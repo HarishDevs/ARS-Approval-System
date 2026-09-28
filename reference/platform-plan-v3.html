@@ -1,0 +1,468 @@
+<title>ARS Approval Platform Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --ground:#F8FAFC; --surface:#FFFFFF; --muted-surface:#F1F5F9; --ink:#0F172A; --muted:#475569; --faint:#94A3B8; --line:#E2E8F0;
+  --primary:#005398; --primary-strong:#003F75; --primary-soft:#EEF4FB; --primary-line:#C9DAEE; --red:#ED1C25;
+  --ok:#16A34A; --ok-soft:#DCFCE7; --warn:#EA580C; --warn-soft:#FFEDD5; --bad:#DC2626; --bad-soft:#FDECEC; --code:#EEF2F7;
+  --display:"Barlow Semi Condensed","Arial Narrow",Arial,sans-serif;
+  --body:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"JetBrains Mono",Consolas,"Courier New",monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --ground:#0C1320; --surface:#131C2B; --muted-surface:#182234; --ink:#E6EBF2; --muted:#A3B0C2; --faint:#6B7A90; --line:#243044;
+    --primary:#6FA8E0; --primary-strong:#9CC4EC; --primary-soft:#15263D; --primary-line:#2A4466; --red:#FF5A61;
+    --ok:#4ADE80; --ok-soft:#12301F; --warn:#FB923C; --warn-soft:#35210F; --bad:#F87171; --bad-soft:#3A1818; --code:#1B2536;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#0C1320; --surface:#131C2B; --muted-surface:#182234; --ink:#E6EBF2; --muted:#A3B0C2; --faint:#6B7A90; --line:#243044;
+  --primary:#6FA8E0; --primary-strong:#9CC4EC; --primary-soft:#15263D; --primary-line:#2A4466; --red:#FF5A61;
+  --ok:#4ADE80; --ok-soft:#12301F; --warn:#FB923C; --warn-soft:#35210F; --bad:#F87171; --bad-soft:#3A1818; --code:#1B2536;
+}
+*{box-sizing:border-box}
+body{background:var(--ground);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.6;padding-inline:16px;padding-block:0 64px}
+a{color:var(--primary)}
+a:focus-visible,summary:focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:3px}
+.band{background:var(--primary);color:#fff;margin-inline:-16px;padding:28px 16px 30px;border-bottom:4px solid var(--red)}
+:root:not([data-theme="light"]) .band{background:var(--primary)}
+.band-inner{max-width:1160px;margin:0 auto}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;opacity:.85}
+h1,h2,h3,h4{font-family:var(--display);line-height:1.15;margin:0;text-wrap:balance}
+.band h1{font-size:clamp(32px,5vw,48px);font-weight:700;margin-top:6px;color:#fff}
+.band p{max-width:74ch;margin:10px 0 0;color:#E4EEF8}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .band{background:#0B2A4A}}
+:root[data-theme="dark"] .band{background:#0B2A4A}
+.wrap{max-width:1160px;margin:28px auto 0;display:grid;grid-template-columns:1fr;gap:32px}
+@media (min-width:1040px){.wrap{grid-template-columns:210px minmax(0,1fr)}}
+nav ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px;font-size:14px}
+@media (min-width:1040px){nav ol{position:sticky;top:calc(env(safe-area-inset-top,0px) + 20px)}}
+nav a{display:block;padding:5px 10px;text-decoration:none;color:var(--muted);border-left:2px solid var(--line)}
+nav a:hover{color:var(--ink);border-left-color:var(--primary)}
+main{min-width:0}
+section{padding-block:4px 32px;margin-bottom:28px;border-bottom:1px solid var(--line)}
+section:last-child{border-bottom:0}
+h2{font-size:30px;font-weight:700;margin-bottom:10px;color:var(--ink)}
+h3{font-size:21px;font-weight:600;margin:24px 0 8px}
+h4{font-size:16px;font-family:var(--body);font-weight:600;margin:0 0 6px}
+p{margin:0 0 12px;max-width:74ch}
+ul,ol.steps{max-width:78ch;padding-left:20px;margin:6px 0 12px}
+li{margin-bottom:4px}
+.lead{font-size:16px;color:var(--muted);max-width:74ch}
+.tbl{overflow-x:auto;border:1px solid var(--line);background:var(--surface);margin:12px 0 16px;border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--primary-soft);color:var(--primary-strong);font-weight:600;font-size:12.5px;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td.c{text-align:center;white-space:nowrap}
+code,.mono{font-family:var(--mono);font-size:12.5px;background:var(--code);padding:1px 5px;border-radius:4px}
+.yes{color:var(--ok);font-weight:600}.no{color:var(--faint)}.part{color:var(--warn);font-weight:600}
+.modules{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin:12px 0}
+.mod{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.mod .tag{font-family:var(--mono);font-size:11px;color:var(--primary);letter-spacing:.04em;text-transform:uppercase}
+.mod ul{padding-left:18px;margin:6px 0 0;font-size:14px}
+.mod li{margin-bottom:3px}
+.diagram{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px;margin:12px 0 16px}
+.diagram pre.mermaid{margin:0;background:transparent}
+.note{border-left:3px solid var(--primary);background:var(--primary-soft);padding:10px 14px;margin:12px 0;max-width:80ch;font-size:14.5px;border-radius:0 8px 8px 0}
+.note.warn{border-left-color:var(--warn);background:var(--warn-soft)}
+.note.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.msg{font-family:var(--mono);font-size:13px;background:var(--muted-surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;max-width:560px;white-space:pre-wrap;margin:10px 0}
+.phases{display:grid;gap:10px;margin:12px 0}
+.phase{display:grid;grid-template-columns:92px minmax(0,1fr);gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.phase .p{font-family:var(--display);font-weight:700;font-size:22px;color:var(--primary)}
+.phase .p small{display:block;font-family:var(--mono);font-size:11px;font-weight:400;color:var(--muted);letter-spacing:.04em}
+.phase h4{margin-bottom:4px}
+.phase ul{margin:4px 0 0;font-size:14px}
+@media (max-width:560px){.phase{grid-template-columns:1fr}}
+.pill{display:inline-block;font-family:var(--mono);font-size:11px;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.p-ok{background:var(--ok-soft);color:var(--ok)}.p-warn{background:var(--warn-soft);color:var(--warn)}.p-bad{background:var(--bad-soft);color:var(--bad)}.p-info{background:var(--primary-soft);color:var(--primary)}
+.decisions{counter-reset:d;list-style:none;padding:0;max-width:86ch}
+.decisions li{counter-increment:d;position:relative;padding:10px 12px 10px 46px;background:var(--surface);border:1px solid var(--line);border-radius:10px;margin-bottom:8px}
+.decisions li::before{content:counter(d);position:absolute;left:12px;top:10px;width:24px;height:24px;border-radius:50%;background:var(--primary);color:#fff;font-size:12px;font-weight:600;display:grid;place-items:center}
+footer{max-width:1160px;margin:0 auto;font-size:13px;color:var(--muted)}
+</style>
+
+<div class="band"><div class="band-inner">
+  <div class="eyebrow">ARS Steels · IT · Build plan v3 · 28 Sep 2026</div>
+  <h1>ARS Approval Platform Plan</h1>
+  <p><strong>Main purpose: multi-level approvals in any custom manner.</strong> Unlimited levels, combined freely as sequential, parallel, any-one, any-N-of-M, conditional or hybrid, with approvers from any source. One approval engine replaces the 104 Asana approval projects. This plan combines the development plan you shared with your requirements:</p>
+  <ul>
+    <li>an Admin Portal (Super Admin)</li>
+    <li>Google sign-in, or password + OTP</li>
+    <li>new-login alerts</li>
+    <li>email and WhatsApp for every notification</li>
+    <li>no backend visibility for anyone except the Super Admin</li>
+  </ul>
+</div></div>
+
+<div class="wrap">
+<nav aria-label="Contents"><ol>
+  <li><a href="#base">Base plan and changes</a></li>
+  <li><a href="#access">Who can see what</a></li>
+  <li><a href="#cc">Admin Portal</a></li>
+  <li><a href="#auth">Sign-in and security</a></li>
+  <li><a href="#notify">Notifications</a></li>
+  <li><a href="#hidden">Keeping the backend hidden</a></li>
+  <li><a href="#arch">Architecture</a></li>
+  <li><a href="#data">Data model additions</a></li>
+  <li><a href="#phases">Build phases</a></li>
+  <li><a href="#risks">Risks</a></li>
+  <li><a href="#decide">Decisions and open questions</a></li>
+  <li><a href="#doa">What a DoA matrix is</a></li>
+</ol></nav>
+
+<main>
+
+<section id="base">
+  <h2>Base plan and changes</h2>
+  <p class="lead">The 45-point development plan you shared stays the base. That covers the Approval Builder, node-based workflow engine, Sequential / Parallel / Any-One / Any-N-of-M / Conditional flows, amount routing, versioning, resubmission with one permanent ID, reopen, delegation, SLA, work assignment, the three portals, the audit trail, the workflow validator, test mode, analytics and the Asana migration. The changes below come from your new requirements and from the Asana audit.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>#</th><th>Change to the base plan</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td>0</td><td><strong>The engine supports any multi-level combination from its first build phase.</strong> The data model is a graph of nodes, connections, rules and actors, never fixed "Level 1–4" slots. The drag-and-drop designer comes after.</td><td>Your main purpose</td></tr>
+      <tr><td>1</td><td><strong>All configuration moves to the Admin Portal</strong> (<code>admin.arssteels.net</code>), a dedicated portal where the IT team creates the predefined approvals. <code>itadmin@arssteels.co.in</code> is the Super Admin with every right and assigns roles to other IT users. <strong>Every user can create custom approvals</strong> in the user app. HODs and management use approvals but do not configure the platform.</td><td>Your requirement</td></tr>
+      <tr><td>2</td><td><strong>Sign-in is Google (no OTP) or user ID + password + OTP</strong>, with the OTP sent on WhatsApp only. This replaces "Microsoft Entra ID". Only users created in the Admin Portal can sign in, using any email address. The sign-in method is set per user.</td><td>Your decisions</td></tr>
+      <tr><td>2a</td><td><strong>WhatsApp through CEOITBox</strong>, and <strong>hosting on GoDaddy</strong>, both as on the Power BI website. <strong>No Asana data import</strong>: Asana is a flow reference only.</td><td>Your decisions</td></tr>
+      <tr><td>3</td><td><strong>The Admin Portal and the notification hub move into Phase 1.</strong> OTP and new-login alerts need email and WhatsApp working on day one.</td><td>OTP depends on them</td></tr>
+      <tr><td>4</td><td><strong>Keep an "On Hold" state</strong> next to Changes Required. On Hold means the approver has paused the request; it stays open and counts as pending. The base plan dropped Hold.</td><td>Admin and Finance use Hold today to park items. In Asana, Hold wrongly completed tasks.</td></tr>
+      <tr><td>5</td><td><strong>No shared accounts.</strong> The MD gets an individual login. The assistant acts through delegation, recorded as "on behalf of".</td><td>The audit found the MD account is operated by an assistant</td></tr>
+      <tr><td>6</td><td><strong>Approvals are never granted from inside a WhatsApp chat.</strong> Messages carry a secure link that opens the request after sign-in. Approvals given outside the system (phone, meeting) can be recorded by the approver with evidence attached.</td><td>Keeps the rule that only an authenticated, authorised person can approve</td></tr>
+      <tr><td>7</td><td><strong>A Delegation of Authority (DoA) matrix from management is a prerequisite</strong> for amount routing. The ₹50k / ₹5L / ₹25L bands in the base plan are placeholders.</td><td>No DoA exists in Asana today; one approver clears up to ₹5 Cr</td></tr>
+      <tr><td>8</td><td><strong>First release targets MD, ED, Finance, Valarmadhi and SCM</strong> as predefined templates.</td><td>They carry about 4,500 of the ~4,800 historical requests (94%)</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="access">
+  <h2>Who can see what</h2>
+  <p>Only one account can see or change anything technical. Every other role sees business data only, limited by the data-scope rules the Super Admin sets.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Area</th><th>Employee</th><th>Approver / HOD</th><th>Management (ED, MD)</th><th>Auditor (read-only)</th><th>Super Admin</th></tr></thead>
+    <tbody>
+      <tr><td>Own requests, timeline, documents</td><td class="c yes">Yes</td><td class="c yes">Yes</td><td class="c yes">Yes</td><td class="c part">If granted</td><td class="c yes">All</td></tr>
+      <tr><td>Requests awaiting my action</td><td class="c no">–</td><td class="c yes">Yes</td><td class="c yes">Yes</td><td class="c no">–</td><td class="c yes">All</td></tr>
+      <tr><td>Department / company requests</td><td class="c no">–</td><td class="c part">Own department</td><td class="c part">As granted</td><td class="c part">As granted</td><td class="c yes">All</td></tr>
+      <tr><td>Dashboards and analytics</td><td class="c part">Own</td><td class="c part">Team</td><td class="c yes">Management view</td><td class="c part">As granted</td><td class="c yes">All</td></tr>
+      <tr><td>Approval types, forms, workflows, DoA</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c yes">Full</td></tr>
+      <tr><td>Users, roles, hierarchy, permissions</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c yes">Full</td></tr>
+      <tr><td>Notification templates and channels</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c yes">Full</td></tr>
+      <tr><td>Service providers, API keys, webhooks, integrations</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c no">–</td><td class="c yes">Full</td></tr>
+      <tr><td>Security settings, login history, system health</td><td class="c part">Own logins</td><td class="c part">Own logins</td><td class="c part">Own logins</td><td class="c no">–</td><td class="c yes">Full</td></tr>
+      <tr><td>Audit log</td><td class="c part">Own requests</td><td class="c part">Requests they see</td><td class="c part">Requests they see</td><td class="c part">As granted</td><td class="c yes">Full (view, export)</td></tr>
+    </tbody>
+  </table></div>
+  <p>"Auditor" and "Management" are roles the Super Admin creates and scopes. They cannot configure anything.</p>
+</section>
+
+<section id="cc">
+  <h2>Admin Portal (Super Admin)</h2>
+  <p>This is a dedicated application at <code>admin.arssteels.net</code> for the IT team, which creates the predefined approvals here.</p>
+  <ul>
+    <li><code>itadmin@arssteels.co.in</code> is the Super Admin with every right.</li>
+    <li>Other IT users only get the roles the Super Admin assigns.</li>
+    <li>Provider keys, security settings and integrations stay Super-Admin-only.</li>
+    <li>Everyone else creates custom approvals in the user app.</li>
+  </ul>
+  <p>Every change made here is written to the audit log with before and after values.</p>
+  <div class="modules">
+    <div class="mod"><div class="tag">Organisation</div><h4>Company structure</h4><ul><li>Companies / units, locations</li><li>Departments: the cleaned-up list replacing today's 27 values</li><li>Designations, cost centres</li></ul></div>
+    <div class="mod"><div class="tag">People</div><h4>Users and hierarchy</h4><ul><li>Create, bulk import, deactivate users</li><li>Reporting manager, HOD, department</li><li>Email, WhatsApp number, OTP preference</li><li>Force sign-out, reset password or OTP, unlock</li><li>Bulk reassign pending work when someone leaves</li></ul></div>
+    <div class="mod"><div class="tag">Access</div><h4>Roles and data rights</h4><ul><li>Role builder with a permission matrix</li><li>Data scope per role: own / team / department / listed departments / all</li><li>Field-level hiding (e.g. Amount, Party)</li><li>Rules for which approvers an employee may pick in custom approvals</li></ul></div>
+    <div class="mod"><div class="tag">Approvals</div><h4>Approval Builder</h4><ul><li>Approval types, codes, categories</li><li>Form builder with reusable field types</li><li>Visual workflow designer, conditions, approver sources</li><li>Validator, test mode, versions, publish / archive</li></ul></div>
+    <div class="mod"><div class="tag">Authority</div><h4>DoA matrix</h4><ul><li>Amount bands per approval type and department</li><li>Which roles approve at each band</li><li>Effective dates, versioned</li></ul></div>
+    <div class="mod"><div class="tag">Operations</div><h4>SLA, escalation, delegation</h4><ul><li>SLA and reminder timers per node</li><li>Escalation chains</li><li>Holiday calendar (the MD pushes dates past holidays today)</li><li>View and end any delegation</li></ul></div>
+    <div class="mod"><div class="tag">Messaging</div><h4>Notification center</h4><ul><li>Email and WhatsApp channel setup</li><li>Template per event and channel, with preview</li><li>WhatsApp template approval status</li><li>Delivery log, failures, retries, resend</li></ul></div>
+    <div class="mod"><div class="tag">Security</div><h4>Sign-in and security</h4><ul><li>Allowed Google domains</li><li>Password policy, lockout</li><li>OTP length, expiry, attempts, resend limits</li><li>Session length, trusted-device period</li><li>New-login alert rules, optional IP allowlist for the Admin Portal</li></ul></div>
+    <div class="mod"><div class="tag">Integrations</div><h4>Providers and API</h4><ul><li>Google OAuth client, email provider, WhatsApp provider</li><li>API keys, webhooks, ERP / Salesforce / Power BI connections</li><li>Secrets shown masked, with rotation dates</li></ul></div>
+    <div class="mod"><div class="tag">Data</div><h4>Data rights</h4><ul><li>Search and view every request</li><li>Export (Excel / CSV), scheduled exports</li><li>Corrections with a reason, which creates a new version</li><li>Archive, retention rules, legal hold</li><li>Backup status and restore requests</li></ul></div>
+    <div class="mod"><div class="tag">Oversight</div><h4>Audit and monitoring</h4><ul><li>Full audit search and export</li><li>Login history, failed attempts, security events</li><li>Job queue and notification health</li><li>Error summary (never shown to users)</li></ul></div>
+    <div class="mod"><div class="tag">Branding</div><h4>Look and wording</h4><ul><li>Logo, colours (from the ARS asset pack)</li><li>Email header and footer, sender name</li><li>Login page message</li></ul></div>
+  </div>
+</section>
+
+<section id="auth">
+  <h2>Sign-in and security</h2>
+  <p>Two ways in, both ending in the same device check. Nobody can sign up on their own; the Super Admin creates every account first.</p>
+  <div class="diagram"><pre class="mermaid">
+flowchart TD
+  A(["Login page"]) --> G["Continue with Google"]
+  A --> P["User ID + password"]
+  G --> G1{"Google email matches an active user&lt;br/&gt;created in the Admin Portal (any domain)?"}
+  G1 -- No --> X["Access denied (generic message)"]
+  G1 -- "Yes, no OTP" --> D
+  P --> P1{"Password correct?"}
+  P1 -- "No (5 tries)" --> L["Account locked for 15 min&lt;br/&gt;user alerted"]
+  P1 -- Yes --> O["Send OTP on WhatsApp only (CEOITBox)"]
+  O --> O1{"OTP valid within 5 min?"}
+  O1 -- No --> O
+  O1 -- Yes --> D{"Known device and location?"}
+  D -- Yes --> S(["Signed in"])
+  D -- No --> N["New-login alert on email AND WhatsApp&lt;br/&gt;device remembered after sign-in"]
+  N --> S
+  </pre></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Setting</th><th>Proposed default</th><th>Changeable in Admin Portal</th></tr></thead>
+    <tbody>
+      <tr><td>Who can sign in</td><td>Only users created in the Admin Portal. Any email address or domain. The sign-in method (Google or password) is set per user; some staff use password + OTP only</td><td>Per user</td></tr>
+      <tr><td>Google sign-in</td><td>No OTP, and no extra OTP for admin actions (decided). Uses Firebase Auth, as on the Power BI website</td><td>–</td></tr>
+      <tr><td>Password</td><td>At least 10 characters, checked against leaked-password lists, stored with Argon2id. The first-time "create password" flow reuses the screens in the asset pack</td><td>Length, expiry</td></tr>
+      <tr><td>OTP</td><td>6 digits, valid 5 minutes, single use, 5 wrong tries, resend after 30 s, max 5 per hour; stored hashed</td><td>All values</td></tr>
+      <tr><td>OTP channel</td><td>WhatsApp only (decided)</td><td>–</td></tr>
+      <tr><td>Lockout</td><td>5 failed passwords → 15 min lock + alert</td><td>Yes</td></tr>
+      <tr><td>Sessions</td><td>Secure HTTP-only cookie; 30 min idle, 12 h maximum; trusted device remembered 30 days</td><td>Yes</td></tr>
+      <tr><td>Forgot password</td><td>OTP on WhatsApp, then set a new password. All sessions end and an alert is sent</td><td>–</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>New-login alert</h3>
+  <p>A sign-in counts as new when the device is not recognised (a signed device cookie plus browser and OS) or the network location changes sharply. The alert goes to both email and WhatsApp. Alerts also go out for password changes, OTP channel changes, lockouts and repeated failed attempts. Every Super Admin sign-in also triggers one.</p>
+  <div class="msg">ARS Approvals: New sign-in to your account
+28 Sep 2026, 15:32 · Chrome on Windows · near &lt;city&gt; · IP 49.xx.xx.xx
+
+If this was you, no action is needed.
+If not, tap to sign out everywhere and lock your account:
+&lt;secure link&gt;</div>
+  <p>"This wasn't me" ends every session, locks the account, and notifies the Super Admin.</p>
+</section>
+
+<section id="notify">
+  <h2>Notifications</h2>
+  <p>One notification hub sends every event on <strong>both email and WhatsApp</strong> (through CEOITBox), plus in-app. One exception: an OTP goes on WhatsApp only. Each event is sent once, which fixes the duplicate comments seen in Asana.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Event</th><th>Sent to</th></tr></thead>
+    <tbody>
+      <tr><td>OTP code</td><td>User (WhatsApp only)</td></tr>
+      <tr><td>New sign-in, password changed, account locked, OTP channel changed</td><td>User; Super Admin for locks and their own sign-ins</td></tr>
+      <tr><td>Request submitted</td><td>Requester (receipt with the Approval ID)</td></tr>
+      <tr><td>Action needed</td><td>The approver(s) at the current step, or their delegate</td></tr>
+      <tr><td>Approved at a step / fully approved</td><td>Requester, next approver, watchers</td></tr>
+      <tr><td>Rejected</td><td>Requester, watchers (with reason)</td></tr>
+      <tr><td>Changes required / On Hold / resubmitted</td><td>Requester / approver</td></tr>
+      <tr><td>SLA reminder, escalation</td><td>Approver; then the escalation contact</td></tr>
+      <tr><td>Delegation started / ended</td><td>Delegator and delegate</td></tr>
+      <tr><td>Reopened</td><td>Requester and the approvers affected</td></tr>
+      <tr><td>Work assigned / work completed</td><td>Assignee / requester</td></tr>
+      <tr><td>Comment or @mention</td><td>Mentioned people, requester, current approver</td></tr>
+      <tr><td>Notification delivery failures, provider problems</td><td>Super Admin only</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note warn"><strong>WhatsApp through CEOITBox, the same as the Power BI website.</strong>
+    <ul>
+      <li><strong>What we need:</strong> CEOITBox's API documentation, credentials and sender number, plus the Power BI website's integration code so the same connection can be reused.</li>
+      <li><strong>Templates:</strong> each event needs a Meta-approved message template, with OTP messages in the "authentication" category.</li>
+      <li><strong>Charges:</strong> Meta charges per message or conversation.</li>
+      <li><strong>Users:</strong> every user needs a WhatsApp number on their profile and must opt in.</li>
+    </ul>
+    Start this in Phase 0 so templates are approved before testing.</div>
+  <div class="note"><strong>Email:</strong> send from an ARS address such as <code>approvals@arssteels.co.in</code> through the company's Google Workspace or a transactional email service, with SPF, DKIM and DMARC set so messages don't land in spam.</div>
+</section>
+
+<section id="hidden">
+  <h2>Keeping the backend hidden</h2>
+  <p>Goal: apart from the Super Admin, no user can learn which providers, APIs, configuration or infrastructure the platform uses.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Layer</th><th>Control</th></tr></thead>
+    <tbody>
+      <tr><td>Admin Portal</td><td>Separate app and address, not linked from the main app. The server checks the Super Admin role on every call. Step-up OTP for sensitive changes. Optional office-IP allowlist</td></tr>
+      <tr><td>User app code</td><td>Built separately from the Admin Portal, so no admin screens or admin API paths are shipped to users. No source maps, no configuration or keys in the browser. Feature flags are decided on the server</td></tr>
+      <tr><td>API</td><td>No public API documentation. Every call needs a signed-in session, and permission is checked on the server for each record. Admin routes are blocked for anyone else before they reach the app. CORS allows only ARS addresses. Rate limits apply</td></tr>
+      <tr><td>Responses</td><td>Generic error messages and reference codes instead of stack traces. Server and framework headers removed. No provider names in pages or messages</td></tr>
+      <tr><td>Emails and WhatsApp</td><td>Sender shown as "ARS Approvals". No provider branding or tracking domains visible where avoidable</td></tr>
+      <tr><td>Secrets</td><td>Held in a server-side secret store, encrypted at rest. Shown masked even in the Admin Portal. Rotated at go-live and on a schedule</td></tr>
+      <tr><td>Logs</td><td>Users see only the business timeline of their requests. Technical logs and errors are visible only in the Admin Portal</td></tr>
+      <tr><td>Infrastructure accounts</td><td>Hosting, database, domain/DNS, Google Cloud (OAuth), WhatsApp provider and email service are all owned by <code>itadmin@arssteels.co.in</code> with 2-step verification</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note bad"><strong>One limit to plan for.</strong> Whoever builds and hosts the system has technical access while building it. That includes developers, the hosting provider's staff, and anyone given server access. Cover it with time-limited access for developers, an NDA, a handover checklist, and rotating every key and password at go-live so only the Super Admin holds them afterwards.</div>
+</section>
+
+<section id="arch">
+  <h2>Architecture</h2>
+  <p>A modular monolith, as the base plan proposes. It has two front-ends, one API, and background workers for notifications and timers.</p>
+  <div class="diagram"><pre class="mermaid">
+flowchart LR
+  subgraph Users["Users (browser / phone)"]
+    EP["Employee portal"]
+    AP["Approver portal"]
+    MP["Management portal"]
+  end
+  CC["Admin Portal&lt;br/&gt;(Super Admin)&lt;br/&gt;(separate app)"]
+  EP & AP & MP --> API["Application API&lt;br/&gt;permission check on every call"]
+  CC --> ADM["Admin API&lt;br/&gt;Super Admin only"]
+  subgraph Core["Core services (one deployable)"]
+    AUTH["Auth: Google, password,&lt;br/&gt;OTP, devices, sessions"]
+    ORG["Users, hierarchy,&lt;br/&gt;roles, data scopes"]
+    BLD["Approval Builder:&lt;br/&gt;forms, workflows, DoA"]
+    ENG["Workflow and approval engine"]
+    NOT["Notification hub"]
+    AUD["Audit log"]
+  end
+  API --> AUTH & ORG & ENG
+  ADM --> AUTH & ORG & BLD & NOT & AUD
+  ENG --> NOT
+  ENG --> AUD
+  AUTH --> NOT
+  Core --> DB[("MySQL 8")]
+  Core --> FS[("File storage")]
+  Core --> Q[("Queue / timers")]
+  NOT --> EM["Email provider"]
+  NOT --> WA["WhatsApp (CEOITBox)"]
+ AUTH --> GO["Google sign-in"]
+  SEC[("Secret store")] -.-> Core
+  </pre></div>
+  <p><strong>Decided stack:</strong> the same setup as the ARS Power BI website, which already runs on the same GoDaddy account (cPanel with Node.js). Using a setup that already works there lowers the risk.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Layer</th><th>Choice</th></tr></thead>
+    <tbody>
+      <tr><td>Hosting</td><td>GoDaddy Node.js Hosting (Node 22): two apps, the user app and the Admin Portal at <code>admin.arssteels.net</code>, deployed from GitHub</td></tr>
+      <tr><td>App</td><td>Next.js 15, React 19, TypeScript, Tailwind with the ARS brand preset. One repository with <code>apps/web</code>, <code>apps/admin</code> and a shared <code>packages/core</code> engine, so admin code never reaches users</td></tr>
+      <tr><td>Database</td><td>MySQL 8 (cPanel), SQL migrations</td></tr>
+      <tr><td>Sign-in</td><td>Firebase Auth for Google (verified on the server); password + WhatsApp OTP; signed session cookies</td></tr>
+      <tr><td>Secrets</td><td>Provider keys stored encrypted (AES-256-GCM) and entered only in the Admin Portal; server keys only in GoDaddy's environment settings</td></tr>
+      <tr><td>Messages</td><td>CEOITBox WhatsApp adapter (the same API contract as the Power BI site); email from <code>itadmin@arssteels.co.in</code></td></tr>
+      <tr><td>Timers</td><td>A job table run by cPanel cron: SLA reminders, escalations, notification retries</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="data">
+  <h2>Data model additions</h2>
+  <p>These tables are added to the entity list in the base plan, section 39.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Table</th><th>Holds</th></tr></thead>
+    <tbody>
+      <tr><td><code>users</code> (extended)</td><td>Sign-in method(s), Google subject ID, password hash, WhatsApp number, WhatsApp opt-in, OTP preference, status, locked-until, is_super_admin</td></tr>
+      <tr><td><code>user_devices</code></td><td>Device ID, browser/OS, first and last seen, last IP and approximate location, trusted-until</td></tr>
+      <tr><td><code>sessions</code></td><td>Session ID, user, device, created, last active, ended, end reason</td></tr>
+      <tr><td><code>otp_challenges</code></td><td>User, channel, code hash, purpose (login / reset / step-up), expires, attempts, used</td></tr>
+      <tr><td><code>login_events</code></td><td>Success/failure, method, device, IP, location, new-device flag, alert sent</td></tr>
+      <tr><td><code>notification_templates</code></td><td>Event, channel, language, body, version, WhatsApp approval status</td></tr>
+      <tr><td><code>notifications</code> / <code>notification_deliveries</code></td><td>One row per event and recipient; one delivery row per channel with provider status and retries</td></tr>
+      <tr><td><code>system_settings</code></td><td>Security, OTP, session and branding settings; versioned; Super Admin only</td></tr>
+      <tr><td><code>integration_credentials</code></td><td>Reference to the secret store (never the raw secret), rotation date, owner</td></tr>
+      <tr><td><code>doa_rules</code></td><td>Approval type, department, amount band, required roles, effective from/to</td></tr>
+      <tr><td><code>data_scope_rules</code></td><td>Role, record type, scope (own / team / department / list / all), hidden fields</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="phases">
+  <h2>Build phases</h2>
+  <p>This is the base plan's order, with Phase 0 and the security items moved forward.</p>
+  <div class="phases">
+    <div class="phase"><div class="p">0<small>SETUP</small></div><div><h4>Decisions and accounts</h4><ul>
+      <li>Answer the decisions below and get the DoA matrix from management.</li>
+      <li>Confirm the GoDaddy plan and pick the stack.</li>
+      <li>Register the CEOITBox WhatsApp templates (OTP + every approval event) and get Meta approval.</li>
+      <li>Create the Google Cloud OAuth client and the email sender, all under <code>itadmin@arssteels.co.in</code>.</li>
+      <li>Create the Git repository and the three living files (done).</li>
+      <li>Collect the staff list with reporting lines, departments and WhatsApp numbers.</li></ul></div></div>
+    <div class="phase"><div class="p">1<small>FOUNDATION</small></div><div><h4>Sign-in, people, Admin Portal core, notifications</h4><ul>
+      <li>Google and password + OTP sign-in, device tracking, new-login alerts, lockout, sessions.</li>
+      <li>Notification hub on email and WhatsApp with a delivery log.</li>
+      <li>Admin Portal modules: Organisation, Users and hierarchy, Roles and data rights, Security, Providers, Notification center, Audit.</li></ul></div></div>
+    <div class="phase"><div class="p">2<small>ENGINE</small></div><div><h4>Multi-level approval engine and first templates</h4><ul>
+      <li>A node-graph engine with every pattern from day one: sequential, parallel, any-one, any-N-of-M, conditional and hybrid, with approvers from any source.</li>
+      <li>Requests, permanent Approval IDs, steps, the state machine (Draft → Submitted → Pending → Approved / Rejected / Changes Required / On Hold).</li>
+      <li>Actor authorisation checked on the server.</li>
+      <li>Employee and approver portals.</li>
+      <li>Templates for MD, ED, Finance, Valarmadhi and SCM (single approver).</li></ul></div></div>
+    <div class="phase"><div class="p">3<small>BUILDER</small></div><div><h4>Workflow designer, conditions, DoA</h4><ul>
+      <li>Visual designer, parallel / any-one / any-N, conditions, approver sources, DoA routing, validator and test mode.</li>
+      <li>Templates for HR, Admin, Recruitment (Manager → HOD), Finance Internal (conditional) and Price Realisation (parallel then ED → MD).</li></ul></div></div>
+    <div class="phase"><div class="p">4<small>LIFECYCLE</small></div><div><h4>Resubmission, reopen, delegation, SLA</h4><ul>
+      <li>Versions under one ID, reopen, delegation with "on behalf of", SLA timers, escalation, holiday calendar.</li></ul></div></div>
+    <div class="phase"><div class="p">5<small>CUSTOM</small></div><div><h4>Employee custom approvals</h4><ul>
+      <li>Custom flows within the approver-selection rules the Super Admin sets.</li>
+      <li>Convert a good custom flow into a template.</li></ul></div></div>
+    <div class="phase"><div class="p">6<small>WORK</small></div><div><h4>Documents, comments, work assignment</h4><ul>
+      <li>Versioned documents, discussion, work assignment after approval (the IT pattern).</li></ul></div></div>
+    <div class="phase"><div class="p">7<small>INSIGHT</small></div><div><h4>Management portal and analytics</h4><ul>
+      <li>Control dashboard, ageing, SLA %, approver workload, Power BI views.</li></ul></div></div>
+    <div class="phase"><div class="p">8<small>CONNECT</small></div><div><h4>Integrations, Asana history, mobile</h4><ul>
+      <li>ERP / Salesforce / webhooks.</li>
+      <li>Installable mobile web app.</li>
+      <li>Switch Asana forms off.</li></ul></div></div>
+  </div>
+</section>
+
+<section id="risks">
+  <h2>Risks</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Risk</th><th>Recommendation</th></tr></thead>
+    <tbody>
+      <tr><td><span class="pill p-ok">accepted</span> <strong>Single Super Admin.</strong> If <code>itadmin@arssteels.co.in</code> is locked out, or the person holding it leaves, nobody can change anything</td><td>A sealed "break-glass" account, disabled by default, that can only be switched on from the GoDaddy console. The credential holder is still to be named</td></tr>
+      <tr><td><span class="pill p-ok">accepted</span> <strong>Full data rights include the audit log.</strong> If the Super Admin can edit history, the audit trail loses its value</td><td>The Super Admin can view and export the audit log, but it is append-only for everyone. Corrections to requests create new versions instead of overwriting</td></tr>
+      <tr><td><span class="pill p-warn">medium</span> <strong>GoDaddy Node.js Hosting limits.</strong> Memory, process and disk limits are not yet measured, and uploads may not survive a redeploy</td><td>Check on the first deploy (persistent disk, reachable MySQL, cron). Keep uploads in the database or object storage if the disk is not persistent. The VPS on the same account is the fallback</td></tr>
+      <tr><td><span class="pill p-warn">medium</span> <strong>WhatsApp delivery and cost.</strong> Template rejections, number bans, per-message charges, and users without WhatsApp</td><td>Email is always sent as well. Use the "authentication" template category for OTP. Watch spend in the Admin Portal</td></tr>
+      <tr><td><span class="pill p-warn">medium</span> <strong>Notification volume.</strong> Every event on two channels, at ~500+ requests a month with several steps each, is a lot of messages for busy approvers</td><td>Keep every event, but let the Super Admin enable an optional daily digest per role later</td></tr>
+      <tr><td><span class="pill p-warn">medium</span> <strong>No DoA today.</strong> Amount routing can't be configured without it</td><td>Get management sign-off on a DoA matrix in Phase 0. Until then, run single-approver templates as Asana does today</td></tr>
+      <tr><td><span class="pill p-info">low</span> <strong>Wrong or missing staff data</strong> (reporting lines, phone numbers)</td><td>Bulk import with validation. Users confirm their WhatsApp number at first sign-in with an OTP</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="decide">
+  <h2>Decisions made (28 Sep 2026)</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Topic</th><th>Decision</th></tr></thead>
+    <tbody>
+      <tr><td>Main purpose</td><td>Multi-level approvals in any custom manner</td></tr>
+      <tr><td>Admin Portal</td><td>One dedicated portal at <code>admin.arssteels.net</code> where the IT team creates the predefined approvals. <code>itadmin@arssteels.co.in</code> is the Super Admin with every right</td></tr>
+      <tr><td>Custom approvals</td><td>Every user can create a custom approval whenever needed</td></tr>
+      <tr><td>Who can sign in</td><td>Any email address, as long as the user was created in the Admin Portal. Some staff use password + OTP only</td></tr>
+      <tr><td>Users and roles</td><td>The admin provides the staff data, assigns roles per user, and adds or deactivates users (never deletes them)</td></tr>
+      <tr><td>Email sender</td><td><code>itadmin@arssteels.co.in</code></td></tr>
+      <tr><td>OTP</td><td>None with Google. Always with user ID + password, on WhatsApp only. No extra OTP for admin actions</td></tr>
+      <tr><td>WhatsApp provider</td><td>CEOITBox (as on the Power BI website)</td></tr>
+      <tr><td>Hosting and stack</td><td>GoDaddy cPanel with Node.js; the same stack as the Power BI website (see Architecture)</td></tr>
+      <tr><td>Break-glass account and append-only audit log</td><td>Both accepted</td></tr>
+      <tr><td>Asana</td><td>No import; flow reference only</td></tr>
+      <tr><td>Build team</td><td>You and Claude, phase by phase in <code>D:\Omniroute\ARS Approval System</code></td></tr>
+      <tr><td>Living files</td><td>DEVELOPMENT-MEMORY.md, PLAN-CHECKLIST.md and FLOWS.md are kept up to date on every piece of work</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3 id="doa">What a DoA matrix is</h3>
+  <p>A <strong>Delegation of Authority (DoA) matrix</strong> is one table, signed off by management. For each kind of request and each amount range, it says <strong>who must approve, and in what order</strong>. The engine reads it to choose the approval levels automatically. Today there is none: one approver clears everything from ₹3,890 to ₹5 Cr.</p>
+  <p>The example below uses today's approvers. <strong>The amounts and names are placeholders for management to fill in.</strong></p>
+  <div class="tbl"><table>
+    <thead><tr><th>Request type</th><th>Up to ₹1 L</th><th>₹1 L – ₹5 L</th><th>₹5 L – ₹25 L</th><th>Above ₹25 L</th></tr></thead>
+    <tbody>
+      <tr><td>Purchase / Work Order</td><td>SCM Head</td><td>SCM Head → Finance</td><td>SCM Head → Finance → ED</td><td>SCM Head → Finance → ED → MD</td></tr>
+      <tr><td>Bill / payment / funds transfer</td><td>Finance checker → Finance HOD</td><td>+ Finance Head</td><td>+ ED</td><td>+ MD</td></tr>
+      <tr><td>HR payments (salary, statutory, F&amp;F)</td><td>HR Manager → HR HOD</td><td>HR Manager → HR HOD</td><td>+ Finance → ED</td><td>+ MD</td></tr>
+      <tr><td>IT purchase / licence / budget</td><td>IT Head</td><td>IT Head → Finance</td><td>+ ED</td><td>+ MD</td></tr>
+      <tr><td>Price realisation / discounts</td><td>Dept HOD(s) → ED</td><td>Dept HOD(s) → ED</td><td>Dept HOD(s) → ED → MD</td><td>Dept HOD(s) → ED → MD</td></tr>
+      <tr><td>Policy / special / investment</td><td>ED</td><td>ED → MD</td><td>ED → MD</td><td>ED → MD</td></tr>
+    </tbody>
+  </table></div>
+  <p>Management decides four things:</p>
+  <ol>
+    <li>The amount bands.</li>
+    <li>The approver roles for each cell.</li>
+    <li>Whether a department's own HOD always comes first.</li>
+    <li>Who may approve on someone's behalf.</li>
+  </ol>
+  <p>The developers then enter the table in the Admin Portal. Changes are versioned with effective dates.</p>
+
+  <h3>Still open</h3>
+  <ol class="decisions">
+    <li><strong>User app address:</strong> the Admin Portal is <code>admin.arssteels.net</code>. What should the address for everyone else be (e.g. <code>approvals.arssteels.net</code>)?</li>
+    <li><strong>CEOITBox sharing:</strong> use the same WhatsApp number and API key as the Power BI website? The daily limit is shared. New Meta-approved templates are needed for the approval messages.</li>
+    <li><strong>Email method for itadmin@arssteels.co.in:</strong> Resend (as the Power BI site) or Google Workspace SMTP?</li>
+    <li><strong>Google sign-in project:</strong> reuse the Power BI site's Firebase project, or create a dedicated one (recommended)?</li>
+    <li><strong>Other IT-team admins:</strong> can they create predefined approvals, while provider keys, security and integrations stay with the Super Admin only?</li>
+    <li><strong>Custom approvals:</strong> can anyone pick anyone (including ED/MD) as an approver, or should some people be excluded unless allowed?</li>
+    <li><strong>DoA matrix owner, and break-glass holder.</strong></li>
+  </ol>
+</section>
+
+</main>
+</div>
+<footer>Sources: the development plan shared on 28 Sep 2026, your added requirements, the ARS Approval Framework audit (24–25 Sep 2026) and the ARS asset pack in D:\Omniroute\assets.</footer>

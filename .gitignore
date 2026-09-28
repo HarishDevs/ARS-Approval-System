@@ -1,0 +1,41 @@
+# dependencies
+node_modules/
+
+# build output
+.next/
+out/
+dist/
+build/
+*.tsbuildinfo
+next-env.d.ts
+
+# environment and secrets: never commit
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*secret*
+!**/*secret*.md
+
+# local data
+backups/
+storage/
+*.sql.gz
+*.dump
+
+# tests
+coverage/
+playwright-report/
+test-results/
+
+# logs and OS files
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+
+# editor / tools
+.vscode/
+.idea/
+.claude/settings.local.json

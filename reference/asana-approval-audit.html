@@ -1,0 +1,924 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>ARS Approval Framework</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --ground:#F2F4F7; --surface:#FFFFFF; --ink:#17202B; --muted:#586475; --line:#D8DEE6;
+  --accent:#2B5A86; --accent-soft:#E2EBF4; --ok:#2C7A4D; --ok-soft:#E1F1E7; --warn:#A86D12; --warn-soft:#FBF0DC;
+  --bad:#AE3636; --bad-soft:#F8E3E3; --code:#EEF1F5;
+  --display:"Barlow Semi Condensed","Arial Narrow",Arial,sans-serif;
+  --body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+  --mono:"JetBrains Mono",Consolas,"Courier New",monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --ground:#11161D; --surface:#19202A; --ink:#E5E9EF; --muted:#9BA6B4; --line:#2B3542;
+    --accent:#86B3DE; --accent-soft:#1D2B3B; --ok:#62BF8B; --ok-soft:#18301F; --warn:#E3AA4E; --warn-soft:#33270F;
+    --bad:#E57A7A; --bad-soft:#3A1C1C; --code:#222B37;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#11161D; --surface:#19202A; --ink:#E5E9EF; --muted:#9BA6B4; --line:#2B3542;
+  --accent:#86B3DE; --accent-soft:#1D2B3B; --ok:#62BF8B; --ok-soft:#18301F; --warn:#E3AA4E; --warn-soft:#33270F;
+  --bad:#E57A7A; --bad-soft:#3A1C1C; --code:#222B37;
+}
+*{box-sizing:border-box}
+body{background:var(--ground);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;padding-inline:16px;padding-block:0 64px}
+a{color:var(--accent)}
+a:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:1fr;gap:32px}
+@media (min-width:1040px){.wrap{grid-template-columns:220px minmax(0,1fr)}}
+header.top{max-width:1180px;margin:0 auto;padding-block:40px 28px;border-bottom:1px solid var(--line);margin-bottom:28px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h1,h2,h3,h4{font-family:var(--display);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:clamp(34px,5vw,52px);font-weight:700;letter-spacing:-.01em;margin-top:8px}
+h2{font-size:30px;font-weight:700;margin-bottom:12px}
+h3{font-size:22px;font-weight:600;margin:28px 0 8px}
+h4{font-size:17px;font-weight:600;margin:18px 0 6px}
+p{margin:0 0 12px;max-width:72ch}
+.lede{font-size:18px;color:var(--muted);max-width:70ch;margin-top:12px}
+nav.toc{position:relative}
+@media (min-width:1040px){nav.toc ol{position:sticky;top:calc(env(safe-area-inset-top,0px) + 20px)}}
+nav.toc ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px;font-size:14px}
+nav.toc a{display:block;padding:5px 10px;text-decoration:none;color:var(--muted);border-left:2px solid var(--line)}
+nav.toc a:hover{color:var(--ink);border-left-color:var(--accent)}
+nav.toc .sub a{padding-left:22px;font-size:13px}
+main{min-width:0}
+section{padding-block:8px 36px;border-bottom:1px solid var(--line);margin-bottom:28px}
+section:last-child{border-bottom:0}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);margin:20px 0}
+.stat{background:var(--surface);padding:14px 16px}
+.stat b{display:block;font-family:var(--display);font-size:32px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+.stat span{font-size:13px;color:var(--muted)}
+.tbl{overflow-x:auto;margin:12px 0 18px;border:1px solid var(--line);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--ground);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+code,.gid{font-family:var(--mono);font-size:12.5px;background:var(--code);padding:1px 5px;border-radius:3px}
+.pill{display:inline-block;font-family:var(--mono);font-size:11px;padding:2px 7px;border-radius:999px;white-space:nowrap;letter-spacing:.02em}
+.p-live{background:var(--ok-soft);color:var(--ok)}
+.p-low{background:var(--warn-soft);color:var(--warn)}
+.p-dead{background:var(--bad-soft);color:var(--bad)}
+.p-info{background:var(--accent-soft);color:var(--accent)}
+.diagram{overflow-x:auto;background:var(--surface);border:1px solid var(--line);padding:16px;margin:12px 0 16px}
+.diagram pre.mermaid{margin:0;background:transparent;font-family:var(--body)}
+.flow-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px 24px;margin:10px 0 14px;font-size:14px}
+.flow-meta div{border-top:2px solid var(--accent);padding-top:6px}
+.flow-meta dt{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.flow-meta dd{margin:2px 0 0}
+ol.steps{padding-left:22px;margin:8px 0 14px;max-width:78ch}
+ol.steps li{margin-bottom:6px}
+ul{max-width:78ch;padding-left:20px}
+ul li{margin-bottom:4px}
+.note{border-left:3px solid var(--warn);background:var(--warn-soft);padding:10px 14px;margin:12px 0;font-size:15px;max-width:78ch}
+.note.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.note.info{border-left-color:var(--accent);background:var(--accent-soft)}
+.gaps{display:grid;gap:14px}
+.gap{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--muted);padding:12px 16px}
+.gap.sev-h{border-left-color:var(--bad)}
+.gap.sev-m{border-left-color:var(--warn)}
+.gap.sev-l{border-left-color:var(--accent)}
+.gap h4{margin:0 0 4px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.gap p{margin:0 0 4px;font-size:15px}
+details{background:var(--surface);border:1px solid var(--line);margin:10px 0}
+details summary{cursor:pointer;padding:10px 14px;font-family:var(--display);font-weight:600;font-size:18px}
+details .tbl{margin:0;border:0;border-top:1px solid var(--line)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 14px}
+.chips span{font-size:13px;border:1px solid var(--line);background:var(--surface);padding:2px 8px;border-radius:4px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--muted);margin:4px 0 8px}
+footer{font-size:13px;color:var(--muted);max-width:1180px;margin:0 auto}
+</style>
+
+<header class="top">
+  <div class="eyebrow">ARS Steels · Asana workspace audit · Read-only · 24–25 Sep 2026</div>
+  <h1>ARS Approval Framework</h1>
+  <p class="lede">A map of every approval system in Asana: the overall structure, a flow chart for each system, the fields and status codes they use, every automation rule, and the gaps found. Rules were read directly from each project's Customize → Automations panel. Nothing in Asana was changed.</p>
+</header>
+
+<div class="wrap">
+<nav class="toc" aria-label="Contents">
+  <ol>
+    <li><a href="#summary">Summary</a></li>
+    <li><a href="#architecture">Architecture</a></li>
+    <li><a href="#directory">Approver directory</a></li>
+    <li><a href="#datamodel">Data model</a></li>
+    <li><a href="#flows">Flows</a></li>
+    <li class="sub"><a href="#f-generic">Tier flow (shared)</a></li>
+    <li class="sub"><a href="#f-md">MD tier</a></li>
+    <li class="sub"><a href="#f-ed">ED tier</a></li>
+    <li class="sub"><a href="#f-fin">Finance and Valarmadhi</a></li>
+    <li class="sub"><a href="#f-scm">SCM tier</a></li>
+    <li class="sub"><a href="#f-sumit">Sumit tier</a></li>
+    <li class="sub"><a href="#f-hrlegacy">HR tier (legacy)</a></li>
+    <li class="sub"><a href="#f-internal">Manager → HOD template</a></li>
+    <li class="sub"><a href="#f-fininternal">Finance Internal</a></li>
+    <li class="sub"><a href="#f-itinternal">IT Internal and IT Head</a></li>
+    <li class="sub"><a href="#f-price">Price Realisation</a></li>
+    <li><a href="#statusmap">Status → section</a></li>
+    <li><a href="#rules">Automation rules</a></li>
+    <li class="sub"><a href="#r-defects">Rule defects</a></li>
+    <li class="sub"><a href="#r-templates">Rule templates</a></li>
+    <li class="sub"><a href="#r-routing">Department routing</a></li>
+    <li class="sub"><a href="#r-md">MD master rules</a></li>
+    <li class="sub"><a href="#r-internal">Internal project rules</a></li>
+    <li class="sub"><a href="#r-compare">Inferred vs actual</a></li>
+    <li><a href="#gaps">Gaps and anomalies</a></li>
+    <li><a href="#inventory">Project inventory</a></li>
+    <li><a href="#method">Method and limits</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ SUMMARY ============ -->
+<section id="summary">
+  <h2>Summary</h2>
+  <div class="stats">
+    <div class="stat"><b>104</b><span>approval projects</span></div>
+    <div class="stat"><b>7</b><span>approver tiers (master + department copies)</span></div>
+    <div class="stat"><b>11</b><span>internal / standalone approval projects</span></div>
+    <div class="stat"><b>54</b><span>projects that have never held a task</span></div>
+    <div class="stat"><b>~4,800</b><span>approval requests processed so far</span></div>
+    <div class="stat"><b>868</b><span>automation rules, every one read</span></div>
+  </div>
+  <p>The approval system runs on <strong>three designs</strong>:</p>
+  <ul>
+    <li><strong>A. Approver tiers (one master project, many department copies).</strong> Each top approver (MD, ED, Finance, Valarmadhi, SCM, Sumit, plus a dormant HR tier) has one intake form and one <em>master</em> project. A rule reads the <code>Department</code> field and copies each request into a "&lt;Dept&gt; – &lt;Approver&gt; Approval Asana" project, so each department can see its own requests. <strong>The master is where decisions are made. The department copies are only a view of it.</strong></li>
+    <li><strong>B. Department internal, Manager → HOD.</strong> Newer single projects (HR, Admin, Recruitment, Finance Internal, IT Internal and others). A request goes through one or two manager levels before the HOD, driven by Asana's built-in approval tasks. Each one is self-contained; nothing is passed on to the MD or ED tiers.</li>
+    <li><strong>C. Sequential sign-off sheet.</strong> Price Realisation runs HOD → ED → MD inside a single project.</li>
+  </ul>
+  <p>What matters most:</p>
+  <ul>
+    <li><strong>No routing by amount or between tiers.</strong> A single approver signs off anything from ₹0 to ₹5 Cr. MD approvals given on WhatsApp are mentioned in the text of Finance and ED requests but never recorded as a step in Asana.</li>
+    <li><strong>The rules don't check who approved.</strong> Requesters, checkers and the first-level approver have each approved a step that belonged to someone else, and the rules moved the task on anyway.</li>
+    <li><strong>Hold counts as done.</strong> In the ED, Finance, SCM and internal projects, "request changes" moves the task to Hold <em>and marks it complete</em>, so the open counts are lower than the real backlog.</li>
+    <li><strong>Master and department copies disagree.</strong> They can show different sections for the same task, every requester gets the notification comment twice, and one of those comments has a broken placeholder.</li>
+    <li><strong>The rules themselves have bugs</strong> (confirmed by reading them). On the MD master, a <em>Rejected</em> decision moves the task to <em>Approved Section</em>. In MD department copies, any completed request is marked Approved. The final approval step in Plant Internal checks the wrong person, and the routing conditions in Branding Approvals can never be true. See <a href="#r-defects">Rule defects</a>.</li>
+    <li><strong>Many projects are unused.</strong> All 12 Sumit department copies, 11 of 12 Valarmadhi, 10 of 12 SCM and the whole legacy HR tier have never held a real request.</li>
+  </ul>
+</section>
+
+<!-- ============ ARCHITECTURE ============ -->
+<section id="architecture">
+  <h2>Architecture</h2>
+  <p>How the three designs sit alongside each other. Solid arrows are automated (a form or a rule). Dotted arrows are manual, or happen outside Asana.</p>
+  <div class="diagram"><pre class="mermaid">
+flowchart LR
+  REQ(["Requester (any department)"])
+
+  subgraph A["A · Approver tiers: master project + department copies"]
+    direction TB
+    FMD["MD form"] --> MMD["MD Approval Asana (master)"]
+    FED["ED form"] --> MED["ED Approval Asana (master)"]
+    FFI["Finance form"] --> MFI["Finance Approval Asana (master)"]
+    FVA["Valarmadhi form"] --> MVA["Valarmadhi – Finance Approval Asana (master)"]
+    FSC["SCM form"] --> MSC["Purchase and SCM Approval Asana (master)"]
+    FSU["Sumit form"] --> MSU["Sumit Approval Asana (master)"]
+    MMD & MED & MFI & MVA & MSC --> CH["Department copies&lt;br/&gt;e.g. Sales – MD Approval Asana&lt;br/&gt;(copied in by rule on Department)"]
+    HRL["HR tier: 12 department copies&lt;br/&gt;(dormant, no master)"]
+  end
+
+  subgraph B["B · Department internal: Manager → HOD"]
+    direction TB
+    HR["HR Approvals"]
+    AD["Admin Approval"]
+    RC["Recruitment Approval"]
+    FI["Finance Internal Approvals&lt;br/&gt;(L1 → L2 → HOD)"]
+    IT["IT Internal Approvals&lt;br/&gt;(HOD only)"]
+    DORM["Training · ASP · Plant · Branding Approvals&lt;br/&gt;IT Head Approval (unused)"]
+  end
+
+  subgraph C["C · Sequential sign-off sheet"]
+    PR["Price Realisation&lt;br/&gt;HOD → ED → MD"]
+  end
+
+  REQ --> FMD & FED & FFI & FVA & FSC & FSU
+  REQ --> HR & AD & RC & FI & IT
+  REQ --> PR
+  MFI -. "requester re-files by hand&lt;br/&gt;after a rejection" .-> MVA
+  MED -. "'already approved by MD'&lt;br/&gt;(text only)" .-> MMD
+  </pre></div>
+  <h3>Anatomy of a tier</h3>
+  <p>Every tier project, master or department copy, follows the same layout:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Part</th><th>Master project</th><th>Department copy</th></tr></thead>
+    <tbody>
+      <tr><td>Intake</td><td>One Asana form per tier. Task named <code>&lt;Requester&gt;, &lt;Nature&gt;</code>; the form answers are also written into the task description</td><td>No form. Tasks arrive about 2 s later, copied in by a rule that matches on <code>Department</code></td></tr>
+      <tr><td>Sections</td><td>Form Submission · Approved Section · Rejected Section · Hold (+ Resubmission on MD; + an unused "Untitled"/"special" section on some)</td><td>The same four (Purchase &amp; SCM – MD also has Resubmission)</td></tr>
+      <tr><td>Fields</td><td>Filled in by the form: Department, Nature, Priority, Amount, Party Name, Cheque/PO/Invoice No, Approval Information (+ Approval Status, Value Category, Mode of Approval on MD/ED)</td><td>Local copies of the same fields that are <strong>never filled in</strong>, or no fields at all</td></tr>
+      <tr><td>Rules</td><td>Request approval, post the "Dear sir…" comment, copy into the department project, move the task to a section when decided, post the result comment</td><td>A duplicate "section move + comment" rule, which is why every notification appears twice</td></tr>
+      <tr><td>Rule owner</td><td colspan="2">Babulal M (Akash E on the Finance tier). All automated actions show up in the activity log under these two accounts</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ============ DIRECTORY ============ -->
+<section id="directory">
+  <h2>Approver directory</h2>
+  <div class="legend"><span><span class="pill p-live">live</span> in daily use</span><span><span class="pill p-low">low</span> occasional</span><span><span class="pill p-dead">dormant</span> empty or test data only</span></div>
+  <div class="tbl"><table>
+    <thead><tr><th>System</th><th>Design</th><th>Approver(s)</th><th>How decisions are recorded</th><th>Dept copies used</th><th>Tasks (total / open)</th><th>State</th></tr></thead>
+    <tbody>
+      <tr><td><a href="https://app.asana.com/1/1202084741929852/project/1212762488713471">MD Approval Asana</a></td><td>A</td><td>"MD" account (seems to be operated by an assistant)</td><td>Custom task type <code>Approval ARS</code> (since Sep 2026; before that, built-in approval)</td><td class="num">12 of 14</td><td class="num">1,655 / 76</td><td><span class="pill p-live">live</span></td></tr>
+      <tr><td><a href="https://app.asana.com/1/1202084741929852/project/1212544315059086">ED Approval Asana</a></td><td>A</td><td>Rajesh Bhatia</td><td>Built-in approval (the Approval Status dropdown doesn't trigger anything)</td><td class="num">10 of 13</td><td class="num">1,347 / 8</td><td><span class="pill p-live">live</span></td></tr>
+      <tr><td><a href="https://app.asana.com/1/1202084741929852/project/1214173415720513">Finance Approval Asana</a></td><td>A</td><td>Prabu</td><td>Built-in approval</td><td class="num">10 of 12</td><td class="num">849 / 5</td><td><span class="pill p-live">live</span></td></tr>
+      <tr><td><a href="https://app.asana.com/1/1202084741929852/project/1214661761069731">Valarmadhi – Finance Approval Asana</a></td><td>A</td><td>valarmadhi ARS Steel</td><td>Built-in approval</td><td class="num">1 of 12 (F&amp;A only)</td><td class="num">345 / 3</td><td><span class="pill p-live">live</span></td></tr>
+      <tr><td><a href="https://app.asana.com/1/1202084741929852/project/1214662037656760">Purchase &amp; SCM Approval Asana</a></td><td>A</td><td>madhanagopal</td><td>Built-in approval</td><td class="num">2 of 12</td><td class="num">316 / 1</td><td><span class="pill p-live">live</span></td></tr>
+      <tr><td><a href="https://app.asana.com/1/1202084741929852/project/1214286961736202">Sumit Approval Asana</a></td><td>A</td><td>Sumit Bhatia (NBD/NBO head, inferred)</td><td>Built-in approval</td><td class="num">0 of 12</td><td class="num">5 / 1</td><td><span class="pill p-low">low</span></td></tr>
+      <tr><td>HR tier ("&lt;Dept&gt; – HR Approval Asana")</td><td>A</td><td>(none; no master project)</td><td>Approval Status dropdown (older design)</td><td class="num">0 of 12</td><td class="num">4 (test / stray)</td><td><span class="pill p-dead">dormant</span></td></tr>
+      <tr><td><a href="https://app.asana.com/1/1202084741929852/project/1217293937885689">HR Approvals</a></td><td>B</td><td>Srinivasa Raghavan K → Subashini</td><td>Built-in approval + Manager/HOD dropdowns</td><td class="num">n/a</td><td class="num">62 / 1</td><td><span class="pill p-live">live</span></td></tr>
+      <tr><td><a href="https://app.asana.com/1/1202084741929852/project/1217295027389677">Admin Approval</a></td><td>B</td><td>Srinivasa Raghavan K → Subashini</td><td>Same</td><td class="num">n/a</td><td class="num">69 / 1</td><td><span class="pill p-live">live</span></td></tr>
+      <tr><td><a href="https://app.asana.com/1/1202084741929852/project/1217295062952142">Recruitment Approval</a></td><td>B</td><td>Gokulakrishnan Raghavan → Subashini</td><td>Same</td><td class="num">n/a</td><td class="num">67 / 7</td><td><span class="pill p-live">live</span></td></tr>
+      <tr><td><a href="https://app.asana.com/1/1202084741929852/project/1217850003440692">Finance Internal Approvals</a></td><td>B</td><td>Checker chosen by Nature → Naveen Kumar G (some Natures) → Valarmadhi</td><td>Same + 1st/2nd level dropdowns</td><td class="num">n/a</td><td class="num">69 / 1</td><td><span class="pill p-live">live</span></td></tr>
+      <tr><td><a href="https://app.asana.com/1/1202084741929852/project/1217309086390688">IT Internal Approvals</a></td><td>B</td><td>Babulal M (IT Head)</td><td>Built-in approval + HOD dropdown</td><td class="num">n/a</td><td class="num">11 / 0</td><td><span class="pill p-low">low</span></td></tr>
+      <tr><td><a href="https://app.asana.com/1/1202084741929852/project/1216774554181273">Price Realisation Approval Sheet</a></td><td>C</td><td>HOD → Rajesh Bhatia (ED) → MD</td><td>Dropdown per level + built-in approval</td><td class="num">n/a</td><td class="num">17 / 17</td><td><span class="pill p-dead">stalled</span></td></tr>
+      <tr><td>Training Dept · ASP Internal · Plant Internal · Branding Approvals · IT Head Approval</td><td>B</td><td>(set up, not used)</td><td>Template</td><td class="num">n/a</td><td class="num">0–1</td><td><span class="pill p-dead">dormant</span></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ============ DATA MODEL ============ -->
+<section id="datamodel">
+  <h2>Data model</h2>
+  <h3>Fields on the approver tiers</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Field</th><th>Type</th><th>Where</th><th>Values / notes</th></tr></thead>
+    <tbody>
+      <tr><td>Department</td><td>dropdown (shared)</td><td>All tier masters</td><td>27 options. This is the value the routing rule matches on. Only 13 have a department copy project, and some options overlap (Steel Site vs Steel Plant, HR vs HR &amp; Admin, Supply Chain Management vs Purchase &amp; SCM)</td></tr>
+      <tr><td>Nature</td><td>dropdown</td><td>All tiers</td><td>Marketing (SSS, Telecalling) · Other Marketing · Other Approval · Incentive · Special · Claim · Policy · Bill Related · Investment · Implementation · Cheque Signing · PO · Work Order · Funds Transfer · Review (MD/Finance/SCM/Sumit) · Leave Approval (ED). The department copies have 13–14 options.</td></tr>
+      <tr><td>Priority</td><td>dropdown (shared)</td><td>All</td><td>Critical · Most Important · Important · High · Low</td></tr>
+      <tr><td>Amount</td><td>number</td><td>All</td><td>Often left blank or 0; the real value is typed into Approval Information or an attachment instead</td></tr>
+      <tr><td>Subject / Party Name</td><td>text</td><td>All</td><td>Used as a free-text subject line</td></tr>
+      <tr><td>Cheque No / PO No / Invoice No</td><td>text</td><td>All</td><td></td></tr>
+      <tr><td>Approval Information</td><td>text</td><td>All</td><td>Free text, often a Google Sheet link</td></tr>
+      <tr><td>Approval Status</td><td>dropdown</td><td>MD (8), ED (4), dept copies (3)</td><td>MD: Approved · Rejected · Hold · Resubmission · Reviewed · Resubmit · Meeting to Plan · Resubmitted. ED: Approved · Rejected · Need To rework · Hold</td></tr>
+      <tr><td>Value Category</td><td>dropdown</td><td>MD master only</td><td>Zero Value · &lt; 1 Lakh · 1–3 Lakhs · 3–5 Lakhs · &gt; 5 Lakhs. Filled in by a rule from Amount, but <strong>nothing routes on it</strong></td></tr>
+      <tr><td>Mode of Approval</td><td>dropdown</td><td>MD, ED</td><td>Mail · Whatsapp · Direct. Almost always empty</td></tr>
+      <tr><td>No of Signature</td><td>number</td><td>MD, ED</td><td>Never filled in</td></tr>
+      <tr><td>Task Status · Completion Status · Delay Days. · Completed Date</td><td>tracking</td><td>MD, ED masters</td><td>Filled in by rules when a task completes. Completion Status reads "Done on Time" even when Delay Days is +74</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Fields on the internal projects (Manager → HOD)</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Field</th><th>Type</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Nature</td><td>dropdown</td><td>Different list in each project (see below)</td></tr>
+      <tr><td>Subject / Party Name · Approval Information · Required Date · Amount · Priority</td><td>mixed</td><td>Captured by the form</td></tr>
+      <tr><td>Manager Approval / 1st Level · 2nd Level Manager Approval · HOD Approval</td><td>dropdown</td><td>Approved · Rejected · Hold (· NA on Finance). Rules set these to record each built-in approval decision</td></tr>
+      <tr><td>Approved By</td><td>people</td><td>Never filled in</td></tr>
+      <tr><td>Approval Remarks</td><td>text</td><td>IT Internal only</td></tr>
+    </tbody>
+  </table></div>
+  <h4>Nature lists by project</h4>
+  <div class="tbl"><table>
+    <thead><tr><th>Project</th><th>Nature options</th></tr></thead>
+    <tbody>
+      <tr><td>HR Approvals</td><td>Salary, Statutory, MRF, Warehouse Manpower, NPS, Pluxee, Invoices, F&amp;F, Employee Referral Bonus, Insurance, Voucher, Budget, Policy, Bills, Advance, Vehicle, Consultant Salary, Gift, Loan, Prepaid Card Bill</td></tr>
+      <tr><td>Admin Approval</td><td>The HR list + Admin Monthly Vendor Bills, Cash Voucher, Other Approvals</td></tr>
+      <tr><td>Recruitment</td><td>MRF, Consultant Approval, Admin Monthly Vendor Bills, Cash Voucher, Candidate Evaluation Form, Expense Bills, Consultants Bill Approval</td></tr>
+      <tr><td>Finance Internal</td><td>Merchandising, Admin, PoP, ATL, Digital, Outdoor, BTL, Meets, Software, HR, Godown Labour, Factory, Scrap Payments, Stores, Godown Reimbursement, Petty Cash Payments, Branding, Freight &amp; Branding Payments, TA Bills &amp; Reimbursement, Gold Vouchers &amp; Coins</td></tr>
+      <tr><td>IT Internal</td><td>Admin Monthly Vendor Bills, Cash Voucher, Quotation, Work Order/PO, Bill, New Software, License, IT Budget, Implementation, Other</td></tr>
+      <tr><td>ASP Internal</td><td>24 options incl. Salary, Incentive, Price, Discount, Other</td></tr>
+      <tr><td>Plant Internal</td><td>Merchandising, FD, RMD, ADMIN, PoP, ATL, Digital, Outdoor, BTL, Meets, Software (the marketing options appear to be copied from another project)</td></tr>
+      <tr><td>Training Dept</td><td>MRF, Consultant Approval, Others</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ============ FLOWS ============ -->
+<section id="flows">
+  <h2>Flows</h2>
+  <p>One flow chart per system, followed by the steps in plain words. Red dashed boxes mark where the flow as designed and the flow as observed differ.</p>
+
+  <!-- Generic tier -->
+  <h3 id="f-generic">Tier flow (shared by ED, Finance, Valarmadhi, SCM, Sumit)</h3>
+  <div class="diagram"><pre class="mermaid">
+flowchart TD
+  A(["Requester submits the tier form"]) --> B["Task created in MASTER · Form Submission&lt;br/&gt;type = approval · name = 'Requester, Nature'&lt;br/&gt;form answers written to fields + description"]
+  B --> C["Rule: approval requested from the tier approver&lt;br/&gt;requester added as collaborator&lt;br/&gt;comment: 'Dear sir, an approval request has been raised…'"]
+  C --> D["Rule (~2 s): task also added to the department copy&lt;br/&gt;matched on Department; the copy rule moves it Untitled → Form Submission"]
+  D --> E{"Approver clicks&lt;br/&gt;built-in Approve / Reject / Request changes"}
+  E -- Approve --> F["Approved Section&lt;br/&gt;result comment ×2 · task completed"]
+  E -- Reject --> G["Rejected Section&lt;br/&gt;result comment ×2 · completed"]
+  E -- "Request changes" --> H["Hold · completed"]
+  G -.-> R(["Requester files a NEW form"])
+  H -.-> R
+  R -.-> A
+  X["Approver sets only the dropdown or a comment"]:::gap -. "no rule fires" .-> B
+  classDef gap stroke:#c24141,stroke-width:2px,stroke-dasharray:5 3
+  </pre></div>
+  <ol class="steps">
+    <li><strong>Intake.</strong> The tier's form creates an approval-type task in the master's <em>Form Submission</em> section and fills in the fields. The task is named from the <em>typed</em> Name answer, not from the requester's login.</li>
+    <li><strong>Approver set by the form.</strong> The activity log reads "&lt;requester&gt; requested approval from &lt;approver&gt;". The due date comes from the form, usually the same day or the next.</li>
+    <li><strong>Notification.</strong> A rule posts "Dear sir, an approval request has been raised in Asana by X". A second copy from the department project's rule inserts a project URL instead of the name.</li>
+    <li><strong>Copy into the department project.</strong> A rule adds the same task to "&lt;Dept&gt; – &lt;Approver&gt; Approval Asana". If the chosen Department has no copy project (e.g. Legal), the task stays in the master only.</li>
+    <li><strong>Decision.</strong> Only the built-in approval action triggers the rules. The task is moved to the matching section, marked complete, and gets a comment that repeats every field.</li>
+    <li><strong>Rejection or changes requested.</strong> There is no resubmission path. The requester files a fresh form (e.g. Finance: rejected at 12:03, new request filed at 12:04 and approved).</li>
+  </ol>
+
+  <!-- MD -->
+  <h3 id="f-md">MD tier</h3>
+  <dl class="flow-meta">
+    <div><dt>Master</dt><dd>MD Approval Asana · 1,655 tasks</dd></div>
+    <div><dt>Approver</dt><dd>"MD" account</dd></div>
+    <div><dt>Decision mechanism</dt><dd>Custom task type "Approval ARS"</dd></div>
+    <div><dt>Busiest copies</dt><dd>Purchase &amp; SCM 496 · Corporate Affairs 259 · EDO 213 · F&amp;A 158 · HR &amp; Admin 136</dd></div>
+  </dl>
+  <div class="diagram"><pre class="mermaid">
+flowchart TD
+  A(["Requester submits the MD form"]) --> B["MD master · Form Submission&lt;br/&gt;Approval ARS = Submitted · assigned to MD&lt;br/&gt;due = next working day"]
+  B --> C["Rules: 'Dear sir…' comment · copy into department project&lt;br/&gt;Value Category set from Amount"]
+  C --> D{"MD sets Approval ARS"}
+  D -- Approved --> E["Approved Section (master + copy)&lt;br/&gt;Approval Status = Approved · Completed Date&lt;br/&gt;Completion Status from Delay Days · completed"]
+  D -- "Reviewed (Nature = Review)" --> E2["Approved Section&lt;br/&gt;Approval Status = Reviewed · completed"]
+  D -- Hold --> F["Hold (master + copy)&lt;br/&gt;stays OPEN"]
+  D -- "Request Changes" --> G["Master: Resubmission · Approval Status = Resubmit&lt;br/&gt;copy: stays in Form Submission (no Resubmission section)"]
+  D -- Rejected --> H["Rejected Section · completed"]
+  G --> I["Requester comments the revision&lt;br/&gt;sets Approval ARS = Resubmitted"]
+  I --> J["Rule: Approval Status = Resubmitted&lt;br/&gt;due + 1 day · back to Form Submission"]
+  J --> D
+  K["Master and copy rules conflict&lt;br/&gt;e.g. rejected in master → Approved in P&amp;SCM copy"]:::gap
+  H -.-> K
+  classDef gap stroke:#c24141,stroke-width:2px,stroke-dasharray:5 3
+  </pre></div>
+  <ul>
+    <li><strong>The only tier with a working resubmission loop and a Hold that stays open.</strong> It also has the richest set of fields: Value Category, Mode of Approval and the tracking fields.</li>
+    <li><strong>Mechanism changed in early September 2026.</strong> Tasks moved from Asana's built-in approval to the custom "Approval ARS" type, and at least one task was converted by hand. Older and newer tasks therefore record decisions differently.</li>
+    <li><strong>Department copies lag behind.</strong> Only Purchase &amp; SCM – MD has a Resubmission section. Seven copies have a 3-option Approval Status field that can't show Resubmit, Reviewed or Resubmitted. No copy has Value Category.</li>
+    <li><strong>"Training and Development – ED Approval Asana"</strong> (<span class="gid">1213324750098201</span>) is actually an MD-tier project with the wrong name. It was created in the same batch as the MD copies and has the same members as the MD master.</li>
+  </ul>
+
+  <!-- ED -->
+  <h3 id="f-ed">ED tier</h3>
+  <dl class="flow-meta">
+    <div><dt>Master</dt><dd>ED Approval Asana · 1,347 tasks</dd></div>
+    <div><dt>Approver</dt><dd>Rajesh Bhatia</dd></div>
+    <div><dt>Decision mechanism</dt><dd>Built-in approval (the dropdown is not wired to anything)</dd></div>
+    <div><dt>Busiest copies</dt><dd>Purchase &amp; SCM 528 · Sales 352 · Branding 129 · ASP 120 · HR &amp; Admin 112</dd></div>
+  </dl>
+  <div class="diagram"><pre class="mermaid">
+flowchart TD
+  A(["Requester submits the ED form"]) --> B["ED master · Form Submission&lt;br/&gt;approval requested from Rajesh Bhatia"]
+  B --> C["Rules: comment ×2 · copy into department project"]
+  C --> M["Requester adds MD and other stakeholders as followers (manual)"]
+  M --> D{"ED action"}
+  D -- "Approval Status = Approved + built-in Approve" --> E["Approved Section (master only)&lt;br/&gt;Completed Date · Task Status · Delay Days&lt;br/&gt;result comment · completed"]
+  D -- "Built-in Reject" --> F["Rejected Section · completed"]
+  D -- "Request changes" --> G["Hold · completed"]
+  D -- "Dropdown only" --> S["Nothing happens:&lt;br/&gt;task stays open in Form Submission"]:::gap
+  E --> CP["Department copy: stays in Form Submission&lt;br/&gt;(only ASP has a sync rule; HR fixed by hand)"]:::gap
+  classDef gap stroke:#c24141,stroke-width:2px,stroke-dasharray:5 3
+  </pre></div>
+  <ul>
+    <li><strong>No escalation to the MD in Asana.</strong> The MD is only added as a follower. Approvals from other levels appear only as text ("already received approval from MD Sir… approved by CMO Sir").</li>
+    <li><strong>Before April 2026 the dropdown did drive the rules</strong> (dropdown Hold moved the task to Hold). The current design ignores it.</li>
+    <li><strong>The Project – ED copy has six duplicate "Approval Status" fields</strong> and no team.</li>
+  </ul>
+
+  <!-- Finance -->
+  <h3 id="f-fin">Finance and Valarmadhi tiers</h3>
+  <dl class="flow-meta">
+    <div><dt>Finance master</dt><dd>849 tasks · approver Prabu · rules run by Akash E</dd></div>
+    <div><dt>Valarmadhi master</dt><dd>345 tasks · approver valarmadhi ARS Steel · rules run by Babulal M</dd></div>
+    <div><dt>How they relate</dt><dd>Parallel alternatives, not sequential steps</dd></div>
+    <div><dt>Main users</dt><dd>Finance &amp; Accounts (455 Finance + 344 Valarmadhi)</dd></div>
+  </dl>
+  <div class="diagram"><pre class="mermaid">
+flowchart TD
+  R(["Requester (mostly F and A)"]) --> Q{"Which form?"}
+  Q -- "Finance Approval Asana form" --> F1["Finance master · Form Submission&lt;br/&gt;approval requested from Prabu"]
+  Q -- "Valarmadhi Mam Asana Approval Form" --> V1["Valarmadhi master · Form Submission&lt;br/&gt;approval requested from Valarmadhi"]
+  F1 --> F2["Copy into department project (10 copies in use)"]
+  V1 --> V2["Copy into F and A – Valarmadhi (other 11 copies empty)"]
+  F2 --> CK["Optional checker comments (manual)&lt;br/&gt;'Ledger scrutinised, vouchers verified…'"]
+  V2 --> CK
+  CK --> D{"Built-in approval"}
+  D -- Approve --> A1["Approved Section · completed"]
+  D -- Reject --> A2["Rejected Section · completed"]
+  D -- "Request changes" --> A3["Hold · completed"]
+  A2 -. "requester re-files, often at the other tier" .-> Q
+  P["Status set back to 'pending' → no rule, section stays wrong"]:::gap
+  A2 -.-> P
+  classDef gap stroke:#c24141,stroke-width:2px,stroke-dasharray:5 3
+  </pre></div>
+  <ul>
+    <li><strong>Valarmadhi is a second F&amp;A approver, not a replacement for Prabu.</strong> Example: Yamini M's REQ 2224/2225/2228 was rejected by Prabu, re-filed with Valarmadhi, rejected again, then split up and approved.</li>
+    <li><strong>No amount limit.</strong> Prabu approves single requests from ₹3,890 up to ₹5 Cr fund transfers.</li>
+    <li><strong>The schemas are lean.</strong> There is no Approval Status, Value Category or Mode of Approval field; the decision lives only in Asana's built-in approval state. Most department copies have no fields at all. The F&amp;A copies carry an extra "Departments" field that is always empty.</li>
+    <li><strong>A membership gap.</strong> The Valarmadhi approver is not a member of her own tier's projects, while Prabu is a member of the Valarmadhi master.</li>
+  </ul>
+
+  <!-- SCM -->
+  <h3 id="f-scm">SCM tier</h3>
+  <dl class="flow-meta">
+    <div><dt>Master</dt><dd>Purchase &amp; SCM Approval Asana · 316 tasks</dd></div>
+    <div><dt>Approver</dt><dd>madhanagopal (every request)</dd></div>
+    <div><dt>Mix (last 100)</dt><dd>86 PO · 13 Work Order · 1 Bill</dd></div>
+    <div><dt>Copies used</dt><dd>Purchase &amp; SCM (314), ASP (3)</dd></div>
+  </dl>
+  <div class="diagram"><pre class="mermaid">
+flowchart TD
+  A(["Buyer submits the SCM form&lt;br/&gt;(Lokesh, Justus, Subbulakshmi, Yashwanth, Padma…)"]) --> B["SCM master · Form Submission&lt;br/&gt;approval requested from madhanagopal"]
+  B --> C["Copy into Purchase and SCM – SCM (or ASP – SCM)&lt;br/&gt;copy rule: Untitled → Form Submission"]
+  C --> D{"madhanagopal"}
+  D -- Approve --> E["Approved Section in both projects · comment ×2 · completed"]
+  D -- Reject --> F["Rejected Section · reason given in a comment&lt;br/&gt;e.g. 'Pls redraft the approval with TCO'"]
+  D -- "Request changes" --> G["Hold (never used so far)"]
+  F -.-> A
+  </pre></div>
+  <p>Turnaround is minutes to hours. SCM is the last step for POs and Work Orders up to ₹13.4 L; nothing is passed on to the Finance or MD tiers.</p>
+
+  <!-- Sumit -->
+  <h3 id="f-sumit">Sumit tier</h3>
+  <dl class="flow-meta">
+    <div><dt>Master</dt><dd>Sumit Approval Asana · 5 tasks</dd></div>
+    <div><dt>Approver</dt><dd>Sumit Bhatia (NBD/NBO head, reports to the MD; inferred)</dd></div>
+    <div><dt>Only requester</dt><dd>Malarselvi (NBD)</dd></div>
+    <div><dt>Copies used</dt><dd>0 of 12 (and NBD has no copy project)</dd></div>
+  </dl>
+  <div class="diagram"><pre class="mermaid">
+flowchart TD
+  A(["Malarselvi submits the Sumit form"]) --> B["Sumit master · Form Submission&lt;br/&gt;approval requested from Sumit Bhatia · 'Dear sir…' comment"]
+  B --> N["Requester renames the untitled task (manual)"]
+  N --> D{"Sumit"}
+  D -- "Defers: due date pushed back 3 times" --> D
+  D -- Approve --> E["Approved Section · result comment · completed"]
+  D -- "Reject / Changes (never seen)" --> F["Rejected Section / Hold (assumed)"]
+  </pre></div>
+
+  <!-- HR legacy -->
+  <h3 id="f-hrlegacy">HR tier (legacy, dormant)</h3>
+  <p>Twelve "&lt;Dept&gt; – HR Approval Asana" projects from January 2026, with no master. They use the older design, where changing the Approval Status dropdown is what triggers the rules. Between them they hold 4 tasks, all tests or strays (2 are still open in Field Marketing &amp; Technical – HR). HR's real approvals moved to <a href="#f-internal">HR Approvals</a> in August 2026.</p>
+  <div class="diagram"><pre class="mermaid">
+flowchart LR
+  A["Task added"] --> B["'Raised by' comment"]
+  B --> C{"Approval Status dropdown"}
+  C -- Approved --> D["Approved Section · comment · completed"]
+  C -- Rejected --> E["Rejected Section"]
+  C -- Hold --> F["Hold"]
+  </pre></div>
+
+  <!-- Internal template -->
+  <h3 id="f-internal">Manager → HOD template (HR, Admin, Recruitment, and the unused ones)</h3>
+  <div class="diagram"><pre class="mermaid">
+flowchart TD
+  A(["Requester submits the project form"]) --> B["Approval Form Submission&lt;br/&gt;name = 'Requester, Nature, Subject'&lt;br/&gt;approval requested from the Manager"]
+  B --> M{"Manager (built-in approval)"}
+  M -- Approve --> R1["Rule: Manager Approval = Approved&lt;br/&gt;move to HOD Approval&lt;br/&gt;reset to pending · request the HOD"]
+  M -- "Request changes" --> H["Hold Section · Manager Approval = Hold · completed"]
+  M -- Reject --> X["Rejected Section"]
+  R1 --> O{"HOD (built-in approval)"}
+  O -- Approve --> Y["Approved Section · HOD Approval = Approved · completed"]
+  O -- Reject --> X
+  O -- "Request changes" --> H
+  W["Anyone can click Approve at the HOD step&lt;br/&gt;(requester or the Manager again)"]:::gap -.-> O
+  classDef gap stroke:#c24141,stroke-width:2px,stroke-dasharray:5 3
+  </pre></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Project</th><th>Manager</th><th>HOD</th><th>Typical requests</th><th>Evidence</th></tr></thead>
+    <tbody>
+      <tr><td>HR Approvals</td><td>Srinivasa Raghavan K</td><td>Subashini</td><td>Salary, EPF/ESI (up to ₹37 L), gifts, vehicle, training fees</td><td>Elizabeth Carter approved the HOD step on task <span class="gid">1218780039019965</span>; Subashini reset it and approved it herself</td></tr>
+      <tr><td>Admin Approval</td><td>Srinivasa Raghavan K</td><td>Subashini</td><td>Cab, hotel and flight bills, advances, utilities</td><td>Rejection path seen (NMR increment); Hold via "request changes" (flight bill ₹1.03 L)</td></tr>
+      <tr><td>Recruitment Approval</td><td>Gokulakrishnan Raghavan</td><td>Subashini</td><td>Offer letters (CTC in the text, Amount = 0), consultant bills</td><td>The Manager also approved the HOD step 5 seconds later; 7 offers are waiting for the HOD</td></tr>
+      <tr><td>Training · ASP Internal · Plant Internal · Branding Approvals</td><td colspan="2">Set up, never used</td><td></td><td>The ASP task is a stray to-do, not an approval</td></tr>
+    </tbody>
+  </table></div>
+
+  <!-- Finance internal -->
+  <h3 id="f-fininternal">Finance Internal Approvals (routed by Nature, up to three levels)</h3>
+  <div class="diagram"><pre class="mermaid">
+flowchart TD
+  A(["Accounts staff submit requisition&lt;br/&gt;(REQ NO / cheque request)"]) --> B["Approval Form Submission"]
+  B --> N{"Rule '1st Level Of Approval Assignment'&lt;br/&gt;assignee set by Nature"}
+  N -- "Admin · HR · Godown Labour" --> L1a["L1: Anbu"]
+  N -- "Factory · Scrap Payments" --> L1b["L1: Thulasiram D"]
+  N -- "Stores · Godown Reimbursement" --> L1c["L1: rishika.l"]
+  N -- "Freight and Branding Payments" --> L1d["L1: Anupriya Devaraj"]
+  N -- "TA Bills and Reimbursement" --> L1e["L1: Srivani M"]
+  N -- "Gold Vouchers and Coins" --> L1f["L1: christypricilla"]
+  L1a & L1b --> NA["Rule '2nd Level Approval' path 1:&lt;br/&gt;L1 = Approved · L2 = NA · reopen"]
+  L1c & L1d --> L2a["Path 2: L1 = Approved · reopen&lt;br/&gt;2nd Level Approval · Naveen Kumar G"]
+  L1e & L1f --> L2b["Path 3: L1 = Approved · reopen&lt;br/&gt;2nd Level Approval · Anbu"]
+  L2a & L2b --> R4["Rule '2nd To HOD Approval'&lt;br/&gt;L2 = Approved · reopen"]
+  NA --> HOD{"HOD Approval · valarmadhi ARS Steel"}
+  R4 --> HOD
+  HOD -- Approve --> OK["Approved Section · HOD = Approved"]
+  HOD -- "Request changes" --> HO["Hold Section · HOD = Hold"]
+  HOD -- Reject --> RJ["Rejected Section · HOD = Rejected"]
+  X["Reject or Hold while in '2nd Level Approval':&lt;br/&gt;no rule branch, task stays put"]:::gap -.-> L2a
+  classDef gap stroke:#c24141,stroke-width:2px,stroke-dasharray:5 3
+  </pre></div>
+  <p>This is the most complete routing in the workspace, and the only place where <em>Nature</em> decides who approves. Each level check also requires the task's assignee to be one of that level's checkers. The approvals go through Asana's built-in Approve action, then a rule reopens the task and hands it to the next level. Valarmadhi is the same person as the Valarmadhi tier approver, but tasks are not copied between the two systems.</p>
+
+  <!-- IT -->
+  <h3 id="f-itinternal">IT Internal Approvals and IT Head Approval</h3>
+  <div class="diagram"><pre class="mermaid">
+flowchart LR
+  A(["Palani Ananth / Harish / Akash submit"]) --> B["HOD Approval section&lt;br/&gt;approval requested from Babulal M"]
+  B --> C{"Babulal M&lt;br/&gt;writes Approval Remarks"}
+  C -- Approve --> D["Approved Section (all 11 so far)"]
+  C -- Reject --> E["Rejected Section"]
+  C -- Hold --> F["Hold Section"]
+  D --> G["Task Completed section (defined, unused)"]
+  </pre></div>
+  <p>A single level. The largest request so far was ₹11.26 L for cameras and a server, with no further escalation. <strong>IT Head Approval Asana</strong> (<span class="gid">1217154859493203</span>) was built on the MD-tier model (8-option Approval Status, Resubmission section, "Assigned To (IT)"), but it has never been used. IT Internal Approvals replaced it six days later.</p>
+
+  <!-- Price realisation -->
+  <h3 id="f-price">Price Realisation Approval Sheet</h3>
+  <div class="diagram"><pre class="mermaid">
+flowchart TD
+  A(["Sathish Kumar J submits the weekly realisation sheet&lt;br/&gt;(CRS-550D / 550D · Week No · Month)"]) --> B["Pending Approval"]
+  B --> S["Rule 'approvals to form submissions':&lt;br/&gt;creates approval SUBTASKS (Ragu · G Chandra Mouli · Gopi K · Prabu)&lt;br/&gt;option 'Let AI decide the number of approvals' is on"]
+  S --> H{"HOD level = all subtasks completed"}
+  H -- "all complete" --> E["Rule 'Move and assign completed subtasks':&lt;br/&gt;ED Approval section · HOD Approval = Approved&lt;br/&gt;type = Approval · assignee Rajesh Bhatia"]
+  E --> ED{"ED decision"}:::gap
+  ED -- "Approved (rule has never run)" --> M["MD Approval section · ED status = Approved&lt;br/&gt;assignee MD · reopen"]
+  M --> MD{"MD decision"}
+  MD -- "task completed" --> OK["Approved · MD Approval = Approved"]
+  MD -- Rejected --> RJ["Rejected"]
+  ED -- Rejected --> RJ
+  classDef gap stroke:#c24141,stroke-width:2px,stroke-dasharray:5 3
+  </pre></div>
+  <div class="note bad"><strong>Stalled.</strong> All 17 sheets, from 20 July to 15 September, are waiting at the ED step, including a leftover "TEST APPROVAL" task. The sheets say "for your kind information", so the ED probably reads them without clicking Approve. The design needs to decide whether ED and MD should approve these or only acknowledge them. The ED → MD rule, the MD rules and both rejection handlers have never run. There is also a paused "Task received" email rule.</div>
+</section>
+
+<!-- ============ STATUS MAP ============ -->
+<section id="statusmap">
+  <h2>Status → section mapping</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Trigger</th><th>MD tier</th><th>ED / Finance / Valarmadhi / SCM / Sumit</th><th>Manager → HOD template</th><th>Completed?</th></tr></thead>
+    <tbody>
+      <tr><td>Form submitted</td><td>Form Submission</td><td>Form Submission (copies: Untitled → Form Submission)</td><td>Approval Form Submission</td><td>No</td></tr>
+      <tr><td>Approved</td><td>Approved Section</td><td>Approved Section</td><td>Manager: → HOD Approval · HOD: → Approved</td><td>Yes (on the final level)</td></tr>
+      <tr><td>Reviewed</td><td>Approved Section, status "Reviewed"</td><td>n/a</td><td>n/a</td><td>Yes</td></tr>
+      <tr><td>Rejected</td><td>Rejected Section</td><td>Rejected Section</td><td>Rejected Section</td><td>Yes</td></tr>
+      <tr><td>Hold</td><td>Hold, <strong>stays open</strong></td><td>n/a (no separate Hold action)</td><td>n/a</td><td>No</td></tr>
+      <tr><td>Request changes</td><td>Resubmission (Approval Status = Resubmit)</td><td>Hold</td><td>Hold Section</td><td><strong>Yes</strong> (except on MD)</td></tr>
+      <tr><td>Resubmitted</td><td>Back to Form Submission, due + 1 day</td><td>No such path: requester files a new form</td><td>No such path</td><td>No</td></tr>
+      <tr><td>Reset to pending</td><td colspan="3">No rule anywhere. The task stays in whatever section it was in (source of section/status mismatches)</td><td></td></tr>
+      <tr><td>Dropdown changed without the built-in action</td><td>n/a</td><td>ED: nothing happens (tasks get stuck)</td><td>Only a record; no effect</td><td>No</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ============ RULES ============ -->
+<section id="rules">
+  <h2>Automation rules</h2>
+  <p>Every approval project's <strong>Customize → Automations</strong> panel was opened on 25 Sep 2026. Each rule's trigger, conditions and actions were read, and the rule was closed with <em>Cancel</em>. Nothing was edited or saved.</p>
+  <ul>
+    <li><strong>Master and internal projects (30):</strong> every rule was read in full.</li>
+    <li><strong>Department copies (87):</strong> every copy's rule list was read. Full detail was read for eight representative copies. Every other copy's rule list matches one of those samples name for name.</li>
+  </ul>
+  <div class="stats">
+    <div class="stat"><b>868</b><span>rules in total</span></div>
+    <div class="stat"><b>68</b><span>on the 6 tier masters</span></div>
+    <div class="stat"><b>49</b><span>on the 11 internal / standalone projects</span></div>
+    <div class="stat"><b>751</b><span>on the 87 department copies</span></div>
+  </div>
+
+  <h3 id="r-defects">Rule defects confirmed</h3>
+  <div class="gaps">
+    <div class="gap sev-h"><h4>MD master: Rejected goes to Approved Section <span class="pill p-dead">high</span></h4><p>Rule <em>"Move Rejected tasks and update status"</em>: when Approval ARS = Rejected, it moves the task to <strong>Approved Section</strong> and sets Approval Status = Rejected. Rule <em>"Task is moved to a section → Complete task"</em> then completes it. So rejected MD requests sit, completed, in the Approved list. Last ran 17 days ago.</p></div>
+    <div class="gap sev-h"><h4>MD department copies: any completion is marked Approved <span class="pill p-dead">high</span></h4><p>Rule <em>"Move completed form submissions to approved"</em> (in all 14 MD copies): when a task is completed while in Form Submission, it moves the task to Approved Section and sets Approval Status = Approved. A native rejection also completes the task, so rejected requests appear as <em>Approved</em> in the department's view. It last ran 2 hours ago in Purchase &amp; SCM – MD. This is the cause of the mismatches seen in task history.</p></div>
+    <div class="gap sev-h"><h4>The approval checks look at the assignee, not at who approved <span class="pill p-dead">high</span></h4><p>HR, Admin, ASP Internal, Plant Internal, Branding Approvals, Finance Internal and IT Internal only advance a level if <em>Assignee is</em> the expected approver. They never check who actually clicked Approve. Recruitment and Training Department have no check at all. Anyone who can open the task can approve a level on the approver's behalf.</p></div>
+    <div class="gap sev-h"><h4>Plant Internal: the final step can never complete <span class="pill p-dead">high</span></h4><p>The manager-step rule hands the task to <strong>Murthy</strong> as HOD. The HOD rule only fires if the assignee is <strong>Sivakarthikeyan S</strong>, a leftover from the Branding copy. So Murthy's approvals will never move the task to Approved Section. The project has had no requests yet.</p></div>
+    <div class="gap sev-m"><h4>Branding Approvals: routing conditions can never be true <span class="pill p-low">medium</span></h4><p>Rule <em>"Route approval tasks by type"</em> requires "Nature is Merchandising <strong>AND</strong> Nature is PoP" (and similar pairs). A single-select field can't hold two values at once, so no request is ever assigned to Sakthivel S, roshan or Joseph Royden F. The conditions should use OR.</p></div>
+    <div class="gap sev-m"><h4>ED and legacy-HR copies watch a field nobody sets <span class="pill p-low">medium</span></h4><p>The section and comment rules in 12 ED copies and 12 HR copies fire on the copy's <em>own</em> "Approval Status" dropdown, which is never filled in. The copies therefore never move (Sales – ED last ran 27 Dec 2025). Only ASP – ED was switched to native approval triggers.</p></div>
+    <div class="gap sev-m"><h4>MD master: two rules act on the same "changes requested" <span class="pill p-low">medium</span></h4><p>Both <em>"Approval Status is changed → Move task…"</em> (→ Hold) and <em>"Move resubmitted tasks to resubmission section"</em> (→ Resubmission) fire on a native "changes requested". That explains tasks logged as moving to both sections. <em>"Move reviewed submissions to approved section"</em> duplicates the Approved rule. A manual-trigger <em>"Copy of Change Value Category"</em> is left over.</p></div>
+    <div class="gap sev-m"><h4>Finance Internal: no reject or hold path at level 2 <span class="pill p-low">medium</span></h4><p>The <em>Rejected Approval</em> and <em>Hold Approval</em> rules only have branches for Approval Form Submission and HOD Approval. A rejection or "request changes" while the task is in <strong>2nd Level Approval</strong> is not handled, so the task stays in that section.</p></div>
+    <div class="gap sev-m"><h4>Department routing has gaps <span class="pill p-low">medium</span></h4><p>No tier routes <strong>Corporate Affairs</strong>, yet Corporate Affairs copies exist under MD, Finance, Valarmadhi, SCM and Sumit. The 259 tasks in Corporate Affairs – MD got there another way. <strong>NBD</strong> is routed only on the MD tier, so the Sumit routing rule, whose only user is NBD, has never run. Training and Development, Legal, Telecalling and others have no branch anywhere.</p></div>
+    <div class="gap sev-l"><h4>Duplicate and broken comments explained <span class="pill p-info">low</span></h4><p>On the ED, HR and MD copies, the "raised" comment is posted by both the master and the copy. The copy's version uses the token <code>Task &gt; Creator</code>, which renders as a link, instead of <code>Task &gt; Creator name</code>. On the Finance, Valarmadhi, SCM and Sumit copies, the result comment ("…was Approved/Rejected") is posted by both master and copy.</p></div>
+    <div class="gap sev-l"><h4>IT Internal: the step that turns an approval into work is misrouted <span class="pill p-info">low</span></h4><p>Rule <em>"Task Assignment"</em>: an approval in HOD Approval whose assignee is not Babulal M should become a task for someone to work on. It moves the task to <em>Approved Section</em>, not <em>Assigned To</em>. As a result <em>"Task Completed"</em>, which watches Assigned To, can never fire.</p></div>
+    <div class="gap sev-l"><h4>Price Realisation leaves the approver count to AI <span class="pill p-info">low</span></h4><p>The subtask-creation rule has "Let AI decide the number of approvals to create" switched on. That makes the number of department-head sign-offs vary from sheet to sheet. The ED → MD rule and the MD rules have never run.</p></div>
+  </div>
+
+  <h3 id="r-templates">Rule templates</h3>
+  <p>Most projects are copies of a handful of rule sets. "Native" means the rule fires on Asana's built-in Approve / Reject / Request changes. "Dropdown" means it fires on a custom field.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Template</th><th>Used by</th><th>Rules</th><th>Trigger</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td>Tier master</td><td>Finance, Valarmadhi, SCM, Sumit masters</td><td class="num">9</td><td>Native</td><td>"Raised" comment · Approved/Rejected → section + result comment · changes requested → Hold · Hold + Approved/Rejected → section · complete-on-section ×2 · route to department copy</td></tr>
+      <tr><td>Tier master + delay bundle</td><td>ED master</td><td class="num">12</td><td>Native</td><td>As above, plus the <em>"Delay Capture based ontime and overdue"</em> bundle (Delay Status, Capture Completed Date, Incompletion Status). Routing also covers Projects → Project – ED</td></tr>
+      <tr><td>MD master</td><td>MD master</td><td class="num">20</td><td>Native (legacy) + <code>Approval ARS</code> task type</td><td>See <a href="#r-md">MD master rules</a></td></tr>
+      <tr><td>Copy A</td><td>All Finance, Valarmadhi, SCM, Sumit copies; ASP – ED</td><td class="num">8</td><td>Native</td><td>Mirrors the master's section moves and posts a second result comment. "Move completed form submissions to approved" here is a harmless duplicate of the Approved rule</td></tr>
+      <tr><td>Copy B</td><td>ED copies (12), legacy HR copies (12)</td><td class="num">8</td><td>Dropdown (the copy's own Approval Status)</td><td>"Raised" comment (duplicate) + section rules that never fire</td></tr>
+      <tr><td>Copy C</td><td>MD copies (14, incl. the misnamed T&amp;D – "ED")</td><td class="num">11–13</td><td>Dropdown + completion</td><td>Delay bundle, dropdown-driven section rules, and <em>"Move completed form submissions to approved"</em> on task completion (the defect above). Purchase &amp; SCM – MD adds "Process resubmitted approvals"; Corporate Affairs and NBD – MD have no "raised" comment rule</td></tr>
+      <tr><td>Manager → HOD</td><td>HR Approvals, Admin, Recruitment, Training, ASP Internal, Plant Internal, Branding Approvals</td><td class="num">4–5</td><td>Native</td><td>Manager approves → HOD Approval, Manager Approval = Approved, reopen, type = Approval, assignee = HOD · HOD approves → Approved Section · Rejected / changes requested → Rejected / Hold at either level. ASP and Branding add intake routing; ASP, Plant and Branding fill "Approved By" with the rule triggerer</td></tr>
+      <tr><td>Finance Internal</td><td>Finance Internal Approvals</td><td class="num">6</td><td>Form + native</td><td>Level 1 assigned by Nature → level 2 for some Natures → HOD Valarmadhi (see flow)</td></tr>
+      <tr><td>IT Internal</td><td>IT Internal Approvals</td><td class="num">5</td><td>Native</td><td>Babulal approves → Approved Section; unused hand-off to "Assigned To"</td></tr>
+      <tr><td>Price Realisation</td><td>Price Realisation Approval Sheet</td><td class="num">7</td><td>Form + subtasks + native</td><td>Department-head approval subtasks → ED → MD; one paused email rule</td></tr>
+      <tr><td>IT Head</td><td>IT Head Approval Asana</td><td class="num">1</td><td>Form</td><td>Assign to Babulal M (never run)</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3 id="r-routing">Department routing ("Add to Department Project based on Department")</h3>
+  <p>Each tier master has one rule, triggered by its form, with an If / Else-if branch per Department value. Each branch adds the task to "&lt;Dept&gt; – &lt;Tier&gt; Approval Asana" in its Form Submission section.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Department value</th><th>MD</th><th>ED</th><th>Finance</th><th>Valarmadhi</th><th>SCM</th><th>Sumit</th></tr></thead>
+    <tbody>
+      <tr><td>Branding · Purchase &amp; SCM · Sales · MDO · EDO · HR &amp; Admin · IT · Field Marketing &amp; Technical · ASP · Steel Plant · Finance &amp; Accounts</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
+      <tr><td>NBD</td><td>✓</td><td>–</td><td>–</td><td>–</td><td>–</td><td>– (its only user)</td></tr>
+      <tr><td>Projects</td><td>–</td><td>✓</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>Corporate Affairs</td><td>– (copy exists)</td><td>–</td><td>– (copy exists)</td><td>– (copy exists)</td><td>– (copy exists)</td><td>– (copy exists)</td></tr>
+      <tr><td>Training and Development</td><td>– (copy exists)</td><td>– (copy exists)</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+      <tr><td>Legal, HR, Marketing, Steel Site, Energy*, Coal, Power*, Supply Chain Management, NBD – HO, Telecalling</td><td colspan="6">Not routed anywhere; stay in the master only</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3 id="r-md">MD master rules (20)</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Rule</th><th>When</th><th>Then</th><th>Last run</th></tr></thead>
+    <tbody>
+      <tr><td>Delay Status · Capture Completed Date · Incompletion Status</td><td>Task Status → Completed; task completed / reopened</td><td>Completion Status = Done on Time✅ if Delay Days &lt; 1, else Done Overdue⏰; Completed Date = today; Task Status = Completed / cleared</td><td>bundle</td></tr>
+      <tr><td>Task Submitted in Form Submission → Add comment</td><td>Form submission, section Form Submission</td><td>"Dear sir, An Approval request has been raised in Asana by {Creator name}." · Approval ARS = Submitted</td><td>3 h ago</td></tr>
+      <tr><td>Add to Department Project based on Department</td><td>Form submission</td><td>Add to department copy (12 departments, see routing)</td><td>3 h ago</td></tr>
+      <tr><td>Change Value Category based on Amount</td><td>Form submission</td><td>0 / empty → Zero Value · ≤ 1,00,000 → Less than 1 Lakh · ≤ 3,00,000 → 1–3 Lakhs · ≤ 5,00,000 → 3–5 Lakhs · &gt; 5,00,000 → Above 5 Lakhs (nothing uses it afterwards)</td><td>3 h ago</td></tr>
+      <tr><td>Copy of Change Value Category</td><td>Run manually</td><td>Same</td><td>1 Jul</td></tr>
+      <tr><td>Move approved tasks and update status</td><td>Approval ARS = Approved / Reviewed</td><td>Approved Section · Approval Status = Approved / Reviewed</td><td>1 h ago</td></tr>
+      <tr><td><strong>Move Rejected tasks and update status</strong></td><td>Approval ARS = Rejected</td><td><strong>Approved Section</strong> (defect) · Approval Status = Rejected</td><td>17 days ago</td></tr>
+      <tr><td>Move Hold tasks and update status</td><td>Approval ARS = Request Changes / Hold</td><td>Resubmission · Status = Resubmit / Hold · Status = Hold</td><td>2 h ago</td></tr>
+      <tr><td>Process resubmitted approvals</td><td>Approval ARS = Resubmitted and section is Rejected, Hold or Resubmission</td><td>Status = Resubmitted · due = +1 day · → Form Submission</td><td>10 days ago</td></tr>
+      <tr><td>Task is moved to a section → Complete task (×2)</td><td>Section = Approved Section / Rejected Section</td><td>Complete task</td><td>17 days / never</td></tr>
+      <tr><td>Legacy native-approval rules (6)</td><td>Built-in approval Approved / Rejected / Changes requested, by section</td><td>Approved + comment · Rejected + comment · Hold · Resubmission · Hold → Approved/Rejected</td><td>4 days – Jul 17</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3 id="r-internal">Internal project rules: who each rule hands the task to</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Project</th><th>Intake routing (rule)</th><th>Manager level</th><th>HOD level</th><th>Rule check at each level</th><th>Ever run?</th></tr></thead>
+    <tbody>
+      <tr><td>HR Approvals</td><td>Form sets approver</td><td>Srinivasa Raghavan K</td><td>Subashini</td><td>Assignee = that person</td><td>Yes</td></tr>
+      <tr><td>Admin Approval</td><td>Form sets approver</td><td>Srinivasa Raghavan K</td><td>Subashini</td><td>Assignee = that person (rules still named "HR requests")</td><td>Yes</td></tr>
+      <tr><td>Recruitment Approval</td><td>Form sets approver</td><td>(form)</td><td>Subashini</td><td><strong>None</strong></td><td>Yes (reject/hold never)</td></tr>
+      <tr><td>Training Department</td><td>Form sets approver</td><td>(form)</td><td>Subashini</td><td><strong>None</strong></td><td>No</td></tr>
+      <tr><td>ASP Internal</td><td>By task creator → Ganesh R (Velmurugan, Fathima, Ramya, Karthic Manoj, Sandhiya, peermohammed) or Divya KP (NirmalKumar, Rajesh P, SatheeshKumar M, premnath)</td><td>Ganesh R / Divya KP</td><td>Jayaprakash R</td><td>HOD: assignee = Jayaprakash</td><td>No</td></tr>
+      <tr><td>Plant Internal</td><td>Form sets approver</td><td>(form)</td><td>Murthy</td><td>HOD: assignee = <strong>Sivakarthikeyan S</strong> (defect)</td><td>No</td></tr>
+      <tr><td>Branding Approvals</td><td>By Nature → Sakthivel S / roshan / Joseph Royden F (conditions can never match)</td><td>(as routed)</td><td>Sivakarthikeyan S</td><td>HOD: assignee = Sivakarthikeyan</td><td>No</td></tr>
+      <tr><td>Finance Internal</td><td>By Nature → 6 level-1 checkers</td><td>L1 + L2 (Naveen Kumar G / Anbu)</td><td>valarmadhi ARS Steel</td><td>L1: assignee is one of the level's checkers</td><td>Yes</td></tr>
+      <tr><td>IT Internal</td><td>Form sets approver</td><td>–</td><td>Babulal M</td><td>Assignee = Babulal M</td><td>Yes</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3 id="r-compare">What changed after reading the rules</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Earlier (inferred from task history)</th><th>Now (read from the rules)</th></tr></thead>
+    <tbody>
+      <tr><td>Duplicate "raised" / result comments come from a duplicate rule in the department copy</td><td>Confirmed. The copy templates post their own comments, and the copy's "raised" comment uses <code>Task &gt; Creator</code>, which renders as a link</td></tr>
+      <tr><td>Department copies go stale</td><td>Confirmed and explained. ED, HR and MD copies react to their own empty dropdown; only native-trigger copies (Finance, Valarmadhi, SCM, Sumit, ASP – ED) stay in sync</td></tr>
+      <tr><td>Rejected P&amp;SCM – MD tasks showed as Approved in the copy</td><td>Explained by "Move completed form submissions to approved". The MD master also has its own Rejected → Approved Section defect</td></tr>
+      <tr><td>A task moved to both Hold and Resubmission</td><td>Explained. Two MD master rules fire on the same "changes requested"</td></tr>
+      <tr><td>Anyone can approve</td><td>Confirmed. The checks look at the assignee; Recruitment and Training have no check</td></tr>
+      <tr><td>Finance Internal: three checkers by Nature; Naveen for Freight and TA Bills</td><td>Corrected. Six level-1 checkers; level 2 = Naveen for Stores / Godown Reimbursement / Freight, Anbu for TA Bills / Gold Vouchers; none for Admin / HR / Godown Labour / Factory / Scrap</td></tr>
+      <tr><td>Price Realisation: "for information" subtasks</td><td>Corrected. They are approval subtasks, and the department-head level passes when all are completed</td></tr>
+      <tr><td>Hold / Complete-task behaviour</td><td>The "complete on Approved/Rejected Section" rules mostly never ran. Completion comes from Asana's built-in approval, which completes the task on any decision</td></tr>
+      <tr><td>(not visible in history)</td><td>New defects: Plant Internal HOD check, Branding routing, Finance Internal level-2 gap, IT Internal hand-off, routing gaps for Corporate Affairs and NBD</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ============ GAPS ============ -->
+<section id="gaps">
+  <h2>Gaps and anomalies</h2>
+  <div class="legend"><span><span class="pill p-dead">high</span> control or financial risk</span><span><span class="pill p-low">medium</span> data is wrong or misleading</span><span><span class="pill p-info">low</span> tidy-up</span></div>
+
+  <h3>Controls</h3>
+  <div class="gaps">
+    <div class="gap sev-h"><h4>The rules don't check who approved <span class="pill p-dead">high</span></h4><p>The rules react to the approval state no matter who clicked; at most they check the task's <em>assignee</em> (see <a href="#r-defects">Rule defects</a>). Finance/Valarmadhi task <span class="gid">1214924098207342</span> was marked approved by a checker and then toggled by the requester. On HR task <span class="gid">1218780039019965</span> the requester approved the HOD step. In Recruitment, the Manager approved both levels within 5 seconds.</p></div>
+    <div class="gap sev-h"><h4>No routing by amount <span class="pill p-dead">high</span></h4><p>A single approver clears ₹5 Cr fund transfers (Finance), ₹18.4 L POs (ED), ₹13.4 L POs (SCM) and ₹11.26 L IT spend. Value Category exists only on the MD master and nothing routes on it. Amount is often blank or 0, so a threshold rule couldn't work today anyway.</p></div>
+    <div class="gap sev-h"><h4>Approvals outside Asana and shared accounts <span class="pill p-dead">high</span></h4><p>Tasks mention approvals given elsewhere ("approved by MD Sir through WhatsApp", "already approved by MD Sir… CMO Sir"). The MD account writes about "MD sir" in the third person, so it is probably operated by an assistant. Every automated action is logged under Babulal M or Akash E. The activity log doesn't show who actually decided.</p></div>
+  </div>
+
+  <h3>Data integrity</h3>
+  <div class="gaps">
+    <div class="gap sev-m"><h4>Dropdown and the built-in approval disagree <span class="pill p-low">medium</span></h4><p>ED Purchase PO <span class="gid">1218777909365952</span> (₹3,38,660) has Approval Status "Approved" but was never approved with the built-in action, so it is still open in Form Submission. Branding PO <span class="gid">1218393647049459</span> (₹18.4 L) was rejected with the built-in action, but its dropdown is empty.</p></div>
+    <div class="gap sev-m"><h4>Section doesn't match status <span class="pill p-low">medium</span></h4><p>Finance <span class="gid">1218545883000451</span>, <span class="gid">1218395682104010</span> (₹5 Cr) and <span class="gid">1216775109278648</span> are approved but still in Rejected. ED <span class="gid">1214253988313394</span> is in Rejected in the master but Approved in the HR copy. On the MD tier, the EDO tasks marked Rejected sit in Approved Section, and a task rejected in the master was moved to Approved in the P&amp;SCM copy.</p></div>
+    <div class="gap sev-m"><h4>Hold is counted as done <span class="pill p-low">medium</span></h4><p>ED, Finance, Valarmadhi and Admin complete the task when changes are requested, so the open counts (8, 5, 3…) are lower than the real backlog. Only the MD tier keeps Hold tasks open.</p></div>
+    <div class="gap sev-m"><h4>Field lists drift and copies are never filled <span class="pill p-low">medium</span></h4><p>Nature has 13, 14 or 15 options depending on the project. Approval Status has 3, 4 or 8. The department copies' local field copies are never filled in. Project – ED has 6 duplicate Approval Status fields. The F&amp;A copies carry a stray "Departments" field. Completion Status says "Done on Time" even when Delay Days is +74.</p></div>
+    <div class="gap sev-m"><h4>Price Realisation is stalled <span class="pill p-low">medium</span></h4><p>17 of 17 sheets are waiting for the ED since July, and "Realisation Approval Month" free text is inconsistent ("JULY -2027", "SEP - 26").</p></div>
+  </div>
+
+  <h3>Automation</h3>
+  <div class="gaps">
+    <div class="gap sev-m"><h4>Duplicate and broken notifications <span class="pill p-low">medium</span></h4><p>The master and copy rules both fire, so requesters get two "raised" comments and two "result" comments. The copy's comment inserts a project URL where the requester's name should be. The automated comments also expose requesters' email addresses.</p></div>
+    <div class="gap sev-m"><h4>Department copies go stale <span class="pill p-low">medium</span></h4><p>On the ED tier only ASP's copy moves when a decision is made. Sales, Branding, EDO and Project copies stay in Form Submission, and HR &amp; Admin was fixed by hand on 21 Sep 2026.</p></div>
+    <div class="gap sev-l"><h4>No resubmission loop outside the MD tier <span class="pill p-info">low</span></h4><p>Rejected or changed requests are re-filed from scratch, so the history of one request is split across several tasks.</p></div>
+    <div class="gap sev-l"><h4>Blank or orphan tasks <span class="pill p-info">low</span></h4><p>ED <span class="gid">1218099475365144</span>, <span class="gid">1216522276395347</span>; Finance <span class="gid">1217745152064170</span>; Sumit <span class="gid">1214327155309145</span> (open for about 5 months); two stray open tasks in Field Marketing &amp; Technical – HR.</p></div>
+  </div>
+
+  <h3>Structure and tidy-up</h3>
+  <div class="gaps">
+    <div class="gap sev-l"><h4>54 of 104 projects have never held a task <span class="pill p-info">low</span></h4><p>All 12 Sumit copies, 11 Valarmadhi, 10 SCM, 10 legacy HR, ED FMT/MDO/T&amp;D, MD ASP/T&amp;D, Finance Corporate Affairs/EDO, plus IT Head, Plant Internal, Training, Branding Approvals.</p></div>
+    <div class="gap sev-l"><h4>Department list doesn't match the projects <span class="pill p-info">low</span></h4><p>27 Department options but only 13 department copies. Requests from Legal, NBD-HO, Coal, Power, Telecalling and others stay in the master only. The Sumit tier's only user (NBD) has no copy project.</p></div>
+    <div class="gap sev-l"><h4>Naming, teams, empty sections <span class="pill p-info">low</span></h4><p>T&amp;D – "ED" Approval Asana belongs to the MD tier. Finance, Valarmadhi, SCM, Sumit, NBD – MD and Project – ED have no team. "Untitled" and "special" sections are empty.</p></div>
+    <div class="gap sev-l"><h4>Three competing designs, none documented <span class="pill p-info">low</span></h4><p>Dropdown-driven (legacy HR), built-in approval (most tiers and internal projects) and a custom task type (MD). The approval forms aren't listed in "ARS Forms &amp; Workflows", and "Master Project for Rules" is a rule sandbox, not documentation.</p></div>
+  </div>
+</section>
+
+<!-- ============ INVENTORY ============ -->
+<section id="inventory">
+  <h2>Project inventory</h2>
+  <p>Every approval project, grouped by tier. Counts are total / open tasks. Babulal M owns every project.</p>
+
+  <details><summary>MD tier (15)</summary><div class="tbl"><table>
+    <thead><tr><th>Project</th><th>GID</th><th>Tasks</th><th>Notes</th></tr></thead><tbody>
+    <tr><td>MD Approval Asana (master)</td><td><span class="gid">1212762488713471</span></td><td class="num">1655 / 76</td><td>+ Resubmission section, Value Category</td></tr>
+    <tr><td>Purchase &amp; SCM – MD</td><td><span class="gid">1213324750535046</span></td><td class="num">496 / 21</td><td>Only copy with a Resubmission section</td></tr>
+    <tr><td>Corporate Affairs – MD</td><td><span class="gid">1213415511109857</span></td><td class="num">259 / 1</td><td></td></tr>
+    <tr><td>EDO – MD</td><td><span class="gid">1213324750535067</span></td><td class="num">213 / 24</td><td>Rejected tasks sitting in Approved in the master</td></tr>
+    <tr><td>Finance &amp; Accounts – MD</td><td><span class="gid">1213324750098207</span></td><td class="num">158 / 9</td><td>Uses the master's fields</td></tr>
+    <tr><td>HR &amp; Admin – MD</td><td><span class="gid">1213324750098192</span></td><td class="num">136 / 4</td><td>Some fields appear twice</td></tr>
+    <tr><td>Steel Plant – MD</td><td><span class="gid">1213324750098204</span></td><td class="num">70 / 10</td><td></td></tr>
+    <tr><td>NBD – MD</td><td><span class="gid">1214855996195872</span></td><td class="num">41 / 2</td><td>No team; created May 2026</td></tr>
+    <tr><td>MDO – MD</td><td><span class="gid">1213324750535064</span></td><td class="num">10 / 1</td><td></td></tr>
+    <tr><td>Sales – MD</td><td><span class="gid">1213324750535061</span></td><td class="num">7 / 2</td><td></td></tr>
+    <tr><td>Branding – MD</td><td><span class="gid">1213324750535058</span></td><td class="num">2 / 1</td><td></td></tr>
+    <tr><td>IT – MD</td><td><span class="gid">1213324750098210</span></td><td class="num">1 / 0</td><td>No department members</td></tr>
+    <tr><td>Field Marketing &amp; Technical – MD</td><td><span class="gid">1213324750098195</span></td><td class="num">1 / 0</td><td>No department members</td></tr>
+    <tr><td>ASP – MD</td><td><span class="gid">1213324750098198</span></td><td class="num">0</td><td>Dormant</td></tr>
+    <tr><td>Training and Development – "ED" Approval Asana</td><td><span class="gid">1213324750098201</span></td><td class="num">0</td><td>Actually MD tier; wrong name</td></tr>
+  </tbody></table></div></details>
+
+  <details><summary>ED tier (14)</summary><div class="tbl"><table>
+    <thead><tr><th>Project</th><th>GID</th><th>Tasks</th><th>Notes</th></tr></thead><tbody>
+    <tr><td>ED Approval Asana (master)</td><td><span class="gid">1212544315059086</span></td><td class="num">1347 / 8</td><td>Stray "Untitled section"</td></tr>
+    <tr><td>Purchase &amp; SCM – ED</td><td><span class="gid">1212602218631759</span></td><td class="num">528 / 2</td><td></td></tr>
+    <tr><td>Sales – ED</td><td><span class="gid">1212594050009138</span></td><td class="num">352 / 1</td><td></td></tr>
+    <tr><td>Branding – ED</td><td><span class="gid">1212594050009132</span></td><td class="num">129 / 0</td><td></td></tr>
+    <tr><td>ASP – ED</td><td><span class="gid">1212594050009162</span></td><td class="num">120 / 1</td><td>Only copy with a section-sync rule (fires twice)</td></tr>
+    <tr><td>HR &amp; Admin – ED</td><td><span class="gid">1212594050009153</span></td><td class="num">112 / 5</td><td>Fixed by hand 21 Sep</td></tr>
+    <tr><td>EDO – ED</td><td><span class="gid">1212594050009147</span></td><td class="num">14 / 0</td><td></td></tr>
+    <tr><td>Finance &amp; Accounts – ED</td><td><span class="gid">1212594050009177</span></td><td class="num">11 / 0</td><td></td></tr>
+    <tr><td>Project – ED</td><td><span class="gid">1217294821550037</span></td><td class="num">9 / 0</td><td>6 duplicate Approval Status fields; no team</td></tr>
+    <tr><td>IT – ED</td><td><span class="gid">1212580264326387</span></td><td class="num">8 / 0</td><td></td></tr>
+    <tr><td>Steel Plant – ED</td><td><span class="gid">1212594050009174</span></td><td class="num">2 / 0</td><td></td></tr>
+    <tr><td>Field Marketing &amp; Technical – ED</td><td><span class="gid">1212594050009159</span></td><td class="num">0</td><td>Dormant</td></tr>
+    <tr><td>MDO – ED</td><td><span class="gid">1212594050009141</span></td><td class="num">0</td><td>Dormant</td></tr>
+    <tr><td>Training and Development – ED</td><td><span class="gid">1212594050009168</span></td><td class="num">0</td><td>Dormant</td></tr>
+  </tbody></table></div></details>
+
+  <details><summary>Finance tier (13)</summary><div class="tbl"><table>
+    <thead><tr><th>Project</th><th>GID</th><th>Tasks</th></tr></thead><tbody>
+    <tr><td>Finance Approval Asana (master)</td><td><span class="gid">1214173415720513</span></td><td class="num">849 / 5</td></tr>
+    <tr><td>Finance &amp; Accounts – Finance</td><td><span class="gid">1214275633171820</span></td><td class="num">455 / 1</td></tr>
+    <tr><td>Branding – Finance</td><td><span class="gid">1214275645360912</span></td><td class="num">109 / 0</td></tr>
+    <tr><td>HR &amp; Admin – Finance</td><td><span class="gid">1214275645360905</span></td><td class="num">68 / 0</td></tr>
+    <tr><td>Purchase &amp; SCM – Finance</td><td><span class="gid">1214275633171813</span></td><td class="num">65 / 1</td></tr>
+    <tr><td>IT – Finance</td><td><span class="gid">1214275645360898</span></td><td class="num">35 / 0</td></tr>
+    <tr><td>Steel Plant – Finance</td><td><span class="gid">1214273926457406</span></td><td class="num">23 / 0</td></tr>
+    <tr><td>ASP – Finance</td><td><span class="gid">1214273926457403</span></td><td class="num">21 / 0</td></tr>
+    <tr><td>MDO – Finance</td><td><span class="gid">1214275633171799</span></td><td class="num">11 / 0</td></tr>
+    <tr><td>Sales – Finance</td><td><span class="gid">1214275645360919</span></td><td class="num">6 / 0</td></tr>
+    <tr><td>Field Marketing &amp; Technical – Finance</td><td><span class="gid">1214273926457398</span></td><td class="num">4 / 0</td></tr>
+    <tr><td>Corporate Affairs – Finance</td><td><span class="gid">1214247377443121</span></td><td class="num">0</td></tr>
+    <tr><td>EDO – Finance</td><td><span class="gid">1214275633171806</span></td><td class="num">0</td></tr>
+  </tbody></table></div></details>
+
+  <details><summary>Valarmadhi – Finance tier (13)</summary><div class="tbl"><table>
+    <thead><tr><th>Project</th><th>GID</th><th>Tasks</th></tr></thead><tbody>
+    <tr><td>Valarmadhi – Finance Approval Asana (master)</td><td><span class="gid">1214661761069731</span></td><td class="num">345 / 3</td></tr>
+    <tr><td>Finance &amp; Accounts – Valarmadhi</td><td><span class="gid">1214661761069734</span></td><td class="num">344 / 2</td></tr>
+    <tr><td>Branding · Purchase &amp; SCM · Sales · Steel Plant · IT · MDO · Corporate Affairs · ASP · FM&amp;T · HR &amp; Admin · EDO</td><td><span class="gid">1214673682574688</span> · <span class="gid">1214661761069746</span> · <span class="gid">1214673682574691</span> · <span class="gid">1214661761069737</span> · <span class="gid">1214661761069752</span> · <span class="gid">1214673682574694</span> · <span class="gid">1214661761069743</span> · <span class="gid">1214661761069740</span> · <span class="gid">1214661761069749</span> · <span class="gid">1214673682574685</span> · <span class="gid">1214673682574697</span></td><td class="num">0 each</td></tr>
+  </tbody></table></div></details>
+
+  <details><summary>SCM tier (13)</summary><div class="tbl"><table>
+    <thead><tr><th>Project</th><th>GID</th><th>Tasks</th></tr></thead><tbody>
+    <tr><td>Purchase &amp; SCM Approval Asana (master)</td><td><span class="gid">1214662037656760</span></td><td class="num">316 / 1</td></tr>
+    <tr><td>Purchase &amp; SCM – SCM</td><td><span class="gid">1214662037656777</span></td><td class="num">314 / 1</td></tr>
+    <tr><td>ASP – SCM</td><td><span class="gid">1214662037656771</span></td><td class="num">3 / 0</td></tr>
+    <tr><td>Sales · Corporate Affairs · Branding · F&amp;A · IT · EDO · Steel Plant · FM&amp;T · MDO · HR &amp; Admin</td><td><span class="gid">1214662037701513</span> · <span class="gid">1214662037656774</span> · <span class="gid">1214662037701510</span> · <span class="gid">1214662037656765</span> · <span class="gid">1214662037656783</span> · <span class="gid">1214662037701519</span> · <span class="gid">1214662037656768</span> · <span class="gid">1214662037656780</span> · <span class="gid">1214662037701516</span> · <span class="gid">1214662037656786</span></td><td class="num">0 each</td></tr>
+  </tbody></table></div></details>
+
+  <details><summary>Sumit tier (13)</summary><div class="tbl"><table>
+    <thead><tr><th>Project</th><th>GID</th><th>Tasks</th></tr></thead><tbody>
+    <tr><td>Sumit Approval Asana (master)</td><td><span class="gid">1214286961736202</span></td><td class="num">5 / 1</td></tr>
+    <tr><td>Sales · Corporate Affairs · ASP · Branding · FM&amp;T · MDO · IT · HR &amp; Admin · F&amp;A · EDO · Purchase &amp; SCM · Steel Plant</td><td><span class="gid">1214286614301526</span> · <span class="gid">1214286015202711</span> · <span class="gid">1214286614301508</span> · <span class="gid">1214286614301523</span> · <span class="gid">1214286614301514</span> · <span class="gid">1214286614301529</span> · <span class="gid">1214286614301517</span> · <span class="gid">1214286614301520</span> · <span class="gid">1214287240439179</span> · <span class="gid">1214286614301532</span> · <span class="gid">1214286614301511</span> · <span class="gid">1214286614301505</span></td><td class="num">0 each</td></tr>
+  </tbody></table></div></details>
+
+  <details><summary>HR tier, legacy (12)</summary><div class="tbl"><table>
+    <thead><tr><th>Project</th><th>GID</th><th>Tasks</th></tr></thead><tbody>
+    <tr><td>Field Marketing &amp; Technical – HR</td><td><span class="gid">1212735851933960</span></td><td class="num">3 / 2 (stray)</td></tr>
+    <tr><td>HR &amp; Admin – HR</td><td><span class="gid">1212735851933957</span></td><td class="num">1 / 0 (test)</td></tr>
+    <tr><td>Purchase &amp; SCM · MDO · Sales · Steel Plant · IT · EDO · ASP · T&amp;D · F&amp;A · Branding</td><td><span class="gid">1212735851933948</span> · <span class="gid">1212782514467428</span> · <span class="gid">1212735851933954</span> · <span class="gid">1212782514467409</span> · <span class="gid">1212782514467415</span> · <span class="gid">1212782514467431</span> · <span class="gid">1212735851933963</span> · <span class="gid">1212735851933966</span> · <span class="gid">1212782514467412</span> · <span class="gid">1212735851933951</span></td><td class="num">0 each</td></tr>
+  </tbody></table></div></details>
+
+  <details><summary>Internal and standalone (11)</summary><div class="tbl"><table>
+    <thead><tr><th>Project</th><th>GID</th><th>Tasks</th><th>Created</th></tr></thead><tbody>
+    <tr><td>Admin Approval</td><td><span class="gid">1217295027389677</span></td><td class="num">69 / 1</td><td>8 Aug 2026</td></tr>
+    <tr><td>Finance Internal Approvals</td><td><span class="gid">1217850003440692</span></td><td class="num">69 / 1</td><td>26 Aug 2026</td></tr>
+    <tr><td>Recruitment Approval</td><td><span class="gid">1217295062952142</span></td><td class="num">67 / 7</td><td>8 Aug 2026</td></tr>
+    <tr><td>HR Approvals</td><td><span class="gid">1217293937885689</span></td><td class="num">62 / 1</td><td>8 Aug 2026</td></tr>
+    <tr><td>Price Realisation Approval Sheet</td><td><span class="gid">1216774554181273</span></td><td class="num">17 / 17</td><td>22 Jul 2026</td></tr>
+    <tr><td>IT Internal Approvals</td><td><span class="gid">1217309086390688</span></td><td class="num">11 / 0</td><td>10 Aug 2026</td></tr>
+    <tr><td>ASP Internal Approvals</td><td><span class="gid">1217776346656935</span></td><td class="num">1 / 0</td><td>24 Aug 2026</td></tr>
+    <tr><td>IT Head Approval Asana</td><td><span class="gid">1217154859493203</span></td><td class="num">0</td><td>4 Aug 2026</td></tr>
+    <tr><td>Training Department Approval</td><td><span class="gid">1217295114213788</span></td><td class="num">0</td><td>8 Aug 2026</td></tr>
+    <tr><td>Branding Approvals</td><td><span class="gid">1217444810784374</span></td><td class="num">0</td><td>13 Aug 2026</td></tr>
+    <tr><td>Plant Internal Approvals</td><td><span class="gid">1218668385937553</span></td><td class="num">0</td><td>21 Sep 2026</td></tr>
+  </tbody></table></div></details>
+
+  <p style="margin-top:14px">Related projects that are not approval systems: <strong>ARS Forms &amp; Workflows</strong> (<span class="gid">1212223287600915</span>), a list of forms, templates and UAT status that doesn't include the approval forms; <strong>Master Project for Rules</strong> (<span class="gid">1212001965925636</span>), a rule sandbox with a "2 day due reminder" rule; <strong>ASP Approval Tracker</strong> (<span class="gid">1214296765476762</span>), an ad-hoc task tracker, not an approval flow.</p>
+</section>
+
+<!-- ============ METHOD ============ -->
+<section id="method">
+  <h2>Method and limits</h2>
+  <ul>
+    <li><strong>Read-only.</strong> Only Asana read calls were used: project settings, sections, custom fields, task lists and task activity logs. Nothing was created, edited or commented on.</li>
+    <li><strong>Rules were read directly (25 Sep 2026).</strong> Asana's API doesn't expose rule definitions, so each project's Customize → Automations panel was opened in the browser. Each rule's trigger, condition and action panes were read, then closed with Cancel or "Discard changes", which leaves the saved rule untouched. No rule was edited, switched on or off, or saved.
+      <ul>
+        <li><strong>Master and internal projects:</strong> every rule was read in full.</li>
+        <li><strong>Department copies:</strong> all 87 copies' rule lists were read, and eight representative copies were read in full. Every other copy matches one of those samples name for name.</li>
+        <li><strong>Earlier sections:</strong> the flow charts above were first drawn from task activity logs and have been corrected where the rules showed otherwise (see <a href="#r-compare">Inferred vs actual</a>).</li>
+      </ul></li>
+    <li><strong>Sampling.</strong> Every project's settings and schema were read. Detailed activity logs were read for 3–5 representative tasks per active project, chosen to include approved, rejected, hold and resubmitted cases where they existed.</li>
+    <li><strong>Inferred roles.</strong> Roles such as Sumit Bhatia as NBD/NBO head and the MD account being operated by an assistant are inferred from activity, not confirmed.</li>
+  </ul>
+</section>
+
+</main>
+</div>
+<footer>Prepared from the ARS Steels Asana workspace on 24 Sep 2026. GIDs refer to Asana project or task IDs.</footer>
+
+<!--claude-mermaid-runtime-begin:3477-->
+<style>.mermaid-diagram{margin-block:4px}.mermaid-diagram svg{display:block;margin:0 auto;max-width:100%;height:auto}</style>
+<script src="/_runtime/mermaid-11.16.1.min.js"></script>
+<script>(function(){
+var CFG={"palettes":{"light":{"surface":"#f4efe4","text":"#42392e","line":"#8a7f6d","border":"#7a6c52","bg":"#fffdf8"},"dark":{"surface":"#262b34","text":"#f2f3f5","line":"#a8adb8","border":"#9aa4b8","bg":"#1f232b"}}};
+if(typeof mermaid==='undefined')return;
+var pres=Array.prototype.slice.call(document.querySelectorAll('pre.mermaid')).filter(function(p){if(p.hasAttribute('data-claude-mermaid-claimed'))return false;p.setAttribute('data-claude-mermaid-claimed','1');return true;});
+if(!pres.length)return;
+var mq=window.matchMedia?window.matchMedia('(prefers-color-scheme: dark)'):null;
+var root=document.documentElement;
+var items=pres.map(function(pre){
+var mount=document.createElement('div');mount.className='mermaid-diagram';
+return {pre:pre,mount:mount,src:pre.textContent||''};
+});
+var seq=0;
+var renderGen=0;
+var lastKey='';
+function pageBg(fallback){
+var els=[document.body,document.documentElement];
+for(var i=0;i<els.length;i++){
+var c=els[i]&&getComputedStyle(els[i]).backgroundColor;
+if(c&&c!=='transparent'&&c!=='rgba(0, 0, 0, 0)')return c;
+}
+return fallback;
+}
+function render(){
+var theme=root.getAttribute('data-theme');
+var dark=theme==='dark'||(!!(mq&&mq.matches)&&theme!=='light');
+var pal=dark?CFG.palettes.dark:CFG.palettes.light;
+var bg=pageBg(pal.bg);
+var key=(dark?'d':'l')+'|'+bg;
+if(key===lastKey)return;
+lastKey=key;
+var gen=++renderGen;
+var font=getComputedStyle(document.body).fontFamily||'sans-serif';
+var nat={useMaxWidth:false};
+mermaid.initialize({
+startOnLoad:false,securityLevel:'strict',theme:'base',
+flowchart:nat,sequence:nat,er:nat,state:nat,class:nat,pie:nat,
+gantt:nat,journey:nat,timeline:nat,gitGraph:nat,mindmap:nat,xyChart:nat,
+quadrantChart:nat,sankey:nat,c4:nat,requirement:nat,block:nat,
+packet:nat,kanban:nat,architecture:nat,radar:nat,
+themeVariables:{background:bg,mainBkg:pal.surface,primaryColor:pal.surface,
+primaryTextColor:pal.text,lineColor:pal.line,primaryBorderColor:pal.border,
+nodeBorder:pal.border,clusterBorder:pal.border,edgeLabelBackground:bg,
+clusterBkg:'rgba(127,127,127,0.07)',titleColor:pal.text,
+darkMode:dark,rowOdd:bg,rowEven:'rgba(127,127,127,0.07)',
+attributeBackgroundColorOdd:bg,attributeBackgroundColorEven:'rgba(127,127,127,0.07)',
+fontSize:'16px',fontFamily:font},
+themeCSS:'.node rect, .node circle, .node polygon, .node path, .cluster rect { stroke-width: 2px; }'
+});
+items.forEach(function(it){
+var id='claude-mermaid-'+seq++;
+mermaid.render(id,it.src).then(function(r){
+if(gen!==renderGen)return;
+var prev=it.pre.previousElementSibling;
+if(prev&&prev.className==='mermaid-diagram'&&prev!==it.mount)return;
+it.mount.innerHTML=r.svg;
+if(!it.mount.parentNode)it.pre.parentNode.insertBefore(it.mount,it.pre);
+it.pre.style.display='none';
+},function(){
+var scratch=document.getElementById(id);
+if(scratch)scratch.parentNode.removeChild(scratch);
+scratch=document.getElementById('d'+id);
+if(scratch)scratch.parentNode.removeChild(scratch);
+if(gen!==renderGen)return;
+if(it.mount.parentNode)it.mount.parentNode.removeChild(it.mount);
+it.pre.style.display='';
+});
+});
+}
+render();
+if(mq&&mq.addEventListener)mq.addEventListener('change',render);
+if(typeof MutationObserver!=='undefined')new MutationObserver(render).observe(root,{attributes:true,attributeFilter:['data-theme']});
+})();</script>
+<!--claude-mermaid-runtime-end-->
+
+</body></html>

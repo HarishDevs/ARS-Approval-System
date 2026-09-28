@@ -1,0 +1,2711 @@
+be my asana analyst and Get all the Approval Systems frame work we have prepared in the Asana and define it as flow chart, Design structur, Document each and every flow --(Read Only)
+
+Yes. I treated the connected Asana workspace as read-only and analyzed the approval framework that is currently configured there. No Asana data was created, edited, moved, completed, or deleted.
+
+I found 98 distinct approval-related projects through the approval-family searches. Because Asana search is capped at 100 results per call and does not provide a complete global approval-project census through this search path, I would treat the 98 as the identified approval framework inventory, with a small possibility of additional projects outside the searched naming patterns.
+
+1. As-Is Approval Architecture
+
+The current Asana setup is not one single approval system. It is a family of approval systems built around several approval authorities and functional departments.
+
+Main approval authorities identified
+Approval Layer / Authority	Examples found
+MD Approval	MD Approval Asana, Sales - MD, Steel Plant - MD, IT - MD, Branding - MD, HR & Admin - MD, Finance & Accounts - MD, Purchase & SCM - MD, MDO - MD, EDO - MD
+ED Approval	ED Approval Asana, Sales - ED, Steel Plant - ED, IT - ED, Branding - ED, HR & Admin - ED, Finance & Accounts - ED, Purchase & SCM - ED, MDO - ED, EDO - ED
+Finance Approval	Finance Approval Asana + department-specific Finance Approval projects
+HR Approval	HR Approval Asana + department-specific HR Approval projects
+SCM Approval	SCM Approval Asana + department-specific SCM Approval projects
+Sumit Approval	Sumit Approval Asana + department-specific Sumit Approval projects
+Valarmadhi Finance	Valarmadhi - Finance Approval Asana + department-specific variants
+Internal Approvals	Finance Internal Approvals, IT Internal Approvals, Plant Internal Approvals, ASP Internal Approvals
+Specialized	Price Realisation Approval Sheet, EDO approval-related systems
+2. Overall Approval Framework
+
+The current architecture can be represented like this:
+
+                         ┌─────────────────────┐
+                         │      EMPLOYEE       │
+                         │   Approval Request  │
+                         └──────────┬──────────┘
+                                    │
+                                    ▼
+                         ┌─────────────────────┐
+                         │   APPROVAL FORM /   │
+                         │   REQUEST CREATION  │
+                         └──────────┬──────────┘
+                                    │
+                                    ▼
+                    ┌───────────────────────────────┐
+                    │ Determine Approval Framework  │
+                    │                               │
+                    │ • MD                          │
+                    │ • ED                          │
+                    │ • Finance                     │
+                    │ • HR                          │
+                    │ • SCM                         │
+                    │ • Sumit                       │
+                    │ • Valarmadhi Finance          │
+                    │ • Internal Approval           │
+                    │ • Price Realisation           │
+                    └───────────────┬───────────────┘
+                                    │
+                                    ▼
+                         ┌─────────────────────┐
+                         │   APPROVER / HOD    │
+                         │      REVIEW         │
+                         └──────────┬──────────┘
+                                    │
+                  ┌─────────────────┼─────────────────┐
+                  │                 │                 │
+                  ▼                 ▼                 ▼
+            ┌──────────┐      ┌──────────┐      ┌──────────┐
+            │ APPROVED │      │   HOLD   │      │ REJECTED │
+            └────┬─────┘      └────┬─────┘      └────┬─────┘
+                 │                 │                  │
+                 ▼                 │                  ▼
+        ┌────────────────┐         │          ┌──────────────┐
+        │ Next Level /   │         │          │ Request Ends │
+        │ Final Approval │◄────────┘          └──────────────┘
+        └───────┬────────┘
+                │
+                ▼
+        ┌─────────────────┐
+        │ FINAL APPROVED  │
+        │     ACTION      │
+        └─────────────────┘
+3. Common Approval Request Structure
+
+Across the approval projects, the request itself follows a fairly consistent data model.
+
+Request Header
+Requester Name
+↓
+Email ID
+↓
+Department
+↓
+Nature / Approval Type
+↓
+Priority
+↓
+Party / Subject
+↓
+PO / Invoice / Cheque Reference
+↓
+Approval Information
+↓
+Amount
+↓
+Required / Due Date
+↓
+Mode of Approval
+↓
+Supporting Documents / Links
+
+For example, the MD and ED systems contain fields such as:
+
+Name
+Email address
+Department
+Nature
+Priority
+Subject / Party Name
+Cheque / PO / Invoice number
+Approval Information
+Amount
+Due Date
+Mode of Approval
+
+The MD system is being used for items such as Bill Related Approval, Other Marketing, Review, Special Approval, Implementation Approval, Investment Approval, Incentive Approval and Policy Approval.
+
+The ED system similarly contains Other Approval, Policy Approval, PO, Bill Related Approval, Special Approval, etc.
+
+4. STANDARD MD APPROVAL FLOW
+
+The actual MD Approval Asana project has these sections:
+
+FORM SUBMISSION
+      │
+      ▼
+   MD REVIEW
+      │
+ ┌────┼──────────┐
+ │    │          │
+ ▼    ▼          ▼
+APPROVED HOLD   REJECTED
+ │      │          │
+ │      │          └──► END
+ │      │
+ │      └──► RESUBMISSION
+ │                  │
+ │                  └──► MD REVIEW
+ │
+ ▼
+FINAL APPROVAL
+MD system structure identified
+MD Approval Asana
+│
+├── Form Submission
+├── Approved Section
+├── Rejected Section
+├── Hold
+└── Resubmission
+
+This is one of the more mature approval structures because it explicitly has a Resubmission loop.
+
+MD request lifecycle
+Employee
+   ↓
+MD Approval Form
+   ↓
+Form Submission
+   ↓
+MD
+   ↓
+Decision
+   ├── Approved → Approved Section
+   ├── Rejected → Rejected Section
+   ├── Hold → Hold
+   └── Changes Required → Resubmission
+                              ↓
+                         MD Review Again
+5. STANDARD ED APPROVAL FLOW
+
+The ED Approval Asana project currently has:
+
+Form Submission
+       │
+       ▼
+   ED REVIEW
+       │
+ ┌─────┼─────┬────────┐
+ │     │     │        │
+ ▼     ▼     ▼        ▼
+Approved Hold Rejected Other/Exception
+ │      │      │
+ ▼      │      ▼
+END    Review  END
+Current ED project structure
+ED Approval Asana
+│
+├── Form Submission
+├── Approved Section
+├── Rejected Section
+├── Hold
+└── Untitled section
+
+The live data shows the approver as Rajesh Bhatia for the ED approval workflow.
+
+The ED system is being used for different request types including:
+
+PO
+Other Approval
+Policy Approval
+Bill Related Approval
+Special Approval
+Reviews
+6. FUNCTIONAL APPROVAL FRAMEWORK
+
+The next major layer is department/function-specific approval.
+
+The architecture is essentially:
+
+                    APPROVAL REQUEST
+                           │
+                           ▼
+                    SELECT FUNCTION
+                           │
+       ┌──────────┬────────┼────────┬──────────┐
+       ▼          ▼        ▼        ▼          ▼
+    Finance       HR       SCM     Internal   Other
+       │          │        │
+       ▼          ▼        ▼
+   Finance       HR       SCM
+   Approval     Approval  Approval
+7. FINANCE APPROVAL FLOW
+
+The main Finance Approval Asana project has:
+
+Form Submission
+      │
+      ▼
+Finance Reviewer
+      │
+ ┌────┼───────────────┐
+ ▼    ▼               ▼
+Approve Hold        Reject
+ │      │              │
+ ▼      │              ▼
+Approved│             END
+Section │
+        │
+        └──► Further Review
+Finance structure
+Finance Approval Asana
+│
+├── Untitled section
+├── Form Submission
+├── Approved Section
+├── Special
+├── Rejected Section
+└── Hold
+
+The actual requests include:
+
+PO approvals
+Bill-related approvals
+Claims
+Incentive approvals
+Marketing approvals
+Payment approvals
+Other approvals
+
+This means Finance is functioning as a general-purpose approval gateway, rather than only as a payment approval system.
+
+8. SCM APPROVAL FLOW
+
+The SCM framework follows the same basic model:
+
+Requester
+   ↓
+SCM Approval Form
+   ↓
+Form Submission
+   ↓
+SCM Approver
+   │
+ ┌─┼──────────┐
+ ▼ ▼          ▼
+YES HOLD      NO
+ │             │
+ ▼             ▼
+Approved     Rejected
+Current structure
+Purchase & SCM Approval Asana
+│
+├── Untitled section
+├── Form Submission
+├── Approved Section
+├── Rejected Section
+└── Hold
+
+Actual requests show strong usage for PO approvals, including:
+
+Supplier
+PO number
+Item
+Quantity
+Rate
+Total value
+Supporting approval information
+9. HR APPROVAL FLOW
+
+The HR approval framework is:
+
+Employee / Requester
+        │
+        ▼
+    HR Approval
+        │
+        ▼
+  Form Submission
+        │
+        ▼
+    HR Reviewer
+        │
+   ┌────┼─────┐
+   ▼    ▼     ▼
+Approved Hold Rejected
+Current HR project structure
+HR Approval Asana
+│
+├── Form Submission
+├── Approved Section
+├── Rejected Section
+└── Hold
+
+The workspace also contains department-specific HR approval projects such as:
+
+Purchase & SCM - HR Approval
+Sales - HR Approval
+Field Marketing & Technical - HR Approval
+Steel Plant - HR Approval
+HR & Admin - HR Approval
+IT - HR Approval
+Branding - HR Approval
+ASP - HR Approval
+Training & Development - HR Approval
+Finance & Accounts - HR Approval
+
+So HR approvals are department → HR rather than simply one common HR queue.
+
+10. SUMIT APPROVAL FRAMEWORK
+
+The Sumit Approval Asana project follows:
+
+Form Submission
+      │
+      ▼
+Sumit Review
+      │
+ ┌────┼──────────┐
+ ▼    ▼          ▼
+Approved Hold   Rejected
+
+Structure:
+
+Sumit Approval Asana
+│
+├── Untitled section
+├── Form Submission
+├── Approved Section
+├── Rejected Section
+└── Hold
+
+There are also department-specific Sumit systems:
+
+Sales - Sumit
+ASP - Sumit
+Branding - Sumit
+IT - Sumit
+Steel Plant - Sumit
+Corporate Affairs - Sumit
+MDO - Sumit
+EDO - Sumit
+Purchase & SCM - Sumit
+HR & Admin - Sumit
+Finance & Accounts - Sumit
+Field Marketing & Technical - Sumit
+
+This shows that Sumit is functioning as an independent approval authority across multiple departments.
+
+11. VALARMADHI FINANCE FRAMEWORK
+
+Another distinct approval authority/framework is:
+
+Department
+    ↓
+Valarmadhi Finance Approval
+    ↓
+Form Submission
+    ↓
+Finance Review
+    ↓
+Approved / Rejected / Hold
+
+Examples found include:
+
+MDO - Valarmadhi - Finance
+EDO - Valarmadhi - Finance
+Branding - Valarmadhi - Finance
+ASP - Valarmadhi - Finance
+Steel Plant - Valarmadhi - Finance
+IT - Valarmadhi - Finance
+Sales - Valarmadhi - Finance
+Finance & Accounts - Valarmadhi - Finance
+Purchase & SCM - Valarmadhi - Finance
+Corporate Affairs - Valarmadhi - Finance
+HR & Admin - Valarmadhi - Finance
+Field Marketing & Technical - Valarmadhi - Finance
+
+This is essentially a department-to-specific-finance-approver routing model.
+
+12. INTERNAL APPROVAL FRAMEWORK
+
+This is particularly important because it is more sophisticated than the normal approval projects.
+
+Finance Internal Approvals
+
+The actual structure is:
+
+Approval Form Submission
+          │
+          ▼
+       HOD Approval
+          │
+          ▼
+   2nd Level Approval
+          │
+          ▼
+   Final Approval
+          │
+    ┌─────┼──────┐
+    ▼     ▼      ▼
+Approved Hold  Rejected
+
+Actual sections:
+
+Finance Internal Approvals
+│
+├── Approval Form Submission
+├── 2nd Level Approval
+├── HOD Approval
+├── Approved Section
+├── Rejected Section
+└── Hold Section
+
+This is a multi-level approval framework, not merely an approval inbox.
+
+13. IT INTERNAL APPROVAL FLOW
+
+The IT Internal Approval system is even more clearly workflow-oriented:
+
+HOD Approval
+      │
+      ▼
+ Assigned To
+      │
+      ▼
+   Reviewer
+      │
+ ┌────┼───────────┐
+ ▼    ▼           ▼
+Approved Hold    Rejected
+ │
+ ▼
+Task Completed
+
+Actual structure:
+
+IT Internal Approvals
+│
+├── HOD Approval
+├── Assigned To
+├── Approved Section
+├── Rejected Section
+├── Hold Section
+└── Task Completed
+
+Actual requests include:
+
+Bill Approvals
+Quotation Approval
+Implementation Approval
+Other Approval
+
+This means IT has moved beyond a simple "approve/reject" model into a workflow + execution model.
+
+14. PLANT INTERNAL APPROVAL
+
+The Plant Internal Approval framework is:
+
+Approval Form Submission
+          │
+          ▼
+      HOD Approval
+          │
+     ┌────┼─────┐
+     ▼    ▼     ▼
+ Approved Hold Rejected
+
+Structure:
+
+Plant Internal Approvals
+│
+├── Approval Form Submission
+├── HOD Approval
+├── Approved Section
+├── Rejected Section
+└── Hold Section
+
+At the time of this read-only analysis, no tasks were returned in this project, so the structure exists but current operational usage could not be established from tasks.
+
+15. PRICE REALISATION APPROVAL FLOW
+
+This is a different and more advanced approval framework.
+
+Actual structure:
+
+Pending Approval
+       │
+       ▼
+   ED Approval
+       │
+       ▼
+   MD Approval
+       │
+ ┌─────┴─────┐
+ ▼           ▼
+Approved   Rejected
+
+Asana sections:
+
+Price Realisation Approval Sheet
+│
+├── Pending Approval
+├── ED Approval
+├── MD Approval
+├── Approved
+└── Rejected
+
+This is effectively a sequential two-level executive approval workflow.
+
+Price Realisation flow
+Price Realisation Sheet
+        │
+        ▼
+ Pending Approval
+        │
+        ▼
+     ED Sir
+        │
+        ▼
+    ED Decision
+        │
+        ▼
+     MD Sir
+        │
+        ▼
+    MD Decision
+      /     \
+     /       \
+Approved    Rejected
+
+The data also contains:
+
+Realisation Date
+Approval Month
+Approval Week
+Product / Grade
+Region
+Due Date
+Approval Information
+
+This makes Price Realisation a specialized business-rule-driven approval system.
+
+16. DEPARTMENT × APPROVER MATRIX
+
+The overall Asana architecture appears to be based on a matrix:
+
+                         APPROVER
+              ┌────┬────┬────┬────┬────┬────┐
+              │ MD │ ED │FIN │ HR │SCM │SUM │
+              └────┴────┴────┴────┴────┴────┘
+                 ▲    ▲    ▲    ▲    ▲    ▲
+                 │    │    │    │    │    │
+Departments ─────┼────┼────┼────┼────┼────┼────
+                 │
+   Sales         ●    ●    ●    ●    ●    ●
+   IT            ●    ●    ●    ●    ●    ●
+   Steel Plant   ●    ●    ●    ●    ●    ●
+   Branding      ●    ●    ●    ●    ●    ●
+   ASP           ●    ●    ●    ●    ●    ●
+   MDO           ●    ●    ●    ●    ●    ●
+   EDO           ●    ●    ●    ●    ●    ●
+   HR & Admin    ●    ●    ●    ●    ●    ●
+   Purchase SCM  ●    ●    ●    ●    ●    ●
+   Finance       ●    ●    ●    ●    ●    ●
+   Corporate     ●    ●    ●    ●    ●    ●
+   Field Mktg    ●    ●    ●    ●    ●    ●
+
+Not every cell necessarily exists or is active, but this is the architectural pattern visible in the project naming.
+
+17. THE CURRENT SYSTEM IS ACTUALLY THREE DIFFERENT ARCHITECTURES
+
+This is the most important finding.
+
+Architecture A — Single-level approval
+Submit
+  ↓
+Approver
+  ↓
+Approve / Reject / Hold
+
+Examples:
+
+Finance
+HR
+SCM
+Sumit
+Standard MD
+Standard ED
+Architecture B — Multi-level approval
+Submit
+  ↓
+HOD
+  ↓
+2nd Level
+  ↓
+Final Approver
+  ↓
+Approve / Reject / Hold
+
+Examples:
+
+Finance Internal Approvals
+Some internal departmental frameworks
+Architecture C — Sequential executive approval
+Submit
+  ↓
+ED
+  ↓
+MD
+  ↓
+Final Decision
+
+Example:
+
+Price Realisation Approval
+18. MASTER AS-IS FLOW
+
+Combining the systems, the current organization's approval ecosystem can be documented as:
+
+                         REQUESTER
+                            │
+                            ▼
+                  ┌────────────────────┐
+                  │ Approval Form      │
+                  │ / Submission       │
+                  └─────────┬──────────┘
+                            │
+                            ▼
+                  ┌────────────────────┐
+                  │ Identify Approval  │
+                  │ Type / Department  │
+                  └─────────┬──────────┘
+                            │
+        ┌───────────────────┼─────────────────────┐
+        │                   │                     │
+        ▼                   ▼                     ▼
+   FUNCTIONAL          EXECUTIVE             INTERNAL
+   APPROVAL             APPROVAL             APPROVAL
+        │                   │                     │
+        │              ┌────┴────┐               │
+        │              │         │               │
+        │              ▼         ▼               ▼
+        │             MD        ED              HOD
+        │              │         │               │
+        │              └────┬────┘               ▼
+        │                   │                2nd Level
+        ▼                   ▼                    │
+ Finance / HR / SCM      Decision               ▼
+ Sumit / Finance        Approved /             Final
+                        Rejected /               │
+                        Hold                     ▼
+        │                                      Decision
+        └────────────────┬───────────────────────┘
+                         │
+                         ▼
+                  ┌───────────────┐
+                  │ Final Outcome │
+                  └───────┬───────┘
+                          │
+              ┌───────────┼───────────┐
+              ▼           ▼           ▼
+          APPROVED       HOLD       REJECTED
+              │           │           │
+              │           ▼           ▼
+              │      Resubmission     END
+              │           │
+              └───────────┘
+19. DESIGN STRUCTURE OF THE EXISTING SYSTEM
+
+I would document the current Asana framework in these layers:
+
+LAYER 1 — USER
+    │
+    ├── Employee
+    ├── HOD
+    └── Approver
+
+LAYER 2 — REQUEST
+    │
+    ├── Approval Form
+    ├── Request Type
+    ├── Department
+    ├── Priority
+    ├── Amount
+    ├── Reference
+    ├── Due Date
+    └── Supporting Information
+
+LAYER 3 — ROUTING
+    │
+    ├── MD
+    ├── ED
+    ├── Finance
+    ├── HR
+    ├── SCM
+    ├── Sumit
+    ├── Valarmadhi
+    └── HOD / 2nd Level
+
+LAYER 4 — WORKFLOW
+    │
+    ├── Form Submission
+    ├── HOD Review
+    ├── 2nd Level Review
+    ├── Executive Review
+    ├── Hold
+    ├── Rejection
+    ├── Resubmission
+    └── Approval
+
+LAYER 5 — OUTCOME
+    │
+    ├── Approved
+    ├── Rejected
+    ├── Hold
+    └── Completed / Action
+
+LAYER 6 — SPECIALIZED WORKFLOWS
+    │
+    ├── Price Realisation
+    ├── Finance Internal
+    ├── IT Internal
+    └── Plant Internal
+20. IMPORTANT DESIGN OBSERVATION
+
+The current Asana system is not truly a single interconnected approval engine.
+
+It is currently a collection of:
+
+Department × Approver × Approval Type = Separate Asana Project
+
+For example:
+
+Sales + MD
+        ↓
+Sales - MD Approval Asana
+
+Sales + ED
+        ↓
+Sales - ED Approval Asana
+
+Sales + Finance
+        ↓
+Sales - Finance Approval Asana
+
+Sales + HR
+        ↓
+Sales - HR Approval Asana
+
+Sales + SCM
+        ↓
+Sales - SCM Approval Asana
+
+Sales + Sumit
+        ↓
+Sales - Sumit Approval Asana
+
+This explains why the number of approval projects has grown significantly.
+
+21. THE FRAMEWORK YOU ARE ALREADY MOVING TOWARD
+
+Your current Asana implementation is effectively pointing toward the custom interconnected approval platform you described earlier.
+
+Instead of:
+
+98+ separate projects
+
+the future architecture can become:
+
+                  APPROVAL PLATFORM
+                         │
+              ┌──────────┴──────────┐
+              │                     │
+        USER MANAGEMENT        APPROVAL ENGINE
+              │                     │
+              │             ┌───────┴────────┐
+              │             │                │
+              │       WORKFLOW BUILDER   APPROVER MATRIX
+              │             │                │
+              │             └───────┬────────┘
+              │                     │
+              ▼                     ▼
+          Employee              Level 1
+                                Level 2
+                                Level 3
+                                Level 4
+                                Level N
+                                  │
+                                  ▼
+                            Final Approval
+                                  │
+                    ┌─────────────┼─────────────┐
+                    ▼             ▼             ▼
+                 Approved       Rejected       Hold
+                                    │
+                                    ▼
+                               Resubmission
+
+That would eliminate the need to create a separate project for every:
+
+Department × Approver × Approval Type combination.
+
+22. MASTER DOCUMENTATION STRUCTURE I RECOMMEND
+
+For formally documenting this Asana approval ecosystem, I would structure the documentation as:
+
+Section 1 — Approval Ecosystem Overview
+Purpose
+Scope
+Approval authorities
+Departments
+Approval categories
+Section 2 — Approval Project Inventory
+Project name
+Department
+Approver
+Approval type
+Workflow type
+Active/inactive
+Number of tasks
+Sections
+Form source
+Section 3 — Standard Approval Flow
+MD
+ED
+Finance
+HR
+SCM
+Sumit
+Section 4 — Multi-Level Approval Flow
+HOD
+Second Level
+Final Approver
+Hold
+Rejection
+Resubmission
+Section 5 — Specialized Approval Flows
+Price Realisation
+Finance Internal
+IT Internal
+Plant Internal
+ASP Internal
+EDO-specific flows
+Section 6 — Department-wise Flow
+Sales
+Purchase & SCM
+Finance & Accounts
+HR & Admin
+IT
+Steel Plant
+ASP
+MDO
+EDO
+Branding
+Corporate Affairs
+Field Marketing & Technical
+Training & Development
+Section 7 — Data Structure
+Requester
+Department
+Approval type
+Priority
+Amount
+Reference
+Due date
+Documents
+Approver
+Status
+Decision
+Section 8 — Status Model
+DRAFT
+  ↓
+SUBMITTED
+  ↓
+PENDING
+  ↓
+UNDER REVIEW
+  ├── APPROVED
+  ├── REJECTED
+  ├── HOLD
+  └── CHANGES REQUIRED
+          ↓
+     RESUBMITTED
+          ↓
+      UNDER REVIEW
+Section 9 — As-Is Architecture
+Employee
+ ↓
+Multiple Forms
+ ↓
+Multiple Asana Projects
+ ↓
+Multiple Approver-specific queues
+ ↓
+Manual / semi-structured routing
+ ↓
+Approval
+Section 10 — Future-State Architecture
+One Portal
+   ↓
+One User Management System
+   ↓
+One Approval Engine
+   ↓
+Configurable Workflow
+   ↓
+Dynamic Level 1 → Level 2 → Level 3 → Level N
+   ↓
+Approval Decision
+   ↓
+Audit Trail
+   ↓
+Employee Viewer Portal
+Bottom line
+
+The Asana data shows that you have already built the functional foundation of an approval management system, but it has evolved into a project-matrix architecture: separate projects for departments, approvers and approval categories, with a few more advanced multi-level workflows.
+
+The strongest existing patterns to carry into your planned custom system are:
+
+Form-based submission
+Department identification
+Approval nature/type
+Priority
+Amount/reference information
+Dedicated approver
+Approved / Rejected / Hold states
+Resubmission
+HOD → 2nd Level → Final Approval
+ED → MD sequential approval
+Auditability through task history
+Specialized workflows such as Price Realisation
+
+The major architectural opportunity is to convert the current many-project model into one configurable Approval Engine, where a new approval system is created by configuration rather than by creating another Asana project.
+
+Yes. I opened and checked the IT Internal Approvals project in Asana in read-only mode and used the actual project structure and completed approval records as the basis for the flow.
+
+1. IT Internal Approval — Current Structure
+
+The project currently has 6 workflow sections:
+
+IT INTERNAL APPROVALS
+│
+├── 1. HOD Approval
+│
+├── 2. Assigned To
+│
+├── 3. Approved Section
+│
+├── 4. Rejected Section
+│
+├── 5. Hold Section
+│
+└── 6. Task Completed
+
+The project currently contains 11 approval tasks, and all 11 are completed.
+
+The approval tasks are actual Asana Approval-type tasks, not just normal tasks. The records show approval status as Approved.
+
+2. End-to-End IT Approval Flow
+
+Based on the actual fields and workflow structure I found, the current process can be represented as:
+
+                    ┌──────────────────────┐
+                    │     EMPLOYEE / IT    │
+                    │   RAISES APPROVAL    │
+                    └──────────┬───────────┘
+                               │
+                               ▼
+                    ┌──────────────────────┐
+                    │   IT APPROVAL FORM   │
+                    │      SUBMISSION      │
+                    └──────────┬───────────┘
+                               │
+                               ▼
+                 ┌────────────────────────────┐
+                 │ ASANA CREATES APPROVAL TASK│
+                 │                            │
+                 │ Requester                  │
+                 │ Email                      │
+                 │ Priority                   │
+                 │ Subject / Party            │
+                 │ Approval Information       │
+                 │ Amount                     │
+                 │ Required Date              │
+                 │ Nature                     │
+                 └─────────────┬──────────────┘
+                               │
+                               ▼
+                    ┌──────────────────────┐
+                    │    HOD APPROVAL      │
+                    │                      │
+                    │ Approval Status:     │
+                    │ • Approved           │
+                    │ • Rejected           │
+                    │ • Hold               │
+                    └───────┬─────┬────────┘
+                            │     │
+             ┌──────────────┘     └──────────────┐
+             ▼                                   ▼
+       ┌─────────────┐                     ┌─────────────┐
+       │  APPROVED   │                     │  REJECTED   │
+       └──────┬──────┘                     └──────┬──────┘
+              │                                   │
+              ▼                                   ▼
+     ┌─────────────────┐                 ┌─────────────────┐
+     │ ASSIGNED TO     │                 │ REJECTED        │
+     │ RESPONSIBLE     │                 │ SECTION         │
+     │ PERSON / IT     │                 └─────────────────┘
+     └────────┬────────┘
+              │
+              ▼
+     ┌─────────────────┐
+     │ IMPLEMENTATION /│
+     │ ACTION REQUIRED │
+     └────────┬────────┘
+              │
+              ▼
+     ┌─────────────────┐
+     │ TASK COMPLETED  │
+     └────────┬────────┘
+              │
+              ▼
+     ┌─────────────────┐
+     │ FINAL COMPLETION│
+     └─────────────────┘
+
+
+       HOLD PATH
+              │
+              ▼
+     ┌─────────────────┐
+     │  HOLD SECTION   │
+     │                 │
+     │ Wait for more   │
+     │ information /   │
+     │ clarification   │
+     └────────┬────────┘
+              │
+              ▼
+        REVIEW AGAIN
+              │
+              └──────────► HOD APPROVAL
+
+Important: the above represents the operational flow evidenced by the project structure and task data. I am not claiming every arrow is an exact Asana Automation rule, because the current Asana connector does not expose the project's Automation/Rule definitions themselves.
+
+3. What the IT Approval Form Captures
+
+The actual completed tasks show a fairly well-defined approval data model.
+
+Request information
+Field	Purpose
+Name	Person raising the request
+Email Address	Requester's email
+Priority	Critical / Most Important / Important / High / Low
+Subject / Party Name	Main approval subject
+Approval Information	Detailed business justification
+Amount	Financial value
+Required Date	Required completion/payment date
+Nature	Approval category
+Approval Remarks	Approver's comments
+
+There is also a system-generated indication that the task was submitted through IT Internal Approvals.
+
+4. Approval Categories Currently Configured
+
+The Nature field has these categories:
+
+IT INTERNAL APPROVAL
+│
+├── Quotation Approval
+│
+├── Work Order / PO Approvals
+│
+├── Bill Approvals
+│
+├── New Software Approvals
+│
+├── License Approvals
+│
+├── IT Budget Approval
+│
+├── Implementation Approval
+│
+└── Other Approval
+
+This is important because the same IT approval framework is being used for multiple business scenarios rather than creating a separate project for every approval type.
+
+5. HOD Decision Mechanism
+
+The project has a dedicated HOD Approval custom field with exactly three values:
+
+HOD Approval
+│
+├── Approved
+├── Rejected
+└── Hold
+
+This is a key part of the workflow.
+
+Conceptually:
+
+                    HOD DECISION
+                         │
+          ┌──────────────┼──────────────┐
+          │              │              │
+          ▼              ▼              ▼
+       APPROVED       REJECTED        HOLD
+          │              │              │
+          ▼              ▼              ▼
+     Assignment       Rejected       Hold
+       / Action        Section       Section
+          │
+          ▼
+       Execution
+          │
+          ▼
+       Complete
+
+Asana supports using field changes and section movement as workflow automation triggers, so this type of structure is consistent with Asana's workflow model.
+
+6. Actual Approval Examples I Found
+
+I checked the 11 completed approval records rather than designing this only from the section names.
+
+Example 1 — Cashfree Payment
+
+Requester: Harish Kumar
+Nature: Bill Approvals
+Subject: Cashfree Payment Integration
+Amount: ₹10,000
+Priority: Critical
+HOD Approval: Approved
+Approval Status: Approved
+Final Section: Approved Section
+
+The request was for recharging the Cashfree account used for influencer KYC/verification.
+
+Example 2 — AI Server + Cameras
+
+Requester: PALANI ANANTH.S
+Nature: Quotation Approval
+Amount: ₹11,26,050
+Priority: Most Important
+HOD Approval: Approved
+Approval Status: Approved
+Final Section: Approved Section
+
+The approval remarks record that the camera, server and graphics-card purchase was approved.
+
+Example 3 — ERP AMC
+
+Requester: PALANI ANANTH.S
+Nature: Bill Approvals
+Party: LIGHTHOUSE INFO SYSTEMS PVT LTD
+Amount: ₹9,41,220
+HOD Approval: Approved
+Approval Status: Approved
+
+Example 4 — CCTV Purchase
+
+Requester: PALANI ANANTH.S
+Nature: Implementation Approval
+Amount: ₹11,200
+Subject: Purchase of 4 CCTV Cameras
+HOD Approval: Approved
+Approval Status: Approved
+
+The approval information itself references the prior HR requirement and existing approval for two cameras, followed by the request for four additional cameras.
+
+7. What Happens Technically
+
+The current design appears to have three different layers.
+
+Layer 1 — Intake
+Employee
+   ↓
+IT Internal Approval Form
+   ↓
+Asana Approval Task
+
+The task contains the structured request information.
+
+Layer 2 — Decision
+HOD Approval
+      │
+ ┌────┼────┐
+ │    │    │
+ ▼    ▼    ▼
+Yes   No  Hold
+
+The decision is represented by the HOD Approval custom field and the Asana Approval status.
+
+Layer 3 — Execution
+Approved
+   ↓
+Assigned To
+   ↓
+IT / Responsible Person
+   ↓
+Action / Implementation
+   ↓
+Task Completed
+
+So the system is not merely an approval tracker. It appears to combine:
+
+Request → Approval → Assignment → Execution → Completion
+
+8. Current IT Approval Architecture
+
+I would document the current system as follows:
+
+                 IT INTERNAL APPROVAL SYSTEM
+                           │
+             ┌─────────────┴─────────────┐
+             │                           │
+       REQUEST INTAKE              APPROVAL ENGINE
+             │                           │
+        IT Form                         HOD
+             │                           │
+             ▼                           ▼
+       Create Task              Approval / Reject / Hold
+             │                           │
+             └─────────────┬─────────────┘
+                           │
+                           ▼
+                    ASSIGNMENT
+                           │
+                           ▼
+                    IT EXECUTION
+                           │
+                           ▼
+                     COMPLETION
+9. The Most Important Finding
+
+There is an important distinction between the visible workflow and the actual automation logic.
+
+Asana automations can contain:
+
+Trigger → Conditions → Actions
+
+and actions can move tasks between sections, change fields, assign users, create tasks/subtasks, etc.
+
+Therefore, from the project data I can establish:
+
+What the workflow is designed to accomplish.
+
+But I cannot yet establish with certainty:
+
+Which exact Automation moves the task from A → B, which Automation assigns the person, and which Automation marks/completes the task.
+
+The current MCP read-only connector exposes the project, tasks, fields, sections and approval statuses, but not the project's Automation/Rule definitions.
+
+10. My Recommended Formal Documentation of the Current IT Process
+
+I would document the existing IT Internal Approval process as:
+
+IT-APP-01 — Request Creation
+
+Actor: Employee / Requester
+Input: IT Approval Form
+Output: Asana Approval Task
+
+↓
+
+IT-APP-02 — Request Classification
+
+Nature selected:
+
+Quotation
+PO/Work Order
+Bill
+New Software
+License
+IT Budget
+Implementation
+Other
+
+↓
+
+IT-APP-03 — HOD Review
+
+HOD reviews:
+
+Business requirement
+Justification
+Amount
+Priority
+Required date
+Supporting information
+
+↓
+
+IT-APP-04 — HOD Decision
+                HOD REVIEW
+                    │
+       ┌────────────┼────────────┐
+       ▼            ▼            ▼
+    APPROVED      REJECTED      HOLD
+       │            │            │
+       ▼            ▼            ▼
+   Assignment    Rejected      Hold
+       │          Section      Section
+       │
+       ▼
+
+↓
+
+IT-APP-05 — IT Execution
+
+For approved requests, responsible IT personnel perform the required activity.
+
+Examples:
+
+Purchase
+Payment
+License renewal
+Software implementation
+Hardware installation
+Vendor activity
+System development
+Infrastructure work
+
+↓
+
+IT-APP-06 — Completion
+Execution completed
+        ↓
+Task Completed
+        ↓
+Approval lifecycle closed
+11. Master Flow — Management Version
+┌──────────────────────┐
+│  EMPLOYEE / REQUESTER │
+└──────────┬───────────┘
+           ↓
+┌──────────────────────┐
+│   IT APPROVAL FORM   │
+└──────────┬───────────┘
+           ↓
+┌──────────────────────┐
+│ ASANA APPROVAL TASK  │
+│                      │
+│ Requester            │
+│ Nature               │
+│ Priority             │
+│ Amount               │
+│ Requirement          │
+│ Required Date        │
+└──────────┬───────────┘
+           ↓
+┌──────────────────────┐
+│     HOD REVIEW       │
+└──────────┬───────────┘
+           ↓
+       ┌───┴───┐
+       ↓       ↓
+   APPROVED   REJECTED
+       │       │
+       │       └──────► REJECTED
+       │
+       ├──── HOLD ───► HOLD
+       │
+       ↓
+┌──────────────────────┐
+│    ASSIGNED TO       │
+│ RESPONSIBLE PERSON   │
+└──────────┬───────────┘
+           ↓
+┌──────────────────────┐
+│   IT EXECUTION /     │
+│   ACTION COMPLETED   │
+└──────────┬───────────┘
+           ↓
+┌──────────────────────┐
+│   TASK COMPLETED     │
+└──────────────────────┘
+Current project evidence
+Project: IT Internal Approvals
+Sections: 6
+Tasks: 11
+Completed: 11
+Incomplete: 0
+Approval type: Asana Approval tasks
+HOD decision values: Approved / Rejected / Hold
+Approval categories: 8
+Current completed examples: quotation, bill, implementation and other approvals.
+
+So this is a good trial model for your future interconnected Approval Platform because it already demonstrates the core pattern you described earlier: Form → configurable approval decision → routing → execution → closure.
+
+The next step for a true automation-level flow would be to inspect the IT Internal Approvals → Customize → Automations screen. That would let me convert the above from a workflow reconstructed from actual data into a Rule-by-Rule technical flow, showing exactly:
+
+Trigger → Condition → Action → Section → Assignee → Next Automation → Final Outcome.
+
+Asana's current automation builder explicitly supports this trigger/condition/action structure.
+
+omit this automation part and with the 1st request make the Complete Documentation of the approval system which is taking part in the Company
+
+Yes. I have consolidated the first request + the IT Internal Approval trial into one complete Company Approval System Documentation.
+
+I have excluded the Automation/Rules layer as requested. The documentation below is based on the actual Asana approval projects, their sections, fields, task records, and workflow patterns currently present in your company.
+
+Asana itself supports using Forms for structured request intake, Sections for workflow stages, Custom Fields for structured approval data, and Approval tasks for formal decisions.
+
+ARS Steels – Company-Wide Approval System Documentation
+ARS STEELS & ALLOY INTERNATIONAL PVT LTD
+COMPANY-WIDE APPROVAL SYSTEM
+Current-State Process & Workflow Documentation
+
+Document Type: Approval Process Architecture & Workflow Documentation
+Platform: Asana
+Prepared From: Current Asana Approval Projects and Approval Records
+Scope: Company-wide Approval Systems
+Mode: Read-only analysis
+Date: 24 September 2026
+
+1. EXECUTIVE SUMMARY
+
+ARS Steels currently operates a distributed approval ecosystem in Asana rather than one single centralized approval application.
+
+The approval framework consists of multiple approval projects designed around:
+
+Approval authority
+Department
+Business function
+Type of request
+Internal operational requirement
+Multi-level approval requirements
+
+The major approval families identified are:
+
+MD Approval
+ED Approval
+Finance Approval
+HR & Admin Approval
+Purchase & SCM Approval
+Sumit Approval
+Finance Internal Approvals
+IT Internal Approvals
+Plant Internal Approvals
+Price Realisation Approval
+
+Earlier approval-framework inventory work identified approximately 98 approval-related project instances through approval-family searches. These should not be interpreted as 98 completely different business processes; many are project-level implementations or variations of the same approval framework.
+
+The company therefore has a multi-project approval architecture with several recurring workflow patterns.
+
+2. CURRENT APPROVAL ARCHITECTURE
+
+The current architecture can be represented as:
+
+                         COMPANY
+                            │
+             ┌──────────────┴──────────────┐
+             │                             │
+       AUTHORITY BASED               FUNCTION BASED
+       APPROVAL SYSTEMS              APPROVAL SYSTEMS
+             │                             │
+       ┌─────┼─────┐              ┌───────┼────────┐
+       │     │     │              │       │        │
+      MD    ED   SUMIT         FINANCE    HR       SCM
+       │     │     │              │       │        │
+       └─────┴─────┴──────────────┴───────┴────────┘
+                            │
+                    INTERNAL APPROVALS
+                            │
+              ┌─────────────┼─────────────┐
+              │             │             │
+           Finance          IT          Plant
+                            │
+                            ▼
+                    Price Realisation
+
+The common underlying concept is:
+
+REQUEST
+   ↓
+FORM / SUBMISSION
+   ↓
+APPROVAL TASK
+   ↓
+APPROVER
+   ↓
+DECISION
+   ├── APPROVED
+   ├── REJECTED
+   └── HOLD / CHANGES
+   ↓
+ACTION / EXECUTION
+   ↓
+COMPLETION
+3. MASTER COMPANY APPROVAL FLOW
+
+The overall company approval lifecycle can be documented as:
+
+┌──────────────────────────────┐
+│       REQUESTER / EMPLOYEE   │
+└───────────────┬──────────────┘
+                │
+                ▼
+┌──────────────────────────────┐
+│      APPROVAL FORM / REQUEST │
+│                              │
+│ • Requester                  │
+│ • Department                │
+│ • Nature                    │
+│ • Priority                  │
+│ • Subject                   │
+│ • Amount                    │
+│ • Supporting Information    │
+│ • Required Date             │
+└───────────────┬──────────────┘
+                │
+                ▼
+┌──────────────────────────────┐
+│     APPROVAL SYSTEM SELECTED │
+│                              │
+│ MD / ED / Finance / HR /    │
+│ SCM / IT / Plant / etc.     │
+└───────────────┬──────────────┘
+                │
+                ▼
+┌──────────────────────────────┐
+│       REVIEW / APPROVAL      │
+└───────────────┬──────────────┘
+                │
+       ┌────────┼─────────┐
+       │        │         │
+       ▼        ▼         ▼
+   APPROVED  REJECTED    HOLD
+       │        │         │
+       │        │         └──────► REVIEW AGAIN
+       │        │
+       │        └───────────────► CLOSED
+       │
+       ▼
+┌──────────────────────────────┐
+│       ASSIGN / EXECUTE       │
+└───────────────┬──────────────┘
+                │
+                ▼
+┌──────────────────────────────┐
+│         ACTION COMPLETE      │
+└───────────────┬──────────────┘
+                │
+                ▼
+┌──────────────────────────────┐
+│       APPROVAL CLOSED        │
+└──────────────────────────────┘
+4. APPROVAL SYSTEM 1 – MD APPROVAL
+Project
+
+MD Approval Asana
+
+Current structure
+MD APPROVAL
+│
+├── Form Submission
+├── Approved Section
+├── Rejected Section
+├── Hold
+└── Resubmission
+
+Current snapshot:
+
+Total tasks: 1,655
+Completed: 1,579
+Incomplete: 76
+Purpose
+
+The MD Approval system is used for requests that require approval at the Managing Director level.
+
+The system is not restricted to one department.
+
+Actual records show requests originating from areas such as:
+
+EDO
+Steel Plant
+Finance & Accounts
+Sales
+Other business functions
+Request information
+
+The MD form captures information such as:
+
+Name
+Email
+Department
+Nature
+Priority
+Subject / Party Name
+Amount
+Cheque / PO / Invoice Number
+Mode of Approval
+Number of Signatures
+Approval Information
+Value Category
+Due Date
+MD Approval Flow
+Employee / Department
+        ↓
+MD Approval Form
+        ↓
+Form Submission
+        ↓
+MD Review
+        ↓
+   ┌────┼─────┐
+   │    │     │
+   ▼    ▼     ▼
+Approved Rejected Hold
+   │      │      │
+   │      │      └──► Review / Resubmission
+   │      │
+   │      └─────────► Closed
+   │
+   ▼
+Approval Completed
+Resubmission
+
+MD Approval has a dedicated Resubmission section.
+
+Therefore, the documented business lifecycle includes:
+
+Submission
+   ↓
+MD Review
+   ↓
+Changes / Clarification
+   ↓
+Resubmission
+   ↓
+MD Review Again
+
+This is an important feature of the company-wide approval architecture.
+
+5. APPROVAL SYSTEM 2 – ED APPROVAL
+Project
+
+ED Approval Asana
+
+Current structure
+ED APPROVAL
+│
+├── Form Submission
+├── Approved Section
+├── Rejected Section
+├── Hold
+└── Untitled Section
+
+Current snapshot:
+
+Total tasks: 1,347
+Completed: 1,339
+Incomplete: 8
+Purpose
+
+Used for approvals requiring Executive Director-level decision.
+
+Actual requests include:
+
+Sales special approvals
+ASP approvals
+Commercial/pricing-related requests
+Other business approvals
+Example
+
+One current request is a Sales approval for:
+
+SAI STEELS – 22T CRS Straight
+
+The request contains:
+
+Requester
+Sales department
+Nature: Special Approval
+Priority: Critical
+Party
+Approval Information
+Due Date
+ED Flow
+Requester
+   ↓
+ED Approval Form
+   ↓
+Form Submission
+   ↓
+ED Review
+   ↓
+┌────────────┬────────────┬──────────┐
+│            │            │
+▼            ▼            ▼
+Approved   Rejected      Hold
+│            │            │
+│            │            └──► Review Again
+│            │
+│            └──────────────► Closed
+│
+▼
+Approval Completed
+6. APPROVAL SYSTEM 3 – FINANCE APPROVAL
+Project
+
+Finance Approval Asana
+
+Current structure
+FINANCE APPROVAL
+│
+├── Untitled Section
+├── Form Submission
+├── Approved Section
+├── Special
+├── Rejected Section
+└── Hold
+
+Current snapshot:
+
+Total tasks: 849
+Completed: 844
+Incomplete: 5
+Purpose
+
+Finance-related requests requiring Finance approval.
+
+The basic process is:
+
+Requester
+   ↓
+Finance Approval Form
+   ↓
+Form Submission
+   ↓
+Finance Review
+   ↓
+┌────────────┬────────────┬─────────┐
+│            │            │
+▼            ▼            ▼
+Approved   Rejected      Hold
+
+The Finance system therefore follows the common approval lifecycle but is maintained as a separate authority-specific project.
+
+7. APPROVAL SYSTEM 4 – HR & ADMIN APPROVAL
+Project
+
+HR & Admin – HR Approval Asana
+
+Structure
+HR APPROVAL
+│
+├── Form Submission
+├── Approved Section
+├── Rejected Section
+└── Hold
+
+Current snapshot:
+
+Total tasks: 1
+Completed: 1
+Incomplete: 0
+Purpose
+
+HR-related requests requiring formal approval.
+
+Flow
+Employee / HR
+     ↓
+HR Approval Form
+     ↓
+Form Submission
+     ↓
+HR Review
+     ↓
+┌──────────┬──────────┬────────┐
+│          │          │
+▼          ▼          ▼
+Approved  Rejected    Hold
+8. APPROVAL SYSTEM 5 – PURCHASE & SCM APPROVAL
+Project
+
+Purchase & SCM Approval Asana
+
+Structure
+PURCHASE & SCM APPROVAL
+│
+├── Untitled Section
+├── Form Submission
+├── Approved Section
+├── Rejected Section
+└── Hold
+
+Current snapshot:
+
+Total tasks: 318
+Completed: 316
+Incomplete: 2
+Purpose
+
+Purchase and Supply Chain Management approval.
+
+Actual requests include:
+
+PO approvals
+Repeat order approvals
+Vendor-related requests
+Purchase-related approvals
+Data captured
+
+Examples include:
+
+Requester
+Department
+Nature
+Priority
+Party Name
+PO Number
+Approval Information
+Amount
+Due Date
+Flow
+Purchase / SCM Request
+          ↓
+SCM Approval Form
+          ↓
+Form Submission
+          ↓
+SCM Review
+          ↓
+   ┌──────┼──────┐
+   ▼      ▼      ▼
+Approved Reject  Hold
+   │      │      │
+   │      │      └──► Review Again
+   │      │
+   │      └─────────► Closed
+   │
+   ▼
+PO / Purchase Process
+9. APPROVAL SYSTEM 6 – SUMIT APPROVAL
+Project
+
+Sumit Approval Asana
+
+Structure
+SUMIT APPROVAL
+│
+├── Untitled Section
+├── Form Submission
+├── Approved Section
+├── Rejected Section
+└── Hold
+
+Current snapshot:
+
+Total tasks: 5
+Completed: 4
+Incomplete: 1
+Purpose
+
+A separate approval authority workflow assigned to Sumit.
+
+Actual records include NBD requests such as:
+
+Draft vetting
+Rejoinder statement vetting
+Claim statement vetting
+Flow
+Requester
+   ↓
+Sumit Approval Form
+   ↓
+Form Submission
+   ↓
+Sumit Review
+   ↓
+┌────────────┬────────────┬──────────┐
+│            │            │
+▼            ▼            ▼
+Approved   Rejected      Hold
+10. APPROVAL SYSTEM 7 – FINANCE INTERNAL APPROVALS
+Project
+
+Finance Internal Approvals
+
+Structure
+FINANCE INTERNAL APPROVALS
+│
+├── Approval Form Submission
+├── 2nd Level Approval
+├── HOD Approval
+├── Approved Section
+├── Rejected Section
+└── Hold Section
+
+Current snapshot:
+
+Total tasks: 69
+Completed: 68
+Incomplete: 1
+This is different from Finance Approval
+
+This system is particularly important because it introduces a multi-level internal approval model.
+
+Actual task data contains fields for:
+
+1st Level Manager Approval
+2nd Level Manager Approval
+HOD Approval
+Approved By
+Nature
+Priority
+Subject
+Approval Information
+Required Date
+Amount
+Observed workflow
+Requester
+    ↓
+Approval Form
+    ↓
+1st Level Manager
+    ↓
+2nd Level Approval
+    ↓
+HOD Approval
+    ↓
+     ┌──────────────┐
+     │ HOD Decision │
+     └──────┬───────┘
+            │
+       ┌────┼────┐
+       ▼    ▼    ▼
+    Approve Reject Hold
+       │     │     │
+       │     │     └──► Review
+       │     │
+       │     └────────► Closed
+       │
+       ▼
+    Approved
+Important architectural point
+
+This is the clearest existing example of a hierarchical approval system inside the company.
+
+11. APPROVAL SYSTEM 8 – IT INTERNAL APPROVALS
+Project
+
+IT Internal Approvals
+
+Structure
+IT INTERNAL APPROVALS
+│
+├── HOD Approval
+├── Assigned To
+├── Approved Section
+├── Rejected Section
+├── Hold Section
+└── Task Completed
+
+Current snapshot:
+
+Total tasks: 11
+Completed: 11
+Incomplete: 0
+Approval categories
+
+The IT system currently supports:
+
+Quotation Approval
+Work Order / PO Approvals
+Bill Approvals
+New Software Approvals
+License Approvals
+IT Budget Approval
+Implementation Approval
+Other Approval
+Core data model
+Requester
+Email
+Priority
+Subject / Party
+Approval Information
+Amount
+Required Date
+Nature
+HOD Approval
+Approval Remarks
+IT Flow
+Employee / Department
+        ↓
+IT Approval Form
+        ↓
+IT Approval Task
+        ↓
+HOD Approval
+        ↓
+ ┌──────┼──────┐
+ │      │      │
+ ▼      ▼      ▼
+Approve Reject  Hold
+ │       │      │
+ │       │      └────► Review Again
+ │       │
+ │       └───────────► Rejected
+ │
+ ▼
+Assigned To
+ │
+ ▼
+IT Action / Implementation
+ │
+ ▼
+Task Completed
+Example request types
+
+Actual records include:
+
+Cashfree payment integration
+ERP AMC payments
+Camera/server/graphics-card purchase
+CCTV purchase
+Software/vendor implementation
+IT credit-card bills
+Petty cash
+
+Therefore, IT Internal Approval is functioning as a general-purpose IT approval gateway.
+
+12. APPROVAL SYSTEM 9 – PLANT INTERNAL APPROVALS
+Project
+
+Plant Internal Approvals
+
+Structure
+PLANT INTERNAL APPROVALS
+│
+├── Approval Form Submission
+├── HOD Approval
+├── Approved Section
+├── Rejected Section
+└── Hold Section
+
+Current snapshot:
+
+Total tasks: 0
+
+This means the workflow structure exists, but there is currently no task activity available in the project snapshot to establish operational usage.
+
+Intended Flow
+Plant Employee
+      ↓
+Plant Approval Form
+      ↓
+Approval Form Submission
+      ↓
+HOD Approval
+      ↓
+┌──────────┬──────────┬─────────┐
+│          │          │
+▼          ▼          ▼
+Approved  Rejected    Hold
+Status
+
+Framework created; current operational utilization not established from available task records.
+
+13. APPROVAL SYSTEM 10 – PRICE REALISATION APPROVAL
+Project
+
+Price Realisation Approval Sheet
+
+Structure
+PRICE REALISATION
+│
+├── Pending Approval
+├── ED Approval
+├── MD Approval
+├── Approved
+└── Rejected
+
+Current snapshot:
+
+Total tasks: 17
+Completed: 0
+Incomplete: 17
+This is a sequential approval system
+
+Unlike a simple single-approver workflow, the structure clearly indicates:
+
+Price Realisation Submission
+          ↓
+    Pending Approval
+          ↓
+       ED Approval
+          ↓
+       MD Approval
+          ↓
+        Approved
+
+Rejected path:
+
+ED / MD
+  ↓
+Reject
+  ↓
+Rejected
+Data captured
+
+Actual records include:
+
+Email Address
+Realisation Sheet Number
+Approval Information
+HOD Approval
+ED Approval Status
+MD Approval
+Week Number
+Realisation For
+Realisation Date
+Approval Month
+Example
+
+A current record is sitting in:
+
+ED Approval
+
+with HOD Approval already marked as Approved.
+
+This demonstrates the sequential nature:
+
+HOD
+ ↓
+ED
+ ↓
+MD
+ ↓
+Final Approval
+14. COMPANY APPROVAL SYSTEM COMPARISON
+Approval System	Primary Authority / Function	Main Flow	Multi-Level
+MD Approval	MD	Form → MD → Outcome	Yes, via resubmission
+ED Approval	ED	Form → ED → Outcome	Limited
+Finance Approval	Finance	Form → Finance → Outcome	Basic
+HR Approval	HR/Admin	Form → HR → Outcome	Basic
+Purchase & SCM	SCM	Form → SCM → Outcome	Basic
+Sumit Approval	Sumit	Form → Sumit → Outcome	Basic
+Finance Internal	Finance/Internal	Form → Manager → Manager → HOD	Yes
+IT Internal	IT	Form → HOD → Assigned → Execution	Yes / Execution stage
+Plant Internal	Plant	Form → HOD → Outcome	Basic
+Price Realisation	Commercial/Pricing	Pending → ED → MD	Yes
+15. COMMON APPROVAL DESIGN PATTERN
+
+Across the company, the most common structure is:
+
+FORM
+  ↓
+FORM SUBMISSION
+  ↓
+REVIEW
+  ↓
+APPROVAL DECISION
+  ↓
+┌─────────────┬──────────────┬───────────┐
+│             │              │
+APPROVED    REJECTED        HOLD
+│             │              │
+▼             ▼              ▼
+ACTION       CLOSED        RE-REVIEW
+│
+▼
+COMPLETION
+
+This is the base approval template being repeatedly implemented across different departments.
+
+Asana's workflow model supports exactly this concept: Forms create structured requests, Sections represent workflow stages, Custom Fields hold structured process data, and Approval tasks represent formal decisions.
+
+16. COMMON DATA MODEL
+
+The approval systems repeatedly use a common set of information.
+
+Requester Information
+Employee Name
+Email
+Department
+Request Information
+Nature
+Subject / Party Name
+Approval Information
+Priority
+Required / Due Date
+Commercial Information
+Amount
+Party Name
+PO Number
+Invoice Number
+Cheque Number
+Value Category
+Approval Information
+Approval Status
+HOD Approval
+Manager Approval
+ED Approval
+MD Approval
+Approved By
+Approval Remarks
+Tracking Information
+Task Status
+Completed Date
+Delay Days
+Completion Status
+
+This gives the company the foundation for a centralized approval database.
+
+17. APPROVAL DECISION TYPES
+
+The company currently uses several variations of decision status.
+
+Standard
+APPROVED
+REJECTED
+HOLD
+Multi-level
+1st Level Approved
+        ↓
+2nd Level Approved
+        ↓
+HOD Approved
+Authority-based
+ED Approved
+        ↓
+MD Approved
+Execution-based
+Approved
+   ↓
+Assigned
+   ↓
+Completed
+18. COMPANY-WIDE APPROVAL HIERARCHY
+
+The current system can be conceptually represented as:
+
+                         REQUESTER
+                             │
+                             ▼
+                      APPROVAL INTAKE
+                             │
+                             ▼
+                 ┌─────────────────────┐
+                 │ DETERMINE APPROVAL   │
+                 │       TYPE          │
+                 └──────────┬──────────┘
+                            │
+        ┌──────────┬────────┼────────┬──────────┐
+        ▼          ▼        ▼        ▼          ▼
+       MD         ED      Finance     HR       SCM
+        │          │        │        │          │
+        └──────────┴────────┴────────┴──────────┘
+                            │
+                     INTERNAL FLOWS
+                            │
+                 ┌──────────┼──────────┐
+                 ▼          ▼          ▼
+              Finance       IT        Plant
+                 │          │          │
+                 └──────────┼──────────┘
+                            │
+                            ▼
+                    SPECIAL FLOWS
+                            │
+                    Price Realisation
+                            │
+                            ▼
+                       ED → MD
+19. CURRENT-STATE SYSTEM DESIGN
+
+The current approval architecture can therefore be described as:
+
+Layer 1 – Request Intake
+
+Forms collect approval requests.
+
+Layer 2 – Approval Project
+
+Each approval authority/function has a dedicated Asana project.
+
+Layer 3 – Structured Data
+
+Custom fields capture:
+
+Department
+Nature
+Amount
+Priority
+Party
+Approval status
+Dates
+Remarks
+Layer 4 – Workflow Stage
+
+Sections represent the current stage.
+
+Layer 5 – Decision
+
+Approver records the decision.
+
+Layer 6 – Execution
+
+For operational approvals such as IT, the approved request can move to the responsible person.
+
+Layer 7 – Closure
+
+The request becomes completed.
+
+20. CURRENT COMPANY APPROVAL ARCHITECTURE – ONE VIEW
+                         ARS STEELS
+                             │
+                   COMPANY APPROVAL PORTAL
+                             │
+              ┌──────────────┴──────────────┐
+              │                             │
+        AUTHORITY FLOWS               FUNCTION FLOWS
+              │                             │
+       ┌──────┼──────┐              ┌───────┼────────┐
+       │      │      │              │       │        │
+      MD     ED    SUMIT         Finance    HR      SCM
+       │      │      │              │       │        │
+       └──────┴──────┴──────────────┴───────┴────────┘
+                             │
+                       INTERNAL FLOWS
+                             │
+                  ┌──────────┼──────────┐
+                  │          │          │
+               Finance       IT       Plant
+                  │          │          │
+                  └──────────┼──────────┘
+                             │
+                             ▼
+                   SPECIALIZED WORKFLOW
+                             │
+                     Price Realisation
+                             │
+                         ED → MD
+21. CURRENT SYSTEM STRENGTHS
+
+Based on the actual structures observed:
+
+1. Standardized request intake
+
+The company has moved several approval processes from informal communication toward structured Forms.
+
+2. Approval information is captured in the task
+
+The approval request and its supporting information remain associated with the approval task.
+
+3. Approval authority is visible
+
+Separate projects make the intended approval authority clear.
+
+4. Approval status is trackable
+
+Approved, rejected and hold states are represented in the workflow.
+
+5. Multi-level approvals already exist
+
+Finance Internal and Price Realisation demonstrate that the company is already using hierarchical approval concepts.
+
+6. IT has an execution stage
+
+IT Internal Approval goes beyond approval and includes:
+
+Approval
+   ↓
+Assignment
+   ↓
+Execution
+   ↓
+Completion
+
+This is a stronger workflow model than simply recording an approval.
+
+22. CURRENT SYSTEM DESIGN GAPS
+
+The current architecture also shows several structural differences between approval systems.
+
+A. Different field structures
+
+Different projects use different custom fields and naming conventions.
+
+For example:
+
+HOD Approval
+ED Approval Status
+MD Approval
+1st Level Manager Approval
+2nd Level Manager Approval
+Approval Status
+Status
+Task Status
+
+These are conceptually related but not standardized.
+
+B. Different workflow structures
+
+Some systems use:
+
+Form → Approved / Rejected / Hold
+
+Others use:
+
+Form → Manager → HOD → Approved
+
+Others use:
+
+Pending → ED → MD → Approved
+
+Others use:
+
+HOD → Assigned → Execution → Completed
+C. Different terminology
+
+The company currently uses:
+
+Hold
+Rejected
+Approval Status
+Task Status
+Completion Status
+Approved Section
+Task Completed
+Assigned To
+
+A centralized system should standardize these concepts.
+
+23. RECOMMENDED COMMON APPROVAL MODEL
+
+The existing systems provide a strong basis for a future centralized Approval Management System.
+
+The common model should be:
+
+REQUEST
+   ↓
+VALIDATION
+   ↓
+APPROVAL WORKFLOW
+   ↓
+LEVEL 1
+   ↓
+LEVEL 2
+   ↓
+LEVEL 3
+   ↓
+LEVEL N
+   ↓
+FINAL APPROVAL
+   ↓
+EXECUTION
+   ↓
+COMPLETION
+
+With branches:
+
+                    APPROVER
+                       │
+          ┌────────────┼────────────┐
+          │            │            │
+       APPROVE       REJECT        HOLD
+          │            │            │
+          ▼            ▼            ▼
+     NEXT LEVEL      CLOSED      REVIEW
+          │
+          ▼
+     FINAL APPROVAL
+24. TARGET COMPANY-WIDE APPROVAL ARCHITECTURE
+
+The current Asana structure can eventually be consolidated into:
+
+                    APPROVAL MANAGEMENT SYSTEM
+                              │
+          ┌───────────────────┼───────────────────┐
+          │                   │                   │
+    USER MANAGEMENT      WORKFLOW ENGINE     VIEWER PORTAL
+          │                   │                   │
+          │             ┌─────┴─────┐             │
+          │             │           │             │
+          │         LEVEL 1      LEVEL N          │
+          │             │           │             │
+          │             └─────┬─────┘             │
+          │                   │                   │
+          └───────────────────┼───────────────────┘
+                              │
+                     APPROVAL DATABASE
+                              │
+             ┌────────────────┼────────────────┐
+             │                │                │
+          Requests         Decisions        Audit Log
+             │                │                │
+             └────────────────┼────────────────┘
+                              │
+                         REPORTING
+                              │
+                  Department / HOD / Employee
+25. CONFIGURABLE APPROVAL ENGINE
+
+The most important future requirement should be that the approval workflow is configurable rather than hard-coded.
+
+For example:
+
+Approval Type:
+IT Budget Approval
+
+Level 1:
+IT HOD
+
+Level 2:
+Finance HOD
+
+Level 3:
+ED
+
+Level 4:
+MD
+
+Another approval can be:
+
+Approval Type:
+License Renewal
+
+Level 1:
+IT HOD
+
+Level 2:
+Finance
+
+Final:
+ED
+
+Another:
+
+Approval Type:
+Price Realisation
+
+Level 1:
+ED
+
+Level 2:
+MD
+
+The system should therefore allow the administrator to configure:
+
+1st Approver
+2nd Approver
+3rd Approver
+4th Approver
+...
+Nth Approver
+
+without developing a new application for every approval type.
+
+26. FINAL COMPANY APPROVAL PROCESS
+
+The complete standardized process should ultimately be:
+
+┌─────────────────────────┐
+│       USER LOGIN        │
+└────────────┬────────────┘
+             ↓
+┌─────────────────────────┐
+│ SELECT APPROVAL TYPE    │
+└────────────┬────────────┘
+             ↓
+┌─────────────────────────┐
+│ COMPLETE APPROVAL FORM  │
+└────────────┬────────────┘
+             ↓
+┌─────────────────────────┐
+│ SYSTEM VALIDATION        │
+└────────────┬────────────┘
+             ↓
+┌─────────────────────────┐
+│ WORKFLOW DETERMINATION  │
+└────────────┬────────────┘
+             ↓
+       ┌─────────────┐
+       │   LEVEL 1   │
+       │  APPROVER   │
+       └──────┬──────┘
+              ↓
+        ┌─────┼─────┐
+        ▼     ▼     ▼
+      YES    NO    HOLD
+        │     │     │
+        │     │     └──► REVIEW
+        │     │
+        │     └────────► CLOSED
+        │
+        ▼
+       LEVEL 2
+        │
+        ▼
+       LEVEL 3
+        │
+        ▼
+       LEVEL N
+        │
+        ▼
+┌─────────────────────────┐
+│    FINAL APPROVAL       │
+└────────────┬────────────┘
+             ↓
+┌─────────────────────────┐
+│ ASSIGN EXECUTION OWNER  │
+└────────────┬────────────┘
+             ↓
+┌─────────────────────────┐
+│      EXECUTION          │
+└────────────┬────────────┘
+             ↓
+┌─────────────────────────┐
+│      COMPLETION         │
+└────────────┬────────────┘
+             ↓
+┌─────────────────────────┐
+│     AUDIT / HISTORY     │
+└─────────────────────────┘
+27. FINAL DOCUMENTED APPROVAL FAMILIES
+
+The company's current approval ecosystem can therefore be formally classified into:
+
+A. Executive Authority Approvals
+MD Approval
+ED Approval
+Sumit Approval
+B. Departmental Approvals
+Finance Approval
+HR & Admin Approval
+Purchase & SCM Approval
+C. Internal Operational Approvals
+Finance Internal Approval
+IT Internal Approval
+Plant Internal Approval
+D. Specialized Sequential Approval
+Price Realisation Approval
+28. FINAL CONCLUSION
+
+The current ARS Steels approval environment has already developed the fundamental components of a centralized Approval Management System:
+
+FORM
+  +
+USER
+  +
+DEPARTMENT
+  +
+APPROVAL TYPE
+  +
+APPROVER
+  +
+MULTI-LEVEL WORKFLOW
+  +
+APPROVAL DECISION
+  +
+EXECUTION
+  +
+COMPLETION
+  +
+AUDIT INFORMATION
+
+The main difference is that these capabilities are currently distributed across multiple Asana projects.
+
+The IT Internal Approval, Finance Internal Approval, and Price Realisation Approval are particularly useful reference models because they demonstrate three different workflow patterns:
+
+IT:
+HOD → ASSIGNMENT → EXECUTION → COMPLETION
+
+FINANCE:
+LEVEL 1 → LEVEL 2 → HOD → FINAL
+
+PRICE REALISATION:
+PENDING → ED → MD → FINAL
+
+These three patterns can serve as the foundation for the single interconnected Approval Platform you are planning.
+
+The future system should therefore not recreate the current projects one-by-one. It should create one configurable Approval Engine capable of reproducing all of these workflows through configuration.
+
+This gives you the current-state company approval architecture without depending on the Rules/Automation layer. It also gives you the base architecture for the custom interconnected approval platform you described earlier.
