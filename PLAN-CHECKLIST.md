@@ -17,10 +17,43 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
-- **Now:** Planning complete; the repo is live on GitHub (D-035). All planning questions answered except Q-004 values (DoA bands), Q-013 (notification templates from the owner) and Q-014 (reuse the OTP template).
-- **Next:** Phase 0 code scaffold (P0-40 to P0-46): a single Next.js app with `/users`, `/admin` and `/superadmin`, local MySQL, the first migrations, then Phase 1 sign-in.
+- **Now:** Build session 1 finished (28 Sep 2026). The single app is scaffolded; the foundation schema runs on local MySQL; sign-in services are built (Google, User ID + password + WhatsApp OTP, lockout, sessions, new-login alerts, "This wasn't me"); the area guards and the **multi-level engine core** are built and tested. Quality gates: 80 unit tests, typecheck, lint and production build all pass. The password flow and lockout were smoke-tested against MySQL.
+- **Waiting on the owner:** Q-004 (DoA values) and Q-013 (notification templates). Live WhatsApp/email sends also need the provider keys entered in `/superadmin` (the S2 settings editor). Google sign-in needs the Firebase Admin service-account values in `.env.local` / GoDaddy.
+- **Next (session 2, planned below):** the `/superadmin` settings editor (so provider keys can be entered encrypted), admin user management, engine persistence, and the CSP header.
 
 ---
+
+## Session log — build session 1 (28 Sep 2026): planned before starting
+- [x] S1-01 Record the owner's confirmation of both assumptions (D-042, Q-014) and the build choices (D-043) (done 28 Sep 2026)
+- [x] S1-02 Scaffold the single Next.js app at the repo root (P0-40a, P0-41): package.json (versions pinned as on the Power BI site), tsconfig, next.config (COOP header, Firebase public config), Tailwind with the ARS tokens, ESLint, PostCSS, Vitest, the folder structure (done 28 Sep 2026)
+- [x] S1-03 Environment schema (P0-43), `.env.example`, DB pool + transaction helper, migrate/seed scripts, docker-compose for MySQL on port 3307 (P0-42) (done 28 Sep 2026)
+- [x] S1-04 Foundation migrations: departments, designations, users, roles + user_roles, otp_challenges, user_devices, user_sessions, login_logs, audit_logs (append-only triggers, P1-37), system_settings + history, whatsapp templates/variables/rate limit, notifications + deliveries, jobs; seeds for roles, the OTP template (reusing `wa_login_otp_v1`) and a bootstrap Super Admin (itadmin@) (done 28 Sep 2026)
+- [x] S1-05 Security libraries: AES-256-GCM encryption, OTP generate/hash/verify, scrypt password hashing, session token signing, device cookie (done 28 Sep 2026)
+- [x] S1-06 Settings (definitions, encrypted resolution, masking) and the CEOITBox + Resend adapters (P1-41, P1-42) (done 28 Sep 2026)
+- [x] S1-07 Auth services with injectable dependencies: Google sign-in (P1-10), User ID + password → WhatsApp OTP (P1-11, P1-12), lockout (P1-15), DB-backed sessions + logout + sign out everywhere (P1-16), device check + new-login alert on email + WhatsApp (P1-17, P1-18), login logs with a wide user-agent column (P1-23) (done 28 Sep 2026)
+- [x] S1-08 Authorisation: pure policy + guards for `/users`, `/admin`, `/superadmin`; middleware layer 1 (P1-30a, P1-31) (done 28 Sep 2026)
+- [x] S1-09 UI: login page (Google, then User ID + password → OTP), area shells for /users, /admin, /superadmin using the ARS brand, generic 404 (P1-70, P1-71, P1-50) (done 28 Sep 2026)
+- [x] S1-10 **Multi-level engine core (north star, P2-ENG):** graph model, validator (P3-04 rules incl. G-08/G-09/G-10), start/advance with sequential, parallel+join, any-one, any-N-of-M, conditions, skip + no-self-approval, reject / changes / hold / resume, simulation (P3-05 core) (done 28 Sep 2026)
+- [x] S1-11 Unit tests for security, auth, policies and the engine; lint, typecheck, test and build all pass (done 28 Sep 2026)
+- [x] S1-12 Start local MySQL, run migrations and seeds, smoke-test sign-in API paths (done 28 Sep 2026)
+- [x] S1-13 Update the three living files; commit and push to GitHub (done 28 Sep 2026)
+
+Found and fixed during session 1 (each covered by a test or smoke check):
+- [x] S1-F1 Lockout locked one attempt early and skipped the lock alert: MySQL applies `SET` assignments left to right (D-044) (done 28 Sep 2026)
+- [x] S1-F2 A blank optional env value (`FIREBASE_*=`) crashed every request; blanks now mean "not set" (D-045) (done 28 Sep 2026)
+- [x] S1-F3 Tailwind resolved its config and content from the working directory, so pages were unstyled when started from another folder (as cPanel may do); both are now resolved from the project (D-046) (done 28 Sep 2026)
+- [x] S1-F4 A whitespace-only form value didn't count as empty in conditions (done 28 Sep 2026)
+
+## Session log — build session 2 (planned)
+- [ ] S2-01 `/superadmin` settings editor: grouped settings, encrypted secrets shown only as Configured / Not configured, save with validation, before/after audit, change history (P1-35, P1-54, P1-55, P1-60)
+- [ ] S2-02 Provider test-send buttons (CEOITBox, Resend) for the Super Admin only; results in the delivery log (P1-55)
+- [ ] S2-03 Admin user management in `/admin`: list, create, edit, set sign-in method, WhatsApp number, manager/HOD, roles (admin only), make inactive / reactivate (ends sessions), unlock, force sign-out (P1-04 to P1-06, P1-52)
+- [ ] S2-04 Set password / first sign-in for password users and forgot password via WhatsApp OTP (P1-13, P1-14)
+- [ ] S2-05 Content-Security-Policy with a per-request nonce that still allows the Firebase Google popup (P1-34a)
+- [ ] S2-06 Engine persistence: workflow definitions and published versions, requests, instances (state JSON + tasks table), actions, timeline (P2-02, P2-06, P2-07, P2-20, P2-31)
+- [ ] S2-07 Break-glass enable/disable script for the hosting console (P1-36)
+- [ ] S2-08 GitHub Actions CI: lint, typecheck, unit tests, build (P0-45)
+- [ ] S2-09 Update the three living files; commit and push
 
 ## Phase 0 — Setup and decisions
 
@@ -53,11 +86,11 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 
 ### 0.2b Code scaffold (D-028)
 - [~] P0-40 Monorepo with two apps: replaced by a single app (D-034, 28 Sep 2026)
-- [ ] P0-40a **Single Next.js app** (like the Power BI app) in the repo root, with route groups `/users`, `/admin`, `/superadmin`, `/login` and `/api`. Layers: `app/` (routes), `features/` (UI by domain), `server/` (engine, auth, business rules, server-only), `lib/` (db, integrations), `config/`, `database/` (migrations, seeds), `tests/`
-- [ ] P0-41 Next.js 15 + React 19 + TypeScript strict + Tailwind 3 with the ARS preset from `D:\Omniroute\assets\tokens`; icons from the asset sprite
-- [ ] P0-42 MySQL 8 via `mysql2`; SQL migration folder + migrate/seed scripts (same pattern as the Power BI site); `docker-compose.yml` for local MySQL
-- [ ] P0-43 Environment schema validated at startup with zod (fail fast with a clear message)
-- [ ] P0-44 Vitest unit tests + Playwright end-to-end; lint and typecheck scripts
+- [x] P0-40a **Single Next.js app** (like the Power BI app) in the repo root, with route groups `/users`, `/admin`, `/superadmin`, `/login` and `/api`. Layers: `app/` (routes), `features/` (UI by domain), `server/` (engine, auth, business rules, server-only), `lib/` (db, integrations), `config/`, `database/` (migrations, seeds), `tests/` (done 28 Sep 2026)
+- [x] P0-41 Next.js 15 + React 19 + TypeScript strict + Tailwind 3 with the ARS preset from `D:\Omniroute\assets\tokens`; icons from the asset sprite (done 28 Sep 2026)
+- [x] P0-42 MySQL 8 via `mysql2`; SQL migration folder + migrate/seed scripts (same pattern as the Power BI site); `docker-compose.yml` for local MySQL (done 28 Sep 2026; Docker MySQL on port 3307)
+- [x] P0-43 Environment schema validated at startup with zod (fail fast with a clear message) (done 28 Sep 2026; blank optional values count as unset (D-045))
+- [>] P0-44 Vitest unit tests + Playwright end-to-end; lint and typecheck scripts (28 Sep 2026: Vitest in place with 80 tests; Playwright still to do)
 - [ ] P0-45 CI on GitHub Actions (lint, typecheck, unit tests, build)
 - [ ] P0-46 GoDaddy deploy: one Node.js app from GitHub `HarishDevs/ARS-Approval-System` → `approvals.arssteels.net`, env vars entered in GoDaddy only, cPanel cron calling a signed job-runner endpoint
 
@@ -96,45 +129,46 @@ The Super Admin then enters the table in the Admin Portal (P3-30). Every request
 ## Phase 1 — Foundation: sign-in, people, Admin Portal core, notifications
 
 ### P1-USR Users and organisation
-- [ ] P1-01 Data model: companies/units, locations, departments, designations, cost centres
-- [ ] P1-02 Data model: users. Fields: login ID, email (any domain), WhatsApp number, sign-in method (Google / password), firebase_uid, password hash, status (active / inactive), locked-until, is_super_admin, is_break_glass
+- [>] P1-01 Data model: companies/units, locations, departments, designations, cost centres (28 Sep 2026: departments (with HOD) and designations; units, locations and cost centres still to do)
+- [x] P1-02 Data model: users. Fields: login ID, email (any domain), WhatsApp number, sign-in method (Google / password), firebase_uid, password hash, status (active / inactive), locked-until, is_super_admin, is_break_glass (done 28 Sep 2026; Super Admin is a role (D-043), not a flag)
 - [ ] P1-03 Reporting hierarchy: reporting manager and HOD per user; manager-of-manager lookup
 - [ ] P1-04 Users can only be created in the Admin Portal (no self sign-up); bulk import with validation
 - [ ] P1-05 Make a user inactive (never hard-delete, D-033) → end their sessions, block sign-in, hand their pending approval steps to a chosen person; reactivate later if needed
 - [ ] P1-06 Roles assigned per user, by the admin only (D-033): a user can hold several roles; no self-service role changes
 
 ### P1-AUTH Sign-in and security
-- [ ] P1-10 Google sign-in via Firebase Auth, ID token verified on the server: the email must match an existing active user whose method is Google; link firebase_uid on the first sign-in only; **no OTP** (D-006)
-- [ ] P1-11 User ID + password sign-in: Argon2id hashing, leaked-password check, minimum length (configurable)
-- [ ] P1-12 OTP after password sign-in: 6 digits, 5 min, single use, 5 wrong tries, resend after 30 s, max 5 per hour, stored hashed, anti-enumeration response; sent on **WhatsApp only** (D-025) with the Authentication-category template
+- [>] P1-10 Google sign-in via Firebase Auth, ID token verified on the server: the email must match an existing active user whose method is Google; link firebase_uid on the first sign-in only; **no OTP** (D-006) (28 Sep 2026: built and unit-tested; a live test needs the Firebase Admin service-account values)
+- [>] P1-11 User ID + password sign-in: Argon2id hashing, leaked-password check, minimum length (configurable) (28 Sep 2026: scrypt instead of Argon2id (D-043), policy checks; leaked-password check still to do)
+- [>] P1-12 OTP after password sign-in: 6 digits, 5 min, single use, 5 wrong tries, resend after 30 s, max 5 per hour, stored hashed, anti-enumeration response; sent on **WhatsApp only** (D-025) with the Authentication-category template (28 Sep 2026: built, unit-tested and smoke-tested to the send step; a live send needs the CEOITBox key entered in /superadmin (S2-01))
 - [ ] P1-13 First sign-in for password users: set password (reuse the asset-pack create-password screens), verify the WhatsApp number by OTP
 - [ ] P1-14 Forgot password: OTP on WhatsApp → new password → all sessions ended → alert sent
-- [ ] P1-15 Lockout after 5 failed passwords (15 min, configurable) + alert
-- [ ] P1-16 Sessions: secure HTTP-only cookie, idle and absolute timeouts (configurable), sign out everywhere
-- [ ] P1-17 Device recognition: signed device cookie + browser/OS + IP / approximate location; trusted-device period
-- [ ] P1-18 **New-login alert** on email + WhatsApp: time, device, browser, approximate location, IP, and a "This wasn't me" link
-- [ ] P1-19 "This wasn't me": end all sessions, lock the account, notify the Super Admin
-- [ ] P1-20 Security alerts for password changed, mobile/WhatsApp changed, account locked, repeated failures; every Super Admin sign-in alerts the Super Admin
+- [x] P1-15 Lockout after 5 failed passwords (15 min, configurable) + alert (done 28 Sep 2026; verified on MySQL (5th wrong password locks, alert recorded))
+- [>] P1-16 Sessions: secure HTTP-only cookie, idle and absolute timeouts (configurable), sign out everywhere (28 Sep 2026: DB-backed sessions, logout, sign out everywhere; idle timeout still to do)
+- [>] P1-17 Device recognition: signed device cookie + browser/OS + IP / approximate location; trusted-device period (28 Sep 2026: signed device cookie, user agent, IP, trusted period; approximate location still to do)
+- [>] P1-18 **New-login alert** on email + WhatsApp: time, device, browser, approximate location, IP, and a "This wasn't me" link (28 Sep 2026: built and tested; the WhatsApp copy waits for the owner's template (Q-013))
+- [>] P1-19 "This wasn't me": end all sessions, lock the account, notify the Super Admin (28 Sep 2026: ends sessions, locks the account, alerts the user and the Super Admin; admin unlock arrives with S2-03)
+- [>] P1-20 Security alerts for password changed, mobile/WhatsApp changed, account locked, repeated failures; every Super Admin sign-in alerts the Super Admin (28 Sep 2026: account locked + Super Admin/break-glass sign-in alerts; password/mobile-changed alerts come with S2-03/S2-04)
 - [ ] P1-21 Rate limiting on sign-in, OTP and password reset
 - [~] P1-22 Step-up OTP for sensitive Admin Portal actions: not needed (D-032, 28 Sep 2026)
-- [ ] P1-23 `login_logs` browser/user-agent column ≥ VARCHAR(500) (bug found on the Power BI site)
+- [x] P1-23 `login_logs` browser/user-agent column ≥ VARCHAR(500) (bug found on the Power BI site) (done 28 Sep 2026; VARCHAR(500))
 
 ### P1-SEC Backend visibility and platform security (D-016)
 - [~] P1-30 Separate admin build and address: replaced by role routes in one app (D-034, 28 Sep 2026)
-- [ ] P1-30a Route protection in 3 layers (the Power BI site's pattern): (1) middleware blocks `/admin` and `/superadmin` without the right role; (2) every page, route handler and server action re-checks the role and permission on the server; (3) record-level data-scope checks. Admin UI built mainly as server components, with no config or secrets in client bundles. Unknown or forbidden admin routes return a generic 404
-- [ ] P1-31 Every API call needs a signed-in session; permissions checked on the server per record; admin routes accept only Admin Portal roles (D-024); Super-Admin-only areas (providers, security, integrations, health, audit export) enforced on the server
-- [ ] P1-32 No public API docs; no source maps in production; no config or keys sent to the browser; feature flags decided on the server
-- [ ] P1-33 Generic error messages with a reference code; server/framework headers stripped; no provider names in the UI, emails or WhatsApp
-- [ ] P1-34 CORS limited to ARS addresses; security headers (CSP, HSTS, frame-ancestors)
+- [>] P1-30a Route protection in 3 layers (the Power BI site's pattern): (1) middleware blocks `/admin` and `/superadmin` without the right role; (2) every page, route handler and server action re-checks the role and permission on the server; (3) record-level data-scope checks. Admin UI built mainly as server components, with no config or secrets in client bundles. Unknown or forbidden admin routes return a generic 404 (28 Sep 2026: layers 1 (middleware) and 2 (every layout and page, plus API guards; forbidden admin areas return 404) done; layer 3 comes with requests)
+- [>] P1-31 Every API call needs a signed-in session; permissions checked on the server per record; admin routes accept only Admin Portal roles (D-024); Super-Admin-only areas (providers, security, integrations, health, audit export) enforced on the server (28 Sep 2026: area guards for API routes; per-record checks come with requests)
+- [>] P1-32 No public API docs; no source maps in production; no config or keys sent to the browser; feature flags decided on the server (28 Sep 2026: no production source maps, no x-powered-by, public config only for Firebase)
+- [>] P1-33 Generic error messages with a reference code; server/framework headers stripped; no provider names in the UI, emails or WhatsApp (28 Sep 2026: generic errors with a REQ- reference code)
+- [>] P1-34 CORS limited to ARS addresses; security headers (CSP, HSTS, frame-ancestors) (28 Sep 2026: HSTS, X-Frame-Options DENY, nosniff, Referrer-Policy and Permissions-Policy set; CSP is S2-05 (P1-34a))
+- [ ] P1-34a Content-Security-Policy with a per-request nonce, compatible with the Firebase popup (S2-05, added 28 Sep 2026)
 - [ ] P1-35 Secrets encrypted at rest, shown masked in the Admin Portal, with rotation dates
-- [ ] P1-36 **Break-glass account** (D-011): disabled by default; enabled only by a server-side script run from the hosting console; each use alerts
-- [ ] P1-37 **Append-only audit log** (D-012): no update or delete for anyone; the Super Admin can view and export
+- [>] P1-36 **Break-glass account** (D-011): disabled by default; enabled only by a server-side script run from the hosting console; each use alerts (28 Sep 2026: schema plus the sign-in window rule and alert; the enabling script is S2-07)
+- [x] P1-37 **Append-only audit log** (D-012): no update or delete for anyone; the Super Admin can view and export (done 28 Sep 2026; MySQL triggers reject UPDATE/DELETE (verified))
 - [ ] P1-38 At go-live: rotate every key and password; remove developer access that is no longer needed
 
 ### P1-NOT Notification hub
-- [ ] P1-40 Event-driven hub: each event is recorded once, then fanned out to channels
-- [ ] P1-41 Email channel (Q-005), using ARS header/footer branding
-- [ ] P1-42 WhatsApp channel through CEOITBox (D-009), with approved templates
+- [>] P1-40 Event-driven hub: each event is recorded once, then fanned out to channels (28 Sep 2026: hub built (in-app + email + WhatsApp, never throws); the retry runner is P1-48)
+- [>] P1-41 Email channel (Q-005), using ARS header/footer branding (28 Sep 2026: Resend adapter built; key entry is S2-01)
+- [>] P1-42 WhatsApp channel through CEOITBox (D-009), with approved templates (28 Sep 2026: CEOITBox adapter with rate limit built; key entry is S2-01)
 - [~] P1-43 SMS channel for OTP: not needed (D-025, 28 Sep 2026)
 - [ ] P1-48 Retry outbox for failed sends, driven by the cron job runner (the Power BI site lacked this); respect the CEOITBox rate limit
 - [ ] P1-44 In-app notifications (bell icon from the asset pack)
@@ -143,8 +177,8 @@ The Super Admin then enters the table in the Admin Portal (P3-30). Every request
 - [ ] P1-47 WhatsApp numbers verified by OTP; opt-in recorded
 
 ### P1-ADM Admin Portal (Super Admin) core
-- [ ] P1-50 Admin area shells at `approvals.arssteels.net/admin` and `/superadmin` (D-034): navigation, ARS branding
-- [ ] P1-50a Roles (D-024, D-039): **Super Admin** = itadmin@ (everything; `/superadmin`); **IT Admin** (`/admin`: approval types, forms, workflows, templates, DoA, users and roles as granted); **User** (`/users`). Provider keys, security, integrations, system health and audit export are `/superadmin` only
+- [>] P1-50 Admin area shells at `approvals.arssteels.net/admin` and `/superadmin` (D-034): navigation, ARS branding (28 Sep 2026: shells for /admin and /superadmin)
+- [>] P1-50a Roles (D-024, D-039): **Super Admin** = itadmin@ (everything; `/superadmin`); **IT Admin** (`/admin`: approval types, forms, workflows, templates, DoA, users and roles as granted); **User** (`/users`). Provider keys, security, integrations, system health and audit export are `/superadmin` only (28 Sep 2026: SUPER_ADMIN / IT_ADMIN / USER roles and area policy)
 - [ ] P1-51 Organisation module (P1-01)
 - [ ] P1-52 Users and hierarchy module (P1-02 to P1-05): create, import, edit, deactivate, force sign-out, reset password, unlock, change sign-in method
 - [ ] P1-53 Roles and data rights: role builder, permission matrix, data scopes (own / team / department / list / all), field-level hiding
@@ -157,8 +191,8 @@ The Super Admin then enters the table in the Admin Portal (P3-30). Every request
 - [ ] P1-60 Every admin change is written to the audit log with before and after values
 
 ### P1-UI User app foundation
-- [ ] P1-70 App shell with the ARS tokens and icons (asset pack): sidebar, top bar, profile
-- [ ] P1-71 Login screens: Google button, User ID + password, OTP screen, forgot password, create password
+- [>] P1-70 App shell with the ARS tokens and icons (asset pack): sidebar, top bar, profile (28 Sep 2026: sidebar shell with ARS branding)
+- [>] P1-71 Login screens: Google button, User ID + password, OTP screen, forgot password, create password (28 Sep 2026: Google + User ID/password + OTP screens; forgot/create password in S2-04)
 - [ ] P1-72 Profile: my details, my devices and sessions (sign out a device), notification preferences where the Super Admin allows them
 
 ---
@@ -178,19 +212,19 @@ The Super Admin then enters the table in the Admin Portal (P3-30). Every request
 
 ### P2-ENG Engine behaviour (all patterns from day one)
 - [ ] P2-20 Instantiate a request against the **published workflow version** (running requests never change underneath)
-- [ ] P2-21 Sequential levels (any number)
-- [ ] P2-22 Parallel levels with a join (ALL)
-- [ ] P2-23 Any-one and any-N-of-M groups
-- [ ] P2-24 Conditional branches (amount, department, type, priority, any form field; AND/OR)
-- [ ] P2-25 Hybrid graphs: combinations of all the above, nested
-- [ ] P2-26 Skip rules (e.g. skip a level if the requester is that approver; no self-approval)
+- [x] P2-21 Sequential levels (any number) (engine core done 28 Sep 2026; stored with S2-06)
+- [x] P2-22 Parallel levels with a join (ALL) (engine core done 28 Sep 2026 (joins: ALL, ANY_ONE, ANY_N))
+- [x] P2-23 Any-one and any-N-of-M groups (engine core done 28 Sep 2026)
+- [x] P2-24 Conditional branches (amount, department, type, priority, any form field; AND/OR) (engine core done 28 Sep 2026 (AND/OR groups, default path))
+- [x] P2-25 Hybrid graphs: combinations of all the above, nested (engine core done 28 Sep 2026)
+- [x] P2-26 Skip rules (e.g. skip a level if the requester is that approver; no self-approval) (engine core done 28 Sep 2026 (skipIf, no self-approval, BLOCK/SKIP when no approver))
 - [ ] P2-27 Resolve approvers when a step starts (so hierarchy changes are picked up); record who was resolved
-- [ ] P2-28 **Server-side actor authorisation** on every action (D-020): the signed-in user must be an eligible approver or a valid delegate for this step
+- [>] P2-28 **Server-side actor authorisation** on every action (D-020): the signed-in user must be an eligible approver or a valid delegate for this step (28 Sep 2026: the engine enforces approver-or-delegate; the server wiring comes with S2-06)
 - [ ] P2-29 Canonical state machine (D-017): Draft, Submitted, Pending, In Progress, On Hold, Changes Required, Resubmitted, Approved, Rejected, Reopened, Closed
-- [ ] P2-30 Actions: Approve, Reject (reason required), Request Changes (reason required), Put On Hold / Resume, Comment
+- [x] P2-30 Actions: Approve, Reject (reason required), Request Changes (reason required), Put On Hold / Resume, Comment (engine core done 28 Sep 2026)
 - [ ] P2-31 Timeline / audit entry for every transition
 - [ ] P2-32 Notification events emitted for every transition (to P1-NOT)
-- [ ] P2-33 Engine test suite covering every pattern, including edge cases (an approver leaves mid-flow, an empty approver group, a condition with no matching branch)
+- [>] P2-33 Engine test suite covering every pattern, including edge cases (an approver leaves mid-flow, an empty approver group, a condition with no matching branch) (28 Sep 2026: 38 engine tests; 'an approver leaves mid-flow' still to do)
 
 ### P2-UI Employee and approver portals (first cut)
 - [ ] P2-40 Employee: create request from a template, dynamic form, attachments, submit, save draft
@@ -213,8 +247,8 @@ The Super Admin then enters the table in the Admin Portal (P3-30). Every request
 - [ ] P3-01 Visual drag-and-drop designer: START, APPROVAL, PARALLEL, ANY-ONE, ANY-N, CONDITION, WORK, END
 - [ ] P3-02 Node settings panel: approver source, completion rule, SLA, allowed actions, notifications
 - [ ] P3-03 Form builder: drag, add, remove and reorder fields; field types; required; validation; conditional visibility
-- [ ] P3-04 **Workflow validator** before publish: start/end exist, all nodes connected, no dead ends, no unintended loops, every approval node has an approver source, no self-approval, valid completion rules, logically valid conditions with no conflicts, rejection path exists, resubmission/reopen policy set, valid escalation (base plan §34)
-- [ ] P3-05 **Test mode / simulation:** enter sample values and see the exact levels and approvers, without creating a real request
+- [>] P3-04 **Workflow validator** before publish: start/end exist, all nodes connected, no dead ends, no unintended loops, every approval node has an approver source, no self-approval, valid completion rules, logically valid conditions with no conflicts, rejection path exists, resubmission/reopen policy set, valid escalation (base plan §34) (28 Sep 2026: core rules incl. G-08/G-09, cycles, dead ends; rejection-path and escalation checks still to do)
+- [>] P3-05 **Test mode / simulation:** enter sample values and see the exact levels and approvers, without creating a real request (28 Sep 2026: simulate() core with stages, skips, blocks and branches; UI with P3)
 - [ ] P3-06 Draft / publish / archive for templates, with version history and a diff
 - [ ] P3-30 **DoA matrix module:** amount bands per type and department, approver roles per band, effective dates, versioned; used by condition nodes
 - [ ] P3-40 Templates: HR Approvals, Admin, Recruitment (Manager → HOD)

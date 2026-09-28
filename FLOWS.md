@@ -18,28 +18,28 @@ The number of levels and how they combine is unlimited. There are no fixed "Leve
 | ID | Flow | Status |
 |---|---|---|
 | A-01…A-12 | Asana reference flows | Reference |
-| F-01 | Google sign-in | Planned |
-| F-02 | User ID + password + OTP | Planned |
-| F-03 | New-login detection and alert | Planned |
+| F-01 | Google sign-in | Built 28 Sep 2026 (live test pending Firebase Admin values) |
+| F-02 | User ID + password + OTP | Built 28 Sep 2026 (live send pending the CEOITBox key) |
+| F-03 | New-login detection and alert | Built 28 Sep 2026 (device cookie; location later) |
 | F-04 | Forgot password | Planned |
-| F-05 | Lockout and "This wasn't me" | Planned |
+| F-05 | Lockout and "This wasn't me" | Built 28 Sep 2026 (admin unlock in S2-03) |
 | F-06 | User creation (Admin Portal) | Planned |
-| F-07 | Break-glass access | Planned |
-| F-08 | Role routing: /users, /admin, /superadmin | Planned |
+| F-07 | Break-glass access | Partly built: sign-in window + alert; enable script S2-07 |
+| F-08 | Role routing: /users, /admin, /superadmin | Built 28 Sep 2026 |
 | F-10 | Request state machine | Planned |
 | F-11 | Submission → workflow resolution | Planned |
 | F-12 | Approver action authorisation | Planned |
-| F-20 | Multi-level building blocks | Planned |
-| F-21 | Sequential multi-level | Planned |
-| F-22 | Parallel (ALL) | Planned |
-| F-23 | Any-one / Any-N-of-M | Planned |
-| F-24 | Conditional / DoA routing | Planned |
-| F-25 | Hybrid (combined) | Planned |
-| F-26 | Changes required → resubmission | Planned |
-| F-27 | On Hold / resume | Planned |
-| F-28 | Reject | Planned |
+| F-20 | Multi-level building blocks | Engine core built 28 Sep 2026 |
+| F-21 | Sequential multi-level | Engine core built 28 Sep 2026 |
+| F-22 | Parallel (ALL) | Engine core built 28 Sep 2026 (joins ALL / ANY_ONE / ANY_N) |
+| F-23 | Any-one / Any-N-of-M | Engine core built 28 Sep 2026 |
+| F-24 | Conditional / DoA routing | Engine core built 28 Sep 2026 (DoA values: Q-004) |
+| F-25 | Hybrid (combined) | Engine core built 28 Sep 2026 |
+| F-26 | Changes required → resubmission | Engine core built 28 Sep 2026 |
+| F-27 | On Hold / resume | Engine core built 28 Sep 2026 |
+| F-28 | Reject | Engine core built 28 Sep 2026 |
 | F-29 | Reopen | Planned |
-| F-30 | Delegation | Planned |
+| F-30 | Delegation | Engine core built 28 Sep 2026 (delegation records: later) |
 | F-31 | SLA, reminder, escalation | Planned |
 | F-32 | Work assignment after approval | Planned |
 | F-33 | Employee custom approval | Planned |
@@ -102,7 +102,15 @@ flowchart TD
   D --> S([Signed in])
 ```
 - First sign-in: set a password (asset-pack screens), then verify the WhatsApp number by OTP.
-- OTP on WhatsApp only (D-025). Every response is identical whether or not the account exists (anti-enumeration). A failed WhatsApp send is logged but never breaks the request. *Updated 28 Sep 2026.*
+- OTP on WhatsApp only (D-025). Every response is identical whether or not the account exists (anti-enumeration). *Updated 28 Sep 2026.*
+- **As built (28 Sep 2026), all values configurable in `/superadmin`:**
+  - An unknown user ID still runs a dummy password check, so the timing reveals nothing.
+  - An inactive account, a Google-only account or a disabled break-glass account gets the same generic "user ID or password is incorrect".
+  - A locked account is refused even with the right password.
+  - Codes: 6 digits, 5 minutes, stored hashed, single use. There is a 30 s cooldown between codes and a cap of 5 per hour. 5 wrong codes end the challenge; a right code after that is still refused.
+  - Resend works only on an open challenge and closes the old code.
+  - After the code is accepted, the account is checked again, in case it was deactivated or locked in the meantime.
+  - If the OTP template is inactive or the WhatsApp send fails, the user sees "couldn't send the code" and an `OTP_DELIVERY_FAILED` audit entry is written. The sign-in cannot continue without the code; only *notifications* are fire-and-forget.
 
 ## F-03 New-login detection and alert
 ```mermaid
@@ -113,6 +121,12 @@ flowchart LR
   N --> R[Remember device for trusted period] --> S
   N -. user taps This wasn't me .-> F05[F-05]
 ```
+- **As built (28 Sep 2026):**
+  - The device is recognised by a signed `ars_device` cookie; a forged cookie counts as a new device. Browser/OS and location matching come later (P1-17).
+  - The very first sign-in on a new account is not alerted.
+  - The alert is sent after the sign-in response is decided. A failed alert never blocks the sign-in.
+  - Every Super Admin sign-in (N-04) and every break-glass sign-in (N-05) also alerts all Super Admins.
+  - The "This wasn't me" link is a signed, single-purpose token valid for 7 days.
 
 ## F-04 Forgot password
 User ID → OTP on WhatsApp → set new password → all sessions end → alert on email + WhatsApp. *Updated 28 Sep 2026 (D-025).*
@@ -120,6 +134,9 @@ User ID → OTP on WhatsApp → set new password → all sessions end → alert 
 ## F-05 Lockout and "This wasn't me"
 - **Lockout:** 5 wrong passwords → locked 15 min (configurable) → alert to the user. Repeated locks also alert the Super Admin.
 - **"This wasn't me":** end all sessions → lock the account → notify the Super Admin → the Super Admin unlocks after checking and resets the password or OTP numbers.
+- **As built (28 Sep 2026):**
+  - The lock happens on exactly the 5th wrong password (D-044). An `ACCOUNT_LOCKED` audit entry is written and the user is alerted.
+  - "This wasn't me" ends every session and locks the account until an admin unlocks it. It writes a `NOT_ME_REPORTED` audit entry, sends "account secured" to the user, and sends a security alert to every Super Admin.
 
 ## F-06 User creation, roles, inactivation (Admin Portal only, D-033)
 ```mermaid
@@ -146,6 +163,10 @@ flowchart TD
   X["Direct visit to /admin or /superadmin\nwithout the role"] --> M[Middleware + server re-check → generic 404, attempt audited]
 ```
 - Everyone lands on `/users`. Admins also see a switcher to their admin area.
+- **As built (28 Sep 2026):**
+  - With no session, or an invalid or forged one, every area redirects to `/login?next=…`.
+  - A signed-in user without the role gets a generic 404, and the attempt is audited.
+  - The check runs in the middleware, in every layout **and** every page (the App Router can render a page without its layout), and in every API route.
 - Protection is enforced on the server in 3 layers: middleware, then every page/handler/action, then record scope. It is never enforced by hiding links alone. *Superseded 28 Sep 2026: the earlier separate admin.arssteels.net portal version of this flow.*
 
 ## F-07 Break-glass access (D-011, D-041)
@@ -209,6 +230,15 @@ flowchart TD
 | Per-node settings | Allowed actions · SLA · reminder · escalation · skip rule · notification overrides |
 | Level count | Unlimited; levels combine freely |
 
+- **As built (28 Sep 2026)** in `server/engine`: the graph is START → (APPROVAL | SPLIT → … → JOIN | CONDITION)* → END.
+  - Each APPROVAL step has approver sources and a completion rule (ALL, ANY_ONE, ANY_N). A JOIN has its own rule over its branches.
+  - When a step starts, approvers are resolved: inactive users are dropped, duplicates are removed, and the requester is never their own approver.
+  - A step with no eligible approver is **BLOCKED**, never silently approved, unless the step is set to SKIP.
+  - `skipIf` skips a step when its condition matches.
+  - Only the task's approver or their delegate can decide. The delegate is recorded as the actor, with on-behalf-of.
+  - An ALL step rejects on the first rejection. An ANY step rejects only when its rule can no longer be met.
+  - Test mode (`simulate`) runs the flow with sample values and lists the stages, with parallel steps together.
+
 ## F-21 Sequential multi-level
 ```mermaid
 flowchart LR
@@ -263,6 +293,13 @@ flowchart TD
 
 ## F-26 Changes required → resubmission (same ID)
 Approver requests changes (reason required) → state Changes Required, stays open → requester edits the form and documents → **version n+1 under the same ID** → restart point per template policy (beginning / the level that asked / a specific level) → the approvers at the restart level are notified.
+
+- **As built (28 Sep 2026):**
+  - Request changes (a reason is required) closes the open tasks, remembers which steps were open, and sets the request to CHANGES_REQUIRED.
+  - Resubmit starts a new **round** on the same request. It restarts either from the beginning or from the requesting step(s), including every parallel branch that was still open.
+  - Finished steps are kept.
+  - Approvals from the previous round never count in the new one.
+  - The full history stays on one request (G-04).
 
 ## F-27 On Hold / resume
 Approver puts the request on hold (reason) → state On Hold, stays open, counts as pending, SLA paused → the approver resumes → back to Pending at the same level.

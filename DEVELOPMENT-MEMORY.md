@@ -25,10 +25,10 @@
 | Company | ARS Steels & Alloy International Pvt Ltd |
 | Build team | Project owner (ARS IT, itadmin@arssteels.co.in) + Claude (AI pair developer) |
 | Admin Portal (Super Admin) login | `itadmin@arssteels.co.in`, operated by the developers |
-| Current stage | **Planning complete (v3). No code written yet.** Stack and hosting decided (D-027/D-028). Remaining open questions in §4; Phase 0 setup can start |
+| Current stage | **Build session 1 done (28 Sep 2026).** App scaffold, foundation schema, sign-in services, area guards and the multi-level engine core are built; 80 unit tests, typecheck, lint and build pass; local MySQL (Docker, port 3307) migrated, seeded and smoke-tested. Next: session 2 (PLAN-CHECKLIST §S2) |
 | Address | **`approvals.arssteels.net`** (single app; role routes `/users`, `/admin`, `/superadmin`, D-034) |
 | Repository | **https://github.com/HarishDevs/ARS-Approval-System** (private, `main`, D-035). Local root: `D:\Omniroute\ARS Approval System` |
-| Last updated | 28 Sep 2026 |
+| Last updated | 28 Sep 2026 (build session 1) |
 
 ## 2. Key files and links
 
@@ -43,6 +43,12 @@
 | Base development plan (45 points, shared by owner 28 Sep) | Captured in PLAN-CHECKLIST.md §Coverage map; full text is in the plan page |
 | Design assets (brand tokens, logos, icons, login screens) | `D:\Omniroute\assets` (tokens.json / tokens.css / tailwind.preset.js) |
 | Figma reference file | `mfSBf0vugMktmwIJLYN6aD` (Starter plan, max 3 pages) |
+| Multi-level engine (north star) | `server/engine/` (types, conditions, validate, engine, simulate); tests in `tests/engine/` |
+| Sign-in services | `server/auth/` (google-sign-in, password-sign-in, complete-sign-in, session, sign-in-rules) |
+| Area access rules | `server/authorization/policy.ts` + `guards.ts`, `middleware.ts` |
+| Notification hub | `server/notifications/notify.ts`; adapters in `server/integrations/ceoitbox` and `resend` |
+| Database | `database/migrations/`, `database/seeds/`, scripts in `scripts/database/`; local `docker-compose.yml` |
+| Local dev server (Claude preview) | `D:\Omniroute\.claude\launch.json` runs `next dev` for the project folder on port 3000 (npm scripts break on the space in the path there) |
 
 ## 3. Decisions register
 
@@ -89,6 +95,11 @@
 | D-039 | 28 Sep 2026 | **IT-team admins (`/admin`) create predefined approvals. Provider keys, security settings, integrations, system health and audit export stay Super Admin only (`/superadmin`).** *Resolves Q-011.* | Owner (answer 5) |
 | D-040 | 28 Sep 2026 | **Custom approvals: anyone can pick anyone as an approver**, including ED and MD, with no exclusion list. The engine's safety rules still apply: approvers must be active users, and nobody approves their own request. *Resolves Q-012.* | Owner (answer 6) |
 | D-041 | 28 Sep 2026 | **Approval authority (DoA owner) = `itadmin@arssteels.co.in`**, who also holds the admin login and the break-glass account. *Resolves Q-009 and the owner part of Q-004.* Risk accepted: keep the break-glass recovery credentials sealed offline, separate from the daily login | Owner (answer 7) |
+| D-042 | 28 Sep 2026 | **Owner confirmed both assumptions:** (1) the login OTP reuses the Power BI site's Meta-approved `wa_login_otp_v1` template; (2) break-glass recovery credentials stay with itadmin@, sealed offline and separate from the daily login (risk accepted) | Owner |
+| D-043 | 28 Sep 2026 | **Build choices for Phase 0/1 (session 1):** passwords hashed with Node's built-in `scrypt` (no native module, so the GoDaddy build can't fail on it; replaces the Argon2id idea in P1-11); sessions are HMAC-signed cookies **backed by a `user_sessions` table**, so "sign out everywhere" and "This wasn't me" can revoke them; the device is identified by a signed `ars_device` cookie; roles live in `user_roles` (SUPER_ADMIN, IT_ADMIN, USER), and a user may hold several; local MySQL runs in Docker on **port 3307** so it can't clash with the Power BI site's container on 3306; the approval engine is a pure TypeScript module (`server/engine`), unit-tested without a database, with persistence added next | Claude, following D-028 |
+| D-044 | 28 Sep 2026 | **SQL rule: in a MySQL `UPDATE`, a column that depends on another column's old value must be assigned before that column** (MySQL applies `SET` assignments left to right). Found when the lockout locked on the 4th wrong password and skipped the lock alert; fixed in `recordFailedPassword`. Along with "do time maths in SQL", this is now a standing rule for every repository | Claude (bug found in smoke test) |
+| D-045 | 28 Sep 2026 | **A blank environment value means "not set".** Optional env vars (Firebase Admin, APP_BASE_URL, JOB_RUNNER_SECRET) are optional because GoDaddy's editor may leave a key with an empty value; a blank must never crash the app | Claude (bug found in smoke test) |
+| D-046 | 28 Sep 2026 | **The build never depends on the working directory.** PostCSS points Tailwind at `tailwind.config.ts` by absolute path, and Tailwind content paths are relative to the config file, because cPanel may start the app from another folder | Claude (bug found in preview) |
 | D-033 | 28 Sep 2026 | **Staff data is provided by the admin. Roles are assigned per user, by the admin only. Users are added or made inactive in the Admin Portal** (never hard-deleted, so history and audit stay intact). *Resolves Q-010.* | Owner (answer 7) |
 
 ## 4. Open questions (must be answered before the phase shown)
@@ -108,9 +119,24 @@
 | Q-011 | IT-team access to the Admin Portal | Phase 1 roles | **Resolved 28 Sep → D-039** |
 | Q-012 | Custom approval limits | Phase 5 | **Resolved 28 Sep → D-040 (anyone can pick anyone; the no-self-approval safety rule stays)** |
 | Q-013 | **Notification templates:** the owner will send the WhatsApp (and email) wording for the events N-06 to N-20; the Meta template names come after approval | Phase 1 notifications | Open, waiting on the owner |
-| Q-014 | **OTP template:** confirm the Power BI site's approved `wa_login_otp_v1` Authentication template is reused for this app's login OTP | Phase 1 | Open (assumed yes) |
+| Q-014 | OTP template | Phase 1 | **Resolved 28 Sep → confirmed by the owner: reuse `wa_login_otp_v1`** (D-042) |
 
 ## 5. Work log (newest first)
+
+### 28 Sep 2026 (build session 1)
+- Owner confirmed both assumptions (D-042). Recorded the build choices (D-043).
+- **Scaffold:** one Next.js 15 / React 19 / TypeScript strict / Tailwind app at the repo root, versions pinned as on the Power BI site; zod env schema; mysql2 pool and transaction helper; migrate/seed scripts (trigger-safe splitter); Docker MySQL 8 on port 3307.
+- **Schema (6 migrations):** departments (with HOD), designations, users (per-user sign-in method, lock and break-glass fields), roles + user_roles, otp_challenges, user_devices, user_sessions, login_logs (user agent VARCHAR(500)), **append-only audit_logs (triggers)**, system_settings + history, WhatsApp templates/variables/rate-limit log, notifications + deliveries, jobs. **Seeds:** roles; the `wa_login_otp_v1` OTP template; the itadmin@ Super Admin (Google, all three roles).
+- **Security:** AES-256-GCM secrets, keyed hashing, hashed OTP codes, scrypt passwords with a policy check, signed session, purpose ("This wasn't me") and device tokens.
+- **Sign-in:** Google (Firebase ID token verified on the server, link on the first sign-in, no OTP); User ID + password then a **WhatsApp-only OTP** (cooldown, hourly cap, attempt limit, single use, re-check after the OTP); lockout with an alert; DB-backed sessions, logout, sign out everywhere; new-device detection and a **new-login alert** (email + WhatsApp + in-app) with a "This wasn't me" link that ends sessions, locks the account and alerts the Super Admin; every Super Admin or break-glass sign-in alerts the Super Admin. All messages are generic (no user enumeration).
+- **Access:** area policy (users / admin / superadmin), guards in every layout **and** page, API guards, middleware. Forbidden admin areas return 404.
+- **UI:** split login page from the asset pack (Google, password, OTP), area shells with ARS branding, security page (sign out everywhere), "This wasn't me" page.
+- **Notification hub:** one call records the in-app row, then email (Resend) and WhatsApp (CEOITBox) deliveries. It never throws; a missing template is SKIPPED with `TEMPLATE_NOT_CONFIGURED` (Q-013).
+- **Multi-level engine core (north star):** node graph (START, APPROVAL, SPLIT, JOIN, CONDITION, END); completion ALL / ANY_ONE / ANY_N on steps and joins; 8 approver sources; conditions with AND/OR and a default path; skipIf; no self-approval; BLOCK/SKIP when no approver; delegation; reject / request changes / hold / resume; resubmit from the beginning or the requesting step (rounds, including parallel branches); validator (G-08 impossible conditions, G-09 unknown sources/fields, cycles, dead ends, counts); simulator (stages, skips, blocks, branches).
+- **Tests:** 80 unit tests (38 engine, 10 security, 8 rules/policy, 6 notification hub, 16 password/OTP + alerts, 2 env). Typecheck, lint and production build are green.
+- **Smoke test on local MySQL:** migrations and seeds apply and re-run safely; audit UPDATE/DELETE rejected; route protection redirects every area to /login (including a forged cookie); security headers present; the password flow reaches the WhatsApp send step (no provider key yet, so nothing was sent); lockout on the 5th wrong password with audit + alert rows; the login page renders the lock message.
+- **Bugs found and fixed:** the lockout off-by-one caused by MySQL SET ordering (D-044); blank env values crashing requests (D-045); unstyled pages when started from another folder (D-046); whitespace-only values not counted as empty in conditions.
+- Planned session 2 in PLAN-CHECKLIST (S2-01 to S2-09).
 
 ### 28 Sep 2026 (third round)
 - Owner answered: one app only at approvals.arssteels.net with /users, /admin, /superadmin; the GitHub repo HarishDevs/ARS-Approval-System for all activity; the same CEOITBox number and API (the owner provides notification templates); Resend; reuse the Firebase project; IT-team admin split confirmed; anyone can pick anyone; itadmin@ is the approval authority and the admin/break-glass login → D-034 to D-041.
@@ -140,30 +166,30 @@
 
 | Area | Feature | Status | Checklist ref |
 |---|---|---|---|
-| Access | Google sign-in (no OTP) | Planned | P1-AUTH |
-| Access | User ID + password + OTP (WhatsApp only, D-025) | Planned | P1-AUTH |
+| Access | Google sign-in (no OTP) | In progress: built and unit-tested; live test needs Firebase Admin values | P1-AUTH |
+| Access | User ID + password + OTP (WhatsApp only, D-025) | In progress: built, tested, smoke-tested to the send step; live send needs the CEOITBox key (S2-01) | P1-AUTH |
 | Admin Portal | IT-team access with roles assigned by the Super Admin (D-024, Q-011) | Planned | P1-ADM |
-| Access | Per-user sign-in method; admin-created users only; any email | Planned | P1-USR |
-| Access | New-login detection + alert + "This wasn't me" | Planned | P1-AUTH |
-| Access | Lockout, sessions, trusted devices, forgot password | Planned | P1-AUTH |
+| Access | Per-user sign-in method; admin-created users only; any email | In progress: enforced at sign-in; the admin screens are S2-03 | P1-USR |
+| Access | New-login detection + alert + "This wasn't me" | In progress: built and tested; WhatsApp copy waits for Q-013 | P1-AUTH |
+| Access | Lockout, sessions, trusted devices, forgot password | In progress: lockout, sessions and devices done; forgot password is S2-04 | P1-AUTH |
 | Admin Portal | Separate app; Super Admin only; audited changes | Planned | P1-ADM |
 | Admin Portal | Organisation, users, hierarchy, roles, data scopes | Planned | P1-ADM |
 | Admin Portal | Security, providers, notification templates, audit viewer | Planned | P1-ADM |
 | Admin Portal | Approval Builder, form builder, workflow designer, validator, test mode | Planned | P3 |
 | Admin Portal | DoA matrix, SLA/escalation, holiday calendar | Planned | P3/P4 |
 | Admin Portal | Data rights: view, export, correct (versioned), archive, retention | Planned | P1-ADM / P7 |
-| Messaging | Notification hub: email + WhatsApp (CEOITBox) + in-app, delivery log | Planned | P1-NOT |
+| Messaging | Notification hub: email + WhatsApp (CEOITBox) + in-app, delivery log | In progress: hub + adapters + delivery rows done; retry runner and log UI to do | P1-NOT |
 | Engine | Requests, permanent ID, state machine, server-side approver check | Planned | P2 |
-| Engine | Sequential / Parallel / Any-One / Any-N-of-M / Conditional / Hybrid | Planned | P2/P3 |
-| Engine | Approver sources (user, role, HOD, manager, group, form field…) | Planned | P3 |
-| Engine | Resubmission with versions, Reopen, On Hold, Changes Required | Planned | P4 |
-| Engine | Delegation ("on behalf of"), SLA, reminders, escalation | Planned | P4 |
+| Engine | Sequential / Parallel / Any-One / Any-N-of-M / Conditional / Hybrid | **Engine core done (28 Sep 2026)**, 38 tests; persistence is S2-06 | P2/P3 |
+| Engine | Approver sources (user, role, HOD, manager, group, form field…) | Engine core done (8 sources); designer UI in P3 | P3 |
+| Engine | Resubmission with versions, Reopen, On Hold, Changes Required | In progress: hold/resume, changes required and resubmit (rounds) in the engine core; reopen and versions to do | P4 |
+| Engine | Delegation ("on behalf of"), SLA, reminders, escalation | In progress: delegation (actor + on-behalf-of) in the engine core; SLA/escalation to do | P4 |
 | Engine | Custom approvals open to every user, whenever needed (D-026) | Planned | P5 |
 | Engine | Documents (versioned), comments, work assignment after approval | Planned | P6 |
 | Portals | Employee, Approver, Management portals | Planned | P2/P7 |
 | Insight | Analytics, SLA dashboards, Power BI views | Planned | P7 |
 | Connect | ERP / Salesforce / webhooks, mobile web app | Planned | P8 |
-| Security | Break-glass account; append-only audit log | Planned | P1-SEC |
+| Security | Break-glass account; append-only audit log | In progress: audit log done (triggers verified); break-glass sign-in window + alert done, enable script is S2-07 | P1-SEC |
 
 ## 7. Key facts from the Asana audit (reference for templates)
 
@@ -189,11 +215,12 @@
 | GoDaddy hosting (Node.JS Hosting, Deluxe; cPanel MySQL; Cron Jobs) | itadmin@arssteels.co.in | GoDaddy | Existing (Power BI site uses it); new app to be created in Phase 0 |
 | CEOITBox WhatsApp (1 number, Phone ID 1057554220785929) | itadmin@arssteels.co.in | CEOITBox, API key entered only in Admin Portal encrypted settings | Existing; sharing to confirm (Q-002) |
 | Firebase project `power-bi-dashboard-3b29f` (Google sign-in) | itadmin@arssteels.co.in | Firebase console | Reused (D-038); add authorised domain approvals.arssteels.net |
-| Resend (email from itadmin@arssteels.co.in) | itadmin@arssteels.co.in | Resend dashboard; API key in GoDaddy env vars only | Reused (D-037); domain verification to check |
+| Resend (email from itadmin@arssteels.co.in) | itadmin@arssteels.co.in | Resend dashboard; API key entered only in `/superadmin` encrypted settings (as for CEOITBox, D-016) | Reused (D-037); domain verification to check |
 | Domain: approvals.arssteels.net | itadmin@arssteels.co.in | GoDaddy DNS (assumed) | To bind to the GoDaddy Node.js app (D-034) |
 | GitHub repo HarishDevs/ARS-Approval-System | HarishDevs (push via the proursolutions-source account) | GitHub | Active (D-035) |
-| `SESSION_SECRET`, `ENCRYPTION_KEY` | – | GoDaddy app environment variables only; `ENCRYPTION_KEY` also backed up in a password manager | Generate fresh in Phase 0; never reuse the Power BI site's values |
-| Break-glass admin | Sealed | Offline | Pending Q-009 |
+| `SESSION_SECRET`, `ENCRYPTION_KEY`, `JOB_RUNNER_SECRET` | – | GoDaddy app environment variables only; `ENCRYPTION_KEY` also backed up in a password manager | Fresh local-only values generated 28 Sep 2026 in the git-ignored `.env.local`; production values to be generated separately at deploy |
+| Firebase Admin service account (`FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`) | itadmin@arssteels.co.in | `.env.local` (dev) / GoDaddy env vars (prod), entered by the owner | Not yet entered; needed for a live Google sign-in test |
+| Break-glass admin | itadmin@ (D-041, D-042) | Sealed offline, separate from the daily login | Account to be created with S2-07 |
 
 ## 9. Reference project: ARS Power BI website (`D:\PBI New`)
 

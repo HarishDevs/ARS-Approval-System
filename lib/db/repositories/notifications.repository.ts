@@ -1,0 +1,68 @@
+import "server-only";
+import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
+import { getDbPool } from "@/lib/db/client";
+
+export interface NotificationRecipient {
+  id: number;
+  name: string;
+  email: string;
+  whatsappNumber: string | null;
+  active: boolean;
+}
+
+export async function findRecipient(userId: number): Promise<NotificationRecipient | null> {
+  const [rows] = await getDbPool().query<
+    (RowDataPacket & { id: number; name: string; email: string; whatsapp_number: string | null; active: number })[]
+  >("SELECT id, name, email, whatsapp_number, active FROM users WHERE id = ? LIMIT 1", [userId]);
+  const row = rows[0];
+  return row ? { id: row.id, name: row.name, email: row.email, whatsappNumber: row.whatsapp_number, active: row.active === 1 } : null;
+}
+
+export async function createNotification(input: {
+  eventType: string;
+  userId: number;
+  title: string;
+  message: string;
+  deepLink: string | null;
+}): Promise<number> {
+  const [result] = await getDbPool().query<ResultSetHeader>(
+    "INSERT INTO notifications (event_type, user_id, title, message, deep_link) VALUES (?, ?, ?, ?, ?)",
+    [input.eventType, input.userId, input.title.slice(0, 200), input.message.slice(0, 1000), input.deepLink],
+  );
+  return result.insertId;
+}
+
+export type DeliveryStatus = "QUEUED" | "SENT" | "FAILED" | "SKIPPED";
+
+export async function createDelivery(input: {
+  notificationId: number;
+  channel: "EMAIL" | "WHATSAPP";
+  provider: "RESEND" | "CEOITBOX";
+  status: DeliveryStatus;
+  providerReference?: string | null;
+  failureCode?: string | null;
+  payload?: Record<string, unknown> | null;
+  retryInSeconds?: number | null;
+}): Promise<number> {
+  const [result] = await getDbPool().query<ResultSetHeader>(
+    `INSERT INTO notification_deliveries
+       (notification_id, channel, provider, status, provider_reference, attempt_count, last_attempt_at, sent_at, failure_code, payload_json, next_retry_at)
+     VALUES (?, ?, ?, ?, ?, ?, IF(? > 0, CURRENT_TIMESTAMP, NULL), IF(? = 'SENT', CURRENT_TIMESTAMP, NULL), ?, ?,
+             IF(? IS NULL, NULL, DATE_ADD(CURRENT_TIMESTAMP, INTERVAL ? SECOND)))`,
+    [
+      input.notificationId,
+      input.channel,
+      input.provider,
+      input.status,
+      input.providerReference ?? null,
+      input.status === "SKIPPED" ? 0 : 1,
+      input.status === "SKIPPED" ? 0 : 1,
+      input.status,
+      input.failureCode ?? null,
+      input.payload ? JSON.stringify(input.payload) : null,
+      input.retryInSeconds ?? null,
+      input.retryInSeconds ?? 0,
+    ],
+  );
+  return result.insertId;
+}

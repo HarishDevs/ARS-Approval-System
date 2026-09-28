@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ARS brand tokens (D:\Omniroute\assets\tokens\tokens.css, D-022). */
+:root {
+  --color-primary-50: #eef4fb;
+  --color-primary-100: #c9daee;
+  --color-primary-600: #005398;
+  --color-primary-700: #003f75;
+  --color-accent-red: #ed1c25;
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-placeholder: #94a3b8;
+  --color-border-default: #e2e8f0;
+  --color-surface-white: #ffffff;
+  --color-surface-muted: #f1f5f9;
+  --color-surface-page: #f8fafc;
+  --color-success-50: #dcfce7;
+  --color-success-600: #16a34a;
+  --color-warning-50: #ffedd5;
+  --color-warning-600: #ea580c;
+  --color-error-50: #fdecec;
+  --color-error-200: #f8c9cb;
+  --color-error-600: #dc2626;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--color-surface-page);
+  color: var(--color-text-primary);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-primary-600);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@layer components {
+  .field-label {
+    @apply mb-1.5 block text-label font-medium text-ink;
+  }
+  .field-input {
+    @apply h-11 w-full rounded-md border border-line bg-surface-muted px-3.5 text-body text-ink placeholder:text-ink-faint focus:border-primary-600 focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary-100;
+  }
+  .btn-primary {
+    @apply inline-flex h-[46px] w-full items-center justify-center gap-2 rounded-md bg-primary-600 px-5 text-body font-semibold text-white shadow-button transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:bg-primary-100 disabled:shadow-none;
+  }
+  .btn-secondary {
+    @apply inline-flex h-[46px] w-full items-center justify-center gap-3 rounded-md border border-line bg-surface px-5 text-body font-medium text-ink transition-colors hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-60;
+  }
+  .link {
+    @apply font-semibold text-primary-600 hover:text-primary-700 hover:underline;
+  }
+}

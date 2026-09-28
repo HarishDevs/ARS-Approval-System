@@ -1,0 +1,25 @@
+# Local development MySQL only (never production). Port 3307 so it can run
+# alongside the Power BI website's container on 3306 (D-043).
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: ars-approvals-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ars_approvals
+      MYSQL_USER: ars_dev
+      MYSQL_PASSWORD: ars_dev_password
+      MYSQL_ROOT_PASSWORD: ars_root_password
+    command: ["--log-bin-trust-function-creators=1"]
+    ports:
+      - "3307:3306"
+    volumes:
+      - ars-approvals-mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pars_root_password"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  ars-approvals-mysql-data:
