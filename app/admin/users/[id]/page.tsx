@@ -1,0 +1,93 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { PageHeader } from "@/features/shell/PageHeader";
+import { UserForm } from "@/features/admin/UserForm";
+import { UserCommands } from "@/features/admin/UserCommands";
+import { loadUserFormOptions } from "@/features/admin/user-options";
+import { requireArea } from "@/server/authorization/guards";
+import { checkCanEdit } from "@/server/admin/user-rules";
+import { getUserForAdmin } from "@/lib/db/repositories/admin-users.repository";
+import { formatIndiaTime } from "@/server/notifications/security-messages";
+
+export default async function UserDetailPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ created?: string }> }) {
+  const { user: actor } = await requireArea("admin");
+  const { id } = await params;
+  if (!/^\d+$/.test(id)) notFound();
+  const user = await getUserForAdmin(Number(id));
+  if (!user) notFound();
+  const created = (await searchParams).created === "1";
+  const canEdit = checkCanEdit(actor, { id: user.id, roles: user.roles, active: user.active, isBreakGlass: user.isBreakGlass }).ok;
+  const options = await loadUserFormOptions(user.id);
+
+  return (
+    <>
+      <PageHeader title={user.name} description={`${user.loginId} · ${user.email}`}>
+        <Link href="/admin/users" className="link text-label">
+          ← All users
+        </Link>
+      </PageHeader>
+      {created && (
+        <p role="status" className="mb-4 rounded-md bg-success-50 px-3 py-2 text-label text-success-600">
+          User created.{user.signInMethod === "PASSWORD" ? " Send the set-password link so they can sign in." : " They can now sign in with Google."}
+        </p>
+      )}
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <UserForm
+          mode="edit"
+          values={{
+            id: user.id,
+            loginId: user.loginId,
+            name: user.name,
+            email: user.email,
+            whatsappNumber: user.whatsappNumber,
+            departmentId: user.departmentId,
+            designationId: user.designationId,
+            reportingManagerId: user.reportingManagerId,
+            signInMethod: user.signInMethod,
+            roles: user.roles,
+          }}
+          {...options}
+          canGrantSuperAdmin={actor.roles.includes("SUPER_ADMIN")}
+          readOnly={!canEdit}
+        />
+        <div className="space-y-6">
+          <section className="card px-5 py-4 text-label">
+            <h2 className="mb-3 font-semibold">Status</h2>
+            <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2">
+              <dt className="text-ink-muted">Account</dt>
+              <dd>
+                {user.active ? "Active" : "Inactive"}
+                {user.locked && <span className="badge ml-2 bg-danger-50 text-danger-600">Locked</span>}
+              </dd>
+              <dt className="text-ink-muted">Sign-in</dt>
+              <dd>
+                {user.signInMethod === "GOOGLE"
+                  ? user.googleLinked
+                    ? "Google (linked)"
+                    : "Google (links on first sign-in)"
+                  : user.hasPassword
+                    ? "Password set"
+                    : "No password yet"}
+              </dd>
+              <dt className="text-ink-muted">Last sign-in</dt>
+              <dd>{user.lastLoginAt ? formatIndiaTime(user.lastLoginAt) : "Never"}</dd>
+              <dt className="text-ink-muted">Open sessions</dt>
+              <dd>{user.openSessionCount}</dd>
+              <dt className="text-ink-muted">Added</dt>
+              <dd>{formatIndiaTime(user.createdAt)}</dd>
+            </dl>
+          </section>
+          <UserCommands
+            id={user.id}
+            name={user.name}
+            active={user.active}
+            locked={user.locked}
+            signInMethod={user.signInMethod}
+            openSessionCount={user.openSessionCount}
+            canEdit={canEdit && user.id !== actor.id}
+          />
+        </div>
+      </div>
+    </>
+  );
+}

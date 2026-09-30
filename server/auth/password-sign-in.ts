@@ -6,56 +6,40 @@ import {
   findChallengeByTokenHash,
   getRecentOtpStats,
   incrementChallengeAttempt,
-  type ChallengeRecord,
-  type RecentOtpStats,
 } from "@/lib/db/repositories/otp.repository";
 import { recordAudit, recordLogin } from "@/lib/db/repositories/audit.repository";
-import { findActiveTemplate, tryConsumeWhatsAppRateLimit, type ActiveTemplate } from "@/lib/db/repositories/whatsapp.repository";
+import { findActiveTemplate, tryConsumeWhatsAppRateLimit } from "@/lib/db/repositories/whatsapp.repository";
 import { sendTemplateMessage } from "@/server/integrations/ceoitbox/client";
 import { burnPasswordCheck, verifyPassword } from "@/lib/security/password";
-import { generateOtpCode, hashOtpCode, verifyOtpCode } from "@/lib/security/otp";
-import { keyedHash, randomToken } from "@/lib/security/hashing";
+import { generateOtpCode } from "@/lib/security/otp";
+import { randomToken } from "@/lib/security/hashing";
 import { getAuthSecurityConfig, getWhatsAppConfig, type AuthSecurityConfig } from "@/server/settings/values";
 import { notify, type NotifyInput } from "@/server/notifications/notify";
 import { accountLockedMessage } from "@/server/notifications/security-messages";
 import { AuthError, GENERIC_SIGN_IN_FAILED } from "@/server/auth/errors";
-import { checkSignInAllowed, maskWhatsAppNumber } from "@/server/auth/sign-in-rules";
+import { checkSignInAllowed } from "@/server/auth/sign-in-rules";
+import { consumeOtpCode, issueOtp, loadOpenChallenge, type OtpChallengeResult, type OtpDeps } from "@/server/auth/otp-flow";
 import { completeSignIn, defaultCompleteSignInDeps, type CompleteSignInDeps, type CompleteSignInResult } from "@/server/auth/complete-sign-in";
-import { logError } from "@/lib/logging/logger";
 import type { RequestContext } from "@/types/auth";
 
+export type { OtpChallengeResult } from "@/server/auth/otp-flow";
+
 // F-02: User ID + password, then a WhatsApp-only OTP (D-025).
-export interface PasswordSignInDeps {
+export interface PasswordSignInDeps extends OtpDeps {
   findUserByLoginId: (loginId: string) => Promise<UserRecord | null>;
   findUserById: (id: number) => Promise<UserRecord | null>;
   verifyPassword: (password: string, hash: string | null) => Promise<boolean>;
   burnPasswordCheck: (password: string) => Promise<void>;
   recordFailedPassword: (userId: number, threshold: number, lockMinutes: number) => Promise<{ failedCount: number; locked: boolean }>;
   resetFailedLogins: (userId: number) => Promise<void>;
-  getRecentOtpStats: (userId: number) => Promise<RecentOtpStats>;
-  createChallenge: typeof createChallenge;
-  findChallengeByTokenHash: (hash: string) => Promise<ChallengeRecord | null>;
-  incrementChallengeAttempt: (id: number) => Promise<void>;
-  consumeChallenge: (id: number) => Promise<boolean>;
-  findOtpTemplate: () => Promise<ActiveTemplate | null>;
-  sendOtpWhatsApp: (to: string, template: ActiveTemplate, code: string) => Promise<void>;
   recordLogin: typeof recordLogin;
-  recordAudit: typeof recordAudit;
-  notify: (input: NotifyInput) => Promise<void>;
+  notify: (input: NotifyInput) => Promise<unknown>;
   getConfig: () => Promise<AuthSecurityConfig>;
-  generateOtpCode: (length: number) => string;
-  randomToken: () => string;
   complete: CompleteSignInDeps;
 }
 
-const defaultDeps: PasswordSignInDeps = {
-  findUserByLoginId: (loginId) => findUserByLoginId(loginId),
-  findUserById: (id) => findUserById(id),
-  verifyPassword,
-  burnPasswordCheck,
-  recordFailedPassword: (userId, threshold, lockMinutes) => recordFailedPassword(userId, threshold, lockMinutes),
-  resetFailedLogins: (userId) => resetFailedLogins(userId),
-  getRecentOtpStats: (userId) => getRecentOtpStats(userId, "LOGIN"),
+export const defaultOtpDeps: OtpDeps = {
+  getRecentOtpStats: (userId, purpose) => getRecentOtpStats(userId, purpose),
   createChallenge,
   findChallengeByTokenHash: (hash) => findChallengeByTokenHash(hash),
   incrementChallengeAttempt: (id) => incrementChallengeAttempt(id),
@@ -69,71 +53,24 @@ const defaultDeps: PasswordSignInDeps = {
       { fetch, tryConsumeRateLimit: tryConsumeWhatsAppRateLimit },
     );
   },
-  recordLogin,
   recordAudit,
-  notify,
-  getConfig: getAuthSecurityConfig,
   generateOtpCode,
   randomToken: () => randomToken(32),
-  complete: defaultCompleteSignInDeps,
 };
 
-export interface OtpChallengeResult {
-  challengeToken: string;
-  maskedNumber: string;
-  expiresInSeconds: number;
-  resendAfterSeconds: number;
-}
-
-async function issueOtp(
-  user: UserRecord & { whatsappNumber: string },
-  context: RequestContext,
-  config: AuthSecurityConfig,
-  deps: PasswordSignInDeps,
-): Promise<OtpChallengeResult> {
-  const stats = await deps.getRecentOtpStats(user.id);
-  if (stats.secondsSinceLast !== null && stats.secondsSinceLast < config.otpCooldownSeconds) {
-    const wait = config.otpCooldownSeconds - stats.secondsSinceLast;
-    throw new AuthError("AUTH_OTP_COOLDOWN", `Please wait ${wait} seconds before asking for another code.`, wait);
-  }
-  if (stats.countLastHour >= config.otpMaxPerHour) {
-    throw new AuthError("AUTH_OTP_RATE_LIMITED", "Too many codes requested. Try again in an hour.", 3600);
-  }
-
-  const template = await deps.findOtpTemplate();
-  if (!template) {
-    logError("OTP template WA_LOGIN_OTP_V1 is not active/approved", new Error("TEMPLATE_NOT_CONFIGURED"));
-    throw new AuthError("AUTH_OTP_DELIVERY_FAILED", "We couldn't send the code on WhatsApp. Contact IT.");
-  }
-
-  const code = deps.generateOtpCode(config.otpLength);
-  const challengeToken = deps.randomToken();
-  await deps.createChallenge({
-    challengeTokenHash: keyedHash(`challenge:${challengeToken}`),
-    userId: user.id,
-    purpose: "LOGIN",
-    otpHash: hashOtpCode(code),
-    ttlSeconds: config.otpTtlSeconds,
-    maxAttempts: config.otpMaxAttempts,
-    ipAddress: context.ipAddress,
-  });
-
-  try {
-    await deps.sendOtpWhatsApp(user.whatsappNumber, template, code);
-  } catch (error) {
-    logError("WhatsApp OTP delivery failed", error, { userId: user.id });
-    await deps.recordAudit({ actorUserId: user.id, action: "OTP_DELIVERY_FAILED", entityType: "USER", entityId: user.id, result: "FAILURE", ipAddress: context.ipAddress });
-    throw new AuthError("AUTH_OTP_DELIVERY_FAILED", "We couldn't send the code on WhatsApp. Please try again in a moment.");
-  }
-
-  await deps.recordAudit({ actorUserId: user.id, action: "OTP_SENT", entityType: "USER", entityId: user.id, ipAddress: context.ipAddress, metadata: { channel: "WHATSAPP" } });
-  return {
-    challengeToken,
-    maskedNumber: maskWhatsAppNumber(user.whatsappNumber),
-    expiresInSeconds: config.otpTtlSeconds,
-    resendAfterSeconds: config.otpCooldownSeconds,
-  };
-}
+const defaultDeps: PasswordSignInDeps = {
+  ...defaultOtpDeps,
+  findUserByLoginId: (loginId) => findUserByLoginId(loginId),
+  findUserById: (id) => findUserById(id),
+  verifyPassword,
+  burnPasswordCheck,
+  recordFailedPassword: (userId, threshold, lockMinutes) => recordFailedPassword(userId, threshold, lockMinutes),
+  resetFailedLogins: (userId) => resetFailedLogins(userId),
+  recordLogin,
+  notify,
+  getConfig: getAuthSecurityConfig,
+  complete: defaultCompleteSignInDeps,
+};
 
 // Step 1: check the password, then send the WhatsApp code.
 export async function startPasswordSignInWithDeps(
@@ -186,26 +123,18 @@ export async function startPasswordSignInWithDeps(
   }
 
   await deps.recordLogin({ userId: user.id, authMethod: "PASSWORD_OTP", step: "PASSWORD", success: true, ipAddress: context.ipAddress, userAgent: context.userAgent });
-  return issueOtp({ ...user, whatsappNumber: user.whatsappNumber }, context, config, deps);
-}
-
-async function loadOpenChallenge(challengeToken: string, deps: PasswordSignInDeps): Promise<ChallengeRecord> {
-  const challenge = await deps.findChallengeByTokenHash(keyedHash(`challenge:${challengeToken}`));
-  if (!challenge || challenge.purpose !== "LOGIN" || challenge.consumed || challenge.secondsUntilExpiry <= 0) {
-    throw new AuthError("AUTH_CHALLENGE_EXPIRED", "This code has expired. Please sign in again.");
-  }
-  return challenge;
+  return issueOtp({ ...user, whatsappNumber: user.whatsappNumber }, "LOGIN", context, config, deps);
 }
 
 // Resend: only for an open challenge, after the cooldown, within the hourly cap.
 export async function resendOtpWithDeps(challengeToken: string, context: RequestContext, deps: PasswordSignInDeps): Promise<OtpChallengeResult> {
   const config = await deps.getConfig();
-  const challenge = await loadOpenChallenge(challengeToken, deps);
+  const challenge = await loadOpenChallenge(challengeToken, "LOGIN", deps);
   const user = await deps.findUserById(challenge.userId);
   if (!user || !user.whatsappNumber || !checkSignInAllowed(user, "PASSWORD").allowed) {
     throw new AuthError("AUTH_CHALLENGE_EXPIRED", "This code has expired. Please sign in again.");
   }
-  const result = await issueOtp({ ...user, whatsappNumber: user.whatsappNumber }, context, config, deps);
+  const result = await issueOtp({ ...user, whatsappNumber: user.whatsappNumber }, "LOGIN", context, config, deps);
   await deps.consumeChallenge(challenge.id);
   return result;
 }
@@ -220,20 +149,8 @@ export async function verifyOtpWithDeps(
   const logFailure = (userId: number | null, reason: string) =>
     deps.recordLogin({ userId, authMethod: "PASSWORD_OTP", step: "OTP", success: false, failureReason: reason, ipAddress: context.ipAddress, userAgent: context.userAgent });
 
-  const challenge = await loadOpenChallenge(challengeToken, deps);
-  if (challenge.attemptCount >= challenge.maxAttempts) {
-    await logFailure(challenge.userId, "OTP_LOCKED");
-    throw new AuthError("AUTH_OTP_LOCKED", "Too many wrong codes. Please sign in again.");
-  }
-  if (!verifyOtpCode(code.trim(), challenge.otpHash)) {
-    await deps.incrementChallengeAttempt(challenge.id);
-    await logFailure(challenge.userId, "INVALID_OTP");
-    const left = challenge.maxAttempts - challenge.attemptCount - 1;
-    throw new AuthError("AUTH_INVALID_OTP", left > 0 ? `That code is not right. ${left} tries left.` : "Too many wrong codes. Please sign in again.");
-  }
-  if (!(await deps.consumeChallenge(challenge.id))) {
-    throw new AuthError("AUTH_CHALLENGE_EXPIRED", "This code was already used. Please sign in again.");
-  }
+  const challenge = await loadOpenChallenge(challengeToken, "LOGIN", deps);
+  await consumeOtpCode(challenge, code, deps, (reason) => logFailure(challenge.userId, reason));
 
   // Re-check the account: it may have been deactivated or locked meanwhile.
   const user = await deps.findUserById(challenge.userId);

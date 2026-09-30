@@ -115,3 +115,60 @@ export function accountSecuredMessage(userName: string) {
     whatsappVariables: { user_name: userName },
   };
 }
+
+const IT_CONTACT = "If you didn't expect this, contact IT (itadmin@arssteels.co.in).";
+
+export function whatsappChangedMessage(userName: string) {
+  const text = [`Hi ${userName},`, "", "The WhatsApp number on your ARS Approvals account was changed by IT.", IT_CONTACT].join("\n");
+  return {
+    title: "WhatsApp number changed",
+    message: "The WhatsApp number on your account was changed.",
+    email: { subject: "Your WhatsApp number was changed", text },
+    whatsappVariables: { user_name: userName },
+  };
+}
+
+export function signInMethodChangedMessage(userName: string, method: "GOOGLE" | "PASSWORD") {
+  const how = method === "GOOGLE" ? "your Google account" : "your User ID and password, with a code on WhatsApp";
+  const text = [`Hi ${userName},`, "", `IT changed how you sign in to ARS Approvals. You now sign in with ${how}.`, IT_CONTACT].join("\n");
+  return {
+    title: "Sign-in method changed",
+    message: `You now sign in with ${method === "GOOGLE" ? "Google" : "User ID and password"}.`,
+    email: { subject: "How you sign in to ARS Approvals has changed", text },
+    whatsappVariables: { user_name: userName, method: method === "GOOGLE" ? "Google" : "User ID and password" },
+  };
+}
+
+export function setPasswordLinkMessage(userName: string, loginId: string, link: string, validHours: number) {
+  const text = [
+    `Hi ${userName},`,
+    "",
+    "An ARS Approvals account is ready for you.",
+    `Your User ID: ${loginId}`,
+    `Set your password here (valid for ${validHours} hours): ${link}`,
+    "You'll confirm it with a code sent to your WhatsApp.",
+    "",
+    IT_CONTACT,
+  ].join("\n");
+  return {
+    title: "Set your password",
+    message: "Use the link in your email to set your password.",
+    email: { subject: "Set your ARS Approvals password", text },
+    whatsappVariables: null,
+  };
+}
+
+export function passwordChangedMessage(userName: string, when: Date) {
+  const text = [
+    `Hi ${userName},`,
+    "",
+    `Your ARS Approvals password was set on ${formatIndiaTime(when)}. You were signed out on every device.`,
+    IT_CONTACT,
+  ].join("\n");
+  return {
+    title: "Password changed",
+    message: "Your password was changed and every device was signed out.",
+    email: { subject: "Your ARS Approvals password was changed", text },
+    whatsappVariables: { user_name: userName, time: formatIndiaTime(when) },
+  };
+}

@@ -1,5 +1,5 @@
 import "server-only";
-import type { ResultSetHeader } from "mysql2/promise";
+import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { getDbPool, type Queryable } from "@/lib/db/client";
 import type { AuthMethod } from "@/types/auth";
 
@@ -65,4 +65,64 @@ export async function recordLogin(entry: LoginLogEntry, db: Queryable = getDbPoo
       entry.sessionId ?? null,
     ],
   );
+}
+
+export interface AuditListItem {
+  id: number;
+  occurredAt: Date;
+  actorName: string | null;
+  action: string;
+  entityType: string;
+  entityId: string | null;
+  result: "SUCCESS" | "FAILURE";
+  ipAddress: string | null;
+  metadata: unknown;
+}
+
+// Read-only viewer for the Super Admin (P1-57).
+export async function listAuditEntries(
+  filter: { action?: string; actorUserId?: number; beforeId?: number },
+  limit: number,
+  db: Queryable = getDbPool(),
+): Promise<AuditListItem[]> {
+  const where: string[] = [];
+  const params: unknown[] = [];
+  if (filter.action) {
+    where.push("a.action = ?");
+    params.push(filter.action);
+  }
+  if (filter.actorUserId) {
+    where.push("a.actor_user_id = ?");
+    params.push(filter.actorUserId);
+  }
+  if (filter.beforeId) {
+    where.push("a.id < ?");
+    params.push(filter.beforeId);
+  }
+  params.push(limit);
+  const [rows] = await db.query<
+    (RowDataPacket & { id: number; occurred_at: Date; name: string | null; action: string; entity_type: string; entity_id: string | null; result: "SUCCESS" | "FAILURE"; ip_address: string | null; metadata_json: unknown })[]
+  >(
+    `SELECT a.id, a.occurred_at, u.name, a.action, a.entity_type, a.entity_id, a.result, a.ip_address, a.metadata_json
+     FROM audit_logs a LEFT JOIN users u ON u.id = a.actor_user_id
+     ${where.length ? `WHERE ${where.join(" AND ")}` : ""}
+     ORDER BY a.id DESC LIMIT ?`,
+    params,
+  );
+  return rows.map((row) => ({
+    id: row.id,
+    occurredAt: row.occurred_at,
+    actorName: row.name,
+    action: row.action,
+    entityType: row.entity_type,
+    entityId: row.entity_id,
+    result: row.result,
+    ipAddress: row.ip_address,
+    metadata: row.metadata_json,
+  }));
+}
+
+export async function listAuditActions(db: Queryable = getDbPool()): Promise<string[]> {
+  const [rows] = await db.query<(RowDataPacket & { action: string })[]>("SELECT DISTINCT action FROM audit_logs ORDER BY action");
+  return rows.map((row) => row.action);
 }

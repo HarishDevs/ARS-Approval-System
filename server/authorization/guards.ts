@@ -32,8 +32,8 @@ export async function requireArea(area: AppArea): Promise<CurrentSession> {
   notFound();
 }
 
-// Same check for API route handlers: throws, and the route maps it to a
-// generic 404 response.
+// Same check for API route handlers and Server Actions: throws, and the
+// caller maps it to a generic "not found" answer.
 export async function requireApiArea(area: AppArea): Promise<CurrentSession> {
   const session = await getCurrentSession();
   const result = evaluateAreaAccess(session?.user ?? null, area);

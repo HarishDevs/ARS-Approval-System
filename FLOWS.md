@@ -21,14 +21,14 @@ The number of levels and how they combine is unlimited. There are no fixed "Leve
 | F-01 | Google sign-in | Built 28 Sep 2026 (live test pending Firebase Admin values) |
 | F-02 | User ID + password + OTP | Built 28 Sep 2026 (live send pending the CEOITBox key) |
 | F-03 | New-login detection and alert | Built 28 Sep 2026 (device cookie; location later) |
-| F-04 | Forgot password | Planned |
+| F-04 | Set password + forgot password | Built 30 Sep 2026 (live send pending the CEOITBox key) |
 | F-05 | Lockout and "This wasn't me" | Built 28 Sep 2026 (admin unlock in S2-03) |
-| F-06 | User creation (Admin Portal) | Planned |
+| F-06 | User creation, roles, inactivation (Admin Portal) | Built 30 Sep 2026 (bulk import later) |
 | F-07 | Break-glass access | Partly built: sign-in window + alert; enable script S2-07 |
 | F-08 | Role routing: /users, /admin, /superadmin | Built 28 Sep 2026 |
 | F-10 | Request state machine | Planned |
-| F-11 | Submission → workflow resolution | Planned |
-| F-12 | Approver action authorisation | Planned |
+| F-11 | Submission → workflow resolution | Built in the service 30 Sep 2026; screens S3 |
+| F-12 | Approver action authorisation | Built and tested on MySQL 30 Sep 2026 |
 | F-20 | Multi-level building blocks | Engine core built 28 Sep 2026 |
 | F-21 | Sequential multi-level | Engine core built 28 Sep 2026 |
 | F-22 | Parallel (ALL) | Engine core built 28 Sep 2026 (joins ALL / ANY_ONE / ANY_N) |
@@ -45,7 +45,10 @@ The number of levels and how they combine is unlimited. There are no fixed "Leve
 | F-33 | Employee custom approval | Planned |
 | F-40 | Notification pipeline | Planned |
 | F-50 | Workflow authoring: design → validate → test → publish → version | Planned |
-| F-51 | Admin configuration change (audited) | Planned |
+| F-51 | Admin configuration change (audited) | Built for settings, users, departments, workflows 30 Sep 2026 |
+| F-52 | Provider settings and test send (Super Admin) | Built 30 Sep 2026 |
+| F-53 | Break-glass console script | Built 30 Sep 2026 (Q-015 open) |
+| F-13 | Request persistence and concurrency | Built and tested on MySQL 30 Sep 2026 |
 | F-60…F-71 | First templates mapped from Asana | Planned |
 
 ---
@@ -131,6 +134,33 @@ flowchart LR
 ## F-04 Forgot password
 User ID → OTP on WhatsApp → set new password → all sessions end → alert on email + WhatsApp. *Updated 28 Sep 2026 (D-025).*
 
+**Design for S2-04 (28 Sep 2026):**
+```mermaid
+flowchart TD
+  subgraph SP["Set password: first sign-in, P1-13"]
+    A1[Admin: send set-password link] --> A2[Single-use token stored hashed
+valid 72 h, emailed to the user]
+    A2 --> A3[User opens /set-password?token=…
+GET only shows the form; the link is never consumed by a preview]
+    A3 --> A4[New password twice → policy check]
+    A4 --> A5[WhatsApp OTP to the number on file
+proves the number (VERIFY_WHATSAPP)]
+    A5 --> A6[Code OK → save hash · token used · failures cleared
+sessions ended · alert sent]
+  end
+  subgraph FP["Forgot password, P1-14"]
+    B1["/forgot-password: User ID"] --> B2{Active password user
+with WhatsApp, not security-locked?}
+    B2 -- No --> B3[Same screen as yes: 'If the account exists, a code was sent'
+fake challenge, no message]
+    B2 -- Yes --> B4["OTP on WhatsApp: PASSWORD_RESET"]
+    B4 --> B5[Code + new password twice]
+    B5 --> A6
+  end
+```
+- An account locked by "This wasn't me" can't reset its own password; only an admin unlock clears it. A reset clears a wrong-password lock.
+- The same OTP limits as sign-in apply (cooldown, per-hour cap, attempts), counted per purpose.
+
 ## F-05 Lockout and "This wasn't me"
 - **Lockout:** 5 wrong passwords → locked 15 min (configurable) → alert to the user. Repeated locks also alert the Super Admin.
 - **"This wasn't me":** end all sessions → lock the account → notify the Super Admin → the Super Admin unlocks after checking and resets the password or OTP numbers.
@@ -151,6 +181,21 @@ flowchart LR
   I1 -. later .-> R[Reactivate]
 ```
 - Users are never hard-deleted, so history and audit stay intact. *Updated 28 Sep 2026.*
+
+**Rules for S2-03 (D-047, 28 Sep 2026):**
+- IT Admin and Super Admin can manage users.
+- Only the Super Admin can grant or remove SUPER_ADMIN, or change a Super Admin or the break-glass account.
+- Nobody can deactivate themselves or remove their own admin role.
+- The last active Super Admin can never be deactivated or demoted.
+- Other actions:
+  - **Deactivate:** ends every session at once. Reassigning pending steps comes when requests exist.
+  - **Unlock:** clears both wrong-password locks and security locks.
+  - **Force sign-out:** ends every session.
+  - **Changing the email of a linked Google account:** unlinks it, so the new Google account links on its next sign-in.
+  - **Changing to Google sign-in:** removes the password.
+  - **Changing to password sign-in:** the user needs a set-password link.
+- Changes to the WhatsApp number or sign-in method alert the user (N-03).
+- Every change writes an audit entry with before and after values; the password hash is never included.
 
 ## F-08 Role routing in the single app (D-034, D-039)
 ```mermaid
@@ -220,6 +265,33 @@ flowchart TD
   E --> F[Apply the node's completion rule → advance the graph]
   F --> G[Timeline + audit + notification events]
 ```
+
+## F-13 Request persistence and concurrency (S2-06, D-050)
+```mermaid
+flowchart TD
+  A[Action arrives] --> T[DB transaction]
+  T --> L[Lock the request's state row
+SELECT … FOR UPDATE]
+  L --> D[Build the directory snapshot
+active users · managers · HODs · roles · groups]
+  D --> E[Pure engine call
+start / decide / hold / resume / resubmit]
+  E --> W[Write the new state JSON (version + 1)
+sync the task table for queues
+append events to the timeline (append-only)]
+  W --> C[Commit]
+  C --> N[Notifications after commit, never inside the transaction]
+```
+- The request is bound to the **published workflow version** it was submitted against.
+- The request number is `PREFIX-YYYY-000001`, from a locked sequence row per prefix and year.
+- If two approvers act at the same moment, the row lock makes them run one after the other. The second sees the updated state, and gets a clear error if its task is closed.
+- **As built (30 Sep 2026):**
+  - Notifications after the commit:
+    - approval needed → each new approver;
+    - approved, rejected (with reason), changes requested and on hold → the requester;
+    - blocked (no eligible approver, or no matching path) → every IT Admin.
+  - Email and in-app work now; WhatsApp waits for the owner's templates (Q-013).
+  - Only the requester can resubmit, on the same number, in the next round, optionally with new form data.
 
 ## F-20 Multi-level building blocks (north star)
 | Part | Options |
@@ -350,6 +422,29 @@ Design (drag-and-drop) → configure the nodes → **validate** (errors block pu
 
 ## F-51 Admin configuration change
 An admin changes a setting (no step-up OTP, D-032) → saved as a new version → audit entry with before and after values → takes effect → affected admins or users notified if relevant.
+
+## F-52 Provider settings and test send (Super Admin only, S2-01/S2-02)
+```mermaid
+flowchart LR
+  A["/superadmin/settings"] --> B[Grouped settings: General · Sign-in security · Email · WhatsApp]
+  B --> C{Secret?}
+  C -- Yes --> D[Shows only Configured / Not configured
+leave blank = keep · new value replaces · Remove clears]
+  C -- No --> E[Shows the value; validated within safe limits]
+  D & E --> F[Save → encrypted if secret → history row
+(secrets: keyed fingerprint only) → audit before/after]
+  F --> G[Applies on the next request (no restart)]
+  A --> T[Test send: email to my address · WhatsApp to my number]
+  T --> R[Result shown to the Super Admin with the provider's error code
+audit entry]
+```
+
+## F-53 Break-glass console script (S2-07, D-011)
+Run in the GoDaddy console only: `node scripts/admin/break-glass.js status | create | set-password | enable --minutes N | disable`.
+- `create` makes the sealed account: password sign-in, all roles, `is_break_glass`, disabled.
+- `enable` opens a window of at most 240 minutes; `disable` closes it at once.
+- Every command writes an audit entry (source: console).
+- Signing in still needs the WhatsApp OTP (see Q-015), and every sign-in alerts the Super Admins (N-05).
 
 ---
 

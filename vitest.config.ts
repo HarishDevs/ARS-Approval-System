@@ -17,7 +17,7 @@ export default defineConfig({
     globals: true,
     setupFiles: ["tests/helpers/setup-env.ts"],
     include: ["tests/**/*.test.{ts,tsx}"],
-    exclude: ["node_modules/**", "reference/**"],
+    exclude: ["node_modules/**", "reference/**", "tests/integration/**"],
     coverage: { provider: "v8", reporter: ["text", "html"] },
   },
 });

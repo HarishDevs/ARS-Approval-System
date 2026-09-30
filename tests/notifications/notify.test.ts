@@ -61,7 +61,7 @@ describe("notification hub", () => {
         throw new Error("boom");
       },
     });
-    await expect(notifyWithDeps(input, deps)).resolves.toBeUndefined();
+    await expect(notifyWithDeps(input, deps)).resolves.toMatchObject({ email: { status: "FAILED" }, whatsapp: { status: "FAILED" } });
     expect(deliveries.map((d) => d.status)).toEqual(["FAILED", "FAILED"]);
   });
 
@@ -71,8 +71,20 @@ describe("notification hub", () => {
         throw new Error("db down");
       },
     });
-    await expect(notifyWithDeps(input, deps)).resolves.toBeUndefined();
+    await expect(notifyWithDeps(input, deps)).resolves.toEqual({ recorded: false, email: null, whatsapp: null });
     expect(deps.sendEmail).not.toHaveBeenCalled();
+  });
+
+  it("a send that worked is never marked FAILED when recording it fails (no double send on retry)", async () => {
+    const { deps } = makeDeps({
+      createDelivery: (async () => {
+        throw new Error("db hiccup");
+      }) as unknown as NotifyDeps["createDelivery"],
+    });
+    const summary = await notifyWithDeps(input, deps);
+    expect(summary.email).toEqual({ status: "SENT" });
+    expect(summary.whatsapp).toEqual({ status: "SENT" });
+    expect(deps.sendEmail).toHaveBeenCalledOnce();
   });
 
   it("sends nothing to an inactive user", async () => {

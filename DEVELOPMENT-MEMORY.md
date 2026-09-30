@@ -25,10 +25,10 @@
 | Company | ARS Steels & Alloy International Pvt Ltd |
 | Build team | Project owner (ARS IT, itadmin@arssteels.co.in) + Claude (AI pair developer) |
 | Admin Portal (Super Admin) login | `itadmin@arssteels.co.in`, operated by the developers |
-| Current stage | **Build session 1 done (28 Sep 2026).** App scaffold, foundation schema, sign-in services, area guards and the multi-level engine core are built; 80 unit tests, typecheck, lint and build pass; local MySQL (Docker, port 3307) migrated, seeded and smoke-tested. Next: session 2 (PLAN-CHECKLIST §S2) |
+| Current stage | **Build session 2 done (30 Sep 2026).** Provider settings, user and department admin, set and forgot password, CSP, **the multi-level engine persisted in MySQL**, break-glass script, CI. 124 unit + 11 MySQL integration tests, typecheck, lint and build pass. Next: session 3 (request screens, workflow builder), PLAN-CHECKLIST §S3 |
 | Address | **`approvals.arssteels.net`** (single app; role routes `/users`, `/admin`, `/superadmin`, D-034) |
 | Repository | **https://github.com/HarishDevs/ARS-Approval-System** (private, `main`, D-035). Local root: `D:\Omniroute\ARS Approval System` |
-| Last updated | 28 Sep 2026 (build session 1) |
+| Last updated | 30 Sep 2026 (build session 2) |
 
 ## 2. Key files and links
 
@@ -47,6 +47,12 @@
 | Sign-in services | `server/auth/` (google-sign-in, password-sign-in, complete-sign-in, session, sign-in-rules) |
 | Area access rules | `server/authorization/policy.ts` + `guards.ts`, `middleware.ts` |
 | Notification hub | `server/notifications/notify.ts`; adapters in `server/integrations/ceoitbox` and `resend` |
+| Approvals persistence | `server/approvals/service.ts` (submit, decide, hold, resume, resubmit, workflows/versions), `server/approvals/messages.ts`, `lib/db/repositories/approvals.repository.ts`, `directory.repository.ts`; integration tests in `tests/integration/` (`npm run test:integration`) |
+| Admin screens | `/admin/users`, `/admin/users/[id]`, `/admin/organisation`; services in `server/admin/` (rules in `user-rules.ts`) |
+| Super Admin screens | `/superadmin/settings` (providers, security, test send), `/superadmin/deliveries`, `/superadmin/audit` |
+| Password flows | `server/auth/set-password.ts` (set link, forgot), shared WhatsApp code steps in `server/auth/otp-flow.ts`; pages `/set-password`, `/forgot-password` |
+| Console scripts | `scripts/admin/break-glass.js` (hosting console only); `scripts/dev/dev-session.js` (LOCAL ONLY: session for screen checks) |
+| CI | `.github/workflows/ci.yml` (lint, typecheck, unit, build; MySQL integration job) |
 | Database | `database/migrations/`, `database/seeds/`, scripts in `scripts/database/`; local `docker-compose.yml` |
 | Local dev server (Claude preview) | `D:\Omniroute\.claude\launch.json` runs `next dev` for the project folder on port 3000 (npm scripts break on the space in the path there) |
 
@@ -100,6 +106,14 @@
 | D-044 | 28 Sep 2026 | **SQL rule: in a MySQL `UPDATE`, a column that depends on another column's old value must be assigned before that column** (MySQL applies `SET` assignments left to right). Found when the lockout locked on the 4th wrong password and skipped the lock alert; fixed in `recordFailedPassword`. Along with "do time maths in SQL", this is now a standing rule for every repository | Claude (bug found in smoke test) |
 | D-045 | 28 Sep 2026 | **A blank environment value means "not set".** Optional env vars (Firebase Admin, APP_BASE_URL, JOB_RUNNER_SECRET) are optional because GoDaddy's editor may leave a key with an empty value; a blank must never crash the app | Claude (bug found in smoke test) |
 | D-046 | 28 Sep 2026 | **The build never depends on the working directory.** PostCSS points Tailwind at `tailwind.config.ts` by absolute path, and Tailwind content paths are relative to the config file, because cPanel may start the app from another folder | Claude (bug found in preview) |
+| D-047 | 30 Sep 2026 | **Rules for managing users.**<br>• IT Admins and the Super Admin manage users.<br>• **Only a Super Admin** can grant or remove SUPER_ADMIN, or change a Super Admin or the break-glass account.<br>• Nobody can deactivate themselves or remove their own admin role.<br>• The last active Super Admin can't be deactivated or demoted.<br>Pure rules in `server/admin/user-rules.ts`, checked on the server for every write. Verified in the browser against a tampered form (an injected SUPER_ADMIN role was refused). | Claude, following D-033/D-039 |
+| D-048 | 30 Sep 2026 | **Admin changes use Server Actions.**<br>• Each action re-checks the area on the server and answers "Not found." when access is refused.<br>• Next.js compares Origin and Host on every action, which blocks cross-site requests.<br>• Forms submit through `useActionForm` (onSubmit + startTransition), not `<form action>`, because React 19 clears action forms after every submit and wiped the admin's typing on validation errors. | Claude (bug found in the browser) |
+| D-049 | 30 Sep 2026 | **Set-password links and forgot password.**<br>• **Links:** single-use, stored only as a keyed hash, valid 72 hours, and a newer link replaces older ones. Sent by email to the user only; the admin never sees the link. Opening it (GET) never uses it up, so chat link previews can't burn it.<br>• **Both flows** end with a WhatsApp code to the number on file, set the password, end every other session, alert the user, and sign them in.<br>• **Forgot password** gives the same answer, in the same time, whether or not the User ID exists: the code is sent after the response, and wrong, unknown and expired codes share one message.<br>• A security lock ("This wasn't me") can only be cleared by an admin; a reset clears only a wrong-password lock. | Claude, following P1-13/P1-14 |
+| D-050 | 30 Sep 2026 | **How approvals are saved.**<br>• Each request stores the engine state as JSON with a `state_version`. Every action runs one transaction: lock the row (`SELECT … FOR UPDATE`), load a fresh directory snapshot, make the pure engine call, save with a version check, sync the task table (for queues), append to `approval_events`. Notifications go only after the commit.<br>• A request stays bound to the **published version** it was submitted against. At most one version per workflow is published (a unique generated column).<br>• Request numbers are `PREFIX-YYYY-000001`, from a locked sequence row.<br>• The break-glass account is never an approver. Delegation returns false until delegation records exist (P4). | Claude (north star) |
+| D-051 | 30 Sep 2026 | **Content-Security-Policy:**<br>• A fresh nonce per request, set in the middleware. Scripts need that nonce plus `'strict-dynamic'`; there is no `unsafe-inline` for scripts, and `unsafe-eval` only in dev.<br>• Frames only from the Firebase auth domain and accounts.google.com, and nobody may frame the app.<br>• Every page renders per request (the root layout is `force-dynamic`).<br>Verified: pages hydrate, server actions work, the Firebase frame loads, and there are no CSP violations. | Claude |
+| D-052 | 30 Sep 2026 | **`notify()` returns a summary** of what happened on each channel (it still never throws). Sending and recording fail separately, so a message that was sent is never retried as FAILED, which would send it twice. | Claude (bug found in review) |
+| D-053 | 30 Sep 2026 | **Testing:**<br>• Integration tests run on a throw-away `ars_approvals_test` database, recreated with the real migrations and seeds on every run; CI uses a MySQL service container.<br>• Local screen checks use `scripts/dev/dev-session.js`. It refuses production and non-local databases, is audited as DEV_SESSION_CREATED, and adds nothing an attacker with the database and SESSION_SECRET couldn't already do. | Claude |
+| D-054 | 30 Sep 2026 | **The break-glass account is managed only by `scripts/admin/break-glass.js` in the hosting console.**<br>• It is created disabled, with all roles.<br>• The password is typed with hidden input, and must be at least 14 characters with letters and numbers.<br>• `enable` opens a window of at most 240 minutes; `disable` ends the window and all sessions.<br>• Every command is audited, with the OS user and host. | Claude, following D-011/D-041/D-042 |
 | D-033 | 28 Sep 2026 | **Staff data is provided by the admin. Roles are assigned per user, by the admin only. Users are added or made inactive in the Admin Portal** (never hard-deleted, so history and audit stay intact). *Resolves Q-010.* | Owner (answer 7) |
 
 ## 4. Open questions (must be answered before the phase shown)
@@ -120,8 +134,38 @@
 | Q-012 | Custom approval limits | Phase 5 | **Resolved 28 Sep → D-040 (anyone can pick anyone; the no-self-approval safety rule stays)** |
 | Q-013 | **Notification templates:** the owner will send the WhatsApp (and email) wording for the events N-06 to N-20; the Meta template names come after approval | Phase 1 notifications | Open, waiting on the owner |
 | Q-014 | OTP template | Phase 1 | **Resolved 28 Sep → confirmed by the owner: reuse `wa_login_otp_v1`** (D-042) |
+| Q-015 | **Break-glass and WhatsApp:** the break-glass account signs in with a password **plus the WhatsApp code** (D-025). If WhatsApp or CEOITBox is down, which is exactly when break-glass may be needed, it can't sign in. Keep the code, or skip it only during the console-enabled window? | Go-live | Open, waiting on the owner (built conservatively: the code is required) |
 
 ## 5. Work log (newest first)
+
+### 30 Sep 2026 (build session 2)
+- **Super Admin area:**
+  - `/superadmin/settings` has grouped settings. Secrets are encrypted, shown only as Configured / Not configured, and can be removed; history and audit keep only a keyed fingerprint.
+  - Values have safe limits, with plain-word errors.
+  - Test-send goes only to your own email and number.
+  - There is a delivery log and an audit-log viewer.
+  - Verified in the browser and in MySQL: the key is stored encrypted and never appears in the page.
+- **Admin area:**
+  - Users: list with search and status filter, create, edit (sign-in method, WhatsApp number normalised to +91, department, designation, manager, roles), deactivate and reactivate (ends sessions), unlock, force sign-out, set-password link.
+  - Departments (with HOD) and designations.
+  - D-047 rules. Changing the WhatsApp number or sign-in method alerts the user. Every change is audited with before and after values.
+- **Set password and forgot password** (D-049), on a shared WhatsApp-code module (`otp-flow.ts`) that sign-in now uses too.
+- **CSP** with a per-request nonce (D-051).
+- **Multi-level engine persisted in MySQL** (D-050):
+  - Workflows with versions, publish and archive; requests with permanent numbers; task queue; append-only timeline; approver groups; directory snapshot.
+  - Emails for approval needed, approved, rejected, changes requested, on hold, and blocked (to IT).
+- **11 integration tests on real MySQL:**
+  - A hybrid request (manager → parallel HOD + any-one finance group → MD above ₹5L), plus the small-amount path.
+  - Numbering stays unique under concurrency.
+  - Two approvers acting at the same moment are serialised.
+  - Nobody can decide another person's task, and the requester is never their own approver.
+  - The timeline is append-only, and invalid workflows can't be published.
+  - Resubmit keeps the same number, round 2; hold and resume work; a running request stays on its version when a new one is published.
+- **Break-glass console script** (D-054); open question Q-015.
+- **CI:** GitHub Actions runs lint, typecheck, unit tests, build and a MySQL integration job. Verified that the build works with no `.env.local`.
+- **Bugs found and fixed:** the `last_value` reserved word (S2-F1), forms wiped after a validation error (S2-F2), a possible double send (S2-F3), raw validation wording (S2-F4), a duplicated error message (S2-F5).
+- An order-dependent race test was corrected. On an any-one step a rejection doesn't end the request while another approver can still approve, so "both succeed" was legitimate; the test now uses two simultaneous approvals.
+- **Local only:** a test user TEST002 and a break-glass account #5 (test email/number) exist in the dev database. They are not seeds and never go to production.
 
 ### 28 Sep 2026 (build session 1)
 - Owner confirmed both assumptions (D-042). Recorded the build choices (D-043).
@@ -169,18 +213,18 @@
 | Access | Google sign-in (no OTP) | In progress: built and unit-tested; live test needs Firebase Admin values | P1-AUTH |
 | Access | User ID + password + OTP (WhatsApp only, D-025) | In progress: built, tested, smoke-tested to the send step; live send needs the CEOITBox key (S2-01) | P1-AUTH |
 | Admin Portal | IT-team access with roles assigned by the Super Admin (D-024, Q-011) | Planned | P1-ADM |
-| Access | Per-user sign-in method; admin-created users only; any email | In progress: enforced at sign-in; the admin screens are S2-03 | P1-USR |
+| Access | Per-user sign-in method; admin-created users only; any email | **Done (30 Sep 2026)**: enforced at sign-in, managed in /admin/users | P1-USR |
 | Access | New-login detection + alert + "This wasn't me" | In progress: built and tested; WhatsApp copy waits for Q-013 | P1-AUTH |
-| Access | Lockout, sessions, trusted devices, forgot password | In progress: lockout, sessions and devices done; forgot password is S2-04 | P1-AUTH |
-| Admin Portal | Separate app; Super Admin only; audited changes | Planned | P1-ADM |
-| Admin Portal | Organisation, users, hierarchy, roles, data scopes | Planned | P1-ADM |
-| Admin Portal | Security, providers, notification templates, audit viewer | Planned | P1-ADM |
+| Access | Lockout, sessions, trusted devices, forgot password | **Done (30 Sep 2026)** except idle timeout and approximate location | P1-AUTH |
+| Admin Portal | Separate app; Super Admin only; audited changes | **Done** as role areas in one app (D-034), every change audited | P1-ADM |
+| Admin Portal | Organisation, users, hierarchy, roles, data scopes | In progress: users, roles, manager, departments + HOD, designations done; data scopes, import to do | P1-ADM |
+| Admin Portal | Security, providers, notification templates, audit viewer | In progress: providers + security settings, test send, delivery log, audit viewer done; templates UI, export to do | P1-ADM |
 | Admin Portal | Approval Builder, form builder, workflow designer, validator, test mode | Planned | P3 |
 | Admin Portal | DoA matrix, SLA/escalation, holiday calendar | Planned | P3/P4 |
 | Admin Portal | Data rights: view, export, correct (versioned), archive, retention | Planned | P1-ADM / P7 |
 | Messaging | Notification hub: email + WhatsApp (CEOITBox) + in-app, delivery log | In progress: hub + adapters + delivery rows done; retry runner and log UI to do | P1-NOT |
-| Engine | Requests, permanent ID, state machine, server-side approver check | Planned | P2 |
-| Engine | Sequential / Parallel / Any-One / Any-N-of-M / Conditional / Hybrid | **Engine core done (28 Sep 2026)**, 38 tests; persistence is S2-06 | P2/P3 |
+| Engine | Requests, permanent ID, state machine, server-side approver check | **Done in the service layer (30 Sep 2026)**, tested on MySQL; screens in S3 | P2 |
+| Engine | Sequential / Parallel / Any-One / Any-N-of-M / Conditional / Hybrid | **Done and persisted (30 Sep 2026)**: 38 engine tests + 11 MySQL integration tests | P2/P3 |
 | Engine | Approver sources (user, role, HOD, manager, group, form field…) | Engine core done (8 sources); designer UI in P3 | P3 |
 | Engine | Resubmission with versions, Reopen, On Hold, Changes Required | In progress: hold/resume, changes required and resubmit (rounds) in the engine core; reopen and versions to do | P4 |
 | Engine | Delegation ("on behalf of"), SLA, reminders, escalation | In progress: delegation (actor + on-behalf-of) in the engine core; SLA/escalation to do | P4 |
@@ -189,7 +233,8 @@
 | Portals | Employee, Approver, Management portals | Planned | P2/P7 |
 | Insight | Analytics, SLA dashboards, Power BI views | Planned | P7 |
 | Connect | ERP / Salesforce / webhooks, mobile web app | Planned | P8 |
-| Security | Break-glass account; append-only audit log | In progress: audit log done (triggers verified); break-glass sign-in window + alert done, enable script is S2-07 | P1-SEC |
+| Security | Content-Security-Policy with per-request nonce | **Done (30 Sep 2026)** (D-051) | P1-SEC |
+| Security | Break-glass account; append-only audit log | **Done (30 Sep 2026)**: audit log + timeline append-only; break-glass console script; Q-015 open | P1-SEC |
 
 ## 7. Key facts from the Asana audit (reference for templates)
 
@@ -220,7 +265,7 @@
 | GitHub repo HarishDevs/ARS-Approval-System | HarishDevs (push via the proursolutions-source account) | GitHub | Active (D-035) |
 | `SESSION_SECRET`, `ENCRYPTION_KEY`, `JOB_RUNNER_SECRET` | – | GoDaddy app environment variables only; `ENCRYPTION_KEY` also backed up in a password manager | Fresh local-only values generated 28 Sep 2026 in the git-ignored `.env.local`; production values to be generated separately at deploy |
 | Firebase Admin service account (`FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`) | itadmin@arssteels.co.in | `.env.local` (dev) / GoDaddy env vars (prod), entered by the owner | Not yet entered; needed for a live Google sign-in test |
-| Break-glass admin | itadmin@ (D-041, D-042) | Sealed offline, separate from the daily login | Account to be created with S2-07 |
+| Break-glass admin | itadmin@ (D-041, D-042) | Sealed offline, separate from the daily login | Script ready (D-054). Create it on GoDaddy at go-live with `create`, then `set-password`; the dev database has a local test copy only |
 
 ## 9. Reference project: ARS Power BI website (`D:\PBI New`)
 

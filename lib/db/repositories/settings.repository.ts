@@ -53,3 +53,35 @@ export async function recordSettingHistory(
     [input.key, input.changedBy, input.changeType, input.oldRef, input.newRef],
   );
 }
+
+export async function clearSetting(key: string, updatedBy: number, db: Queryable = getDbPool()): Promise<void> {
+  await db.query<ResultSetHeader>("UPDATE system_settings SET value = NULL, updated_by = ? WHERE setting_key = ?", [updatedBy, key]);
+}
+
+export interface SettingHistoryEntry {
+  key: string;
+  changedAt: Date;
+  changedByName: string | null;
+  changeType: "CREATE" | "UPDATE";
+  oldRef: string | null;
+  newRef: string | null;
+}
+
+export async function listSettingHistory(limit: number, db: Queryable = getDbPool()): Promise<SettingHistoryEntry[]> {
+  const [rows] = await db.query<
+    (RowDataPacket & { setting_key: string; changed_at: Date; name: string | null; change_type: "CREATE" | "UPDATE"; old_value_reference: string | null; new_value_reference: string | null })[]
+  >(
+    `SELECT h.setting_key, h.changed_at, u.name, h.change_type, h.old_value_reference, h.new_value_reference
+     FROM settings_change_history h LEFT JOIN users u ON u.id = h.changed_by
+     ORDER BY h.id DESC LIMIT ?`,
+    [limit],
+  );
+  return rows.map((row) => ({
+    key: row.setting_key,
+    changedAt: row.changed_at,
+    changedByName: row.name,
+    changeType: row.change_type,
+    oldRef: row.old_value_reference,
+    newRef: row.new_value_reference,
+  }));
+}

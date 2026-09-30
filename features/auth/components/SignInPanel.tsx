@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { GoogleButton } from "@/features/auth/components/GoogleButton";
 
@@ -38,7 +39,6 @@ function PasswordStep({ onChallenge, onDone }: { onChallenge: (c: Challenge) => 
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [forgotHint, setForgotHint] = useState(false);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -96,13 +96,10 @@ function PasswordStep({ onChallenge, onDone }: { onChallenge: (c: Challenge) => 
             </button>
           </div>
           <div className="mt-2 flex justify-end">
-            <button type="button" className="link text-label" onClick={() => setForgotHint(true)}>
+            <Link href="/forgot-password" className="link text-label">
               Forgot password?
-            </button>
+            </Link>
           </div>
-          {forgotHint && (
-            <p className="mt-1 text-label text-ink-muted">Ask IT (itadmin@arssteels.co.in) to reset it. Self-service reset is coming soon.</p>
-          )}
         </div>
 
         {error && (

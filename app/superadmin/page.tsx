@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { requireArea } from "@/server/authorization/guards";
 import { SETTING_DEFINITIONS } from "@/server/settings/definitions";
@@ -33,7 +34,11 @@ export default async function SuperAdminHome() {
           ))}
         </ul>
       </section>
-      <p className="mt-4 text-label text-ink-muted">Entering and changing keys arrives with the settings screen in the next build step.</p>
+      <p className="mt-4 text-label text-ink-muted">
+        Enter or replace keys in <Link className="link" href="/superadmin/settings">
+          Providers &amp; security
+        </Link>.
+      </p>
     </>
   );
 }

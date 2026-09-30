@@ -1,0 +1,70 @@
+"use client";
+
+import { userCommandAction } from "@/app/admin/users/actions";
+import { ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
+
+// Account actions on the user page (F-06). Each is a tiny form so it works
+// without client-side routing and is checked again on the server.
+function Command({ id, command, label, body, danger, confirm }: { id: number; command: string; label: string; body: string; danger?: boolean; confirm?: string }) {
+  const { result, pending, onSubmit } = useActionForm(userCommandAction, { confirm });
+  return (
+    <form onSubmit={onSubmit} className="space-y-2 px-5 py-4">
+      <input type="hidden" name="id" value={id} />
+      <input type="hidden" name="command" value={command} />
+      <p className="font-medium">{label}</p>
+      <p className="text-label text-ink-muted">{body}</p>
+      <SubmitButton pending={pending} variant="secondary" className={`btn-compact ${danger ? "text-danger-600" : ""}`}>
+        {label}
+      </SubmitButton>
+      <ResultMessage result={result} />
+    </form>
+  );
+}
+
+export function UserCommands({
+  id,
+  name,
+  active,
+  locked,
+  signInMethod,
+  openSessionCount,
+  canEdit,
+}: {
+  id: number;
+  name: string;
+  active: boolean;
+  locked: boolean;
+  signInMethod: "GOOGLE" | "PASSWORD";
+  openSessionCount: number;
+  canEdit: boolean;
+}) {
+  if (!canEdit) {
+    return (
+      <section className="card px-5 py-4 text-label text-ink-muted">Only the Super Admin can change this account.</section>
+    );
+  }
+  return (
+    <section className="card divide-y divide-line">
+      <h2 className="px-5 py-4 font-semibold">Account actions</h2>
+      {active && signInMethod === "PASSWORD" && (
+        <Command id={id} command="set-password-link" label="Send set-password link" body="Emails a link (valid 72 hours) to set a new password, confirmed by a WhatsApp code. Older links stop working." />
+      )}
+      {locked && <Command id={id} command="unlock" label="Unlock account" body="Clears a lock from wrong passwords or from “This wasn't me”." />}
+      {active && (
+        <Command id={id} command="signout" label="Sign out everywhere" body={`Ends every open session (${openSessionCount} now).`} confirm={`Sign ${name} out on every device?`} />
+      )}
+      {active ? (
+        <Command
+          id={id}
+          command="deactivate"
+          label="Deactivate user"
+          body="Blocks sign-in and ends every session. History is kept; you can reactivate later."
+          danger
+          confirm={`Deactivate ${name}? They will be signed out everywhere and can't sign in.`}
+        />
+      ) : (
+        <Command id={id} command="reactivate" label="Reactivate user" body="Allows sign-in again." />
+      )}
+    </section>
+  );
+}

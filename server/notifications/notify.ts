@@ -65,12 +65,23 @@ function isRetryable(code: string): boolean {
   return code === "CEOITBOX_REQUEST_FAILED" || code === "CEOITBOX_TIMEOUT" || code === "CEOITBOX_RATE_LIMITED" || code === "EMAIL_REQUEST_FAILED";
 }
 
-export async function notifyWithDeps(input: NotifyInput, deps: NotifyDeps): Promise<void> {
+export type ChannelOutcome = { status: "SENT" | "FAILED" | "SKIPPED"; code?: string } | null;
+
+// What happened, for callers that show it (e.g. "link emailed"). Never
+// thrown: notify() still can't fail the business action.
+export interface NotifySummary {
+  recorded: boolean;
+  email: ChannelOutcome;
+  whatsapp: ChannelOutcome;
+}
+
+export async function notifyWithDeps(input: NotifyInput, deps: NotifyDeps): Promise<NotifySummary> {
+  const summary: NotifySummary = { recorded: false, email: null, whatsapp: null };
   let notificationId: number;
   let recipient: NotificationRecipient | null;
   try {
     recipient = await deps.findRecipient(input.userId);
-    if (!recipient || !recipient.active) return;
+    if (!recipient || !recipient.active) return summary;
     notificationId = await deps.createNotification({
       eventType: input.eventType,
       userId: input.userId,
@@ -78,18 +89,22 @@ export async function notifyWithDeps(input: NotifyInput, deps: NotifyDeps): Prom
       message: input.message,
       deepLink: input.deepLink ?? null,
     });
+    summary.recorded = true;
   } catch (error) {
     logError("notify: could not record notification", error, { eventType: input.eventType, userId: input.userId });
-    return;
+    return summary;
   }
 
   if (input.email) {
+    // Sending and recording fail separately: a send that worked must never
+    // be marked FAILED and retried (that would send it twice).
+    let sent: { id: string | null } | null = null;
     try {
-      const sent = await deps.sendEmail(recipient.email, input.email.subject, input.email.text);
-      await deps.createDelivery({ notificationId, channel: "EMAIL", provider: "RESEND", status: "SENT", providerReference: sent.id });
+      sent = await deps.sendEmail(recipient.email, input.email.subject, input.email.text);
     } catch (error) {
       const code = failureCode(error);
       logError("notify: email failed", error, { eventType: input.eventType, userId: input.userId });
+      summary.email = { status: "FAILED", code };
       await safeDelivery(deps, {
         notificationId,
         channel: "EMAIL",
@@ -100,10 +115,15 @@ export async function notifyWithDeps(input: NotifyInput, deps: NotifyDeps): Prom
         retryInSeconds: isRetryable(code) ? RETRY_DELAY_SECONDS : null,
       });
     }
+    if (sent) {
+      summary.email = { status: "SENT" };
+      await safeDelivery(deps, { notificationId, channel: "EMAIL", provider: "RESEND", status: "SENT", providerReference: sent.id });
+    }
   }
 
   if (input.whatsappVariables) {
     if (!recipient.whatsappNumber) {
+      summary.whatsapp = { status: "SKIPPED", code: "NO_WHATSAPP_NUMBER" };
       await safeDelivery(deps, { notificationId, channel: "WHATSAPP", provider: "CEOITBOX", status: "SKIPPED", failureCode: "NO_WHATSAPP_NUMBER" });
     } else {
       let template: ActiveTemplate | null = null;
@@ -114,16 +134,18 @@ export async function notifyWithDeps(input: NotifyInput, deps: NotifyDeps): Prom
       }
       if (!template) {
         // Templates for this event are not supplied/approved yet (Q-013).
+        summary.whatsapp = { status: "SKIPPED", code: "TEMPLATE_NOT_CONFIGURED" };
         await safeDelivery(deps, { notificationId, channel: "WHATSAPP", provider: "CEOITBOX", status: "SKIPPED", failureCode: "TEMPLATE_NOT_CONFIGURED" });
       } else {
         const values = input.whatsappVariables;
         const variables = template.variableKeys.map((key) => values[key] ?? "");
+        let sent: { waMessageId: string } | null = null;
         try {
-          const sent = await deps.sendWhatsApp(recipient.whatsappNumber, template, variables);
-          await deps.createDelivery({ notificationId, channel: "WHATSAPP", provider: "CEOITBOX", status: "SENT", providerReference: sent.waMessageId });
+          sent = await deps.sendWhatsApp(recipient.whatsappNumber, template, variables);
         } catch (error) {
           const code = failureCode(error);
           logError("notify: WhatsApp failed", error, { eventType: input.eventType, userId: input.userId });
+          summary.whatsapp = { status: "FAILED", code };
           await safeDelivery(deps, {
             notificationId,
             channel: "WHATSAPP",
@@ -134,9 +156,14 @@ export async function notifyWithDeps(input: NotifyInput, deps: NotifyDeps): Prom
             retryInSeconds: isRetryable(code) ? RETRY_DELAY_SECONDS : null,
           });
         }
+        if (sent) {
+          summary.whatsapp = { status: "SENT" };
+          await safeDelivery(deps, { notificationId, channel: "WHATSAPP", provider: "CEOITBOX", status: "SENT", providerReference: sent.waMessageId });
+        }
       }
     }
   }
+  return summary;
 }
 
 async function safeDelivery(deps: NotifyDeps, input: Parameters<NotifyDeps["createDelivery"]>[0]): Promise<void> {
@@ -147,6 +174,6 @@ async function safeDelivery(deps: NotifyDeps, input: Parameters<NotifyDeps["crea
   }
 }
 
-export function notify(input: NotifyInput): Promise<void> {
+export function notify(input: NotifyInput): Promise<NotifySummary> {
   return notifyWithDeps(input, defaultDeps);
 }

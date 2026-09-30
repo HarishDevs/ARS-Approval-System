@@ -13,3 +13,14 @@ export function getRequestContext(request: NextRequest): RequestContext {
   const deviceKey = readDeviceKey(request.cookies.get(DEVICE_COOKIE_NAME)?.value);
   return { ipAddress, userAgent, deviceKey };
 }
+
+// Same context for Server Actions, which have no NextRequest.
+export async function getActionContext(): Promise<RequestContext> {
+  const { headers, cookies } = await import("next/headers");
+  const headerList = await headers();
+  const forwarded = headerList.get("x-forwarded-for");
+  const ipAddress = forwarded?.split(",")[0]?.trim() || headerList.get("x-real-ip") || null;
+  const userAgent = headerList.get("user-agent")?.slice(0, 500) ?? null;
+  const deviceKey = readDeviceKey((await cookies()).get(DEVICE_COOKIE_NAME)?.value);
+  return { ipAddress, userAgent, deviceKey };
+}

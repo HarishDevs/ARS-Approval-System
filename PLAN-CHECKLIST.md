@@ -17,9 +17,13 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
-- **Now:** Build session 1 finished (28 Sep 2026). The single app is scaffolded; the foundation schema runs on local MySQL; sign-in services are built (Google, User ID + password + WhatsApp OTP, lockout, sessions, new-login alerts, "This wasn't me"); the area guards and the **multi-level engine core** are built and tested. Quality gates: 80 unit tests, typecheck, lint and production build all pass. The password flow and lockout were smoke-tested against MySQL.
-- **Waiting on the owner:** Q-004 (DoA values) and Q-013 (notification templates). Live WhatsApp/email sends also need the provider keys entered in `/superadmin` (the S2 settings editor). Google sign-in needs the Firebase Admin service-account values in `.env.local` / GoDaddy.
-- **Next (session 2, planned below):** the `/superadmin` settings editor (so provider keys can be entered encrypted), admin user management, engine persistence, and the CSP header.
+- **Now:** Build session 2 finished (30 Sep 2026). The Super Admin can enter provider keys (encrypted), test-send, and read the delivery log and audit log. The IT team manages users, roles, departments and designations. Password users get a set-password link, and anyone can use forgot password (WhatsApp code). A per-request CSP is on. The **multi-level engine is now persisted in MySQL**: workflows with versions, requests with permanent numbers, a task queue and an append-only timeline. There is a break-glass console script, and CI runs on GitHub. Gates: 124 unit tests, 11 MySQL integration tests, typecheck, lint and build all pass.
+- **Waiting on the owner:**
+  - Q-004 (DoA values) and Q-013 (notification templates).
+  - **Q-015** (break-glass without WhatsApp?).
+  - The CEOITBox and Resend keys, entered in `/superadmin/settings`.
+  - The Firebase Admin service-account values, for a live Google sign-in test.
+- **Next (session 3, planned below):** the request screens in `/users`: raise a request, My requests, My approvals queue, the request page with timeline, and approve / reject / changes / hold. Also a first workflow builder in `/admin` (form-based before drag-and-drop), the retry runner, and rate limiting.
 
 ---
 
@@ -45,15 +49,37 @@ Found and fixed during session 1 (each covered by a test or smoke check):
 - [x] S1-F4 A whitespace-only form value didn't count as empty in conditions (done 28 Sep 2026)
 
 ## Session log — build session 2 (planned)
-- [ ] S2-01 `/superadmin` settings editor: grouped settings, encrypted secrets shown only as Configured / Not configured, save with validation, before/after audit, change history (P1-35, P1-54, P1-55, P1-60)
-- [ ] S2-02 Provider test-send buttons (CEOITBox, Resend) for the Super Admin only; results in the delivery log (P1-55)
-- [ ] S2-03 Admin user management in `/admin`: list, create, edit, set sign-in method, WhatsApp number, manager/HOD, roles (admin only), make inactive / reactivate (ends sessions), unlock, force sign-out (P1-04 to P1-06, P1-52)
-- [ ] S2-04 Set password / first sign-in for password users and forgot password via WhatsApp OTP (P1-13, P1-14)
-- [ ] S2-05 Content-Security-Policy with a per-request nonce that still allows the Firebase Google popup (P1-34a)
-- [ ] S2-06 Engine persistence: workflow definitions and published versions, requests, instances (state JSON + tasks table), actions, timeline (P2-02, P2-06, P2-07, P2-20, P2-31)
-- [ ] S2-07 Break-glass enable/disable script for the hosting console (P1-36)
-- [ ] S2-08 GitHub Actions CI: lint, typecheck, unit tests, build (P0-45)
-- [ ] S2-09 Update the three living files; commit and push
+- [x] S2-01 `/superadmin` settings editor: grouped settings, encrypted secrets shown only as Configured / Not configured, save with validation, before/after audit, change history (P1-35, P1-54, P1-55, P1-60) (done 30 Sep 2026)
+- [x] S2-02 Provider test-send buttons (CEOITBox, Resend) for the Super Admin only; results in the delivery log (P1-55) (done 30 Sep 2026)
+- [x] S2-03 Admin user management in `/admin`: list, create, edit, set sign-in method, WhatsApp number, manager/HOD, roles (admin only), make inactive / reactivate (ends sessions), unlock, force sign-out (P1-04 to P1-06, P1-52) (done 30 Sep 2026)
+- [x] S2-03a Organisation basics in `/admin` so user records can point at them: departments (code, name, HOD) and designations; add, edit, make inactive (P1-01, P1-51) (done 30 Sep 2026)
+- [x] S2-03b Rules for managing users (D-047): only the Super Admin grants SUPER_ADMIN or edits Super Admin / break-glass accounts; no self-deactivation; the last Super Admin is protected; unit-tested (done 30 Sep 2026)
+- [x] S2-04 Set password / first sign-in for password users and forgot password via WhatsApp OTP (P1-13, P1-14) (done 30 Sep 2026)
+- [x] S2-05 Content-Security-Policy with a per-request nonce that still allows the Firebase Google popup (P1-34a) (done 30 Sep 2026)
+- [x] S2-06 Engine persistence: workflow definitions and published versions, requests, instances (state JSON + tasks table), actions, timeline (P2-02, P2-06, P2-07, P2-20, P2-31) (done 30 Sep 2026)
+- [x] S2-06a Approver groups (tables + directory) so the GROUP approver source works from the database (P2-05) (done 30 Sep 2026)
+- [x] S2-06b Integration tests against a real MySQL test database: migrations, request numbering, start → decide → approve, concurrent decisions, append-only timeline (done 30 Sep 2026)
+- [x] S2-07 Break-glass enable/disable script for the hosting console (P1-36) (done 30 Sep 2026)
+- [x] S2-08 GitHub Actions CI: lint, typecheck, unit tests, build (P0-45) (done 30 Sep 2026)
+- [x] S2-09 Update the three living files; commit and push (done 30 Sep 2026)
+
+Found and fixed during session 2:
+- [x] S2-F1 `last_value` is a reserved word in MySQL 8. The integration run caught it before it reached any database; the column is renamed `current_value` (done 30 Sep 2026)
+- [x] S2-F2 React 19 clears a `<form action>` after every submit, which wiped the admin's typing on a validation error. Forms now submit through `useActionForm`, and only clear after a successful save where that's wanted (D-048) (done 30 Sep 2026)
+- [x] S2-F3 A notification that was sent but failed to be recorded was marked FAILED and would be retried: a double send. Sending and recording now fail separately (D-052) (done 30 Sep 2026)
+- [x] S2-F4 Setting limits showed the raw validation text ("Number must be greater than or equal to 5"). Now plain: "Use 5 or more." (done 30 Sep 2026)
+- [x] S2-F5 A duplicate department code showed its message twice (done 30 Sep 2026)
+
+## Session log — build session 3 (planned)
+- [ ] S3-01 `/users` home: My approvals queue (pending tasks) and My requests, with status pills (P2-41, P2-42)
+- [ ] S3-02 Raise a request from a published approval type: title + form fields (a simple key/value form until the form builder, P3-03), submit (P2-40)
+- [ ] S3-03 Request page: details, the full level map (every step and branch, who approved or is pending), timeline, and approve / reject / request changes / hold / resume with reasons; record-level access (P1-30a layer 3, P2-43)
+- [ ] S3-04 Resubmit after changes required, from the request page (F-26)
+- [ ] S3-05 `/admin/workflows`: list, create and edit a workflow as structured steps (sequential levels, parallel groups, any-one / any-N, conditions), validate, test mode (simulate), publish, and version history (P3-01 first cut, P3-04, P3-05, P3-06)
+- [ ] S3-06 Approver groups screen in `/admin` (S2-06a data)
+- [ ] S3-07 Retry runner: signed `/api/jobs/run` for cPanel cron; retries FAILED deliveries with backoff (P1-48)
+- [ ] S3-08 Rate limiting on sign-in, OTP start and forgot password, per IP and per User ID (P1-21)
+- [ ] S3-09 Update the three living files; commit and push
 
 ## Phase 0 — Setup and decisions
 
@@ -91,7 +117,7 @@ Found and fixed during session 1 (each covered by a test or smoke check):
 - [x] P0-42 MySQL 8 via `mysql2`; SQL migration folder + migrate/seed scripts (same pattern as the Power BI site); `docker-compose.yml` for local MySQL (done 28 Sep 2026; Docker MySQL on port 3307)
 - [x] P0-43 Environment schema validated at startup with zod (fail fast with a clear message) (done 28 Sep 2026; blank optional values count as unset (D-045))
 - [>] P0-44 Vitest unit tests + Playwright end-to-end; lint and typecheck scripts (28 Sep 2026: Vitest in place with 80 tests; Playwright still to do)
-- [ ] P0-45 CI on GitHub Actions (lint, typecheck, unit tests, build)
+- [x] P0-45 CI on GitHub Actions (lint, typecheck, unit tests, build) (done 30 Sep 2026; lint, typecheck, unit tests, build + MySQL integration job)
 - [ ] P0-46 GoDaddy deploy: one Node.js app from GitHub `HarishDevs/ARS-Approval-System` → `approvals.arssteels.net`, env vars entered in GoDaddy only, cPanel cron calling a signed job-runner endpoint
 
 ### 0.3 Business inputs
@@ -132,22 +158,22 @@ The Super Admin then enters the table in the Admin Portal (P3-30). Every request
 - [>] P1-01 Data model: companies/units, locations, departments, designations, cost centres (28 Sep 2026: departments (with HOD) and designations; units, locations and cost centres still to do)
 - [x] P1-02 Data model: users. Fields: login ID, email (any domain), WhatsApp number, sign-in method (Google / password), firebase_uid, password hash, status (active / inactive), locked-until, is_super_admin, is_break_glass (done 28 Sep 2026; Super Admin is a role (D-043), not a flag)
 - [ ] P1-03 Reporting hierarchy: reporting manager and HOD per user; manager-of-manager lookup
-- [ ] P1-04 Users can only be created in the Admin Portal (no self sign-up); bulk import with validation
-- [ ] P1-05 Make a user inactive (never hard-delete, D-033) → end their sessions, block sign-in, hand their pending approval steps to a chosen person; reactivate later if needed
-- [ ] P1-06 Roles assigned per user, by the admin only (D-033): a user can hold several roles; no self-service role changes
+- [>] P1-04 Users can only be created in the Admin Portal (no self sign-up); bulk import with validation (30 Sep 2026: admin-only creation done; bulk import still to do)
+- [>] P1-05 Make a user inactive (never hard-delete, D-033) → end their sessions, block sign-in, hand their pending approval steps to a chosen person; reactivate later if needed (30 Sep 2026: deactivate ends sessions and blocks sign-in, reactivate done; handing over pending steps comes with S3)
+- [x] P1-06 Roles assigned per user, by the admin only (D-033): a user can hold several roles; no self-service role changes (done 30 Sep 2026; D-047 rules)
 
 ### P1-AUTH Sign-in and security
 - [>] P1-10 Google sign-in via Firebase Auth, ID token verified on the server: the email must match an existing active user whose method is Google; link firebase_uid on the first sign-in only; **no OTP** (D-006) (28 Sep 2026: built and unit-tested; a live test needs the Firebase Admin service-account values)
 - [>] P1-11 User ID + password sign-in: Argon2id hashing, leaked-password check, minimum length (configurable) (28 Sep 2026: scrypt instead of Argon2id (D-043), policy checks; leaked-password check still to do)
 - [>] P1-12 OTP after password sign-in: 6 digits, 5 min, single use, 5 wrong tries, resend after 30 s, max 5 per hour, stored hashed, anti-enumeration response; sent on **WhatsApp only** (D-025) with the Authentication-category template (28 Sep 2026: built, unit-tested and smoke-tested to the send step; a live send needs the CEOITBox key entered in /superadmin (S2-01))
-- [ ] P1-13 First sign-in for password users: set password (reuse the asset-pack create-password screens), verify the WhatsApp number by OTP
-- [ ] P1-14 Forgot password: OTP on WhatsApp → new password → all sessions ended → alert sent
+- [x] P1-13 First sign-in for password users: set password (reuse the asset-pack create-password screens), verify the WhatsApp number by OTP (done 30 Sep 2026; single-use link + WhatsApp code (D-049))
+- [x] P1-14 Forgot password: OTP on WhatsApp → new password → all sessions ended → alert sent (done 30 Sep 2026; uniform answers, code sent after the response)
 - [x] P1-15 Lockout after 5 failed passwords (15 min, configurable) + alert (done 28 Sep 2026; verified on MySQL (5th wrong password locks, alert recorded))
 - [>] P1-16 Sessions: secure HTTP-only cookie, idle and absolute timeouts (configurable), sign out everywhere (28 Sep 2026: DB-backed sessions, logout, sign out everywhere; idle timeout still to do)
 - [>] P1-17 Device recognition: signed device cookie + browser/OS + IP / approximate location; trusted-device period (28 Sep 2026: signed device cookie, user agent, IP, trusted period; approximate location still to do)
 - [>] P1-18 **New-login alert** on email + WhatsApp: time, device, browser, approximate location, IP, and a "This wasn't me" link (28 Sep 2026: built and tested; the WhatsApp copy waits for the owner's template (Q-013))
-- [>] P1-19 "This wasn't me": end all sessions, lock the account, notify the Super Admin (28 Sep 2026: ends sessions, locks the account, alerts the user and the Super Admin; admin unlock arrives with S2-03)
-- [>] P1-20 Security alerts for password changed, mobile/WhatsApp changed, account locked, repeated failures; every Super Admin sign-in alerts the Super Admin (28 Sep 2026: account locked + Super Admin/break-glass sign-in alerts; password/mobile-changed alerts come with S2-03/S2-04)
+- [x] P1-19 "This wasn't me": end all sessions, lock the account, notify the Super Admin (28 Sep 2026: ends sessions, locks the account, alerts the user and the Super Admin; admin unlock arrives with S2-03; unlock done 30 Sep 2026)
+- [>] P1-20 Security alerts for password changed, mobile/WhatsApp changed, account locked, repeated failures; every Super Admin sign-in alerts the Super Admin (28 Sep 2026: account locked + Super Admin/break-glass sign-in alerts; password/mobile-changed alerts come with S2-03/S2-04; added 30 Sep 2026, email now, WhatsApp after Q-013)
 - [ ] P1-21 Rate limiting on sign-in, OTP and password reset
 - [~] P1-22 Step-up OTP for sensitive Admin Portal actions: not needed (D-032, 28 Sep 2026)
 - [x] P1-23 `login_logs` browser/user-agent column ≥ VARCHAR(500) (bug found on the Power BI site) (done 28 Sep 2026; VARCHAR(500))
@@ -158,10 +184,10 @@ The Super Admin then enters the table in the Admin Portal (P3-30). Every request
 - [>] P1-31 Every API call needs a signed-in session; permissions checked on the server per record; admin routes accept only Admin Portal roles (D-024); Super-Admin-only areas (providers, security, integrations, health, audit export) enforced on the server (28 Sep 2026: area guards for API routes; per-record checks come with requests)
 - [>] P1-32 No public API docs; no source maps in production; no config or keys sent to the browser; feature flags decided on the server (28 Sep 2026: no production source maps, no x-powered-by, public config only for Firebase)
 - [>] P1-33 Generic error messages with a reference code; server/framework headers stripped; no provider names in the UI, emails or WhatsApp (28 Sep 2026: generic errors with a REQ- reference code)
-- [>] P1-34 CORS limited to ARS addresses; security headers (CSP, HSTS, frame-ancestors) (28 Sep 2026: HSTS, X-Frame-Options DENY, nosniff, Referrer-Policy and Permissions-Policy set; CSP is S2-05 (P1-34a))
-- [ ] P1-34a Content-Security-Policy with a per-request nonce, compatible with the Firebase popup (S2-05, added 28 Sep 2026)
-- [ ] P1-35 Secrets encrypted at rest, shown masked in the Admin Portal, with rotation dates
-- [>] P1-36 **Break-glass account** (D-011): disabled by default; enabled only by a server-side script run from the hosting console; each use alerts (28 Sep 2026: schema plus the sign-in window rule and alert; the enabling script is S2-07)
+- [>] P1-34 CORS limited to ARS addresses; security headers (CSP, HSTS, frame-ancestors) (28 Sep 2026: HSTS, X-Frame-Options DENY, nosniff, Referrer-Policy and Permissions-Policy set; CSP is S2-05 (P1-34a); CSP done 30 Sep 2026)
+- [x] P1-34a Content-Security-Policy with a per-request nonce, compatible with the Firebase popup (S2-05, added 28 Sep 2026) (done 30 Sep 2026; D-051)
+- [>] P1-35 Secrets encrypted at rest, shown masked in the Admin Portal, with rotation dates (30 Sep 2026: encrypted, shown only as Configured/Not configured, history by fingerprint; rotation dates still to do)
+- [>] P1-36 **Break-glass account** (D-011): disabled by default; enabled only by a server-side script run from the hosting console; each use alerts (28 Sep 2026: schema plus the sign-in window rule and alert; the enabling script is S2-07; script done 30 Sep 2026, see Q-015)
 - [x] P1-37 **Append-only audit log** (D-012): no update or delete for anyone; the Super Admin can view and export (done 28 Sep 2026; MySQL triggers reject UPDATE/DELETE (verified))
 - [ ] P1-38 At go-live: rotate every key and password; remove developer access that is no longer needed
 
@@ -172,27 +198,27 @@ The Super Admin then enters the table in the Admin Portal (P3-30). Every request
 - [~] P1-43 SMS channel for OTP: not needed (D-025, 28 Sep 2026)
 - [ ] P1-48 Retry outbox for failed sends, driven by the cron job runner (the Power BI site lacked this); respect the CEOITBox rate limit
 - [ ] P1-44 In-app notifications (bell icon from the asset pack)
-- [ ] P1-45 Delivery log per channel with status, retries and failures; the Super Admin can resend
+- [>] P1-45 Delivery log per channel with status, retries and failures; the Super Admin can resend (30 Sep 2026: Super Admin delivery log; resend button with the retry runner (S3-07))
 - [ ] P1-46 Template per event and channel, versioned, with preview
 - [ ] P1-47 WhatsApp numbers verified by OTP; opt-in recorded
 
 ### P1-ADM Admin Portal (Super Admin) core
 - [>] P1-50 Admin area shells at `approvals.arssteels.net/admin` and `/superadmin` (D-034): navigation, ARS branding (28 Sep 2026: shells for /admin and /superadmin)
 - [>] P1-50a Roles (D-024, D-039): **Super Admin** = itadmin@ (everything; `/superadmin`); **IT Admin** (`/admin`: approval types, forms, workflows, templates, DoA, users and roles as granted); **User** (`/users`). Provider keys, security, integrations, system health and audit export are `/superadmin` only (28 Sep 2026: SUPER_ADMIN / IT_ADMIN / USER roles and area policy)
-- [ ] P1-51 Organisation module (P1-01)
-- [ ] P1-52 Users and hierarchy module (P1-02 to P1-05): create, import, edit, deactivate, force sign-out, reset password, unlock, change sign-in method
+- [>] P1-51 Organisation module (P1-01) (30 Sep 2026: departments (with HOD) and designations; units, locations, cost centres still to do)
+- [>] P1-52 Users and hierarchy module (P1-02 to P1-05): create, import, edit, deactivate, force sign-out, reset password, unlock, change sign-in method (30 Sep 2026: create, edit, deactivate, reactivate, unlock, force sign-out, set-password link, change sign-in method; import still to do)
 - [ ] P1-53 Roles and data rights: role builder, permission matrix, data scopes (own / team / department / list / all), field-level hiding
-- [ ] P1-54 Security settings: password policy, OTP values, lockout, sessions, trusted-device period, alert rules, optional IP allowlist for the Admin Portal
-- [ ] P1-55 Providers and integrations: Google OAuth, email, CEOITBox, SMS. Masked keys, test-send button
+- [>] P1-54 Security settings: password policy, OTP values, lockout, sessions, trusted-device period, alert rules, optional IP allowlist for the Admin Portal (30 Sep 2026: password length, OTP, lockout, trusted-device values in /superadmin; session timeouts and IP allowlist still to do)
+- [>] P1-55 Providers and integrations: Google OAuth, email, CEOITBox, SMS. Masked keys, test-send button (30 Sep 2026: Resend + CEOITBox keys and test-send; Google (Firebase Admin) stays an env value)
 - [ ] P1-56 Notification center: templates, channels, delivery log
-- [ ] P1-57 Audit viewer: search, filter and export the audit log; login history; security events
+- [>] P1-57 Audit viewer: search, filter and export the audit log; login history; security events (30 Sep 2026: viewer with action filter and paging; export and login-history view still to do)
 - [ ] P1-58 System health: job queue, notification failures, error summary (admin only)
 - [ ] P1-59 Branding: logo, colours, email header, login message
-- [ ] P1-60 Every admin change is written to the audit log with before and after values
+- [x] P1-60 Every admin change is written to the audit log with before and after values (done 30 Sep 2026 for settings, users, roles, departments, designations, workflows)
 
 ### P1-UI User app foundation
 - [>] P1-70 App shell with the ARS tokens and icons (asset pack): sidebar, top bar, profile (28 Sep 2026: sidebar shell with ARS branding)
-- [>] P1-71 Login screens: Google button, User ID + password, OTP screen, forgot password, create password (28 Sep 2026: Google + User ID/password + OTP screens; forgot/create password in S2-04)
+- [x] P1-71 Login screens: Google button, User ID + password, OTP screen, forgot password, create password (28 Sep 2026: Google + User ID/password + OTP screens; forgot/create password in S2-04; forgot + set password screens done 30 Sep 2026)
 - [ ] P1-72 Profile: my details, my devices and sessions (sign out a device), notification preferences where the Super Admin allows them
 
 ---
@@ -201,29 +227,29 @@ The Super Admin then enters the table in the Admin Portal (P3-30). Every request
 
 ### P2-DM Data model (node graph, never fixed levels)
 - [ ] P2-01 ApprovalTypes, ApprovalTemplates (versioned), FormDefinitions (versioned), FormFields (reusable field types)
-- [ ] P2-02 WorkflowDefinitions → WorkflowVersions → WorkflowNodes + WorkflowEdges + WorkflowConditions
+- [x] P2-02 WorkflowDefinitions → WorkflowVersions → WorkflowNodes + WorkflowEdges + WorkflowConditions (done 30 Sep 2026; nodes/edges stored as the version's JSON graph, one published version at a time)
 - [ ] P2-03 Node kinds: START, APPROVAL, PARALLEL-SPLIT, JOIN, CONDITION, WORK-ASSIGNMENT, NOTIFY, END
 - [ ] P2-04 Completion rules on a group: ALL, ANY_ONE, ANY_N_OF_M (N configurable), with optional weighted or mandatory members
-- [ ] P2-05 Approver sources per node: specific user, role, requester's HOD, department HOD, reporting manager, manager's manager, department, approval group, requester-selected (within governance), user from a form field
-- [ ] P2-06 ApprovalRequests (permanent ID, e.g. PUR-2026-000421), ApprovalVersions, ApprovalInstances, ApprovalSteps, ApprovalActions
-- [ ] P2-07 Step record: step ID, request, node, assigned approver(s), eligible approvers, **actual actor**, on-behalf-of, decision, time, comment, version
+- [>] P2-05 Approver sources per node: specific user, role, requester's HOD, department HOD, reporting manager, manager's manager, department, approval group, requester-selected (within governance), user from a form field (30 Sep 2026: all 8 sources resolve from MySQL; approver groups have tables (screen in S3-06))
+- [>] P2-06 ApprovalRequests (permanent ID, e.g. PUR-2026-000421), ApprovalVersions, ApprovalInstances, ApprovalSteps, ApprovalActions (30 Sep 2026: requests with permanent numbers, state, tasks and timeline; form versions come with the form builder)
+- [x] P2-07 Step record: step ID, request, node, assigned approver(s), eligible approvers, **actual actor**, on-behalf-of, decision, time, comment, version (done 30 Sep 2026; actual actor + on-behalf-of per task)
 - [ ] P2-08 Comments, Attachments (versioned), Watchers
-- [ ] P2-09 Numbering scheme per approval type (code prefix + year + sequence)
+- [x] P2-09 Numbering scheme per approval type (code prefix + year + sequence) (done 30 Sep 2026; PREFIX-YYYY-000001 from a locked sequence row)
 
 ### P2-ENG Engine behaviour (all patterns from day one)
-- [ ] P2-20 Instantiate a request against the **published workflow version** (running requests never change underneath)
+- [x] P2-20 Instantiate a request against the **published workflow version** (running requests never change underneath) (done 30 Sep 2026; tested with a new version published mid-flight)
 - [x] P2-21 Sequential levels (any number) (engine core done 28 Sep 2026; stored with S2-06)
 - [x] P2-22 Parallel levels with a join (ALL) (engine core done 28 Sep 2026 (joins: ALL, ANY_ONE, ANY_N))
 - [x] P2-23 Any-one and any-N-of-M groups (engine core done 28 Sep 2026)
 - [x] P2-24 Conditional branches (amount, department, type, priority, any form field; AND/OR) (engine core done 28 Sep 2026 (AND/OR groups, default path))
 - [x] P2-25 Hybrid graphs: combinations of all the above, nested (engine core done 28 Sep 2026)
 - [x] P2-26 Skip rules (e.g. skip a level if the requester is that approver; no self-approval) (engine core done 28 Sep 2026 (skipIf, no self-approval, BLOCK/SKIP when no approver))
-- [ ] P2-27 Resolve approvers when a step starts (so hierarchy changes are picked up); record who was resolved
-- [>] P2-28 **Server-side actor authorisation** on every action (D-020): the signed-in user must be an eligible approver or a valid delegate for this step (28 Sep 2026: the engine enforces approver-or-delegate; the server wiring comes with S2-06)
+- [x] P2-27 Resolve approvers when a step starts (so hierarchy changes are picked up); record who was resolved (done 30 Sep 2026; resolved from a fresh directory snapshot when each step starts)
+- [x] P2-28 **Server-side actor authorisation** on every action (D-020): the signed-in user must be an eligible approver or a valid delegate for this step (28 Sep 2026: the engine enforces approver-or-delegate; the server wiring comes with S2-06; wired and tested on MySQL 30 Sep 2026)
 - [ ] P2-29 Canonical state machine (D-017): Draft, Submitted, Pending, In Progress, On Hold, Changes Required, Resubmitted, Approved, Rejected, Reopened, Closed
 - [x] P2-30 Actions: Approve, Reject (reason required), Request Changes (reason required), Put On Hold / Resume, Comment (engine core done 28 Sep 2026)
-- [ ] P2-31 Timeline / audit entry for every transition
-- [ ] P2-32 Notification events emitted for every transition (to P1-NOT)
+- [x] P2-31 Timeline / audit entry for every transition (done 30 Sep 2026; append-only approval_events)
+- [>] P2-32 Notification events emitted for every transition (to P1-NOT) (30 Sep 2026: approval needed / approved / rejected / changes / hold / blocked on email + in-app; WhatsApp waits for Q-013)
 - [>] P2-33 Engine test suite covering every pattern, including edge cases (an approver leaves mid-flow, an empty approver group, a condition with no matching branch) (28 Sep 2026: 38 engine tests; 'an approver leaves mid-flow' still to do)
 
 ### P2-UI Employee and approver portals (first cut)
@@ -249,7 +275,7 @@ The Super Admin then enters the table in the Admin Portal (P3-30). Every request
 - [ ] P3-03 Form builder: drag, add, remove and reorder fields; field types; required; validation; conditional visibility
 - [>] P3-04 **Workflow validator** before publish: start/end exist, all nodes connected, no dead ends, no unintended loops, every approval node has an approver source, no self-approval, valid completion rules, logically valid conditions with no conflicts, rejection path exists, resubmission/reopen policy set, valid escalation (base plan §34) (28 Sep 2026: core rules incl. G-08/G-09, cycles, dead ends; rejection-path and escalation checks still to do)
 - [>] P3-05 **Test mode / simulation:** enter sample values and see the exact levels and approvers, without creating a real request (28 Sep 2026: simulate() core with stages, skips, blocks and branches; UI with P3)
-- [ ] P3-06 Draft / publish / archive for templates, with version history and a diff
+- [>] P3-06 Draft / publish / archive for templates, with version history and a diff (30 Sep 2026: versions, publish and archive in the service; screens in S3-05)
 - [ ] P3-30 **DoA matrix module:** amount bands per type and department, approver roles per band, effective dates, versioned; used by condition nodes
 - [ ] P3-40 Templates: HR Approvals, Admin, Recruitment (Manager → HOD)
 - [ ] P3-41 Template: Finance Internal (level 1 chosen by Nature → optional level 2 → HOD), including the reject/hold paths at level 2 that are missing in Asana

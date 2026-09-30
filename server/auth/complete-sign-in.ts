@@ -36,7 +36,7 @@ export interface CompleteSignInDeps {
   recordLogin: typeof recordLogin;
   recordAudit: typeof recordAudit;
   listSuperAdminIds: () => Promise<number[]>;
-  notify: (input: NotifyInput) => Promise<void>;
+  notify: (input: NotifyInput) => Promise<unknown>;
   // Alerts run after the response is decided; they never block or fail sign-in.
   dispatch: (work: () => Promise<void>) => void;
   getTrustedDeviceDays: () => Promise<number>;
@@ -137,7 +137,9 @@ export async function completeSignIn(
     const token = createPurposeToken(NOT_ME_PURPOSE, user.id, sessionId, NOT_ME_TTL_SECONDS);
     const link = `${deps.appBaseUrl()}/security/not-me?token=${encodeURIComponent(token)}`;
     const message = newSignInMessage(details, link);
-    deps.dispatch(() => deps.notify({ eventType: "NEW_LOGIN", userId: user.id, deepLink: link, ...message }));
+    deps.dispatch(async () => {
+      await deps.notify({ eventType: "NEW_LOGIN", userId: user.id, deepLink: link, ...message });
+    });
   }
 
   // Every Super Admin or break-glass sign-in alerts the Super Admins (N-04, N-05).

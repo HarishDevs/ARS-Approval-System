@@ -13,10 +13,10 @@ export default async function SuperAdminLayout({ children }: { children: React.R
       user={user}
       nav={[
         { href: "/superadmin", label: "Overview" },
-        { href: "/superadmin/settings", label: "Providers & security", soon: true },
+        { href: "/superadmin/settings", label: "Providers & security" },
         { href: "/superadmin/templates", label: "WhatsApp templates", soon: true },
-        { href: "/superadmin/deliveries", label: "Message deliveries", soon: true },
-        { href: "/superadmin/audit", label: "Audit log", soon: true },
+        { href: "/superadmin/deliveries", label: "Message deliveries" },
+        { href: "/superadmin/audit", label: "Audit log" },
       ]}
     >
       {children}

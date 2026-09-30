@@ -66,3 +66,38 @@ export async function createDelivery(input: {
   );
   return result.insertId;
 }
+
+export interface DeliveryListItem {
+  id: number;
+  createdAt: Date;
+  eventType: string;
+  recipientName: string;
+  channel: "EMAIL" | "WHATSAPP";
+  status: string;
+  attemptCount: number;
+  failureCode: string | null;
+}
+
+// Super Admin delivery log (P1-45). Never returns payloads.
+export async function listRecentDeliveries(limit: number): Promise<DeliveryListItem[]> {
+  const [rows] = await getDbPool().query<
+    (RowDataPacket & { id: number; created_at: Date; event_type: string; name: string; channel: "EMAIL" | "WHATSAPP"; status: string; attempt_count: number; failure_code: string | null })[]
+  >(
+    `SELECT d.id, d.created_at, n.event_type, u.name, d.channel, d.status, d.attempt_count, d.failure_code
+     FROM notification_deliveries d
+     JOIN notifications n ON n.id = d.notification_id
+     JOIN users u ON u.id = n.user_id
+     ORDER BY d.id DESC LIMIT ?`,
+    [limit],
+  );
+  return rows.map((row) => ({
+    id: row.id,
+    createdAt: row.created_at,
+    eventType: row.event_type,
+    recipientName: row.name,
+    channel: row.channel,
+    status: row.status,
+    attemptCount: row.attempt_count,
+    failureCode: row.failure_code,
+  }));
+}
