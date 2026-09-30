@@ -14,7 +14,8 @@ export type AuthErrorCode =
   | "AUTH_CHALLENGE_EXPIRED"
   | "AUTH_PASSWORD_MISMATCH"
   | "AUTH_PASSWORD_POLICY"
-  | "AUTH_LINK_INVALID";
+  | "AUTH_LINK_INVALID"
+  | "AUTH_RATE_LIMITED";
 
 export class AuthError extends Error {
   constructor(
@@ -42,6 +43,7 @@ export const AUTH_ERROR_STATUS: Record<AuthErrorCode, number> = {
   AUTH_PASSWORD_MISMATCH: 400,
   AUTH_PASSWORD_POLICY: 400,
   AUTH_LINK_INVALID: 410,
+  AUTH_RATE_LIMITED: 429,
 };
 
 export const GENERIC_SIGN_IN_FAILED = "The user ID or password is incorrect.";

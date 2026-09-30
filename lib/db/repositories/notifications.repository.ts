@@ -76,14 +76,17 @@ export interface DeliveryListItem {
   status: string;
   attemptCount: number;
   failureCode: string | null;
+  canRetry: boolean;
+  nextRetryAt: Date | null;
 }
 
 // Super Admin delivery log (P1-45). Never returns payloads.
 export async function listRecentDeliveries(limit: number): Promise<DeliveryListItem[]> {
   const [rows] = await getDbPool().query<
-    (RowDataPacket & { id: number; created_at: Date; event_type: string; name: string; channel: "EMAIL" | "WHATSAPP"; status: string; attempt_count: number; failure_code: string | null })[]
+    (RowDataPacket & { id: number; created_at: Date; event_type: string; name: string; channel: "EMAIL" | "WHATSAPP"; status: string; attempt_count: number; failure_code: string | null; has_payload: number; next_retry_at: Date | null })[]
   >(
-    `SELECT d.id, d.created_at, n.event_type, u.name, d.channel, d.status, d.attempt_count, d.failure_code
+    `SELECT d.id, d.created_at, n.event_type, u.name, d.channel, d.status, d.attempt_count, d.failure_code,
+            (d.payload_json IS NOT NULL) AS has_payload, d.next_retry_at
      FROM notification_deliveries d
      JOIN notifications n ON n.id = d.notification_id
      JOIN users u ON u.id = n.user_id
@@ -99,5 +102,7 @@ export async function listRecentDeliveries(limit: number): Promise<DeliveryListI
     status: row.status,
     attemptCount: row.attempt_count,
     failureCode: row.failure_code,
+    canRetry: row.status === "FAILED" && Number(row.has_payload) === 1,
+    nextRetryAt: row.next_retry_at,
   }));
 }

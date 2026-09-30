@@ -18,12 +18,13 @@ export function AppShell({
   children: React.ReactNode;
 }) {
   const areas = areasForUser(user);
-  const initials = user.name
-    .split(/\s+/)
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+  const initials =
+    user.name
+      .split(/\s+/)
+      .map((part) => part.replace(/[^\p{L}]/gu, "")[0] ?? "")
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "?";
 
   return (
     <div className="flex min-h-full">

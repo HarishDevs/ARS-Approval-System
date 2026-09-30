@@ -27,7 +27,7 @@ The number of levels and how they combine is unlimited. There are no fixed "Leve
 | F-07 | Break-glass access | Partly built: sign-in window + alert; enable script S2-07 |
 | F-08 | Role routing: /users, /admin, /superadmin | Built 28 Sep 2026 |
 | F-10 | Request state machine | Planned |
-| F-11 | Submission → workflow resolution | Built in the service 30 Sep 2026; screens S3 |
+| F-11 | Submission → workflow resolution | Built with screens 30 Sep 2026 |
 | F-12 | Approver action authorisation | Built and tested on MySQL 30 Sep 2026 |
 | F-20 | Multi-level building blocks | Engine core built 28 Sep 2026 |
 | F-21 | Sequential multi-level | Engine core built 28 Sep 2026 |
@@ -35,20 +35,23 @@ The number of levels and how they combine is unlimited. There are no fixed "Leve
 | F-23 | Any-one / Any-N-of-M | Engine core built 28 Sep 2026 |
 | F-24 | Conditional / DoA routing | Engine core built 28 Sep 2026 (DoA values: Q-004) |
 | F-25 | Hybrid (combined) | Engine core built 28 Sep 2026 |
-| F-26 | Changes required → resubmission | Engine core built 28 Sep 2026 |
-| F-27 | On Hold / resume | Engine core built 28 Sep 2026 |
-| F-28 | Reject | Engine core built 28 Sep 2026 |
+| F-26 | Changes required → resubmission | Built with screens 30 Sep 2026 |
+| F-27 | On Hold / resume | Built with screens 30 Sep 2026 |
+| F-28 | Reject | Built with screens 30 Sep 2026 |
 | F-29 | Reopen | Planned |
 | F-30 | Delegation | Engine core built 28 Sep 2026 (delegation records: later) |
 | F-31 | SLA, reminder, escalation | Planned |
 | F-32 | Work assignment after approval | Planned |
 | F-33 | Employee custom approval | Planned |
 | F-40 | Notification pipeline | Planned |
-| F-50 | Workflow authoring: design → validate → test → publish → version | Planned |
+| F-50 | Workflow authoring: design → validate → test → publish → version | Levels builder built 30 Sep 2026; canvas later |
 | F-51 | Admin configuration change (audited) | Built for settings, users, departments, workflows 30 Sep 2026 |
 | F-52 | Provider settings and test send (Super Admin) | Built 30 Sep 2026 |
 | F-53 | Break-glass console script | Built 30 Sep 2026 (Q-015 open) |
 | F-13 | Request persistence and concurrency | Built and tested on MySQL 30 Sep 2026 |
+| F-14 | Request screens: raise → queue → act → resubmit | Built and verified in the browser 30 Sep 2026 |
+| F-41 | Retry runner for failed messages | Built 30 Sep 2026 (cron set up at go-live) |
+| F-09 | Rate limiting on sign-in and codes | Built and verified 30 Sep 2026 |
 | F-60…F-71 | First templates mapped from Asana | Planned |
 
 ---
@@ -160,6 +163,20 @@ fake challenge, no message]
 ```
 - An account locked by "This wasn't me" can't reset its own password; only an admin unlock clears it. A reset clears a wrong-password lock.
 - The same OTP limits as sign-in apply (cooldown, per-hour cap, attempts), counted per purpose.
+
+## F-09 Rate limiting (S3-08, P1-21, D-059)
+Counted in MySQL (a hit table with a sliding window), per IP address and per User ID, independent of whether the account exists:
+
+| Action | Per IP | Per User ID |
+|---|---|---|
+| Password sign-in (step 1) | 20 / 15 min | 10 / 15 min |
+| Code check (sign-in, set / forgot password) | 30 / 15 min | (the challenge already allows only 5 tries) |
+| Forgot password (step 1) | 10 / 15 min | 5 / hour |
+| Set password (step 1) | 10 / 15 min | (the link is single-use) |
+| Google sign-in | 30 / 15 min | (not applicable) |
+
+- Over the limit → HTTP 429 with a generic "Too many attempts. Try again in a few minutes." and a Retry-After header. Nothing reveals whether the User ID exists.
+- The retry runner (F-41) deletes hits older than a day.
 
 ## F-05 Lockout and "This wasn't me"
 - **Lockout:** 5 wrong passwords → locked 15 min (configurable) → alert to the user. Repeated locks also alert the Super Admin.
@@ -293,6 +310,47 @@ append events to the timeline (append-only)]
   - Email and in-app work now; WhatsApp waits for the owner's templates (Q-013).
   - Only the requester can resubmit, on the same number, in the next round, optionally with new form data.
 
+## F-14 Request screens (S3-01 to S3-04, D-055, D-057)
+```mermaid
+flowchart TD
+  H["/users home: My approvals queue + My requests"] --> N["Raise a request: pick a published approval type"]
+  N --> F["Form from the workflow version: title + fields\nvalidated on the server (required, number, date, choice, person)"]
+  F --> S["Submit → number PREFIX-YYYY-nnnnnn → F-11"]
+  S --> R["/users/requests/id"]
+  H --> R
+  R --> V{"Who may open it?\nrequester · anyone with a task on it · IT Admin / Super Admin"}
+  V -- No --> X[Generic 404, attempt audited]
+  V -- Yes --> P["Details · form data · step map: every level and branch,\nwho approved, who is pending, skipped or blocked steps · timeline"]
+  P --> A{"Your pending task here?"}
+  A -- Yes --> D["Approve · Reject (reason) · Request changes (reason) · Hold (reason)"]
+  P --> RS{"On hold and you hold the task, or you're an admin?"}
+  RS -- Yes --> RE[Resume]
+  P --> C{"Changes required and you raised it?"}
+  C -- Yes --> E["Edit the form → Resubmit: same number, next round\nrestart from the requesting step"]
+```
+- Every button calls a Server Action that re-checks everything on the server (F-12). The screen only hides buttons for convenience.
+- **The form belongs to the workflow version (D-055)**, so a running request keeps the fields it was raised with.
+- **As built (30 Sep 2026):**
+  - Title and field errors come back together.
+  - After a resubmission, a level finished in an earlier round still shows who approved it.
+  - The timeline hides bookkeeping events and says each thing once.
+  - Rejecting or asking for changes needs a reason; hold takes an optional one.
+
+## F-41 Retry runner (S3-07, P1-48, D-058)
+```mermaid
+flowchart LR
+  C["cPanel cron every 5 min:\nPOST /api/jobs/run with x-job-secret"] --> K{"Secret matches?\ntiming-safe"}
+  K -- No --> Z[404]
+  K -- Yes --> L["Lease up to 20 FAILED deliveries that are due\nFOR UPDATE SKIP LOCKED, pushes next_retry_at 10 min ahead"]
+  L --> S["Resend each one: email via Resend, WhatsApp via CEOITBox"]
+  S -- sent --> OK[SENT, attempt + 1]
+  S -- failed --> B{"attempts < retry limit?"}
+  B -- Yes --> BK["FAILED, retry after 2, 4, 8… minutes"]
+  B -- No --> G["FAILED, no more retries → shown on /superadmin/deliveries"]
+  C --> T[Housekeeping: delete rate-limit hits older than a day]
+```
+- The Super Admin can press **Retry now** on a failed delivery, which makes it due immediately.
+
 ## F-20 Multi-level building blocks (north star)
 | Part | Options |
 |---|---|
@@ -418,6 +476,19 @@ flowchart LR
 - Messages carry secure deep links. Nobody approves from inside a WhatsApp chat (D-019).
 
 ## F-50 Workflow authoring (IT team in `/admin`)
+
+**Structured builder (S3-05, D-056):** a workflow is a list of **stages** run in order. A stage is either:
+- **one step:** approvers from any source (people, role, requester's manager or manager's manager, requester's department HOD, a department's HOD, a group, a person chosen in a form field); needs all, any one, or any N of them; optional "skip this step when [field] [condition] [value]"; or
+- **parallel steps:** two or more steps side by side, joined by all, any one, or any N of them.
+
+The builder turns this into the engine's node graph (START → … → END; parallel stages become SPLIT → steps → JOIN). The builder's own description is saved with the version, so it can be edited again. The drag-and-drop canvas (P3-01) comes later and uses the same graph.
+
+Before publishing:
+- **Validate:** errors block publishing, warnings are shown.
+- **Test mode:** enter sample form values and a sample requester, and see each stage with the names that would approve.
+
+Publishing makes this version the one new requests use; the previous version is archived. Running requests stay on their version.
+
 Design (drag-and-drop) → configure the nodes → **validate** (errors block publishing; warnings are shown) → **test mode** with sample values shows the exact levels and approvers → publish as version n → running requests stay on their original version → archive old versions when no longer used.
 
 ## F-51 Admin configuration change

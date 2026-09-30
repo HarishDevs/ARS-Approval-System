@@ -17,13 +17,14 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
-- **Now:** Build session 2 finished (30 Sep 2026). The Super Admin can enter provider keys (encrypted), test-send, and read the delivery log and audit log. The IT team manages users, roles, departments and designations. Password users get a set-password link, and anyone can use forgot password (WhatsApp code). A per-request CSP is on. The **multi-level engine is now persisted in MySQL**: workflows with versions, requests with permanent numbers, a task queue and an append-only timeline. There is a break-glass console script, and CI runs on GitHub. Gates: 124 unit tests, 11 MySQL integration tests, typecheck, lint and build all pass.
-- **Waiting on the owner:**
-  - Q-004 (DoA values) and Q-013 (notification templates).
-  - **Q-015** (break-glass without WhatsApp?).
-  - The CEOITBox and Resend keys, entered in `/superadmin/settings`.
-  - The Firebase Admin service-account values, for a live Google sign-in test.
-- **Next (session 3, planned below):** the request screens in `/users`: raise a request, My requests, My approvals queue, the request page with timeline, and approve / reject / changes / hold. Also a first workflow builder in `/admin` (form-based before drag-and-drop), the retry runner, and rate limiting.
+- **Now:** Build session 3 finished (30 Sep 2026). **The north star is usable end to end in the app.**
+  - The IT team builds a workflow in `/admin/workflows`: form fields plus any number of levels (single steps or parallel steps, all / any one / any N, skip conditions, every approver source). They test it with sample values, publish it, and keep versions.
+  - Staff raise requests in `/users`. Approvers act from "Waiting for me": approve, reject, ask for changes, hold, resume. Requesters resubmit on the same number.
+  - The request page shows every level and branch with names and statuses, plus the timeline.
+  - Also built: approver groups, the retry runner for failed messages (cron endpoint + Retry now), and rate limiting.
+  - Gates: 144 unit tests, 16 MySQL integration tests, typecheck, lint and build pass. The full flow was verified in the browser: manager → HOD (changes → resubmit) → MD (hold → resume → approve).
+- **Waiting on the owner:** Q-004 (DoA values), Q-013 (templates), Q-015 (break-glass without WhatsApp?), the provider keys, and the Firebase Admin values.
+- **Next (session 4, planned below):** custom approvals for every user (P5), comments on requests, delegation (out of office), SLA reminders and escalation, handing over pending steps when someone leaves, the in-app notification bell, and a GoDaddy deployment dry run.
 
 ---
 
@@ -71,15 +72,36 @@ Found and fixed during session 2:
 - [x] S2-F5 A duplicate department code showed its message twice (done 30 Sep 2026)
 
 ## Session log — build session 3 (planned)
-- [ ] S3-01 `/users` home: My approvals queue (pending tasks) and My requests, with status pills (P2-41, P2-42)
-- [ ] S3-02 Raise a request from a published approval type: title + form fields (a simple key/value form until the form builder, P3-03), submit (P2-40)
-- [ ] S3-03 Request page: details, the full level map (every step and branch, who approved or is pending), timeline, and approve / reject / request changes / hold / resume with reasons; record-level access (P1-30a layer 3, P2-43)
-- [ ] S3-04 Resubmit after changes required, from the request page (F-26)
-- [ ] S3-05 `/admin/workflows`: list, create and edit a workflow as structured steps (sequential levels, parallel groups, any-one / any-N, conditions), validate, test mode (simulate), publish, and version history (P3-01 first cut, P3-04, P3-05, P3-06)
-- [ ] S3-06 Approver groups screen in `/admin` (S2-06a data)
-- [ ] S3-07 Retry runner: signed `/api/jobs/run` for cPanel cron; retries FAILED deliveries with backoff (P1-48)
-- [ ] S3-08 Rate limiting on sign-in, OTP start and forgot password, per IP and per User ID (P1-21)
-- [ ] S3-09 Update the three living files; commit and push
+- [x] S3-01 `/users` home: My approvals queue (pending tasks) and My requests, with status pills (P2-41, P2-42) (done 30 Sep 2026)
+- [x] S3-01a Form fields per workflow version (D-055): text, long text, number, date, choice, person; required; validated on the server; conditions and the person-from-field approver source use them (done 30 Sep 2026)
+- [x] S3-02 Raise a request from a published approval type: title + form fields (a simple key/value form until the form builder, P3-03), submit (P2-40) (done 30 Sep 2026)
+- [x] S3-03 Request page: details, the full level map (every step and branch, who approved or is pending), timeline, and approve / reject / request changes / hold / resume with reasons; record-level access (P1-30a layer 3, P2-43) (done 30 Sep 2026)
+- [x] S3-04 Resubmit after changes required, from the request page (F-26) (done 30 Sep 2026)
+- [x] S3-05 `/admin/workflows`: list, create and edit a workflow as structured steps (sequential levels, parallel groups, any-one / any-N, conditions), validate, test mode (simulate), publish, and version history (P3-01 first cut, P3-04, P3-05, P3-06) (done 30 Sep 2026)
+- [x] S3-05a Pure builder → graph compiler with unit tests (sequential, parallel + join rules, any-one / any-N, skip conditions, every approver source) (done 30 Sep 2026)
+- [x] S3-05b Step map for the request page: every level and branch with its status and people (pure, unit-tested) (done 30 Sep 2026)
+- [x] S3-06 Approver groups screen in `/admin` (S2-06a data) (done 30 Sep 2026)
+- [x] S3-07 Retry runner: signed `/api/jobs/run` for cPanel cron; retries FAILED deliveries with backoff (P1-48) (done 30 Sep 2026)
+- [x] S3-08 Rate limiting on sign-in, OTP start and forgot password, per IP and per User ID (P1-21) (done 30 Sep 2026)
+- [x] S3-09 Update the three living files; commit and push (done 30 Sep 2026)
+
+Found and fixed during session 3 (in the browser run):
+- [x] S3-F1 After a resubmission, a level finished in round 1 showed no approver; the map now shows each step's latest round (done 30 Sep 2026)
+- [x] S3-F2 The request title was checked before the fields, so a bad amount only showed up on the second try; all errors now come back together (done 30 Sep 2026)
+- [x] S3-F3 Avatar initials used punctuation ("Meena (MD)" → "M("); now letters only (done 30 Sep 2026)
+- [x] S3-F4 "Asked for changes" appeared twice in the timeline (done 30 Sep 2026)
+- [x] S3-F5 A race test expected one winner when a rejection and an approval hit an any-one step together; both are valid there. The test now uses two approvals, and the behaviour is recorded in FLOWS F-13 (done 30 Sep 2026)
+
+## Session log — build session 4 (planned)
+- [ ] S4-01 Custom approvals for every user (P5, D-026, D-040): build a one-off route from the same levels builder (pick anyone, any mix of levels) and submit it at once; it belongs to that user
+- [ ] S4-02 Comments on a request, visible to everyone who can open it, and on the timeline (P2-08; attachments wait for the GoDaddy disk check, Q-001)
+- [ ] S4-03 Delegation / out of office (D-018, P4): a delegate for a date range; the engine's canActFor uses it; actor + on-behalf-of recorded
+- [ ] S4-04 SLA per step: reminders and escalation through the job runner (P4, F-31)
+- [ ] S4-05 Hand over pending steps when a user is deactivated (P1-05)
+- [ ] S4-06 In-app notification bell with unread count (P1-44)
+- [ ] S4-07 GoDaddy deployment dry run: build output, env var list, cPanel Node app settings, cron line, MySQL privileges (TRIGGER), a go-live checklist (P0-46, P0-17a)
+- [ ] S4-08 DoA matrix structure (P3-30), ready for the owner's values (Q-004)
+- [ ] S4-09 Update the three living files; commit and push
 
 ## Phase 0 — Setup and decisions
 
@@ -174,13 +196,13 @@ The Super Admin then enters the table in the Admin Portal (P3-30). Every request
 - [>] P1-18 **New-login alert** on email + WhatsApp: time, device, browser, approximate location, IP, and a "This wasn't me" link (28 Sep 2026: built and tested; the WhatsApp copy waits for the owner's template (Q-013))
 - [x] P1-19 "This wasn't me": end all sessions, lock the account, notify the Super Admin (28 Sep 2026: ends sessions, locks the account, alerts the user and the Super Admin; admin unlock arrives with S2-03; unlock done 30 Sep 2026)
 - [>] P1-20 Security alerts for password changed, mobile/WhatsApp changed, account locked, repeated failures; every Super Admin sign-in alerts the Super Admin (28 Sep 2026: account locked + Super Admin/break-glass sign-in alerts; password/mobile-changed alerts come with S2-03/S2-04; added 30 Sep 2026, email now, WhatsApp after Q-013)
-- [ ] P1-21 Rate limiting on sign-in, OTP and password reset
+- [x] P1-21 Rate limiting on sign-in, OTP and password reset (done 30 Sep 2026; D-059)
 - [~] P1-22 Step-up OTP for sensitive Admin Portal actions: not needed (D-032, 28 Sep 2026)
 - [x] P1-23 `login_logs` browser/user-agent column ≥ VARCHAR(500) (bug found on the Power BI site) (done 28 Sep 2026; VARCHAR(500))
 
 ### P1-SEC Backend visibility and platform security (D-016)
 - [~] P1-30 Separate admin build and address: replaced by role routes in one app (D-034, 28 Sep 2026)
-- [>] P1-30a Route protection in 3 layers (the Power BI site's pattern): (1) middleware blocks `/admin` and `/superadmin` without the right role; (2) every page, route handler and server action re-checks the role and permission on the server; (3) record-level data-scope checks. Admin UI built mainly as server components, with no config or secrets in client bundles. Unknown or forbidden admin routes return a generic 404 (28 Sep 2026: layers 1 (middleware) and 2 (every layout and page, plus API guards; forbidden admin areas return 404) done; layer 3 comes with requests)
+- [x] P1-30a Route protection in 3 layers (the Power BI site's pattern): (1) middleware blocks `/admin` and `/superadmin` without the right role; (2) every page, route handler and server action re-checks the role and permission on the server; (3) record-level data-scope checks. Admin UI built mainly as server components, with no config or secrets in client bundles. Unknown or forbidden admin routes return a generic 404 (28 Sep 2026: layers 1 (middleware) and 2 (every layout and page, plus API guards; forbidden admin areas return 404) done; layer 3 comes with requests) (done 30 Sep 2026; layer 3: request pages open only for requester, participants and IT/Super Admin (D-057))
 - [>] P1-31 Every API call needs a signed-in session; permissions checked on the server per record; admin routes accept only Admin Portal roles (D-024); Super-Admin-only areas (providers, security, integrations, health, audit export) enforced on the server (28 Sep 2026: area guards for API routes; per-record checks come with requests)
 - [>] P1-32 No public API docs; no source maps in production; no config or keys sent to the browser; feature flags decided on the server (28 Sep 2026: no production source maps, no x-powered-by, public config only for Firebase)
 - [>] P1-33 Generic error messages with a reference code; server/framework headers stripped; no provider names in the UI, emails or WhatsApp (28 Sep 2026: generic errors with a REQ- reference code)
@@ -196,9 +218,9 @@ The Super Admin then enters the table in the Admin Portal (P3-30). Every request
 - [>] P1-41 Email channel (Q-005), using ARS header/footer branding (28 Sep 2026: Resend adapter built; key entry is S2-01)
 - [>] P1-42 WhatsApp channel through CEOITBox (D-009), with approved templates (28 Sep 2026: CEOITBox adapter with rate limit built; key entry is S2-01)
 - [~] P1-43 SMS channel for OTP: not needed (D-025, 28 Sep 2026)
-- [ ] P1-48 Retry outbox for failed sends, driven by the cron job runner (the Power BI site lacked this); respect the CEOITBox rate limit
+- [x] P1-48 Retry outbox for failed sends, driven by the cron job runner (the Power BI site lacked this); respect the CEOITBox rate limit (done 30 Sep 2026; /api/jobs/run with lease and backoff (D-058))
 - [ ] P1-44 In-app notifications (bell icon from the asset pack)
-- [>] P1-45 Delivery log per channel with status, retries and failures; the Super Admin can resend (30 Sep 2026: Super Admin delivery log; resend button with the retry runner (S3-07))
+- [x] P1-45 Delivery log per channel with status, retries and failures; the Super Admin can resend (30 Sep 2026: Super Admin delivery log; resend button with the retry runner (S3-07)) (done 30 Sep 2026; Retry now + automatic retries)
 - [ ] P1-46 Template per event and channel, versioned, with preview
 - [ ] P1-47 WhatsApp numbers verified by OTP; opt-in recorded
 
@@ -230,7 +252,7 @@ The Super Admin then enters the table in the Admin Portal (P3-30). Every request
 - [x] P2-02 WorkflowDefinitions → WorkflowVersions → WorkflowNodes + WorkflowEdges + WorkflowConditions (done 30 Sep 2026; nodes/edges stored as the version's JSON graph, one published version at a time)
 - [ ] P2-03 Node kinds: START, APPROVAL, PARALLEL-SPLIT, JOIN, CONDITION, WORK-ASSIGNMENT, NOTIFY, END
 - [ ] P2-04 Completion rules on a group: ALL, ANY_ONE, ANY_N_OF_M (N configurable), with optional weighted or mandatory members
-- [>] P2-05 Approver sources per node: specific user, role, requester's HOD, department HOD, reporting manager, manager's manager, department, approval group, requester-selected (within governance), user from a form field (30 Sep 2026: all 8 sources resolve from MySQL; approver groups have tables (screen in S3-06))
+- [x] P2-05 Approver sources per node: specific user, role, requester's HOD, department HOD, reporting manager, manager's manager, department, approval group, requester-selected (within governance), user from a form field (30 Sep 2026: all 8 sources resolve from MySQL; approver groups have tables (screen in S3-06)) (done 30 Sep 2026; approver groups screen added)
 - [>] P2-06 ApprovalRequests (permanent ID, e.g. PUR-2026-000421), ApprovalVersions, ApprovalInstances, ApprovalSteps, ApprovalActions (30 Sep 2026: requests with permanent numbers, state, tasks and timeline; form versions come with the form builder)
 - [x] P2-07 Step record: step ID, request, node, assigned approver(s), eligible approvers, **actual actor**, on-behalf-of, decision, time, comment, version (done 30 Sep 2026; actual actor + on-behalf-of per task)
 - [ ] P2-08 Comments, Attachments (versioned), Watchers
@@ -253,11 +275,11 @@ The Super Admin then enters the table in the Admin Portal (P3-30). Every request
 - [>] P2-33 Engine test suite covering every pattern, including edge cases (an approver leaves mid-flow, an empty approver group, a condition with no matching branch) (28 Sep 2026: 38 engine tests; 'an approver leaves mid-flow' still to do)
 
 ### P2-UI Employee and approver portals (first cut)
-- [ ] P2-40 Employee: create request from a template, dynamic form, attachments, submit, save draft
-- [ ] P2-41 Employee: My Requests, with a status pill and a visual step tracker showing every level and branch
-- [ ] P2-42 Approver: My Queue (ID, requester, department, type, amount, current step, age, SLA) with actions
-- [ ] P2-43 Request detail: form data, documents, timeline, comments, the full level map
-- [ ] P2-44 Secure deep links from email/WhatsApp that open the request after sign-in (D-019)
+- [>] P2-40 Employee: create request from a template, dynamic form, attachments, submit, save draft (30 Sep 2026: pick a type, fill the form (text, long text, number, date, choice, person), submit; attachments and drafts still to do)
+- [x] P2-41 Employee: My Requests, with a status pill and a visual step tracker showing every level and branch (done 30 Sep 2026)
+- [>] P2-42 Approver: My Queue (ID, requester, department, type, amount, current step, age, SLA) with actions (30 Sep 2026: queue with request, requester, step and age; SLA column with S4-04)
+- [>] P2-43 Request detail: form data, documents, timeline, comments, the full level map (30 Sep 2026: form data, full level map, timeline; documents and comments in S4)
+- [x] P2-44 Secure deep links from email/WhatsApp that open the request after sign-in (D-019) (done 30 Sep 2026; links open /users/requests/id after sign-in)
 
 ### P2-TPL First-release templates (D-021), built by configuration only
 - [ ] P2-50 MD Approval
@@ -270,12 +292,12 @@ The Super Admin then enters the table in the Admin Portal (P3-30). Every request
 ---
 
 ## Phase 3 — Workflow designer, DoA, validator, test mode
-- [ ] P3-01 Visual drag-and-drop designer: START, APPROVAL, PARALLEL, ANY-ONE, ANY-N, CONDITION, WORK, END
-- [ ] P3-02 Node settings panel: approver source, completion rule, SLA, allowed actions, notifications
-- [ ] P3-03 Form builder: drag, add, remove and reorder fields; field types; required; validation; conditional visibility
+- [>] P3-01 Visual drag-and-drop designer: START, APPROVAL, PARALLEL, ANY-ONE, ANY-N, CONDITION, WORK, END (30 Sep 2026: structured levels builder (D-056); drag-and-drop canvas later)
+- [>] P3-02 Node settings panel: approver source, completion rule, SLA, allowed actions, notifications (30 Sep 2026: approver source, completion rule, skip condition, no-approver policy; SLA and notifications per step later)
+- [>] P3-03 Form builder: drag, add, remove and reorder fields; field types; required; validation; conditional visibility (30 Sep 2026: fields with type, required and choices in the builder; conditional visibility later)
 - [>] P3-04 **Workflow validator** before publish: start/end exist, all nodes connected, no dead ends, no unintended loops, every approval node has an approver source, no self-approval, valid completion rules, logically valid conditions with no conflicts, rejection path exists, resubmission/reopen policy set, valid escalation (base plan §34) (28 Sep 2026: core rules incl. G-08/G-09, cycles, dead ends; rejection-path and escalation checks still to do)
-- [>] P3-05 **Test mode / simulation:** enter sample values and see the exact levels and approvers, without creating a real request (28 Sep 2026: simulate() core with stages, skips, blocks and branches; UI with P3)
-- [>] P3-06 Draft / publish / archive for templates, with version history and a diff (30 Sep 2026: versions, publish and archive in the service; screens in S3-05)
+- [x] P3-05 **Test mode / simulation:** enter sample values and see the exact levels and approvers, without creating a real request (28 Sep 2026: simulate() core with stages, skips, blocks and branches; UI with P3) (done 30 Sep 2026; test mode with real names)
+- [>] P3-06 Draft / publish / archive for templates, with version history and a diff (30 Sep 2026: versions, publish and archive in the service; screens in S3-05) (30 Sep 2026: draft/publish/archive with version history; diff still to do)
 - [ ] P3-30 **DoA matrix module:** amount bands per type and department, approver roles per band, effective dates, versioned; used by condition nodes
 - [ ] P3-40 Templates: HR Approvals, Admin, Recruitment (Manager → HOD)
 - [ ] P3-41 Template: Finance Internal (level 1 chosen by Nature → optional level 2 → HOD), including the reject/hold paths at level 2 that are missing in Asana

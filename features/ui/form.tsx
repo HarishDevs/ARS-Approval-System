@@ -22,7 +22,9 @@ export function useActionForm(action: Action, options: { resetOnSuccess?: boolea
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (confirm && !window.confirm(confirm)) return;
-    const formData = new FormData(event.currentTarget);
+    // Include the pressed button's name/value (forms with several actions).
+    const submitter = (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
+    const formData = new FormData(event.currentTarget, submitter);
     startTransition(() => dispatch(formData));
   }
 

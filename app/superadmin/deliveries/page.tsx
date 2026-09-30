@@ -1,6 +1,8 @@
 import { PageHeader, EmptyState } from "@/features/shell/PageHeader";
 import { requireArea } from "@/server/authorization/guards";
 import { listRecentDeliveries } from "@/lib/db/repositories/notifications.repository";
+import { RetryButton } from "@/features/superadmin/RetryButton";
+import { formatIndiaTime } from "@/server/notifications/security-messages";
 
 const STATUS_STYLE: Record<string, string> = {
   SENT: "bg-success-50 text-success-600",
@@ -18,7 +20,7 @@ export default async function DeliveriesPage() {
   const deliveries = await listRecentDeliveries(200);
   return (
     <>
-      <PageHeader title="Message deliveries" description="The latest 200 email and WhatsApp sends. SKIPPED with TEMPLATE_NOT_CONFIGURED means the WhatsApp template for that event isn't set up yet." />
+      <PageHeader title="Message deliveries" description="The latest 200 email and WhatsApp sends. Failed sends are retried automatically every few minutes by the job runner. SKIPPED with TEMPLATE_NOT_CONFIGURED means the WhatsApp template for that event isn't set up yet." />
       {deliveries.length === 0 ? (
         <EmptyState title="Nothing sent yet" body="Sign-in codes, alerts and test sends will appear here." />
       ) : (
@@ -32,6 +34,8 @@ export default async function DeliveriesPage() {
                 <th>Channel</th>
                 <th>Status</th>
                 <th>Reason</th>
+                <th>Tries</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -44,7 +48,12 @@ export default async function DeliveriesPage() {
                   <td>
                     <span className={`badge ${STATUS_STYLE[delivery.status] ?? ""}`}>{delivery.status}</span>
                   </td>
-                  <td className="text-ink-muted">{delivery.failureCode ?? ""}</td>
+                  <td className="text-ink-muted">
+                    {delivery.failureCode ?? ""}
+                    {delivery.nextRetryAt && <p className="text-caption">Next try {formatIndiaTime(delivery.nextRetryAt)}</p>}
+                  </td>
+                  <td>{delivery.attemptCount}</td>
+                  <td>{delivery.canRetry && <RetryButton deliveryId={delivery.id} />}</td>
                 </tr>
               ))}
             </tbody>

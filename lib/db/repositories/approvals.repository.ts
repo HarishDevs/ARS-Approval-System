@@ -2,6 +2,8 @@ import "server-only";
 import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { getDbPool, type Queryable } from "@/lib/db/client";
 import type { EngineEvent, InstanceState, InstanceStatus, WorkflowDefinition, WorkflowNode } from "@/server/engine/types";
+import type { FormField } from "@/server/forms/fields";
+import type { BuilderSpec } from "@/server/workflows/builder";
 
 // Persistence for workflows and requests (S2-06, D-050, F-13). Only the
 // service layer (server/approvals) calls these, inside its transactions.
@@ -11,6 +13,7 @@ export interface WorkflowRecord {
   id: number;
   code: string;
   name: string;
+  description?: string | null;
   kind: "PREDEFINED" | "CUSTOM";
   requestPrefix: string;
   ownerUserId: number | null;
@@ -23,6 +26,10 @@ export interface WorkflowVersionRecord {
   versionNo: number;
   status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
   definition: WorkflowDefinition;
+  form: FormField[];
+  builder: BuilderSpec | null;
+  createdAt: Date;
+  publishedAt: Date | null;
 }
 
 export async function insertWorkflow(
@@ -38,45 +45,126 @@ export async function insertWorkflow(
 }
 
 export async function findWorkflow(id: number, db: Queryable = getDbPool()): Promise<WorkflowRecord | null> {
-  const [rows] = await db.query<(RowDataPacket & { id: number; code: string; name: string; kind: WorkflowRecord["kind"]; request_prefix: string; owner_user_id: number | null; active: number })[]>(
-    "SELECT id, code, name, kind, request_prefix, owner_user_id, active FROM workflow_definitions WHERE id = ? LIMIT 1",
+  const [rows] = await db.query<(RowDataPacket & { id: number; code: string; name: string; description: string | null; kind: WorkflowRecord["kind"]; request_prefix: string; owner_user_id: number | null; active: number })[]>(
+    "SELECT id, code, name, description, kind, request_prefix, owner_user_id, active FROM workflow_definitions WHERE id = ? LIMIT 1",
     [id],
   );
   const row = rows[0];
-  return row ? { id: row.id, code: row.code, name: row.name, kind: row.kind, requestPrefix: row.request_prefix, ownerUserId: row.owner_user_id, active: row.active === 1 } : null;
+  return row
+    ? { id: row.id, code: row.code, name: row.name, description: row.description, kind: row.kind, requestPrefix: row.request_prefix, ownerUserId: row.owner_user_id, active: row.active === 1 }
+    : null;
 }
 
-export async function insertWorkflowVersion(workflowId: number, definition: WorkflowDefinition, createdBy: number, db: Queryable = getDbPool()): Promise<{ id: number; versionNo: number }> {
+export async function insertWorkflowVersion(
+  workflowId: number,
+  content: { definition: WorkflowDefinition; form: FormField[]; builder: BuilderSpec | null },
+  createdBy: number,
+  db: Queryable = getDbPool(),
+): Promise<{ id: number; versionNo: number }> {
   const [rows] = await db.query<(RowDataPacket & { next_no: number })[]>(
     "SELECT COALESCE(MAX(version_no), 0) + 1 AS next_no FROM workflow_versions WHERE workflow_id = ? FOR UPDATE",
     [workflowId],
   );
   const versionNo = Number(rows[0]?.next_no ?? 1);
   const [result] = await db.query<ResultSetHeader>(
-    "INSERT INTO workflow_versions (workflow_id, version_no, definition_json, created_by) VALUES (?, ?, ?, ?)",
-    [workflowId, versionNo, JSON.stringify(definition), createdBy],
+    "INSERT INTO workflow_versions (workflow_id, version_no, definition_json, form_json, builder_json, created_by) VALUES (?, ?, ?, ?, ?, ?)",
+    [workflowId, versionNo, JSON.stringify(content.definition), JSON.stringify(content.form), content.builder ? JSON.stringify(content.builder) : null, createdBy],
   );
   return { id: result.insertId, versionNo };
 }
 
-type VersionRow = RowDataPacket & { id: number; workflow_id: number; version_no: number; status: WorkflowVersionRecord["status"]; definition_json: WorkflowDefinition | string };
+type VersionRow = RowDataPacket & {
+  id: number;
+  workflow_id: number;
+  version_no: number;
+  status: WorkflowVersionRecord["status"];
+  definition_json: WorkflowDefinition | string;
+  form_json: FormField[] | string | null;
+  builder_json: BuilderSpec | string | null;
+  created_at: Date;
+  published_at: Date | null;
+};
+
+const VERSION_COLUMNS = "id, workflow_id, version_no, status, definition_json, form_json, builder_json, created_at, published_at";
 
 function toVersion(row: VersionRow): WorkflowVersionRecord {
-  const definition = typeof row.definition_json === "string" ? (JSON.parse(row.definition_json) as WorkflowDefinition) : row.definition_json;
-  return { id: row.id, workflowId: row.workflow_id, versionNo: row.version_no, status: row.status, definition };
+  const json = <T>(value: T | string | null): T | null => (value === null ? null : typeof value === "string" ? (JSON.parse(value) as T) : value);
+  return {
+    id: row.id,
+    workflowId: row.workflow_id,
+    versionNo: row.version_no,
+    status: row.status,
+    definition: json(row.definition_json)!,
+    form: json(row.form_json) ?? [],
+    builder: json(row.builder_json),
+    createdAt: row.created_at,
+    publishedAt: row.published_at,
+  };
 }
 
 export async function findWorkflowVersion(id: number, db: Queryable = getDbPool()): Promise<WorkflowVersionRecord | null> {
-  const [rows] = await db.query<VersionRow[]>("SELECT id, workflow_id, version_no, status, definition_json FROM workflow_versions WHERE id = ? LIMIT 1", [id]);
+  const [rows] = await db.query<VersionRow[]>(`SELECT ${VERSION_COLUMNS} FROM workflow_versions WHERE id = ? LIMIT 1`, [id]);
   return rows[0] ? toVersion(rows[0]) : null;
 }
 
 export async function findPublishedVersion(workflowId: number, db: Queryable = getDbPool()): Promise<WorkflowVersionRecord | null> {
   const [rows] = await db.query<VersionRow[]>(
-    "SELECT id, workflow_id, version_no, status, definition_json FROM workflow_versions WHERE workflow_id = ? AND status = 'PUBLISHED' LIMIT 1",
+    `SELECT ${VERSION_COLUMNS} FROM workflow_versions WHERE workflow_id = ? AND status = 'PUBLISHED' LIMIT 1`,
     [workflowId],
   );
   return rows[0] ? toVersion(rows[0]) : null;
+}
+
+export async function listVersions(workflowId: number, db: Queryable = getDbPool()): Promise<WorkflowVersionRecord[]> {
+  const [rows] = await db.query<VersionRow[]>(`SELECT ${VERSION_COLUMNS} FROM workflow_versions WHERE workflow_id = ? ORDER BY version_no DESC`, [workflowId]);
+  return rows.map(toVersion);
+}
+
+export interface WorkflowListItem extends WorkflowRecord {
+  publishedVersionNo: number | null;
+  latestVersionNo: number;
+  requestCount: number;
+}
+
+export async function listWorkflows(filter: { kind?: WorkflowRecord["kind"]; ownerUserId?: number }, db: Queryable = getDbPool()): Promise<WorkflowListItem[]> {
+  const where: string[] = [];
+  const params: unknown[] = [];
+  if (filter.kind) {
+    where.push("w.kind = ?");
+    params.push(filter.kind);
+  }
+  if (filter.ownerUserId) {
+    where.push("w.owner_user_id = ?");
+    params.push(filter.ownerUserId);
+  }
+  const [rows] = await db.query<
+    (RowDataPacket & { id: number; code: string; name: string; description: string | null; kind: WorkflowRecord["kind"]; request_prefix: string; owner_user_id: number | null; active: number; published_no: number | null; latest_no: number; request_count: number })[]
+  >(
+    `SELECT w.id, w.code, w.name, w.description, w.kind, w.request_prefix, w.owner_user_id, w.active,
+            (SELECT v.version_no FROM workflow_versions v WHERE v.workflow_id = w.id AND v.status = 'PUBLISHED') AS published_no,
+            (SELECT MAX(v.version_no) FROM workflow_versions v WHERE v.workflow_id = w.id) AS latest_no,
+            (SELECT COUNT(*) FROM approval_requests r JOIN workflow_versions v ON v.id = r.workflow_version_id WHERE v.workflow_id = w.id) AS request_count
+     FROM workflow_definitions w ${where.length ? `WHERE ${where.join(" AND ")}` : ""}
+     ORDER BY w.active DESC, w.name`,
+    params,
+  );
+  return rows.map((row) => ({
+    id: row.id,
+    code: row.code,
+    name: row.name,
+    description: row.description,
+    kind: row.kind,
+    requestPrefix: row.request_prefix,
+    ownerUserId: row.owner_user_id,
+    active: row.active === 1,
+    publishedVersionNo: row.published_no,
+    latestVersionNo: Number(row.latest_no ?? 0),
+    requestCount: Number(row.request_count),
+  }));
+}
+
+export async function updateWorkflowDetails(id: number, input: { name: string; description: string | null; active: boolean }, db: Queryable = getDbPool()): Promise<void> {
+  await db.query<ResultSetHeader>("UPDATE workflow_definitions SET name = ?, description = ?, active = ? WHERE id = ?", [input.name, input.description, input.active, id]);
 }
 
 // Archive the old published version, then publish this one (same transaction).
@@ -270,6 +358,50 @@ export async function isParticipant(requestId: number, userId: number, db: Query
     [requestId, userId, requestId, userId, userId],
   );
   return rows.length > 0;
+}
+
+export interface MyRequestItem {
+  id: number;
+  requestNo: string;
+  title: string;
+  workflowName: string;
+  status: InstanceStatus;
+  submittedAt: Date;
+  closedAt: Date | null;
+  pendingWith: string | null;
+}
+
+export async function listMyRequests(userId: number, db: Queryable = getDbPool()): Promise<MyRequestItem[]> {
+  const [rows] = await db.query<
+    (RowDataPacket & { id: number; request_no: string; title: string; workflow_name: string; status: InstanceStatus; submitted_at: Date; closed_at: Date | null; pending_with: string | null })[]
+  >(
+    `SELECT r.id, r.request_no, r.title, w.name AS workflow_name, r.status, r.submitted_at, r.closed_at,
+            (SELECT GROUP_CONCAT(DISTINCT u.name ORDER BY u.name SEPARATOR ', ')
+               FROM approval_tasks t JOIN users u ON u.id = t.approver_id
+              WHERE t.request_id = r.id AND t.status = 'PENDING') AS pending_with
+     FROM approval_requests r
+     JOIN workflow_versions v ON v.id = r.workflow_version_id
+     JOIN workflow_definitions w ON w.id = v.workflow_id
+     WHERE r.requester_id = ?
+     ORDER BY r.id DESC LIMIT 200`,
+    [userId],
+  );
+  return rows.map((row) => ({
+    id: row.id,
+    requestNo: row.request_no,
+    title: row.title,
+    workflowName: row.workflow_name,
+    status: row.status,
+    submittedAt: row.submitted_at,
+    closedAt: row.closed_at,
+    pendingWith: row.pending_with,
+  }));
+}
+
+export async function userNames(ids: readonly number[], db: Queryable = getDbPool()): Promise<Map<number, string>> {
+  if (ids.length === 0) return new Map();
+  const [rows] = await db.query<(RowDataPacket & { id: number; name: string })[]>("SELECT id, name FROM users WHERE id IN (?)", [ids]);
+  return new Map(rows.map((row) => [row.id, row.name]));
 }
 
 export interface TimelineEntry {

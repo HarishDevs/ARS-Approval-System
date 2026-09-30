@@ -5,12 +5,17 @@ import { withTransaction } from "@/lib/db/transaction";
 import { nextRequestNumber, listPendingTasksFor, listTimeline } from "@/lib/db/repositories/approvals.repository";
 import { addDraftVersion, createWorkflow, decideTask, holdTask, publishVersion, resubmitRequest, resumeRequest, submitRequest, type Actor } from "@/server/approvals/service";
 import type { WorkflowDefinition } from "@/server/engine";
+import type { FormField } from "@/server/forms/fields";
 import { createDepartment, createGroup, createUser, pendingTaskKey, requestRow, setDepartment } from "./helpers";
 
 // S2-06b: the multi-level engine persisted in MySQL, end to end.
 const admin = (id: number): Actor => ({ id, roles: ["USER", "IT_ADMIN"] });
 const user = (id: number): Actor => ({ id, roles: ["USER"] });
 let codeCounter = 0;
+const FORM: FormField[] = [
+  { key: "amount", label: "Amount", type: "NUMBER", required: false },
+  { key: "quotes", label: "Quotes attached", type: "TEXT", required: false },
+];
 const code = () => `WF_${Date.now().toString(36)}_${++codeCounter}`.toUpperCase();
 
 let adminId: number;
@@ -67,7 +72,7 @@ function hybrid(groupId: number): WorkflowDefinition {
 }
 
 async function publishedWorkflow(definition: WorkflowDefinition, prefix: string): Promise<number> {
-  const created = await createWorkflow({ code: code(), name: "Test approval", kind: "PREDEFINED", requestPrefix: prefix, definition }, admin(adminId));
+  const created = await createWorkflow({ code: code(), name: "Test approval", kind: "PREDEFINED", requestPrefix: prefix, definition, form: FORM }, admin(adminId));
   if (!created.ok) throw new Error(created.message);
   expect(created.value.validation.errors).toEqual([]);
   const published = await publishVersion(created.value.versionId, admin(adminId));
@@ -93,7 +98,7 @@ describe("request numbers", () => {
 describe("hybrid multi-level request, persisted", () => {
   it("runs manager → parallel HOD + any-one Finance → MD for ₹12.5L, with queues and timeline", async () => {
     const workflowId = await publishedWorkflow(hybrid(await createGroup([financeA, financeB])), "HYB");
-    const submitted = await submitRequest({ workflowId, title: "New crane motor", formData: { amount: 1250000 } }, user(requester));
+    const submitted = await submitRequest({ workflowId, title: "New crane motor", fields: { amount: "1250000" } }, user(requester));
     if (!submitted.ok) throw new Error(submitted.message);
     const { requestId, requestNo } = submitted.value;
     expect(requestNo).toMatch(/^HYB-\d{4}-000001$/);
@@ -131,7 +136,7 @@ describe("hybrid multi-level request, persisted", () => {
 
   it("small amounts skip the MD level", async () => {
     const workflowId = await publishedWorkflow(hybrid(await createGroup([financeA])), "SML");
-    const submitted = await submitRequest({ workflowId, title: "Stationery", formData: { amount: 4000 } }, user(requester));
+    const submitted = await submitRequest({ workflowId, title: "Stationery", fields: { amount: "4000" } }, user(requester));
     if (!submitted.ok) throw new Error(submitted.message);
     const { requestId } = submitted.value;
     await approve(requestId, manager);
@@ -154,7 +159,7 @@ describe("safety on the server", () => {
       ],
     };
     const workflowId = await publishedWorkflow(definition, "SAF");
-    const submitted = await submitRequest({ workflowId, title: "Self check", formData: {} }, user(requester));
+    const submitted = await submitRequest({ workflowId, title: "Self check", fields: {} }, user(requester));
     if (!submitted.ok) throw new Error(submitted.message);
     const { requestId } = submitted.value;
     // Requester was listed as an approver, but is never given a task.
@@ -178,7 +183,7 @@ describe("safety on the server", () => {
       ],
     };
     const workflowId = await publishedWorkflow(definition, "RCE");
-    const submitted = await submitRequest({ workflowId, title: "Race", formData: {} }, user(requester));
+    const submitted = await submitRequest({ workflowId, title: "Race", fields: {} }, user(requester));
     if (!submitted.ok) throw new Error(submitted.message);
     const { requestId } = submitted.value;
     const [keyA, keyB] = [await pendingTaskKey(requestId, financeA), await pendingTaskKey(requestId, financeB)];
@@ -247,7 +252,7 @@ describe("changes, hold and versions", () => {
 
   it("changes required → requester resubmits the same request with new data → approved", async () => {
     const workflowId = await publishedWorkflow(twoLevel(), "CHG");
-    const submitted = await submitRequest({ workflowId, title: "Laptop", formData: { amount: 90000 } }, user(requester));
+    const submitted = await submitRequest({ workflowId, title: "Laptop", fields: { amount: "90000" } }, user(requester));
     if (!submitted.ok) throw new Error(submitted.message);
     const { requestId, requestNo } = submitted.value;
     await approve(requestId, manager);
@@ -255,7 +260,7 @@ describe("changes, hold and versions", () => {
     expect(asked).toMatchObject({ ok: true, value: { status: "CHANGES_REQUIRED" } });
 
     expect(await resubmitRequest({ requestId }, user(manager))).toMatchObject({ ok: false, code: "NOT_AUTHORISED" });
-    const again = await resubmitRequest({ requestId, formData: { amount: 85000, quotes: "3" } }, user(requester));
+    const again = await resubmitRequest({ requestId, fields: { amount: "85,000", quotes: "3" } }, user(requester));
     expect(again).toMatchObject({ ok: true, value: { status: "IN_PROGRESS" } });
     const row = await requestRow(requestId);
     expect(row.round).toBe(2);
@@ -271,7 +276,7 @@ describe("changes, hold and versions", () => {
 
   it("hold pauses; the approver resumes", async () => {
     const workflowId = await publishedWorkflow(twoLevel(), "HLD");
-    const submitted = await submitRequest({ workflowId, title: "Vendor onboarding", formData: {} }, user(requester));
+    const submitted = await submitRequest({ workflowId, title: "Vendor onboarding", fields: {} }, user(requester));
     if (!submitted.ok) throw new Error(submitted.message);
     const { requestId } = submitted.value;
     const key = await pendingTaskKey(requestId, manager);
@@ -283,7 +288,7 @@ describe("changes, hold and versions", () => {
 
   it("a running request stays on its version when a new one is published", async () => {
     const workflowId = await publishedWorkflow(twoLevel(), "VER");
-    const first = await submitRequest({ workflowId, title: "Before change", formData: {} }, user(requester));
+    const first = await submitRequest({ workflowId, title: "Before change", fields: {} }, user(requester));
     if (!first.ok) throw new Error(first.message);
 
     const oneLevel: WorkflowDefinition = {
@@ -297,7 +302,7 @@ describe("changes, hold and versions", () => {
         { id: "e2", from: "md", to: "end" },
       ],
     };
-    const draft = await addDraftVersion(workflowId, oneLevel, admin(adminId));
+    const draft = await addDraftVersion(workflowId, { definition: oneLevel, form: FORM }, admin(adminId));
     if (!draft.ok) throw new Error(draft.message);
     expect(draft.value.versionNo).toBe(2);
     expect(await publishVersion(draft.value.versionId, admin(adminId))).toMatchObject({ ok: true });
@@ -306,7 +311,7 @@ describe("changes, hold and versions", () => {
     await expect(pendingTaskKey(first.value.requestId, md)).rejects.toThrow();
     await approve(first.value.requestId, manager);
     // A new request goes straight to the MD (version 2).
-    const second = await submitRequest({ workflowId, title: "After change", formData: {} }, user(requester));
+    const second = await submitRequest({ workflowId, title: "After change", fields: {} }, user(requester));
     if (!second.ok) throw new Error(second.message);
     expect(await pendingTaskKey(second.value.requestId, md)).toBeTruthy();
 
@@ -315,5 +320,67 @@ describe("changes, hold and versions", () => {
       [workflowId],
     );
     expect(versions.map((row) => `${row.version_no}:${row.status}`)).toEqual(["1:ARCHIVED", "2:PUBLISHED"]);
+  });
+});
+
+describe("builder-made workflows and forms (S3)", () => {
+  it("a workflow built from stages runs end to end, and the form is enforced", async () => {
+    const created = await createWorkflow(
+      {
+        code: code(),
+        name: "Built",
+        kind: "PREDEFINED",
+        requestPrefix: "BLT",
+        form: [
+          { key: "amount", label: "Amount", type: "NUMBER", required: true },
+          { key: "nature", label: "Nature", type: "CHOICE", required: true, options: ["Capex", "Opex"] },
+        ],
+        builder: {
+          stages: [
+            { kind: "STEP", step: { id: "mgr", label: "Manager", approvers: { kind: "REQUESTER_MANAGER" }, rule: "ALL" } },
+            {
+              kind: "PARALLEL",
+              id: "both",
+              label: "HOD and MD",
+              join: "ALL",
+              steps: [
+                { id: "hod", label: "HOD", approvers: { kind: "REQUESTER_DEPARTMENT_HOD" }, rule: "ALL" },
+                { id: "md", label: "MD", approvers: { kind: "PEOPLE", userIds: [md] }, rule: "ALL", skipWhen: { field: "amount", operator: "LT", value: 100000 } },
+              ],
+            },
+          ],
+        },
+      },
+      admin(adminId),
+    );
+    if (!created.ok) throw new Error(created.message);
+    expect(created.value.validation.errors).toEqual([]);
+    expect(await publishVersion(created.value.versionId, admin(adminId))).toMatchObject({ ok: true });
+
+    const bad = await submitRequest({ workflowId: created.value.workflowId, title: "Bad form", fields: { amount: "lots", nature: "Other" } }, user(requester));
+    expect(bad).toMatchObject({ ok: false, code: "INVALID_FORM", fieldErrors: { amount: "Enter a number.", nature: "Choose one of the options." } });
+
+    const good = await submitRequest({ workflowId: created.value.workflowId, title: "Good form", fields: { amount: "50,000", nature: "Opex" } }, user(requester));
+    if (!good.ok) throw new Error(good.message);
+    await approve(good.value.requestId, manager);
+    // MD is skipped below ₹1L, so HOD alone completes the parallel stage.
+    expect((await approve(good.value.requestId, hod)).status).toBe("APPROVED");
+  });
+
+  it("a builder step naming an unknown form field can't be published", async () => {
+    const created = await createWorkflow(
+      {
+        code: code(),
+        name: "Bad field",
+        kind: "PREDEFINED",
+        requestPrefix: "BDF",
+        form: [],
+        builder: { stages: [{ kind: "STEP", step: { id: "x", label: "X", approvers: { kind: "FORM_FIELD_USER", fieldKey: "reviewer" }, rule: "ALL" } }] },
+      },
+      admin(adminId),
+    );
+    if (!created.ok) throw new Error(created.message);
+    expect(created.value.validation.errors.map((issue) => issue.code)).toContain("APPROVER_UNKNOWN_FIELD");
+    expect(await publishVersion(created.value.versionId, admin(adminId))).toMatchObject({ ok: false, code: "INVALID_WORKFLOW" });
   });
 });

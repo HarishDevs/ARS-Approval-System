@@ -15,28 +15,42 @@ import {
   publishWorkflowVersion,
   saveRequestState,
   syncTasks,
+  userNames,
   type RequestRecord,
   type WorkflowRecord,
+  type WorkflowVersionRecord,
 } from "@/lib/db/repositories/approvals.repository";
-import { loadDirectorySnapshot, toDirectory } from "@/lib/db/repositories/directory.repository";
+import { loadDirectorySnapshot, toDirectory, type DirectorySnapshot } from "@/lib/db/repositories/directory.repository";
+import { checkFormDefinition, parseFormSubmission, type FormField } from "@/server/forms/fields";
+import { compileBuilder, type BuilderSpec } from "@/server/workflows/builder";
+import { describeRule } from "@/server/approvals/step-map";
 import { listUserIdsWithRole } from "@/lib/db/repositories/users.repository";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { getEnv } from "@/config/environment";
 import { notify } from "@/server/notifications/notify";
 import { messagesForEvents } from "@/server/approvals/messages";
-import { decide, putOnHold, resubmit, resume, startInstance, validateWorkflow, EngineError } from "@/server/engine";
+import { decide, putOnHold, resubmit, resume, simulate, startInstance, validateWorkflow, EngineError } from "@/server/engine";
 import type { Decision, EngineEvent, EngineResult, FormData as EngineFormData, RestartPolicy, ValidationResult, WorkflowDefinition } from "@/server/engine";
 import { logError } from "@/lib/logging/logger";
 import type { RoleCode } from "@/types/auth";
 
 // The multi-level approval service (north star, S2-06, F-11 to F-13). The
 // engine decides; this layer loads, locks, saves and tells people.
-export type Result<T> = { ok: true; value: T } | { ok: false; code: string; message: string; validation?: ValidationResult };
+export type Result<T> = { ok: true; value: T } | { ok: false; code: string; message: string; validation?: ValidationResult; fieldErrors?: Record<string, string> };
 
 export interface Actor {
   id: number;
   roles: readonly RoleCode[];
 }
+
+// A submitted form didn't pass its checks (field → message).
+class FormError extends Error {
+  constructor(readonly fieldErrors: Record<string, string>) {
+    super("INVALID_FORM");
+  }
+}
+
+const activeIds = (snapshot: DirectorySnapshot) => new Set(snapshot.users.filter((user) => user.active && !user.isBreakGlass).map((user) => user.id));
 
 // Errors the service raises itself (not from the engine).
 class ServiceError extends Error {
@@ -73,43 +87,83 @@ function canManageWorkflow(actor: Actor, workflow: Pick<WorkflowRecord, "kind" |
   return workflow.kind === "PREDEFINED" ? isAdmin(actor) : workflow.ownerUserId === actor.id || isAdmin(actor);
 }
 
+// What a version holds: the graph (given directly, or compiled from the
+// builder, D-056) and the form (D-055).
+export interface WorkflowContent {
+  definition?: WorkflowDefinition;
+  builder?: BuilderSpec;
+  form?: FormField[];
+}
+
+type ResolvedContent = { definition: WorkflowDefinition; builder: BuilderSpec | null; form: FormField[]; validation: ValidationResult };
+
+async function resolveContent(content: WorkflowContent): Promise<Result<ResolvedContent>> {
+  const form = content.form ?? [];
+  const formProblems = checkFormDefinition(form);
+  if (formProblems.length) return { ok: false, code: "INVALID_FORM", message: formProblems.join(" ") };
+  let definition = content.definition;
+  if (content.builder) {
+    const compiled = compileBuilder(content.builder);
+    if (!compiled.ok) return { ok: false, code: "INVALID_BUILDER", message: compiled.errors.join(" ") };
+    definition = compiled.definition;
+  }
+  if (!definition) return { ok: false, code: "INVALID_WORKFLOW", message: "The workflow has no steps." };
+  const validation = await checkWorkflow(definition, form.map((field) => field.key));
+  return { ok: true, value: { definition, builder: content.builder ?? null, form, validation } };
+}
+
 export async function createWorkflow(
-  input: { code: string; name: string; description?: string; kind: WorkflowRecord["kind"]; requestPrefix: string; definition: WorkflowDefinition },
+  input: { code: string; name: string; description?: string; kind: WorkflowRecord["kind"]; requestPrefix: string } & WorkflowContent,
   actor: Actor,
 ): Promise<Result<{ workflowId: number; versionId: number; validation: ValidationResult }>> {
   if (input.kind === "PREDEFINED" && !isAdmin(actor)) return { ok: false, code: "FORBIDDEN", message: "Only the IT team creates predefined approvals." };
   if (!/^[A-Z]{2,6}$/.test(input.requestPrefix)) return { ok: false, code: "INVALID_PREFIX", message: "Use 2 to 6 capital letters for the request prefix, e.g. PUR." };
-  const validation = await checkWorkflow(input.definition);
-  const ids = await withTransaction(async (connection) => {
-    const workflowId = await insertWorkflow(
-      {
-        code: input.code,
-        name: input.name,
-        description: input.description ?? null,
-        kind: input.kind,
-        requestPrefix: input.requestPrefix,
-        ownerUserId: input.kind === "CUSTOM" ? actor.id : null,
-        createdBy: actor.id,
-      },
-      connection,
-    );
-    const version = await insertWorkflowVersion(workflowId, input.definition, actor.id, connection);
-    await recordAudit({ actorUserId: actor.id, action: "WORKFLOW_CREATED", entityType: "WORKFLOW", entityId: workflowId, metadata: { code: input.code, kind: input.kind, versionNo: version.versionNo } }, connection);
-    return { workflowId, versionId: version.id };
-  });
-  return { ok: true, value: { ...ids, validation } };
+  if (!/^[A-Z0-9_]{2,50}$/.test(input.code)) return { ok: false, code: "INVALID_CODE", message: "Use 2 to 50 capital letters, numbers or _ for the code, e.g. PURCHASE." };
+  const resolved = await resolveContent(input);
+  if (!resolved.ok) return resolved;
+  const { definition, builder, form, validation } = resolved.value;
+  try {
+    const ids = await withTransaction(async (connection) => {
+      const workflowId = await insertWorkflow(
+        {
+          code: input.code,
+          name: input.name,
+          description: input.description ?? null,
+          kind: input.kind,
+          requestPrefix: input.requestPrefix,
+          ownerUserId: input.kind === "CUSTOM" ? actor.id : null,
+          createdBy: actor.id,
+        },
+        connection,
+      );
+      const version = await insertWorkflowVersion(workflowId, { definition, form, builder }, actor.id, connection);
+      await recordAudit({ actorUserId: actor.id, action: "WORKFLOW_CREATED", entityType: "WORKFLOW", entityId: workflowId, metadata: { code: input.code, kind: input.kind, versionNo: version.versionNo } }, connection);
+      return { workflowId, versionId: version.id };
+    });
+    return { ok: true, value: { ...ids, validation } };
+  } catch (error) {
+    if ((error as { code?: string })?.code === "ER_DUP_ENTRY") return { ok: false, code: "DUPLICATE_CODE", message: "Another workflow already uses this code." };
+    throw error;
+  }
 }
 
-export async function addDraftVersion(workflowId: number, definition: WorkflowDefinition, actor: Actor): Promise<Result<{ versionId: number; versionNo: number; validation: ValidationResult }>> {
+export async function addDraftVersion(workflowId: number, content: WorkflowContent, actor: Actor): Promise<Result<{ versionId: number; versionNo: number; validation: ValidationResult }>> {
   const workflow = await findWorkflow(workflowId);
   if (!workflow || !canManageWorkflow(actor, workflow)) return { ok: false, code: "NOT_FOUND", message: "Workflow not found." };
-  const validation = await checkWorkflow(definition);
+  const resolved = await resolveContent(content);
+  if (!resolved.ok) return resolved;
+  const { definition, builder, form, validation } = resolved.value;
   const version = await withTransaction(async (connection) => {
-    const created = await insertWorkflowVersion(workflowId, definition, actor.id, connection);
+    const created = await insertWorkflowVersion(workflowId, { definition, form, builder }, actor.id, connection);
     await recordAudit({ actorUserId: actor.id, action: "WORKFLOW_VERSION_CREATED", entityType: "WORKFLOW", entityId: workflowId, metadata: { versionNo: created.versionNo } }, connection);
     return created;
   });
   return { ok: true, value: { versionId: version.id, versionNo: version.versionNo, validation } };
+}
+
+export async function validateVersion(versionId: number): Promise<ValidationResult | null> {
+  const version = await findWorkflowVersion(versionId);
+  return version ? checkWorkflow(version.definition, version.form.map((field) => field.key)) : null;
 }
 
 // A version with validation errors can never be published (P3-04).
@@ -118,13 +172,48 @@ export async function publishVersion(versionId: number, actor: Actor): Promise<R
   const workflow = version ? await findWorkflow(version.workflowId) : null;
   if (!version || !workflow || !canManageWorkflow(actor, workflow)) return { ok: false, code: "NOT_FOUND", message: "Workflow not found." };
   if (version.status !== "DRAFT") return { ok: false, code: "NOT_DRAFT", message: "Only a draft can be published." };
-  const validation = await checkWorkflow(version.definition);
+  const validation = await checkWorkflow(version.definition, version.form.map((field) => field.key));
   if (!validation.valid) return { ok: false, code: "INVALID_WORKFLOW", message: "Fix the errors before publishing.", validation };
   await withTransaction(async (connection) => {
     await publishWorkflowVersion(version.id, workflow.id, actor.id, connection);
     await recordAudit({ actorUserId: actor.id, action: "WORKFLOW_PUBLISHED", entityType: "WORKFLOW", entityId: workflow.id, metadata: { versionNo: version.versionNo } }, connection);
   });
   return { ok: true, value: { versionNo: version.versionNo } };
+}
+
+// Test mode (P3-05, F-50): the stages and the names that would approve,
+// for sample form values and a sample requester. Nothing is saved.
+export interface SimulationView {
+  outcome: "APPROVED" | "BLOCKED";
+  stages: { label: string; rule: string; people: string[] }[][];
+  skipped: string[];
+  blocked: string[];
+  formErrors: Record<string, string>;
+}
+
+export async function simulateVersion(versionId: number, input: { requesterId: number; fields: Record<string, string | undefined> }): Promise<SimulationView | null> {
+  const version = await findWorkflowVersion(versionId);
+  if (!version) return null;
+  const snapshot = await loadDirectorySnapshot();
+  const active = new Set(snapshot.users.filter((user) => user.active && !user.isBreakGlass).map((user) => user.id));
+  const parsed = parseFormSubmission(version.form, input.fields, active);
+  // Test mode still runs with partial data, so the IT team sees the effect of each field.
+  const formData = parsed.ok ? parsed.data : {};
+  const result = simulate(version.definition, { requesterId: input.requesterId, formData, now: now() }, toDirectory(snapshot));
+  const names = await userNames([...new Set(result.stages.flat().flatMap((step) => step.approverIds))]);
+  return {
+    outcome: result.outcome,
+    stages: result.stages.map((stage) =>
+      stage.map((step) => ({
+        label: step.label,
+        rule: describeRule(step.completion, step.approverIds.length),
+        people: step.approverIds.map((id) => names.get(id) ?? `User #${id}`),
+      })),
+    ),
+    skipped: result.skipped.map((step) => step.label),
+    blocked: result.blocked.map((step) => `${step.label}: ${step.reason}`),
+    formErrors: parsed.ok ? {} : parsed.errors,
+  };
 }
 
 // ---- requests (F-11, F-12, F-13) --------------------------------------------------------
@@ -159,22 +248,28 @@ async function announce(changed: Changed): Promise<void> {
   }
 }
 
-export async function submitRequest(input: { workflowId: number; title: string; formData: EngineFormData }, actor: Actor): Promise<Result<{ requestId: number; requestNo: string; status: string }>> {
+export async function submitRequest(
+  input: { workflowId: number; title: string; fields: Record<string, string | undefined> },
+  actor: Actor,
+): Promise<Result<{ requestId: number; requestNo: string; status: string }>> {
   const workflow = await findWorkflow(input.workflowId);
   if (!workflow || !workflow.active) return { ok: false, code: "NOT_FOUND", message: "This approval type isn't available." };
   if (workflow.kind === "CUSTOM" && workflow.ownerUserId !== actor.id) return { ok: false, code: "NOT_FOUND", message: "This approval type isn't available." };
   const version = await findPublishedVersion(workflow.id);
   if (!version) return { ok: false, code: "NOT_PUBLISHED", message: "This approval type has no published version yet." };
   const title = input.title.trim();
-  if (title.length < 3 || title.length > 200) return { ok: false, code: "INVALID_TITLE", message: "Give the request a title of 3 to 200 characters." };
+  const titleError = title.length < 3 || title.length > 200 ? "Give the request a title of 3 to 200 characters." : null;
 
   let changed: Changed;
   try {
     changed = await withTransaction(async (connection) => {
-      const directory = toDirectory(await loadDirectorySnapshot(connection));
-      const result = startInstance(version.definition, { requesterId: actor.id, formData: input.formData, now: now() }, directory);
+      const snapshot = await loadDirectorySnapshot(connection);
+      const parsed = parseFormSubmission(version.form, input.fields, activeIds(snapshot));
+      if (!parsed.ok || titleError) throw new FormError({ ...(parsed.ok ? {} : parsed.errors), ...(titleError ? { title: titleError } : {}) });
+      const formData = parsed.data;
+      const result = startInstance(version.definition, { requesterId: actor.id, formData, now: now() }, toDirectory(snapshot));
       const requestNo = await nextRequestNumber(workflow.requestPrefix, connection);
-      const id = await insertRequest({ requestNo, workflowVersionId: version.id, requesterId: actor.id, title, formData: input.formData, state: result.state }, connection);
+      const id = await insertRequest({ requestNo, workflowVersionId: version.id, requesterId: actor.id, title, formData, state: result.state }, connection);
       await syncTasks(id, result.state, version.definition.nodes, connection);
       await appendEvents(id, [{ type: "SUBMITTED", requestNo }, ...result.events], actor.id, connection);
       const request: RequestRecord = {
@@ -183,7 +278,7 @@ export async function submitRequest(input: { workflowId: number; title: string; 
         workflowVersionId: version.id,
         requesterId: actor.id,
         title,
-        formData: input.formData,
+        formData,
         status: result.state.status,
         round: result.state.round,
         state: result.state,
@@ -192,13 +287,15 @@ export async function submitRequest(input: { workflowId: number; title: string; 
       return { request, events: result.events, requesterName: await requesterName(actor.id, connection) };
     });
   } catch (error) {
+    if (error instanceof FormError) return { ok: false, code: "INVALID_FORM", message: "Check the highlighted fields.", fieldErrors: error.fieldErrors };
     return engineFailure(error);
   }
   await announce(changed);
   return { ok: true, value: { requestId: changed.request.id, requestNo: changed.request.requestNo, status: changed.request.status } };
 }
 
-type Step = (request: RequestRecord, definition: WorkflowDefinition, directory: ReturnType<typeof toDirectory>) => EngineResult & { formData?: Record<string, unknown> };
+type StepContext = { version: WorkflowVersionRecord; snapshot: DirectorySnapshot };
+type Step = (request: RequestRecord, definition: WorkflowDefinition, directory: ReturnType<typeof toDirectory>, extra: StepContext) => EngineResult & { formData?: Record<string, unknown> };
 
 // One locked read-modify-write for every action on an existing request.
 async function mutate(requestId: number, actor: Actor, step: Step): Promise<Result<{ status: string }>> {
@@ -209,8 +306,8 @@ async function mutate(requestId: number, actor: Actor, step: Step): Promise<Resu
       if (!request) throw new ServiceError("NOT_FOUND", "Request not found.");
       const version = await findWorkflowVersion(request.workflowVersionId, connection);
       if (!version) throw new Error(`workflow version ${request.workflowVersionId} missing`);
-      const directory = toDirectory(await loadDirectorySnapshot(connection));
-      const result = step(request, version.definition, directory);
+      const snapshot = await loadDirectorySnapshot(connection);
+      const result = step(request, version.definition, toDirectory(snapshot), { version, snapshot });
       if (!(await saveRequestState(request.id, request.stateVersion, result.state, result.formData ?? null, connection))) {
         throw new ServiceError("CONFLICT", "Someone else just changed this request. Reload and try again.");
       }
@@ -223,6 +320,7 @@ async function mutate(requestId: number, actor: Actor, step: Step): Promise<Resu
       };
     });
   } catch (error) {
+    if (error instanceof FormError) return { ok: false, code: "INVALID_FORM", message: "Check the highlighted fields.", fieldErrors: error.fieldErrors };
     return engineFailure(error);
   }
   await announce(changed);
@@ -247,12 +345,18 @@ export function resumeRequest(requestId: number, actor: Actor) {
   return mutate(requestId, actor, (request, _definition, directory) => resume(request.state, { actorId: actor.id, isAdmin: isAdmin(actor) }, directory));
 }
 
-// Only the requester resubmits, on the same request number (G-04).
-export function resubmitRequest(input: { requestId: number; formData?: EngineFormData; policy?: RestartPolicy }, actor: Actor) {
-  return mutate(input.requestId, actor, (request, definition, directory) => {
+// Only the requester resubmits, on the same request number (G-04). New
+// field values, if given, are checked against the request's form version.
+export function resubmitRequest(input: { requestId: number; fields?: Record<string, string | undefined>; policy?: RestartPolicy }, actor: Actor) {
+  return mutate(input.requestId, actor, (request, definition, directory, { version, snapshot }) => {
     if (request.requesterId !== actor.id) throw new EngineError("NOT_AUTHORISED", "Only the person who raised the request can resubmit it.");
-    const formData = (input.formData ?? request.formData) as EngineFormData;
+    let formData = request.formData as EngineFormData;
+    if (input.fields) {
+      const parsed = parseFormSubmission(version.form, input.fields, activeIds(snapshot));
+      if (!parsed.ok) throw new FormError(parsed.errors);
+      formData = parsed.data;
+    }
     const result = resubmit(definition, request.state, input.policy ?? "REQUESTING_STEP", { requesterId: request.requesterId, formData, now: now() }, directory);
-    return { ...result, formData: input.formData ?? undefined };
+    return { ...result, formData: input.fields ? formData : undefined };
   });
 }

@@ -1,0 +1,113 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { requireApiArea } from "@/server/authorization/guards";
+import { decideTask, holdTask, resubmitRequest, resumeRequest, submitRequest, type Actor } from "@/server/approvals/service";
+import { logError } from "@/lib/logging/logger";
+import type { ActionResult } from "@/lib/http/action-result";
+
+// Server Actions for requests (F-14). Every one re-checks the session; the
+// service then enforces who may do what on the record (F-12, D-057).
+const NOT_FOUND: ActionResult = { ok: false, message: "Not found." };
+const RESERVED = new Set(["workflowId", "requestId", "title", "taskKey", "decision", "comment"]);
+
+async function actor(): Promise<Actor | null> {
+  try {
+    const session = await requireApiArea("users");
+    return { id: session.user.id, roles: session.user.roles };
+  } catch {
+    return null;
+  }
+}
+
+function num(value: FormDataEntryValue | null): number | null {
+  return typeof value === "string" && /^\d+$/.test(value) ? Number(value) : null;
+}
+
+function fieldsFrom(formData: FormData): Record<string, string> {
+  const fields: Record<string, string> = {};
+  for (const [key, value] of formData.entries()) {
+    if (!RESERVED.has(key) && !key.startsWith("$") && typeof value === "string") fields[key] = value;
+  }
+  return fields;
+}
+
+export async function submitRequestAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const me = await actor();
+  const workflowId = num(formData.get("workflowId"));
+  if (!me || workflowId === null) return NOT_FOUND;
+  let requestId: number;
+  try {
+    const result = await submitRequest({ workflowId, title: String(formData.get("title") ?? ""), fields: fieldsFrom(formData) }, me);
+    if (!result.ok) return { ok: false, message: result.message, fieldErrors: result.fieldErrors };
+    requestId = result.value.requestId;
+  } catch (error) {
+    logError("submitRequestAction failed", error);
+    return { ok: false, message: "Couldn't submit. Please try again." };
+  }
+  revalidatePath("/users");
+  redirect(`/users/requests/${requestId}?submitted=1`);
+}
+
+const DECISIONS = new Set(["APPROVE", "REJECT", "REQUEST_CHANGES", "HOLD"]);
+const DONE: Record<string, string> = {
+  APPROVE: "Approved.",
+  REJECT: "Rejected. The requester has been told.",
+  REQUEST_CHANGES: "Sent back for changes. The requester has been told.",
+  HOLD: "Put on hold.",
+};
+
+export async function decideAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const me = await actor();
+  const requestId = num(formData.get("requestId"));
+  const taskKey = String(formData.get("taskKey") ?? "");
+  const decision = String(formData.get("decision") ?? "");
+  if (!me || requestId === null || !taskKey || !DECISIONS.has(decision)) return NOT_FOUND;
+  const comment = String(formData.get("comment") ?? "").trim().slice(0, 2000);
+  if (decision !== "APPROVE" && decision !== "HOLD" && !comment) return { ok: false, message: "Give a reason.", fieldErrors: { comment: "A reason is required." } };
+  try {
+    const result =
+      decision === "HOLD"
+        ? await holdTask({ requestId, taskKey, reason: comment || undefined }, me)
+        : await decideTask({ requestId, taskKey, decision: decision as "APPROVE" | "REJECT" | "REQUEST_CHANGES", comment: comment || undefined }, me);
+    if (!result.ok) return { ok: false, message: result.message };
+  } catch (error) {
+    logError("decideAction failed", error, { decision });
+    return { ok: false, message: "Something went wrong. Please try again." };
+  }
+  revalidatePath(`/users/requests/${requestId}`);
+  revalidatePath("/users");
+  return { ok: true, message: DONE[decision] };
+}
+
+export async function resumeAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const me = await actor();
+  const requestId = num(formData.get("requestId"));
+  if (!me || requestId === null) return NOT_FOUND;
+  try {
+    const result = await resumeRequest(requestId, me);
+    if (!result.ok) return { ok: false, message: result.message };
+  } catch (error) {
+    logError("resumeAction failed", error);
+    return { ok: false, message: "Something went wrong. Please try again." };
+  }
+  revalidatePath(`/users/requests/${requestId}`);
+  return { ok: true, message: "Resumed." };
+}
+
+export async function resubmitAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const me = await actor();
+  const requestId = num(formData.get("requestId"));
+  if (!me || requestId === null) return NOT_FOUND;
+  try {
+    const result = await resubmitRequest({ requestId, fields: fieldsFrom(formData) }, me);
+    if (!result.ok) return { ok: false, message: result.message, fieldErrors: result.fieldErrors };
+  } catch (error) {
+    logError("resubmitAction failed", error);
+    return { ok: false, message: "Something went wrong. Please try again." };
+  }
+  revalidatePath(`/users/requests/${requestId}`);
+  revalidatePath("/users");
+  return { ok: true, message: "Resubmitted. The approvers have been told." };
+}
