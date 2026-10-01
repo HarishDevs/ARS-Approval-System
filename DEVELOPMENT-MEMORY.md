@@ -25,10 +25,10 @@
 | Company | ARS Steels & Alloy International Pvt Ltd |
 | Build team | Project owner (ARS IT, itadmin@arssteels.co.in) + Claude (AI pair developer) |
 | Admin Portal (Super Admin) login | `itadmin@arssteels.co.in`, operated by the developers |
-| Current stage | **Build session 3 done (30 Sep 2026): the north star works end to end in the app.** The IT team builds multi-level workflows (levels builder, test mode, versions); staff raise requests; approvers act from their queue; the request page shows every level. Also built: groups, retry runner, rate limits. 144 unit + 16 MySQL integration tests, typecheck, lint and build pass. Next: session 4, PLAN-CHECKLIST §S4 |
+| Current stage | **Build session 4 done (1 Oct 2026).** On top of the working multi-level flow: custom approvals for everyone, comments, out-of-office delegation, SLA reminders and escalation, handover on leaving, notification bell, DoA view, GoDaddy deployment guide. 154 unit + 24 MySQL integration tests, typecheck, lint and build pass. Ready to deploy once the owner says go; next is session 5, PLAN-CHECKLIST §S5 |
 | Address | **`approvals.arssteels.net`** (single app; role routes `/users`, `/admin`, `/superadmin`, D-034) |
 | Repository | **https://github.com/HarishDevs/ARS-Approval-System** (private, `main`, D-035). Local root: `D:\Omniroute\ARS Approval System` |
-| Last updated | 30 Sep 2026 (build session 3) |
+| Last updated | 1 Oct 2026 (build session 4) |
 
 ## 2. Key files and links
 
@@ -48,6 +48,8 @@
 | Area access rules | `server/authorization/policy.ts` + `guards.ts`, `middleware.ts` |
 | Notification hub | `server/notifications/notify.ts`; adapters in `server/integrations/ceoitbox` and `resend` |
 | Approvals persistence | `server/approvals/service.ts` (submit, decide, hold, resume, resubmit, workflows/versions), `server/approvals/messages.ts`, `lib/db/repositories/approvals.repository.ts`, `directory.repository.ts`; integration tests in `tests/integration/` (`npm run test:integration`) |
+| Deployment guide | `docs/DEPLOYMENT.md` (GoDaddy Node.JS Hosting from GitHub, env vars, DB privilege check, migrations, cron, Firebase domain, provider keys, break-glass, go-live checks); `scripts/database/check-privileges.js` |
+| Collaboration | custom approvals `/users/custom` (`submitCustomRequest`), comments, out-of-office `/users/delegation`, inbox `/users/notifications`; services `server/approvals/collab.ts`; data `lib/db/repositories/collab.repository.ts`; SLA job `server/jobs/sla.ts`; DoA view `/admin/doa` (`server/workflows/doa.ts`) |
 | Request screens | `/users` (home, `queue`, `requests`, `requests/[id]`, `new`, `new/[workflowId]`); actions in `app/users/actions.ts`; view + access check in `server/approvals/view.ts`; level map `step-map.ts`; timeline wording `timeline.ts` |
 | Workflow builder | `/admin/workflows` (list, new, `[id]` with versions, test mode, publish); compiler `server/workflows/builder.ts`; form fields `server/forms/fields.ts`; UI `features/admin/WorkflowBuilder.tsx` |
 | Job runner and rate limits | `app/api/jobs/run` (cron), `server/jobs/retry-deliveries.ts`, `server/auth/rate-limit.ts`, `lib/db/repositories/jobs.repository.ts` |
@@ -122,6 +124,12 @@
 | D-057 | 30 Sep 2026 | **Who can open a request (layer 3):** the requester, anyone with a task on it (now or before), and IT Admin / Super Admin. Anyone else gets the same 404 as a request that doesn't exist, and the attempt is audited (REQUEST_ACCESS_DENIED). | Claude, following P1-30a |
 | D-058 | 30 Sep 2026 | **Retrying failed messages.**<br>• cPanel cron POSTs `/api/jobs/run` every 5 minutes with an `x-job-secret` header, compared timing-safe. With no secret configured or a wrong one, it answers 404.<br>• The runner leases due FAILED deliveries (`FOR UPDATE SKIP LOCKED`, pushed 10 minutes ahead) and resends each from its stored payload.<br>• Retries wait 2, 4, 8… minutes, up to the WhatsApp retry limit setting. Errors that can't be fixed by retrying (not configured, no template) are not retried.<br>• The Super Admin also has **Retry now**. The same run deletes rate-limit hits older than a day. | Claude, following P1-48 |
 | D-059 | 30 Sep 2026 | **Rate limits (sliding window in MySQL, per IP and per User ID, whether or not the account exists):**<br>• sign-in: 20 per IP / 10 per User ID per 15 min;<br>• code checks: 30 per IP per 15 min;<br>• forgot password: 10 per IP per 15 min, 5 per User ID per hour;<br>• set password: 10 per IP per 15 min;<br>• Google sign-in: 30 per IP per 15 min.<br>Over the limit gives 429 with a generic message and Retry-After. Verified live. | Claude, following P1-21 |
+| D-060 | 1 Oct 2026 | **Custom approvals.** Any user builds a route with the same levels editor the IT team uses, and submits it in one go.<br>• It is saved as a CUSTOM workflow owned by that user and published at once. Numbers look like `CUS-YYYY-nnnnnn`.<br>• The form is fixed: details (required) and amount (optional).<br>• A step made only of the requester is refused; the graph validator still applies.<br>• Custom routes never appear in anyone else's New request list. | Claude, following D-026/D-040 |
+| D-061 | 1 Oct 2026 | **Comments are append-only** (triggers, like the audit log). Anyone who can open the request can comment. The requester and pending approvers are told, except the author. Attachments wait for Q-001. | Claude |
+| D-062 | 1 Oct 2026 | **Out of office.**<br>• A person names one delegate for a date range of up to 90 days, with no overlaps. IT can set one for anyone.<br>• While active (India date), the delegate sees those approvals in their queue, can open the requests, and decides them; actor and "on behalf of" are recorded.<br>• No chains. Never on the delegate's own request (the engine refuses the requester as actor).<br>• Start and end alert both people. Ended early with `ended_at`, never deleted. | Claude, following D-018 |
+| D-063 | 1 Oct 2026 | **SLA.**<br>• A builder step can have "respond within N hours" (1 to 720), giving each task a due time.<br>• The job runner sends a reminder at the due time (to the approver and their active delegate) and an escalation at twice the time (to the approver's manager and the IT Admins).<br>• Each is sent once per task (`task_reminders`, claimed with INSERT IGNORE). Requests on hold get no notices.<br>• Calendar hours for now; working days and holidays come in S5-04. | Claude, following F-31 |
+| D-064 | 1 Oct 2026 | **Handover.**<br>• IT moves a person's pending approvals to someone else. Each move is a pure engine `reassignTask` call (TASK_REASSIGNED event) through the normal locked path, so the timeline, audit and new-approver alert all happen.<br>• A move is refused for the requester, an inactive person, or someone already on that step; refused moves are reported.<br>• **Deactivation is refused while approvals still wait on the person.** | Claude, following P1-05 |
+| D-065 | 1 Oct 2026 | **DoA lives in the workflow** as "skip this step when amount is at most ₹N". `/admin/doa` derives the amount-band matrix from the live versions for review with the owner (Q-004); no separate DoA table to keep in sync. Changing a limit means a new workflow version. | Claude |
 | D-033 | 28 Sep 2026 | **Staff data is provided by the admin. Roles are assigned per user, by the admin only. Users are added or made inactive in the Admin Portal** (never hard-deleted, so history and audit stay intact). *Resolves Q-010.* | Owner (answer 7) |
 
 ## 4. Open questions (must be answered before the phase shown)
@@ -145,6 +153,21 @@
 | Q-015 | **Break-glass and WhatsApp:** the break-glass account signs in with a password **plus the WhatsApp code** (D-025). If WhatsApp or CEOITBox is down, which is exactly when break-glass may be needed, it can't sign in. Keep the code, or skip it only during the console-enabled window? | Go-live | Open, waiting on the owner (built conservatively: the code is required) |
 
 ## 5. Work log (newest first)
+
+### 1 Oct 2026 (build session 4)
+- **New:**
+  - custom approvals (D-060); comments (D-061);
+  - out of office / delegation (D-062), including queue items "for <name>" and request access for delegates;
+  - SLA due times, reminders and escalation (D-063), with "Overdue" in the queue;
+  - handover with the deactivation guard (D-064);
+  - the notification bell, inbox and mark all read;
+  - the DoA matrix (D-065);
+  - `docs/DEPLOYMENT.md` and `check-privileges.js`.
+- **Engine:** `reassignTask` + the TASK_REASSIGNED event; `slaHours` on approval nodes.
+- **Builder:** "Respond within N hours" per step. The levels editor is now shared with custom approvals.
+- **Tests:** +10 unit (handover, delegation, custom self-check, delegation dates, SLA decisions, DoA bands) and +8 MySQL integration (custom submit and privacy, self-approval refused, delegate approves on behalf and stops when ended, delegate can't approve own request, handover then deactivation, handover to the requester skipped, append-only comments, SLA reminder then escalation each sent once).
+- **Browser run:** Ravi raised CUS-2026-000001 for Meena and commented. Meena set out of office to Test Staff. Test Staff saw it in the queue "for Meena (MD)" and approved, and the timeline shows it was on her behalf. The bell showed the unread counts and cleared with Mark all as read. `/admin/doa` showed ₹0–₹5,00,000: Manager → HOD; above ₹5,00,000: Manager → HOD → MD.
+- **Local only:** request CUS-2026-000001 and the Meena → Test Staff out-of-office exist in the dev database.
 
 ### 30 Sep 2026 (build session 3)
 - **The north star is usable end to end.** Staff raise, approvers act, requesters resubmit, and the page shows every level.
@@ -249,16 +272,16 @@
 | Admin Portal | Organisation, users, hierarchy, roles, data scopes | In progress: users, roles, manager, departments + HOD, designations done; data scopes, import to do | P1-ADM |
 | Admin Portal | Security, providers, notification templates, audit viewer | In progress: providers + security settings, test send, delivery log, audit viewer done; templates UI, export to do | P1-ADM |
 | Admin Portal | Approval Builder, form builder, workflow designer, validator, test mode | **Done as a structured levels builder (30 Sep 2026)**: forms, levels, validation, test mode, versions; drag-and-drop canvas later | P3 |
-| Admin Portal | DoA matrix, SLA/escalation, holiday calendar | Planned | P3/P4 |
+| Admin Portal | DoA matrix, SLA/escalation, holiday calendar | In progress: DoA view and SLA done; holiday calendar in S5 | P3/P4 |
 | Admin Portal | Data rights: view, export, correct (versioned), archive, retention | Planned | P1-ADM / P7 |
 | Messaging | Notification hub: email + WhatsApp (CEOITBox) + in-app, delivery log | In progress: hub, adapters, delivery log, retry runner and Retry now done; in-app bell in S4 | P1-NOT |
 | Engine | Requests, permanent ID, state machine, server-side approver check | **Done with screens (30 Sep 2026)** | P2 |
 | Engine | Sequential / Parallel / Any-One / Any-N-of-M / Conditional / Hybrid | **Done and persisted (30 Sep 2026)**: 38 engine tests + 11 MySQL integration tests | P2/P3 |
 | Engine | Approver sources (user, role, HOD, manager, group, form field…) | Engine core done (8 sources); designer UI in P3 | P3 |
 | Engine | Resubmission with versions, Reopen, On Hold, Changes Required | In progress: hold/resume, changes required and resubmit (rounds) in the engine core; reopen and versions to do | P4 |
-| Engine | Delegation ("on behalf of"), SLA, reminders, escalation | In progress: delegation (actor + on-behalf-of) in the engine core; SLA/escalation to do | P4 |
-| Engine | Custom approvals open to every user, whenever needed (D-026) | Planned | P5 |
-| Engine | Documents (versioned), comments, work assignment after approval | Planned | P6 |
+| Engine | Delegation ("on behalf of"), SLA, reminders, escalation | **Done (1 Oct 2026)**: out of office, SLA hours, reminders, escalation; working days in S5 | P4 |
+| Engine | Custom approvals open to every user, whenever needed (D-026) | **Done (1 Oct 2026)** | P5 |
+| Engine | Documents (versioned), comments, work assignment after approval | In progress: comments done; documents wait for Q-001; work assignment later | P6 |
 | Portals | Employee, Approver, Management portals | Employee + approver **done (30 Sep 2026)**; management portal P7 | P2/P7 |
 | Insight | Analytics, SLA dashboards, Power BI views | Planned | P7 |
 | Connect | ERP / Salesforce / webhooks, mobile web app | Planned | P8 |

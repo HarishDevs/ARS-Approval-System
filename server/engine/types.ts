@@ -76,6 +76,9 @@ export interface ApprovalNode extends BaseNode {
   skipIf?: Condition;
   // When nobody eligible resolves: BLOCK (default, needs an admin) or SKIP.
   onNoApprover?: "BLOCK" | "SKIP";
+  // Respond-within time (F-31). The engine only carries it; the job runner
+  // turns it into reminders and escalation.
+  slaHours?: number;
 }
 
 export interface SplitNode extends BaseNode {
@@ -183,7 +186,8 @@ export type EngineEvent =
   | { type: "CHANGES_REQUESTED"; nodeId: string; actorId: number; comment: string }
   | { type: "PUT_ON_HOLD"; nodeId: string; actorId: number; reason?: string }
   | { type: "RESUMED"; actorId: number }
-  | { type: "RESUBMITTED"; round: number; restartNodeId: string };
+  | { type: "RESUBMITTED"; round: number; restartNodeId: string }
+  | { type: "TASK_REASSIGNED"; taskId: string; nodeId: string; fromId: number; toId: number; actorId: number };
 
 export type Decision = "APPROVE" | "REJECT" | "REQUEST_CHANGES";
 
@@ -199,7 +203,8 @@ export type EngineErrorCode =
   | "NOT_CHANGES_REQUIRED"
   | "NOT_AUTHORISED"
   | "COMMENT_REQUIRED"
-  | "UNKNOWN_NODE";
+  | "UNKNOWN_NODE"
+  | "INVALID_REASSIGN";
 
 export class EngineError extends Error {
   constructor(

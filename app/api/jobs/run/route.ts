@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { getEnv } from "@/config/environment";
 import { apiError, apiSuccess } from "@/lib/http/api-response";
 import { runDeliveryRetries, runHousekeeping } from "@/server/jobs/retry-deliveries";
+import { runSlaChecks } from "@/server/jobs/sla";
 import { logError, logInfo } from "@/lib/logging/logger";
 
 // Cron entry point (F-41, D-058). cPanel cron, every 5 minutes:
@@ -21,9 +22,10 @@ export async function POST(request: NextRequest) {
   if (!secretMatches(request.headers.get("x-job-secret"))) return apiError("NOT_FOUND", "Not found.", 404);
   try {
     const retries = await runDeliveryRetries();
+    const sla = await runSlaChecks();
     const housekeeping = await runHousekeeping();
-    logInfo("job runner finished", { ...retries, ...housekeeping });
-    return apiSuccess({ retries, housekeeping });
+    logInfo("job runner finished", { ...retries, ...sla, ...housekeeping });
+    return apiSuccess({ retries, sla, housekeeping });
   } catch (error) {
     logError("job runner failed", error);
     return apiError("SYSTEM_ERROR", "Job run failed.", 500);

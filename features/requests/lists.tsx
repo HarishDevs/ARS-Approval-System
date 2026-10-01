@@ -15,6 +15,7 @@ export function QueueTable({ items }: { items: QueueItem[] }) {
             <th>From</th>
             <th>Your step</th>
             <th>Waiting since</th>
+            <th>Due</th>
           </tr>
         </thead>
         <tbody>
@@ -27,8 +28,21 @@ export function QueueTable({ items }: { items: QueueItem[] }) {
                 <p className="text-caption text-ink-muted">{item.requestNo}</p>
               </td>
               <td>{item.requesterName}</td>
-              <td>{item.nodeLabel}</td>
+              <td>
+                {item.nodeLabel}
+                {item.forName && <p className="text-caption text-ink-muted">for {item.forName} (you&apos;re covering)</p>}
+              </td>
               <td className="whitespace-nowrap">{formatIndiaTime(item.createdAt)}</td>
+              <td className="whitespace-nowrap">
+                {item.dueAt ? (
+                  <span className={item.overdue ? "font-semibold text-danger-600" : ""}>
+                    {item.overdue ? "Overdue · " : ""}
+                    {formatIndiaTime(item.dueAt)}
+                  </span>
+                ) : (
+                  <span className="text-ink-faint">—</span>
+                )}
+              </td>
             </tr>
           ))}
         </tbody>

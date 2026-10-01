@@ -39,16 +39,20 @@ The number of levels and how they combine is unlimited. There are no fixed "Leve
 | F-27 | On Hold / resume | Built with screens 30 Sep 2026 |
 | F-28 | Reject | Built with screens 30 Sep 2026 |
 | F-29 | Reopen | Planned |
-| F-30 | Delegation | Engine core built 28 Sep 2026 (delegation records: later) |
-| F-31 | SLA, reminder, escalation | Planned |
+| F-30 | Delegation | Built and verified 1 Oct 2026 |
+| F-31 | SLA, reminder, escalation | Built 1 Oct 2026 (calendar hours; holidays in S5) |
 | F-32 | Work assignment after approval | Planned |
-| F-33 | Employee custom approval | Planned |
+| F-33 | Employee custom approval | Built and verified 1 Oct 2026 |
 | F-40 | Notification pipeline | Planned |
 | F-50 | Workflow authoring: design → validate → test → publish → version | Levels builder built 30 Sep 2026; canvas later |
 | F-51 | Admin configuration change (audited) | Built for settings, users, departments, workflows 30 Sep 2026 |
 | F-52 | Provider settings and test send (Super Admin) | Built 30 Sep 2026 |
 | F-53 | Break-glass console script | Built 30 Sep 2026 (Q-015 open) |
 | F-13 | Request persistence and concurrency | Built and tested on MySQL 30 Sep 2026 |
+| F-15 | Comments on a request | Built and verified 1 Oct 2026 |
+| F-16 | Handing over pending approvals | Built and tested on MySQL 1 Oct 2026 |
+| F-54 | DoA view derived from workflows | Built and verified 1 Oct 2026 |
+| F-90 | GoDaddy deployment and go-live | Guide + privilege check ready 1 Oct 2026; deploy on owner's go-ahead |
 | F-14 | Request screens: raise → queue → act → resubmit | Built and verified in the browser 30 Sep 2026 |
 | F-41 | Retry runner for failed messages | Built 30 Sep 2026 (cron set up at go-live) |
 | F-09 | Rate limiting on sign-in and codes | Built and verified 30 Sep 2026 |
@@ -443,8 +447,27 @@ An approved request is reopened by the Super Admin or a role the Super Admin all
 ## F-30 Delegation (D-018)
 The approver (or the Super Admin) sets a date range, a delegate and a scope (all or listed types). While it is active, the delegate sees the steps and acts **on behalf of** the approver, and both are recorded. Delegation start and end notify both people.
 
+**Design for S4-03 (D-062):**
+- **Who sets it:** each person sets their own out-of-office in `/users/delegation`: a delegate, a from and to date (at most 90 days), and a reason. IT Admins can set or end one for anyone from the user page.
+- **While active** (today within the dates, not ended, delegate active):
+  - the delegate sees the person's pending approvals in "Waiting for me", marked "for <name>";
+  - the delegate can open those requests and act; the task records the actor and "on behalf of".
+- **Limits:**
+  - No chains: a delegate can only act for the person who named them.
+  - A delegate can never approve their own request (the engine refuses the requester as actor).
+- **Alerts:** starting or ending a delegation alerts both people.
+
 ## F-31 SLA, reminder, escalation
 The node starts → at the reminder time (e.g. 12 h) the approver is reminded → at the SLA (e.g. 24 h) the manager or escalation contact is notified → at the escalation time (e.g. 48 h) the request is escalated and optionally reassigned per node settings. Working days follow the holiday calendar.
+
+**First cut for S4-04 (D-063):**
+- A builder step can have "respond within N hours". Each task gets a due time when it is created.
+- The job runner (F-41) checks every 5 minutes:
+  - **due time reached** → a reminder to the approver (and their active delegate);
+  - **twice the time** (e.g. 48 h for a 24 h limit) → an escalation notice to the approver's manager and to the IT Admins.
+- Each notice is sent once per task, recorded in `task_reminders`.
+- The queue shows the due time, and an "Overdue" flag once it's passed.
+- Hours are calendar hours for now. Working days and the holiday calendar come later.
 
 ## F-32 Work assignment after approval
 Final approval → WORK node assigns a person or department (with optional tasks) → assignee completes the tasks → requester notified → Closed. Example: IT purchase approved → IT team buys and installs → complete.
@@ -460,6 +483,37 @@ flowchart TD
 ```
 - Predefined approvals are created only by the IT team in the Admin Portal (F-50). Custom approvals are open to everyone. *Updated 28 Sep 2026.*
 
+**Design for S4-01 (D-060):**
+- Any user opens `/users/custom` and enters:
+  - a title, details, and an optional amount;
+  - the levels, using the same levels editor as the IT team: any person, their own manager or HOD, a group; one step or parallel steps; all / any one / any N.
+- It is submitted at once as a **CUSTOM** workflow owned by that user, with version 1 published and the request raised in one go. The number looks like `CUS-2026-000001`.
+- **Checks:**
+  - A step made only of the requester can't be used (no self-approval).
+  - The same graph validator applies.
+  - Custom approvals never appear in anyone else's "New request" list.
+- Everything after submission is the normal flow (F-11 to F-14).
+
+## F-15 Comments on a request (S4-02, D-061)
+Anyone who can open the request (D-057) can post a comment of up to 2,000 characters.
+- Comments are **append-only**: no edit or delete, like the rest of the history.
+- They appear in a Discussion section on the request page.
+- A comment notifies the requester and the people with a pending approval, except its author.
+- Attachments wait for the GoDaddy disk check (Q-001).
+
+## F-16 Handing over pending approvals (S4-05, D-064)
+```mermaid
+flowchart LR
+  A["Admin: user page → Hand over pending approvals"] --> B["Choose an active person"]
+  B --> C["Each pending task of the leaver moves to that person\nengine: TASK_REASSIGNED, timeline + audit"]
+  C --> D["New approver is told"]
+  E["Admin: Deactivate"] --> F{"Pending approvals left?"}
+  F -- Yes --> G["Refused: hand them over first"]
+  F -- No --> H["Deactivate: sign-in blocked, sessions end"]
+```
+- The replacement can't be the requester of that request, and can't already be an approver on the same step; those tasks are listed as needing IT.
+- Only pending tasks move. Decisions already taken stay with the person who took them.
+
 ## F-40 Notification pipeline
 ```mermaid
 flowchart LR
@@ -474,6 +528,7 @@ flowchart LR
 ```
 - SMS removed: OTP is WhatsApp only (D-025). *Updated 28 Sep 2026.*
 - Messages carry secure deep links. Nobody approves from inside a WhatsApp chat (D-019).
+- **In-app bell (S4-06):** the header shows an unread count. `/users/notifications` lists the latest 50, each opening its request, with "Mark all as read".
 
 ## F-50 Workflow authoring (IT team in `/admin`)
 
@@ -490,6 +545,24 @@ Before publishing:
 Publishing makes this version the one new requests use; the previous version is archived. Running requests stay on their version.
 
 Design (drag-and-drop) → configure the nodes → **validate** (errors block publishing; warnings are shown) → **test mode** with sample values shows the exact levels and approvers → publish as version n → running requests stay on their original version → archive old versions when no longer used.
+
+## F-54 DoA view (S4-08, D-065)
+Approval limits (DoA) are expressed in the workflow itself: each amount-dependent level has "skip this step when amount is at most ₹N".
+- `/admin/doa` reads every live workflow and shows it as a matrix: amount bands in rows, the levels needed in each band.
+- The owner can review the bands with IT (Q-004); changing them is a new workflow version.
+
+## F-90 GoDaddy deployment and go-live (S4-07)
+Follows the Power BI site's route (Node.JS Hosting, connected to the GitHub repo).
+Full steps are in `docs/DEPLOYMENT.md`:
+- environment variables;
+- the MySQL setup, including the TRIGGER privilege check;
+- migrations and seeds;
+- the first Super Admin;
+- the cron line for the job runner;
+- Firebase authorised domains;
+- provider keys in `/superadmin`;
+- the break-glass setup;
+- a post-go-live checklist.
 
 ## F-51 Admin configuration change
 An admin changes a setting (no step-up OTP, D-032) → saved as a new version → audit entry with before and after values → takes effect → affected admins or users notified if relevant.

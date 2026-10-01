@@ -6,6 +6,7 @@ import { RequestStatusPill } from "@/features/requests/StatusPill";
 import { StepMap } from "@/features/requests/StepMap";
 import { DecisionForm, ResumeForm } from "@/features/requests/ActionPanel";
 import { RequestForm } from "@/features/requests/RequestForm";
+import { CommentForm } from "@/features/requests/Discussion";
 import { loadRequestView } from "@/server/approvals/view";
 import { listActiveUserOptions } from "@/lib/db/repositories/admin-users.repository";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
@@ -50,7 +51,7 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
             <section className="card divide-y divide-line border-primary-600">
               <h2 className="px-5 py-4 font-semibold">Needs your action</h2>
               {view.myTasks.map((task) => (
-                <DecisionForm key={task.taskKey} requestId={view.id} taskKey={task.taskKey} label={task.label} />
+                <DecisionForm key={task.taskKey} requestId={view.id} taskKey={task.taskKey} label={task.forName ? `${task.label} (for ${task.forName}, as their delegate)` : task.label} />
               ))}
               {view.canResume && <ResumeForm requestId={view.id} />}
             </section>
@@ -79,6 +80,25 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
             </section>
           )}
         </div>
+        <div className="space-y-6">
+        <section className="card px-5 py-4">
+          <h2 className="mb-3 font-semibold">Discussion</h2>
+          {view.comments.length === 0 ? (
+            <p className="mb-3 text-label text-ink-muted">No comments yet.</p>
+          ) : (
+            <ul className="mb-4 space-y-3">
+              {view.comments.map((comment) => (
+                <li key={comment.id} className="text-label">
+                  <p>
+                    <span className="font-medium">{comment.authorName}</span> <span className="text-caption text-ink-faint">· {formatIndiaTime(comment.createdAt)}</span>
+                  </p>
+                  <p className="mt-0.5 whitespace-pre-wrap">{comment.body}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+          <CommentForm requestId={view.id} />
+        </section>
         <section className="card h-fit px-5 py-4">
           <h2 className="mb-3 font-semibold">Timeline</h2>
           <ol className="space-y-3 border-l border-line pl-4">
@@ -90,6 +110,7 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
             ))}
           </ol>
         </section>
+        </div>
       </div>
     </>
   );

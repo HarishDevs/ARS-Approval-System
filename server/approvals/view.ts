@@ -1,6 +1,7 @@
 import "server-only";
 import { findRequest, findWorkflow, findWorkflowVersion, isParticipant, listTimeline, userNames } from "@/lib/db/repositories/approvals.repository";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
+import { activeDelegatorsFor, listComments, type CommentItem } from "@/lib/db/repositories/collab.repository";
 import { buildStepMap, peopleInState, type MapStage } from "@/server/approvals/step-map";
 import { describeEvent } from "@/server/approvals/timeline";
 import { displayValue, type FormField } from "@/server/forms/fields";
@@ -24,7 +25,8 @@ export interface RequestView {
   fields: { key: string; label: string; value: string }[];
   stages: MapStage[];
   timeline: { id: number; at: Date; text: string }[];
-  myTasks: { taskKey: string; label: string }[];
+  myTasks: { taskKey: string; label: string; forName: string | null }[];
+  comments: CommentItem[];
   canResume: boolean;
   canResubmit: boolean;
   changesComment: string | null;
@@ -60,7 +62,12 @@ export async function loadRequestView(requestId: number, viewer: Actor): Promise
   const labelOf = (nodeId: string) => labels.get(nodeId) ?? nodeId;
   const nameOf = (userId: number) => names.get(userId) ?? `User #${userId}`;
 
-  const myPending = state.tasks.filter((task) => task.status === "PENDING" && task.round === state.round && task.approverId === viewer.id);
+  // Mine, plus those of anyone who named me their delegate today (D-062);
+  // never on my own request.
+  const delegators = await activeDelegatorsFor(viewer.id);
+  const myPending = state.tasks.filter(
+    (task) => task.status === "PENDING" && task.round === state.round && (task.approverId === viewer.id || delegators.has(task.approverId)) && request.requesterId !== viewer.id,
+  );
   const holdNode = state.hold?.nodeId;
 
   return {
@@ -79,7 +86,11 @@ export async function loadRequestView(requestId: number, viewer: Actor): Promise
     timeline: timelineRows
       .map((row) => ({ id: row.id, at: row.createdAt, text: describeEvent(row.payload, labelOf, nameOf) }))
       .filter((row): row is { id: number; at: Date; text: string } => row.text !== null),
-    myTasks: state.status === "IN_PROGRESS" ? myPending.map((task) => ({ taskKey: task.id, label: labelOf(task.nodeId) })) : [],
+    myTasks:
+      state.status === "IN_PROGRESS"
+        ? myPending.map((task) => ({ taskKey: task.id, label: labelOf(task.nodeId), forName: task.approverId === viewer.id ? null : nameOf(task.approverId) }))
+        : [],
+    comments: await listComments(requestId),
     canResume: state.status === "ON_HOLD" && (isAdmin(viewer) || myPending.some((task) => task.nodeId === holdNode)),
     canResubmit: state.status === "CHANGES_REQUIRED" && request.requesterId === viewer.id,
     changesComment: state.status === "CHANGES_REQUIRED" ? (state.changesRequested?.comment ?? null) : null,

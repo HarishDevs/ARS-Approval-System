@@ -14,6 +14,9 @@ export default async function UsersLayout({ children }: { children: React.ReactN
         { href: "/users/queue", label: "Waiting for me" },
         { href: "/users/requests", label: "My requests" },
         { href: "/users/new", label: "New request" },
+        { href: "/users/custom", label: "Custom approval" },
+        { href: "/users/delegation", label: "Out of office" },
+        { href: "/users/notifications", label: "Notifications" },
         { href: "/users/security", label: "Sign-in & devices" },
       ]}
     >

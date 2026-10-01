@@ -4,6 +4,7 @@ import { getDbPool, type Queryable } from "@/lib/db/client";
 import type { EngineEvent, InstanceState, InstanceStatus, WorkflowDefinition, WorkflowNode } from "@/server/engine/types";
 import type { FormField } from "@/server/forms/fields";
 import type { BuilderSpec } from "@/server/workflows/builder";
+import { INDIA_TODAY_SQL } from "@/lib/db/repositories/directory.repository";
 
 // Persistence for workflows and requests (S2-06, D-050, F-13). Only the
 // service layer (server/approvals) calls these, inside its transactions.
@@ -281,6 +282,7 @@ export async function saveRequestState(
 export async function syncTasks(requestId: number, state: InstanceState, nodes: readonly WorkflowNode[], db: Queryable): Promise<void> {
   if (state.tasks.length === 0) return;
   const labels = new Map(nodes.map((node) => [node.id, node.label]));
+  const sla = new Map(nodes.map((node) => [node.id, node.kind === "APPROVAL" ? (node.slaHours ?? null) : null]));
   const rows = state.tasks.map((task) => [
     requestId,
     task.id,
@@ -293,12 +295,14 @@ export async function syncTasks(requestId: number, state: InstanceState, nodes: 
     task.onBehalfOf ?? null,
     task.comment?.slice(0, 2000) ?? null,
     new Date(task.createdAt),
+    sla.get(task.nodeId) ? new Date(new Date(task.createdAt).getTime() + sla.get(task.nodeId)! * 3600_000) : null,
     task.decidedAt ? new Date(task.decidedAt) : null,
   ]);
+  // approver_id is updated too: a handover (F-16) moves a pending task.
   await db.query<ResultSetHeader>(
-    `INSERT INTO approval_tasks (request_id, task_key, node_id, node_label, round, approver_id, status, decided_by, on_behalf_of, comment, created_at, decided_at)
+    `INSERT INTO approval_tasks (request_id, task_key, node_id, node_label, round, approver_id, status, decided_by, on_behalf_of, comment, created_at, due_at, decided_at)
      VALUES ?
-     ON DUPLICATE KEY UPDATE status = VALUES(status), decided_by = VALUES(decided_by), on_behalf_of = VALUES(on_behalf_of),
+     ON DUPLICATE KEY UPDATE approver_id = VALUES(approver_id), status = VALUES(status), decided_by = VALUES(decided_by), on_behalf_of = VALUES(on_behalf_of),
        comment = VALUES(comment), decided_at = VALUES(decided_at)`,
     [rows],
   );
@@ -328,17 +332,29 @@ export interface QueueItem {
   taskKey: string;
   nodeLabel: string;
   createdAt: Date;
+  dueAt: Date | null;
+  overdue: boolean;
+  forName: string | null; // set when this is a delegated task
 }
 
+// My pending approvals, plus those of anyone who named me as their
+// delegate today (D-062). Never my own requests.
 export async function listPendingTasksFor(userId: number, db: Queryable = getDbPool()): Promise<QueueItem[]> {
-  const [rows] = await db.query<(RowDataPacket & { request_id: number; request_no: string; title: string; requester_name: string; task_key: string; node_label: string; created_at: Date })[]>(
-    `SELECT t.request_id, r.request_no, r.title, u.name AS requester_name, t.task_key, t.node_label, t.created_at
+  const [rows] = await db.query<
+    (RowDataPacket & { request_id: number; request_no: string; title: string; requester_name: string; task_key: string; node_label: string; created_at: Date; due_at: Date | null; overdue: number; approver_id: number; approver_name: string })[]
+  >(
+    `SELECT t.request_id, r.request_no, r.title, u.name AS requester_name, t.task_key, t.node_label, t.created_at, t.due_at,
+            (t.due_at IS NOT NULL AND t.due_at < CURRENT_TIMESTAMP) AS overdue, t.approver_id, a.name AS approver_name
      FROM approval_tasks t
      JOIN approval_requests r ON r.id = t.request_id
      JOIN users u ON u.id = r.requester_id
-     WHERE t.approver_id = ? AND t.status = 'PENDING' AND r.status IN ('IN_PROGRESS', 'ON_HOLD')
+     JOIN users a ON a.id = t.approver_id
+     WHERE t.status = 'PENDING' AND r.status IN ('IN_PROGRESS', 'ON_HOLD') AND r.requester_id <> ?
+       AND (t.approver_id = ? OR t.approver_id IN (
+             SELECT d.user_id FROM delegations d
+             WHERE d.delegate_id = ? AND d.ended_at IS NULL AND ${INDIA_TODAY_SQL} BETWEEN d.starts_on AND d.ends_on))
      ORDER BY t.created_at`,
-    [userId],
+    [userId, userId, userId],
   );
   return rows.map((row) => ({
     requestId: row.request_id,
@@ -348,14 +364,23 @@ export async function listPendingTasksFor(userId: number, db: Queryable = getDbP
     taskKey: row.task_key,
     nodeLabel: row.node_label,
     createdAt: row.created_at,
+    dueAt: row.due_at,
+    overdue: Number(row.overdue) === 1,
+    forName: row.approver_id === userId ? null : row.approver_name,
   }));
 }
 
+// Requester, anyone with a task on it (now or before), or the active
+// delegate of someone with a pending task on it (D-057, D-062).
 export async function isParticipant(requestId: number, userId: number, db: Queryable = getDbPool()): Promise<boolean> {
   const [rows] = await db.query<(RowDataPacket & { found: number })[]>(
     `SELECT 1 AS found FROM approval_requests WHERE id = ? AND requester_id = ?
-     UNION SELECT 1 FROM approval_tasks WHERE request_id = ? AND (approver_id = ? OR decided_by = ?) LIMIT 1`,
-    [requestId, userId, requestId, userId, userId],
+     UNION SELECT 1 FROM approval_tasks WHERE request_id = ? AND (approver_id = ? OR decided_by = ?)
+     UNION SELECT 1 FROM approval_tasks t JOIN delegations d ON d.user_id = t.approver_id
+       WHERE t.request_id = ? AND t.status = 'PENDING' AND d.delegate_id = ? AND d.ended_at IS NULL
+         AND ${INDIA_TODAY_SQL} BETWEEN d.starts_on AND d.ends_on
+     LIMIT 1`,
+    [requestId, userId, requestId, userId, userId, requestId, userId],
   );
   return rows.length > 0;
 }

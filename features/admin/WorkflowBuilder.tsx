@@ -77,17 +77,6 @@ export function WorkflowBuilder({
   const { result, pending, onSubmit } = useActionForm(mode === "create" ? createWorkflowAction : saveDraftAction);
   const checks = (result?.ok ? result.data : undefined) as { errors: string[]; warnings: string[] } | undefined;
 
-  const newStep = (label: string): BuilderStep => ({ id: newId(), label, approvers: { kind: "REQUESTER_MANAGER" }, rule: "ALL" });
-  const setStage = (index: number, stage: BuilderStage) => setStages((all) => all.map((item, i) => (i === index ? stage : item)));
-  const move = (index: number, delta: number) =>
-    setStages((all) => {
-      const next = [...all];
-      const target = index + delta;
-      if (target < 0 || target >= next.length) return all;
-      [next[index], next[target]] = [next[target]!, next[index]!];
-      return next;
-    });
-  const personFields = form.filter((field) => field.type === "PERSON");
 
   return (
     <form onSubmit={onSubmit} className="space-y-6">
@@ -198,10 +187,69 @@ export function WorkflowBuilder({
         </div>
       </section>
 
+      <LevelsEditor stages={stages} setStages={setStages} options={options} form={form} newId={newId} />
+
+      <div className="flex flex-wrap items-center gap-3">
+        <SubmitButton pending={pending} className="btn-compact">
+          {mode === "create" ? "Create workflow (as draft)" : "Save as new draft version"}
+        </SubmitButton>
+        <div className="min-w-0 flex-1">
+          <ResultMessage result={result} />
+        </div>
+      </div>
+      {checks && (checks.errors.length > 0 || checks.warnings.length > 0) && (
+        <div className="space-y-1 text-label">
+          {checks.errors.map((message) => (
+            <p key={message} className="text-danger-600">
+              ✗ {message}
+            </p>
+          ))}
+          {checks.warnings.map((message) => (
+            <p key={message} className="text-warning-600">
+              ! {message}
+            </p>
+          ))}
+        </div>
+      )}
+    </form>
+  );
+}
+
+// The levels list (F-50, F-33): shared by the IT team's workflow builder and
+// by staff creating a custom approval.
+export function LevelsEditor({
+  stages,
+  setStages,
+  options,
+  form,
+  newId,
+  title = "Approval levels",
+  hint = "Levels run top to bottom. Add as many as you need; a level can have several steps running in parallel.",
+}: {
+  stages: BuilderStage[];
+  setStages: React.Dispatch<React.SetStateAction<BuilderStage[]>>;
+  options: BuilderOptions;
+  form: FormField[];
+  newId: () => string;
+  title?: string;
+  hint?: string;
+}) {
+  const newStep = (label: string): BuilderStep => ({ id: newId(), label, approvers: { kind: "REQUESTER_MANAGER" }, rule: "ALL" });
+  const setStage = (index: number, stage: BuilderStage) => setStages((all) => all.map((item, i) => (i === index ? stage : item)));
+  const move = (index: number, delta: number) =>
+    setStages((all) => {
+      const next = [...all];
+      const target = index + delta;
+      if (target < 0 || target >= next.length) return all;
+      [next[index], next[target]] = [next[target]!, next[index]!];
+      return next;
+    });
+  const personFields = form.filter((field) => field.type === "PERSON");
+  return (
       <section className="card">
         <div className="border-b border-line px-5 py-4">
-          <h2 className="font-semibold">Approval levels</h2>
-          <p className="text-label text-ink-muted">Levels run top to bottom. Add as many as you need; a level can have several steps running in parallel.</p>
+          <h2 className="font-semibold">{title}</h2>
+          <p className="text-label text-ink-muted">{hint}</p>
         </div>
         <ol className="divide-y divide-line">
           {stages.map((stage, index) => (
@@ -276,30 +324,6 @@ export function WorkflowBuilder({
           </button>
         </div>
       </section>
-
-      <div className="flex flex-wrap items-center gap-3">
-        <SubmitButton pending={pending} className="btn-compact">
-          {mode === "create" ? "Create workflow (as draft)" : "Save as new draft version"}
-        </SubmitButton>
-        <div className="min-w-0 flex-1">
-          <ResultMessage result={result} />
-        </div>
-      </div>
-      {checks && (checks.errors.length > 0 || checks.warnings.length > 0) && (
-        <div className="space-y-1 text-label">
-          {checks.errors.map((message) => (
-            <p key={message} className="text-danger-600">
-              ✗ {message}
-            </p>
-          ))}
-          {checks.warnings.map((message) => (
-            <p key={message} className="text-warning-600">
-              ! {message}
-            </p>
-          ))}
-        </div>
-      )}
-    </form>
   );
 }
 
@@ -395,6 +419,20 @@ function StepEditor({
           <option value="ANY_N">Any N of them</option>
         </select>
         {step.rule === "ANY_N" && <input aria-label="N" type="number" min={1} value={step.n ?? 1} onChange={(event) => onChange({ ...step, n: Number(event.target.value) })} className="field-input w-24" />}
+        <label className="flex items-center gap-2 text-label">
+          Respond within
+          <input
+            aria-label="Respond within hours"
+            type="number"
+            min={1}
+            max={720}
+            value={step.slaHours ?? ""}
+            onChange={(event) => onChange({ ...step, slaHours: event.target.value ? Number(event.target.value) : null })}
+            placeholder="—"
+            className="field-input w-20"
+          />
+          hours
+        </label>
         <select value={step.onNoApprover ?? "BLOCK"} onChange={(event) => onChange({ ...step, onNoApprover: event.target.value as "BLOCK" | "SKIP" })} className="field-input w-auto" aria-label="If nobody resolves">
           <option value="BLOCK">If nobody to approve: stop and tell IT</option>
           <option value="SKIP">If nobody to approve: skip this step</option>

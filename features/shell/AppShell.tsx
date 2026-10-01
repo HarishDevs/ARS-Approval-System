@@ -2,11 +2,12 @@ import Link from "next/link";
 import { areasForUser } from "@/server/authorization/policy";
 import { SignOutButton } from "@/features/shell/SignOutButton";
 import { SideNav, type NavItem } from "@/features/shell/SideNav";
+import { countUnread } from "@/lib/db/repositories/collab.repository";
 import type { AppArea, AuthenticatedUser } from "@/types/auth";
 
 const AREA_LABEL: Record<AppArea, string> = { users: "My approvals", admin: "Admin", superadmin: "Super Admin" };
 
-export function AppShell({
+export async function AppShell({
   area,
   user,
   nav,
@@ -18,6 +19,7 @@ export function AppShell({
   children: React.ReactNode;
 }) {
   const areas = areasForUser(user);
+  const unread = await countUnread(user.id).catch(() => 0);
   const initials =
     user.name
       .split(/\s+/)
@@ -54,6 +56,21 @@ export function AppShell({
             <span className="rounded-full bg-primary-50 px-3 py-1 text-caption font-semibold text-primary-600">{AREA_LABEL[area]}</span>
           </div>
           <div className="flex items-center gap-3">
+            <Link
+              href="/users/notifications"
+              aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}
+              className="relative flex h-9 w-9 items-center justify-center rounded-full text-ink-muted hover:bg-surface-muted hover:text-ink"
+            >
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.7 21a2 2 0 0 1-3.4 0" />
+              </svg>
+              {unread > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 min-w-[18px] rounded-full bg-danger-600 px-1 text-center text-[11px] font-semibold leading-[18px] text-white">
+                  {unread > 99 ? "99+" : unread}
+                </span>
+              )}
+            </Link>
             <div className="hidden text-right sm:block">
               <p className="text-label font-semibold leading-tight">{user.name}</p>
               <p className="text-caption leading-tight text-ink-muted">{user.email}</p>

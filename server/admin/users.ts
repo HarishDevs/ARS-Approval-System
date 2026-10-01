@@ -18,6 +18,7 @@ import { signInMethodChangedMessage, whatsappChangedMessage } from "@/server/not
 import { checkCanEdit, checkDeactivate, checkManager, checkRoleChange, type Actor, type TargetUser } from "@/server/admin/user-rules";
 import { diffFields, type ParsedUserInput } from "@/server/admin/user-input";
 import { logError } from "@/lib/logging/logger";
+import { countPendingTasks } from "@/server/approvals/service";
 
 // User management services (F-06, D-047). Every write re-checks the rules,
 // runs in one transaction with its audit entry, and sends alerts only after
@@ -173,6 +174,11 @@ export async function setActive(id: number, active: boolean, actor: AdminActor):
   const check = active ? checkCanEdit(actor, target) : checkDeactivate(actor, target, await countActiveSuperAdmins());
   if (!check.ok) return { ok: false, message: check.message };
   if (existing.active === active) return { ok: true, value: undefined };
+  // F-16: nobody leaves with approvals still waiting on them.
+  if (!active) {
+    const pending = await countPendingTasks(id);
+    if (pending > 0) return { ok: false, message: `${existing.name} still has ${pending} pending approval${pending === 1 ? "" : "s"}. Hand them over first.` };
+  }
 
   await withTransaction(async (connection) => {
     await setUserActive(id, active, actor.id, connection);

@@ -17,14 +17,29 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
-- **Now:** Build session 3 finished (30 Sep 2026). **The north star is usable end to end in the app.**
-  - The IT team builds a workflow in `/admin/workflows`: form fields plus any number of levels (single steps or parallel steps, all / any one / any N, skip conditions, every approver source). They test it with sample values, publish it, and keep versions.
-  - Staff raise requests in `/users`. Approvers act from "Waiting for me": approve, reject, ask for changes, hold, resume. Requesters resubmit on the same number.
-  - The request page shows every level and branch with names and statuses, plus the timeline.
-  - Also built: approver groups, the retry runner for failed messages (cron endpoint + Retry now), and rate limiting.
-  - Gates: 144 unit tests, 16 MySQL integration tests, typecheck, lint and build pass. The full flow was verified in the browser: manager → HOD (changes → resubmit) → MD (hold → resume → approve).
-- **Waiting on the owner:** Q-004 (DoA values), Q-013 (templates), Q-015 (break-glass without WhatsApp?), the provider keys, and the Firebase Admin values.
-- **Next (session 4, planned below):** custom approvals for every user (P5), comments on requests, delegation (out of office), SLA reminders and escalation, handing over pending steps when someone leaves, the in-app notification bell, and a GoDaddy deployment dry run.
+- **Now:** Build session 4 finished (1 Oct 2026).
+  - **Custom approvals** for every user, with any people and any mix of levels.
+  - **Comments** on requests (append-only).
+  - **Out-of-office delegation:** the delegate acts on behalf, and both names are recorded.
+  - **SLA:** "respond within N hours", with a reminder at the due time and escalation at twice the time.
+  - **Handover** of pending approvals; deactivation is refused until it's done.
+  - The **notification bell** and inbox.
+  - The **DoA view**, derived from the live workflows.
+  - The **GoDaddy deployment guide**, with a database privilege check.
+  - Gates: 154 unit tests, 24 MySQL integration tests, typecheck, lint and build pass. Verified in the browser: custom request → comment → out-of-office → the delegate approved on behalf → bell and inbox → DoA matrix.
+- **Waiting on the owner:**
+  - Q-004 (DoA values), Q-013 (templates), Q-015 (break-glass without WhatsApp?).
+  - The provider keys and Firebase Admin values.
+  - **The staff list** (D-033), so the first real workflows can be set up.
+  - **A go-ahead for the GoDaddy deployment** (docs/DEPLOYMENT.md).
+- **Next (session 5, planned below):**
+  - first real templates once the staff list arrives;
+  - cancel / withdraw and reopen;
+  - a management dashboard;
+  - working days and holidays for SLAs;
+  - end-to-end browser tests (Playwright);
+  - branching conditions in the builder;
+  - attachments, once the GoDaddy disk is confirmed.
 
 ---
 
@@ -93,15 +108,30 @@ Found and fixed during session 3 (in the browser run):
 - [x] S3-F5 A race test expected one winner when a rejection and an approval hit an any-one step together; both are valid there. The test now uses two approvals, and the behaviour is recorded in FLOWS F-13 (done 30 Sep 2026)
 
 ## Session log — build session 4 (planned)
-- [ ] S4-01 Custom approvals for every user (P5, D-026, D-040): build a one-off route from the same levels builder (pick anyone, any mix of levels) and submit it at once; it belongs to that user
-- [ ] S4-02 Comments on a request, visible to everyone who can open it, and on the timeline (P2-08; attachments wait for the GoDaddy disk check, Q-001)
-- [ ] S4-03 Delegation / out of office (D-018, P4): a delegate for a date range; the engine's canActFor uses it; actor + on-behalf-of recorded
-- [ ] S4-04 SLA per step: reminders and escalation through the job runner (P4, F-31)
-- [ ] S4-05 Hand over pending steps when a user is deactivated (P1-05)
-- [ ] S4-06 In-app notification bell with unread count (P1-44)
-- [ ] S4-07 GoDaddy deployment dry run: build output, env var list, cPanel Node app settings, cron line, MySQL privileges (TRIGGER), a go-live checklist (P0-46, P0-17a)
-- [ ] S4-08 DoA matrix structure (P3-30), ready for the owner's values (Q-004)
-- [ ] S4-09 Update the three living files; commit and push
+- [x] S4-01 Custom approvals for every user (P5, D-026, D-040): build a one-off route from the same levels builder (pick anyone, any mix of levels) and submit it at once; it belongs to that user (done 1 Oct 2026)
+- [x] S4-02 Comments on a request, visible to everyone who can open it, and on the timeline (P2-08; attachments wait for the GoDaddy disk check, Q-001) (done 1 Oct 2026)
+- [x] S4-03 Delegation / out of office (D-018, P4): a delegate for a date range; the engine's canActFor uses it; actor + on-behalf-of recorded (done 1 Oct 2026)
+- [x] S4-04 SLA per step: reminders and escalation through the job runner (P4, F-31) (done 1 Oct 2026)
+- [x] S4-05 Hand over pending steps when a user is deactivated (P1-05) (done 1 Oct 2026)
+- [x] S4-06 In-app notification bell with unread count (P1-44) (done 1 Oct 2026)
+- [x] S4-07 GoDaddy deployment dry run: build output, env var list, cPanel Node app settings, cron line, MySQL privileges (TRIGGER), a go-live checklist (P0-46, P0-17a) (done 1 Oct 2026)
+- [x] S4-08 DoA matrix structure (P3-30), ready for the owner's values (Q-004) (done 1 Oct 2026)
+- [x] S4-09 Update the three living files; commit and push (done 1 Oct 2026)
+
+Notes from session 4:
+- [x] S4-N1 The levels editor is now one shared component (`LevelsEditor`), used by the IT team's builder and by staff custom approvals, so the two can't drift apart (done 1 Oct 2026)
+- [x] S4-N2 Delegation dates use India's date, whatever the database server's timezone (`INDIA_TODAY_SQL`), so an out-of-office starts and ends on the right day on GoDaddy (done 1 Oct 2026)
+- [x] S4-N3 `check-privileges.js` added for go-live: CREATE TRIGGER must be allowed or the append-only guarantees are lost (done 1 Oct 2026)
+
+## Session log — build session 5 (planned)
+- [ ] S5-01 First real approval types (P2-50 to P2-55: MD, ED, Finance, Purchase & SCM) set up in the builder from the owner's staff list (D-033) and the Asana reference flows (FLOWS F-60 onward)
+- [ ] S5-02 Withdraw / cancel by the requester while still open, and reopen of an approved request by the Super Admin with a reason (F-29)
+- [ ] S5-03 Management dashboard: open requests by type and step, average time per level, overdue list, approvals per person (P7-01)
+- [ ] S5-04 Working days and a holiday calendar for SLA timing (F-31)
+- [ ] S5-05 Playwright end-to-end tests for sign-in guard, raise → approve → resubmit, delegation (P0-44)
+- [ ] S5-06 Branching paths (CONDITION) in the builder: "if amount > X go to these levels, otherwise those" (P3-01 step toward the canvas)
+- [ ] S5-07 Attachments on requests, once the GoDaddy disk check (Q-001) says local storage is persistent; otherwise S3-compatible storage
+- [ ] S5-08 Update the three living files; commit and push
 
 ## Phase 0 — Setup and decisions
 
@@ -140,7 +170,7 @@ Found and fixed during session 3 (in the browser run):
 - [x] P0-43 Environment schema validated at startup with zod (fail fast with a clear message) (done 28 Sep 2026; blank optional values count as unset (D-045))
 - [>] P0-44 Vitest unit tests + Playwright end-to-end; lint and typecheck scripts (28 Sep 2026: Vitest in place with 80 tests; Playwright still to do)
 - [x] P0-45 CI on GitHub Actions (lint, typecheck, unit tests, build) (done 30 Sep 2026; lint, typecheck, unit tests, build + MySQL integration job)
-- [ ] P0-46 GoDaddy deploy: one Node.js app from GitHub `HarishDevs/ARS-Approval-System` → `approvals.arssteels.net`, env vars entered in GoDaddy only, cPanel cron calling a signed job-runner endpoint
+- [>] P0-46 GoDaddy deploy: one Node.js app from GitHub `HarishDevs/ARS-Approval-System` → `approvals.arssteels.net`, env vars entered in GoDaddy only, cPanel cron calling a signed job-runner endpoint (1 Oct 2026: docs/DEPLOYMENT.md + check-privileges.js; deployment waits for the owner's go-ahead)
 
 ### 0.3 Business inputs
 - [?] P0-30 **DoA matrix.** The approval authority is itadmin@ (D-041); fill in the bands and approvers per request type before Phase 3 (Q-004)
@@ -181,7 +211,7 @@ The Super Admin then enters the table in the Admin Portal (P3-30). Every request
 - [x] P1-02 Data model: users. Fields: login ID, email (any domain), WhatsApp number, sign-in method (Google / password), firebase_uid, password hash, status (active / inactive), locked-until, is_super_admin, is_break_glass (done 28 Sep 2026; Super Admin is a role (D-043), not a flag)
 - [ ] P1-03 Reporting hierarchy: reporting manager and HOD per user; manager-of-manager lookup
 - [>] P1-04 Users can only be created in the Admin Portal (no self sign-up); bulk import with validation (30 Sep 2026: admin-only creation done; bulk import still to do)
-- [>] P1-05 Make a user inactive (never hard-delete, D-033) → end their sessions, block sign-in, hand their pending approval steps to a chosen person; reactivate later if needed (30 Sep 2026: deactivate ends sessions and blocks sign-in, reactivate done; handing over pending steps comes with S3)
+- [x] P1-05 Make a user inactive (never hard-delete, D-033) → end their sessions, block sign-in, hand their pending approval steps to a chosen person; reactivate later if needed (30 Sep 2026: deactivate ends sessions and blocks sign-in, reactivate done; handing over pending steps comes with S3) (done 1 Oct 2026; handover required before deactivation (F-16))
 - [x] P1-06 Roles assigned per user, by the admin only (D-033): a user can hold several roles; no self-service role changes (done 30 Sep 2026; D-047 rules)
 
 ### P1-AUTH Sign-in and security
@@ -219,7 +249,7 @@ The Super Admin then enters the table in the Admin Portal (P3-30). Every request
 - [>] P1-42 WhatsApp channel through CEOITBox (D-009), with approved templates (28 Sep 2026: CEOITBox adapter with rate limit built; key entry is S2-01)
 - [~] P1-43 SMS channel for OTP: not needed (D-025, 28 Sep 2026)
 - [x] P1-48 Retry outbox for failed sends, driven by the cron job runner (the Power BI site lacked this); respect the CEOITBox rate limit (done 30 Sep 2026; /api/jobs/run with lease and backoff (D-058))
-- [ ] P1-44 In-app notifications (bell icon from the asset pack)
+- [x] P1-44 In-app notifications (bell icon from the asset pack) (done 1 Oct 2026; bell with unread count + inbox)
 - [x] P1-45 Delivery log per channel with status, retries and failures; the Super Admin can resend (30 Sep 2026: Super Admin delivery log; resend button with the retry runner (S3-07)) (done 30 Sep 2026; Retry now + automatic retries)
 - [ ] P1-46 Template per event and channel, versioned, with preview
 - [ ] P1-47 WhatsApp numbers verified by OTP; opt-in recorded
@@ -255,7 +285,7 @@ The Super Admin then enters the table in the Admin Portal (P3-30). Every request
 - [x] P2-05 Approver sources per node: specific user, role, requester's HOD, department HOD, reporting manager, manager's manager, department, approval group, requester-selected (within governance), user from a form field (30 Sep 2026: all 8 sources resolve from MySQL; approver groups have tables (screen in S3-06)) (done 30 Sep 2026; approver groups screen added)
 - [>] P2-06 ApprovalRequests (permanent ID, e.g. PUR-2026-000421), ApprovalVersions, ApprovalInstances, ApprovalSteps, ApprovalActions (30 Sep 2026: requests with permanent numbers, state, tasks and timeline; form versions come with the form builder)
 - [x] P2-07 Step record: step ID, request, node, assigned approver(s), eligible approvers, **actual actor**, on-behalf-of, decision, time, comment, version (done 30 Sep 2026; actual actor + on-behalf-of per task)
-- [ ] P2-08 Comments, Attachments (versioned), Watchers
+- [>] P2-08 Comments, Attachments (versioned), Watchers (1 Oct 2026: comments done (append-only); attachments and watchers later)
 - [x] P2-09 Numbering scheme per approval type (code prefix + year + sequence) (done 30 Sep 2026; PREFIX-YYYY-000001 from a locked sequence row)
 
 ### P2-ENG Engine behaviour (all patterns from day one)
@@ -277,7 +307,7 @@ The Super Admin then enters the table in the Admin Portal (P3-30). Every request
 ### P2-UI Employee and approver portals (first cut)
 - [>] P2-40 Employee: create request from a template, dynamic form, attachments, submit, save draft (30 Sep 2026: pick a type, fill the form (text, long text, number, date, choice, person), submit; attachments and drafts still to do)
 - [x] P2-41 Employee: My Requests, with a status pill and a visual step tracker showing every level and branch (done 30 Sep 2026)
-- [>] P2-42 Approver: My Queue (ID, requester, department, type, amount, current step, age, SLA) with actions (30 Sep 2026: queue with request, requester, step and age; SLA column with S4-04)
+- [x] P2-42 Approver: My Queue (ID, requester, department, type, amount, current step, age, SLA) with actions (30 Sep 2026: queue with request, requester, step and age; SLA column with S4-04) (done 1 Oct 2026; due time and Overdue in the queue)
 - [>] P2-43 Request detail: form data, documents, timeline, comments, the full level map (30 Sep 2026: form data, full level map, timeline; documents and comments in S4)
 - [x] P2-44 Secure deep links from email/WhatsApp that open the request after sign-in (D-019) (done 30 Sep 2026; links open /users/requests/id after sign-in)
 
@@ -298,7 +328,7 @@ The Super Admin then enters the table in the Admin Portal (P3-30). Every request
 - [>] P3-04 **Workflow validator** before publish: start/end exist, all nodes connected, no dead ends, no unintended loops, every approval node has an approver source, no self-approval, valid completion rules, logically valid conditions with no conflicts, rejection path exists, resubmission/reopen policy set, valid escalation (base plan §34) (28 Sep 2026: core rules incl. G-08/G-09, cycles, dead ends; rejection-path and escalation checks still to do)
 - [x] P3-05 **Test mode / simulation:** enter sample values and see the exact levels and approvers, without creating a real request (28 Sep 2026: simulate() core with stages, skips, blocks and branches; UI with P3) (done 30 Sep 2026; test mode with real names)
 - [>] P3-06 Draft / publish / archive for templates, with version history and a diff (30 Sep 2026: versions, publish and archive in the service; screens in S3-05) (30 Sep 2026: draft/publish/archive with version history; diff still to do)
-- [ ] P3-30 **DoA matrix module:** amount bands per type and department, approver roles per band, effective dates, versioned; used by condition nodes
+- [>] P3-30 **DoA matrix module:** amount bands per type and department, approver roles per band, effective dates, versioned; used by condition nodes (1 Oct 2026: DoA expressed as amount skip conditions; /admin/doa matrix view; owner's values pending Q-004)
 - [ ] P3-40 Templates: HR Approvals, Admin, Recruitment (Manager → HOD)
 - [ ] P3-41 Template: Finance Internal (level 1 chosen by Nature → optional level 2 → HOD), including the reject/hold paths at level 2 that are missing in Asana
 - [ ] P3-42 Template: Price Realisation (parallel HOD sign-offs → ED → MD), with a decision on approve vs acknowledge

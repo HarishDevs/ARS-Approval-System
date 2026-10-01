@@ -34,6 +34,8 @@ export function describeEvent(event: TimelineEvent, labelOf: (nodeId: string) =>
       return `Resumed by ${nameOf(event.actorId)}`;
     case "RESUBMITTED":
       return `Resubmitted (round ${event.round})`;
+    case "TASK_REASSIGNED":
+      return `"${labelOf(event.nodeId)}" handed over from ${nameOf(event.fromId)} to ${nameOf(event.toId)} by ${nameOf(event.actorId)}`;
     case "BRANCH_TAKEN":
     case "NODE_ACTIVATED":
       return null;

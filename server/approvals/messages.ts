@@ -42,6 +42,20 @@ export function messagesForEvents(
           whatsappVariables: vars({ requester_name: request.requesterName }),
         });
         break;
+      case "TASK_REASSIGNED":
+        out.push({
+          eventType: "APPROVAL_NEEDED",
+          userId: event.toId,
+          title: "Approval handed to you",
+          message: `An approval was handed over to you: ${ref}`,
+          deepLink: link,
+          email: {
+            subject: `Approval needed: ${request.requestNo}`,
+            text: `An approval was handed over to you (the previous approver is no longer available).\n\n${ref}\n\nOpen it here (sign-in required): ${link}`,
+          },
+          whatsappVariables: vars({ requester_name: request.requesterName }),
+        });
+        break;
       case "INSTANCE_APPROVED":
         out.push({
           eventType: "REQUEST_APPROVED",

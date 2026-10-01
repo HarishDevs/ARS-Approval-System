@@ -522,6 +522,36 @@ export function resubmit(
 }
 
 // Open tasks for one person (their "Waiting for me" list).
+// Handover (F-16, D-064): a pending task moves to another person, e.g.
+// when its approver leaves. Only pending tasks move; decisions stay with
+// whoever made them. The new person must be active, can't be the requester,
+// and can't already have a task on the same step in this round.
+export function reassignTask(
+  previous: InstanceState,
+  input: { taskId: string; toUserId: number; actorId: number },
+  context: EngineContext,
+  directory: Directory,
+): EngineResult {
+  if (previous.status !== "IN_PROGRESS" && previous.status !== "ON_HOLD") {
+    throw new EngineError("NOT_IN_PROGRESS", "Only an open request's approvals can be handed over.");
+  }
+  const state = clone(previous);
+  const task = state.tasks.find((candidate) => candidate.id === input.taskId);
+  if (!task || task.status !== "PENDING") throw new EngineError("INVALID_REASSIGN", "This approval is no longer pending.");
+  if (input.toUserId === task.approverId) throw new EngineError("INVALID_REASSIGN", "That person already has this approval.");
+  if (!directory.isActive(input.toUserId)) throw new EngineError("INVALID_REASSIGN", "The new approver must be an active person.");
+  if (input.toUserId === context.requesterId) throw new EngineError("INVALID_REASSIGN", "The requester can't approve their own request.");
+  const clash = state.tasks.some((other) => other.nodeId === task.nodeId && other.round === task.round && other.approverId === input.toUserId && other.status !== "CANCELLED");
+  if (clash) throw new EngineError("INVALID_REASSIGN", "That person is already an approver on this step.");
+  const fromId = task.approverId;
+  task.approverId = input.toUserId;
+  state.seq += 1;
+  return {
+    state,
+    events: [{ type: "TASK_REASSIGNED", taskId: task.id, nodeId: task.nodeId, fromId, toId: input.toUserId, actorId: input.actorId }],
+  };
+}
+
 export function pendingTasksFor(state: InstanceState, userId: number, directory: Directory): ApprovalTask[] {
   if (state.status !== "IN_PROGRESS" && state.status !== "ON_HOLD") return [];
   return state.tasks.filter((task) => task.status === "PENDING" && (task.approverId === userId || directory.canActFor(userId, task.approverId)));

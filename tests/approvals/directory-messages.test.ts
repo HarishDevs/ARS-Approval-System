@@ -12,6 +12,11 @@ const snapshot: DirectorySnapshot = {
   departmentHods: new Map([[10, 2]]),
   roleMembers: new Map([["IT_ADMIN", [2]]]),
   groupMembers: new Map([[5, [1, 2]]]),
+  // 1 may act for 2 today; the inactive 3 was named by 2 but can't act.
+  delegations: new Map([
+    [1, new Set([2])],
+    [3, new Set([2])],
+  ]),
 };
 
 describe("directory snapshot → engine directory", () => {
@@ -33,8 +38,11 @@ describe("directory snapshot → engine directory", () => {
     expect(directory.isActive(404)).toBe(false);
   });
 
-  it("no delegation until delegation records exist", () => {
-    expect(directory.canActFor(1, 2)).toBe(false);
+  it("a delegate acts only for who named them, only while active, never in a chain", () => {
+    expect(directory.canActFor(1, 2)).toBe(true);
+    expect(directory.canActFor(2, 1)).toBe(false);
+    expect(directory.canActFor(3, 2)).toBe(false);
+    expect(directory.canActFor(1, 9)).toBe(false);
   });
 });
 

@@ -10,7 +10,11 @@ export default async function NewRequestPage() {
   const types = (await listWorkflows({ kind: "PREDEFINED" })).filter((item) => item.active && item.publishedVersionNo !== null);
   return (
     <>
-      <PageHeader title="New request" description="Choose the kind of approval you need." />
+      <PageHeader title="New request" description="Choose the kind of approval you need.">
+        <Link href="/users/custom" className="btn-secondary btn-compact">
+          Something else? Custom approval
+        </Link>
+      </PageHeader>
       {types.length === 0 ? (
         <EmptyState title="No approval types yet" body="IT is setting up the approval types. Ask itadmin@arssteels.co.in if you need one now." />
       ) : (

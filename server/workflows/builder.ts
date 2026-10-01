@@ -33,6 +33,7 @@ const stepSchema = z.object({
   n: z.number().int().min(1).max(50).optional(),
   skipWhen: comparisonSchema.nullish(),
   onNoApprover: z.enum(["BLOCK", "SKIP"]).optional(),
+  slaHours: z.number().int().min(1, "Use at least 1 hour.").max(720, "Use at most 720 hours (30 days).").nullish(),
 });
 
 const stageSchema = z.discriminatedUnion("kind", [
@@ -86,6 +87,7 @@ function stepNode(step: BuilderStep): WorkflowNode {
     completion: toRule(step.rule, step.n),
     ...(step.skipWhen ? { skipIf: step.skipWhen as Comparison } : {}),
     ...(step.onNoApprover ? { onNoApprover: step.onNoApprover } : {}),
+    ...(step.slaHours ? { slaHours: step.slaHours } : {}),
   };
 }
 

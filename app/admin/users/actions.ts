@@ -6,6 +6,7 @@ import { formFields, getAdminActor, parseId } from "@/server/admin/actor";
 import { parseUserForm } from "@/server/admin/user-input";
 import { createUser, forceSignOut, setActive, unlock, updateUser } from "@/server/admin/users";
 import { sendSetPasswordLink } from "@/server/auth/set-password";
+import { handOverPendingTasks } from "@/server/approvals/service";
 import { logError } from "@/lib/logging/logger";
 import type { ActionResult } from "@/lib/http/action-result";
 
@@ -94,6 +95,26 @@ export async function userCommandAction(_previous: ActionResult | null, formData
     return result;
   } catch (error) {
     logError("userCommandAction failed", error, { command });
+    return { ok: false, message: "Something went wrong. Please try again." };
+  }
+}
+
+// F-16: move every pending approval of a person to someone else.
+export async function handoverAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const actor = await getAdminActor();
+  const fromId = parseId(formData.get("id"));
+  const toId = parseId(formData.get("toUserId"));
+  if (!actor || fromId === null) return NOT_FOUND;
+  if (toId === null) return { ok: false, message: "Choose who takes them over.", fieldErrors: { toUserId: "Choose a person." } };
+  try {
+    const result = await handOverPendingTasks(fromId, toId, actor);
+    if (!result.ok) return { ok: false, message: result.message };
+    revalidatePath(`/admin/users/${fromId}`);
+    const { moved, skipped } = result.value;
+    const skippedText = skipped.length ? ` ${skipped.length} couldn't move: ${skipped.map((item) => `${item.requestNo} (${item.reason})`).join("; ")}` : "";
+    return { ok: skipped.length === 0, message: `Handed over ${moved} approval${moved === 1 ? "" : "s"}.${skippedText}` };
+  } catch (error) {
+    logError("handoverAction failed", error);
     return { ok: false, message: "Something went wrong. Please try again." };
   }
 }

@@ -29,7 +29,7 @@ import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { getEnv } from "@/config/environment";
 import { notify } from "@/server/notifications/notify";
 import { messagesForEvents } from "@/server/approvals/messages";
-import { decide, putOnHold, resubmit, resume, simulate, startInstance, validateWorkflow, EngineError } from "@/server/engine";
+import { decide, putOnHold, reassignTask, resubmit, resume, simulate, startInstance, validateWorkflow, EngineError } from "@/server/engine";
 import type { Decision, EngineEvent, EngineResult, FormData as EngineFormData, RestartPolicy, ValidationResult, WorkflowDefinition } from "@/server/engine";
 import { logError } from "@/lib/logging/logger";
 import type { RoleCode } from "@/types/auth";
@@ -359,4 +359,89 @@ export function resubmitRequest(input: { requestId: number; fields?: Record<stri
     const result = resubmit(definition, request.state, input.policy ?? "REQUESTING_STEP", { requesterId: request.requesterId, formData, now: now() }, directory);
     return { ...result, formData: input.fields ? formData : undefined };
   });
+}
+
+// ---- custom approvals (F-33, D-060) -------------------------------------------------
+// Any user, any people, any mix of levels; submitted in one go as a CUSTOM
+// workflow they own. A step made only of the requester is refused (no
+// self-approval); everything else goes through the same validator.
+export const CUSTOM_FORM: FormField[] = [
+  { key: "details", label: "Details", type: "LONG_TEXT", required: true },
+  { key: "amount", label: "Amount (₹)", type: "NUMBER", required: false },
+];
+
+export function checkCustomSpec(spec: BuilderSpec, requesterId: number): string[] {
+  const problems: string[] = [];
+  const steps = spec.stages.flatMap((stage) => (stage.kind === "STEP" ? [stage.step] : stage.steps));
+  for (const step of steps) {
+    if (step.approvers.kind === "PEOPLE" && step.approvers.userIds.every((id) => id === requesterId)) {
+      problems.push(`"${step.label}": you can't approve your own request. Pick someone else.`);
+    }
+  }
+  return problems;
+}
+
+export async function submitCustomRequest(
+  input: { title: string; builder: BuilderSpec; fields: Record<string, string | undefined> },
+  actor: Actor,
+): Promise<Result<{ requestId: number; requestNo: string; status: string }>> {
+  const own = checkCustomSpec(input.builder, actor.id);
+  if (own.length) return { ok: false, code: "SELF_APPROVAL", message: own.join(" ") };
+  const resolved = await resolveContent({ builder: input.builder, form: CUSTOM_FORM });
+  if (!resolved.ok) return resolved;
+  if (!resolved.value.validation.valid) {
+    return { ok: false, code: "INVALID_WORKFLOW", message: resolved.value.validation.errors.map((issue) => issue.message).join(" "), validation: resolved.value.validation };
+  }
+  const created = await createWorkflow(
+    {
+      code: `CUSTOM_${actor.id}_${Date.now().toString(36).toUpperCase()}`,
+      name: input.title.trim().slice(0, 150) || "Custom approval",
+      kind: "CUSTOM",
+      requestPrefix: "CUS",
+      builder: input.builder,
+      form: CUSTOM_FORM,
+    },
+    actor,
+  );
+  if (!created.ok) return created;
+  const published = await publishVersion(created.value.versionId, actor);
+  if (!published.ok) return published;
+  return submitRequest({ workflowId: created.value.workflowId, title: input.title, fields: input.fields }, actor);
+}
+
+// ---- handover (F-16, D-064) --------------------------------------------------------------
+export interface HandoverReport {
+  moved: number;
+  skipped: { requestNo: string; reason: string }[];
+}
+
+// Moves every pending task of `fromUserId` to `toUserId`, one request at a
+// time through the normal locked path (timeline, audit, notifications).
+export async function handOverPendingTasks(fromUserId: number, toUserId: number, actor: Actor): Promise<Result<HandoverReport>> {
+  if (!isAdmin(actor)) return { ok: false, code: "FORBIDDEN", message: "Only IT can hand over approvals." };
+  if (fromUserId === toUserId) return { ok: false, code: "SAME_PERSON", message: "Choose someone else." };
+  const [rows] = await getDbPool().query<(RowDataPacket & { request_id: number; request_no: string; task_key: string })[]>(
+    `SELECT t.request_id, r.request_no, t.task_key FROM approval_tasks t JOIN approval_requests r ON r.id = t.request_id
+     WHERE t.approver_id = ? AND t.status = 'PENDING' AND r.status IN ('IN_PROGRESS', 'ON_HOLD') ORDER BY t.id`,
+    [fromUserId],
+  );
+  const report: HandoverReport = { moved: 0, skipped: [] };
+  for (const row of rows) {
+    const result = await mutate(row.request_id, actor, (request, _definition, directory) =>
+      reassignTask(request.state, { taskId: row.task_key, toUserId, actorId: actor.id }, context(request), directory),
+    );
+    if (result.ok) report.moved += 1;
+    else report.skipped.push({ requestNo: row.request_no, reason: result.message });
+  }
+  await recordAudit({ actorUserId: actor.id, action: "APPROVALS_HANDED_OVER", entityType: "USER", entityId: fromUserId, metadata: { toUserId, moved: report.moved, skipped: report.skipped.length } });
+  return { ok: true, value: report };
+}
+
+export async function countPendingTasks(userId: number): Promise<number> {
+  const [rows] = await getDbPool().query<(RowDataPacket & { total: number })[]>(
+    `SELECT COUNT(*) AS total FROM approval_tasks t JOIN approval_requests r ON r.id = t.request_id
+     WHERE t.approver_id = ? AND t.status = 'PENDING' AND r.status IN ('IN_PROGRESS', 'ON_HOLD')`,
+    [userId],
+  );
+  return Number(rows[0]?.total ?? 0);
 }

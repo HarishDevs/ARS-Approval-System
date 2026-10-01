@@ -8,6 +8,11 @@ import { requireArea } from "@/server/authorization/guards";
 import { checkCanEdit } from "@/server/admin/user-rules";
 import { getUserForAdmin } from "@/lib/db/repositories/admin-users.repository";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
+import { HandoverForm } from "@/features/admin/HandoverForm";
+import { DelegationForm } from "@/features/requests/DelegationForms";
+import { DelegationList } from "@/features/requests/DelegationList";
+import { countPendingTasks } from "@/server/approvals/service";
+import { indiaToday, listDelegationsInvolving } from "@/lib/db/repositories/collab.repository";
 
 export default async function UserDetailPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ created?: string }> }) {
   const { user: actor } = await requireArea("admin");
@@ -17,7 +22,7 @@ export default async function UserDetailPage({ params, searchParams }: { params:
   if (!user) notFound();
   const created = (await searchParams).created === "1";
   const canEdit = checkCanEdit(actor, { id: user.id, roles: user.roles, active: user.active, isBreakGlass: user.isBreakGlass }).ok;
-  const options = await loadUserFormOptions(user.id);
+  const [options, pending, delegations, today] = await Promise.all([loadUserFormOptions(user.id), countPendingTasks(user.id), listDelegationsInvolving(user.id), indiaToday()]);
 
   return (
     <>
@@ -86,6 +91,18 @@ export default async function UserDetailPage({ params, searchParams }: { params:
             openSessionCount={user.openSessionCount}
             canEdit={canEdit && user.id !== actor.id}
           />
+          {canEdit && (
+            <section className="card">
+              <HandoverForm id={user.id} name={user.name} pending={pending} people={options.managers} />
+            </section>
+          )}
+          {canEdit && user.active && (
+            <section className="card">
+              <h2 className="border-b border-line px-5 py-4 font-semibold">Out of office</h2>
+              <DelegationList items={delegations} personId={user.id} canEnd={false} />
+              <DelegationForm people={options.managers} today={today} userId={user.id} />
+            </section>
+          )}
         </div>
       </div>
     </>
