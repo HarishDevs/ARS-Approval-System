@@ -17,29 +17,19 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
-- **Now:** Build session 4 finished (1 Oct 2026).
-  - **Custom approvals** for every user, with any people and any mix of levels.
-  - **Comments** on requests (append-only).
-  - **Out-of-office delegation:** the delegate acts on behalf, and both names are recorded.
-  - **SLA:** "respond within N hours", with a reminder at the due time and escalation at twice the time.
-  - **Handover** of pending approvals; deactivation is refused until it's done.
-  - The **notification bell** and inbox.
-  - The **DoA view**, derived from the live workflows.
-  - The **GoDaddy deployment guide**, with a database privilege check.
-  - Gates: 154 unit tests, 24 MySQL integration tests, typecheck, lint and build pass. Verified in the browser: custom request → comment → out-of-office → the delegate approved on behalf → bell and inbox → DoA matrix.
-- **Waiting on the owner:**
-  - Q-004 (DoA values), Q-013 (templates), Q-015 (break-glass without WhatsApp?).
-  - The provider keys and Firebase Admin values.
-  - **The staff list** (D-033), so the first real workflows can be set up.
-  - **A go-ahead for the GoDaddy deployment** (docs/DEPLOYMENT.md).
-- **Next (session 5, planned below):**
-  - first real templates once the staff list arrives;
-  - cancel / withdraw and reopen;
-  - a management dashboard;
-  - working days and holidays for SLAs;
-  - end-to-end browser tests (Playwright);
-  - branching conditions in the builder;
-  - attachments, once the GoDaddy disk is confirmed.
+- **Now:** Build session 5 finished (1 Oct 2026).
+  - **Choices in the builder** (if X → these levels, otherwise those levels), so any route shape can be built on screen.
+  - **Withdraw** by the requester; **reopen** by the Super Admin.
+  - A **working calendar** (working days and holidays) for response times.
+  - A **management Insights page**.
+  - **Playwright end-to-end tests** in CI.
+  - Gates: 169 unit tests, 28 MySQL integration tests, 8 browser end-to-end tests, typecheck, lint and build pass.
+  - Verified in the browser: added a choice to the live Purchase workflow (version 2, with the DoA matrix updated), raised and withdrew a request, Insights, calendar.
+- **Blocked on the owner:**
+  - S5-01 needs **the staff list**; S5-07 needs the GoDaddy disk check (Q-001).
+  - Still open: Q-004 (DoA values), Q-013 (templates), Q-015 (break-glass without WhatsApp?), provider keys, Firebase Admin values.
+  - **A go-ahead to deploy** (docs/DEPLOYMENT.md).
+- **Next:** go-live (deploy + the first real approval types) as soon as the staff list and the go-ahead arrive. After that, session 6 (planned below).
 
 ---
 
@@ -124,14 +114,30 @@ Notes from session 4:
 - [x] S4-N3 `check-privileges.js` added for go-live: CREATE TRIGGER must be allowed or the append-only guarantees are lost (done 1 Oct 2026)
 
 ## Session log — build session 5 (planned)
-- [ ] S5-01 First real approval types (P2-50 to P2-55: MD, ED, Finance, Purchase & SCM) set up in the builder from the owner's staff list (D-033) and the Asana reference flows (FLOWS F-60 onward)
-- [ ] S5-02 Withdraw / cancel by the requester while still open, and reopen of an approved request by the Super Admin with a reason (F-29)
-- [ ] S5-03 Management dashboard: open requests by type and step, average time per level, overdue list, approvals per person (P7-01)
-- [ ] S5-04 Working days and a holiday calendar for SLA timing (F-31)
-- [ ] S5-05 Playwright end-to-end tests for sign-in guard, raise → approve → resubmit, delegation (P0-44)
-- [ ] S5-06 Branching paths (CONDITION) in the builder: "if amount > X go to these levels, otherwise those" (P3-01 step toward the canvas)
-- [ ] S5-07 Attachments on requests, once the GoDaddy disk check (Q-001) says local storage is persistent; otherwise S3-compatible storage
-- [ ] S5-08 Update the three living files; commit and push
+- [?] S5-01 (waiting for the owner's staff list, D-033) First real approval types (P2-50 to P2-55: MD, ED, Finance, Purchase & SCM) set up in the builder from the owner's staff list (D-033) and the Asana reference flows (FLOWS F-60 onward)
+- [x] S5-02 Withdraw / cancel by the requester while still open, and reopen of an approved request by the Super Admin with a reason (F-29) (done 1 Oct 2026)
+- [x] S5-03 Management dashboard: open requests by type and step, average time per level, overdue list, approvals per person (P7-01) (done 1 Oct 2026)
+- [x] S5-04 Working days and a holiday calendar for SLA timing (F-31) (done 1 Oct 2026)
+- [x] S5-05 Playwright end-to-end tests for sign-in guard, raise → approve → resubmit, delegation (P0-44) (done 1 Oct 2026)
+- [x] S5-06 Branching paths (CONDITION) in the builder: "if amount > X go to these levels, otherwise those" (P3-01 step toward the canvas) (done 1 Oct 2026)
+- [?] S5-07 (waiting for Q-001: does GoDaddy keep uploaded files?) Attachments on requests, once the GoDaddy disk check (Q-001) says local storage is persistent; otherwise S3-compatible storage
+- [x] S5-06a Step map and DoA view understand choices; the request page shows the path taken (done 1 Oct 2026)
+- [x] S5-04a Due and escalation times on the working calendar (escalate_at column); holiday screen in /admin/calendar (done 1 Oct 2026)
+- [x] S5-08 Update the three living files; commit and push (done 1 Oct 2026)
+
+Found and fixed during session 5:
+- [x] S5-F1 Editing a saved workflow reused step ids (the builder counted from s1001 on every page load), so the save was refused with "id used twice". New steps now get random ids (done 1 Oct 2026)
+- [x] S5-F2 Insights showed "0 min" for very quick decisions; it now says "under 1 min" (done 1 Oct 2026)
+- [x] S5-N1 The SLA integration test now also moves `escalate_at` when it fakes elapsed time, since tasks now carry the calendar-based escalation time (done 1 Oct 2026)
+
+## Session log — build session 6 (planned)
+- [ ] S6-01 Go-live on GoDaddy following docs/DEPLOYMENT.md (with the owner): privilege check, migrate, seed, env vars, cron, Firebase domain, provider keys, break-glass, go-live checks
+- [ ] S6-02 Load the owner's staff list: departments, HODs, designations, users (bulk import screen, P1-04)
+- [ ] S6-03 Build the first real approval types (S5-01) and walk each one through test mode with the owner
+- [ ] S6-04 WhatsApp templates registry screen in /superadmin, so the owner's templates (Q-013) can be entered without code (P1-46)
+- [ ] S6-05 Attachments (S5-07) once Q-001 is answered
+- [ ] S6-06 Audit export (CSV) and login history for the Super Admin (P1-57)
+- [ ] S6-07 Update the three living files; commit and push
 
 ## Phase 0 — Setup and decisions
 
@@ -168,7 +174,7 @@ Notes from session 4:
 - [x] P0-41 Next.js 15 + React 19 + TypeScript strict + Tailwind 3 with the ARS preset from `D:\Omniroute\assets\tokens`; icons from the asset sprite (done 28 Sep 2026)
 - [x] P0-42 MySQL 8 via `mysql2`; SQL migration folder + migrate/seed scripts (same pattern as the Power BI site); `docker-compose.yml` for local MySQL (done 28 Sep 2026; Docker MySQL on port 3307)
 - [x] P0-43 Environment schema validated at startup with zod (fail fast with a clear message) (done 28 Sep 2026; blank optional values count as unset (D-045))
-- [>] P0-44 Vitest unit tests + Playwright end-to-end; lint and typecheck scripts (28 Sep 2026: Vitest in place with 80 tests; Playwright still to do)
+- [x] P0-44 Vitest unit tests + Playwright end-to-end; lint and typecheck scripts (28 Sep 2026: Vitest in place with 80 tests; Playwright still to do) (done 1 Oct 2026; Vitest + Playwright e2e in CI)
 - [x] P0-45 CI on GitHub Actions (lint, typecheck, unit tests, build) (done 30 Sep 2026; lint, typecheck, unit tests, build + MySQL integration job)
 - [>] P0-46 GoDaddy deploy: one Node.js app from GitHub `HarishDevs/ARS-Approval-System` → `approvals.arssteels.net`, env vars entered in GoDaddy only, cPanel cron calling a signed job-runner endpoint (1 Oct 2026: docs/DEPLOYMENT.md + check-privileges.js; deployment waits for the owner's go-ahead)
 
@@ -322,10 +328,10 @@ The Super Admin then enters the table in the Admin Portal (P3-30). Every request
 ---
 
 ## Phase 3 — Workflow designer, DoA, validator, test mode
-- [>] P3-01 Visual drag-and-drop designer: START, APPROVAL, PARALLEL, ANY-ONE, ANY-N, CONDITION, WORK, END (30 Sep 2026: structured levels builder (D-056); drag-and-drop canvas later)
+- [>] P3-01 Visual drag-and-drop designer: START, APPROVAL, PARALLEL, ANY-ONE, ANY-N, CONDITION, WORK, END (30 Sep 2026: structured levels builder (D-056); drag-and-drop canvas later) (1 Oct 2026: levels builder now has choices (CONDITION); drag-and-drop canvas still later)
 - [>] P3-02 Node settings panel: approver source, completion rule, SLA, allowed actions, notifications (30 Sep 2026: approver source, completion rule, skip condition, no-approver policy; SLA and notifications per step later)
 - [>] P3-03 Form builder: drag, add, remove and reorder fields; field types; required; validation; conditional visibility (30 Sep 2026: fields with type, required and choices in the builder; conditional visibility later)
-- [>] P3-04 **Workflow validator** before publish: start/end exist, all nodes connected, no dead ends, no unintended loops, every approval node has an approver source, no self-approval, valid completion rules, logically valid conditions with no conflicts, rejection path exists, resubmission/reopen policy set, valid escalation (base plan §34) (28 Sep 2026: core rules incl. G-08/G-09, cycles, dead ends; rejection-path and escalation checks still to do)
+- [>] P3-04 **Workflow validator** before publish: start/end exist, all nodes connected, no dead ends, no unintended loops, every approval node has an approver source, no self-approval, valid completion rules, logically valid conditions with no conflicts, rejection path exists, resubmission/reopen policy set, valid escalation (base plan §34) (28 Sep 2026: core rules incl. G-08/G-09, cycles, dead ends; rejection-path and escalation checks still to do) (1 Oct 2026: conditions on choices validated too; rejection-path and escalation checks still to do)
 - [x] P3-05 **Test mode / simulation:** enter sample values and see the exact levels and approvers, without creating a real request (28 Sep 2026: simulate() core with stages, skips, blocks and branches; UI with P3) (done 30 Sep 2026; test mode with real names)
 - [>] P3-06 Draft / publish / archive for templates, with version history and a diff (30 Sep 2026: versions, publish and archive in the service; screens in S3-05) (30 Sep 2026: draft/publish/archive with version history; diff still to do)
 - [>] P3-30 **DoA matrix module:** amount bands per type and department, approver roles per band, effective dates, versioned; used by condition nodes (1 Oct 2026: DoA expressed as amount skip conditions; /admin/doa matrix view; owner's values pending Q-004)
@@ -357,7 +363,7 @@ The Super Admin then enters the table in the Admin Portal (P3-30). Every request
 - [ ] P6-04 Watchers / followers
 
 ## Phase 7 — Management portal and analytics
-- [ ] P7-01 Management control center: raised, pending, approved, rejected, changes required, on hold, overdue (today / period)
+- [x] P7-01 Management control center: raised, pending, approved, rejected, changes required, on hold, overdue (today / period) (done 1 Oct 2026; /admin/insights (D-069))
 - [ ] P7-02 Views by department, approval type, approver, amount band, age, SLA
 - [ ] P7-03 Approver workload and response times
 - [ ] P7-04 Reporting views for Power BI (read-only DB views or API)

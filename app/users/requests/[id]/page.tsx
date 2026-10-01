@@ -4,7 +4,7 @@ import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { RequestStatusPill } from "@/features/requests/StatusPill";
 import { StepMap } from "@/features/requests/StepMap";
-import { DecisionForm, ResumeForm } from "@/features/requests/ActionPanel";
+import { DecisionForm, ReopenForm, ResumeForm, WithdrawForm } from "@/features/requests/ActionPanel";
 import { RequestForm } from "@/features/requests/RequestForm";
 import { CommentForm } from "@/features/requests/Discussion";
 import { loadRequestView } from "@/server/approvals/view";
@@ -60,6 +60,12 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
             <section>
               <h2 className="mb-3 font-semibold">Update and resubmit</h2>
               <RequestForm mode="resubmit" requestId={view.id} fields={view.form} people={people} initial={view.rawFields} />
+            </section>
+          )}
+          {(view.canWithdraw || view.canReopen) && (
+            <section className="card divide-y divide-line">
+              {view.canWithdraw && <WithdrawForm requestId={view.id} />}
+              {view.canReopen && <ReopenForm requestId={view.id} />}
             </section>
           )}
           <section className="card px-5 py-4">

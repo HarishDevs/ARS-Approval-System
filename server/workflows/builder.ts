@@ -36,7 +36,7 @@ const stepSchema = z.object({
   slaHours: z.number().int().min(1, "Use at least 1 hour.").max(720, "Use at most 720 hours (30 days).").nullish(),
 });
 
-const stageSchema = z.discriminatedUnion("kind", [
+const plainStageSchemas = [
   z.object({ kind: z.literal("STEP"), step: stepSchema }),
   z.object({
     kind: z.literal("PARALLEL"),
@@ -46,13 +46,31 @@ const stageSchema = z.discriminatedUnion("kind", [
     join: ruleSchema,
     n: z.number().int().min(1).max(10).optional(),
   }),
-]);
+] as const;
+
+// Inside a choice: one step or parallel steps (choices aren't nested, D-068).
+const innerStageSchema = z.discriminatedUnion("kind", [...plainStageSchemas]);
+
+const branchStageSchema = z
+  .object({
+    kind: z.literal("BRANCH"),
+    id: z.string().regex(/^[a-z0-9_]{1,30}$/),
+    label: z.string().trim().min(1).max(100),
+    condition: comparisonSchema,
+    then: z.array(innerStageSchema).max(20),
+    otherwise: z.array(innerStageSchema).max(20),
+  })
+  .refine((stage) => stage.then.length + stage.otherwise.length > 0, { message: "A choice needs levels on at least one path." });
+
+const stageSchema = z.union([z.discriminatedUnion("kind", [...plainStageSchemas]), branchStageSchema]);
 
 export const builderSpecSchema = z.object({ stages: z.array(stageSchema).min(1, "Add at least one step.").max(30) });
 
 export type ApproverPick = z.infer<typeof approverPickSchema>;
 export type BuilderStep = z.infer<typeof stepSchema>;
 export type BuilderStage = z.infer<typeof stageSchema>;
+export type BuilderInnerStage = z.infer<typeof innerStageSchema>;
+export type BuilderBranch = z.infer<typeof branchStageSchema>;
 export type BuilderSpec = z.infer<typeof builderSpecSchema>;
 
 export function toSources(pick: ApproverPick): ApproverSource[] {
@@ -93,6 +111,16 @@ function stepNode(step: BuilderStep): WorkflowNode {
 
 export type CompileResult = { ok: true; definition: WorkflowDefinition } | { ok: false; errors: string[] };
 
+// Compiles forward, carrying the "loose ends" that must connect to the next
+// level: one after a step or a join; several after a choice (each path's
+// last node, or the choice itself when a path is empty).
+interface LooseEnd {
+  from: string;
+  condition?: Comparison;
+  isDefault?: boolean;
+  order?: number;
+}
+
 export function compileBuilder(spec: BuilderSpec): CompileResult {
   const errors: string[] = [];
   const ids = new Set<string>();
@@ -104,36 +132,68 @@ export function compileBuilder(spec: BuilderSpec): CompileResult {
   const nodes: WorkflowNode[] = [{ id: "start", kind: "START", label: "Start" }];
   const edges: WorkflowEdge[] = [];
   let edgeCount = 0;
-  const connect = (from: string, to: string) => edges.push({ id: `e${++edgeCount}`, from, to });
-  let previous = "start";
+  const connectAll = (ends: LooseEnd[], to: string) => {
+    for (const end of ends) {
+      edges.push({
+        id: `e${++edgeCount}`,
+        from: end.from,
+        to,
+        ...(end.condition ? { condition: end.condition } : {}),
+        ...(end.isDefault ? { isDefault: true } : {}),
+        ...(end.order ? { order: end.order } : {}),
+      });
+    }
+  };
 
-  for (const stage of spec.stages) {
-    if (stage.kind === "STEP") {
-      claim(stage.step.id);
-      nodes.push(stepNode(stage.step));
-      connect(previous, stepNodeId(stage.step));
-      previous = stepNodeId(stage.step);
-      continue;
+  const emit = (stages: readonly (BuilderStage | BuilderInnerStage)[], incoming: LooseEnd[]): LooseEnd[] => {
+    let ends = incoming;
+    for (const stage of stages) {
+      if (stage.kind === "STEP") {
+        claim(stage.step.id);
+        nodes.push(stepNode(stage.step));
+        connectAll(ends, stepNodeId(stage.step));
+        ends = [{ from: stepNodeId(stage.step) }];
+      } else if (stage.kind === "PARALLEL") {
+        claim(stage.id);
+        const splitId = `par_${stage.id}_split`;
+        const joinId = `par_${stage.id}_join`;
+        nodes.push({ id: splitId, kind: "SPLIT", label: stage.label });
+        connectAll(ends, splitId);
+        for (const step of stage.steps) {
+          claim(step.id);
+          nodes.push(stepNode(step));
+          connectAll([{ from: splitId }], stepNodeId(step));
+          connectAll([{ from: stepNodeId(step) }], joinId);
+        }
+        nodes.push({ id: joinId, kind: "JOIN", label: `${stage.label} complete`, completion: toRule(stage.join, stage.n) });
+        ends = [{ from: joinId }];
+      } else {
+        claim(stage.id);
+        const choiceId = `choice_${stage.id}`;
+        nodes.push({ id: choiceId, kind: "CONDITION", label: stage.label });
+        connectAll(ends, choiceId);
+        const thenEnds = emit(stage.then, [{ from: choiceId, condition: stage.condition as Comparison, order: 1 }]);
+        const otherwiseEnds = emit(stage.otherwise, [{ from: choiceId, isDefault: true }]);
+        ends = [...thenEnds, ...otherwiseEnds];
+      }
     }
-    claim(stage.id);
-    const splitId = `par_${stage.id}_split`;
-    const joinId = `par_${stage.id}_join`;
-    nodes.push({ id: splitId, kind: "SPLIT", label: stage.label });
-    connect(previous, splitId);
-    for (const step of stage.steps) {
-      claim(step.id);
-      nodes.push(stepNode(step));
-      connect(splitId, stepNodeId(step));
-      connect(stepNodeId(step), joinId);
-    }
-    nodes.push({ id: joinId, kind: "JOIN", label: `${stage.label} complete`, completion: toRule(stage.join, stage.n) });
-    // The join links on to the next stage (or End) at the top of the loop.
-    previous = joinId;
-  }
+    return ends;
+  };
+
+  const ends = emit(spec.stages, [{ from: "start" }]);
   nodes.push({ id: "end", kind: "END", label: "End" });
-  connect(previous, "end");
+  connectAll(ends, "end");
 
   return errors.length ? { ok: false, errors } : { ok: true, definition: { nodes, edges } };
+}
+
+// Every step in the spec, including those inside choices and parallel levels.
+export function allSteps(spec: { stages: readonly (BuilderStage | BuilderInnerStage)[] }): BuilderStep[] {
+  return spec.stages.flatMap((stage) => {
+    if (stage.kind === "STEP") return [stage.step];
+    if (stage.kind === "PARALLEL") return stage.steps;
+    return [...allSteps({ stages: stage.then }), ...allSteps({ stages: stage.otherwise })];
+  });
 }
 
 // A new, empty step with a fresh id (used by the builder screen and tests).

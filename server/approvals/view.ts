@@ -5,7 +5,7 @@ import { activeDelegatorsFor, listComments, type CommentItem } from "@/lib/db/re
 import { buildStepMap, peopleInState, type MapStage } from "@/server/approvals/step-map";
 import { describeEvent } from "@/server/approvals/timeline";
 import { displayValue, type FormField } from "@/server/forms/fields";
-import type { InstanceStatus } from "@/server/engine/types";
+import type { FormData as EngineFormData, InstanceStatus } from "@/server/engine/types";
 import type { Actor } from "@/server/approvals/service";
 
 // Everything the request page shows (F-14), after the record-level check
@@ -29,6 +29,8 @@ export interface RequestView {
   comments: CommentItem[];
   canResume: boolean;
   canResubmit: boolean;
+  canWithdraw: boolean;
+  canReopen: boolean;
   changesComment: string | null;
   holdReason: string | null;
 }
@@ -82,7 +84,10 @@ export async function loadRequestView(requestId: number, viewer: Actor): Promise
     form: version.form,
     rawFields: Object.fromEntries(Object.entries(request.formData).map(([key, value]) => [key, value === null || value === undefined ? "" : String(value)])),
     fields: version.form.map((field) => ({ key: field.key, label: field.label, value: displayValue(field, request.formData[field.key], names) })),
-    stages: buildStepMap(version.definition, state, version.builder, names),
+    stages: buildStepMap(version.definition, state, version.builder, names, {
+      formData: request.formData as EngineFormData,
+      fieldLabel: (key) => version.form.find((field) => field.key === key)?.label ?? key,
+    }),
     timeline: timelineRows
       .map((row) => ({ id: row.id, at: row.createdAt, text: describeEvent(row.payload, labelOf, nameOf) }))
       .filter((row): row is { id: number; at: Date; text: string } => row.text !== null),
@@ -93,6 +98,8 @@ export async function loadRequestView(requestId: number, viewer: Actor): Promise
     comments: await listComments(requestId),
     canResume: state.status === "ON_HOLD" && (isAdmin(viewer) || myPending.some((task) => task.nodeId === holdNode)),
     canResubmit: state.status === "CHANGES_REQUIRED" && request.requesterId === viewer.id,
+    canWithdraw: ["IN_PROGRESS", "ON_HOLD", "CHANGES_REQUIRED"].includes(state.status) && request.requesterId === viewer.id,
+    canReopen: state.status === "APPROVED" && viewer.roles.includes("SUPER_ADMIN"),
     changesComment: state.status === "CHANGES_REQUIRED" ? (state.changesRequested?.comment ?? null) : null,
     holdReason: state.status === "ON_HOLD" ? (state.hold?.reason ?? null) : null,
   };

@@ -187,7 +187,9 @@ export type EngineEvent =
   | { type: "PUT_ON_HOLD"; nodeId: string; actorId: number; reason?: string }
   | { type: "RESUMED"; actorId: number }
   | { type: "RESUBMITTED"; round: number; restartNodeId: string }
-  | { type: "TASK_REASSIGNED"; taskId: string; nodeId: string; fromId: number; toId: number; actorId: number };
+  | { type: "TASK_REASSIGNED"; taskId: string; nodeId: string; fromId: number; toId: number; actorId: number }
+  | { type: "WITHDRAWN"; actorId: number; reason?: string; closedTaskIds: string[]; approverIds: number[] }
+  | { type: "REOPENED"; actorId: number; reason: string; round: number };
 
 export type Decision = "APPROVE" | "REJECT" | "REQUEST_CHANGES";
 
@@ -204,7 +206,9 @@ export type EngineErrorCode =
   | "NOT_AUTHORISED"
   | "COMMENT_REQUIRED"
   | "UNKNOWN_NODE"
-  | "INVALID_REASSIGN";
+  | "INVALID_REASSIGN"
+  | "NOT_OPEN"
+  | "NOT_APPROVED";
 
 export class EngineError extends Error {
   constructor(

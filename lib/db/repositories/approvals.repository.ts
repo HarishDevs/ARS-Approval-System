@@ -5,6 +5,13 @@ import type { EngineEvent, InstanceState, InstanceStatus, WorkflowDefinition, Wo
 import type { FormField } from "@/server/forms/fields";
 import type { BuilderSpec } from "@/server/workflows/builder";
 import { INDIA_TODAY_SQL } from "@/lib/db/repositories/directory.repository";
+import { addWorkingHours, type WorkingCalendar } from "@/server/workflows/calendar";
+
+function dueTimes(createdAt: Date, hours: number | null, calendar?: WorkingCalendar): [Date | null, Date | null] {
+  if (!hours) return [null, null];
+  if (!calendar) return [new Date(createdAt.getTime() + hours * 3600_000), new Date(createdAt.getTime() + 2 * hours * 3600_000)];
+  return [addWorkingHours(createdAt, hours, calendar), addWorkingHours(createdAt, 2 * hours, calendar)];
+}
 
 // Persistence for workflows and requests (S2-06, D-050, F-13). Only the
 // service layer (server/approvals) calls these, inside its transactions.
@@ -279,7 +286,9 @@ export async function saveRequestState(
 }
 
 // ---- tasks (projection for queues) -------------------------------------------
-export async function syncTasks(requestId: number, state: InstanceState, nodes: readonly WorkflowNode[], db: Queryable): Promise<void> {
+// calendar: due and escalation times count working days only (D-067);
+// without it, plain hours.
+export async function syncTasks(requestId: number, state: InstanceState, nodes: readonly WorkflowNode[], db: Queryable, calendar?: WorkingCalendar): Promise<void> {
   if (state.tasks.length === 0) return;
   const labels = new Map(nodes.map((node) => [node.id, node.label]));
   const sla = new Map(nodes.map((node) => [node.id, node.kind === "APPROVAL" ? (node.slaHours ?? null) : null]));
@@ -295,12 +304,12 @@ export async function syncTasks(requestId: number, state: InstanceState, nodes: 
     task.onBehalfOf ?? null,
     task.comment?.slice(0, 2000) ?? null,
     new Date(task.createdAt),
-    sla.get(task.nodeId) ? new Date(new Date(task.createdAt).getTime() + sla.get(task.nodeId)! * 3600_000) : null,
+    ...dueTimes(new Date(task.createdAt), sla.get(task.nodeId) ?? null, calendar),
     task.decidedAt ? new Date(task.decidedAt) : null,
   ]);
   // approver_id is updated too: a handover (F-16) moves a pending task.
   await db.query<ResultSetHeader>(
-    `INSERT INTO approval_tasks (request_id, task_key, node_id, node_label, round, approver_id, status, decided_by, on_behalf_of, comment, created_at, due_at, decided_at)
+    `INSERT INTO approval_tasks (request_id, task_key, node_id, node_label, round, approver_id, status, decided_by, on_behalf_of, comment, created_at, due_at, escalate_at, decided_at)
      VALUES ?
      ON DUPLICATE KEY UPDATE approver_id = VALUES(approver_id), status = VALUES(status), decided_by = VALUES(decided_by), on_behalf_of = VALUES(on_behalf_of),
        comment = VALUES(comment), decided_at = VALUES(decided_at)`,

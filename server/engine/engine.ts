@@ -522,6 +522,54 @@ export function resubmit(
 }
 
 // Open tasks for one person (their "Waiting for me" list).
+// Withdraw (F-17, D-066): the request is closed while still open. Every
+// pending approval is closed. Who may withdraw is the caller's rule
+// (only the requester).
+export function withdraw(previous: InstanceState, input: { actorId: number; reason?: string }): EngineResult {
+  if (previous.status !== "IN_PROGRESS" && previous.status !== "ON_HOLD" && previous.status !== "CHANGES_REQUIRED") {
+    throw new EngineError("NOT_OPEN", "Only an open request can be withdrawn.");
+  }
+  const state = clone(previous);
+  const closed: string[] = [];
+  const approverIds = new Set<number>();
+  for (const task of state.tasks) {
+    if (task.status === "PENDING") {
+      task.status = "CANCELLED";
+      closed.push(task.id);
+      approverIds.add(task.approverId);
+    }
+  }
+  for (const nodeState of Object.values(state.nodes)) {
+    if (nodeState.status === "ACTIVE" || nodeState.status === "BLOCKED") nodeState.status = "CANCELLED";
+  }
+  state.status = "CANCELLED";
+  delete state.hold;
+  const reason = input.reason?.trim();
+  return { state, events: [{ type: "WITHDRAWN", actorId: input.actorId, ...(reason ? { reason } : {}), closedTaskIds: closed, approverIds: [...approverIds] }] };
+}
+
+// Reopen (F-29, D-066): an approved request starts again from the first
+// level in a new round, on the same number and workflow version. Earlier
+// approvals stay in the history but don't count.
+export function reopen(
+  definition: WorkflowDefinition,
+  previous: InstanceState,
+  input: { actorId: number; reason: string },
+  context: EngineContext,
+  directory: Directory,
+): EngineResult {
+  if (previous.status !== "APPROVED") throw new EngineError("NOT_APPROVED", "Only an approved request can be reopened.");
+  const reason = input.reason.trim();
+  if (!reason) throw new EngineError("COMMENT_REQUIRED", "Please give a reason.");
+  const graph = new Graph(definition);
+  const state = freshState(definition, previous.round + 1, previous.seq);
+  state.tasks = previous.tasks.map((task) => ({ ...task }));
+  const run = new Run(graph, state, context, directory);
+  run.events.push({ type: "REOPENED", actorId: input.actorId, reason, round: state.round });
+  run.activate(graph.start());
+  return { state, events: run.events };
+}
+
 // Handover (F-16, D-064): a pending task moves to another person, e.g.
 // when its approver leaves. Only pending tasks move; decisions stay with
 // whoever made them. The new person must be active, can't be the requester,

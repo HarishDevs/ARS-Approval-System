@@ -25,10 +25,10 @@
 | Company | ARS Steels & Alloy International Pvt Ltd |
 | Build team | Project owner (ARS IT, itadmin@arssteels.co.in) + Claude (AI pair developer) |
 | Admin Portal (Super Admin) login | `itadmin@arssteels.co.in`, operated by the developers |
-| Current stage | **Build session 4 done (1 Oct 2026).** On top of the working multi-level flow: custom approvals for everyone, comments, out-of-office delegation, SLA reminders and escalation, handover on leaving, notification bell, DoA view, GoDaddy deployment guide. 154 unit + 24 MySQL integration tests, typecheck, lint and build pass. Ready to deploy once the owner says go; next is session 5, PLAN-CHECKLIST §S5 |
+| Current stage | **Build session 5 done (1 Oct 2026).** Choices in the builder, withdraw/reopen, working calendar, Insights, Playwright e2e in CI. 169 unit + 28 MySQL integration + 8 e2e tests, typecheck, lint and build pass. **Feature-complete for go-live**; waiting on the owner's staff list and deployment go-ahead |
 | Address | **`approvals.arssteels.net`** (single app; role routes `/users`, `/admin`, `/superadmin`, D-034) |
 | Repository | **https://github.com/HarishDevs/ARS-Approval-System** (private, `main`, D-035). Local root: `D:\Omniroute\ARS Approval System` |
-| Last updated | 1 Oct 2026 (build session 4) |
+| Last updated | 1 Oct 2026 (build session 5) |
 
 ## 2. Key files and links
 
@@ -48,6 +48,8 @@
 | Area access rules | `server/authorization/policy.ts` + `guards.ts`, `middleware.ts` |
 | Notification hub | `server/notifications/notify.ts`; adapters in `server/integrations/ceoitbox` and `resend` |
 | Approvals persistence | `server/approvals/service.ts` (submit, decide, hold, resume, resubmit, workflows/versions), `server/approvals/messages.ts`, `lib/db/repositories/approvals.repository.ts`, `directory.repository.ts`; integration tests in `tests/integration/` (`npm run test:integration`) |
+| End-to-end tests | `npm run test:e2e` (Playwright): builds the app, recreates `ars_approvals_test`, seeds E2E_* people, signs them in with test cookies; specs in `tests/e2e/` |
+| Insights and calendar | `/admin/insights` (`insights.repository.ts`), `/admin/calendar` (`calendar.repository.ts`, `server/workflows/calendar.ts`) |
 | Deployment guide | `docs/DEPLOYMENT.md` (GoDaddy Node.JS Hosting from GitHub, env vars, DB privilege check, migrations, cron, Firebase domain, provider keys, break-glass, go-live checks); `scripts/database/check-privileges.js` |
 | Collaboration | custom approvals `/users/custom` (`submitCustomRequest`), comments, out-of-office `/users/delegation`, inbox `/users/notifications`; services `server/approvals/collab.ts`; data `lib/db/repositories/collab.repository.ts`; SLA job `server/jobs/sla.ts`; DoA view `/admin/doa` (`server/workflows/doa.ts`) |
 | Request screens | `/users` (home, `queue`, `requests`, `requests/[id]`, `new`, `new/[workflowId]`); actions in `app/users/actions.ts`; view + access check in `server/approvals/view.ts`; level map `step-map.ts`; timeline wording `timeline.ts` |
@@ -130,6 +132,11 @@
 | D-063 | 1 Oct 2026 | **SLA.**<br>• A builder step can have "respond within N hours" (1 to 720), giving each task a due time.<br>• The job runner sends a reminder at the due time (to the approver and their active delegate) and an escalation at twice the time (to the approver's manager and the IT Admins).<br>• Each is sent once per task (`task_reminders`, claimed with INSERT IGNORE). Requests on hold get no notices.<br>• Calendar hours for now; working days and holidays come in S5-04. | Claude, following F-31 |
 | D-064 | 1 Oct 2026 | **Handover.**<br>• IT moves a person's pending approvals to someone else. Each move is a pure engine `reassignTask` call (TASK_REASSIGNED event) through the normal locked path, so the timeline, audit and new-approver alert all happen.<br>• A move is refused for the requester, an inactive person, or someone already on that step; refused moves are reported.<br>• **Deactivation is refused while approvals still wait on the person.** | Claude, following P1-05 |
 | D-065 | 1 Oct 2026 | **DoA lives in the workflow** as "skip this step when amount is at most ₹N". `/admin/doa` derives the amount-band matrix from the live versions for review with the owner (Q-004); no separate DoA table to keep in sync. Changing a limit means a new workflow version. | Claude |
+| D-066 | 1 Oct 2026 | **Withdraw and reopen.**<br>• **Withdraw:** only the requester, while the request is open (in progress, on hold, or changes required). Pending approvals are closed and their approvers told. Shown as "Withdrawn" (CANCELLED); final, not undoable.<br>• **Reopen:** only the Super Admin, only an approved request, with a reason. It restarts from the first level in a new round on the same number and version; earlier approvals stay in the history.<br>Both are pure engine functions (WITHDRAWN / REOPENED events). | Claude, following F-29 |
+| D-067 | 1 Oct 2026 | **Working calendar.**<br>• Response times count working hours only on India working days: Mon–Sat by default (setting `calendar.working_days`), minus holidays (table `holidays`), both managed by IT in `/admin/calendar`.<br>• Due and escalation times (`due_at`, `escalate_at` = twice the working time) are worked out when a task is created; calendar changes apply to new tasks only.<br>• Pure `addWorkingHours`, unit-tested. | Claude, following F-31 |
+| D-068 | 1 Oct 2026 | **Choices in the builder.**<br>• A level can be "if [field] [condition] [value] → these levels, otherwise → those levels". It compiles to a CONDITION node with one condition edge and one otherwise edge; both paths carry on to the next level, and either path may be empty.<br>• Choices aren't nested (kept readable).<br>• The request map shows the path taken and marks the other "Not taken". The DoA view follows amount choices.<br>• With skip conditions, parallel levels and any-one / any-N, the builder can now express every shape in the north star. | Claude (north star) |
+| D-069 | 1 Oct 2026 | **Insights page** (`/admin/insights`, IT Admin and Super Admin). Headline tiles (open, overdue, approved in 30 days, average time to approve) and tables: waiting now by level, time to decide per level (90 days), overdue list, decisions per person (30 days), requests by month (6 months). Tables rather than charts, because exact values matter here; a management role can be given access later. | Claude, following P7 |
+| D-070 | 1 Oct 2026 | **End-to-end tests.** Playwright 1.63 (the version Next 15.5 needs) runs a production build on port 3100 against `ars_approvals_test`, with test-only secrets in `playwright.config.ts`. People are seeded by SQL and signed in with app-format session cookies. It runs as a third CI job, alongside the checks and integration jobs. | Claude, following P0-44 |
 | D-033 | 28 Sep 2026 | **Staff data is provided by the admin. Roles are assigned per user, by the admin only. Users are added or made inactive in the Admin Portal** (never hard-deleted, so history and audit stay intact). *Resolves Q-010.* | Owner (answer 7) |
 
 ## 4. Open questions (must be answered before the phase shown)
@@ -153,6 +160,19 @@
 | Q-015 | **Break-glass and WhatsApp:** the break-glass account signs in with a password **plus the WhatsApp code** (D-025). If WhatsApp or CEOITBox is down, which is exactly when break-glass may be needed, it can't sign in. Keep the code, or skip it only during the console-enabled window? | Go-live | Open, waiting on the owner (built conservatively: the code is required) |
 
 ## 5. Work log (newest first)
+
+### 1 Oct 2026 (build session 5)
+- **Built:**
+  - choices in the builder (D-068), with the request map and DoA support;
+  - withdraw / reopen (D-066), with screens, messages and timeline wording;
+  - the working calendar (D-067), with the `escalate_at` column, `/admin/calendar` and the SLA job using it;
+  - Insights (D-069);
+  - Playwright e2e (D-070): 8 tests covering the access guards, security headers, and IT builds → tests → publishes → raise → manager approves → HOD asks for changes (reason enforced) → resubmit → approved → outsider gets 404; in CI.
+- **Blocked:** S5-01 (staff list) and S5-07 (Q-001) are marked [?].
+- **Fixes:** S5-F1 (duplicate step ids when editing a saved workflow, found in the browser), S5-F2.
+- **Tests:** +15 unit (choices, calendar maths, withdraw/reopen) and +4 MySQL integration (withdraw rights, reopen rights and round, calendar due times across a holiday, insights).
+- **Browser:** Purchase Approval version 2 published with a choice (above ₹5L: CFO review by Meena), and the DoA view matched. PUR-2026-000002 was raised and then withdrawn by Ravi; the timeline shows the reason. Insights and calendar render.
+- **Local only:** Purchase Approval v2 and PUR-2026-000002 exist in the dev database.
 
 ### 1 Oct 2026 (build session 4)
 - **New:**
@@ -272,18 +292,18 @@
 | Admin Portal | Organisation, users, hierarchy, roles, data scopes | In progress: users, roles, manager, departments + HOD, designations done; data scopes, import to do | P1-ADM |
 | Admin Portal | Security, providers, notification templates, audit viewer | In progress: providers + security settings, test send, delivery log, audit viewer done; templates UI, export to do | P1-ADM |
 | Admin Portal | Approval Builder, form builder, workflow designer, validator, test mode | **Done as a structured levels builder (30 Sep 2026)**: forms, levels, validation, test mode, versions; drag-and-drop canvas later | P3 |
-| Admin Portal | DoA matrix, SLA/escalation, holiday calendar | In progress: DoA view and SLA done; holiday calendar in S5 | P3/P4 |
+| Admin Portal | DoA matrix, SLA/escalation, holiday calendar | **Done (1 Oct 2026)**: DoA view, SLA, working days and holidays | P3/P4 |
 | Admin Portal | Data rights: view, export, correct (versioned), archive, retention | Planned | P1-ADM / P7 |
 | Messaging | Notification hub: email + WhatsApp (CEOITBox) + in-app, delivery log | In progress: hub, adapters, delivery log, retry runner and Retry now done; in-app bell in S4 | P1-NOT |
 | Engine | Requests, permanent ID, state machine, server-side approver check | **Done with screens (30 Sep 2026)** | P2 |
 | Engine | Sequential / Parallel / Any-One / Any-N-of-M / Conditional / Hybrid | **Done and persisted (30 Sep 2026)**: 38 engine tests + 11 MySQL integration tests | P2/P3 |
 | Engine | Approver sources (user, role, HOD, manager, group, form field…) | Engine core done (8 sources); designer UI in P3 | P3 |
-| Engine | Resubmission with versions, Reopen, On Hold, Changes Required | In progress: hold/resume, changes required and resubmit (rounds) in the engine core; reopen and versions to do | P4 |
+| Engine | Resubmission with versions, Reopen, On Hold, Changes Required | **Done (1 Oct 2026)** incl. withdraw and reopen | P4 |
 | Engine | Delegation ("on behalf of"), SLA, reminders, escalation | **Done (1 Oct 2026)**: out of office, SLA hours, reminders, escalation; working days in S5 | P4 |
 | Engine | Custom approvals open to every user, whenever needed (D-026) | **Done (1 Oct 2026)** | P5 |
 | Engine | Documents (versioned), comments, work assignment after approval | In progress: comments done; documents wait for Q-001; work assignment later | P6 |
 | Portals | Employee, Approver, Management portals | Employee + approver **done (30 Sep 2026)**; management portal P7 | P2/P7 |
-| Insight | Analytics, SLA dashboards, Power BI views | Planned | P7 |
+| Insight | Analytics, SLA dashboards, Power BI views | In progress: Insights page done (1 Oct 2026); Power BI views later | P7 |
 | Connect | ERP / Salesforce / webhooks, mobile web app | Planned | P8 |
 | Security | Rate limiting on sign-in, codes, forgot / set password | **Done (30 Sep 2026)** (D-059) | P1-SEC |
 | Security | Content-Security-Policy with per-request nonce | **Done (30 Sep 2026)** (D-051) | P1-SEC |

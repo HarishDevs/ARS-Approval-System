@@ -154,10 +154,14 @@ describe("SLA (F-31)", () => {
       "SELECT TIMESTAMPDIFF(HOUR, created_at, due_at) AS hours FROM approval_tasks WHERE request_id = ?",
       [requestId],
     );
-    expect(Number(due[0]!.hours)).toBe(24);
+    // 24 working hours; the default calendar (Mon–Sat) may stretch it over a Sunday.
+    expect(Number(due[0]!.hours)).toBeGreaterThanOrEqual(24);
 
     // Pretend it was raised 30 hours ago: past due, not yet at 48 h.
-    await getDbPool().query("UPDATE approval_tasks SET created_at = DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 30 HOUR), due_at = DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 6 HOUR) WHERE request_id = ?", [requestId]);
+    await getDbPool().query(
+      "UPDATE approval_tasks SET created_at = DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 30 HOUR), due_at = DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 6 HOUR), escalate_at = DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 18 HOUR) WHERE request_id = ?",
+      [requestId],
+    );
     await runSlaChecks();
     await runSlaChecks();
     const kinds = async () => {
@@ -169,7 +173,10 @@ describe("SLA (F-31)", () => {
     };
     expect(await kinds()).toEqual(["REMINDER"]);
 
-    await getDbPool().query("UPDATE approval_tasks SET created_at = DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 50 HOUR), due_at = DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 26 HOUR) WHERE request_id = ?", [requestId]);
+    await getDbPool().query(
+      "UPDATE approval_tasks SET created_at = DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 50 HOUR), due_at = DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 26 HOUR), escalate_at = DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 2 HOUR) WHERE request_id = ?",
+      [requestId],
+    );
     await runSlaChecks();
     await runSlaChecks();
     expect(await kinds()).toEqual(["REMINDER", "ESCALATION"]);

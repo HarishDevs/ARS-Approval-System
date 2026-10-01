@@ -8,7 +8,7 @@ const REQUEST: Record<InstanceStatus, { label: string; style: string }> = {
   CHANGES_REQUIRED: { label: "Changes required", style: "bg-warning-50 text-warning-600" },
   APPROVED: { label: "Approved", style: "bg-success-50 text-success-600" },
   REJECTED: { label: "Rejected", style: "bg-danger-50 text-danger-600" },
-  CANCELLED: { label: "Cancelled", style: "bg-surface-muted text-ink-muted" },
+  CANCELLED: { label: "Withdrawn", style: "bg-surface-muted text-ink-muted" },
 };
 
 const STEP: Record<NodeStatus, { label: string; style: string }> = {

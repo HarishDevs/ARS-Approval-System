@@ -14,10 +14,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       user={user}
       nav={[
         { href: "/admin", label: "Overview" },
+        { href: "/admin/insights", label: "Insights" },
         { href: "/admin/approval-types", label: "Approval types", soon: true },
         { href: "/admin/workflows", label: "Workflows" },
         { href: "/admin/groups", label: "Approver groups" },
         { href: "/admin/doa", label: "Approval authority (DoA)" },
+        { href: "/admin/calendar", label: "Working calendar" },
         { href: "/admin/users", label: "Users & roles" },
         { href: "/admin/organisation", label: "Departments" },
       ]}

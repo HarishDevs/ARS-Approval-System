@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireApiArea } from "@/server/authorization/guards";
-import { decideTask, holdTask, resubmitRequest, resumeRequest, submitRequest, type Actor } from "@/server/approvals/service";
+import { decideTask, holdTask, reopenRequest, resubmitRequest, resumeRequest, submitRequest, withdrawRequest, type Actor } from "@/server/approvals/service";
 import { logError } from "@/lib/logging/logger";
 import type { ActionResult } from "@/lib/http/action-result";
 
@@ -110,4 +110,37 @@ export async function resubmitAction(_previous: ActionResult | null, formData: F
   revalidatePath(`/users/requests/${requestId}`);
   revalidatePath("/users");
   return { ok: true, message: "Resubmitted. The approvers have been told." };
+}
+
+export async function withdrawAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const me = await actor();
+  const requestId = num(formData.get("requestId"));
+  if (!me || requestId === null) return NOT_FOUND;
+  try {
+    const result = await withdrawRequest({ requestId, reason: String(formData.get("reason") ?? "").slice(0, 500) || undefined }, me);
+    if (!result.ok) return { ok: false, message: result.message };
+  } catch (error) {
+    logError("withdrawAction failed", error);
+    return { ok: false, message: "Something went wrong. Please try again." };
+  }
+  revalidatePath(`/users/requests/${requestId}`);
+  revalidatePath("/users");
+  return { ok: true, message: "Withdrawn. The approvers have been told." };
+}
+
+export async function reopenAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const me = await actor();
+  const requestId = num(formData.get("requestId"));
+  if (!me || requestId === null) return NOT_FOUND;
+  const reason = String(formData.get("reason") ?? "").trim().slice(0, 500);
+  if (!reason) return { ok: false, message: "Give a reason.", fieldErrors: { reason: "A reason is required." } };
+  try {
+    const result = await reopenRequest({ requestId, reason }, me);
+    if (!result.ok) return { ok: false, message: result.message };
+  } catch (error) {
+    logError("reopenAction failed", error);
+    return { ok: false, message: "Something went wrong. Please try again." };
+  }
+  revalidatePath(`/users/requests/${requestId}`);
+  return { ok: true, message: "Reopened. It goes through approval again from the first level." };
 }

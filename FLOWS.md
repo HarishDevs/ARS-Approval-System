@@ -33,18 +33,21 @@ The number of levels and how they combine is unlimited. There are no fixed "Leve
 | F-21 | Sequential multi-level | Engine core built 28 Sep 2026 |
 | F-22 | Parallel (ALL) | Engine core built 28 Sep 2026 (joins ALL / ANY_ONE / ANY_N) |
 | F-23 | Any-one / Any-N-of-M | Engine core built 28 Sep 2026 |
-| F-24 | Conditional / DoA routing | Engine core built 28 Sep 2026 (DoA values: Q-004) |
+| F-24 | Conditional / DoA routing | Built with screens 1 Oct 2026 (choices + skip conditions; DoA values: Q-004) |
 | F-25 | Hybrid (combined) | Engine core built 28 Sep 2026 |
 | F-26 | Changes required → resubmission | Built with screens 30 Sep 2026 |
 | F-27 | On Hold / resume | Built with screens 30 Sep 2026 |
 | F-28 | Reject | Built with screens 30 Sep 2026 |
-| F-29 | Reopen | Planned |
+| F-29 | Reopen | Built 1 Oct 2026 (Super Admin) |
+| F-17 | Withdraw by the requester | Built and verified 1 Oct 2026 |
+| F-55 | Working calendar (working days, holidays) | Built 1 Oct 2026 |
+| F-70 | Management dashboard | Built 1 Oct 2026 |
 | F-30 | Delegation | Built and verified 1 Oct 2026 |
-| F-31 | SLA, reminder, escalation | Built 1 Oct 2026 (calendar hours; holidays in S5) |
+| F-31 | SLA, reminder, escalation | Built 1 Oct 2026 (working days and holidays) |
 | F-32 | Work assignment after approval | Planned |
 | F-33 | Employee custom approval | Built and verified 1 Oct 2026 |
 | F-40 | Notification pipeline | Planned |
-| F-50 | Workflow authoring: design → validate → test → publish → version | Levels builder built 30 Sep 2026; canvas later |
+| F-50 | Workflow authoring: design → validate → test → publish → version | Levels builder with choices built 1 Oct 2026; canvas later |
 | F-51 | Admin configuration change (audited) | Built for settings, users, departments, workflows 30 Sep 2026 |
 | F-52 | Provider settings and test send (Super Admin) | Built 30 Sep 2026 |
 | F-53 | Break-glass console script | Built 30 Sep 2026 (Q-015 open) |
@@ -444,6 +447,16 @@ Approver rejects (reason required) → state Rejected (final) → requester and 
 ## F-29 Reopen
 An approved request is reopened by the Super Admin or a role the Super Admin allows. A reason is required. Restart from: beginning / a chosen level / current level. A new version is created, and everything is audited.
 
+**First cut for S5-02 (D-066):**
+- **Who:** only the Super Admin can reopen an **approved** request, and a reason is required.
+- **What happens:** it restarts from the first level in a new round, on the same number and the same workflow version. Earlier approvals stay in the history but don't count.
+- **Who is told:** the requester and the new approvers.
+
+## F-17 Withdraw (S5-02, D-066)
+While a request is still open (in progress, on hold, or waiting for changes), **only the requester** can withdraw it, with an optional reason.
+- Every pending approval is closed, and the status becomes **Withdrawn** (stored as CANCELLED). It can't be undone; raise a new request instead.
+- The people who had a pending approval are told it's no longer needed.
+
 ## F-30 Delegation (D-018)
 The approver (or the Super Admin) sets a date range, a delegate and a scope (all or listed types). While it is active, the delegate sees the steps and acts **on behalf of** the approver, and both are recorded. Delegation start and end notify both people.
 
@@ -459,6 +472,12 @@ The approver (or the Super Admin) sets a date range, a delegate and a scope (all
 
 ## F-31 SLA, reminder, escalation
 The node starts → at the reminder time (e.g. 12 h) the approver is reminded → at the SLA (e.g. 24 h) the manager or escalation contact is notified → at the escalation time (e.g. 48 h) the request is escalated and optionally reassigned per node settings. Working days follow the holiday calendar.
+
+**Working calendar (S5-04, D-067):**
+- Respond-within hours count only on **working days**: Monday to Saturday by default; IT can change this in `/admin/calendar`.
+- **Holidays** listed there don't count.
+- Days are India dates. A due time that would fall on a holiday or Sunday moves forward by the skipped days.
+- Escalation is at twice the working time (`escalate_at`, worked out the same way).
 
 **First cut for S4-04 (D-063):**
 - A builder step can have "respond within N hours". Each task gets a due time when it is created.
@@ -544,6 +563,16 @@ Before publishing:
 
 Publishing makes this version the one new requests use; the previous version is archived. Running requests stay on their version.
 
+**Choices between paths (S5-06, D-068):** a level can also be a **choice**:
+
+> If [field] [condition] [value] → these levels, otherwise → those levels.
+
+- Either path can be empty (nothing extra needed). After the choice, both paths carry on to the next level.
+- Inside a path, a level is one step or parallel steps. Choices aren't nested, to keep the screen readable.
+- The builder turns this into a CONDITION node: one condition edge, plus the "otherwise" edge.
+- The request page shows the path that was taken, and marks the other one "Not taken".
+- The DoA view follows the choice when it depends on the amount.
+
 Design (drag-and-drop) → configure the nodes → **validate** (errors block publishing; warnings are shown) → **test mode** with sample values shows the exact levels and approvers → publish as version n → running requests stay on their original version → archive old versions when no longer used.
 
 ## F-54 DoA view (S4-08, D-065)
@@ -563,6 +592,14 @@ Full steps are in `docs/DEPLOYMENT.md`:
 - provider keys in `/superadmin`;
 - the break-glass setup;
 - a post-go-live checklist.
+
+## F-70 Management dashboard (S5-03, D-069)
+`/admin/insights`, for IT Admin and Super Admin; management roles come later:
+- **Open now:** requests by approval type and by the level they are waiting at, plus the overdue count.
+- **Speed:** average and slowest time to decide, per level, over the last 90 days.
+- **Overdue list:** request, level, approver, how long overdue.
+- **Who decides:** approvals and rejections per person in the last 30 days.
+- **Volume:** requests raised per month in the last 6 months, by outcome.
 
 ## F-51 Admin configuration change
 An admin changes a setting (no step-up OTP, D-032) → saved as a new version → audit entry with before and after values → takes effect → affected admins or users notified if relevant.

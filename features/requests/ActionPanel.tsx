@@ -1,6 +1,6 @@
 "use client";
 
-import { decideAction, resumeAction } from "@/app/users/actions";
+import { decideAction, reopenAction, resumeAction, withdrawAction } from "@/app/users/actions";
 import { FieldError, ResultMessage, useActionForm } from "@/features/ui/form";
 
 // What the signed-in person can do on this request right now (F-14). The
@@ -46,6 +46,39 @@ export function ResumeForm({ requestId }: { requestId: number }) {
       <p className="text-label text-ink-muted">This request is on hold. Resume it when you&apos;re ready to decide.</p>
       <button type="submit" disabled={pending} className="btn-secondary btn-compact">
         {pending ? "Working…" : "Resume"}
+      </button>
+      <ResultMessage result={result} />
+    </form>
+  );
+}
+
+export function WithdrawForm({ requestId }: { requestId: number }) {
+  const { result, pending, onSubmit } = useActionForm(withdrawAction, { confirm: "Withdraw this request? It can't be undone; you'd raise a new one instead." });
+  return (
+    <form onSubmit={onSubmit} className="space-y-2 px-5 py-4">
+      <input type="hidden" name="requestId" value={requestId} />
+      <p className="font-medium">Withdraw this request</p>
+      <p className="text-label text-ink-muted">Closes it now. Anyone still to approve is told it&apos;s no longer needed.</p>
+      <input name="reason" maxLength={500} placeholder="Reason (optional)" aria-label="Reason for withdrawing" className="field-input" />
+      <button type="submit" disabled={pending} className="btn-secondary btn-compact text-danger-600">
+        {pending ? "Working…" : "Withdraw"}
+      </button>
+      <ResultMessage result={result} />
+    </form>
+  );
+}
+
+export function ReopenForm({ requestId }: { requestId: number }) {
+  const { result, pending, onSubmit } = useActionForm(reopenAction, { confirm: "Reopen this approved request? It goes through every level again." });
+  return (
+    <form onSubmit={onSubmit} className="space-y-2 px-5 py-4">
+      <input type="hidden" name="requestId" value={requestId} />
+      <p className="font-medium">Reopen (Super Admin)</p>
+      <p className="text-label text-ink-muted">Starts approval again from the first level, on the same number. The earlier approvals stay in the history.</p>
+      <input name="reason" maxLength={500} placeholder="Reason (required)" aria-label="Reason for reopening" className="field-input" />
+      <FieldError result={result} name="reason" />
+      <button type="submit" disabled={pending} className="btn-secondary btn-compact">
+        {pending ? "Working…" : "Reopen"}
       </button>
       <ResultMessage result={result} />
     </form>

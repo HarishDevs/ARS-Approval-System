@@ -47,7 +47,7 @@ export async function runSlaChecks(): Promise<{ reminders: number; escalations: 
   >(
     `SELECT t.id, t.request_id, r.request_no, r.title, t.node_label, t.approver_id, u.name AS approver_name, u.reporting_manager_id AS manager_id,
             (t.due_at <= CURRENT_TIMESTAMP) AS is_due,
-            (DATE_ADD(t.due_at, INTERVAL TIMESTAMPDIFF(SECOND, t.created_at, t.due_at) SECOND) <= CURRENT_TIMESTAMP) AS is_escalation_due,
+            (COALESCE(t.escalate_at, DATE_ADD(t.due_at, INTERVAL TIMESTAMPDIFF(SECOND, t.created_at, t.due_at) SECOND)) <= CURRENT_TIMESTAMP) AS is_escalation_due,
             EXISTS (SELECT 1 FROM task_reminders m WHERE m.task_id = t.id AND m.kind = 'REMINDER') AS reminded,
             EXISTS (SELECT 1 FROM task_reminders m WHERE m.task_id = t.id AND m.kind = 'ESCALATION') AS escalated
      FROM approval_tasks t

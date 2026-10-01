@@ -1,5 +1,6 @@
-import type { BuilderSpec, BuilderStep } from "@/server/workflows/builder";
-import type { ApprovalNode, CompletionRule, InstanceState, NodeStatus, TaskStatus, WorkflowDefinition } from "@/server/engine/types";
+import type { BuilderInnerStage, BuilderSpec, BuilderStage, BuilderStep } from "@/server/workflows/builder";
+import { evaluateCondition } from "@/server/engine/conditions";
+import type { ApprovalNode, CompletionRule, FormData, InstanceState, NodeStatus, TaskStatus, WorkflowDefinition } from "@/server/engine/types";
 
 // The request page's level map (S3-05b, F-14): every level and branch with
 // its status and people. Pure and unit-tested. Uses the builder's stages
@@ -20,13 +21,35 @@ export interface MapStep {
   rule: string; // "All must approve", "Any one", "Any 2"
   reason?: string; // skipped / blocked reason
   people: MapPerson[];
+  notTaken?: boolean; // on the path a choice didn't take (D-068)
 }
 
 export interface MapStage {
-  kind: "STEP" | "PARALLEL";
+  kind: "STEP" | "PARALLEL" | "CHOICE";
   label: string;
   joinRule?: string;
   steps: MapStep[];
+  // CHOICE only: the two paths; taken is null until the choice is reached.
+  paths?: { label: string; taken: boolean | null; stages: MapStage[] }[];
+}
+
+const OPERATOR_WORDS: Record<string, string> = {
+  GT: "is more than",
+  GTE: "is at least",
+  LT: "is less than",
+  LTE: "is at most",
+  EQ: "is",
+  NEQ: "is not",
+  IN: "is one of",
+  NOT_IN: "is not one of",
+  CONTAINS: "contains",
+  IS_EMPTY: "is empty",
+  IS_NOT_EMPTY: "is filled in",
+};
+
+export function describeCondition(condition: { field: string; operator: string; value?: unknown }, fieldLabel: (key: string) => string): string {
+  const value = typeof condition.value === "number" ? condition.value.toLocaleString("en-IN") : condition.value === undefined ? "" : String(condition.value);
+  return `${fieldLabel(condition.field)} ${OPERATOR_WORDS[condition.operator] ?? condition.operator}${value ? ` ${value}` : ""}`.trim();
 }
 
 export function describeRule(rule: CompletionRule, count: number): string {
@@ -95,26 +118,51 @@ function graphOrder(definition: WorkflowDefinition): ApprovalNode[] {
   return order;
 }
 
-export function buildStepMap(definition: WorkflowDefinition, state: InstanceState, spec: BuilderSpec | null, names: ReadonlyMap<number, string>): MapStage[] {
+export function buildStepMap(
+  definition: WorkflowDefinition,
+  state: InstanceState,
+  spec: BuilderSpec | null,
+  names: ReadonlyMap<number, string>,
+  context: { formData?: FormData; fieldLabel?: (key: string) => string } = {},
+): MapStage[] {
   const approvalNodes = new Map(
     definition.nodes.filter((node): node is ApprovalNode => node.kind === "APPROVAL").map((node) => [node.id, node]),
   );
   const nodeFor = (step: BuilderStep) => approvalNodes.get(`step_${step.id}`);
+  const fieldLabel = context.fieldLabel ?? ((key: string) => key);
 
-  if (spec) {
-    const stages: MapStage[] = [];
-    for (const stage of spec.stages) {
+  const mapStages = (stages: readonly (BuilderStage | BuilderInnerStage)[], notTaken: boolean): MapStage[] => {
+    const out: MapStage[] = [];
+    for (const stage of stages) {
       if (stage.kind === "STEP") {
         const node = nodeFor(stage.step);
-        if (node) stages.push({ kind: "STEP", label: node.label, steps: [mapStep(node, state, names)] });
-      } else {
-        const steps = stage.steps.map(nodeFor).filter((node): node is ApprovalNode => !!node).map((node) => mapStep(node, state, names));
+        if (node) out.push({ kind: "STEP", label: node.label, steps: [{ ...mapStep(node, state, names), ...(notTaken ? { notTaken } : {}) }] });
+      } else if (stage.kind === "PARALLEL") {
+        const steps = stage.steps
+          .map(nodeFor)
+          .filter((node): node is ApprovalNode => !!node)
+          .map((node) => ({ ...mapStep(node, state, names), ...(notTaken ? { notTaken } : {}) }));
         const joinRule: CompletionRule = stage.join === "ANY_N" ? { type: "ANY_N", n: stage.n ?? 1 } : { type: stage.join };
-        stages.push({ kind: "PARALLEL", label: stage.label, joinRule: describeJoin(joinRule), steps });
+        out.push({ kind: "PARALLEL", label: stage.label, joinRule: describeJoin(joinRule), steps });
+      } else {
+        const reached = state.nodes[`choice_${stage.id}`]?.status === "APPROVED";
+        const thenTaken = reached && context.formData ? evaluateCondition(stage.condition, context.formData) : null;
+        const label = describeCondition(stage.condition, fieldLabel);
+        out.push({
+          kind: "CHOICE",
+          label: `${stage.label}: if ${label}`,
+          steps: [],
+          paths: [
+            { label: `If ${label}`, taken: thenTaken, stages: mapStages(stage.then, notTaken || thenTaken === false) },
+            { label: "Otherwise", taken: thenTaken === null ? null : !thenTaken, stages: mapStages(stage.otherwise, notTaken || thenTaken === true) },
+          ],
+        });
       }
     }
-    return stages;
-  }
+    return out;
+  };
+
+  if (spec) return mapStages(spec.stages, false);
   return graphOrder(definition).map((node) => ({ kind: "STEP", label: node.label, steps: [mapStep(node, state, names)] }));
 }
 

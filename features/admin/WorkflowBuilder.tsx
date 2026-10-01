@@ -1,10 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { createWorkflowAction, saveDraftAction } from "@/app/admin/workflows/actions";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import { FIELD_TYPES, type FieldType, type FormField } from "@/server/forms/fields";
-import type { ApproverPick, BuilderStage, BuilderStep } from "@/server/workflows/builder";
+import type { ApproverPick, BuilderInnerStage, BuilderStage, BuilderStep } from "@/server/workflows/builder";
 
 // Structured workflow builder (D-056, F-50). Stages run in order; a stage
 // is one step or several steps in parallel. The server compiles, validates
@@ -72,8 +72,9 @@ export function WorkflowBuilder({
 }) {
   const [stages, setStages] = useState<BuilderStage[]>(initialStages);
   const [form, setForm] = useState<FormField[]>(initialForm);
-  const counter = useRef(1000);
-  const newId = () => `s${++counter.current}`;
+  // Random ids: a counter restarts on every page load and would collide
+  // with ids already saved in the version being edited.
+  const newId = newStepId;
   const { result, pending, onSubmit } = useActionForm(mode === "create" ? createWorkflowAction : saveDraftAction);
   const checks = (result?.ok ? result.data : undefined) as { errors: string[]; warnings: string[] } | undefined;
 
@@ -215,8 +216,13 @@ export function WorkflowBuilder({
   );
 }
 
+export function newStepId(): string {
+  return `s${crypto.randomUUID().replace(/-/g, "").slice(0, 12)}`;
+}
+
 // The levels list (F-50, F-33): shared by the IT team's workflow builder and
-// by staff creating a custom approval.
+// by staff creating a custom approval. A choice level (D-068) holds two
+// nested lists of ordinary levels; choices aren't nested.
 export function LevelsEditor({
   stages,
   setStages,
@@ -224,7 +230,8 @@ export function LevelsEditor({
   form,
   newId,
   title = "Approval levels",
-  hint = "Levels run top to bottom. Add as many as you need; a level can have several steps running in parallel.",
+  hint = "Levels run top to bottom. Add as many as you need; a level can have several steps running in parallel, or a choice between paths.",
+  allowChoice = true,
 }: {
   stages: BuilderStage[];
   setStages: React.Dispatch<React.SetStateAction<BuilderStage[]>>;
@@ -233,97 +240,217 @@ export function LevelsEditor({
   newId: () => string;
   title?: string;
   hint?: string;
+  allowChoice?: boolean;
+}) {
+  return (
+    <section className="card">
+      <div className="border-b border-line px-5 py-4">
+        <h2 className="font-semibold">{title}</h2>
+        <p className="text-label text-ink-muted">{hint}</p>
+      </div>
+      <StageList stages={stages} onChange={(next) => setStages(next)} options={options} form={form} newId={newId} allowChoice={allowChoice} />
+    </section>
+  );
+}
+
+const stageKey = (stage: BuilderStage) => (stage.kind === "STEP" ? stage.step.id : stage.id);
+
+function StageList({
+  stages,
+  onChange,
+  options,
+  form,
+  newId,
+  allowChoice,
+  nested = false,
+}: {
+  stages: BuilderStage[];
+  onChange: (stages: BuilderStage[]) => void;
+  options: BuilderOptions;
+  form: FormField[];
+  newId: () => string;
+  allowChoice: boolean;
+  nested?: boolean;
 }) {
   const newStep = (label: string): BuilderStep => ({ id: newId(), label, approvers: { kind: "REQUESTER_MANAGER" }, rule: "ALL" });
-  const setStage = (index: number, stage: BuilderStage) => setStages((all) => all.map((item, i) => (i === index ? stage : item)));
-  const move = (index: number, delta: number) =>
-    setStages((all) => {
-      const next = [...all];
-      const target = index + delta;
-      if (target < 0 || target >= next.length) return all;
-      [next[index], next[target]] = [next[target]!, next[index]!];
-      return next;
-    });
+  const setStage = (index: number, stage: BuilderStage) => onChange(stages.map((item, i) => (i === index ? stage : item)));
+  const move = (index: number, delta: number) => {
+    const target = index + delta;
+    if (target < 0 || target >= stages.length) return;
+    const next = [...stages];
+    [next[index], next[target]] = [next[target]!, next[index]!];
+    onChange(next);
+  };
   const personFields = form.filter((field) => field.type === "PERSON");
+  const kindLabel = (stage: BuilderStage) => (stage.kind === "STEP" ? "one step" : stage.kind === "PARALLEL" ? "parallel steps" : "a choice");
+
   return (
-      <section className="card">
-        <div className="border-b border-line px-5 py-4">
-          <h2 className="font-semibold">{title}</h2>
-          <p className="text-label text-ink-muted">{hint}</p>
-        </div>
-        <ol className="divide-y divide-line">
-          {stages.map((stage, index) => (
-            <li key={stage.kind === "STEP" ? stage.step.id : stage.id} className="px-5 py-4">
-              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                <p className="text-caption font-semibold uppercase tracking-wider text-ink-faint">
-                  Level {index + 1} · {stage.kind === "STEP" ? "one step" : "parallel steps"}
-                </p>
-                <div className="flex gap-2">
-                  <button type="button" onClick={() => move(index, -1)} disabled={index === 0} className="btn-secondary btn-compact" aria-label="Move up">
-                    ↑
-                  </button>
-                  <button type="button" onClick={() => move(index, 1)} disabled={index === stages.length - 1} className="btn-secondary btn-compact" aria-label="Move down">
-                    ↓
-                  </button>
-                  <button type="button" onClick={() => setStages((all) => all.filter((_, i) => i !== index))} className="btn-secondary btn-compact text-danger-600">
-                    Remove level
-                  </button>
+    <>
+      <ol className={nested ? "space-y-3" : "divide-y divide-line"}>
+        {stages.length === 0 && nested && <li className="text-label text-ink-muted">No levels on this path: it goes straight on.</li>}
+        {stages.map((stage, index) => (
+          <li key={stageKey(stage)} className={nested ? "rounded-md border border-line p-3" : "px-5 py-4"}>
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <p className="text-caption font-semibold uppercase tracking-wider text-ink-faint">
+                Level {index + 1} · {kindLabel(stage)}
+              </p>
+              <div className="flex gap-2">
+                <button type="button" onClick={() => move(index, -1)} disabled={index === 0} className="btn-secondary btn-compact" aria-label="Move up">
+                  ↑
+                </button>
+                <button type="button" onClick={() => move(index, 1)} disabled={index === stages.length - 1} className="btn-secondary btn-compact" aria-label="Move down">
+                  ↓
+                </button>
+                <button type="button" onClick={() => onChange(stages.filter((_, i) => i !== index))} className="btn-secondary btn-compact text-danger-600">
+                  Remove level
+                </button>
+              </div>
+            </div>
+            {stage.kind === "STEP" && (
+              <StepEditor step={stage.step} onChange={(step) => setStage(index, { kind: "STEP", step })} options={options} form={form} personFields={personFields} />
+            )}
+            {stage.kind === "PARALLEL" && (
+              <div className="space-y-3">
+                <div className="grid gap-3 md:grid-cols-[1fr_auto_auto]">
+                  <input aria-label="Parallel level name" value={stage.label} onChange={(event) => setStage(index, { ...stage, label: event.target.value })} className="field-input" />
+                  <select aria-label="How many branches must finish" value={stage.join} onChange={(event) => setStage(index, { ...stage, join: event.target.value as Rule })} className="field-input">
+                    <option value="ALL">All branches must finish</option>
+                    <option value="ANY_ONE">Any one branch is enough</option>
+                    <option value="ANY_N">Any N branches</option>
+                  </select>
+                  {stage.join === "ANY_N" && (
+                    <input aria-label="N" type="number" min={1} max={stage.steps.length} value={stage.n ?? 1} onChange={(event) => setStage(index, { ...stage, n: Number(event.target.value) })} className="field-input w-24" />
+                  )}
+                </div>
+                <div className="grid gap-3 lg:grid-cols-2">
+                  {stage.steps.map((step, stepIndex) => (
+                    <div key={step.id} className="rounded-md border border-dashed border-line p-3">
+                      <StepEditor
+                        step={step}
+                        onChange={(next) => setStage(index, { ...stage, steps: stage.steps.map((item, i) => (i === stepIndex ? next : item)) })}
+                        options={options}
+                        form={form}
+                        personFields={personFields}
+                      />
+                      {stage.steps.length > 2 && (
+                        <button type="button" onClick={() => setStage(index, { ...stage, steps: stage.steps.filter((_, i) => i !== stepIndex) })} className="link mt-2 text-label">
+                          Remove this branch
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <button type="button" onClick={() => setStage(index, { ...stage, steps: [...stage.steps, newStep("New branch")] })} className="btn-secondary btn-compact">
+                  Add a parallel branch
+                </button>
+              </div>
+            )}
+            {stage.kind === "BRANCH" && (
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <input aria-label="Choice name" value={stage.label} onChange={(event) => setStage(index, { ...stage, label: event.target.value })} className="field-input max-w-xs" />
+                  <ConditionEditor
+                    form={form}
+                    value={stage.condition}
+                    onChange={(condition) => setStage(index, { ...stage, condition })}
+                    prefix="If"
+                  />
+                </div>
+                <div className="grid gap-3 lg:grid-cols-2">
+                  {(["then", "otherwise"] as const).map((path) => (
+                    <div key={path} className="rounded-md bg-surface-muted p-3">
+                      <p className="mb-2 text-label font-semibold">{path === "then" ? "Then these levels" : "Otherwise these levels"}</p>
+                      <StageList
+                        stages={stage[path]}
+                        onChange={(next) => setStage(index, { ...stage, [path]: next as BuilderInnerStage[] })}
+                        options={options}
+                        form={form}
+                        newId={newId}
+                        allowChoice={false}
+                        nested
+                      />
+                    </div>
+                  ))}
                 </div>
               </div>
-              {stage.kind === "STEP" ? (
-                <StepEditor step={stage.step} onChange={(step) => setStage(index, { kind: "STEP", step })} options={options} form={form} personFields={personFields} />
-              ) : (
-                <div className="space-y-3">
-                  <div className="grid gap-3 md:grid-cols-[1fr_auto_auto]">
-                    <input aria-label="Parallel level name" value={stage.label} onChange={(event) => setStage(index, { ...stage, label: event.target.value })} className="field-input" />
-                    <select aria-label="How many branches must finish" value={stage.join} onChange={(event) => setStage(index, { ...stage, join: event.target.value as Rule })} className="field-input">
-                      <option value="ALL">All branches must finish</option>
-                      <option value="ANY_ONE">Any one branch is enough</option>
-                      <option value="ANY_N">Any N branches</option>
-                    </select>
-                    {stage.join === "ANY_N" && (
-                      <input aria-label="N" type="number" min={1} max={stage.steps.length} value={stage.n ?? 1} onChange={(event) => setStage(index, { ...stage, n: Number(event.target.value) })} className="field-input w-24" />
-                    )}
-                  </div>
-                  <div className="grid gap-3 lg:grid-cols-2">
-                    {stage.steps.map((step, stepIndex) => (
-                      <div key={step.id} className="rounded-md border border-dashed border-line p-3">
-                        <StepEditor
-                          step={step}
-                          onChange={(next) => setStage(index, { ...stage, steps: stage.steps.map((item, i) => (i === stepIndex ? next : item)) })}
-                          options={options}
-                          form={form}
-                          personFields={personFields}
-                        />
-                        {stage.steps.length > 2 && (
-                          <button type="button" onClick={() => setStage(index, { ...stage, steps: stage.steps.filter((_, i) => i !== stepIndex) })} className="link mt-2 text-label">
-                            Remove this branch
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                  <button type="button" onClick={() => setStage(index, { ...stage, steps: [...stage.steps, newStep("New branch")] })} className="btn-secondary btn-compact">
-                    Add a parallel branch
-                  </button>
-                </div>
-              )}
-            </li>
-          ))}
-        </ol>
-        <div className="flex flex-wrap gap-2 border-t border-line px-5 py-3">
-          <button type="button" onClick={() => setStages((all) => [...all, { kind: "STEP", step: newStep("New step") }])} className="btn-secondary btn-compact">
-            Add a level
-          </button>
+            )}
+          </li>
+        ))}
+      </ol>
+      <div className={`flex flex-wrap gap-2 ${nested ? "pt-3" : "border-t border-line px-5 py-3"}`}>
+        <button type="button" onClick={() => onChange([...stages, { kind: "STEP", step: newStep("New step") }])} className="btn-secondary btn-compact">
+          Add a level
+        </button>
+        <button
+          type="button"
+          onClick={() => onChange([...stages, { kind: "PARALLEL", id: newId(), label: "Parallel review", join: "ALL", steps: [newStep("Branch A"), newStep("Branch B")] }])}
+          className="btn-secondary btn-compact"
+        >
+          Add parallel steps
+        </button>
+        {allowChoice && (
           <button
             type="button"
-            onClick={() => setStages((all) => [...all, { kind: "PARALLEL", id: newId(), label: "Parallel review", join: "ALL", steps: [newStep("Branch A"), newStep("Branch B")] }])}
+            disabled={form.length === 0}
+            title={form.length === 0 ? "Add a form field first" : undefined}
+            onClick={() =>
+              onChange([
+                ...stages,
+                {
+                  kind: "BRANCH",
+                  id: newId(),
+                  label: "Amount check",
+                  condition: { field: form[0]?.key ?? "", operator: "GT", value: 500000 },
+                  then: [{ kind: "STEP", step: newStep("Extra approval") }],
+                  otherwise: [],
+                },
+              ])
+            }
             className="btn-secondary btn-compact"
           >
-            Add parallel steps
+            Add a choice (if / otherwise)
           </button>
-        </div>
-      </section>
+        )}
+      </div>
+    </>
+  );
+}
+
+type SimpleCondition = NonNullable<BuilderStep["skipWhen"]>;
+
+// One field-operator-value condition, used by choices and skip rules.
+function ConditionEditor({ form, value, onChange, prefix }: { form: FormField[]; value: SimpleCondition; onChange: (value: SimpleCondition) => void; prefix: string }) {
+  return (
+    <div className="flex flex-wrap items-center gap-2 text-label">
+      <span className="font-medium">{prefix}</span>
+      <select value={value.field} onChange={(event) => onChange({ ...value, field: event.target.value })} className="field-input w-auto" aria-label="Field">
+        {form.map((field) => (
+          <option key={field.key} value={field.key}>
+            {field.label || field.key}
+          </option>
+        ))}
+      </select>
+      <select value={value.operator} onChange={(event) => onChange({ ...value, operator: event.target.value as SimpleCondition["operator"] })} className="field-input w-auto" aria-label="Condition">
+        {OPERATORS.map(([operator, label]) => (
+          <option key={operator} value={operator}>
+            {label}
+          </option>
+        ))}
+      </select>
+      {value.operator !== "IS_EMPTY" && value.operator !== "IS_NOT_EMPTY" && (
+        <input
+          aria-label="Value"
+          value={String(value.value ?? "")}
+          onChange={(event) => {
+            const raw = event.target.value;
+            const numeric = raw.replace(/[,\s₹]/g, "");
+            onChange({ ...value, value: numeric !== "" && Number.isFinite(Number(numeric)) ? Number(numeric) : raw });
+          }}
+          placeholder="e.g. 500000"
+          className="field-input w-40"
+        />
+      )}
+    </div>
   );
 }
 

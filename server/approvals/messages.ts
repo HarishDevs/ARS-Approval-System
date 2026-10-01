@@ -42,6 +42,30 @@ export function messagesForEvents(
           whatsappVariables: vars({ requester_name: request.requesterName }),
         });
         break;
+      case "WITHDRAWN":
+        for (const approverId of event.approverIds) {
+          out.push({
+            eventType: "REQUEST_WITHDRAWN",
+            userId: approverId,
+            title: "Request withdrawn",
+            message: `No longer needed: ${ref} was withdrawn by ${request.requesterName}.`,
+            deepLink: link,
+            email: { subject: `Withdrawn: ${request.requestNo}`, text: `${request.requesterName} withdrew this request, so your approval is no longer needed.\n\n${ref}${event.reason ? `\nReason: ${event.reason}` : ""}\n\n${link}` },
+            whatsappVariables: vars({ requester_name: request.requesterName }),
+          });
+        }
+        break;
+      case "REOPENED":
+        out.push({
+          eventType: "REQUEST_REOPENED",
+          userId: request.requesterId,
+          title: "Request reopened",
+          message: `Reopened for approval again: ${ref}. Reason: ${event.reason}`,
+          deepLink: link,
+          email: { subject: `Reopened: ${request.requestNo}`, text: `Your approved request was reopened and goes through approval again.\n\n${ref}\nReason: ${event.reason}\n\n${link}` },
+          whatsappVariables: vars({ reason: event.reason }),
+        });
+        break;
       case "TASK_REASSIGNED":
         out.push({
           eventType: "APPROVAL_NEEDED",

@@ -1,9 +1,19 @@
 import { StepStatusPill, taskStatusText } from "@/features/requests/StatusPill";
 import type { MapStage, MapStep } from "@/server/approvals/step-map";
 
-// The full level map (F-14): every stage in order; parallel steps side by
-// side; each step with its rule and every approver's status.
+// The full level map (F-14): every level in order; parallel steps side by
+// side; choices show both paths, the one not taken greyed out (D-068).
 function StepCard({ step }: { step: MapStep }) {
+  if (step.notTaken) {
+    return (
+      <div className="rounded-md border border-dashed border-line p-3 opacity-60">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="font-medium">{step.label}</p>
+          <span className="badge bg-surface-muted text-ink-muted">Not taken</span>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className={`rounded-md border p-3 ${step.status === "ACTIVE" ? "border-primary-600 bg-primary-50/40" : "border-line bg-surface"}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -29,6 +39,56 @@ function StepCard({ step }: { step: MapStep }) {
   );
 }
 
+function StageBody({ stage }: { stage: MapStage }) {
+  if (stage.kind === "PARALLEL") {
+    return (
+      <div className="rounded-md border border-dashed border-line p-3">
+        <p className="mb-2 text-caption font-semibold uppercase tracking-wider text-ink-faint">
+          {stage.label} · in parallel · {stage.joinRule}
+        </p>
+        <div className="grid gap-3 md:grid-cols-2">
+          {stage.steps.map((step) => (
+            <StepCard key={step.nodeId} step={step} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+  if (stage.kind === "CHOICE") {
+    return (
+      <div className="rounded-md border border-dashed border-line p-3">
+        <p className="mb-2 text-caption font-semibold uppercase tracking-wider text-ink-faint">{stage.label}</p>
+        <div className="grid gap-3 md:grid-cols-2">
+          {stage.paths?.map((path) => (
+            <div key={path.label} className={`rounded-md p-2 ${path.taken === false ? "opacity-70" : ""}`}>
+              <p className="mb-2 text-label font-medium">
+                {path.label}
+                {path.taken === true && <span className="badge ml-2 bg-success-50 text-success-600">Path taken</span>}
+              </p>
+              {path.stages.length === 0 ? (
+                <p className="text-caption text-ink-muted">No extra levels.</p>
+              ) : (
+                <div className="space-y-2">
+                  {path.stages.map((inner, index) => (
+                    <StageBody key={`${inner.label}-${index}`} stage={inner} />
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  return (
+    <>
+      {stage.steps.map((step) => (
+        <StepCard key={step.nodeId} step={step} />
+      ))}
+    </>
+  );
+}
+
 export function StepMap({ stages }: { stages: MapStage[] }) {
   return (
     <ol className="space-y-3">
@@ -38,20 +98,7 @@ export function StepMap({ stages }: { stages: MapStage[] }) {
             {index + 1}
           </span>
           <div className="min-w-0 flex-1">
-            {stage.kind === "PARALLEL" ? (
-              <div className="rounded-md border border-dashed border-line p-3">
-                <p className="mb-2 text-caption font-semibold uppercase tracking-wider text-ink-faint">
-                  {stage.label} · in parallel · {stage.joinRule}
-                </p>
-                <div className="grid gap-3 md:grid-cols-2">
-                  {stage.steps.map((step) => (
-                    <StepCard key={step.nodeId} step={step} />
-                  ))}
-                </div>
-              </div>
-            ) : (
-              stage.steps.map((step) => <StepCard key={step.nodeId} step={step} />)
-            )}
+            <StageBody stage={stage} />
           </div>
         </li>
       ))}

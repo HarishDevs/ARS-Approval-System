@@ -1,8 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { submitCustomAction } from "@/app/users/collab-actions";
-import { LevelsEditor, type BuilderOptions } from "@/features/admin/WorkflowBuilder";
+import { LevelsEditor, newStepId, type BuilderOptions } from "@/features/admin/WorkflowBuilder";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import type { BuilderStage } from "@/server/workflows/builder";
 import type { FormField } from "@/server/forms/fields";
@@ -14,7 +14,6 @@ export function CustomApprovalForm({ options }: { options: BuilderOptions }) {
   const [stages, setStages] = useState<BuilderStage[]>([
     { kind: "STEP", step: { id: "s1", label: "First approval", approvers: { kind: "PEOPLE", userIds: [] }, rule: "ALL" } },
   ]);
-  const counter = useRef(100);
   const { result, pending, onSubmit } = useActionForm(submitCustomAction);
 
   return (
@@ -48,7 +47,7 @@ export function CustomApprovalForm({ options }: { options: BuilderOptions }) {
         setStages={setStages}
         options={options}
         form={CUSTOM_FIELDS}
-        newId={() => `s${++counter.current}`}
+        newId={newStepId}
         title="Who approves"
         hint="Pick anyone, in any order. Add parallel steps when several people should look at the same time. You can't approve your own request."
       />

@@ -21,15 +21,16 @@ import {
   type WorkflowVersionRecord,
 } from "@/lib/db/repositories/approvals.repository";
 import { loadDirectorySnapshot, toDirectory, type DirectorySnapshot } from "@/lib/db/repositories/directory.repository";
+import { loadWorkingCalendar } from "@/lib/db/repositories/calendar.repository";
 import { checkFormDefinition, parseFormSubmission, type FormField } from "@/server/forms/fields";
-import { compileBuilder, type BuilderSpec } from "@/server/workflows/builder";
+import { allSteps, compileBuilder, type BuilderSpec } from "@/server/workflows/builder";
 import { describeRule } from "@/server/approvals/step-map";
 import { listUserIdsWithRole } from "@/lib/db/repositories/users.repository";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { getEnv } from "@/config/environment";
 import { notify } from "@/server/notifications/notify";
 import { messagesForEvents } from "@/server/approvals/messages";
-import { decide, putOnHold, reassignTask, resubmit, resume, simulate, startInstance, validateWorkflow, EngineError } from "@/server/engine";
+import { decide, putOnHold, reassignTask, reopen, resubmit, resume, simulate, startInstance, validateWorkflow, withdraw, EngineError } from "@/server/engine";
 import type { Decision, EngineEvent, EngineResult, FormData as EngineFormData, RestartPolicy, ValidationResult, WorkflowDefinition } from "@/server/engine";
 import { logError } from "@/lib/logging/logger";
 import type { RoleCode } from "@/types/auth";
@@ -270,7 +271,7 @@ export async function submitRequest(
       const result = startInstance(version.definition, { requesterId: actor.id, formData, now: now() }, toDirectory(snapshot));
       const requestNo = await nextRequestNumber(workflow.requestPrefix, connection);
       const id = await insertRequest({ requestNo, workflowVersionId: version.id, requesterId: actor.id, title, formData, state: result.state }, connection);
-      await syncTasks(id, result.state, version.definition.nodes, connection);
+      await syncTasks(id, result.state, version.definition.nodes, connection, await loadWorkingCalendar(connection));
       await appendEvents(id, [{ type: "SUBMITTED", requestNo }, ...result.events], actor.id, connection);
       const request: RequestRecord = {
         id,
@@ -311,7 +312,7 @@ async function mutate(requestId: number, actor: Actor, step: Step): Promise<Resu
       if (!(await saveRequestState(request.id, request.stateVersion, result.state, result.formData ?? null, connection))) {
         throw new ServiceError("CONFLICT", "Someone else just changed this request. Reload and try again.");
       }
-      await syncTasks(request.id, result.state, version.definition.nodes, connection);
+      await syncTasks(request.id, result.state, version.definition.nodes, connection, await loadWorkingCalendar(connection));
       await appendEvents(request.id, result.events, actor.id, connection);
       return {
         request: { ...request, state: result.state, status: result.state.status, round: result.state.round, stateVersion: request.stateVersion + 1 },
@@ -372,8 +373,7 @@ export const CUSTOM_FORM: FormField[] = [
 
 export function checkCustomSpec(spec: BuilderSpec, requesterId: number): string[] {
   const problems: string[] = [];
-  const steps = spec.stages.flatMap((stage) => (stage.kind === "STEP" ? [stage.step] : stage.steps));
-  for (const step of steps) {
+  for (const step of allSteps(spec)) {
     if (step.approvers.kind === "PEOPLE" && step.approvers.userIds.every((id) => id === requesterId)) {
       problems.push(`"${step.label}": you can't approve your own request. Pick someone else.`);
     }
@@ -444,4 +444,19 @@ export async function countPendingTasks(userId: number): Promise<number> {
     [userId],
   );
   return Number(rows[0]?.total ?? 0);
+}
+
+// ---- withdraw and reopen (F-17, F-29, D-066) ---------------------------------------
+export function withdrawRequest(input: { requestId: number; reason?: string }, actor: Actor) {
+  return mutate(input.requestId, actor, (request) => {
+    if (request.requesterId !== actor.id) throw new ServiceError("NOT_AUTHORISED", "Only the person who raised the request can withdraw it.");
+    return withdraw(request.state, { actorId: actor.id, reason: input.reason });
+  });
+}
+
+export function reopenRequest(input: { requestId: number; reason: string }, actor: Actor) {
+  return mutate(input.requestId, actor, (request, definition, directory) => {
+    if (!actor.roles.includes("SUPER_ADMIN")) throw new ServiceError("NOT_AUTHORISED", "Only the Super Admin can reopen an approved request.");
+    return reopen(definition, request.state, { actorId: actor.id, reason: input.reason }, context(request), directory);
+  });
 }
