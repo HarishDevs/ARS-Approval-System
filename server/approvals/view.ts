@@ -7,6 +7,8 @@ import { describeEvent } from "@/server/approvals/timeline";
 import { displayValue, type FormField } from "@/server/forms/fields";
 import type { FormData as EngineFormData, InstanceStatus } from "@/server/engine/types";
 import type { Actor } from "@/server/approvals/service";
+import { listAttachments } from "@/lib/db/repositories/attachments.repository";
+import { formatSize } from "@/server/attachments/files";
 
 // Everything the request page shows (F-14), after the record-level check
 // (P1-30a layer 3, D-057): the requester, anyone with a task on it, or
@@ -27,6 +29,8 @@ export interface RequestView {
   timeline: { id: number; at: Date; text: string }[];
   myTasks: { taskKey: string; label: string; forName: string | null }[];
   comments: CommentItem[];
+  attachments: { id: number; name: string; size: string; uploaderName: string; createdAt: Date; round: number }[];
+  canAddFiles: boolean;
   canResume: boolean;
   canResubmit: boolean;
   canWithdraw: boolean;
@@ -96,6 +100,8 @@ export async function loadRequestView(requestId: number, viewer: Actor): Promise
         ? myPending.map((task) => ({ taskKey: task.id, label: labelOf(task.nodeId), forName: task.approverId === viewer.id ? null : nameOf(task.approverId) }))
         : [],
     comments: await listComments(requestId),
+    attachments: (await listAttachments(requestId)).map((file) => ({ id: file.id, name: file.name, size: formatSize(file.sizeBytes), uploaderName: file.uploaderName, createdAt: file.createdAt, round: file.round })),
+    canAddFiles: ["IN_PROGRESS", "ON_HOLD", "CHANGES_REQUIRED"].includes(state.status),
     canResume: state.status === "ON_HOLD" && (isAdmin(viewer) || myPending.some((task) => task.nodeId === holdNode)),
     canResubmit: state.status === "CHANGES_REQUIRED" && request.requesterId === viewer.id,
     canWithdraw: ["IN_PROGRESS", "ON_HOLD", "CHANGES_REQUIRED"].includes(state.status) && request.requesterId === viewer.id,

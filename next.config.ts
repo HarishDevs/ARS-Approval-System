@@ -22,6 +22,12 @@ const nextConfig: NextConfig = {
   eslint: { ignoreDuringBuilds: false },
   typescript: { ignoreBuildErrors: false },
   env: FIREBASE_PUBLIC_CONFIG,
+  // Attachments (D-072): up to 5 files of 10 MB in one upload. The
+  // middleware limit must match, or bodies over 10 MB would be cut short.
+  experimental: {
+    serverActions: { bodySizeLimit: "52mb" },
+    middlewareClientMaxBodySize: "52mb",
+  },
   async headers() {
     return [
       {

@@ -41,12 +41,15 @@ The number of levels and how they combine is unlimited. There are no fixed "Leve
 | F-29 | Reopen | Built 1 Oct 2026 (Super Admin) |
 | F-17 | Withdraw by the requester | Built and verified 1 Oct 2026 |
 | F-55 | Working calendar (working days, holidays) | Built 1 Oct 2026 |
-| F-70 | Management dashboard | Built 1 Oct 2026 |
+| F-56 | Management dashboard (was numbered F-70 by mistake; F-70 is Price Realisation) | Built 1 Oct 2026 |
+| F-18 | Attachments on a request | Built and tested (incl. e2e) 7 Oct 2026 |
+| F-57 | Demo data loader | Built and verified in the browser 7 Oct 2026 |
+| F-42 | WhatsApp template registry | Built and verified 7 Oct 2026; templates go live as Meta approves them |
 | F-30 | Delegation | Built and verified 1 Oct 2026 |
 | F-31 | SLA, reminder, escalation | Built 1 Oct 2026 (working days and holidays) |
 | F-32 | Work assignment after approval | Planned |
 | F-33 | Employee custom approval | Built and verified 1 Oct 2026 |
-| F-40 | Notification pipeline | Planned |
+| F-40 | Notification pipeline | Built (in-app + email + WhatsApp, retries); WhatsApp per template as approved (7 Oct 2026) |
 | F-50 | Workflow authoring: design → validate → test → publish → version | Levels builder with choices built 1 Oct 2026; canvas later |
 | F-51 | Admin configuration change (audited) | Built for settings, users, departments, workflows 30 Sep 2026 |
 | F-52 | Provider settings and test send (Super Admin) | Built 30 Sep 2026 |
@@ -59,7 +62,7 @@ The number of levels and how they combine is unlimited. There are no fixed "Leve
 | F-14 | Request screens: raise → queue → act → resubmit | Built and verified in the browser 30 Sep 2026 |
 | F-41 | Retry runner for failed messages | Built 30 Sep 2026 (cron set up at go-live) |
 | F-09 | Rate limiting on sign-in and codes | Built and verified 30 Sep 2026 |
-| F-60…F-71 | First templates mapped from Asana | Planned |
+| F-60…F-71 | First templates mapped from Asana | Built and published 7 Oct 2026 on demo staff (12 types) |
 
 ---
 
@@ -513,6 +516,43 @@ flowchart TD
   - Custom approvals never appear in anyone else's "New request" list.
 - Everything after submission is the normal flow (F-11 to F-14).
 
+## F-18 Attachments on a request (S6-05, D-072)
+```
+Requester raises / resubmits ──(files)──┐
+Anyone who can see the request, while open ──(Add files)──┤
+                                        ▼
+   check: signed in, can view, request open (raise/resubmit: is requester)
+   check each file: ≤ 10 MB, ≤ 20 files per request, allowed type
+   (PDF, images, Office, CSV, text), contents match the type (sniffed)
+                                        ▼
+   save to UPLOAD_DIR/<yyyy>/<mm>/<random id> (outside the web root)
+   row in request_attachments (name, type, size, sha256, who, round)
+   timeline: "Ravi attached quote.pdf"
+                                        ▼
+   Download: GET /api/attachments/<id> → session + same view check as the
+   request page (else 404, audited) → sent as a download, never inline
+```
+Files are never deleted or replaced. A newer file is simply added, so the history stays complete.
+
+## F-57 Demo data loader (S6-02a, D-071)
+`/superadmin/demo` → "Load demo data" (Super Admin only, audited) creates:
+- demo departments, designations and people, with managers and HODs;
+- approver groups (MD office, ED office, Finance (Prabu's desk), Finance (Valarmadhi's desk), Purchase & SCM, Sumit's desk, Price realisation reviewers, Finance checkers, Finance level 2);
+- the first approval types F-60 to F-70, published.
+
+It is safe to run twice: anything that already exists is left as it is. "Retire demo staff" makes every demo person inactive. Pending approvals then block and IT is told (G-02), so the real people must be put into the groups or HOD slots first.
+
+## F-42 WhatsApp template registry (S6-04)
+```
+catalogue in code ──► docs/NOTIFICATION-TEMPLATES.md ──► owner creates each in CEOITBox
+        │                                                      │ Meta approves
+        ▼                                                      ▼
+/superadmin/templates: Super Admin enters the approved name, ticks "Approved and on"
+        ▼
+whatsapp_templates (+ variables in catalogue order) ──► notify() sends it
+```
+Until a template is switched on, the WhatsApp send is SKIPPED (TEMPLATE_NOT_CONFIGURED). Email and in-app messages still go out.
+
 ## F-15 Comments on a request (S4-02, D-061)
 Anyone who can open the request (D-057) can post a comment of up to 2,000 characters.
 - Comments are **append-only**: no edit or delete, like the rest of the history.
@@ -593,7 +633,7 @@ Full steps are in `docs/DEPLOYMENT.md`:
 - the break-glass setup;
 - a post-go-live checklist.
 
-## F-70 Management dashboard (S5-03, D-069)
+## F-56 Management dashboard (S5-03, D-069; numbered F-70 until 7 Oct 2026)
 `/admin/insights`, for IT Admin and Super Admin; management roles come later:
 - **Open now:** requests by approval type and by the level they are waiting at, plus the overdue count.
 - **Speed:** average and slowest time to decide, per level, over the last 90 days.
@@ -630,6 +670,15 @@ Run in the GoDaddy console only: `node scripts/admin/break-glass.js status | cre
 ---
 
 ## First templates (from Asana reference, corrected)
+Built 7 Oct 2026 as published approval types on the demo staff (D-071). People are picked by group or department HOD, so the real staff swap in without editing:
+- F-62 became "Finance (controller)", using the group FIN_CONTROLLER.
+- F-63 became "Finance (head)", using the Finance department's HOD.
+- F-64 carries the DoA example (D-074).
+- F-65 became "Director Approval".
+- F-68's level 2 is a choice on Nature.
+- F-69 waits for F-32 for the work hand-off.
+- F-71 became the generic "Department Approval (Manager → HOD)".
+
 | ID | Template | Graph | Replaces |
 |---|---|---|---|
 | F-60 | MD Approval | START → MD → END; resubmission allowed; later DoA-driven | A-02 (+ all MD department copies) |

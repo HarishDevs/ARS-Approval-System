@@ -54,7 +54,12 @@ export function deriveDoaTable(spec: BuilderSpec, field = "amount"): DoaTable {
         return !condition || condition.field !== field || !evaluateCondition(condition, { [field]: amount });
       };
       if (stage.kind === "STEP") return keep(stage.step.skipWhen) ? [mark(stage.step.label)] : [];
-      if (stage.kind === "PARALLEL") return stage.steps.filter((step) => keep(step.skipWhen)).map((step) => mark(step.label));
+      if (stage.kind === "PARALLEL") {
+        // Steps in parallel are one level: "A + B (together)".
+        const labels = stage.steps.filter((step) => keep(step.skipWhen)).map((step) => step.label);
+        if (labels.length <= 1) return labels.map(mark);
+        return [mark(`${labels.join(" + ")} (together)`)];
+      }
       if (stage.condition.field === field) {
         return evaluateCondition(stage.condition as Comparison, { [field]: amount }) ? levelsIn(stage.then, amount, maybe) : levelsIn(stage.otherwise, amount, maybe);
       }

@@ -6,6 +6,8 @@ export function describeEvent(event: TimelineEvent, labelOf: (nodeId: string) =>
   switch (event.type) {
     case "SUBMITTED":
       return `Submitted as ${event.requestNo}`;
+    case "ATTACHMENTS_ADDED":
+      return `${nameOf(event.actorId)} attached ${event.names.join(", ")}`;
     case "TASK_CREATED":
       return `Sent to ${nameOf(event.approverId)} for "${labelOf(event.nodeId)}"`;
     case "TASK_DECIDED": {

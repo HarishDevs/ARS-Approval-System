@@ -52,6 +52,7 @@ Anything below marked **confirm** has not been seen on the real GoDaddy screens 
 | `SESSION_SECRET` | fresh, from §1 |
 | `ENCRYPTION_KEY` | fresh, from §1 |
 | `JOB_RUNNER_SECRET` | fresh, from §1 |
+| `UPLOAD_DIR` | a folder **outside** the app folder and public_html, e.g. `/home/<cpanel-user>/ars-approvals-uploads` (create it first). Attachments live here, so it must survive redeploys and be in the backup |
 | `FIREBASE_PROJECT_ID` | `power-bi-dashboard-3b29f` |
 | `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` | from the service account. Keep the `\n` sequences as they are in the JSON |
 

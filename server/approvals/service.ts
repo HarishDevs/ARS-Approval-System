@@ -237,11 +237,14 @@ async function requesterName(id: number, db: Pick<PoolConnection, "query">): Pro
 // Notifications after the commit; a failed send never undoes the action.
 async function announce(changed: Changed): Promise<void> {
   try {
-    const adminIds = changed.events.some((event) => event.type === "NODE_BLOCKED") ? await listUserIdsWithRole("IT_ADMIN") : [];
+    const blocked = changed.events.some((event) => event.type === "NODE_BLOCKED");
+    const adminIds = blocked ? await listUserIdsWithRole("IT_ADMIN") : [];
+    const nodes = blocked ? ((await findWorkflowVersion(changed.request.workflowVersionId))?.definition.nodes ?? []) : [];
+    const labelOf = (nodeId: string) => nodes.find((node) => node.id === nodeId)?.label ?? nodeId;
     const messages = messagesForEvents(
       changed.events,
       { id: changed.request.id, requestNo: changed.request.requestNo, title: changed.request.title, requesterId: changed.request.requesterId, requesterName: changed.requesterName },
-      { baseUrl: getEnv().APP_BASE_URL ?? "https://approvals.arssteels.net", adminIds },
+      { baseUrl: getEnv().APP_BASE_URL ?? "https://approvals.arssteels.net", adminIds, labelOf },
     );
     for (const message of messages) await notify(message);
   } catch (error) {

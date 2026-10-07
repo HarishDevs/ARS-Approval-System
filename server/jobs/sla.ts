@@ -101,7 +101,7 @@ export async function runSlaChecks(): Promise<{ reminders: number; escalations: 
                 subject: `Escalation: ${row.request_no} is stuck with ${row.approver_name}`,
                 text: `${row.approver_name} hasn't acted on "${row.node_label}" for twice the allowed time.\n\n${ref}\n\nIT can hand the approval over if needed.\n${link}`,
               },
-              whatsappVariables: null,
+              whatsappVariables: { approver_name: row.approver_name, step: row.node_label, request_no: row.request_no, title: row.title, link },
             });
           }
           result.escalations += 1;

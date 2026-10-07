@@ -25,10 +25,10 @@
 | Company | ARS Steels & Alloy International Pvt Ltd |
 | Build team | Project owner (ARS IT, itadmin@arssteels.co.in) + Claude (AI pair developer) |
 | Admin Portal (Super Admin) login | `itadmin@arssteels.co.in`, operated by the developers |
-| Current stage | **Build session 5 done (1 Oct 2026).** Choices in the builder, withdraw/reopen, working calendar, Insights, Playwright e2e in CI. 169 unit + 28 MySQL integration + 8 e2e tests, typecheck, lint and build pass. **Feature-complete for go-live**; waiting on the owner's staff list and deployment go-ahead |
+| Current stage | **Build session 6 done (7 Oct 2026).** Demo staff and the 12 first approval types; DoA example; all 20 WhatsApp template formats and the registry screen; attachments. 192 unit + 37 MySQL integration + 12 e2e tests, typecheck, lint and build pass. Ready to go live on the owner's go-ahead |
 | Address | **`approvals.arssteels.net`** (single app; role routes `/users`, `/admin`, `/superadmin`, D-034) |
 | Repository | **https://github.com/HarishDevs/ARS-Approval-System** (private, `main`, D-035). Local root: `D:\Omniroute\ARS Approval System` |
-| Last updated | 1 Oct 2026 (build session 5) |
+| Last updated | 7 Oct 2026 (build session 6) |
 
 ## 2. Key files and links
 
@@ -50,6 +50,10 @@
 | Approvals persistence | `server/approvals/service.ts` (submit, decide, hold, resume, resubmit, workflows/versions), `server/approvals/messages.ts`, `lib/db/repositories/approvals.repository.ts`, `directory.repository.ts`; integration tests in `tests/integration/` (`npm run test:integration`) |
 | End-to-end tests | `npm run test:e2e` (Playwright): builds the app, recreates `ars_approvals_test`, seeds E2E_* people, signs them in with test cookies; specs in `tests/e2e/` |
 | Insights and calendar | `/admin/insights` (`insights.repository.ts`), `/admin/calendar` (`calendar.repository.ts`, `server/workflows/calendar.ts`) |
+| Demo data | `server/demo/demo-data.ts` (people, groups, the 12 approval types), `server/demo/service.ts` (load, retire, Try as), `/superadmin/demo` |
+| Notification templates | `server/notifications/templates.ts` (catalogue; generates `docs/NOTIFICATION-TEMPLATES.md` via `node scripts/dev/write-templates-doc.mjs`), `/superadmin/templates` |
+| Attachments | `server/attachments/files.ts` (rules), `server/attachments/service.ts`, `/api/attachments/[id]`, env `UPLOAD_DIR` |
+| DoA example | `docs/DOA-EXAMPLE.md` |
 | Deployment guide | `docs/DEPLOYMENT.md` (GoDaddy Node.JS Hosting from GitHub, env vars, DB privilege check, migrations, cron, Firebase domain, provider keys, break-glass, go-live checks); `scripts/database/check-privileges.js` |
 | Collaboration | custom approvals `/users/custom` (`submitCustomRequest`), comments, out-of-office `/users/delegation`, inbox `/users/notifications`; services `server/approvals/collab.ts`; data `lib/db/repositories/collab.repository.ts`; SLA job `server/jobs/sla.ts`; DoA view `/admin/doa` (`server/workflows/doa.ts`) |
 | Request screens | `/users` (home, `queue`, `requests`, `requests/[id]`, `new`, `new/[workflowId]`); actions in `app/users/actions.ts`; view + access check in `server/approvals/view.ts`; level map `step-map.ts`; timeline wording `timeline.ts` |
@@ -137,16 +141,20 @@
 | D-068 | 1 Oct 2026 | **Choices in the builder.**<br>• A level can be "if [field] [condition] [value] → these levels, otherwise → those levels". It compiles to a CONDITION node with one condition edge and one otherwise edge; both paths carry on to the next level, and either path may be empty.<br>• Choices aren't nested (kept readable).<br>• The request map shows the path taken and marks the other "Not taken". The DoA view follows amount choices.<br>• With skip conditions, parallel levels and any-one / any-N, the builder can now express every shape in the north star. | Claude (north star) |
 | D-069 | 1 Oct 2026 | **Insights page** (`/admin/insights`, IT Admin and Super Admin). Headline tiles (open, overdue, approved in 30 days, average time to approve) and tables: waiting now by level, time to decide per level (90 days), overdue list, decisions per person (30 days), requests by month (6 months). Tables rather than charts, because exact values matter here; a management role can be given access later. | Claude, following P7 |
 | D-070 | 1 Oct 2026 | **End-to-end tests.** Playwright 1.63 (the version Next 15.5 needs) runs a production build on port 3100 against `ars_approvals_test`, with test-only secrets in `playwright.config.ts`. People are seeded by SQL and signed in with app-format session cookies. It runs as a third CI job, alongside the checks and integration jobs. | Claude, following P0-44 |
+| D-071 | 7 Oct 2026 | **Demo data until the staff list arrives** (owner: "use dummy data for now").<br>• /superadmin/demo loads 20 invented demo people ("(demo)", `demo.` User IDs, emails `itadmin+demo.…@arssteels.co.in` so the IT mailbox sees every message, no WhatsApp numbers), 7 departments with HODs, 8 approver groups, and the 12 first approval types, published. Safe to repeat.<br>• Approval types pick people **by group or department HOD, never by name**, so the real staff swap in with no workflow edits.<br>• **Try as:** the Super Admin can continue as an active demo person to walk a request through. Only `is_demo` people, only with the USER role (enforced again at every request), audited (DEMO_TRY_AS); the Super Admin's own session ends.<br>• "Retire demo staff" makes them inactive, never deleted. | Claude, from owner answer 1 |
+| D-072 | 7 Oct 2026 | **Attachments** (owner confirmed GoDaddy keeps files, Q-001).<br>• Files on disk in `UPLOAD_DIR` (outside the web root), random names, sha256 recorded.<br>• Allowed: PDF, PNG/JPG/WEBP, Word/Excel/PowerPoint, CSV, text. The contents are sniffed to match the name. 10 MB per file, 5 per upload, 20 per request.<br>• Added on raise or resubmit (requester), or any time while open (anyone who can see the request). Never deleted.<br>• Downloads only through `/api/attachments/[id]`, with the same check as the request page; always a download, with a sandbox CSP and nosniff.<br>• Server Action and middleware body limits raised to 52 MB. | Claude, following P2-08 |
+| D-073 | 7 Oct 2026 | **WhatsApp template catalogue** (Q-013: owner asked for every format).<br>• One catalogue in code holds 20 Utility templates (wording, {{n}} order, Meta samples). It generates docs/NOTIFICATION-TEMPLATES.md, and a test keeps code, catalogue and document in step.<br>• The Super Admin records the approved name and switches each one on in /superadmin/templates. Until then the WhatsApp send is SKIPPED; email and in-app messages still go out.<br>• Values are sent on one line, cut to 300 characters, never empty (Meta's rules).<br>• Escalation and "request blocked" now go on WhatsApp too. The set-password link stays email only. | Claude, from owner answer 3 |
+| D-074 | 7 Oct 2026 | **DoA example** (owner asked for one, Q-004): Purchase & SCM, with bands up to ₹1L SCM head; then + Finance head; above ₹10L + ED; above ₹25L + MD. Explained in docs/DOA-EXAMPLE.md with a table to fill in. The DoA view shows parallel reviewers as one level ("A + B (together)"). Flow F-70 was numbered twice, so the dashboard became F-56. | Claude, from owner answer 4 |
 | D-033 | 28 Sep 2026 | **Staff data is provided by the admin. Roles are assigned per user, by the admin only. Users are added or made inactive in the Admin Portal** (never hard-deleted, so history and audit stay intact). *Resolves Q-010.* | Owner (answer 7) |
 
 ## 4. Open questions (must be answered before the phase shown)
 
 | ID | Question | Blocks | Status |
 |---|---|---|---|
-| Q-001 | GoDaddy plan type | Phase 0 stack choice | **Resolved 28 Sep → D-027/D-028.** Still to check on first deploy: the Node.js Hosting product vs cPanel "Setup Node.js App", whether its MySQL is the existing cPanel one (17 of 25 DB slots used), whether the disk is persistent (attachments), and cron availability |
+| Q-001 | GoDaddy plan type | Phase 0 stack choice | **Resolved 28 Sep → D-027/D-028.** Still to check on first deploy: the Node.js Hosting product vs cPanel "Setup Node.js App", whether its MySQL is the existing cPanel one (17 of 25 DB slots used), whether the disk is persistent (attachments), and cron availability **7 Oct 2026: owner confirmed the disk keeps uploaded files → D-072.** MySQL host and cron still to check on the first deploy |
 | Q-002 | CEOITBox API details and sharing | Phase 0 / Phase 1 | **Resolved 28 Sep → D-029, D-036** (same number and key; the owner provides the notification templates) |
 | Q-003 | OTP channels | Phase 1 OTP | **Resolved 28 Sep → D-025 (WhatsApp only)** |
-| Q-004 | **DoA matrix** (explained in PLAN-CHECKLIST §0.3) | Phase 3 amount routing | **Owner resolved → D-041 (itadmin@).** Open: the actual amount bands and approvers per request type, to be entered by itadmin@ before Phase 3 |
+| Q-004 | **DoA matrix** (explained in PLAN-CHECKLIST §0.3) | Phase 3 amount routing | **Owner resolved → D-041 (itadmin@).** Open: the actual amount bands and approvers per request type, to be entered by itadmin@ before Phase 3 **7 Oct 2026: example given (docs/DOA-EXAMPLE.md, demo Purchase & SCM); waiting for the real bands** |
 | Q-005 | Email sender | Phase 1 notifications | **Resolved 28 Sep → D-030, D-037 (Resend from itadmin@)** |
 | Q-006 | App addresses | Phase 0 | **Resolved 28 Sep → D-034 (one address: approvals.arssteels.net; role routes /users, /admin, /superadmin)** |
 | Q-007 | Google sign-in project | Phase 1 | **Resolved 28 Sep → D-038 (reuse power-bi-dashboard-3b29f)** |
@@ -155,11 +163,25 @@
 | Q-010 | Staff master data | Phase 1 | **Resolved 28 Sep → D-033 (admin provides; roles per user by admin; add/inactivate in the Admin Portal)** |
 | Q-011 | IT-team access to the Admin Portal | Phase 1 roles | **Resolved 28 Sep → D-039** |
 | Q-012 | Custom approval limits | Phase 5 | **Resolved 28 Sep → D-040 (anyone can pick anyone; the no-self-approval safety rule stays)** |
-| Q-013 | **Notification templates:** the owner will send the WhatsApp (and email) wording for the events N-06 to N-20; the Meta template names come after approval | Phase 1 notifications | Open, waiting on the owner |
+| Q-013 | **Notification templates:** the owner will send the WhatsApp (and email) wording for the events N-06 to N-20; the Meta template names come after approval | Phase 1 notifications | Open, waiting on the owner **7 Oct 2026: all 20 formats delivered (docs/NOTIFICATION-TEMPLATES.md); the owner creates them in CEOITBox and switches each on in /superadmin/templates** |
 | Q-014 | OTP template | Phase 1 | **Resolved 28 Sep → confirmed by the owner: reuse `wa_login_otp_v1`** (D-042) |
 | Q-015 | **Break-glass and WhatsApp:** the break-glass account signs in with a password **plus the WhatsApp code** (D-025). If WhatsApp or CEOITBox is down, which is exactly when break-glass may be needed, it can't sign in. Keep the code, or skip it only during the console-enabled window? | Go-live | Open, waiting on the owner (built conservatively: the code is required) |
 
 ## 5. Work log (newest first)
+
+### 7 Oct 2026 (build session 6)
+- **Owner's answers:** use dummy data; GoDaddy keeps files; send every template format; give a DoA example.
+- **Built:**
+  - demo data with Try as (D-071), and the 12 first approval types F-60 to F-71 (P2-50 to P2-55);
+  - the DoA example (D-074);
+  - the template catalogue, document and registry screen, with WhatsApp for escalation and blocked requests (D-073);
+  - attachments (D-072).
+- **Found and fixed:**
+  - S6-F1: the e2e suite caught empty file boxes blocking every submit;
+  - S6-F2: parallel levels in the DoA view;
+  - S6-F3: duplicate F-70.
+- **Tests:** +23 unit (templates and code kept in step, file rules, demo set validity and DoA bands) and +9 MySQL integration (demo load twice, a ₹15L purchase routed SCM → Finance → ED, Try as rules, retire, attachment rights, closed request, the registry). +4 e2e (load demo, switch on a template, Try as + raise with a PDF + download, wrong type refused, outsider 404).
+- **Local only:** the demo data is loaded in the dev database.
 
 ### 1 Oct 2026 (build session 5)
 - **Built:**
@@ -290,7 +312,7 @@
 | Access | Lockout, sessions, trusted devices, forgot password | **Done (30 Sep 2026)** except idle timeout and approximate location | P1-AUTH |
 | Admin Portal | Separate app; Super Admin only; audited changes | **Done** as role areas in one app (D-034), every change audited | P1-ADM |
 | Admin Portal | Organisation, users, hierarchy, roles, data scopes | In progress: users, roles, manager, departments + HOD, designations done; data scopes, import to do | P1-ADM |
-| Admin Portal | Security, providers, notification templates, audit viewer | In progress: providers + security settings, test send, delivery log, audit viewer done; templates UI, export to do | P1-ADM |
+| Admin Portal | Security, providers, notification templates, audit viewer | In progress: providers, security, test send, delivery log, audit viewer; **WhatsApp template registry done 7 Oct 2026** | P1-ADM |
 | Admin Portal | Approval Builder, form builder, workflow designer, validator, test mode | **Done as a structured levels builder (30 Sep 2026)**: forms, levels, validation, test mode, versions; drag-and-drop canvas later | P3 |
 | Admin Portal | DoA matrix, SLA/escalation, holiday calendar | **Done (1 Oct 2026)**: DoA view, SLA, working days and holidays | P3/P4 |
 | Admin Portal | Data rights: view, export, correct (versioned), archive, retention | Planned | P1-ADM / P7 |

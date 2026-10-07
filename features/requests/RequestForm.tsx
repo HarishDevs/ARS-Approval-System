@@ -3,6 +3,7 @@
 import { resubmitAction, submitRequestAction } from "@/app/users/actions";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import type { FormField } from "@/server/forms/fields";
+import { ACCEPT_ATTRIBUTE } from "@/server/attachments/files";
 
 // Raise a request, or edit and resubmit one (F-14). The server re-checks
 // every field against the workflow version's form (D-055).
@@ -50,6 +51,14 @@ export function RequestForm({
             <FieldError result={result} name={field.key} />
           </div>
         ))}
+        <div>
+          <label htmlFor="f-attachments" className="field-label">
+            {mode === "submit" ? "Attachments" : "Add files"} <span className="font-normal text-ink-faint">(optional)</span>
+          </label>
+          <input id="f-attachments" name="attachments" type="file" multiple accept={ACCEPT_ATTRIBUTE} className="block w-full text-label file:mr-3 file:rounded-md file:border-0 file:bg-surface-muted file:px-3 file:py-2" />
+          <p className="mt-1 text-caption text-ink-muted">Quotes, invoices, photos: PDF, images, Word, Excel, PowerPoint, CSV or text. Up to 5 files of 10 MB each.</p>
+          <FieldError result={result} name="attachments" />
+        </div>
       </div>
       <div className="flex flex-wrap items-center gap-3 border-t border-line px-5 py-4">
         <SubmitButton pending={pending} className="btn-compact">

@@ -318,7 +318,7 @@ export async function syncTasks(requestId: number, state: InstanceState, nodes: 
 }
 
 // The timeline holds the engine's events plus the service's own markers.
-export type TimelineEvent = EngineEvent | { type: "SUBMITTED"; requestNo: string };
+export type TimelineEvent = EngineEvent | { type: "SUBMITTED"; requestNo: string } | { type: "ATTACHMENTS_ADDED"; actorId: number; names: string[] };
 
 export async function appendEvents(requestId: number, events: readonly TimelineEvent[], actorId: number | null, db: Queryable): Promise<void> {
   if (events.length === 0) return;

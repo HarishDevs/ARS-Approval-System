@@ -2,8 +2,9 @@ import type { EngineEvent } from "@/server/engine/types";
 import type { NotifyInput } from "@/server/notifications/notify";
 
 // Which engine events tell whom what (N-06 onwards). Pure and unit-tested.
-// Email and in-app work now; WhatsApp uses the owner's templates once they
-// are approved (Q-013), filled from whatsappVariables.
+// Email and in-app work now; WhatsApp uses the templates in
+// server/notifications/templates.ts once each is approved and switched on
+// (Q-013), filled from whatsappVariables by key.
 export interface RequestSummary {
   id: number;
   requestNo: string;
@@ -19,7 +20,7 @@ export function requestLink(baseUrl: string, requestId: number): string {
 export function messagesForEvents(
   events: readonly EngineEvent[],
   request: RequestSummary,
-  context: { baseUrl: string; adminIds: readonly number[] },
+  context: { baseUrl: string; adminIds: readonly number[]; labelOf?: (nodeId: string) => string },
 ): NotifyInput[] {
   const link = requestLink(context.baseUrl, request.id);
   const ref = `${request.requestNo} · ${request.title}`;
@@ -127,23 +128,26 @@ export function messagesForEvents(
           whatsappVariables: vars({ reason: event.reason ?? "" }),
         });
         break;
-      case "NODE_BLOCKED":
+      case "NODE_BLOCKED": {
         // Never silently approved: IT must fix the missing approver (G-02).
+        const step = context.labelOf?.(event.nodeId) ?? event.nodeId;
+        const why = event.reason === "NO_MATCHING_BRANCH" ? "no path matches" : "no eligible approver";
         for (const adminId of context.adminIds) {
           out.push({
             eventType: "REQUEST_BLOCKED",
             userId: adminId,
             title: "Request blocked",
-            message: `${ref} is stuck at step "${event.nodeId}": ${event.reason === "NO_MATCHING_BRANCH" ? "no path matches" : "no eligible approver"}.`,
+            message: `${ref} is stuck at step "${step}": ${why}.`,
             deepLink: link,
             email: {
               subject: `Blocked: ${request.requestNo}`,
-              text: `A request can't move on and needs IT.\n\n${ref}\nStep: ${event.nodeId}\nReason: ${event.reason}\n\n${link}`,
+              text: `A request can't move on and needs IT.\n\n${ref}\nStep: ${step}\nReason: ${why}\n\n${link}`,
             },
-            whatsappVariables: null,
+            whatsappVariables: vars({ step, reason: why }),
           });
         }
         break;
+      }
       default:
         break;
     }

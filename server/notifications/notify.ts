@@ -10,6 +10,7 @@ import { sendTemplateMessage, CeoitboxError } from "@/server/integrations/ceoitb
 import { sendEmail, EmailSendError } from "@/server/integrations/resend/client";
 import { getEmailConfig, getWhatsAppConfig } from "@/server/settings/values";
 import { logError } from "@/lib/logging/logger";
+import { whatsappValue } from "@/server/notifications/templates";
 
 // Notification hub (F-40, P1-40..P1-47). One call = one event for one
 // recipient: an in-app row plus one delivery per channel (email + WhatsApp,
@@ -138,7 +139,7 @@ export async function notifyWithDeps(input: NotifyInput, deps: NotifyDeps): Prom
         await safeDelivery(deps, { notificationId, channel: "WHATSAPP", provider: "CEOITBOX", status: "SKIPPED", failureCode: "TEMPLATE_NOT_CONFIGURED" });
       } else {
         const values = input.whatsappVariables;
-        const variables = template.variableKeys.map((key) => values[key] ?? "");
+        const variables = template.variableKeys.map((key) => whatsappValue(values[key] ?? ""));
         let sent: { waMessageId: string } | null = null;
         try {
           sent = await deps.sendWhatsApp(recipient.whatsappNumber, template, variables);

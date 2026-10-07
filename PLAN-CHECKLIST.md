@@ -17,19 +17,19 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
-- **Now:** Build session 5 finished (1 Oct 2026).
-  - **Choices in the builder** (if X → these levels, otherwise those levels), so any route shape can be built on screen.
-  - **Withdraw** by the requester; **reopen** by the Super Admin.
-  - A **working calendar** (working days and holidays) for response times.
-  - A **management Insights page**.
-  - **Playwright end-to-end tests** in CI.
-  - Gates: 169 unit tests, 28 MySQL integration tests, 8 browser end-to-end tests, typecheck, lint and build pass.
-  - Verified in the browser: added a choice to the live Purchase workflow (version 2, with the DoA matrix updated), raised and withdrew a request, Insights, calendar.
-- **Blocked on the owner:**
-  - S5-01 needs **the staff list**; S5-07 needs the GoDaddy disk check (Q-001).
-  - Still open: Q-004 (DoA values), Q-013 (templates), Q-015 (break-glass without WhatsApp?), provider keys, Firebase Admin values.
-  - **A go-ahead to deploy** (docs/DEPLOYMENT.md).
-- **Next:** go-live (deploy + the first real approval types) as soon as the staff list and the go-ahead arrive. After that, session 6 (planned below).
+- **Now:** Build session 6 finished (7 Oct 2026), working from the owner's answers.
+  - **Demo data:** /superadmin/demo loads 20 stand-in staff, groups and departments, plus **12 published approval types** (F-60 to F-71). "Try as" lets the Super Admin walk a request through as any demo person.
+  - **DoA example:** Purchase & SCM, with docs/DOA-EXAMPLE.md.
+  - **All 20 WhatsApp template formats:** docs/NOTIFICATION-TEMPLATES.md, plus a /superadmin/templates screen to switch each one on.
+  - **Attachments on requests.**
+  - Gates: 192 unit tests, 37 MySQL integration tests, 12 browser end-to-end tests, typecheck, lint and build pass.
+  - Verified in the browser: the demo load, the DoA matrix, the templates screen.
+- **Waiting on the owner:**
+  - Create the 20 templates in CEOITBox (docs/NOTIFICATION-TEMPLATES.md) and send back the approved names, or enter them in /superadmin/templates.
+  - Fill in the DoA table (docs/DOA-EXAMPLE.md, Q-004).
+  - The real staff list (then swap the group members and HODs, and retire the demo staff).
+  - Q-015; the provider keys and Firebase Admin values; **the deployment go-ahead** (S6-01).
+- **Next:** session 7 (planned below). Go-live as soon as the go-ahead comes; the demo data works on the live site too.
 
 ---
 
@@ -114,13 +114,13 @@ Notes from session 4:
 - [x] S4-N3 `check-privileges.js` added for go-live: CREATE TRIGGER must be allowed or the append-only guarantees are lost (done 1 Oct 2026)
 
 ## Session log — build session 5 (planned)
-- [?] S5-01 (waiting for the owner's staff list, D-033) First real approval types (P2-50 to P2-55: MD, ED, Finance, Purchase & SCM) set up in the builder from the owner's staff list (D-033) and the Asana reference flows (FLOWS F-60 onward)
+- [x] S5-01 (done 7 Oct 2026 on demo staff, S6-03; real people swap in through groups and HODs) First real approval types (P2-50 to P2-55: MD, ED, Finance, Purchase & SCM) set up in the builder from the owner's staff list (D-033) and the Asana reference flows (FLOWS F-60 onward)
 - [x] S5-02 Withdraw / cancel by the requester while still open, and reopen of an approved request by the Super Admin with a reason (F-29) (done 1 Oct 2026)
 - [x] S5-03 Management dashboard: open requests by type and step, average time per level, overdue list, approvals per person (P7-01) (done 1 Oct 2026)
 - [x] S5-04 Working days and a holiday calendar for SLA timing (F-31) (done 1 Oct 2026)
 - [x] S5-05 Playwright end-to-end tests for sign-in guard, raise → approve → resubmit, delegation (P0-44) (done 1 Oct 2026)
 - [x] S5-06 Branching paths (CONDITION) in the builder: "if amount > X go to these levels, otherwise those" (P3-01 step toward the canvas) (done 1 Oct 2026)
-- [?] S5-07 (waiting for Q-001: does GoDaddy keep uploaded files?) Attachments on requests, once the GoDaddy disk check (Q-001) says local storage is persistent; otherwise S3-compatible storage
+- [x] S5-07 (done 7 Oct 2026, S6-05; owner confirmed GoDaddy keeps files) Attachments on requests, once the GoDaddy disk check (Q-001) says local storage is persistent; otherwise S3-compatible storage
 - [x] S5-06a Step map and DoA view understand choices; the request page shows the path taken (done 1 Oct 2026)
 - [x] S5-04a Due and escalation times on the working calendar (escalate_at column); holiday screen in /admin/calendar (done 1 Oct 2026)
 - [x] S5-08 Update the three living files; commit and push (done 1 Oct 2026)
@@ -130,14 +130,54 @@ Found and fixed during session 5:
 - [x] S5-F2 Insights showed "0 min" for very quick decisions; it now says "under 1 min" (done 1 Oct 2026)
 - [x] S5-N1 The SLA integration test now also moves `escalate_at` when it fakes elapsed time, since tasks now carry the calendar-based escalation time (done 1 Oct 2026)
 
-## Session log — build session 6 (planned)
-- [ ] S6-01 Go-live on GoDaddy following docs/DEPLOYMENT.md (with the owner): privilege check, migrate, seed, env vars, cron, Firebase domain, provider keys, break-glass, go-live checks
-- [ ] S6-02 Load the owner's staff list: departments, HODs, designations, users (bulk import screen, P1-04)
-- [ ] S6-03 Build the first real approval types (S5-01) and walk each one through test mode with the owner
-- [ ] S6-04 WhatsApp templates registry screen in /superadmin, so the owner's templates (Q-013) can be entered without code (P1-46)
-- [ ] S6-05 Attachments (S5-07) once Q-001 is answered
-- [ ] S6-06 Audit export (CSV) and login history for the Super Admin (P1-57)
-- [ ] S6-07 Update the three living files; commit and push
+## Session log — build session 6 (7 Oct 2026)
+Owner's answers (7 Oct 2026):
+1. Use dummy data for now, in place of the staff list.
+2. Yes, GoDaddy keeps uploaded files (Q-001 disk), so attachments can go ahead.
+3. Asked for every template format, to create the templates.
+4. Asked for a DoA example.
+
+The deployment go-ahead is still pending.
+
+- [ ] S6-01 Go-live on GoDaddy following docs/DEPLOYMENT.md (with the owner): privilege check, migrate, seed, env vars, cron, Firebase domain, provider keys, break-glass, go-live checks (waiting for the go-ahead)
+- [~] S6-02 Load the owner's staff list. Replaced by S6-02a for now (owner answer 1). The real list still comes later, through the user screens or a bulk import (P1-04)
+- [x] S6-02a **Demo data** (D-071), loaded with one button in /superadmin/demo: (done 7 Oct 2026)
+  - demo departments, designations and about 20 demo people, with managers, HODs and approver groups;
+  - every demo person is marked "(demo)", has a `demo.` User ID, an itadmin+demo… email and no WhatsApp number;
+  - safe to load twice; "Retire demo staff" makes them inactive (never deleted)
+- [x] S6-03 **First approval types** F-60 to F-70 (P2-50 to P2-55): (done 7 Oct 2026)
+  - built with the levels builder on the demo staff;
+  - approvers come from groups and department HODs, so the real people can be swapped in later without editing workflows;
+  - published, and each one passes its test-mode run
+- [x] S6-03a **DoA example** (Q-004) built into Purchase & SCM. The amount bands add levels, and the DoA view shows the matrix. docs/DOA-EXAMPLE.md explains how to fill in the real values (done 7 Oct 2026)
+- [x] S6-04 **WhatsApp templates** (Q-013, P0-14, P1-46): (done 7 Oct 2026)
+  - one catalogue in code (`server/notifications/templates.ts`) with every event's wording, {{n}} variables in order, and sample values;
+  - docs/NOTIFICATION-TEMPLATES.md for creating them in CEOITBox;
+  - a /superadmin/templates screen to record the approved Meta name and switch each one on;
+  - a test keeps the code, catalogue and document in step
+- [x] S6-04a Escalation and "request blocked" messages also go on WhatsApp (they were email only) (done 7 Oct 2026)
+- [x] S6-05 **Attachments** (D-072, F-18): (done 7 Oct 2026)
+  - files on a request (raise, resubmit, or later while open), stored on disk outside the web root;
+  - allowed types, size limits, file-type sniffing;
+  - download only through a signed-in, permission-checked route;
+  - shown in the timeline; never deleted
+- [~] S6-06 Audit export (CSV) and login history for the Super Admin (P1-57). Moved to session 7 if time runs out (7 Oct 2026: moved to S7-03)
+- [x] S6-07 Fix the duplicate flow number: F-70 was both "Price Realisation" and "Management dashboard". The dashboard becomes F-56 (done 7 Oct 2026)
+- [x] S6-08 Tests (unit, integration, e2e) and the browser check; update the three living files; commit and push (done 7 Oct 2026)
+
+Found and fixed during session 6:
+- [x] S6-F1 An empty file box reached the server as a 0-byte file named "blob" and was refused as a wrong type, which blocked every plain submit. Empty entries are now ignored, with a regression test; the e2e suite caught it (done 7 Oct 2026)
+- [x] S6-F2 The DoA view listed parallel reviewers as if they ran one after another; it now shows "A + B (together)" (done 7 Oct 2026)
+- [x] S6-F3 Flow number F-70 was used twice; the dashboard is now F-56 (done 7 Oct 2026)
+
+## Session log — build session 7 (planned)
+- [ ] S7-01 Go-live on GoDaddy (S6-01) when the owner gives the go-ahead. Create UPLOAD_DIR outside public_html, and add it to the backup
+- [ ] S7-02 Switch on each WhatsApp template as Meta approves it, and test-send each one to the owner's number
+- [ ] S7-03 Audit export (CSV) and login history for the Super Admin (P1-57)
+- [ ] S7-04 Attachments on custom approvals (the custom form doesn't take files yet)
+- [ ] S7-05 Real DoA values (Q-004) and staff (D-033) when they arrive: swap the group members and HODs, then retire the demo staff
+- [ ] S7-06 Work hand-off after approval (F-32), for IT Internal and similar
+- [ ] S7-07 Update the three living files; commit and push
 
 ## Phase 0 — Setup and decisions
 
@@ -157,11 +197,11 @@ Found and fixed during session 5:
 - [x] P0-12 Review the Power BI website's CEOITBox integration, WhatsApp OTP, Google login, sessions, settings and GoDaddy deploy guide (D-029, DEVELOPMENT-MEMORY §9) (done 28 Sep 2026)
 - [x] P0-12a CEOITBox: same number and API key as the Power BI website (D-036) (done 28 Sep 2026)
 - [~] P0-13 SMS channel for OTP: not needed, OTP is WhatsApp only (D-025, 28 Sep 2026)
-- [?] P0-14 Notification templates: the owner provides the wording (Q-013) → register them in CEOITBox (Utility category) → Meta approval → record the template names and variable order in the app's template registry. OTP reuses `wa_login_otp_v1` (Q-014)
+- [x] P0-14 Notification templates: the owner provides the wording (Q-013) → register them in CEOITBox (Utility category) → Meta approval → record the template names and variable order in the app's template registry. OTP reuses `wa_login_otp_v1` (Q-014) (7 Oct 2026: all 20 formats in docs/NOTIFICATION-TEMPLATES.md and /superadmin/templates; the owner creates them in CEOITBox)
 - [ ] P0-15 Email through Resend from itadmin@arssteels.co.in (D-037): check the domain is verified in Resend (SPF/DKIM); API key in GoDaddy env vars only
 - [ ] P0-16 Reuse Firebase project `power-bi-dashboard-3b29f` (D-038): add `approvals.arssteels.net` and `localhost` to its authorised domains
 - [ ] P0-17 DNS + SSL: bind `approvals.arssteels.net` to the GoDaddy Node.js app (D-034)
-- [ ] P0-17a On the first GoDaddy app: check that the disk is persistent (attachments), which MySQL host is reachable, and whether cron is available (Q-001 remainder)
+- [>] P0-17a On the first GoDaddy app: check that the disk is persistent (attachments), which MySQL host is reachable, and whether cron is available (Q-001 remainder) (7 Oct 2026: owner confirmed the disk is persistent; MySQL host and cron still to check on the first deploy)
 - [x] P0-18 Git repository `HarishDevs/ARS-Approval-System` (D-035): `git init` in the project folder, `.gitignore` (node_modules, .next, .env*, backups, storage), README, repo-level CLAUDE.md, first commit pushed to `main` (done 28 Sep 2026)
 - [ ] P0-18a Working rule: commit with clear messages; push at the end of every session; feature branches + pull requests once coding starts
 - [ ] P0-19 Create the environments: local dev, staging (GoDaddy), production (GoDaddy)
@@ -179,7 +219,7 @@ Found and fixed during session 5:
 - [>] P0-46 GoDaddy deploy: one Node.js app from GitHub `HarishDevs/ARS-Approval-System` → `approvals.arssteels.net`, env vars entered in GoDaddy only, cPanel cron calling a signed job-runner endpoint (1 Oct 2026: docs/DEPLOYMENT.md + check-privileges.js; deployment waits for the owner's go-ahead)
 
 ### 0.3 Business inputs
-- [?] P0-30 **DoA matrix.** The approval authority is itadmin@ (D-041); fill in the bands and approvers per request type before Phase 3 (Q-004)
+- [>] P0-30 **DoA matrix.** The approval authority is itadmin@ (D-041); fill in the bands and approvers per request type before Phase 3 (Q-004) (7 Oct 2026: example in docs/DOA-EXAMPLE.md and the demo Purchase & SCM; real values still to come (Q-004))
 - [ ] P0-31 Staff master, provided by the admin (D-033): name, email, WhatsApp number, department, designation, reporting manager, HOD, sign-in method, role(s). Prepare an import template (Excel) for it
 - [ ] P0-32 Clean department list (replaces Asana's 27 values)
 - [ ] P0-33 Clean request-type (Nature) list per approval type (merged from the ~60 Asana values)
@@ -257,7 +297,7 @@ The Super Admin then enters the table in the Admin Portal (P3-30). Every request
 - [x] P1-48 Retry outbox for failed sends, driven by the cron job runner (the Power BI site lacked this); respect the CEOITBox rate limit (done 30 Sep 2026; /api/jobs/run with lease and backoff (D-058))
 - [x] P1-44 In-app notifications (bell icon from the asset pack) (done 1 Oct 2026; bell with unread count + inbox)
 - [x] P1-45 Delivery log per channel with status, retries and failures; the Super Admin can resend (30 Sep 2026: Super Admin delivery log; resend button with the retry runner (S3-07)) (done 30 Sep 2026; Retry now + automatic retries)
-- [ ] P1-46 Template per event and channel, versioned, with preview
+- [x] P1-46 Template per event and channel, versioned, with preview (7 Oct 2026: catalogue with preview, registry screen, versioned rows)
 - [ ] P1-47 WhatsApp numbers verified by OTP; opt-in recorded
 
 ### P1-ADM Admin Portal (Super Admin) core
@@ -291,7 +331,7 @@ The Super Admin then enters the table in the Admin Portal (P3-30). Every request
 - [x] P2-05 Approver sources per node: specific user, role, requester's HOD, department HOD, reporting manager, manager's manager, department, approval group, requester-selected (within governance), user from a form field (30 Sep 2026: all 8 sources resolve from MySQL; approver groups have tables (screen in S3-06)) (done 30 Sep 2026; approver groups screen added)
 - [>] P2-06 ApprovalRequests (permanent ID, e.g. PUR-2026-000421), ApprovalVersions, ApprovalInstances, ApprovalSteps, ApprovalActions (30 Sep 2026: requests with permanent numbers, state, tasks and timeline; form versions come with the form builder)
 - [x] P2-07 Step record: step ID, request, node, assigned approver(s), eligible approvers, **actual actor**, on-behalf-of, decision, time, comment, version (done 30 Sep 2026; actual actor + on-behalf-of per task)
-- [>] P2-08 Comments, Attachments (versioned), Watchers (1 Oct 2026: comments done (append-only); attachments and watchers later)
+- [>] P2-08 Comments, Attachments (versioned), Watchers (1 Oct 2026: comments done (append-only); attachments and watchers later) (7 Oct 2026: comments and attachments done (attachments never deleted; a newer file is added); watchers later)
 - [x] P2-09 Numbering scheme per approval type (code prefix + year + sequence) (done 30 Sep 2026; PREFIX-YYYY-000001 from a locked sequence row)
 
 ### P2-ENG Engine behaviour (all patterns from day one)
@@ -318,12 +358,12 @@ The Super Admin then enters the table in the Admin Portal (P3-30). Every request
 - [x] P2-44 Secure deep links from email/WhatsApp that open the request after sign-in (D-019) (done 30 Sep 2026; links open /users/requests/id after sign-in)
 
 ### P2-TPL First-release templates (D-021), built by configuration only
-- [ ] P2-50 MD Approval
-- [ ] P2-51 ED Approval
-- [ ] P2-52 Finance Approval (Prabu)
-- [ ] P2-53 Finance Approval (Valarmadhi)
-- [ ] P2-54 Purchase & SCM Approval
-- [ ] P2-55 Each template is checked against the reference flows in FLOWS.md Part A, with the known defects not reproduced
+- [x] P2-50 MD Approval (7 Oct 2026 on demo staff)
+- [x] P2-51 ED Approval (7 Oct 2026 on demo staff)
+- [x] P2-52 Finance Approval (Prabu) (7 Oct 2026 as Finance (controller), via a group)
+- [x] P2-53 Finance Approval (Valarmadhi) (7 Oct 2026 as Finance (head), via the department HOD)
+- [x] P2-54 Purchase & SCM Approval (7 Oct 2026 with the DoA bands)
+- [x] P2-55 Each template is checked against the reference flows in FLOWS.md Part A, with the known defects not reproduced (7 Oct 2026: shapes as FLOWS F-60 to F-71, people by group/HOD (G-01..G-15 not reproduced))
 
 ---
 

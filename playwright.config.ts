@@ -1,3 +1,5 @@
+import os from "node:os";
+import path from "node:path";
 import { defineConfig, devices } from "@playwright/test";
 
 // End-to-end tests (S5-05, P0-44): a real production build against the
@@ -15,6 +17,7 @@ export const E2E_ENV = {
   SESSION_SECRET: "e2e-session-secret-that-is-only-for-tests-0123456789",
   ENCRYPTION_KEY: Buffer.alloc(32, 9).toString("base64"),
   JOB_RUNNER_SECRET: "e2e-job-runner-secret-only-for-tests",
+  UPLOAD_DIR: path.join(os.tmpdir(), "ars-approvals-e2e-uploads"),
 };
 
 export default defineConfig({

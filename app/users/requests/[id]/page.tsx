@@ -7,19 +7,21 @@ import { StepMap } from "@/features/requests/StepMap";
 import { DecisionForm, ReopenForm, ResumeForm, WithdrawForm } from "@/features/requests/ActionPanel";
 import { RequestForm } from "@/features/requests/RequestForm";
 import { CommentForm } from "@/features/requests/Discussion";
+import { AddFilesForm } from "@/features/requests/Attachments";
 import { loadRequestView } from "@/server/approvals/view";
 import { listActiveUserOptions } from "@/lib/db/repositories/admin-users.repository";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 
 // F-14 request page. loadRequestView applies the record-level check
 // (D-057); anyone else gets the same 404 as a request that doesn't exist.
-export default async function RequestPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ submitted?: string }> }) {
+export default async function RequestPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ submitted?: string; files?: string }> }) {
   const { user } = await requireArea("users");
   const { id } = await params;
   if (!/^\d+$/.test(id)) notFound();
   const view = await loadRequestView(Number(id), { id: user.id, roles: user.roles });
   if (!view) notFound();
-  const submitted = (await searchParams).submitted === "1";
+  const query = await searchParams;
+  const submitted = query.submitted === "1";
   const people =
     view.canResubmit && view.form.some((field) => field.type === "PERSON")
       ? (await listActiveUserOptions()).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` }))
@@ -38,6 +40,11 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
       {submitted && (
         <p role="status" className="mb-4 rounded-md bg-success-50 px-3 py-2 text-label text-success-600">
           Submitted as {view.requestNo}. The first approvers have been told.
+        </p>
+      )}
+      {submitted && query.files === "failed" && (
+        <p role="alert" className="mb-4 rounded-md border border-danger-200 bg-danger-50 px-3 py-2 text-label text-danger-600">
+          The request was submitted, but the files couldn&apos;t be saved. Add them again under Attachments.
         </p>
       )}
       {view.changesComment && (
@@ -87,6 +94,27 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
           )}
         </div>
         <div className="space-y-6">
+        <section className="card px-5 py-4">
+          <h2 className="mb-3 font-semibold">Attachments</h2>
+          {view.attachments.length === 0 ? (
+            <p className="mb-3 text-label text-ink-muted">No files attached.</p>
+          ) : (
+            <ul className="mb-4 space-y-2">
+              {view.attachments.map((file) => (
+                <li key={file.id} className="text-label">
+                  <a href={`/api/attachments/${file.id}`} className="link break-all" download>
+                    {file.name}
+                  </a>
+                  <p className="text-caption text-ink-faint">
+                    {file.size} · {file.uploaderName} · {formatIndiaTime(file.createdAt)}
+                    {view.round > 1 ? ` · round ${file.round}` : ""}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+          {view.canAddFiles && <AddFilesForm requestId={view.id} />}
+        </section>
         <section className="card px-5 py-4">
           <h2 className="mb-3 font-semibold">Discussion</h2>
           {view.comments.length === 0 ? (

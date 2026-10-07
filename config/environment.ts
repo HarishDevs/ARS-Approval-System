@@ -24,6 +24,9 @@ const envSchema = z.object({
   SESSION_SECRET: z.string().min(32, "SESSION_SECRET must be at least 32 characters"),
   ENCRYPTION_KEY: z.string().min(1),
   JOB_RUNNER_SECRET: optional(z.string().min(24)),
+  // Where request attachments are kept (D-072): outside the web root, on
+  // GoDaddy's persistent disk. Defaults to ./storage/uploads.
+  UPLOAD_DIR: optional(z.string().min(1)),
 });
 
 export type Env = z.infer<typeof envSchema>;

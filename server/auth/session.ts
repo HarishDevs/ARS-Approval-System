@@ -41,7 +41,9 @@ async function loadCurrentSession(): Promise<CurrentSession | null> {
       whatsappNumber: user.whatsappNumber,
       signInMethod: user.signInMethod,
       active: user.active,
-      roles: user.roles,
+      // A demo person never acts with admin rights (D-071).
+      roles: user.isDemo ? ["USER"] : user.roles,
+      isDemo: user.isDemo,
     },
   };
 }

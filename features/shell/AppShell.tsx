@@ -81,6 +81,11 @@ export async function AppShell({
             <SignOutButton />
           </div>
         </header>
+        {user.isDemo && (
+          <p role="status" className="border-b border-warning-600/30 bg-warning-50 px-4 py-2 text-label text-warning-600 sm:px-8">
+            You&apos;re trying the app as {user.name}, a demo person. Sign out and sign in again to return to your own account.
+          </p>
+        )}
         <main className="flex-1 px-4 py-6 sm:px-8 sm:py-8">{children}</main>
       </div>
     </div>
