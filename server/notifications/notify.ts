@@ -32,7 +32,7 @@ export interface NotifyDeps {
   createNotification: typeof createNotification;
   createDelivery: typeof createDelivery;
   findActiveTemplate: (eventType: string) => Promise<ActiveTemplate | null>;
-  sendWhatsApp: (to: string, template: ActiveTemplate, variables: string[]) => Promise<{ waMessageId: string }>;
+  sendWhatsApp: (to: string, template: ActiveTemplate, variables: string[], reference: string) => Promise<{ waMessageId: string }>;
   sendEmail: (to: string, subject: string, text: string) => Promise<{ id: string | null }>;
 }
 
@@ -43,11 +43,11 @@ const defaultDeps: NotifyDeps = {
   createNotification,
   createDelivery,
   findActiveTemplate: (eventType) => findActiveTemplate(eventType),
-  async sendWhatsApp(to, template, variables) {
+  async sendWhatsApp(to, template, variables, reference) {
     const config = await getWhatsAppConfig();
     const result = await sendTemplateMessage(
       config,
-      { to, templateName: template.providerName, language: template.language, templateVariables: variables },
+      { to, templateName: template.providerName, language: template.language, templateVariables: variables, userMessageId: reference },
       { fetch, tryConsumeRateLimit: tryConsumeWhatsAppRateLimit },
     );
     return { waMessageId: result.waMessageId };
@@ -142,7 +142,8 @@ export async function notifyWithDeps(input: NotifyInput, deps: NotifyDeps): Prom
         const variables = template.variableKeys.map((key) => whatsappValue(values[key] ?? ""));
         let sent: { waMessageId: string } | null = null;
         try {
-          sent = await deps.sendWhatsApp(recipient.whatsappNumber, template, variables);
+          // Our reference shows in CEOITBox reports (userMessageId).
+          sent = await deps.sendWhatsApp(recipient.whatsappNumber, template, variables, `ars-n${notificationId}`);
         } catch (error) {
           const code = failureCode(error);
           logError("notify: WhatsApp failed", error, { eventType: input.eventType, userId: input.userId });

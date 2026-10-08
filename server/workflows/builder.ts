@@ -1,5 +1,6 @@
 import { z } from "zod";
-import type { ApproverSource, Comparison, CompletionRule, WorkflowDefinition, WorkflowEdge, WorkflowNode } from "@/server/engine/types";
+import type { ApproverSource, Comparison, CompletionRule, Condition, WorkflowDefinition, WorkflowEdge, WorkflowNode } from "@/server/engine/types";
+import type { FormField } from "@/server/forms/fields";
 
 // Structured workflow builder (D-056, S3-05a, F-50). The IT team describes a
 // workflow as stages run in order; each stage is one step or several steps
@@ -62,15 +63,47 @@ const branchStageSchema = z
   })
   .refine((stage) => stage.then.length + stage.otherwise.length > 0, { message: "A choice needs levels on at least one path." });
 
-const stageSchema = z.union([z.discriminatedUnion("kind", [...plainStageSchemas]), branchStageSchema]);
+// DoA matrix (D-075, F-58): the approval authority of one approval type.
+// Bands are cut at rising limits (inclusive upper limit; the last band is
+// "above"). Each level is ticked for the bands that need it, so bands can be
+// cumulative (more levels as the amount grows) or not.
+const doaLevelSchema = z.object({ step: stepSchema, bands: z.array(z.boolean()).min(2).max(11) });
 
-export const builderSpecSchema = z.object({ stages: z.array(stageSchema).min(1, "Add at least one step.").max(30) });
+const doaStageSchema = z
+  .object({
+    kind: z.literal("DOA"),
+    id: z.string().regex(/^[a-z0-9_]{1,30}$/),
+    label: z.string().trim().min(1).max(100),
+    field: z.string().regex(/^[a-z][a-z0-9_]{0,49}$/, "Pick the amount field the DoA reads."),
+    limits: z.array(z.number().positive("Limits must be more than ₹0.").max(1e13)).min(1, "Add at least one amount limit.").max(10),
+    levels: z.array(doaLevelSchema).min(1, "Add at least one DoA level.").max(15),
+  })
+  .superRefine((stage, ctx) => {
+    for (let i = 1; i < stage.limits.length; i += 1) {
+      if (stage.limits[i]! <= stage.limits[i - 1]!) ctx.addIssue({ code: "custom", message: "DoA limits must go up from left to right." });
+    }
+    const bands = stage.limits.length + 1;
+    for (const level of stage.levels) {
+      if (level.bands.length !== bands) ctx.addIssue({ code: "custom", message: `"${level.step.label}" needs a tick box for every amount band.` });
+      else if (!level.bands.some(Boolean)) ctx.addIssue({ code: "custom", message: `"${level.step.label}" isn't needed at any amount: tick at least one band, or remove it.` });
+    }
+    for (let band = 0; band < bands; band += 1) {
+      if (!stage.levels.some((level) => level.bands[band])) ctx.addIssue({ code: "custom", message: `Nobody approves in the band "${doaBandLabels(stage.limits)[band]}": tick at least one level.` });
+    }
+  });
+
+const stageSchema = z.union([z.discriminatedUnion("kind", [...plainStageSchemas]), branchStageSchema, doaStageSchema]);
+
+export const builderSpecSchema = z
+  .object({ stages: z.array(stageSchema).min(1, "Add at least one step.").max(30) })
+  .refine((spec) => spec.stages.filter((stage) => stage.kind === "DOA").length <= 1, { message: "An approval type has one DoA matrix." });
 
 export type ApproverPick = z.infer<typeof approverPickSchema>;
 export type BuilderStep = z.infer<typeof stepSchema>;
 export type BuilderStage = z.infer<typeof stageSchema>;
 export type BuilderInnerStage = z.infer<typeof innerStageSchema>;
 export type BuilderBranch = z.infer<typeof branchStageSchema>;
+export type BuilderDoa = z.infer<typeof doaStageSchema>;
 export type BuilderSpec = z.infer<typeof builderSpecSchema>;
 
 export function toSources(pick: ApproverPick): ApproverSource[] {
@@ -167,6 +200,17 @@ export function compileBuilder(spec: BuilderSpec): CompileResult {
         }
         nodes.push({ id: joinId, kind: "JOIN", label: `${stage.label} complete`, completion: toRule(stage.join, stage.n) });
         ends = [{ from: joinId }];
+      } else if (stage.kind === "DOA") {
+        claim(stage.id);
+        for (const level of stage.levels) {
+          claim(level.step.id);
+          // A DoA level's own skip rule is replaced by the matrix.
+          const step: BuilderStep = { ...level.step, skipWhen: null };
+          const skipIf = doaSkipCondition(stage.field, stage.limits, level.bands);
+          nodes.push({ ...stepNode(step), ...(skipIf ? { skipIf } : {}) });
+          connectAll(ends, stepNodeId(step));
+          ends = [{ from: stepNodeId(step) }];
+        }
       } else {
         claim(stage.id);
         const choiceId = `choice_${stage.id}`;
@@ -192,6 +236,7 @@ export function allSteps(spec: { stages: readonly (BuilderStage | BuilderInnerSt
   return spec.stages.flatMap((stage) => {
     if (stage.kind === "STEP") return [stage.step];
     if (stage.kind === "PARALLEL") return stage.steps;
+    if (stage.kind === "DOA") return stage.levels.map((level) => level.step);
     return [...allSteps({ stages: stage.then }), ...allSteps({ stages: stage.otherwise })];
   });
 }
@@ -199,4 +244,79 @@ export function allSteps(spec: { stages: readonly (BuilderStage | BuilderInnerSt
 // A new, empty step with a fresh id (used by the builder screen and tests).
 export function newStep(id: string, label = "New step"): BuilderStep {
   return { id, label, approvers: { kind: "REQUESTER_MANAGER" }, rule: "ALL" };
+}
+
+// ---- DoA matrix helpers (D-075). Pure. ------------------------------------------
+const rupees = (value: number) => `₹${value.toLocaleString("en-IN")}`;
+
+// "Up to ₹1,00,000", "₹1,00,001 to ₹10,00,000", …, "Above ₹25,00,000".
+export function doaBandLabels(limits: readonly number[]): string[] {
+  return [...limits.map((limit, i) => (i === 0 ? `Up to ${rupees(limit)}` : `${rupees(limits[i - 1]! + 1)} to ${rupees(limit)}`)), `Above ${rupees(limits.at(-1) ?? 0)}`];
+}
+
+// The band an amount falls in (upper limits are inclusive).
+export function doaBandIndex(limits: readonly number[], amount: number): number {
+  const index = limits.findIndex((limit) => amount <= limit);
+  return index === -1 ? limits.length : index;
+}
+
+// Skip a level in every band it isn't ticked for. Neighbouring unticked
+// bands merge into one range; null = needed at every amount.
+export function doaSkipCondition(field: string, limits: readonly number[], bands: readonly boolean[]): Condition | null {
+  const ranges: Condition[] = [];
+  let band = 0;
+  while (band < bands.length) {
+    if (bands[band]) {
+      band += 1;
+      continue;
+    }
+    const from = band;
+    while (band + 1 < bands.length && !bands[band + 1]) band += 1;
+    const lower = from === 0 ? null : limits[from - 1]!;
+    const upper = band === bands.length - 1 ? null : limits[band]!;
+    const parts: Comparison[] = [
+      ...(lower !== null ? [{ field, operator: "GT" as const, value: lower }] : []),
+      ...(upper !== null ? [{ field, operator: "LTE" as const, value: upper }] : []),
+    ];
+    if (parts.length === 1) ranges.push(parts[0]!);
+    else if (parts.length === 2) ranges.push({ op: "AND", conditions: parts });
+    band += 1;
+  }
+  if (ranges.length === 0) return null;
+  return ranges.length === 1 ? ranges[0]! : { op: "OR", conditions: ranges };
+}
+
+export function findDoa(spec: { stages: readonly BuilderStage[] } | null | undefined): BuilderDoa | null {
+  const stage = spec?.stages.find((item) => item.kind === "DOA");
+  return stage && stage.kind === "DOA" ? stage : null;
+}
+
+// The DoA reads one form field: it must exist, be a number and be required,
+// or a request without an amount would need every level.
+export function checkDoaForm(spec: BuilderSpec, form: readonly FormField[]): string[] {
+  const doa = findDoa(spec);
+  if (!doa) return [];
+  const field = form.find((item) => item.key === doa.field);
+  if (!field) return [`The DoA reads "${doa.field}", which isn't on the form. Add a number field with that key.`];
+  const problems: string[] = [];
+  if (field.type !== "NUMBER") problems.push(`The DoA field "${field.label}" must be a number field.`);
+  if (!field.required) problems.push(`Make "${field.label}" required: the DoA needs it to pick the approvers.`);
+  return problems;
+}
+
+// A fresh DoA matrix for a new approval type: three limits, four bands,
+// cumulative levels the IT team then renames and assigns.
+export function newDoaStage(newId: () => string, field = "amount"): BuilderDoa {
+  const level = (label: string, from: number): BuilderDoa["levels"][number] => ({
+    step: { id: newId(), label, approvers: { kind: "REQUESTER_MANAGER" }, rule: "ALL" },
+    bands: [0, 1, 2, 3].map((band) => band >= from),
+  });
+  return {
+    kind: "DOA",
+    id: newId(),
+    label: "Approval authority (DoA)",
+    field,
+    limits: [100_000, 1_000_000, 2_500_000],
+    levels: [level("Level 1", 0), level("Level 2", 1), level("Level 3", 2), level("Level 4", 3)],
+  };
 }

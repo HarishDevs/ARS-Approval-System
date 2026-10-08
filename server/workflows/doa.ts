@@ -1,9 +1,9 @@
 import { evaluateCondition } from "@/server/engine/conditions";
-import type { BuilderInnerStage, BuilderSpec, BuilderStage } from "@/server/workflows/builder";
+import { doaBandIndex, findDoa, type BuilderInnerStage, type BuilderSpec, type BuilderStage } from "@/server/workflows/builder";
 import type { Comparison } from "@/server/engine/types";
 
-// DoA view (F-54, D-065): approval limits live in the workflow as "skip
-// this step when amount …". This turns them back into a matrix of amount
+// DoA view (F-54, D-065, D-075): an approval type's DoA matrix, or limits
+// written as "skip this step when amount …", turned into a table of amount
 // bands → the levels needed. Pure and unit-tested.
 export interface DoaBand {
   from: number;
@@ -21,7 +21,9 @@ const AMOUNT_OPERATORS = new Set(["GT", "GTE", "LT", "LTE"]);
 
 type AnyStage = BuilderStage | BuilderInnerStage;
 
-export function deriveDoaTable(spec: BuilderSpec, field = "amount"): DoaTable {
+export function deriveDoaTable(spec: BuilderSpec, fieldOverride?: string): DoaTable {
+  // The DoA matrix names its own amount field.
+  const field = fieldOverride ?? findDoa(spec)?.field ?? "amount";
   const thresholds = new Set<number>();
   const otherConditions: string[] = [];
   const note = (condition: Comparison | null | undefined, label: string) => {
@@ -33,7 +35,10 @@ export function deriveDoaTable(spec: BuilderSpec, field = "amount"): DoaTable {
     for (const stage of stages) {
       if (stage.kind === "STEP") note(stage.step.skipWhen as Comparison | null | undefined, stage.step.label);
       else if (stage.kind === "PARALLEL") stage.steps.forEach((step) => note(step.skipWhen as Comparison | null | undefined, step.label));
-      else {
+      else if (stage.kind === "DOA") {
+        if (stage.field === field) stage.limits.forEach((limit) => thresholds.add(limit));
+        else otherConditions.push(`${stage.label} (depends on ${stage.field})`);
+      } else {
         note(stage.condition as Comparison, stage.label);
         scan(stage.then);
         scan(stage.otherwise);
@@ -59,6 +64,11 @@ export function deriveDoaTable(spec: BuilderSpec, field = "amount"): DoaTable {
         const labels = stage.steps.filter((step) => keep(step.skipWhen)).map((step) => step.label);
         if (labels.length <= 1) return labels.map(mark);
         return [mark(`${labels.join(" + ")} (together)`)];
+      }
+      if (stage.kind === "DOA") {
+        if (stage.field !== field) return stage.levels.map((level) => `${level.step.label} (maybe)`);
+        const band = doaBandIndex(stage.limits, amount);
+        return stage.levels.filter((level) => level.bands[band]).map((level) => mark(level.step.label));
       }
       if (stage.condition.field === field) {
         return evaluateCondition(stage.condition as Comparison, { [field]: amount }) ? levelsIn(stage.then, amount, maybe) : levelsIn(stage.otherwise, amount, maybe);

@@ -23,7 +23,7 @@ import {
 import { loadDirectorySnapshot, toDirectory, type DirectorySnapshot } from "@/lib/db/repositories/directory.repository";
 import { loadWorkingCalendar } from "@/lib/db/repositories/calendar.repository";
 import { checkFormDefinition, parseFormSubmission, type FormField } from "@/server/forms/fields";
-import { allSteps, compileBuilder, type BuilderSpec } from "@/server/workflows/builder";
+import { allSteps, checkDoaForm, compileBuilder, type BuilderSpec } from "@/server/workflows/builder";
 import { describeRule } from "@/server/approvals/step-map";
 import { listUserIdsWithRole } from "@/lib/db/repositories/users.repository";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
@@ -104,6 +104,8 @@ async function resolveContent(content: WorkflowContent): Promise<Result<Resolved
   if (formProblems.length) return { ok: false, code: "INVALID_FORM", message: formProblems.join(" ") };
   let definition = content.definition;
   if (content.builder) {
+    const doaProblems = checkDoaForm(content.builder, form);
+    if (doaProblems.length) return { ok: false, code: "INVALID_BUILDER", message: doaProblems.join(" ") };
     const compiled = compileBuilder(content.builder);
     if (!compiled.ok) return { ok: false, code: "INVALID_BUILDER", message: compiled.errors.join(" ") };
     definition = compiled.definition;
@@ -376,6 +378,8 @@ export const CUSTOM_FORM: FormField[] = [
 
 export function checkCustomSpec(spec: BuilderSpec, requesterId: number): string[] {
   const problems: string[] = [];
+  // A DoA matrix belongs to an approval type the IT team owns (D-075).
+  if (spec.stages.some((stage) => stage.kind === "DOA")) problems.push("Custom approvals don't use a DoA matrix; pick the levels directly.");
   for (const step of allSteps(spec)) {
     if (step.approvers.kind === "PEOPLE" && step.approvers.userIds.every((id) => id === requesterId)) {
       problems.push(`"${step.label}": you can't approve your own request. Pick someone else.`);

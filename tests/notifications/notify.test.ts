@@ -32,7 +32,7 @@ describe("notification hub", () => {
     const { deps, deliveries } = makeDeps();
     await notifyWithDeps(input, deps);
     expect(deps.createNotification).toHaveBeenCalledOnce();
-    expect(deps.sendWhatsApp).toHaveBeenCalledWith("919876543210", expect.objectContaining({ providerName: "wa_new_login_v1" }), ["Staff", "10:00"]);
+    expect(deps.sendWhatsApp).toHaveBeenCalledWith("919876543210", expect.objectContaining({ providerName: "wa_new_login_v1" }), ["Staff", "10:00"], expect.stringMatching(/^ars-n\d+$/));
     expect(deliveries.map((d) => [d.channel, d.status])).toEqual([
       ["EMAIL", "SENT"],
       ["WHATSAPP", "SENT"],

@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { RowDataPacket } from "mysql2/promise";
 import { getDbPool } from "@/lib/db/client";
 import { withTransaction } from "@/lib/db/transaction";
-import { findActiveTemplate, saveRegisteredTemplate } from "@/lib/db/repositories/whatsapp.repository";
+import { applyTemplateVerdict, findActiveTemplate, markTemplateSubmitted, saveTemplateDraft } from "@/lib/db/repositories/whatsapp.repository";
 import { listAttachments } from "@/lib/db/repositories/attachments.repository";
 import { listTimeline } from "@/lib/db/repositories/approvals.repository";
 import { createWorkflow, decideTask, publishVersion, submitRequest, withdrawRequest, type Actor } from "@/server/approvals/service";
@@ -166,16 +166,24 @@ describe("attachments (S6-05, D-072)", () => {
   });
 });
 
-describe("WhatsApp template registry (S6-04)", () => {
-  it("a template is sent only once it is named and switched on, with variables in catalogue order", async () => {
+describe("WhatsApp template registry (S6-04, S7)", () => {
+  it("a template is sent only once Meta has approved it, with variables in the saved order", async () => {
     const entry = findTemplateEntry("WA_APPROVAL_NEEDED_V1")!;
-    const save = (providerName: string | null, on: boolean) =>
-      withTransaction((db) => saveRegisteredTemplate({ code: entry.code, eventType: entry.eventType, providerName, on, variables: entry.variables }, adminId, db));
-    await save("ars_approval_needed_v1", false);
+    const id = await withTransaction((db) =>
+      saveTemplateDraft(
+        { existingId: null, code: entry.code, eventType: entry.eventType, version: 1, providerName: "ars_s6_needed_v1", category: "UTILITY", body: entry.body, footer: null, variables: entry.variables },
+        adminId,
+        db,
+      ),
+    );
     expect(await findActiveTemplate("APPROVAL_NEEDED")).toBeNull();
-    await save("ars_approval_needed_v1", true);
-    expect(await findActiveTemplate("APPROVAL_NEEDED")).toMatchObject({ providerName: "ars_approval_needed_v1", variableKeys: ["requester_name", "request_no", "title", "link"] });
-    await save("ars_approval_needed_v1", false);
+    await withTransaction((db) => markTemplateSubmitted(id, adminId, db));
     expect(await findActiveTemplate("APPROVAL_NEEDED")).toBeNull();
+    await withTransaction((db) => applyTemplateVerdict({ id, code: entry.code, version: 1 }, { outcome: "APPROVED", metaStatus: "APPROVED", reason: null }, db));
+    expect(await findActiveTemplate("APPROVAL_NEEDED")).toMatchObject({ providerName: "ars_s6_needed_v1", variableKeys: ["requester_name", "request_no", "title", "link"] });
+    await withTransaction((db) => applyTemplateVerdict({ id, code: entry.code, version: 1 }, { outcome: "PAUSED", metaStatus: "PAUSED", reason: "Low quality" }, db));
+    expect(await findActiveTemplate("APPROVAL_NEEDED")).toBeNull();
+    await getDbPool().query("DELETE FROM whatsapp_template_variables WHERE template_id = ?", [id]);
+    await getDbPool().query("DELETE FROM whatsapp_templates WHERE id = ?", [id]);
   });
 });

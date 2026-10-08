@@ -44,7 +44,8 @@ The number of levels and how they combine is unlimited. There are no fixed "Leve
 | F-56 | Management dashboard (was numbered F-70 by mistake; F-70 is Price Realisation) | Built 1 Oct 2026 |
 | F-18 | Attachments on a request | Built and tested (incl. e2e) 7 Oct 2026 |
 | F-57 | Demo data loader | Built and verified in the browser 7 Oct 2026 |
-| F-42 | WhatsApp template registry | Built and verified 7 Oct 2026; templates go live as Meta approves them |
+| F-58 | DoA matrix per approval type | Built and tested (incl. e2e) 8 Oct 2026 |
+| F-42 | WhatsApp template registry → creator | Creator built 8 Oct 2026 (create, sync, test via CEOITBox API); goes live with the app's CEOITBox key |
 | F-30 | Delegation | Built and verified 1 Oct 2026 |
 | F-31 | SLA, reminder, escalation | Built 1 Oct 2026 (working days and holidays) |
 | F-32 | Work assignment after approval | Planned |
@@ -57,7 +58,7 @@ The number of levels and how they combine is unlimited. There are no fixed "Leve
 | F-13 | Request persistence and concurrency | Built and tested on MySQL 30 Sep 2026 |
 | F-15 | Comments on a request | Built and verified 1 Oct 2026 |
 | F-16 | Handing over pending approvals | Built and tested on MySQL 1 Oct 2026 |
-| F-54 | DoA view derived from workflows | Built and verified 1 Oct 2026 |
+| F-54 | DoA view derived from workflows | Built 1 Oct 2026; reads DoA matrices 8 Oct 2026 |
 | F-90 | GoDaddy deployment and go-live | Guide + privilege check ready 1 Oct 2026; deploy on owner's go-ahead |
 | F-14 | Request screens: raise → queue → act → resubmit | Built and verified in the browser 30 Sep 2026 |
 | F-41 | Retry runner for failed messages | Built 30 Sep 2026 (cron set up at go-live) |
@@ -632,6 +633,37 @@ Full steps are in `docs/DEPLOYMENT.md`:
 - provider keys in `/superadmin`;
 - the break-glass setup;
 - a post-go-live checklist.
+
+## F-58 DoA matrix per approval type (S7, D-075)
+```
+IT creates an approval type
+  ├─ form: Amount (₹) [number, required]  ← the DoA reads this field
+  └─ levels: … [DoA matrix] …
+        bands:        up to ₹1L │ ₹1L–₹10L │ ₹10L–₹25L │ above ₹25L
+        SCM head          ✓     │    ✓     │     ✓     │     ✓
+        Finance head            │    ✓     │     ✓     │     ✓
+        ED                      │          │     ✓     │     ✓
+        MD                      │          │           │     ✓
+Compile: each level → APPROVAL step with skipIf = OR(amount in an unticked band)
+Raise ₹15L → SCM head → Finance head → ED (MD skipped: "not needed at this amount")
+```
+Rules:
+- Every band needs at least one level.
+- The limits must rise, and the upper limit is inclusive (₹1,00,000 falls in "up to ₹1L").
+- Only one DoA matrix per approval type.
+- Changing it means publishing a new version. Running requests keep the version they started with.
+
+## F-42b WhatsApp template creator (S7, D-076)
+```
+Super Admin → /superadmin/templates → event (e.g. Approval needed)
+  write the wording with {{requester_name}}, {{request_no}}… → preview
+  Submit → POST /api/v1/messageTemplate/create (UTILITY, en, BODY + example) → status SUBMITTED
+  Sync status → GET /whatsapp/syncTemplatesFromMeta + POST /messageTemplate/getTemplates
+      APPROVED → switched on automatically (notify() uses it)
+      REJECTED → reason shown; edit → new version
+  Send test to me → POST /whatsapp/sendMessage to the Super Admin's own number
+```
+Editing an approved template makes version n+1 with a new name. The old version keeps sending until the new one is approved.
 
 ## F-56 Management dashboard (S5-03, D-069; numbered F-70 until 7 Oct 2026)
 `/admin/insights`, for IT Admin and Super Admin; management roles come later:

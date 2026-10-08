@@ -17,19 +17,17 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
-- **Now:** Build session 6 finished (7 Oct 2026), working from the owner's answers.
-  - **Demo data:** /superadmin/demo loads 20 stand-in staff, groups and departments, plus **12 published approval types** (F-60 to F-71). "Try as" lets the Super Admin walk a request through as any demo person.
-  - **DoA example:** Purchase & SCM, with docs/DOA-EXAMPLE.md.
-  - **All 20 WhatsApp template formats:** docs/NOTIFICATION-TEMPLATES.md, plus a /superadmin/templates screen to switch each one on.
-  - **Attachments on requests.**
-  - Gates: 192 unit tests, 37 MySQL integration tests, 12 browser end-to-end tests, typecheck, lint and build pass.
-  - Verified in the browser: the demo load, the DoA matrix, the templates screen.
+- **Now:** Build session 7 finished (8 Oct 2026), on the owner's two instructions.
+  - **DoA per approval type:** every approval type is created with its own DoA matrix: amount limits across, approval levels down, tick which levels each band needs.
+  - **WhatsApp template creator** in Super Admin, on the CEOITBox API as the master document says: write the wording, submit it to Meta, sync the status (approved templates go live by themselves), and send a test to yourself.
+  - Gates: 209 unit tests, 43 MySQL integration tests, 14 browser end-to-end tests, typecheck, lint and build pass.
+  - Verified in the browser: the DoA editor and the template creator.
 - **Waiting on the owner:**
-  - Create the 20 templates in CEOITBox (docs/NOTIFICATION-TEMPLATES.md) and send back the approved names, or enter them in /superadmin/templates.
-  - Fill in the DoA table (docs/DOA-EXAMPLE.md, Q-004).
-  - The real staff list (then swap the group members and HODs, and retire the demo staff).
-  - Q-015; the provider keys and Firebase Admin values; **the deployment go-ahead** (S6-01).
-- **Next:** session 7 (planned below). Go-live as soon as the go-ahead comes; the demo data works on the live site too.
+  - **A separate CEOITBox API key for this app** (entered in /superadmin after go-live; never sent in chat).
+  - The deployment go-ahead.
+  - The real DoA limits per approval type (now set on screen by IT when creating each approval type).
+  - The real staff list; Q-015.
+- **Next:** go-live, then create and submit the 20 templates from /superadmin/templates. Then session 8: S7-11 items.
 
 ---
 
@@ -170,14 +168,55 @@ Found and fixed during session 6:
 - [x] S6-F2 The DoA view listed parallel reviewers as if they ran one after another; it now shows "A + B (together)" (done 7 Oct 2026)
 - [x] S6-F3 Flow number F-70 was used twice; the dashboard is now F-56 (done 7 Oct 2026)
 
-## Session log — build session 7 (planned)
-- [ ] S7-01 Go-live on GoDaddy (S6-01) when the owner gives the go-ahead. Create UPLOAD_DIR outside public_html, and add it to the backup
-- [ ] S7-02 Switch on each WhatsApp template as Meta approves it, and test-send each one to the owner's number
-- [ ] S7-03 Audit export (CSV) and login history for the Super Admin (P1-57)
-- [ ] S7-04 Attachments on custom approvals (the custom form doesn't take files yet)
-- [ ] S7-05 Real DoA values (Q-004) and staff (D-033) when they arrive: swap the group members and HODs, then retire the demo staff
-- [ ] S7-06 Work hand-off after approval (F-32), for IT Internal and similar
-- [ ] S7-07 Update the three living files; commit and push
+## Session log — build session 7 (8 Oct 2026)
+Owner's instructions (8 Oct 2026):
+- "When creating an approval I will create the DoA based on each approval; design the system based on that."
+- "For all WhatsApp notification templates, create the WhatsApp notification template creator in the Super Admin. Use this as the master document for API services": CEOITBOX_API_Integration_Guide.docx and CEOITBOX_API_Master_Documentation.docx.
+
+DoA per approval type (D-075, F-58):
+- [x] S7-01 **DoA matrix** as part of each approval type: a new "DoA" level in the builder. (done 8 Oct 2026)
+  - Holds: the amount field; the band limits (e.g. ₹1L / ₹10L / ₹25L / above); the approval levels (any approver source, rule, response time); and a tick grid of which levels each band needs.
+  - Bands may be cumulative or not.
+  - One per approval type. It can sit between ordinary levels (e.g. manager first, DoA, then accounts).
+- [x] S7-02 The engine side: each DoA level compiles to an approval step that is skipped (AND/OR condition) in the bands where it isn't ticked. The checks: (done 8 Oct 2026)
+  - every band needs a level;
+  - the limits must rise;
+  - the amount field must exist, be a number, and be required.
+- [x] S7-03 New approval types start with an "Amount (₹)" field and a DoA matrix ready to fill in. The DoA view, request map, test mode and demo Purchase & SCM all use it (done 8 Oct 2026)
+- [x] S7-04 Tests: compile/validate, routing at every band edge, DoA view, form checks (done 8 Oct 2026)
+
+WhatsApp template creator (D-076, F-42), per the CEOITBox master document:
+- [x] S7-05 CEOITBox client additions: (done 8 Oct 2026)
+  - create a template (POST /api/v1/messageTemplate/create: name, language, category, components BODY/FOOTER with example.body_text);
+  - sync from Meta (GET /api/v1/whatsapp/syncTemplatesFromMeta);
+  - list templates (POST /api/v1/messageTemplate/getTemplates, paginated);
+  - every send carries a userMessageId;
+  - a 200 reply that carries an error object counts as a failure
+- [x] S7-06 Registry storage per version: wording, footer, category, variable map, Meta status, rejection reason, last sync, submitted by/at (done 8 Oct 2026)
+- [x] S7-07 /superadmin/templates becomes a creator. For each event: (done 8 Oct 2026)
+  - write the wording with named placeholders ({{request_no}}…), which the app turns into {{1}}, {{2}} in order of use;
+  - see a live preview, and submit it to CEOITBox for Meta approval;
+  - "Sync status" pulls Meta's verdict: an approved template switches on by itself; a rejected one shows the reason;
+  - "Send test to me" sends to the Super Admin's own number;
+  - editing an approved template makes a new version (name _v2…); the old one keeps sending until the new one is approved
+- [x] S7-08 docs/CEOITBOX-API.md: the endpoints and rules the app uses, from the master document. No keys, ever (done 8 Oct 2026)
+- [x] S7-09 Tests: placeholder conversion, the create payload shape, a 200-with-error reply, sync status mapping, version rules (done 8 Oct 2026)
+
+Carried over:
+- [ ] S7-10 Go-live on GoDaddy (S6-01) when the owner gives the go-ahead (still waiting for the go-ahead)
+- [~] S7-11 Audit export (CSV) and login history (P1-57), attachments on custom approvals, work hand-off (F-32): to session 8 if time runs out (8 Oct 2026: moved to session 8, S8-02)
+- [x] S7-12 Update the three living files; commit and push (done 8 Oct 2026)
+
+Found and fixed during session 7:
+- [x] S7-F1 Rejected (400), blocked (200 with an error) and bad-key (401) CEOITBox replies were all mapped to a retryable error, so they would have been retried. The guide says never retry 400 or 401, so only network and 5xx errors are retried now (done 8 Oct 2026)
+- [x] S7-F2 On narrow screens the form-fields row of the builder made the whole page scroll sideways. It now wraps until large screens (done 8 Oct 2026)
+- [x] S7-N1 Levels further down a request map show "Not needed at this amount (DoA)" straight away, instead of "Waiting", when the amount's band doesn't tick them (done 8 Oct 2026)
+
+## Session log — build session 8 (planned)
+- [ ] S8-01 Go-live on GoDaddy (docs/DEPLOYMENT.md) when the owner gives the go-ahead. Then enter the new CEOITBox key, submit the 20 templates, sync and test-send each
+- [ ] S8-02 Audit export (CSV) and login history (P1-57); attachments on custom approvals; work hand-off after approval (F-32)
+- [ ] S8-03 CEOITBox webhook for delivery and read receipts (HTTPS, secret header), shown in Message deliveries
+- [ ] S8-04 Update the three living files; commit and push
 
 ## Phase 0 — Setup and decisions
 
@@ -219,7 +258,7 @@ Found and fixed during session 6:
 - [>] P0-46 GoDaddy deploy: one Node.js app from GitHub `HarishDevs/ARS-Approval-System` → `approvals.arssteels.net`, env vars entered in GoDaddy only, cPanel cron calling a signed job-runner endpoint (1 Oct 2026: docs/DEPLOYMENT.md + check-privileges.js; deployment waits for the owner's go-ahead)
 
 ### 0.3 Business inputs
-- [>] P0-30 **DoA matrix.** The approval authority is itadmin@ (D-041); fill in the bands and approvers per request type before Phase 3 (Q-004) (7 Oct 2026: example in docs/DOA-EXAMPLE.md and the demo Purchase & SCM; real values still to come (Q-004))
+- [>] P0-30 **DoA matrix.** The approval authority is itadmin@ (D-041); fill in the bands and approvers per request type before Phase 3 (Q-004) (7 Oct 2026: example in docs/DOA-EXAMPLE.md and the demo Purchase & SCM; real values still to come (Q-004)) (8 Oct 2026: owner decided: DoA set per approval type when creating it (D-075); the editor is built)
 - [ ] P0-31 Staff master, provided by the admin (D-033): name, email, WhatsApp number, department, designation, reporting manager, HOD, sign-in method, role(s). Prepare an import template (Excel) for it
 - [ ] P0-32 Clean department list (replaces Asana's 27 values)
 - [ ] P0-33 Clean request-type (Nature) list per approval type (merged from the ~60 Asana values)
@@ -368,7 +407,7 @@ The Super Admin then enters the table in the Admin Portal (P3-30). Every request
 ---
 
 ## Phase 3 — Workflow designer, DoA, validator, test mode
-- [>] P3-01 Visual drag-and-drop designer: START, APPROVAL, PARALLEL, ANY-ONE, ANY-N, CONDITION, WORK, END (30 Sep 2026: structured levels builder (D-056); drag-and-drop canvas later) (1 Oct 2026: levels builder now has choices (CONDITION); drag-and-drop canvas still later)
+- [>] P3-01 Visual drag-and-drop designer: START, APPROVAL, PARALLEL, ANY-ONE, ANY-N, CONDITION, WORK, END (30 Sep 2026: structured levels builder (D-056); drag-and-drop canvas later) (1 Oct 2026: levels builder now has choices (CONDITION); drag-and-drop canvas still later) (8 Oct 2026: DoA matrix editor per approval type added)
 - [>] P3-02 Node settings panel: approver source, completion rule, SLA, allowed actions, notifications (30 Sep 2026: approver source, completion rule, skip condition, no-approver policy; SLA and notifications per step later)
 - [>] P3-03 Form builder: drag, add, remove and reorder fields; field types; required; validation; conditional visibility (30 Sep 2026: fields with type, required and choices in the builder; conditional visibility later)
 - [>] P3-04 **Workflow validator** before publish: start/end exist, all nodes connected, no dead ends, no unintended loops, every approval node has an approver source, no self-approval, valid completion rules, logically valid conditions with no conflicts, rejection path exists, resubmission/reopen policy set, valid escalation (base plan §34) (28 Sep 2026: core rules incl. G-08/G-09, cycles, dead ends; rejection-path and escalation checks still to do) (1 Oct 2026: conditions on choices validated too; rejection-path and escalation checks still to do)

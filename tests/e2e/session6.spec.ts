@@ -29,17 +29,19 @@ test("the Super Admin loads the demo staff and approval types", async ({ page, c
   await expect(page.getByText("Purchase & SCM Approval").first()).toBeVisible();
 });
 
-test("a WhatsApp template is switched on from the registry", async ({ page, context }) => {
+test("the template creator drafts a message; submitting needs the CEOITBox key", async ({ page, context }) => {
   await as(context, "E2E_SUPER");
   await page.goto("/superadmin/templates");
-  await expect(page.getByText("0 of 20 switched on", { exact: false })).toBeVisible();
-  const card = page.locator("#WA_REQUEST_APPROVED_V1");
-  await card.getByLabel("Approved template name in CEOITBox").fill("ars_request_approved_v1");
-  await card.getByLabel(/Approved by Meta/).check();
-  await card.getByRole("button", { name: "Save" }).click();
-  await expect(card.getByText("Saved and switched on", { exact: false })).toBeVisible();
+  await expect(page.getByText("0 of 20 messages are live", { exact: false })).toBeVisible();
+  await page.getByRole("row", { name: /waiting for this person's approval/ }).getByRole("link", { name: "Create" }).click();
+  await expect(page).toHaveURL(/\/superadmin\/templates\/WA_APPROVAL_NEEDED_V1$/);
+  await expect(page.getByText("Ravi Kumar needs your approval for PUR-2026-000123", { exact: false })).toBeVisible();
+  await page.getByRole("button", { name: "Save draft" }).click();
+  await expect(page.getByText("Draft version 1 saved", { exact: false })).toBeVisible();
   await page.reload();
-  await expect(page.locator("#WA_REQUEST_APPROVED_V1").getByText("On", { exact: true })).toBeVisible();
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.getByRole("button", { name: "Submit to Meta for approval" }).click();
+  await expect(page.getByText("CEOITBox API key is not configured.")).toBeVisible();
 });
 
 test("'Try as' a demo buyer; raise a purchase with a quote attached", async ({ page, context }) => {

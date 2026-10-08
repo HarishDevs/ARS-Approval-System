@@ -4,7 +4,7 @@ import { useState } from "react";
 import { createWorkflowAction, saveDraftAction } from "@/app/admin/workflows/actions";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import { FIELD_TYPES, type FieldType, type FormField } from "@/server/forms/fields";
-import type { ApproverPick, BuilderInnerStage, BuilderStage, BuilderStep } from "@/server/workflows/builder";
+import { doaBandLabels, type ApproverPick, type BuilderDoa, type BuilderInnerStage, type BuilderStage, type BuilderStep } from "@/server/workflows/builder";
 
 // Structured workflow builder (D-056, F-50). Stages run in order; a stage
 // is one step or several steps in parallel. The server compiles, validates
@@ -126,7 +126,7 @@ export function WorkflowBuilder({
         </div>
         <div className="divide-y divide-line">
           {form.map((field, index) => (
-            <div key={index} className="grid items-start gap-3 px-5 py-3 md:grid-cols-[1fr_160px_170px_auto_auto]">
+            <div key={index} className="grid items-start gap-3 px-5 py-3 lg:grid-cols-[1fr_160px_170px_auto_auto]">
               <input
                 aria-label="Field label"
                 value={field.label}
@@ -175,7 +175,7 @@ export function WorkflowBuilder({
                     setForm((all) => all.map((item, i) => (i === index ? { ...item, options: event.target.value.split(",").map((option) => option.trim()).filter(Boolean) } : item)))
                   }
                   placeholder="Choices, separated by commas: Capex, Opex"
-                  className="field-input md:col-span-5"
+                  className="field-input lg:col-span-5"
                 />
               )}
             </div>
@@ -282,7 +282,9 @@ function StageList({
     onChange(next);
   };
   const personFields = form.filter((field) => field.type === "PERSON");
-  const kindLabel = (stage: BuilderStage) => (stage.kind === "STEP" ? "one step" : stage.kind === "PARALLEL" ? "parallel steps" : "a choice");
+  const kindLabel = (stage: BuilderStage) => (stage.kind === "STEP" ? "one step" : stage.kind === "PARALLEL" ? "parallel steps" : stage.kind === "DOA" ? "DoA matrix" : "a choice");
+  const hasDoa = stages.some((stage) => stage.kind === "DOA");
+  const numberFields = form.filter((field) => field.type === "NUMBER");
 
   return (
     <>
@@ -345,6 +347,9 @@ function StageList({
                 </button>
               </div>
             )}
+            {stage.kind === "DOA" && (
+              <DoaEditor stage={stage} onChange={(next) => setStage(index, next)} options={options} form={form} personFields={personFields} newId={newId} />
+            )}
             {stage.kind === "BRANCH" && (
               <div className="space-y-3">
                 <div className="flex flex-wrap items-center gap-2">
@@ -388,6 +393,33 @@ function StageList({
         >
           Add parallel steps
         </button>
+        {allowChoice && !nested && !hasDoa && (
+          <button
+            type="button"
+            disabled={numberFields.length === 0}
+            title={numberFields.length === 0 ? "Add a number field (the amount) first" : undefined}
+            onClick={() =>
+              onChange([
+                ...stages,
+                {
+                  kind: "DOA",
+                  id: newId(),
+                  label: "Approval authority (DoA)",
+                  field: numberFields.find((field) => field.key === "amount")?.key ?? numberFields[0]?.key ?? "amount",
+                  limits: [100000, 1000000],
+                  levels: [
+                    { step: newStep("Level 1"), bands: [true, true, true] },
+                    { step: newStep("Level 2"), bands: [false, true, true] },
+                    { step: newStep("Level 3"), bands: [false, false, true] },
+                  ],
+                },
+              ])
+            }
+            className="btn-secondary btn-compact"
+          >
+            Add a DoA matrix
+          </button>
+        )}
         {allowChoice && (
           <button
             type="button"
@@ -413,6 +445,174 @@ function StageList({
         )}
       </div>
     </>
+  );
+}
+
+// DoA matrix (D-075, F-58): amount bands across, approval levels down;
+// tick which levels each band needs. The levels run top to bottom.
+function DoaEditor({
+  stage,
+  onChange,
+  options,
+  form,
+  personFields,
+  newId,
+}: {
+  stage: BuilderDoa;
+  onChange: (stage: BuilderDoa) => void;
+  options: BuilderOptions;
+  form: FormField[];
+  personFields: FormField[];
+  newId: () => string;
+}) {
+  const bandLabels = doaBandLabels(stage.limits);
+  const numberFields = form.filter((field) => field.type === "NUMBER");
+  const setLevel = (index: number, level: BuilderDoa["levels"][number]) => onChange({ ...stage, levels: stage.levels.map((item, i) => (i === index ? level : item)) });
+  const moveLevel = (index: number, delta: number) => {
+    const target = index + delta;
+    if (target < 0 || target >= stage.levels.length) return;
+    const levels = [...stage.levels];
+    [levels[index], levels[target]] = [levels[target]!, levels[index]!];
+    onChange({ ...stage, levels });
+  };
+  // Adding a limit splits the top band (ticks copied); removing one merges
+  // two bands (a level stays needed if either band needed it).
+  const addLimit = () => {
+    const last = stage.limits.at(-1) ?? 0;
+    onChange({ ...stage, limits: [...stage.limits, last * 10 || 100000], levels: stage.levels.map((level) => ({ ...level, bands: [...level.bands, level.bands.at(-1) ?? true] })) });
+  };
+  const removeLimit = (index: number) => {
+    if (stage.limits.length <= 1) return;
+    onChange({
+      ...stage,
+      limits: stage.limits.filter((_, i) => i !== index),
+      levels: stage.levels.map((level) => ({ ...level, bands: level.bands.flatMap((tick, band) => (band === index ? [tick || Boolean(level.bands[band + 1])] : band === index + 1 ? [] : [tick])) })),
+    });
+  };
+  const setLimit = (index: number, raw: string) => {
+    const digits = raw.replace(/[^0-9]/g, "");
+    onChange({ ...stage, limits: stage.limits.map((limit, i) => (i === index ? Number(digits || 0) : limit)) });
+  };
+  const empty = bandLabels.map((_, band) => !stage.levels.some((level) => level.bands[band]));
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-3 md:grid-cols-2">
+        <div>
+          <label className="field-label">Name</label>
+          <input aria-label="DoA name" value={stage.label} onChange={(event) => onChange({ ...stage, label: event.target.value })} className="field-input" />
+        </div>
+        <div>
+          <label className="field-label">Amount field it reads</label>
+          <select aria-label="DoA amount field" value={stage.field} onChange={(event) => onChange({ ...stage, field: event.target.value })} className="field-input">
+            {!numberFields.some((field) => field.key === stage.field) && <option value={stage.field}>{stage.field} (not on the form)</option>}
+            {numberFields.map((field) => (
+              <option key={field.key} value={field.key}>
+                {field.label || field.key}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <p className="field-label">Amount limits (₹), lowest first</p>
+        <div className="flex flex-wrap items-center gap-2">
+          {stage.limits.map((limit, index) => (
+            <span key={index} className="flex items-center gap-1">
+              <input
+                aria-label={`Limit ${index + 1}`}
+                inputMode="numeric"
+                value={limit ? limit.toLocaleString("en-IN") : ""}
+                onChange={(event) => setLimit(index, event.target.value)}
+                className="field-input w-36"
+              />
+              {stage.limits.length > 1 && (
+                <button type="button" onClick={() => removeLimit(index)} className="btn-secondary btn-compact h-11" aria-label={`Remove limit ${index + 1}`}>
+                  ×
+                </button>
+              )}
+            </span>
+          ))}
+          {stage.limits.length < 10 && (
+            <button type="button" onClick={addLimit} className="btn-secondary btn-compact">
+              Add a limit
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Level (runs top to bottom)</th>
+              {bandLabels.map((label, band) => (
+                <th key={band} className={`text-center ${empty[band] ? "text-danger-600" : ""}`}>
+                  {label}
+                </th>
+              ))}
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {stage.levels.map((level, index) => (
+              <tr key={level.step.id}>
+                <td>
+                  <input aria-label={`Level ${index + 1} name`} value={level.step.label} onChange={(event) => setLevel(index, { ...level, step: { ...level.step, label: event.target.value } })} className="field-input min-w-40" />
+                </td>
+                {level.bands.map((tick, band) => (
+                  <td key={band} className="text-center">
+                    <input
+                      type="checkbox"
+                      aria-label={`${level.step.label} needed for ${bandLabels[band]}`}
+                      checked={tick}
+                      onChange={(event) => setLevel(index, { ...level, bands: level.bands.map((item, i) => (i === band ? event.target.checked : item)) })}
+                      className="h-5 w-5"
+                    />
+                  </td>
+                ))}
+                <td className="whitespace-nowrap">
+                  <button type="button" onClick={() => moveLevel(index, -1)} disabled={index === 0} className="btn-secondary btn-compact" aria-label="Move level up">
+                    ↑
+                  </button>{" "}
+                  <button type="button" onClick={() => moveLevel(index, 1)} disabled={index === stage.levels.length - 1} className="btn-secondary btn-compact" aria-label="Move level down">
+                    ↓
+                  </button>{" "}
+                  {stage.levels.length > 1 && (
+                    <button type="button" onClick={() => onChange({ ...stage, levels: stage.levels.filter((_, i) => i !== index) })} className="btn-secondary btn-compact text-danger-600">
+                      Remove
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {empty.some(Boolean) && <p className="text-label text-danger-600">Every amount band needs at least one ticked level.</p>}
+      <button
+        type="button"
+        onClick={() => onChange({ ...stage, levels: [...stage.levels, { step: { id: newId(), label: `Level ${stage.levels.length + 1}`, approvers: { kind: "REQUESTER_MANAGER" }, rule: "ALL" }, bands: bandLabels.map(() => false).map((_, band) => band === bandLabels.length - 1) }] })}
+        className="btn-secondary btn-compact"
+      >
+        Add a DoA level
+      </button>
+
+      <div className="space-y-3">
+        <p className="text-label font-semibold">Who approves at each DoA level</p>
+        {stage.levels.map((level, index) => (
+          <details key={level.step.id} className="rounded-md border border-line p-3" open={index === 0}>
+            <summary className="cursor-pointer text-label font-medium">
+              {level.step.label || `Level ${index + 1}`} · needed for {level.bands.map((tick, band) => (tick ? bandLabels[band] : null)).filter(Boolean).join("; ") || "no band yet"}
+            </summary>
+            <div className="mt-3">
+              <StepEditor step={level.step} onChange={(step) => setLevel(index, { ...level, step })} options={options} form={form} personFields={personFields} hideSkip />
+            </div>
+          </details>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -460,12 +660,14 @@ function StepEditor({
   options,
   form,
   personFields,
+  hideSkip = false,
 }: {
   step: BuilderStep;
   onChange: (step: BuilderStep) => void;
   options: BuilderOptions;
   form: FormField[];
   personFields: FormField[];
+  hideSkip?: boolean;
 }) {
   const pick = step.approvers;
   const skip = step.skipWhen ?? null;
@@ -565,49 +767,51 @@ function StepEditor({
           <option value="SKIP">If nobody to approve: skip this step</option>
         </select>
       </div>
-      <div className="md:col-span-2">
-        <label className="flex items-center gap-2 text-label">
-          <input
-            type="checkbox"
-            checked={skip !== null}
-            disabled={form.length === 0}
-            onChange={(event) => onChange({ ...step, skipWhen: event.target.checked ? { field: form[0]?.key ?? "", operator: "LTE", value: "" } : null })}
-          />
-          Skip this step when…
-          {form.length === 0 && <span className="text-ink-faint">(add a form field first)</span>}
-        </label>
-        {skip && (
-          <div className="mt-2 flex flex-wrap gap-2">
-            <select value={skip.field} onChange={(event) => onChange({ ...step, skipWhen: { ...skip, field: event.target.value } })} className="field-input w-auto" aria-label="Field">
-              {form.map((field) => (
-                <option key={field.key} value={field.key}>
-                  {field.label || field.key}
-                </option>
-              ))}
-            </select>
-            <select value={skip.operator} onChange={(event) => onChange({ ...step, skipWhen: { ...skip, operator: event.target.value as typeof skip.operator } })} className="field-input w-auto" aria-label="Condition">
-              {OPERATORS.map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-            {skip.operator !== "IS_EMPTY" && skip.operator !== "IS_NOT_EMPTY" && (
-              <input
-                aria-label="Value"
-                value={String(skip.value ?? "")}
-                onChange={(event) => {
-                  const raw = event.target.value;
-                  const numeric = raw.replace(/[,\s₹]/g, "");
-                  onChange({ ...step, skipWhen: { ...skip, value: numeric !== "" && Number.isFinite(Number(numeric)) ? Number(numeric) : raw } });
-                }}
-                placeholder="e.g. 500000"
-                className="field-input w-48"
-              />
-            )}
-          </div>
-        )}
-      </div>
+      {!hideSkip && (
+        <div className="md:col-span-2">
+          <label className="flex items-center gap-2 text-label">
+            <input
+              type="checkbox"
+              checked={skip !== null}
+              disabled={form.length === 0}
+              onChange={(event) => onChange({ ...step, skipWhen: event.target.checked ? { field: form[0]?.key ?? "", operator: "LTE", value: "" } : null })}
+            />
+            Skip this step when…
+            {form.length === 0 && <span className="text-ink-faint">(add a form field first)</span>}
+          </label>
+          {skip && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              <select value={skip.field} onChange={(event) => onChange({ ...step, skipWhen: { ...skip, field: event.target.value } })} className="field-input w-auto" aria-label="Field">
+                {form.map((field) => (
+                  <option key={field.key} value={field.key}>
+                    {field.label || field.key}
+                  </option>
+                ))}
+              </select>
+              <select value={skip.operator} onChange={(event) => onChange({ ...step, skipWhen: { ...skip, operator: event.target.value as typeof skip.operator } })} className="field-input w-auto" aria-label="Condition">
+                {OPERATORS.map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+              {skip.operator !== "IS_EMPTY" && skip.operator !== "IS_NOT_EMPTY" && (
+                <input
+                  aria-label="Value"
+                  value={String(skip.value ?? "")}
+                  onChange={(event) => {
+                    const raw = event.target.value;
+                    const numeric = raw.replace(/[,\s₹]/g, "");
+                    onChange({ ...step, skipWhen: { ...skip, value: numeric !== "" && Number.isFinite(Number(numeric)) ? Number(numeric) : raw } });
+                  }}
+                  placeholder="e.g. 500000"
+                  className="field-input w-48"
+                />
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

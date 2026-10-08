@@ -1,4 +1,4 @@
-import type { BuilderInnerStage, BuilderSpec, BuilderStage, BuilderStep } from "@/server/workflows/builder";
+import { doaBandIndex, type BuilderInnerStage, type BuilderSpec, type BuilderStage, type BuilderStep } from "@/server/workflows/builder";
 import { evaluateCondition } from "@/server/engine/conditions";
 import type { ApprovalNode, CompletionRule, FormData, InstanceState, NodeStatus, TaskStatus, WorkflowDefinition } from "@/server/engine/types";
 
@@ -144,6 +144,22 @@ export function buildStepMap(
           .map((node) => ({ ...mapStep(node, state, names), ...(notTaken ? { notTaken } : {}) }));
         const joinRule: CompletionRule = stage.join === "ANY_N" ? { type: "ANY_N", n: stage.n ?? 1 } : { type: stage.join };
         out.push({ kind: "PARALLEL", label: stage.label, joinRule: describeJoin(joinRule), steps });
+      } else if (stage.kind === "DOA") {
+        // Each DoA level shows on its own; levels the amount doesn't need
+        // say so in DoA terms.
+        // Levels not yet reached are shown as skipped already when the
+        // amount's band doesn't tick them (the engine will skip them).
+        const amount = Number(context.formData?.[stage.field]);
+        const band = Number.isFinite(amount) && context.formData?.[stage.field] !== undefined ? doaBandIndex(stage.limits, amount) : null;
+        for (const level of stage.levels) {
+          const node = nodeFor(level.step);
+          if (!node) continue;
+          const step = mapStep(node, state, names);
+          const notNeeded =
+            (step.status === "SKIPPED" && state.nodes[node.id]?.reason === "SKIP_CONDITION") || (step.status === "WAITING" && band !== null && !level.bands[band]);
+          const doaStep = notNeeded ? { ...step, status: "SKIPPED" as const, reason: "Not needed at this amount (DoA)" } : step;
+          out.push({ kind: "STEP", label: node.label, steps: [{ ...doaStep, ...(notTaken ? { notTaken } : {}) }] });
+        }
       } else {
         const reached = state.nodes[`choice_${stage.id}`]?.status === "APPROVED";
         const thenTaken = reached && context.formData ? evaluateCondition(stage.condition, context.formData) : null;

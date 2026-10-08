@@ -2,42 +2,90 @@
 
 import { revalidatePath } from "next/cache";
 import { requireApiArea } from "@/server/authorization/guards";
-import { withTransaction } from "@/lib/db/transaction";
-import { saveRegisteredTemplate } from "@/lib/db/repositories/whatsapp.repository";
-import { recordAudit } from "@/lib/db/repositories/audit.repository";
-import { findTemplateEntry } from "@/server/notifications/templates";
+import { saveDraft, sendTemplateTest, submitDraft, syncStatuses } from "@/server/notifications/template-registry";
 import { logError } from "@/lib/logging/logger";
 import type { ActionResult } from "@/lib/http/action-result";
+import type { TemplateCategory } from "@/server/integrations/ceoitbox/client";
 
-// /superadmin/templates (S6-04, F-42): record the Meta-approved name of a
-// catalogue template and switch it on or off. Super Admin only.
-export async function saveTemplateAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  let session;
+// /superadmin/templates (S7, D-076, F-42b): the WhatsApp template creator.
+// Super Admin only; the service checks the role again.
+const NOT_FOUND: ActionResult = { ok: false, message: "Not found." };
+
+async function superAdmin() {
   try {
-    session = await requireApiArea("superadmin");
+    const session = await requireApiArea("superadmin");
+    return { id: session.user.id, roles: session.user.roles, sessionId: session.sessionId, whatsappNumber: session.user.whatsappNumber };
   } catch {
-    return { ok: false, message: "Not found." };
+    return null;
   }
-  const entry = findTemplateEntry(String(formData.get("code") ?? ""));
-  if (!entry) return { ok: false, message: "Not found." };
-  const providerName = String(formData.get("providerName") ?? "").trim();
-  const on = formData.get("on") === "on";
-  if (providerName && !/^[a-z0-9_]{1,512}$/.test(providerName)) {
-    return { ok: false, message: "Check the name.", fieldErrors: { providerName: "Use the exact name from CEOITBox: lowercase letters, numbers and _." } };
-  }
-  if (on && !providerName) return { ok: false, message: "Check the name.", fieldErrors: { providerName: "Enter the approved template name before switching it on." } };
+}
+
+const codeOf = (formData: FormData) => String(formData.get("code") ?? "");
+
+function done(code: string) {
+  revalidatePath("/superadmin/templates");
+  if (code) revalidatePath(`/superadmin/templates/${code}`);
+}
+
+export async function saveTemplateDraftAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const actor = await superAdmin();
+  if (!actor) return NOT_FOUND;
+  const code = codeOf(formData);
   try {
-    await withTransaction(async (connection) => {
-      await saveRegisteredTemplate({ code: entry.code, eventType: entry.eventType, providerName: providerName || null, on, variables: entry.variables }, session.user.id, connection);
-      await recordAudit(
-        { actorUserId: session.user.id, action: "WHATSAPP_TEMPLATE_SAVED", entityType: "WHATSAPP_TEMPLATE", entityId: entry.code, sessionId: session.sessionId, metadata: { providerName: providerName || null, on } },
-        connection,
-      );
-    });
+    const result = await saveDraft(
+      code,
+      {
+        name: String(formData.get("name") ?? "").trim(),
+        category: String(formData.get("category") ?? "UTILITY") as TemplateCategory,
+        body: String(formData.get("body") ?? ""),
+        footer: String(formData.get("footer") ?? ""),
+      },
+      actor,
+    );
+    if (!result.ok) return { ok: false, message: result.message, fieldErrors: result.fieldErrors };
+    done(code);
+    return { ok: true, message: result.message };
   } catch (error) {
-    logError("saveTemplateAction failed", error);
+    logError("saveTemplateDraftAction failed", error);
     return { ok: false, message: "Couldn't save. Please try again." };
   }
-  revalidatePath("/superadmin/templates");
-  return { ok: true, message: on ? "Saved and switched on. WhatsApp messages for this event now use it." : "Saved. It stays off until you tick \"Approved by Meta\"." };
+}
+
+export async function submitTemplateAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const actor = await superAdmin();
+  if (!actor) return NOT_FOUND;
+  const code = codeOf(formData);
+  try {
+    const result = await submitDraft(code, actor);
+    done(code);
+    return { ok: result.ok, message: result.message };
+  } catch (error) {
+    logError("submitTemplateAction failed", error);
+    return { ok: false, message: "Couldn't submit. Please try again." };
+  }
+}
+
+export async function syncTemplatesAction(): Promise<ActionResult> {
+  const actor = await superAdmin();
+  if (!actor) return NOT_FOUND;
+  try {
+    const result = await syncStatuses(actor);
+    done("");
+    return { ok: result.ok, message: result.message };
+  } catch (error) {
+    logError("syncTemplatesAction failed", error);
+    return { ok: false, message: "Couldn't sync. Please try again." };
+  }
+}
+
+export async function testTemplateAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const actor = await superAdmin();
+  if (!actor) return NOT_FOUND;
+  try {
+    const result = await sendTemplateTest(codeOf(formData), actor);
+    return { ok: result.ok, message: result.message };
+  } catch (error) {
+    logError("testTemplateAction failed", error);
+    return { ok: false, message: "Couldn't send the test. Please try again." };
+  }
 }

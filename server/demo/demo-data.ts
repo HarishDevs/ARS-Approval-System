@@ -172,12 +172,24 @@ export function demoWorkflows(ids: DemoIds): DemoWorkflow[] {
         { key: "budgeted", label: "In the approved budget?", type: "CHOICE", required: true, options: ["Yes", "No"] },
         details,
       ],
-      builder: single(
-        hod("scmhead", "Purchase & SCM head", "SCM"),
-        hod("finance", "Finance head", "FIN", { skipWhen: { field: "amount", operator: "LTE", value: PURCHASE_DOA_BANDS.finance } }),
-        group("ed", "ED", "ED_OFFICE", { skipWhen: { field: "amount", operator: "LTE", value: PURCHASE_DOA_BANDS.ed }, slaHours: 48 }),
-        group("md", "MD", "MD_OFFICE", { skipWhen: { field: "amount", operator: "LTE", value: PURCHASE_DOA_BANDS.md }, slaHours: 48 }),
-      ),
+      // The approval type's own DoA matrix (D-075).
+      builder: {
+        stages: [
+          {
+            kind: "DOA",
+            id: "doa",
+            label: "Purchase DoA",
+            field: "amount",
+            limits: [PURCHASE_DOA_BANDS.finance, PURCHASE_DOA_BANDS.ed, PURCHASE_DOA_BANDS.md],
+            levels: [
+              { step: hod("scmhead", "Purchase & SCM head", "SCM"), bands: [true, true, true, true] },
+              { step: hod("finance", "Finance head", "FIN"), bands: [false, true, true, true] },
+              { step: group("ed", "ED", "ED_OFFICE", { slaHours: 48 }), bands: [false, false, true, true] },
+              { step: group("md", "MD", "MD_OFFICE", { slaHours: 48 }), bands: [false, false, false, true] },
+            ],
+          },
+        ],
+      },
     },
     {
       flow: "F-65",

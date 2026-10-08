@@ -25,10 +25,10 @@
 | Company | ARS Steels & Alloy International Pvt Ltd |
 | Build team | Project owner (ARS IT, itadmin@arssteels.co.in) + Claude (AI pair developer) |
 | Admin Portal (Super Admin) login | `itadmin@arssteels.co.in`, operated by the developers |
-| Current stage | **Build session 6 done (7 Oct 2026).** Demo staff and the 12 first approval types; DoA example; all 20 WhatsApp template formats and the registry screen; attachments. 192 unit + 37 MySQL integration + 12 e2e tests, typecheck, lint and build pass. Ready to go live on the owner's go-ahead |
+| Current stage | **Build session 7 done (8 Oct 2026).** DoA matrix per approval type; WhatsApp template creator on the CEOITBox API (create, sync, test). 209 unit + 37+6 MySQL integration + 14 e2e tests, typecheck, lint and build pass. Ready to go live on the owner's go-ahead |
 | Address | **`approvals.arssteels.net`** (single app; role routes `/users`, `/admin`, `/superadmin`, D-034) |
 | Repository | **https://github.com/HarishDevs/ARS-Approval-System** (private, `main`, D-035). Local root: `D:\Omniroute\ARS Approval System` |
-| Last updated | 7 Oct 2026 (build session 6) |
+| Last updated | 8 Oct 2026 (build session 7) |
 
 ## 2. Key files and links
 
@@ -51,6 +51,9 @@
 | End-to-end tests | `npm run test:e2e` (Playwright): builds the app, recreates `ars_approvals_test`, seeds E2E_* people, signs them in with test cookies; specs in `tests/e2e/` |
 | Insights and calendar | `/admin/insights` (`insights.repository.ts`), `/admin/calendar` (`calendar.repository.ts`, `server/workflows/calendar.ts`) |
 | Demo data | `server/demo/demo-data.ts` (people, groups, the 12 approval types), `server/demo/service.ts` (load, retire, Try as), `/superadmin/demo` |
+| CEOITBox API reference | `docs/CEOITBOX-API.md` (summary of the owner's CEOITBOX_API_Master_Documentation.docx and Integration Guide, 8 Oct 2026; the .docx files stay outside the repo); client `server/integrations/ceoitbox/client.ts` |
+| Template creator | `server/notifications/template-authoring.ts` (rules), `server/notifications/template-registry.ts` (save, submit, sync, test), `/superadmin/templates` and `/superadmin/templates/[code]` |
+| DoA matrix | `server/workflows/builder.ts` (DOA stage, `doaSkipCondition`, `checkDoaForm`), `features/admin/WorkflowBuilder.tsx` (DoaEditor) |
 | Notification templates | `server/notifications/templates.ts` (catalogue; generates `docs/NOTIFICATION-TEMPLATES.md` via `node scripts/dev/write-templates-doc.mjs`), `/superadmin/templates` |
 | Attachments | `server/attachments/files.ts` (rules), `server/attachments/service.ts`, `/api/attachments/[id]`, env `UPLOAD_DIR` |
 | DoA example | `docs/DOA-EXAMPLE.md` |
@@ -145,6 +148,8 @@
 | D-072 | 7 Oct 2026 | **Attachments** (owner confirmed GoDaddy keeps files, Q-001).<br>• Files on disk in `UPLOAD_DIR` (outside the web root), random names, sha256 recorded.<br>• Allowed: PDF, PNG/JPG/WEBP, Word/Excel/PowerPoint, CSV, text. The contents are sniffed to match the name. 10 MB per file, 5 per upload, 20 per request.<br>• Added on raise or resubmit (requester), or any time while open (anyone who can see the request). Never deleted.<br>• Downloads only through `/api/attachments/[id]`, with the same check as the request page; always a download, with a sandbox CSP and nosniff.<br>• Server Action and middleware body limits raised to 52 MB. | Claude, following P2-08 |
 | D-073 | 7 Oct 2026 | **WhatsApp template catalogue** (Q-013: owner asked for every format).<br>• One catalogue in code holds 20 Utility templates (wording, {{n}} order, Meta samples). It generates docs/NOTIFICATION-TEMPLATES.md, and a test keeps code, catalogue and document in step.<br>• The Super Admin records the approved name and switches each one on in /superadmin/templates. Until then the WhatsApp send is SKIPPED; email and in-app messages still go out.<br>• Values are sent on one line, cut to 300 characters, never empty (Meta's rules).<br>• Escalation and "request blocked" now go on WhatsApp too. The set-password link stays email only. | Claude, from owner answer 3 |
 | D-074 | 7 Oct 2026 | **DoA example** (owner asked for one, Q-004): Purchase & SCM, with bands up to ₹1L SCM head; then + Finance head; above ₹10L + ED; above ₹25L + MD. Explained in docs/DOA-EXAMPLE.md with a table to fill in. The DoA view shows parallel reviewers as one level ("A + B (together)"). Flow F-70 was numbered twice, so the dashboard became F-56. | Claude, from owner answer 4 |
+| D-075 | 8 Oct 2026 | **The DoA belongs to each approval type** (owner: "When creating an approval I will create the DoA based on each approval").<br>• The builder has a DoA matrix level: an amount field, rising limits (upper limit inclusive; the last band is "above"), and approval levels, each with any approver source, rule and response time. A tick grid says which levels each band needs, so bands can be cumulative or not.<br>• One per approval type. It can sit between ordinary levels.<br>• Each level compiles to an approval step skipped by an AND/OR range condition in the bands it isn't ticked for. Every band needs a level; the amount field must be a required number.<br>• New approval types start with a DoA matrix. The DoA view, request map ("Not needed at this amount (DoA)"), test mode and demo Purchase & SCM use it. Custom approvals don't.<br>• Supersedes the example-only approach of D-074 for new approval types; skip rules still work. | Owner, 8 Oct 2026 |
+| D-076 | 8 Oct 2026 | **WhatsApp template creator on the CEOITBox API** (owner: create it in the Super Admin; the CEOITBox API documents are the master reference).<br>• /superadmin/templates lists the 20 messages. Each has an editor with named placeholders (turned into {{1}}, {{2}} in order of use), insert buttons, a live preview, and checks for Meta's rules.<br>• Submit → `POST /messageTemplate/create` (Utility, en, BODY + example, optional FOOTER).<br>• Sync → `GET /whatsapp/syncTemplatesFromMeta` + `POST /messageTemplate/getTemplates`. Approved versions go live by themselves and retire older ones; rejected ones show Meta's reason; paused ones stop.<br>• A change after submitting becomes the next version (`_v2`…); the old version keeps sending until the new one is approved.<br>• "Send a test to my WhatsApp" goes only to the Super Admin's own number.<br>• Sends carry `userMessageId` (`ars-n<id>`). A 200 reply with an error object counts as a failure. 400, 401 and blocked replies aren't retried.<br>• The app should get its own CEOITBox key ("ARS Approvals – prod"), rotated every 90 days. | Owner, 8 Oct 2026 |
 | D-033 | 28 Sep 2026 | **Staff data is provided by the admin. Roles are assigned per user, by the admin only. Users are added or made inactive in the Admin Portal** (never hard-deleted, so history and audit stay intact). *Resolves Q-010.* | Owner (answer 7) |
 
 ## 4. Open questions (must be answered before the phase shown)
@@ -154,7 +159,7 @@
 | Q-001 | GoDaddy plan type | Phase 0 stack choice | **Resolved 28 Sep → D-027/D-028.** Still to check on first deploy: the Node.js Hosting product vs cPanel "Setup Node.js App", whether its MySQL is the existing cPanel one (17 of 25 DB slots used), whether the disk is persistent (attachments), and cron availability **7 Oct 2026: owner confirmed the disk keeps uploaded files → D-072.** MySQL host and cron still to check on the first deploy |
 | Q-002 | CEOITBox API details and sharing | Phase 0 / Phase 1 | **Resolved 28 Sep → D-029, D-036** (same number and key; the owner provides the notification templates) |
 | Q-003 | OTP channels | Phase 1 OTP | **Resolved 28 Sep → D-025 (WhatsApp only)** |
-| Q-004 | **DoA matrix** (explained in PLAN-CHECKLIST §0.3) | Phase 3 amount routing | **Owner resolved → D-041 (itadmin@).** Open: the actual amount bands and approvers per request type, to be entered by itadmin@ before Phase 3 **7 Oct 2026: example given (docs/DOA-EXAMPLE.md, demo Purchase & SCM); waiting for the real bands** |
+| Q-004 | **DoA matrix** (explained in PLAN-CHECKLIST §0.3) | Phase 3 amount routing | **Owner resolved → D-041 (itadmin@).** Open: the actual amount bands and approvers per request type, to be entered by itadmin@ before Phase 3 **7 Oct 2026: example given (docs/DOA-EXAMPLE.md, demo Purchase & SCM); waiting for the real bands** **8 Oct 2026: owner decided the DoA is set per approval type at creation → D-075 (editor built); the values are entered by IT on screen** |
 | Q-005 | Email sender | Phase 1 notifications | **Resolved 28 Sep → D-030, D-037 (Resend from itadmin@)** |
 | Q-006 | App addresses | Phase 0 | **Resolved 28 Sep → D-034 (one address: approvals.arssteels.net; role routes /users, /admin, /superadmin)** |
 | Q-007 | Google sign-in project | Phase 1 | **Resolved 28 Sep → D-038 (reuse power-bi-dashboard-3b29f)** |
@@ -168,6 +173,16 @@
 | Q-015 | **Break-glass and WhatsApp:** the break-glass account signs in with a password **plus the WhatsApp code** (D-025). If WhatsApp or CEOITBox is down, which is exactly when break-glass may be needed, it can't sign in. Keep the code, or skip it only during the console-enabled window? | Go-live | Open, waiting on the owner (built conservatively: the code is required) |
 
 ## 5. Work log (newest first)
+
+### 8 Oct 2026 (build session 7)
+- **Owner's instructions:** the DoA is set per approval type when it is created; build the WhatsApp template creator in Super Admin; the CEOITBox API documents are the master reference.
+- **Read:** both .docx files (Integration Guide, Master Documentation). No key values are in them, and none were copied.
+- **Built:**
+  - the DoA matrix (D-075): schema, compile, editor, defaults, DoA view, request map, demo Purchase & SCM;
+  - the template creator (D-076): client calls (create, sync, list, userMessageId, error mapping), registry versions (migration 202610081200), and the creator screens;
+  - docs/CEOITBOX-API.md, and the regenerated docs/NOTIFICATION-TEMPLATES.md.
+- **Fixes:** S7-F1 (non-retryable CEOITBox replies), S7-F2 (narrow-screen overflow), S7-N1.
+- **Tests:** +17 unit (DoA bands and conditions, routing at the band edges, checks; placeholder rules; payloads; reply mapping) and +6 MySQL integration (DoA required-field rule, routing by band including a non-cumulative level, the creator end to end against a fake CEOITBox: draft, submit payload, pending, approved goes live, v2 replaces v1, rejection reason, test send to own number only). +2 e2e (DoA matrix built on screen and used; creator draft, submit needs the key).
 
 ### 7 Oct 2026 (build session 6)
 - **Owner's answers:** use dummy data; GoDaddy keeps files; send every template format; give a DoA example.
