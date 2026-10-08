@@ -2,6 +2,7 @@ import Link from "next/link";
 import { EmptyState, PageHeader } from "@/features/shell/PageHeader";
 import { requireArea } from "@/server/authorization/guards";
 import { listUsersForAdmin } from "@/lib/db/repositories/admin-users.repository";
+import { Email } from "@/features/ui/SafeText";
 
 const PAGE_SIZE = 50;
 const ROLE_LABEL = { USER: "User", IT_ADMIN: "IT Admin", SUPER_ADMIN: "Super Admin" } as const;
@@ -69,7 +70,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
                     <Link href={`/admin/users/${user.id}`} className="link">
                       {user.name}
                     </Link>
-                    <p className="text-caption text-ink-muted">{user.email}</p>
+                    <p className="text-caption text-ink-muted"><Email address={user.email} /></p>
                   </td>
                   <td>{user.loginId}</td>
                   <td>{user.departmentName ?? <span className="text-ink-faint">—</span>}</td>

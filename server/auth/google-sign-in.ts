@@ -11,6 +11,7 @@ import { AuthError, GENERIC_GOOGLE_FAILED } from "@/server/auth/errors";
 import { completeSignIn, defaultCompleteSignInDeps, type CompleteSignInDeps, type CompleteSignInResult } from "@/server/auth/complete-sign-in";
 import { checkSignInAllowed } from "@/server/auth/sign-in-rules";
 import type { RequestContext } from "@/types/auth";
+import { logError } from "@/lib/logging/logger";
 
 // F-01: Google sign-in, no OTP (D-006). The account must already exist
 // (created in /admin, any email domain — D-004) with sign-in method GOOGLE.
@@ -47,7 +48,10 @@ export async function googleSignInWithDeps(
   let identity: VerifiedGoogleIdentity;
   try {
     identity = await deps.verifyIdToken(idToken);
-  } catch {
+  } catch (error) {
+    // The reason goes to the server log only (e.g. Firebase Admin not set up,
+    // a malformed private key, a token from another project); never the token.
+    logError("google sign-in: token verification failed", error);
     return fail(null, "INVALID_TOKEN", new AuthError("AUTH_INVALID_TOKEN", "Google sign-in failed. Please try again."));
   }
   if (!identity.email || !identity.emailVerified) {

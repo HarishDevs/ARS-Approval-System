@@ -1,3 +1,5 @@
+import { Email } from "@/features/ui/SafeText";
+
 // Split layout for sign-in, set-password and forgot-password (asset pack
 // 00-login-split-layout-alt).
 export function AuthLayout({ children }: { children: React.ReactNode }) {
@@ -46,7 +48,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
           <img src="/brand/ars-green-steel.svg" alt="ARS Green Steel" className="h-16 w-auto" />
           {children}
           <p className="mt-8 text-center text-body text-ink-muted">
-            Need access? Contact IT Support: <span className="select-all font-medium text-ink">itadmin@arssteels.co.in</span>
+            Need access? Contact IT Support: <span className="select-all font-medium text-ink"><Email address="itadmin@arssteels.co.in" /></span>
           </p>
         </div>
       </section>

@@ -8,6 +8,17 @@ import { getEnv } from "@/config/environment";
 // Project power-bi-dashboard-3b29f is reused from the Power BI site (D-038).
 let app: App | undefined;
 
+// The key as pasted into a hosting secrets screen can arrive with its
+// surrounding quotes, with literal "\n" sequences, or with real line breaks
+// (or \r\n). Firebase needs plain PEM with real line breaks.
+export function normalizePrivateKey(raw: string): string {
+  let key = raw.trim();
+  if ((key.startsWith('"') && key.endsWith('"')) || (key.startsWith("'") && key.endsWith("'"))) key = key.slice(1, -1);
+  return `${key.replace(/\\r\\n|\\n/g, "\n").replace(/\r\n/g, "\n").trim()}\n`;
+}
+
+const unquote = (value: string) => value.trim().replace(/^["']|["']$/g, "");
+
 function getFirebaseAdminApp(): App {
   if (app) return app;
   const existing = getApps()[0];
@@ -21,9 +32,9 @@ function getFirebaseAdminApp(): App {
   }
   app = initializeApp({
     credential: cert({
-      projectId: env.FIREBASE_PROJECT_ID,
-      clientEmail: env.FIREBASE_CLIENT_EMAIL,
-      privateKey: env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+      projectId: unquote(env.FIREBASE_PROJECT_ID),
+      clientEmail: unquote(env.FIREBASE_CLIENT_EMAIL),
+      privateKey: normalizePrivateKey(env.FIREBASE_PRIVATE_KEY),
     }),
   });
   return app;

@@ -4,6 +4,7 @@ import { SignOutButton } from "@/features/shell/SignOutButton";
 import { SideNav, type NavItem } from "@/features/shell/SideNav";
 import { countUnread } from "@/lib/db/repositories/collab.repository";
 import type { AppArea, AuthenticatedUser } from "@/types/auth";
+import { Email } from "@/features/ui/SafeText";
 
 const AREA_LABEL: Record<AppArea, string> = { users: "My approvals", admin: "Admin", superadmin: "Super Admin" };
 
@@ -73,7 +74,7 @@ export async function AppShell({
             </Link>
             <div className="hidden text-right sm:block">
               <p className="text-label font-semibold leading-tight">{user.name}</p>
-              <p className="text-caption leading-tight text-ink-muted">{user.email}</p>
+              <p className="text-caption leading-tight text-ink-muted"><Email address={user.email} /></p>
             </div>
             <span aria-hidden="true" className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-600 text-caption font-semibold text-white">
               {initials}

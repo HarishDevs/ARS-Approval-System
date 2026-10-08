@@ -247,6 +247,10 @@ Found during S8-06:
   - v1.0.1
 - [x] S8-09 Domain is approval.arssteels.net (D-079): code fallback, docs, samples and tests updated; APP_BASE_URL in the env file updated (done 8 Oct 2026)
 - [x] S8-10 First GoDaddy deploy: the live app started (DB set up by the start command). Fixed the preview build failure (stale .next, v1.0.3). Sender changed to approvals@arssteels.net with reply-to IT (D-080) (done 8 Oct 2026)
+- [x] S8-11 First live run at approval.arssteels.net (done 8 Oct 2026):
+  - Cloudflare email obfuscation broke hydration (React #418) → addresses are now rendered split (SafeText);
+  - Google sign-in 401 → the Firebase key is accepted in any paste format, and verification failures are logged;
+  - v1.0.4
 - [ ] S8-01b Go-live on GoDaddy with the owner, following docs/DEPLOYMENT.md (the owner is at the wizard's "Add secrets" step)
 - [x] S8-04 Update the three living files; commit and push (done 8 Oct 2026)
 

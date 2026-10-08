@@ -5,6 +5,7 @@ import { saveTemplateDraftAction, submitTemplateAction, syncTemplatesAction, tes
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import { compileNamedBody, MAX_BODY, previewNamed } from "@/server/notifications/template-authoring";
 import type { TemplateVariable } from "@/server/notifications/templates";
+import { SafeText } from "@/features/ui/SafeText";
 
 // WhatsApp template creator (S7, D-076, F-42b). The wording uses named
 // placeholders; the server turns them into Meta's {{1}}, {{2}} on save.
@@ -99,7 +100,7 @@ export function TemplateEditor({
           <p className="field-label">Preview with sample values</p>
           <div className="rounded-lg bg-success-50 p-4">
             <div className="max-w-sm whitespace-pre-wrap rounded-lg bg-white px-3 py-2 text-label shadow-sm">
-              {previewNamed(body, variables)}
+              <SafeText text={previewNamed(body, variables)} />
               {footer && <p className="mt-2 text-caption text-ink-faint">{footer}</p>}
             </div>
           </div>

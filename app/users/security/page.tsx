@@ -1,6 +1,7 @@
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { SignOutEverywhereButton } from "@/features/shell/SignOutEverywhereButton";
+import { SafeText } from "@/features/ui/SafeText";
 
 export default async function SecurityPage() {
   const { user } = await requireArea("users");
@@ -12,7 +13,7 @@ export default async function SecurityPage() {
           <h2 className="font-semibold">Sign-in method</h2>
           <p className="mt-1 text-ink-muted">
             {user.signInMethod === "GOOGLE"
-              ? `Google account (${user.email}). No code is needed.`
+              ? <SafeText text={`Google account (${user.email}). No code is needed.`} />
               : `User ID and password, then a code on WhatsApp${user.whatsappNumber ? ` (+${user.whatsappNumber.slice(0, 2)}…${user.whatsappNumber.slice(-2)})` : ""}.`}
           </p>
           <p className="mt-2 text-label text-ink-muted">Only IT can change how you sign in.</p>

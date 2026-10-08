@@ -2,6 +2,7 @@
 
 import { testSendAction } from "@/app/superadmin/settings/actions";
 import { ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
+import { SafeText } from "@/features/ui/SafeText";
 
 // F-52 test send: to the Super Admin's own email and number only.
 function TestButton({ channel, label, target }: { channel: "EMAIL" | "WHATSAPP"; label: string; target: string }) {
@@ -13,7 +14,7 @@ function TestButton({ channel, label, target }: { channel: "EMAIL" | "WHATSAPP";
         <SubmitButton pending={pending} variant="secondary" className="btn-compact">
           {label}
         </SubmitButton>
-        <span className="text-label text-ink-muted">to {target}</span>
+        <span className="text-label text-ink-muted">to <SafeText text={target} /></span>
       </div>
       <ResultMessage result={result} />
     </form>

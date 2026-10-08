@@ -1,5 +1,12 @@
 # Release notes
 
+## v1.0.4 (8 Oct 2026): first live fixes
+- **Email addresses on pages no longer break the page.** GoDaddy's Cloudflare layer rewrote any address in the HTML (email obfuscation) and injected a script the CSP blocks, which caused React error #418. Addresses are now rendered so Cloudflare leaves them alone; they look the same.
+- **Google sign-in:**
+  - the Firebase private key is accepted with or without surrounding quotes, as literal `
+`, real line breaks or CRLF;
+  - when a Google token can't be verified, the reason is written to the runtime log (never the token).
+
 ## v1.0.3 (8 Oct 2026)
 - **Build fix:** `npm run build` removes the old `.next` folder first. GoDaddy reuses the app folder between builds, which broke Next.js with `ENOENT rename …/export/500.html`.
 - **Email sender** is now `approvals@arssteels.net`, the domain verified in Resend. A new **Reply-to** setting defaults to `itadmin@arssteels.co.in`, so replies reach IT. Both can be changed in Super Admin → Providers & security → Email.
