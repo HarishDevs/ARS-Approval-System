@@ -60,7 +60,7 @@ The number of levels and how they combine is unlimited. There are no fixed "Leve
 | F-15 | Comments on a request | Built and verified 1 Oct 2026 |
 | F-16 | Handing over pending approvals | Built and tested on MySQL 1 Oct 2026 |
 | F-54 | DoA view derived from workflows | Built 1 Oct 2026; reads DoA matrices 8 Oct 2026 |
-| F-90 | GoDaddy deployment and go-live | Guide + privilege check ready 1 Oct 2026; deploy on owner's go-ahead |
+| F-90 | GoDaddy deployment and go-live | v1.0.0 prepared 8 Oct 2026 (guide, release notes, tag); deploy with the owner |
 | F-14 | Request screens: raise → queue → act → resubmit | Built and verified in the browser 30 Sep 2026 |
 | F-41 | Retry runner for failed messages | Built 30 Sep 2026 (cron set up at go-live) |
 | F-09 | Rate limiting on sign-in and codes | Built and verified 30 Sep 2026 |

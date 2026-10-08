@@ -17,17 +17,18 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
-- **Now:** Build session 7 finished (8 Oct 2026), on the owner's two instructions.
-  - **DoA per approval type:** every approval type is created with its own DoA matrix: amount limits across, approval levels down, tick which levels each band needs.
-  - **WhatsApp template creator** in Super Admin, on the CEOITBox API as the master document says: write the wording, submit it to Meta, sync the status (approved templates go live by themselves), and send a test to yourself.
-  - Gates: 209 unit tests, 43 MySQL integration tests, 14 browser end-to-end tests, typecheck, lint and build pass.
-  - Verified in the browser: the DoA editor and the template creator.
-- **Waiting on the owner:**
-  - **A separate CEOITBox API key for this app** (entered in /superadmin after go-live; never sent in chat).
-  - The deployment go-ahead.
-  - The real DoA limits per approval type (now set on screen by IT when creating each approval type).
-  - The real staff list; Q-015.
-- **Next:** go-live, then create and submit the 20 templates from /superadmin/templates. Then session 8: S7-11 items.
+- **Now:** **v1.0.0 is prepared for production** (8 Oct 2026).
+  - The QA defects are fixed.
+  - A Node 22 empty-file bug was caught by CI and fixed.
+  - The deployment guide and release notes are updated, the version is 1.0.0, and the tag `v1.0.0` is pushed once CI is green.
+  - The owner kept the policy items as they are (D-078).
+- **Next, with the owner on GoDaddy** (docs/DEPLOYMENT.md):
+  - DB and privilege check → migrate (15) → seed;
+  - Node app from the `v1.0.0` commit, with env vars including UPLOAD_DIR;
+  - DNS and HTTPS; Firebase authorised domain;
+  - Resend key and a **new** CEOITBox key; cron;
+  - break-glass; demo or real staff; the 19 templates; go-live checks.
+- **Still open:** Q-015 (break-glass without WhatsApp); the real staff list.
 
 ---
 
@@ -231,10 +232,16 @@ Found and fixed during session 7:
   - [x] S8-06h D-QA-11: My requests gets search (number or title), a status filter and paging (done 8 Oct 2026)
   - [x] S8-06i D-QA-15: line breaks stripped from email subjects (done 8 Oct 2026)
   - [x] S8-06j D-QA-07 and D-QA-13 checked: already handled (deactivation with pending approvals is refused; reminders skip held requests). Correct the QA document (done 8 Oct 2026)
-  - [~] S8-06k D-QA-08, D-QA-10, D-QA-14 are policy choices (segregation of duties, expiry): waiting for the owner's answers to Q-QA-03 and Q-QA-10
+  - [x] S8-06k D-QA-08, D-QA-10, D-QA-14: the owner chose to keep them as they are (D-078) (done 8 Oct 2026)
 Found during S8-06:
 - [x] S8-F1 The new duplicate check ran before field validation, so a negative amount on a repeated title showed the duplicate message instead of the amount error. It now runs inside the transaction, after the form is valid; the e2e test caught it (done 8 Oct 2026)
-- [ ] S8-04 Update the three living files; commit and push
+- [x] S8-07 Prepare the production release v1.0.0 (owner, 8 Oct 2026):
+  - Found and fixed S8-F2: CI's e2e job had failed since session 6, because on Node 22 an empty file box arrives as a 0-byte "undefined" file and blocked every plain submit;
+  - updated DEPLOYMENT.md (migration list, new CEOITBox key, templates, cron jobs, UPLOAD_DIR, demo option, extra go-live checks, known limits);
+  - RELEASE-NOTES.md; version 1.0.0; .nvmrc 22;
+  - tag v1.0.0 once CI is green (done 8 Oct 2026)
+- [ ] S8-01b Go-live on GoDaddy with the owner, following docs/DEPLOYMENT.md
+- [x] S8-04 Update the three living files; commit and push (done 8 Oct 2026)
 
 ## Phase 0 — Setup and decisions
 
