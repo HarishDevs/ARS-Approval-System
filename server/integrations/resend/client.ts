@@ -36,7 +36,8 @@ export async function sendEmail(
       body: JSON.stringify({
         from: `${config.fromName} <${config.fromAddress}>`,
         to: input.to,
-        subject: input.subject,
+        // D-QA-15: one line only, so a title can't add mail headers.
+        subject: input.subject.replace(/[\r\n]+/g, " ").trim(),
         text: input.text,
         ...(input.html ? { html: input.html } : {}),
       }),

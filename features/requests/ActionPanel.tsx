@@ -16,7 +16,7 @@ export function DecisionForm({ requestId, taskKey, label }: { requestId: number;
         <label htmlFor={`comment-${taskKey}`} className="field-label">
           Comment <span className="font-normal text-ink-faint">(required to reject or ask for changes)</span>
         </label>
-        <textarea id={`comment-${taskKey}`} name="comment" rows={3} className="field-input h-auto py-2.5" />
+        <textarea id={`comment-${taskKey}`} name="comment" rows={3} maxLength={2000} className="field-input h-auto py-2.5" />
         <FieldError result={result} name="comment" />
       </div>
       <div className="flex flex-wrap gap-2">

@@ -12,6 +12,8 @@ import {
   type TemplateVersion,
 } from "@/lib/db/repositories/whatsapp.repository";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
+import { getDbPool } from "@/lib/db/client";
+import type { RowDataPacket } from "mysql2/promise";
 import { CeoitboxError, createTemplate, listTemplates, sendTemplateMessage, syncTemplatesFromMeta, type TemplateCategory } from "@/server/integrations/ceoitbox/client";
 import { getWhatsAppConfig } from "@/server/settings/values";
 import { checkFooter, checkTemplateName, compileNamedBody, outcomeOf, versionedName } from "@/server/notifications/template-authoring";
@@ -143,6 +145,31 @@ export interface SyncReport {
 // dashboard and named here).
 export async function syncStatuses(actor: RegistryActor): Promise<RegistryResult<SyncReport>> {
   if (!isSuperAdmin(actor)) return NOT_FOUND;
+  return syncCore(actor.id, actor.sessionId);
+}
+
+// D-QA-09: the job runner pulls Meta's verdicts once a day, so a template
+// paused or deleted at CEOITBox stops being used without anyone pressing
+// Sync. Skipped without a key, without any named template, or if a sync
+// (by hand or automatic) ran in the last 24 hours.
+export async function runDailyTemplateSync(): Promise<{ templateSync: string }> {
+  try {
+    if (!(await getWhatsAppConfig()).apiKey) return { templateSync: "skipped: no CEOITBox key" };
+    const codes = new Set(WHATSAPP_TEMPLATES.map((entry) => entry.code));
+    const named = (await listTemplateVersions()).some((row) => codes.has(row.code) && row.providerName && row.status !== "RETIRED");
+    if (!named) return { templateSync: "skipped: no templates yet" };
+    const [rows] = await getDbPool().query<(RowDataPacket & { recent: number })[]>(
+      "SELECT COUNT(*) AS recent FROM audit_logs WHERE action = 'WHATSAPP_TEMPLATES_SYNCED' AND occurred_at > DATE_SUB(CURRENT_TIMESTAMP(3), INTERVAL 24 HOUR)",
+    );
+    if (Number(rows[0]?.recent ?? 0) > 0) return { templateSync: "skipped: synced in the last 24 hours" };
+    const result = await syncCore(null, null);
+    return { templateSync: result.ok ? "synced" : `failed: ${result.message}` };
+  } catch (error) {
+    return { templateSync: `failed: ${providerMessage(error)}` };
+  }
+}
+
+async function syncCore(actorId: number | null, sessionId: string | null): Promise<RegistryResult<SyncReport>> {
   try {
     const config = await getWhatsAppConfig();
     await syncTemplatesFromMeta(config, { fetch });
@@ -162,7 +189,7 @@ export async function syncStatuses(actor: RegistryActor): Promise<RegistryResult
         report[outcome === "APPROVED" ? "approved" : outcome === "REJECTED" ? "rejected" : outcome === "PAUSED" ? "paused" : "pending"] += 1;
         await applyTemplateVerdict(row, { outcome, metaStatus: found.status, reason: found.rejectedReason }, db);
       }
-      await recordAudit({ actorUserId: actor.id, action: "WHATSAPP_TEMPLATES_SYNCED", entityType: "WHATSAPP_TEMPLATE", entityId: "all", sessionId: actor.sessionId, metadata: { ...report } }, db);
+      await recordAudit({ actorUserId: actorId, action: "WHATSAPP_TEMPLATES_SYNCED", entityType: "WHATSAPP_TEMPLATE", entityId: "all", sessionId, metadata: { ...report, automatic: actorId === null } }, db);
     });
     const parts = [`${report.approved} approved (live)`, `${report.pending} waiting`, `${report.rejected} rejected`, ...(report.paused ? [`${report.paused} paused by Meta`] : [])];
     const missing = report.notFound.length ? ` Not found at CEOITBox yet: ${report.notFound.join(", ")}.` : "";

@@ -42,6 +42,11 @@ export async function submitCustomAction(_previous: ActionResult | null, formDat
         title: String(formData.get("title") ?? ""),
         builder,
         fields: { details: String(formData.get("details") ?? ""), amount: String(formData.get("amount") ?? "") },
+        submissionKey: (() => {
+          const value = formData.get("submissionKey");
+          return typeof value === "string" && /^[0-9a-f-]{36}$/i.test(value) ? value.toLowerCase() : null;
+        })(),
+        allowDuplicate: formData.get("allowDuplicate") === "on",
       },
       me,
     );

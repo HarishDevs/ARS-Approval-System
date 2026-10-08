@@ -8,17 +8,20 @@ import type { BuilderStage } from "@/server/workflows/builder";
 import type { FormField } from "@/server/forms/fields";
 
 // Custom approval (F-33, D-060): anyone picks anyone, any mix of levels.
-const CUSTOM_FIELDS: FormField[] = [{ key: "amount", label: "Amount (₹)", type: "NUMBER", required: false }];
+const CUSTOM_FIELDS: FormField[] = [{ key: "amount", label: "Amount (₹)", type: "NUMBER", required: false, min: 0 }];
 
 export function CustomApprovalForm({ options }: { options: BuilderOptions }) {
   const [stages, setStages] = useState<BuilderStage[]>([
     { kind: "STEP", step: { id: "s1", label: "First approval", approvers: { kind: "PEOPLE", userIds: [] }, rule: "ALL" } },
   ]);
   const { result, pending, onSubmit } = useActionForm(submitCustomAction);
+  const [submissionKey] = useState(() => crypto.randomUUID());
+  const possibleDuplicate = Boolean(result && !result.ok && result.fieldErrors?.allowDuplicate);
 
   return (
     <form onSubmit={onSubmit} className="space-y-6">
       <input type="hidden" name="spec" value={JSON.stringify({ stages })} />
+      <input type="hidden" name="submissionKey" value={submissionKey} />
       <section className="card space-y-5 px-5 py-5">
         <div>
           <label htmlFor="c-title" className="field-label">
@@ -51,6 +54,12 @@ export function CustomApprovalForm({ options }: { options: BuilderOptions }) {
         title="Who approves"
         hint="Pick anyone, in any order. Add parallel steps when several people should look at the same time. You can't approve your own request."
       />
+      {possibleDuplicate && (
+        <label className="flex items-start gap-2 rounded-md border border-warning-600/40 bg-warning-50 px-3 py-2 text-label text-warning-600">
+          <input type="checkbox" name="allowDuplicate" className="mt-0.5" />
+          <span>This is a separate request: raise it anyway.</span>
+        </label>
+      )}
       <div className="flex flex-wrap items-center gap-3">
         <SubmitButton pending={pending} className="btn-compact">
           Submit custom approval

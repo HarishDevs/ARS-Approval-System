@@ -121,7 +121,7 @@ describe("attachments (S6-05, D-072)", () => {
   });
 
   async function raise(): Promise<number> {
-    const raised = await submitRequest({ workflowId, title: "With files", fields: {} }, person(requester));
+    const raised = await submitRequest({ workflowId, title: "With files", fields: {}, allowDuplicate: true }, person(requester));
     if (!raised.ok) throw new Error(raised.message);
     return raised.value.requestId;
   }

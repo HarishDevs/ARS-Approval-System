@@ -43,3 +43,24 @@ test("a ₹1,50,000 request needs only the manager; the map says why HOD is skip
   await expect(page.getByText("Not needed at this amount (DoA)").first()).toBeVisible();
   await expect(page.getByText("Manoj Manager").first()).toBeVisible();
 });
+
+test("QA fixes on screen: a negative amount is refused; a repeat title asks first", async ({ page, context }) => {
+  await as(context, "E2E_REQ");
+  await page.goto("/users/new");
+  await page.getByRole("link", { name: /E2E Capex/ }).click();
+  await page.getByLabel("Title").fill("Forklift battery");
+  await page.getByLabel(/Amount/).fill("-5,000");
+  await page.getByRole("button", { name: "Submit request" }).click();
+  await expect(page.getByText("Enter 0 or more.")).toBeVisible();
+
+  await page.getByLabel(/Amount/).fill("1,50,000");
+  await page.getByRole("button", { name: "Submit request" }).click();
+  await expect(page.getByText(/You raised “Forklift battery” as ECX-\d{4}-000001 a few minutes ago/).first()).toBeVisible();
+  await page.getByLabel(/This is a separate request/).check();
+  await page.getByRole("button", { name: "Submit request" }).click();
+  await expect(page).toHaveURL(/\/users\/requests\/\d+\?submitted=1$/);
+  await expect(page.getByRole("status").filter({ hasText: /Submitted as ECX-\d{4}-000002/ })).toBeVisible();
+
+  await page.goto("/users/requests?q=forklift");
+  await expect(page.getByText("2 requests")).toBeVisible();
+});

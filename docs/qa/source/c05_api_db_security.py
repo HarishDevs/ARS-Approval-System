@@ -42,14 +42,14 @@ Headers | Security headers on every response | — | 1) curl -I /login, /users, 
 '''))
 
 SECTIONS.append(("18. API Timeout & Retry Test Cases", "Idempotency", "Concurrency", r'''
-Submit | Submit retried after a client timeout | SESS(REQ); throttle network so the response is lost | 1) Submit 2) Server commits 3) Browser times out 4) User submits again | — | Expected: one request. Current: a second request is created (no idempotency key): defect risk D-QA-01. Verify count in approval_requests for that title/requester | P0 | | P | R18,C
+Submit | Submit retried after a client timeout | SESS(REQ); throttle network so the response is lost | 1) Submit 2) Server commits 3) Browser times out 4) User submits again | — | One request: the retry carries the same form key and returns the first request (submission_key unique per requester); count in approval_requests = 1 (D-QA-01 fixed) | P0 | | P | R18,C
 Submit | Double-click Submit | SESS(REQ) | 1) Double-click Submit request | — | Button disabled after first click ("Working…"); one request | P0 | | Y | R18,C,N
-Submit | Two tabs submit the same form | SESS(REQ) | 1) Same data in 2 tabs 2) Submit both | — | Two requests today (no duplicate detection): D-QA-02; decide if a warning is wanted | P1 | | Y | R18
+Submit | Two tabs submit the same form | SESS(REQ) | 1) Same data in 2 tabs 2) Submit both | — | Second tab: "You raised “…” as … a few minutes ago…" with the tick "This is a separate request"; one request unless ticked (D-QA-02 fixed) | P1 | | Y | R18
 Decide | Approve retried after timeout (processed) | Request at MGR | 1) Approve; drop response 2) Approve again | — | Second attempt refused (task not pending) or "Someone else just changed this request…"; one TASK_DECIDED; one notification | P0 | | Y | R18,R08,C
 Decide | Reject retried after 500 | Simulate 500 after commit | 1) Reject 2) Retry | — | One rejection event; second refused | P0 | Recovery | P | R18,C
 Withdraw | Withdraw retried | — | 1) Withdraw, lose reply 2) Withdraw again | — | NOT_OPEN on retry; one WITHDRAWN event | P1 | | Y | R18,R24
 Resubmit | Resubmit retried | CHANGES_REQUIRED | 1) Resubmit, lose reply 2) Resubmit again | — | Second refused (no longer CHANGES_REQUIRED); round incremented once | P1 | | Y | R18,R11
-Attach | Upload retried after timeout | Open request | 1) Attach, lose reply 2) Attach same file again | — | Today: two rows (sha256 equal) are stored: D-QA-03; files never lost | P2 | | Y | R18,R25
+Attach | Upload retried after timeout | Open request | 1) Attach, lose reply 2) Attach same file again | — | Second upload: "Nothing new to attach. Already attached, so not added again: quote.pdf."; one row (D-QA-03 fixed) | P2 | | Y | R18,R25
 Delivery | Delivery retry after 502/503/504 | Simulated provider errors | 1) Trigger 2) Run jobs | — | Retried with back-off 2,4,8… min up to retry_limit; one SENT at most | P1 | Recovery | Y | R18,R17
 Delivery | Send succeeded but recording failed | DB fails after provider 200 | 1) Trigger | — | Not marked FAILED, so not resent (notify keeps send and record apart) | P1 | Recovery | P | R18,R17
 Delivery | No retry on 400/401 | Provider 400 | 1) Trigger 2) Run jobs | — | Not retried (non-retryable code) | P1 | | Y | R18

@@ -10,6 +10,8 @@ import {
   insertRequest,
   insertWorkflow,
   insertWorkflowVersion,
+  findBySubmissionKey,
+  findRecentDuplicate,
   lockRequest,
   nextRequestNumber,
   publishWorkflowVersion,
@@ -23,7 +25,7 @@ import {
 import { loadDirectorySnapshot, toDirectory, type DirectorySnapshot } from "@/lib/db/repositories/directory.repository";
 import { loadWorkingCalendar } from "@/lib/db/repositories/calendar.repository";
 import { checkFormDefinition, parseFormSubmission, type FormField } from "@/server/forms/fields";
-import { allSteps, checkDoaForm, compileBuilder, type BuilderSpec } from "@/server/workflows/builder";
+import { allSteps, checkDoaAmount, checkDoaForm, compileBuilder, type BuilderSpec } from "@/server/workflows/builder";
 import { describeRule } from "@/server/approvals/step-map";
 import { listUserIdsWithRole } from "@/lib/db/repositories/users.repository";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
@@ -32,6 +34,8 @@ import { notify } from "@/server/notifications/notify";
 import { messagesForEvents } from "@/server/approvals/messages";
 import { decide, putOnHold, reassignTask, reopen, resubmit, resume, simulate, startInstance, validateWorkflow, withdraw, EngineError } from "@/server/engine";
 import type { Decision, EngineEvent, EngineResult, FormData as EngineFormData, RestartPolicy, ValidationResult, WorkflowDefinition } from "@/server/engine";
+import { claimOutbox, insertOutbox, listStaleOutbox, markOutboxSent } from "@/lib/db/repositories/outbox.repository";
+import type { NotifyInput } from "@/server/notifications/notify";
 import { logError } from "@/lib/logging/logger";
 import type { RoleCode } from "@/types/auth";
 
@@ -46,7 +50,10 @@ export interface Actor {
 
 // A submitted form didn't pass its checks (field → message).
 class FormError extends Error {
-  constructor(readonly fieldErrors: Record<string, string>) {
+  constructor(
+    readonly fieldErrors: Record<string, string>,
+    readonly userMessage = "Check the highlighted fields.",
+  ) {
     super("INVALID_FORM");
   }
 }
@@ -224,6 +231,7 @@ interface Changed {
   request: RequestRecord;
   events: EngineEvent[];
   requesterName: string;
+  outboxIds: number[];
 }
 
 function engineFailure(error: unknown): Result<never> {
@@ -236,28 +244,64 @@ async function requesterName(id: number, db: Pick<PoolConnection, "query">): Pro
   return rows[0]?.name ?? "Someone";
 }
 
-// Notifications after the commit; a failed send never undoes the action.
-async function announce(changed: Changed): Promise<void> {
-  try {
-    const blocked = changed.events.some((event) => event.type === "NODE_BLOCKED");
-    const adminIds = blocked ? await listUserIdsWithRole("IT_ADMIN") : [];
-    const nodes = blocked ? ((await findWorkflowVersion(changed.request.workflowVersionId))?.definition.nodes ?? []) : [];
-    const labelOf = (nodeId: string) => nodes.find((node) => node.id === nodeId)?.label ?? nodeId;
-    const messages = messagesForEvents(
-      changed.events,
-      { id: changed.request.id, requestNo: changed.request.requestNo, title: changed.request.title, requesterId: changed.request.requesterId, requesterName: changed.requesterName },
-      { baseUrl: getEnv().APP_BASE_URL ?? "https://approvals.arssteels.net", adminIds, labelOf },
-    );
-    for (const message of messages) await notify(message);
-  } catch (error) {
-    logError("approvals: announce failed", error, { requestId: changed.request.id });
+// Notifications (D-QA-06): worked out inside the action's transaction and
+// written to the outbox with it, sent right after the commit. If the process
+// dies first, the job runner sends what's left. A failed send never undoes
+// the action.
+async function prepareMessages(
+  change: { request: RequestRecord; events: EngineEvent[]; requesterName: string },
+  db: Pick<PoolConnection, "query">,
+): Promise<NotifyInput[]> {
+  const blocked = change.events.some((event) => event.type === "NODE_BLOCKED");
+  const adminIds = blocked ? await listUserIdsWithRole("IT_ADMIN", db) : [];
+  const nodes = blocked ? ((await findWorkflowVersion(change.request.workflowVersionId, db))?.definition.nodes ?? []) : [];
+  const labelOf = (nodeId: string) => nodes.find((node) => node.id === nodeId)?.label ?? nodeId;
+  return messagesForEvents(
+    change.events,
+    { id: change.request.id, requestNo: change.request.requestNo, title: change.request.title, requesterId: change.request.requesterId, requesterName: change.requesterName },
+    { baseUrl: getEnv().APP_BASE_URL ?? "https://approvals.arssteels.net", adminIds, labelOf },
+  );
+}
+
+async function queueMessages(change: { request: RequestRecord; events: EngineEvent[]; requesterName: string }, db: Pick<PoolConnection, "query">): Promise<number[]> {
+  return insertOutbox(change.request.id, await prepareMessages(change, db), db);
+}
+
+// Send outbox rows; each is claimed first so it is sent by one sender only.
+export async function deliverOutbox(ids: readonly number[]): Promise<number> {
+  let sent = 0;
+  for (const id of ids) {
+    try {
+      const message = await claimOutbox(id);
+      if (!message) continue;
+      await notify(message);
+      await markOutboxSent(id);
+      sent += 1;
+    } catch (error) {
+      logError("approvals: outbox delivery failed", error, { outboxId: id });
+    }
   }
+  return sent;
+}
+
+// Job runner: whatever the in-process sender didn't finish.
+export async function runOutbox(): Promise<{ outboxSent: number }> {
+  return { outboxSent: await deliverOutbox(await listStaleOutbox(200)) };
+}
+
+async function announce(changed: Changed): Promise<void> {
+  await deliverOutbox(changed.outboxIds);
 }
 
 export async function submitRequest(
-  input: { workflowId: number; title: string; fields: Record<string, string | undefined> },
+  input: { workflowId: number; title: string; fields: Record<string, string | undefined>; submissionKey?: string | null; allowDuplicate?: boolean; isCustom?: boolean },
   actor: Actor,
-): Promise<Result<{ requestId: number; requestNo: string; status: string }>> {
+): Promise<Result<{ requestId: number; requestNo: string; status: string; repeated?: boolean }>> {
+  // D-QA-01: the same form sent again (retry after a timeout) → the request it already made.
+  if (input.submissionKey) {
+    const earlier = await findBySubmissionKey(actor.id, input.submissionKey);
+    if (earlier) return { ok: true, value: { requestId: earlier.id, requestNo: earlier.requestNo, status: earlier.status, repeated: true } };
+  }
   const workflow = await findWorkflow(input.workflowId);
   if (!workflow || !workflow.active) return { ok: false, code: "NOT_FOUND", message: "This approval type isn't available." };
   if (workflow.kind === "CUSTOM" && workflow.ownerUserId !== actor.id) return { ok: false, code: "NOT_FOUND", message: "This approval type isn't available." };
@@ -271,11 +315,23 @@ export async function submitRequest(
     changed = await withTransaction(async (connection) => {
       const snapshot = await loadDirectorySnapshot(connection);
       const parsed = parseFormSubmission(version.form, input.fields, activeIds(snapshot));
-      if (!parsed.ok || titleError) throw new FormError({ ...(parsed.ok ? {} : parsed.errors), ...(titleError ? { title: titleError } : {}) });
+      const doaErrors = parsed.ok ? checkDoaAmount(version.builder, parsed.data) : {};
+      if (!parsed.ok || titleError || Object.keys(doaErrors).length) {
+        throw new FormError({ ...(parsed.ok ? {} : parsed.errors), ...doaErrors, ...(titleError ? { title: titleError } : {}) });
+      }
+      // D-QA-02: the same title on the same type a few minutes ago (two tabs,
+      // or a second click elsewhere). Checked once the form itself is valid.
+      if (!input.allowDuplicate) {
+        const duplicate = await findRecentDuplicate({ requesterId: actor.id, title, workflowId: input.isCustom ? null : workflow.id }, connection);
+        if (duplicate) {
+          const message = `You raised “${title}” as ${duplicate} a few minutes ago. If this is a separate request, tick “This is a separate request” and submit again.`;
+          throw new FormError({ allowDuplicate: message }, message);
+        }
+      }
       const formData = parsed.data;
       const result = startInstance(version.definition, { requesterId: actor.id, formData, now: now() }, toDirectory(snapshot));
       const requestNo = await nextRequestNumber(workflow.requestPrefix, connection);
-      const id = await insertRequest({ requestNo, workflowVersionId: version.id, requesterId: actor.id, title, formData, state: result.state }, connection);
+      const id = await insertRequest({ requestNo, workflowVersionId: version.id, requesterId: actor.id, title, formData, state: result.state, submissionKey: input.submissionKey ?? null }, connection);
       await syncTasks(id, result.state, version.definition.nodes, connection, await loadWorkingCalendar(connection));
       await appendEvents(id, [{ type: "SUBMITTED", requestNo }, ...result.events], actor.id, connection);
       const request: RequestRecord = {
@@ -290,10 +346,16 @@ export async function submitRequest(
         state: result.state,
         stateVersion: 1,
       };
-      return { request, events: result.events, requesterName: await requesterName(actor.id, connection) };
+      const change = { request, events: result.events, requesterName: await requesterName(actor.id, connection) };
+      return { ...change, outboxIds: await queueMessages(change, connection) };
     });
   } catch (error) {
-    if (error instanceof FormError) return { ok: false, code: "INVALID_FORM", message: "Check the highlighted fields.", fieldErrors: error.fieldErrors };
+    if (error instanceof FormError) return { ok: false, code: error.fieldErrors.allowDuplicate ? "POSSIBLE_DUPLICATE" : "INVALID_FORM", message: error.userMessage, fieldErrors: error.fieldErrors };
+    // Two copies of the same form racing: the unique key let one through.
+    if ((error as { code?: string })?.code === "ER_DUP_ENTRY" && input.submissionKey) {
+      const earlier = await findBySubmissionKey(actor.id, input.submissionKey);
+      if (earlier) return { ok: true, value: { requestId: earlier.id, requestNo: earlier.requestNo, status: earlier.status, repeated: true } };
+    }
     return engineFailure(error);
   }
   await announce(changed);
@@ -319,14 +381,15 @@ async function mutate(requestId: number, actor: Actor, step: Step): Promise<Resu
       }
       await syncTasks(request.id, result.state, version.definition.nodes, connection, await loadWorkingCalendar(connection));
       await appendEvents(request.id, result.events, actor.id, connection);
-      return {
+      const change = {
         request: { ...request, state: result.state, status: result.state.status, round: result.state.round, stateVersion: request.stateVersion + 1 },
         events: result.events,
         requesterName: await requesterName(request.requesterId, connection),
       };
+      return { ...change, outboxIds: await queueMessages(change, connection) };
     });
   } catch (error) {
-    if (error instanceof FormError) return { ok: false, code: "INVALID_FORM", message: "Check the highlighted fields.", fieldErrors: error.fieldErrors };
+    if (error instanceof FormError) return { ok: false, code: error.fieldErrors.allowDuplicate ? "POSSIBLE_DUPLICATE" : "INVALID_FORM", message: error.userMessage, fieldErrors: error.fieldErrors };
     return engineFailure(error);
   }
   await announce(changed);
@@ -360,6 +423,8 @@ export function resubmitRequest(input: { requestId: number; fields?: Record<stri
     if (input.fields) {
       const parsed = parseFormSubmission(version.form, input.fields, activeIds(snapshot));
       if (!parsed.ok) throw new FormError(parsed.errors);
+      const doaErrors = checkDoaAmount(version.builder, parsed.data);
+      if (Object.keys(doaErrors).length) throw new FormError(doaErrors);
       formData = parsed.data;
     }
     const result = resubmit(definition, request.state, input.policy ?? "REQUESTING_STEP", { requesterId: request.requesterId, formData, now: now() }, directory);
@@ -373,7 +438,7 @@ export function resubmitRequest(input: { requestId: number; fields?: Record<stri
 // self-approval); everything else goes through the same validator.
 export const CUSTOM_FORM: FormField[] = [
   { key: "details", label: "Details", type: "LONG_TEXT", required: true },
-  { key: "amount", label: "Amount (₹)", type: "NUMBER", required: false },
+  { key: "amount", label: "Amount (₹)", type: "NUMBER", required: false, min: 0 },
 ];
 
 export function checkCustomSpec(spec: BuilderSpec, requesterId: number): string[] {
@@ -389,9 +454,21 @@ export function checkCustomSpec(spec: BuilderSpec, requesterId: number): string[
 }
 
 export async function submitCustomRequest(
-  input: { title: string; builder: BuilderSpec; fields: Record<string, string | undefined> },
+  input: { title: string; builder: BuilderSpec; fields: Record<string, string | undefined>; submissionKey?: string | null; allowDuplicate?: boolean },
   actor: Actor,
-): Promise<Result<{ requestId: number; requestNo: string; status: string }>> {
+): Promise<Result<{ requestId: number; requestNo: string; status: string; repeated?: boolean }>> {
+  if (input.submissionKey) {
+    const earlier = await findBySubmissionKey(actor.id, input.submissionKey);
+    if (earlier) return { ok: true, value: { requestId: earlier.id, requestNo: earlier.requestNo, status: earlier.status, repeated: true } };
+  }
+  const title = input.title.trim();
+  if (!input.allowDuplicate && title.length >= 3) {
+    const duplicate = await findRecentDuplicate({ requesterId: actor.id, title, workflowId: null });
+    if (duplicate) {
+      const message = `You raised “${title}” as ${duplicate} a few minutes ago. If this is a separate request, tick “This is a separate request” and submit again.`;
+      return { ok: false, code: "POSSIBLE_DUPLICATE", message, fieldErrors: { allowDuplicate: message } };
+    }
+  }
   const own = checkCustomSpec(input.builder, actor.id);
   if (own.length) return { ok: false, code: "SELF_APPROVAL", message: own.join(" ") };
   const resolved = await resolveContent({ builder: input.builder, form: CUSTOM_FORM });
@@ -413,7 +490,7 @@ export async function submitCustomRequest(
   if (!created.ok) return created;
   const published = await publishVersion(created.value.versionId, actor);
   if (!published.ok) return published;
-  return submitRequest({ workflowId: created.value.workflowId, title: input.title, fields: input.fields }, actor);
+  return submitRequest({ workflowId: created.value.workflowId, title: input.title, fields: input.fields, submissionKey: input.submissionKey, allowDuplicate: true, isCustom: true }, actor);
 }
 
 // ---- handover (F-16, D-064) --------------------------------------------------------------

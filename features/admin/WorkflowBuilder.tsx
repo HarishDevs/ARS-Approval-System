@@ -151,7 +151,7 @@ export function WorkflowBuilder({
               <select
                 aria-label="Field type"
                 value={field.type}
-                onChange={(event) => setForm((all) => all.map((item, i) => (i === index ? { ...item, type: event.target.value as FieldType, options: event.target.value === "CHOICE" ? (item.options ?? []) : undefined } : item)))}
+                onChange={(event) => setForm((all) => all.map((item, i) => (i === index ? { ...item, type: event.target.value as FieldType, options: event.target.value === "CHOICE" ? (item.options ?? []) : undefined, min: event.target.value === "NUMBER" ? item.min : undefined } : item)))}
                 className="field-input"
               >
                 {FIELD_TYPES.map((type) => (
@@ -167,6 +167,24 @@ export function WorkflowBuilder({
               <button type="button" onClick={() => setForm((all) => all.filter((_, i) => i !== index))} className="btn-secondary btn-compact h-11">
                 Remove
               </button>
+              {field.type === "NUMBER" && (
+                <label className="flex flex-wrap items-center gap-2 text-label lg:col-span-5">
+                  Smallest value allowed
+                  <input
+                    aria-label={`Smallest value for ${field.label || field.key}`}
+                    inputMode="decimal"
+                    value={field.min ?? ""}
+                    onChange={(event) => {
+                      const raw = event.target.value.replace(/[,\s₹]/g, "");
+                      const min = raw === "" || raw === "-" || !Number.isFinite(Number(raw)) ? undefined : Number(raw);
+                      setForm((all) => all.map((item, i) => (i === index ? { ...item, min } : item)));
+                    }}
+                    placeholder="none"
+                    className="field-input w-32"
+                  />
+                  <span className="text-caption text-ink-faint">Use 0 for amounts. A DoA amount can never be negative.</span>
+                </label>
+              )}
               {field.type === "CHOICE" && (
                 <input
                   aria-label="Choices"

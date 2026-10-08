@@ -3,8 +3,9 @@ import { createHash, randomBytes } from "node:crypto";
 import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { withTransaction } from "@/lib/db/transaction";
-import { appendEvents, findRequest, isParticipant, type RequestRecord } from "@/lib/db/repositories/approvals.repository";
-import { countAttachments, findAttachment, insertAttachment, type AttachmentRecord } from "@/lib/db/repositories/attachments.repository";
+import type { RowDataPacket } from "mysql2/promise";
+import { appendEvents, findRequest, isParticipant, lockRequest, type RequestRecord } from "@/lib/db/repositories/approvals.repository";
+import { findAttachment, insertAttachment, type AttachmentRecord } from "@/lib/db/repositories/attachments.repository";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { getEnv } from "@/config/environment";
 import { checkCount, checkFile, SNIFF_BYTES } from "@/server/attachments/files";
@@ -50,50 +51,76 @@ export async function prepareFiles(files: readonly File[]): Promise<{ ok: true; 
   return { ok: true, files: prepared };
 }
 
+class AttachError extends Error {
+  constructor(
+    readonly code: string,
+    message: string,
+  ) {
+    super(message);
+  }
+}
+
+// The checks run under the request-row lock (D-QA-03), so two uploads at
+// the same moment can't pass the 20-file limit together, and a file that is
+// already on the request (same sha256, e.g. a retried upload) isn't stored
+// again.
 export async function addAttachments(
   requestId: number,
   files: readonly PreparedFile[],
   actor: Actor,
   options: { requesterOnly?: boolean } = {},
-): Promise<Result<{ count: number }>> {
-  if (files.length === 0) return { ok: true, value: { count: 0 } };
+): Promise<Result<{ count: number; duplicates: string[] }>> {
+  if (files.length === 0) return { ok: true, value: { count: 0, duplicates: [] } };
   const request = await findRequest(requestId);
   if (!request || !(await canSeeRequest(request, actor)) || (options.requesterOnly && request.requesterId !== actor.id)) {
     return { ok: false, code: "NOT_FOUND", message: "Not found." };
   }
-  if (!OPEN.has(request.status)) return { ok: false, code: "CLOSED", message: "Files can only be added while the request is open." };
-  const tooMany = checkCount(await countAttachments(requestId), files.length);
-  if (tooMany) return { ok: false, code: "TOO_MANY", message: tooMany };
 
+  const hashed = files.map((file) => ({ ...file, sha256: createHash("sha256").update(file.bytes).digest("hex") }));
   const root = uploadRoot();
   const now = new Date();
   const folder = `${now.getUTCFullYear()}/${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
   await mkdir(path.join(root, folder), { recursive: true });
   const written: string[] = [];
   try {
-    const saved: (PreparedFile & { storedPath: string; sha256: string })[] = [];
-    for (const file of files) {
-      const storedPath = `${folder}/${randomBytes(16).toString("hex")}`;
-      await writeFile(path.join(root, storedPath), file.bytes, { flag: "wx" });
-      written.push(path.join(root, storedPath));
-      saved.push({ ...file, storedPath, sha256: createHash("sha256").update(file.bytes).digest("hex") });
-    }
-    await withTransaction(async (connection) => {
-      for (const file of saved) {
+    const outcome = await withTransaction(async (connection) => {
+      const locked = await lockRequest(requestId, connection);
+      if (!locked || !OPEN.has(locked.status)) throw new AttachError("CLOSED", "Files can only be added while the request is open.");
+      const [existing] = await connection.query<(RowDataPacket & { sha256: string })[]>("SELECT sha256 FROM request_attachments WHERE request_id = ?", [requestId]);
+      const known = new Set(existing.map((row) => row.sha256));
+      const fresh: typeof hashed = [];
+      const duplicates: string[] = [];
+      for (const file of hashed) {
+        if (known.has(file.sha256)) duplicates.push(file.name);
+        else {
+          known.add(file.sha256);
+          fresh.push(file);
+        }
+      }
+      const tooMany = checkCount(existing.length, fresh.length);
+      if (tooMany) throw new AttachError("TOO_MANY", tooMany);
+      for (const file of fresh) {
+        const storedPath = `${folder}/${randomBytes(16).toString("hex")}`;
+        await writeFile(path.join(root, storedPath), file.bytes, { flag: "wx" });
+        written.push(path.join(root, storedPath));
         await insertAttachment(
-          { requestId, uploadedBy: actor.id, round: request.round, name: file.name, storedPath: file.storedPath, contentType: file.contentType, sizeBytes: file.bytes.length, sha256: file.sha256 },
+          { requestId, uploadedBy: actor.id, round: locked.round, name: file.name, storedPath, contentType: file.contentType, sizeBytes: file.bytes.length, sha256: file.sha256 },
           connection,
         );
       }
-      const names = saved.map((file) => file.name);
-      await appendEvents(requestId, [{ type: "ATTACHMENTS_ADDED", actorId: actor.id, names }], actor.id, connection);
-      await recordAudit({ actorUserId: actor.id, action: "REQUEST_FILES_ADDED", entityType: "REQUEST", entityId: requestId, metadata: { names, sha256: saved.map((file) => file.sha256) } }, connection);
+      if (fresh.length) {
+        const names = fresh.map((file) => file.name);
+        await appendEvents(requestId, [{ type: "ATTACHMENTS_ADDED", actorId: actor.id, names }], actor.id, connection);
+        await recordAudit({ actorUserId: actor.id, action: "REQUEST_FILES_ADDED", entityType: "REQUEST", entityId: requestId, metadata: { names, sha256: fresh.map((file) => file.sha256) } }, connection);
+      }
+      return { count: fresh.length, duplicates };
     });
+    return { ok: true, value: outcome };
   } catch (error) {
     await Promise.all(written.map((file) => unlink(file).catch(() => undefined)));
+    if (error instanceof AttachError) return { ok: false, code: error.code, message: error.message };
     throw error;
   }
-  return { ok: true, value: { count: files.length } };
 }
 
 // For the download route: the record and its bytes, or null (the same 404

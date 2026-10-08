@@ -1,6 +1,6 @@
 # ARS Approval Platform: QA Test Suite
 
-Prepared 8 Oct 2026 for build session 7, commit `a3e5d51`, against the owner's master QA prompt.
+Prepared 8 Oct 2026 for build session 7, commit `a3e5d51`, against the owner's master QA prompt. Updated the same day after the S8-06 defect fixes.
 The suite has **600 executable test cases**.
 
 These cases are written for **this application**: its real statuses, roles, screens, Server Actions, MySQL tables, DoA matrix, CEOITBox WhatsApp and Resend email. They are not for a generic system.
@@ -202,7 +202,7 @@ Rows are the **from** state; columns are the **to** state. ✓ means allowed, wi
 | APP-044 | Superadmin | Create, submit and sync a WhatsApp template | Test CEOITBox key set, SESS(SA) | 1) /superadmin/templates 2) Open Approval needed 3) Save draft 4) Submit 5) Yes, continue 6) Sync status | — | Status Waiting for Meta → after approval "Live"; findActiveTemplate returns it | P1 | High | Functional | Partial | Not run |
 | APP-045 | Superadmin | Send a template test to own number | Live template, SA has WhatsApp number | 1) Send a test to my WhatsApp | — | "Sent … to your WhatsApp."; message arrives with sample values; CEOITBox report shows userMessageId ars-test-… | P2 | Medium | Functional | No | Not run |
 | APP-046 | Lists | Draft requests | WF-SEQ, SESS(REQ) | 1) Fill the form 2) Leave the page without submitting 3) Return | — | No request row exists (no draft feature, A-01); nothing in My requests | P3 | Low | Functional | Yes | Not run |
-| APP-047 | Lists | Search, filter, sort, paginate My requests | > 200 requests by REQ | 1) /users | — | Current: latest 200 shown, newest first, no search or filter (gap R36). Record actual behaviour | P3 | Low | Functional | No | Not run |
+| APP-047 | Lists | Search, filter, sort, paginate My requests | > 200 requests by REQ | 1) /users | — | 25 per page with Newer/Older; search by number or title; status filter; Clear resets (D-QA-11 fixed) | P2 | Medium | Functional | Yes | Not run |
 | APP-048 | Lists | Queue order | Approver with 3 tasks | 1) /users/queue | — | Oldest waiting first (or as designed); each row links to the request | P3 | Low | Functional | Yes | Not run |
 | APP-049 | Close | Admin cancels or closes a request | Request IN_PROGRESS, SESS(IT) | 1) Look for a cancel or close action | — | None exists (A-02); IT can only hand over; record as gap R38 | P3 | Low | Functional | No | Not run |
 | APP-050 | Auth | Sign in with Google | Active Google user, FX-ENV | 1) /login 2) Continue with Google 3) Pick account | — | Lands on /users; session row created; login_logs success; new-device email + WhatsApp alert on a new device | P0 | Critical | Functional | Partial | Not run |
@@ -231,8 +231,8 @@ Rows are the **from** state; columns are the **to** state. ✓ means allowed, wi
 | APP-065 | Number | Decimal amount | WF-SEQ | 1) Submit | "1500.75" | Stored 1500.75; displayed with Indian grouping | P2 | Medium | Validation | Yes | Not run |
 | APP-066 | Number | Amount over the maximum | WF-SEQ | 1) Submit | "100000000000000" (1e14) | "That number is too large."; no row | P2 | Medium | Boundary | Yes | Not run |
 | APP-067 | Number | Amount at the maximum | WF-SEQ | 1) Submit | 10,000,000,000,000 (1e13) | Accepted | P3 | Low | Boundary | Yes | Not run |
-| APP-068 | Number | Zero amount | WF-DOA | 1) Submit | 0 | Accepted today; band 1 (SCM head only). Business rule wanted? See D-QA-04 | P2 | Medium | Boundary | Yes | Not run |
-| APP-069 | Number | Negative amount | WF-DOA | 1) Submit | -50000 | Currently accepted and routed to band 1 (fewest approvers): D-QA-04. Expected after fix: "Enter an amount of ₹0 or more." | P1 | High | Boundary | Yes | Not run |
+| APP-068 | Number | Zero amount | WF-DOA | 1) Submit | 0 | Accepted (₹0 or more is valid); band 1 (SCM head only). Whether ₹0 is allowed is Q-QA-12 | P2 | Medium | Boundary | Yes | Not run |
+| APP-069 | Number | Negative amount | WF-DOA | 1) Submit | -50000 | Refused: "Enter 0 or more." (field minimum) or "Enter an amount of ₹0 or more." (DoA guard, even without a minimum); no row (D-QA-04 fixed) | P1 | High | Boundary | Yes | Not run |
 | APP-070 | Number | Scientific notation | WF-SEQ | 1) Submit | "1e5" | Accepted as 100000 (Number parsing); confirm acceptable | P3 | Low | Validation | Yes | Not run |
 | APP-071 | Date | Invalid date | Workflow with DATE field | 1) Submit | "2026-02-30" | "Enter a date as YYYY-MM-DD."; no row | P2 | Medium | Validation | Yes | Not run |
 | APP-072 | Date | Past date | DATE field "Needed by" | 1) Submit | 2020-01-01 | Accepted (no min rule); record whether business needs a rule (Q-QA-06) | P3 | Low | Validation | Yes | Not run |
@@ -243,7 +243,7 @@ Rows are the **from** state; columns are the **to** state. ✓ means allowed, wi
 | APP-077 | Person | Person field set to an inactive user | Workflow with PERSON field | 1) POST with the id of an inactive user | — | Field error (must be an active user); no row | P1 | High | Validation | Yes | Not run |
 | APP-078 | Person | Person field set to a non-numeric id | PERSON field | 1) POST "abc" | — | Field error; no row | P2 | Medium | Validation | Yes | Not run |
 | APP-079 | Comment | Reject comment of spaces only | Request at MGR | 1) Comment "   " 2) Reject | — | "A reason is required."; task still PENDING | P1 | High | Validation | Yes | Not run |
-| APP-080 | Comment | Decision comment over 2000 characters | Request at MGR | 1) 2100-char comment 2) Approve | — | Currently stored cut to 2000 without telling the user (D-QA-05); expected after fix: a clear limit message | P3 | Low | Boundary | Yes | Not run |
+| APP-080 | Comment | Decision comment over 2000 characters | Request at MGR | 1) 2100-char comment 2) Approve | — | Refused: "Keep it under 2,000 characters (now 2,100)."; the box also stops at 2,000 (D-QA-05 fixed) | P3 | Low | Boundary | Yes | Not run |
 | APP-081 | Comment | Discussion comment over 2000 | Request open | 1) Post 2001 chars | — | "Keep it under 2,000 characters."; nothing stored | P3 | Low | Boundary | Yes | Not run |
 | APP-082 | Workflow | Prefix and code rules | SESS(IT) | 1) New workflow with prefix "P1" and code "bad code" | — | Prefix "Use 2 to 6 capital letters…"; code "Use 2 to 50 capital letters, numbers or _…"; nothing saved | P2 | Medium | Validation | Yes | Not run |
 | APP-083 | Workflow | Duplicate workflow code | Existing PURCHASE_SCM_APPROVAL | 1) Create another with that code | — | "Another workflow already uses this code."; nothing saved | P2 | Medium | Validation | Yes | Not run |
@@ -437,7 +437,7 @@ Rows are the **from** state; columns are the **to** state. ✓ means allowed, wi
 | APP-231 | Escalation | Approver without a manager | Approver has no manager | 1) Escalation fires | — | IT admins only | P2 | Medium | Functional | Yes | Not run |
 | APP-232 | Escalation | No escalation after approval | Task approved before escalate_at | 1) Run jobs after escalate_at | — | Nothing sent (task not pending) | P0 | Critical | Functional | Yes | Not run |
 | APP-233 | Escalation | No escalation after rejection or withdrawal | Request REJECTED / CANCELLED | 1) Run jobs | — | Nothing sent | P1 | High | Functional | Yes | Not run |
-| APP-234 | Escalation | No reminder while ON_HOLD | Held before due | 1) Run jobs after due | — | Record behaviour: expected no reminder while held (confirm rule, Q-QA-07) | P2 | Medium | Functional | Yes | Not run |
+| APP-234 | Escalation | No reminder while ON_HOLD | Held before due | 1) Run jobs after due | — | No reminder while ON_HOLD (SLA job only checks IN_PROGRESS requests) | P2 | Medium | Functional | Yes | Not run |
 | APP-235 | Escalation | Two job runners at once | Due task | 1) Fire /api/jobs/run twice in parallel | — | Exactly one reminder (claim row is unique) | P0 | Critical | Concurrency | Yes | Not run |
 | APP-236 | Escalation | Escalation reaches the right manager after a manager change | Approver's manager changed after task creation | 1) Escalate | — | Current manager at escalation time is told | P2 | Medium | Functional | Yes | Not run |
 | APP-237 | SLA | SLA boundary second | due_at = T | 1) Run at T-1 s 2) Run at T+1 s | — | No reminder at T-1 s; reminder at T+1 s | P2 | Medium | Boundary | Partial | Not run |
@@ -559,14 +559,14 @@ Rows are the **from** state; columns are the **to** state. ✓ means allowed, wi
 
 | Test Case ID | Module | Test Scenario | Preconditions | Test Steps | Test Data | Expected Result | Priority | Severity | Test Type | Automation Candidate | Status |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| APP-324 | Submit | Submit retried after a client timeout | SESS(REQ); throttle network so the response is lost | 1) Submit 2) Server commits 3) Browser times out 4) User submits again | — | Expected: one request. Current: a second request is created (no idempotency key): defect risk D-QA-01. Verify count in approval_requests for that title/requester | P0 | Critical | Concurrency | Partial | Not run |
+| APP-324 | Submit | Submit retried after a client timeout | SESS(REQ); throttle network so the response is lost | 1) Submit 2) Server commits 3) Browser times out 4) User submits again | — | One request: the retry carries the same form key and returns the first request (submission_key unique per requester); count in approval_requests = 1 (D-QA-01 fixed) | P0 | Critical | Concurrency | Partial | Not run |
 | APP-325 | Submit | Double-click Submit | SESS(REQ) | 1) Double-click Submit request | — | Button disabled after first click ("Working…"); one request | P0 | Critical | Concurrency | Yes | Not run |
-| APP-326 | Submit | Two tabs submit the same form | SESS(REQ) | 1) Same data in 2 tabs 2) Submit both | — | Two requests today (no duplicate detection): D-QA-02; decide if a warning is wanted | P1 | High | Concurrency | Yes | Not run |
+| APP-326 | Submit | Two tabs submit the same form | SESS(REQ) | 1) Same data in 2 tabs 2) Submit both | — | Second tab: "You raised “…” as … a few minutes ago…" with the tick "This is a separate request"; one request unless ticked (D-QA-02 fixed) | P1 | High | Concurrency | Yes | Not run |
 | APP-327 | Decide | Approve retried after timeout (processed) | Request at MGR | 1) Approve; drop response 2) Approve again | — | Second attempt refused (task not pending) or "Someone else just changed this request…"; one TASK_DECIDED; one notification | P0 | Critical | Concurrency | Yes | Not run |
 | APP-328 | Decide | Reject retried after 500 | Simulate 500 after commit | 1) Reject 2) Retry | — | One rejection event; second refused | P0 | Critical | Recovery | Partial | Not run |
 | APP-329 | Withdraw | Withdraw retried | — | 1) Withdraw, lose reply 2) Withdraw again | — | NOT_OPEN on retry; one WITHDRAWN event | P1 | High | Concurrency | Yes | Not run |
 | APP-330 | Resubmit | Resubmit retried | CHANGES_REQUIRED | 1) Resubmit, lose reply 2) Resubmit again | — | Second refused (no longer CHANGES_REQUIRED); round incremented once | P1 | High | Concurrency | Yes | Not run |
-| APP-331 | Attach | Upload retried after timeout | Open request | 1) Attach, lose reply 2) Attach same file again | — | Today: two rows (sha256 equal) are stored: D-QA-03; files never lost | P2 | Medium | Concurrency | Yes | Not run |
+| APP-331 | Attach | Upload retried after timeout | Open request | 1) Attach, lose reply 2) Attach same file again | — | Second upload: "Nothing new to attach. Already attached, so not added again: quote.pdf."; one row (D-QA-03 fixed) | P2 | Medium | Concurrency | Yes | Not run |
 | APP-332 | Delivery | Delivery retry after 502/503/504 | Simulated provider errors | 1) Trigger 2) Run jobs | — | Retried with back-off 2,4,8… min up to retry_limit; one SENT at most | P1 | High | Recovery | Yes | Not run |
 | APP-333 | Delivery | Send succeeded but recording failed | DB fails after provider 200 | 1) Trigger | — | Not marked FAILED, so not resent (notify keeps send and record apart) | P1 | High | Recovery | Partial | Not run |
 | APP-334 | Delivery | No retry on 400/401 | Provider 400 | 1) Trigger 2) Run jobs | — | Not retried (non-retryable code) | P1 | High | Concurrency | Yes | Not run |
@@ -697,7 +697,7 @@ Rows are the **from** state; columns are the **to** state. ✓ means allowed, wi
 | APP-427 | Upload | 5 files in one upload | — | 1) Attach 5 | — | Accepted; one timeline line listing 5 names | P2 | Medium | Boundary | Yes | Not run |
 | APP-428 | Upload | 6 files in one upload | — | 1) Attach 6 | — | "Add at most 5 files at a time." | P2 | Medium | Boundary | Yes | Not run |
 | APP-429 | Upload | 21st file on a request | 20 attached | 1) Attach 1 | — | "A request can hold at most 20 files (20 already attached)." | P2 | Medium | Boundary | Yes | Not run |
-| APP-430 | Upload | Same file twice | — | 1) Attach quote.pdf twice | — | Both kept (sha256 equal), both listed; record if de-duplication wanted | P3 | Low | Functional | Yes | Not run |
+| APP-430 | Upload | Same file twice | — | 1) Attach quote.pdf twice | — | Second time: "Already attached, so not added again"; one copy kept | P3 | Low | Functional | Yes | Not run |
 | APP-431 | Upload | Unicode file name | — | 1) Attach "कोटेशन final.pdf" | — | Shown and downloaded with the Unicode name (filename* header) | P2 | Medium | Functional | Yes | Not run |
 | APP-432 | Upload | Very long file name | — | 1) 220-char name | — | Cut to 150 keeping ".pdf" | P3 | Low | Boundary | Yes | Not run |
 | APP-433 | Upload | Upload on resubmit | CHANGES_REQUIRED | 1) Resubmit with a file | — | File stored with round 2 shown | P2 | Medium | Functional | Yes | Not run |
@@ -713,11 +713,11 @@ Rows are the **from** state; columns are the **to** state. ✓ means allowed, wi
 | Test Case ID | Module | Test Scenario | Preconditions | Test Steps | Test Data | Expected Result | Priority | Severity | Test Type | Automation Candidate | Status |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | APP-437 | My requests | List order | 5 requests | 1) /users | — | Newest first | P3 | Low | Functional | Yes | Not run |
-| APP-438 | My requests | More than 200 requests | 205 requests by REQ | 1) /users | — | Latest 200 shown; no paging (gap R36): record | P2 | Medium | Functional | Yes | Not run |
+| APP-438 | My requests | More than 200 requests | 205 requests by REQ | 1) /users | — | Paged 25 at a time; all reachable (D-QA-11 fixed) | P2 | Medium | Functional | Yes | Not run |
 | APP-439 | Queue | Queue shows only my pending tasks | Mixed | 1) /users/queue | — | Only PENDING tasks for me (and delegators) in the current round | P1 | High | Functional | Yes | Not run |
 | APP-440 | Queue | Queue after a decision | — | 1) Approve 2) Return to queue | — | Item gone | P2 | Medium | Functional | Yes | Not run |
-| APP-441 | Search | Search by request number | — | 1) Look for search | — | Not available (gap R36); workaround: open by URL | P3 | Low | Functional | No | Not run |
-| APP-442 | Search | Filter by status, date, amount, department, type | — | 1) Look for filters | — | Not available (gap R36) | P3 | Low | Functional | No | Not run |
+| APP-441 | Search | Search by request number | > 1 request | 1) /users/requests 2) Search the number | SEI-2026-000004 | Exactly that request | P2 | Medium | Functional | Yes | Not run |
+| APP-442 | Search | Filter by status; partial and literal search | Requests in several statuses | 1) Status = Approved 2) Search "valve" 3) Search "%" | — | Only approved shown; partial match; "%" matches nothing (wildcards literal). Date, amount, department, type filters not built (R36 partial) | P2 | Medium | Functional | Yes | Not run |
 | APP-443 | Admin | User list search | SESS(IT), many users | 1) Search by name / User ID (if offered) | "kumar" | Case-insensitive partial match; record actual | P3 | Low | Functional | Yes | Not run |
 | APP-444 | Audit | Audit log filters | SESS(SA) | 1) Filter by action | WORKFLOW_PUBLISHED | Only that action shown | P2 | Medium | Functional | Yes | Not run |
 | APP-445 | Deliveries | Delivery log shows latest 200 | > 200 deliveries | 1) /superadmin/deliveries | — | Latest 200; no body or payload shown | P3 | Low | Functional | Yes | Not run |
@@ -769,7 +769,7 @@ Rows are the **from** state; columns are the **to** state. ✓ means allowed, wi
 | APP-475 | Jobs | Job runner and a user approve the same reminder-due task | — | 1) Run jobs while approving | — | No reminder after approval commit; never duplicate | P2 | Medium | Concurrency | Partial | Not run |
 | APP-476 | Demo | Load demo data in two tabs at once | SESS(SA) | 1) Click Load in both | — | No duplicate people or groups (unique codes); one may report errors | P3 | Low | Concurrency | Partial | Not run |
 | APP-477 | Templates | Sync while submitting | SESS(SA) | 1) Submit and sync together | — | Version rows consistent; no duplicate versions | P3 | Low | Concurrency | Partial | Not run |
-| APP-478 | Attach | Two uploads hitting the 20-file limit together | 19 attached | 1) Two uploads of 1 file at once | — | At most 20 stored; one may be refused (record if 21 slip through: D-QA-03) | P2 | Medium | Concurrency | Partial | Not run |
+| APP-478 | Attach | Two uploads hitting the 20-file limit together | 19 attached | 1) Two uploads of 1 file at once | — | Exactly 20 stored; the other upload refused with the limit message (count taken under the request lock, D-QA-03 fixed) | P2 | Medium | Concurrency | Partial | Not run |
 | APP-479 | Users | Role change during an open session | IT signed in | 1) SA removes IT_ADMIN while IT saves a workflow | — | Save refused if role check runs after removal; no half write | P2 | Medium | Concurrency | Partial | Not run |
 | APP-480 | Network | Timeout but backend processed approval | Throttle | 1) Approve, lose reply 2) Reload | — | Page shows approved; retry refused (see §18) | P0 | Critical | Recovery | Partial | Not run |
 
@@ -805,7 +805,7 @@ Rows are the **from** state; columns are the **to** state. ✓ means allowed, wi
 | Test Case ID | Module | Test Scenario | Preconditions | Test Steps | Test Data | Expected Result | Priority | Severity | Test Type | Automation Candidate | Status |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | APP-497 | App | App restart during an action | Staging | 1) Approve 2) Restart Node during the request | — | Either committed fully or not at all; page after restart shows the true state | P0 | Critical | Recovery | Partial | Not run |
-| APP-498 | App | Crash after commit, before notifications | Inject crash after commit | 1) Approve | — | Decision kept; notifications missing (known limit: no outbox): record D-QA-06 | P1 | High | Recovery | Partial | Not run |
+| APP-498 | App | Crash after commit, before notifications | Inject crash after commit | 1) Approve | — | Decision kept; its messages are in notification_outbox and the next job run sends them once (D-QA-06 fixed) | P1 | High | Recovery | Partial | Not run |
 | APP-499 | DB | MySQL restarts | Staging | 1) Restart MySQL 2) Use the app | — | Pool reconnects; errors only during the outage | P0 | Critical | Recovery | Partial | Not run |
 | APP-500 | DB | Deadlock or lock wait timeout | Force lock contention | 1) Two long transactions | — | One retried or clear error; no partial state | P1 | High | Recovery | Partial | Not run |
 | APP-501 | Provider | CEOITBox down for an hour | Block outbound | 1) Run the app 2) Unblock 3) Run jobs | — | Business continues; WhatsApp deliveries retried and sent once | P1 | High | Recovery | Partial | Not run |
@@ -829,7 +829,7 @@ Rows are the **from** state; columns are the **to** state. ✓ means allowed, wi
 | Test Case ID | Module | Test Scenario | Preconditions | Test Steps | Test Data | Expected Result | Priority | Severity | Test Type | Automation Candidate | Status |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | APP-513 | People | Approver leaves the organisation | Pending tasks | 1) IT deactivates; sees pending count 2) Hand over | — | Warning shows the count; handover moves all tasks; none lost | P0 | Critical | Edge | Yes | Not run |
-| APP-514 | People | Approver leaves without handover | Pending task | 1) Deactivate only | — | Task stays with an inactive person; escalation at SLA; IT can still hand over (record: should deactivate require handover? Q-QA-09) | P1 | High | Edge | Yes | Not run |
+| APP-514 | People | Approver leaves without handover | Pending task | 1) Deactivate only | — | Refused: "… still has N pending approvals. Hand them over first." (already enforced) | P1 | High | Edge | Yes | Not run |
 | APP-515 | People | Requester leaves during approval | Open request | 1) Deactivate requester | — | Approvals continue; requester notifications skipped (inactive) | P2 | Medium | Edge | Yes | Not run |
 | APP-516 | People | Manager changes during approval | Request at MGR | 1) IT changes REQ's manager | — | Existing MGR task stays; resubmission or new requests use the new manager | P2 | Medium | Edge | Yes | Not run |
 | APP-517 | People | Department changes during approval | Request before HOD | 1) Move REQ to another department 2) MGR approves | — | HOD resolved at activation → new department's HOD (document) | P2 | Medium | Edge | Yes | Not run |
@@ -933,7 +933,7 @@ Rows are the **from** state; columns are the **to** state. ✓ means allowed, wi
 | APP-583 | E2E-001 | Successful sequential approval | FX-DEMO, WF-SEQ | 1) REQ raises ₹85,000 with quote.pdf 2) MGR, HOD, FIN, MD approve 3) Check notifications, audit, DB | — | APPROVED; 4 TASK_DECIDED; requester got REQUEST_APPROVED (in-app, email, WhatsApp if live); audit and timeline complete; file downloadable | P0 | Critical | E2E | Yes | Not run |
 | APP-584 | E2E-002 | Rejection at HOD | WF-SEQ | 1) Raise 2) MGR approves 3) HOD rejects with reason | — | REJECTED; FIN/MD never asked; requester told with reason | P0 | Critical | E2E | Yes | Not run |
 | APP-585 | E2E-003 | Changes → resubmit → approve | WF-SEQ | 1) Raise 2) MGR asks for changes 3) REQ edits + resubmits 4) All approve | — | Same number, round 2, APPROVED; both rounds in history | P0 | Critical | E2E | Yes | Not run |
-| APP-586 | E2E-004 | Submit timeout → retry | WF-SEQ, throttled | 1) Submit, lose reply 2) Retry | — | Exactly one request expected; today two (D-QA-01) | P0 | Critical | E2E | Partial | Not run |
+| APP-586 | E2E-004 | Submit timeout → retry | WF-SEQ, throttled | 1) Submit, lose reply 2) Retry | — | Exactly one request (D-QA-01 fixed) | P0 | Critical | E2E | Partial | Not run |
 | APP-587 | E2E-005 | Concurrent approval | WF-GRP | 1) Both checkers approve at once | — | One completion; consistent final state | P0 | Critical | E2E | Partial | Not run |
 | APP-588 | E2E-006 | Unauthorised approval | WF-SEQ | 1) OUT opens and POSTs approve | — | 404 / refused; audited | P0 | Critical | E2E | Yes | Not run |
 | APP-589 | E2E-007 | Delegation | WF-SEQ | 1) MGR delegates to finl2b 2) Raise 3) finl2b approves | — | Workflow continues; "for Deepa Menon" in history | P0 | Critical | E2E | Yes | Not run |
@@ -1241,7 +1241,7 @@ Each requirement's linked cases are listed. **Coverage** means: Covered (3 or mo
 | R15 | Complete, append-only audit and event trail | APP-021, APP-038, APP-128, APP-200, APP-223, APP-266–APP-282, APP-349, APP-444, APP-488, APP-583 | Covered | Not run |
 | R16 | Nobody can open or act on a request they aren't part of (IDOR) | APP-185–APP-190, APP-198, APP-273, APP-286–APP-287, APP-308, APP-366, APP-588 | Covered | Not run |
 | R17 | Provider or API failures never change or undo a business action | APP-254–APP-256, APP-258–APP-259, APP-261, APP-322, APP-332–APP-333, APP-342, APP-358–APP-359, APP-445, APP-494, APP-497–APP-499, APP-501–APP-502, APP-508, APP-511 | Covered | Not run |
-| R18 | Timeout, retry and idempotency: one business transaction per intent | APP-002, APP-259–APP-260, APP-312, APP-315, APP-317, APP-324–APP-337, APP-344, APP-391, APP-412, APP-465, APP-480, APP-501, APP-503–APP-504, APP-507, APP-568–APP-569, APP-586 | Partially covered (gap: duplicate submit on retry, D-QA-01) | Not run |
+| R18 | Timeout, retry and idempotency: one business transaction per intent | APP-002, APP-259–APP-260, APP-312, APP-315, APP-317, APP-324–APP-337, APP-344, APP-391, APP-412, APP-465, APP-480, APP-501, APP-503–APP-504, APP-507, APP-568–APP-569, APP-586 | Covered | Not run |
 | R19 | Database state matches the UI, notifications and audit | APP-020–APP-022, APP-059–APP-060, APP-282, APP-338–APP-339, APP-341–APP-342, APP-347–APP-348, APP-350–APP-352, APP-357, APP-417, APP-455, APP-481, APP-489, APP-510, APP-512, APP-525, APP-538, APP-550 | Covered | Not run |
 | R20 | Security: sessions, CSRF, XSS, injection, headers, rate limits, file upload | APP-076, APP-100, APP-205–APP-206, APP-252, APP-275, APP-289, APP-291–APP-292, APP-298, APP-305–APP-306, APP-309–APP-311, APP-320, APP-323, APP-353, APP-360–APP-363, APP-365, APP-369–APP-371, APP-377–APP-379, APP-381–APP-382, APP-387, APP-389–APP-390, APP-549 | Covered | Not run |
 | R21 | DoA matrix per approval type routes by amount band (D-075) | APP-006, APP-032, APP-041, APP-064, APP-068–APP-069, APP-084–APP-087, APP-162–APP-171, APP-402–APP-404, APP-448, APP-528, APP-531–APP-533, APP-548, APP-572, APP-591–APP-592, APP-597 | Covered | Not run |
@@ -1259,7 +1259,7 @@ Each requirement's linked cases are listed. **Coverage** means: Covered (3 or mo
 | R33 | Insights and reporting (D-069) | APP-040, APP-356, APP-388, APP-420, APP-446, APP-459, APP-487, APP-496, APP-553–APP-562 | Covered | Not run |
 | R34 | Demo data and Try as (D-071) | APP-042–APP-043, APP-131–APP-132, APP-197, APP-277, APP-416, APP-476, APP-541–APP-542 | Covered | Not run |
 | R35 | Handover of a leaver's pending approvals (F-16) | APP-030, APP-138, APP-204, APP-472, APP-513–APP-514, APP-596 | Covered | Not run |
-| R36 | Search, filter, sort and pagination of request lists | APP-047–APP-048, APP-437–APP-443, APP-486 | Missing (not built: lists show the latest 200) | Not run |
+| R36 | Search, filter, sort and pagination of request lists | APP-047–APP-048, APP-437–APP-443, APP-486 | Partially covered (My requests: search, status filter, paging; no date/amount/department filters or IT-wide search) | Not run |
 | R37 | Save, edit and delete a draft request | APP-046 | Missing (not built: A-01) | Not run |
 | R38 | Admin cancel or close of a request | APP-049, APP-134 | Missing (not built: A-02) | Not run |
 | R39 | Auditor or read-only role | APP-200–APP-201 | Missing (not built: A-06) | Not run |
@@ -1267,35 +1267,35 @@ Each requirement's linked cases are listed. **Coverage** means: Covered (3 or mo
 
 
 ## 39. Defect Risk Scenarios
-These were found by reading the code before any execution. Each is linked to the cases that will confirm it.
+These were found by reading the code before execution. **Status as of 8 Oct 2026 (S8-06):** the code defects are fixed, each with regression tests; two findings were already handled; three are policy choices waiting for the owner.
 
-| ID | Defect title | Module | Scenario | Expected behaviour | Possible actual behaviour | Severity | Business impact | Recommended fix |
+| ID | Defect title | Module | Scenario | Expected behaviour | Behaviour found | Severity | Business impact | Fix / status |
 |---|---|---|---|---|---|---|---|---|
-| D-QA-04 | **Negative amount takes the lowest DoA band** | Forms / DoA | Requester enters −₹50,00,000 in a DoA approval type | Refused: an amount must be ₹0 or more | `parseFormSubmission` accepts negatives, and the DoA puts them in band 1: one approver instead of four | **Critical** | Approval-level bypass on purchases (financial control) | Add a "minimum" option to NUMBER fields; DoA fields enforce ≥ 0 on the server; test the edges |
-| D-QA-01 | Duplicate request on retry after a timeout | Submit | The server commits, the reply is lost, and the user presses Submit again | One request | Two requests with two numbers (no idempotency key) | High | Duplicate purchase approvals and double spend | Hidden one-time submission token on the form, stored unique on `approval_requests`; a repeat returns the first request |
-| D-QA-06 | Notifications lost on a crash between commit and send | Notifications | Process dies right after the decision commits | Next approver is told eventually | Decision saved, no notification ever sent (sending happens after commit, in memory) | Medium | Requests silently wait; the SLA reminder is the only safety net | Outbox: write notification intents in the same transaction; the job runner sends them |
-| D-QA-03 | Attachment limit race and duplicate uploads | Attachments | Two uploads at the 19-file mark, or a retried upload | At most 20; no accidental duplicates | Count read outside the lock: 21 possible; a retry stores the same file twice | Low | Storage clutter; limit bypass | Count inside the request-row lock; skip an identical sha256 on the same request, or warn |
-| D-QA-02 | Same request raised twice in two tabs | Submit | User submits the same form from 2 tabs | Warning about a likely duplicate | Two requests | Medium | Duplicate approvals | Soft check: same requester, type and title within 10 minutes → confirm |
-| D-QA-07 | Tasks stuck with a deactivated approver | Users | IT deactivates without handing over | Tasks moved or blocked at deactivation | Tasks stay pending with an inactive person until escalation | Medium | Delays; needs IT action | Require handover (or auto-hand over to the manager) when deactivating someone with pending tasks |
-| D-QA-11 | Request lists capped at 200, with no search | Lists | User or IT needs an older request | Search, filter, paging | Only the latest 200 visible; older ones reachable only by URL | Medium | Usability and audit retrieval | Add search (number, title, status, date, type) and paging; IT-wide request search |
-| D-QA-05 | Long comments silently cut | Decisions | 2,100-character approval comment; 600-character withdraw reason | Clear limit message | Saved cut to 2,000 / 500 without telling the user | Low | Lost text in the audit trail | Validate the length and show the limit; counter in the UI |
-| D-QA-08 | Delegate can approve two consecutive levels | Delegation | MGR delegates to the HOD | Optional segregation rule | The same person approves both levels | Medium (policy) | Weakens four-eyes control | Owner decision (Q-QA-10); optionally block delegation to a later-level approver |
-| D-QA-09 | Live template deleted or paused at CEOITBox | WhatsApp | Template removed in the CEOITBox dashboard | App stops using it | Registry stays "Live" until the next sync; each send fails with 400 | Low | Missed WhatsApp messages (email still sent) | Auto-sync daily; mark the version paused on a template-not-found error |
-| D-QA-10 | No expiry for stale requests | Lifecycle | Request open for months | Owner-defined expiry or auto-withdraw | Stays open forever, with one reminder and one escalation | Low (policy) | Clutter and stale approvals | Owner decision (Q-QA-03) |
-| D-QA-12 | Confirmations blocked by browsers | UI | Pop-up confirm blocked | Action runs after confirmation | **Fixed 8 Oct 2026 (S7-F3)**: in-page confirm bar | — | — | Regression cases in §21 |
-| D-QA-13 | Reminders while on hold | SLA | A held request passes its due time | Owner rule | Reminder may still fire (unverified) | Low | Annoying reminders | Decide the rule (Q-QA-07); skip reminders while ON_HOLD |
-| D-QA-14 | Same person approves several levels | Workflow | One person resolves at two levels | Owner rule | Asked twice, approves twice | Low (policy) | Four-eyes weakened | Optional "skip if already approved by this person" setting per step |
-| D-QA-15 | Header or newline injection in email subjects | Email | Title with CR/LF | One-line subject | Depends on Resend API handling (likely safe) | Low | Spoofing risk | Strip CR/LF from subjects before sending |
+| D-QA-04 | Negative amount took the lowest DoA band | Forms / DoA | Requester enters −₹50,00,000 | Refused | Was accepted and routed to band 1 (one approver instead of four) | Critical | Approval-level bypass | **Fixed:** NUMBER fields have a minimum (0 for amounts), and a server-side DoA guard refuses any negative DoA amount. Tests: qa-fixes.test, session8.int, session7 e2e |
+| D-QA-01 | Duplicate request on retry after a timeout | Submit | Server commits, the reply is lost, the user submits again | One request | A second request was created | High | Duplicate approvals or spend | **Fixed:** a one-time form key (`submission_key`, unique per requester); a repeat returns the first request, including when two copies race. Tests: session8.int |
+| D-QA-06 | Notifications lost on a crash between commit and send | Notifications | Process dies after the decision commits | Messages still go out | Messages were lost | Medium | Requests waiting silently | **Fixed:** notification outbox written in the same transaction; sent after the commit, and leftovers sent by the job runner (claimed, sent once). Tests: session8.int |
+| D-QA-03 | Attachment limit race and duplicate uploads | Attachments | Two uploads at 19 files, or a retried upload | ≤ 20; no duplicates | 21 possible; the same file stored twice | Low | Clutter, limit bypass | **Fixed:** count and duplicate check (sha256) run under the request-row lock; duplicates are skipped and reported. Tests: session8.int |
+| D-QA-02 | Same request raised twice from two tabs | Submit | The same title on the same type within 10 minutes | Ask first | Two requests | Medium | Duplicate approvals | **Fixed:** "You raised … a few minutes ago" with a "This is a separate request" tick; checked after the form is valid. Tests: session8.int, session7 e2e |
+| D-QA-11 | Request lists capped at 200 with no search | Lists | Older requests needed | Search, filter, paging | Only the latest 200 | Medium | Usability, audit | **Fixed for My requests:** search by number or title, status filter, 25 per page. Date, amount and department filters, and an IT-wide search, remain open (R36 partial). Tests: session8.int, e2e |
+| D-QA-05 | Long comments and reasons cut silently | Decisions | 2,100-character comment | Clear limit | Saved cut to 2,000 / 500 | Low | Lost audit text | **Fixed:** refused with the limit shown; the box also stops at 2,000 |
+| D-QA-09 | Live template deleted or paused at CEOITBox | WhatsApp | Removed in the dashboard | App stops using it | Stayed "Live" until a manual sync | Low | Failed WhatsApp sends | **Fixed:** the job runner syncs from Meta once a day (if a key and named templates exist). Tests: session8.int |
+| D-QA-15 | Line breaks in email subjects | Email | Title with CR/LF | One-line subject | Depended on Resend | Low | Header spoofing | **Fixed:** CR/LF stripped before sending. Tests: qa-fixes.test |
+| D-QA-12 | Confirmations blocked by browsers | UI | Pop-up confirm blocked | Action runs after confirming | Action silently cancelled | High | Submit to Meta looked dead | **Fixed 8 Oct (S7-F3):** in-page confirm bar |
+| D-QA-07 | Tasks stuck with a deactivated approver | Users | Deactivate with pending approvals | Blocked | **Already handled:** refused with "Hand them over first" | — | — | No change needed; test case updated |
+| D-QA-13 | Reminders while on hold | SLA | Held request passes its due time | No reminder | **Already handled:** the SLA job only reads IN_PROGRESS requests | — | — | No change needed; test case updated |
+| D-QA-08 | Delegate can approve two consecutive levels | Delegation | MGR delegates to the HOD | Owner rule | Allowed | Medium (policy) | Four-eyes weakened | **Waiting for the owner (Q-QA-10)** |
+| D-QA-14 | Same person approves several levels | Workflow | One person at two levels | Owner rule | Asked twice, approves twice | Low (policy) | Four-eyes weakened | **Waiting for the owner (Q-QA-10)** |
+| D-QA-10 | No expiry for stale requests | Lifecycle | Open for months | Owner rule | Stays open | Low (policy) | Clutter | **Waiting for the owner (Q-QA-03)** |
 
 **Areas reviewed and found sound:**
-- duplicate approval and double-click: refused by the row lock, the `state_version` check and the task status;
-- self-approval: the engine filters the requester out of every approver list;
-- IDOR on requests and files: 404 plus audit;
-- concurrent approvals: serialised by `FOR UPDATE`;
-- reminder duplication: unique claim rows;
-- unauthorised areas: 404;
-- audit and events: tables protected by triggers;
-- provider failures don't roll back business actions.
+- double approval and double-click;
+- self-approval;
+- IDOR on requests and files;
+- concurrent approvals (row lock and version check);
+- reminder duplication;
+- unauthorised areas;
+- append-only audit, events and comments;
+- provider failures never roll back business actions.
 
 
 ## 40. Automation Recommendations
@@ -1375,11 +1375,11 @@ These were found by reading the code before any execution. Each is linked to the
 | Total test cases | 600 |
 | P0 (Critical) | 160 |
 | P1 (High) | 201 |
-| P2 (Medium) | 150 |
-| P3 (Low) | 89 |
-| Automation candidates (Yes) | 484 |
+| P2 (Medium) | 153 |
+| P3 (Low) | 86 |
+| Automation candidates (Yes) | 487 |
 | Partial automation | 80 |
-| Manual only (No) | 36 |
+| Manual only (No) | 33 |
 | Smoke suite | 24 |
 | Sanity suite | 18 |
 | Regression suite | 361 |
@@ -1387,17 +1387,16 @@ These were found by reading the code before any execution. Each is linked to the
 
 
 ### Critical risks
-1. **D-QA-04:** a negative amount bypasses the DoA levels. Fix it before go-live.
-2. **D-QA-01:** a retried submit can create a duplicate request. Fix it before go-live.
-3. **D-QA-06:** notifications can be lost on a crash. The SLA reminder mitigates it; plan an outbox.
-4. Cron must be confirmed on GoDaddy, or reminders, escalations and retries never run.
-5. UPLOAD_DIR must be outside the app folder and in the backup, or attachments are lost on redeploy.
+1. ~~D-QA-04 negative amounts~~, ~~D-QA-01 duplicate on retry~~, ~~D-QA-06 lost notifications~~: **fixed 8 Oct 2026 (S8-06).**
+2. Cron must be confirmed on GoDaddy, or reminders, escalations, retries, the outbox and the daily template sync never run.
+3. UPLOAD_DIR must be outside the app folder and in the backup, or attachments are lost on redeploy.
+4. Policy gaps waiting for the owner: segregation of duties (Q-QA-10) and request expiry (Q-QA-03).
 
 ### Missing requirements (not built, from the master prompt)
 - Drafts (R37).
 - Admin cancel or close (R38).
 - Request expiry (R13).
-- Search, filter and paging (R36).
+- Search beyond My requests (by date, amount, department or type), and an IT-wide request search (R36, partly built).
 - Auditor or read-only role (R39).
 - Report export.
 - A submission receipt notification (N-06).
@@ -1415,16 +1414,16 @@ These were found by reading the code before any execution. Each is linked to the
 | Q-QA-04 | Can a **rejected** request be resubmitted, or must people raise a new one? | Rejected is final today; "ask for changes" is the route back | R11 |
 | Q-QA-05 | Is an **Auditor or read-only** role needed (view all requests and the audit log, no admin rights)? | Only IT Admin and Super Admin see everything | R39 |
 | Q-QA-06 | Any date rules (no past "needed by" dates, maximum future)? | Dates are free today | Validation |
-| Q-QA-07 | Should SLA reminders **pause while on hold**? | Behaviour to confirm | R07, D-QA-13 |
+| Q-QA-07 | ~~Should reminders pause while on hold?~~ They already do (the SLA job only reads IN_PROGRESS) | Answered by the code | D-QA-13 |
 | Q-QA-08 | Performance targets: users, requests per day, acceptable response times? | The proposed targets in §26 need sign-off | §26 |
-| Q-QA-09 | Must IT **hand over** before deactivating someone with pending approvals? | Tasks can be stranded | D-QA-07 |
+| Q-QA-09 | ~~Must IT hand over before deactivating?~~ Already enforced: deactivation is refused while approvals wait | Answered by the code | D-QA-07 |
 | Q-QA-10 | **Segregation of duties:** may one person approve two levels (directly or as a delegate)? | Allowed today | D-QA-08, D-QA-14 |
 | Q-QA-11 | If a WhatsApp template is deleted at CEOITBox, should the app switch it off automatically? | Sends fail until the next sync | D-QA-09 |
 | Q-QA-12 | Are **zero** amounts valid in DoA approvals, or must they be more than ₹0? | Affects the D-QA-04 fix | R21 |
 
 
 ## 43. Final Recommendations
-1. **Fix before go-live:** D-QA-04 (negative or zero amounts in DoA fields) and D-QA-01 (idempotent submit). Both are small, server-side changes, each with unit, integration and e2e regression tests.
+1. **Done (S8-06):** the code defects D-QA-01 to -06, -09, -11 and -15 are fixed, with regression tests. Run the §33 Smoke and §36 Critical suites to confirm on staging.
 2. **Run the Smoke and Critical suites on staging** with the demo data and the CEOITBox test key, then again on production right after go-live, using a real requester and approver pair.
 3. **Automate next:**
    - the §11 DoA boundary cases and the §25 race cases as integration tests;

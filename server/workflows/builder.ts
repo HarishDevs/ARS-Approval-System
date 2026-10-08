@@ -304,6 +304,17 @@ export function checkDoaForm(spec: BuilderSpec, form: readonly FormField[]): str
   return problems;
 }
 
+// The DoA field can never be negative: a negative amount would fall in the
+// lowest band and skip approval levels (D-QA-04). Checked on every submit
+// and resubmit, whatever the form's own minimum says.
+export function checkDoaAmount(spec: { stages: readonly BuilderStage[] } | null | undefined, formData: Record<string, unknown>): Record<string, string> {
+  const doa = findDoa(spec);
+  if (!doa) return {};
+  const value = formData[doa.field];
+  if (typeof value === "number" && value < 0) return { [doa.field]: "Enter an amount of ₹0 or more." };
+  return {};
+}
+
 // A fresh DoA matrix for a new approval type: three limits, four bands,
 // cumulative levels the IT team then renames and assigns.
 export function newDoaStage(newId: () => string, field = "amount"): BuilderDoa {

@@ -11,7 +11,14 @@ import type { ActionResult } from "@/lib/http/action-result";
 // Server Actions for requests (F-14). Every one re-checks the session; the
 // service then enforces who may do what on the record (F-12, D-057).
 const NOT_FOUND: ActionResult = { ok: false, message: "Not found." };
-const RESERVED = new Set(["workflowId", "requestId", "title", "taskKey", "decision", "comment", "attachments"]);
+const RESERVED = new Set(["workflowId", "requestId", "title", "taskKey", "decision", "comment", "attachments", "submissionKey", "allowDuplicate"]);
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// D-QA-01: the form's one-time key (anything else is ignored).
+function submissionKeyOf(formData: FormData): string | null {
+  const value = formData.get("submissionKey");
+  return typeof value === "string" && UUID.test(value) ? value.toLowerCase() : null;
+}
 
 async function actor(): Promise<Actor | null> {
   try {
@@ -45,9 +52,14 @@ export async function submitRequestAction(_previous: ActionResult | null, formDa
   let requestId: number;
   let filesSaved = true;
   try {
-    const result = await submitRequest({ workflowId, title: String(formData.get("title") ?? ""), fields: fieldsFrom(formData) }, me);
+    const result = await submitRequest(
+      { workflowId, title: String(formData.get("title") ?? ""), fields: fieldsFrom(formData), submissionKey: submissionKeyOf(formData), allowDuplicate: formData.get("allowDuplicate") === "on" },
+      me,
+    );
     if (!result.ok) return { ok: false, message: result.message, fieldErrors: result.fieldErrors };
     requestId = result.value.requestId;
+    // A repeated submit already has its files from the first time.
+    if (result.value.repeated) files.files.length = 0;
   } catch (error) {
     logError("submitRequestAction failed", error);
     return { ok: false, message: "Couldn't submit. Please try again." };
@@ -77,7 +89,8 @@ export async function decideAction(_previous: ActionResult | null, formData: For
   const taskKey = String(formData.get("taskKey") ?? "");
   const decision = String(formData.get("decision") ?? "");
   if (!me || requestId === null || !taskKey || !DECISIONS.has(decision)) return NOT_FOUND;
-  const comment = String(formData.get("comment") ?? "").trim().slice(0, 2000);
+  const comment = String(formData.get("comment") ?? "").trim();
+  if (comment.length > 2000) return { ok: false, message: "Keep the comment under 2,000 characters.", fieldErrors: { comment: `Keep it under 2,000 characters (now ${comment.length.toLocaleString("en-IN")}).` } };
   if (decision !== "APPROVE" && decision !== "HOLD" && !comment) return { ok: false, message: "Give a reason.", fieldErrors: { comment: "A reason is required." } };
   try {
     const result =
@@ -140,7 +153,9 @@ export async function withdrawAction(_previous: ActionResult | null, formData: F
   const requestId = num(formData.get("requestId"));
   if (!me || requestId === null) return NOT_FOUND;
   try {
-    const result = await withdrawRequest({ requestId, reason: String(formData.get("reason") ?? "").slice(0, 500) || undefined }, me);
+    const reason = String(formData.get("reason") ?? "").trim();
+    if (reason.length > 500) return { ok: false, message: "Keep the reason under 500 characters." };
+    const result = await withdrawRequest({ requestId, reason: reason || undefined }, me);
     if (!result.ok) return { ok: false, message: result.message };
   } catch (error) {
     logError("withdrawAction failed", error);
@@ -155,8 +170,9 @@ export async function reopenAction(_previous: ActionResult | null, formData: For
   const me = await actor();
   const requestId = num(formData.get("requestId"));
   if (!me || requestId === null) return NOT_FOUND;
-  const reason = String(formData.get("reason") ?? "").trim().slice(0, 500);
+  const reason = String(formData.get("reason") ?? "").trim();
   if (!reason) return { ok: false, message: "Give a reason.", fieldErrors: { reason: "A reason is required." } };
+  if (reason.length > 500) return { ok: false, message: "Keep the reason under 500 characters.", fieldErrors: { reason: "Keep it under 500 characters." } };
   try {
     const result = await reopenRequest({ requestId, reason }, me);
     if (!result.ok) return { ok: false, message: result.message };
@@ -176,13 +192,19 @@ export async function addFilesAction(_previous: ActionResult | null, formData: F
   const files = await prepareFiles(filesFrom(formData));
   if (!files.ok) return { ok: false, message: files.message, fieldErrors: { attachments: files.message } };
   if (files.files.length === 0) return { ok: false, message: "Choose a file first.", fieldErrors: { attachments: "Choose a file first." } };
+  let added = 0;
+  let duplicates: string[] = [];
   try {
     const result = await addAttachments(requestId, files.files, me);
     if (!result.ok) return { ok: false, message: result.message };
+    added = result.value.count;
+    duplicates = result.value.duplicates;
   } catch (error) {
     logError("addFilesAction failed", error);
     return { ok: false, message: "Couldn't save the files. Please try again." };
   }
   revalidatePath(`/users/requests/${requestId}`);
-  return { ok: true, message: files.files.length === 1 ? "File attached." : `${files.files.length} files attached.` };
+  const already = duplicates.length ? ` Already attached, so not added again: ${duplicates.join(", ")}.` : "";
+  if (added === 0) return { ok: true, message: `Nothing new to attach.${already}` };
+  return { ok: true, message: `${added === 1 ? "File attached." : `${added} files attached.`}${already}` };
 }

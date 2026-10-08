@@ -28,7 +28,7 @@ Escalation | Escalation once only | Escalated | 1) Run jobs again | — | No sec
 Escalation | Approver without a manager | Approver has no manager | 1) Escalation fires | — | IT admins only | P2 | | Y | R07
 Escalation | No escalation after approval | Task approved before escalate_at | 1) Run jobs after escalate_at | — | Nothing sent (task not pending) | P0 | | Y | R07,C
 Escalation | No escalation after rejection or withdrawal | Request REJECTED / CANCELLED | 1) Run jobs | — | Nothing sent | P1 | | Y | R07
-Escalation | No reminder while ON_HOLD | Held before due | 1) Run jobs after due | — | Record behaviour: expected no reminder while held (confirm rule, Q-QA-07) | P2 | | Y | R07,R23
+Escalation | No reminder while ON_HOLD | Held before due | 1) Run jobs after due | — | No reminder while ON_HOLD (SLA job only checks IN_PROGRESS requests) | P2 | | Y | R07,R23
 Escalation | Two job runners at once | Due task | 1) Fire /api/jobs/run twice in parallel | — | Exactly one reminder (claim row is unique) | P0 | Concurrency | Y | R07,R09,C
 Escalation | Escalation reaches the right manager after a manager change | Approver's manager changed after task creation | 1) Escalate | — | Current manager at escalation time is told | P2 | | Y | R07
 SLA | SLA boundary second | due_at = T | 1) Run at T-1 s 2) Run at T+1 s | — | No reminder at T-1 s; reminder at T+1 s | P2 | Boundary | P | R07,R32

@@ -19,7 +19,7 @@ Insights | Insights with 100k tasks | Seeded | 1) Load | — | < 5 s | P3 | | Y 
 
 SECTIONS.append(("27. Recovery Test Cases", "Recovery", "Recovery", r'''
 App | App restart during an action | Staging | 1) Approve 2) Restart Node during the request | — | Either committed fully or not at all; page after restart shows the true state | P0 | | P | R17,C
-App | Crash after commit, before notifications | Inject crash after commit | 1) Approve | — | Decision kept; notifications missing (known limit: no outbox): record D-QA-06 | P1 | | P | R17
+App | Crash after commit, before notifications | Inject crash after commit | 1) Approve | — | Decision kept; its messages are in notification_outbox and the next job run sends them once (D-QA-06 fixed) | P1 | | P | R17
 DB | MySQL restarts | Staging | 1) Restart MySQL 2) Use the app | — | Pool reconnects; errors only during the outage | P0 | | P | R17,C
 DB | Deadlock or lock wait timeout | Force lock contention | 1) Two long transactions | — | One retried or clear error; no partial state | P1 | | P | R09
 Provider | CEOITBox down for an hour | Block outbound | 1) Run the app 2) Unblock 3) Run jobs | — | Business continues; WhatsApp deliveries retried and sent once | P1 | | P | R17,R18
@@ -38,7 +38,7 @@ Migration | Migration fails half-way | Staging | 1) Inject failure in a migratio
 
 SECTIONS.append(("28. Edge Cases", "Edge cases", "Edge", r'''
 People | Approver leaves the organisation | Pending tasks | 1) IT deactivates; sees pending count 2) Hand over | — | Warning shows the count; handover moves all tasks; none lost | P0 | | Y | R35,C
-People | Approver leaves without handover | Pending task | 1) Deactivate only | — | Task stays with an inactive person; escalation at SLA; IT can still hand over (record: should deactivate require handover? Q-QA-09) | P1 | | Y | R35
+People | Approver leaves without handover | Pending task | 1) Deactivate only | — | Refused: "… still has N pending approvals. Hand them over first." (already enforced) | P1 | | Y | R35
 People | Requester leaves during approval | Open request | 1) Deactivate requester | — | Approvals continue; requester notifications skipped (inactive) | P2 | | Y | R14
 People | Manager changes during approval | Request at MGR | 1) IT changes REQ's manager | — | Existing MGR task stays; resubmission or new requests use the new manager | P2 | | Y | R02
 People | Department changes during approval | Request before HOD | 1) Move REQ to another department 2) MGR approves | — | HOD resolved at activation → new department's HOD (document) | P2 | | Y | R02
@@ -122,7 +122,7 @@ SECTIONS.append(("32. End-to-End Test Cases", "End to end", "E2E", r'''
 E2E-001 | Successful sequential approval | FX-DEMO, WF-SEQ | 1) REQ raises ₹85,000 with quote.pdf 2) MGR, HOD, FIN, MD approve 3) Check notifications, audit, DB | — | APPROVED; 4 TASK_DECIDED; requester got REQUEST_APPROVED (in-app, email, WhatsApp if live); audit and timeline complete; file downloadable | P0 | | Y | R01,R03,R14,R15,S,C
 E2E-002 | Rejection at HOD | WF-SEQ | 1) Raise 2) MGR approves 3) HOD rejects with reason | — | REJECTED; FIN/MD never asked; requester told with reason | P0 | | Y | R06,S,C
 E2E-003 | Changes → resubmit → approve | WF-SEQ | 1) Raise 2) MGR asks for changes 3) REQ edits + resubmits 4) All approve | — | Same number, round 2, APPROVED; both rounds in history | P0 | | Y | R11,C
-E2E-004 | Submit timeout → retry | WF-SEQ, throttled | 1) Submit, lose reply 2) Retry | — | Exactly one request expected; today two (D-QA-01) | P0 | | P | R18,C
+E2E-004 | Submit timeout → retry | WF-SEQ, throttled | 1) Submit, lose reply 2) Retry | — | Exactly one request (D-QA-01 fixed) | P0 | | P | R18,C
 E2E-005 | Concurrent approval | WF-GRP | 1) Both checkers approve at once | — | One completion; consistent final state | P0 | | P | R09,C
 E2E-006 | Unauthorised approval | WF-SEQ | 1) OUT opens and POSTs approve | — | 404 / refused; audited | P0 | | Y | R16,C
 E2E-007 | Delegation | WF-SEQ | 1) MGR delegates to finl2b 2) Raise 3) finl2b approves | — | Workflow continues; "for Deepa Menon" in history | P0 | | Y | R22,C

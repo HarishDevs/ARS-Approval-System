@@ -1,6 +1,6 @@
 EXTRA["head"] = r'''# ARS Approval Platform: QA Test Suite
 
-Prepared 8 Oct 2026 for build session 7, commit `a3e5d51`, against the owner's master QA prompt.
+Prepared 8 Oct 2026 for build session 7, commit `a3e5d51`, against the owner's master QA prompt. Updated the same day after the S8-06 defect fixes.
 The suite has **{TOTAL} executable test cases**.
 
 These cases are written for **this application**: its real statuses, roles, screens, Server Actions, MySQL tables, DoA matrix, CEOITBox WhatsApp and Resend email. They are not for a generic system.
@@ -168,7 +168,7 @@ REQS.extend([
     ("R15", "Complete, append-only audit and event trail", None),
     ("R16", "Nobody can open or act on a request they aren't part of (IDOR)", None),
     ("R17", "Provider or API failures never change or undo a business action", None),
-    ("R18", "Timeout, retry and idempotency: one business transaction per intent", "Partially covered (gap: duplicate submit on retry, D-QA-01)"),
+    ("R18", "Timeout, retry and idempotency: one business transaction per intent", None),
     ("R19", "Database state matches the UI, notifications and audit", None),
     ("R20", "Security: sessions, CSRF, XSS, injection, headers, rate limits, file upload", None),
     ("R21", "DoA matrix per approval type routes by amount band (D-075)", None),
@@ -186,7 +186,7 @@ REQS.extend([
     ("R33", "Insights and reporting (D-069)", None),
     ("R34", "Demo data and Try as (D-071)", None),
     ("R35", "Handover of a leaver's pending approvals (F-16)", None),
-    ("R36", "Search, filter, sort and pagination of request lists", "Missing (not built: lists show the latest 200)"),
+    ("R36", "Search, filter, sort and pagination of request lists", "Partially covered (My requests: search, status filter, paging; no date/amount/department filters or IT-wide search)"),
     ("R37", "Save, edit and delete a draft request", "Missing (not built: A-01)"),
     ("R38", "Admin cancel or close of a request", "Missing (not built: A-02)"),
     ("R39", "Auditor or read-only role", "Missing (not built: A-06)"),

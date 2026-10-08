@@ -13,6 +13,7 @@ export interface FormField {
   required: boolean;
   options?: string[]; // CHOICE only
   help?: string;
+  min?: number; // NUMBER only: the smallest value allowed (e.g. 0 for amounts, D-QA-04)
 }
 
 export const formFieldSchema = z.object({
@@ -22,6 +23,7 @@ export const formFieldSchema = z.object({
   required: z.boolean(),
   options: z.array(z.string().trim().min(1).max(100)).max(50).optional(),
   help: z.string().trim().max(200).optional(),
+  min: z.number().finite().optional(),
 });
 
 export const formSchema = z.array(formFieldSchema).max(40);
@@ -35,6 +37,7 @@ export function checkFormDefinition(fields: readonly FormField[]): string[] {
     keys.add(field.key);
     if (field.type === "CHOICE" && (!field.options || field.options.length < 2)) problems.push(`"${field.label}" needs at least two choices.`);
     if (field.type !== "CHOICE" && field.options?.length) problems.push(`"${field.label}" has choices but isn't a choice field.`);
+    if (field.type !== "NUMBER" && field.min !== undefined) problems.push(`"${field.label}" has a minimum but isn't a number field.`);
   }
   return problems;
 }
@@ -67,6 +70,7 @@ export function parseFormSubmission(fields: readonly FormField[], raw: Record<st
         const number = Number(cleaned);
         if (cleaned === "" || !Number.isFinite(number)) errors[field.key] = "Enter a number.";
         else if (Math.abs(number) > 1e13) errors[field.key] = "That number is too large.";
+        else if (field.min !== undefined && number < field.min) errors[field.key] = `Enter ${field.min.toLocaleString("en-IN")} or more.`;
         else data[field.key] = number;
         break;
       }

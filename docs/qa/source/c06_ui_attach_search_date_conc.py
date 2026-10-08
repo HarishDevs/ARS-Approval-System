@@ -41,7 +41,7 @@ Upload | Corrupted PDF (wrong magic) | — | 1) Attach | — | "doesn't look lik
 Upload | 5 files in one upload | — | 1) Attach 5 | — | Accepted; one timeline line listing 5 names | P2 | Boundary | Y | R25
 Upload | 6 files in one upload | — | 1) Attach 6 | — | "Add at most 5 files at a time." | P2 | Boundary | Y | R25
 Upload | 21st file on a request | 20 attached | 1) Attach 1 | — | "A request can hold at most 20 files (20 already attached)." | P2 | Boundary | Y | R25
-Upload | Same file twice | — | 1) Attach quote.pdf twice | — | Both kept (sha256 equal), both listed; record if de-duplication wanted | P3 | | Y | R25
+Upload | Same file twice | — | 1) Attach quote.pdf twice | — | Second time: "Already attached, so not added again"; one copy kept | P3 | | Y | R25
 Upload | Unicode file name | — | 1) Attach "कोटेशन final.pdf" | — | Shown and downloaded with the Unicode name (filename* header) | P2 | | Y | R25
 Upload | Very long file name | — | 1) 220-char name | — | Cut to 150 keeping ".pdf" | P3 | Boundary | Y | R25
 Upload | Upload on resubmit | CHANGES_REQUIRED | 1) Resubmit with a file | — | File stored with round 2 shown | P2 | | Y | R25,R11
@@ -52,11 +52,11 @@ Storage | File survives a redeploy | Staging | 1) Redeploy 2) Download | — | 2
 
 SECTIONS.append(("23. Search & Filter Test Cases", "Lists", "Functional", r'''
 My requests | List order | 5 requests | 1) /users | — | Newest first | P3 | | Y | R36
-My requests | More than 200 requests | 205 requests by REQ | 1) /users | — | Latest 200 shown; no paging (gap R36): record | P2 | | Y | R36
+My requests | More than 200 requests | 205 requests by REQ | 1) /users | — | Paged 25 at a time; all reachable (D-QA-11 fixed) | P2 | | Y | R36
 Queue | Queue shows only my pending tasks | Mixed | 1) /users/queue | — | Only PENDING tasks for me (and delegators) in the current round | P1 | | Y | R36,R04
 Queue | Queue after a decision | — | 1) Approve 2) Return to queue | — | Item gone | P2 | | Y | R36
-Search | Search by request number | — | 1) Look for search | — | Not available (gap R36); workaround: open by URL | P3 | | N | R36
-Search | Filter by status, date, amount, department, type | — | 1) Look for filters | — | Not available (gap R36) | P3 | | N | R36
+Search | Search by request number | > 1 request | 1) /users/requests 2) Search the number | SEI-2026-000004 | Exactly that request | P2 | | Y | R36
+Search | Filter by status; partial and literal search | Requests in several statuses | 1) Status = Approved 2) Search "valve" 3) Search "%" | — | Only approved shown; partial match; "%" matches nothing (wildcards literal). Date, amount, department, type filters not built (R36 partial) | P2 | | Y | R36
 Admin | User list search | SESS(IT), many users | 1) Search by name / User ID (if offered) | "kumar" | Case-insensitive partial match; record actual | P3 | | Y | R36
 Audit | Audit log filters | SESS(SA) | 1) Filter by action | WORKFLOW_PUBLISHED | Only that action shown | P2 | | Y | R15
 Deliveries | Delivery log shows latest 200 | > 200 deliveries | 1) /superadmin/deliveries | — | Latest 200; no body or payload shown | P3 | | Y | R17
@@ -98,7 +98,7 @@ Numbers | 50 parallel submits | 50 sessions | 1) Submit together | — | 50 uniq
 Jobs | Job runner and a user approve the same reminder-due task | — | 1) Run jobs while approving | — | No reminder after approval commit; never duplicate | P2 | | P | R09,R07
 Demo | Load demo data in two tabs at once | SESS(SA) | 1) Click Load in both | — | No duplicate people or groups (unique codes); one may report errors | P3 | | P | R34
 Templates | Sync while submitting | SESS(SA) | 1) Submit and sync together | — | Version rows consistent; no duplicate versions | P3 | | P | R31
-Attach | Two uploads hitting the 20-file limit together | 19 attached | 1) Two uploads of 1 file at once | — | At most 20 stored; one may be refused (record if 21 slip through: D-QA-03) | P2 | | P | R09,R25
+Attach | Two uploads hitting the 20-file limit together | 19 attached | 1) Two uploads of 1 file at once | — | Exactly 20 stored; the other upload refused with the limit message (count taken under the request lock, D-QA-03 fixed) | P2 | | P | R09,R25
 Users | Role change during an open session | IT signed in | 1) SA removes IT_ADMIN while IT saves a workflow | — | Save refused if role check runs after removal; no half write | P2 | | P | R09,R30
 Network | Timeout but backend processed approval | Throttle | 1) Approve, lose reply 2) Reload | — | Page shows approved; retry refused (see §18) | P0 | Recovery | P | R09,R18,C
 '''))

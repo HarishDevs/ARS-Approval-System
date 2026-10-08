@@ -50,7 +50,8 @@ The number of levels and how they combine is unlimited. There are no fixed "Leve
 | F-31 | SLA, reminder, escalation | Built 1 Oct 2026 (working days and holidays) |
 | F-32 | Work assignment after approval | Planned |
 | F-33 | Employee custom approval | Built and verified 1 Oct 2026 |
-| F-40 | Notification pipeline | Built (in-app + email + WhatsApp, retries); WhatsApp per template as approved (7 Oct 2026) |
+| F-40 | Notification pipeline | Built (in-app + email + WhatsApp, retries); WhatsApp per template as approved; outbox 8 Oct 2026 (F-43) |
+| F-43 | Notification outbox and idempotent submit | Built and tested 8 Oct 2026 |
 | F-50 | Workflow authoring: design → validate → test → publish → version | Levels builder with choices built 1 Oct 2026; canvas later |
 | F-51 | Admin configuration change (audited) | Built for settings, users, departments, workflows 30 Sep 2026 |
 | F-52 | Provider settings and test send (Super Admin) | Built 30 Sep 2026 |
@@ -664,6 +665,17 @@ Super Admin → /superadmin/templates → event (e.g. Approval needed)
   Send test to me → POST /whatsapp/sendMessage to the Super Admin's own number
 ```
 Editing an approved template makes version n+1 with a new name. The old version keeps sending until the new one is approved.
+
+## F-43 Notification outbox and idempotent submit (S8-06, D-077)
+```
+Action (submit / decide / …) ── one transaction ──► request + tasks + events + notification_outbox rows
+                                   commit ──► deliverOutbox(ids): claim row → notify() → sent_at
+crash before sending?  job runner (every 5 min): rows unsent > 2 min → claim → notify → sent_at (≤ 5 tries)
+
+Submit form carries submission_key (UUID, one per form)
+  same key again (retry or race) ──► the first request, nothing new
+  same title + type within 10 min, no key match ──► "You raised … a few minutes ago" + tick "This is a separate request"
+```
 
 ## F-56 Management dashboard (S5-03, D-069; numbered F-70 until 7 Oct 2026)
 `/admin/insights`, for IT Admin and Super Admin; management roles come later:

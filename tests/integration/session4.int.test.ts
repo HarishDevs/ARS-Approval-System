@@ -47,7 +47,7 @@ async function liveWorkflow(spec: BuilderSpec): Promise<number> {
 }
 
 async function raise(workflowId: number, by = requester): Promise<number> {
-  const result = await submitRequest({ workflowId, title: "Session 4 test", fields: {} }, person(by));
+  const result = await submitRequest({ workflowId, title: "Session 4 test", fields: {}, allowDuplicate: true }, person(by));
   if (!result.ok) throw new Error(result.message);
   return result.value.requestId;
 }

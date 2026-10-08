@@ -53,35 +53,35 @@ EXTRA["rtm_intro"] = "Each requirement's linked cases are listed. **Coverage** m
 
 EXTRA["defects"] = r'''
 ## 39. Defect Risk Scenarios
-These were found by reading the code before any execution. Each is linked to the cases that will confirm it.
+These were found by reading the code before execution. **Status as of 8 Oct 2026 (S8-06):** the code defects are fixed, each with regression tests; two findings were already handled; three are policy choices waiting for the owner.
 
-| ID | Defect title | Module | Scenario | Expected behaviour | Possible actual behaviour | Severity | Business impact | Recommended fix |
+| ID | Defect title | Module | Scenario | Expected behaviour | Behaviour found | Severity | Business impact | Fix / status |
 |---|---|---|---|---|---|---|---|---|
-| D-QA-04 | **Negative amount takes the lowest DoA band** | Forms / DoA | Requester enters −₹50,00,000 in a DoA approval type | Refused: an amount must be ₹0 or more | `parseFormSubmission` accepts negatives, and the DoA puts them in band 1: one approver instead of four | **Critical** | Approval-level bypass on purchases (financial control) | Add a "minimum" option to NUMBER fields; DoA fields enforce ≥ 0 on the server; test the edges |
-| D-QA-01 | Duplicate request on retry after a timeout | Submit | The server commits, the reply is lost, and the user presses Submit again | One request | Two requests with two numbers (no idempotency key) | High | Duplicate purchase approvals and double spend | Hidden one-time submission token on the form, stored unique on `approval_requests`; a repeat returns the first request |
-| D-QA-06 | Notifications lost on a crash between commit and send | Notifications | Process dies right after the decision commits | Next approver is told eventually | Decision saved, no notification ever sent (sending happens after commit, in memory) | Medium | Requests silently wait; the SLA reminder is the only safety net | Outbox: write notification intents in the same transaction; the job runner sends them |
-| D-QA-03 | Attachment limit race and duplicate uploads | Attachments | Two uploads at the 19-file mark, or a retried upload | At most 20; no accidental duplicates | Count read outside the lock: 21 possible; a retry stores the same file twice | Low | Storage clutter; limit bypass | Count inside the request-row lock; skip an identical sha256 on the same request, or warn |
-| D-QA-02 | Same request raised twice in two tabs | Submit | User submits the same form from 2 tabs | Warning about a likely duplicate | Two requests | Medium | Duplicate approvals | Soft check: same requester, type and title within 10 minutes → confirm |
-| D-QA-07 | Tasks stuck with a deactivated approver | Users | IT deactivates without handing over | Tasks moved or blocked at deactivation | Tasks stay pending with an inactive person until escalation | Medium | Delays; needs IT action | Require handover (or auto-hand over to the manager) when deactivating someone with pending tasks |
-| D-QA-11 | Request lists capped at 200, with no search | Lists | User or IT needs an older request | Search, filter, paging | Only the latest 200 visible; older ones reachable only by URL | Medium | Usability and audit retrieval | Add search (number, title, status, date, type) and paging; IT-wide request search |
-| D-QA-05 | Long comments silently cut | Decisions | 2,100-character approval comment; 600-character withdraw reason | Clear limit message | Saved cut to 2,000 / 500 without telling the user | Low | Lost text in the audit trail | Validate the length and show the limit; counter in the UI |
-| D-QA-08 | Delegate can approve two consecutive levels | Delegation | MGR delegates to the HOD | Optional segregation rule | The same person approves both levels | Medium (policy) | Weakens four-eyes control | Owner decision (Q-QA-10); optionally block delegation to a later-level approver |
-| D-QA-09 | Live template deleted or paused at CEOITBox | WhatsApp | Template removed in the CEOITBox dashboard | App stops using it | Registry stays "Live" until the next sync; each send fails with 400 | Low | Missed WhatsApp messages (email still sent) | Auto-sync daily; mark the version paused on a template-not-found error |
-| D-QA-10 | No expiry for stale requests | Lifecycle | Request open for months | Owner-defined expiry or auto-withdraw | Stays open forever, with one reminder and one escalation | Low (policy) | Clutter and stale approvals | Owner decision (Q-QA-03) |
-| D-QA-12 | Confirmations blocked by browsers | UI | Pop-up confirm blocked | Action runs after confirmation | **Fixed 8 Oct 2026 (S7-F3)**: in-page confirm bar | — | — | Regression cases in §21 |
-| D-QA-13 | Reminders while on hold | SLA | A held request passes its due time | Owner rule | Reminder may still fire (unverified) | Low | Annoying reminders | Decide the rule (Q-QA-07); skip reminders while ON_HOLD |
-| D-QA-14 | Same person approves several levels | Workflow | One person resolves at two levels | Owner rule | Asked twice, approves twice | Low (policy) | Four-eyes weakened | Optional "skip if already approved by this person" setting per step |
-| D-QA-15 | Header or newline injection in email subjects | Email | Title with CR/LF | One-line subject | Depends on Resend API handling (likely safe) | Low | Spoofing risk | Strip CR/LF from subjects before sending |
+| D-QA-04 | Negative amount took the lowest DoA band | Forms / DoA | Requester enters −₹50,00,000 | Refused | Was accepted and routed to band 1 (one approver instead of four) | Critical | Approval-level bypass | **Fixed:** NUMBER fields have a minimum (0 for amounts), and a server-side DoA guard refuses any negative DoA amount. Tests: qa-fixes.test, session8.int, session7 e2e |
+| D-QA-01 | Duplicate request on retry after a timeout | Submit | Server commits, the reply is lost, the user submits again | One request | A second request was created | High | Duplicate approvals or spend | **Fixed:** a one-time form key (`submission_key`, unique per requester); a repeat returns the first request, including when two copies race. Tests: session8.int |
+| D-QA-06 | Notifications lost on a crash between commit and send | Notifications | Process dies after the decision commits | Messages still go out | Messages were lost | Medium | Requests waiting silently | **Fixed:** notification outbox written in the same transaction; sent after the commit, and leftovers sent by the job runner (claimed, sent once). Tests: session8.int |
+| D-QA-03 | Attachment limit race and duplicate uploads | Attachments | Two uploads at 19 files, or a retried upload | ≤ 20; no duplicates | 21 possible; the same file stored twice | Low | Clutter, limit bypass | **Fixed:** count and duplicate check (sha256) run under the request-row lock; duplicates are skipped and reported. Tests: session8.int |
+| D-QA-02 | Same request raised twice from two tabs | Submit | The same title on the same type within 10 minutes | Ask first | Two requests | Medium | Duplicate approvals | **Fixed:** "You raised … a few minutes ago" with a "This is a separate request" tick; checked after the form is valid. Tests: session8.int, session7 e2e |
+| D-QA-11 | Request lists capped at 200 with no search | Lists | Older requests needed | Search, filter, paging | Only the latest 200 | Medium | Usability, audit | **Fixed for My requests:** search by number or title, status filter, 25 per page. Date, amount and department filters, and an IT-wide search, remain open (R36 partial). Tests: session8.int, e2e |
+| D-QA-05 | Long comments and reasons cut silently | Decisions | 2,100-character comment | Clear limit | Saved cut to 2,000 / 500 | Low | Lost audit text | **Fixed:** refused with the limit shown; the box also stops at 2,000 |
+| D-QA-09 | Live template deleted or paused at CEOITBox | WhatsApp | Removed in the dashboard | App stops using it | Stayed "Live" until a manual sync | Low | Failed WhatsApp sends | **Fixed:** the job runner syncs from Meta once a day (if a key and named templates exist). Tests: session8.int |
+| D-QA-15 | Line breaks in email subjects | Email | Title with CR/LF | One-line subject | Depended on Resend | Low | Header spoofing | **Fixed:** CR/LF stripped before sending. Tests: qa-fixes.test |
+| D-QA-12 | Confirmations blocked by browsers | UI | Pop-up confirm blocked | Action runs after confirming | Action silently cancelled | High | Submit to Meta looked dead | **Fixed 8 Oct (S7-F3):** in-page confirm bar |
+| D-QA-07 | Tasks stuck with a deactivated approver | Users | Deactivate with pending approvals | Blocked | **Already handled:** refused with "Hand them over first" | — | — | No change needed; test case updated |
+| D-QA-13 | Reminders while on hold | SLA | Held request passes its due time | No reminder | **Already handled:** the SLA job only reads IN_PROGRESS requests | — | — | No change needed; test case updated |
+| D-QA-08 | Delegate can approve two consecutive levels | Delegation | MGR delegates to the HOD | Owner rule | Allowed | Medium (policy) | Four-eyes weakened | **Waiting for the owner (Q-QA-10)** |
+| D-QA-14 | Same person approves several levels | Workflow | One person at two levels | Owner rule | Asked twice, approves twice | Low (policy) | Four-eyes weakened | **Waiting for the owner (Q-QA-10)** |
+| D-QA-10 | No expiry for stale requests | Lifecycle | Open for months | Owner rule | Stays open | Low (policy) | Clutter | **Waiting for the owner (Q-QA-03)** |
 
 **Areas reviewed and found sound:**
-- duplicate approval and double-click: refused by the row lock, the `state_version` check and the task status;
-- self-approval: the engine filters the requester out of every approver list;
-- IDOR on requests and files: 404 plus audit;
-- concurrent approvals: serialised by `FOR UPDATE`;
-- reminder duplication: unique claim rows;
-- unauthorised areas: 404;
-- audit and events: tables protected by triggers;
-- provider failures don't roll back business actions.
+- double approval and double-click;
+- self-approval;
+- IDOR on requests and files;
+- concurrent approvals (row lock and version check);
+- reminder duplication;
+- unauthorised areas;
+- append-only audit, events and comments;
+- provider failures never roll back business actions.
 '''
 
 EXTRA["automation"] = r'''
@@ -103,17 +103,16 @@ EXTRA["automation"] = r'''
 
 EXTRA["summary_tail"] = r'''
 ### Critical risks
-1. **D-QA-04:** a negative amount bypasses the DoA levels. Fix it before go-live.
-2. **D-QA-01:** a retried submit can create a duplicate request. Fix it before go-live.
-3. **D-QA-06:** notifications can be lost on a crash. The SLA reminder mitigates it; plan an outbox.
-4. Cron must be confirmed on GoDaddy, or reminders, escalations and retries never run.
-5. UPLOAD_DIR must be outside the app folder and in the backup, or attachments are lost on redeploy.
+1. ~~D-QA-04 negative amounts~~, ~~D-QA-01 duplicate on retry~~, ~~D-QA-06 lost notifications~~: **fixed 8 Oct 2026 (S8-06).**
+2. Cron must be confirmed on GoDaddy, or reminders, escalations, retries, the outbox and the daily template sync never run.
+3. UPLOAD_DIR must be outside the app folder and in the backup, or attachments are lost on redeploy.
+4. Policy gaps waiting for the owner: segregation of duties (Q-QA-10) and request expiry (Q-QA-03).
 
 ### Missing requirements (not built, from the master prompt)
 - Drafts (R37).
 - Admin cancel or close (R38).
 - Request expiry (R13).
-- Search, filter and paging (R36).
+- Search beyond My requests (by date, amount, department or type), and an IT-wide request search (R36, partly built).
 - Auditor or read-only role (R39).
 - Report export.
 - A submission receipt notification (N-06).
@@ -131,9 +130,9 @@ EXTRA["questions"] = r'''
 | Q-QA-04 | Can a **rejected** request be resubmitted, or must people raise a new one? | Rejected is final today; "ask for changes" is the route back | R11 |
 | Q-QA-05 | Is an **Auditor or read-only** role needed (view all requests and the audit log, no admin rights)? | Only IT Admin and Super Admin see everything | R39 |
 | Q-QA-06 | Any date rules (no past "needed by" dates, maximum future)? | Dates are free today | Validation |
-| Q-QA-07 | Should SLA reminders **pause while on hold**? | Behaviour to confirm | R07, D-QA-13 |
+| Q-QA-07 | ~~Should reminders pause while on hold?~~ They already do (the SLA job only reads IN_PROGRESS) | Answered by the code | D-QA-13 |
 | Q-QA-08 | Performance targets: users, requests per day, acceptable response times? | The proposed targets in §26 need sign-off | §26 |
-| Q-QA-09 | Must IT **hand over** before deactivating someone with pending approvals? | Tasks can be stranded | D-QA-07 |
+| Q-QA-09 | ~~Must IT hand over before deactivating?~~ Already enforced: deactivation is refused while approvals wait | Answered by the code | D-QA-07 |
 | Q-QA-10 | **Segregation of duties:** may one person approve two levels (directly or as a delegate)? | Allowed today | D-QA-08, D-QA-14 |
 | Q-QA-11 | If a WhatsApp template is deleted at CEOITBox, should the app switch it off automatically? | Sends fail until the next sync | D-QA-09 |
 | Q-QA-12 | Are **zero** amounts valid in DoA approvals, or must they be more than ₹0? | Affects the D-QA-04 fix | R21 |
@@ -141,7 +140,7 @@ EXTRA["questions"] = r'''
 
 EXTRA["final"] = r'''
 ## 43. Final Recommendations
-1. **Fix before go-live:** D-QA-04 (negative or zero amounts in DoA fields) and D-QA-01 (idempotent submit). Both are small, server-side changes, each with unit, integration and e2e regression tests.
+1. **Done (S8-06):** the code defects D-QA-01 to -06, -09, -11 and -15 are fixed, with regression tests. Run the §33 Smoke and §36 Critical suites to confirm on staging.
 2. **Run the Smoke and Critical suites on staging** with the demo data and the CEOITBox test key, then again on production right after go-live, using a real requester and approver pair.
 3. **Automate next:**
    - the §11 DoA boundary cases and the §25 race cases as integration tests;

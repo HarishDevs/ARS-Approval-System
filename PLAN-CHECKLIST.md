@@ -220,7 +220,20 @@ Found and fixed during session 7:
 - [ ] S8-02 Audit export (CSV) and login history (P1-57); attachments on custom approvals; work hand-off after approval (F-32)
 - [ ] S8-03 CEOITBox webhook for delivery and read receipts (HTTPS, secret header), shown in Message deliveries
 - [x] S8-05 QA test-case suite for the whole platform (owner's master QA prompt, 8 Oct 2026): docs/qa/QA-TEST-SUITE.md, specific to this app (real statuses, roles, DoA, CEOITBox, attachments). It includes a traceability matrix, defect risks found by reading the code, and the smoke, sanity, regression and critical suites (done 8 Oct 2026: 600 cases; P0 160, P1 201, P2 150, P3 89; smoke 24, sanity 18, regression 361, critical 144; generated from docs/qa/source)
-- [ ] S8-06 Fix QA risks before go-live: D-QA-04 (negative or zero amounts in DoA fields route to the lowest band) and D-QA-01 (idempotent submit). Add unit, integration and e2e regression tests
+- [x] S8-06 Fix the QA defects (owner: "fix all the defects", 8 Oct 2026):
+  - [x] S8-06a D-QA-04: amounts in a DoA field (and amount fields generally) can't be negative. NUMBER fields gain a minimum; the DoA field is enforced at ≥ ₹0 on the server (done 8 Oct 2026)
+  - [x] S8-06b D-QA-01: idempotent submit. A one-time submission key on each form, stored unique per requester; a repeat returns the first request (done 8 Oct 2026)
+  - [x] S8-06c D-QA-02: same requester, type and title within 10 minutes → "looks like a duplicate", with a tick to raise it anyway (done 8 Oct 2026)
+  - [x] S8-06d D-QA-03: attachments are counted under the request lock; the same file (sha256) isn't stored twice on a request (done 8 Oct 2026)
+  - [x] S8-06e D-QA-05: over-long comments and reasons are refused with the limit shown, instead of cut silently (done 8 Oct 2026)
+  - [x] S8-06f D-QA-06: notification outbox. Messages are written in the same transaction as the decision, sent after the commit, and any left unsent are sent by the job runner (done 8 Oct 2026)
+  - [x] S8-06g D-QA-09: the job runner syncs WhatsApp template status from Meta once a day (done 8 Oct 2026)
+  - [x] S8-06h D-QA-11: My requests gets search (number or title), a status filter and paging (done 8 Oct 2026)
+  - [x] S8-06i D-QA-15: line breaks stripped from email subjects (done 8 Oct 2026)
+  - [x] S8-06j D-QA-07 and D-QA-13 checked: already handled (deactivation with pending approvals is refused; reminders skip held requests). Correct the QA document (done 8 Oct 2026)
+  - [~] S8-06k D-QA-08, D-QA-10, D-QA-14 are policy choices (segregation of duties, expiry): waiting for the owner's answers to Q-QA-03 and Q-QA-10
+Found during S8-06:
+- [x] S8-F1 The new duplicate check ran before field validation, so a negative amount on a repeated title showed the duplicate message instead of the amount error. It now runs inside the transaction, after the form is valid; the e2e test caught it (done 8 Oct 2026)
 - [ ] S8-04 Update the three living files; commit and push
 
 ## Phase 0 — Setup and decisions

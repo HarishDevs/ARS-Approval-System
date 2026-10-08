@@ -244,15 +244,39 @@ function toRequest(row: RequestRow): RequestRecord {
 const REQUEST_COLUMNS = "id, request_no, workflow_version_id, requester_id, title, form_data_json, status, round, state_json, state_version";
 
 export async function insertRequest(
-  input: { requestNo: string; workflowVersionId: number; requesterId: number; title: string; formData: Record<string, unknown>; state: InstanceState },
+  input: { requestNo: string; workflowVersionId: number; requesterId: number; title: string; formData: Record<string, unknown>; state: InstanceState; submissionKey?: string | null },
   db: Queryable = getDbPool(),
 ): Promise<number> {
   const [result] = await db.query<ResultSetHeader>(
-    `INSERT INTO approval_requests (request_no, workflow_version_id, requester_id, title, form_data_json, status, round, state_json, closed_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, IF(? IN ('APPROVED', 'REJECTED', 'CANCELLED'), CURRENT_TIMESTAMP, NULL))`,
-    [input.requestNo, input.workflowVersionId, input.requesterId, input.title, JSON.stringify(input.formData), input.state.status, input.state.round, JSON.stringify(input.state), input.state.status],
+    `INSERT INTO approval_requests (request_no, workflow_version_id, requester_id, submission_key, title, form_data_json, status, round, state_json, closed_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, IF(? IN ('APPROVED', 'REJECTED', 'CANCELLED'), CURRENT_TIMESTAMP, NULL))`,
+    [input.requestNo, input.workflowVersionId, input.requesterId, input.submissionKey ?? null, input.title, JSON.stringify(input.formData), input.state.status, input.state.round, JSON.stringify(input.state), input.state.status],
   );
   return result.insertId;
+}
+
+// D-QA-01: the request a form already created (a retried submit).
+export async function findBySubmissionKey(requesterId: number, submissionKey: string, db: Queryable = getDbPool()): Promise<{ id: number; requestNo: string; status: InstanceStatus } | null> {
+  const [rows] = await db.query<(RowDataPacket & { id: number; request_no: string; status: InstanceStatus })[]>(
+    "SELECT id, request_no, status FROM approval_requests WHERE requester_id = ? AND submission_key = ? LIMIT 1",
+    [requesterId, submissionKey],
+  );
+  return rows[0] ? { id: rows[0].id, requestNo: rows[0].request_no, status: rows[0].status } : null;
+}
+
+// D-QA-02: the same person raised the same title on the same approval type
+// (or any custom approval) in the last 10 minutes.
+export async function findRecentDuplicate(input: { requesterId: number; title: string; workflowId: number | null }, db: Queryable = getDbPool()): Promise<string | null> {
+  const [rows] = await db.query<(RowDataPacket & { request_no: string })[]>(
+    `SELECT r.request_no FROM approval_requests r
+     JOIN workflow_versions v ON v.id = r.workflow_version_id
+     JOIN workflow_definitions w ON w.id = v.workflow_id
+     WHERE r.requester_id = ? AND r.title = ? AND r.submitted_at > DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 10 MINUTE)
+       AND ${input.workflowId === null ? "w.kind = 'CUSTOM'" : "w.id = ?"}
+     ORDER BY r.id DESC LIMIT 1`,
+    input.workflowId === null ? [input.requesterId, input.title] : [input.requesterId, input.title, input.workflowId],
+  );
+  return rows[0]?.request_no ?? null;
 }
 
 // FOR UPDATE: actions on the same request run one after another (F-13).
@@ -430,6 +454,63 @@ export async function listMyRequests(userId: number, db: Queryable = getDbPool()
     closedAt: row.closed_at,
     pendingWith: row.pending_with,
   }));
+}
+
+// D-QA-11: My requests with search (number or title), a status filter and
+// paging. The filter values are bound, never pasted into the SQL.
+export const MY_REQUESTS_PAGE_SIZE = 25;
+const STATUSES: readonly InstanceStatus[] = ["IN_PROGRESS", "ON_HOLD", "CHANGES_REQUIRED", "APPROVED", "REJECTED", "CANCELLED"];
+
+export async function searchMyRequests(
+  userId: number,
+  filter: { q?: string; status?: string; page?: number },
+  db: Queryable = getDbPool(),
+): Promise<{ items: MyRequestItem[]; total: number; page: number; pages: number }> {
+  const where = ["r.requester_id = ?"];
+  const params: unknown[] = [userId];
+  const q = (filter.q ?? "").trim().slice(0, 100);
+  if (q) {
+    where.push("(r.request_no LIKE ? OR r.title LIKE ?)");
+    const like = `%${q.replace(/[\\%_]/g, (match) => `\\${match}`)}%`;
+    params.push(like, like);
+  }
+  if (filter.status && (STATUSES as readonly string[]).includes(filter.status)) {
+    where.push("r.status = ?");
+    params.push(filter.status);
+  }
+  const [countRows] = await db.query<(RowDataPacket & { total: number })[]>(`SELECT COUNT(*) AS total FROM approval_requests r WHERE ${where.join(" AND ")}`, params);
+  const total = Number(countRows[0]?.total ?? 0);
+  const pages = Math.max(1, Math.ceil(total / MY_REQUESTS_PAGE_SIZE));
+  const page = Math.min(Math.max(1, Math.floor(filter.page ?? 1)), pages);
+  const [rows] = await db.query<
+    (RowDataPacket & { id: number; request_no: string; title: string; workflow_name: string; status: InstanceStatus; submitted_at: Date; closed_at: Date | null; pending_with: string | null })[]
+  >(
+    `SELECT r.id, r.request_no, r.title, w.name AS workflow_name, r.status, r.submitted_at, r.closed_at,
+            (SELECT GROUP_CONCAT(DISTINCT u.name ORDER BY u.name SEPARATOR ', ')
+               FROM approval_tasks t JOIN users u ON u.id = t.approver_id
+              WHERE t.request_id = r.id AND t.status = 'PENDING') AS pending_with
+     FROM approval_requests r
+     JOIN workflow_versions v ON v.id = r.workflow_version_id
+     JOIN workflow_definitions w ON w.id = v.workflow_id
+     WHERE ${where.join(" AND ")}
+     ORDER BY r.id DESC LIMIT ? OFFSET ?`,
+    [...params, MY_REQUESTS_PAGE_SIZE, (page - 1) * MY_REQUESTS_PAGE_SIZE],
+  );
+  return {
+    items: rows.map((row) => ({
+      id: row.id,
+      requestNo: row.request_no,
+      title: row.title,
+      workflowName: row.workflow_name,
+      status: row.status,
+      submittedAt: row.submitted_at,
+      closedAt: row.closed_at,
+      pendingWith: row.pending_with,
+    })),
+    total,
+    page,
+    pages,
+  };
 }
 
 export async function userNames(ids: readonly number[], db: Queryable = getDbPool()): Promise<Map<number, string>> {

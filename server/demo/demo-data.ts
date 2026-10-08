@@ -101,7 +101,7 @@ export interface DemoWorkflow {
 export const PURCHASE_DOA_BANDS = { finance: 100_000, ed: 1_000_000, md: 2_500_000 } as const;
 
 const details: FormField = { key: "details", label: "Details", type: "LONG_TEXT", required: true, help: "What you need approved, and why." };
-const amount = (required: boolean): FormField => ({ key: "amount", label: "Amount (₹)", type: "NUMBER", required });
+const amount = (required: boolean): FormField => ({ key: "amount", label: "Amount (₹)", type: "NUMBER", required, min: 0 });
 
 export function demoWorkflows(ids: DemoIds): DemoWorkflow[] {
   const group = (id: string, label: string, code: DemoGroupCode, extra: Partial<BuilderStep> = {}): BuilderStep => ({

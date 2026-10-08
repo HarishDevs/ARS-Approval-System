@@ -16,7 +16,7 @@ export default async function NewWorkflowPage() {
       </PageHeader>
       <WorkflowBuilder
         mode="create"
-        initialForm={[{ key: "amount", label: "Amount (₹)", type: "NUMBER", required: true }]}
+        initialForm={[{ key: "amount", label: "Amount (₹)", type: "NUMBER", required: true, min: 0 }]}
         // Every approval type starts with its own DoA matrix (D-075): set the
         // limits, name the levels, pick who approves, tick the bands.
         initialStages={[

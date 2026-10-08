@@ -14,8 +14,8 @@ Number | Indian grouping and ₹ accepted | WF-SEQ | 1) Submit | "₹ 12,50,000"
 Number | Decimal amount | WF-SEQ | 1) Submit | "1500.75" | Stored 1500.75; displayed with Indian grouping | P2 | | Y | R01
 Number | Amount over the maximum | WF-SEQ | 1) Submit | "100000000000000" (1e14) | "That number is too large."; no row | P2 | Boundary | Y | R01
 Number | Amount at the maximum | WF-SEQ | 1) Submit | 10,000,000,000,000 (1e13) | Accepted | P3 | Boundary | Y | R01
-Number | Zero amount | WF-DOA | 1) Submit | 0 | Accepted today; band 1 (SCM head only). Business rule wanted? See D-QA-04 | P2 | Boundary | Y | R21
-Number | Negative amount | WF-DOA | 1) Submit | -50000 | Currently accepted and routed to band 1 (fewest approvers): D-QA-04. Expected after fix: "Enter an amount of ₹0 or more." | P1 | Boundary | Y | R21,C,N
+Number | Zero amount | WF-DOA | 1) Submit | 0 | Accepted (₹0 or more is valid); band 1 (SCM head only). Whether ₹0 is allowed is Q-QA-12 | P2 | Boundary | Y | R21
+Number | Negative amount | WF-DOA | 1) Submit | -50000 | Refused: "Enter 0 or more." (field minimum) or "Enter an amount of ₹0 or more." (DoA guard, even without a minimum); no row (D-QA-04 fixed) | P1 | Boundary | Y | R21,C,N
 Number | Scientific notation | WF-SEQ | 1) Submit | "1e5" | Accepted as 100000 (Number parsing); confirm acceptable | P3 | | Y | R01
 Date | Invalid date | Workflow with DATE field | 1) Submit | "2026-02-30" | "Enter a date as YYYY-MM-DD."; no row | P2 | | Y | R01
 Date | Past date | DATE field "Needed by" | 1) Submit | 2020-01-01 | Accepted (no min rule); record whether business needs a rule (Q-QA-06) | P3 | | Y | R01
@@ -26,7 +26,7 @@ Choice | Choice value not in the list | WF-DOA "budgeted" | 1) POST with budgete
 Person | Person field set to an inactive user | Workflow with PERSON field | 1) POST with the id of an inactive user | — | Field error (must be an active user); no row | P1 | | Y | R02
 Person | Person field set to a non-numeric id | PERSON field | 1) POST "abc" | — | Field error; no row | P2 | | Y | R01
 Comment | Reject comment of spaces only | Request at MGR | 1) Comment "   " 2) Reject | — | "A reason is required."; task still PENDING | P1 | | Y | R06
-Comment | Decision comment over 2000 characters | Request at MGR | 1) 2100-char comment 2) Approve | — | Currently stored cut to 2000 without telling the user (D-QA-05); expected after fix: a clear limit message | P3 | Boundary | Y | R26
+Comment | Decision comment over 2000 characters | Request at MGR | 1) 2100-char comment 2) Approve | — | Refused: "Keep it under 2,000 characters (now 2,100)."; the box also stops at 2,000 (D-QA-05 fixed) | P3 | Boundary | Y | R26
 Comment | Discussion comment over 2000 | Request open | 1) Post 2001 chars | — | "Keep it under 2,000 characters."; nothing stored | P3 | Boundary | Y | R26
 Workflow | Prefix and code rules | SESS(IT) | 1) New workflow with prefix "P1" and code "bad code" | — | Prefix "Use 2 to 6 capital letters…"; code "Use 2 to 50 capital letters, numbers or _…"; nothing saved | P2 | | Y | R27
 Workflow | Duplicate workflow code | Existing PURCHASE_SCM_APPROVAL | 1) Create another with that code | — | "Another workflow already uses this code."; nothing saved | P2 | | Y | R27

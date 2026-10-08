@@ -1,6 +1,7 @@
 "use client";
 
 import { resubmitAction, submitRequestAction } from "@/app/users/actions";
+import { useState } from "react";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import type { FormField } from "@/server/forms/fields";
 import { ACCEPT_ATTRIBUTE } from "@/server/attachments/files";
@@ -25,11 +26,15 @@ export function RequestForm({
   initialTitle?: string;
 }) {
   const { result, pending, onSubmit } = useActionForm(mode === "submit" ? submitRequestAction : resubmitAction);
+  // D-QA-01: one key per form; a retried submit returns the same request.
+  const [submissionKey] = useState(() => crypto.randomUUID());
+  const possibleDuplicate = Boolean(result && !result.ok && result.fieldErrors?.allowDuplicate);
 
   return (
     <form onSubmit={onSubmit} className="card">
       {workflowId && <input type="hidden" name="workflowId" value={workflowId} />}
       {requestId && <input type="hidden" name="requestId" value={requestId} />}
+      {mode === "submit" && <input type="hidden" name="submissionKey" value={submissionKey} />}
       <div className="space-y-5 px-5 py-5">
         {mode === "submit" && (
           <div>
@@ -60,6 +65,12 @@ export function RequestForm({
           <FieldError result={result} name="attachments" />
         </div>
       </div>
+      {possibleDuplicate && (
+        <label className="mx-5 mb-4 flex items-start gap-2 rounded-md border border-warning-600/40 bg-warning-50 px-3 py-2 text-label text-warning-600">
+          <input type="checkbox" name="allowDuplicate" className="mt-0.5" />
+          <span>This is a separate request: raise it anyway.</span>
+        </label>
+      )}
       <div className="flex flex-wrap items-center gap-3 border-t border-line px-5 py-4">
         <SubmitButton pending={pending} className="btn-compact">
           {mode === "submit" ? "Submit request" : "Resubmit"}
