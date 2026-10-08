@@ -46,5 +46,9 @@ describe("D-QA-15: email subjects stay on one line", () => {
     await sendEmail({ apiKey: "test", fromAddress: "a@b.c", fromName: "ARS" }, { to: "x@y.z", subject: "Approval needed: A\r\nBcc: evil@x.com", text: "t" }, { fetch: fetcher });
     const body = JSON.parse(String((fetcher.mock.calls[0] as unknown as [string, RequestInit])[1].body));
     expect(body.subject).toBe("Approval needed: A Bcc: evil@x.com");
+    expect(body.reply_to).toBeUndefined();
+    await sendEmail({ apiKey: "test", fromAddress: "approvals@arssteels.net", fromName: "ARS", replyTo: "itadmin@arssteels.co.in" }, { to: "x@y.z", subject: "S", text: "t" }, { fetch: fetcher });
+    const second = JSON.parse(String((fetcher.mock.calls[1] as unknown as [string, RequestInit])[1].body));
+    expect(second).toMatchObject({ from: "ARS <approvals@arssteels.net>", reply_to: "itadmin@arssteels.co.in" });
   });
 });

@@ -39,6 +39,7 @@ export async function sendEmail(
         // D-QA-15: one line only, so a title can't add mail headers.
         subject: input.subject.replace(/[\r\n]+/g, " ").trim(),
         text: input.text,
+        ...(config.replyTo ? { reply_to: config.replyTo } : {}),
         ...(input.html ? { html: input.html } : {}),
       }),
     });

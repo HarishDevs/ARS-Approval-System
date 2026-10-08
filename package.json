@@ -1,6 +1,6 @@
 {
   "name": "ars-approval-system",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "private": true,
   "description": "ARS Approval Platform — multi-level approvals in any custom manner",
   "engines": {
@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node -e \"require('fs').rmSync('.next',{recursive:true,force:true})\" && next build",
     "start": "node scripts/database/migrate.js && node scripts/database/seed.js && next start",
     "start:production": "npm start",
     "start:app": "next start",

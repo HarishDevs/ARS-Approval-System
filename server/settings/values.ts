@@ -74,13 +74,15 @@ export interface EmailConfig {
   apiKey: string | null;
   fromAddress: string;
   fromName: string;
+  replyTo?: string | null;
 }
 
 export async function getEmailConfig(): Promise<EmailConfig> {
-  const [apiKey, fromAddress, fromName] = await Promise.all([
+  const [apiKey, fromAddress, fromName, replyTo] = await Promise.all([
     getSettingValue("email.resend_api_key"),
     getSettingValue("email.from_address"),
     getSettingValue("email.from_name"),
+    getSettingValue("email.reply_to"),
   ]);
-  return { apiKey, fromAddress: fromAddress ?? "itadmin@arssteels.co.in", fromName: fromName ?? "ARS Approvals" };
+  return { apiKey, fromAddress: fromAddress ?? "approvals@arssteels.net", fromName: fromName ?? "ARS Approvals", replyTo };
 }

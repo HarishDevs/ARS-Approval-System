@@ -1,5 +1,9 @@
 # Release notes
 
+## v1.0.3 (8 Oct 2026)
+- **Build fix:** `npm run build` removes the old `.next` folder first. GoDaddy reuses the app folder between builds, which broke Next.js with `ENOENT rename …/export/500.html`.
+- **Email sender** is now `approvals@arssteels.net`, the domain verified in Resend. A new **Reply-to** setting defaults to `itadmin@arssteels.co.in`, so replies reach IT. Both can be changed in Super Admin → Providers & security → Email.
+
 ## v1.0.2 (8 Oct 2026)
 - `npm start` now applies the database migrations and seeds before starting, so the default start command on GoDaddy creates and updates the database by itself. GoDaddy's "Import SQL" answered "Unauthorized", and the importer drops existing tables. `npm run start:app` starts without migrating.
 - Deployment guide Part B updated: automatic setup first; the SQL import only as an option, with its warnings.

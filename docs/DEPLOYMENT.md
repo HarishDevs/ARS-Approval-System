@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| App | ARS Approval Platform **v1.0.2** (`docs/RELEASE-NOTES.md`) |
+| App | ARS Approval Platform **v1.0.3** (`docs/RELEASE-NOTES.md`) |
 | Address | **https://approval.arssteels.net** (one app: `/users`, `/admin`, `/superadmin`) |
 | Hosting | GoDaddy **Node.js Hosting** ("Deploy your Node.js app"), from GitHub `HarishDevs/ARS-Approval-System`, branch `main` |
 | Database | MySQL 8 in GoDaddy cPanel |
@@ -58,7 +58,7 @@ The file `D:\Omniroute\deploy-secrets\ars-approvals.production.env` was generate
 5. Your Phone ID is `558214737370188` (Connected Accounts).
 
 ### A5. Resend (email) and the sending domain
-The app sends email as **itadmin@arssteels.co.in** through Resend. Resend only sends for a domain you've verified.
+The app sends email as **approvals@arssteels.net** through Resend (replies go to itadmin@arssteels.co.in). Resend only sends for a domain you've verified: **arssteels.net** (done 8 Oct 2026).
 1. Sign up or sign in at https://resend.com → **Domains** → **Add domain** → `arssteels.co.in`.
 2. Resend shows DNS records (an MX and TXT for the `send` subdomain, plus a DKIM TXT). Add each one in the DNS of `arssteels.co.in`:
    - wherever that domain's DNS is managed (GoDaddy → My Products → DNS, or your email provider's DNS);
@@ -187,7 +187,8 @@ GoDaddy → **My Products** → **Node.js Hosting** (host.godaddy.com/hosting) �
 ### G2. Email (Resend)
 1. **Super Admin → Providers & security → Email**:
    - paste the Resend key (A5);
-   - From address `itadmin@arssteels.co.in`;
+   - From address **`approvals@arssteels.net`** (already the default; the Resend domain verified is `arssteels.net`);
+   - Reply-to `itadmin@arssteels.co.in` (the default), so replies reach IT;
    - From name `ARS Approvals`;
    - **Save**.
 2. **Send test email**: it arrives in the itadmin inbox. If not, see Part N.
@@ -322,6 +323,9 @@ To rebuild a full import file for a brand-new environment: apply the migrations 
 | Import SQL shows "Unauthorized" | GoDaddy's import service refused the session | Skip the import: the first start creates the database (B1) |
 | Runtime log: `Migration failed: … TRIGGER command denied` | Hosted DB user can't create triggers | GoDaddy support ticket: the triggers protect the audit log and are required |
 | No reminders or escalations | Cron missing, or wrong secret (the job answers 404) | Part I |
+| Build fails: `ENOENT … rename '/app/.next/export/500.html'` | GoDaddy reused the old `.next` folder | Fixed in v1.0.3 (the build cleans `.next` first): **Retry build** / **Update Preview** |
+| `Cannot find module 'mysql2/promise'` for a minute during Publish | The platform restarted the app before its packages were in place | Recovers by itself; if it repeats for more than 2 minutes, **Restart Published App** |
+| `The Server Reference ID did not match … Received "y"` | A page opened before a deploy (or a bot) sent an old form | Harmless; reload the page |
 | 502 / "Application error" right after deploy | App still starting (migrations on the first start), or crashed | Wait 1 minute; read the app's runtime log |
 
 ---

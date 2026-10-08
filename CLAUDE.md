@@ -24,7 +24,7 @@ Every session:
 - `itadmin@arssteels.co.in` = Super Admin, approval (DoA) authority, and break-glass holder. **Every user can create custom approvals and pick anyone** as an approver. The only limits: approvers must be active users, and nobody approves their own request.
 - Only admin-created users sign in (any email). Roles are set per user by the admin only. Users are made inactive, never deleted.
 - Google sign-in (reusing the Power BI site's Firebase project `power-bi-dashboard-3b29f`) has no OTP. User ID + password needs an OTP on **WhatsApp only**. No step-up OTP.
-- New-login alerts and all notifications go on email (Resend, from itadmin@arssteels.co.in) + WhatsApp (CEOITBox, the same number and API as the Power BI site). The owner supplies the notification templates.
+- New-login alerts and all notifications go on email (Resend, from approvals@arssteels.net, reply-to itadmin@arssteels.co.in, D-080) + WhatsApp (CEOITBox, the same number and API as the Power BI site). The owner supplies the notification templates.
 - Hosting: GoDaddy Node.js Hosting (cPanel). Stack: Next.js 15, React 19, TypeScript, Tailwind (ARS tokens from `D:\Omniroute\assets`), MySQL 8 (`mysql2`), Firebase Auth, HMAC sessions, AES-GCM encrypted settings, cron job runner, Vitest + Playwright.
 - **Reference implementation: `D:\PBI New`** (read-only). Reuse its patterns. **Never open or copy its `.env.local` or any real secret.**
 - Break-glass admin account; append-only audit log. No Asana import (Asana is a flow reference only, see `reference/`).
