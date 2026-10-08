@@ -85,9 +85,10 @@ GoDaddy's Node.js hosting provisions a MySQL database **with the app**: **App �
 4. If the import reports an error about `TRIGGER` (privileges), send it to GoDaddy support: the triggers protect the audit log, timeline and comments, and are required.
 5. The file never drops anything: importing it again fails with "Table already exists" instead of wiping data. Import it **only once**. Later releases add their migrations by themselves (D3 start command).
 
-### B2. Connection details → secrets
-1. **Hosted Database → Open database guide**: copy the host, port, database name, user and password.
-2. **Settings → Secrets**: set `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` and `DB_PASSWORD` to those values. The app reads only these names. If the guide shows a single connection URL, split it into the five values.
+### B2. Connection details: automatic
+With the Hosted Database attached, GoDaddy sets **`DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` and `DB_PASSWORD` by itself**. They're listed in the Secrets card. These are exactly the names the app reads.
+- **Don't enter or override them.** If you imported a `.env` that contained `DB_…` lines (for example `CHANGE_ME` values), **delete those entries** in Settings → Secrets, so the hosted values apply.
+- The app keeps a small pool of at most 10 connections and returns each one after every query. **Confirm** that the hosted plan allows 10 connections; if it reports "too many connections", ask IT to lower the pool in `lib/db/client.ts`.
 
 ### B3. If you use the cPanel MySQL instead (fallback)
 Create the database and an ALL PRIVILEGES user in cPanel → MySQL Databases. Import the same `.sql` file in phpMyAdmin → Import. Then put its details in the secrets as in B2. `npm run db:check` (from your PC, after allowing your IP in cPanel → Remote MySQL) confirms the user may create triggers.
@@ -129,7 +130,8 @@ If the wizard doesn't let you change the start command, it runs `npm start`. The
 ### D4. Add secrets (the screen in your screenshot)
 1. Click **Import from .env file** → choose `D:\Omniroute\deploy-secrets\ars-approvals.production.env`.
 2. Check the list:
-   - **15 keys:** NODE_ENV, APP_BASE_URL, DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD, SESSION_SECRET, ENCRYPTION_KEY, JOB_RUNNER_SECRET, UPLOAD_DIR, FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY.
+   - **9 keys from the file:** NODE_ENV, APP_BASE_URL, SESSION_SECRET, ENCRYPTION_KEY, JOB_RUNNER_SECRET, UPLOAD_DIR, FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY.
+   - Plus the five `DB_…` entries that GoDaddy adds itself (B2).
    - **No value says `CHANGE_ME`.**
    - `FIREBASE_PRIVATE_KEY` starts with `-----BEGIN PRIVATE KEY-----`. If the quotes were imported as part of the value, edit it and remove them.
 3. If the build later fails because `tailwindcss` or `typescript` is missing, add one more secret: `NPM_CONFIG_PRODUCTION` = `false` (see Part N).
