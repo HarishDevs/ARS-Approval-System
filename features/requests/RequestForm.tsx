@@ -14,6 +14,8 @@ export function RequestForm({
   requestId,
   fields,
   people,
+  approverPeople,
+  approverFields = [],
   initial,
   initialTitle,
 }: {
@@ -22,6 +24,9 @@ export function RequestForm({
   requestId?: number;
   fields: FormField[];
   people: { id: number; label: string }[];
+  // D-085: person fields that decide an approver list approvers only.
+  approverPeople?: { id: number; label: string }[];
+  approverFields?: string[];
   initial?: Record<string, string>;
   initialTitle?: string;
 }) {
@@ -51,7 +56,7 @@ export function RequestForm({
               {field.label}
               {!field.required && <span className="font-normal text-ink-faint"> (optional)</span>}
             </label>
-            <FieldInput field={field} people={people} defaultValue={initial?.[field.key] ?? ""} />
+            <FieldInput field={field} people={approverPeople && approverFields.includes(field.key) ? approverPeople : people} defaultValue={initial?.[field.key] ?? ""} />
             {field.help && <p className="mt-1 text-caption text-ink-muted">{field.help}</p>}
             <FieldError result={result} name={field.key} />
           </div>

@@ -62,6 +62,7 @@ const user = (over: Partial<SnapshotUser>): SnapshotUser => ({
   active: true,
   isBreakGlass: false,
   isDemo: false,
+  approver: true,
   googleLinked: false,
   hasPassword: false,
   ...over,
@@ -81,7 +82,10 @@ function snapshot(actorRoles: Snapshot["actor"]["roles"] = ["USER", "IT_ADMIN"])
       { id: 10, code: "FIN", name: "Finance", hodUserId: null, active: true },
       { id: 11, code: "OLD", name: "Old dept", hodUserId: null, active: false },
     ],
-    designations: [{ id: 20, code: "MGR", name: "Manager", active: true }],
+    designations: [
+      { id: 20, code: "MGR", name: "Manager", isApprover: true, active: true },
+      { id: 21, code: "EXEC", name: "Executive", isApprover: false, active: true },
+    ],
     groups: [{ id: 30, code: "FIN_CHECKERS", name: "Finance checkers", active: true, memberIds: [2, 3] }],
     holidays: [{ date: "2026-10-20", name: "Deepavali" }],
   };
@@ -114,7 +118,7 @@ describe("planImport: users", () => {
       usersFile(
         "ravi,Ravi Kumar,RAVI@example.com,,FIN,,oldmgr,GOOGLE,USER",
         "sita,Sita Raman,sita@example.com,9876543210,FIN,MGR,newboss,PASSWORD,",
-        "newboss,New Boss,newboss@example.com,,,,,,USER;IT_ADMIN",
+        "newboss,New Boss,newboss@example.com,,,MGR,,,USER;IT_ADMIN",
       ),
       snapshot(),
     );
@@ -177,6 +181,31 @@ describe("planImport: users", () => {
     const plan = planImport("users", usersFile("ravi,Ravi Kumar,ravi.k@example.com,,FIN,,oldmgr,GOOGLE,USER"), base);
     expect(plan.ops[0]).toMatchObject({ kind: "user-update", endSessions: true, effects: { unlinkGoogle: true, clearPassword: false } });
     expect(plan.rows[0]!.changes).toEqual(["email"]);
+  });
+});
+
+describe("planImport: approver designations (D-085)", () => {
+  it("a newly chosen manager, HOD or group member must be an approver; what is already saved stays valid", () => {
+    const base = snapshot();
+    base.users[2] = { ...base.users[2]!, approver: false }; // ravi
+    base.users.push({ ...base.users[2]!, id: 6, loginId: "junior", name: "Junior Exec", email: "junior@example.com", departmentId: null, reportingManagerId: 3, approver: false });
+    const users = planImport("users", usersFile("junior,Junior Exec,junior@example.com,,,,ravi,GOOGLE,USER", "newbie,New Bie,newbie@example.com,,,,ravi,,"), base);
+    expect(users.rows[0]!.action).toBe("unchanged");
+    expect(users.rows[1]!.problems[0]!.message).toMatch(/isn't an approver/);
+    const inFile = planImport("users", usersFile("lead,Team Lead,lead@example.com,,,EXEC,,,", "member,Member,member@example.com,,,,lead,,"), base);
+    expect(inFile.rows[1]!.problems[0]!.message).toMatch(/isn't an approver/);
+    const hod = planImport("departments", "code,name,hod_login_id,active\nFIN,Finance,ravi,Yes", base);
+    expect(hod.rows[0]!.problems[0]!.message).toMatch(/isn't an approver/);
+    const group = planImport("groups", "code,name,members,active\nFIN_CHECKERS,Finance checkers,elena;ravi,Yes", base); // ravi already a member
+    expect(group.rows[0]!.action).toBe("unchanged");
+    const newGroup = planImport("groups", "code,name,members,active\nNEW_G,New group,ravi,Yes", base);
+    expect(newGroup.rows[0]!.problems[0]!.message).toMatch(/Not approvers/);
+  });
+
+  it("designations carry the approver flag (empty means No)", () => {
+    const plan = planImport("designations", "code,name,approver,active\nMGR,Manager,Yes,Yes\nEXEC,Executive,Yes,Yes\nTRAINEE,Trainee,,Yes\nX1,Bad,perhaps,Yes", snapshot());
+    expect(plan.rows.map((row) => row.action)).toEqual(["unchanged", "update", "create", "error"]);
+    expect(plan.rows[1]!.changes).toEqual(["isApprover"]);
   });
 });
 

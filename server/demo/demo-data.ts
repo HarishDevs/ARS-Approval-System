@@ -15,14 +15,16 @@ export interface DemoPerson {
   manager: string | null; // key of an earlier person
 }
 
+// approver (D-085): Manager and above, plus the Finance checkers'
+// Accountant designation, because they approve at level 1.
 export const DEMO_DESIGNATIONS = [
-  { code: "MD", name: "Managing Director" },
-  { code: "ED", name: "Executive Director" },
-  { code: "DIRECTOR", name: "Director" },
-  { code: "HOD", name: "Head of Department" },
-  { code: "MANAGER", name: "Manager" },
-  { code: "EXECUTIVE", name: "Executive" },
-  { code: "ACCOUNTANT", name: "Accountant" },
+  { code: "MD", name: "Managing Director", approver: true },
+  { code: "ED", name: "Executive Director", approver: true },
+  { code: "DIRECTOR", name: "Director", approver: true },
+  { code: "HOD", name: "Head of Department", approver: true },
+  { code: "MANAGER", name: "Manager", approver: true },
+  { code: "EXECUTIVE", name: "Executive", approver: false },
+  { code: "ACCOUNTANT", name: "Accountant", approver: true },
 ] as const;
 
 // HOD = the person key that heads it.

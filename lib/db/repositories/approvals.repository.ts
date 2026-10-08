@@ -151,7 +151,7 @@ export async function listWorkflows(filter: { kind?: WorkflowRecord["kind"]; own
     `SELECT w.id, w.code, w.name, w.description, w.kind, w.request_prefix, w.owner_user_id, w.active,
             (SELECT v.version_no FROM workflow_versions v WHERE v.workflow_id = w.id AND v.status = 'PUBLISHED') AS published_no,
             (SELECT MAX(v.version_no) FROM workflow_versions v WHERE v.workflow_id = w.id) AS latest_no,
-            (SELECT COUNT(*) FROM approval_requests r JOIN workflow_versions v ON v.id = r.workflow_version_id WHERE v.workflow_id = w.id) AS request_count
+            (SELECT COUNT(*) FROM approval_requests r JOIN workflow_versions v ON v.id = r.workflow_version_id WHERE v.workflow_id = w.id AND r.deleted_at IS NULL) AS request_count
      FROM workflow_definitions w ${where.length ? `WHERE ${where.join(" AND ")}` : ""}
      ORDER BY w.active DESC, w.name`,
     params,
@@ -271,7 +271,7 @@ export async function findRecentDuplicate(input: { requesterId: number; title: s
     `SELECT r.request_no FROM approval_requests r
      JOIN workflow_versions v ON v.id = r.workflow_version_id
      JOIN workflow_definitions w ON w.id = v.workflow_id
-     WHERE r.requester_id = ? AND r.title = ? AND r.submitted_at > DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 10 MINUTE)
+     WHERE r.deleted_at IS NULL AND r.requester_id = ? AND r.title = ? AND r.submitted_at > DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 10 MINUTE)
        AND ${input.workflowId === null ? "w.kind = 'CUSTOM'" : "w.id = ?"}
      ORDER BY r.id DESC LIMIT 1`,
     input.workflowId === null ? [input.requesterId, input.title] : [input.requesterId, input.title, input.workflowId],
@@ -281,12 +281,12 @@ export async function findRecentDuplicate(input: { requesterId: number; title: s
 
 // FOR UPDATE: actions on the same request run one after another (F-13).
 export async function lockRequest(id: number, db: Queryable): Promise<RequestRecord | null> {
-  const [rows] = await db.query<RequestRow[]>(`SELECT ${REQUEST_COLUMNS} FROM approval_requests WHERE id = ? LIMIT 1 FOR UPDATE`, [id]);
+  const [rows] = await db.query<RequestRow[]>(`SELECT ${REQUEST_COLUMNS} FROM approval_requests WHERE id = ? AND deleted_at IS NULL LIMIT 1 FOR UPDATE`, [id]);
   return rows[0] ? toRequest(rows[0]) : null;
 }
 
 export async function findRequest(id: number, db: Queryable = getDbPool()): Promise<RequestRecord | null> {
-  const [rows] = await db.query<RequestRow[]>(`SELECT ${REQUEST_COLUMNS} FROM approval_requests WHERE id = ? LIMIT 1`, [id]);
+  const [rows] = await db.query<RequestRow[]>(`SELECT ${REQUEST_COLUMNS} FROM approval_requests WHERE id = ? AND deleted_at IS NULL LIMIT 1`, [id]);
   return rows[0] ? toRequest(rows[0]) : null;
 }
 
@@ -382,7 +382,7 @@ export async function listPendingTasksFor(userId: number, db: Queryable = getDbP
      JOIN approval_requests r ON r.id = t.request_id
      JOIN users u ON u.id = r.requester_id
      JOIN users a ON a.id = t.approver_id
-     WHERE t.status = 'PENDING' AND r.status IN ('IN_PROGRESS', 'ON_HOLD') AND r.requester_id <> ?
+     WHERE t.status = 'PENDING' AND r.status IN ('IN_PROGRESS', 'ON_HOLD') AND r.deleted_at IS NULL AND r.requester_id <> ?
        AND (t.approver_id = ? OR t.approver_id IN (
              SELECT d.user_id FROM delegations d
              WHERE d.delegate_id = ? AND d.ended_at IS NULL AND ${INDIA_TODAY_SQL} BETWEEN d.starts_on AND d.ends_on))
@@ -440,7 +440,7 @@ export async function listMyRequests(userId: number, db: Queryable = getDbPool()
      FROM approval_requests r
      JOIN workflow_versions v ON v.id = r.workflow_version_id
      JOIN workflow_definitions w ON w.id = v.workflow_id
-     WHERE r.requester_id = ?
+     WHERE r.requester_id = ? AND r.deleted_at IS NULL
      ORDER BY r.id DESC LIMIT 200`,
     [userId],
   );
@@ -466,7 +466,7 @@ export async function searchMyRequests(
   filter: { q?: string; status?: string; page?: number },
   db: Queryable = getDbPool(),
 ): Promise<{ items: MyRequestItem[]; total: number; page: number; pages: number }> {
-  const where = ["r.requester_id = ?"];
+  const where = ["r.requester_id = ?", "r.deleted_at IS NULL"];
   const params: unknown[] = [userId];
   const q = (filter.q ?? "").trim().slice(0, 100);
   if (q) {

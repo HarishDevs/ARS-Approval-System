@@ -53,10 +53,11 @@ export function DepartmentForm({
   );
 }
 
-export function DesignationForm({ designation }: { designation?: { id: number; code: string; name: string; active: boolean } }) {
+// D-085: "Approver" = people with this designation can be chosen as approvers.
+export function DesignationForm({ designation }: { designation?: { id: number; code: string; name: string; isApprover: boolean; active: boolean } }) {
   const { result, pending, formRef, onSubmit } = useActionForm(saveDesignationAction, { resetOnSuccess: !designation });
   return (
-    <form ref={formRef} onSubmit={onSubmit} className="grid items-start gap-3 px-5 py-4 md:grid-cols-[120px_minmax(0,1fr)_auto_auto]">
+    <form ref={formRef} onSubmit={onSubmit} className="grid items-start gap-3 px-5 py-4 md:grid-cols-[120px_minmax(0,1fr)_auto_auto_auto]">
       {designation && <input type="hidden" name="id" value={designation.id} />}
       <div>
         <input aria-label="Code" name="code" defaultValue={designation?.code ?? ""} placeholder="Code" className="field-input" />
@@ -66,6 +67,9 @@ export function DesignationForm({ designation }: { designation?: { id: number; c
         <input aria-label="Designation name" name="name" defaultValue={designation?.name ?? ""} placeholder="Designation" className="field-input" />
         <FieldError result={result} name="name" />
       </div>
+      <label className="flex h-11 items-center gap-2 text-label" title="People with this designation can be chosen as approvers (Manager and above)">
+        <input type="checkbox" name="isApprover" defaultChecked={designation?.isApprover ?? false} /> Approver
+      </label>
       {designation ? (
         <label className="flex h-11 items-center gap-2 text-label">
           <input type="checkbox" name="active" defaultChecked={designation.active} /> Active
@@ -77,7 +81,7 @@ export function DesignationForm({ designation }: { designation?: { id: number; c
         {designation ? "Save" : "Add"}
       </SubmitButton>
       {result && (
-        <div className="md:col-span-4">
+        <div className="md:col-span-5">
           <ResultMessage result={result} />
         </div>
       )}

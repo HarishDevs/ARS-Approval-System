@@ -4,6 +4,8 @@ import { PageHeader } from "@/features/shell/PageHeader";
 import { WorkflowBuilder } from "@/features/admin/WorkflowBuilder";
 import { DetailsForm, PublishButton, TestModePanel } from "@/features/admin/WorkflowPanels";
 import { loadBuilderOptions } from "@/features/admin/workflow-options";
+import { namedApprovers } from "@/server/approvals/approver-rules";
+import { listActiveUserOptions } from "@/lib/db/repositories/admin-users.repository";
 import { requireArea } from "@/server/authorization/guards";
 import { findWorkflow, listVersions } from "@/lib/db/repositories/approvals.repository";
 import { validateVersion } from "@/server/approvals/service";
@@ -17,7 +19,10 @@ export default async function WorkflowPage({ params, searchParams }: { params: P
   if (!/^\d+$/.test(id)) notFound();
   const workflow = await findWorkflow(Number(id));
   if (!workflow || workflow.kind !== "PREDEFINED") notFound();
-  const [versions, options] = await Promise.all([listVersions(workflow.id), loadBuilderOptions()]);
+  const versions = await listVersions(workflow.id);
+  const options = await loadBuilderOptions(versions.flatMap((version) => namedApprovers(version.definition)));
+  // Test mode: anyone can be the sample requester (approver-only lists are for choosing approvers).
+  const everyone = (await listActiveUserOptions()).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` }));
   const latest = versions[0];
   const published = versions.find((version) => version.status === "PUBLISHED");
   const latestChecks = latest && latest.status === "DRAFT" ? await validateVersion(latest.id) : null;
@@ -74,7 +79,7 @@ export default async function WorkflowPage({ params, searchParams }: { params: P
               </div>
             ))}
           </section>
-          {latest && <TestModePanel versionId={latest.id} form={latest.form} people={options.people} />}
+          {latest && <TestModePanel versionId={latest.id} form={latest.form} people={everyone} />}
           <DetailsForm workflowId={workflow.id} name={workflow.name} description={workflow.description ?? null} active={workflow.active} />
         </div>
       </div>

@@ -3,13 +3,15 @@ import { PageHeader } from "@/features/shell/PageHeader";
 import { DepartmentForm, DesignationForm } from "@/features/admin/OrganisationForms";
 import { requireArea } from "@/server/authorization/guards";
 import { listDepartments, listDesignations } from "@/lib/db/repositories/organisation.repository";
-import { listActiveUserOptions } from "@/lib/db/repositories/admin-users.repository";
+import { listApproverOptions } from "@/lib/db/repositories/approvers.repository";
 
 // P1-01 / S2-03a. The HOD set here is who "requester's department HOD" and
 // "department HOD" resolve to in workflows.
 export default async function OrganisationPage() {
   await requireArea("admin");
-  const [departments, designations, people] = await Promise.all([listDepartments(), listDesignations(), listActiveUserOptions()]);
+  const [departments, designations] = await Promise.all([listDepartments(), listDesignations()]);
+  // D-085: a HOD must be an approver; each department's current HOD stays listed.
+  const people = await listApproverOptions(departments.map((department) => department.hodUserId));
   const options = people.map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` }));
 
   return (
@@ -34,6 +36,10 @@ export default async function OrganisationPage() {
         <section className="card divide-y divide-line">
           <div className="px-5 py-4">
             <h2 className="font-semibold">Designations</h2>
+            <p className="text-label text-ink-muted">
+              Tick <strong>Approver</strong> for Manager and above. Only people whose designation is ticked can be chosen as approvers, group members, HODs,
+              reporting managers or out-of-office delegates. Choices already saved stay valid until changed.
+            </p>
           </div>
           {designations.map((designation) => (
             <DesignationForm key={designation.id} designation={designation} />

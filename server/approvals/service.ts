@@ -12,6 +12,7 @@ import {
   insertWorkflowVersion,
   findBySubmissionKey,
   findRecentDuplicate,
+  listVersions,
   lockRequest,
   nextRequestNumber,
   publishWorkflowVersion,
@@ -27,6 +28,8 @@ import { loadWorkingCalendar } from "@/lib/db/repositories/calendar.repository";
 import { checkFormDefinition, parseFormSubmission, type FormField } from "@/server/forms/fields";
 import { allSteps, checkDoaAmount, checkDoaForm, compileBuilder, type BuilderSpec } from "@/server/workflows/builder";
 import { describeRule } from "@/server/approvals/step-map";
+import { approverFieldKeys, ineligibleChoices, namedApprovers } from "@/server/approvals/approver-rules";
+import { approverStatuses } from "@/lib/db/repositories/approvers.repository";
 import { listUserIdsWithRole } from "@/lib/db/repositories/users.repository";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { getEnv } from "@/config/environment";
@@ -59,6 +62,20 @@ class FormError extends Error {
 }
 
 const activeIds = (snapshot: DirectorySnapshot) => new Set(snapshot.users.filter((user) => user.active && !user.isBreakGlass).map((user) => user.id));
+const approverIds = (snapshot: DirectorySnapshot) => new Set(snapshot.users.filter((user) => user.active && !user.isBreakGlass && user.approver).map((user) => user.id));
+
+// D-085: a person field that decides an approver takes approver-eligible
+// people only. On a resubmit, the person already chosen stays valid.
+function approverFieldErrors(definition: WorkflowDefinition, data: EngineFormData, snapshot: DirectorySnapshot, previous?: EngineFormData): Record<string, string> {
+  const eligible = approverIds(snapshot);
+  const errors: Record<string, string> = {};
+  for (const key of approverFieldKeys(definition)) {
+    const value = data[key];
+    if (typeof value !== "number" || eligible.has(value) || (previous && previous[key] === value)) continue;
+    errors[key] = "This person isn't an approver. Choose someone whose designation is ticked as Approver.";
+  }
+  return errors;
+}
 
 // Errors the service raises itself (not from the engine).
 class ServiceError extends Error {
@@ -105,7 +122,8 @@ export interface WorkflowContent {
 
 type ResolvedContent = { definition: WorkflowDefinition; builder: BuilderSpec | null; form: FormField[]; validation: ValidationResult };
 
-async function resolveContent(content: WorkflowContent): Promise<Result<ResolvedContent>> {
+// previousNamed: people already named in the version being replaced; they stay valid (D-085).
+async function resolveContent(content: WorkflowContent, previousNamed: readonly number[] = []): Promise<Result<ResolvedContent>> {
   const form = content.form ?? [];
   const formProblems = checkFormDefinition(form);
   if (formProblems.length) return { ok: false, code: "INVALID_FORM", message: formProblems.join(" ") };
@@ -118,6 +136,11 @@ async function resolveContent(content: WorkflowContent): Promise<Result<Resolved
     definition = compiled.definition;
   }
   if (!definition) return { ok: false, code: "INVALID_WORKFLOW", message: "The workflow has no steps." };
+  // People who don't exist are left to the validator (the draft saves, publishing is refused).
+  const named = namedApprovers(definition);
+  const statuses = await approverStatuses(named);
+  const notApprovers = ineligibleChoices(named.filter((id) => statuses.has(id)), previousNamed, statuses);
+  if (notApprovers.length) return { ok: false, code: "NOT_APPROVER", message: notApprovers.join(" ") };
   const validation = await checkWorkflow(definition, form.map((field) => field.key));
   return { ok: true, value: { definition, builder: content.builder ?? null, form, validation } };
 }
@@ -160,7 +183,8 @@ export async function createWorkflow(
 export async function addDraftVersion(workflowId: number, content: WorkflowContent, actor: Actor): Promise<Result<{ versionId: number; versionNo: number; validation: ValidationResult }>> {
   const workflow = await findWorkflow(workflowId);
   if (!workflow || !canManageWorkflow(actor, workflow)) return { ok: false, code: "NOT_FOUND", message: "Workflow not found." };
-  const resolved = await resolveContent(content);
+  const latest = (await listVersions(workflowId))[0];
+  const resolved = await resolveContent(content, latest ? namedApprovers(latest.definition) : []);
   if (!resolved.ok) return resolved;
   const { definition, builder, form, validation } = resolved.value;
   const version = await withTransaction(async (connection) => {
@@ -315,7 +339,7 @@ export async function submitRequest(
     changed = await withTransaction(async (connection) => {
       const snapshot = await loadDirectorySnapshot(connection);
       const parsed = parseFormSubmission(version.form, input.fields, activeIds(snapshot));
-      const doaErrors = parsed.ok ? checkDoaAmount(version.builder, parsed.data) : {};
+      const doaErrors = parsed.ok ? { ...checkDoaAmount(version.builder, parsed.data), ...approverFieldErrors(version.definition, parsed.data, snapshot) } : {};
       if (!parsed.ok || titleError || Object.keys(doaErrors).length) {
         throw new FormError({ ...(parsed.ok ? {} : parsed.errors), ...doaErrors, ...(titleError ? { title: titleError } : {}) });
       }
@@ -423,7 +447,7 @@ export function resubmitRequest(input: { requestId: number; fields?: Record<stri
     if (input.fields) {
       const parsed = parseFormSubmission(version.form, input.fields, activeIds(snapshot));
       if (!parsed.ok) throw new FormError(parsed.errors);
-      const doaErrors = checkDoaAmount(version.builder, parsed.data);
+      const doaErrors = { ...checkDoaAmount(version.builder, parsed.data), ...approverFieldErrors(version.definition, parsed.data, snapshot, request.formData as EngineFormData) };
       if (Object.keys(doaErrors).length) throw new FormError(doaErrors);
       formData = parsed.data;
     }
@@ -504,9 +528,12 @@ export interface HandoverReport {
 export async function handOverPendingTasks(fromUserId: number, toUserId: number, actor: Actor): Promise<Result<HandoverReport>> {
   if (!isAdmin(actor)) return { ok: false, code: "FORBIDDEN", message: "Only IT can hand over approvals." };
   if (fromUserId === toUserId) return { ok: false, code: "SAME_PERSON", message: "Choose someone else." };
+  // D-085: whoever takes the approvals over must be an approver.
+  const notApprover = ineligibleChoices([toUserId], [], await approverStatuses([toUserId]));
+  if (notApprover.length) return { ok: false, code: "NOT_APPROVER", message: notApprover[0]! };
   const [rows] = await getDbPool().query<(RowDataPacket & { request_id: number; request_no: string; task_key: string })[]>(
     `SELECT t.request_id, r.request_no, t.task_key FROM approval_tasks t JOIN approval_requests r ON r.id = t.request_id
-     WHERE t.approver_id = ? AND t.status = 'PENDING' AND r.status IN ('IN_PROGRESS', 'ON_HOLD') ORDER BY t.id`,
+     WHERE t.approver_id = ? AND t.status = 'PENDING' AND r.status IN ('IN_PROGRESS', 'ON_HOLD') AND r.deleted_at IS NULL ORDER BY t.id`,
     [fromUserId],
   );
   const report: HandoverReport = { moved: 0, skipped: [] };
@@ -524,7 +551,7 @@ export async function handOverPendingTasks(fromUserId: number, toUserId: number,
 export async function countPendingTasks(userId: number): Promise<number> {
   const [rows] = await getDbPool().query<(RowDataPacket & { total: number })[]>(
     `SELECT COUNT(*) AS total FROM approval_tasks t JOIN approval_requests r ON r.id = t.request_id
-     WHERE t.approver_id = ? AND t.status = 'PENDING' AND r.status IN ('IN_PROGRESS', 'ON_HOLD')`,
+     WHERE t.approver_id = ? AND t.status = 'PENDING' AND r.status IN ('IN_PROGRESS', 'ON_HOLD') AND r.deleted_at IS NULL`,
     [userId],
   );
   return Number(rows[0]?.total ?? 0);

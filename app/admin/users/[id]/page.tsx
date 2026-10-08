@@ -22,7 +22,7 @@ export default async function UserDetailPage({ params, searchParams }: { params:
   if (!user) notFound();
   const created = (await searchParams).created === "1";
   const canEdit = checkCanEdit(actor, { id: user.id, roles: user.roles, active: user.active, isBreakGlass: user.isBreakGlass }).ok;
-  const [options, pending, delegations, today] = await Promise.all([loadUserFormOptions(user.id), countPendingTasks(user.id), listDelegationsInvolving(user.id), indiaToday()]);
+  const [options, pending, delegations, today] = await Promise.all([loadUserFormOptions(user.id, user.reportingManagerId), countPendingTasks(user.id), listDelegationsInvolving(user.id), indiaToday()]);
 
   return (
     <>

@@ -6,6 +6,7 @@ import { addGroupMember, insertGroup, removeGroupMember, updateGroup } from "@/l
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { withTransaction } from "@/lib/db/transaction";
 import { logError } from "@/lib/logging/logger";
+import { checkChosenApprover } from "@/server/approvals/approver-check";
 import type { ActionResult } from "@/lib/http/action-result";
 
 // Approver groups (S3-06). Changes apply to steps that start from now on;
@@ -47,6 +48,10 @@ export async function groupMemberAction(_previous: ActionResult | null, formData
   const userId = parseId(formData.get("userId"));
   const command = formData.get("command");
   if (groupId === null || userId === null || (command !== "add" && command !== "remove")) return { ok: false, message: "Choose a person." };
+  if (command === "add") {
+    const notApprover = await checkChosenApprover(userId);
+    if (notApprover) return { ok: false, message: notApprover };
+  }
   try {
     await withTransaction(async (connection) => {
       if (command === "add") await addGroupMember(groupId, userId, actor.id, connection);

@@ -1,5 +1,21 @@
 # Release notes
 
+## v1.2.0 (8 Oct 2026): approver designations, request deletion, dashboards
+- **Approver designations:** Admin → Departments → Designations has an **Approver** tick. Tick Manager and above.
+  - Only people whose designation is ticked can be chosen as approvers: named workflow and custom approval steps, approver group members, department HOD, reporting manager, out-of-office delegate, handover, and person fields that pick an approver.
+  - Choices already saved stay valid until changed.
+  - Every existing designation starts ticked; untick the junior ones. New designations start unticked.
+  - Import has a new `approver` column for designations.
+- **Super Admin → Requests:** every request, searchable, with **Delete** (a reason is required). Also on the request page.
+  - A deleted request leaves every screen, queue, reminder and report, and its pending approvals are cancelled.
+  - The **Deleted** tab and the audit log keep who, when and why. There is no undo.
+- **Admin → Dashboards**, four pages, each with a date, type and department filter and a CSV download:
+  - **Utilisation**: every approval type, used or not;
+  - **Department-wise raised**;
+  - **Approver-wise**: given, decided, waiting, overdue, average time, on-time %;
+  - **Raiser-wise by department**: with department subtotals.
+  - The default period is the financial year to date.
+
 ## v1.1.0 (8 Oct 2026): bulk import
 - **Import data** in the Admin and Super Admin spaces, for **Users, Departments, Designations, Approver groups and Holidays**:
   - **Download template** (CSV with the header row) or **Download current data** (the same columns, filled in, to edit and re-upload);

@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| App | ARS Approval Platform **v1.1.0** (`docs/RELEASE-NOTES.md`) |
+| App | ARS Approval Platform **v1.2.0** (`docs/RELEASE-NOTES.md`) |
 | Address | **https://approval.arssteels.net** (one app: `/users`, `/admin`, `/superadmin`) |
 | Hosting | GoDaddy **Node.js Hosting** ("Deploy your Node.js app"), from GitHub `HarishDevs/ARS-Approval-System`, branch `main` |
 | Database | MySQL 8 in GoDaddy cPanel |
@@ -262,6 +262,7 @@ Choose one:
   3. **Admin → Approver groups**: MD office, ED office, Finance desks and so on, with the real members.
   4. **Admin → Workflows → New workflow**: form fields; the **DoA matrix** (limits across, levels down, tick the bands); **test mode**; **Publish**.
   5. If demo data was loaded: swap the real people into the groups and HOD slots, then **Super Admin → Demo data → Retire demo staff**.
+- **Approver designations (v1.2.0):** in **Admin → Departments → Designations**, tick **Approver** on Manager and above, and untick the rest. Only people with a ticked designation can be picked as approvers, HODs, reporting managers, group members or delegates. Give the Super Admin a ticked designation if they approve.
 - **Real staff in bulk (v1.1.0):** **Admin → Import data**, or **Super Admin → Import data** (the same screen). Import in this order, because each step uses codes from the one before:
   1. **Designations**;
   2. **Departments**, with the HOD column empty;

@@ -17,17 +17,17 @@ const n = (value: unknown) => Number(value ?? 0);
 export async function loadInsights(db: Queryable = getDbPool()): Promise<Insights> {
   const [[totals]] = await db.query<RowDataPacket[]>(
     `SELECT
-       (SELECT COUNT(*) FROM approval_requests WHERE status IN ('IN_PROGRESS', 'ON_HOLD', 'CHANGES_REQUIRED')) AS open_count,
-       (SELECT COUNT(*) FROM approval_tasks t JOIN approval_requests r ON r.id = t.request_id
+       (SELECT COUNT(*) FROM approval_requests WHERE deleted_at IS NULL AND status IN ('IN_PROGRESS', 'ON_HOLD', 'CHANGES_REQUIRED')) AS open_count,
+       (SELECT COUNT(*) FROM approval_tasks t JOIN approval_requests r ON r.id = t.request_id AND r.deleted_at IS NULL
          WHERE t.status = 'PENDING' AND r.status = 'IN_PROGRESS' AND t.due_at < CURRENT_TIMESTAMP) AS overdue_count,
-       (SELECT COUNT(*) FROM approval_requests WHERE status = 'APPROVED' AND closed_at >= DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 30 DAY)) AS approved_30,
+       (SELECT COUNT(*) FROM approval_requests WHERE deleted_at IS NULL AND status = 'APPROVED' AND closed_at >= DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 30 DAY)) AS approved_30,
        (SELECT AVG(TIMESTAMPDIFF(MINUTE, submitted_at, closed_at)) / 60 FROM approval_requests
-         WHERE status = 'APPROVED' AND closed_at >= DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 90 DAY)) AS avg_hours`,
+         WHERE deleted_at IS NULL AND status = 'APPROVED' AND closed_at >= DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 90 DAY)) AS avg_hours`,
   );
   const [openByStep] = await db.query<RowDataPacket[]>(
     `SELECT w.name AS workflow, t.node_label AS level, COUNT(DISTINCT t.request_id) AS requests
      FROM approval_tasks t
-     JOIN approval_requests r ON r.id = t.request_id
+     JOIN approval_requests r ON r.id = t.request_id AND r.deleted_at IS NULL
      JOIN workflow_versions v ON v.id = r.workflow_version_id
      JOIN workflow_definitions w ON w.id = v.workflow_id
      WHERE t.status = 'PENDING' AND r.status IN ('IN_PROGRESS', 'ON_HOLD')
@@ -38,7 +38,7 @@ export async function loadInsights(db: Queryable = getDbPool()): Promise<Insight
             AVG(TIMESTAMPDIFF(MINUTE, t.created_at, t.decided_at)) / 60 AS avg_hours,
             MAX(TIMESTAMPDIFF(MINUTE, t.created_at, t.decided_at)) / 60 AS max_hours
      FROM approval_tasks t
-     JOIN approval_requests r ON r.id = t.request_id
+     JOIN approval_requests r ON r.id = t.request_id AND r.deleted_at IS NULL
      JOIN workflow_versions v ON v.id = r.workflow_version_id
      JOIN workflow_definitions w ON w.id = v.workflow_id
      WHERE t.decided_at IS NOT NULL AND t.status IN ('APPROVED', 'REJECTED', 'CHANGES_REQUESTED')
@@ -49,7 +49,7 @@ export async function loadInsights(db: Queryable = getDbPool()): Promise<Insight
     `SELECT r.id AS request_id, r.request_no, r.title, t.node_label AS level, u.name AS approver,
             TIMESTAMPDIFF(MINUTE, t.due_at, CURRENT_TIMESTAMP) / 60 AS hours_overdue
      FROM approval_tasks t
-     JOIN approval_requests r ON r.id = t.request_id
+     JOIN approval_requests r ON r.id = t.request_id AND r.deleted_at IS NULL
      JOIN users u ON u.id = t.approver_id
      WHERE t.status = 'PENDING' AND r.status = 'IN_PROGRESS' AND t.due_at < CURRENT_TIMESTAMP
      ORDER BY t.due_at LIMIT 100`,
@@ -58,7 +58,7 @@ export async function loadInsights(db: Queryable = getDbPool()): Promise<Insight
     `SELECT u.name,
             SUM(t.status = 'APPROVED') AS approved, SUM(t.status = 'REJECTED') AS rejected, SUM(t.status = 'CHANGES_REQUESTED') AS changes,
             AVG(TIMESTAMPDIFF(MINUTE, t.created_at, t.decided_at)) / 60 AS avg_hours
-     FROM approval_tasks t JOIN users u ON u.id = t.decided_by
+     FROM approval_tasks t JOIN approval_requests r ON r.id = t.request_id AND r.deleted_at IS NULL JOIN users u ON u.id = t.decided_by
      WHERE t.decided_at >= DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 30 DAY) AND t.status IN ('APPROVED', 'REJECTED', 'CHANGES_REQUESTED')
      GROUP BY u.id, u.name ORDER BY approved + rejected + changes DESC LIMIT 50`,
   );
@@ -67,7 +67,7 @@ export async function loadInsights(db: Queryable = getDbPool()): Promise<Insight
             SUM(status = 'APPROVED') AS approved, SUM(status = 'REJECTED') AS rejected, SUM(status = 'CANCELLED') AS withdrawn,
             SUM(status IN ('IN_PROGRESS', 'ON_HOLD', 'CHANGES_REQUIRED')) AS open_count
      FROM approval_requests
-     WHERE submitted_at >= DATE_SUB(DATE_FORMAT(CURRENT_DATE, '%Y-%m-01'), INTERVAL 5 MONTH)
+     WHERE deleted_at IS NULL AND submitted_at >= DATE_SUB(DATE_FORMAT(CURRENT_DATE, '%Y-%m-01'), INTERVAL 5 MONTH)
      GROUP BY month ORDER BY month DESC`,
   );
   return {

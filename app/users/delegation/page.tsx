@@ -3,13 +3,13 @@ import { PageHeader } from "@/features/shell/PageHeader";
 import { DelegationForm } from "@/features/requests/DelegationForms";
 import { DelegationList } from "@/features/requests/DelegationList";
 import { indiaToday, listDelegationsInvolving } from "@/lib/db/repositories/collab.repository";
-import { listActiveUserOptions } from "@/lib/db/repositories/admin-users.repository";
+import { listApproverOptions } from "@/lib/db/repositories/approvers.repository";
 
 // F-30 out of office: the delegate sees and decides your approvals while
 // it's active; every decision records both names.
 export default async function DelegationPage() {
   const { user } = await requireArea("users");
-  const [items, people, today] = await Promise.all([listDelegationsInvolving(user.id), listActiveUserOptions(), indiaToday()]);
+  const [items, people, today] = await Promise.all([listDelegationsInvolving(user.id), listApproverOptions(), indiaToday()]);
   const options = people.filter((person) => person.id !== user.id).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` }));
   return (
     <>

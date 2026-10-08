@@ -60,6 +60,9 @@ The number of levels and how they combine is unlimited. There are no fixed "Leve
 | F-15 | Comments on a request | Built and verified 1 Oct 2026 |
 | F-16 | Handing over pending approvals | Built and tested on MySQL 1 Oct 2026 |
 | F-54 | DoA view derived from workflows | Built 1 Oct 2026; reads DoA matrices 8 Oct 2026 |
+| F-72 | Approver designations (who can be picked as approver) | Built 8 Oct 2026 (S11) |
+| F-73 | Super Admin deletes a request (soft) | Built 8 Oct 2026 (S11) |
+| F-74 | Admin dashboards: utilisation, department, approver, raiser | Built 8 Oct 2026 (S11) |
 | F-59 | Bulk import of master data (template, check, import) | Built 8 Oct 2026 (S10) |
 | F-90 | GoDaddy deployment and go-live | v1.0.0 prepared 8 Oct 2026 (guide, release notes, tag); deploy with the owner |
 | F-14 | Request screens: raise → queue → act → resubmit | Built and verified in the browser 30 Sep 2026 |
@@ -507,6 +510,7 @@ flowchart TD
   D --> E[Submit → same engine F-11 onward]
 ```
 - Predefined approvals are created only by the IT team in the Admin Portal (F-50). Custom approvals are open to everyone. *Updated 28 Sep 2026.*
+- **8 Oct 2026 (D-085, F-72):** the approvers anyone can pick are now the **approver-eligible** people (designation ticked as Approver), no longer any active user.
 
 **Design for S4-01 (D-060):**
 - Any user opens `/users/custom` and enters:
@@ -661,6 +665,43 @@ flowchart TD
 - **Group members:** the cell is the full list (User IDs separated by `;`). People left out are removed from the group, and that applies only to steps starting from now.
 - **Limits:** CSV only, 2 MB at most, 2,000 rows at most. A formula-looking cell (`=`, `+`, `-`, `@`) in a download gets a leading `'`, so Excel won't run it.
 - **Loaders:** the buttons show a spinner, and the page shows "Checking…" / "Importing… don't close this page" while the server works.
+
+## F-72 Approver designations (S11, D-085, supersedes the "pick anyone" part of D-026)
+```mermaid
+flowchart TD
+  A[Admin → Departments → Designations: tick **Approver** on Manager and above] --> B[Approver-eligible person = active, not break-glass, designation ticked as Approver]
+  B --> P1[Workflow builder & custom approval: named people]
+  B --> P2[Approver group members]
+  B --> P3[Department HOD]
+  B --> P4[Reporting manager]
+  B --> P5[Out-of-office delegate]
+  P1 & P2 & P3 & P4 & P5 --> S{Saved on the server}
+  S -- "new choice not eligible" --> R[Refused: '<name> isn't an approver (designation X)'; untick → pick another]
+  S -- "eligible, or unchanged from before" --> OK[Saved]
+```
+- Pickers list eligible people only; a value that is already saved stays shown and valid until it is changed. Existing data never breaks.
+- The engine is unchanged: requests in flight, and published workflows, keep their approvers. Rules apply when something is **chosen** (save, publish, custom submit, group change, delegation, import).
+- Roles, GROUP and the REQUESTER_MANAGER / HOD sources resolve at run time as before. They draw on people who could only be chosen if eligible.
+- At the migration, every existing designation is ticked (no change on deploy). New designations start unticked, and IT unticks the junior ones.
+- People without a designation are not approvers. Give the Super Admin a designation ticked as Approver if they approve.
+
+## F-73 Super Admin deletes a request (S11, D-086)
+```mermaid
+flowchart TD
+  A[Super Admin → Requests (all requests, search) or a request page] --> B[Delete → reason (required) → Yes, delete]
+  B --> T[One transaction: request marked deleted (who, when, why) · pending tasks CANCELLED · audit REQUEST_DELETED]
+  T --> H[Gone from: every list and queue, request page (404), reminders and escalation, Insights, Dashboards, Admin counts]
+  T --> K[Kept: the database row, timeline and audit log (D-012); Super Admin → Requests → Deleted shows it read-only]
+```
+- Only the Super Admin can delete. There is no undo; raise the request again if it was deleted by mistake.
+- People with a pending approval on it are not messaged (the request simply disappears from their queue).
+
+## F-74 Admin dashboards (S11, D-087)
+`/admin/dashboards`: four pages with one filter bar (from/to date, approval type, department) and a CSV download of every table. Deleted requests are never counted.
+- **Utilisation:** per approval type (live and custom), how many raised, approved, rejected, withdrawn and open, the approval rate, the average time to close and when it was last used. Types never used in the period are listed too.
+- **Department-wise raised:** per department of the person who raised: raised, approved, rejected, open, average time to close; plus each department's top approval types.
+- **Approver-wise:** per approver: assigned, approved, rejected, changes asked, pending now, overdue now, average time to decide, decided within the response time %.
+- **Raiser-wise by department:** each raiser grouped under their department: raised, approved, rejected, open, average time to close, last raised.
 
 ## F-58 DoA matrix per approval type (S7, D-075)
 ```

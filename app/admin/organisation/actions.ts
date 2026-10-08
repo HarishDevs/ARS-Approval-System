@@ -26,7 +26,7 @@ export async function saveDesignationAction(_previous: ActionResult | null, form
   const actor = await getAdminActor();
   if (!actor) return NOT_FOUND;
   try {
-    const result = await saveDesignation(parseId(formData.get("id")), formFields(formData, ["code", "name", "active"]), actor);
+    const result = await saveDesignation(parseId(formData.get("id")), formFields(formData, ["code", "name", "isApprover", "active"]), actor);
     if (!result.ok) return { ok: false, message: result.message, fieldErrors: result.fieldErrors };
   } catch (error) {
     logError("saveDesignationAction failed", error);

@@ -23,6 +23,7 @@ export interface SnapshotUser {
   active: boolean;
   isBreakGlass: boolean;
   isDemo: boolean;
+  approver: boolean; // designation ticked as Approver (D-085)
   googleLinked: boolean;
   hasPassword: boolean;
 }
@@ -31,7 +32,7 @@ export interface Snapshot {
   actor: { id: number; roles: readonly RoleCode[] };
   users: SnapshotUser[];
   departments: { id: number; code: string; name: string; hodUserId: number | null; active: boolean }[];
-  designations: { id: number; code: string; name: string; active: boolean }[];
+  designations: { id: number; code: string; name: string; isApprover: boolean; active: boolean }[];
   groups: { id: number; code: string; name: string; active: boolean; memberIds: number[] }[];
   holidays: { date: string; name: string }[];
 }
@@ -79,7 +80,7 @@ export type ImportOp =
       endSessions: boolean;
     }
   | { kind: "department"; line: number; id: number | null; value: { code: string; name: string; hodUserId: number | null; active: boolean }; before: unknown }
-  | { kind: "designation"; line: number; id: number | null; value: { code: string; name: string; active: boolean }; before: unknown }
+  | { kind: "designation"; line: number; id: number | null; value: { code: string; name: string; isApprover: boolean; active: boolean }; before: unknown }
   | { kind: "group"; line: number; id: number | null; value: { code: string; name: string; active: boolean }; memberIds: number[]; before: unknown }
   | { kind: "holiday"; line: number; exists: boolean; value: { date: string; name: string }; before: unknown };
 
@@ -310,6 +311,14 @@ function planUsers(rows: Row[], snapshot: Snapshot): { planned: PlannedRow[]; op
       else if (fileLogins.has(managerLogin) && !managerUser) manager = { loginId: managerLogin };
       else check.add("manager_login_id", `No active person with User ID ${row.get("manager_login_id")}.`);
       if (login && managerLogin !== login && loops(login)) check.add("manager_login_id", "This would make the reporting line loop back to this person.");
+      // D-085: a newly chosen manager must be an approver. A manager who is
+      // new in this file can't be checked yet, so their designation must be.
+      const managerRow = rows.find((other) => lower(other.get("login_id")) === managerLogin);
+      const managerIsApprover = managerUser
+        ? managerUser.approver
+        : Boolean(managerRow && designations.get(managerRow.get("designation_code").toUpperCase())?.isApprover);
+      const unchanged = Boolean(existing && managerUser && existing.reportingManagerId === managerUser.id);
+      if (manager && !managerIsApprover && !unchanged) check.add("manager_login_id", `${row.get("manager_login_id")} isn't an approver: their designation isn't ticked as Approver.`);
     }
 
     const signInMethod = parseSignIn(row.get("sign_in_method"));
@@ -401,14 +410,18 @@ function planOrganisation(kind: "departments" | "designations", rows: Row[], sna
       const hod = hodLogin ? usersByLogin.get(hodLogin) : undefined;
       const currentHod = existing ? (existing as Snapshot["departments"][number]).hodUserId : null;
       if (hodLogin && (!hod || hod.isBreakGlass || (!hod.active && hod.id !== currentHod))) check.add("hod_login_id", `No active person with User ID ${row.get("hod_login_id")}.`);
+      else if (hod && !hod.approver && hod.id !== currentHod) check.add("hod_login_id", `${row.get("hod_login_id")} isn't an approver: their designation isn't ticked as Approver.`);
       const value = { code, name, hodUserId: hod?.id ?? null, active };
       const before = existing ? { code: existing.code, name: existing.name, hodUserId: (existing as Snapshot["departments"][number]).hodUserId, active: existing.active } : null;
       const changes = before ? Object.keys(diff(before, value)) : [];
       plannedRows.push(planned(row.line, code, check, !existing, changes));
       if (!check.problems.length && (!existing || changes.length)) ops.push({ kind: "department", line: row.line, id: existing?.id ?? null, value, before });
     } else {
-      const value = { code, name, active };
-      const before = existing ? { code: existing.code, name: existing.name, active: existing.active } : null;
+      const approver = parseYesNo(row.get("approver") || "no");
+      if (approver === null) check.add("approver", "Write Yes or No.");
+      const value = { code, name, isApprover: approver ?? false, active };
+      const current = existing as Snapshot["designations"][number] | undefined;
+      const before = current ? { code: current.code, name: current.name, isApprover: current.isApprover, active: current.active } : null;
       const changes = before ? Object.keys(diff(before, value)) : [];
       plannedRows.push(planned(row.line, code, check, !existing, changes));
       if (!check.problems.length && (!existing || changes.length)) ops.push({ kind: "designation", line: row.line, id: existing?.id ?? null, value, before });
@@ -429,12 +442,15 @@ function planGroups(rows: Row[], snapshot: Snapshot): { planned: PlannedRow[]; o
     const current = byCode.get(code)?.memberIds ?? [];
     const memberIds: number[] = [];
     const missing: string[] = [];
+    const notApprovers: string[] = [];
     for (const member of splitList(row.get("members"))) {
       const user = usersByLogin.get(lower(member));
       if (!user || user.isBreakGlass || (!user.active && !current.includes(user.id))) missing.push(member);
+      else if (!user.approver && !current.includes(user.id)) notApprovers.push(member);
       else if (!memberIds.includes(user.id)) memberIds.push(user.id);
     }
     if (missing.length) check.add("members", `No active person with User ID ${missing.join(", ")}.`);
+    if (notApprovers.length) check.add("members", `Not approvers (designation not ticked as Approver): ${notApprovers.join(", ")}.`);
     memberIds.sort((a, b) => a - b);
     const existing = code ? byCode.get(code) : undefined;
     const value = { code, name, active };

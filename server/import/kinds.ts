@@ -62,6 +62,7 @@ export const IMPORT_SPECS: Record<ImportKind, ImportKindSpec> = {
     columns: [
       { name: "code", required: true, help: "Short code: letters, numbers, dash or underscore. Saved in capitals.", example: "MGR" },
       { name: "name", required: true, help: "Designation name.", example: "Manager" },
+      { name: "approver", required: false, help: "Yes if people with this designation can be chosen as approvers (Manager and above). Empty means No.", example: "Yes" },
       ACTIVE,
     ],
   },

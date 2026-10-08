@@ -12,18 +12,18 @@ test("IT downloads the template, checks a file with a problem, then imports a fi
 
   const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Download template" }).click()]);
   expect(download.suggestedFilename()).toBe("ars-designations-template.csv");
-  expect((await readFile((await download.path())!, "utf8")).replace(/^﻿/, "").trim()).toBe("code,name,active");
+  expect((await readFile((await download.path())!, "utf8")).replace(/^﻿/, "").trim()).toBe("code,name,approver,active");
 
   const code = `E2E${Date.now().toString(36).toUpperCase()}`;
   const upload = (text: string) => page.getByLabel("Designations CSV file").setInputFiles({ name: "designations.csv", mimeType: "text/csv", buffer: Buffer.from(text) });
 
-  await upload(`code,name,active\n${code},E2E Designation,Yes\nX,Too short code,maybe`);
+  await upload(`code,name,approver,active\n${code},E2E Designation,No,Yes\nX,Too short code,No,maybe`);
   await page.getByRole("button", { name: "Check file" }).click();
   await expect(page.getByText("1 of 2 rows have problems. Nothing has been saved.")).toBeVisible();
   await expect(page.getByText("Write Yes or No.")).toBeVisible();
   await expect(page.getByRole("button", { name: /^Import / })).toHaveCount(0);
 
-  await upload(`code,name,active\n${code},E2E Designation,Yes`);
+  await upload(`code,name,approver,active\n${code},E2E Designation,No,Yes`);
   await page.getByRole("button", { name: "Check file" }).click();
   await expect(page.getByText("The file is fine. Review the changes, then import.")).toBeVisible();
   await page.getByRole("button", { name: "Import 1 designation" }).click();

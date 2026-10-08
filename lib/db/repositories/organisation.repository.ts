@@ -17,6 +17,7 @@ export interface Designation {
   id: number;
   code: string;
   name: string;
+  isApprover: boolean; // D-085
   active: boolean;
 }
 
@@ -41,10 +42,10 @@ export async function listDepartments(db: Queryable = getDbPool()): Promise<Depa
 }
 
 export async function listDesignations(db: Queryable = getDbPool()): Promise<Designation[]> {
-  const [rows] = await db.query<(RowDataPacket & { id: number; code: string; name: string; active: number })[]>(
-    "SELECT id, code, name, active FROM designations ORDER BY active DESC, name",
+  const [rows] = await db.query<(RowDataPacket & { id: number; code: string; name: string; is_approver: number; active: number })[]>(
+    "SELECT id, code, name, is_approver, active FROM designations ORDER BY active DESC, name",
   );
-  return rows.map((row) => ({ id: row.id, code: row.code, name: row.name, active: row.active === 1 }));
+  return rows.map((row) => ({ id: row.id, code: row.code, name: row.name, isApprover: Number(row.is_approver) === 1, active: row.active === 1 }));
 }
 
 export async function findDepartment(id: number, db: Queryable = getDbPool()): Promise<Department | null> {
@@ -70,11 +71,11 @@ export async function updateDepartment(
   ]);
 }
 
-export async function insertDesignation(input: { code: string; name: string }, db: Queryable = getDbPool()): Promise<number> {
-  const [result] = await db.query<ResultSetHeader>("INSERT INTO designations (code, name) VALUES (?, ?)", [input.code, input.name]);
+export async function insertDesignation(input: { code: string; name: string; isApprover?: boolean }, db: Queryable = getDbPool()): Promise<number> {
+  const [result] = await db.query<ResultSetHeader>("INSERT INTO designations (code, name, is_approver) VALUES (?, ?, ?)", [input.code, input.name, input.isApprover ?? false]);
   return result.insertId;
 }
 
-export async function updateDesignation(id: number, input: { code: string; name: string; active: boolean }, db: Queryable = getDbPool()): Promise<void> {
-  await db.query<ResultSetHeader>("UPDATE designations SET code = ?, name = ?, active = ? WHERE id = ?", [input.code, input.name, input.active, id]);
+export async function updateDesignation(id: number, input: { code: string; name: string; isApprover: boolean; active: boolean }, db: Queryable = getDbPool()): Promise<void> {
+  await db.query<ResultSetHeader>("UPDATE designations SET code = ?, name = ?, is_approver = ?, active = ? WHERE id = ?", [input.code, input.name, input.isApprover, input.active, id]);
 }

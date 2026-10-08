@@ -1,4 +1,5 @@
 import "server-only";
+import { checkChosenApprover } from "@/server/approvals/approver-check";
 import { findRequest, isParticipant } from "@/lib/db/repositories/approvals.repository";
 import {
   commentAudience,
@@ -76,6 +77,9 @@ export async function createDelegation(
   if (problem) return { ok: false, code: "INVALID", message: problem };
   const [person, delegate] = await Promise.all([findUserById(input.userId), findUserById(input.delegateId)]);
   if (!person || !delegate || !delegate.active || delegate.isBreakGlass) return { ok: false, code: "INVALID", message: "Choose an active person as the delegate." };
+  // D-085: the delegate approves for you, so they must be an approver.
+  const notApprover = await checkChosenApprover(input.delegateId);
+  if (notApprover) return { ok: false, code: "NOT_APPROVER", message: notApprover };
   if (await hasOverlappingDelegation(input.userId, input.startsOn, input.endsOn)) {
     return { ok: false, code: "OVERLAP", message: "These dates overlap an existing out-of-office. End that one first." };
   }

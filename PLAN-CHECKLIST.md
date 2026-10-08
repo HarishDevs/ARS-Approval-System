@@ -17,16 +17,18 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
-- **Now:** **v1.1.0 (bulk import, build session 10) is pushed** (8 Oct 2026).
-  - Admin / Super Admin → **Import data** for users, departments, designations, approver groups and holidays: template, check, import, all or nothing (F-59, D-084).
-  - v1.0.6 (UI polish, spaces, account menu) is in the same publish.
-  - The live site runs v1.0.3; v1.0.4–v1.1.0 wait for the owner's Publish.
-- **Next, with the owner on GoDaddy** (docs/DEPLOYMENT.md):
-  - Update Preview → check it's healthy → **Publish to Live**;
-  - sign in with Google as `itsupport@arsenergy.co.in` (D-082);
-  - Super Admin: the Resend key, a **new** CEOITBox key, Phone ID; the WhatsApp templates;
-  - cron job; break-glass;
-  - **load the real staff with Import data** (Part K order); rotate the Firebase key that was pasted in chat.
+- **Now:** **v1.2.0 is pushed** (8 Oct 2026):
+  - approver designations (D-085);
+  - Super Admin request deletion (D-086);
+  - Admin dashboards for utilisation, department, approver and raiser (D-087).
+  - v1.0.4–v1.1.0 (UI polish, bulk import) go out in the same publish.
+- **Next, with the owner:**
+  - GoDaddy: Update Preview → check it's healthy → **Publish to Live** (migrations run by themselves on start);
+  - **Admin → Designations:** untick the junior designations; give the Super Admin an approver designation if they approve;
+  - sign in with Google as `itsupport@arsenergy.co.in`;
+  - Super Admin keys (Resend, a new CEOITBox key), WhatsApp templates, cron, break-glass;
+  - load the real staff with Import data;
+  - rotate the Firebase key that was pasted in chat.
 - **Still open:** Q-015 (break-glass without WhatsApp); the real staff list.
 
 ---
@@ -253,6 +255,46 @@ Found during S8-06:
 - [x] S8-12 Google sign-in reached UNKNOWN_ACCOUNT: itadmin@ is an alias. The Super Admin now signs in as itsupport@arsenergy.co.in (D-082, migration + non-overwriting seed, v1.0.5) (done 8 Oct 2026)
 - [ ] S8-01b Go-live on GoDaddy with the owner, following docs/DEPLOYMENT.md (the owner is at the wizard's "Add secrets" step)
 - [x] S8-04 Update the three living files; commit and push (done 8 Oct 2026)
+
+## Session log — build session 11: approver designations, request deletion, dashboards (8 Oct 2026)
+Owner:
+- "Approver should be the designations with any manager and above. In the designation level add one more field to record whether to show as the approver or not, so that I can customise the approvers";
+- "need approval deletion option for Super Admin";
+- "utilisation for approvals, Departmentwise raised Dashboard, Approver wise Dashboard, Raiser wise Department Dashboard as a separate page in Admin portal".
+
+Owner's choices (asked 8 Oct 2026): **all approver pickers** follow the flag; delete = **requests, soft delete**.
+
+**A. Approver designations (F-72, D-085):**
+- [x] S11-01 Migration `designations.is_approver`. Existing designations are ticked; new ones start unticked (done 8 Oct 2026)
+- [x] S11-02 Designation form and list: an **Approver** checkbox and badge; the import column `approver` (Yes/No); the export includes it (done 8 Oct 2026)
+- [x] S11-03 One eligibility rule (pure): active, not break-glass, designation is an approver. A repository for the eligible-people list (done 8 Oct 2026)
+- [x] S11-04 Pickers show eligible people only, keeping a current value that is no longer eligible: (done 8 Oct 2026)
+  - builder and custom approval people;
+  - group members, HOD, reporting manager, delegate
+- [x] S11-05 Server checks on save: (done 8 Oct 2026)
+  - workflow create, version save and publish (PEOPLE steps);
+  - custom submit; group member add; department HOD; user manager; delegation;
+  - import (users manager, departments HOD, groups members), with "unchanged is fine"
+- [x] S11-06 Demo data: demo designations get the right flag (manager and above), so demo publishing still works (done 8 Oct 2026)
+
+**B. Request deletion (F-73, D-086):**
+- [x] S11-07 Migration: `approval_requests.deleted_at / deleted_by / delete_reason` + an index (done 8 Oct 2026)
+- [x] S11-08 Service `deleteRequest`: Super Admin only, reason required; cancels pending tasks; audit (done 8 Oct 2026)
+- [x] S11-09 Every read excludes deleted requests: (done 8 Oct 2026)
+  - queue, my requests, request page (404), participants;
+  - reminders and escalation, insights, admin counts, dashboards
+- [x] S11-10 Super Admin → **Requests**: all requests, search, status filter, paging, Delete with reason and confirm; a **Deleted** tab (read-only list with who, when, why). A Delete button on the request page for the Super Admin (done 8 Oct 2026)
+
+**C. Dashboards (F-74, D-087):**
+- [x] S11-11 Repository: utilisation, department-wise raised, approver-wise, raiser-wise by department; filters for dates, approval type and department (done 8 Oct 2026)
+- [x] S11-12 `/admin/dashboards/*`: four tabs as separate pages, a filter bar, KPI tiles, tables with inline bars, CSV download per dashboard, loading skeleton; nav item **Dashboards** (done 8 Oct 2026)
+
+**D. Close:**
+- [x] S11-13 Tests: (done 8 Oct 2026)
+  - unit: eligibility, dashboard maths;
+  - integration: flag enforcement, delete hides everywhere, dashboard numbers;
+  - e2e: tick a designation; Super Admin deletes; dashboards render
+- [x] S11-14 Docs (DEPLOYMENT Part K: tick approver designations; release notes); living files; v1.2.0; CI green; tag (done 8 Oct 2026)
 
 ## Session log — build session 10: bulk import with templates and loaders (8 Oct 2026)
 Owner: "import options with a download-template option and an upload option, for Admin and Super Admin, for Users, Designations, Departments and that kind of master; add loaders".

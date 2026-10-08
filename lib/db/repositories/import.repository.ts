@@ -22,6 +22,7 @@ export async function loadImportSnapshot(db: Queryable = getDbPool()): Promise<O
       active: number;
       is_break_glass: number;
       is_demo: number;
+      approver: number;
       google_linked: number;
       has_password: number;
       roles: string | null;
@@ -29,6 +30,7 @@ export async function loadImportSnapshot(db: Queryable = getDbPool()): Promise<O
   >(
     `SELECT u.id, u.login_id, u.name, u.email, u.whatsapp_number, u.department_id, u.designation_id, u.reporting_manager_id,
             u.sign_in_method, u.active, u.is_break_glass, u.is_demo,
+            COALESCE((SELECT d.is_approver FROM designations d WHERE d.id = u.designation_id), FALSE) AS approver,
             (u.firebase_uid IS NOT NULL) AS google_linked, (u.password_hash IS NOT NULL) AS has_password,
             (SELECT GROUP_CONCAT(r.code ORDER BY r.id) FROM user_roles ur JOIN roles r ON r.id = ur.role_id AND r.active = TRUE WHERE ur.user_id = u.id) AS roles
      FROM users u ORDER BY u.name`,
@@ -36,8 +38,8 @@ export async function loadImportSnapshot(db: Queryable = getDbPool()): Promise<O
   const [departments] = await db.query<(RowDataPacket & { id: number; code: string; name: string; hod_user_id: number | null; active: number })[]>(
     "SELECT id, code, name, hod_user_id, active FROM departments ORDER BY name",
   );
-  const [designations] = await db.query<(RowDataPacket & { id: number; code: string; name: string; active: number })[]>(
-    "SELECT id, code, name, active FROM designations ORDER BY name",
+  const [designations] = await db.query<(RowDataPacket & { id: number; code: string; name: string; is_approver: number; active: number })[]>(
+    "SELECT id, code, name, is_approver, active FROM designations ORDER BY name",
   );
   const [groups] = await db.query<(RowDataPacket & { id: number; code: string; name: string; active: number; members: string | null })[]>(
     `SELECT g.id, g.code, g.name, g.active, (SELECT GROUP_CONCAT(m.user_id) FROM approver_group_members m WHERE m.group_id = g.id) AS members
@@ -65,12 +67,13 @@ export async function loadImportSnapshot(db: Queryable = getDbPool()): Promise<O
         active: Number(row.active) === 1,
         isBreakGlass: Number(row.is_break_glass) === 1,
         isDemo: Number(row.is_demo) === 1,
+        approver: Number(row.approver) === 1,
         googleLinked: Number(row.google_linked) === 1,
         hasPassword: Number(row.has_password) === 1,
       }),
     ),
     departments: departments.map((row) => ({ id: row.id, code: row.code, name: row.name, hodUserId: row.hod_user_id, active: Number(row.active) === 1 })),
-    designations: designations.map((row) => ({ id: row.id, code: row.code, name: row.name, active: Number(row.active) === 1 })),
+    designations: designations.map((row) => ({ id: row.id, code: row.code, name: row.name, isApprover: Number(row.is_approver) === 1, active: Number(row.active) === 1 })),
     groups: groups.map((row) => ({
       id: row.id,
       code: row.code,

@@ -213,7 +213,7 @@ export async function currentDataCsv(kind: ImportKind): Promise<string> {
     case "designations":
       return toCsv(
         header,
-        data.designations.map((item) => [item.code, item.name, yesNo(item.active)]),
+        data.designations.map((item) => [item.code, item.name, yesNo(item.isApprover), yesNo(item.active)]),
       );
     case "groups":
       return toCsv(

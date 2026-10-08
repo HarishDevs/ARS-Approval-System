@@ -5,6 +5,8 @@ import { PageHeader } from "@/features/shell/PageHeader";
 import { RequestForm } from "@/features/requests/RequestForm";
 import { findPublishedVersion, findWorkflow } from "@/lib/db/repositories/approvals.repository";
 import { listActiveUserOptions } from "@/lib/db/repositories/admin-users.repository";
+import { listApproverOptions } from "@/lib/db/repositories/approvers.repository";
+import { approverFieldKeys } from "@/server/approvals/approver-rules";
 
 export default async function RaiseRequestPage({ params }: { params: Promise<{ workflowId: string }> }) {
   await requireArea("users");
@@ -16,6 +18,8 @@ export default async function RaiseRequestPage({ params }: { params: Promise<{ w
   if (!version) notFound();
   const needsPeople = version.form.some((field) => field.type === "PERSON");
   const people = needsPeople ? (await listActiveUserOptions()).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` })) : [];
+  const approverFields = approverFieldKeys(version.definition);
+  const approverPeople = approverFields.length ? (await listApproverOptions()).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` })) : undefined;
 
   return (
     <>
@@ -25,7 +29,7 @@ export default async function RaiseRequestPage({ params }: { params: Promise<{ w
         </Link>
       </PageHeader>
       <div className="max-w-2xl">
-        <RequestForm mode="submit" workflowId={workflow.id} fields={version.form} people={people} />
+        <RequestForm mode="submit" workflowId={workflow.id} fields={version.form} people={people} approverPeople={approverPeople} approverFields={approverFields} />
       </div>
     </>
   );

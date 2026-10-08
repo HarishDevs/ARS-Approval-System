@@ -51,7 +51,7 @@ export async function loadDemoData(actor: Actor): Promise<DemoReport> {
     for (const designation of DEMO_DESIGNATIONS) {
       let id = await idByCode("designations", designation.code, db);
       if (id === null) {
-        const [result] = await db.query<ResultSetHeader>("INSERT INTO designations (code, name) VALUES (?, ?)", [designation.code, designation.name]);
+        const [result] = await db.query<ResultSetHeader>("INSERT INTO designations (code, name, is_approver) VALUES (?, ?, ?)", [designation.code, designation.name, designation.approver]);
         id = result.insertId;
         report.designations += 1;
       }

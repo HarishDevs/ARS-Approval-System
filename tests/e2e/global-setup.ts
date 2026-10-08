@@ -9,10 +9,13 @@ export default async function globalSetup(): Promise<void> {
   await recreateTestDatabase();
   const conn = await db();
   try {
-    const add = async (loginId: string, name: string, roles: string[], managerId: number | null = null, departmentId: number | null = null) => {
+    // D-085: managers and above approve; the requester and staff don't.
+    const [manager_] = await conn.query<import("mysql2/promise").ResultSetHeader>("INSERT INTO designations (code, name, is_approver) VALUES ('E2E_MANAGER', 'Manager', TRUE)");
+    const [executive] = await conn.query<import("mysql2/promise").ResultSetHeader>("INSERT INTO designations (code, name, is_approver) VALUES ('E2E_EXEC', 'Executive', FALSE)");
+    const add = async (loginId: string, name: string, roles: string[], managerId: number | null = null, departmentId: number | null = null, approver = true) => {
       const [result] = await conn.query<import("mysql2/promise").ResultSetHeader>(
-        "INSERT INTO users (login_id, name, email, sign_in_method, reporting_manager_id, department_id, active, last_login_at) VALUES (?, ?, ?, 'GOOGLE', ?, ?, TRUE, CURRENT_TIMESTAMP)",
-        [loginId, name, `${loginId.toLowerCase()}@example.test`, managerId, departmentId],
+        "INSERT INTO users (login_id, name, email, sign_in_method, reporting_manager_id, department_id, designation_id, active, last_login_at) VALUES (?, ?, ?, 'GOOGLE', ?, ?, ?, TRUE, CURRENT_TIMESTAMP)",
+        [loginId, name, `${loginId.toLowerCase()}@example.test`, managerId, departmentId, approver ? manager_.insertId : executive.insertId],
       );
       await conn.query("INSERT INTO user_roles (user_id, role_id) SELECT ?, id FROM roles WHERE code IN (?)", [result.insertId, roles]);
       return result.insertId;
@@ -22,8 +25,8 @@ export default async function globalSetup(): Promise<void> {
     const hod = await add("E2E_HOD", "Harini HOD", ["USER"]);
     const [dept] = await conn.query<import("mysql2/promise").ResultSetHeader>("INSERT INTO departments (code, name, hod_user_id) VALUES ('E2E', 'E2E Department', ?)", [hod]);
     const manager = await add("E2E_MGR", "Manoj Manager", ["USER"], null, dept.insertId);
-    await add("E2E_REQ", "Ravi Requester", ["USER"], manager, dept.insertId);
-    await add("E2E_STAFF", "Sita Staff", ["USER"]);
+    await add("E2E_REQ", "Ravi Requester", ["USER"], manager, dept.insertId, false);
+    await add("E2E_STAFF", "Sita Staff", ["USER"], null, null, false);
   } finally {
     await conn.end();
   }

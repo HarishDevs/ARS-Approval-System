@@ -17,7 +17,7 @@ async function counts(): Promise<Record<string, number>> {
        (SELECT COUNT(*) FROM approver_groups WHERE active = TRUE) AS groups_n,
        (SELECT COUNT(*) FROM departments WHERE active = TRUE) AS departments,
        (SELECT COUNT(*) FROM holidays WHERE holiday_on >= CURRENT_DATE) AS holidays,
-       (SELECT COUNT(*) FROM approval_requests WHERE status IN ('IN_PROGRESS','ON_HOLD','CHANGES_REQUIRED')) AS open_requests`,
+       (SELECT COUNT(*) FROM approval_requests WHERE status IN ('IN_PROGRESS','ON_HOLD','CHANGES_REQUIRED') AND deleted_at IS NULL) AS open_requests`,
   );
   return rows[0] ?? {};
 }

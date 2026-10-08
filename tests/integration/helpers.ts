@@ -5,12 +5,23 @@ import type { RoleCode } from "@/types/auth";
 // Direct SQL helpers for arranging integration-test data.
 let counter = 0;
 
-export async function createUser(input: { name?: string; managerId?: number | null; departmentId?: number | null; roles?: RoleCode[]; active?: boolean } = {}): Promise<number> {
+// Test people get a designation ticked as Approver (D-085) unless a test
+// asks for a non-approver.
+export async function designationId(approver: boolean): Promise<number> {
+  const code = approver ? "IT_APPROVER" : "IT_NON_APPROVER";
+  await getDbPool().query("INSERT IGNORE INTO designations (code, name, is_approver) VALUES (?, ?, ?)", [code, approver ? "Test approver" : "Test non-approver", approver]);
+  const [rows] = await getDbPool().query<(RowDataPacket & { id: number })[]>("SELECT id FROM designations WHERE code = ?", [code]);
+  return rows[0]!.id;
+}
+
+export async function createUser(
+  input: { name?: string; managerId?: number | null; departmentId?: number | null; roles?: RoleCode[]; active?: boolean; approver?: boolean } = {},
+): Promise<number> {
   counter += 1;
   const tag = `${Date.now().toString(36)}${counter}`;
   const [result] = await getDbPool().query<ResultSetHeader>(
-    "INSERT INTO users (login_id, name, email, sign_in_method, reporting_manager_id, department_id, active) VALUES (?, ?, ?, 'GOOGLE', ?, ?, ?)",
-    [`it-${tag}`, input.name ?? `Person ${tag}`, `it-${tag}@example.test`, input.managerId ?? null, input.departmentId ?? null, input.active ?? true],
+    "INSERT INTO users (login_id, name, email, sign_in_method, reporting_manager_id, department_id, designation_id, active) VALUES (?, ?, ?, 'GOOGLE', ?, ?, ?, ?)",
+    [`it-${tag}`, input.name ?? `Person ${tag}`, `it-${tag}@example.test`, input.managerId ?? null, input.departmentId ?? null, await designationId(input.approver ?? true), input.active ?? true],
   );
   const id = result.insertId;
   const roles = input.roles ?? ["USER"];

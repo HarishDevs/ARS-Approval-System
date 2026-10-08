@@ -11,6 +11,7 @@ import {
 } from "@/lib/db/repositories/organisation.repository";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import type { AdminActor, ServiceResult } from "@/server/admin/users";
+import { checkChosenApprover } from "@/server/approvals/approver-check";
 
 // Departments (with HOD, used by the REQUESTER_DEPARTMENT_HOD and
 // DEPARTMENT_HOD approver sources) and designations (P1-01, S2-03a).
@@ -28,7 +29,7 @@ const idSchema = z
   .transform((value) => (value && /^\d+$/.test(value) ? Number(value) : null));
 
 const departmentSchema = z.object({ code: codeSchema, name: nameSchema, hodUserId: idSchema, active: z.string().optional() });
-const designationSchema = z.object({ code: codeSchema, name: nameSchema, active: z.string().optional() });
+const designationSchema = z.object({ code: codeSchema, name: nameSchema, isApprover: z.string().optional(), active: z.string().optional() });
 
 function issues(error: z.ZodError): Record<string, string> {
   const out: Record<string, string> = {};
@@ -44,6 +45,10 @@ export async function saveDepartment(id: number | null, fields: Record<string, s
   const parsed = departmentSchema.safeParse(fields);
   if (!parsed.success) return { ok: false, message: "Check the highlighted fields.", fieldErrors: issues(parsed.error) };
   const value = { code: parsed.data.code, name: parsed.data.name, hodUserId: parsed.data.hodUserId };
+  // D-085: the HOD approves at the HOD level. The HOD already saved stays valid.
+  const currentHod = id === null ? null : ((await findDepartment(id))?.hodUserId ?? null);
+  const notApprover = await checkChosenApprover(value.hodUserId, currentHod);
+  if (notApprover) return { ok: false, message: "Check the highlighted fields.", fieldErrors: { hodUserId: notApprover } };
   try {
     const savedId = await withTransaction(async (connection) => {
       if (id === null) {
@@ -81,7 +86,8 @@ export async function saveDepartment(id: number | null, fields: Record<string, s
 export async function saveDesignation(id: number | null, fields: Record<string, string | undefined>, actor: AdminActor): Promise<ServiceResult<number>> {
   const parsed = designationSchema.safeParse(fields);
   if (!parsed.success) return { ok: false, message: "Check the highlighted fields.", fieldErrors: issues(parsed.error) };
-  const value = { code: parsed.data.code, name: parsed.data.name };
+  // D-085: people with this designation can be chosen as approvers.
+  const value = { code: parsed.data.code, name: parsed.data.name, isApprover: parsed.data.isApprover === "on" };
   try {
     const savedId = await withTransaction(async (connection) => {
       if (id === null) {
@@ -101,7 +107,7 @@ export async function saveDesignation(id: number | null, fields: Record<string, 
           entityId: id,
           sessionId: actor.sessionId,
           ipAddress: actor.ipAddress,
-          metadata: { before: { code: before.code, name: before.name, active: before.active }, after: { ...value, active } },
+          metadata: { before: { code: before.code, name: before.name, isApprover: before.isApprover, active: before.active }, after: { ...value, active } },
         },
         connection,
       );

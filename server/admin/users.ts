@@ -19,6 +19,7 @@ import { checkCanEdit, checkDeactivate, checkManager, checkRoleChange, type Acto
 import { diffFields, type ParsedUserInput } from "@/server/admin/user-input";
 import { logError } from "@/lib/logging/logger";
 import { countPendingTasks } from "@/server/approvals/service";
+import { checkChosenApprover } from "@/server/approvals/approver-check";
 
 // User management services (F-06, D-047). Every write re-checks the rules,
 // runs in one transaction with its audit entry, and sends alerts only after
@@ -64,6 +65,9 @@ export async function createUser(input: ParsedUserInput, actor: AdminActor): Pro
   if (!roleCheck.ok) return { ok: false, message: roleCheck.message, fieldErrors: { roles: roleCheck.message } };
   const managerCheck = checkManager(null, input.reportingManagerId, () => null);
   if (!managerCheck.ok) return { ok: false, message: managerCheck.message, fieldErrors: { reportingManagerId: managerCheck.message } };
+  // D-085: the reporting manager approves at the manager level.
+  const managerNotApprover = await checkChosenApprover(input.reportingManagerId);
+  if (managerNotApprover) return { ok: false, message: managerNotApprover, fieldErrors: { reportingManagerId: managerNotApprover } };
 
   try {
     const id = await withTransaction(async (connection) => {
@@ -103,6 +107,8 @@ export async function updateUser(id: number, input: ParsedUserInput, actor: Admi
   const managers = await getManagerMap();
   const managerCheck = checkManager(id, input.reportingManagerId, (userId) => managers.get(userId) ?? null);
   if (!managerCheck.ok) return { ok: false, message: managerCheck.message, fieldErrors: { reportingManagerId: managerCheck.message } };
+  const managerNotApprover = await checkChosenApprover(input.reportingManagerId, existing.reportingManagerId);
+  if (managerNotApprover) return { ok: false, message: managerNotApprover, fieldErrors: { reportingManagerId: managerNotApprover } };
 
   const before = {
     loginId: existing.loginId,

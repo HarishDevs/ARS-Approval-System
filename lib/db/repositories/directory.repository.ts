@@ -7,7 +7,7 @@ import type { Directory } from "@/server/engine/types";
 // enough for ARS (hundreds of people) to read whole; approvers are then
 // resolved against the same snapshot for the whole engine call.
 export interface DirectorySnapshot {
-  users: { id: number; active: boolean; managerId: number | null; departmentId: number | null; isBreakGlass: boolean }[];
+  users: { id: number; active: boolean; managerId: number | null; departmentId: number | null; isBreakGlass: boolean; approver?: boolean }[];
   departmentHods: Map<number, number | null>;
   roleMembers: Map<string, number[]>;
   groupMembers: Map<number, number[]>;
@@ -19,8 +19,10 @@ export interface DirectorySnapshot {
 export const INDIA_TODAY_SQL = "DATE(DATE_ADD(UTC_TIMESTAMP(), INTERVAL 330 MINUTE))";
 
 export async function loadDirectorySnapshot(db: Queryable = getDbPool()): Promise<DirectorySnapshot> {
-  const [users] = await db.query<(RowDataPacket & { id: number; active: number; reporting_manager_id: number | null; department_id: number | null; is_break_glass: number })[]>(
-    "SELECT id, active, reporting_manager_id, department_id, is_break_glass FROM users",
+  const [users] = await db.query<(RowDataPacket & { id: number; active: number; reporting_manager_id: number | null; department_id: number | null; is_break_glass: number; approver: number })[]>(
+    // approver: the designation is ticked as Approver (D-085), for checking choices.
+    `SELECT u.id, u.active, u.reporting_manager_id, u.department_id, u.is_break_glass, COALESCE(d.is_approver, FALSE) AS approver
+     FROM users u LEFT JOIN designations d ON d.id = u.designation_id`,
   );
   const [departments] = await db.query<(RowDataPacket & { id: number; hod_user_id: number | null; active: number })[]>("SELECT id, hod_user_id, active FROM departments");
   const [roles] = await db.query<(RowDataPacket & { code: string; user_id: number })[]>(
@@ -48,6 +50,7 @@ export async function loadDirectorySnapshot(db: Queryable = getDbPool()): Promis
       managerId: row.reporting_manager_id,
       departmentId: row.department_id,
       isBreakGlass: row.is_break_glass === 1,
+      approver: Number(row.approver) === 1,
     })),
     departmentHods: new Map(departments.filter((row) => row.active === 1).map((row) => [row.id, row.hod_user_id])),
     roleMembers,

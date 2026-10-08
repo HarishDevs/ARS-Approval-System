@@ -158,6 +158,9 @@
 | D-082 | 8 Oct 2026 | **The Super Admin's Google sign-in is `itsupport@arsenergy.co.in`**. `itadmin@arssteels.co.in` is an alias of arunram@arssteels.co.in, and Google ID tokens carry the primary address, so login_logs showed UNKNOWN_ACCOUNT.<br>• Migration 202610081400 moves the bootstrap account (User ID `itadmin`, roles unchanged) once, only if it's unlinked.<br>• The bootstrap seed now only creates the account and never overwrites it.<br>• **Rule for staff:** create users with their **primary** Google email, never an alias. | Owner, 8 Oct 2026 |
 | D-083 | 8 Oct 2026 | **The three parts of the app are called "spaces" on screen** (My approvals, Admin, Super Admin), not "areas". One **account menu** at the top right holds the name, email, the current space badge, **Switch space**, Notifications, Sign-in & devices and Sign out. The sidebar holds only the current space's pages, and on phones it opens as a drawer. Code identifiers (`AppArea`, `requireArea`) keep their names. | Owner, 8 Oct 2026 (three UI reviews) |
 | D-084 | 8 Oct 2026 | **Bulk import of master data by CSV** (F-59): users, departments, designations, approver groups and holidays, from the Admin **and** the Super Admin space.<br>• **Check** is a dry run; **Import** re-plans inside one transaction and writes every row or none.<br>• Matched by User ID, code or date: it creates or updates, and never deletes or deactivates.<br>• The same rules as the forms (D-025, D-047); audit per record + `IMPORT_COMPLETED`; downloads of current data are audited (`IMPORT_DATA_DOWNLOADED`).<br>• CSV, not XLSX: no extra library, and Excel opens and saves it. Approval types are not imported; they are built and tested in the workflow builder. | Owner request, 8 Oct 2026 |
+| D-085 | 8 Oct 2026 | **Approver designations** (F-72). A designation is ticked "Approver" (Manager and above). Only approver-eligible people (active, not break-glass, designation ticked) can be **chosen** as approvers.<br>• This covers named workflow and custom steps, group members, HOD, reporting manager, delegate, handover target, and person fields feeding FORM_FIELD_USER.<br>• Choices already saved stay valid until changed; the engine is unchanged.<br>• Existing designations are ticked at migration; new ones start unticked.<br>• **Supersedes the "pick anyone" part of D-026/D-040.** Owner chose "all approver pickers". | Owner, 8 Oct 2026 |
+| D-086 | 8 Oct 2026 | **Super Admin deletes requests: a soft delete** (F-73).<br>• A reason is required; pending tasks are CANCELLED.<br>• The request is hidden from every list, queue, job and report; the row, timeline and audit stay (D-012).<br>• Super Admin → Requests (All / Deleted) and a button on the request page. There is no undo. Owner chose soft over permanent. | Owner, 8 Oct 2026 |
+| D-087 | 8 Oct 2026 | **Admin dashboards** (F-74), `/admin/dashboards/*`: Utilisation, Department-wise raised, Approver-wise, Raiser-wise by department.<br>• One GET filter (India dates, the FY to date by default, type incl. custom, department); a CSV per page.<br>• Department = the raiser's current department (the approver's, on the approver page). A delegate's decision counts for the approver. Deleted requests are excluded. | Owner, 8 Oct 2026 |
 | D-033 | 28 Sep 2026 | **Staff data is provided by the admin. Roles are assigned per user, by the admin only. Users are added or made inactive in the Admin Portal** (never hard-deleted, so history and audit stay intact). *Resolves Q-010.* | Owner (answer 7) |
 
 ## 4. Open questions (must be answered before the phase shown)
@@ -181,6 +184,37 @@
 | Q-015 | **Break-glass and WhatsApp:** the break-glass account signs in with a password **plus the WhatsApp code** (D-025). If WhatsApp or CEOITBox is down, which is exactly when break-glass may be needed, it can't sign in. Keep the code, or skip it only during the console-enabled window? | Go-live | Open, waiting on the owner (built conservatively: the code is required) |
 
 ## 5. Work log (newest first)
+
+### 8 Oct 2026 (build session 11: approver designations, request deletion, dashboards, v1.2.0)
+- The owner asked for:
+  - approvers limited to designations of Manager and above, through a per-designation flag;
+  - a Super Admin delete for requests;
+  - four dashboards in Admin.
+- Asked two questions; the owner chose **all approver pickers** and a **soft delete** (D-085, D-086).
+- **A. Approver designations:**
+  - migration 202610081500 (`designations.is_approver`, existing ones ticked);
+  - `server/approvals/approver-rules.ts` (pure) and `approver-check.ts`; `lib/db/repositories/approvers.repository.ts`; the directory snapshot carries `approver`.
+  - **Checks on save:**
+    - workflow save: named USER sources, ignoring ids that no longer exist (the validator handles those at publish);
+    - custom submit; group member add; HOD; reporting manager; delegation; handover;
+    - FORM_FIELD_USER person fields on submit and resubmit;
+    - import (manager, HOD, members; a manager who is new in the same file is checked by their designation).
+  - Pickers list eligible people plus the saved value. Test mode keeps everyone as the sample requester.
+  - Demo designations are flagged (Executive is not an approver; Accountant is, because the Finance checkers approve).
+- **B. Deletion:**
+  - migration 202610081501;
+  - `server/approvals/delete.ts`, `request-admin.repository.ts`;
+  - `deleted_at IS NULL` added to findRequest and lockRequest (so actions and the page 404), the queue, my requests, duplicate checks, handover, pending counts, SLA jobs, insights and the admin counts;
+  - Super Admin → Requests page; a Delete card on the request page, with a server-side redirect, because the page being left becomes a 404.
+- **C. Dashboards:**
+  - `server/dashboards/filters.ts` (pure); `lib/db/repositories/dashboards.repository.ts`; `server/dashboards/export.ts`;
+  - `/api/admin/dashboards/[slug]`;
+  - pages under `app/admin/dashboards/*` with `DashboardFrame` (tabs, filter, presets, KPI tiles, outcome bars, measure bars), and a loading skeleton.
+- **Tests:**
+  - unit 243;
+  - integration 64 (+4 in session11; the test helper now gives people an approver designation);
+  - e2e 23 (+3 in session11; e2e people have Manager/Executive designations);
+  - checked in the browser.
 
 ### 8 Oct 2026 (build session 10: bulk import, v1.1.0)
 - The owner asked for import with a download template and an upload, for Admin and Super Admin, for users, designations, departments "and that kind", with loaders (D-084, F-59).

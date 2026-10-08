@@ -11,6 +11,7 @@ import { AddFilesForm } from "@/features/requests/Attachments";
 import { loadRequestView } from "@/server/approvals/view";
 import { listActiveUserOptions } from "@/lib/db/repositories/admin-users.repository";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
+import { DeleteRequestButton } from "@/features/superadmin/DeleteRequestButton";
 
 // F-14 request page. loadRequestView applies the record-level check
 // (D-057); anyone else gets the same 404 as a request that doesn't exist.
@@ -144,6 +145,13 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
             ))}
           </ol>
         </section>
+        {user.roles.includes("SUPER_ADMIN") && (
+          <section className="card h-fit px-5 py-4">
+            <h2 className="mb-1 font-semibold">Super Admin</h2>
+            <p className="mb-3 text-label text-ink-muted">Remove this request from every screen, for example a test or a mistake.</p>
+            <DeleteRequestButton requestId={view.id} requestNo={view.requestNo} redirectTo="/superadmin/requests?tab=deleted" />
+          </section>
+        )}
         </div>
       </div>
     </>

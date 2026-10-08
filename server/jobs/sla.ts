@@ -53,7 +53,7 @@ export async function runSlaChecks(): Promise<{ reminders: number; escalations: 
      FROM approval_tasks t
      JOIN approval_requests r ON r.id = t.request_id
      JOIN users u ON u.id = t.approver_id
-     WHERE t.status = 'PENDING' AND r.status = 'IN_PROGRESS' AND t.due_at IS NOT NULL AND t.due_at <= CURRENT_TIMESTAMP
+     WHERE t.status = 'PENDING' AND r.status = 'IN_PROGRESS' AND r.deleted_at IS NULL AND t.due_at IS NOT NULL AND t.due_at <= CURRENT_TIMESTAMP
      ORDER BY t.due_at LIMIT 200`,
   );
   const base = getEnv().APP_BASE_URL ?? "https://approval.arssteels.net";

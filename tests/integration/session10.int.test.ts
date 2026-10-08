@@ -29,13 +29,13 @@ describe("bulk import (F-59)", () => {
   });
 
   it("imports designations, departments, then users whose manager is in the same file", async () => {
-    expect((await runImport("designations", `code,name,active\nD${tag},Deputy ${tag},Yes`, "d.csv", itAdmin)).ok).toBe(true);
+    expect((await runImport("designations", `code,name,approver,active\nD${tag},Deputy ${tag},Yes,Yes`, "d.csv", itAdmin)).ok).toBe(true);
     expect((await runImport("departments", `code,name,hod_login_id,active\nP${tag},Plant ${tag},,Yes`, "p.csv", itAdmin)).ok).toBe(true);
 
     const users = [
       "login_id,name,email,whatsapp_number,department_code,designation_code,manager_login_id,sign_in_method,roles",
       `emp-${tag},Employee ${tag},emp-${tag}@example.test,,P${tag},D${tag},boss-${tag},GOOGLE,USER`,
-      `boss-${tag},Boss ${tag},boss-${tag}@example.test,9${String(Date.now()).slice(-9)},P${tag},,,PASSWORD,USER;IT_ADMIN`,
+      `boss-${tag},Boss ${tag},boss-${tag}@example.test,9${String(Date.now()).slice(-9)},P${tag},D${tag},,PASSWORD,USER;IT_ADMIN`,
     ].join("\n");
     const check = await checkImport("users", users, itAdmin);
     expect(check.summary).toMatchObject({ create: 2, error: 0 });
