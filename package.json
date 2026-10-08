@@ -1,6 +1,6 @@
 {
   "name": "ars-approval-system",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "ARS Approval Platform — multi-level approvals in any custom manner",
   "engines": {
@@ -10,6 +10,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "start:production": "node scripts/database/migrate.js && node scripts/database/seed.js && next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -18,7 +19,8 @@
     "test:e2e": "playwright test",
     "db:up": "docker compose up -d mysql",
     "db:migrate": "node scripts/database/migrate.js",
-    "db:seed": "node scripts/database/seed.js"
+    "db:seed": "node scripts/database/seed.js",
+    "db:check": "node scripts/database/check-privileges.js"
   },
   "dependencies": {
     "clsx": "2.1.1",

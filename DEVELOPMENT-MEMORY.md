@@ -176,6 +176,12 @@
 
 ## 5. Work log (newest first)
 
+### 8 Oct 2026 (v1.0.1: deployment guide)
+- The owner is in GoDaddy's "Deploy your Node.js app" wizard (GitHub → main, Add secrets).
+- Generated the production env file outside the repo with fresh secrets (never displayed).
+- Added `start:production` (migrate + seed + next start), because the platform may have no terminal, and `db:check`.
+- DEPLOYMENT.md rewritten step by step, informed by the Power BI GoDaddy guide (read-only). It adds the Resend domain verification for arssteels.co.in and a new CEOITBox prod key.
+
 ### 8 Oct 2026 (release v1.0.0 prepared)
 - The owner kept the policy items as they are (D-078).
 - **CI had been red since session 6 on the e2e job.** Node 22 sends an empty file box as a 0-byte "undefined" file, so every plain submit was refused; local runs use Node 24, which hid it. Fixed: any 0-byte entry is ignored. **Lesson: check CI after every push.**

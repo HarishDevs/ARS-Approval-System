@@ -1,5 +1,11 @@
 # Release notes
 
+## v1.0.1 (deployment helpers, 8 Oct 2026)
+- `npm run start:production` applies the database migrations and seeds, then starts the app. GoDaddy's Node.js hosting may have no terminal, so the first start sets up the database by itself, and later releases migrate themselves. Both scripts skip what's already done.
+- `npm run db:check` runs the MySQL privilege check (triggers).
+- `docs/DEPLOYMENT.md` is rewritten as a complete step-by-step guide (Parts A–O) for the "Deploy your Node.js app" wizard, including Resend domain verification, a new CEOITBox key, the secrets-file import, cron and troubleshooting.
+- No change to app behaviour.
+
 ## v1.0.0 — first production release (8 Oct 2026)
 The ARS Approval Platform: **multi-level approvals in any custom manner**. It replaces the 104 Asana approval projects.
 Deploy with `docs/DEPLOYMENT.md`.

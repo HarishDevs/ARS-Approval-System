@@ -1,139 +1,327 @@
-# Deployment and go-live: ARS Approval Platform
+# Deployment guide: ARS Approval Platform on GoDaddy (step by step)
 
-Address: **https://approvals.arssteels.net** (one app; areas `/users`, `/admin`, `/superadmin`, D-034).
+| | |
+|---|---|
+| App | ARS Approval Platform **v1.0.1** (`docs/RELEASE-NOTES.md`) |
+| Address | **https://approvals.arssteels.net** (one app: `/users`, `/admin`, `/superadmin`) |
+| Hosting | GoDaddy **Node.js Hosting** ("Deploy your Node.js app"), from GitHub `HarishDevs/ARS-Approval-System`, branch `main` |
+| Database | MySQL 8 in GoDaddy cPanel |
+| Done by | itadmin@arssteels.co.in, with IT |
+| Time | About 2 hours the first time; Part H (WhatsApp templates) finishes over the next day while Meta reviews |
 
-Route: **GoDaddy Node.JS Hosting**, connected to GitHub `HarishDevs/ARS-Approval-System`, branch `main`. This is the same product and path the Power BI site uses (see `D:\PBI New\Completed Documentation\Deployment\GODADDY_DEPLOYMENT_GUIDE.md`).
+Work through the parts **in order**. Tick each box as you go. Anything marked **confirm** hasn't been seen on the real GoDaddy screens yet, so check it rather than assume. Never paste a key or password into chat, email or a file in the repository.
 
-Flow: FLOWS.md F-90. Owner: itadmin@arssteels.co.in.
-
-Anything below marked **confirm** has not been seen on the real GoDaddy screens yet. Check it as you go; don't assume.
-
-**Release v1.0.0 (8 Oct 2026):** the first production release. What's in it is listed in `docs/RELEASE-NOTES.md`. Deploy the commit tagged `v1.0.0`, and only once CI on that commit shows all three jobs green (checks, integration, e2e).
+## Contents
+- **Part A:** Get ready (on your PC)
+- **Part B:** Create the database (cPanel)
+- **Part C:** Create the attachments folder (cPanel)
+- **Part D:** Deploy the app (the "Deploy your Node.js app" wizard)
+- **Part E:** Connect the domain and HTTPS
+- **Part F:** Allow the domain in Firebase
+- **Part G:** First sign-in and Super Admin settings
+- **Part H:** WhatsApp templates
+- **Part I:** Scheduled jobs (cron)
+- **Part J:** Break-glass emergency account
+- **Part K:** People and approval types
+- **Part L:** Go-live checks
+- **Part M:** Updating later, and rollback
+- **Part N:** Troubleshooting
+- **Part O:** Known limits
 
 ---
 
-## 1. Before you start
-- [ ] GitHub CI is green on the commit you will deploy (Actions tab).
-- [ ] You can sign in to GoDaddy (`host.godaddy.com/hosting` → Node.JS Hosting) and cPanel.
-- [ ] Generate **fresh** production secrets on your own computer. Never reuse the development values, and never put them in any file:
-  ```bash
-  node -e "console.log(require('crypto').randomBytes(48).toString('base64'))"     # SESSION_SECRET
-  node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"     # ENCRYPTION_KEY
-  node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"  # JOB_RUNNER_SECRET
-  ```
-  Store `ENCRYPTION_KEY` in a password manager as well. If it is lost, every saved provider key must be entered again.
-- [ ] You have the Firebase Admin service-account values for project `power-bi-dashboard-3b29f` (D-038).
+## Part A: Get ready (on your PC)
 
-## 2. Database (MySQL 8)
-1. In cPanel → MySQL Databases, create the database (e.g. `ars_approvals`) and a user with all privileges on it.
-   - **Confirm** which host the Node app reaches (§1 item 3 of the Power BI guide: bundled database vs the existing cPanel MySQL).
-2. **Privilege check first.** The audit log, timeline and comments are made append-only by triggers:
-   ```bash
-   DB_HOST=… DB_PORT=3306 DB_NAME=ars_approvals DB_USER=… DB_PASSWORD=… node scripts/database/check-privileges.js
+### A1. Check the release is green
+- [ ] Open https://github.com/HarishDevs/ARS-Approval-System/actions. The latest run on `main` must show **3 green jobs**: checks, integration and end-to-end. If any is red, stop; don't deploy.
+- [ ] GoDaddy deploys the **`main` branch**. The release tags (`v1.0.0`, `v1.0.1`) mark what was released.
+
+### A2. The secrets file (already created)
+The file `D:\Omniroute\deploy-secrets\ars-approvals.production.env` was generated for you. It's outside the repository. It already holds fresh values for `SESSION_SECRET`, `ENCRYPTION_KEY` and `JOB_RUNNER_SECRET`.
+- [ ] Open it in Notepad. You'll fill in the `CHANGE_ME` values in B3, C1 and A3.
+- [ ] Copy **`ENCRYPTION_KEY`** into your password manager now. If it's lost, every provider key saved in the app must be entered again.
+
+### A3. Firebase service account (for Google sign-in)
+1. Open https://console.firebase.google.com → project **power-bi-dashboard-3b29f**.
+2. Gear icon → **Project settings** → **Service accounts** → **Generate new private key** → **Generate key**. A `.json` file downloads.
+3. Open the JSON in Notepad, and in the secrets file set:
+   - `FIREBASE_CLIENT_EMAIL` = the JSON's `client_email`;
+   - `FIREBASE_PRIVATE_KEY` = the JSON's `private_key`, copied **exactly**, on one line, with its `\n` sequences, inside double quotes:
+     `FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIE...\n-----END PRIVATE KEY-----\n"`
+4. Delete the downloaded JSON once the values are copied.
+
+### A4. A CEOITBox API key for this app
+1. https://official.ceoitbox.com → **Integrations & Utilities → Developer → API Keys** → **Create API Key**.
+2. Name it **`ARS Approvals - prod`**, leave Status on, then **OK**.
+3. Keep the value ready for G3. Don't put it in the secrets file; it's entered in the app.
+4. Switch **off** the test key that was pasted in chat on 8 Oct.
+5. Your Phone ID is `558214737370188` (Connected Accounts).
+
+### A5. Resend (email) and the sending domain
+The app sends email as **itadmin@arssteels.co.in** through Resend. Resend only sends for a domain you've verified.
+1. Sign up or sign in at https://resend.com → **Domains** → **Add domain** → `arssteels.co.in`.
+2. Resend shows DNS records (an MX and TXT for the `send` subdomain, plus a DKIM TXT). Add each one in the DNS of `arssteels.co.in`:
+   - wherever that domain's DNS is managed (GoDaddy → My Products → DNS, or your email provider's DNS);
+   - **don't change** the existing MX records for your mailboxes.
+3. Wait for Resend to show **Verified** (minutes to a few hours).
+4. **API Keys** → **Create API key** (Sending access, domain arssteels.co.in). Keep it ready for G2.
+
+---
+
+## Part B: Create the database (cPanel)
+
+### B1. Database and user
+1. GoDaddy → **My Products** → your hosting → **cPanel Admin** → **MySQL® Databases**.
+2. **Create New Database**: `ars_approvals`. cPanel adds a prefix, e.g. `abc123_ars_approvals`; note the full name.
+3. **Add New User**: e.g. `ars_app`, with a strong password from the generator. Note the full name and the password.
+4. **Add User To Database**: that user + that database → **ALL PRIVILEGES** → **Make Changes**.
+
+### B2. Which host the app uses
+- [ ] **Confirm** the database host the Node.js app can reach. The wizard (D3) or the app's settings may show a MySQL host, because GoDaddy says "a managed MySQL database comes with every published app".
+  - **If it offers its own database:** use those details instead of B1's.
+  - **Otherwise:** use the cPanel database. Its host is shown in cPanel → **Remote MySQL** / server information. It's often `localhost` from cPanel's own side, but a Node app on a separate container may need the server's hostname.
+
+### B3. Put the values in the secrets file
+`DB_HOST`, `DB_PORT=3306`, `DB_NAME` (the full prefixed name), `DB_USER` (full name), `DB_PASSWORD`.
+
+### B4. (Recommended) Privilege check from your PC
+The audit log, timeline and comments are protected by database triggers, so the user must be allowed `CREATE TRIGGER`.
+1. cPanel → **Remote MySQL** → add your current public IP (search "what is my IP").
+2. On your PC, in `D:\Omniroute\ARS Approval System`, run this in PowerShell, using the values from B1–B3:
+   ```powershell
+   $env:DB_HOST="<host>"; $env:DB_PORT="3306"; $env:DB_NAME="<db>"; $env:DB_USER="<user>"; $env:DB_PASSWORD="<password>"; npm run db:check
    ```
-   Every line must say OK. If `CREATE TRIGGER` fails, ask GoDaddy support to allow triggers for the user (or to enable `log_bin_trust_function_creators`) **before** migrating. Don't go live without it.
-3. Migrate, then seed:
-   ```bash
-   DB_HOST=… node scripts/database/migrate.js
-   DB_HOST=… node scripts/database/seed.js
-   ```
-   The seeds add the roles, the `wa_login_otp_v1` sign-in code template, and the first Super Admin (`itadmin@arssteels.co.in`, Google sign-in).
-   Both scripts are safe to run again. v1.0.0 applies these 15 migrations, in order:
+3. Every line must say **OK**, ending with "Ready". If `CREATE TRIGGER` fails, ask GoDaddy support to allow triggers for the user (or set `log_bin_trust_function_creators=1`). Don't go live without it.
+4. Remove your IP from Remote MySQL afterwards if you won't need it again (Part J uses it too).
 
-   | Migration | Adds |
-   |---|---|
-   | 202609281200 … 202609281205 | organisation, users and roles, sign-in tables, audit log (append-only), settings, notifications |
-   | 202609291200, 202609291201 | password links; workflows, requests, tasks, events (append-only) |
-   | 202609301200 | form and builder per version, rate limits |
-   | 202610011200, 202610011300 | comments (append-only), delegation, SLA; holidays, escalation times |
-   | 202610071200, 202610071201 | attachments; demo people and the DEMO session type |
-   | 202610081200 | WhatsApp template creator (versions, Meta status) |
-   | 202610081300 | submission key (no duplicate requests), notification outbox |
+You don't need to run migrations by hand. The app's start command (D4) applies them on every start, safely: already-applied ones are skipped.
 
-   Check: `SELECT COUNT(*) FROM schema_migrations` gives 15.
+---
 
-## 3. Create the Node app
-1. Node.JS Hosting → **Create a New App** → **Connect GitHub** → `HarishDevs/ARS-Approval-System`, `main`.
-2. Node **22** (the project needs ≥ 20; CI tests on 22, the same as GoDaddy).
-3. Build `npm ci && npm run build`, start `npm start`. **Confirm** the platform runs these. `next start` reads the `PORT` the platform gives it.
-4. Environment variables (exactly these; nothing else is read from the environment):
+## Part C: Create the attachments folder (cPanel)
+1. cPanel → **File Manager** → your home folder (`/home/<cpanel-user>`). Note `<cpanel-user>`; it's shown at the top of cPanel.
+2. **+ Folder** → `ars-approvals-uploads`. It must be **outside** `public_html` and outside the app's folder.
+3. In the secrets file, set `UPLOAD_DIR=/home/<cpanel-user>/ars-approvals-uploads`.
+4. cPanel → **Backup** (or JetBackup): make sure the home folder, and this folder in particular, is included.
+- [ ] **Confirm** the Node.js app can write to that path. G5 tests it. If it can't, use the folder path the Node.js app's settings recommend for persistent files.
 
-| Variable | Value |
+---
+
+## Part D: Deploy the app (the "Deploy your Node.js app" wizard)
+
+### D1. Start
+GoDaddy → **My Products** → **Node.js Hosting** (host.godaddy.com/hosting) → **Create a New App** / **Deploy your Node.js app**.
+
+### D2. Source: GitHub
+1. Choose **Connect GitHub** → sign in to GitHub → **Install & authorise** the GoDaddy app.
+2. Pick **Only select repositories** → `HarishDevs/ARS-Approval-System`. Don't give it access to every repository.
+3. Repository `ARS-Approval-System`, branch **`main`**.
+
+### D3. Runtime and commands (**confirm** the names on the screen)
+| Field | Value |
 |---|---|
-| `NODE_ENV` | `production` |
-| `APP_BASE_URL` | `https://approvals.arssteels.net` |
-| `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | from §2 |
-| `SESSION_SECRET` | fresh, from §1 |
-| `ENCRYPTION_KEY` | fresh, from §1 |
-| `JOB_RUNNER_SECRET` | fresh, from §1 |
-| `UPLOAD_DIR` | a folder **outside** the app folder and public_html, e.g. `/home/<cpanel-user>/ars-approvals-uploads` (create it first). Attachments live here, so it must survive redeploys and be in the backup |
-| `FIREBASE_PROJECT_ID` | `power-bi-dashboard-3b29f` |
-| `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` | from the service account. Keep the `\n` sequences as they are in the JSON |
+| Node.js version | **22** |
+| Install command | `npm ci` (or the platform default `npm install`) |
+| Build command | `npm run build` |
+| Start command | **`npm run start:production`**: applies migrations and seeds, then starts the app |
+| Port | Leave the default; the app listens on the `PORT` the platform gives |
 
-   The four `NEXT_PUBLIC_FIREBASE_*` values are built into `next.config.ts` and need not be set.
-   Provider keys (Resend, CEOITBox) are **not** environment variables: they are entered in `/superadmin` after go-live (D-016).
-5. Deploy. Open the temporary GoDaddy address: the sign-in page must load.
-6. Bind `approvals.arssteels.net` to the app (DNS in GoDaddy) and make sure HTTPS is on.
+If the wizard doesn't let you change the start command, it runs `npm start`. Then run the migrations once from your PC before the first start (B4 setup, then `npm run db:migrate` and `npm run db:seed` with the same `$env:` values), and again after any release that adds migrations.
 
-## 4. After the first deploy
-1. **Firebase** console → Authentication → Settings → Authorised domains → add `approvals.arssteels.net` (and the temporary address while testing).
-2. Sign in with Google as `itadmin@arssteels.co.in` → `/superadmin/settings`:
-   - **Email:** paste the Resend API key, save, **Send test email**.
-   - **WhatsApp:** paste a **new CEOITBox key made for this app** (for example "ARS Approvals – prod"; never the test key pasted in chat, and never the Power BI key). Set the Phone ID `558214737370188`, save, then **Send test WhatsApp**. Your account needs a WhatsApp number first; add it in `/admin/users`.
-   - Review the sign-in security values.
-   - **WhatsApp templates** (`/superadmin/templates`):
-     - the local test approved `ars_approval_needed_v1` on the same CEOITBox account, so press **Sync status from Meta** first: it shows as Live once a production draft with that exact name is saved;
-     - for each of the other 19 messages: open it → **Save draft** → **Submit to Meta for approval** → **Yes, continue**;
-     - later, **Sync status**: approved templates go live by themselves.
-3. **Cron** (cPanel → Cron Jobs), every 5 minutes. **Without it, no reminders, escalations, retries, outbox catch-up or daily template sync happen.** It runs:
-   - the notification outbox catch-up;
-   - delivery retries;
-   - SLA reminders and escalation;
-   - the daily WhatsApp template sync;
-   - housekeeping.
+### D4. Add secrets (the screen in your screenshot)
+1. Click **Import from .env file** → choose `D:\Omniroute\deploy-secrets\ars-approvals.production.env`.
+2. Check the list:
+   - **15 keys:** NODE_ENV, APP_BASE_URL, DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD, SESSION_SECRET, ENCRYPTION_KEY, JOB_RUNNER_SECRET, UPLOAD_DIR, FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY.
+   - **No value says `CHANGE_ME`.**
+   - `FIREBASE_PRIVATE_KEY` starts with `-----BEGIN PRIVATE KEY-----`. If the quotes were imported as part of the value, edit it and remove them.
+3. If the build later fails because `tailwindcss` or `typescript` is missing, add one more secret: `NPM_CONFIG_PRODUCTION` = `false` (see Part N).
+4. **Continue**.
+
+### D5. Deploy and watch the build
+1. **Deploy** / **Publish**. Open the build log.
+2. A good log ends the build with `✓ Compiled successfully` and the route list, then shows:
    ```
-   */5 * * * * curl -s -X POST -H "x-job-secret: <JOB_RUNNER_SECRET>" https://approvals.arssteels.net/api/jobs/run > /dev/null
+   Applying 202609281200_create_organisation.sql ... (15 files on the first start)
+   Done. Applied 15 migration(s).
+   Seeding 001_roles.sql ... Done. Ran 3 seed file(s).
+   ▲ Next.js 15.5.25 - Local: http://localhost:<port>  ✓ Ready
    ```
-   Check it once by hand: the answer must be `{"success":true,…}`. A wrong secret answers 404.
-4. **Break-glass** (D-054), in the hosting console:
-   ```bash
-   node scripts/admin/break-glass.js create --email <separate address> --whatsapp <number>
-   node scripts/admin/break-glass.js set-password
-   node scripts/admin/break-glass.js status
+3. The app shows **Running**. Note its temporary address, e.g. `something.godaddysites.app` (**confirm**).
+- [ ] Open the temporary address: the **ARS Approvals sign-in page** loads.
+
+### D6. Delete the secrets file
+- [ ] With the app running, delete `D:\Omniroute\deploy-secrets\ars-approvals.production.env`. The values now live only in GoDaddy and your password manager.
+
+---
+
+## Part E: Connect the domain and HTTPS
+1. In the Node.js app → **Settings / Domains** → **Add custom domain** → `approvals.arssteels.net` (**confirm** the menu name).
+2. GoDaddy shows the DNS record to add, usually a **CNAME** `approvals` → the app's address, or an A record.
+   - If `arssteels.net` is managed in the same GoDaddy account, GoDaddy may add it for you.
+   - Otherwise: **My Products → arssteels.net → DNS → Add** that record exactly.
+3. Wait until the domain shows **Connected**, and the certificate shows **SSL active / Secure**. Usually minutes; DNS can take up to an hour.
+- [ ] https://approvals.arssteels.net shows the sign-in page with the padlock.
+- [ ] `APP_BASE_URL` is `https://approvals.arssteels.net`. It's used in every email and WhatsApp link.
+
+---
+
+## Part F: Allow the domain in Firebase
+1. Firebase console → **power-bi-dashboard-3b29f** → **Authentication** → **Settings** → **Authorised domains** → **Add domain**:
+   - `approvals.arssteels.net`;
+   - while testing, also the temporary GoDaddy address from D5.
+2. Without this, Google sign-in fails with `auth/unauthorized-domain`.
+
+---
+
+## Part G: First sign-in and Super Admin settings
+
+### G1. Sign in
+1. https://approvals.arssteels.net → **Continue with Google** → **itadmin@arssteels.co.in**. The seed created this Super Admin.
+2. You land on **My approvals**. The left menu's **Switch area** shows Admin and Super Admin.
+
+### G2. Email (Resend)
+1. **Super Admin → Providers & security → Email**:
+   - paste the Resend key (A5);
+   - From address `itadmin@arssteels.co.in`;
+   - From name `ARS Approvals`;
+   - **Save**.
+2. **Send test email**: it arrives in the itadmin inbox. If not, see Part N.
+
+### G3. WhatsApp (CEOITBox)
+1. **Admin → Users & roles → IT Admin (Super Admin)** → WhatsApp number **9150091870** → **Save changes**. The app stores it as 919150091870.
+2. **Super Admin → Providers & security → WhatsApp**:
+   - base URL `https://official.ceoitbox.com`;
+   - Phone ID `558214737370188`;
+   - API key: the **new** key from A4;
+   - **Save**.
+3. **Send test WhatsApp**: you receive the sign-in code template.
+
+### G4. Security settings
+Review the **Authentication** group. The defaults are fine: lockout after 5 wrong passwords for 15 minutes, 6-digit codes. **Save** only if you change something.
+
+### G5. Attachments work and survive a redeploy
+1. **My approvals → New request** → any type → attach a small PDF → **Submit request**. The file is listed and downloads.
+2. In the Node.js app, **Redeploy** / **Restart**. Open the same request: the file **still downloads**. If it's gone, `UPLOAD_DIR` isn't persistent; fix it before go-live (Part C).
+
+---
+
+## Part H: WhatsApp templates
+"Approval needed" (`ars_approval_needed_v1`) is already approved at CEOITBox: it was created during testing on the same account.
+1. **Super Admin → WhatsApp templates → "A request is waiting for this person's approval" → Save draft**. Keep the name `ars_approval_needed_v1`.
+2. Press **Sync status from Meta**: it shows **Live**. Then **Send a test to my WhatsApp**.
+3. For each of the other **19** messages: **Create** → check the wording (change it if you like) → **Save draft** → **Submit to Meta for approval** → **Yes, continue**.
+4. Over the next hours, press **Sync status from Meta**. Approved ones go **Live** by themselves; rejected ones show Meta's reason, so edit and resubmit (it becomes `_v2`). The job runner also syncs once a day.
+- Until a template is live, that message goes by email and in-app only.
+
+---
+
+## Part I: Scheduled jobs (cron)
+Without this, there are **no reminders, escalations, retries, outbox catch-up or daily template sync**.
+1. cPanel → **Cron Jobs** → **Add New Cron Job** → Common settings: **Once Per Five Minutes** (`*/5 * * * *`).
+2. Command: copy `JOB_RUNNER_SECRET` from your password manager, or from GoDaddy's secrets screen:
    ```
-   Seal the password offline. Leave it disabled. See Q-015 about the WhatsApp code.
-5. **Attachments folder:** create `UPLOAD_DIR` (see §3) and add it to the cPanel backup. Attach one file to a test request, redeploy, and check it still downloads.
-6. Set up the organisation, either way:
-   - **Real staff now:** in `/admin`, add the departments with HODs, designations, users (password users get a set-password link), approver groups, and approval types. Each type's DoA matrix is set on its creation screen; use test mode, then publish.
-   - **Demo first (owner's choice, D-071):** `/superadmin/demo` → **Load demo data** gives 20 demo people and the 12 approval types, so the flows can be tried with **Try as**. When the real staff arrive, put them into the groups and HOD slots, then press **Retire demo staff**. Demo emails go to `itadmin+demo…@arssteels.co.in`.
+   curl -s -X POST -H "x-job-secret: <JOB_RUNNER_SECRET>" https://approvals.arssteels.net/api/jobs/run > /dev/null
+   ```
+3. **Add New Cron Job**.
+4. Test it once by hand. In PowerShell on your PC:
+   ```powershell
+   curl.exe -s -X POST -H "x-job-secret: <JOB_RUNNER_SECRET>" https://approvals.arssteels.net/api/jobs/run
+   ```
+   - Expected: `{"success":true,"data":{"outbox":…,"retries":…,"sla":…,"templates":…}}`.
+   - A wrong secret gives a 404.
 
-## 5. Go-live checks
-- [ ] Sign-in page over HTTPS; security headers present (CSP, HSTS, frame-deny).
-- [ ] Google sign-in works (authorised domain).
-- [ ] Password user: set-password link email arrives → WhatsApp code → signed in.
-- [ ] A new-device sign-in sends the alert email + WhatsApp.
-- [ ] `/admin` gives a 404 for a plain user; `/superadmin` gives a 404 for an IT Admin.
-- [ ] One real request end to end: raise → approve at each level → requester told → timeline complete.
-- [ ] A Purchase & SCM (or other DoA) request at ₹1,00,000 and at ₹1,00,001 goes to the levels the DoA view shows; a negative amount is refused.
-- [ ] Submit a request without a file and one with a PDF. Both succeed, and the PDF downloads (this guards the Node 22 empty-file fix).
-- [ ] Submit the same form twice (double click, or Back and Submit again): only one request exists.
-- [ ] `/superadmin/templates`: at least "Approval needed" is Live, and a test send arrives on your WhatsApp.
-- [ ] `/superadmin/deliveries` shows SENT rows. A deliberately failed send is retried by the cron.
-- [ ] `/superadmin/audit` shows the sign-ins and changes.
-- [ ] Remove any test requests and users made during these checks (make users inactive; requests stay as history).
+---
 
-## 6. Updating later
-Push to `main` → CI must be green **on all three jobs** → tag the release (`v1.0.1` …) → GoDaddy redeploys from GitHub (**confirm** whether it does this automatically or needs a "redeploy" click).
-- If the release has new files in `database/migrations/`, run `migrate.js` against production right after the deploy. Migrations only ever add.
-- Before each release, run the Smoke suite in `docs/qa/QA-TEST-SUITE.md` §33.
+## Part J: Break-glass emergency account
+A sealed admin account for when Google sign-in or itadmin@ isn't available. Run from your PC, with Remote MySQL access as in B4, inside `D:\Omniroute\ARS Approval System`, with the same `$env:DB_*` values set:
+```powershell
+node scripts/admin/break-glass.js create --email <a separate mailbox, not itadmin@> --whatsapp <the holder's number>
+node scripts/admin/break-glass.js set-password
+node scripts/admin/break-glass.js status
+```
+- Write the password down and seal it offline. Leave the account **disabled**. `enable --minutes 60` opens it only in an emergency, and alerts every Super Admin.
+- Signing in still needs the WhatsApp code (Q-015, open).
 
-## 7. Known limits carried into production (v1.0.0)
-- **Break-glass sign-in needs the WhatsApp code (Q-015).** If WhatsApp is down, it can't sign in.
-- **WhatsApp:** only the messages whose templates Meta has approved go out on WhatsApp. Email and in-app always go out. 19 templates are still to be submitted from `/superadmin/templates`.
-- **Owner decisions kept as they are (8 Oct 2026, D-078):**
-  - one person may approve more than one level, directly or as a delegate;
+---
+
+## Part K: People and approval types
+Choose one:
+- **Try first with demo staff (recommended now):** **Super Admin → Demo data → Load demo data**.
+  - This adds 20 demo people, 7 departments, 8 approver groups and 12 published approval types, including Purchase & SCM with its DoA matrix.
+  - Use **Try as** to act as any demo person.
+  - Demo emails go to itadmin+demo…@arssteels.co.in.
+- **Real staff** (when the list arrives):
+  1. **Admin → Departments**: add departments and designations; set each department's HOD after its people exist.
+  2. **Admin → Users & roles → New user**: name, email, User ID, WhatsApp number, department, designation, reporting manager, and sign-in method (Google, or password: they get a set-password link). Roles: USER; IT team: IT_ADMIN.
+  3. **Admin → Approver groups**: MD office, ED office, Finance desks and so on, with the real members.
+  4. **Admin → Workflows → New workflow**: form fields; the **DoA matrix** (limits across, levels down, tick the bands); **test mode**; **Publish**.
+  5. If demo data was loaded: swap the real people into the groups and HOD slots, then **Super Admin → Demo data → Retire demo staff**.
+
+---
+
+## Part L: Go-live checks
+Run these at https://approvals.arssteels.net. They come from the Smoke suite, `docs/qa/QA-TEST-SUITE.md` §33.
+- [ ] HTTPS padlock. Security headers present: in browser DevTools → Network → a page → Response headers, look for `content-security-policy`, `strict-transport-security`, `x-frame-options: DENY`.
+- [ ] Google sign-in works for itadmin@.
+- [ ] A **password** user: the set-password email arrives → WhatsApp code → signed in.
+- [ ] Signing in on a new browser sends the **new sign-in** alert (email, plus WhatsApp once that template is live).
+- [ ] A plain user gets **404** for `/admin` and `/superadmin`; an IT Admin gets 404 for `/superadmin`.
+- [ ] One request end to end: raise → each level approves → the requester is told → the timeline is complete.
+- [ ] A DoA type: ₹1,00,000 and ₹1,00,001 go to the levels the **DoA view** shows; **−5,000 is refused** ("Enter 0 or more.").
+- [ ] Submit **without** a file and **with** a PDF; both work, and the PDF downloads.
+- [ ] Double-click **Submit request**: only one request appears in **My requests**.
+- [ ] **Super Admin → Message deliveries** shows SENT rows; **Audit log** shows the sign-ins and changes.
+- [ ] The cron job ran: in the Message deliveries / audit log after 10 minutes, or check the cron email in cPanel.
+- [ ] Remove the test requests' traces: requests stay as history by design; make any test users **inactive**.
+
+When all are ticked: **live**. Tell the staff the address, and who to contact (IT).
+
+---
+
+## Part M: Updating later, and rollback
+
+### Release a new version
+1. Changes are pushed to `main` → GitHub Actions must be **green on all 3 jobs**.
+2. Tag it: `v1.0.2` and so on.
+3. GoDaddy redeploys from `main`: automatically, or press **Redeploy** (**confirm** which).
+4. The start command applies any new migrations by itself. Migrations only ever **add**, so older code keeps working on a newer database.
+5. Run the Smoke suite (Part L, short version).
+
+### Roll back
+- In GoDaddy, redeploy the previous good commit or tag. Or, on GitHub, revert the bad commit on `main` and let it redeploy.
+- The database doesn't need rolling back: migrations are additive.
+- If a provider key leaks: switch it off at the provider, create a new one, and paste it in **Super Admin → Providers & security**.
+
+---
+
+## Part N: Troubleshooting
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| Build fails: `Cannot find module 'tailwindcss'` / `typescript` / `eslint` | The platform installed production packages only | Add the secret `NPM_CONFIG_PRODUCTION=false` and redeploy |
+| App won't start: `Invalid environment configuration: DB_HOST: Required` (or another key) | A secret is missing, or still `CHANGE_ME` | Fix that secret in the app's settings; restart |
+| `Invalid ENCRYPTION_KEY: must be a base64-encoded 32-byte key` | Value cut or changed while copying | Paste it again from the password manager |
+| `Migration failed: … ECONNREFUSED` / `ENOTFOUND` / `Access denied` | Wrong DB host, user or password, or the DB isn't reachable from the app | Check Part B2/B3; try the server hostname instead of `localhost` |
+| `Migration failed: … TRIGGER command denied` | The user can't create triggers | GoDaddy support: allow triggers (B4) |
+| Google sign-in: `auth/unauthorized-domain` | Domain not allowed in Firebase | Part F |
+| Google sign-in fails on the server; log mentions the private key | `FIREBASE_PRIVATE_KEY` mangled | Re-enter it on one line with the `\n` sequences and **no** surrounding quotes |
+| "Your account isn't set up" for a Google user | Only admin-created users can sign in | Create the user in Admin → Users with the same email |
+| Test email fails; deliveries show `EMAIL_REQUEST_FAILED` | Resend domain not verified, or wrong key | Part A5: wait for **Verified**; check the key |
+| WhatsApp test: "CEOITBox refused the API key (401)" | Wrong or switched-off key | Paste the new key again; check it's on in CEOITBox |
+| WhatsApp: `CEOITBOX_BLOCKED` | Wallet balance low, or the number opted out | Top up in CEOITBox → Money → Credit Center |
+| WhatsApp messages skipped: `TEMPLATE_NOT_CONFIGURED` | That message's template isn't live yet | Part H |
+| Attachments vanish after a redeploy | `UPLOAD_DIR` not persistent | Part C; point it at a persistent folder |
+| No reminders or escalations | Cron missing, or wrong secret (the job answers 404) | Part I |
+| 502 / "Application error" right after deploy | App still starting (migrations on the first start), or crashed | Wait 1 minute; read the app's runtime log |
+
+---
+
+## Part O: Known limits (v1.0.1)
+- **Break-glass** sign-in needs the WhatsApp code (Q-015).
+- **WhatsApp** messages go out only once their template is live (Part H). Email and in-app always go out.
+- **Owner decisions kept (D-078):**
+  - one person may approve more than one level;
   - requests don't expire;
-  - rejection is final (the route back is "ask for changes");
+  - rejection is final;
   - no drafts, admin cancel or auditor role.
-- **Search:** only My requests has search, a status filter and paging. There's no IT-wide request search yet.
-- **Not in this release:** report and audit export (CSV), work hand-off after approval (F-32), approve from WhatsApp.
+- **Search:** only My requests has search, a status filter and paging.
+- **Not in this release:** CSV export of reports or the audit log, work hand-off after approval, approving from WhatsApp.

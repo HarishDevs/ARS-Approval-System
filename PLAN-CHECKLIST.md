@@ -240,7 +240,12 @@ Found during S8-06:
   - updated DEPLOYMENT.md (migration list, new CEOITBox key, templates, cron jobs, UPLOAD_DIR, demo option, extra go-live checks, known limits);
   - RELEASE-NOTES.md; version 1.0.0; .nvmrc 22;
   - tag v1.0.0 once CI is green (done 8 Oct 2026)
-- [ ] S8-01b Go-live on GoDaddy with the owner, following docs/DEPLOYMENT.md
+- [x] S8-08 Owner asked for a complete step-by-step deployment guide and an env file to upload (done 8 Oct 2026):
+  - the production env file is generated outside the repo (`D:\Omniroute\deploy-secrets`), with fresh secrets never shown in chat;
+  - `start:production` (migrate + seed + start) and `db:check`;
+  - DEPLOYMENT.md rewritten as Parts A–O;
+  - v1.0.1
+- [ ] S8-01b Go-live on GoDaddy with the owner, following docs/DEPLOYMENT.md (the owner is at the wizard's "Add secrets" step)
 - [x] S8-04 Update the three living files; commit and push (done 8 Oct 2026)
 
 ## Phase 0 — Setup and decisions
