@@ -2,11 +2,11 @@
 
 import { publishAction, simulateAction, updateDetailsAction } from "@/app/admin/workflows/actions";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
-import type { FormField } from "@/server/forms/fields";
+import { NO_LOOKUPS, type FieldLookups, type FormField } from "@/server/forms/fields";
 import type { SimulationView } from "@/server/approvals/service";
 
 // Test mode (P3-05): sample values → the exact route and names. Nothing is saved.
-export function TestModePanel({ versionId, form, people }: { versionId: number; form: FormField[]; people: { id: number; label: string }[] }) {
+export function TestModePanel({ versionId, form, people, lookups = NO_LOOKUPS }: { versionId: number; form: FormField[]; people: { id: number; label: string }[]; lookups?: FieldLookups }) {
   const { result, pending, onSubmit } = useActionForm(simulateAction);
   const view = (result?.ok ? (result.data as { view?: SimulationView } | undefined)?.view : undefined) ?? null;
   return (
@@ -41,6 +41,15 @@ export function TestModePanel({ versionId, form, people }: { versionId: number; 
                 <option value="">—</option>
                 {field.options?.map((option) => (
                   <option key={option}>{option}</option>
+                ))}
+              </select>
+            ) : field.type === "LOOKUP" ? (
+              <select id={`sim-${field.key}`} name={`field:${field.key}`} defaultValue="" className="field-input">
+                <option value="">—</option>
+                {(field.source ? lookups[field.source] : []).map((item) => (
+                  <option key={item.code} value={item.code}>
+                    {item.name}
+                  </option>
                 ))}
               </select>
             ) : field.type === "PERSON" ? (

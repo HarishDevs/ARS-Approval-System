@@ -47,9 +47,20 @@ const OPERATOR_WORDS: Record<string, string> = {
   IS_NOT_EMPTY: "is filled in",
 };
 
+const DATE_WORDS: Record<string, string> = { GT: "is after", GTE: "is on or after", LT: "is before", LTE: "is on or before" };
+
 export function describeCondition(condition: { field: string; operator: string; value?: unknown }, fieldLabel: (key: string) => string): string {
-  const value = typeof condition.value === "number" ? condition.value.toLocaleString("en-IN") : condition.value === undefined ? "" : String(condition.value);
-  return `${fieldLabel(condition.field)} ${OPERATOR_WORDS[condition.operator] ?? condition.operator}${value ? ` ${value}` : ""}`.trim();
+  const isDate = typeof condition.value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(condition.value);
+  const value =
+    typeof condition.value === "number"
+      ? condition.value.toLocaleString("en-IN")
+      : isDate
+        ? new Date(`${condition.value as string}T00:00:00Z`).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" })
+        : condition.value === undefined
+          ? ""
+          : String(condition.value);
+  const words = (isDate ? DATE_WORDS[condition.operator] : undefined) ?? OPERATOR_WORDS[condition.operator] ?? condition.operator;
+  return `${fieldLabel(condition.field)} ${words}${value ? ` ${value}` : ""}`.trim();
 }
 
 export function describeRule(rule: CompletionRule, count: number): string {
@@ -131,17 +142,24 @@ export function buildStepMap(
   const nodeFor = (step: BuilderStep) => approvalNodes.get(`step_${step.id}`);
   const fieldLabel = context.fieldLabel ?? ((key: string) => key);
 
+  // A level not reached yet whose skip condition already holds on the form
+  // is shown as skipped now, like DoA levels (S12): the engine will skip it.
+  const withPreview = (step: MapStep, builderStep: BuilderStep): MapStep =>
+    step.status === "WAITING" && builderStep.skipWhen && context.formData && evaluateCondition(builderStep.skipWhen, context.formData)
+      ? { ...step, status: "SKIPPED", reason: `Skipped: ${describeCondition(builderStep.skipWhen, fieldLabel)}` }
+      : step;
+
   const mapStages = (stages: readonly (BuilderStage | BuilderInnerStage)[], notTaken: boolean): MapStage[] => {
     const out: MapStage[] = [];
     for (const stage of stages) {
       if (stage.kind === "STEP") {
         const node = nodeFor(stage.step);
-        if (node) out.push({ kind: "STEP", label: node.label, steps: [{ ...mapStep(node, state, names), ...(notTaken ? { notTaken } : {}) }] });
+        if (node) out.push({ kind: "STEP", label: node.label, steps: [{ ...withPreview(mapStep(node, state, names), stage.step), ...(notTaken ? { notTaken } : {}) }] });
       } else if (stage.kind === "PARALLEL") {
-        const steps = stage.steps
-          .map(nodeFor)
-          .filter((node): node is ApprovalNode => !!node)
-          .map((node) => ({ ...mapStep(node, state, names), ...(notTaken ? { notTaken } : {}) }));
+        const steps = stage.steps.flatMap((builderStep) => {
+          const node = nodeFor(builderStep);
+          return node ? [{ ...withPreview(mapStep(node, state, names), builderStep), ...(notTaken ? { notTaken } : {}) }] : [];
+        });
         const joinRule: CompletionRule = stage.join === "ANY_N" ? { type: "ANY_N", n: stage.n ?? 1 } : { type: stage.join };
         out.push({ kind: "PARALLEL", label: stage.label, joinRule: describeJoin(joinRule), steps });
       } else if (stage.kind === "DOA") {

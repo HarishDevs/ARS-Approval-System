@@ -17,19 +17,19 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
-- **Now:** **v1.2.0 is pushed** (8 Oct 2026):
-  - approver designations (D-085);
-  - Super Admin request deletion (D-086);
-  - Admin dashboards for utilisation, department, approver and raiser (D-087).
-  - v1.0.4–v1.1.0 (UI polish, bulk import) go out in the same publish.
+- **Now:** **v1.3.0 is pushed** (8 Oct 2026): the form field creator is fixed and extended (F-75, D-088).
+  - Fixed: the dropdown list editor, keys that follow the label, number boxes, and type-aware conditions with dates.
+  - New: Department and Designation fields filled from the database.
+  - Covered by a full e2e test of the builder.
+  - Together with v1.0.4–v1.2.0, it waits for the owner's Publish.
 - **Next, with the owner:**
-  - GoDaddy: Update Preview → check it's healthy → **Publish to Live** (migrations run by themselves on start);
-  - **Admin → Designations:** untick the junior designations; give the Super Admin an approver designation if they approve;
-  - sign in with Google as `itsupport@arsenergy.co.in`;
-  - Super Admin keys (Resend, a new CEOITBox key), WhatsApp templates, cron, break-glass;
-  - load the real staff with Import data;
+  - GoDaddy: Update Preview → check it's healthy → **Publish to Live**;
+  - untick the junior designations;
+  - Google sign-in as itsupport@arsenergy.co.in;
+  - provider keys; WhatsApp templates; cron; break-glass;
+  - import the real staff;
   - rotate the Firebase key that was pasted in chat.
-- **Still open:** Q-015 (break-glass without WhatsApp); the real staff list.
+- **Still open:** Q-015; the real staff list.
 
 ---
 
@@ -255,6 +255,24 @@ Found during S8-06:
 - [x] S8-12 Google sign-in reached UNKNOWN_ACCOUNT: itadmin@ is an alias. The Super Admin now signs in as itsupport@arsenergy.co.in (D-082, migration + non-overwriting seed, v1.0.5) (done 8 Oct 2026)
 - [ ] S8-01b Go-live on GoDaddy with the owner, following docs/DEPLOYMENT.md (the owner is at the wizard's "Add secrets" step)
 - [x] S8-04 Update the three living files; commit and push (done 8 Oct 2026)
+
+## Session log — build session 12: the form field creator, tested and fixed (8 Oct 2026)
+Owner: "Test the Flow creation form entirely; add a field creation option with database values like departments as a dropdown; the Dropdown Creator is not working properly; the date selector is not working as a date; check all the field creator's data types; create an end-to-end test case and run it."
+
+**Found by typing key by key in the browser** (the automation's "paste" hid the first two bugs):
+- [x] S12-01 ❌ **Dropdown creator:** the Choices box drops every comma the moment it is typed, so "Capex, Opex" becomes "CapexOpex". Only one option can ever be made → replace it with a list editor (type → Add or Enter; paste many at once; remove; no duplicates) (done 8 Oct 2026)
+- [x] S12-02 ❌ **Field key** is taken from the first letter only ("Delivery Date" → `d`), because the key is filled once and never follows the label → follow the label until IT edits the key; saved keys never change (done 8 Oct 2026)
+- [x] S12-03 ❌ **Smallest value** drops a decimal point or a leading minus as it is typed ("1.5" → 15). The condition value boxes have the same flaw → keep what is typed, use it once it is a number (done 8 Oct 2026)
+- [x] S12-04 ❌ **Date in conditions:** the skip/choice condition is a plain text box for every field type; the engine and validator only compare numbers, so "date is before …" can never work → a value box per field type (a date picker for Date, the options list for Choice/master, people for Person, numbers for Number) and engine/validator support for date order (YYYY-MM-DD) (done 8 Oct 2026)
+- [x] S12-05 ⚠️ The operators offered don't depend on the field type ("is more than" on a text field) → per-type operators, with "is before/after" for dates (done 8 Oct 2026)
+- [x] S12-06 ❌ **New: fields filled from database values.** "Department (from the list)" and "Designation (from the list)": the requester picks from the live active list; the code is stored and the name shown; the server checks the code; conditions pick from the same list (done 8 Oct 2026)
+- [x] S12-07 ⚠️ Help text exists in the schema but can't be set in the builder → add it; the Required checkbox gets a proper accessible name (done 8 Oct 2026)
+- [x] S12-08 Dates display as 08 Oct 2026 on the request page (stored as YYYY-MM-DD) (done 8 Oct 2026)
+- [x] S12-09 Tests: (done 8 Oct 2026)
+  - unit: every field type parses and refuses bad input; date order in conditions; lookup checks; form definition checks;
+  - e2e: the full builder, with every field type, the dropdown creator, a department field, a date condition that skips a step, publish, raise, then check the route and the values shown
+- [x] S12-11 Found while testing: test mode dropped every valid sample value when one was invalid; now it keeps the valid ones. The request page now shows a level as "Skipped: <condition>" before it is reached, like DoA levels (done 8 Oct 2026)
+- [x] S12-10 Living files; release v1.3.0; CI green; tag (done 8 Oct 2026)
 
 ## Session log — build session 11: approver designations, request deletion, dashboards (8 Oct 2026)
 Owner:

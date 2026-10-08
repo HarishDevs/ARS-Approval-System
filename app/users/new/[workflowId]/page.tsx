@@ -7,6 +7,7 @@ import { findPublishedVersion, findWorkflow } from "@/lib/db/repositories/approv
 import { listActiveUserOptions } from "@/lib/db/repositories/admin-users.repository";
 import { listApproverOptions } from "@/lib/db/repositories/approvers.repository";
 import { approverFieldKeys } from "@/server/approvals/approver-rules";
+import { loadFieldLookups } from "@/lib/db/repositories/lookups.repository";
 
 export default async function RaiseRequestPage({ params }: { params: Promise<{ workflowId: string }> }) {
   await requireArea("users");
@@ -19,6 +20,7 @@ export default async function RaiseRequestPage({ params }: { params: Promise<{ w
   const needsPeople = version.form.some((field) => field.type === "PERSON");
   const people = needsPeople ? (await listActiveUserOptions()).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` })) : [];
   const approverFields = approverFieldKeys(version.definition);
+  const lookups = version.form.some((field) => field.type === "LOOKUP") ? await loadFieldLookups() : undefined;
   const approverPeople = approverFields.length ? (await listApproverOptions()).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` })) : undefined;
 
   return (
@@ -29,7 +31,7 @@ export default async function RaiseRequestPage({ params }: { params: Promise<{ w
         </Link>
       </PageHeader>
       <div className="max-w-2xl">
-        <RequestForm mode="submit" workflowId={workflow.id} fields={version.form} people={people} approverPeople={approverPeople} approverFields={approverFields} />
+        <RequestForm mode="submit" workflowId={workflow.id} fields={version.form} people={people} approverPeople={approverPeople} approverFields={approverFields} lookups={lookups} />
       </div>
     </>
   );

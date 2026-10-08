@@ -1,4 +1,5 @@
 import "server-only";
+import { loadLookupNames } from "@/lib/db/repositories/lookups.repository";
 import { findRequest, findWorkflow, findWorkflowVersion, isParticipant, listTimeline, userNames } from "@/lib/db/repositories/approvals.repository";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { activeDelegatorsFor, listComments, type CommentItem } from "@/lib/db/repositories/collab.repository";
@@ -64,6 +65,7 @@ export async function loadRequestView(requestId: number, viewer: Actor): Promise
     return ["actorId", "approverId", "onBehalfOf"].map((key) => payload[key]).filter((value): value is number => typeof value === "number");
   });
   const names = await userNames([...new Set([request.requesterId, ...peopleInState(state), ...personFieldIds, ...actorIds])]);
+  const lookupNames = version.form.some((field) => field.type === "LOOKUP") ? await loadLookupNames() : undefined;
   const labels = new Map(version.definition.nodes.map((node) => [node.id, node.label]));
   const labelOf = (nodeId: string) => labels.get(nodeId) ?? nodeId;
   const nameOf = (userId: number) => names.get(userId) ?? `User #${userId}`;
@@ -87,7 +89,7 @@ export async function loadRequestView(requestId: number, viewer: Actor): Promise
     requesterName: nameOf(request.requesterId),
     form: version.form,
     rawFields: Object.fromEntries(Object.entries(request.formData).map(([key, value]) => [key, value === null || value === undefined ? "" : String(value)])),
-    fields: version.form.map((field) => ({ key: field.key, label: field.label, value: displayValue(field, request.formData[field.key], names) })),
+    fields: version.form.map((field) => ({ key: field.key, label: field.label, value: displayValue(field, request.formData[field.key], names, lookupNames) })),
     stages: buildStepMap(version.definition, state, version.builder, names, {
       formData: request.formData as EngineFormData,
       fieldLabel: (key) => version.form.find((field) => field.key === key)?.label ?? key,

@@ -60,6 +60,7 @@ The number of levels and how they combine is unlimited. There are no fixed "Leve
 | F-15 | Comments on a request | Built and verified 1 Oct 2026 |
 | F-16 | Handing over pending approvals | Built and tested on MySQL 1 Oct 2026 |
 | F-54 | DoA view derived from workflows | Built 1 Oct 2026; reads DoA matrices 8 Oct 2026 |
+| F-75 | Form field creator: all types, master-data dropdowns | Built 8 Oct 2026 (S12) |
 | F-72 | Approver designations (who can be picked as approver) | Built 8 Oct 2026 (S11) |
 | F-73 | Super Admin deletes a request (soft) | Built 8 Oct 2026 (S11) |
 | F-74 | Admin dashboards: utilisation, department, approver, raiser | Built 8 Oct 2026 (S11) |
@@ -702,6 +703,21 @@ flowchart TD
 - **Department-wise raised:** per department of the person who raised: raised, approved, rejected, open, average time to close; plus each department's top approval types.
 - **Approver-wise:** per approver: assigned, approved, rejected, changes asked, pending now, overdue now, average time to decide, decided within the response time %.
 - **Raiser-wise by department:** each raiser grouped under their department: raised, approved, rejected, open, average time to close, last raised.
+
+## F-75 Form field creator (S12, D-088)
+IT adds fields in the workflow builder (F-50). Each field has a label, a key (follows the label until edited), a type, Required, and optional help text.
+
+| Type | Requester sees | Stored | Conditions offer |
+|---|---|---|---|
+| Short text / Long text | text box | text | is / is not / empty / filled in |
+| Number / amount | number box (12,50,000 accepted); optional smallest value | number | more / at least / less / at most / is / is not / empty / filled in |
+| Date | date picker | YYYY-MM-DD | is before / on or before / after / on or after / is / empty / filled in |
+| Choice | dropdown of IT's options (list editor) | the option | is / is not / empty / filled in, value picked from the options |
+| Department (from the list) | dropdown of active departments | department code | is / is not / empty / filled in, value picked from departments |
+| Designation (from the list) | dropdown of active designations | designation code | the same, from designations |
+| Person | dropdown of people (approvers only when it decides an approver, D-085) | user id | is / is not / empty / filled in |
+
+- The server checks every value: a Choice must be one of the options, and a Department/Designation an active code. A department made inactive later still displays on old requests.
 
 ## F-58 DoA matrix per approval type (S7, D-075)
 ```

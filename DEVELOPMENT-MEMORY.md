@@ -161,6 +161,12 @@
 | D-085 | 8 Oct 2026 | **Approver designations** (F-72). A designation is ticked "Approver" (Manager and above). Only approver-eligible people (active, not break-glass, designation ticked) can be **chosen** as approvers.<br>• This covers named workflow and custom steps, group members, HOD, reporting manager, delegate, handover target, and person fields feeding FORM_FIELD_USER.<br>• Choices already saved stay valid until changed; the engine is unchanged.<br>• Existing designations are ticked at migration; new ones start unticked.<br>• **Supersedes the "pick anyone" part of D-026/D-040.** Owner chose "all approver pickers". | Owner, 8 Oct 2026 |
 | D-086 | 8 Oct 2026 | **Super Admin deletes requests: a soft delete** (F-73).<br>• A reason is required; pending tasks are CANCELLED.<br>• The request is hidden from every list, queue, job and report; the row, timeline and audit stay (D-012).<br>• Super Admin → Requests (All / Deleted) and a button on the request page. There is no undo. Owner chose soft over permanent. | Owner, 8 Oct 2026 |
 | D-087 | 8 Oct 2026 | **Admin dashboards** (F-74), `/admin/dashboards/*`: Utilisation, Department-wise raised, Approver-wise, Raiser-wise by department.<br>• One GET filter (India dates, the FY to date by default, type incl. custom, department); a CSV per page.<br>• Department = the raiser's current department (the approver's, on the approver page). A delegate's decision counts for the approver. Deleted requests are excluded. | Owner, 8 Oct 2026 |
+| D-088 | 8 Oct 2026 | **Form field creator** (F-75).
+- **Field types:** Short/Long text, Number, Date, Dropdown (IT's options, a list editor), **Department / Designation from the list** (LOOKUP, `source`, the code stored, the name shown, checked against the active list), Person. Help text can be set.
+- **Keys** follow the label until edited; saved keys are locked.
+- **Conditions** are type-aware: dates compare by calendar order (engine + validator accept YYYY-MM-DD for before/after); lists, options and people are picked, not typed.
+- **Test mode** keeps the valid sample values.
+- **The level map** previews skip conditions that already hold. | Owner, 8 Oct 2026 |
 | D-033 | 28 Sep 2026 | **Staff data is provided by the admin. Roles are assigned per user, by the admin only. Users are added or made inactive in the Admin Portal** (never hard-deleted, so history and audit stay intact). *Resolves Q-010.* | Owner (answer 7) |
 
 ## 4. Open questions (must be answered before the phase shown)
@@ -184,6 +190,28 @@
 | Q-015 | **Break-glass and WhatsApp:** the break-glass account signs in with a password **plus the WhatsApp code** (D-025). If WhatsApp or CEOITBox is down, which is exactly when break-glass may be needed, it can't sign in. Keep the code, or skip it only during the console-enabled window? | Go-live | Open, waiting on the owner (built conservatively: the code is required) |
 
 ## 5. Work log (newest first)
+
+### 8 Oct 2026 (build session 12: form field creator tested and fixed, v1.3.0)
+- The owner asked for the whole flow creation form to be tested, database-backed dropdowns, the dropdown creator and the date selector fixed, every data type checked, and an e2e test.
+- **Tested in the browser key by key.** The automation's paste first hid the bugs, so key-by-key input was used.
+- **Confirmed:**
+  - the Choices box dropped every comma ("Capex, Opex" → "CapexOpex");
+  - the field key stopped at the first letter ("Delivery Date" → `d`).
+- **Found in the code:**
+  - number boxes dropped "1." / "-" as they were typed;
+  - conditions were a text box for every type, and the engine/validator refused date order;
+  - the operators ignored the type;
+  - test mode threw away all sample values on one bad value.
+- **Built:**
+  - `features/admin/FormFieldsEditor.tsx`: field editor, ChoiceListEditor, NumberDraftInput, operatorsFor, ConditionValueInput;
+  - the LOOKUP type in `server/forms/fields.ts` (isIsoDate, partial parse data, readable dates and lookup names);
+  - `lib/db/repositories/lookups.repository.ts`, wired into submit, resubmit, simulate, the builder options, the request form, test mode and the request view;
+  - date order in `server/engine/conditions.ts` and `validate.ts`;
+  - the step-map preview of skip conditions, with date words.
+- **Tests:**
+  - unit 254 (+11 in form-fields.test.ts);
+  - integration 64;
+  - e2e 25 (+3 in session12.spec: builds every field type key by key, test mode on date and department conditions, publishes, raises with validation, checks the stored values and the skipped level).
 
 ### 8 Oct 2026 (build session 11: approver designations, request deletion, dashboards, v1.2.0)
 - The owner asked for:

@@ -34,6 +34,9 @@ function asList(value: ScalarValue | ScalarValue[] | undefined): ScalarValue[] {
   return Array.isArray(value) ? value : [value];
 }
 
+const DATE_TEXT = /^\d{4}-\d{2}-\d{2}$/;
+const isDateText = (value: unknown): value is string => typeof value === "string" && DATE_TEXT.test(value);
+
 export function evaluateComparison(comparison: Comparison, formData: FormData): boolean {
   const actual = formData[comparison.field];
   switch (comparison.operator) {
@@ -58,6 +61,14 @@ export function evaluateComparison(comparison: Comparison, formData: FormData): 
     case "GTE":
     case "LT":
     case "LTE": {
+      // Dates (YYYY-MM-DD) order as text (S12-04); anything else as numbers.
+      if (isDateText(actual) && isDateText(comparison.value)) {
+        const order = actual < comparison.value ? -1 : actual > comparison.value ? 1 : 0;
+        if (comparison.operator === "GT") return order > 0;
+        if (comparison.operator === "GTE") return order >= 0;
+        if (comparison.operator === "LT") return order < 0;
+        return order <= 0;
+      }
       const left = toNumber(actual);
       const right = toNumber(comparison.value);
       if (left === null || right === null) return false;

@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { createWorkflowAction, saveDraftAction } from "@/app/admin/workflows/actions";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
-import { FIELD_TYPES, type FieldType, type FormField } from "@/server/forms/fields";
+import type { FieldLookups, FormField } from "@/server/forms/fields";
+import { ConditionValueInput, FormFieldsEditor, freshCondition, needsValue, operatorsFor } from "@/features/admin/FormFieldsEditor";
 import { doaBandLabels, type ApproverPick, type BuilderDoa, type BuilderInnerStage, type BuilderStage, type BuilderStep } from "@/server/workflows/builder";
 
 // Structured workflow builder (D-056, F-50). Stages run in order; a stage
@@ -14,11 +15,11 @@ export interface BuilderOptions {
   roles: { code: string; name: string }[];
   departments: { id: number; label: string }[];
   groups: { id: number; label: string }[];
+  lookups: FieldLookups; // department / designation lists for "from the list" fields
 }
 
 type Rule = BuilderStep["rule"];
 
-const FIELD_LABEL: Record<FieldType, string> = { TEXT: "Short text", LONG_TEXT: "Long text", NUMBER: "Number / amount", DATE: "Date", CHOICE: "Choice", PERSON: "Person" };
 const PICK_LABEL: Record<ApproverPick["kind"], string> = {
   PEOPLE: "Specific people",
   REQUESTER_MANAGER: "Requester's manager",
@@ -29,16 +30,6 @@ const PICK_LABEL: Record<ApproverPick["kind"], string> = {
   GROUP: "An approver group",
   FORM_FIELD_USER: "Person chosen in a form field",
 };
-const OPERATORS = [
-  ["GT", "is more than"],
-  ["GTE", "is at least"],
-  ["LT", "is less than"],
-  ["LTE", "is at most"],
-  ["EQ", "is"],
-  ["NEQ", "is not"],
-  ["IS_EMPTY", "is empty"],
-  ["IS_NOT_EMPTY", "is filled in"],
-] as const;
 
 function defaultPick(kind: ApproverPick["kind"], options: BuilderOptions): ApproverPick {
   switch (kind) {
@@ -72,6 +63,8 @@ export function WorkflowBuilder({
 }) {
   const [stages, setStages] = useState<BuilderStage[]>(initialStages);
   const [form, setForm] = useState<FormField[]>(initialForm);
+  // Keys already saved never change (S12-02).
+  const [lockedKeys] = useState(() => initialForm.map((field) => field.key));
   // Random ids: a counter restarts on every page load and would collide
   // with ids already saved in the version being edited.
   const newId = newStepId;
@@ -119,92 +112,7 @@ export function WorkflowBuilder({
         </section>
       )}
 
-      <section className="card">
-        <div className="border-b border-line px-5 py-4">
-          <h2 className="font-semibold">Form fields</h2>
-          <p className="text-label text-ink-muted">What the requester fills in. Steps can skip on these values, e.g. amount.</p>
-        </div>
-        <div className="divide-y divide-line">
-          {form.map((field, index) => (
-            <div key={index} className="grid items-start gap-3 px-5 py-3 lg:grid-cols-[1fr_160px_170px_auto_auto]">
-              <input
-                aria-label="Field label"
-                value={field.label}
-                onChange={(event) => {
-                  const label = event.target.value;
-                  setForm((all) =>
-                    all.map((item, i) =>
-                      i === index ? { ...item, label, key: item.key || label.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 50) } : item,
-                    ),
-                  );
-                }}
-                placeholder="Label, e.g. Amount (₹)"
-                className="field-input"
-              />
-              <input
-                aria-label="Field key"
-                value={field.key}
-                onChange={(event) => setForm((all) => all.map((item, i) => (i === index ? { ...item, key: event.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "") } : item)))}
-                placeholder="key"
-                className="field-input font-mono"
-              />
-              <select
-                aria-label="Field type"
-                value={field.type}
-                onChange={(event) => setForm((all) => all.map((item, i) => (i === index ? { ...item, type: event.target.value as FieldType, options: event.target.value === "CHOICE" ? (item.options ?? []) : undefined, min: event.target.value === "NUMBER" ? item.min : undefined } : item)))}
-                className="field-input"
-              >
-                {FIELD_TYPES.map((type) => (
-                  <option key={type} value={type}>
-                    {FIELD_LABEL[type]}
-                  </option>
-                ))}
-              </select>
-              <label className="flex h-11 items-center gap-2 text-label">
-                <input type="checkbox" checked={field.required} onChange={(event) => setForm((all) => all.map((item, i) => (i === index ? { ...item, required: event.target.checked } : item)))} />
-                Required
-              </label>
-              <button type="button" onClick={() => setForm((all) => all.filter((_, i) => i !== index))} className="btn-secondary btn-compact h-11">
-                Remove
-              </button>
-              {field.type === "NUMBER" && (
-                <label className="flex flex-wrap items-center gap-2 text-label lg:col-span-5">
-                  Smallest value allowed
-                  <input
-                    aria-label={`Smallest value for ${field.label || field.key}`}
-                    inputMode="decimal"
-                    value={field.min ?? ""}
-                    onChange={(event) => {
-                      const raw = event.target.value.replace(/[,\s₹]/g, "");
-                      const min = raw === "" || raw === "-" || !Number.isFinite(Number(raw)) ? undefined : Number(raw);
-                      setForm((all) => all.map((item, i) => (i === index ? { ...item, min } : item)));
-                    }}
-                    placeholder="none"
-                    className="field-input w-32"
-                  />
-                  <span className="text-caption text-ink-faint">Use 0 for amounts. A DoA amount can never be negative.</span>
-                </label>
-              )}
-              {field.type === "CHOICE" && (
-                <input
-                  aria-label="Choices"
-                  value={(field.options ?? []).join(", ")}
-                  onChange={(event) =>
-                    setForm((all) => all.map((item, i) => (i === index ? { ...item, options: event.target.value.split(",").map((option) => option.trim()).filter(Boolean) } : item)))
-                  }
-                  placeholder="Choices, separated by commas: Capex, Opex"
-                  className="field-input lg:col-span-5"
-                />
-              )}
-            </div>
-          ))}
-        </div>
-        <div className="px-5 py-3">
-          <button type="button" onClick={() => setForm((all) => [...all, { key: "", label: "", type: "TEXT", required: false }])} className="btn-secondary btn-compact">
-            Add field
-          </button>
-        </div>
-      </section>
+      <FormFieldsEditor form={form} setForm={setForm} lockedKeys={lockedKeys} />
 
       <LevelsEditor stages={stages} setStages={setStages} options={options} form={form} newId={newId} />
 
@@ -377,6 +285,7 @@ function StageList({
                     value={stage.condition}
                     onChange={(condition) => setStage(index, { ...stage, condition })}
                     prefix="If"
+                    options={options}
                   />
                 </div>
                 <div className="grid gap-3 lg:grid-cols-2">
@@ -636,38 +545,41 @@ function DoaEditor({
 
 type SimpleCondition = NonNullable<BuilderStep["skipWhen"]>;
 
-// One field-operator-value condition, used by choices and skip rules.
-function ConditionEditor({ form, value, onChange, prefix }: { form: FormField[]; value: SimpleCondition; onChange: (value: SimpleCondition) => void; prefix: string }) {
+// One field-operator-value condition, used by choices and skip rules. The
+// operators and the value box follow the field's type (S12-04/05).
+function ConditionEditor({
+  form,
+  value,
+  onChange,
+  prefix,
+  options,
+}: {
+  form: FormField[];
+  value: SimpleCondition;
+  onChange: (value: SimpleCondition) => void;
+  prefix: string;
+  options: BuilderOptions;
+}) {
+  const field = form.find((item) => item.key === value.field);
   return (
     <div className="flex flex-wrap items-center gap-2 text-label">
-      <span className="font-medium">{prefix}</span>
-      <select value={value.field} onChange={(event) => onChange({ ...value, field: event.target.value })} className="field-input w-auto" aria-label="Field">
-        {form.map((field) => (
-          <option key={field.key} value={field.key}>
-            {field.label || field.key}
+      {prefix && <span className="font-medium">{prefix}</span>}
+      <select value={value.field} onChange={(event) => onChange(freshCondition(form.find((item) => item.key === event.target.value)))} className="field-input w-auto" aria-label="Field">
+        {!field && <option value={value.field}>Choose a field…</option>}
+        {form.map((item) => (
+          <option key={item.key} value={item.key}>
+            {item.label || item.key}
           </option>
         ))}
       </select>
       <select value={value.operator} onChange={(event) => onChange({ ...value, operator: event.target.value as SimpleCondition["operator"] })} className="field-input w-auto" aria-label="Condition">
-        {OPERATORS.map(([operator, label]) => (
+        {operatorsFor(field).map(([operator, label]) => (
           <option key={operator} value={operator}>
             {label}
           </option>
         ))}
       </select>
-      {value.operator !== "IS_EMPTY" && value.operator !== "IS_NOT_EMPTY" && (
-        <input
-          aria-label="Value"
-          value={String(value.value ?? "")}
-          onChange={(event) => {
-            const raw = event.target.value;
-            const numeric = raw.replace(/[,\s₹]/g, "");
-            onChange({ ...value, value: numeric !== "" && Number.isFinite(Number(numeric)) ? Number(numeric) : raw });
-          }}
-          placeholder="e.g. 500000"
-          className="field-input w-40"
-        />
-      )}
+      {needsValue(value.operator) && <ConditionValueInput field={field} value={value.value} onChange={(next) => onChange({ ...value, value: next })} lookups={options.lookups} people={options.people} />}
     </div>
   );
 }
@@ -792,40 +704,14 @@ function StepEditor({
               type="checkbox"
               checked={skip !== null}
               disabled={form.length === 0}
-              onChange={(event) => onChange({ ...step, skipWhen: event.target.checked ? { field: form[0]?.key ?? "", operator: "LTE", value: "" } : null })}
+              onChange={(event) => onChange({ ...step, skipWhen: event.target.checked ? freshCondition(form[0]) : null })}
             />
             Skip this step when…
             {form.length === 0 && <span className="text-ink-faint">(add a form field first)</span>}
           </label>
           {skip && (
-            <div className="mt-2 flex flex-wrap gap-2">
-              <select value={skip.field} onChange={(event) => onChange({ ...step, skipWhen: { ...skip, field: event.target.value } })} className="field-input w-auto" aria-label="Field">
-                {form.map((field) => (
-                  <option key={field.key} value={field.key}>
-                    {field.label || field.key}
-                  </option>
-                ))}
-              </select>
-              <select value={skip.operator} onChange={(event) => onChange({ ...step, skipWhen: { ...skip, operator: event.target.value as typeof skip.operator } })} className="field-input w-auto" aria-label="Condition">
-                {OPERATORS.map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-              {skip.operator !== "IS_EMPTY" && skip.operator !== "IS_NOT_EMPTY" && (
-                <input
-                  aria-label="Value"
-                  value={String(skip.value ?? "")}
-                  onChange={(event) => {
-                    const raw = event.target.value;
-                    const numeric = raw.replace(/[,\s₹]/g, "");
-                    onChange({ ...step, skipWhen: { ...skip, value: numeric !== "" && Number.isFinite(Number(numeric)) ? Number(numeric) : raw } });
-                  }}
-                  placeholder="e.g. 500000"
-                  className="field-input w-48"
-                />
-              )}
+            <div className="mt-2">
+              <ConditionEditor form={form} value={skip} onChange={(next) => onChange({ ...step, skipWhen: next })} prefix="" options={options} />
             </div>
           )}
         </div>

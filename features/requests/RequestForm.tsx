@@ -3,7 +3,7 @@
 import { resubmitAction, submitRequestAction } from "@/app/users/actions";
 import { useState } from "react";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
-import type { FormField } from "@/server/forms/fields";
+import { NO_LOOKUPS, type FieldLookups, type FormField } from "@/server/forms/fields";
 import { ACCEPT_ATTRIBUTE } from "@/server/attachments/files";
 
 // Raise a request, or edit and resubmit one (F-14). The server re-checks
@@ -16,6 +16,7 @@ export function RequestForm({
   people,
   approverPeople,
   approverFields = [],
+  lookups = NO_LOOKUPS,
   initial,
   initialTitle,
 }: {
@@ -27,6 +28,8 @@ export function RequestForm({
   // D-085: person fields that decide an approver list approvers only.
   approverPeople?: { id: number; label: string }[];
   approverFields?: string[];
+  // Department / designation lists for "from the list" fields (D-088).
+  lookups?: FieldLookups;
   initial?: Record<string, string>;
   initialTitle?: string;
 }) {
@@ -56,7 +59,7 @@ export function RequestForm({
               {field.label}
               {!field.required && <span className="font-normal text-ink-faint"> (optional)</span>}
             </label>
-            <FieldInput field={field} people={approverPeople && approverFields.includes(field.key) ? approverPeople : people} defaultValue={initial?.[field.key] ?? ""} />
+            <FieldInput field={field} people={approverPeople && approverFields.includes(field.key) ? approverPeople : people} lookups={lookups} defaultValue={initial?.[field.key] ?? ""} />
             {field.help && <p className="mt-1 text-caption text-ink-muted">{field.help}</p>}
             <FieldError result={result} name={field.key} />
           </div>
@@ -88,7 +91,7 @@ export function RequestForm({
   );
 }
 
-function FieldInput({ field, people, defaultValue }: { field: FormField; people: { id: number; label: string }[]; defaultValue: string }) {
+function FieldInput({ field, people, lookups, defaultValue }: { field: FormField; people: { id: number; label: string }[]; lookups: FieldLookups; defaultValue: string }) {
   const id = `f-${field.key}`;
   switch (field.type) {
     case "LONG_TEXT":
@@ -108,6 +111,21 @@ function FieldInput({ field, people, defaultValue }: { field: FormField; people:
           ))}
         </select>
       );
+    case "LOOKUP": {
+      const items = field.source ? lookups[field.source] : [];
+      return (
+        <select id={id} name={field.key} defaultValue={defaultValue} className="field-input">
+          <option value="">Choose…</option>
+          {/* A value saved earlier that is no longer active stays selectable. */}
+          {defaultValue && !items.some((item) => item.code === defaultValue) && <option value={defaultValue}>{defaultValue}</option>}
+          {items.map((item) => (
+            <option key={item.code} value={item.code}>
+              {item.name}
+            </option>
+          ))}
+        </select>
+      );
+    }
     case "PERSON":
       return (
         <select id={id} name={field.key} defaultValue={defaultValue} className="field-input">

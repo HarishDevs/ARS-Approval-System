@@ -248,8 +248,9 @@ function validateCondition(
   if (VALUE_OPERATORS.has(condition.operator) && (condition.value === undefined || condition.value === "")) {
     errors.push({ code: "CONDITION_VALUE_MISSING", message: `The condition on "${condition.field}" has no value.`, ...where });
   }
-  if (NUMERIC_OPERATORS.has(condition.operator) && typeof condition.value !== "number") {
-    errors.push({ code: "CONDITION_VALUE_NOT_NUMBER", message: `The condition on "${condition.field}" needs a number.`, ...where });
+  // "More / less" compares numbers, or dates written YYYY-MM-DD (S12-04).
+  if (NUMERIC_OPERATORS.has(condition.operator) && typeof condition.value !== "number" && !(typeof condition.value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(condition.value))) {
+    errors.push({ code: "CONDITION_VALUE_NOT_NUMBER", message: `The condition on "${condition.field}" needs a number or a date.`, ...where });
   }
   if ((condition.operator === "IN" || condition.operator === "NOT_IN") && !Array.isArray(condition.value)) {
     errors.push({ code: "CONDITION_VALUE_NOT_LIST", message: `The condition on "${condition.field}" needs a list of values.`, ...where });

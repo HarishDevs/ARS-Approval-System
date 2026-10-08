@@ -23,7 +23,7 @@ const doaSpec = builderSpecSchema.parse({
 
 describe("D-QA-04: amounts can't be negative", () => {
   it("a number field's minimum is enforced", () => {
-    expect(parseFormSubmission([AMOUNT], { amount: "-50,000" }, new Set())).toEqual({ ok: false, errors: { amount: "Enter 0 or more." } });
+    expect(parseFormSubmission([AMOUNT], { amount: "-50,000" }, new Set())).toEqual({ ok: false, errors: { amount: "Enter 0 or more." }, data: {} });
     expect(parseFormSubmission([AMOUNT], { amount: "0" }, new Set())).toEqual({ ok: true, data: { amount: 0 } });
     expect(parseFormSubmission([{ ...AMOUNT, min: 1000 }], { amount: "999" }, new Set())).toMatchObject({ ok: false, errors: { amount: "Enter 1,000 or more." } });
   });

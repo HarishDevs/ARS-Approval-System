@@ -30,6 +30,7 @@ import { allSteps, checkDoaAmount, checkDoaForm, compileBuilder, type BuilderSpe
 import { describeRule } from "@/server/approvals/step-map";
 import { approverFieldKeys, ineligibleChoices, namedApprovers } from "@/server/approvals/approver-rules";
 import { approverStatuses } from "@/lib/db/repositories/approvers.repository";
+import { loadFieldLookups } from "@/lib/db/repositories/lookups.repository";
 import { listUserIdsWithRole } from "@/lib/db/repositories/users.repository";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { getEnv } from "@/config/environment";
@@ -230,9 +231,9 @@ export async function simulateVersion(versionId: number, input: { requesterId: n
   if (!version) return null;
   const snapshot = await loadDirectorySnapshot();
   const active = new Set(snapshot.users.filter((user) => user.active && !user.isBreakGlass).map((user) => user.id));
-  const parsed = parseFormSubmission(version.form, input.fields, active);
-  // Test mode still runs with partial data, so the IT team sees the effect of each field.
-  const formData = parsed.ok ? parsed.data : {};
+  const parsed = parseFormSubmission(version.form, input.fields, active, await loadFieldLookups());
+  // Test mode still runs with the values that are fine, so the IT team sees the effect of each field.
+  const formData = parsed.data;
   const result = simulate(version.definition, { requesterId: input.requesterId, formData, now: now() }, toDirectory(snapshot));
   const names = await userNames([...new Set(result.stages.flat().flatMap((step) => step.approverIds))]);
   return {
@@ -338,7 +339,7 @@ export async function submitRequest(
   try {
     changed = await withTransaction(async (connection) => {
       const snapshot = await loadDirectorySnapshot(connection);
-      const parsed = parseFormSubmission(version.form, input.fields, activeIds(snapshot));
+      const parsed = parseFormSubmission(version.form, input.fields, activeIds(snapshot), await loadFieldLookups(connection));
       const doaErrors = parsed.ok ? { ...checkDoaAmount(version.builder, parsed.data), ...approverFieldErrors(version.definition, parsed.data, snapshot) } : {};
       if (!parsed.ok || titleError || Object.keys(doaErrors).length) {
         throw new FormError({ ...(parsed.ok ? {} : parsed.errors), ...doaErrors, ...(titleError ? { title: titleError } : {}) });
@@ -440,12 +441,13 @@ export function resumeRequest(requestId: number, actor: Actor) {
 
 // Only the requester resubmits, on the same request number (G-04). New
 // field values, if given, are checked against the request's form version.
-export function resubmitRequest(input: { requestId: number; fields?: Record<string, string | undefined>; policy?: RestartPolicy }, actor: Actor) {
+export async function resubmitRequest(input: { requestId: number; fields?: Record<string, string | undefined>; policy?: RestartPolicy }, actor: Actor) {
+  const lookups = input.fields ? await loadFieldLookups() : undefined;
   return mutate(input.requestId, actor, (request, definition, directory, { version, snapshot }) => {
     if (request.requesterId !== actor.id) throw new EngineError("NOT_AUTHORISED", "Only the person who raised the request can resubmit it.");
     let formData = request.formData as EngineFormData;
     if (input.fields) {
-      const parsed = parseFormSubmission(version.form, input.fields, activeIds(snapshot));
+      const parsed = parseFormSubmission(version.form, input.fields, activeIds(snapshot), lookups);
       if (!parsed.ok) throw new FormError(parsed.errors);
       const doaErrors = { ...checkDoaAmount(version.builder, parsed.data), ...approverFieldErrors(version.definition, parsed.data, snapshot, request.formData as EngineFormData) };
       if (Object.keys(doaErrors).length) throw new FormError(doaErrors);

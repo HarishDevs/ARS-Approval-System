@@ -12,6 +12,7 @@ import { loadRequestView } from "@/server/approvals/view";
 import { listActiveUserOptions } from "@/lib/db/repositories/admin-users.repository";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 import { DeleteRequestButton } from "@/features/superadmin/DeleteRequestButton";
+import { loadFieldLookups } from "@/lib/db/repositories/lookups.repository";
 
 // F-14 request page. loadRequestView applies the record-level check
 // (D-057); anyone else gets the same 404 as a request that doesn't exist.
@@ -23,6 +24,7 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
   if (!view) notFound();
   const query = await searchParams;
   const submitted = query.submitted === "1";
+  const lookups = view.canResubmit && view.form.some((field) => field.type === "LOOKUP") ? await loadFieldLookups() : undefined;
   const people =
     view.canResubmit && view.form.some((field) => field.type === "PERSON")
       ? (await listActiveUserOptions()).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` }))
@@ -67,7 +69,7 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
           {view.canResubmit && (
             <section>
               <h2 className="mb-3 font-semibold">Update and resubmit</h2>
-              <RequestForm mode="resubmit" requestId={view.id} fields={view.form} people={people} initial={view.rawFields} />
+              <RequestForm mode="resubmit" requestId={view.id} fields={view.form} people={people} initial={view.rawFields} lookups={lookups} />
             </section>
           )}
           {(view.canWithdraw || view.canReopen) && (

@@ -1,5 +1,17 @@
 # Release notes
 
+## v1.3.0 (8 Oct 2026): the form field creator
+- **Fixed after testing key by key:**
+  - **Dropdowns:** options are now a list. Type one and press Enter or **Add option**, or paste several at once. Duplicates are refused. Before, the box dropped every comma, so only one option could be made.
+  - **Field keys** follow the whole label (before, "Delivery Date" became `d`). Saved keys are locked.
+  - **Number boxes** keep a decimal point or a minus sign while you type.
+  - **Dates in conditions:** "skip when *Needed by* is before / after …" uses a date picker and now works. Every condition's value box matches its field: a dropdown for options and lists, people for a person, numbers for amounts.
+- **New: Department and Designation fields from the database.** The requester picks from the live list of active departments or designations; conditions can use them, e.g. skip a level for one department.
+- **Help text** under any field.
+- **Test mode** keeps the valid sample values even when one is wrong.
+- **The request page** shows a level as "Skipped: <reason>" as soon as its condition applies, not only when it is reached.
+- Dates show as 01 Dec 2026.
+
 ## v1.2.0 (8 Oct 2026): approver designations, request deletion, dashboards
 - **Approver designations:** Admin → Departments → Designations has an **Approver** tick. Tick Manager and above.
   - Only people whose designation is ticked can be chosen as approvers: named workflow and custom approval steps, approver group members, department HOD, reporting manager, out-of-office delegate, handover, and person fields that pick an approver.

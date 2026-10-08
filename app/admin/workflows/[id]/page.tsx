@@ -79,7 +79,7 @@ export default async function WorkflowPage({ params, searchParams }: { params: P
               </div>
             ))}
           </section>
-          {latest && <TestModePanel versionId={latest.id} form={latest.form} people={everyone} />}
+          {latest && <TestModePanel versionId={latest.id} form={latest.form} people={everyone} lookups={options.lookups} />}
           <DetailsForm workflowId={workflow.id} name={workflow.name} description={workflow.description ?? null} active={workflow.active} />
         </div>
       </div>
