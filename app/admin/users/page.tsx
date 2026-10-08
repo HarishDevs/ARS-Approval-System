@@ -21,6 +21,9 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
   return (
     <>
       <PageHeader title="Users & roles" description="Only people added here can sign in. People are made inactive, never deleted, so their history stays.">
+        <Link href="/admin/import?kind=users" className="btn-secondary btn-compact">
+          Import
+        </Link>
         <Link href="/admin/users/new" className="btn-primary btn-compact">
           Add user
         </Link>

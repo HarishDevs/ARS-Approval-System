@@ -157,6 +157,7 @@
 | D-081 | 8 Oct 2026 | **GoDaddy runs the app behind Cloudflare**, whose email obfuscation rewrites addresses in the HTML. Every address shown on a page goes through `<Email>` / `<SafeText>` (features/ui/SafeText.tsx). New screens must do the same, or React hydration breaks (#418). | Claude, from the live console |
 | D-082 | 8 Oct 2026 | **The Super Admin's Google sign-in is `itsupport@arsenergy.co.in`**. `itadmin@arssteels.co.in` is an alias of arunram@arssteels.co.in, and Google ID tokens carry the primary address, so login_logs showed UNKNOWN_ACCOUNT.<br>• Migration 202610081400 moves the bootstrap account (User ID `itadmin`, roles unchanged) once, only if it's unlinked.<br>• The bootstrap seed now only creates the account and never overwrites it.<br>• **Rule for staff:** create users with their **primary** Google email, never an alias. | Owner, 8 Oct 2026 |
 | D-083 | 8 Oct 2026 | **The three parts of the app are called "spaces" on screen** (My approvals, Admin, Super Admin), not "areas". One **account menu** at the top right holds the name, email, the current space badge, **Switch space**, Notifications, Sign-in & devices and Sign out. The sidebar holds only the current space's pages, and on phones it opens as a drawer. Code identifiers (`AppArea`, `requireArea`) keep their names. | Owner, 8 Oct 2026 (three UI reviews) |
+| D-084 | 8 Oct 2026 | **Bulk import of master data by CSV** (F-59): users, departments, designations, approver groups and holidays, from the Admin **and** the Super Admin space.<br>• **Check** is a dry run; **Import** re-plans inside one transaction and writes every row or none.<br>• Matched by User ID, code or date: it creates or updates, and never deletes or deactivates.<br>• The same rules as the forms (D-025, D-047); audit per record + `IMPORT_COMPLETED`; downloads of current data are audited (`IMPORT_DATA_DOWNLOADED`).<br>• CSV, not XLSX: no extra library, and Excel opens and saves it. Approval types are not imported; they are built and tested in the workflow builder. | Owner request, 8 Oct 2026 |
 | D-033 | 28 Sep 2026 | **Staff data is provided by the admin. Roles are assigned per user, by the admin only. Users are added or made inactive in the Admin Portal** (never hard-deleted, so history and audit stay intact). *Resolves Q-010.* | Owner (answer 7) |
 
 ## 4. Open questions (must be answered before the phase shown)
@@ -180,6 +181,28 @@
 | Q-015 | **Break-glass and WhatsApp:** the break-glass account signs in with a password **plus the WhatsApp code** (D-025). If WhatsApp or CEOITBox is down, which is exactly when break-glass may be needed, it can't sign in. Keep the code, or skip it only during the console-enabled window? | Go-live | Open, waiting on the owner (built conservatively: the code is required) |
 
 ## 5. Work log (newest first)
+
+### 8 Oct 2026 (build session 10: bulk import, v1.1.0)
+- The owner asked for import with a download template and an upload, for Admin and Super Admin, for users, designations, departments "and that kind", with loaders (D-084, F-59).
+- **Built:**
+  - `server/import/csv.ts`: an Excel-friendly CSV reader/writer; formula cells guarded;
+  - `kinds.ts`: column specs;
+  - `plan.ts`: a pure planner with every rule;
+  - `service.ts`: check, import (one transaction), downloads;
+  - `lib/db/repositories/import.repository.ts`;
+  - actions `app/admin/import/actions.ts`; download route `/api/admin/import/[kind]?type=template|data`;
+  - pages `/admin/import` and `/superadmin/import` with loading skeletons;
+  - `features/admin/ImportPanel.tsx`; `features/ui/Spinner.tsx`;
+  - Import buttons on the Users, Departments, Groups and Calendar pages; DEPLOYMENT.md Part K gives the order.
+- **Rules worth remembering:**
+  - an unchanged inactive reference (manager, department, HOD, group member) is accepted, so a re-uploaded export stays valid;
+  - managers can be rows of the same file (set after every row is written);
+  - the members cell replaces the group's members.
+- **Tests:**
+  - unit 234 (+17 import);
+  - integration 60 (+7: order of imports, all-or-nothing, the Super Admin role rule, sessions ended on an email change, groups/holidays, export → re-import = no changes);
+  - e2e 19 (+2: template download, check with a problem, import; the Super Admin screen; a plain user gets 404 on the download);
+  - lint and typecheck clean; the screen and its loader were checked in the browser.
 
 ### 8 Oct 2026 (build session 9: UI polish, v1.0.6)
 - The owner sent three UI reviews (My approvals, Super Admin templates, Admin overview) and asked to check each item, build it, and say "space" instead of "area" (D-083).

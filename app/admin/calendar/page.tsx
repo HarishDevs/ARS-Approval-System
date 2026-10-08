@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { AddHolidayForm, RemoveHolidayButton, WorkingDaysForm } from "@/features/admin/CalendarForms";
 import { requireArea } from "@/server/authorization/guards";
@@ -12,8 +13,11 @@ export default async function CalendarPage() {
     <>
       <PageHeader
         title="Working calendar"
-        description="Response times (“respond within N hours”) only count working days. Changes apply to approvals that start afterwards."
-      />
+        description="Response times (“respond within N hours”) only count working days. Changes apply to approvals that start afterwards.">
+        <Link href="/admin/import?kind=holidays" className="btn-secondary btn-compact">
+          Import holidays
+        </Link>
+      </PageHeader>
       <div className="grid gap-6 xl:grid-cols-2">
         <section className="card">
           <h2 className="border-b border-line px-5 py-4 font-semibold">Working days</h2>

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { DepartmentForm, DesignationForm } from "@/features/admin/OrganisationForms";
 import { requireArea } from "@/server/authorization/guards";
@@ -13,7 +14,11 @@ export default async function OrganisationPage() {
 
   return (
     <>
-      <PageHeader title="Departments" description="Departments and their heads (HOD) drive who approves at the HOD level. Designations are job titles." />
+      <PageHeader title="Departments" description="Departments and their heads (HOD) drive who approves at the HOD level. Designations are job titles.">
+        <Link href="/admin/import?kind=departments" className="btn-secondary btn-compact">
+          Import departments or designations
+        </Link>
+      </PageHeader>
       <div className="space-y-6">
         <section className="card divide-y divide-line">
           <div className="px-5 py-4">

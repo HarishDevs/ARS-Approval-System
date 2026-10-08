@@ -60,6 +60,7 @@ The number of levels and how they combine is unlimited. There are no fixed "Leve
 | F-15 | Comments on a request | Built and verified 1 Oct 2026 |
 | F-16 | Handing over pending approvals | Built and tested on MySQL 1 Oct 2026 |
 | F-54 | DoA view derived from workflows | Built 1 Oct 2026; reads DoA matrices 8 Oct 2026 |
+| F-59 | Bulk import of master data (template, check, import) | Built 8 Oct 2026 (S10) |
 | F-90 | GoDaddy deployment and go-live | v1.0.0 prepared 8 Oct 2026 (guide, release notes, tag); deploy with the owner |
 | F-14 | Request screens: raise → queue → act → resubmit | Built and verified in the browser 30 Sep 2026 |
 | F-41 | Retry runner for failed messages | Built 30 Sep 2026 (cron set up at go-live) |
@@ -634,6 +635,32 @@ Full steps are in `docs/DEPLOYMENT.md`:
 - provider keys in `/superadmin`;
 - the break-glass setup;
 - a post-go-live checklist.
+
+## F-59 Bulk import of master data (S10, D-084)
+Kinds: **Users, Departments, Designations, Approver groups, Holidays**. The same screen is in the Admin space (`/admin/import`) and the Super Admin space (`/superadmin/import`). Each kind's list page links to it.
+
+```mermaid
+flowchart TD
+  A[Choose what to import] --> T[Download template: CSV with the header row]
+  A --> C[Download current data: same columns, filled]
+  T --> E[Fill in Excel, save as CSV UTF-8]
+  C --> E
+  E --> U[Upload the file]
+  U --> K{Check file: dry run, nothing saved}
+  K -- "any row has a problem" --> R[Every problem listed by row and column; download the problem list] --> E
+  K -- "all rows fine" --> P[Preview: N new · M changed · K unchanged]
+  P --> Y[Import: Yes, continue]
+  Y --> TX[One transaction: every row, or none]
+  TX -- "fails (e.g. someone else changed the data meanwhile)" --> F[Nothing saved, reason shown] --> U
+  TX -- ok --> D[Audit: one entry per record + IMPORT_COMPLETED summary] --> AL[After commit: WhatsApp-changed / sign-in-changed alerts to updated users]
+```
+- **Match key:** User ID (users), code (departments, designations, groups), date (holidays). A known key updates that record; a new key creates one. Rows that match exactly are left alone.
+- **Never through import:** deleting anything, deactivating users (that needs the pending-approval handover, F-16), break-glass and demo accounts.
+- **References:** a user's department and designation codes, and a department HOD and group members (User IDs), must already exist. A manager can be another row of the same file.
+- **Same rules as the forms:** only a Super Admin grants or removes Super Admin (D-047); password sign-in needs a WhatsApp number (D-025); there are no reporting-line loops; the email and WhatsApp number are unique.
+- **Group members:** the cell is the full list (User IDs separated by `;`). People left out are removed from the group, and that applies only to steps starting from now.
+- **Limits:** CSV only, 2 MB at most, 2,000 rows at most. A formula-looking cell (`=`, `+`, `-`, `@`) in a download gets a leading `'`, so Excel won't run it.
+- **Loaders:** the buttons show a spinner, and the page shows "Checking…" / "Importing… don't close this page" while the server works.
 
 ## F-58 DoA matrix per approval type (S7, D-075)
 ```

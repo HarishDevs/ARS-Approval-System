@@ -17,14 +17,16 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
-- **Now:** **v1.0.6 (UI polish, build session 9) is pushed** (8 Oct 2026).
-  - The site runs live at https://approval.arssteels.net (v1.0.3 deployed; v1.0.4–1.0.6 wait for the owner's Publish).
-  - The three spaces have one account menu (Switch space, Sign out), a phone drawer, and a cleaner overview per space (D-083).
+- **Now:** **v1.1.0 (bulk import, build session 10) is pushed** (8 Oct 2026).
+  - Admin / Super Admin → **Import data** for users, departments, designations, approver groups and holidays: template, check, import, all or nothing (F-59, D-084).
+  - v1.0.6 (UI polish, spaces, account menu) is in the same publish.
+  - The live site runs v1.0.3; v1.0.4–v1.1.0 wait for the owner's Publish.
 - **Next, with the owner on GoDaddy** (docs/DEPLOYMENT.md):
-  - Update Preview → check it's healthy → **Publish to Live**, to get v1.0.4–v1.0.6;
+  - Update Preview → check it's healthy → **Publish to Live**;
   - sign in with Google as `itsupport@arsenergy.co.in` (D-082);
-  - Super Admin: the Resend key, a **new** CEOITBox key, Phone ID; the WhatsApp templates (`ars_approval_needed_v2` and the rest);
-  - cron job; break-glass; demo or real staff; rotate the Firebase key that was pasted in chat.
+  - Super Admin: the Resend key, a **new** CEOITBox key, Phone ID; the WhatsApp templates;
+  - cron job; break-glass;
+  - **load the real staff with Import data** (Part K order); rotate the Firebase key that was pasted in chat.
 - **Still open:** Q-015 (break-glass without WhatsApp); the real staff list.
 
 ---
@@ -251,6 +253,25 @@ Found during S8-06:
 - [x] S8-12 Google sign-in reached UNKNOWN_ACCOUNT: itadmin@ is an alias. The Super Admin now signs in as itsupport@arsenergy.co.in (D-082, migration + non-overwriting seed, v1.0.5) (done 8 Oct 2026)
 - [ ] S8-01b Go-live on GoDaddy with the owner, following docs/DEPLOYMENT.md (the owner is at the wizard's "Add secrets" step)
 - [x] S8-04 Update the three living files; commit and push (done 8 Oct 2026)
+
+## Session log — build session 10: bulk import with templates and loaders (8 Oct 2026)
+Owner: "import options with a download-template option and an upload option, for Admin and Super Admin, for Users, Designations, Departments and that kind of master; add loaders".
+Read as: every master the admin keeps by hand. **Users, Departments, Designations, Approver groups, Holidays.** Approval types are excluded: they are built and tested in the workflow builder (F-59, D-084).
+- [x] S10-01 CSV engine (pure, unit-tested): parse with quotes, commas or semicolons, CRLF and a UTF-8 BOM (Excel); write with a BOM, with formula cells guarded (done 8 Oct 2026)
+- [x] S10-02 Column specs per kind (required, format, example) and the pure row checks (done 8 Oct 2026)
+- [x] S10-03 Import service: (done 8 Oct 2026)
+  - **Check** = a dry run that lists every problem by row;
+  - **Import** = re-check, then all rows in one transaction, or none;
+  - audit per record + a summary; alerts after the commit;
+  - the same user rules as the forms
+- [x] S10-04 Downloads: the template (header row) and the current data, per kind; admin space only; plain 404 otherwise (done 8 Oct 2026)
+- [x] S10-05 Import page in **both** the Admin and the Super Admin spaces (nav item); an "Import" link on the Users, Departments, Approver groups and Working calendar pages (done 8 Oct 2026)
+- [x] S10-06 Loaders: (done 8 Oct 2026)
+  - a Spinner component; spinners on Check and Import;
+  - a progress message while working; the controls locked while busy;
+  - `loading.tsx` skeletons for the import pages
+- [x] S10-07 Tests: unit (CSV, row checks), integration (check + import per kind, rules, all-or-nothing), e2e (download the template, upload, check, import) (done 8 Oct 2026)
+- [x] S10-08 Docs: the import guide in DEPLOYMENT.md (initial data load) and release notes; living files; release v1.1.0, CI green, tag (done 8 Oct 2026)
 
 ## Session log — build session 9: UI polish from the owner's three design reviews (8 Oct 2026)
 Owner: "add all these and check whether done or not in each Area, then build them, and instead of 'Area' change the name as 'Space'".

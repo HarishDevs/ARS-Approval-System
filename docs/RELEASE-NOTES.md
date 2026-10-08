@@ -1,5 +1,15 @@
 # Release notes
 
+## v1.1.0 (8 Oct 2026): bulk import
+- **Import data** in the Admin and Super Admin spaces, for **Users, Departments, Designations, Approver groups and Holidays**:
+  - **Download template** (CSV with the header row) or **Download current data** (the same columns, filled in, to edit and re-upload);
+  - **Upload → Check file**: a dry run that shows new, changed, unchanged and problem rows, every problem by row and column, and a downloadable problem list;
+  - **Import**: all rows in one go, or none.
+  - The same rules as the forms: only the Super Admin grants Super Admin; password sign-in needs WhatsApp; no reporting loops; emails and numbers stay unique.
+  - Each change and each import is in the audit log, and people whose WhatsApp number or sign-in method changed get the usual alert.
+- **Loaders:** spinners on Download, Check and Import; a "Checking… / Importing… please keep this page open" bar; the controls are locked while working; a skeleton while the page loads.
+- An **Import** button on the Users, Departments, Approver groups and Working calendar pages.
+
 ## v1.0.6 (8 Oct 2026): UI polish
 - **Spaces:** My approvals, Admin and Super Admin are now called *spaces*. Your name at the top right opens one menu with your space, **Switch space**, Notifications, Sign-in & devices and **Sign out**.
 - **Phones:** a menu button opens the page list as a drawer. Before this there was no menu below tablet width.

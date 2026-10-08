@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| App | ARS Approval Platform **v1.0.6** (`docs/RELEASE-NOTES.md`) |
+| App | ARS Approval Platform **v1.1.0** (`docs/RELEASE-NOTES.md`) |
 | Address | **https://approval.arssteels.net** (one app: `/users`, `/admin`, `/superadmin`) |
 | Hosting | GoDaddy **Node.js Hosting** ("Deploy your Node.js app"), from GitHub `HarishDevs/ARS-Approval-System`, branch `main` |
 | Database | MySQL 8 in GoDaddy cPanel |
@@ -262,6 +262,20 @@ Choose one:
   3. **Admin → Approver groups**: MD office, ED office, Finance desks and so on, with the real members.
   4. **Admin → Workflows → New workflow**: form fields; the **DoA matrix** (limits across, levels down, tick the bands); **test mode**; **Publish**.
   5. If demo data was loaded: swap the real people into the groups and HOD slots, then **Super Admin → Demo data → Retire demo staff**.
+- **Real staff in bulk (v1.1.0):** **Admin → Import data**, or **Super Admin → Import data** (the same screen). Import in this order, because each step uses codes from the one before:
+  1. **Designations**;
+  2. **Departments**, with the HOD column empty;
+  3. **Users**: a manager can be another row of the same file;
+  4. **Departments again**, now with `hod_login_id`;
+  5. **Approver groups**: members are User IDs separated by `;`;
+  6. **Holidays**.
+
+  For each step:
+  - **Download template**, fill it in Excel, and save it as **CSV UTF-8**.
+  - Upload it and press **Check file**. Nothing is saved; every problem is listed by row, and **Download problem list** gives you the list for fixing.
+  - When the check is clean, press **Import** → **Yes, import**. All rows are saved, or none.
+  - **Download current …** gives the existing records in the same columns: edit them and upload again to update many at once.
+  - Granting SUPER_ADMIN by import works only for the Super Admin. Import never deletes or deactivates anything.
 
 ---
 
