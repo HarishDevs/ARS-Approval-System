@@ -31,12 +31,9 @@ export default async function MyRequestsPage({ searchParams }: { searchParams: P
   };
   return (
     <>
-      <PageHeader title="My requests" description="Everything you've raised, with where it is now.">
-        <Link href="/users/new" className="btn-primary btn-compact">
-          New request
-        </Link>
-      </PageHeader>
-      <form method="get" className="mb-4 flex flex-wrap items-end gap-3" role="search">
+      <PageHeader title="My requests" description="Everything you've raised, with where it is now." />
+      {/* One action bar: search, filter and the primary action together (S9-12). */}
+      <form method="get" className="card mb-4 flex flex-wrap items-end gap-3 px-4 py-3" role="search">
         <div className="min-w-0 flex-1">
           <label htmlFor="q" className="field-label">
             Search
@@ -63,6 +60,9 @@ export default async function MyRequestsPage({ searchParams }: { searchParams: P
             Clear
           </Link>
         )}
+        <Link href="/users/new" className="btn-primary btn-compact h-11 sm:ml-auto">
+          New request
+        </Link>
       </form>
       <p className="mb-2 text-caption text-ink-muted" role="status">
         {result.total === 0 ? "No requests match." : `${result.total.toLocaleString("en-IN")} request${result.total === 1 ? "" : "s"}${result.pages > 1 ? ` · page ${result.page} of ${result.pages}` : ""}`}

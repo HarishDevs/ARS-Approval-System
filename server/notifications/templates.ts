@@ -26,6 +26,38 @@ export interface TemplateEntry {
   emailSubject: string; // the matching email's subject, with sample values
 }
 
+// Short screen names for the Super Admin's list (S9-15); the purpose stays
+// as the longer explanation.
+const SHORT_LABEL: Record<string, string> = {
+  APPROVAL_NEEDED: "Approval needed",
+  REQUEST_APPROVED: "Request approved",
+  REQUEST_REJECTED: "Request rejected",
+  CHANGES_REQUESTED: "Changes requested",
+  REQUEST_ON_HOLD: "Request on hold",
+  REQUEST_WITHDRAWN: "Request withdrawn",
+  REQUEST_REOPENED: "Request reopened",
+  REQUEST_COMMENT: "New comment",
+  APPROVAL_REMINDER: "Approval reminder",
+  APPROVAL_ESCALATED: "Approval escalated",
+  REQUEST_BLOCKED: "Request blocked",
+  NEW_LOGIN: "New sign-in",
+  ACCOUNT_LOCKED: "Account locked",
+  ACCOUNT_SECURED: "Account secured",
+  SECURITY_ALERT: "Security alert",
+  SUPER_ADMIN_SIGNIN: "Super Admin signed in",
+  BREAK_GLASS_USED: "Break-glass used",
+  PASSWORD_CHANGED: "Password changed",
+  WHATSAPP_CHANGED: "WhatsApp number changed",
+  SIGN_IN_METHOD_CHANGED: "Sign-in method changed",
+};
+
+export function templateLabel(eventType: string): string {
+  const known = SHORT_LABEL[eventType];
+  if (known) return known;
+  const words = eventType.toLowerCase().split("_").join(" ");
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
 const SIGN_OFF = "— ARS Approvals";
 const LINK_NOTE = "Open it here (sign-in needed):";
 

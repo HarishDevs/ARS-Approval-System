@@ -8,12 +8,12 @@ test("signed-out visitors are sent to sign-in", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
 });
 
-test("a plain user gets a 404 for /admin and /superadmin, and lands on their own area", async ({ page, context }) => {
+test("a plain user gets a 404 for /admin and /superadmin, and lands on their own space", async ({ page, context }) => {
   await context.addCookies([await sessionCookie("E2E_STAFF")]);
   expect((await page.goto("/admin"))?.status()).toBe(404);
   expect((await page.goto("/superadmin"))?.status()).toBe(404);
   await page.goto("/users");
-  await expect(page.getByRole("heading", { name: /Hello, Sita/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Welcome back, Sita/ })).toBeVisible();
 });
 
 test("an IT Admin reaches /admin but not /superadmin", async ({ page, context }) => {

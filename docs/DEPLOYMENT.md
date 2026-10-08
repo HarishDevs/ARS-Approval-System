@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| App | ARS Approval Platform **v1.0.5** (`docs/RELEASE-NOTES.md`) |
+| App | ARS Approval Platform **v1.0.6** (`docs/RELEASE-NOTES.md`) |
 | Address | **https://approval.arssteels.net** (one app: `/users`, `/admin`, `/superadmin`) |
 | Hosting | GoDaddy **Node.js Hosting** ("Deploy your Node.js app"), from GitHub `HarishDevs/ARS-Approval-System`, branch `main` |
 | Database | MySQL 8 in GoDaddy cPanel |
@@ -182,7 +182,7 @@ GoDaddy → **My Products** → **Node.js Hosting** (host.godaddy.com/hosting) �
 
 ### G1. Sign in
 1. https://approval.arssteels.net → **Continue with Google** → **itsupport@arsenergy.co.in** (D-082). The seed created this Super Admin, User ID `itadmin`. `itadmin@arssteels.co.in` can't be used: it's only an alias, and Google reports the main address.
-2. You land on **My approvals**. The left menu's **Switch area** shows Admin and Super Admin.
+2. You land on **My approvals**. Your name at the top right opens a menu whose **Switch space** section shows Admin and Super Admin.
 
 ### G2. Email (Resend)
 1. **Super Admin → Providers & security → Email**:

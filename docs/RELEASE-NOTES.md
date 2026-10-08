@@ -1,5 +1,13 @@
 # Release notes
 
+## v1.0.6 (8 Oct 2026): UI polish
+- **Spaces:** My approvals, Admin and Super Admin are now called *spaces*. Your name at the top right opens one menu with your space, **Switch space**, Notifications, Sign-in & devices and **Sign out**.
+- **Phones:** a menu button opens the page list as a drawer. Before this there was no menu below tablet width.
+- **My approvals:** "Welcome back", compact counters that open the matching list, the top 5 items waiting and recent; My requests has one bar for search, filter and New request.
+- **Admin:** the overview shows every module as a live card with counts (no more "Being built").
+- **Super Admin → WhatsApp templates:** a status panel (how many are live, last sync, Sync button), short message names with the description behind "?", and tidy Open/Create buttons.
+- Clearer active menu item, hover on cards and rows, softer cards, and content centred on wide screens.
+
 ## v1.0.5 (8 Oct 2026)
 - **The Super Admin signs in with Google as `itsupport@arsenergy.co.in`** (D-082). `itadmin@arssteels.co.in` is an alias of another mailbox, and Google always reports the primary address, so it never matched (`UNKNOWN_ACCOUNT`).
 - A one-time migration moves the bootstrap account (User ID `itadmin`, all its roles) to the new email.

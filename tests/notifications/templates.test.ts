@@ -11,7 +11,7 @@ import {
   superAdminSignInMessage,
   whatsappChangedMessage,
 } from "@/server/notifications/security-messages";
-import { checkTemplateEntry, previewBody, renderTemplatesDoc, WHATSAPP_TEMPLATES, whatsappValue } from "@/server/notifications/templates";
+import { checkTemplateEntry, previewBody, renderTemplatesDoc, templateLabel, WHATSAPP_TEMPLATES, whatsappValue } from "@/server/notifications/templates";
 import type { EngineEvent } from "@/server/engine/types";
 
 // S6-04: the catalogue, the code that sends and the shared document must
@@ -100,5 +100,18 @@ describe("WhatsApp template catalogue", () => {
     expect(whatsappValue("Add\n\ntwo   quotes\t please")).toBe("Add two quotes please");
     expect(whatsappValue("   ")).toBe("-");
     expect(whatsappValue("x".repeat(400))).toHaveLength(300);
+  });
+});
+
+describe("short labels (S9-15)", () => {
+  it("every message has its own short screen name, not the raw event code", () => {
+    const labels = WHATSAPP_TEMPLATES.map((entry) => templateLabel(entry.eventType));
+    for (const [index, label] of labels.entries()) {
+      expect(label).not.toMatch(/_/);
+      expect(label.length).toBeLessThanOrEqual(28);
+      expect(label).not.toBe(WHATSAPP_TEMPLATES[index]!.purpose);
+    }
+    expect(new Set(labels).size).toBe(labels.length);
+    expect(templateLabel("SOME_NEW_EVENT")).toBe("Some new event");
   });
 });

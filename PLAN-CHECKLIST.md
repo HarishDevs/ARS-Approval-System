@@ -17,17 +17,14 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
-- **Now:** **v1.0.0 is prepared for production** (8 Oct 2026).
-  - The QA defects are fixed.
-  - A Node 22 empty-file bug was caught by CI and fixed.
-  - The deployment guide and release notes are updated, the version is 1.0.0, and the tag `v1.0.0` is pushed once CI is green.
-  - The owner kept the policy items as they are (D-078).
+- **Now:** **v1.0.6 (UI polish, build session 9) is pushed** (8 Oct 2026).
+  - The site runs live at https://approval.arssteels.net (v1.0.3 deployed; v1.0.4–1.0.6 wait for the owner's Publish).
+  - The three spaces have one account menu (Switch space, Sign out), a phone drawer, and a cleaner overview per space (D-083).
 - **Next, with the owner on GoDaddy** (docs/DEPLOYMENT.md):
-  - DB and privilege check → migrate (15) → seed;
-  - Node app from the `v1.0.0` commit, with env vars including UPLOAD_DIR;
-  - DNS and HTTPS; Firebase authorised domain;
-  - Resend key and a **new** CEOITBox key; cron;
-  - break-glass; demo or real staff; the 19 templates; go-live checks.
+  - Update Preview → check it's healthy → **Publish to Live**, to get v1.0.4–v1.0.6;
+  - sign in with Google as `itsupport@arsenergy.co.in` (D-082);
+  - Super Admin: the Resend key, a **new** CEOITBox key, Phone ID; the WhatsApp templates (`ars_approval_needed_v2` and the rest);
+  - cron job; break-glass; demo or real staff; rotate the Firebase key that was pasted in chat.
 - **Still open:** Q-015 (break-glass without WhatsApp); the real staff list.
 
 ---
@@ -254,6 +251,41 @@ Found during S8-06:
 - [x] S8-12 Google sign-in reached UNKNOWN_ACCOUNT: itadmin@ is an alias. The Super Admin now signs in as itsupport@arsenergy.co.in (D-082, migration + non-overwriting seed, v1.0.5) (done 8 Oct 2026)
 - [ ] S8-01b Go-live on GoDaddy with the owner, following docs/DEPLOYMENT.md (the owner is at the wizard's "Add secrets" step)
 - [x] S8-04 Update the three living files; commit and push (done 8 Oct 2026)
+
+## Session log — build session 9: UI polish from the owner's three design reviews (8 Oct 2026)
+Owner: "add all these and check whether done or not in each Area, then build them, and instead of 'Area' change the name as 'Space'".
+
+Each item shows its status **before** this session: ✅ done, ⚠️ partly done, ❌ not done, N/A not applicable.
+
+**All spaces (shell):**
+- [x] S9-01 ❌ One profile menu at the top right holds the name, email, avatar, the current space badge, **Switch space** links, Sign-in & devices, and Sign out (reviews 1, 2, 3) (done 8 Oct 2026)
+- [x] S9-02 ❌ The isolated space pill leaves the top-left; it becomes a badge next to the profile name (reviews 1, 2, 3) (done 8 Oct 2026)
+- [x] S9-03 ❌ "Switch area" → **"Switch space"**: moved out of the sidebar bottom into the profile menu. Everywhere the UI says "area" now says "space" (owner) (done 8 Oct 2026)
+- [x] S9-04 N/A No top sub-navigation bar exists; the sidebar is the only nav (reviews 2, 3). Found instead: ❌ below 768 px there was **no menu at all** → add a mobile menu button with a slide-in sidebar (done 8 Oct 2026)
+- [x] S9-05 ⚠️ Sidebar active item: darker text (primary-700) with a left accent, for contrast (review 3) (done 8 Oct 2026)
+- [x] S9-06 ⚠️ Hover states on table rows and clickable cards; cards get a soft shadow (reviews 1, 3) (done 8 Oct 2026)
+- [x] S9-07 ⚠️ Page header: more whitespace, consistent h1/h2 scale; primary actions in the same header bar as page controls (reviews 1, 3) (done 8 Oct 2026)
+- [x] S9-08 ⚠️ Compact empty states with an icon (review 1) (done 8 Oct 2026)
+- [x] S9-09 ⚠️ Content width capped and centred on wide screens (review 3) (done 8 Oct 2026)
+- [x] S9-10 ✅ Body text contrast: #475569 is 7.6:1, already above AA (review 1). No change needed (checked 8 Oct 2026)
+
+**My approvals space:**
+- [x] S9-11 ❌ Overview: "Welcome back, <first name>" (it was "Hello, IT"); compact KPI tiles; no duplicate navigation in the content (review 1) (done 8 Oct 2026)
+- [x] S9-12 ⚠️ My requests: search, filter and "New request" in one action bar (review 1) (done 8 Oct 2026)
+
+**Admin space:**
+- [x] S9-13 ❌ Overview cards said "Being built" although all four features are live. They become real, equal-height cards linking to the pages, with live counts and hover; 3 columns on wide screens (review 3) (done 8 Oct 2026)
+
+**Super Admin space:**
+- [x] S9-14 ❌ WhatsApp templates: one status panel with the "N of 20 live" summary, last sync and the Sync button side by side (review 2) (done 8 Oct 2026)
+- [x] S9-15 ❌ Templates table: a short message name as the row title, the event code under it, the long description behind a "?" tooltip; badges standardised (Live green, Waiting amber, Not created gray); action buttons a uniform width and right-aligned (review 2) (done 8 Oct 2026)
+
+**Found while building:**
+- [x] S9-17 Admin sidebar: removed the stale "Approval types · soon" item; approval types live under **Approval types & workflows** (done 8 Oct 2026)
+- [x] S9-18 Status badges never wrap ("Not created" broke onto two lines) (done 8 Oct 2026)
+- [x] S9-19 Tailwind opacity modifiers (`/40`) don't work on the CSS-variable colour tokens: `@apply` fails the build, and in markup they silently do nothing. New S9 classes use solid tokens. The older silent uses (warning borders, notification row tint) are left as they render acceptably (done 8 Oct 2026)
+
+- [x] S9-16 Tests (e2e selectors for the moved menu), a browser check with screenshots, docs ("space"), living files; release v1.0.6 (done 8 Oct 2026)
 
 ## Phase 0 — Setup and decisions
 

@@ -2,17 +2,20 @@ import Link from "next/link";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { requireArea } from "@/server/authorization/guards";
 import { loadTemplateBoard } from "@/server/notifications/template-registry";
-import { EMAIL_ONLY_EVENTS, EXISTING_OTP_TEMPLATE } from "@/server/notifications/templates";
+import { EMAIL_ONLY_EVENTS, EXISTING_OTP_TEMPLATE, templateLabel } from "@/server/notifications/templates";
 import { SyncTemplatesButton } from "@/features/superadmin/TemplateForm";
 import { StatusBadge } from "@/features/superadmin/template-status";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 
 // WhatsApp template creator (S7, D-076, F-42b): every WhatsApp message the
 // app sends, its live version, and the newest version in the works.
+// S9-14/15: one status panel (live count, last sync, Sync), short row
+// titles with the purpose behind a "?" hint, uniform right-aligned actions.
 export default async function TemplatesPage() {
   await requireArea("superadmin");
   const board = await loadTemplateBoard();
   const live = board.filter((item) => item.live).length;
+  const percent = board.length ? Math.round((live / board.length) * 100) : 0;
   const lastSync = board
     .flatMap((item) => item.versions.map((version) => version.syncedAt))
     .filter((value): value is Date => value !== null)
@@ -21,14 +24,21 @@ export default async function TemplatesPage() {
     <>
       <PageHeader
         title="WhatsApp templates"
-        description={`${live} of ${board.length} messages are live on WhatsApp. Open a message to write its template, submit it to Meta through CEOITBox, and it goes live by itself once Meta approves it (press Sync status). Until then, email and in-app messages still go out.`}
-      >
+        description="Open a message to write its template and submit it to Meta through CEOITBox. It goes live by itself once Meta approves it. Until then, email and in-app messages still go out."
+      />
+      <section className="card mb-6 flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0 flex-1">
+          <p className="text-label text-ink-muted">Live on WhatsApp</p>
+          <p className="mt-1 text-2xl font-bold tabular-nums">
+            {live} <span className="text-label font-normal text-ink-muted">of {board.length} messages</span>
+          </p>
+          <div className="mt-2 h-2 max-w-sm overflow-hidden rounded-full bg-surface-muted" role="progressbar" aria-valuenow={live} aria-valuemin={0} aria-valuemax={board.length} aria-label="Templates live">
+            <div className="h-full rounded-full bg-primary-600" style={{ width: `${percent}%` }} />
+          </div>
+          <p className="mt-2 text-caption text-ink-muted">{lastSync ? `Last synced ${formatIndiaTime(lastSync)}` : "Not synced yet"}</p>
+        </div>
         <SyncTemplatesButton />
-      </PageHeader>
-      <p className="mb-4 text-label text-ink-muted">
-        {lastSync ? `Last synced ${formatIndiaTime(lastSync)}.` : "Not synced yet."} The sign-in code uses the Power BI website&apos;s approved{" "}
-        <span className="font-mono">{EXISTING_OTP_TEMPLATE.name}</span>; nothing to do for it. {EMAIL_ONLY_EVENTS.map((item) => `${item.eventType} is email only.`).join(" ")}
-      </p>
+      </section>
       <section className="card overflow-x-auto">
         <table className="data-table">
           <thead>
@@ -36,27 +46,38 @@ export default async function TemplatesPage() {
               <th>Message</th>
               <th>Sent to</th>
               <th>Live version</th>
-              <th>Newest version</th>
-              <th></th>
+              <th>Status</th>
+              <th className="text-right">
+                <span className="sr-only">Action</span>
+              </th>
             </tr>
           </thead>
           <tbody>
             {board.map(({ entry, live: current, latest }) => (
               <tr key={entry.code}>
                 <td>
-                  <p className="font-medium">{entry.purpose}</p>
-                  <p className="text-caption text-ink-faint">
-                    {entry.group} · {entry.eventType}
+                  <p className="flex items-center gap-1.5 font-medium">
+                    {templateLabel(entry.eventType)}
+                    <span
+                      title={entry.purpose}
+                      className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-line text-[10px] font-semibold text-ink-faint"
+                    >
+                      <span aria-hidden="true">?</span>
+                      <span className="sr-only">{entry.purpose}</span>
+                    </span>
+                  </p>
+                  <p className="font-mono text-caption text-ink-faint">
+                    {entry.eventType} · {entry.group}
                   </p>
                 </td>
                 <td className="text-label">{entry.sentTo}</td>
                 <td>{current ? <span className="font-mono text-label">{current.providerName}</span> : <span className="text-ink-faint">—</span>}</td>
                 <td>
                   <StatusBadge version={latest} />
-                  {latest && latest !== current && <p className="font-mono text-caption text-ink-faint">{latest.providerName}</p>}
+                  {latest && latest !== current && <p className="mt-1 font-mono text-caption text-ink-faint">{latest.providerName}</p>}
                 </td>
-                <td>
-                  <Link href={`/superadmin/templates/${entry.code}`} className="btn-secondary btn-compact whitespace-nowrap">
+                <td className="text-right">
+                  <Link href={`/superadmin/templates/${entry.code}`} className={`${latest ? "btn-secondary" : "btn-primary"} btn-compact inline-flex w-20 justify-center`}>
                     {latest ? "Open" : "Create"}
                   </Link>
                 </td>
@@ -65,6 +86,10 @@ export default async function TemplatesPage() {
           </tbody>
         </table>
       </section>
+      <p className="mt-4 text-caption text-ink-muted">
+        The sign-in code uses the Power BI website&apos;s approved <span className="font-mono">{EXISTING_OTP_TEMPLATE.name}</span>, so it needs nothing here.{" "}
+        {EMAIL_ONLY_EVENTS.map((item) => `${templateLabel(item.eventType)} is email only.`).join(" ")}
+      </p>
     </>
   );
 }

@@ -67,10 +67,14 @@ body {
     @apply h-9 w-auto px-3 text-label;
   }
   .card {
-    @apply rounded-lg border border-line bg-surface;
+    @apply rounded-lg border border-line bg-surface shadow-sm;
+  }
+  /* A whole card that is a link: lifts on hover (S9-06). */
+  .card-link {
+    @apply rounded-lg border border-line bg-surface shadow-sm transition hover:-translate-y-px hover:border-primary-600 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600;
   }
   .badge {
-    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-caption font-semibold;
+    @apply inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-0.5 text-caption font-semibold;
   }
   .data-table {
     @apply w-full text-left text-label;
@@ -80,6 +84,12 @@ body {
   }
   .data-table td {
     @apply border-b border-line px-4 py-3 align-top;
+  }
+  .data-table tbody tr {
+    @apply transition-colors hover:bg-surface-muted;
+  }
+  .data-table tbody tr:last-child td {
+    @apply border-b-0;
   }
   .link {
     @apply font-semibold text-primary-600 hover:text-primary-700 hover:underline;

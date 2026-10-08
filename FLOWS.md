@@ -236,7 +236,7 @@ flowchart TD
   R -- "Super Admin (itadmin@)" --> SA["/superadmin: providers · security · integrations\nsystem health · audit export · break-glass\n+ everything in /admin and /users"]
   X["Direct visit to /admin or /superadmin\nwithout the role"] --> M[Middleware + server re-check → generic 404, attempt audited]
 ```
-- Everyone lands on `/users`. Admins also see a switcher to their admin area.
+- Everyone lands on `/users`. The three parts are called **spaces** on screen (D-083). The account menu at the top right (name → menu) shows the current space and a **Switch space** list, only with the spaces the person's roles allow, plus Sign out. On phones the space's pages open from a menu button as a drawer. *Superseded 8 Oct 2026: the "Switch area" block at the bottom of the sidebar.*
 - **As built (28 Sep 2026):**
   - With no session, or an invalid or forged one, every area redirects to `/login?next=…`.
   - A signed-in user without the role gets a generic 404, and the attempt is audited.

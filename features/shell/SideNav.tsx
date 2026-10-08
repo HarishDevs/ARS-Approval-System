@@ -25,7 +25,7 @@ export function SideNav({ items }: { items: NavItem[] }) {
             key={item.href}
             href={item.href}
             aria-current={active ? "page" : undefined}
-            className={`block rounded-md px-3 py-2 text-body ${active ? "bg-primary-50 font-semibold text-primary-600" : "text-ink-muted hover:bg-surface-muted hover:text-ink"}`}
+            className={`block rounded-md border-l-[3px] px-3 py-2 text-body transition-colors ${active ? "border-primary-600 bg-primary-50 font-semibold text-primary-700" : "border-transparent text-ink-muted hover:bg-surface-muted hover:text-ink"}`}
           >
             {item.label}
           </Link>

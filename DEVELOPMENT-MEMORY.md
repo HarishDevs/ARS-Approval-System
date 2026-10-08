@@ -156,6 +156,7 @@
 | D-080 | 8 Oct 2026 | **Email sender `approvals@arssteels.net`** (the owner verified arssteels.net in Resend), with **Reply-to `itadmin@arssteels.co.in`** (new setting `email.reply_to`). This supersedes the earlier sender itadmin@arssteels.co.in (D-037). Builds clean `.next` first, because GoDaddy reuses the app folder (v1.0.3). | Owner, 8 Oct 2026 |
 | D-081 | 8 Oct 2026 | **GoDaddy runs the app behind Cloudflare**, whose email obfuscation rewrites addresses in the HTML. Every address shown on a page goes through `<Email>` / `<SafeText>` (features/ui/SafeText.tsx). New screens must do the same, or React hydration breaks (#418). | Claude, from the live console |
 | D-082 | 8 Oct 2026 | **The Super Admin's Google sign-in is `itsupport@arsenergy.co.in`**. `itadmin@arssteels.co.in` is an alias of arunram@arssteels.co.in, and Google ID tokens carry the primary address, so login_logs showed UNKNOWN_ACCOUNT.<br>• Migration 202610081400 moves the bootstrap account (User ID `itadmin`, roles unchanged) once, only if it's unlinked.<br>• The bootstrap seed now only creates the account and never overwrites it.<br>• **Rule for staff:** create users with their **primary** Google email, never an alias. | Owner, 8 Oct 2026 |
+| D-083 | 8 Oct 2026 | **The three parts of the app are called "spaces" on screen** (My approvals, Admin, Super Admin), not "areas". One **account menu** at the top right holds the name, email, the current space badge, **Switch space**, Notifications, Sign-in & devices and Sign out. The sidebar holds only the current space's pages, and on phones it opens as a drawer. Code identifiers (`AppArea`, `requireArea`) keep their names. | Owner, 8 Oct 2026 (three UI reviews) |
 | D-033 | 28 Sep 2026 | **Staff data is provided by the admin. Roles are assigned per user, by the admin only. Users are added or made inactive in the Admin Portal** (never hard-deleted, so history and audit stay intact). *Resolves Q-010.* | Owner (answer 7) |
 
 ## 4. Open questions (must be answered before the phase shown)
@@ -179,6 +180,25 @@
 | Q-015 | **Break-glass and WhatsApp:** the break-glass account signs in with a password **plus the WhatsApp code** (D-025). If WhatsApp or CEOITBox is down, which is exactly when break-glass may be needed, it can't sign in. Keep the code, or skip it only during the console-enabled window? | Go-live | Open, waiting on the owner (built conservatively: the code is required) |
 
 ## 5. Work log (newest first)
+
+### 8 Oct 2026 (build session 9: UI polish, v1.0.6)
+- The owner sent three UI reviews (My approvals, Super Admin templates, Admin overview) and asked to check each item, build it, and say "space" instead of "area" (D-083).
+- **Shell:**
+  - new ProfileMenu (account menu with Switch space and Sign out) and MobileNav (a phone drawer; before this there was no menu below 768 px);
+  - SideNav active item gets a left accent;
+  - cards and table rows get hover states; `.card-link`;
+  - PageHeader spacing and an actions slot; compact EmptyState; content capped at max-w-7xl.
+- **My approvals:** "Welcome back, <name>"; compact KPI tiles linking to filtered lists; the top 5 waiting and recent items. My requests has one action bar (search, filter, New request).
+- **Admin:** the overview cards were still marked "Being built". They are now equal-height link cards with live counts. The stale "Approval types · soon" sidebar item is removed.
+- **Super Admin templates:**
+  - a status panel (live count, progress bar, last sync, Sync);
+  - short row titles (`templateLabel`) with the event code below and the purpose behind a "?";
+  - uniform right-aligned Open/Create buttons; the detail page title is the short label.
+- **Found while building:** Tailwind opacity modifiers don't work on the CSS-variable tokens (`@apply` fails the build), so solid tokens are used. Badges no longer wrap.
+- **Tests:**
+  - unit 217 (adds the short-label test), integration 53;
+  - e2e 17 (adds session9.spec: the account menu and the phone drawer; updates the greeting and template panel selectors);
+  - lint and typecheck clean; the screens were checked in the browser at desktop and phone width.
 
 ### 8 Oct 2026 (v1.0.1: deployment guide)
 - The owner is in GoDaddy's "Deploy your Node.js app" wizard (GitHub → main, Add secrets).

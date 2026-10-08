@@ -32,7 +32,8 @@ test("the Super Admin loads the demo staff and approval types", async ({ page, c
 test("the template creator drafts a message; submitting needs the CEOITBox key", async ({ page, context }) => {
   await as(context, "E2E_SUPER");
   await page.goto("/superadmin/templates");
-  await expect(page.getByText("0 of 20 messages are live", { exact: false })).toBeVisible();
+  await expect(page.getByRole("progressbar", { name: "Templates live" })).toHaveAttribute("aria-valuenow", "0");
+  await expect(page.getByText("of 20 messages")).toBeVisible();
   await page.getByRole("row", { name: /waiting for this person's approval/ }).getByRole("link", { name: "Create" }).click();
   await expect(page).toHaveURL(/\/superadmin\/templates\/WA_APPROVAL_NEEDED_V1$/);
   await expect(page.getByText("Ravi Kumar needs your approval for PUR-2026-000123", { exact: false })).toBeVisible();

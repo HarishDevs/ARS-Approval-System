@@ -4,6 +4,7 @@ import { PageHeader } from "@/features/shell/PageHeader";
 import { requireArea } from "@/server/authorization/guards";
 import { loadTemplateBoard } from "@/server/notifications/template-registry";
 import { defaultDraft, toNamedBody } from "@/server/notifications/template-authoring";
+import { templateLabel } from "@/server/notifications/templates";
 import { SubmitTemplateButton, SyncTemplatesButton, TemplateEditor, TestTemplateButton } from "@/features/superadmin/TemplateForm";
 import { StatusBadge } from "@/features/superadmin/template-status";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
@@ -24,7 +25,7 @@ export default async function TemplatePage({ params }: { params: Promise<{ code:
 
   return (
     <>
-      <PageHeader title={entry.purpose} description={`Sent to: ${entry.sentTo}. App event ${entry.eventType}. Matching email subject: “${entry.emailSubject}”.`}>
+      <PageHeader title={templateLabel(entry.eventType)} description={`${entry.purpose} Sent to: ${entry.sentTo}. App event ${entry.eventType}. Matching email subject: “${entry.emailSubject}”.`}>
         <Link href="/superadmin/templates" className="link text-label">
           ← All templates
         </Link>
