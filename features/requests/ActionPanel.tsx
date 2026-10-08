@@ -53,7 +53,7 @@ export function ResumeForm({ requestId }: { requestId: number }) {
 }
 
 export function WithdrawForm({ requestId }: { requestId: number }) {
-  const { result, pending, onSubmit } = useActionForm(withdrawAction, { confirm: "Withdraw this request? It can't be undone; you'd raise a new one instead." });
+  const { result, pending, onSubmit, confirmBar } = useActionForm(withdrawAction, { confirm: "Withdraw this request? It can't be undone; you'd raise a new one instead." });
   return (
     <form onSubmit={onSubmit} className="space-y-2 px-5 py-4">
       <input type="hidden" name="requestId" value={requestId} />
@@ -64,12 +64,13 @@ export function WithdrawForm({ requestId }: { requestId: number }) {
         {pending ? "Working…" : "Withdraw"}
       </button>
       <ResultMessage result={result} />
+      {confirmBar}
     </form>
   );
 }
 
 export function ReopenForm({ requestId }: { requestId: number }) {
-  const { result, pending, onSubmit } = useActionForm(reopenAction, { confirm: "Reopen this approved request? It goes through every level again." });
+  const { result, pending, onSubmit, confirmBar } = useActionForm(reopenAction, { confirm: "Reopen this approved request? It goes through every level again." });
   return (
     <form onSubmit={onSubmit} className="space-y-2 px-5 py-4">
       <input type="hidden" name="requestId" value={requestId} />
@@ -81,6 +82,7 @@ export function ReopenForm({ requestId }: { requestId: number }) {
         {pending ? "Working…" : "Reopen"}
       </button>
       <ResultMessage result={result} />
+      {confirmBar}
     </form>
   );
 }

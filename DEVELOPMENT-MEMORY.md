@@ -174,6 +174,12 @@
 
 ## 5. Work log (newest first)
 
+### 8 Oct 2026 (build session 7, live check)
+- The owner entered a CEOITBox key and Phone ID in /superadmin themselves (Claude did not enter it). The sync and list calls worked.
+- "Submit" seemed dead because window.confirm was blocked silently. Replaced with an in-page confirm bar (S7-F3).
+- `ars_approval_needed_v1` was then submitted and shows as waiting for Meta.
+- The owner should rotate that key after testing, because it was pasted into chat.
+
 ### 8 Oct 2026 (build session 7)
 - **Owner's instructions:** the DoA is set per approval type when it is created; build the WhatsApp template creator in Super Admin; the CEOITBox API documents are the master reference.
 - **Read:** both .docx files (Integration Guide, Master Documentation). No key values are in them, and none were copied.

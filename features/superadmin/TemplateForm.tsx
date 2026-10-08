@@ -138,7 +138,7 @@ export function TemplateEditor({
 }
 
 export function SubmitTemplateButton({ code, name }: { code: string; name: string }) {
-  const { result, pending, onSubmit } = useActionForm(submitTemplateAction, { confirm: `Submit ${name} to Meta through CEOITBox? After this, changes need a new version.` });
+  const { result, pending, onSubmit, confirmBar } = useActionForm(submitTemplateAction, { confirm: `Submit ${name} to Meta through CEOITBox? After this, changes need a new version.` });
   return (
     <form onSubmit={onSubmit} className="space-y-2">
       <input type="hidden" name="code" value={code} />
@@ -146,6 +146,7 @@ export function SubmitTemplateButton({ code, name }: { code: string; name: strin
         Submit to Meta for approval
       </SubmitButton>
       <ResultMessage result={result} />
+      {confirmBar}
     </form>
   );
 }

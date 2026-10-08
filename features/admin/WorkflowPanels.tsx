@@ -91,7 +91,7 @@ export function TestModePanel({ versionId, form, people }: { versionId: number; 
 }
 
 export function PublishButton({ workflowId, versionId, versionNo }: { workflowId: number; versionId: number; versionNo: number }) {
-  const { result, pending, onSubmit } = useActionForm(publishAction, { confirm: `Publish version ${versionNo}? New requests will use it straight away.` });
+  const { result, pending, onSubmit, confirmBar } = useActionForm(publishAction, { confirm: `Publish version ${versionNo}? New requests will use it straight away.` });
   return (
     <form onSubmit={onSubmit} className="space-y-2">
       <input type="hidden" name="workflowId" value={workflowId} />
@@ -100,6 +100,7 @@ export function PublishButton({ workflowId, versionId, versionNo }: { workflowId
         Publish version {versionNo}
       </SubmitButton>
       <ResultMessage result={result} />
+      {confirmBar}
     </form>
   );
 }

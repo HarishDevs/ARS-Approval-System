@@ -212,6 +212,9 @@ Found and fixed during session 7:
 - [x] S7-F2 On narrow screens the form-fields row of the builder made the whole page scroll sideways. It now wraps until large screens (done 8 Oct 2026)
 - [x] S7-N1 Levels further down a request map show "Not needed at this amount (DoA)" straight away, instead of "Waiting", when the amount's band doesn't tick them (done 8 Oct 2026)
 
+- [x] S7-F3 "Submit to Meta" did nothing in the browser pane: confirmations used window.confirm, which some browsers block silently (counted as Cancel), so nothing reached CEOITBox. All 8 confirmations are now an in-page "Yes, continue / Cancel" bar. Verified live: ars_approval_needed_v1 was submitted to CEOITBox and the sync shows it waiting for Meta (done 8 Oct 2026)
+- [x] S7-L1 Live check with the owner's CEOITBox test key, entered by the owner in /superadmin: sync and list worked; the first template (ars_approval_needed_v1) was submitted (done 8 Oct 2026)
+
 ## Session log — build session 8 (planned)
 - [ ] S8-01 Go-live on GoDaddy (docs/DEPLOYMENT.md) when the owner gives the go-ahead. Then enter the new CEOITBox key, submit the 20 templates, sync and test-send each
 - [ ] S8-02 Audit export (CSV) and login history (P1-57); attachments on custom approvals; work hand-off after approval (F-32)

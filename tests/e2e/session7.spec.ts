@@ -22,8 +22,8 @@ test("IT sets a DoA matrix when creating an approval type, and publishes it", as
   await page.getByLabel("HOD needed for Up to ₹2,00,000").uncheck();
   await page.getByRole("button", { name: "Create workflow (as draft)" }).click();
   await expect(page).toHaveURL(/\/admin\/workflows\/\d+\?created=1/);
-  page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Publish version 1" }).click();
+  await page.getByRole("button", { name: "Yes, continue" }).click();
   await expect(page.getByText("Live", { exact: true })).toBeVisible();
 
   await page.goto("/admin/doa");

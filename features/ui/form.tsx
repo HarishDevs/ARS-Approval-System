@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useActionState, useEffect, useRef } from "react";
+import { startTransition, useActionState, useEffect, useRef, useState } from "react";
 import type { ActionResult } from "@/lib/http/action-result";
 
 // Server Action forms. React 19 resets a <form action={…}> after every
@@ -10,8 +10,12 @@ import type { ActionResult } from "@/lib/http/action-result";
 // successful save (e.g. an "add" row, or a secret key field).
 type Action = (previous: ActionResult | null, formData: FormData) => Promise<ActionResult>;
 
+// A form with `confirm` asks in the page, not with window.confirm: embedded
+// browsers and some managed browsers block pop-up dialogs silently, which
+// made the action look dead. Render `confirmBar` inside the form.
 export function useActionForm(action: Action, options: { resetOnSuccess?: boolean; confirm?: string } = {}) {
   const [result, dispatch, pending] = useActionState(action, null);
+  const [awaiting, setAwaiting] = useState<FormData | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const { resetOnSuccess, confirm } = options;
 
@@ -21,14 +25,39 @@ export function useActionForm(action: Action, options: { resetOnSuccess?: boolea
 
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (confirm && !window.confirm(confirm)) return;
     // Include the pressed button's name/value (forms with several actions).
     const submitter = (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
     const formData = new FormData(event.currentTarget, submitter);
+    if (confirm) {
+      setAwaiting(formData);
+      return;
+    }
     startTransition(() => dispatch(formData));
   }
 
-  return { result, pending, formRef, onSubmit };
+  const confirmBar = awaiting ? (
+    <div role="alertdialog" aria-label="Please confirm" className="mt-2 space-y-2 rounded-md border border-warning-600/40 bg-warning-50 px-3 py-2 text-label">
+      <p>{confirm}</p>
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          className="btn-primary btn-compact"
+          onClick={() => {
+            const formData = awaiting;
+            setAwaiting(null);
+            startTransition(() => dispatch(formData));
+          }}
+        >
+          Yes, continue
+        </button>
+        <button type="button" className="btn-secondary btn-compact" onClick={() => setAwaiting(null)}>
+          Cancel
+        </button>
+      </div>
+    </div>
+  ) : null;
+
+  return { result, pending, formRef, onSubmit, confirmBar };
 }
 
 export function SubmitButton({

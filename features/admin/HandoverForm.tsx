@@ -6,7 +6,7 @@ import type { Option } from "@/features/admin/UserForm";
 
 // F-16: required before deactivating someone with pending approvals.
 export function HandoverForm({ id, name, pending, people }: { id: number; name: string; pending: number; people: Option[] }) {
-  const { result, pending: busy, onSubmit } = useActionForm(handoverAction, { confirm: `Move ${name}'s ${pending} pending approval(s)?` });
+  const { result, pending: busy, onSubmit, confirmBar } = useActionForm(handoverAction, { confirm: `Move ${name}'s ${pending} pending approval(s)?` });
   return (
     <form onSubmit={onSubmit} className="space-y-2 px-5 py-4">
       <input type="hidden" name="id" value={id} />
@@ -31,6 +31,7 @@ export function HandoverForm({ id, name, pending, people }: { id: number; name: 
         </>
       )}
       <ResultMessage result={result} />
+      {confirmBar}
     </form>
   );
 }

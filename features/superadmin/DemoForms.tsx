@@ -17,7 +17,7 @@ export function LoadDemoForm() {
 }
 
 export function RetireDemoForm() {
-  const { result, pending, onSubmit } = useActionForm(retireDemoAction, {
+  const { result, pending, onSubmit, confirmBar } = useActionForm(retireDemoAction, {
     confirm: "Make every demo person inactive? Approvals still waiting with them will block until IT hands them over.",
   });
   return (
@@ -26,12 +26,13 @@ export function RetireDemoForm() {
         Retire demo staff
       </SubmitButton>
       <ResultMessage result={result} />
+      {confirmBar}
     </form>
   );
 }
 
 export function TryAsButton({ userId, name }: { userId: number; name: string }) {
-  const { result, pending, onSubmit } = useActionForm(tryAsAction, {
+  const { result, pending, onSubmit, confirmBar } = useActionForm(tryAsAction, {
     confirm: `Continue as ${name}? You'll be signed out of your Super Admin session; sign in again to come back.`,
   });
   return (
@@ -41,6 +42,7 @@ export function TryAsButton({ userId, name }: { userId: number; name: string }) 
         {pending ? "Switching…" : "Try as"}
       </button>
       {result && !result.ok && <ResultMessage result={result} />}
+      {confirmBar}
     </form>
   );
 }
