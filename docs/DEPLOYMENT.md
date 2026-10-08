@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| App | ARS Approval Platform **v1.0.1** (`docs/RELEASE-NOTES.md`) |
+| App | ARS Approval Platform **v1.0.2** (`docs/RELEASE-NOTES.md`) |
 | Address | **https://approvals.arssteels.net** (one app: `/users`, `/admin`, `/superadmin`) |
 | Hosting | GoDaddy **Node.js Hosting** ("Deploy your Node.js app"), from GitHub `HarishDevs/ARS-Approval-System`, branch `main` |
 | Database | MySQL 8 in GoDaddy cPanel |
@@ -71,19 +71,22 @@ The app sends email as **itadmin@arssteels.co.in** through Resend. Resend only s
 ## Part B: The database (the app's Hosted Database)
 GoDaddy's Node.js hosting provisions a MySQL database **with the app**: **App → Settings → Hosted Database**. The preview and live environments share it. Use it; the cPanel database isn't needed.
 
-### B1. Import the database file (first time only)
-1. The file is `D:\Omniroute\deploy-secrets\ars-approvals-v1.0.1-database.sql`. It's built from the 15 migrations and the seeds, and was tested by importing it into an empty MySQL 8 as an ordinary user. It holds:
-   - 35 tables;
-   - 6 append-only triggers;
-   - the roles;
-   - the sign-in code template;
-   - the Super Admin itadmin@arssteels.co.in;
-   - the record of the applied migrations.
-   It has no passwords or keys.
-2. **Settings → Hosted Database → Import SQL** → choose that file → import.
-3. **Browse tables**: you should see 35 tables, including `users` with one row (`itadmin`) and `schema_migrations` with 15 rows.
-4. If the import reports an error about `TRIGGER` (privileges), send it to GoDaddy support: the triggers protect the audit log, timeline and comments, and are required.
-5. The file never drops anything: importing it again fails with "Table already exists" instead of wiping data. Import it **only once**. Later releases add their migrations by themselves (D3 start command).
+### B1. Create the tables: automatic on the first start (recommended)
+Nothing to do. **`npm start` applies all database migrations and seeds before the app starts** (v1.0.2):
+- it creates the 35 tables, the 6 append-only triggers, the roles, the sign-in code template and the Super Admin itadmin@arssteels.co.in;
+- on later starts it applies only what's new, and skips what's already there.
+
+After the first deploy (D5), open **Runtime Logs**. You should see `Done. Applied 15 migration(s).` and `Done. Ran 3 seed file(s).` before `Ready`. **Browse tables** then shows 35 tables.
+
+### B1-alt. Import the SQL file instead (optional)
+`D:\Omniroute\deploy-secrets\ars-approvals-v1.0.1-database.sql` creates the same database. It's tested and contains no keys.
+- **Use it only on an empty database before the first start.** GoDaddy's importer **drops all existing tables first**, so importing on a live database would **erase every request**.
+- If **Start import** shows **"Unauthorized"**, GoDaddy's import service refused the session:
+  - reload the page and sign in again;
+  - make sure the preview app is running (**Restart Preview App**);
+  - allow cookies for godaddy.com in the browser, or try another browser;
+  - otherwise use B1 (automatic), which doesn't need the importer.
+- If the import succeeds and the app then starts, it reports "No pending migrations"; that's correct.
 
 ### B2. Connection details: automatic
 With the Hosted Database attached, GoDaddy sets **`DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` and `DB_PASSWORD` by itself**. They're listed in the Secrets card. These are exactly the names the app reads.
@@ -122,10 +125,10 @@ GoDaddy → **My Products** → **Node.js Hosting** (host.godaddy.com/hosting) �
 | Node.js version | **22** |
 | Install command | `npm ci` (or the platform default `npm install`) |
 | Build command | `npm run build` |
-| Start command | **`npm run start:production`**: applies any new migrations and the seeds, then starts the app. With the B1 import already done, it simply reports "No pending migrations" |
+| Start command | **`npm start`** (the platform default): applies new database migrations and the seeds, then starts the app |
 | Port | Leave the default; the app listens on the `PORT` the platform gives |
 
-If the wizard doesn't let you change the start command, it runs `npm start`. Then run the migrations once from your PC before the first start (B4 setup, then `npm run db:migrate` and `npm run db:seed` with the same `$env:` values), and again after any release that adds migrations.
+`npm start` already includes the migrations, so the default start command is right. Nothing needs changing.
 
 ### D4. Add secrets (the screen in your screenshot)
 1. Click **Import from .env file** → choose `D:\Omniroute\deploy-secrets\ars-approvals.production.env`.
@@ -316,7 +319,8 @@ To rebuild a full import file for a brand-new environment: apply the migrations 
 | WhatsApp messages skipped: `TEMPLATE_NOT_CONFIGURED` | That message's template isn't live yet | Part H |
 | Attachments vanish after a redeploy | `UPLOAD_DIR` points inside `/app` | Part C: `/private/uploads` |
 | "Your app is redirecting" warning | Root `/` redirects to `/login` | Settings → General → root path `/login` |
-| Import SQL fails on `CREATE TRIGGER` | Hosted DB user not allowed to create triggers | GoDaddy support ticket (Part B1 step 4) |
+| Import SQL shows "Unauthorized" | GoDaddy's import service refused the session | Skip the import: the first start creates the database (B1) |
+| Runtime log: `Migration failed: … TRIGGER command denied` | Hosted DB user can't create triggers | GoDaddy support ticket: the triggers protect the audit log and are required |
 | No reminders or escalations | Cron missing, or wrong secret (the job answers 404) | Part I |
 | 502 / "Application error" right after deploy | App still starting (migrations on the first start), or crashed | Wait 1 minute; read the app's runtime log |
 

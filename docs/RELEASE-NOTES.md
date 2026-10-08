@@ -1,5 +1,9 @@
 # Release notes
 
+## v1.0.2 (8 Oct 2026)
+- `npm start` now applies the database migrations and seeds before starting, so the default start command on GoDaddy creates and updates the database by itself. GoDaddy's "Import SQL" answered "Unauthorized", and the importer drops existing tables. `npm run start:app` starts without migrating.
+- Deployment guide Part B updated: automatic setup first; the SQL import only as an option, with its warnings.
+
 ## v1.0.1 (deployment helpers, 8 Oct 2026)
 - `npm run start:production` applies the database migrations and seeds, then starts the app. GoDaddy's Node.js hosting may have no terminal, so the first start sets up the database by itself, and later releases migrate themselves. Both scripts skip what's already done.
 - `npm run db:check` runs the MySQL privilege check (triggers).
