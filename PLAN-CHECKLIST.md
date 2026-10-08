@@ -219,6 +219,8 @@ Found and fixed during session 7:
 - [ ] S8-01 Go-live on GoDaddy (docs/DEPLOYMENT.md) when the owner gives the go-ahead. Then enter the new CEOITBox key, submit the 20 templates, sync and test-send each
 - [ ] S8-02 Audit export (CSV) and login history (P1-57); attachments on custom approvals; work hand-off after approval (F-32)
 - [ ] S8-03 CEOITBox webhook for delivery and read receipts (HTTPS, secret header), shown in Message deliveries
+- [x] S8-05 QA test-case suite for the whole platform (owner's master QA prompt, 8 Oct 2026): docs/qa/QA-TEST-SUITE.md, specific to this app (real statuses, roles, DoA, CEOITBox, attachments). It includes a traceability matrix, defect risks found by reading the code, and the smoke, sanity, regression and critical suites (done 8 Oct 2026: 600 cases; P0 160, P1 201, P2 150, P3 89; smoke 24, sanity 18, regression 361, critical 144; generated from docs/qa/source)
+- [ ] S8-06 Fix QA risks before go-live: D-QA-04 (negative or zero amounts in DoA fields route to the lowest band) and D-QA-01 (idempotent submit). Add unit, integration and e2e regression tests
 - [ ] S8-04 Update the three living files; commit and push
 
 ## Phase 0 — Setup and decisions

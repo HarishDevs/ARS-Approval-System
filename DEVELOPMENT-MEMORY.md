@@ -174,6 +174,15 @@
 
 ## 5. Work log (newest first)
 
+### 8 Oct 2026 (QA suite)
+- From the owner's master QA prompt: docs/qa/QA-TEST-SUITE.md with 600 test cases specific to this app.
+- Every section the prompt asked for (1–43) is included, along with the RTM over R01–R40, 15 defect risks and 12 open questions (Q-QA-01..12).
+- Main code-review findings:
+  - **D-QA-04:** a negative amount is accepted and takes the lowest DoA band (approval bypass);
+  - **D-QA-01:** a submit retried after a timeout creates a duplicate request.
+  Both are planned as S8-06.
+- The document is generated from docs/qa/source/*.py (`python docs/qa/source/gen.py docs/qa/QA-TEST-SUITE.md`).
+
 ### 8 Oct 2026 (build session 7, live check)
 - The owner entered a CEOITBox key and Phone ID in /superadmin themselves (Claude did not enter it). The sync and list calls worked.
 - "Submit" seemed dead because window.confirm was blocked silently. Replaced with an in-page confirm bar (S7-F3).
