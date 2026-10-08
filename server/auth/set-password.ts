@@ -61,7 +61,7 @@ const defaultDeps: PasswordFlowDeps = {
   // Runs after the response is sent, so a real account and an unknown one
   // answer in the same time (forgot password, anti-enumeration).
   defer: (work) => after(() => work().catch((error) => logError("deferred password-flow work failed", error))),
-  appBaseUrl: () => getEnv().APP_BASE_URL ?? "https://approvals.arssteels.net",
+  appBaseUrl: () => getEnv().APP_BASE_URL ?? "https://approval.arssteels.net",
   complete: defaultCompleteSignInDeps,
 };
 

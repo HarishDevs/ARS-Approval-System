@@ -20,7 +20,7 @@ Every session:
 - **Never commit secrets.** `.env*` stays git-ignored. Provider keys are entered only in `/superadmin` encrypted settings; server secrets go only in GoDaddy env vars.
 
 ## Fixed decisions (full list and reasons in DEVELOPMENT-MEMORY.md)
-- **One app** at `approvals.arssteels.net`, like the Power BI app. Role routes: `/users` (everyone), `/admin` (IT team: predefined approvals, forms, workflows, DoA, users/roles), `/superadmin` (itadmin@ only: providers, security, integrations, health, audit export, break-glass). Every protection check runs on the server.
+- **One app** at `approval.arssteels.net`, like the Power BI app. Role routes: `/users` (everyone), `/admin` (IT team: predefined approvals, forms, workflows, DoA, users/roles), `/superadmin` (itadmin@ only: providers, security, integrations, health, audit export, break-glass). Every protection check runs on the server.
 - `itadmin@arssteels.co.in` = Super Admin, approval (DoA) authority, and break-glass holder. **Every user can create custom approvals and pick anyone** as an approver. The only limits: approvers must be active users, and nobody approves their own request.
 - Only admin-created users sign in (any email). Roles are set per user by the admin only. Users are made inactive, never deleted.
 - Google sign-in (reusing the Power BI site's Firebase project `power-bi-dashboard-3b29f`) has no OTP. User ID + password needs an OTP on **WhatsApp only**. No step-up OTP.

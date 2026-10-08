@@ -48,11 +48,11 @@ describe("directory snapshot → engine directory", () => {
 
 describe("who hears about what", () => {
   const request = { id: 7, requestNo: "PUR-2026-000007", title: "Crane motor", requesterId: 1, requesterName: "Asha" };
-  const context = { baseUrl: "https://approvals.arssteels.net/", adminIds: [2, 4] };
+  const context = { baseUrl: "https://approval.arssteels.net/", adminIds: [2, 4] };
 
   it("each new task tells its approver, with a sign-in deep link", () => {
     const [message] = messagesForEvents([{ type: "TASK_CREATED", taskId: "t1", nodeId: "hod", approverId: 2 }], request, context);
-    expect(message).toMatchObject({ eventType: "APPROVAL_NEEDED", userId: 2, deepLink: "https://approvals.arssteels.net/users/requests/7" });
+    expect(message).toMatchObject({ eventType: "APPROVAL_NEEDED", userId: 2, deepLink: "https://approval.arssteels.net/users/requests/7" });
     expect(message!.email!.subject).toBe("Approval needed: PUR-2026-000007");
   });
 

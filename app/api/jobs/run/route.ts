@@ -10,7 +10,7 @@ import { runDailyTemplateSync } from "@/server/notifications/template-registry";
 import { logError, logInfo } from "@/lib/logging/logger";
 
 // Cron entry point (F-41, D-058). cPanel cron, every 5 minutes:
-//   curl -s -X POST -H "x-job-secret: $JOB_RUNNER_SECRET" https://approvals.arssteels.net/api/jobs/run
+//   curl -s -X POST -H "x-job-secret: $JOB_RUNNER_SECRET" https://approval.arssteels.net/api/jobs/run
 // Without the right secret (or with none configured) it looks like any
 // missing route.
 function secretMatches(given: string | null): boolean {

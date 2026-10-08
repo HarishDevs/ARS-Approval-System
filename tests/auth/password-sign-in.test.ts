@@ -31,7 +31,7 @@ function completeDeps(overrides: Partial<CompleteSignInDeps> = {}) {
     getTrustedDeviceDays: async () => 30,
     randomUUID: () => "session-uuid",
     now: () => new Date("2026-09-28T10:00:00Z"),
-    appBaseUrl: () => "https://approvals.arssteels.net",
+    appBaseUrl: () => "https://approval.arssteels.net",
     ...overrides,
   };
   return { deps, notified };
@@ -226,7 +226,7 @@ describe("complete sign-in: new-login alerts (F-03, N-02, N-04)", () => {
     await Promise.resolve();
     expect(notified).toHaveLength(1);
     expect(notified[0]).toMatchObject({ eventType: "NEW_LOGIN", userId: 5 });
-    expect(notified[0]!.deepLink).toContain("https://approvals.arssteels.net/security/not-me?token=");
+    expect(notified[0]!.deepLink).toContain("https://approval.arssteels.net/security/not-me?token=");
   });
 
   it("no alert on a known device or on the very first sign-in", async () => {

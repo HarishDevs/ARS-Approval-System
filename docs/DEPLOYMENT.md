@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | App | ARS Approval Platform **v1.0.2** (`docs/RELEASE-NOTES.md`) |
-| Address | **https://approvals.arssteels.net** (one app: `/users`, `/admin`, `/superadmin`) |
+| Address | **https://approval.arssteels.net** (one app: `/users`, `/admin`, `/superadmin`) |
 | Hosting | GoDaddy **Node.js Hosting** ("Deploy your Node.js app"), from GitHub `HarishDevs/ARS-Approval-System`, branch `main` |
 | Database | MySQL 8 in GoDaddy cPanel |
 | Done by | itadmin@arssteels.co.in, with IT |
@@ -160,19 +160,19 @@ GoDaddy → **My Products** → **Node.js Hosting** (host.godaddy.com/hosting) �
 ---
 
 ## Part E: Connect the domain and HTTPS
-1. In the app → **Settings → Domains** (or the **Connect custom domain** card) → add `approvals.arssteels.net`.
+1. In the app → **Settings → Domains** (or the **Connect custom domain** card) → add `approval.arssteels.net`.
 2. GoDaddy shows the DNS record to add, usually a **CNAME** `approvals` → the app's address, or an A record.
    - If `arssteels.net` is managed in the same GoDaddy account, GoDaddy may add it for you.
    - Otherwise: **My Products → arssteels.net → DNS → Add** that record exactly.
 3. Wait until the domain shows **Connected**, and the certificate shows **SSL active / Secure**. Usually minutes; DNS can take up to an hour.
-- [ ] https://approvals.arssteels.net shows the sign-in page with the padlock.
-- [ ] `APP_BASE_URL` is `https://approvals.arssteels.net`. It's used in every email and WhatsApp link.
+- [ ] https://approval.arssteels.net shows the sign-in page with the padlock.
+- [ ] `APP_BASE_URL` is `https://approval.arssteels.net`. It's used in every email and WhatsApp link.
 
 ---
 
 ## Part F: Allow the domain in Firebase
 1. Firebase console → **power-bi-dashboard-3b29f** → **Authentication** → **Settings** → **Authorised domains** → **Add domain**:
-   - `approvals.arssteels.net`;
+   - `approval.arssteels.net`;
    - the preview address `30yc8vknqm.preview.c40.airoapp.ai`, so you can sign in on the preview before going live.
 2. Without this, Google sign-in fails with `auth/unauthorized-domain`.
 
@@ -181,7 +181,7 @@ GoDaddy → **My Products** → **Node.js Hosting** (host.godaddy.com/hosting) �
 ## Part G: First sign-in and Super Admin settings
 
 ### G1. Sign in
-1. https://approvals.arssteels.net → **Continue with Google** → **itadmin@arssteels.co.in**. The seed created this Super Admin.
+1. https://approval.arssteels.net → **Continue with Google** → **itadmin@arssteels.co.in**. The seed created this Super Admin.
 2. You land on **My approvals**. The left menu's **Switch area** shows Admin and Super Admin.
 
 ### G2. Email (Resend)
@@ -225,12 +225,12 @@ Without this, there are **no reminders, escalations, retries, outbox catch-up or
 1. cPanel → **Cron Jobs** → **Add New Cron Job** → Common settings: **Once Per Five Minutes** (`*/5 * * * *`).
 2. Command: copy `JOB_RUNNER_SECRET` from your password manager, or from GoDaddy's secrets screen:
    ```
-   curl -s -X POST -H "x-job-secret: <JOB_RUNNER_SECRET>" https://approvals.arssteels.net/api/jobs/run > /dev/null
+   curl -s -X POST -H "x-job-secret: <JOB_RUNNER_SECRET>" https://approval.arssteels.net/api/jobs/run > /dev/null
    ```
 3. **Add New Cron Job**.
 4. Test it once by hand. In PowerShell on your PC:
    ```powershell
-   curl.exe -s -X POST -H "x-job-secret: <JOB_RUNNER_SECRET>" https://approvals.arssteels.net/api/jobs/run
+   curl.exe -s -X POST -H "x-job-secret: <JOB_RUNNER_SECRET>" https://approval.arssteels.net/api/jobs/run
    ```
    - Expected: `{"success":true,"data":{"outbox":…,"retries":…,"sla":…,"templates":…}}`.
    - A wrong secret gives a 404.
@@ -265,7 +265,7 @@ Choose one:
 ---
 
 ## Part L: Go-live checks
-Run these at https://approvals.arssteels.net. They come from the Smoke suite, `docs/qa/QA-TEST-SUITE.md` §33.
+Run these at https://approval.arssteels.net. They come from the Smoke suite, `docs/qa/QA-TEST-SUITE.md` §33.
 - [ ] HTTPS padlock. Security headers present: in browser DevTools → Network → a page → Response headers, look for `content-security-policy`, `strict-transport-security`, `x-frame-options: DENY`.
 - [ ] Google sign-in works for itadmin@.
 - [ ] A **password** user: the set-password email arrives → WhatsApp code → signed in.

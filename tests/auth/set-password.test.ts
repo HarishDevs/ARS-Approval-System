@@ -40,7 +40,7 @@ function build(user: UserRecord | null, overrides: Partial<PasswordFlowDeps> = {
     getTrustedDeviceDays: async () => 30,
     randomUUID: () => "new-session",
     now: () => new Date("2026-09-29T10:00:00Z"),
-    appBaseUrl: () => "https://approvals.arssteels.net",
+    appBaseUrl: () => "https://approval.arssteels.net",
   };
   const deps: PasswordFlowDeps = {
     getRecentOtpStats: async () => ({ countLastHour: 0, secondsSinceLast: null }),
@@ -86,7 +86,7 @@ function build(user: UserRecord | null, overrides: Partial<PasswordFlowDeps> = {
     defer: (work) => {
       deferred.push(work);
     },
-    appBaseUrl: () => "https://approvals.arssteels.net",
+    appBaseUrl: () => "https://approval.arssteels.net",
     complete,
     ...overrides,
   };
@@ -113,7 +113,7 @@ describe("set-password link (P1-13)", () => {
     expect(tokens).toHaveLength(1);
     expect(tokens[0]!.hash).not.toContain("token-1");
     const sent = (deps.notify as unknown as { mock: { calls: [{ email: { text: string } }][] } }).mock.calls[0]![0];
-    expect(sent.email.text).toContain("https://approvals.arssteels.net/set-password?token=token-1");
+    expect(sent.email.text).toContain("https://approval.arssteels.net/set-password?token=token-1");
   });
 
   it("refuses Google users, users without WhatsApp, and the break-glass account", async () => {

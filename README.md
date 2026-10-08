@@ -2,7 +2,7 @@
 
 One configurable approval engine for ARS Steels & Alloy International Pvt Ltd. **Its main purpose is multi-level approvals in any custom manner.** It replaces the 104 Asana approval projects.
 
-- **Address:** `approvals.arssteels.net`
+- **Address:** `approval.arssteels.net`
   - `/users`: everyone. Create requests, create custom approvals, act on your approval queue.
   - `/admin`: IT team. Predefined approvals, forms, workflows, DoA, users and roles.
   - `/superadmin`: itadmin@arssteels.co.in only. Providers, security, integrations, system health, audit.

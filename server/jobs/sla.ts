@@ -56,7 +56,7 @@ export async function runSlaChecks(): Promise<{ reminders: number; escalations: 
      WHERE t.status = 'PENDING' AND r.status = 'IN_PROGRESS' AND t.due_at IS NOT NULL AND t.due_at <= CURRENT_TIMESTAMP
      ORDER BY t.due_at LIMIT 200`,
   );
-  const base = getEnv().APP_BASE_URL ?? "https://approvals.arssteels.net";
+  const base = getEnv().APP_BASE_URL ?? "https://approval.arssteels.net";
   let adminIds: number[] | null = null;
   const result = { reminders: 0, escalations: 0 };
 

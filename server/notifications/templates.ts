@@ -32,7 +32,7 @@ const LINK_NOTE = "Open it here (sign-in needed):";
 const v = (key: string, label: string, sample: string): TemplateVariable => ({ key, label, sample });
 const REQUEST_NO = v("request_no", "Request number", "PUR-2026-000123");
 const TITLE = v("title", "Request title", "Laptop for the new engineer");
-const LINK = v("link", "Link to the request", "https://approvals.arssteels.net/users/requests/123");
+const LINK = v("link", "Link to the request", "https://approval.arssteels.net/users/requests/123");
 const USER = v("user_name", "Person's name", "Ravi Kumar");
 
 export const WHATSAPP_TEMPLATES: readonly TemplateEntry[] = [
@@ -165,7 +165,7 @@ export const WHATSAPP_TEMPLATES: readonly TemplateEntry[] = [
     group: "Security",
     purpose: "A sign-in from a new device or browser.",
     sentTo: "The person who signed in",
-    variables: [USER, v("time", "When", "07 Oct 2026, 10:42 am"), v("device", "Device", "Chrome on Windows"), v("ip_address", "IP address", "103.21.58.10"), v("link", "\"This wasn't me\" link", "https://approvals.arssteels.net/api/auth/not-me?t=abc123")],
+    variables: [USER, v("time", "When", "07 Oct 2026, 10:42 am"), v("device", "Device", "Chrome on Windows"), v("ip_address", "IP address", "103.21.58.10"), v("link", "\"This wasn't me\" link", "https://approval.arssteels.net/api/auth/not-me?t=abc123")],
     body: `New sign-in\n\nHi {{1}}, there was a new sign-in to your ARS Approvals account.\nWhen: {{2}}\nDevice: {{3}}\nIP address: {{4}}\n\nIf this wasn't you, open this link to sign out everywhere and lock your account: {{5}}\n\n${SIGN_OFF}`,
   },
   {

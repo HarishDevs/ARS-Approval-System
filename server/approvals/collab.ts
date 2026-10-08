@@ -18,7 +18,7 @@ import { logError } from "@/lib/logging/logger";
 import type { Actor, Result } from "@/server/approvals/service";
 
 const isAdmin = (actor: Actor) => actor.roles.includes("IT_ADMIN") || actor.roles.includes("SUPER_ADMIN");
-const baseUrl = () => getEnv().APP_BASE_URL ?? "https://approvals.arssteels.net";
+const baseUrl = () => getEnv().APP_BASE_URL ?? "https://approval.arssteels.net";
 
 // ---- comments (F-15, D-061) -------------------------------------------------------
 export async function addComment(requestId: number, body: string, actor: Actor): Promise<Result<{ id: number }>> {

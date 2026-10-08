@@ -259,7 +259,7 @@ async function prepareMessages(
   return messagesForEvents(
     change.events,
     { id: change.request.id, requestNo: change.request.requestNo, title: change.request.title, requesterId: change.request.requesterId, requesterName: change.requesterName },
-    { baseUrl: getEnv().APP_BASE_URL ?? "https://approvals.arssteels.net", adminIds, labelOf },
+    { baseUrl: getEnv().APP_BASE_URL ?? "https://approval.arssteels.net", adminIds, labelOf },
   );
 }
 

@@ -15,7 +15,7 @@ The file is generated from `docs/qa/source/` (one compact line per case). To add
 | Item | Detail |
 |---|---|
 | Purpose | Replaces 104 Asana approval projects. North star: **multi-level approvals in any custom manner** |
-| URL | `approvals.arssteels.net`, one Next.js 15 app on GoDaddy Node.js hosting with MySQL 8 |
+| URL | `approval.arssteels.net`, one Next.js 15 app on GoDaddy Node.js hosting with MySQL 8 |
 | Areas | `/users`: everyone (raise, queue, my requests, custom approvals, delegation, notifications)<br>`/admin`: IT Admin (workflows, DoA view, users, departments, groups, calendar, insights)<br>`/superadmin`: Super Admin only (providers, WhatsApp templates, demo data, deliveries, audit log) |
 | Sign-in | Google (Firebase), no OTP. Or User ID + password + WhatsApp OTP. 12-hour server-side session; lockout after 5 wrong passwords for 15 minutes; new-device alert; "This wasn't me" |
 | Engine | Node graph: START, APPROVAL, SPLIT, JOIN, CONDITION, END. Completion rules ALL, ANY_ONE and ANY_N. Skip conditions (AND/OR). Approver sources: people, role, group, requester's manager, manager's manager, the requester's department HOD, a named department's HOD, a person field on the form |

@@ -66,7 +66,7 @@ Open it here (sign-in needed): {{4}}
 | `{{1}}` | Raised by | Ravi Kumar |
 | `{{2}}` | Request number | PUR-2026-000123 |
 | `{{3}}` | Request title | Laptop for the new engineer |
-| `{{4}}` | Link to the request | https://approvals.arssteels.net/users/requests/123 |
+| `{{4}}` | Link to the request | https://approval.arssteels.net/users/requests/123 |
 
 What the person sees (with the samples):
 ```
@@ -74,7 +74,7 @@ Approval needed
 
 Ravi Kumar needs your approval for PUR-2026-000123: Laptop for the new engineer.
 
-Open it here (sign-in needed): https://approvals.arssteels.net/users/requests/123
+Open it here (sign-in needed): https://approval.arssteels.net/users/requests/123
 
 — ARS Approvals
 ```
@@ -101,7 +101,7 @@ Details: {{3}}
 |---|---|---|
 | `{{1}}` | Request number | PUR-2026-000123 |
 | `{{2}}` | Request title | Laptop for the new engineer |
-| `{{3}}` | Link to the request | https://approvals.arssteels.net/users/requests/123 |
+| `{{3}}` | Link to the request | https://approval.arssteels.net/users/requests/123 |
 
 What the person sees (with the samples):
 ```
@@ -109,7 +109,7 @@ Request approved
 
 Your request PUR-2026-000123: Laptop for the new engineer is fully approved.
 
-Details: https://approvals.arssteels.net/users/requests/123
+Details: https://approval.arssteels.net/users/requests/123
 
 — ARS Approvals
 ```
@@ -138,7 +138,7 @@ Details: {{4}}
 | `{{1}}` | Request number | PUR-2026-000123 |
 | `{{2}}` | Request title | Laptop for the new engineer |
 | `{{3}}` | Reason | Budget not available this quarter |
-| `{{4}}` | Link to the request | https://approvals.arssteels.net/users/requests/123 |
+| `{{4}}` | Link to the request | https://approval.arssteels.net/users/requests/123 |
 
 What the person sees (with the samples):
 ```
@@ -147,7 +147,7 @@ Request rejected
 Your request PUR-2026-000123: Laptop for the new engineer was rejected.
 Reason: Budget not available this quarter
 
-Details: https://approvals.arssteels.net/users/requests/123
+Details: https://approval.arssteels.net/users/requests/123
 
 — ARS Approvals
 ```
@@ -176,7 +176,7 @@ Update and resubmit it here: {{4}}
 | `{{1}}` | Request number | PUR-2026-000123 |
 | `{{2}}` | Request title | Laptop for the new engineer |
 | `{{3}}` | What to change | Attach two quotes |
-| `{{4}}` | Link to the request | https://approvals.arssteels.net/users/requests/123 |
+| `{{4}}` | Link to the request | https://approval.arssteels.net/users/requests/123 |
 
 What the person sees (with the samples):
 ```
@@ -185,7 +185,7 @@ Changes needed
 An approver asked for changes to PUR-2026-000123: Laptop for the new engineer.
 What to change: Attach two quotes
 
-Update and resubmit it here: https://approvals.arssteels.net/users/requests/123
+Update and resubmit it here: https://approval.arssteels.net/users/requests/123
 
 — ARS Approvals
 ```
@@ -214,7 +214,7 @@ Details: {{4}}
 | `{{1}}` | Request number | PUR-2026-000123 |
 | `{{2}}` | Request title | Laptop for the new engineer |
 | `{{3}}` | Reason (may be a dash) | Waiting for the budget review |
-| `{{4}}` | Link to the request | https://approvals.arssteels.net/users/requests/123 |
+| `{{4}}` | Link to the request | https://approval.arssteels.net/users/requests/123 |
 
 What the person sees (with the samples):
 ```
@@ -223,7 +223,7 @@ Request on hold
 Your request PUR-2026-000123: Laptop for the new engineer is on hold.
 Reason: Waiting for the budget review
 
-Details: https://approvals.arssteels.net/users/requests/123
+Details: https://approval.arssteels.net/users/requests/123
 
 — ARS Approvals
 ```
@@ -251,7 +251,7 @@ Details: {{4}}
 | `{{1}}` | Request number | PUR-2026-000123 |
 | `{{2}}` | Request title | Laptop for the new engineer |
 | `{{3}}` | Withdrawn by | Ravi Kumar |
-| `{{4}}` | Link to the request | https://approvals.arssteels.net/users/requests/123 |
+| `{{4}}` | Link to the request | https://approval.arssteels.net/users/requests/123 |
 
 What the person sees (with the samples):
 ```
@@ -259,7 +259,7 @@ Request withdrawn
 
 PUR-2026-000123: Laptop for the new engineer was withdrawn by Ravi Kumar, so your approval is no longer needed.
 
-Details: https://approvals.arssteels.net/users/requests/123
+Details: https://approval.arssteels.net/users/requests/123
 
 — ARS Approvals
 ```
@@ -288,7 +288,7 @@ Details: {{4}}
 | `{{1}}` | Request number | PUR-2026-000123 |
 | `{{2}}` | Request title | Laptop for the new engineer |
 | `{{3}}` | Reason | Vendor changed the price |
-| `{{4}}` | Link to the request | https://approvals.arssteels.net/users/requests/123 |
+| `{{4}}` | Link to the request | https://approval.arssteels.net/users/requests/123 |
 
 What the person sees (with the samples):
 ```
@@ -297,7 +297,7 @@ Request reopened
 Your approved request PUR-2026-000123: Laptop for the new engineer was reopened and goes through approval again.
 Reason: Vendor changed the price
 
-Details: https://approvals.arssteels.net/users/requests/123
+Details: https://approval.arssteels.net/users/requests/123
 
 — ARS Approvals
 ```
@@ -325,7 +325,7 @@ Read and reply here: {{4}}
 | `{{1}}` | Comment by | Meena Iyer |
 | `{{2}}` | Request number | PUR-2026-000123 |
 | `{{3}}` | Request title | Laptop for the new engineer |
-| `{{4}}` | Link to the request | https://approvals.arssteels.net/users/requests/123 |
+| `{{4}}` | Link to the request | https://approval.arssteels.net/users/requests/123 |
 
 What the person sees (with the samples):
 ```
@@ -333,7 +333,7 @@ New comment
 
 Meena Iyer commented on PUR-2026-000123: Laptop for the new engineer.
 
-Read and reply here: https://approvals.arssteels.net/users/requests/123
+Read and reply here: https://approval.arssteels.net/users/requests/123
 
 — ARS Approvals
 ```
@@ -360,7 +360,7 @@ Open it here (sign-in needed): {{3}}
 |---|---|---|
 | `{{1}}` | Request number | PUR-2026-000123 |
 | `{{2}}` | Request title | Laptop for the new engineer |
-| `{{3}}` | Link to the request | https://approvals.arssteels.net/users/requests/123 |
+| `{{3}}` | Link to the request | https://approval.arssteels.net/users/requests/123 |
 
 What the person sees (with the samples):
 ```
@@ -368,7 +368,7 @@ Reminder: approval waiting
 
 PUR-2026-000123: Laptop for the new engineer has passed its response time and is still waiting for your decision.
 
-Open it here (sign-in needed): https://approvals.arssteels.net/users/requests/123
+Open it here (sign-in needed): https://approval.arssteels.net/users/requests/123
 
 — ARS Approvals
 ```
@@ -398,7 +398,7 @@ IT can hand it over if needed: {{5}}
 | `{{2}}` | Level | HOD approval |
 | `{{3}}` | Request number | PUR-2026-000123 |
 | `{{4}}` | Request title | Laptop for the new engineer |
-| `{{5}}` | Link to the request | https://approvals.arssteels.net/users/requests/123 |
+| `{{5}}` | Link to the request | https://approval.arssteels.net/users/requests/123 |
 
 What the person sees (with the samples):
 ```
@@ -407,7 +407,7 @@ Approval escalated
 Manoj Menon hasn't acted on "HOD approval" for twice the allowed time.
 Request: PUR-2026-000123: Laptop for the new engineer
 
-IT can hand it over if needed: https://approvals.arssteels.net/users/requests/123
+IT can hand it over if needed: https://approval.arssteels.net/users/requests/123
 
 — ARS Approvals
 ```
@@ -436,7 +436,7 @@ Please fix it here: {{5}}
 | `{{2}}` | Request title | Laptop for the new engineer |
 | `{{3}}` | Level | Finance approval |
 | `{{4}}` | Why | no eligible approver |
-| `{{5}}` | Link to the request | https://approvals.arssteels.net/users/requests/123 |
+| `{{5}}` | Link to the request | https://approval.arssteels.net/users/requests/123 |
 
 What the person sees (with the samples):
 ```
@@ -444,7 +444,7 @@ Request blocked
 
 PUR-2026-000123: Laptop for the new engineer can't move on at "Finance approval" because of: no eligible approver.
 
-Please fix it here: https://approvals.arssteels.net/users/requests/123
+Please fix it here: https://approval.arssteels.net/users/requests/123
 
 — ARS Approvals
 ```
@@ -478,7 +478,7 @@ If this wasn't you, open this link to sign out everywhere and lock your account:
 | `{{2}}` | When | 07 Oct 2026, 10:42 am |
 | `{{3}}` | Device | Chrome on Windows |
 | `{{4}}` | IP address | 103.21.58.10 |
-| `{{5}}` | "This wasn't me" link | https://approvals.arssteels.net/api/auth/not-me?t=abc123 |
+| `{{5}}` | "This wasn't me" link | https://approval.arssteels.net/api/auth/not-me?t=abc123 |
 
 What the person sees (with the samples):
 ```
@@ -489,7 +489,7 @@ When: 07 Oct 2026, 10:42 am
 Device: Chrome on Windows
 IP address: 103.21.58.10
 
-If this wasn't you, open this link to sign out everywhere and lock your account: https://approvals.arssteels.net/api/auth/not-me?t=abc123
+If this wasn't you, open this link to sign out everywhere and lock your account: https://approval.arssteels.net/api/auth/not-me?t=abc123
 
 — ARS Approvals
 ```

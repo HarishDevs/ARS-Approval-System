@@ -61,7 +61,7 @@ export const defaultCompleteSignInDeps: CompleteSignInDeps = {
   getTrustedDeviceDays: async () => (await getAuthSecurityConfig()).trustedDeviceDays,
   randomUUID: () => crypto.randomUUID(),
   now: () => new Date(),
-  appBaseUrl: () => getEnv().APP_BASE_URL ?? "https://approvals.arssteels.net",
+  appBaseUrl: () => getEnv().APP_BASE_URL ?? "https://approval.arssteels.net",
 };
 
 export async function completeSignIn(
