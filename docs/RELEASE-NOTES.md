@@ -1,5 +1,10 @@
 # Release notes
 
+## v1.0.5 (8 Oct 2026)
+- **The Super Admin signs in with Google as `itsupport@arsenergy.co.in`** (D-082). `itadmin@arssteels.co.in` is an alias of another mailbox, and Google always reports the primary address, so it never matched (`UNKNOWN_ACCOUNT`).
+- A one-time migration moves the bootstrap account (User ID `itadmin`, all its roles) to the new email.
+- The bootstrap seed no longer overwrites the account on every start, so later edits in Admin → Users stay.
+
 ## v1.0.4 (8 Oct 2026): first live fixes
 - **Email addresses on pages no longer break the page.** GoDaddy's Cloudflare layer rewrote any address in the HTML (email obfuscation) and injected a script the CSP blocks, which caused React error #418. Addresses are now rendered so Cloudflare leaves them alone; they look the same.
 - **Google sign-in:**

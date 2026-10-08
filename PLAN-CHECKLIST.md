@@ -251,6 +251,7 @@ Found during S8-06:
   - Cloudflare email obfuscation broke hydration (React #418) → addresses are now rendered split (SafeText);
   - Google sign-in 401 → the Firebase key is accepted in any paste format, and verification failures are logged;
   - v1.0.4
+- [x] S8-12 Google sign-in reached UNKNOWN_ACCOUNT: itadmin@ is an alias. The Super Admin now signs in as itsupport@arsenergy.co.in (D-082, migration + non-overwriting seed, v1.0.5) (done 8 Oct 2026)
 - [ ] S8-01b Go-live on GoDaddy with the owner, following docs/DEPLOYMENT.md (the owner is at the wizard's "Add secrets" step)
 - [x] S8-04 Update the three living files; commit and push (done 8 Oct 2026)
 

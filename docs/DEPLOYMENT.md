@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| App | ARS Approval Platform **v1.0.4** (`docs/RELEASE-NOTES.md`) |
+| App | ARS Approval Platform **v1.0.5** (`docs/RELEASE-NOTES.md`) |
 | Address | **https://approval.arssteels.net** (one app: `/users`, `/admin`, `/superadmin`) |
 | Hosting | GoDaddy **Node.js Hosting** ("Deploy your Node.js app"), from GitHub `HarishDevs/ARS-Approval-System`, branch `main` |
 | Database | MySQL 8 in GoDaddy cPanel |
@@ -181,7 +181,7 @@ GoDaddy → **My Products** → **Node.js Hosting** (host.godaddy.com/hosting) �
 ## Part G: First sign-in and Super Admin settings
 
 ### G1. Sign in
-1. https://approval.arssteels.net → **Continue with Google** → **itadmin@arssteels.co.in**. The seed created this Super Admin.
+1. https://approval.arssteels.net → **Continue with Google** → **itsupport@arsenergy.co.in** (D-082). The seed created this Super Admin, User ID `itadmin`. `itadmin@arssteels.co.in` can't be used: it's only an alias, and Google reports the main address.
 2. You land on **My approvals**. The left menu's **Switch area** shows Admin and Super Admin.
 
 ### G2. Email (Resend)
@@ -313,7 +313,7 @@ To rebuild a full import file for a brand-new environment: apply the migrations 
 | `Migration failed: … TRIGGER command denied` | The user can't create triggers | GoDaddy support: allow triggers (B4) |
 | Google sign-in: `auth/unauthorized-domain` | Domain not allowed in Firebase | Part F |
 | Google sign-in fails on the server; log mentions the private key | `FIREBASE_PRIVATE_KEY` mangled | Re-enter it on one line with the `\n` sequences and **no** surrounding quotes |
-| "Your account isn't set up" for a Google user | Only admin-created users can sign in | Create the user in Admin → Users with the same email |
+| "Google sign-in failed" (403); `login_logs.failure_reason` = `UNKNOWN_ACCOUNT` | The Google account's **primary** email matches no user. An alias such as itadmin@arssteels.co.in never matches | Sign in with the primary address; for staff, create the user in Admin → Users with their **primary** Google email |
 | Test email fails; deliveries show `EMAIL_REQUEST_FAILED` | Resend domain not verified, or wrong key | Part A5: wait for **Verified**; check the key |
 | WhatsApp test: "CEOITBox refused the API key (401)" | Wrong or switched-off key | Paste the new key again; check it's on in CEOITBox |
 | WhatsApp: `CEOITBOX_BLOCKED` | Wallet balance low, or the number opted out | Top up in CEOITBox → Money → Credit Center |
