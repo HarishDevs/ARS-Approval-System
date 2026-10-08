@@ -13,8 +13,8 @@ Work through the parts **in order**. Tick each box as you go. Anything marked **
 
 ## Contents
 - **Part A:** Get ready (on your PC)
-- **Part B:** Create the database (cPanel)
-- **Part C:** Create the attachments folder (cPanel)
+- **Part B:** The database (Hosted Database: import the SQL file)
+- **Part C:** Attachments storage (Private Storage)
 - **Part D:** Deploy the app (the "Deploy your Node.js app" wizard)
 - **Part E:** Connect the domain and HTTPS
 - **Part F:** Allow the domain in Firebase
@@ -68,42 +68,40 @@ The app sends email as **itadmin@arssteels.co.in** through Resend. Resend only s
 
 ---
 
-## Part B: Create the database (cPanel)
+## Part B: The database (the app's Hosted Database)
+GoDaddy's Node.js hosting provisions a MySQL database **with the app**: **App → Settings → Hosted Database**. The preview and live environments share it. Use it; the cPanel database isn't needed.
 
-### B1. Database and user
-1. GoDaddy → **My Products** → your hosting → **cPanel Admin** → **MySQL® Databases**.
-2. **Create New Database**: `ars_approvals`. cPanel adds a prefix, e.g. `abc123_ars_approvals`; note the full name.
-3. **Add New User**: e.g. `ars_app`, with a strong password from the generator. Note the full name and the password.
-4. **Add User To Database**: that user + that database → **ALL PRIVILEGES** → **Make Changes**.
+### B1. Import the database file (first time only)
+1. The file is `D:\Omniroute\deploy-secrets\ars-approvals-v1.0.1-database.sql`. It's built from the 15 migrations and the seeds, and was tested by importing it into an empty MySQL 8 as an ordinary user. It holds:
+   - 35 tables;
+   - 6 append-only triggers;
+   - the roles;
+   - the sign-in code template;
+   - the Super Admin itadmin@arssteels.co.in;
+   - the record of the applied migrations.
+   It has no passwords or keys.
+2. **Settings → Hosted Database → Import SQL** → choose that file → import.
+3. **Browse tables**: you should see 35 tables, including `users` with one row (`itadmin`) and `schema_migrations` with 15 rows.
+4. If the import reports an error about `TRIGGER` (privileges), send it to GoDaddy support: the triggers protect the audit log, timeline and comments, and are required.
+5. The file never drops anything: importing it again fails with "Table already exists" instead of wiping data. Import it **only once**. Later releases add their migrations by themselves (D3 start command).
 
-### B2. Which host the app uses
-- [ ] **Confirm** the database host the Node.js app can reach. The wizard (D3) or the app's settings may show a MySQL host, because GoDaddy says "a managed MySQL database comes with every published app".
-  - **If it offers its own database:** use those details instead of B1's.
-  - **Otherwise:** use the cPanel database. Its host is shown in cPanel → **Remote MySQL** / server information. It's often `localhost` from cPanel's own side, but a Node app on a separate container may need the server's hostname.
+### B2. Connection details → secrets
+1. **Hosted Database → Open database guide**: copy the host, port, database name, user and password.
+2. **Settings → Secrets**: set `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` and `DB_PASSWORD` to those values. The app reads only these names. If the guide shows a single connection URL, split it into the five values.
 
-### B3. Put the values in the secrets file
-`DB_HOST`, `DB_PORT=3306`, `DB_NAME` (the full prefixed name), `DB_USER` (full name), `DB_PASSWORD`.
-
-### B4. (Recommended) Privilege check from your PC
-The audit log, timeline and comments are protected by database triggers, so the user must be allowed `CREATE TRIGGER`.
-1. cPanel → **Remote MySQL** → add your current public IP (search "what is my IP").
-2. On your PC, in `D:\Omniroute\ARS Approval System`, run this in PowerShell, using the values from B1–B3:
-   ```powershell
-   $env:DB_HOST="<host>"; $env:DB_PORT="3306"; $env:DB_NAME="<db>"; $env:DB_USER="<user>"; $env:DB_PASSWORD="<password>"; npm run db:check
-   ```
-3. Every line must say **OK**, ending with "Ready". If `CREATE TRIGGER` fails, ask GoDaddy support to allow triggers for the user (or set `log_bin_trust_function_creators=1`). Don't go live without it.
-4. Remove your IP from Remote MySQL afterwards if you won't need it again (Part J uses it too).
-
-You don't need to run migrations by hand. The app's start command (D4) applies them on every start, safely: already-applied ones are skipped.
+### B3. If you use the cPanel MySQL instead (fallback)
+Create the database and an ALL PRIVILEGES user in cPanel → MySQL Databases. Import the same `.sql` file in phpMyAdmin → Import. Then put its details in the secrets as in B2. `npm run db:check` (from your PC, after allowing your IP in cPanel → Remote MySQL) confirms the user may create triggers.
 
 ---
 
-## Part C: Create the attachments folder (cPanel)
-1. cPanel → **File Manager** → your home folder (`/home/<cpanel-user>`). Note `<cpanel-user>`; it's shown at the top of cPanel.
-2. **+ Folder** → `ars-approvals-uploads`. It must be **outside** `public_html` and outside the app's folder.
-3. In the secrets file, set `UPLOAD_DIR=/home/<cpanel-user>/ars-approvals-uploads`.
-4. cPanel → **Backup** (or JetBackup): make sure the home folder, and this folder in particular, is included.
-- [ ] **Confirm** the Node.js app can write to that path. G5 tests it. If it can't, use the folder path the Node.js app's settings recommend for persistent files.
+## Part C: Attachments storage (Private Storage)
+The app's **File Manager** has two areas:
+- **App (`/app`):** rebuilt on every deploy, so it's **not** for uploads.
+- **Private Storage (`/private`):** never public, and kept across deploys.
+
+1. **Settings → Secrets**: set `UPLOAD_DIR` = **`/private/uploads`**. The app creates the folder itself on the first upload.
+2. G5 checks that a file survives a redeploy. **Confirm** the path: if Private Storage shows a different absolute path in File Manager → Private Storage → (i), use that path plus `/uploads`.
+3. Private Storage is outside cPanel backups. Use **Export SQL** (database) regularly, and ask GoDaddy how Private Storage is backed up (**confirm**).
 
 ---
 
@@ -123,7 +121,7 @@ GoDaddy → **My Products** → **Node.js Hosting** (host.godaddy.com/hosting) �
 | Node.js version | **22** |
 | Install command | `npm ci` (or the platform default `npm install`) |
 | Build command | `npm run build` |
-| Start command | **`npm run start:production`**: applies migrations and seeds, then starts the app |
+| Start command | **`npm run start:production`**: applies any new migrations and the seeds, then starts the app. With the B1 import already done, it simply reports "No pending migrations" |
 | Port | Leave the default; the app listens on the `PORT` the platform gives |
 
 If the wizard doesn't let you change the start command, it runs `npm start`. Then run the migrations once from your PC before the first start (B4 setup, then `npm run db:migrate` and `npm run db:seed` with the same `$env:` values), and again after any release that adds migrations.
@@ -146,7 +144,9 @@ If the wizard doesn't let you change the start command, it runs `npm start`. The
    Seeding 001_roles.sql ... Done. Ran 3 seed file(s).
    ▲ Next.js 15.5.25 - Local: http://localhost:<port>  ✓ Ready
    ```
-3. The app shows **Running**. Note its temporary address, e.g. `something.godaddysites.app` (**confirm**).
+3. The app shows **Running / Build status Healthy**. Its preview address looks like `30yc8vknqm.preview.c40.airoapp.ai`.
+4. If it says **"Your app is redirecting"**: the site root `/` sends visitors to `/login`, so health checks need that path. Press **Open General settings** → set the root/health-check path to **`/login`** → save.
+5. **Update Preview** deploys the latest `main`. When the preview is checked (Parts F–L), press **Publish to Live**.
 - [ ] Open the temporary address: the **ARS Approvals sign-in page** loads.
 
 ### D6. Delete the secrets file
@@ -155,7 +155,7 @@ If the wizard doesn't let you change the start command, it runs `npm start`. The
 ---
 
 ## Part E: Connect the domain and HTTPS
-1. In the Node.js app → **Settings / Domains** → **Add custom domain** → `approvals.arssteels.net` (**confirm** the menu name).
+1. In the app → **Settings → Domains** (or the **Connect custom domain** card) → add `approvals.arssteels.net`.
 2. GoDaddy shows the DNS record to add, usually a **CNAME** `approvals` → the app's address, or an A record.
    - If `arssteels.net` is managed in the same GoDaddy account, GoDaddy may add it for you.
    - Otherwise: **My Products → arssteels.net → DNS → Add** that record exactly.
@@ -168,7 +168,7 @@ If the wizard doesn't let you change the start command, it runs `npm start`. The
 ## Part F: Allow the domain in Firebase
 1. Firebase console → **power-bi-dashboard-3b29f** → **Authentication** → **Settings** → **Authorised domains** → **Add domain**:
    - `approvals.arssteels.net`;
-   - while testing, also the temporary GoDaddy address from D5.
+   - the preview address `30yc8vknqm.preview.c40.airoapp.ai`, so you can sign in on the preview before going live.
 2. Without this, Google sign-in fails with `auth/unauthorized-domain`.
 
 ---
@@ -281,6 +281,9 @@ When all are ticked: **live**. Tell the staff the address, and who to contact (I
 ## Part M: Updating later, and rollback
 
 ### Release a new version
+Never re-import the database file: it's for the very first setup only. New migrations are applied by the start command.
+To rebuild a full import file for a brand-new environment: apply the migrations and seeds to an empty local database, `mysqldump --triggers --no-tablespaces --set-gtid-purged=OFF`, then `python scripts/database/release-sql-clean.py <dump> <out>`. That removes DEFINER, DELIMITER, DROP and LOCK statements, and adds one-line triggers.
+
 1. Changes are pushed to `main` → GitHub Actions must be **green on all 3 jobs**.
 2. Tag it: `v1.0.2` and so on.
 3. GoDaddy redeploys from `main`: automatically, or press **Redeploy** (**confirm** which).
@@ -309,7 +312,9 @@ When all are ticked: **live**. Tell the staff the address, and who to contact (I
 | WhatsApp test: "CEOITBox refused the API key (401)" | Wrong or switched-off key | Paste the new key again; check it's on in CEOITBox |
 | WhatsApp: `CEOITBOX_BLOCKED` | Wallet balance low, or the number opted out | Top up in CEOITBox → Money → Credit Center |
 | WhatsApp messages skipped: `TEMPLATE_NOT_CONFIGURED` | That message's template isn't live yet | Part H |
-| Attachments vanish after a redeploy | `UPLOAD_DIR` not persistent | Part C; point it at a persistent folder |
+| Attachments vanish after a redeploy | `UPLOAD_DIR` points inside `/app` | Part C: `/private/uploads` |
+| "Your app is redirecting" warning | Root `/` redirects to `/login` | Settings → General → root path `/login` |
+| Import SQL fails on `CREATE TRIGGER` | Hosted DB user not allowed to create triggers | GoDaddy support ticket (Part B1 step 4) |
 | No reminders or escalations | Cron missing, or wrong secret (the job answers 404) | Part I |
 | 502 / "Application error" right after deploy | App still starting (migrations on the first start), or crashed | Wait 1 minute; read the app's runtime log |
 
