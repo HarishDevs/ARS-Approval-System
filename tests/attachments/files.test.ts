@@ -67,6 +67,8 @@ describe("filesFrom", () => {
     const form = new FormData();
     form.append("attachments", new File([], "blob"));
     form.append("attachments", new File([], ""));
+    form.append("attachments", new File([], "undefined")); // Node 22 (CI, GoDaddy)
+    form.append("attachments", new File([], "empty.pdf"));
     form.append("attachments", new File(["%PDF-1.4"], "quote.pdf"));
     expect(filesFrom(form).map((file) => file.name)).toEqual(["quote.pdf"]);
   });

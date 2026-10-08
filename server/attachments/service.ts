@@ -32,12 +32,13 @@ export async function canSeeRequest(request: RequestRecord, viewer: Actor): Prom
   return request.requesterId === viewer.id || isAdmin(viewer) || (await isParticipant(request.id, viewer.id));
 }
 
-// An empty file input arrives as a 0-byte entry named "" (browser) or
-// "blob" (after the Server Action round trip): ignore those.
+// An empty file input still sends a 0-byte entry, and its name depends on
+// the runtime: "" in the browser, "blob" on Node 24, "undefined" on Node 22
+// (CI and GoDaddy). Any 0-byte entry is ignored: there's nothing to attach.
 export function filesFrom(formData: FormData, field = "attachments"): File[] {
   return formData
     .getAll(field)
-    .filter((value): value is File => typeof value === "object" && value !== null && "arrayBuffer" in value && !(value.size === 0 && (value.name === "" || value.name === "blob")));
+    .filter((value): value is File => typeof value === "object" && value !== null && "arrayBuffer" in value && value.size > 0);
 }
 
 export async function prepareFiles(files: readonly File[]): Promise<{ ok: true; files: PreparedFile[] } | { ok: false; message: string }> {
