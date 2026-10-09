@@ -268,6 +268,19 @@ Found during S8-06:
 - [x] S8-01b Go-live on GoDaddy with the owner, following docs/DEPLOYMENT.md (the owner is at the wizard's "Add secrets" step) (done 9 Oct 2026: live since 8 Oct 2026)
 - [x] S8-04 Update the three living files; commit and push (done 8 Oct 2026)
 
+## Session log — v1.6.0: master prompt (audit, UI modernisation, features, validation), 9 Oct 2026, planned before starting
+Plan: `docs/IMPLEMENTATION_PLAN.md`. Acceptance criteria: `docs/FEATURE_ACCEPTANCE_CRITERIA.md`.
+- [x] V160-00 Phase 0: audit re-read, repository inspected, baseline recorded, plan and the 4 docs (done 9 Oct 2026)
+- [ ] V160-01 Phase 1: tokens, dark mode (user_settings), UI kit, icons, DataTable
+- [ ] V160-02 Phase 2: skeletons, per-space errors, toasts and undo, session-expired dialog, offline banner, error summary, 404/403
+- [ ] V160-03 Phase 3: bottom navigation with counts, sticky actions with a drawer, skip link, axe in E2E
+- [ ] V160-04 Phase 4: queue filters, shortcuts, command palette, recently viewed, breadcrumbs, instant read state
+- [ ] V160-05 Phase 5: timeline, file preview, resubmission diff (request_revisions)
+- [ ] V160-06 Phase 6: conditional and calculated fields, line items, recall, ask for info, consultation, request delegation, links and follow-ups, budgets, expiry
+- [ ] V160-07 Phase 7: templates, watchers, calendar, builder sections and preview
+- [ ] V160-08 Phase 8: version diff and restore, analytics, weekly HOD report (off), bulk reassignment
+- [ ] V160-09 Phases 9–12: standardise routes, performance, security review, full tests, IMPLEMENTATION_REPORT, go-live checklist, living files, push
+
 ## Session log — v1.5.0: owner's development spec (9 Oct 2026), planned before starting
 Plan and feature map: `docs/development/ENHANCEMENT_IMPLEMENTATION_PLAN.md`.
 - [x] V150-00 Phase 0: baseline (v1.4.0 live, CI green, local suites green), feature map, plan (done 9 Oct 2026)
