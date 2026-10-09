@@ -145,9 +145,12 @@ test("QA-AUTH-04 wrong passwords: one generic answer, lockout after 5, a per-Use
 
 test("QA-SEC-06 the per-IP sign-in limit can't be dodged by sending a different X-Forwarded-For", async ({ request }) => {
   // 22 tries from one machine, each claiming a new client address and a new User ID.
+  // Live traffic always arrives through Cloudflare (Q-018), which sets
+  // CF-Connecting-IP to the real caller whatever X-Forwarded-For claims, so
+  // the requests are sent the way Cloudflare delivers them.
   const statuses: number[] = [];
   for (let i = 0; i < 22; i += 1) {
-    const response = await request.post("/api/auth/password/start", { data: { loginId: `spoof-${stamp}-${i}`, password: "wrong-password-123" }, headers: { "x-forwarded-for": `203.0.113.${i + 1}` } });
+    const response = await request.post("/api/auth/password/start", { data: { loginId: `spoof-${stamp}-${i}`, password: "wrong-password-123" }, headers: { "cf-connecting-ip": "198.51.100.7", "x-forwarded-for": `203.0.113.${i + 1}` } });
     statuses.push(response.status());
   }
   const sameIp: number[] = [];

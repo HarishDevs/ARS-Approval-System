@@ -1,5 +1,12 @@
 # Release notes
 
+## v1.3.4 (9 Oct 2026)
+- **Security updates:** Next.js 15.5.27 and firebase-admin 14.5.0. The production dependency audit is now clean (0 known vulnerabilities).
+- **Sign-in protection:** the per-address sign-in limit now uses the visitor's real address from Cloudflare, so it can't be dodged by faking a header.
+- **Email** is sent from `no_reply@approval.arssteels.net` by default (replies still go to IT).
+- **Super Admin → Message deliveries** shows when the job runner last ran, and warns if the cron job isn't running.
+- The deployment guide has a step-by-step cron job setup (Part I).
+
 ## v1.3.3 (9 Oct 2026)
 - The "People" picker (custom approvals and workflow steps) now has an accessible name for screen readers.
 - Live notification test: WhatsApp works for request events. Email is blocked by Resend (HTTP 403) until the sending domain is verified in the Resend account that owns the API key (see DEPLOYMENT.md G2).

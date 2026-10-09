@@ -68,7 +68,7 @@ The number of levels and how they combine is unlimited. There are no fixed "Leve
 | F-59 | Bulk import of master data (template, check, import) | Built 8 Oct 2026 (S10) |
 | F-90 | GoDaddy deployment and go-live | v1.0.0 prepared 8 Oct 2026 (guide, release notes, tag); deploy with the owner |
 | F-14 | Request screens: raise → queue → act → resubmit | Built and verified in the browser 30 Sep 2026 |
-| F-41 | Retry runner for failed messages | Built 30 Sep 2026 (cron set up at go-live) |
+| F-41 | Retry runner for failed messages | Built 30 Sep 2026; heartbeat 9 Oct 2026 (cron: DEPLOYMENT Part I) |
 | F-09 | Rate limiting on sign-in and codes | Built and verified 30 Sep 2026 |
 | F-60…F-71 | First templates mapped from Asana | Built and published 7 Oct 2026 on demo staff (12 types) |
 
@@ -366,6 +366,8 @@ flowchart LR
   B -- Yes --> BK["FAILED, retry after 2, 4, 8… minutes"]
   B -- No --> G["FAILED, no more retries → shown on /superadmin/deliveries"]
   C --> T[Housekeeping: delete rate-limit hits older than a day]
+  T --> H["Heartbeat: RUNNER_HEARTBEAT row updated (D-094)
+Message deliveries shows last run; amber after 15 min"]
 ```
 - The Super Admin can press **Retry now** on a failed delivery, which makes it due immediately.
 

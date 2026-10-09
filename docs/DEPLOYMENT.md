@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| App | ARS Approval Platform **v1.3.3** (`docs/RELEASE-NOTES.md`) |
+| App | ARS Approval Platform **v1.3.4** (`docs/RELEASE-NOTES.md`) |
 | Address | **https://approval.arssteels.net** (one app: `/users`, `/admin`, `/superadmin`) |
 | Hosting | GoDaddy **Node.js Hosting** ("Deploy your Node.js app"), from GitHub `HarishDevs/ARS-Approval-System`, branch `main` |
 | Database | MySQL 8 in GoDaddy cPanel |
@@ -58,7 +58,7 @@ The file `D:\Omniroute\deploy-secrets\ars-approvals.production.env` was generate
 5. Your Phone ID is `558214737370188` (Connected Accounts).
 
 ### A5. Resend (email) and the sending domain
-The app sends email as **approvals@arssteels.net** through Resend (replies go to itadmin@arssteels.co.in). Resend only sends for a domain you've verified: **arssteels.net** (done 8 Oct 2026).
+The app sends email as **no_reply@approval.arssteels.net** through Resend (replies go to itadmin@arssteels.co.in). Resend only sends for a domain you've verified in the Resend team that owns the API key: **approval.arssteels.net** (verified in the team "arssteels", 9 Oct 2026).
 1. Sign up or sign in at https://resend.com → **Domains** → **Add domain** → `arssteels.co.in`.
 2. Resend shows DNS records (an MX and TXT for the `send` subdomain, plus a DKIM TXT). Add each one in the DNS of `arssteels.co.in`:
    - wherever that domain's DNS is managed (GoDaddy → My Products → DNS, or your email provider's DNS);
@@ -187,7 +187,7 @@ GoDaddy → **My Products** → **Node.js Hosting** (host.godaddy.com/hosting) �
 ### G2. Email (Resend)
 1. **Super Admin → Providers & security → Email**:
    - paste the Resend key (A5);
-   - From address **`approvals@arssteels.net`** (already the default; the Resend domain verified is `arssteels.net`);
+   - From address **`no_reply@approval.arssteels.net`** (already the default; it needs `approval.arssteels.net` verified in Resend);
    - Reply-to `itadmin@arssteels.co.in` (the default), so replies reach IT;
    - From name `ARS Approvals`;
    - **Save**.
@@ -227,21 +227,79 @@ Review the **Authentication** group. The defaults are fine: lockout after 5 wron
 ---
 
 ## Part I: Scheduled jobs (cron)
-Without this, there are **no reminders, escalations, retries, outbox catch-up or daily template sync**.
-1. cPanel → **Cron Jobs** → **Add New Cron Job** → Common settings: **Once Per Five Minutes** (`*/5 * * * *`).
-2. Command: copy `JOB_RUNNER_SECRET` from your password manager, or from GoDaddy's secrets screen:
-   ```
-   curl -s -X POST -H "x-job-secret: <JOB_RUNNER_SECRET>" https://approval.arssteels.net/api/jobs/run > /dev/null
-   ```
-3. **Add New Cron Job**.
-4. Test it once by hand. In PowerShell on your PC:
-   ```powershell
-   curl.exe -s -X POST -H "x-job-secret: <JOB_RUNNER_SECRET>" https://approval.arssteels.net/api/jobs/run
-   ```
-   - Expected: `{"success":true,"data":{"outbox":…,"retries":…,"sla":…,"templates":…}}`.
-   - A wrong secret gives a 404.
+Every 5 minutes, GoDaddy calls the app's job runner (`/api/jobs/run`). Without it there are **no reminders, escalations, retries of failed email/WhatsApp, outbox catch-up or daily template sync**.
 
----
+**Before you start:** publish **v1.3.4 or later**. It adds the "Job runner" line on Super Admin → Message deliveries, which is how you check the cron job works (step I6).
+
+### I1. Find the job secret
+The app accepts the call only with the secret `JOB_RUNNER_SECRET` (at least 24 characters). Get its value from either place:
+- **GoDaddy:** your Node.js app → **Settings / Environment variables (secrets)** → `JOB_RUNNER_SECRET` → reveal and copy; or
+- **your PC:** `D:\Omniroute\deploy-secrets\ars-approvals.production.env` → the line `JOB_RUNNER_SECRET=...` (copy only the part after `=`).
+
+Keep it private: don't paste it in chat, email or WhatsApp.
+If it's missing or still `CHANGE_ME`: make a new one (PowerShell: `[Convert]::ToBase64String((1..32 | % { Get-Random -Max 256 }))`), add it as `JOB_RUNNER_SECRET` in GoDaddy's secrets, and **Publish** again so the app picks it up.
+
+### I2. Test it once by hand (from your PC)
+In PowerShell, replace `PASTE_SECRET_HERE` with the secret (keep the quotes):
+```powershell
+curl.exe -s -X POST -H "x-job-secret: PASTE_SECRET_HERE" https://approval.arssteels.net/api/jobs/run
+```
+| You see | Meaning |
+|---|---|
+| `{"success":true,"data":{"outbox":…,"retries":…,"sla":…,"templates":…,"housekeeping":…}}` | Works. Go to I3. |
+| `{"success":false,…"Not found."}` (404) | The secret is wrong, or `JOB_RUNNER_SECRET` isn't set on GoDaddy (I1). |
+| An HTML page from Cloudflare ("Just a moment…", 403) | Cloudflare blocked a non-browser call. See I7. |
+| `"Job run failed."` (500) | The app hit an error. GoDaddy → app → **Logs**, search "job runner failed". |
+
+### I3. Open Cron Jobs in cPanel
+1. https://account.godaddy.com → **My Products** → your hosting → **Manage** (or **cPanel Admin**).
+2. In cPanel, scroll to **Advanced** → **Cron Jobs** (or type "cron" in the cPanel search box).
+3. **Cron Email** (top of the page): leave it empty, or put your address only while testing. Each run would otherwise send you a mail every 5 minutes.
+
+### I4. Add the cron job
+1. **Add New Cron Job** → **Common Settings** → **Once Per Five Minutes (`*/5 * * * *`)**. The five boxes fill as `*/5`, `*`, `*`, `*`, `*`.
+2. **Command**: paste this as one line, with your secret in place of `PASTE_SECRET_HERE`:
+   ```
+   curl -s -X POST --max-time 120 -H "x-job-secret: PASTE_SECRET_HERE" https://approval.arssteels.net/api/jobs/run > /dev/null 2>&1
+   ```
+3. Click **Add New Cron Job**. It appears under **Current Cron Jobs**.
+
+### I5. Optional: keep a log for the first day
+To see what each run returned, use this command instead (Current Cron Jobs → **Edit**):
+```
+curl -s -X POST --max-time 120 -H "x-job-secret: PASTE_SECRET_HERE" https://approval.arssteels.net/api/jobs/run >> $HOME/ars-job-runner.log 2>&1
+```
+cPanel → **File Manager** → your home folder → `ars-job-runner.log` shows one JSON line every 5 minutes. When it all looks right, switch back to the I4 command (the log keeps growing) and delete the file.
+
+### I6. Check it is running
+After 5–10 minutes, open **Super Admin → Message deliveries**. The line at the top shows:
+- green **"Job runner: last ran N min ago."** → it works;
+- amber **"has never run"** or **"last ran 20 min ago…"** → the cron job isn't reaching the app. Run the I2 test again, and check the I4 command for a typo or a missing secret.
+
+Failed email/WhatsApp rows then retry by themselves: the **Tries** count goes up, and the row becomes SENT once the provider accepts it.
+
+### I7. If Cloudflare blocks the call
+Calls from GoDaddy's server go through Cloudflare like any visitor's. If I2 or the log shows a Cloudflare page:
+1. Cloudflare → `arssteels.net` → **Security → WAF → Custom rules → Create rule**:
+   - name `ARS job runner`;
+   - field **URI Path**, operator **equals**, value `/api/jobs/run`;
+   - action **Skip** → tick all remaining custom rules, rate limiting rules, managed rules and Super Bot Fight Mode → **Deploy**.
+2. If **Security → Bots → Bot Fight Mode** is **On** (free plan), a skip rule can't bypass it. Turn it Off, or use I8 instead.
+   The runner is still safe without these protections: without the exact secret it answers "Not found".
+
+### I8. Alternative: a Cloudflare cron trigger (if cPanel has no Cron Jobs)
+1. Cloudflare → **Workers & Pages** → **Create** → **Create Worker** → name `ars-job-runner` → **Deploy** → **Edit code**. Replace the code with:
+   ```js
+   export default {
+     async scheduled(event, env, ctx) {
+       ctx.waitUntil(fetch("https://approval.arssteels.net/api/jobs/run", { method: "POST", headers: { "x-job-secret": env.JOB_RUNNER_SECRET } }));
+     },
+   };
+   ```
+   Then **Deploy**.
+2. The Worker → **Settings → Variables and Secrets → Add** → type **Secret**, name `JOB_RUNNER_SECRET`, value = the secret → **Deploy**.
+3. **Settings → Trigger events (Cron Triggers) → Add** → `*/5 * * * *` → **Add**.
+4. Check as in I6.
 
 ## Part J: Break-glass emergency account
 A sealed admin account for when Google sign-in or itadmin@ isn't available. Run from your PC, with Remote MySQL access as in B4, inside `D:\Omniroute\ARS Approval System`, with the same `$env:DB_*` values set:

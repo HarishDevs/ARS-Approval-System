@@ -84,5 +84,5 @@ export async function getEmailConfig(): Promise<EmailConfig> {
     getSettingValue("email.from_name"),
     getSettingValue("email.reply_to"),
   ]);
-  return { apiKey, fromAddress: fromAddress ?? "approvals@arssteels.net", fromName: fromName ?? "ARS Approvals", replyTo };
+  return { apiKey, fromAddress: fromAddress ?? "no_reply@approval.arssteels.net", fromName: fromName ?? "ARS Approvals", replyTo };
 }

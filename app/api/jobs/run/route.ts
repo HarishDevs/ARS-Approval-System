@@ -6,6 +6,7 @@ import { runDeliveryRetries, runHousekeeping } from "@/server/jobs/retry-deliver
 import { runSlaChecks } from "@/server/jobs/sla";
 import { runOutbox } from "@/server/approvals/service";
 import { pruneOutbox } from "@/lib/db/repositories/outbox.repository";
+import { recordRunnerHeartbeat } from "@/lib/db/repositories/jobs.repository";
 import { runDailyTemplateSync } from "@/server/notifications/template-registry";
 import { logError, logInfo } from "@/lib/logging/logger";
 
@@ -29,6 +30,7 @@ export async function POST(request: NextRequest) {
     const sla = await runSlaChecks();
     const templates = await runDailyTemplateSync();
     const housekeeping = { ...(await runHousekeeping()), outboxPruned: await pruneOutbox() };
+    await recordRunnerHeartbeat();
     logInfo("job runner finished", { ...outbox, ...retries, ...sla, ...templates, ...housekeeping });
     return apiSuccess({ outbox, retries, sla, templates, housekeeping });
   } catch (error) {

@@ -1,7 +1,7 @@
 import { afterAll, describe, expect, it } from "vitest";
 import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { getDbPool } from "@/lib/db/client";
-import { hitRateLimit, leaseDueDeliveries, makeDeliveryDue, markRetryFailed, markRetrySent, pruneRateLimitHits } from "@/lib/db/repositories/jobs.repository";
+import { getRunnerHeartbeat, hitRateLimit, leaseDueDeliveries, makeDeliveryDue, markRetryFailed, markRetrySent, pruneRateLimitHits, recordRunnerHeartbeat } from "@/lib/db/repositories/jobs.repository";
 import { createUser } from "./helpers";
 
 afterAll(async () => {
@@ -57,5 +57,17 @@ describe("delivery lease", () => {
     const [after] = await getDbPool().query<(RowDataPacket & { status: string; next_retry_at: Date | null })[]>("SELECT status, next_retry_at FROM notification_deliveries WHERE id = ?", [id]);
     expect(after[0]).toMatchObject({ status: "SENT", next_retry_at: null });
     expect(await makeDeliveryDue(id)).toBe(false);
+  });
+});
+
+describe("job runner heartbeat", () => {
+  it("keeps one row and counts each run, so Super Admin sees when the cron last ran", async () => {
+    await recordRunnerHeartbeat();
+    const first = await getRunnerHeartbeat();
+    await recordRunnerHeartbeat();
+    const second = await getRunnerHeartbeat();
+    expect(second).toMatchObject({ minutesAgo: 0, runs: (first?.runs ?? 0) + 1 });
+    const [rows] = await getDbPool().query<(RowDataPacket & { total: number })[]>("SELECT COUNT(*) AS total FROM jobs WHERE job_type = 'RUNNER_HEARTBEAT'");
+    expect(Number(rows[0]?.total)).toBe(1);
   });
 });

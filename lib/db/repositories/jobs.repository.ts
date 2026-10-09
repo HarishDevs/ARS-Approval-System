@@ -87,3 +87,31 @@ export async function findTemplateById(id: number, db: Queryable = getDbPool()):
   );
   return rows[0]?.provider_name ? { providerName: rows[0].provider_name, language: rows[0].language } : null;
 }
+
+// ---- runner heartbeat ---------------------------------------------------------
+// One row in `jobs` notes when the cron runner last finished, so Super Admin
+// can see whether the cron job is set up and running (DEPLOYMENT Part I).
+const HEARTBEAT = "RUNNER_HEARTBEAT";
+
+export async function recordRunnerHeartbeat(db: Queryable = getDbPool()): Promise<void> {
+  const [result] = await db.query<ResultSetHeader>(
+    "UPDATE jobs SET status = 'DONE', locked_at = CURRENT_TIMESTAMP, attempts = attempts + 1 WHERE job_type = ? ORDER BY id LIMIT 1",
+    [HEARTBEAT],
+  );
+  if (result.affectedRows === 0) {
+    await db.query<ResultSetHeader>("INSERT INTO jobs (job_type, status, locked_at, attempts) VALUES (?, 'DONE', CURRENT_TIMESTAMP, 1)", [HEARTBEAT]);
+  }
+}
+
+export interface RunnerHeartbeat {
+  minutesAgo: number;
+  runs: number;
+}
+
+export async function getRunnerHeartbeat(db: Queryable = getDbPool()): Promise<RunnerHeartbeat | null> {
+  const [rows] = await db.query<(RowDataPacket & { minutes_ago: number; attempts: number })[]>(
+    "SELECT TIMESTAMPDIFF(MINUTE, locked_at, CURRENT_TIMESTAMP) AS minutes_ago, attempts FROM jobs WHERE job_type = ? AND locked_at IS NOT NULL ORDER BY id LIMIT 1",
+    [HEARTBEAT],
+  );
+  return rows[0] ? { minutesAgo: Number(rows[0].minutes_ago), runs: Number(rows[0].attempts) } : null;
+}

@@ -21,7 +21,7 @@ describe("settings save plan (F-52)", () => {
   });
 
   it("plain values change only when they differ from the value in force (default included)", () => {
-    const unchanged = planSettingChanges(email, { "email.from_address": "approvals@arssteels.net", "email.from_name": "ARS Approvals" }, new Set(), new Map());
+    const unchanged = planSettingChanges(email, { "email.from_address": "no_reply@approval.arssteels.net", "email.from_name": "ARS Approvals" }, new Set(), new Map());
     expect(unchanged.changes).toEqual([]);
     const changed = planSettingChanges(email, { "email.from_name": "ARS Steels Approvals" }, new Set(), new Map());
     expect(changed.changes[0]).toMatchObject({ kind: "SET", value: "ARS Steels Approvals", before: "ARS Approvals" });

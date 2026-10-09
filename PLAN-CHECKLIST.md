@@ -17,14 +17,13 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
-- **Now:** live notifications confirmed end to end (9 Oct 2026): a real approval sent **email and WhatsApp** to the approver and, on approval, to the raiser. From address `no_reply@approval.arssteels.net`. Test data cleaned up. v1.3.3 is pushed (accessible "People" picker), on top of v1.3.2 (Cloudflare-safe addresses).
+- **Now:** v1.3.4 is pushed: dependency upgrades (Q-017, audit 0), client IP from Cloudflare (Q-018, QA 27/27), default sender `no_reply@approval.arssteels.net`, job runner heartbeat, and a step-by-step cron guide (DEPLOYMENT Part I). Live email and WhatsApp work end to end.
 - **Next, the owner:**
-  - set up the cron job (DEPLOYMENT Part I) so failed sends are retried;
-  - GoDaddy: Publish v1.3.3;
-  - answer Q-017 and Q-018;
-  - load the masters and build the approval types;
-  - finish the WhatsApp security templates (waiting for Meta); rotate the keys that were pasted in chat.
-- **Still open:** Q-015, Q-017, Q-018.
+  1. GoDaddy: Publish v1.3.4.
+  2. Set up the cron job (DEPLOYMENT Part I, I1–I6); Message deliveries should show a green "Job runner: last ran N min ago".
+  3. Load the masters and build the approval types.
+  4. Finish the WhatsApp security templates (waiting for Meta); rotate the keys that were pasted in chat.
+- **Still open:** Q-015.
 
 ---
 
@@ -250,6 +249,16 @@ Found during S8-06:
 - [x] S8-12 Google sign-in reached UNKNOWN_ACCOUNT: itadmin@ is an alias. The Super Admin now signs in as itsupport@arsenergy.co.in (D-082, migration + non-overwriting seed, v1.0.5) (done 8 Oct 2026)
 - [ ] S8-01b Go-live on GoDaddy with the owner, following docs/DEPLOYMENT.md (the owner is at the wizard's "Add secrets" step)
 - [x] S8-04 Update the three living files; commit and push (done 8 Oct 2026)
+
+## Session log — v1.3.4: cron guide, Q-017, Q-018, default sender (9 Oct 2026)
+Owner: a step-by-step cron guide; "Yes" to Q-017 and Q-018; "Yes, go ahead" to the new default From address.
+- [x] V134-01 Q-017: upgrade Next 15.5.27, firebase-admin 14.5.0, `npm audit fix`, overrides (postcss, grpc-js) → production audit 0 (D-093) (done 9 Oct 2026)
+- [x] V134-02 Q-018: client IP from CF-Connecting-IP (`lib/http/client-ip.ts` + unit test); QA-SEC-06 models Cloudflare and passes (D-092) (done 9 Oct 2026)
+- [x] V134-03 Default From address `no_reply@approval.arssteels.net` in code, tests and docs (D-091) (done 9 Oct 2026)
+- [x] V134-04 Job runner heartbeat on Message deliveries + integration test (D-094, F-41 updated) (done 9 Oct 2026)
+- [x] V134-05 DEPLOYMENT Part I rewritten step by step (I1–I8) (done 9 Oct 2026)
+- [x] V134-06 Regression: types, lint, 262 unit, 65 integration, 27 e2e (new: job runner status), QA 27/27, build (done 9 Oct 2026)
+- [ ] V134-07 Owner: GoDaddy Publish v1.3.4, then set up the cron job (Part I) and check the green "Job runner" line
 
 ## Session log — QA session 15: live test on approval.arssteels.net (9 Oct 2026)
 Owner: "I have opened Google Chrome, test it live", then, signed in as IT Admin, "test every left-out thing here".

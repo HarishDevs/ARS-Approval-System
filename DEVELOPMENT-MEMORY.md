@@ -173,6 +173,10 @@
 - The form keeps **its own busy state** instead of `useActionState`'s pending, which can't end while the action's request is open.
 - `app/error.tsx` / `app/global-error.tsx` replace the blank Next error.
 - **No `loading.tsx` at space level:** it streams pages, so a missing record returned 200 instead of 404 (breaks D-016) and stalled action refreshes. Navigation feedback is link-level instead: `useLinkStatus` in the sidebar, and `PendingLink` (a normal page load) for period and paging links. | Claude, from audit evidence |
+| D-091 | 9 Oct 2026 | **Email sender `no_reply@approval.arssteels.net`** (supersedes the address in D-080; Reply-to stays `itadmin@arssteels.co.in`). The owner set it in Super Admin; `approval.arssteels.net` is verified in the Resend team "arssteels". It is now the code default too. | Owner, 9 Oct 2026 |
+| D-092 | 9 Oct 2026 | **Client IP = Cloudflare's `CF-Connecting-IP`** (Q-018: the owner confirmed all traffic goes through Cloudflare). X-Forwarded-For is never read from the left. Without the Cloudflare header, the right-most entry is used (the nearest proxy's), then X-Real-IP; values must be valid IPs (`lib/http/client-ip.ts`). This closes QA-SEC-06. Remaining risk: a request sent straight to the GoDaddy origin, bypassing Cloudflare, could set its own CF-Connecting-IP. | Owner, 9 Oct 2026 |
+| D-093 | 9 Oct 2026 | **Dependency upgrades** (Q-017): Next and eslint-config-next 15.5.27, firebase-admin 14.5.0, plus `npm audit fix`. Two npm `overrides`: Next's bundled postcss → 8.5.28 (build-time only) and the Firebase client's Firestore grpc-js → 1.14.6 (Firestore is unused; Auth only). Result: `npm audit --omit=dev` 0 vulnerabilities. A firebase client major upgrade (11 → 12/13) isn't needed for security, so it waits until there is a reason. | Owner, 9 Oct 2026 |
+| D-094 | 9 Oct 2026 | **Job runner heartbeat:** each successful `/api/jobs/run` updates a single `RUNNER_HEARTBEAT` row in the (previously unused) `jobs` table. Super Admin → Message deliveries shows "Job runner: last ran N min ago": green within 15 minutes, amber otherwise or if it never ran. This lets the owner confirm the cron job (DEPLOYMENT Part I). | Claude, 9 Oct 2026 |
 | D-033 | 28 Sep 2026 | **Staff data is provided by the admin. Roles are assigned per user, by the admin only. Users are added or made inactive in the Admin Portal** (never hard-deleted, so history and audit stay intact). *Resolves Q-010.* | Owner (answer 7) |
 
 ## 4. Open questions (must be answered before the phase shown)
@@ -195,11 +199,20 @@
 | Q-014 | OTP template | Phase 1 | **Resolved 28 Sep → confirmed by the owner: reuse `wa_login_otp_v1`** (D-042) |
 | Q-015 | **Break-glass and WhatsApp:** the break-glass account signs in with a password **plus the WhatsApp code** (D-025). If WhatsApp or CEOITBox is down, which is exactly when break-glass may be needed, it can't sign in. Keep the code, or skip it only during the console-enabled window? | Go-live | Open, waiting on the owner (built conservatively: the code is required) |
 | Q-016 | **Loader audit fixes** (docs/qa/LOADER-QA-REPORT.md): may I fix DEF-02 (High: a failed form answer crashes the page), DEF-03 (no time limit) and DEF-06 (unreadable busy button) before the next Publish, then DEF-01/04 and the Low ones? | Before the next Publish | **Answered 9 Oct 2026:** owner said complete the failed tests → all 9 fixed and retested (QA session 14) |
-| Q-017 | **Dependency upgrades (DEF-E1):** `npm audit` shows 6 high / 7 moderate in production deps. Upgrade Next to 15.5.27 (patch) and firebase-admin to 14.5.0 (minor) now, and plan the firebase client major upgrade? | Before or with the next Publish | Open, waiting on the owner |
-| Q-018 | **Rate-limit IP source (DEF-E2):** is all traffic to approval.arssteels.net forced through Cloudflare? If yes, use `CF-Connecting-IP`; if not, the right-most X-Forwarded-For entry added by GoDaddy's proxy. A wrong choice could put all users on one address. | Before go-live | Open, waiting on the owner |
+| Q-017 | **Dependency upgrades (DEF-E1):** `npm audit` shows 6 high / 7 moderate in production deps. Upgrade Next to 15.5.27 (patch) and firebase-admin to 14.5.0 (minor) now, and plan the firebase client major upgrade? | Before or with the next Publish | **Answered 9 Oct 2026: yes → D-093** (done in v1.3.4) |
+| Q-018 | **Rate-limit IP source (DEF-E2):** is all traffic to approval.arssteels.net forced through Cloudflare? If yes, use `CF-Connecting-IP`; if not, the right-most X-Forwarded-For entry added by GoDaddy's proxy. A wrong choice could put all users on one address. | Before go-live | **Answered 9 Oct 2026: yes, all traffic goes through Cloudflare → D-092** (done in v1.3.4) |
 | Q-019 | **Which Resend account holds the API key in Super Admin?** The "arsenergy" team (open in Chrome) is empty. Email works only once the From domain (`approvals@arssteels.net`) is verified in the account that owns the key, or a new key from a team with a verified domain is entered. | Before go-live (no email is delivered today) | **Answered 9 Oct 2026:** the key is "New Api Approval" in the Resend team "arssteels" (harishkumar.t@arssteels.com). The owner verified `arssteels.net` there; Resend's log showed "API key not authorized for this domain" for a few minutes after verification, then the test email was **sent** |
 
 ## 5. Work log (newest first)
+
+### 9 Oct 2026 (v1.3.4: cron guide, Q-017, Q-018, default sender)
+- The owner answered **yes** to Q-017 and Q-018, asked for a step-by-step cron guide, and approved changing the default From address.
+- **Q-017 (D-093):** Next 15.5.27, firebase-admin 14.5.0, `npm audit fix`, overrides for postcss (inside Next) and grpc-js (inside Firestore); production audit 13 → **0** vulnerabilities.
+- **Q-018 (D-092):** client IP from `CF-Connecting-IP` (new `lib/http/client-ip.ts`, unit test). QA-SEC-06 now sends requests the way Cloudflare delivers them, and passes, so the QA suite is **27/27**.
+- **D-091:** default From address is now `no_reply@approval.arssteels.net` (settings definition, fallback, docs, CLAUDE.md).
+- **D-094:** job runner heartbeat on Message deliveries; integration test added.
+- **DEPLOYMENT Part I** rewritten step by step (I1–I8): find the secret, test by hand, cPanel Cron Jobs, optional log, check the heartbeat, Cloudflare WAF skip, and a Cloudflare Worker cron trigger as the alternative.
+- **Checks:** types and lint clean; 262 unit, 65 integration, 27 e2e (new: job runner status), QA 27/27; production build OK.
 
 ### 9 Oct 2026 (live approval email test)
 - The owner changed the From address to `no_reply@approval.arssteels.net` (Super Admin settings; approval.arssteels.net is verified in Resend) and asked for one approval to test email.
