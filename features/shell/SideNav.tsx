@@ -1,6 +1,7 @@
 "use client";
 
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
+import { Spinner } from "@/features/ui/Spinner";
 import { usePathname } from "next/navigation";
 
 export interface NavItem {
@@ -27,10 +28,20 @@ export function SideNav({ items }: { items: NavItem[] }) {
             aria-current={active ? "page" : undefined}
             className={`block rounded-md border-l-[3px] px-3 py-2 text-body transition-colors ${active ? "border-primary-600 bg-primary-50 font-semibold text-primary-700" : "border-transparent text-ink-muted hover:bg-surface-muted hover:text-ink"}`}
           >
-            {item.label}
+            <span className="flex items-center justify-between gap-2">
+              {item.label}
+              <PendingMark />
+            </span>
           </Link>
         );
       })}
     </nav>
   );
+}
+
+// While this link's page loads, a small spinner shows on it (QA session 14,
+// DEF-01): before, a slow page change gave no sign the click had registered.
+function PendingMark() {
+  const { pending } = useLinkStatus();
+  return pending ? <Spinner className="h-3.5 w-3.5 shrink-0" label="Loading" /> : null;
 }

@@ -1,0 +1,44 @@
+{"tc":"DIAG-040","at":"2026-10-09T07:43:25.973Z","fromBefore":"2026-04-01","urlFrom":"2025-04-01","fromFieldAfter":"2025-04-01","csvLinkFrom":"2025-04-01"}
+{"tc":"DIAG-074","at":"2026-10-09T07:43:29.674Z","apiCalls":["http://localhost:3100/api/auth/password/start"],"pageErrors":[],"visibleText":"ARS STEELS · APPROVALS\n\nEvery approval,\none clear path.\n\nRaise a request, route it through as many levels as it needs, and see exactly who has approved and who is next.\n\nAny\nnumber of levels\nOne\nplace for every request\nFull\nhistory, always\n\n© 2026 ARS Steels & Alloy International Pvt. Ltd.\n\nWelcome back\n\nSign in to ARS Approvals\n\nUser ID\nPassword\nShow\nForgot password?\n\nSomething went wrong. Please try again.\n\nContinue\nor\nContinue with Google\n\nNeed access? Contact IT Support: itadmin@arssteels.co"}
+{"tc":"DIAG-040b","at":"2026-10-09T07:43:37.105Z","urlFrom":"2026-10-01","fromField":"2026-10-01","renderedFilterFrom":"2026-10-01"}
+{"tc":"DIAG-011","at":"2026-10-09T07:43:42.626Z","posts":["200 2:\"$Sreact.fragment\"\n3:I[9766,[],\"\"]\n4:I[9567,[\"2619\",\"static/chunks/2619-3c9e02e22d10480a.js\",\"8039\",\"static/chunks/app/error-8095c1ab3deb892b.js\"],\"default\"]\n"],"errors":[],"savedShown":true,"stillWorking":0}
+{"tc":"DIAG-011b","at":"2026-10-09T07:43:50.240Z","log":["failed net::ERR_ABORTED","failed net::ERR_ABORTED","failed net::ERR_ABORTED","failed net::ERR_ABORTED","failed net::ERR_ABORTED","req action /admin/organisation","seen=1","res 200","failed net::ERR_ABORTED"],"savedShown":true,"stillWorking":0}
+{"tc":"DIAG-039","at":"2026-10-09T07:43:53.825Z","hydrated":true,"samples":["err Error: page.evaluate: Execution context ","0/0/?from=2026-10-01&to=2026-10-09","0/0/?from=2026-10-01&to=2026-10-09","0/0/?from=2026-10-01&to=2026-10-09","0/0/?from=2026-10-01&to=2026-10-09","0/0/?from=2026-10-01&to=2026-10-09"]}
+{"tc":"TC-001/002","at":"2026-10-09T07:43:56.017Z","firstVisibleMs":243,"reloadVisibleMs":98,"nav":{"ttfb":16,"domContentLoaded":186,"load":192},"leftoverLoaders":0,"note":"Pages are server-rendered: HTML arrives complete; no client loader is needed on first load"}
+{"tc":"TC-003","at":"2026-10-09T07:44:06.166Z","dashboardsSkeletonShown":true,"usersPageFeedbackWithin1200ms":true,"oldPageStillShownWhileWaiting":true,"usersPageMs":3180}
+{"tc":"TC-004","at":"2026-10-09T07:44:06.854Z","loaderAppearedAfterMs":59,"totalMs":177,"buttonWidthBefore":115.34375,"buttonWidthDuring":115.34375}
+{"tc":"TC-005/024","at":"2026-10-09T07:44:11.792Z","actions":1,"stillWorkingAt3s":true,"totalMs":4461}
+{"tc":"TC-006/028","at":"2026-10-09T07:44:12.299Z","unknownRouteStatus":404,"unknownRecordStatus":404}
+{"tc":"TC-007","at":"2026-10-09T07:44:14.089Z","leftoverLoaders":0}
+{"tc":"TC-008","at":"2026-10-09T07:44:14.700Z","signedInVisitToLoginLandsOn":"/admin/dashboards","note":"Google/password sign-in itself needs Firebase/WhatsApp, not available in the test env"}
+{"tc":"TC-009/026","at":"2026-10-09T07:44:18.515Z","stuck":false,"redirectedToLogin":false,"message":"asks to sign in","crashed":false}
+{"tc":"TC-010","at":"2026-10-09T07:44:23.236Z","finalHeading":"Working calendar","finalUrl":"/admin/calendar","leftoverLoaders":0}
+{"tc":"TC-011/016/077","at":"2026-10-09T07:44:23.735Z","workingButtonsWhileHeld":1,"otherSaveEnabled":true,"workingAfter":0}
+{"tc":"TC-012/013/014","at":"2026-10-09T07:44:27.880Z","uiClicks":3,"actionPosts":1,"requestsCreated":1}
+{"tc":"TC-015","at":"2026-10-09T07:44:28.505Z","roundTrips":1,"note":"Validation runs on the server (one round trip, brief loader); no client-side pre-check"}
+{"tc":"TC-017/029","at":"2026-10-09T07:44:32.135Z","crashedToErrorPage":false,"loaderStuck":false,"errorMessages":1}
+{"tc":"TC-018/030/070","at":"2026-10-09T07:45:07.682Z","waitedMs":35000,"stillSpinning":false,"cancelOrRetryOffered":false}
+{"tc":"TC-020/079","at":"2026-10-09T07:45:09.814Z","uiClicks":2,"actionPosts":1,"approvedTasks":1}
+{"tc":"TC-021","at":"2026-10-09T07:45:11.451Z","keptRequestRejected":0,"rejectedRequestRejected":1}
+{"tc":"TC-022","at":"2026-10-09T07:45:15.903Z","approvedTasks":1,"tabsToldItWasAlreadyDone":1}
+{"tc":"TC-023/033","at":"2026-10-09T07:45:16.847Z","dataShown":true,"emptyStateShown":true}
+{"tc":"TC-025/034/050","at":"2026-10-09T07:45:19.288Z","errorShownOn400":true,"otherButtonLockedWhileBusy":true,"downloadedFile":"ars-departments-template.csv"}
+{"tc":"TC-027/067/084","at":"2026-10-09T07:45:20.725Z","adminPageStatus":404,"adminApiStatus":404,"replayStatus":200,"replaySaysNotFound":true,"requestStillPresent":1}
+{"tc":"TC-031/032","at":"2026-10-09T07:45:24.641Z","crashedToErrorPage":false,"loaderStuck":false,"connectionMessage":1,"recoveredAfterRetry":true}
+{"tc":"TC-035/036","at":"2026-10-09T07:45:32.299Z","skeletonTiles":4,"finalTiles":4,"cumulativeLayoutShift":0.002,"note":"The table is a single grey block in the skeleton, not rows"}
+{"tc":"TC-039/040","at":"2026-10-09T07:45:41.383Z","feedbackWhileApplying":true,"finalFrom":"2026-10-01","fromFieldShows":"2026-10-01"}
+{"tc":"TC-041","at":"2026-10-09T07:45:44.845Z","feedbackWhileLoadingPage2":true,"firstRowChanged":true}
+{"tc":"TC-045/047/048","at":"2026-10-09T07:45:49.260Z","loaderDuringUpload":true,"actions":1,"wrongTypeRefused":true,"tooBigRefused":true,"loaderStuck":false,"progressShown":"indeterminate only (button text)"}
+{"tc":"TC-046/082","at":"2026-10-09T07:46:04.093Z","uploadMs":13261,"pageResponsiveDuringUpload":true,"progress":"indeterminate (no % shown)"}
+{"tc":"TC-049","at":"2026-10-09T07:46:07.791Z","crashedToErrorPage":false,"loaderStuck":false,"errorMessages":2,"partialFileSaved":0}
+{"tc":"TC-051/052/075/078","at":"2026-10-09T07:46:10.636Z","csvFile":"ars-approvers-2026-04-01-to-2026-10-09.csv","actions":1,"statusBarWhileChecking":true,"statusBarAfter":0,"importOfferedWithProblems":0,"goodRowSaved":0}
+{"tc":"TC-060/061/080","at":"2026-10-09T07:46:11.425Z","desktop":{"visible":true,"insideWidth":true,"horizontalScroll":false},"mobile":{"visible":true,"insideWidth":true,"horizontalScroll":false},"zoom200":{"visible":true,"insideWidth":true,"horizontalScroll":false}}
+{"tc":"TC-062/068","at":"2026-10-09T07:46:13.611Z","cpuThrottle":"6x","rows":300,"checkMs":1166,"longTaskTotalMs":377}
+{"tc":"TC-063/064","at":"2026-10-09T07:46:14.528Z","tabReachesPostButton":"Post comment","enterSubmits":true,"genericForm":{"formAriaBusy":null,"buttonAriaDisabled":null,"liveRegionNearButton":true},"importStatusRegion":1,"importAriaBusy":1}
+{"tc":"TC-065/066/081","at":"2026-10-09T07:46:15.090Z","reducedMotionAnimationDuration":"1e-05s","statusContrast":9.64,"busyButtonContrast":4.72,"busyButtonColors":{"fg":"rgb(255, 255, 255)","bg":"rgb(83, 118, 158)"},"darkPreferenceBodyBg":"rgb(248, 250, 252)","note":"The app has no dark theme; it stays light"}
+{"tc":"TC-069","at":"2026-10-09T07:46:16.658Z","cycles":10,"domNodesBefore":137,"domNodesAfter":175,"heapBeforeMB":10,"heapAfterMB":10,"leftoverStatusBars":0}
+{"tc":"TC-071","at":"2026-10-09T07:46:19.510Z","resultShownOnReturn":true}
+{"tc":"TC-072/073","at":"2026-10-09T07:46:29.444Z","requestsAfterRefreshDuringSubmit":0,"requestsAfterCloseDuringSubmit":1,"note":"0 = the browser cut the request before it reached the server; 1 = completed once"}
+{"tc":"TC-074","at":"2026-10-09T07:46:33.365Z","signInShowsMessage":true,"signInStuck":false,"formCrashedToErrorPage":false,"formLoaderStuck":false}
+{"tc":"TC-076","at":"2026-10-09T07:46:37.044Z","shownText":"MY APPROVALS\n\nOverview\nWaiting for me\nMy requests\nNew request\nCustom approval\nOut of office\nNotifications\nSign-in & devices\n1\nRavi Requester\nMy approvals\nRR\nQA base mv0nsq3l\n\nQAL-2026-000001 · QA Loader Type · raised by Ravi Requester\n\nIn progress\n← Back\n\nWithdraw this request\n\nCloses it now. Anyone","commentSaved":0,"loaderStuck":false,"toldToSignIn":true,"url":"/users/requests/1"}
+{"tc":"TC-085","at":"2026-10-09T07:46:38.215Z","replayStatus":200,"approvedTasks":1,"approvalEvents":1}

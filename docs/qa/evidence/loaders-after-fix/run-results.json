@@ -1,0 +1,283 @@
+{
+  "ranAt": "2026-10-09T07:42:36.755Z",
+  "stats": {
+    "startTime": "2026-10-09T07:42:36.755Z",
+    "duration": 242102.233,
+    "expected": 45,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "tests": [
+    {
+      "title": "DIAG-040 one preset click: do the filter fields and the data follow the address?",
+      "status": "passed",
+      "durationMs": 2512,
+      "error": ""
+    },
+    {
+      "title": "DIAG-074 sign-in with a malformed answer: what the page shows",
+      "status": "passed",
+      "durationMs": 3732,
+      "error": ""
+    },
+    {
+      "title": "DIAG-040b rapid preset clicks: which period is actually on screen?",
+      "status": "passed",
+      "durationMs": 7363,
+      "error": ""
+    },
+    {
+      "title": "DIAG-011 Admin → Departments: does the first Save work with no interception?",
+      "status": "passed",
+      "durationMs": 5500,
+      "error": ""
+    },
+    {
+      "title": "DIAG-011b Admin → Departments: Save held, then released",
+      "status": "passed",
+      "durationMs": 7587,
+      "error": ""
+    },
+    {
+      "title": "DIAG-039 period link: is the busy spinner shown while the page loads?",
+      "status": "passed",
+      "durationMs": 3588,
+      "error": ""
+    },
+    {
+      "title": "setup: IT publishes a type; a requester raises one request",
+      "status": "passed",
+      "durationMs": 1622,
+      "error": ""
+    },
+    {
+      "title": "TC-001 TC-002 initial load and refresh render complete content, no stuck loader",
+      "status": "passed",
+      "durationMs": 503,
+      "error": ""
+    },
+    {
+      "title": "TC-003 a slow page change shows loading feedback (skeleton or indicator)",
+      "status": "passed",
+      "durationMs": 10190,
+      "error": ""
+    },
+    {
+      "title": "TC-004 fast actions: how long the loader shows, and layout shift of the button",
+      "status": "passed",
+      "durationMs": 641,
+      "error": ""
+    },
+    {
+      "title": "TC-005 TC-024 a slow action keeps its loader until the answer arrives",
+      "status": "passed",
+      "durationMs": 4923,
+      "error": ""
+    },
+    {
+      "title": "TC-006 TC-028 an unknown page or record shows the not-found page",
+      "status": "passed",
+      "durationMs": 480,
+      "error": ""
+    },
+    {
+      "title": "TC-007 Back and Forward never leave a loader behind",
+      "status": "passed",
+      "durationMs": 1809,
+      "error": ""
+    },
+    {
+      "title": "TC-008 a signed-out visit returns to the page asked for after signing in",
+      "status": "passed",
+      "durationMs": 609,
+      "error": ""
+    },
+    {
+      "title": "TC-009 TC-026 a session that ended: the next action is clearly refused, not stuck",
+      "status": "passed",
+      "durationMs": 3774,
+      "error": ""
+    },
+    {
+      "title": "TC-010 rapid navigation ends on the last page with no loader left",
+      "status": "passed",
+      "durationMs": 4695,
+      "error": ""
+    },
+    {
+      "title": "TC-011 TC-016 TC-077 Save shows its own loader, then Saved; other Save buttons stay usable",
+      "status": "passed",
+      "durationMs": 510,
+      "error": ""
+    },
+    {
+      "title": "TC-012 TC-013 TC-014 double and triple clicks on Submit create one request",
+      "status": "passed",
+      "durationMs": 4115,
+      "error": ""
+    },
+    {
+      "title": "TC-015 an invalid form shows field errors and ends its loader",
+      "status": "passed",
+      "durationMs": 614,
+      "error": ""
+    },
+    {
+      "title": "TC-017 TC-029 a server error stops the loader and shows an error",
+      "status": "passed",
+      "durationMs": 3625,
+      "error": ""
+    },
+    {
+      "title": "TC-018 TC-030 TC-070 a request that never answers does not spin forever",
+      "status": "passed",
+      "durationMs": 35557,
+      "error": ""
+    },
+    {
+      "title": "TC-020 TC-079 double-clicking Approve records one approval",
+      "status": "passed",
+      "durationMs": 2086,
+      "error": ""
+    },
+    {
+      "title": "TC-021 rejecting updates the right request only",
+      "status": "passed",
+      "durationMs": 1628,
+      "error": ""
+    },
+    {
+      "title": "TC-022 two tabs approving the same task at once: one wins, the other is told",
+      "status": "passed",
+      "durationMs": 4688,
+      "error": ""
+    },
+    {
+      "title": "TC-023 TC-033 data and empty periods: dashboards show data or an empty state, never a loader",
+      "status": "passed",
+      "durationMs": 695,
+      "error": ""
+    },
+    {
+      "title": "TC-025 TC-034 TC-050 downloads: a failed download says so; a good one arrives; buttons lock while busy",
+      "status": "passed",
+      "durationMs": 2439,
+      "error": ""
+    },
+    {
+      "title": "TC-027 TC-067 TC-084 no access: plain user gets 404 pages and 404 APIs; a replayed admin action is refused",
+      "status": "passed",
+      "durationMs": 1481,
+      "error": ""
+    },
+    {
+      "title": "TC-031 TC-032 offline: the action says so and works again once back online",
+      "status": "passed",
+      "durationMs": 3847,
+      "error": ""
+    },
+    {
+      "title": "TC-035 TC-036 TC-024 dashboard skeleton vs final layout, and layout shift",
+      "status": "passed",
+      "durationMs": 7635,
+      "error": ""
+    },
+    {
+      "title": "TC-039 TC-040 dashboard filters: feedback while applying; rapid preset clicks end on the last one",
+      "status": "passed",
+      "durationMs": 9093,
+      "error": ""
+    },
+    {
+      "title": "TC-041 pagination shows the right page",
+      "status": "passed",
+      "durationMs": 3452,
+      "error": ""
+    },
+    {
+      "title": "TC-045 TC-047 TC-048 attachments: upload shows a loader; wrong type and too big are refused cleanly",
+      "status": "passed",
+      "durationMs": 4415,
+      "error": ""
+    },
+    {
+      "title": "TC-046 TC-082 a 9 MB upload on a slow network: loader stays, page stays usable",
+      "status": "passed",
+      "durationMs": 14788,
+      "error": ""
+    },
+    {
+      "title": "TC-049 an upload cut off midway fails safely",
+      "status": "passed",
+      "durationMs": 3706,
+      "error": ""
+    },
+    {
+      "title": "TC-051 TC-052 TC-075 TC-078 CSV export and import: status, problems, all-or-nothing, the shared status bar clears",
+      "status": "passed",
+      "durationMs": 2817,
+      "error": ""
+    },
+    {
+      "title": "TC-060 TC-061 TC-080 loaders stay visible on resize, on a phone and at 200% zoom",
+      "status": "passed",
+      "durationMs": 773,
+      "error": ""
+    },
+    {
+      "title": "TC-062 TC-068 slow CPU: the import check still completes; main-thread long tasks measured",
+      "status": "passed",
+      "durationMs": 2171,
+      "error": ""
+    },
+    {
+      "title": "TC-063 TC-064 keyboard use, and what screen readers are told",
+      "status": "passed",
+      "durationMs": 934,
+      "error": ""
+    },
+    {
+      "title": "TC-065 TC-066 TC-081 reduced motion, contrast of loaders, dark preference",
+      "status": "passed",
+      "durationMs": 546,
+      "error": ""
+    },
+    {
+      "title": "TC-069 ten check/fail cycles leave no extra overlays or listeners",
+      "status": "passed",
+      "durationMs": 1567,
+      "error": ""
+    },
+    {
+      "title": "TC-071 work finished in a background tab shows when the tab comes back",
+      "status": "passed",
+      "durationMs": 2838,
+      "error": ""
+    },
+    {
+      "title": "TC-072 TC-073 closing or refreshing during a submit never makes two requests",
+      "status": "passed",
+      "durationMs": 9898,
+      "error": ""
+    },
+    {
+      "title": "TC-074 malformed answers: sign-in and a form both recover",
+      "status": "passed",
+      "durationMs": 3925,
+      "error": ""
+    },
+    {
+      "title": "TC-076 the session ends while a request is in flight",
+      "status": "passed",
+      "durationMs": 3656,
+      "error": ""
+    },
+    {
+      "title": "TC-085 a replayed approval (duplicate request) changes nothing",
+      "status": "passed",
+      "durationMs": 1154,
+      "error": ""
+    }
+  ]
+}

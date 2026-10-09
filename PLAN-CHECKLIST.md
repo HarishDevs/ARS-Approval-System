@@ -17,21 +17,19 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
-- **Now:** **the loader QA audit is done** (9 Oct 2026, `docs/qa/LOADER-QA-REPORT.md`).
-  - 85 cases: 51 pass, 19 fail, 2 blocked, 13 not applicable; coverage 97.2 %, pass rate 72.9 %.
-  - 9 defects: 1 High, 4 Medium, 4 Low. No application code was changed.
-- **Next:** the owner decides on fixes (Q-016). **Recommended before the next Publish:**
-  - DEF-02: a failed form answer crashes the page and loses input;
-  - DEF-03: no time limit on requests;
-  - DEF-06: unreadable busy button.
-- **Then, with the owner on GoDaddy:**
-  - Publish v1.3.0 (+ fixes);
+- **Now:** **v1.3.1 is pushed** (9 Oct 2026). The end-to-end QA master prompt was run and all loader defects fixed (`docs/qa/E2E-QA-REPORT.md`).
+  - **Loader audit:** 45 / 45 green (pass rate 100 % of executed).
+  - **New QA suite:** 26 / 27.
+  - **Full regression green:** 259 unit, 64 integration, 25 e2e.
+- **Owner decisions needed:** Q-017 (dependency upgrades: DEF-E1) and Q-018 (the rate-limit IP source behind GoDaddy/Cloudflare: DEF-E2).
+- **Then, on GoDaddy:**
+  - Update Preview → Publish v1.3.1;
   - untick the junior designations;
   - Google sign-in as itsupport@arsenergy.co.in;
   - provider keys; templates; cron; break-glass;
   - import the staff;
   - rotate the Firebase key that was pasted in chat.
-- **Still open:** Q-015; Q-016; the real staff list.
+- **Still open:** Q-015, Q-017, Q-018; the real staff list.
 
 ---
 
@@ -258,13 +256,35 @@ Found during S8-06:
 - [ ] S8-01b Go-live on GoDaddy with the owner, following docs/DEPLOYMENT.md (the owner is at the wizard's "Add secrets" step)
 - [x] S8-04 Update the three living files; commit and push (done 8 Oct 2026)
 
+## Session log — QA session 14: end-to-end master prompt + fixing the loader defects (9 Oct 2026)
+Owner: "Test these now (Claude_End_to_End_Application_Testing_Master_Prompt.docx) and, along with that, complete the failed tests from the previous test if it is possible to integrate." Taken as the go-ahead for Q-016 (fix the loader defects).
+Boundaries from the prompt: smallest safe fixes, only for reproduced defects; no schema changes; no new dependencies; no secrets; passing code left alone; re-run the failed test, then regression.
+- [x] Q14-01 Scope inventory and applicability matrix (feature → existing suites → new tests; N/A with reasons) (done 9 Oct 2026)
+- [x] Q14-02 Baseline: build, lint, typecheck, unit, integration, e2e, loader audit, `npm audit`, migrate twice (idempotent); record exit codes and totals (done 9 Oct 2026)
+- [x] Q14-03 New executable suite `tests/qa-e2e/`, for areas not yet covered: (done 9 Oct 2026)
+  - session (logout, deactivated user, tampered cookie, revoked session);
+  - authorization (record access, the jobs endpoint, a replayed decision by another user, role-limited UI);
+  - business rules (DoA routing, withdraw, hold/resume, no self-approval, reopen);
+  - security (stored XSS in title/comment/import, SQL injection in search, headers, CSRF origin check, safe errors, disguised file types);
+  - integrations (notification outbox; delivery itself blocked: no provider keys); jobs; files/CSV accuracy;
+  - performance (page timings, 20 parallel users); accessibility (names, lang, h1, focus); mobile layout
+- [x] Q14-04 Fix the confirmed loader defects with minimal changes: (done 9 Oct 2026)
+  - DEF-02/07: the `useActionForm` wrapper catches failures; the session-ended message comes from a tiny `/api/auth/status`; `error.tsx` + `global-error.tsx`;
+  - DEF-03: a 30 s time limit with an "it may still go through" message;
+  - DEF-06: readable disabled primary button;
+  - DEF-01/04/09: a `loading.tsx` per space; period and paging links become plain links with a pending state (the last click wins; work before hydration);
+  - DEF-05/08: a live region and a fixed-width busy label in SubmitButton
+- [x] Q14-05 Re-run: the loader audit (all 85), the new suite, then the full regression (unit, integration, e2e, build); fix any new defects with the same loop (done 9 Oct 2026)
+- [ ] Q14-07 **Owner decisions:** DEF-E1 (dependency upgrades: Next 15.5.27 patch now; firebase-admin 14.5.0; firebase client major later) and DEF-E2 (the rate-limit IP source: is all traffic through Cloudflare?) (Q-017, Q-018)
+- [x] Q14-06 Report `docs/qa/E2E-QA-REPORT.md` (inventory, register with fix/retest columns, defect + change log, summary); update the loader report; living files; commit, push, CI, tag (done 9 Oct 2026)
+
 ## Session log — QA session 13: loader and loading-state audit (9 Oct 2026)
 Owner: "Master prompt: complete web application loader testing and QA audit" (TC-001 to TC-085). Testing only; defects are reported, and fixes wait for the owner's go-ahead.
 - [x] Q13-01 Reconnaissance: loader inventory (loading.tsx, SubmitButton "Working…", Spinner, import/delete/download loaders, auth buttons), error boundaries, existing tests (done 9 Oct 2026)
 - [x] Q13-02 Executable audit suite `tests/qa-loaders/` with its own config (`playwright.loaders.config.ts`; not part of CI, because it asserts the target behaviour and will fail where there are defects). It uses network interception of server actions and fetches: delay, 500, abort, offline, malformed, replay (done 9 Oct 2026)
 - [x] Q13-03 Run it against a production build with the e2e test database; collect measurements (done 9 Oct 2026)
 - [x] Q13-04 Report `docs/qa/LOADER-QA-REPORT.md`: inventory, register TC-001..085, defects, summary, management summary, remediation plan (done 9 Oct 2026)
-- [ ] Q13-06 **Waiting for the owner's go-ahead:** fix DEF-02 (High), DEF-03 and DEF-06 before the next Publish; then DEF-01/04; then DEF-05/07/08/09. The regression tests are already in `tests/qa-loaders/`
+- [x] Q13-06 (done 9 Oct 2026 in QA session 14: all 9 fixed and retested) **Waiting for the owner's go-ahead:** fix DEF-02 (High), DEF-03 and DEF-06 before the next Publish; then DEF-01/04; then DEF-05/07/08/09. The regression tests are already in `tests/qa-loaders/`
 - [x] Q13-05 Living files; commit and push (tests + report only; no app changes) (done 9 Oct 2026)
 
 ## Session log — build session 12: the form field creator, tested and fixed (8 Oct 2026)

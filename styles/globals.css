@@ -56,8 +56,9 @@ body {
   .field-input {
     @apply h-11 w-full rounded-md border border-line bg-surface-muted px-3.5 text-body text-ink placeholder:text-ink-faint focus:border-primary-600 focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary-100;
   }
+  /* Disabled/busy: a muted blue that keeps white text at 4.72:1 (QA DEF-06). */
   .btn-primary {
-    @apply inline-flex h-[46px] w-full items-center justify-center gap-2 rounded-md bg-primary-600 px-5 text-body font-semibold text-white shadow-button transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:bg-primary-100 disabled:shadow-none;
+    @apply inline-flex h-[46px] w-full items-center justify-center gap-2 rounded-md bg-primary-600 px-5 text-body font-semibold text-white shadow-button transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:bg-[#53769e] disabled:shadow-none;
   }
   .btn-secondary {
     @apply inline-flex h-[46px] w-full items-center justify-center gap-3 rounded-md border border-line bg-surface px-5 text-body font-medium text-ink transition-colors hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-60;

@@ -1,0 +1,29 @@
+## baseline 2026-10-09T07:10:32Z commit 22e6e3f
+typecheck exit=0
+lint exit=0
+ Test Files  27 passed (27)
+      Tests  254 passed (254)
+unit exit=0
+No pending migrations.
+No pending migrations.
+migrate twice exit=0
+npm audit (prod deps): {"info":0,"low":0,"moderate":7,"high":6,"critical":0,"total":13}
+npm audit (all deps): {"info":0,"low":0,"moderate":12,"high":14,"critical":3,"total":29}
+high      @firebase/firestore          direct: false fix: firebase@9.14.0 (MAJOR) | 
+high      @firebase/firestore-compat   direct: false fix: firebase@9.14.0 (MAJOR) | 
+moderate  @google-cloud/storage        direct: false fix: firebase-admin@14.5.0 | 
+high      @grpc/grpc-js                direct: false fix: firebase@9.14.0 (MAJOR) | @grpc/grpc-js: In certain configurations, getAuthContext can return unauthorized certificates as though they were authorized
+high      firebase                     direct: true fix: firebase@9.14.0 (MAJOR) | 
+moderate  firebase-admin               direct: true fix: firebase-admin@14.5.0 | 
+moderate  gaxios                       direct: false fix: true | 
+moderate  next                         direct: true fix: next@15.5.27 | Next.js has cache poisoning of SSG and ISR pages in self-hosted applications
+high      postcss                      direct: false fix: next@15.5.27 | PostCSS has XSS via Unescaped </style> in its CSS Stringify Output
+moderate  retry-request                direct: false fix: firebase-admin@14.5.0 | 
+high      source-map-js                direct: false fix: true | source-map-js allows event-loop denial of service through indexed source-map section offsets
+moderate  teeny-request                direct: false fix: firebase-admin@14.5.0 | 
+moderate  uuid                         direct: false fix: firebase-admin@14.5.0 | uuid: Missing buffer bounds check in v3/v5/v6 when buf is provided
+ Test Files  9 passed (9)
+      Tests  64 passed (64)
+integration exit=0
+  25 passed (1.2m)
+e2e exit=0

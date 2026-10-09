@@ -1,5 +1,14 @@
 # Release notes
 
+## v1.3.1 (9 Oct 2026): reliability fixes from the QA audits
+- **Forms no longer crash the page.** When the server errors, the connection drops, an upload is cut off, or the session has ended, the form now says so ("You're offline…", "Couldn't reach the server…", "Your session has ended…") and keeps what you typed. Before, the page went blank with "Application error".
+- **No endless spinners:** after 30 seconds a form stops waiting and says the action may still have gone through.
+- **Loading feedback:** a spinner on the menu link you clicked, and on dashboard period and page links. Quick period changes now always show the period you clicked last.
+- **Readable busy buttons** (contrast 4.72:1, was 1.42:1); buttons keep their size while busy; screen readers hear "Working…".
+- A friendly error page instead of a blank one, if anything else goes wrong.
+- Workflow builder: every field has an accessible name.
+- Audits: `docs/qa/LOADER-QA-REPORT.md` (retest: 70/70 executed pass) and `docs/qa/E2E-QA-REPORT.md`.
+
 ## v1.3.0 (8 Oct 2026): the form field creator
 - **Fixed after testing key by key:**
   - **Dropdowns:** options are now a list. Type one and press Enter or **Add option**, or paste several at once. Duplicates are refused. Before, the box dropped every comma, so only one option could be made.

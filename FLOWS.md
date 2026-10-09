@@ -60,6 +60,7 @@ The number of levels and how they combine is unlimited. There are no fixed "Leve
 | F-15 | Comments on a request | Built and verified 1 Oct 2026 |
 | F-16 | Handing over pending approvals | Built and tested on MySQL 1 Oct 2026 |
 | F-54 | DoA view derived from workflows | Built 1 Oct 2026; reads DoA matrices 8 Oct 2026 |
+| F-76 | Form submission resilience (errors, time limit, session ended) | Built 9 Oct 2026 (QA session 14) |
 | F-75 | Form field creator: all types, master-data dropdowns | Built 8 Oct 2026 (S12) |
 | F-72 | Approver designations (who can be picked as approver) | Built 8 Oct 2026 (S11) |
 | F-73 | Super Admin deletes a request (soft) | Built 8 Oct 2026 (S11) |
@@ -703,6 +704,25 @@ flowchart TD
 - **Department-wise raised:** per department of the person who raised: raised, approved, rejected, open, average time to close; plus each department's top approval types.
 - **Approver-wise:** per approver: assigned, approved, rejected, changes asked, pending now, overdue now, average time to decide, decided within the response time %.
 - **Raiser-wise by department:** each raiser grouped under their department: raised, approved, rejected, open, average time to close, last raised.
+
+## F-76 Form submission resilience (QA session 14, D-090)
+```mermaid
+flowchart TD
+  A[Submit a form] --> B[Button busy: spinner, same width, aria-busy, live region]
+  B --> C{Answer within 30 s?}
+  C -- normal answer --> D[Show the result; fields kept on error]
+  C -- answer is Not found --> E{Still signed in? /api/auth/status}
+  E -- no --> S[Your session has ended. Sign in again]
+  E -- yes --> D
+  C -- throws: 500, offline, cut, garbage, sign-in redirect --> F{Offline?}
+  F -- yes --> O[You are offline; what you typed is still here]
+  F -- no --> G{Still signed in?}
+  G -- no --> S
+  G -- yes --> U[Could not reach the server; try again]
+  C -- no answer after 30 s --> T[Taking longer than expected; it may still go through]
+```
+- Page-level failures show `app/error.tsx` (Try again / Go to my approvals); a broken root layout shows `app/global-error.tsx`.
+- Navigation feedback is a spinner on the clicked sidebar link. Period and paging links do a normal page load with a spinner, so the last click wins.
 
 ## F-75 Form field creator (S12, D-088)
 IT adds fields in the workflow builder (F-50). Each field has a label, a key (follows the label until edited), a type, Required, and optional help text.

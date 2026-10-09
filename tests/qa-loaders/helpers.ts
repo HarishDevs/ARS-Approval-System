@@ -53,10 +53,12 @@ export async function interceptActions(
   return { release: () => open(), count: () => seen };
 }
 
-// Client-side navigations (RSC fetches) made slow.
-export async function delayNavigations(page: Page, delayMs: number): Promise<void> {
+// Client-side navigations (RSC fetches) made slow; with `documents`, full
+// page loads too (links that do a normal page load, QA session 14).
+export async function delayNavigations(page: Page, delayMs: number, options: { documents?: boolean } = {}): Promise<void> {
   await page.route("**/*", async (route) => {
-    if (!isRsc(route)) return route.fallback();
+    const isDocument = options.documents && route.request().resourceType() === "document" && route.request().method() === "GET";
+    if (!isRsc(route) && !isDocument) return route.fallback();
     await new Promise((resolve) => setTimeout(resolve, delayMs));
     return route.continue().catch(() => undefined);
   });
@@ -102,4 +104,21 @@ export function contrast(fg: string, bg: string): number {
   };
   const [a, b] = [lum(fg), lum(bg)].sort((x, y) => y - x) as [number, number];
   return Math.round(((a + 0.05) / (b + 0.05)) * 100) / 100;
+}
+
+// Watches for busy feedback (a busy link or button, a spinner, a loading
+// skeleton) and remembers it in sessionStorage, which survives a normal page
+// load. Read it back with busySeen() after the click.
+export async function watchBusy(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    sessionStorage.removeItem("qaBusySeen");
+    const seen = () => {
+      if (document.querySelector('[aria-busy="true"], .animate-spin, [role="status"][aria-label^="Loading"]')) sessionStorage.setItem("qaBusySeen", "1");
+    };
+    new MutationObserver(seen).observe(document.body, { subtree: true, childList: true, attributes: true });
+  });
+}
+
+export async function busySeen(page: Page): Promise<boolean> {
+  return page.evaluate(() => sessionStorage.getItem("qaBusySeen") === "1");
 }

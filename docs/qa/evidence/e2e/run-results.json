@@ -1,0 +1,175 @@
+{
+  "ranAt": "2026-10-09T07:46:42.314Z",
+  "stats": {
+    "startTime": "2026-10-09T07:46:42.314Z",
+    "duration": 73073.05099999999,
+    "expected": 26,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  },
+  "tests": [
+    {
+      "title": "QA-SETUP publish the default type (DoA: manager, HOD, senior above ₹10 lakh)",
+      "status": "passed",
+      "durationMs": 1146,
+      "error": ""
+    },
+    {
+      "title": "QA-SMOKE-01 sign-in page, brand assets and an unknown page answer correctly",
+      "status": "passed",
+      "durationMs": 51,
+      "error": ""
+    },
+    {
+      "title": "QA-OPS-01 the scheduled-jobs endpoint refuses callers without the secret and runs with it",
+      "status": "passed",
+      "durationMs": 64,
+      "error": ""
+    },
+    {
+      "title": "QA-AUTH-01 sign out ends the session on the server; Back can't show protected pages",
+      "status": "passed",
+      "durationMs": 720,
+      "error": ""
+    },
+    {
+      "title": "QA-AUTH-02 a deactivated person is locked out at once",
+      "status": "passed",
+      "durationMs": 624,
+      "error": ""
+    },
+    {
+      "title": "QA-AUTH-03 a forged or tampered session cookie is not accepted",
+      "status": "passed",
+      "durationMs": 469,
+      "error": ""
+    },
+    {
+      "title": "QA-AUTH-04 wrong passwords: one generic answer, lockout after 5, a per-User-ID limit",
+      "status": "passed",
+      "durationMs": 888,
+      "error": ""
+    },
+    {
+      "title": "QA-SEC-06 the per-IP sign-in limit can't be dodged by sending a different X-Forwarded-For",
+      "status": "failed",
+      "durationMs": 2496,
+      "error": "Error: changing the claimed address doesn't reset the per-IP limit"
+    },
+    {
+      "title": "QA-AZ-01 people only see their own requests (direct URL and attachments)",
+      "status": "passed",
+      "durationMs": 999,
+      "error": ""
+    },
+    {
+      "title": "QA-AZ-02 an IT Admin can't use Super Admin pages or grant the Super Admin role",
+      "status": "passed",
+      "durationMs": 448,
+      "error": ""
+    },
+    {
+      "title": "QA-AZ-03 a decision replayed by someone who isn't the approver is refused",
+      "status": "passed",
+      "durationMs": 1167,
+      "error": ""
+    },
+    {
+      "title": "QA-BL-01 DoA routing: ₹50,000 needs manager + HOD; ₹15,00,000 adds the senior level",
+      "status": "passed",
+      "durationMs": 1157,
+      "error": ""
+    },
+    {
+      "title": "QA-BL-02 hold → resume → approve by both levels → Approved; audit and timeline recorded",
+      "status": "passed",
+      "durationMs": 1554,
+      "error": ""
+    },
+    {
+      "title": "QA-BL-03 withdraw: the request closes and leaves the approver's queue",
+      "status": "passed",
+      "durationMs": 1087,
+      "error": ""
+    },
+    {
+      "title": "QA-BL-04 reject needs a reason; the requester can't approve their own request",
+      "status": "passed",
+      "durationMs": 958,
+      "error": ""
+    },
+    {
+      "title": "QA-BL-05 the Super Admin reopens an approved request; it runs through the levels again",
+      "status": "passed",
+      "durationMs": 1648,
+      "error": ""
+    },
+    {
+      "title": "QA-SEC-01 stored XSS in a title and a comment is shown as text, never run",
+      "status": "passed",
+      "durationMs": 1050,
+      "error": ""
+    },
+    {
+      "title": "QA-SEC-02 SQL-injection text in searches is treated as text",
+      "status": "passed",
+      "durationMs": 600,
+      "error": ""
+    },
+    {
+      "title": "QA-SEC-03 security headers on pages and APIs; nothing reveals the stack",
+      "status": "passed",
+      "durationMs": 346,
+      "error": ""
+    },
+    {
+      "title": "QA-SEC-04 a Server Action posted from another site (CSRF) is refused",
+      "status": "passed",
+      "durationMs": 1057,
+      "error": ""
+    },
+    {
+      "title": "QA-SEC-05 a disguised executable named .pdf is refused",
+      "status": "passed",
+      "durationMs": 759,
+      "error": ""
+    },
+    {
+      "title": "QA-FILE-01 dashboard CSV matches the page; attachment downloads keep name and type",
+      "status": "passed",
+      "durationMs": 1242,
+      "error": ""
+    },
+    {
+      "title": "QA-PERF-01 key pages respond within budget (median of 5 < 1.5 s locally)",
+      "status": "passed",
+      "durationMs": 3235,
+      "error": ""
+    },
+    {
+      "title": "QA-PERF-02 20 people at once (server only, no browsers): every page loads, p95 under 3 s",
+      "status": "passed",
+      "durationMs": 394,
+      "error": ""
+    },
+    {
+      "title": "QA-A11Y-01 every form control has a name; one h1; page language set; images have alt",
+      "status": "passed",
+      "durationMs": 1011,
+      "error": ""
+    },
+    {
+      "title": "QA-A11Y-02 keyboard focus is visible on the sign-in page",
+      "status": "passed",
+      "durationMs": 482,
+      "error": ""
+    },
+    {
+      "title": "QA-UI-01 phone width: key pages have no sideways scrolling",
+      "status": "passed",
+      "durationMs": 863,
+      "error": ""
+    }
+  ]
+}

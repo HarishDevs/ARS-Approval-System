@@ -15,6 +15,19 @@ Evidence is in `docs/qa/evidence/loaders/`:
 
 No credentials, cookies or real data appear in this report: test sessions are generated for throw-away e2e users.
 
+> ## Retest after fixes — 9 Oct 2026 (QA session 14, v1.3.1)
+> All 9 defects below were **fixed and retested**; details and the change log are in `E2E-QA-REPORT.md` §4–5.
+> - **The whole audit was re-run against the fixed production build:** 45 / 45 tests green (39 audit + 6 diagnostics). Evidence: `evidence/loaders-after-fix/`.
+> - **Status after retest:** 70 PASS · 0 FAIL · 2 BLOCKED (TC-044, TC-083: still need a fault-injection hook; `app/error.tsx` now limits their impact) · 13 NOT APPLICABLE. Coverage 97.2 % (70 / 72), **pass rate 100 %** (70 / 70).
+> - **Test changes:**
+>   - checks that read the raw button text now use the accessible name / `aria-busy`, because the busy button keeps its hidden label;
+>   - a width assertion was added for DEF-08;
+>   - feedback on period/paging links is detected before the page changes;
+>   - TC-074 matches its message instead of Next's empty route announcer.
+>
+>   No assertion was weakened.
+> - The register and defects below are the **original findings** (kept as history).
+
 ---
 
 ## E. Execution summary

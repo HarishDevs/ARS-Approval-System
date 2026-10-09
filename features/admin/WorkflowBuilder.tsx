@@ -605,11 +605,11 @@ function StepEditor({
     <div className="grid gap-3 md:grid-cols-2">
       <div>
         <label className="field-label">Step name</label>
-        <input value={step.label} onChange={(event) => onChange({ ...step, label: event.target.value })} placeholder="e.g. HOD approval" className="field-input" />
+        <input aria-label="Step name" value={step.label} onChange={(event) => onChange({ ...step, label: event.target.value })} placeholder="e.g. HOD approval" className="field-input" />
       </div>
       <div>
         <label className="field-label">Who approves</label>
-        <select value={pick.kind} onChange={(event) => onChange({ ...step, approvers: defaultPick(event.target.value as ApproverPick["kind"], options) })} className="field-input">
+        <select aria-label="Who approves" value={pick.kind} onChange={(event) => onChange({ ...step, approvers: defaultPick(event.target.value as ApproverPick["kind"], options) })} className="field-input">
           {(Object.keys(PICK_LABEL) as ApproverPick["kind"][]).map((kind) => (
             <option key={kind} value={kind} disabled={(kind === "GROUP" && !options.groups.length) || (kind === "DEPARTMENT_HOD" && !options.departments.length) || (kind === "FORM_FIELD_USER" && !personFields.length)}>
               {PICK_LABEL[kind]}

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PendingLink } from "@/features/ui/PendingLink";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { MyRequestsTable } from "@/features/requests/lists";
@@ -71,14 +72,14 @@ export default async function MyRequestsPage({ searchParams }: { searchParams: P
       {result.pages > 1 && (
         <nav aria-label="Pages" className="mt-4 flex items-center gap-3 text-label">
           {result.page > 1 ? (
-            <Link href={link(result.page - 1)} className="btn-secondary btn-compact">
+            <PendingLink href={link(result.page - 1)} className="btn-secondary btn-compact">
               ← Newer
-            </Link>
+            </PendingLink>
           ) : null}
           {result.page < result.pages ? (
-            <Link href={link(result.page + 1)} className="btn-secondary btn-compact">
+            <PendingLink href={link(result.page + 1)} className="btn-secondary btn-compact">
               Older →
-            </Link>
+            </PendingLink>
           ) : null}
         </nav>
       )}

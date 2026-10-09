@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PendingLink } from "@/features/ui/PendingLink";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { CUSTOM_TYPE, filterQuery, presets, type DashboardFilter } from "@/server/dashboards/filters";
 
@@ -97,14 +98,11 @@ export function DashboardFrame({
       </form>
       <p className="mb-6 flex flex-wrap items-center gap-x-3 gap-y-1 text-caption text-ink-muted">
         <span>Quick:</span>
+        {/* Plain links with a pending spinner: the last click always wins (QA DEF-04). */}
         {presets(today).map((preset) => (
-          <Link
-            key={preset.label}
-            className="link font-normal"
-            href={`/admin/dashboards/${slug}?${filterQuery({ ...filter, from: preset.from, to: preset.to })}`}
-          >
+          <PendingLink key={preset.label} className="link font-normal" href={`/admin/dashboards/${slug}?${filterQuery({ ...filter, from: preset.from, to: preset.to })}`}>
             {preset.label}
-          </Link>
+          </PendingLink>
         ))}
         <span aria-hidden="true">·</span>
         <span>{departmentNote} Deleted requests are never counted.</span>

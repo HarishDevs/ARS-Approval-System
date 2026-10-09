@@ -168,6 +168,11 @@
 - **Test mode** keeps the valid sample values.
 - **The level map** previews skip conditions that already hold. | Owner, 8 Oct 2026 |
 | D-089 | 9 Oct 2026 | **The loader/loading-state audit suite lives outside CI** (`tests/qa-loaders/`, `playwright.loaders.config.ts`). It asserts the target behaviour, using intercepted Server Actions and page fetches (slow, 500, abort, offline, malformed, replay) and DB counts, so it stays red until the defects in `docs/qa/LOADER-QA-REPORT.md` are fixed. Once they are, it can join CI. | Claude, QA session 13 |
+| D-090 | 9 Oct 2026 | **Form resilience** (QA session 14).
+- Every `useActionForm` Server Action goes through `guardAction`: failures become a plain message and the fields are kept; a 30 s limit says it "may still go through"; "session ended" is detected via `/api/auth/status` (yes/no only).
+- The form keeps **its own busy state** instead of `useActionState`'s pending, which can't end while the action's request is open.
+- `app/error.tsx` / `app/global-error.tsx` replace the blank Next error.
+- **No `loading.tsx` at space level:** it streams pages, so a missing record returned 200 instead of 404 (breaks D-016) and stalled action refreshes. Navigation feedback is link-level instead: `useLinkStatus` in the sidebar, and `PendingLink` (a normal page load) for period and paging links. | Claude, from audit evidence |
 | D-033 | 28 Sep 2026 | **Staff data is provided by the admin. Roles are assigned per user, by the admin only. Users are added or made inactive in the Admin Portal** (never hard-deleted, so history and audit stay intact). *Resolves Q-010.* | Owner (answer 7) |
 
 ## 4. Open questions (must be answered before the phase shown)
@@ -189,9 +194,30 @@
 | Q-013 | **Notification templates:** the owner will send the WhatsApp (and email) wording for the events N-06 to N-20; the Meta template names come after approval | Phase 1 notifications | Open, waiting on the owner **7 Oct 2026: all 20 formats delivered (docs/NOTIFICATION-TEMPLATES.md); the owner creates them in CEOITBox and switches each on in /superadmin/templates** |
 | Q-014 | OTP template | Phase 1 | **Resolved 28 Sep → confirmed by the owner: reuse `wa_login_otp_v1`** (D-042) |
 | Q-015 | **Break-glass and WhatsApp:** the break-glass account signs in with a password **plus the WhatsApp code** (D-025). If WhatsApp or CEOITBox is down, which is exactly when break-glass may be needed, it can't sign in. Keep the code, or skip it only during the console-enabled window? | Go-live | Open, waiting on the owner (built conservatively: the code is required) |
-| Q-016 | **Loader audit fixes** (docs/qa/LOADER-QA-REPORT.md): may I fix DEF-02 (High: a failed form answer crashes the page), DEF-03 (no time limit) and DEF-06 (unreadable busy button) before the next Publish, then DEF-01/04 and the Low ones? | Before the next Publish | Open, waiting on the owner |
+| Q-016 | **Loader audit fixes** (docs/qa/LOADER-QA-REPORT.md): may I fix DEF-02 (High: a failed form answer crashes the page), DEF-03 (no time limit) and DEF-06 (unreadable busy button) before the next Publish, then DEF-01/04 and the Low ones? | Before the next Publish | **Answered 9 Oct 2026:** owner said complete the failed tests → all 9 fixed and retested (QA session 14) |
+| Q-017 | **Dependency upgrades (DEF-E1):** `npm audit` shows 6 high / 7 moderate in production deps. Upgrade Next to 15.5.27 (patch) and firebase-admin to 14.5.0 (minor) now, and plan the firebase client major upgrade? | Before or with the next Publish | Open, waiting on the owner |
+| Q-018 | **Rate-limit IP source (DEF-E2):** is all traffic to approval.arssteels.net forced through Cloudflare? If yes, use `CF-Connecting-IP`; if not, the right-most X-Forwarded-For entry added by GoDaddy's proxy. A wrong choice could put all users on one address. | Before go-live | Open, waiting on the owner |
 
 ## 5. Work log (newest first)
+
+### 9 Oct 2026 (QA session 14: end-to-end master prompt, fixes, retest, v1.3.1)
+- **Baseline** (all green): 254 unit, 64 integration, 25 e2e; migrations idempotent. `npm audit`: 13 production findings (6 high) in next/postcss and firebase/firebase-admin chains (DEF-E1, needs approval).
+- **New suite `tests/qa-e2e/`:**
+  - session (sign out, deactivated user, forged cookie, lockout, per-ID limit);
+  - authorization (record URL, Super Admin pages, replayed decision);
+  - business rules (DoA routing, hold/resume, withdraw, reject reason, reopen);
+  - security (XSS, SQLi, headers, CSRF, disguised file); files/CSV accuracy; performance (median page < 1.5 s; 20 concurrent p95 0.29 s);
+  - accessibility; phone layout.
+- **Corrected my own test mistakes** before judging:
+  - a redirect was followed;
+  - the limits were misread;
+  - 20 browsers were measured instead of the server;
+  - focus left the page.
+- **Found:**
+  - DEF-E3: unnamed builder fields (fixed);
+  - DEF-E2: the per-IP sign-in limit can be dodged with a spoofed X-Forwarded-For (open: the fix depends on the live proxy chain).
+- **Fixed all 9 loader defects (D-090).** My first attempt (a space-level `loading.tsx`) caused a 404→200 regression and a stuck Save (DEF-E4); it was caught by the audit, reverted and replaced before commit.
+- **Retest:** loader audit 45/45 (from 29/42); QA suite 26/27; final regression 259 unit / 64 integration / 25 e2e. Reports: `docs/qa/E2E-QA-REPORT.md`, plus a retest section in `LOADER-QA-REPORT.md`.
 
 ### 9 Oct 2026 (QA session 13: loader audit, TC-001…TC-085)
 - **Method:**

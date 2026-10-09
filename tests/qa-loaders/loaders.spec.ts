@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
-import { as, clearIntercepts, contrast, count, crashed, delayNavigations, interceptActions, record, sql } from "./helpers";
+import { as, busySeen, clearIntercepts, watchBusy, contrast, count, crashed, delayNavigations, interceptActions, record, sql } from "./helpers";
 
 // Loader and loading-state audit (QA session 13), against a production build
 // and the throw-away e2e database. Each test names the TC ids it executes and
@@ -94,7 +94,7 @@ test("TC-004 fast actions: how long the loader shows, and layout shift of the bu
   await page.goto(requestPath);
   const before = await postButton(page).boundingBox();
   await commentBox(page).fill("Fast comment");
-  const shown = page.waitForFunction(() => [...document.querySelectorAll("button")].some((b) => b.textContent === "Working…"), undefined, { timeout: 5000 }).then(() => Date.now()).catch(() => null);
+  const shown = page.waitForFunction(() => [...document.querySelectorAll("button")].some((b) => b.getAttribute("aria-busy") === "true"), undefined, { timeout: 5000 }).then(() => Date.now()).catch(() => null);
   const t0 = Date.now();
   await postButton(page).click();
   const during = await page.getByRole("button", { name: "Working…" }).boundingBox().catch(() => null);
@@ -103,6 +103,8 @@ test("TC-004 fast actions: how long the loader shows, and layout shift of the bu
   const done = Date.now();
   record("TC-004", { loaderAppearedAfterMs: appeared ? appeared - t0 : null, totalMs: done - t0, buttonWidthBefore: before?.width, buttonWidthDuring: during?.width ?? null });
   expect(appeared, "the loader appears").not.toBeNull();
+  // DEF-08: the button keeps its width while busy (no jolt on fast actions).
+  if (during) expect(Math.abs((during.width ?? 0) - (before?.width ?? 0))).toBeLessThan(2);
 });
 
 test("TC-005 TC-024 a slow action keeps its loader until the answer arrives", async ({ page, context }) => {
@@ -469,19 +471,22 @@ test("TC-035 TC-036 TC-024 dashboard skeleton vs final layout, and layout shift"
 test("TC-039 TC-040 dashboard filters: feedback while applying; rapid preset clicks end on the last one", async ({ page, context }) => {
   await as(context, "E2E_ADMIN");
   await page.goto("/admin/dashboards/utilisation");
-  await delayNavigations(page, 1500);
+  await delayNavigations(page, 1500, { documents: true });
+  await watchBusy(page);
   // The last click is a period different from the default, so the result is unambiguous.
   await page.getByRole("link", { name: "Last financial year" }).click({ noWaitAfter: true });
   await page.waitForTimeout(100);
   await page.getByRole("link", { name: "Last 90 days" }).click({ noWaitAfter: true });
   await page.waitForTimeout(100);
   await page.getByRole("link", { name: "This month" }).click({ noWaitAfter: true });
-  const skeletonSeen = await page.getByRole("status", { name: "Loading the dashboard" }).waitFor({ state: "visible", timeout: 1000 }).then(() => true).catch(() => false);
   await page.waitForTimeout(5000);
+  // Feedback = a busy spinner on the clicked link (or a skeleton) before the new period showed.
+  const skeletonSeen = await busySeen(page);
   const url = new URL(page.url());
   const fromInput = await page.getByLabel("From").inputValue();
   record("TC-039/040", { feedbackWhileApplying: skeletonSeen, finalFrom: url.searchParams.get("from"), fromFieldShows: fromInput });
   await clearIntercepts(page);
+  expect(skeletonSeen, "feedback while the new period loads").toBe(true);
   expect(url.searchParams.get("from")).toMatch(/-01$/);
   expect(url.searchParams.get("from")).not.toMatch(/-04-01$/);
   expect(fromInput).toBe(url.searchParams.get("from"));
@@ -500,11 +505,12 @@ test("TC-041 pagination shows the right page", async ({ page, context }) => {
   );
   await as(context, "E2E_SUPER");
   await page.goto("/superadmin/requests");
-  await delayNavigations(page, 2000);
+  await delayNavigations(page, 2000, { documents: true });
   const firstPage = await page.getByRole("row").nth(1).innerText();
+  await watchBusy(page);
   await page.getByRole("link", { name: "Older →" }).click();
   await page.waitForTimeout(800);
-  const feedback = await page.evaluate(() => Boolean(document.querySelector('[aria-label^="Loading"], [aria-busy="true"], .animate-spin, .animate-pulse')));
+  const feedback = await busySeen(page);
   await expect(page.getByText(/page 2 of/)).toBeVisible({ timeout: 15_000 });
   const secondPage = await page.getByRole("row").nth(1).innerText();
   record("TC-041", { feedbackWhileLoadingPage2: feedback, firstRowChanged: firstPage !== secondPage });
@@ -655,7 +661,7 @@ test("TC-063 TC-064 keyboard use, and what screen readers are told", async ({ pa
   await page.keyboard.press("Enter");
   await expect(page.getByRole("button", { name: "Working…" })).toBeVisible();
   const a11y = await page.evaluate(() => {
-    const button = [...document.querySelectorAll("button")].find((b) => b.textContent === "Working…");
+    const button = [...document.querySelectorAll("button")].find((b) => b.getAttribute("aria-busy") === "true");
     const form = button?.closest("form");
     return {
       formAriaBusy: form?.getAttribute("aria-busy") ?? null,
@@ -774,7 +780,8 @@ test("TC-074 malformed answers: sign-in and a form both recover", async ({ page,
   await page.getByLabel("User ID").fill("someone");
   await page.getByLabel("Password", { exact: true }).fill("not-a-real-password");
   await page.getByRole("button", { name: "Continue", exact: true }).click();
-  const signInMessage = await page.getByRole("alert").waitFor({ state: "visible", timeout: 5000 }).then(() => true).catch(() => false);
+  // Next adds an empty role=alert route announcer; look for the message itself.
+  const signInMessage = await page.getByRole("alert").filter({ hasText: /went wrong|try again/i }).waitFor({ state: "visible", timeout: 5000 }).then(() => true).catch(() => false);
   const signInStuck = await page.getByRole("button", { name: "Checking…" }).isVisible();
   await page.unroute("**/api/auth/**");
   await as(context, "E2E_REQ");

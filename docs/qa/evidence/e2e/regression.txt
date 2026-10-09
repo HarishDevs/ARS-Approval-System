@@ -1,0 +1,18 @@
+## regression after fixes 2026-10-09T07:40:20Z
+typecheck exit=0
+lint exit=0
+ Test Files  27 passed (27)
+      Tests  254 passed (254)
+ Test Files  9 passed (9)
+      Tests  64 passed (64)
+integration exit=0
+  25 passed (1.2m)
+e2e exit=0
+## final regression 2026-10-09T07:51:17Z
+typecheck exit=0
+lint exit=0
+ Test Files  28 passed (28)
+      Tests  259 passed (259)
+      Tests  64 passed (64)
+  25 passed (1.2m)
+e2e exit=0
