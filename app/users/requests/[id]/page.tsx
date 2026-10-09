@@ -45,8 +45,12 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
   return (
     <>
       <PageHeader title={view.title} description={`${view.requestNo} · ${view.workflowName} · raised by ${view.requesterName}${view.round > 1 ? ` · round ${view.round}` : ""}`}>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <RequestStatusPill status={view.status} />
+          {/* #10: a plain download, not a page (no prefetch). */}
+          <a href={`/api/requests/${view.id}/summary.pdf`} className="link text-label" download>
+            Download PDF
+          </a>
           <Link href="/users" className="link text-label">
             ← Back
           </Link>

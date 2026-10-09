@@ -246,7 +246,7 @@ export interface TrackerSummary {
   tone: "progress" | "waiting" | "attention" | "done" | "stopped";
 }
 
-function flatSteps(stages: readonly MapStage[]): MapStep[] {
+export function flatSteps(stages: readonly MapStage[]): MapStep[] {
   return stages.flatMap((stage) => [...stage.steps, ...(stage.paths ?? []).flatMap((path) => flatSteps(path.stages))]);
 }
 

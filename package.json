@@ -30,6 +30,7 @@
     "lucide-react": "0.469.0",
     "mysql2": "3.24.3",
     "next": "15.5.27",
+    "pdf-lib": "1.17.1",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "server-only": "0.0.1",
