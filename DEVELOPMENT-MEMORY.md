@@ -201,6 +201,11 @@
 
 ## 5. Work log (newest first)
 
+### 9 Oct 2026 (live approval email test)
+- The owner changed the From address to `no_reply@approval.arssteels.net` (Super Admin settings; approval.arssteels.net is verified in Resend) and asked for one approval to test email.
+- Harish Kumar raised CUS-2026-000003 for IT Admin (temporary designation QA_TEST, approver). Deliveries: APPROVAL_NEEDED email + WhatsApp SENT; after IT Admin approved, REQUEST_APPROVED email + WhatsApp SENT to Harish.
+- Cleanup: request soft-deleted with a reason; IT Admin's designation reset; QA_TEST inactive and not an approver.
+
 ### 9 Oct 2026 (email fixed on live)
 - The owner verified `arssteels.net` in the Resend team "arssteels". The first retest still gave 403; Resend's log said "API key not authorized for this domain… from arssteels.net" (key "New Api Approval", Full access).
 - A few minutes later, the Super Admin "Send test email" succeeded ("Test email sent to itsupport@arsenergy.co.in").
