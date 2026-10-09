@@ -197,9 +197,14 @@
 | Q-016 | **Loader audit fixes** (docs/qa/LOADER-QA-REPORT.md): may I fix DEF-02 (High: a failed form answer crashes the page), DEF-03 (no time limit) and DEF-06 (unreadable busy button) before the next Publish, then DEF-01/04 and the Low ones? | Before the next Publish | **Answered 9 Oct 2026:** owner said complete the failed tests → all 9 fixed and retested (QA session 14) |
 | Q-017 | **Dependency upgrades (DEF-E1):** `npm audit` shows 6 high / 7 moderate in production deps. Upgrade Next to 15.5.27 (patch) and firebase-admin to 14.5.0 (minor) now, and plan the firebase client major upgrade? | Before or with the next Publish | Open, waiting on the owner |
 | Q-018 | **Rate-limit IP source (DEF-E2):** is all traffic to approval.arssteels.net forced through Cloudflare? If yes, use `CF-Connecting-IP`; if not, the right-most X-Forwarded-For entry added by GoDaddy's proxy. A wrong choice could put all users on one address. | Before go-live | Open, waiting on the owner |
-| Q-019 | **Which Resend account holds the API key in Super Admin?** The "arsenergy" team (open in Chrome) is empty. Email works only once the From domain (`approvals@arssteels.net`) is verified in the account that owns the key, or a new key from a team with a verified domain is entered. | Before go-live (no email is delivered today) | Open, waiting on the owner |
+| Q-019 | **Which Resend account holds the API key in Super Admin?** The "arsenergy" team (open in Chrome) is empty. Email works only once the From domain (`approvals@arssteels.net`) is verified in the account that owns the key, or a new key from a team with a verified domain is entered. | Before go-live (no email is delivered today) | **Answered 9 Oct 2026:** the key is "New Api Approval" in the Resend team "arssteels" (harishkumar.t@arssteels.com). The owner verified `arssteels.net` there; Resend's log showed "API key not authorized for this domain" for a few minutes after verification, then the test email was **sent** |
 
 ## 5. Work log (newest first)
+
+### 9 Oct 2026 (email fixed on live)
+- The owner verified `arssteels.net` in the Resend team "arssteels". The first retest still gave 403; Resend's log said "API key not authorized for this domain… from arssteels.net" (key "New Api Approval", Full access).
+- A few minutes later, the Super Admin "Send test email" succeeded ("Test email sent to itsupport@arsenergy.co.in").
+- **Email now works.** Old failed notifications weren't re-sent (they're stale; and with no cron job, nothing retries them).
 
 ### 9 Oct 2026 (QA session 15b: live email and WhatsApp test, v1.3.3)
 - The owner approved live test data and messages to their own addresses.
