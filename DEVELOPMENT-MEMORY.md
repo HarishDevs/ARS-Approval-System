@@ -177,6 +177,7 @@
 | D-092 | 9 Oct 2026 | **Client IP = Cloudflare's `CF-Connecting-IP`** (Q-018: the owner confirmed all traffic goes through Cloudflare). X-Forwarded-For is never read from the left. Without the Cloudflare header, the right-most entry is used (the nearest proxy's), then X-Real-IP; values must be valid IPs (`lib/http/client-ip.ts`). This closes QA-SEC-06. Remaining risk: a request sent straight to the GoDaddy origin, bypassing Cloudflare, could set its own CF-Connecting-IP. | Owner, 9 Oct 2026 |
 | D-093 | 9 Oct 2026 | **Dependency upgrades** (Q-017): Next and eslint-config-next 15.5.27, firebase-admin 14.5.0, plus `npm audit fix`. Two npm `overrides`: Next's bundled postcss → 8.5.28 (build-time only) and the Firebase client's Firestore grpc-js → 1.14.6 (Firestore is unused; Auth only). Result: `npm audit --omit=dev` 0 vulnerabilities. A firebase client major upgrade (11 → 12/13) isn't needed for security, so it waits until there is a reason. | Owner, 9 Oct 2026 |
 | D-094 | 9 Oct 2026 | **Job runner heartbeat:** each successful `/api/jobs/run` updates a single `RUNNER_HEARTBEAT` row in the (previously unused) `jobs` table. Super Admin → Message deliveries shows "Job runner: last ran N min ago": green within 15 minutes, amber otherwise or if it never ran. This lets the owner confirm the cron job (DEPLOYMENT Part I). | Claude, 9 Oct 2026 |
+| D-095 | 9 Oct 2026 | **User sidebar: one "Profile" entry** (owner: "take out of office, Notification, Sign-in & devices to the Profile page"). `/users/profile` shows the person's details read-only, with tabs for Notifications, Out of office and Sign-in & devices. Those pages keep their addresses (`ProfileTabs`, `NavItem.also`). | Owner, 9 Oct 2026 |
 | D-033 | 28 Sep 2026 | **Staff data is provided by the admin. Roles are assigned per user, by the admin only. Users are added or made inactive in the Admin Portal** (never hard-deleted, so history and audit stay intact). *Resolves Q-010.* | Owner (answer 7) |
 
 ## 4. Open questions (must be answered before the phase shown)
@@ -204,6 +205,19 @@
 | Q-019 | **Which Resend account holds the API key in Super Admin?** The "arsenergy" team (open in Chrome) is empty. Email works only once the From domain (`approvals@arssteels.net`) is verified in the account that owns the key, or a new key from a team with a verified domain is entered. | Before go-live (no email is delivered today) | **Answered 9 Oct 2026:** the key is "New Api Approval" in the Resend team "arssteels" (harishkumar.t@arssteels.com). The owner verified `arssteels.net` there; Resend's log showed "API key not authorized for this domain" for a few minutes after verification, then the test email was **sent** |
 
 ## 5. Work log (newest first)
+
+### 9 Oct 2026 (v1.3.5: Profile page; application audit)
+- **Profile (D-095, F-77):**
+  - new `/users/profile`: read-only details via `getOwnProfile`, plus `ProfileTabs`;
+  - the sidebar drops Out of office, Notifications and Sign-in & devices;
+  - the account menu has a Profile link.
+  - e2e `profile.spec.ts` (tabs, highlight, phone width without sideways scroll); `cloudflare-safe` now covers `/users/profile`.
+- **Application audit:** the owner's master prompt. The report is `docs/APPLICATION_CURRENT_STATE_AUDIT.md`. The audit was read-only, using four parallel inspections plus local checks:
+  - tsc and lint clean; unit 262/262; e2e 28/28; production audit 0; CI green on v1.3.4.
+  - **Broken:** B-01, the admin "Deactivate user" and "Sign out everywhere" never run (`UserCommands.tsx` doesn't render the confirm bar).
+  - **Security:** S-01 set-password link stored in plain text in retry payloads; S-02 open redirect via `/\`; S-03 OTP attempt race; S-04 no Resend timeout; S-05 no idle timeout.
+  - **Not implemented:** backups and restore, health endpoint, BLOCKED-step recovery, WORK/NOTIFY nodes.
+  - These were not fixed in the audit (read-only). They are queued as AUD-01..05.
 
 ### 9 Oct 2026 (v1.3.4: cron guide, Q-017, Q-018, default sender)
 - The owner answered **yes** to Q-017 and Q-018, asked for a step-by-step cron guide, and approved changing the default From address.

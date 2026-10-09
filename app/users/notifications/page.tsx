@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireArea } from "@/server/authorization/guards";
+import { ProfileTabs } from "@/features/shell/ProfileTabs";
 import { EmptyState, PageHeader } from "@/features/shell/PageHeader";
 import { MarkAllReadButton } from "@/features/shell/MarkAllReadButton";
 import { listInbox } from "@/lib/db/repositories/collab.repository";
@@ -26,6 +27,7 @@ export default async function NotificationsPage() {
       <PageHeader title="Notifications" description="Everything we've told you by email or WhatsApp, in one place.">
         {items.some((item) => !item.read) && <MarkAllReadButton />}
       </PageHeader>
+      <ProfileTabs />
       {items.length === 0 ? (
         <EmptyState title="Nothing yet" body="Approvals, decisions and comments will show up here." />
       ) : (

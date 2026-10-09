@@ -60,6 +60,7 @@ The number of levels and how they combine is unlimited. There are no fixed "Leve
 | F-15 | Comments on a request | Built and verified 1 Oct 2026 |
 | F-16 | Handing over pending approvals | Built and tested on MySQL 1 Oct 2026 |
 | F-54 | DoA view derived from workflows | Built 1 Oct 2026; reads DoA matrices 8 Oct 2026 |
+| F-77 | Profile page: details + Notifications, Out of office, Sign-in & devices as tabs | Built 9 Oct 2026 (v1.3.5) |
 | F-76 | Form submission resilience (errors, time limit, session ended) | Built 9 Oct 2026 (QA session 14) |
 | F-75 | Form field creator: all types, master-data dropdowns | Built 8 Oct 2026 (S12) |
 | F-72 | Approver designations (who can be picked as approver) | Built 8 Oct 2026 (S11) |
@@ -706,6 +707,19 @@ flowchart TD
 - **Department-wise raised:** per department of the person who raised: raised, approved, rejected, open, average time to close; plus each department's top approval types.
 - **Approver-wise:** per approver: assigned, approved, rejected, changes asked, pending now, overdue now, average time to decide, decided within the response time %.
 - **Raiser-wise by department:** each raiser grouped under their department: raised, approved, rejected, open, average time to close, last raised.
+
+## F-77 Profile page (v1.3.5, D-095)
+```mermaid
+flowchart LR
+  SB["Sidebar: Profile\n(or account menu → Profile)"] --> P["/users/profile\nYour details (read-only)"]
+  P --- T1["Notifications\n/users/notifications"]
+  P --- T2["Out of office\n/users/delegation"]
+  P --- T3["Sign-in & devices\n/users/security"]
+```
+- The user sidebar is now: Overview, Waiting for me, My requests, New request, Custom approval, **Profile**.
+- **Your details:** name, User ID, email, WhatsApp (masked), department, designation, reporting manager, access, last sign-in. Only IT can change them.
+- The three tabs keep their old addresses, so links in emails and WhatsApp still work. The sidebar keeps Profile highlighted on all four.
+- The bell and the account menu still go straight to Notifications.
 
 ## F-76 Form submission resilience (QA session 14, D-090)
 ```mermaid

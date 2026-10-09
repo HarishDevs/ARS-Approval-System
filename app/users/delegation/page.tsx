@@ -1,4 +1,5 @@
 import { requireArea } from "@/server/authorization/guards";
+import { ProfileTabs } from "@/features/shell/ProfileTabs";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { DelegationForm } from "@/features/requests/DelegationForms";
 import { DelegationList } from "@/features/requests/DelegationList";
@@ -17,6 +18,7 @@ export default async function DelegationPage() {
         title="Out of office"
         description="Name someone to approve for you while you're away (up to 90 days). They act on your behalf and both names are recorded. They can't approve their own requests."
       />
+      <ProfileTabs />
       <div className="grid gap-6 xl:grid-cols-2">
         <section className="card">
           <h2 className="border-b border-line px-5 py-4 font-semibold">Set out of office</h2>

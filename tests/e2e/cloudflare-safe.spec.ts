@@ -19,7 +19,7 @@ function plainTextAddresses(html: string): string[] {
 test("no page shows an email address as plain text that Cloudflare would rewrite", async ({ page, context }) => {
   await context.addCookies([await sessionCookie("E2E_SUPER")]);
   const found: Record<string, string[]> = {};
-  for (const url of ["/admin/import", "/admin/import?kind=users", "/superadmin/audit", "/superadmin/settings", "/admin/users", "/users", "/superadmin/requests"]) {
+  for (const url of ["/admin/import", "/admin/import?kind=users", "/superadmin/audit", "/superadmin/settings", "/admin/users", "/users", "/users/profile", "/superadmin/requests"]) {
     const html = await (await page.request.get(url)).text();
     const addresses = plainTextAddresses(html);
     if (addresses.length) found[url] = addresses;

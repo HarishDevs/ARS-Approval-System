@@ -17,10 +17,11 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
-- **Now:** v1.3.4 is pushed: dependency upgrades (Q-017, audit 0), client IP from Cloudflare (Q-018, QA 27/27), default sender `no_reply@approval.arssteels.net`, job runner heartbeat, and a step-by-step cron guide (DEPLOYMENT Part I). Live email and WhatsApp work end to end.
+- **Now:** v1.3.5 is pushed: the Profile page (Notifications, Out of office and Sign-in & devices moved under it). The application audit is in `docs/APPLICATION_CURRENT_STATE_AUDIT.md`. Live email and WhatsApp work end to end.
+- **Next, development (waiting for the owner's go-ahead):** AUD-01 (B-01 admin deactivate/sign-out broken), AUD-02 (S-01), AUD-03 (S-02..S-05), AUD-04 (backups, health), AUD-05.
 - **Next, the owner:**
-  1. GoDaddy: Publish v1.3.4.
-  2. Set up the cron job (DEPLOYMENT Part I, I1–I6); Message deliveries should show a green "Job runner: last ran N min ago".
+  1. GoDaddy: Publish v1.3.5 (with `JOB_RUNNER_SECRET` set).
+  2. Finish the cron job with the real secret (DEPLOYMENT Part I); Message deliveries should show a green "Job runner" line.
   3. Load the masters and build the approval types.
   4. Finish the WhatsApp security templates (waiting for Meta); rotate the keys that were pasted in chat.
 - **Still open:** Q-015.
@@ -249,6 +250,16 @@ Found during S8-06:
 - [x] S8-12 Google sign-in reached UNKNOWN_ACCOUNT: itadmin@ is an alias. The Super Admin now signs in as itsupport@arsenergy.co.in (D-082, migration + non-overwriting seed, v1.0.5) (done 8 Oct 2026)
 - [ ] S8-01b Go-live on GoDaddy with the owner, following docs/DEPLOYMENT.md (the owner is at the wizard's "Add secrets" step)
 - [x] S8-04 Update the three living files; commit and push (done 8 Oct 2026)
+
+## Session log — v1.3.5: Profile page and application audit (9 Oct 2026)
+- [x] V135-01 Profile page: details tab + Notifications, Out of office, Sign-in & devices as tabs; sidebar and account menu updated (D-095, F-77) (done 9 Oct 2026)
+- [x] V135-02 e2e `profile.spec.ts`; `/users/profile` added to the Cloudflare address check; e2e 28/28 (done 9 Oct 2026)
+- [x] V135-03 Read-only application audit → `docs/APPLICATION_CURRENT_STATE_AUDIT.md` (done 9 Oct 2026)
+- [ ] AUD-01 Fix B-01: confirm bar missing on admin "Deactivate user" / "Sign out everywhere" (P1)
+- [ ] AUD-02 Fix S-01: no plain-text set-password links in `notification_deliveries.payload_json` (P1)
+- [ ] AUD-03 Fix S-02..S-05: login redirect, OTP attempt race, Resend timeout, idle timeout (P2)
+- [ ] AUD-04 Backups + restore drill (P0-21, GL-04) and a health endpoint
+- [ ] AUD-05 BLOCKED-step recovery; builder AND/OR; designation approver source (core completion)
 
 ## Session log — v1.3.4: cron guide, Q-017, Q-018, default sender (9 Oct 2026)
 Owner: a step-by-step cron guide; "Yes" to Q-017 and Q-018; "Yes, go ahead" to the new default From address.

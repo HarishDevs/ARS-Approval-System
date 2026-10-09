@@ -8,6 +8,7 @@ export interface NavItem {
   href: string;
   label: string;
   soon?: boolean;
+  also?: readonly string[]; // other pages this entry stays highlighted on (the Profile tabs)
 }
 
 export function SideNav({ items }: { items: NavItem[] }) {
@@ -15,7 +16,10 @@ export function SideNav({ items }: { items: NavItem[] }) {
   return (
     <nav className="flex-1 space-y-0.5 p-3" aria-label="Main">
       {items.map((item) => {
-        const active = pathname === item.href || (item.href.split("/").length > 2 && pathname.startsWith(`${item.href}/`));
+        const active =
+          pathname === item.href ||
+          (item.href.split("/").length > 2 && pathname.startsWith(`${item.href}/`)) ||
+          (item.also ?? []).some((path) => pathname === path || pathname.startsWith(`${path}/`));
         return item.soon ? (
           <span key={item.href} className="flex items-center justify-between rounded-md px-3 py-2 text-body text-ink-faint">
             {item.label}

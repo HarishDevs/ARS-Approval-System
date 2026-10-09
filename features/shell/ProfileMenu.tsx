@@ -101,6 +101,9 @@ export function ProfileMenu({
             </div>
           )}
           <div className="py-2">
+            <Link href="/users/profile" role="menuitem" className={item}>
+              Profile
+            </Link>
             <Link href="/users/notifications" role="menuitem" className={item}>
               Notifications
               {unread > 0 && <span className="rounded-full bg-danger-600 px-1.5 text-[11px] font-semibold leading-[18px] text-white">{unread > 99 ? "99+" : unread}</span>}

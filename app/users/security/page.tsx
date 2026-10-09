@@ -1,4 +1,5 @@
 import { requireArea } from "@/server/authorization/guards";
+import { ProfileTabs } from "@/features/shell/ProfileTabs";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { SignOutEverywhereButton } from "@/features/shell/SignOutEverywhereButton";
 import { SafeText } from "@/features/ui/SafeText";
@@ -8,6 +9,7 @@ export default async function SecurityPage() {
   return (
     <>
       <PageHeader title="Sign-in & devices" description="How you sign in, and what to do if you see a sign-in you don't recognise." />
+      <ProfileTabs />
       <div className="max-w-2xl space-y-4">
         <section className="rounded-lg border border-line bg-surface p-5">
           <h2 className="font-semibold">Sign-in method</h2>

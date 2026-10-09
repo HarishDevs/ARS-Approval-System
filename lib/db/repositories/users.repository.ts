@@ -151,3 +151,25 @@ export async function listUserIdsWithRole(role: RoleCode, db: Queryable = getDbP
   );
   return rows.map((row) => row.id);
 }
+
+// ---- the signed-in person's own profile (/users/profile) ------------------
+export interface OwnProfile {
+  departmentName: string | null;
+  designationName: string | null;
+  reportingManagerName: string | null;
+  lastLoginAt: Date | null;
+}
+
+export async function getOwnProfile(userId: number, db: Queryable = getDbPool()): Promise<OwnProfile | null> {
+  const [rows] = await db.query<(RowDataPacket & { department_name: string | null; designation_name: string | null; manager_name: string | null; last_login_at: Date | null })[]>(
+    `SELECT d.name AS department_name, g.name AS designation_name, m.name AS manager_name, u.last_login_at
+     FROM users u
+     LEFT JOIN departments d ON d.id = u.department_id
+     LEFT JOIN designations g ON g.id = u.designation_id
+     LEFT JOIN users m ON m.id = u.reporting_manager_id
+     WHERE u.id = ? LIMIT 1`,
+    [userId],
+  );
+  const row = rows[0];
+  return row ? { departmentName: row.department_name, designationName: row.designation_name, reportingManagerName: row.manager_name, lastLoginAt: row.last_login_at } : null;
+}
