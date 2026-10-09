@@ -213,6 +213,16 @@ export async function publishWorkflowVersion(versionId: number, workflowId: numb
   return result.affectedRows === 1;
 }
 
+// #11 impact note: open requests of an approval type (any version).
+export async function countOpenRequests(workflowId: number, db: Queryable = getDbPool()): Promise<number> {
+  const [rows] = await db.query<(RowDataPacket & { total: number })[]>(
+    `SELECT COUNT(*) AS total FROM approval_requests r JOIN workflow_versions v ON v.id = r.workflow_version_id
+     WHERE v.workflow_id = ? AND r.deleted_at IS NULL AND r.status IN ('IN_PROGRESS', 'ON_HOLD', 'CHANGES_REQUIRED')`,
+    [workflowId],
+  );
+  return Number(rows[0]?.total ?? 0);
+}
+
 // An approval type nobody has used can be removed completely (with its
 // versions); one with requests can only be switched off (archived).
 export async function deleteUnusedWorkflow(id: number, db: Queryable): Promise<boolean> {

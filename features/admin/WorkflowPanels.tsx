@@ -91,8 +91,51 @@ export function TestModePanel({ versionId, form, people, lookups = NO_LOOKUPS }:
               </li>
             ))}
           </ol>
-          {view.skipped.length > 0 && <p className="text-label text-ink-muted">Skipped: {view.skipped.join(", ")}</p>}
+          {view.branches.length > 0 && (
+            <div className="text-label">
+              <p className="font-medium">Choices</p>
+              <ul className="list-disc pl-5 text-ink-muted">
+                {view.branches.map((line, index) => (
+                  <li key={index}>{line}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {view.skippedReasons.length > 0 && (
+            <div className="text-label">
+              <p className="font-medium">Skipped</p>
+              <ul className="list-disc pl-5 text-ink-muted">
+                {view.skippedReasons.map((line, index) => (
+                  <li key={index}>{line}</li>
+                ))}
+              </ul>
+            </div>
+          )}
           {view.blocked.length > 0 && <p className="text-label text-danger-600">Blocked: {view.blocked.join("; ")}</p>}
+          {view.comparison && (
+            <div className="rounded-md border border-line bg-surface-muted p-3 text-label">
+              <p className="font-medium">Compared with the live version {view.comparison.liveVersionNo}</p>
+              {view.comparison.same ? (
+                <p className="text-ink-muted">Same route and people for this sample.</p>
+              ) : (
+                <ul className="list-disc pl-5">
+                  {view.comparison.notes.map((note, index) => (
+                    <li key={index}>{note}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+          {view.impact && (
+            <p className="text-label text-ink-muted">
+              {view.impact.isLive
+                ? `This is the live version. `
+                : `Publishing version ${view.impact.versionNo} affects new requests only. `}
+              {view.impact.openRequests === 0
+                ? "No requests of this type are open right now."
+                : `${view.impact.openRequests} open request${view.impact.openRequests === 1 ? "" : "s"} of this type keep the version they started with.`}
+            </p>
+          )}
         </div>
       )}
     </form>

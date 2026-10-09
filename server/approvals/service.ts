@@ -4,6 +4,7 @@ import { withTransaction } from "@/lib/db/transaction";
 import { getDbPool } from "@/lib/db/client";
 import {
   appendEvents,
+  countOpenRequests,
   deleteUnusedWorkflow,
   extendDueTimes,
   findPublishedVersion,
@@ -31,6 +32,7 @@ import { loadWorkingCalendar } from "@/lib/db/repositories/calendar.repository";
 import { checkFormDefinition, parseFormSubmission, type FormField } from "@/server/forms/fields";
 import { allSteps, checkDoaAmount, checkDoaForm, compileBuilder, type BuilderSpec } from "@/server/workflows/builder";
 import { describeRule } from "@/server/approvals/step-map";
+import { compareRoutes } from "@/server/approvals/route-compare";
 import { approverFieldKeys, ineligibleChoices, namedApprovers } from "@/server/approvals/approver-rules";
 import { approverStatuses } from "@/lib/db/repositories/approvers.repository";
 import { loadFieldLookups } from "@/lib/db/repositories/lookups.repository";
@@ -246,20 +248,23 @@ export interface SimulationView {
   outcome: "APPROVED" | "BLOCKED";
   stages: { label: string; rule: string; people: string[] }[][];
   skipped: string[];
+  // #11: why each step was skipped and which way each choice went.
+  skippedReasons: string[];
+  branches: string[];
   blocked: string[];
   formErrors: Record<string, string>;
+  // #11: the same sample through the live version, and who a publish affects.
+  comparison: { liveVersionNo: number; same: boolean; notes: string[] } | null;
+  impact: { versionNo: number; isLive: boolean; openRequests: number } | null;
 }
 
-export async function simulateVersion(versionId: number, input: { requesterId: number; fields: Record<string, string | undefined> }): Promise<SimulationView | null> {
-  const version = await findWorkflowVersion(versionId);
-  if (!version) return null;
-  const snapshot = await loadDirectorySnapshot();
-  const active = new Set(snapshot.users.filter((user) => user.active && !user.isBreakGlass).map((user) => user.id));
-  const parsed = parseFormSubmission(version.form, input.fields, active, await loadFieldLookups());
-  // Test mode still runs with the values that are fine, so the IT team sees the effect of each field.
-  const formData = parsed.data;
-  const result = simulate(version.definition, { requesterId: input.requesterId, formData, now: now() }, toDirectory(snapshot));
+type RouteView = Omit<SimulationView, "formErrors" | "comparison" | "impact">;
+
+async function simulateDefinition(definition: WorkflowDefinition, requesterId: number, formData: EngineFormData, directory: ReturnType<typeof toDirectory>): Promise<RouteView> {
+  const result = simulate(definition, { requesterId, formData, now: now() }, directory);
   const names = await userNames([...new Set(result.stages.flat().flatMap((step) => step.approverIds))]);
+  const nodes = new Map(definition.nodes.map((node) => [node.id, node.label]));
+  const edges = new Map(definition.edges.map((edge) => [edge.id, edge]));
   return {
     outcome: result.outcome,
     stages: result.stages.map((stage) =>
@@ -270,9 +275,33 @@ export async function simulateVersion(versionId: number, input: { requesterId: n
       })),
     ),
     skipped: result.skipped.map((step) => step.label),
+    skippedReasons: result.skipped.map((step) => `${step.label}: ${step.reason}`),
+    branches: result.branches.map((branch) => {
+      const target = edges.get(branch.edgeId)?.to;
+      return `${nodes.get(branch.nodeId) ?? branch.nodeId}: went to ${(target && nodes.get(target)) ?? "the next step"}${branch.isDefault ? " (no rule matched, so the default path)" : ""}`;
+    }),
     blocked: result.blocked.map((step) => `${step.label}: ${step.reason}`),
-    formErrors: parsed.ok ? {} : parsed.errors,
   };
+}
+
+export async function simulateVersion(versionId: number, input: { requesterId: number; fields: Record<string, string | undefined> }): Promise<SimulationView | null> {
+  const version = await findWorkflowVersion(versionId);
+  if (!version) return null;
+  const snapshot = await loadDirectorySnapshot();
+  const active = new Set(snapshot.users.filter((user) => user.active && !user.isBreakGlass).map((user) => user.id));
+  const lookups = await loadFieldLookups();
+  const parsed = parseFormSubmission(version.form, input.fields, active, lookups);
+  // Test mode still runs with the values that are fine, so the IT team sees the effect of each field.
+  const directory = toDirectory(snapshot);
+  const route = await simulateDefinition(version.definition, input.requesterId, parsed.data, directory);
+  const live = await findPublishedVersion(version.workflowId);
+  let comparison: SimulationView["comparison"] = null;
+  if (live && live.id !== version.id) {
+    const liveRoute = await simulateDefinition(live.definition, input.requesterId, parseFormSubmission(live.form, input.fields, active, lookups).data, directory);
+    comparison = { liveVersionNo: live.versionNo, ...compareRoutes(route, liveRoute) };
+  }
+  const impact = { versionNo: version.versionNo, isLive: live?.id === version.id, openRequests: await countOpenRequests(version.workflowId) };
+  return { ...route, formErrors: parsed.ok ? {} : parsed.errors, comparison, impact };
 }
 
 // ---- requests (F-11, F-12, F-13) --------------------------------------------------------
