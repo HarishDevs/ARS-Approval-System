@@ -8,9 +8,10 @@ import { listActiveUserOptions } from "@/lib/db/repositories/admin-users.reposit
 import { listApproverOptions } from "@/lib/db/repositories/approvers.repository";
 import { approverFieldKeys } from "@/server/approvals/approver-rules";
 import { loadFieldLookups } from "@/lib/db/repositories/lookups.repository";
+import { findDraft } from "@/lib/db/repositories/drafts.repository";
 
 export default async function RaiseRequestPage({ params }: { params: Promise<{ workflowId: string }> }) {
-  await requireArea("users");
+  const { user } = await requireArea("users");
   const { workflowId } = await params;
   if (!/^\d+$/.test(workflowId)) notFound();
   const workflow = await findWorkflow(Number(workflowId));
@@ -22,6 +23,9 @@ export default async function RaiseRequestPage({ params }: { params: Promise<{ w
   const approverFields = approverFieldKeys(version.definition);
   const lookups = version.form.some((field) => field.type === "LOOKUP") ? await loadFieldLookups() : undefined;
   const approverPeople = approverFields.length ? (await listApproverOptions()).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` })) : undefined;
+  // #3: the person's own draft for this type, if any (scoped by user id).
+  const draftKey = `WF:${workflow.id}`;
+  const draft = await findDraft(user.id, draftKey);
 
   return (
     <>
@@ -31,7 +35,18 @@ export default async function RaiseRequestPage({ params }: { params: Promise<{ w
         </Link>
       </PageHeader>
       <div className="max-w-2xl">
-        <RequestForm mode="submit" workflowId={workflow.id} fields={version.form} people={people} approverPeople={approverPeople} approverFields={approverFields} lookups={lookups} />
+        <RequestForm
+          mode="submit"
+          workflowId={workflow.id}
+          fields={version.form}
+          people={people}
+          approverPeople={approverPeople}
+          approverFields={approverFields}
+          lookups={lookups}
+          initial={draft?.fields}
+          initialTitle={draft?.title}
+          draft={{ key: draftKey, version: draft?.version ?? null, savedAt: draft ? draft.updatedAt.toISOString() : null }}
+        />
       </div>
     </>
   );

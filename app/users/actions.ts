@@ -6,6 +6,7 @@ import { requireApiArea } from "@/server/authorization/guards";
 import { decideTask, holdTask, reopenRequest, resolveBlockedStep, resubmitRequest, resumeRequest, submitRequest, withdrawRequest, type Actor } from "@/server/approvals/service";
 import { addAttachments, filesFrom, prepareFiles } from "@/server/attachments/service";
 import { logError } from "@/lib/logging/logger";
+import { deleteDraft } from "@/lib/db/repositories/drafts.repository";
 import type { ActionResult } from "@/lib/http/action-result";
 
 // Server Actions for requests (F-14). Every one re-checks the session; the
@@ -60,6 +61,8 @@ export async function submitRequestAction(_previous: ActionResult | null, formDa
     requestId = result.value.requestId;
     // A repeated submit already has its files from the first time.
     if (result.value.repeated) files.files.length = 0;
+    // The draft has become a request (#3).
+    await deleteDraft(me.id, `WF:${workflowId}`).catch((error) => logError("submitRequestAction: draft cleanup failed", error));
   } catch (error) {
     logError("submitRequestAction failed", error);
     return { ok: false, message: "Couldn't submit. Please try again." };

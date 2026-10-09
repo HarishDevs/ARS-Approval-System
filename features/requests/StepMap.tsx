@@ -1,5 +1,5 @@
 import { StepStatusPill, taskStatusText } from "@/features/requests/StatusPill";
-import type { MapStage, MapStep } from "@/server/approvals/step-map";
+import type { MapStage, MapStep, TrackerSummary } from "@/server/approvals/step-map";
 import { SafeText } from "@/features/ui/SafeText";
 
 // The full level map (F-14): every level in order; parallel steps side by
@@ -113,5 +113,42 @@ export function StepMap({ stages }: { stages: MapStage[] }) {
         </li>
       ))}
     </ol>
+  );
+}
+
+// Where the request is now (spec #2): words and a progress count, never
+// colour alone.
+const TONE: Record<TrackerSummary["tone"], string> = {
+  progress: "border-line bg-surface-muted",
+  waiting: "border-primary-600/40 bg-primary-50/50",
+  attention: "border-warning-600/40 bg-warning-50",
+  done: "border-success-600/40 bg-success-50",
+  stopped: "border-line bg-surface-muted",
+};
+
+export function TrackerBanner({ summary }: { summary: TrackerSummary }) {
+  const percent = summary.total ? Math.round((summary.done / summary.total) * 100) : 0;
+  return (
+    <div className={`mb-4 rounded-md border px-4 py-3 ${TONE[summary.tone]}`}>
+      <p className="font-semibold">
+        <span className="sr-only">Now: </span>
+        <SafeText text={summary.headline} />
+      </p>
+      {summary.detail && (
+        <p className="text-label text-ink-muted">
+          <SafeText text={summary.detail} />
+        </p>
+      )}
+      {summary.total > 0 && (
+        <div className="mt-2 flex items-center gap-3">
+          <div role="progressbar" aria-label="Steps finished" aria-valuemin={0} aria-valuemax={summary.total} aria-valuenow={summary.done} className="h-1.5 flex-1 overflow-hidden rounded-full bg-line">
+            <div className="h-full bg-primary-600 motion-safe:transition-[width]" style={{ width: `${percent}%` }} />
+          </div>
+          <span className="text-caption text-ink-muted tabular-nums">
+            {summary.done} of {summary.total} steps done
+          </span>
+        </div>
+      )}
+    </div>
   );
 }

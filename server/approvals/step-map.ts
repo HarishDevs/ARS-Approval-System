@@ -235,3 +235,58 @@ export function peopleInState(state: InstanceState): number[] {
   }
   return [...ids];
 }
+
+// "Where it is now" (spec #2): one plain summary over the level map, so it
+// can never disagree with it. Uses only what the map already shows.
+export interface TrackerSummary {
+  headline: string;
+  detail?: string;
+  done: number;
+  total: number;
+  tone: "progress" | "waiting" | "attention" | "done" | "stopped";
+}
+
+function flatSteps(stages: readonly MapStage[]): MapStep[] {
+  return stages.flatMap((stage) => [...stage.steps, ...(stage.paths ?? []).flatMap((path) => flatSteps(path.stages))]);
+}
+
+export function summarizeTracker(
+  stages: readonly MapStage[],
+  input: { status: InstanceState["status"]; requesterName: string; closedAt?: string | null; holdSince?: string | null },
+): TrackerSummary {
+  const steps = flatSteps(stages).filter((step) => !step.notTaken && step.type !== "NOTIFY");
+  const done = steps.filter((step) => step.status === "APPROVED" || step.status === "SKIPPED").length;
+  const total = steps.length;
+  const names = (step: MapStep) => step.people.filter((person) => person.status === "PENDING").map((person) => person.name);
+  const when = (iso?: string | null) =>
+    iso ? new Date(iso).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kolkata" }) : null;
+  const blocked = steps.filter((step) => step.status === "BLOCKED");
+  const active = steps.filter((step) => step.status === "ACTIVE");
+  const next = steps.find((step) => step.status === "WAITING");
+  switch (input.status) {
+    case "APPROVED":
+      return { headline: "Fully approved", detail: input.closedAt ? `Finished ${when(input.closedAt)}` : undefined, done, total, tone: "done" };
+    case "REJECTED":
+      return { headline: "Rejected", detail: input.closedAt ? `Closed ${when(input.closedAt)}` : undefined, done, total, tone: "stopped" };
+    case "CANCELLED":
+      return { headline: "Withdrawn or removed", detail: input.closedAt ? `Closed ${when(input.closedAt)}` : undefined, done, total, tone: "stopped" };
+    case "CHANGES_REQUIRED":
+      return { headline: `Back with ${input.requesterName} for changes`, detail: "It continues once the changes are resubmitted.", done, total, tone: "attention" };
+    case "ON_HOLD":
+      return { headline: "On hold", detail: input.holdSince ? `Since ${when(input.holdSince)}. It continues when the approver resumes it.` : "It continues when the approver resumes it.", done, total, tone: "attention" };
+    default: {
+      if (blocked.length) return { headline: `Stuck at "${blocked[0]!.label}"`, detail: "Nobody can act on this step yet. IT has been told and can move it on.", done, total, tone: "attention" };
+      const waitingFor = active.flatMap((step) => names(step).map((name) => ({ name, step: step.label, verb: step.type === "WORK" ? "to do" : "to decide" })));
+      if (!waitingFor.length) return { headline: "In progress", done, total, tone: "progress" };
+      const people = [...new Set(waitingFor.map((item) => item.name))];
+      const stepsNow = [...new Set(active.map((step) => `"${step.label}"`))];
+      return {
+        headline: `Waiting for ${people.length > 3 ? `${people.slice(0, 3).join(", ")} and ${people.length - 3} more` : people.join(", ")} ${waitingFor[0]!.verb}`,
+        detail: `At ${stepsNow.join(" and ")}.${next ? ` Next: "${next.label}".` : " This is the last step."}`,
+        done,
+        total,
+        tone: "waiting",
+      };
+    }
+  }
+}

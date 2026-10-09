@@ -5,6 +5,14 @@ import { useState } from "react";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import { NO_LOOKUPS, type FieldLookups, type FormField } from "@/server/forms/fields";
 import { ACCEPT_ATTRIBUTE } from "@/server/attachments/files";
+import { DraftStatus, useDraftAutosave } from "@/features/requests/useDraftAutosave";
+
+// A saved draft for this form (#3): what was restored, and its version.
+export interface DraftInfo {
+  key: string;
+  version: number | null;
+  savedAt: string | null;
+}
 
 // Raise a request, or edit and resubmit one (F-14). The server re-checks
 // every field against the workflow version's form (D-055).
@@ -19,6 +27,7 @@ export function RequestForm({
   lookups = NO_LOOKUPS,
   initial,
   initialTitle,
+  draft,
 }: {
   mode: "submit" | "resubmit";
   workflowId?: number;
@@ -32,14 +41,24 @@ export function RequestForm({
   lookups?: FieldLookups;
   initial?: Record<string, string>;
   initialTitle?: string;
+  draft?: DraftInfo;
 }) {
   const { result, pending, onSubmit } = useActionForm(mode === "submit" ? submitRequestAction : resubmitAction);
+  const restoredAt = draft?.savedAt ? new Date(draft.savedAt) : null;
+  const autosave = useDraftAutosave({ draftKey: draft?.key ?? "", initialVersion: draft?.version ?? null, savedAt: null, disabled: !draft });
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const [discardError, setDiscardError] = useState<string | null>(null);
   // D-QA-01: one key per form; a retried submit returns the same request.
   const [submissionKey] = useState(() => crypto.randomUUID());
   const possibleDuplicate = Boolean(result && !result.ok && result.fieldErrors?.allowDuplicate);
 
   return (
-    <form onSubmit={onSubmit} className="card">
+    <form ref={autosave.formRef} onSubmit={onSubmit} className="card">
+      {draft && restoredAt && (
+        <p role="status" className="border-b border-line bg-primary-50/50 px-5 py-2 text-label text-primary-700">
+          Restored your draft from {restoredAt.toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kolkata" })}. Files aren&apos;t kept in drafts: add them again before submitting.
+        </p>
+      )}
       {workflowId && <input type="hidden" name="workflowId" value={workflowId} />}
       {requestId && <input type="hidden" name="requestId" value={requestId} />}
       {mode === "submit" && <input type="hidden" name="submissionKey" value={submissionKey} />}
@@ -87,6 +106,31 @@ export function RequestForm({
           <ResultMessage result={result} />
         </div>
       </div>
+      {draft && (
+        <div className="space-y-2 border-t border-line px-5 py-3">
+          <DraftStatus state={autosave.state} restoredAt={restoredAt} onDiscard={() => setConfirmDiscard(true)} />
+          {confirmDiscard && (
+            <div role="alertdialog" aria-label="Discard draft" className="flex flex-wrap items-center gap-2 rounded-md border border-warning-600/40 bg-warning-50 px-3 py-2 text-label">
+              <span>Discard this draft? What you typed is cleared.</span>
+              <button
+                type="button"
+                className="btn-primary btn-compact"
+                onClick={async () => {
+                  const done = await autosave.discard().catch(() => ({ ok: false, message: "Couldn't reach the server. Try again." }));
+                  if (done.ok) window.location.reload();
+                  else setDiscardError(done.message);
+                }}
+              >
+                Yes, discard
+              </button>
+              <button type="button" className="btn-secondary btn-compact" onClick={() => setConfirmDiscard(false)}>
+                Cancel
+              </button>
+              {discardError && <span className="text-danger-600">{discardError}</span>}
+            </div>
+          )}
+        </div>
+      )}
     </form>
   );
 }

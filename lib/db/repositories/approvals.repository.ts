@@ -460,6 +460,42 @@ const PENDING_FOR = `
              SELECT d.user_id FROM delegations d
              WHERE d.delegate_id = ? AND d.ended_at IS NULL AND ${INDIA_TODAY_SQL} BETWEEN d.starts_on AND d.ends_on))`;
 
+// My Work (#1): what is overdue, or due within 24 hours, for this person.
+// Same access rule as Waiting for me; bounded.
+export async function listAttentionTasksFor(userId: number, limit = 10, db: Queryable = getDbPool()): Promise<{ items: QueueItem[]; overdue: number; dueSoon: number }> {
+  const [rows] = await db.query<
+    (RowDataPacket & { request_id: number; request_no: string; title: string; requester_name: string; task_key: string; node_label: string; task_type: string; created_at: Date; due_at: Date | null; overdue: number; approver_id: number; approver_name: string })[]
+  >(
+    `SELECT t.request_id, r.request_no, r.title, u.name AS requester_name, t.task_key, t.node_label, t.task_type, t.created_at, t.due_at,
+            (t.due_at < CURRENT_TIMESTAMP) AS overdue, t.approver_id, a.name AS approver_name
+     ${PENDING_FOR} AND t.due_at IS NOT NULL AND t.due_at < DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 24 HOUR)
+     ORDER BY t.due_at, t.id LIMIT ?`,
+    [userId, userId, userId, limit],
+  );
+  const [[counts]] = await db.query<RowDataPacket[]>(
+    `SELECT COALESCE(SUM(t.due_at < CURRENT_TIMESTAMP), 0) AS overdue, COALESCE(SUM(t.due_at >= CURRENT_TIMESTAMP), 0) AS due_soon
+     ${PENDING_FOR} AND t.due_at IS NOT NULL AND t.due_at < DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 24 HOUR)`,
+    [userId, userId, userId],
+  );
+  return {
+    items: rows.map((row) => ({
+      requestId: row.request_id,
+      requestNo: row.request_no,
+      title: row.title,
+      requesterName: row.requester_name,
+      taskKey: row.task_key,
+      nodeLabel: row.node_label,
+      createdAt: row.created_at,
+      dueAt: row.due_at,
+      overdue: Number(row.overdue) === 1,
+      forName: row.approver_id === userId ? null : row.approver_name,
+      work: row.task_type === "WORK",
+    })),
+    overdue: Number(counts?.overdue ?? 0),
+    dueSoon: Number(counts?.due_soon ?? 0),
+  };
+}
+
 export async function countPendingTasksFor(userId: number, db: Queryable = getDbPool()): Promise<number> {
   const [rows] = await db.query<(RowDataPacket & { total: number })[]>(`SELECT COUNT(*) AS total ${PENDING_FOR}`, [userId, userId, userId]);
   return Number(rows[0]?.total ?? 0);

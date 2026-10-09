@@ -3,7 +3,7 @@ import { loadLookupNames } from "@/lib/db/repositories/lookups.repository";
 import { findRequest, findWorkflow, findWorkflowVersion, isParticipant, listTimeline, userNames } from "@/lib/db/repositories/approvals.repository";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { activeDelegatorsFor, listComments, type CommentItem } from "@/lib/db/repositories/collab.repository";
-import { buildStepMap, peopleInState, type MapStage } from "@/server/approvals/step-map";
+import { buildStepMap, peopleInState, summarizeTracker, type MapStage, type TrackerSummary } from "@/server/approvals/step-map";
 import { describeEvent } from "@/server/approvals/timeline";
 import { displayValue, type FormField } from "@/server/forms/fields";
 import type { FormData as EngineFormData, InstanceStatus } from "@/server/engine/types";
@@ -28,6 +28,7 @@ export interface RequestView {
   rawFields: Record<string, string>; // for the resubmit form
   fields: { key: string; label: string; value: string }[];
   stages: MapStage[];
+  tracker: TrackerSummary;
   timeline: { id: number; at: Date; text: string }[];
   myTasks: { taskKey: string; label: string; forName: string | null; work: boolean }[];
   // IT only (D-098): steps that found nobody / no path, with what can be done.
@@ -44,6 +45,12 @@ export interface RequestView {
 }
 
 const isAdmin = (actor: Actor) => actor.roles.includes("IT_ADMIN") || actor.roles.includes("SUPER_ADMIN");
+
+// When a finished request was closed: the latest decision time in its tasks.
+function closedAt(state: { status: string; tasks: { decidedAt?: string }[] }): string | null {
+  if (!["APPROVED", "REJECTED", "CANCELLED"].includes(state.status)) return null;
+  return state.tasks.map((task) => task.decidedAt).filter((value): value is string => Boolean(value)).sort().at(-1) ?? null;
+}
 
 export async function loadRequestView(requestId: number, viewer: Actor): Promise<RequestView | null> {
   const request = await findRequest(requestId);
@@ -105,6 +112,11 @@ export async function loadRequestView(requestId: number, viewer: Actor): Promise
       : [];
   const holdNode = state.hold?.nodeId;
 
+  const stages = buildStepMap(version.definition, state, version.builder, names, {
+    formData: request.formData as EngineFormData,
+    fieldLabel: (key) => version.form.find((field) => field.key === key)?.label ?? key,
+  });
+
   return {
     id: request.id,
     requestNo: request.requestNo,
@@ -118,10 +130,8 @@ export async function loadRequestView(requestId: number, viewer: Actor): Promise
     form: version.form,
     rawFields: Object.fromEntries(Object.entries(request.formData).map(([key, value]) => [key, value === null || value === undefined ? "" : String(value)])),
     fields: version.form.map((field) => ({ key: field.key, label: field.label, value: displayValue(field, request.formData[field.key], names, lookupNames) })),
-    stages: buildStepMap(version.definition, state, version.builder, names, {
-      formData: request.formData as EngineFormData,
-      fieldLabel: (key) => version.form.find((field) => field.key === key)?.label ?? key,
-    }),
+    stages,
+    tracker: summarizeTracker(stages, { status: state.status, requesterName: nameOf(request.requesterId), closedAt: closedAt(state), holdSince: state.hold?.at ?? null }),
     timeline: timelineRows
       .map((row) => ({ id: row.id, at: row.createdAt, text: describeEvent(row.payload, labelOf, nameOf, (nodeId) => workNodes.has(nodeId)) }))
       .filter((row): row is { id: number; at: Date; text: string } => row.text !== null),

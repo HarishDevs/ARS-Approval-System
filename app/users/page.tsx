@@ -3,40 +3,73 @@ import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { displayName } from "@/features/shell/AppShell";
 import { MyRequestsTable, QueueTable } from "@/features/requests/lists";
-import { countPendingTasksFor, listMyRequests, listPendingTasksFor } from "@/lib/db/repositories/approvals.repository";
+import { countPendingTasksFor, listAttentionTasksFor, listMyRequests, listPendingTasksFor } from "@/lib/db/repositories/approvals.repository";
+import { listDrafts } from "@/lib/db/repositories/drafts.repository";
+import { formatIndiaTime } from "@/server/notifications/security-messages";
+import { SafeText } from "@/features/ui/SafeText";
+import { FirstUseChecklist } from "@/features/help/FirstUseChecklist";
+import { hasFlag } from "@/lib/db/repositories/user-flags.repository";
 
-// Overview of the My approvals space (S9-11): a short greeting, compact KPI
-// tiles, then what's waiting and what you raised. Navigation stays in the
-// sidebar.
+// My Work (S9-11, spec #1): the next thing to do first. Every list uses the
+// same access rules as its full page (Waiting for me, My requests) and is
+// bounded; each section links to that page.
+const RECENT_DAYS = 30;
+
 export default async function UsersHome() {
   const { user } = await requireArea("users");
-  const [queue, waiting, mine] = await Promise.all([listPendingTasksFor(user.id, { limit: 5, offset: 0 }), countPendingTasksFor(user.id), listMyRequests(user.id)]);
+  const [queue, waiting, attention, mine, drafts, onboarded] = await Promise.all([
+    listPendingTasksFor(user.id, { limit: 5, offset: 0 }),
+    countPendingTasksFor(user.id),
+    listAttentionTasksFor(user.id, 10),
+    listMyRequests(user.id),
+    listDrafts(user.id, 5),
+    hasFlag(user.id, "ONBOARDING_DONE"),
+  ]);
   const name = displayName(user.name);
   const words = name.split(/\s+/);
   const greetingName = words.length <= 2 ? name : words[0];
-  const open = mine.filter((item) => item.status === "IN_PROGRESS" || item.status === "ON_HOLD").length;
-  const changes = mine.filter((item) => item.status === "CHANGES_REQUIRED").length;
+  const open = mine.filter((item) => item.status === "IN_PROGRESS" || item.status === "ON_HOLD");
+  const returned = mine.filter((item) => item.status === "CHANGES_REQUIRED");
+  const since = Date.now() - RECENT_DAYS * 86_400_000;
+  const completed = mine.filter((item) => (item.status === "APPROVED" || item.status === "REJECTED") && item.closedAt && item.closedAt.getTime() >= since).slice(0, 5);
   const tiles = [
     { label: "Waiting for me", value: waiting, href: "/users/queue", alert: waiting > 0 },
-    { label: "My open requests", value: open, href: "/users/requests?status=IN_PROGRESS", alert: false },
-    { label: "Changes asked of me", value: changes, href: "/users/requests?status=CHANGES_REQUIRED", alert: changes > 0 },
+    { label: "Overdue for me", value: attention.overdue, href: "/users/queue", alert: attention.overdue > 0, danger: true },
+    { label: "My open requests", value: open.length, href: "/users/requests?status=IN_PROGRESS", alert: false },
+    { label: "Changes asked of me", value: returned.length, href: "/users/requests?status=CHANGES_REQUIRED", alert: returned.length > 0 },
   ];
 
   return (
     <>
-      <PageHeader title={`Welcome back, ${greetingName}`} description="What needs your decision, and where your requests are.">
+      <PageHeader title={`Welcome back, ${greetingName}`} description="What needs you first, then where your requests are.">
         <Link href="/users/new" className="btn-primary btn-compact">
           New request
         </Link>
       </PageHeader>
-      <div className="grid gap-3 sm:grid-cols-3">
+      {!onboarded && <FirstUseChecklist />}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {tiles.map((tile) => (
           <Link key={tile.label} href={tile.href} className="card-link flex items-center justify-between px-4 py-3">
             <span className="text-label text-ink-muted">{tile.label}</span>
-            <span className={`text-2xl font-bold tabular-nums ${tile.alert ? "text-primary-700" : "text-ink"}`}>{tile.value}</span>
+            <span className={`text-2xl font-bold tabular-nums ${tile.alert ? (tile.danger ? "text-danger-600" : "text-primary-700") : "text-ink"}`}>{tile.value}</span>
           </Link>
         ))}
       </div>
+
+      {attention.items.length > 0 && (
+        <section className="mt-8" aria-labelledby="attention">
+          <div className="mb-3 flex items-baseline justify-between">
+            <h2 id="attention" className="text-card-title font-semibold">
+              Due soon or overdue
+            </h2>
+            <span className="text-label text-ink-muted">
+              {attention.overdue} overdue · {attention.dueSoon} due within 24 hours
+            </span>
+          </div>
+          <QueueTable items={attention.items} />
+        </section>
+      )}
+
       <section className="mt-8">
         <div className="mb-3 flex items-baseline justify-between">
           <h2 className="text-card-title font-semibold">Waiting for me</h2>
@@ -48,6 +81,37 @@ export default async function UsersHome() {
         </div>
         <QueueTable items={queue} />
       </section>
+
+      {returned.length > 0 && (
+        <section className="mt-8" aria-labelledby="returned">
+          <h2 id="returned" className="mb-3 text-card-title font-semibold">
+            Returned to you for changes
+          </h2>
+          <MyRequestsTable items={returned.slice(0, 5)} />
+        </section>
+      )}
+
+      {drafts.length > 0 && (
+        <section className="mt-8" aria-labelledby="drafts">
+          <h2 id="drafts" className="mb-3 text-card-title font-semibold">
+            Your drafts
+          </h2>
+          <ul className="card divide-y divide-line">
+            {drafts.map((draft) => (
+              <li key={draft.key} className="flex flex-wrap items-baseline justify-between gap-2 px-5 py-3">
+                <span>
+                  <Link href={draft.href} className="link font-medium">
+                    <SafeText text={draft.title} />
+                  </Link>
+                  <span className="text-label text-ink-muted"> · {draft.typeName}</span>
+                </span>
+                <span className="text-caption text-ink-muted">saved {formatIndiaTime(draft.updatedAt)}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       <section className="mt-8">
         <div className="mb-3 flex items-baseline justify-between">
           <h2 className="text-card-title font-semibold">My recent requests</h2>
@@ -59,6 +123,15 @@ export default async function UsersHome() {
         </div>
         <MyRequestsTable items={mine.slice(0, 5)} />
       </section>
+
+      {completed.length > 0 && (
+        <section className="mt-8" aria-labelledby="completed">
+          <h2 id="completed" className="mb-3 text-card-title font-semibold">
+            Finished in the last {RECENT_DAYS} days
+          </h2>
+          <MyRequestsTable items={completed} />
+        </section>
+      )}
     </>
   );
 }

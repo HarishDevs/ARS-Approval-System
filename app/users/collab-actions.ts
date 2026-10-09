@@ -9,6 +9,7 @@ import { markAllRead } from "@/lib/db/repositories/collab.repository";
 import { builderSpecSchema } from "@/server/workflows/builder";
 import { addAttachments, filesFrom, prepareFiles } from "@/server/attachments/service";
 import { logError } from "@/lib/logging/logger";
+import { deleteDraft } from "@/lib/db/repositories/drafts.repository";
 import type { ActionResult } from "@/lib/http/action-result";
 
 // Custom approvals (F-33), comments (F-15), out-of-office (F-30), inbox.
@@ -58,6 +59,7 @@ export async function submitCustomAction(_previous: ActionResult | null, formDat
     if (!result.ok) return { ok: false, message: result.message, fieldErrors: result.fieldErrors };
     requestId = result.value.requestId;
     if (result.value.repeated) files.files.length = 0;
+    await deleteDraft(me.id, "CUSTOM").catch((error) => logError("submitCustomAction: draft cleanup failed", error));
   } catch (error) {
     logError("submitCustomAction failed", error);
     return { ok: false, message: "Couldn't submit. Please try again." };

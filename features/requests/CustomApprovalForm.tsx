@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { DraftStatus, useDraftAutosave } from "@/features/requests/useDraftAutosave";
+import type { DraftInfo } from "@/features/requests/RequestForm";
 import { submitCustomAction } from "@/app/users/collab-actions";
 import { LevelsEditor, newStepId, type BuilderOptions } from "@/features/admin/WorkflowBuilder";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
@@ -11,16 +13,44 @@ import { ACCEPT_ATTRIBUTE } from "@/server/attachments/files";
 // Custom approval (F-33, D-060): anyone picks anyone, any mix of levels.
 const CUSTOM_FIELDS: FormField[] = [{ key: "amount", label: "Amount (₹)", type: "NUMBER", required: false, min: 0 }];
 
-export function CustomApprovalForm({ options }: { options: BuilderOptions }) {
-  const [stages, setStages] = useState<BuilderStage[]>([
-    { kind: "STEP", step: { id: "s1", label: "First approval", approvers: { kind: "PEOPLE", userIds: [] }, rule: "ALL" } },
-  ]);
+function restoredStages(spec: string | undefined): BuilderStage[] | null {
+  try {
+    const parsed = spec ? (JSON.parse(spec) as { stages?: BuilderStage[] }) : null;
+    return parsed?.stages?.length ? parsed.stages : null;
+  } catch {
+    return null;
+  }
+}
+
+export function CustomApprovalForm({ options, draft, initial }: { options: BuilderOptions; draft?: DraftInfo; initial?: { title: string; fields: Record<string, string> } }) {
+  const [stages, setStages] = useState<BuilderStage[]>(
+    () =>
+      restoredStages(initial?.fields.spec) ?? [{ kind: "STEP", step: { id: "s1", label: "First approval", approvers: { kind: "PEOPLE", userIds: [] }, rule: "ALL" } }],
+  );
   const { result, pending, onSubmit } = useActionForm(submitCustomAction);
+  const restoredAt = draft?.savedAt ? new Date(draft.savedAt) : null;
+  const autosave = useDraftAutosave({ draftKey: draft?.key ?? "", initialVersion: draft?.version ?? null, savedAt: null, disabled: !draft });
+  const { nudge } = autosave;
+  // The levels live in a hidden input, which fires no input event: save on change.
+  const [firstRender, setFirstRender] = useState(true);
+  useEffect(() => {
+    if (firstRender) {
+      setFirstRender(false);
+      return;
+    }
+    nudge();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stages]);
   const [submissionKey] = useState(() => crypto.randomUUID());
   const possibleDuplicate = Boolean(result && !result.ok && result.fieldErrors?.allowDuplicate);
 
   return (
-    <form onSubmit={onSubmit} className="space-y-6">
+    <form ref={autosave.formRef} onSubmit={onSubmit} className="space-y-6">
+      {draft && restoredAt && (
+        <p role="status" className="rounded-md bg-primary-50/60 px-3 py-2 text-label text-primary-700">
+          Restored your draft from {restoredAt.toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kolkata" })}. Files aren&apos;t kept in drafts: add them again before submitting.
+        </p>
+      )}
       <input type="hidden" name="spec" value={JSON.stringify({ stages })} />
       <input type="hidden" name="submissionKey" value={submissionKey} />
       <section className="card space-y-5 px-5 py-5">
@@ -28,21 +58,21 @@ export function CustomApprovalForm({ options }: { options: BuilderOptions }) {
           <label htmlFor="c-title" className="field-label">
             Title
           </label>
-          <input id="c-title" name="title" placeholder="e.g. Approval to hire a temporary driver" className="field-input" />
+          <input id="c-title" name="title" defaultValue={initial?.title ?? ""} placeholder="e.g. Approval to hire a temporary driver" className="field-input" />
           <FieldError result={result} name="title" />
         </div>
         <div>
           <label htmlFor="c-details" className="field-label">
             Details
           </label>
-          <textarea id="c-details" name="details" rows={4} placeholder="What you need approved, and why." className="field-input h-auto py-2.5" />
+          <textarea id="c-details" name="details" rows={4} defaultValue={initial?.fields.details ?? ""} placeholder="What you need approved, and why." className="field-input h-auto py-2.5" />
           <FieldError result={result} name="details" />
         </div>
         <div className="max-w-xs">
           <label htmlFor="c-amount" className="field-label">
             Amount (₹) <span className="font-normal text-ink-faint">(optional)</span>
           </label>
-          <input id="c-amount" name="amount" inputMode="decimal" placeholder="e.g. 45,000" className="field-input" />
+          <input id="c-amount" name="amount" inputMode="decimal" defaultValue={initial?.fields.amount ?? ""} placeholder="e.g. 45,000" className="field-input" />
           <FieldError result={result} name="amount" />
         </div>
         <div>
@@ -77,6 +107,18 @@ export function CustomApprovalForm({ options }: { options: BuilderOptions }) {
           <ResultMessage result={result} />
         </div>
       </div>
+      {draft && (
+        <DraftStatus
+          state={autosave.state}
+          restoredAt={restoredAt}
+          onDiscard={async () => {
+            if (!window.confirm("Discard this draft? What you typed is cleared.")) return;
+            const done = await autosave.discard().catch(() => ({ ok: false, message: "Couldn't reach the server. Try again." }));
+            if (done.ok) window.location.reload();
+            else window.alert(done.message);
+          }}
+        />
+      )}
     </form>
   );
 }

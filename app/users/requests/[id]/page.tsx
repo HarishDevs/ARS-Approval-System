@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { RequestStatusPill } from "@/features/requests/StatusPill";
-import { StepMap } from "@/features/requests/StepMap";
+import { StepMap, TrackerBanner } from "@/features/requests/StepMap";
 import { BlockedStepForm, DecisionForm, ReopenForm, ResumeForm, WithdrawForm } from "@/features/requests/ActionPanel";
 import { PromoteCustomForm } from "@/features/admin/PromoteCustomForm";
 import { listApproverOptions } from "@/lib/db/repositories/approvers.repository";
@@ -104,8 +104,11 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
               {view.canReopen && <ReopenForm requestId={view.id} />}
             </section>
           )}
-          <section className="card px-5 py-4">
-            <h2 className="mb-4 font-semibold">Approval levels</h2>
+          <section className="card px-5 py-4" aria-labelledby="levels">
+            <h2 id="levels" className="mb-3 font-semibold">
+              Approval levels
+            </h2>
+            <TrackerBanner summary={view.tracker} />
             <StepMap stages={view.stages} />
           </section>
           {view.fields.length > 0 && (
