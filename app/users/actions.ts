@@ -7,6 +7,7 @@ import { decideTask, holdTask, reopenRequest, resolveBlockedStep, resubmitReques
 import { addAttachments, filesFrom, prepareFiles } from "@/server/attachments/service";
 import { logError } from "@/lib/logging/logger";
 import { deleteDraft } from "@/lib/db/repositories/drafts.repository";
+import { bulkApprove, BULK_MAX } from "@/server/approvals/bulk";
 import type { ActionResult } from "@/lib/http/action-result";
 
 // Server Actions for requests (F-14). Every one re-checks the session; the
@@ -244,4 +245,33 @@ export async function addFilesAction(_previous: ActionResult | null, formData: F
   const already = duplicates.length ? ` Already attached, so not added again: ${duplicates.join(", ")}.` : "";
   if (added === 0) return { ok: true, message: `Nothing new to attach.${already}` };
   return { ok: true, message: `${added === 1 ? "File attached." : `${added} files attached.`}${already}` };
+}
+
+// Bulk approval (#7): "requestId:taskKey" values from the queue's checkboxes.
+export async function bulkApproveAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const me = await actor();
+  if (!me) return NOT_FOUND;
+  const items = formData
+    .getAll("item")
+    .map((value) => (typeof value === "string" ? /^(\d{1,10}):([A-Za-z0-9_-]{1,40})$/.exec(value) : null))
+    .filter((match): match is RegExpExecArray => match !== null)
+    .map((match) => ({ requestId: Number(match[1]), taskKey: match[2]! }));
+  if (items.length === 0) return { ok: false, message: "Tick at least one approval." };
+  if (items.length > BULK_MAX) return { ok: false, message: `Approve at most ${BULK_MAX} at a time.` };
+  const comment = String(formData.get("comment") ?? "").trim();
+  if (comment.length > 2000) return { ok: false, message: "Keep the comment under 2,000 characters." };
+  try {
+    const outcomes = await bulkApprove(items, me, comment || undefined);
+    revalidatePath("/users/queue");
+    revalidatePath("/users");
+    const approved = outcomes.filter((outcome) => outcome.result === "APPROVED").length;
+    return {
+      ok: approved > 0,
+      message: approved === outcomes.length ? `Approved ${approved}.` : `Approved ${approved} of ${outcomes.length}. See the list for the others.`,
+      data: { outcomes },
+    };
+  } catch (error) {
+    logError("bulkApproveAction failed", error);
+    return { ok: false, message: "Something went wrong. Please try again." };
+  }
 }

@@ -2,6 +2,7 @@ import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { QueueTable } from "@/features/requests/lists";
 import { PendingLink } from "@/features/ui/PendingLink";
+import { BulkApprove } from "@/features/requests/BulkApprove";
 import { countPendingTasksFor, listPendingTasksFor } from "@/lib/db/repositories/approvals.repository";
 
 const PAGE_SIZE = 25;
@@ -21,6 +22,7 @@ export default async function QueuePage({ searchParams }: { searchParams: Promis
           {`${total.toLocaleString("en-IN")} waiting${pages > 1 ? ` · page ${page} of ${pages}` : ""}`}
         </p>
       )}
+      <BulkApprove items={queue} />
       <QueueTable items={queue} />
       {pages > 1 && (
         <nav aria-label="Pages" className="mt-4 flex items-center gap-3 text-label">

@@ -93,3 +93,36 @@ describe("notification hub", () => {
     expect(deps.createNotification).not.toHaveBeenCalled();
   });
 });
+
+describe("notification preferences (#6, D-110)", () => {
+  const update: NotifyInput = { ...input, eventType: "REQUEST_APPROVED", whatsappVariables: { name: "Staff", time: "10:00" } };
+
+  it("a channel switched off is skipped (recorded as USER_PREFERENCE); the inbox still gets it", async () => {
+    const { deps, deliveries } = makeDeps({ loadOptOuts: async () => new Set(["MY_REQUESTS:WHATSAPP"]) });
+    const summary = await notifyWithDeps(update, deps);
+    expect(deps.createNotification).toHaveBeenCalledOnce();
+    expect(deps.sendEmail).toHaveBeenCalledOnce();
+    expect(deps.sendWhatsApp).not.toHaveBeenCalled();
+    expect(summary.whatsapp).toEqual({ status: "SKIPPED", code: "USER_PREFERENCE" });
+    expect(deliveries.map((d) => [d.channel, d.status, d.failureCode ?? null])).toEqual([
+      ["WHATSAPP", "SKIPPED", "USER_PREFERENCE"],
+      ["EMAIL", "SENT", null],
+    ]);
+  });
+
+  it("security and approval-needed messages ignore opt-outs", async () => {
+    const everything = new Set(["SECURITY:EMAIL", "SECURITY:WHATSAPP", "ACTION_NEEDED:EMAIL", "ACTION_NEEDED:WHATSAPP"]);
+    for (const eventType of ["NEW_LOGIN", "APPROVAL_NEEDED", "SOME_NEW_EVENT"]) {
+      const { deps } = makeDeps({ loadOptOuts: async () => everything });
+      await notifyWithDeps({ ...input, eventType }, deps);
+      expect(deps.sendEmail).toHaveBeenCalledOnce();
+      expect(deps.sendWhatsApp).toHaveBeenCalledOnce();
+    }
+  });
+
+  it("if the choices can't be read, everything is sent", async () => {
+    const { deps } = makeDeps({ loadOptOuts: async () => Promise.reject(new Error("db down")) });
+    await notifyWithDeps(update, deps);
+    expect(deps.sendEmail).toHaveBeenCalledOnce();
+  });
+});

@@ -443,6 +443,7 @@ export interface QueueItem {
   overdue: boolean;
   forName: string | null; // set when this is a delegated task
   work: boolean; // a work task to mark done (D-097)
+  onHold: boolean; // the request is on hold (can't be bulk-approved)
 }
 
 // My pending approvals, plus those of anyone who named me as their
@@ -464,9 +465,9 @@ const PENDING_FOR = `
 // Same access rule as Waiting for me; bounded.
 export async function listAttentionTasksFor(userId: number, limit = 10, db: Queryable = getDbPool()): Promise<{ items: QueueItem[]; overdue: number; dueSoon: number }> {
   const [rows] = await db.query<
-    (RowDataPacket & { request_id: number; request_no: string; title: string; requester_name: string; task_key: string; node_label: string; task_type: string; created_at: Date; due_at: Date | null; overdue: number; approver_id: number; approver_name: string })[]
+    (RowDataPacket & { request_id: number; request_no: string; title: string; requester_name: string; task_key: string; node_label: string; task_type: string; request_status: string; created_at: Date; due_at: Date | null; overdue: number; approver_id: number; approver_name: string })[]
   >(
-    `SELECT t.request_id, r.request_no, r.title, u.name AS requester_name, t.task_key, t.node_label, t.task_type, t.created_at, t.due_at,
+    `SELECT t.request_id, r.request_no, r.title, u.name AS requester_name, t.task_key, t.node_label, t.task_type, r.status AS request_status, t.created_at, t.due_at,
             (t.due_at < CURRENT_TIMESTAMP) AS overdue, t.approver_id, a.name AS approver_name
      ${PENDING_FOR} AND t.due_at IS NOT NULL AND t.due_at < DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 24 HOUR)
      ORDER BY t.due_at, t.id LIMIT ?`,
@@ -490,6 +491,7 @@ export async function listAttentionTasksFor(userId: number, limit = 10, db: Quer
       overdue: Number(row.overdue) === 1,
       forName: row.approver_id === userId ? null : row.approver_name,
       work: row.task_type === "WORK",
+      onHold: row.request_status === "ON_HOLD",
     })),
     overdue: Number(counts?.overdue ?? 0),
     dueSoon: Number(counts?.due_soon ?? 0),
@@ -503,9 +505,9 @@ export async function countPendingTasksFor(userId: number, db: Queryable = getDb
 
 export async function listPendingTasksFor(userId: number, page: { limit: number; offset: number } = { limit: 500, offset: 0 }, db: Queryable = getDbPool()): Promise<QueueItem[]> {
   const [rows] = await db.query<
-    (RowDataPacket & { request_id: number; request_no: string; title: string; requester_name: string; task_key: string; node_label: string; task_type: string; created_at: Date; due_at: Date | null; overdue: number; approver_id: number; approver_name: string })[]
+    (RowDataPacket & { request_id: number; request_no: string; title: string; requester_name: string; task_key: string; node_label: string; task_type: string; request_status: string; created_at: Date; due_at: Date | null; overdue: number; approver_id: number; approver_name: string })[]
   >(
-    `SELECT t.request_id, r.request_no, r.title, u.name AS requester_name, t.task_key, t.node_label, t.task_type, t.created_at, t.due_at,
+    `SELECT t.request_id, r.request_no, r.title, u.name AS requester_name, t.task_key, t.node_label, t.task_type, r.status AS request_status, t.created_at, t.due_at,
             (t.due_at IS NOT NULL AND t.due_at < CURRENT_TIMESTAMP) AS overdue, t.approver_id, a.name AS approver_name
      ${PENDING_FOR}
      ORDER BY t.created_at, t.id LIMIT ? OFFSET ?`,
@@ -523,6 +525,7 @@ export async function listPendingTasksFor(userId: number, page: { limit: number;
     overdue: Number(row.overdue) === 1,
     forName: row.approver_id === userId ? null : row.approver_name,
     work: row.task_type === "WORK",
+    onHold: row.request_status === "ON_HOLD",
   }));
 }
 

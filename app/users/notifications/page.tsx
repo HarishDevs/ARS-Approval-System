@@ -31,7 +31,12 @@ export default async function NotificationsPage({ searchParams }: { searchParams
   return (
     <>
       <PageHeader title="Notifications" description="Everything we've told you by email or WhatsApp, in one place.">
-        {items.some((item) => !item.read) && <MarkAllReadButton />}
+        <span className="flex flex-wrap items-center gap-3">
+          <Link href="/users/notifications/settings" className="link text-label">
+            Settings
+          </Link>
+          {items.some((item) => !item.read) && <MarkAllReadButton />}
+        </span>
       </PageHeader>
       <ProfileTabs />
       {items.length === 0 ? (

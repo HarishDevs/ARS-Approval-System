@@ -11,6 +11,8 @@ import { sendEmail, EmailSendError } from "@/server/integrations/resend/client";
 import { getEmailConfig, getWhatsAppConfig } from "@/server/settings/values";
 import { logError } from "@/lib/logging/logger";
 import { whatsappValue } from "@/server/notifications/templates";
+import { channelWanted } from "@/server/notifications/preferences";
+import { loadOptOuts } from "@/lib/db/repositories/preferences.repository";
 
 // Notification hub (F-40, P1-40..P1-47). One call = one event for one
 // recipient: an in-app row plus one delivery per channel (email + WhatsApp,
@@ -34,11 +36,14 @@ export interface NotifyDeps {
   findActiveTemplate: (eventType: string) => Promise<ActiveTemplate | null>;
   sendWhatsApp: (to: string, template: ActiveTemplate, variables: string[], reference: string) => Promise<{ waMessageId: string }>;
   sendEmail: (to: string, subject: string, text: string) => Promise<{ id: string | null }>;
+  // #6: the person's "off" choices (GROUP:CHANNEL). Optional for tests.
+  loadOptOuts?: (userId: number) => Promise<Set<string>>;
 }
 
 const RETRY_DELAY_SECONDS = 120;
 
 const defaultDeps: NotifyDeps = {
+  loadOptOuts: (userId) => loadOptOuts(userId),
   findRecipient,
   createNotification,
   createDelivery,
@@ -96,7 +101,21 @@ export async function notifyWithDeps(input: NotifyInput, deps: NotifyDeps): Prom
     return summary;
   }
 
-  if (input.email) {
+  // #6: email / WhatsApp the person switched off for this kind of message.
+  // Mandatory kinds always go (preferences.ts). The inbox row above is kept.
+  const optOuts = deps.loadOptOuts ? await deps.loadOptOuts(input.userId).catch(() => new Set<string>()) : new Set<string>();
+  const emailWanted = channelWanted(input.eventType, "EMAIL", optOuts);
+  const whatsappWanted = channelWanted(input.eventType, "WHATSAPP", optOuts);
+  if (input.email && !emailWanted) {
+    summary.email = { status: "SKIPPED", code: "USER_PREFERENCE" };
+    await safeDelivery(deps, { notificationId, channel: "EMAIL", provider: "RESEND", status: "SKIPPED", failureCode: "USER_PREFERENCE" });
+  }
+  if (input.whatsappVariables && !whatsappWanted) {
+    summary.whatsapp = { status: "SKIPPED", code: "USER_PREFERENCE" };
+    await safeDelivery(deps, { notificationId, channel: "WHATSAPP", provider: "CEOITBOX", status: "SKIPPED", failureCode: "USER_PREFERENCE" });
+  }
+
+  if (input.email && emailWanted) {
     // Sending and recording fail separately: a send that worked must never
     // be marked FAILED and retried (that would send it twice).
     let sent: { id: string | null } | null = null;
@@ -122,7 +141,7 @@ export async function notifyWithDeps(input: NotifyInput, deps: NotifyDeps): Prom
     }
   }
 
-  if (input.whatsappVariables) {
+  if (input.whatsappVariables && whatsappWanted) {
     if (!recipient.whatsappNumber) {
       summary.whatsapp = { status: "SKIPPED", code: "NO_WHATSAPP_NUMBER" };
       await safeDelivery(deps, { notificationId, channel: "WHATSAPP", provider: "CEOITBOX", status: "SKIPPED", failureCode: "NO_WHATSAPP_NUMBER" });
