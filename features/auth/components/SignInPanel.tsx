@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { GoogleButton } from "@/features/auth/components/GoogleButton";
+import { safeNextPath } from "@/lib/http/safe-next";
 
 type Challenge = { challengeToken: string; maskedNumber: string; expiresInSeconds: number; resendAfterSeconds: number };
 type ApiBody<T> = { success: true; data: T } | { success: false; error: { code: string; message: string } };
@@ -18,7 +19,8 @@ export function SignInPanel({ nextPath }: { nextPath: string }) {
   const [challenge, setChallenge] = useState<Challenge | null>(null);
 
   function finish(redirectTo: string) {
-    router.replace(nextPath !== "/users" ? nextPath : redirectTo);
+    const safe = safeNextPath(nextPath);
+    router.replace(safe !== "/users" ? safe : redirectTo);
     router.refresh();
   }
 

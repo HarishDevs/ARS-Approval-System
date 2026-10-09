@@ -49,8 +49,11 @@ function build(user: UserRecord | null, overrides: Partial<PasswordFlowDeps> = {
       return challenges.length;
     }) as unknown as PasswordFlowDeps["createChallenge"],
     findChallengeByTokenHash: async () => challenges.at(-1) ?? null,
-    incrementChallengeAttempt: async (id) => {
-      challenges.find((c) => c.id === id)!.attemptCount += 1;
+    reserveChallengeAttempt: async (id) => {
+      const challenge = challenges.find((c) => c.id === id)!;
+      if (challenge.consumed || challenge.attemptCount >= challenge.maxAttempts) return false;
+      challenge.attemptCount += 1;
+      return true;
     },
     consumeChallenge: async (id) => {
       const challenge = challenges.find((c) => c.id === id)!;

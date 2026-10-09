@@ -1,5 +1,13 @@
 # Release notes
 
+## v1.3.6 (9 Oct 2026): fixes from the application audit
+- **Fixed:** on an admin's user page, **Deactivate user** and **Sign out everywhere** now ask for confirmation and then work. Before, they did nothing.
+- **Idle sign-out:** you're signed out after **2 hours without activity** (Super Admin can set 15–720 minutes under Sign-in security). Sessions still end 12 hours after sign-in.
+- **Safer sign-in links:** after signing in, the app only returns you to a page inside this site.
+- **One-time codes:** the limit of wrong tries per code now holds even for simultaneous guesses.
+- **Messages waiting for a retry** (which can contain set-password links) are stored encrypted and deleted once sent, or after 7 days.
+- **Email sending** gives up after 15 seconds instead of waiting indefinitely, and is retried by the job runner.
+
 ## v1.3.5 (9 Oct 2026)
 - **Profile page:** in My approvals, the sidebar now has one **Profile** entry. It shows your details (department, designation, reporting manager and more), with tabs for **Notifications**, **Out of office** and **Sign-in & devices**. Old links still work.
 - The account menu (top right) has a Profile link.

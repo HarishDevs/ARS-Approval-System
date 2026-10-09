@@ -91,8 +91,15 @@ export async function getRecentOtpStats(userId: number, purpose: OtpPurpose, db:
   };
 }
 
-export async function incrementChallengeAttempt(id: number, db: Queryable = getDbPool()): Promise<void> {
-  await db.query<ResultSetHeader>("UPDATE otp_challenges SET attempt_count = attempt_count + 1 WHERE id = ?", [id]);
+// Claims one try before the code is checked (audit S-03). The condition makes
+// the limit hold even when several guesses arrive at the same moment: once
+// max_attempts tries are claimed, every further claim fails.
+export async function reserveChallengeAttempt(id: number, db: Queryable = getDbPool()): Promise<boolean> {
+  const [result] = await db.query<ResultSetHeader>(
+    "UPDATE otp_challenges SET attempt_count = attempt_count + 1 WHERE id = ? AND attempt_count < max_attempts AND consumed_at IS NULL",
+    [id],
+  );
+  return result.affectedRows === 1;
 }
 
 // Conditional update so the same code can never be used twice, even with

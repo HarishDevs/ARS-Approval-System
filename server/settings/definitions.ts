@@ -29,6 +29,7 @@ export const SETTING_DEFINITIONS: readonly SettingDefinition[] = [
   { key: "auth.password_min_length", group: "AUTHENTICATION", label: "Minimum password length", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(10).max(64), defaultValue: "10" },
   { key: "auth.lockout_threshold", group: "AUTHENTICATION", label: "Wrong passwords before lock", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(3).max(10), defaultValue: "5" },
   { key: "auth.lockout_minutes", group: "AUTHENTICATION", label: "Lock duration (minutes)", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(5).max(1440), defaultValue: "15" },
+  { key: "auth.idle_timeout_minutes", group: "AUTHENTICATION", label: "Sign out after no activity (minutes)", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(15).max(720), defaultValue: "120" },
   { key: "auth.trusted_device_days", group: "AUTHENTICATION", label: "Remember a device for (days)", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(1).max(90), defaultValue: "30" },
 
   // Email via Resend (D-037). GoDaddy's Node hosting blocks outbound SMTP.

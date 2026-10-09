@@ -1,5 +1,5 @@
 import "server-only";
-import { findTemplateById, leaseDueDeliveries, markRetryFailed, markRetrySent, pruneRateLimitHits, type DueDelivery } from "@/lib/db/repositories/jobs.repository";
+import { findTemplateById, leaseDueDeliveries, markRetryFailed, markRetrySent, pruneDeliveryPayloads, pruneRateLimitHits, type DueDelivery } from "@/lib/db/repositories/jobs.repository";
 import { sendTemplateMessage, CeoitboxError } from "@/server/integrations/ceoitbox/client";
 import { sendEmail, EmailSendError } from "@/server/integrations/resend/client";
 import { tryConsumeWhatsAppRateLimit } from "@/lib/db/repositories/whatsapp.repository";
@@ -89,6 +89,6 @@ export async function runDeliveryRetriesWithDeps(deps: RetryDeps, options: { lim
 
 export const runDeliveryRetries = (options?: { limit?: number; onlyIds?: readonly number[] }) => runDeliveryRetriesWithDeps(defaultDeps, options);
 
-export async function runHousekeeping(): Promise<{ rateLimitHitsDeleted: number }> {
-  return { rateLimitHitsDeleted: await pruneRateLimitHits() };
+export async function runHousekeeping(): Promise<{ rateLimitHitsDeleted: number; payloadsCleared: number }> {
+  return { rateLimitHitsDeleted: await pruneRateLimitHits(), payloadsCleared: await pruneDeliveryPayloads() };
 }

@@ -1,6 +1,8 @@
 import "server-only";
 import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { getDbPool } from "@/lib/db/client";
+import { sealPayload } from "@/lib/security/delivery-payload";
+import { logError } from "@/lib/logging/logger";
 
 export interface NotificationRecipient {
   id: number;
@@ -59,12 +61,24 @@ export async function createDelivery(input: {
       input.status === "SKIPPED" ? 0 : 1,
       input.status,
       input.failureCode ?? null,
-      input.payload ? JSON.stringify(input.payload) : null,
+      storedPayload(input.payload),
       input.retryInSeconds ?? null,
       input.retryInSeconds ?? 0,
     ],
   );
   return result.insertId;
+}
+
+// Encrypted at rest (S-01). If it can't be sealed, nothing is kept: the
+// delivery is still logged, it just can't be retried.
+function storedPayload(payload: Record<string, unknown> | null | undefined): string | null {
+  if (!payload) return null;
+  try {
+    return JSON.stringify(sealPayload(payload));
+  } catch (error) {
+    logError("delivery payload not stored", error);
+    return null;
+  }
 }
 
 export interface DeliveryListItem {

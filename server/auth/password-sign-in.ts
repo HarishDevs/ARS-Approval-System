@@ -5,7 +5,7 @@ import {
   createChallenge,
   findChallengeByTokenHash,
   getRecentOtpStats,
-  incrementChallengeAttempt,
+  reserveChallengeAttempt,
 } from "@/lib/db/repositories/otp.repository";
 import { recordAudit, recordLogin } from "@/lib/db/repositories/audit.repository";
 import { findActiveTemplate, tryConsumeWhatsAppRateLimit } from "@/lib/db/repositories/whatsapp.repository";
@@ -42,7 +42,7 @@ export const defaultOtpDeps: OtpDeps = {
   getRecentOtpStats: (userId, purpose) => getRecentOtpStats(userId, purpose),
   createChallenge,
   findChallengeByTokenHash: (hash) => findChallengeByTokenHash(hash),
-  incrementChallengeAttempt: (id) => incrementChallengeAttempt(id),
+  reserveChallengeAttempt: (id) => reserveChallengeAttempt(id),
   consumeChallenge: (id) => consumeChallenge(id),
   findOtpTemplate: () => findActiveTemplate("OTP_LOGIN"),
   async sendOtpWhatsApp(to, template, code) {

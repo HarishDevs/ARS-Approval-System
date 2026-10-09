@@ -10,6 +10,7 @@ import { notify } from "@/server/notifications/notify";
 import { accountSecuredMessage } from "@/server/notifications/security-messages";
 import { NOT_ME_PURPOSE } from "@/server/auth/complete-sign-in";
 import type { AuthenticatedUser } from "@/types/auth";
+import { getNumberSetting } from "@/server/settings/values";
 
 export interface CurrentSession {
   sessionId: string;
@@ -22,11 +23,15 @@ export interface CurrentSession {
 // cache(): layouts and pages each call this; it runs once per request.
 export const getCurrentSession = cache(loadCurrentSession);
 
+// Used only if the setting can't be read (the default is also 120).
+const IDLE_MINUTES_FALLBACK = 120;
+
 async function loadCurrentSession(): Promise<CurrentSession | null> {
   const token = (await cookies()).get(SESSION_COOKIE_NAME)?.value;
   const payload = verifySessionToken(token);
   if (!payload) return null;
-  if (!(await isSessionActive(payload.sid, payload.uid))) return null;
+  const idleMinutes = await getNumberSetting("auth.idle_timeout_minutes").catch(() => IDLE_MINUTES_FALLBACK);
+  if (!(await isSessionActive(payload.sid, payload.uid, idleMinutes))) return null;
   const user = await findUserById(payload.uid);
   if (!user || !user.active || user.lockedSecondsRemaining > 0) return null;
   if (user.isBreakGlass && user.breakGlassSecondsRemaining <= 0) return null;

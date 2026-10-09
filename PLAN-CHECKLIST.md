@@ -17,10 +17,17 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
-- **Now:** v1.3.5 is pushed: the Profile page (Notifications, Out of office and Sign-in & devices moved under it). The application audit is in `docs/APPLICATION_CURRENT_STATE_AUDIT.md`. Live email and WhatsApp work end to end.
-- **Next, development (waiting for the owner's go-ahead):** AUD-01 (B-01 admin deactivate/sign-out broken), AUD-02 (S-01), AUD-03 (S-02..S-05), AUD-04 (backups, health), AUD-05.
+- **Now:** v1.3.6 is pushed. The audit's first fixes are done:
+  - B-01: admin Deactivate / Sign out everywhere work again;
+  - S-01: retry payloads encrypted and wiped;
+  - S-02: safe post-login redirect;
+  - S-03: race-proof code tries;
+  - S-04: email timeout;
+  - S-05: idle sign-out after 120 minutes (Super Admin setting).
+  All suites are green. v1.3.5 added the Profile page; the audit is in `docs/APPLICATION_CURRENT_STATE_AUDIT.md`.
+- **Next, development (waiting for the owner's go-ahead):** AUD-04 (backups, health endpoint), AUD-05 (BLOCKED recovery, builder AND/OR, designation approver source), then the remaining register items (S-06/07, R-04..R-10, P-01..P-06).
 - **Next, the owner:**
-  1. GoDaddy: Publish v1.3.5 (with `JOB_RUNNER_SECRET` set).
+  1. GoDaddy: Publish v1.3.6 (with `JOB_RUNNER_SECRET` set).
   2. Finish the cron job with the real secret (DEPLOYMENT Part I); Message deliveries should show a green "Job runner" line.
   3. Load the masters and build the approval types.
   4. Finish the WhatsApp security templates (waiting for Meta); rotate the keys that were pasted in chat.
@@ -255,9 +262,9 @@ Found during S8-06:
 - [x] V135-01 Profile page: details tab + Notifications, Out of office, Sign-in & devices as tabs; sidebar and account menu updated (D-095, F-77) (done 9 Oct 2026)
 - [x] V135-02 e2e `profile.spec.ts`; `/users/profile` added to the Cloudflare address check; e2e 28/28 (done 9 Oct 2026)
 - [x] V135-03 Read-only application audit → `docs/APPLICATION_CURRENT_STATE_AUDIT.md` (done 9 Oct 2026)
-- [ ] AUD-01 Fix B-01: confirm bar missing on admin "Deactivate user" / "Sign out everywhere" (P1)
-- [ ] AUD-02 Fix S-01: no plain-text set-password links in `notification_deliveries.payload_json` (P1)
-- [ ] AUD-03 Fix S-02..S-05: login redirect, OTP attempt race, Resend timeout, idle timeout (P2)
+- [x] AUD-01 Fix B-01: confirm bar missing on admin "Deactivate user" / "Sign out everywhere" (P1) (done 9 Oct 2026, v1.3.6)
+- [x] AUD-02 Fix S-01: no plain-text set-password links in `notification_deliveries.payload_json` (P1) (done 9 Oct 2026, v1.3.6)
+- [x] AUD-03 Fix S-02..S-05: login redirect, OTP attempt race, Resend timeout, idle timeout (P2) (done 9 Oct 2026, v1.3.6)
 - [ ] AUD-04 Backups + restore drill (P0-21, GL-04) and a health endpoint
 - [ ] AUD-05 BLOCKED-step recovery; builder AND/OR; designation approver source (core completion)
 

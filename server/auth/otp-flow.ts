@@ -19,7 +19,7 @@ export interface OtpDeps {
   getRecentOtpStats: (userId: number, purpose: OtpPurpose) => Promise<RecentOtpStats>;
   createChallenge: typeof createChallenge;
   findChallengeByTokenHash: (hash: string) => Promise<ChallengeRecord | null>;
-  incrementChallengeAttempt: (id: number) => Promise<void>;
+  reserveChallengeAttempt: (id: number) => Promise<boolean>;
   consumeChallenge: (id: number) => Promise<boolean>;
   findOtpTemplate: () => Promise<ActiveTemplate | null>;
   sendOtpWhatsApp: (to: string, template: ActiveTemplate, code: string) => Promise<void>;
@@ -98,20 +98,21 @@ export async function loadOpenChallenge(challengeToken: string, purpose: OtpPurp
   return challenge;
 }
 
-// Checks the code and uses the challenge up. Wrong codes count toward the
-// challenge's attempt limit; a right code after the limit is still refused.
+// Checks the code and uses the challenge up. Every try (right or wrong) first
+// claims one of the challenge's attempts in the database, so the limit holds
+// even for simultaneous guesses; once they're used up, even a right code is
+// refused.
 export async function consumeOtpCode(
   challenge: ChallengeRecord,
   code: string,
-  deps: Pick<OtpDeps, "incrementChallengeAttempt" | "consumeChallenge">,
+  deps: Pick<OtpDeps, "reserveChallengeAttempt" | "consumeChallenge">,
   onFailure: (reason: "OTP_LOCKED" | "INVALID_OTP") => Promise<void>,
 ): Promise<void> {
-  if (challenge.attemptCount >= challenge.maxAttempts) {
+  if (challenge.attemptCount >= challenge.maxAttempts || !(await deps.reserveChallengeAttempt(challenge.id))) {
     await onFailure("OTP_LOCKED");
     throw new AuthError("AUTH_OTP_LOCKED", "Too many wrong codes. Please start again.");
   }
   if (!verifyOtpCode(code.trim(), challenge.otpHash)) {
-    await deps.incrementChallengeAttempt(challenge.id);
     await onFailure("INVALID_OTP");
     const left = challenge.maxAttempts - challenge.attemptCount - 1;
     throw new AuthError("AUTH_INVALID_OTP", left > 0 ? `That code is not right. ${left} tries left.` : "Too many wrong codes. Please start again.");

@@ -1,7 +1,8 @@
 import { afterAll, describe, expect, it } from "vitest";
 import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { getDbPool } from "@/lib/db/client";
-import { getRunnerHeartbeat, hitRateLimit, leaseDueDeliveries, makeDeliveryDue, markRetryFailed, markRetrySent, pruneRateLimitHits, recordRunnerHeartbeat } from "@/lib/db/repositories/jobs.repository";
+import { createDelivery } from "@/lib/db/repositories/notifications.repository";
+import { getRunnerHeartbeat, hitRateLimit, leaseDueDeliveries, makeDeliveryDue, markRetryFailed, markRetrySent, pruneDeliveryPayloads, pruneRateLimitHits, recordRunnerHeartbeat } from "@/lib/db/repositories/jobs.repository";
 import { createUser } from "./helpers";
 
 afterAll(async () => {
@@ -69,5 +70,35 @@ describe("job runner heartbeat", () => {
     expect(second).toMatchObject({ minutesAgo: 0, runs: (first?.runs ?? 0) + 1 });
     const [rows] = await getDbPool().query<(RowDataPacket & { total: number })[]>("SELECT COUNT(*) AS total FROM jobs WHERE job_type = 'RUNNER_HEARTBEAT'");
     expect(Number(rows[0]?.total)).toBe(1);
+  });
+});
+
+describe("stored message bodies (audit S-01)", () => {
+  it("are encrypted, still retried as written, and wiped once sent or after 7 days", async () => {
+    const userId = await createUser();
+    const [notification] = await getDbPool().query<ResultSetHeader>("INSERT INTO notifications (event_type, user_id, title, message) VALUES ('SET_PASSWORD', ?, 't', 'm')", [userId]);
+    const link = "https://approval.arssteels.net/set-password?token=SECRET_TOKEN_123";
+    const body = { to: "x@example.test", subject: "Set your password", text: `Open ${link}` };
+    const create = () =>
+      createDelivery({ notificationId: notification.insertId, channel: "EMAIL", provider: "RESEND", status: "FAILED", failureCode: "EMAIL_REQUEST_FAILED", payload: body, retryInSeconds: 0 });
+    const id = await create();
+
+    const [raw] = await getDbPool().query<(RowDataPacket & { payload: string })[]>("SELECT CAST(payload_json AS CHAR) AS payload FROM notification_deliveries WHERE id = ?", [id]);
+    expect(raw[0]!.payload).not.toContain("SECRET_TOKEN_123");
+    expect(raw[0]!.payload).toContain("sealed");
+
+    await getDbPool().query("UPDATE notification_deliveries SET next_retry_at = DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 1 MINUTE) WHERE id = ?", [id]);
+    const [leased] = await leaseDueDeliveries(20, [id]);
+    expect(leased!.payload).toEqual(body);
+    await markRetrySent(id, "re_ok");
+    const [sent] = await getDbPool().query<(RowDataPacket & { payload_json: unknown })[]>("SELECT payload_json FROM notification_deliveries WHERE id = ?", [id]);
+    expect(sent[0]!.payload_json).toBeNull();
+
+    const old = await create();
+    await getDbPool().query("UPDATE notification_deliveries SET created_at = DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 8 DAY) WHERE id = ?", [old]);
+    const fresh = await create();
+    expect(await pruneDeliveryPayloads()).toBeGreaterThanOrEqual(1);
+    const [rows] = await getDbPool().query<(RowDataPacket & { id: number; kept: number })[]>("SELECT id, payload_json IS NOT NULL AS kept FROM notification_deliveries WHERE id IN (?, ?)", [old, fresh]);
+    expect(Object.fromEntries(rows.map((row) => [row.id, Number(row.kept)]))).toEqual({ [old]: 0, [fresh]: 1 });
   });
 });

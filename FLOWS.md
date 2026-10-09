@@ -60,6 +60,7 @@ The number of levels and how they combine is unlimited. There are no fixed "Leve
 | F-15 | Comments on a request | Built and verified 1 Oct 2026 |
 | F-16 | Handing over pending approvals | Built and tested on MySQL 1 Oct 2026 |
 | F-54 | DoA view derived from workflows | Built 1 Oct 2026; reads DoA matrices 8 Oct 2026 |
+| F-78 | Sign-in safety rules from the audit (idle sign-out, safe redirect, code tries, encrypted retries) | Built 9 Oct 2026 (v1.3.6) |
 | F-77 | Profile page: details + Notifications, Out of office, Sign-in & devices as tabs | Built 9 Oct 2026 (v1.3.5) |
 | F-76 | Form submission resilience (errors, time limit, session ended) | Built 9 Oct 2026 (QA session 14) |
 | F-75 | Form field creator: all types, master-data dropdowns | Built 8 Oct 2026 (S12) |
@@ -707,6 +708,12 @@ flowchart TD
 - **Department-wise raised:** per department of the person who raised: raised, approved, rejected, open, average time to close; plus each department's top approval types.
 - **Approver-wise:** per approver: assigned, approved, rejected, changes asked, pending now, overdue now, average time to decide, decided within the response time %.
 - **Raiser-wise by department:** each raiser grouped under their department: raised, approved, rejected, open, average time to close, last raised.
+
+## F-78 Sign-in safety rules added by the audit (v1.3.6, D-096)
+- **Idle sign-out:** a session ends after 120 minutes without activity (Super Admin → Sign-in security, 15–720), and in any case 12 hours after sign-in. The next click goes to the sign-in page; forms say "Your session has ended" and keep what was typed (F-76).
+- **After sign-in** the app only returns to a page inside this site (`?next=` is checked); anything else goes to My approvals.
+- **One-time codes:** at most the set number of tries per code (default 5), even when guesses arrive at the same moment.
+- **Messages kept for retry** are stored encrypted and deleted once sent, or after 7 days.
 
 ## F-77 Profile page (v1.3.5, D-095)
 ```mermaid

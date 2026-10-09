@@ -178,6 +178,13 @@
 | D-093 | 9 Oct 2026 | **Dependency upgrades** (Q-017): Next and eslint-config-next 15.5.27, firebase-admin 14.5.0, plus `npm audit fix`. Two npm `overrides`: Next's bundled postcss → 8.5.28 (build-time only) and the Firebase client's Firestore grpc-js → 1.14.6 (Firestore is unused; Auth only). Result: `npm audit --omit=dev` 0 vulnerabilities. A firebase client major upgrade (11 → 12/13) isn't needed for security, so it waits until there is a reason. | Owner, 9 Oct 2026 |
 | D-094 | 9 Oct 2026 | **Job runner heartbeat:** each successful `/api/jobs/run` updates a single `RUNNER_HEARTBEAT` row in the (previously unused) `jobs` table. Super Admin → Message deliveries shows "Job runner: last ran N min ago": green within 15 minutes, amber otherwise or if it never ran. This lets the owner confirm the cron job (DEPLOYMENT Part I). | Claude, 9 Oct 2026 |
 | D-095 | 9 Oct 2026 | **User sidebar: one "Profile" entry** (owner: "take out of office, Notification, Sign-in & devices to the Profile page"). `/users/profile` shows the person's details read-only, with tabs for Notifications, Out of office and Sign-in & devices. Those pages keep their addresses (`ProfileTabs`, `NavItem.also`). | Owner, 9 Oct 2026 |
+| D-096 | 9 Oct 2026 | **Audit fixes (v1.3.6).**
+- **Retry payloads** (message bodies kept for re-sending) are stored AES-256-GCM encrypted with ENCRYPTION_KEY, cleared on send and after 7 days. Rows written before v1.3.6 are read as plain JSON.
+- **After sign-in**, only a same-site path without backslashes, whitespace or control characters is followed.
+- **One-time codes:** each try claims an attempt with a conditional UPDATE before checking the code.
+- **Resend** calls time out after 15 s.
+- **Idle sign-out** defaults to 120 minutes (setting `auth.idle_timeout_minutes`, 15–720) on top of the 12-hour session.
+- **Confirmations:** every form that asks for one must render `{confirmBar}` (unit guard). | Owner ("Go Ahead"), 9 Oct 2026 |
 | D-033 | 28 Sep 2026 | **Staff data is provided by the admin. Roles are assigned per user, by the admin only. Users are added or made inactive in the Admin Portal** (never hard-deleted, so history and audit stay intact). *Resolves Q-010.* | Owner (answer 7) |
 
 ## 4. Open questions (must be answered before the phase shown)
@@ -205,6 +212,15 @@
 | Q-019 | **Which Resend account holds the API key in Super Admin?** The "arsenergy" team (open in Chrome) is empty. Email works only once the From domain (`approvals@arssteels.net`) is verified in the account that owns the key, or a new key from a team with a verified domain is entered. | Before go-live (no email is delivered today) | **Answered 9 Oct 2026:** the key is "New Api Approval" in the Resend team "arssteels" (harishkumar.t@arssteels.com). The owner verified `arssteels.net` there; Resend's log showed "API key not authorized for this domain" for a few minutes after verification, then the test email was **sent** |
 
 ## 5. Work log (newest first)
+
+### 9 Oct 2026 (v1.3.6: first audit fixes)
+- **B-01:** `UserCommands` now renders the confirmation bar. New e2e test `user-commands.spec.ts`, plus a source guard `confirm-bar.test.ts`, proved to fail on the old code.
+- **S-01:** `lib/security/delivery-payload.ts` (seal/open); `createDelivery` seals; `leaseDueDeliveries` opens; `markRetrySent` clears; `pruneDeliveryPayloads` runs in housekeeping. Integration test added.
+- **S-02:** `lib/http/safe-next.ts`, used by the login page and `SignInPanel`. Unit test added.
+- **S-03:** `reserveChallengeAttempt` replaces `incrementChallengeAttempt`. Integration test: 12 parallel tries → 5 claims.
+- **S-04:** AbortController on Resend calls (15 s). Unit test added.
+- **S-05:** idle check in `isSessionActive`, with the new setting. Integration test added.
+- **Regression:** lint and types clean; unit 266; integration 68; build; e2e 29; QA 27/27.
 
 ### 9 Oct 2026 (v1.3.5: Profile page; application audit)
 - **Profile (D-095, F-77):**

@@ -6,7 +6,7 @@ import { ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 // Account actions on the user page (F-06). Each is a tiny form so it works
 // without client-side routing and is checked again on the server.
 function Command({ id, command, label, body, danger, confirm }: { id: number; command: string; label: string; body: string; danger?: boolean; confirm?: string }) {
-  const { result, pending, onSubmit } = useActionForm(userCommandAction, { confirm });
+  const { result, pending, onSubmit, confirmBar } = useActionForm(userCommandAction, { confirm });
   return (
     <form onSubmit={onSubmit} className="space-y-2 px-5 py-4">
       <input type="hidden" name="id" value={id} />
@@ -16,6 +16,7 @@ function Command({ id, command, label, body, danger, confirm }: { id: number; co
       <SubmitButton pending={pending} variant="secondary" className={`btn-compact ${danger ? "text-danger-600" : ""}`}>
         {label}
       </SubmitButton>
+      {confirmBar}
       <ResultMessage result={result} />
     </form>
   );

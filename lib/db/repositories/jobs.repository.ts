@@ -2,6 +2,7 @@ import "server-only";
 import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { getDbPool, type Queryable } from "@/lib/db/client";
 import { withTransaction } from "@/lib/db/transaction";
+import { openPayload } from "@/lib/security/delivery-payload";
 
 // Data for the cron job runner (F-41, F-09). Times are MySQL's (never JS).
 
@@ -47,7 +48,7 @@ export async function leaseDueDeliveries(limit: number, onlyIds?: readonly numbe
       id: row.id,
       channel: row.channel,
       attemptCount: row.attempt_count,
-      payload: typeof row.payload_json === "string" ? (JSON.parse(row.payload_json) as Record<string, unknown>) : row.payload_json,
+      payload: openPayload(typeof row.payload_json === "string" ? (JSON.parse(row.payload_json) as Record<string, unknown>) : row.payload_json),
     }));
   });
 }
@@ -55,7 +56,7 @@ export async function leaseDueDeliveries(limit: number, onlyIds?: readonly numbe
 export async function markRetrySent(id: number, providerReference: string | null, db: Queryable = getDbPool()): Promise<void> {
   await db.query<ResultSetHeader>(
     `UPDATE notification_deliveries SET status = 'SENT', provider_reference = ?, attempt_count = attempt_count + 1,
-       last_attempt_at = CURRENT_TIMESTAMP, sent_at = CURRENT_TIMESTAMP, next_retry_at = NULL, failure_code = NULL
+       last_attempt_at = CURRENT_TIMESTAMP, sent_at = CURRENT_TIMESTAMP, next_retry_at = NULL, failure_code = NULL, payload_json = NULL
      WHERE id = ?`,
     [providerReference, id],
   );
@@ -69,6 +70,18 @@ export async function markRetryFailed(id: number, failureCode: string, retryInMi
      WHERE id = ?`,
     [failureCode, retryInMinutes, retryInMinutes ?? 0, id],
   );
+}
+
+// S-01: message bodies are kept only while a retry may still need them.
+// Sent rows are cleared at once (markRetrySent); anything else after 7 days,
+// long after a set-password link (72 h) has expired.
+export async function pruneDeliveryPayloads(db: Queryable = getDbPool()): Promise<number> {
+  const [result] = await db.query<ResultSetHeader>(
+    `UPDATE notification_deliveries SET payload_json = NULL
+     WHERE payload_json IS NOT NULL AND (status <> 'FAILED' OR created_at < DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 7 DAY))
+     LIMIT 5000`,
+  );
+  return result.affectedRows;
 }
 
 // Super Admin "Retry now": due immediately, if it can be retried at all.

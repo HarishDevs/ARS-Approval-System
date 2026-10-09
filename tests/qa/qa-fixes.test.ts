@@ -52,3 +52,20 @@ describe("D-QA-15: email subjects stay on one line", () => {
     expect(second).toMatchObject({ from: "ARS <approvals@arssteels.net>", reply_to: "itadmin@arssteels.co.in" });
   });
 });
+
+describe("audit S-04: a hung email call gives up", () => {
+  it("aborts after the time limit with a retryable failure", async () => {
+    const hanging = vi.fn(
+      (_url: string, init?: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")));
+        }),
+    );
+    const started = Date.now();
+    await expect(sendEmail({ apiKey: "test", fromAddress: "a@b.c", fromName: "ARS" }, { to: "x@y.z", subject: "S", text: "t" }, { fetch: hanging as unknown as typeof fetch, timeoutMs: 50 })).rejects.toMatchObject({
+      code: "EMAIL_REQUEST_FAILED",
+      message: "Resend request timed out after 50ms.",
+    });
+    expect(Date.now() - started).toBeLessThan(2000);
+  });
+});

@@ -31,6 +31,26 @@ The owner asked, in the same message as the audit request, to move **Out of offi
 
 Everything else in this document is read-only findings.
 
+
+## Update: fixes in v1.3.6 (9 Oct 2026, owner: "Go Ahead")
+
+| ID | Fix | Proof |
+|---|---|---|
+| B-01 | `UserCommands` renders the confirmation bar; "Sign out everywhere" and "Deactivate user" ask first, then run | **Fixed in v1.3.6** (see the update above) |
+| S-01 | Retry payloads stored encrypted (AES-256-GCM, `lib/security/delivery-payload.ts`), wiped when sent and after 7 days (`pruneDeliveryPayloads` in the job runner); older plain rows still readable | `tests/integration/jobs.int.test.ts` "stored message bodies": the DB text holds no token; the retry gets the original; cleared after send and after 7 days |
+| S-02 | `lib/http/safe-next.ts` refuses `//`, backslashes, whitespace and control characters, and anything not resolving to this site; used by the login page and the sign-in panel | `tests/security/safe-next.test.ts` |
+| S-03 | Each try claims an attempt with a conditional UPDATE (`reserveChallengeAttempt`) before the code is checked | `tests/integration/otp.int.test.ts`: 12 simultaneous tries give exactly 5 claims |
+| S-04 | Resend calls abort after 15 s (`EMAIL_TIMEOUT_MS`); the failure is retryable | `tests/qa/qa-fixes.test.ts` "a hung email call gives up" |
+| S-05 | Sessions end after **120 minutes without activity** (new Super Admin setting "Sign out after no activity", 15–720), as well as the 12-hour limit | `tests/integration/sessions.int.test.ts` |
+
+**Regression after the fixes:**
+- lint and type check clean;
+- unit 266/266; integration 68/68;
+- build OK;
+- e2e 29/29; QA suite 27/27.
+
+**Still open from the register:** S-06, S-07, R-04..R-10, P-01..P-06, D-01..D-04, and the not-implemented items (backups, health check, BLOCKED recovery, WORK/NOTIFY nodes).
+
 ---
 
 ## Deliverable 1: Executive summary
@@ -101,7 +121,7 @@ Verification key: **E2E** = Playwright suite (`tests/e2e`, in CI); **INT** = MyS
 | U-09 | Users | `/users/delegation` Out of office (Profile tab) | Done | Done | INT, E2E | Overlap check only in code |
 | U-10 | Users | `/users/security` Sign-in & devices (Profile tab) | Done | Done | E2E (nav), CODE (action) | Sign-out-everywhere errors ignored (`SignOutEverywhereButton.tsx:13`) |
 | A-01 | Admin | `/admin` home cards | Done | Raw SQL in page | E2E | Query not in a repository (`app/admin/page.tsx:9-23`) |
-| A-02 | Admin | `/admin/users`, `/new`, `/[id]` | Done | Done | E2E, UNIT | **B-01: Sign out everywhere and Deactivate never run** |
+| A-02 | Admin | `/admin/users`, `/new`, `/[id]` | Done | Done | E2E, UNIT | B-01 fixed in v1.3.6 |
 | A-03 | Admin | `/admin/organisation` (departments + HOD, designations + approver flag) | Done | Done | E2E, LIVE | – |
 | A-04 | Admin | `/admin/groups` | Done | Done | INT | Member remove has no confirm |
 | A-05 | Admin | `/admin/workflows`, `/new`, `/[id]` builder, publish, test mode, form-field creator, DB-backed dropdowns | Done | Done | E2E, UNIT, INT, QA | No delete/archive; publish race (R-05); default DoA limits hard-coded (`new/page.tsx:28`) |
@@ -240,11 +260,11 @@ flowchart LR
 | ID | Issue | Evidence | Impact | Priority | Recommended fix |
 |---|---|---|---|---|---|
 | B-01 | "Sign out everywhere" and "Deactivate user" on `/admin/users/[id]` never run | `features/admin/UserCommands.tsx:9` passes `confirm` but never renders `confirmBar`; `features/ui/form.tsx:97-100` waits for that confirmation | IT can't deactivate a leaver or kill their sessions from the UI. This is a core admin control. | **P1** | Render `confirmBar` in `Command`; add an e2e test |
-| S-01 | Set-password link (raw token) saved in plain text when the email fails | `server/notifications/notify.ts:115` stores `{to, subject, text}` in `notification_deliveries.payload_json`; the link is in the text (`security-messages.ts:148`) | Anyone with DB or backup read access could take over that account for up to 72 h | **P1** | Encrypt link-bearing payloads, or rebuild the message at retry time; clear the payload after send |
-| S-02 | Open redirect after sign-in | `app/(public)/login/page.tsx:12` accepts `/\evil.com` (browsers treat it as `//evil.com`) | Phishing via a crafted login link | **P2** | Reject `\`, or resolve with `new URL` and compare the origin |
-| S-03 | OTP attempt limit can be raced | `otp-flow.ts:109` reads the count; `otp.repository.ts:95` increments unconditionally | Parallel guesses can go over 5 tries (still capped by the 30/15 min per-IP limit) | **P2** | `UPDATE … SET attempt_count=attempt_count+1 WHERE id=? AND attempt_count<max_attempts`, then check the affected rows |
-| S-04 | No timeout on Resend calls | `server/integrations/resend/client.ts:33` (no `signal`) | A hung Resend call delays the user's action and the cron run | **P2** | AbortController with a configurable timeout, as CEOITBox already has |
-| S-05 | No session idle timeout | `sessions.repository.ts:65-79`; `PLAN-CHECKLIST.md:528` | A left-open browser stays signed in for 12 h | P2 | Check `last_seen_at` against a setting |
+| S-01 | Set-password link (raw token) saved in plain text when the email fails | `server/notifications/notify.ts:115` stores `{to, subject, text}` in `notification_deliveries.payload_json`; the link is in the text (`security-messages.ts:148`) | Anyone with DB or backup read access could take over that account for up to 72 h | **P1** | **Fixed in v1.3.6** (see the update above) |
+| S-02 | Open redirect after sign-in | `app/(public)/login/page.tsx:12` accepts `/\evil.com` (browsers treat it as `//evil.com`) | Phishing via a crafted login link | **P2** | **Fixed in v1.3.6** (see the update above) |
+| S-03 | OTP attempt limit can be raced | `otp-flow.ts:109` reads the count; `otp.repository.ts:95` increments unconditionally | Parallel guesses can go over 5 tries (still capped by the 30/15 min per-IP limit) | **P2** | **Fixed in v1.3.6** (see the update above) |
+| S-04 | No timeout on Resend calls | `server/integrations/resend/client.ts:33` (no `signal`) | A hung Resend call delays the user's action and the cron run | **P2** | **Fixed in v1.3.6** (see the update above) |
+| S-05 | No session idle timeout | `sessions.repository.ts:65-79`; `PLAN-CHECKLIST.md:528` | A left-open browser stays signed in for 12 h | P2 | **Fixed in v1.3.6** (see the update above) |
 | S-06 | Locked account reveals that the User ID exists | `password-sign-in.ts:93-96` | Minor account enumeration | P3 | Return the generic message |
 | S-07 | "Not me" link reusable for 7 days | `complete-sign-in.ts:118,238` | A forwarded link can re-lock the account after IT unlocks it | P3 | Make it single-use |
 | R-04 | Soft delete cancels tasks but leaves `state_json` IN_PROGRESS with PENDING tasks | `request-admin.repository.ts:102`; `server/approvals/delete.ts` | Inconsistent state if a deleted request is ever restored or re-read by the engine; approvers aren't told | P2 | Add a DELETED terminal state via the engine, and bump `state_version` |

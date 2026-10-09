@@ -15,6 +15,10 @@ export class EmailSendError extends Error {
   }
 }
 
+// A hung Resend call would hold up the person's action and the cron run
+// (audit S-04), so each request gives up after this long and is retried.
+export const EMAIL_TIMEOUT_MS = 15_000;
+
 export interface SendEmailInput {
   to: string;
   subject: string;
@@ -25,13 +29,17 @@ export interface SendEmailInput {
 export async function sendEmail(
   config: EmailConfig,
   input: SendEmailInput,
-  deps: { fetch: typeof fetch },
+  deps: { fetch: typeof fetch; timeoutMs?: number },
 ): Promise<{ id: string | null }> {
   if (!config.apiKey) throw new EmailSendError("EMAIL_NOT_CONFIGURED", "Resend API key is not configured.");
   let response: Response;
+  const timeoutMs = deps.timeoutMs ?? EMAIL_TIMEOUT_MS;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     response = await deps.fetch("https://api.resend.com/emails", {
       method: "POST",
+      signal: controller.signal,
       headers: { Authorization: `Bearer ${config.apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         from: `${config.fromName} <${config.fromAddress}>`,
@@ -44,9 +52,12 @@ export async function sendEmail(
       }),
     });
   } catch (error) {
+    clearTimeout(timer);
+    if (controller.signal.aborted) throw new EmailSendError("EMAIL_REQUEST_FAILED", `Resend request timed out after ${timeoutMs}ms.`);
     throw new EmailSendError("EMAIL_REQUEST_FAILED", "Resend request failed.", undefined, String(error));
   }
   const body = (await response.json().catch(() => null)) as { id?: string } | null;
+  clearTimeout(timer);
   if (!response.ok) {
     throw new EmailSendError("EMAIL_REQUEST_FAILED", `Resend rejected the email (HTTP ${response.status}).`, response.status, body);
   }

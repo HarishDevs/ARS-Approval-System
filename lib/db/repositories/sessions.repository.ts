@@ -62,11 +62,14 @@ export async function createSession(
   );
 }
 
-export async function isSessionActive(sessionId: string, userId: number, db: Queryable = getDbPool()): Promise<boolean> {
+// Live = not revoked, not past its absolute expiry, and used within the
+// idle limit (audit S-05; last_seen_at is refreshed at most once a minute).
+export async function isSessionActive(sessionId: string, userId: number, idleMinutes: number, db: Queryable = getDbPool()): Promise<boolean> {
   const [rows] = await db.query<(RowDataPacket & { id: string })[]>(
     `SELECT id FROM user_sessions
-     WHERE id = ? AND user_id = ? AND revoked_at IS NULL AND expires_at > CURRENT_TIMESTAMP LIMIT 1`,
-    [sessionId, userId],
+     WHERE id = ? AND user_id = ? AND revoked_at IS NULL AND expires_at > CURRENT_TIMESTAMP
+       AND last_seen_at > DATE_SUB(CURRENT_TIMESTAMP, INTERVAL ? MINUTE) LIMIT 1`,
+    [sessionId, userId, idleMinutes],
   );
   return rows.length === 1;
 }

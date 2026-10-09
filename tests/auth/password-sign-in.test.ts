@@ -64,9 +64,11 @@ function passwordDeps(user: UserRecord | null, overrides: Partial<PasswordSignIn
       return challenges.length;
     }) as unknown as PasswordSignInDeps["createChallenge"],
     findChallengeByTokenHash: async () => challenges.at(-1) ?? null,
-    incrementChallengeAttempt: vi.fn(async (id: number) => {
+    reserveChallengeAttempt: vi.fn(async (id: number) => {
       const challenge = challenges.find((c) => c.id === id)!;
+      if (challenge.consumed || challenge.attemptCount >= challenge.maxAttempts) return false;
       challenge.attemptCount += 1;
+      return true;
     }),
     consumeChallenge: vi.fn(async (id: number) => {
       const challenge = challenges.find((c) => c.id === id)!;
