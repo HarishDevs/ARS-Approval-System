@@ -185,6 +185,52 @@
 - **Resend** calls time out after 15 s.
 - **Idle sign-out** defaults to 120 minutes (setting `auth.idle_timeout_minutes`, 15–720) on top of the 12-hour session.
 - **Confirmations:** every form that asks for one must render `{confirmBar}` (unit guard). | Owner ("Go Ahead"), 9 Oct 2026 |
+| D-097 | 9 Oct 2026 | **Step kinds and new sources.**
+- An approval step can be **WORK**: "Mark as done" instead of approve, may go to the requester, can't be rejected, changes can be asked. It implements hand-off after approval (F-32).
+- **NOTIFY** steps tell people and move on.
+- **New sources:** DESIGNATION (optionally the requester's department; approval steps need an approver designation) and REQUESTER (work and FYI only; the validator refuses it on an approval step).
+- Task rows carry `task_type`. Dashboards count approvals only. | Owner ("fix every pending"), 9 Oct 2026 |
+| D-098 | 9 Oct 2026 | **Blocked-step recovery by IT:** ASSIGN people, SKIP, RETRY after fixing masters, or TAKE_PATH on a choice. A reason is required; it is audited (REQUEST_UNBLOCKED) and the requester is told. | Owner, 9 Oct 2026 |
+| D-099 | 9 Oct 2026 | **Builder rules:** a choice or skip rule holds up to 10 conditions, all or any. Choices nest up to 3 deep (supersedes D-068's "not nested"). Old single-comparison specs stay valid. | Owner, 9 Oct 2026 |
+| D-100 | 9 Oct 2026 | **Escalation levels:** reminder at T; then the manager and IT at 2×T; the manager's manager at 3×T; one more at 4×T. The setting `general.escalation_levels` (1–3, default 2) sets how far. Tasks that got every notice drop out of the scan (R-08). | Owner, 9 Oct 2026 |
+| D-101 | 9 Oct 2026 | **Resubmit restart per approval type:** from the step that asked (default) or from the beginning. | Owner, 9 Oct 2026 |
+| D-102 | 9 Oct 2026 | **Security (audit S-06, S-07, P-01..P-09).**
+- A locked account answers like an unknown one unless the password is right.
+- "This wasn't me" links work once.
+- Optional `ORIGIN_SECRET` origin lock via a Cloudflare header.
+- Google sign-in only for provider `google.com`.
+- Another IT Admin's email, WhatsApp, sign-in method or set-password link: Super Admin only.
+- The CEOITBox URL must be https; provider bodies in logs are masked.
+- Cross-site and sibling-site API POSTs are refused (Sec-Fetch-Site).
+- **Kept, with reasons:**
+  - P-02: the 52 MB action body is needed for 5×10 MB uploads;
+  - P-08: one SESSION_SECRET, with domain-separated HMACs; rotating it signs everyone out, by design;
+  - P-09: trigger privilege checked by `scripts/database/check-privileges.js`. | Owner, 9 Oct 2026 |
+| D-103 | 9 Oct 2026 | **`/api/health`:** public; 200/503; version, database, job runner. For an uptime monitor. | Claude, 9 Oct 2026 |
+| D-104 | 9 Oct 2026 | **Backups:**
+- Daily, from the job runner: a gzipped SQL dump in one consistent snapshot, paged by full primary key, with triggers and no DEFINER.
+- New attachments are copied too; old dumps go after `BACKUP_KEEP_DAYS`.
+- Super Admin "Back up now".
+- `scripts/database/restore.js` needs `--confirm-database`.
+- The drill (restore, then a checksum of every table) runs in CI. | Owner, 9 Oct 2026 |
+| D-105 | 9 Oct 2026 | **Tooling:**
+- vitest 5 / vite 7 / plugin-react 5, `postcss-selector-parser` override; production audit 0.
+- 7 dev-only advisories remain (`braces`, no fix) under Tailwind 3/ESLint; build-time on our own files; accepted.
+- CI adds the production audit, the QA suite and the origin check.
+- The load test is run locally before go-live (tests/perf). | Claude, 9 Oct 2026 |
+| D-106 | 9 Oct 2026 | **Reuse and reach:**
+- IT can make a custom approval an approval type (draft copy).
+- Power BI read-only views are an optional SQL file, not a migration (CREATE VIEW privilege).
+- The app is installable (manifest + icons), with no offline cache. | Claude, 9 Oct 2026 |
+| D-107 | 9 Oct 2026 | **Integrity (audit R-04..R-10):**
+- A delete closes an open request through the engine and tells approvers and the requester; the outbox drops older messages for deleted requests.
+- Publishing locks the type row.
+- A failed custom approval removes its one-off type.
+- A handover restarts the response clock and forgets reminders; hold time extends due times.
+- Request numbers use the year in India.
+- Migrations resume from the failed statement.
+- Out-of-office overlap is checked under a row lock.
+- Every decision is in the audit log too. | Claude, 9 Oct 2026 |
 | D-033 | 28 Sep 2026 | **Staff data is provided by the admin. Roles are assigned per user, by the admin only. Users are added or made inactive in the Admin Portal** (never hard-deleted, so history and audit stay intact). *Resolves Q-010.* | Owner (answer 7) |
 
 ## 4. Open questions (must be answered before the phase shown)
@@ -212,6 +258,33 @@
 | Q-019 | **Which Resend account holds the API key in Super Admin?** The "arsenergy" team (open in Chrome) is empty. Email works only once the From domain (`approvals@arssteels.net`) is verified in the account that owns the key, or a new key from a team with a verified domain is entered. | Before go-live (no email is delivered today) | **Answered 9 Oct 2026:** the key is "New Api Approval" in the Resend team "arssteels" (harishkumar.t@arssteels.com). The owner verified `arssteels.net` there; Resend's log showed "API key not authorized for this domain" for a few minutes after verification, then the test email was **sent** |
 
 ## 5. Work log (newest first)
+
+### 9 Oct 2026 (v1.4.0: every pending item)
+- The owner asked to "fix every pending item in one go", then publish.
+- **Engine and builder:**
+  - work and FYI steps; designation and requester sources;
+  - IT recovery for blocked steps;
+  - all/any rules and choices nested 3 deep;
+  - new notifications (task for you, FYI, resumed, changes made, removed, moving again) and 6 new templates (26 in all).
+- **Integrity:** R-04..R-10 fixed (D-107).
+- **Security:**
+  - S-06, S-07;
+  - P-01 origin lock, proven on a real `next start`;
+  - P-03..P-07;
+  - P-02/P-08/P-09 decided (D-102).
+- **Ops:**
+  - `/api/health`; daily backups with a CI restore drill. The drill caught two real bugs: composite-key paging that could repeat rows, and computed columns slipping into the dump; computed columns are now read from SHOW CREATE TABLE, and 6 full runs in a row pass;
+  - CEOITBox receipts webhook; multi-level escalation;
+  - migration resume.
+- **Features:**
+  - audit CSV and sign-in history; custom approval attachments;
+  - remove/archive approval types, unsaved-changes warning, resubmit policy;
+  - queue and notifications paging; custom → approval type;
+  - Power BI views; installable app.
+- **Clean-up:** D-02 loose ends, D-03 shared labels, admin home query moved to a repository, one time format.
+- **Tooling:** vitest 5; CI adds the QA suite, the origin check and the audit; load test (50 people: 2,400 requests, 0 errors, p95 586 ms).
+- **Docs:** README, USER-GUIDE, DEPLOYMENT (E2, G6, G7, K2, O, P), E2E report status, the audit update.
+- **Checks:** types and lint clean; unit 301; integration 81; e2e 38; QA 27/27; origin 1; build OK.
 
 ### 9 Oct 2026 (v1.3.6: first audit fixes)
 - **B-01:** `UserCommands` now renders the confirmation bar. New e2e test `user-commands.spec.ts`, plus a source guard `confirm-bar.test.ts`, proved to fail on the old code.

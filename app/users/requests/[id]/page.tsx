@@ -5,6 +5,7 @@ import { PageHeader } from "@/features/shell/PageHeader";
 import { RequestStatusPill } from "@/features/requests/StatusPill";
 import { StepMap } from "@/features/requests/StepMap";
 import { BlockedStepForm, DecisionForm, ReopenForm, ResumeForm, WithdrawForm } from "@/features/requests/ActionPanel";
+import { PromoteCustomForm } from "@/features/admin/PromoteCustomForm";
 import { listApproverOptions } from "@/lib/db/repositories/approvers.repository";
 import { RequestForm } from "@/features/requests/RequestForm";
 import { CommentForm } from "@/features/requests/Discussion";
@@ -178,6 +179,13 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
             ))}
           </ol>
         </section>
+        {view.isCustom && (user.roles.includes("IT_ADMIN") || user.roles.includes("SUPER_ADMIN")) && (
+          <section className="card h-fit px-5 py-4">
+            <h2 className="mb-1 font-semibold">Reuse these levels</h2>
+            <p className="mb-3 text-label text-ink-muted">Make this custom approval a predefined approval type. Its levels and form are copied into a draft you can change, test and publish.</p>
+            <PromoteCustomForm requestId={view.id} title={view.title} />
+          </section>
+        )}
         {user.roles.includes("SUPER_ADMIN") && (
           <section className="card h-fit px-5 py-4">
             <h2 className="mb-1 font-semibold">Super Admin</h2>

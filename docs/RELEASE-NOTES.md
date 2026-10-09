@@ -1,5 +1,47 @@
 # Release notes
 
+## v1.4.0 (9 Oct 2026): everything pending
+**For everyone**
+- **Work tasks:** after approval, a step can hand work to someone, often the requester (e.g. raise the PO). It shows as **To do**, and they press **Mark as done**.
+- **FYI steps** tell people (e.g. Finance) that a request reached a point; nothing to do.
+- **Waiting for me** and **Notifications** have pages; custom approvals take attachments.
+- New messages: task for you, FYI, request resumed, changes made, request removed, request moving again.
+- The app can be installed on a phone ("Add to Home screen").
+
+**For IT**
+- **Builder:**
+  - step kinds (approval, work, FYI);
+  - approvers by **designation** (optionally the requester's department);
+  - rules with several conditions (**all** or **any**);
+  - choices inside choices;
+  - a warning before leaving with unsaved changes.
+- **Stuck requests** show **Stuck: needs IT** on the request page: give the step to people, skip it, try again, or pick a path.
+- **Approval types:** remove one that was never used, or archive it; choose where a resubmitted request restarts; make a good custom approval into an approval type.
+- **Escalation** goes up the management chain (up to 3 levels).
+- Dashboards count approvals only (not work tasks).
+
+**For the Super Admin**
+- **Backups:** daily, plus **Back up now**, with a tested restore (deployment guide Part P).
+- **Audit log CSV download**, and **Sign-in history**.
+- **WhatsApp delivery receipts** (with the webhook), and a **health check** for an uptime monitor.
+- Optional **origin lock** to Cloudflare, and optional **Power BI views**.
+
+**Fixes and hardening**
+- **Deleting a request:**
+  - closes it properly;
+  - tells the people waiting.
+- **Publishing:** two people publishing at once can't clash.
+- **Handover:** the new approver gets the full response time.
+- **Hold:** time on hold doesn't count against the response time.
+- **Request numbers:** the year follows India time.
+- **Updates:** a failed update can carry on where it stopped.
+- **Sign-in:**
+  - a locked account isn't revealed to guessers;
+  - "This wasn't me" links work once.
+- **Google sign-in** accepts Google identities only.
+- **IT Admin accounts:** one IT Admin can't change another's contact details.
+- **Settings and logs:** safer provider settings and log masking.
+
 ## v1.3.6 (9 Oct 2026): fixes from the application audit
 - **Fixed:** on an admin's user page, **Deactivate user** and **Sign out everywhere** now ask for confirmation and then work. Before, they did nothing.
 - **Idle sign-out:** you're signed out after **2 hours without activity** (Super Admin can set 15–720 minutes under Sign-in security). Sessions still end 12 hours after sign-in.

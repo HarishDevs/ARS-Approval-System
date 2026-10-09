@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| App | ARS Approval Platform **v1.3.6** (`docs/RELEASE-NOTES.md`) |
+| App | ARS Approval Platform **v1.4.0** (`docs/RELEASE-NOTES.md`) |
 | Address | **https://approval.arssteels.net** (one app: `/users`, `/admin`, `/superadmin`) |
 | Hosting | GoDaddy **Node.js Hosting** ("Deploy your Node.js app"), from GitHub `HarishDevs/ARS-Approval-System`, branch `main` |
 | Database | MySQL 8 in GoDaddy cPanel |
@@ -27,6 +27,7 @@ Work through the parts **in order**. Tick each box as you go. Anything marked **
 - **Part M:** Updating later, and rollback
 - **Part N:** Troubleshooting
 - **Part O:** Known limits
+- **Part P:** Backups and restore (v1.4.0)
 
 ---
 
@@ -134,6 +135,7 @@ GoDaddy → **My Products** → **Node.js Hosting** (host.godaddy.com/hosting) �
 1. Click **Import from .env file** → choose `D:\Omniroute\deploy-secrets\ars-approvals.production.env`.
 2. Check the list:
    - **9 keys from the file:** NODE_ENV, APP_BASE_URL, SESSION_SECRET, ENCRYPTION_KEY, JOB_RUNNER_SECRET, UPLOAD_DIR, FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY.
+   - **v1.4.0, optional:** `BACKUP_DIR` (Part P; e.g. `/home/<cpanel-user>/ars-approvals-backups`), `BACKUP_KEEP_DAYS` (default 14), `ORIGIN_SECRET` (Part E2; add it only **after** the Cloudflare rule).
    - Plus the five `DB_…` entries that GoDaddy adds itself (B2).
    - **No value says `CHANGE_ME`.**
    - `FIREBASE_PRIVATE_KEY` starts with `-----BEGIN PRIVATE KEY-----`. If the quotes were imported as part of the value, edit it and remove them.
@@ -167,6 +169,18 @@ GoDaddy → **My Products** → **Node.js Hosting** (host.godaddy.com/hosting) �
 3. Wait until the domain shows **Connected**, and the certificate shows **SSL active / Secure**. Usually minutes; DNS can take up to an hour.
 - [ ] https://approval.arssteels.net shows the sign-in page with the padlock.
 - [ ] `APP_BASE_URL` is `https://approval.arssteels.net`. It's used in every email and WhatsApp link.
+
+### E2. Optional: lock the origin to Cloudflare (v1.4.0, D-102)
+Stops anyone reaching the GoDaddy server directly, around Cloudflare (and faking their address). **Do the steps in this order**, or the site will refuse everyone.
+1. Make a secret of 40+ characters (PowerShell: `-join ((1..40) | % { [char](Get-Random -Min 97 -Max 123) })`). Keep it in your password manager.
+2. Cloudflare → `arssteels.net` → **Rules → Transform Rules → Modify Request Header → Create rule**:
+   - name `ARS origin header`;
+   - when **Hostname** equals `approval.arssteels.net`;
+   - **Set static** header `x-ars-origin` = the secret;
+   - **Deploy**.
+3. GoDaddy → the app → secrets → add `ORIGIN_SECRET` = the same secret → **Publish** / restart.
+4. Check: https://approval.arssteels.net works as before. The cron test (Part I, I2) still works, because it goes through Cloudflare.
+5. To undo: remove `ORIGIN_SECRET` and publish (then delete the Cloudflare rule).
 
 ---
 
@@ -216,6 +230,15 @@ Review the **Authentication** group. The defaults are fine: lockout after 5 wron
 
 ---
 
+### G6. Optional: WhatsApp delivery receipts (v1.4.0, S8-03)
+Message deliveries can then show **DELIVERED** and **READ** for WhatsApp, not only SENT.
+1. Make a secret of 24+ characters. **Super Admin → Providers & security → WhatsApp → Webhook secret** → paste → **Save**.
+2. In CEOITBox, set the delivery/read webhook to `https://approval.arssteels.net/api/webhooks/ceoitbox`, with header `x-webhook-secret` = the same secret.
+3. Send a test WhatsApp (G3). Within a minute its row on **Message deliveries** should change to DELIVERED, then READ. If it stays SENT, send CEOITBox's sample payload to IT: the app reads Meta's format and a flat `{ id, status }` one.
+
+### G7. Uptime monitor (v1.4.0, D-103)
+`https://approval.arssteels.net/api/health` answers `200 {"status":"ok"…}` when the app and the database are up, and `503` when the database isn't. It also says whether the job runner ran in the last 15 minutes. Point any uptime monitor at it (e.g. UptimeRobot, free: HTTP(s) monitor, every 5 minutes, alert to itadmin@ by email or WhatsApp). With the origin lock on (E2), monitor the public address only.
+
 ## Part H: WhatsApp templates
 "Approval needed" (`ars_approval_needed_v1`) is already approved at CEOITBox: it was created during testing on the same account.
 1. **Super Admin → WhatsApp templates → "A request is waiting for this person's approval" → Save draft**. Keep the name `ars_approval_needed_v1`.
@@ -227,7 +250,7 @@ Review the **Authentication** group. The defaults are fine: lockout after 5 wron
 ---
 
 ## Part I: Scheduled jobs (cron)
-Every 5 minutes, GoDaddy calls the app's job runner (`/api/jobs/run`). Without it there are **no reminders, escalations, retries of failed email/WhatsApp, outbox catch-up or daily template sync**.
+Every 5 minutes, GoDaddy calls the app's job runner (`/api/jobs/run`). Without it there are **no reminders, escalations, retries of failed email/WhatsApp, outbox catch-up, daily template sync or daily backup** (Part P).
 
 **Before you start:** publish **v1.3.4 or later**. It adds the "Job runner" line on Super Admin → Message deliveries, which is how you check the cron job works (step I6).
 
@@ -341,6 +364,13 @@ Choose one:
   - **Download current …** gives the existing records in the same columns: edit them and upload again to update many at once.
   - Granting SUPER_ADMIN by import works only for the Super Admin. Import never deletes or deactivates anything.
 
+### K2. Optional: Power BI reporting views (v1.4.0, P7-04)
+Two read-only views give Power BI one row per request (`reporting_requests`) and one per task (`reporting_tasks`), with names instead of ids. Deleted requests are left out, and times are in UTC.
+1. cPanel → **phpMyAdmin** → the app's database → **SQL** → paste `database/optional/reporting_views.sql` from the repository → **Go**. (It's not a migration: creating views needs a privilege some plans don't give the app.)
+2. cPanel → **MySQL Databases** → add a user `…_powerbi` with a strong password. phpMyAdmin → SQL: `GRANT SELECT ON <db>.reporting_requests TO '<user>'@'%'; GRANT SELECT ON <db>.reporting_tasks TO '<user>'@'%';`
+3. In Power BI Desktop: **Get data → MySQL database** → the GoDaddy database host (cPanel → Remote MySQL: allow the Power BI gateway's IP) → that user → the two views.
+4. After an upgrade that changes the tables, run step 1 again (the views are replaced).
+
 ---
 
 ## Part L: Go-live checks
@@ -356,7 +386,10 @@ Run these at https://approval.arssteels.net. They come from the Smoke suite, `do
 - [ ] Double-click **Submit request**: only one request appears in **My requests**.
 - [ ] **Super Admin → Message deliveries** shows SENT rows; **Audit log** shows the sign-ins and changes.
 - [ ] The cron job ran: in the Message deliveries / audit log after 10 minutes, or check the cron email in cPanel.
-- [ ] Remove the test requests' traces: requests stay as history by design; make any test users **inactive**.
+- [ ] **Super Admin → Overview → Backups** shows a backup from today (press **Back up now** once), and Part P's restore drill was done.
+- [ ] `https://approval.arssteels.net/api/health` returns `"status":"ok"` and `"jobRunner":"OK"`; an uptime monitor watches it (G7).
+- [ ] A stuck request (e.g. a level whose HOD isn't set) shows **Stuck: needs IT** to an IT Admin, who can give it to a person or skip it.
+- [ ] Remove the test requests' traces: Super Admin → Requests → **Delete** (with a reason); make any test users **inactive**.
 
 When all are ticked: **live**. Tell the staff the address, and who to contact (IT).
 
@@ -408,13 +441,44 @@ To rebuild a full import file for a brand-new environment: apply the migrations 
 
 ---
 
-## Part O: Known limits (v1.0.1)
+## Part O: Known limits (v1.4.0)
 - **Break-glass** sign-in needs the WhatsApp code (Q-015).
-- **WhatsApp** messages go out only once their template is live (Part H). Email and in-app always go out.
+- **WhatsApp** messages go out only once their template is live (Part H): 26 templates, 6 of them new in v1.4.0 (work task, FYI, resumed, changes made, removed, moving again). Email and in-app always go out.
 - **Owner decisions kept (D-078):**
   - one person may approve more than one level;
   - requests don't expire;
   - rejection is final;
   - no drafts, admin cancel or auditor role.
-- **Search:** only My requests has search, a status filter and paging.
-- **Not in this release:** CSV export of reports or the audit log, work hand-off after approval, approving from WhatsApp.
+- **Choices** can be nested up to 3 deep; a rule has up to 10 conditions, all or any (D-099).
+- **Approving from WhatsApp** (reply buttons) isn't available; the message links to the request.
+- **Delivery receipts** depend on CEOITBox's webhook (G6); until it's set, WhatsApp rows stay SENT.
+- **Dev-only advisories:** `npm audit` (with dev tools) lists 7 high for `braces` under Tailwind 3 and ESLint. They run only at build time on our own files; no fixed version exists; the production audit is clean (D-105).
+
+---
+
+## Part P: Backups and restore (v1.4.0, D-104)
+**What happens by itself:** once a day the job runner (Part I) writes a gzipped SQL copy of the whole database, `ars-db-YYYYMMDD-HHMMSS.sql.gz`, into `BACKUP_DIR`. It also copies new attachment files to `BACKUP_DIR/attachments`. Files older than `BACKUP_KEEP_DAYS` (default 14) are deleted.
+
+### P1. Set it up
+1. cPanel → **File Manager** → in your home folder (not `public_html`) create `ars-approvals-backups`.
+2. GoDaddy → the app → secrets → `BACKUP_DIR` = `/home/<cpanel-user>/ars-approvals-backups` → **Publish**.
+3. **Super Admin → Overview → Backups → Back up now**. The line turns green, showing the time and size.
+4. Every week or so, download the newest file from File Manager to a safe place off GoDaddy (e.g. the IT Google Drive). The server copy alone doesn't protect against losing the hosting account.
+
+### P2. Restore drill (do it once now, then every quarter)
+Restore into a **new, empty** database, never straight over the live one.
+1. cPanel → **MySQL Databases** → create `…_restoretest` and give the app's database user all rights on it.
+2. Either:
+   - **phpMyAdmin:** select `…_restoretest` → **Import** → the `.sql.gz` file → **Go**. The file is standard SQL with `DELIMITER` blocks, which phpMyAdmin accepts.
+   - **or** on a PC with Node and the repository: set `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME=<…_restoretest>`, then run `node scripts/database/restore.js ars-db-….sql.gz --confirm-database=<…_restoretest>`.
+3. Check it: in phpMyAdmin, `…_restoretest` has the same tables, and `SELECT COUNT(*)` on `approval_requests`, `users` and `audit_logs` matches the live database.
+4. Drop `…_restoretest`. Note the date in PLAN-CHECKLIST (GL-04).
+
+The automated version of this drill runs in every CI build (`tests/integration/backup.int.test.ts`). It restores the test database and compares every table's checksum.
+
+### P3. A real restore (after data loss)
+1. Tell staff to pause for a while. Everything up to the backup's time is in the file.
+2. Restore the chosen file into a new database (P2), and check it.
+3. GoDaddy → the app → change the `DB_…` secrets to the restored database → **Publish**.
+4. Copy `BACKUP_DIR/attachments/*` back into `UPLOAD_DIR` (File Manager), keeping the folder structure.
+5. Anything done after the backup's time must be redone; the audit log of the old database (if it still exists) shows what.

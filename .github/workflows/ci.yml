@@ -1,6 +1,8 @@
 # CI (P0-45, S2-08): every push and pull request to main must pass lint,
-# typecheck, unit tests, the production build, and the MySQL integration
-# tests. No secrets are needed: the tests use throw-away values only.
+# typecheck, unit tests, the production dependency audit, the production
+# build, the MySQL integration tests (with the backup/restore drill), the
+# end-to-end tests, the QA suite and the origin-lock check (v1.4.0).
+# No secrets are needed: the tests use throw-away values only.
 name: CI
 
 on:
@@ -28,6 +30,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm audit --omit=dev --audit-level=moderate
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
@@ -96,9 +99,15 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
+      # Owner's master-prompt QA suite (QA session 14) on the same build.
+      - run: npx playwright test -c playwright.qa.config.ts
+      # The build started with ORIGIN_SECRET: direct requests are refused (D-102).
+      - run: npx playwright test -c playwright.origin.config.ts
       - if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
-          path: playwright-report
+          path: |
+            playwright-report
+            test-results
           retention-days: 7

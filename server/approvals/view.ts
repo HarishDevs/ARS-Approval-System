@@ -19,6 +19,7 @@ export interface RequestView {
   requestNo: string;
   title: string;
   workflowName: string;
+  isCustom: boolean; // a custom approval (IT can make it an approval type, P5-04)
   status: InstanceStatus;
   round: number;
   requesterId: number;
@@ -109,6 +110,7 @@ export async function loadRequestView(requestId: number, viewer: Actor): Promise
     requestNo: request.requestNo,
     title: request.title,
     workflowName: workflow.name,
+    isCustom: workflow.kind === "CUSTOM",
     status: state.status,
     round: state.round,
     requesterId: request.requesterId,

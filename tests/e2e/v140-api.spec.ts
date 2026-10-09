@@ -94,3 +94,14 @@ test("a 'This wasn't me' link works once (S-07)", async ({ request }) => {
     await connection.end();
   }
 });
+
+test("installable: the web app manifest and icons load without signing in (P8-02)", async ({ request }) => {
+  const manifest = await request.get("/manifest.webmanifest");
+  expect(manifest.status()).toBe(200);
+  expect(await manifest.json()).toMatchObject({ name: "ARS Approvals", start_url: "/users", display: "standalone" });
+  for (const icon of ["/icons/icon-192.png", "/icons/icon-512.png", "/icons/apple-touch-icon.png"]) {
+    const response = await request.get(icon);
+    expect(response.status(), icon).toBe(200);
+    expect(response.headers()["content-type"]).toContain("image/png");
+  }
+});

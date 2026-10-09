@@ -11,7 +11,7 @@ import { buildCsp, createNonce } from "@/lib/security/csp";
 // It also sets the per-request Content-Security-Policy nonce (P1-34a).
 // Next.js reads the nonce from the request's CSP header and adds it to its
 // own scripts, so every page is rendered per request (root layout is dynamic).
-const PUBLIC_PREFIXES = ["/login", "/set-password", "/forgot-password", "/security", "/api/auth", "/api/jobs", "/api/health", "/api/webhooks", "/_next", "/brand", "/favicon.ico", "/icon.svg"];
+const PUBLIC_PREFIXES = ["/login", "/set-password", "/forgot-password", "/security", "/api/auth", "/api/jobs", "/api/health", "/api/webhooks", "/_next", "/brand", "/icons", "/manifest.webmanifest", "/favicon.ico", "/icon.svg"];
 
 const CSP_OPTIONS = {
   dev: process.env.NODE_ENV !== "production",

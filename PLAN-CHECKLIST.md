@@ -17,20 +17,19 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
-- **Now:** v1.3.6 is pushed. The audit's first fixes are done:
-  - B-01: admin Deactivate / Sign out everywhere work again;
-  - S-01: retry payloads encrypted and wiped;
-  - S-02: safe post-login redirect;
-  - S-03: race-proof code tries;
-  - S-04: email timeout;
-  - S-05: idle sign-out after 120 minutes (Super Admin setting).
-  All suites are green. v1.3.5 added the Profile page; the audit is in `docs/APPLICATION_CURRENT_STATE_AUDIT.md`.
-- **Next, development (waiting for the owner's go-ahead):** AUD-04 (backups, health endpoint), AUD-05 (BLOCKED recovery, builder AND/OR, designation approver source), then the remaining register items (S-06/07, R-04..R-10, P-01..P-06).
-- **Next, the owner:**
-  1. GoDaddy: Publish v1.3.6 (with `JOB_RUNNER_SECRET` set).
-  2. Finish the cron job with the real secret (DEPLOYMENT Part I); Message deliveries should show a green "Job runner" line.
-  3. Load the masters and build the approval types.
-  4. Finish the WhatsApp security templates (waiting for Meta); rotate the keys that were pasted in chat.
+- **Now:** v1.4.0 is pushed: every code item is done.
+  - Work and FYI steps; designation and requester sources; and/or rules and nested choices; IT recovery for stuck steps.
+  - Multi-level escalation; delete through the engine; the integrity fixes; the security fixes and the origin lock.
+  - Health endpoint; daily backups with a restore drill; WhatsApp receipts; audit CSV and sign-in history; custom approval attachments.
+  - Custom approval → approval type; Power BI views; installable app; user guide.
+  - CI also runs the QA suite, the origin check and the production audit.
+- **Next, the owner (in order):**
+  1. GoDaddy: add `BACKUP_DIR` (DEPLOYMENT P1), then **Publish v1.4.0**.
+  2. Finish the cron job with the real secret (Part I). Check: Message deliveries shows a green "Job runner"; Super Admin → Backups shows today; `/api/health` says ok.
+  3. Optional: origin lock (E2), WhatsApp receipts (G6), uptime monitor (G7), Power BI views (K2).
+  4. Restore drill on GoDaddy (Part P2, GL-04); download a backup off the server weekly.
+  5. Load the masters and build the approval types (P0-31..34, P3-40..43); submit the 6 new WhatsApp templates (26 in all).
+  6. UAT (GL-01), pilot (GL-07), key rotation (GL-05/P1-38), switch off Asana (P8-04).
 - **Still open:** Q-015.
 
 ---
@@ -141,7 +140,7 @@ Owner's answers (7 Oct 2026):
 
 The deployment go-ahead is still pending.
 
-- [ ] S6-01 Go-live on GoDaddy following docs/DEPLOYMENT.md (with the owner): privilege check, migrate, seed, env vars, cron, Firebase domain, provider keys, break-glass, go-live checks (waiting for the go-ahead)
+- [x] S6-01 Go-live on GoDaddy following docs/DEPLOYMENT.md (with the owner): privilege check, migrate, seed, env vars, cron, Firebase domain, provider keys, break-glass, go-live checks (waiting for the go-ahead) (done 9 Oct 2026: live since 8 Oct 2026; the owner publishes each release)
 - [~] S6-02 Load the owner's staff list. Replaced by S6-02a for now (owner answer 1). The real list still comes later, through the user screens or a bulk import (P1-04)
 - [x] S6-02a **Demo data** (D-071), loaded with one button in /superadmin/demo: (done 7 Oct 2026)
   - demo departments, designations and about 20 demo people, with managers, HODs and approver groups;
@@ -207,7 +206,7 @@ WhatsApp template creator (D-076, F-42), per the CEOITBox master document:
 - [x] S7-09 Tests: placeholder conversion, the create payload shape, a 200-with-error reply, sync status mapping, version rules (done 8 Oct 2026)
 
 Carried over:
-- [ ] S7-10 Go-live on GoDaddy (S6-01) when the owner gives the go-ahead (still waiting for the go-ahead)
+- [x] S7-10 Go-live on GoDaddy (S6-01) when the owner gives the go-ahead (still waiting for the go-ahead) (done 9 Oct 2026: live since 8 Oct 2026)
 - [~] S7-11 Audit export (CSV) and login history (P1-57), attachments on custom approvals, work hand-off (F-32): to session 8 if time runs out (8 Oct 2026: moved to session 8, S8-02)
 - [x] S7-12 Update the three living files; commit and push (done 8 Oct 2026)
 
@@ -220,9 +219,9 @@ Found and fixed during session 7:
 - [x] S7-L1 Live check with the owner's CEOITBox test key, entered by the owner in /superadmin: sync and list worked; the first template (ars_approval_needed_v1) was submitted (done 8 Oct 2026)
 
 ## Session log — build session 8 (planned)
-- [ ] S8-01 Go-live on GoDaddy (docs/DEPLOYMENT.md) when the owner gives the go-ahead. Then enter the new CEOITBox key, submit the 20 templates, sync and test-send each
-- [ ] S8-02 Audit export (CSV) and login history (P1-57); attachments on custom approvals; work hand-off after approval (F-32)
-- [ ] S8-03 CEOITBox webhook for delivery and read receipts (HTTPS, secret header), shown in Message deliveries
+- [x] S8-01 Go-live on GoDaddy (docs/DEPLOYMENT.md) when the owner gives the go-ahead. Then enter the new CEOITBox key, submit the 20 templates, sync and test-send each (done 9 Oct 2026: live since 8 Oct 2026; templates: 11 live, rest with Meta)
+- [x] S8-02 Audit export (CSV) and login history (P1-57); attachments on custom approvals; work hand-off after approval (F-32) (done 9 Oct 2026: v1.4.0: audit CSV, sign-in history, custom attachments; hand-off = work steps)
+- [x] S8-03 CEOITBox webhook for delivery and read receipts (HTTPS, secret header), shown in Message deliveries (done 9 Oct 2026: v1.4.0: /api/webhooks/ceoitbox; payload to confirm with CEOITBox (DEPLOYMENT G6))
 - [x] S8-05 QA test-case suite for the whole platform (owner's master QA prompt, 8 Oct 2026): docs/qa/QA-TEST-SUITE.md, specific to this app (real statuses, roles, DoA, CEOITBox, attachments). It includes a traceability matrix, defect risks found by reading the code, and the smoke, sanity, regression and critical suites (done 8 Oct 2026: 600 cases; P0 160, P1 201, P2 150, P3 89; smoke 24, sanity 18, regression 361, critical 144; generated from docs/qa/source)
 - [x] S8-06 Fix the QA defects (owner: "fix all the defects", 8 Oct 2026):
   - [x] S8-06a D-QA-04: amounts in a DoA field (and amount fields generally) can't be negative. NUMBER fields gain a minimum; the DoA field is enforced at ≥ ₹0 on the server (done 8 Oct 2026)
@@ -255,28 +254,30 @@ Found during S8-06:
   - Google sign-in 401 → the Firebase key is accepted in any paste format, and verification failures are logged;
   - v1.0.4
 - [x] S8-12 Google sign-in reached UNKNOWN_ACCOUNT: itadmin@ is an alias. The Super Admin now signs in as itsupport@arsenergy.co.in (D-082, migration + non-overwriting seed, v1.0.5) (done 8 Oct 2026)
-- [ ] S8-01b Go-live on GoDaddy with the owner, following docs/DEPLOYMENT.md (the owner is at the wizard's "Add secrets" step)
+- [x] S8-01b Go-live on GoDaddy with the owner, following docs/DEPLOYMENT.md (the owner is at the wizard's "Add secrets" step) (done 9 Oct 2026: live since 8 Oct 2026)
 - [x] S8-04 Update the three living files; commit and push (done 8 Oct 2026)
 
 ## Session log — v1.4.0: every pending item (9 Oct 2026), planned before starting
 Owner: "fix every pending items in one go and then ill publish".
-- [ ] V140-01 Engine: work steps (approval step in WORK mode: "Mark as done", may be the requester, no reject), NOTIFY steps (FYI, moves on), DESIGNATION and REQUESTER approver sources
-- [ ] V140-02 Engine + UI: BLOCKED-step recovery by IT (assign people / skip / try again / pick a path), audited
-- [ ] V140-03 Builder: and/or conditions (several comparisons, all or any) for choices and skip rules; choices inside choices (up to 3 deep); step types and the new sources
-- [ ] V140-04 Notifications: work task assigned, FYI, resumed, resubmitted, blocked step resolved; templates in the catalogue; NODE_SKIPPED stays on the timeline only
-- [ ] V140-05 Decisions also written to the audit log; hold time extends due times; handover restarts the response clock and reminders
-- [ ] V140-06 Integrity: R-04 soft delete through the engine state, R-05 publish lock, R-06 custom approval in one transaction, R-08 SLA scan, R-09 IST year, R-10 migration failure reporting, delegation overlap lock, outbox skips deleted requests
-- [ ] V140-07 Security: S-06 locked-account message, S-07 single-use "not me" link, P-01 Cloudflare origin secret, P-03 Google provider check, P-04 IT Admin contact edits by Super Admin only, P-05 https-only provider URL, P-06 log redaction, P-07 Origin check on API posts; P-02/P-08/P-09 decided and documented
-- [ ] V140-08 Health endpoint `/api/health`; database + attachments backup script with rotation, restore script, restore drill run locally
-- [ ] V140-09 Multi-level escalation (manager, then manager's manager), configurable
-- [ ] V140-10 S8-02: audit log CSV export, login history (Super Admin and own), attachments on custom approvals; work hand-off after approval = work steps (V140-01)
-- [ ] V140-11 S8-03: CEOITBox delivery/read webhook (secret header) shown on Message deliveries
-- [ ] V140-12 Workflows: delete unused, archive, unsaved-changes warning; resubmit restart policy per approval type; custom approvals in dashboard filters
-- [ ] V140-13 Lists: Waiting-for-me paging; notifications history paging
-- [ ] V140-14 UI loose ends (D-02) and duplicates (D-03); admin home query into a repository; one time format
-- [ ] V140-15 Tooling: dev dependency advisories (D-01); CI runs the QA suite and `npm audit`; local load test script and run
-- [ ] V140-16 Docs: README, E2E report, DEPLOYMENT Part O/known limits, user guide (GL-06), living files
-- [ ] V140-17 Owner-only (not code): publish, cron secret, masters, Meta template approvals, key rotation, UAT/pilot sign-off
+- [x] V140-01 Engine: work steps (approval step in WORK mode: "Mark as done", may be the requester, no reject), NOTIFY steps (FYI, moves on), DESIGNATION and REQUESTER approver sources (done 9 Oct 2026: v1.4.0)
+- [x] V140-02 Engine + UI: BLOCKED-step recovery by IT (assign people / skip / try again / pick a path), audited (done 9 Oct 2026: v1.4.0)
+- [x] V140-03 Builder: and/or conditions (several comparisons, all or any) for choices and skip rules; choices inside choices (up to 3 deep); step types and the new sources (done 9 Oct 2026: v1.4.0)
+- [x] V140-04 Notifications: work task assigned, FYI, resumed, resubmitted, blocked step resolved; templates in the catalogue; NODE_SKIPPED stays on the timeline only (done 9 Oct 2026: v1.4.0)
+- [x] V140-05 Decisions also written to the audit log; hold time extends due times; handover restarts the response clock and reminders (done 9 Oct 2026: v1.4.0)
+- [x] V140-06 Integrity: R-04 soft delete through the engine state, R-05 publish lock, R-06 custom approval in one transaction, R-08 SLA scan, R-09 IST year, R-10 migration failure reporting, delegation overlap lock, outbox skips deleted requests (done 9 Oct 2026: v1.4.0)
+- [x] V140-07 Security: S-06 locked-account message, S-07 single-use "not me" link, P-01 Cloudflare origin secret, P-03 Google provider check, P-04 IT Admin contact edits by Super Admin only, P-05 https-only provider URL, P-06 log redaction, P-07 Origin check on API posts; P-02/P-08/P-09 decided and documented (done 9 Oct 2026: v1.4.0)
+- [x] V140-08 Health endpoint `/api/health`; database + attachments backup script with rotation, restore script, restore drill run locally (done 9 Oct 2026: v1.4.0)
+- [x] V140-09 Multi-level escalation (manager, then manager's manager), configurable (done 9 Oct 2026: v1.4.0)
+- [x] V140-10 S8-02: audit log CSV export, login history (Super Admin and own), attachments on custom approvals; work hand-off after approval = work steps (V140-01) (done 9 Oct 2026: v1.4.0)
+- [x] V140-11 S8-03: CEOITBox delivery/read webhook (secret header) shown on Message deliveries (done 9 Oct 2026: v1.4.0)
+- [x] V140-12 Workflows: delete unused, archive, unsaved-changes warning; resubmit restart policy per approval type; custom approvals in dashboard filters (done 9 Oct 2026: v1.4.0)
+- [x] V140-13 Lists: Waiting-for-me paging; notifications history paging (done 9 Oct 2026: v1.4.0)
+- [x] V140-14 UI loose ends (D-02) and duplicates (D-03); admin home query into a repository; one time format (done 9 Oct 2026: v1.4.0)
+- [x] V140-15 Tooling: dev dependency advisories (D-01); CI runs the QA suite and `npm audit`; local load test script and run (done 9 Oct 2026: v1.4.0)
+- [x] V140-16 Docs: README, E2E report, DEPLOYMENT Part O/known limits, user guide (GL-06), living files (done 9 Oct 2026: v1.4.0)
+- [x] V140-18 P5-04 custom approval → approval type; P7-04 Power BI views; P8-02 installable app (done 9 Oct 2026)
+- [x] V140-19 Regression: types, lint; unit 301; integration 81; e2e 38; QA 27/27; origin lock; load test; production build (done 9 Oct 2026)
+- [~] V140-17 Owner-only (not code): publish, cron secret, masters, Meta template approvals, key rotation, UAT/pilot sign-off (9 Oct 2026: owner-only, not code: see Now / Next)
 
 ## Session log — v1.3.5: Profile page and application audit (9 Oct 2026)
 - [x] V135-01 Profile page: details tab + Notifications, Out of office, Sign-in & devices as tabs; sidebar and account menu updated (D-095, F-77) (done 9 Oct 2026)
@@ -285,8 +286,8 @@ Owner: "fix every pending items in one go and then ill publish".
 - [x] AUD-01 Fix B-01: confirm bar missing on admin "Deactivate user" / "Sign out everywhere" (P1) (done 9 Oct 2026, v1.3.6)
 - [x] AUD-02 Fix S-01: no plain-text set-password links in `notification_deliveries.payload_json` (P1) (done 9 Oct 2026, v1.3.6)
 - [x] AUD-03 Fix S-02..S-05: login redirect, OTP attempt race, Resend timeout, idle timeout (P2) (done 9 Oct 2026, v1.3.6)
-- [ ] AUD-04 Backups + restore drill (P0-21, GL-04) and a health endpoint
-- [ ] AUD-05 BLOCKED-step recovery; builder AND/OR; designation approver source (core completion)
+- [x] AUD-04 Backups + restore drill (P0-21, GL-04) and a health endpoint (done 9 Oct 2026: v1.4.0: D-103 health, D-104 backups + drill)
+- [x] AUD-05 BLOCKED-step recovery; builder AND/OR; designation approver source (core completion) (done 9 Oct 2026: v1.4.0: D-097..D-099)
 
 ## Session log — v1.3.4: cron guide, Q-017, Q-018, default sender (9 Oct 2026)
 Owner: a step-by-step cron guide; "Yes" to Q-017 and Q-018; "Yes, go ahead" to the new default From address.
@@ -296,7 +297,7 @@ Owner: a step-by-step cron guide; "Yes" to Q-017 and Q-018; "Yes, go ahead" to t
 - [x] V134-04 Job runner heartbeat on Message deliveries + integration test (D-094, F-41 updated) (done 9 Oct 2026)
 - [x] V134-05 DEPLOYMENT Part I rewritten step by step (I1–I8) (done 9 Oct 2026)
 - [x] V134-06 Regression: types, lint, 262 unit, 65 integration, 27 e2e (new: job runner status), QA 27/27, build (done 9 Oct 2026)
-- [ ] V134-07 Owner: GoDaddy Publish v1.3.4, then set up the cron job (Part I) and check the green "Job runner" line
+- [~] V134-07 Owner: GoDaddy Publish v1.3.4, then set up the cron job (Part I) and check the green "Job runner" line (9 Oct 2026: superseded: publish v1.4.0 instead)
 
 ## Session log — QA session 15: live test on approval.arssteels.net (9 Oct 2026)
 Owner: "I have opened Google Chrome, test it live", then, signed in as IT Admin, "test every left-out thing here".
@@ -351,7 +352,7 @@ Boundaries from the prompt: smallest safe fixes, only for reproduced defects; no
   - DEF-01/04/09: a `loading.tsx` per space; period and paging links become plain links with a pending state (the last click wins; work before hydration);
   - DEF-05/08: a live region and a fixed-width busy label in SubmitButton
 - [x] Q14-05 Re-run: the loader audit (all 85), the new suite, then the full regression (unit, integration, e2e, build); fix any new defects with the same loop (done 9 Oct 2026)
-- [ ] Q14-07 **Owner decisions:** DEF-E1 (dependency upgrades: Next 15.5.27 patch now; firebase-admin 14.5.0; firebase client major later) and DEF-E2 (the rate-limit IP source: is all traffic through Cloudflare?) (Q-017, Q-018)
+- [x] Q14-07 **Owner decisions:** DEF-E1 (dependency upgrades: Next 15.5.27 patch now; firebase-admin 14.5.0; firebase client major later) and DEF-E2 (the rate-limit IP source: is all traffic through Cloudflare?) (Q-017, Q-018) (done 9 Oct 2026: answered 9 Oct 2026 (Q-017, Q-018) → v1.3.4)
 - [x] Q14-06 Report `docs/qa/E2E-QA-REPORT.md` (inventory, register with fix/retest columns, defect + change log, summary); update the loader report; living files; commit, push, CI, tag (done 9 Oct 2026)
 
 ## Session log — QA session 13: loader and loading-state audit (9 Oct 2026)
@@ -485,7 +486,7 @@ Each item shows its status **before** this session: ✅ done, ⚠️ partly done
 - [x] P0-05 Update the plan page to v2 with the decisions and the DoA explanation, and republish (same URL). Copy saved as `reference/platform-plan-v2.html` (done 28 Sep 2026)
 - [x] P0-08 Record the second-round answers (D-024 to D-033) and the Power BI reference (DEVELOPMENT-MEMORY §9) in all living files; republish the plan page as v3 (done 28 Sep 2026)
 - [x] P0-07 Write CLAUDE.md (project root) and Claude memory entries enforcing the north star and the three living files (done 28 Sep 2026)
-- [ ] P0-06 Owner reviews the plan v2 and this checklist
+- [~] P0-06 Owner reviews the plan v2 and this checklist (9 Oct 2026: superseded: the owner steers from Now / Next each session)
 
 ### 0.2 Infrastructure (all owned by itadmin@arssteels.co.in)
 - [x] P0-10 Confirm the GoDaddy plan type: cPanel with Node.js; Node.JS Hosting product as used by the Power BI website (D-027) (done 28 Sep 2026)
@@ -494,15 +495,15 @@ Each item shows its status **before** this session: ✅ done, ⚠️ partly done
 - [x] P0-12a CEOITBox: same number and API key as the Power BI website (D-036) (done 28 Sep 2026)
 - [~] P0-13 SMS channel for OTP: not needed, OTP is WhatsApp only (D-025, 28 Sep 2026)
 - [x] P0-14 Notification templates: the owner provides the wording (Q-013) → register them in CEOITBox (Utility category) → Meta approval → record the template names and variable order in the app's template registry. OTP reuses `wa_login_otp_v1` (Q-014) (7 Oct 2026: all 20 formats in docs/NOTIFICATION-TEMPLATES.md and /superadmin/templates; the owner creates them in CEOITBox)
-- [ ] P0-15 Email through Resend from itadmin@arssteels.co.in (D-037): check the domain is verified in Resend (SPF/DKIM); API key in GoDaddy env vars only
-- [ ] P0-16 Reuse Firebase project `power-bi-dashboard-3b29f` (D-038): add `approvals.arssteels.net` and `localhost` to its authorised domains
-- [ ] P0-17 DNS + SSL: bind `approvals.arssteels.net` to the GoDaddy Node.js app (D-034)
+- [x] P0-15 Email through Resend from itadmin@arssteels.co.in (D-037): check the domain is verified in Resend (SPF/DKIM); API key in GoDaddy env vars only (done 9 Oct 2026: arssteels.net / approval.arssteels.net verified; key in Super Admin settings (D-091))
+- [x] P0-16 Reuse Firebase project `power-bi-dashboard-3b29f` (D-038): add `approvals.arssteels.net` and `localhost` to its authorised domains (done 9 Oct 2026: Google sign-in works on live)
+- [x] P0-17 DNS + SSL: bind `approvals.arssteels.net` to the GoDaddy Node.js app (D-034) (done 9 Oct 2026: live with SSL (Cloudflare + GoDaddy))
 - [>] P0-17a On the first GoDaddy app: check that the disk is persistent (attachments), which MySQL host is reachable, and whether cron is available (Q-001 remainder) (7 Oct 2026: owner confirmed the disk is persistent; MySQL host and cron still to check on the first deploy)
 - [x] P0-18 Git repository `HarishDevs/ARS-Approval-System` (D-035): `git init` in the project folder, `.gitignore` (node_modules, .next, .env*, backups, storage), README, repo-level CLAUDE.md, first commit pushed to `main` (done 28 Sep 2026)
-- [ ] P0-18a Working rule: commit with clear messages; push at the end of every session; feature branches + pull requests once coding starts
-- [ ] P0-19 Create the environments: local dev, staging (GoDaddy), production (GoDaddy)
-- [ ] P0-20 Set up a secrets store on the server (environment files outside the web root, locked permissions); never in the repo
-- [ ] P0-21 Set up database backups: daily, off-server copy, tested restore
+- [x] P0-18a Working rule: commit with clear messages; push at the end of every session; feature branches + pull requests once coding starts (done 9 Oct 2026: practised every session; CI on main)
+- [~] P0-19 Create the environments: local dev, staging (GoDaddy), production (GoDaddy) (9 Oct 2026: decided: local + CI + production; no separate staging)
+- [x] P0-20 Set up a secrets store on the server (environment files outside the web root, locked permissions); never in the repo (done 9 Oct 2026: GoDaddy env secrets + AES-GCM settings)
+- [x] P0-21 Set up database backups: daily, off-server copy, tested restore (done 9 Oct 2026: v1.4.0, D-104: daily, attachments too, restore drill in CI; off-server copy: DEPLOYMENT P1 step 4)
 
 ### 0.2b Code scaffold (D-028)
 - [~] P0-40 Monorepo with two apps: replaced by a single app (D-034, 28 Sep 2026)
@@ -551,7 +552,7 @@ The Super Admin then enters the table in the Admin Portal (P3-30). Every request
 ### P1-USR Users and organisation
 - [>] P1-01 Data model: companies/units, locations, departments, designations, cost centres (28 Sep 2026: departments (with HOD) and designations; units, locations and cost centres still to do)
 - [x] P1-02 Data model: users. Fields: login ID, email (any domain), WhatsApp number, sign-in method (Google / password), firebase_uid, password hash, status (active / inactive), locked-until, is_super_admin, is_break_glass (done 28 Sep 2026; Super Admin is a role (D-043), not a flag)
-- [ ] P1-03 Reporting hierarchy: reporting manager and HOD per user; manager-of-manager lookup
+- [x] P1-03 Reporting hierarchy: reporting manager and HOD per user; manager-of-manager lookup (done 9 Oct 2026: reporting manager, HOD, manager's manager sources)
 - [>] P1-04 Users can only be created in the Admin Portal (no self sign-up); bulk import with validation (30 Sep 2026: admin-only creation done; bulk import still to do)
 - [x] P1-05 Make a user inactive (never hard-delete, D-033) → end their sessions, block sign-in, hand their pending approval steps to a chosen person; reactivate later if needed (30 Sep 2026: deactivate ends sessions and blocks sign-in, reactivate done; handing over pending steps comes with S3) (done 1 Oct 2026; handover required before deactivation (F-16))
 - [x] P1-06 Roles assigned per user, by the admin only (D-033): a user can hold several roles; no self-service role changes (done 30 Sep 2026; D-047 rules)
@@ -594,36 +595,36 @@ The Super Admin then enters the table in the Admin Portal (P3-30). Every request
 - [x] P1-44 In-app notifications (bell icon from the asset pack) (done 1 Oct 2026; bell with unread count + inbox)
 - [x] P1-45 Delivery log per channel with status, retries and failures; the Super Admin can resend (30 Sep 2026: Super Admin delivery log; resend button with the retry runner (S3-07)) (done 30 Sep 2026; Retry now + automatic retries)
 - [x] P1-46 Template per event and channel, versioned, with preview (7 Oct 2026: catalogue with preview, registry screen, versioned rows)
-- [ ] P1-47 WhatsApp numbers verified by OTP; opt-in recorded
+- [~] P1-47 WhatsApp numbers verified by OTP; opt-in recorded (9 Oct 2026: WhatsApp is verified by the code at set-password and forgot-password; opt-in records not needed for staff)
 
 ### P1-ADM Admin Portal (Super Admin) core
 - [>] P1-50 Admin area shells at `approvals.arssteels.net/admin` and `/superadmin` (D-034): navigation, ARS branding (28 Sep 2026: shells for /admin and /superadmin)
 - [>] P1-50a Roles (D-024, D-039): **Super Admin** = itadmin@ (everything; `/superadmin`); **IT Admin** (`/admin`: approval types, forms, workflows, templates, DoA, users and roles as granted); **User** (`/users`). Provider keys, security, integrations, system health and audit export are `/superadmin` only (28 Sep 2026: SUPER_ADMIN / IT_ADMIN / USER roles and area policy)
 - [>] P1-51 Organisation module (P1-01) (30 Sep 2026: departments (with HOD) and designations; units, locations, cost centres still to do)
 - [>] P1-52 Users and hierarchy module (P1-02 to P1-05): create, import, edit, deactivate, force sign-out, reset password, unlock, change sign-in method (30 Sep 2026: create, edit, deactivate, reactivate, unlock, force sign-out, set-password link, change sign-in method; import still to do)
-- [ ] P1-53 Roles and data rights: role builder, permission matrix, data scopes (own / team / department / list / all), field-level hiding
+- [~] P1-53 Roles and data rights: role builder, permission matrix, data scopes (own / team / department / list / all), field-level hiding (9 Oct 2026: superseded by D-047: three fixed roles plus record-level checks)
 - [>] P1-54 Security settings: password policy, OTP values, lockout, sessions, trusted-device period, alert rules, optional IP allowlist for the Admin Portal (30 Sep 2026: password length, OTP, lockout, trusted-device values in /superadmin; session timeouts and IP allowlist still to do)
 - [>] P1-55 Providers and integrations: Google OAuth, email, CEOITBox, SMS. Masked keys, test-send button (30 Sep 2026: Resend + CEOITBox keys and test-send; Google (Firebase Admin) stays an env value)
-- [ ] P1-56 Notification center: templates, channels, delivery log
+- [x] P1-56 Notification center: templates, channels, delivery log (done 9 Oct 2026: template board, channels, Message deliveries)
 - [>] P1-57 Audit viewer: search, filter and export the audit log; login history; security events (30 Sep 2026: viewer with action filter and paging; export and login-history view still to do)
-- [ ] P1-58 System health: job queue, notification failures, error summary (admin only)
-- [ ] P1-59 Branding: logo, colours, email header, login message
+- [x] P1-58 System health: job queue, notification failures, error summary (admin only) (done 9 Oct 2026: job runner status, /api/health, Message deliveries, audit log)
+- [~] P1-59 Branding: logo, colours, email header, login message (9 Oct 2026: superseded: fixed ARS branding)
 - [x] P1-60 Every admin change is written to the audit log with before and after values (done 30 Sep 2026 for settings, users, roles, departments, designations, workflows)
 
 ### P1-UI User app foundation
 - [>] P1-70 App shell with the ARS tokens and icons (asset pack): sidebar, top bar, profile (28 Sep 2026: sidebar shell with ARS branding)
 - [x] P1-71 Login screens: Google button, User ID + password, OTP screen, forgot password, create password (28 Sep 2026: Google + User ID/password + OTP screens; forgot/create password in S2-04; forgot + set password screens done 30 Sep 2026)
-- [ ] P1-72 Profile: my details, my devices and sessions (sign out a device), notification preferences where the Super Admin allows them
+- [x] P1-72 Profile: my details, my devices and sessions (sign out a device), notification preferences where the Super Admin allows them (done 9 Oct 2026: Profile page v1.3.5 (details, sign-ins, sign out everywhere); notification preferences not offered: both channels by decision)
 
 ---
 
 ## Phase 2 — Multi-level approval engine (the core of the product)
 
 ### P2-DM Data model (node graph, never fixed levels)
-- [ ] P2-01 ApprovalTypes, ApprovalTemplates (versioned), FormDefinitions (versioned), FormFields (reusable field types)
+- [x] P2-01 ApprovalTypes, ApprovalTemplates (versioned), FormDefinitions (versioned), FormFields (reusable field types) (done 9 Oct 2026: workflow_definitions / versioned versions with form and builder)
 - [x] P2-02 WorkflowDefinitions → WorkflowVersions → WorkflowNodes + WorkflowEdges + WorkflowConditions (done 30 Sep 2026; nodes/edges stored as the version's JSON graph, one published version at a time)
-- [ ] P2-03 Node kinds: START, APPROVAL, PARALLEL-SPLIT, JOIN, CONDITION, WORK-ASSIGNMENT, NOTIFY, END
-- [ ] P2-04 Completion rules on a group: ALL, ANY_ONE, ANY_N_OF_M (N configurable), with optional weighted or mandatory members
+- [x] P2-03 Node kinds: START, APPROVAL, PARALLEL-SPLIT, JOIN, CONDITION, WORK-ASSIGNMENT, NOTIFY, END (done 9 Oct 2026: all eight, WORK and NOTIFY in v1.4.0 (D-097))
+- [~] P2-04 Completion rules on a group: ALL, ANY_ONE, ANY_N_OF_M (N configurable), with optional weighted or mandatory members (9 Oct 2026: ALL / ANY_ONE / ANY_N built; a mandatory member = a parallel step joined with ALL)
 - [x] P2-05 Approver sources per node: specific user, role, requester's HOD, department HOD, reporting manager, manager's manager, department, approval group, requester-selected (within governance), user from a form field (30 Sep 2026: all 8 sources resolve from MySQL; approver groups have tables (screen in S3-06)) (done 30 Sep 2026; approver groups screen added)
 - [>] P2-06 ApprovalRequests (permanent ID, e.g. PUR-2026-000421), ApprovalVersions, ApprovalInstances, ApprovalSteps, ApprovalActions (30 Sep 2026: requests with permanent numbers, state, tasks and timeline; form versions come with the form builder)
 - [x] P2-07 Step record: step ID, request, node, assigned approver(s), eligible approvers, **actual actor**, on-behalf-of, decision, time, comment, version (done 30 Sep 2026; actual actor + on-behalf-of per task)
@@ -640,7 +641,7 @@ The Super Admin then enters the table in the Admin Portal (P3-30). Every request
 - [x] P2-26 Skip rules (e.g. skip a level if the requester is that approver; no self-approval) (engine core done 28 Sep 2026 (skipIf, no self-approval, BLOCK/SKIP when no approver))
 - [x] P2-27 Resolve approvers when a step starts (so hierarchy changes are picked up); record who was resolved (done 30 Sep 2026; resolved from a fresh directory snapshot when each step starts)
 - [x] P2-28 **Server-side actor authorisation** on every action (D-020): the signed-in user must be an eligible approver or a valid delegate for this step (28 Sep 2026: the engine enforces approver-or-delegate; the server wiring comes with S2-06; wired and tested on MySQL 30 Sep 2026)
-- [ ] P2-29 Canonical state machine (D-017): Draft, Submitted, Pending, In Progress, On Hold, Changes Required, Resubmitted, Approved, Rejected, Reopened, Closed
+- [~] P2-29 Canonical state machine (D-017): Draft, Submitted, Pending, In Progress, On Hold, Changes Required, Resubmitted, Approved, Rejected, Reopened, Closed (9 Oct 2026: D-078: no drafts; reopen = new round; closed = approved / rejected / withdrawn)
 - [x] P2-30 Actions: Approve, Reject (reason required), Request Changes (reason required), Put On Hold / Resume, Comment (engine core done 28 Sep 2026)
 - [x] P2-31 Timeline / audit entry for every transition (done 30 Sep 2026; append-only approval_events)
 - [>] P2-32 Notification events emitted for every transition (to P1-NOT) (30 Sep 2026: approval needed / approved / rejected / changes / hold / blocked on email + in-app; WhatsApp waits for Q-013)
@@ -677,47 +678,47 @@ The Super Admin then enters the table in the Admin Portal (P3-30). Every request
 - [ ] P3-43 Templates: IT Internal, Plant, ASP, Branding, Training, Sumit (in the corrected form)
 
 ## Phase 4 — Lifecycle
-- [ ] P4-01 Changes Required → requester edits → Resubmitted as a new version under the **same ID** (base plan §14)
-- [ ] P4-02 Resubmission restarts from a policy-defined point (beginning / the level that asked / a specific level)
-- [ ] P4-03 Reopen after approval: reason required; restart from beginning / a chosen level / current level; audited (base plan §15)
-- [ ] P4-04 On Hold: paused, stays open, counts as pending; resume
-- [ ] P4-05 Delegation: date range, delegate, scope; "on behalf of" recorded (D-018); the Super Admin can view and end any delegation
-- [ ] P4-06 SLA per node, reminders, escalation chains (base plan §19)
-- [ ] P4-07 Holiday / working-day calendar used by SLA and due dates
-- [ ] P4-08 Recording approvals given outside the system (phone/meeting): approver records it with evidence (D-019)
+- [x] P4-01 Changes Required → requester edits → Resubmitted as a new version under the **same ID** (base plan §14) (done 9 Oct 2026: same request number, round N)
+- [~] P4-02 Resubmission restarts from a policy-defined point (beginning / the level that asked / a specific level) (9 Oct 2026: D-101: from the step that asked, or from the beginning, per approval type)
+- [~] P4-03 Reopen after approval: reason required; restart from beginning / a chosen level / current level; audited (base plan §15) (9 Oct 2026: reopen restarts from the beginning, reason required, audited)
+- [x] P4-04 On Hold: paused, stays open, counts as pending; resume (done 9 Oct 2026: hold time extends due times (v1.4.0))
+- [x] P4-05 Delegation: date range, delegate, scope; "on behalf of" recorded (D-018); the Super Admin can view and end any delegation (done 9 Oct 2026: out of office, on behalf recorded)
+- [x] P4-06 SLA per node, reminders, escalation chains (base plan §19) (done 9 Oct 2026: reminder + escalation up to 3 levels (v1.4.0, D-100))
+- [x] P4-07 Holiday / working-day calendar used by SLA and due dates (done 9 Oct 2026: working calendar)
+- [~] P4-08 Recording approvals given outside the system (phone/meeting): approver records it with evidence (D-019) (9 Oct 2026: recorded as an approval with a comment and the evidence attached)
 
 ## Phase 5 — Employee custom approvals
-- [ ] P5-01 "Create custom approval", open to **every user whenever needed** (D-026): choose approvers and pattern (sequential / parallel / any-one / any-N / mixed), documents, submit
-- [ ] P5-02 Anyone can pick anyone as an approver (D-040). Always-on safety rules: active users only, no self-approval, graph validated. No exclusion list
-- [ ] P5-03 Custom flows are validated by the same validator (P3-04)
-- [ ] P5-04 Super Admin can turn a useful custom flow into a predefined template
+- [x] P5-01 "Create custom approval", open to **every user whenever needed** (D-026): choose approvers and pattern (sequential / parallel / any-one / any-N / mixed), documents, submit (done 9 Oct 2026: Custom approval page)
+- [x] P5-02 Anyone can pick anyone as an approver (D-040). Always-on safety rules: active users only, no self-approval, graph validated. No exclusion list (done 9 Oct 2026: approver-eligible people (D-085), no self-approval)
+- [x] P5-03 Custom flows are validated by the same validator (P3-04) (done 9 Oct 2026: same validator)
+- [x] P5-04 Super Admin can turn a useful custom flow into a predefined template (done 9 Oct 2026: v1.4.0: "Make it an approval type" on a custom request (IT))
 
 ## Phase 6 — Documents, discussion, work assignment
-- [ ] P6-01 Documents: PDF, Excel, Word, images; versions kept; never overwritten silently
-- [ ] P6-02 Comments and @mentions on each request
-- [ ] P6-03 Work assignment after approval: assignee or department, work tasks, completion, close (the IT pattern)
-- [ ] P6-04 Watchers / followers
+- [x] P6-01 Documents: PDF, Excel, Word, images; versions kept; never overwritten silently (done 9 Oct 2026: attachments never overwritten; per round)
+- [~] P6-02 Comments and @mentions on each request (9 Oct 2026: comments built; no @mentions (a mention would need its own access rule; participants are already told))
+- [x] P6-03 Work assignment after approval: assignee or department, work tasks, completion, close (the IT pattern) (done 9 Oct 2026: work steps (v1.4.0, D-097))
+- [~] P6-04 Watchers / followers (9 Oct 2026: no watchers: FYI steps tell people who aren't approvers)
 
 ## Phase 7 — Management portal and analytics
 - [x] P7-01 Management control center: raised, pending, approved, rejected, changes required, on hold, overdue (today / period) (done 1 Oct 2026; /admin/insights (D-069))
-- [ ] P7-02 Views by department, approval type, approver, amount band, age, SLA
-- [ ] P7-03 Approver workload and response times
-- [ ] P7-04 Reporting views for Power BI (read-only DB views or API)
-- [ ] P7-05 Data rights tools for the Super Admin: export (Excel/CSV), scheduled exports, corrections with a reason (versioned), archive, retention rules, legal hold
+- [x] P7-02 Views by department, approval type, approver, amount band, age, SLA (done 9 Oct 2026: four dashboards with filters)
+- [x] P7-03 Approver workload and response times (done 9 Oct 2026: approver dashboard)
+- [x] P7-04 Reporting views for Power BI (read-only DB views or API) (done 9 Oct 2026: v1.4.0: database/optional/reporting_views.sql (DEPLOYMENT K2))
+- [~] P7-05 Data rights tools for the Super Admin: export (Excel/CSV), scheduled exports, corrections with a reason (versioned), archive, retention rules, legal hold (9 Oct 2026: CSV exports built (audit, dashboards, import data); scheduled exports, retention and legal hold not needed yet)
 
 ## Phase 8 — Integrations and mobile
-- [ ] P8-01 ERP / Salesforce / other apps via API and webhooks (Super Admin configures)
-- [ ] P8-02 Installable mobile web app (PWA) for approvers
+- [~] P8-01 ERP / Salesforce / other apps via API and webhooks (Super Admin configures) (9 Oct 2026: no consumer yet; revisit when an ERP needs it)
+- [x] P8-02 Installable mobile web app (PWA) for approvers (done 9 Oct 2026: v1.4.0: installable (manifest + icons))
 - [~] P8-03 Import of Asana history. Not needed: D-013 (28 Sep 2026)
 - [ ] P8-04 Switch off the Asana approval forms after go-live and tell users
 
 ## Go-live
 - [ ] GL-01 User acceptance testing, per template, with the real approvers
-- [ ] GL-02 Security review: auth, permissions, admin isolation, headers, secrets
-- [ ] GL-03 Load test with typical volume (~500+ requests/month, multi-step)
+- [x] GL-02 Security review: auth, permissions, admin isolation, headers, secrets (done 9 Oct 2026: docs/APPLICATION_CURRENT_STATE_AUDIT.md + fixes in v1.3.6/v1.4.0)
+- [x] GL-03 Load test with typical volume (~500+ requests/month, multi-step) (done 9 Oct 2026: local load test, 50 people at once: 2,400 requests, 0 errors, p95 586 ms (tests/perf))
 - [ ] GL-04 Backup/restore drill
 - [ ] GL-05 Key rotation and access clean-up (P1-38)
-- [ ] GL-06 User guides: employee, approver, management; admin runbook
+- [x] GL-06 User guides: employee, approver, management; admin runbook (done 9 Oct 2026: docs/USER-GUIDE.md; admin runbook = DEPLOYMENT.md)
 - [ ] GL-07 Pilot with one department, then roll out by template
 
 ---

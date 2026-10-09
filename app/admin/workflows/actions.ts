@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getAdminActor, parseId } from "@/server/admin/actor";
 import { addDraftVersion, createWorkflow, publishVersion, simulateVersion } from "@/server/approvals/service";
-import { deleteUnusedWorkflow, findWorkflow, updateWorkflowDetails } from "@/lib/db/repositories/approvals.repository";
+import { deleteUnusedWorkflow, findRequest, findWorkflow, findWorkflowVersion, updateWorkflowDetails } from "@/lib/db/repositories/approvals.repository";
 import { withTransaction } from "@/lib/db/transaction";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { builderSpecSchema } from "@/server/workflows/builder";
@@ -186,4 +186,45 @@ export async function deleteWorkflowAction(_previous: ActionResult | null, formD
   if (!removed) return { ok: false, message: "Requests were raised on this approval type, so it can't be removed. Untick \"Open for new requests\" to archive it instead." };
   revalidatePath("/admin/workflows");
   redirect("/admin/workflows?removed=1");
+}
+
+// P5-04: a custom approval that worked well becomes a predefined approval
+// type: its levels and form are copied into a new draft, which IT then
+// reviews, tests and publishes like any other.
+export async function promoteCustomAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const actor = await getAdminActor();
+  const requestId = parseId(formData.get("requestId"));
+  if (!actor || requestId === null) return NOT_FOUND;
+  const request = await findRequest(requestId);
+  const version = request ? await findWorkflowVersion(request.workflowVersionId) : null;
+  const source = version ? await findWorkflow(version.workflowId) : null;
+  if (!request || !version || !source || source.kind !== "CUSTOM" || !version.builder) return NOT_FOUND;
+  const name = String(formData.get("name") ?? "").trim();
+  if (name.length < 3 || name.length > 150) return { ok: false, message: "Check the highlighted fields.", fieldErrors: { name: "Enter a name (3 to 150 characters)." } };
+  let workflowId: number;
+  try {
+    const result = await createWorkflow(
+      {
+        code: String(formData.get("code") ?? "").trim().toUpperCase(),
+        name,
+        description: `Made from custom approval ${request.requestNo}.`,
+        kind: "PREDEFINED",
+        requestPrefix: String(formData.get("prefix") ?? "").trim().toUpperCase(),
+        builder: version.builder,
+        form: version.form,
+      },
+      actor,
+    );
+    if (!result.ok) {
+      const field = result.code === "INVALID_PREFIX" ? "prefix" : result.code === "INVALID_CODE" || result.code === "DUPLICATE_CODE" ? "code" : null;
+      return { ok: false, message: result.message, ...(field ? { fieldErrors: { [field]: result.message } } : {}) };
+    }
+    workflowId = result.value.workflowId;
+    await recordAudit({ actorUserId: actor.id, action: "CUSTOM_PROMOTED", entityType: "WORKFLOW", entityId: workflowId, sessionId: actor.sessionId, ipAddress: actor.ipAddress, metadata: { fromRequest: request.requestNo } });
+  } catch (error) {
+    logError("promoteCustomAction failed", error);
+    return { ok: false, message: "Couldn't save. Please try again." };
+  }
+  revalidatePath("/admin/workflows");
+  redirect(`/admin/workflows/${workflowId}?created=1`);
 }

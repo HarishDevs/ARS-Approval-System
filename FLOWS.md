@@ -60,6 +60,12 @@ The number of levels and how they combine is unlimited. There are no fixed "Leve
 | F-15 | Comments on a request | Built and verified 1 Oct 2026 |
 | F-16 | Handing over pending approvals | Built and tested on MySQL 1 Oct 2026 |
 | F-54 | DoA view derived from workflows | Built 1 Oct 2026; reads DoA matrices 8 Oct 2026 |
+| F-84 | Custom approval → approval type (IT) | Built 9 Oct 2026 (v1.4.0) |
+| F-83 | Backups and restore | Built 9 Oct 2026 (v1.4.0) |
+| F-82 | Late approvals: reminder and escalation levels | Built 9 Oct 2026 (v1.4.0) |
+| F-81 | Builder rules: all/any conditions, nested choices | Built 9 Oct 2026 (v1.4.0) |
+| F-80 | Stuck step: IT moves it on | Built 9 Oct 2026 (v1.4.0) |
+| F-79 | Work steps and FYI steps | Built 9 Oct 2026 (v1.4.0) |
 | F-78 | Sign-in safety rules from the audit (idle sign-out, safe redirect, code tries, encrypted retries) | Built 9 Oct 2026 (v1.3.6) |
 | F-77 | Profile page: details + Notifications, Out of office, Sign-in & devices as tabs | Built 9 Oct 2026 (v1.3.5) |
 | F-76 | Form submission resilience (errors, time limit, session ended) | Built 9 Oct 2026 (QA session 14) |
@@ -708,6 +714,48 @@ flowchart TD
 - **Department-wise raised:** per department of the person who raised: raised, approved, rejected, open, average time to close; plus each department's top approval types.
 - **Approver-wise:** per approver: assigned, approved, rejected, changes asked, pending now, overdue now, average time to decide, decided within the response time %.
 - **Raiser-wise by department:** each raiser grouped under their department: raised, approved, rejected, open, average time to close, last raised.
+
+## F-79 Work steps and FYI steps (v1.4.0, D-097)
+```mermaid
+flowchart LR
+  A[Approvals done] --> W["Work step: Raise the PO\nassigned to the requester or a buyer"]
+  W -- "Mark as done (comment)" --> F["FYI step: tell Finance\n(no action, moves on)"]
+  W -- "Ask for changes" --> R[Requester updates and resubmits]
+  F --> E[Approved]
+```
+- A work task shows as **To do** in Waiting for me. It can't be rejected, and it may be the requester's own.
+- FYI recipients get "For your information". The level map lists who was told.
+
+## F-80 Stuck step: IT moves it on (v1.4.0, D-098)
+```mermaid
+flowchart TD
+  B["Step finds nobody (e.g. no HOD)"] --> N[IT Admins told: Request blocked]
+  N --> P["Request page: Stuck: needs IT"]
+  P -->|Give it to people| T[Tasks for them]
+  P -->|Skip| S[Next level]
+  P -->|Try again after fixing masters| X[Resolve again]
+  P -->|Choice: pick a path| C[That path]
+  T & S & X & C --> M["Requester told: moving again; timeline + audit"]
+```
+
+## F-81 Builder rules (v1.4.0, D-099)
+- A choice, or a skip rule, holds up to 10 conditions, joined by **all of these** or **any one of these**.
+- A path of a choice can hold another choice, up to 3 deep.
+- The level map writes the rule as "Amount is more than 5,00,000 or Nature is Capex".
+
+## F-82 Late approvals (v1.4.0, D-100)
+With a response time T: **T** brings a reminder to the approver and their delegate. **2×T** goes to the manager and IT, **3×T** to the manager's manager, and **4×T** one level higher. How far it goes is set in Super Admin → General. Time on hold doesn't count, and a handover restarts the clock.
+
+## F-83 Backups and restore (v1.4.0, D-104)
+```mermaid
+flowchart LR
+  J[Job runner, once a day] --> D["ars-db-YYYYMMDD-HHMMSS.sql.gz\n+ new attachments"] --> K[Kept BACKUP_KEEP_DAYS]
+  S[Super Admin: Back up now] --> D
+  D --> R["restore.js / phpMyAdmin into a new database\n(DEPLOYMENT Part P)"]
+```
+
+## F-84 Custom approval → approval type (v1.4.0, D-106)
+IT opens a custom request → **Reuse these levels** → name, code, prefix → a draft predefined approval type with the same levels and form. Then edit it, test it and publish it as usual.
 
 ## F-78 Sign-in safety rules added by the audit (v1.3.6, D-096)
 - **Idle sign-out:** a session ends after 120 minutes without activity (Super Admin → Sign-in security, 15–720), and in any case 12 hours after sign-in. The next click goes to the sign-in page; forms say "Your session has ended" and keep what was typed (F-76).

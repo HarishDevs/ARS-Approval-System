@@ -9,6 +9,14 @@
 - **No schema changes and no new dependencies.**
 - Defects were fixed only after they were reproduced.
 
+> **Status update (9 Oct 2026, later releases):**
+> - **DEF-E1** (dependency advisories) was closed in **v1.3.4** (D-093): production audit 0.
+> - **DEF-E2** (rate-limit IP source) was closed in **v1.3.4** (D-092): the client IP comes from CF-Connecting-IP, and QA-SEC-06 passes.
+> - The QA suite is **27/27** since v1.3.4 and runs in CI from **v1.4.0**.
+> - QA-AUTH-04 was updated in v1.4.0 (S-06): a locked account now gives the same generic answer as an unknown one, unless the password is right.
+>
+> The rest of this report is kept as it was on 9 Oct (v1.3.1).
+
 ## 1. Scope inventory (features that really exist → where they are tested)
 
 | Area | What exists | Tested by |

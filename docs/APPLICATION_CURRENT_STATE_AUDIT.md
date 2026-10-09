@@ -32,6 +32,33 @@ The owner asked, in the same message as the audit request, to move **Out of offi
 Everything else in this document is read-only findings.
 
 
+## Update: v1.4.0 (9 Oct 2026, owner: "fix every pending items in one go")
+Every code item in this report is now done. The owner's tasks (data, Meta approvals, publish, UAT, pilot, key rotation) remain.
+
+| Register | Status in v1.4.0 | Proof |
+|---|---|---|
+| X-03 BLOCKED-step recovery | Built (D-098) | `tests/engine/v140-engine.test.ts`, `tests/integration/v140.int.test.ts`, `tests/e2e/v140-ui.spec.ts` |
+| WORK / NOTIFY nodes, designation and requester sources | Built (D-097) | same, plus `tests/workflows/v140-builder.test.ts` |
+| Builder AND/OR, nested branches | Built (D-099) | `v140-builder.test.ts`, `v140-ui.spec.ts` |
+| Multi-level escalation, R-08 | Built (D-100) | `session4.test.ts`, `v140.int.test.ts` |
+| R-04 delete via engine, R-05, R-06, R-07, R-09, R-10, delegation lock, decisions audited, hold extends due | Fixed (D-107) | `v140.int.test.ts`, `migrate.int.test.ts` |
+| S-06, S-07, P-01, P-03..P-07 | Fixed (D-102) | `password-sign-in.test.ts`, `google-provider.test.ts`, `user-rules.test.ts`, `log-redaction.test.ts`, `v140-api.spec.ts`, `tests/origin/origin-lock.spec.ts` |
+| P-02, P-08, P-09 | Decided and kept, with reasons (D-102) | DEVELOPMENT-MEMORY |
+| X-09 health, X-10 backups | Built (D-103, D-104); restore drill in CI | `backup.int.test.ts`, `v140-api.spec.ts` |
+| Delivery receipts (S8-03) | Built; CEOITBox payload to confirm (DEPLOYMENT G6) | `receipts.test.ts`, `v140-api.spec.ts` |
+| S8-02 bundle | Built | `v140-ui.spec.ts`, manual |
+| D-01 dev advisories | 16 → 7 (one package, `braces`, with no fix; build-time only) (D-105) | `npm audit` |
+| D-02, D-03, D-04 | Fixed | `confirm-bar.test.ts`, the docs |
+| Load test (GL-03) | 50 people at once: 2,400 requests, 0 errors, p95 586 ms (local) | `tests/perf/load.spec.ts` |
+| P5-04, P7-04, P8-02 | Built (D-106) | `v140-ui.spec.ts`, `reporting-views.int.test.ts`, `v140-api.spec.ts` |
+
+**Regression on v1.4.0:**
+- types and lint clean; unit 301; integration 81;
+- e2e 38; QA 27/27; origin 1;
+- production build OK; production audit 0.
+
+
+
 ## Update: fixes in v1.3.6 (9 Oct 2026, owner: "Go Ahead")
 
 | ID | Fix | Proof |

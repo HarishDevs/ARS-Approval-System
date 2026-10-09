@@ -68,6 +68,9 @@ describe("backup and restore drill", () => {
     try {
       execFileSync(process.execPath, [script, report.file, `--confirm-database=${target}`], { env, stdio: "pipe" });
     } catch (error) {
+      // Keep the file for a look (test-results is git-ignored).
+      fs.mkdirSync("test-results", { recursive: true });
+      fs.copyFileSync(report.file, path.join("test-results", "failed-restore.sql.gz"));
       throw new Error(`restore failed: ${(error as { stderr?: Buffer }).stderr?.toString() ?? String(error)}`);
     }
 

@@ -829,8 +829,8 @@ function StepEditor({
           hours
         </label>
         <select value={step.onNoApprover ?? "BLOCK"} onChange={(event) => onChange({ ...step, onNoApprover: event.target.value as "BLOCK" | "SKIP" })} className="field-input w-auto" aria-label="If nobody resolves">
-          <option value="BLOCK">If nobody to approve: stop and tell IT</option>
-          <option value="SKIP">If nobody to approve: skip this step</option>
+          <option value="BLOCK">{type === "WORK" ? "If nobody to do it" : "If nobody to approve"}: stop and tell IT</option>
+          <option value="SKIP">{type === "WORK" ? "If nobody to do it" : "If nobody to approve"}: skip this step</option>
         </select>
       </div>
       )}

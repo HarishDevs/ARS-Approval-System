@@ -66,11 +66,18 @@ async function* dumpWith(db: Awaited<ReturnType<ReturnType<typeof getDbPool>["ge
   for (const name of names) {
     stats.tables += 1;
     const [create] = await db.query<RowDataPacket[]>(`SHOW CREATE TABLE ${quoteId(name)}`);
-    yield `DROP TABLE IF EXISTS ${quoteId(name)};\n${String(create[0]!["Create Table"])};\n`;
+    const createSql = String(create[0]!["Create Table"]);
+    yield `DROP TABLE IF EXISTS ${quoteId(name)};\n${createSql};\n`;
+    // Computed columns, read from the CREATE TABLE text itself: SHOW COLUMNS'
+    // "Extra" came back empty for one in a busy run, and the restore then
+    // failed ("value specified for generated column … is not allowed").
+    const computed = new Set([...createSql.matchAll(/^\s*`([^`]+)`[^\n]*\bGENERATED ALWAYS AS\b/gm)].map((match) => match[1]));
     const [columns] = await db.query<RowDataPacket[]>(`SHOW COLUMNS FROM ${quoteId(name)}`);
     // Computed (VIRTUAL/STORED GENERATED) columns can't be inserted. Note:
     // "DEFAULT_GENERATED" only means a DEFAULT CURRENT_TIMESTAMP, which is kept.
-    const insertable = columns.filter((column) => !/(VIRTUAL|STORED) GENERATED/i.test(String(column.Extra ?? ""))).map((column) => String(column.Field));
+    const insertable = columns
+      .filter((column) => !computed.has(String(column.Field)) && !/(VIRTUAL|STORED) GENERATED/i.test(String(column.Extra ?? "")))
+      .map((column) => String(column.Field));
     const columnList = insertable.map(quoteId).join(", ");
     // Paged by the primary key (all of its columns), so each row is read once.
     const keyColumns = columns.filter((column) => column.Key === "PRI").map((column) => String(column.Field));
