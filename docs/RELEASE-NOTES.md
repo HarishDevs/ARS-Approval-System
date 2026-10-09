@@ -1,5 +1,31 @@
 # Release notes
 
+## v1.5.0 (9 Oct 2026): easier every day
+**For everyone**
+- **My work** (the first page) shows what needs you first: due soon and overdue, waiting for you, returned for changes, your drafts, your recent requests and what finished lately. New people see a short "five things to know" list until they hide it.
+- **Drafts:** what you type in a new request or custom approval is saved as you go. Come back to it from My work, or discard it. Submitting removes the draft; drafts go after 30 days.
+- **Where is it now?** A line above the level map says who it's waiting for, since when, what comes next, and how many steps are done.
+- **Search** finds any request you're allowed to see, with filters; save a search as a view.
+- **Phones:** lists become cards, and buttons are easier to tap.
+- **Notification settings** (Profile → Notifications → Settings): switch off email or WhatsApp for updates, reminders, comments and FYIs. Approvals waiting for you and security messages always come.
+- **@mentions:** type `@` and a User ID in a comment to tell someone who can already see the request.
+- **Download PDF** on a request: details, levels, decisions and history in one file.
+- **Out of office** explains what your delegate will see, and lists what is waiting for you now.
+- **Help** (sidebar): how-tos, what each status means, and **Copy details for IT**.
+
+**For approvers**
+- **Approve several at once** on Waiting for me: tick, review the list, approve. Work tasks and requests on hold are done one by one.
+- A **due soon** heads-up comes before the response time runs out.
+
+**For IT**
+- **Workload** (Admin): who has how much waiting, how old it is, what is overdue.
+- **Hand over** suggests the people with the fewest approvals waiting.
+- **Test mode** shows which way each choice went, why steps were skipped, and how the route differs from the live version; it also says which requests a publish would affect.
+
+**For the Super Admin**
+- An alert (once a day) if the scheduled jobs or the daily backup fail.
+- Every page and error has a **reference** that matches the server log.
+
 ## v1.4.0 (9 Oct 2026): everything pending
 **For everyone**
 - **Work tasks:** after approval, a step can hand work to someone, often the requester (e.g. raise the PO). It shows as **To do**, and they press **Mark as done**.

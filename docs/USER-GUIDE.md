@@ -1,4 +1,4 @@
-# ARS Approvals: user guide (v1.4.0)
+# ARS Approvals: user guide (v1.5.0)
 
 **Address:** https://approval.arssteels.net. Sign in with your company Google account, or with your User ID and password and a WhatsApp code if IT set you up that way. Questions: IT (itadmin@arssteels.co.in).
 
@@ -8,12 +8,17 @@ You are signed out after **2 hours without activity**, and 12 hours after signin
 
 ## 1. Everyone
 
+### My work
+The first page after signing in. Tiles show what is waiting for you, what is overdue, your open requests and what was sent back. Below are, in order: **due soon / overdue**, **waiting for me**, **returned for changes**, **your drafts**, **your recent requests** and **finished lately**.
+
 ### Raise a request
 1. **New request** → pick the approval type (e.g. *Purchase & SCM Approval*).
 2. Fill in the form. Add files if needed: up to 5 at a time, 10 MB each (PDF, images, Word, Excel, PowerPoint, CSV, text).
 3. **Submit request.** You see its number (e.g. `PUR-2026-000123`), and the first approvers are told by email and WhatsApp.
 
-The **level map** on the request shows every level, who approves, and where it is now. Levels that the amount (DoA) or a rule doesn't need show as *skipped*.
+**Drafts:** what you type is saved as a draft as you go ("Draft saved 10:42"). If you leave, open it again from **My work → Your drafts**. **Discard draft** clears it. Files aren't kept in drafts, so add them again before submitting. Drafts are removed when you submit, or after 30 days.
+
+A line above the **level map** says who it's waiting for, since when, and what comes next. The **level map** on the request shows every level, who approves, and where it is now. Levels that the amount (DoA) or a rule doesn't need show as *skipped*.
 
 ### Custom approval
 For something without an approval type: **Custom approval** → title, details, amount (optional), files (optional) → pick who approves:
@@ -29,11 +34,23 @@ You get a message. Open the request, change the fields or add files, then **Resu
 ### Withdraw
 While it's open: **Withdraw** on the request. The approvers are told.
 
+### Find a request
+**Search** in the sidebar finds requests you raised, approve(d) or cover for: by number, title or name, with filters for status, type and dates. **Save view** keeps a search for later; make one your default.
+
+### Comments and mentions
+Comments can't be edited or removed. To tell someone in particular, type `@` and their User ID (or tap their name under the box). Only people who can already see the request are told; if someone couldn't be told, you see their User ID after posting.
+
+### Download a summary
+**Download PDF** at the top of a request: details, levels, who decided what, files and history.
+
+### Help
+**Help** in the sidebar: how-tos and what each status means. If something goes wrong, use **Copy details for IT** and paste it in your message to IT. It contains a reference IT can look up, and nothing private.
+
 ### Profile
 **Profile** in the sidebar (or the menu at the top right):
 - **Profile:** your details. Only IT can change them.
-- **Notifications:** everything sent to you; *Older →* for earlier ones.
-- **Out of office:** name someone to approve for you between two dates (up to 90 days). Both names are recorded on every decision.
+- **Notifications:** everything sent to you; *Older →* for earlier ones. **Settings** lets you switch off email or WhatsApp for updates on your requests, reminders, comments and FYIs. Approvals waiting for you and security messages always come.
+- **Out of office:** name someone to approve for you between two dates (up to 90 days, India dates, whole days). They see what is already waiting and anything new. Both names are recorded on every decision. The page lists what is waiting for you now.
 - **Sign-in & devices:** how you sign in, your last 10 sign-ins, and **Sign out everywhere** if a phone or laptop was lost.
 
 If you get a *new sign-in* alert that wasn't you, use its **This wasn't me** link. Your account is signed out everywhere and locked until IT unlocks it.
@@ -51,7 +68,9 @@ If you get a *new sign-in* alert that wasn't you, use its **This wasn't me** lin
 
 **FYI** messages need nothing from you.
 
-If you don't act in time: you get a reminder, then your manager and IT are told, and then your manager's manager.
+**Approve several at once:** on Waiting for me, tick the straightforward approvals (up to 25), press **Review**, check the list, add a comment if you like, and **Yes, approve**. Each one is approved on its own and you see the result for each. Work tasks and requests on hold aren't offered; open them one by one.
+
+If you don't act in time: you get a **due soon** heads-up first, then a reminder, then your manager and IT are told, and then your manager's manager.
 
 ---
 

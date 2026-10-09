@@ -231,6 +231,36 @@
 - Migrations resume from the failed statement.
 - Out-of-office overlap is checked under a row lock.
 - Every decision is in the audit log too. | Claude, 9 Oct 2026 |
+| D-108 | 9 Oct 2026 | **v1.5.0 user comfort (owner's development spec):**
+- **Drafts** are kept server-side per person and form for 30 days. This supersedes the "no drafts" note under D-078: the owner asked for drafts in the spec.
+- **Search** builds the access rule into its SQL, the same rule as the request page.
+- **Saved views** are private.
+- **Bulk approval:**
+  - plain approvals only (no work tasks, no requests on hold);
+  - at most 25 at a time;
+  - each one goes through `decideTask` and gets its own result. | Owner spec; Claude, 9 Oct 2026 |
+| D-109 | 9 Oct 2026 | **Out of office (#8):**
+- It covers approvals already waiting and new ones, on India dates (start of the start day to end of the end day).
+- A delegate must still be approver-eligible when they act, not only when named.
+- The job runner logs each start and end once. | Claude, 9 Oct 2026 |
+| D-110 | 9 Oct 2026 | **Notification choices (#6) amend D-008:**
+- **Always on:** security and sign-in messages, and "work waiting for you".
+- **Can be switched off by email or WhatsApp:** updates on your own requests, reminders and escalations, comments and mentions, and FYI.
+- **Recording:** a switched-off message is logged SKIPPED / USER_PREFERENCE; the in-app inbox always gets everything.
+- **Events not in a group** are treated as mandatory. | Owner spec; Claude, 9 Oct 2026 |
+| D-111 | 9 Oct 2026 | **PDF summary (#10):**
+- Built with `pdf-lib` and its built-in Helvetica. The planned fontkit and Noto Sans are not used: that keeps it to one pure-JS dependency with no font file.
+- Text outside Latin-1 is written as a stand-in ("₹" → "Rs.").
+- The same access check as the request page applies, and every download is audited. | Claude, 9 Oct 2026 |
+| D-112 | 9 Oct 2026 | **Mentions, due soon, monitoring:**
+- **Mentions (#9):**
+  - `@UserID` notifies only people who can already see the request, once;
+  - plain text;
+  - no internal notes and no threads.
+- **Due soon (#12):** a heads-up at 75 % of the response time. It doesn't take an escalation slot.
+- **New messages:** "mentioned you", "due soon" and the Super Admin's job/backup alert go by inbox and email. There are no WhatsApp templates for them yet (an owner choice).
+- **Request ids (#14):** each request gets an id, from Cloudflare's CF-Ray or a new UUID. A caller's own id is never trusted. The id is shown as the "Reference" and is written in error logs.
+- **Super Admin alerts:** at most once a day per kind. | Claude, 9 Oct 2026 |
 | D-033 | 28 Sep 2026 | **Staff data is provided by the admin. Roles are assigned per user, by the admin only. Users are added or made inactive in the Admin Portal** (never hard-deleted, so history and audit stay intact). *Resolves Q-010.* | Owner (answer 7) |
 
 ## 4. Open questions (must be answered before the phase shown)
@@ -258,6 +288,38 @@
 | Q-019 | **Which Resend account holds the API key in Super Admin?** The "arsenergy" team (open in Chrome) is empty. Email works only once the From domain (`approvals@arssteels.net`) is verified in the account that owns the key, or a new key from a team with a verified domain is entered. | Before go-live (no email is delivered today) | **Answered 9 Oct 2026:** the key is "New Api Approval" in the Resend team "arssteels" (harishkumar.t@arssteels.com). The owner verified `arssteels.net` there; Resend's log showed "API key not authorized for this domain" for a few minutes after verification, then the test email was **sent** |
 
 ## 5. Work log (newest first)
+
+### 9 Oct 2026 (v1.5.0: owner's development spec)
+- **Source:** the owner gave the development spec (14 features, phases 0–5) and said "Go ahead".
+- **Phase 0:** baseline and plan in `docs/development/ENHANCEMENT_IMPLEMENTATION_PLAN.md`.
+- **Built:**
+  - #1 My work sections and the first-use checklist;
+  - #2 the tracker summary;
+  - #3 server-side drafts with autosave;
+  - #4 search and saved views, with access in the SQL;
+  - #5 phone cards and touch targets;
+  - #6 notification choices (D-110);
+  - #7 bulk approval through `decideTask`;
+  - #8 out-of-office preview and policy, the delegate rechecked when acting, starts and ends logged (D-109);
+  - #9 @mentions (D-112);
+  - #10 the PDF summary with pdf-lib (D-111);
+  - #11 test mode: choices, skip reasons, the diff against live, the impact note;
+  - #12 the workload page, the due-soon reminder at 75 %, handover suggestions;
+  - #13 the help page and "Copy details for IT";
+  - #14 `x-request-id` in headers and logs, and Super Admin alerts on job or backup failure.
+- **Migration:** one file, additive.
+- **New package:** `pdf-lib`.
+- **Testing found:**
+  - bulk results vanished once the queue was empty;
+  - the old test-mode "Skipped:" line had gone;
+  - DUE_SOON took an escalation slot;
+  - the out-of-office backfill would have logged every past delegation.
+  All four are fixed and covered by tests.
+- **Checks:** tsc and lint clean; unit 328; integration 97 (3 runs in a row); E2E 47; QA 27; origin 1; build OK; production audit 0.
+- **Not done (by the spec):** no deploy and no live checks. Live `/api/health` showed jobRunner NEVER, so the cron secret needs checking (GO_LIVE_CHECKLIST §3).
+- **The owner's question "where is the To Do":**
+  - it is the **To do** badge in Waiting for me, shown on work-task steps;
+  - it appears only for an approval type with a **Work task** step, once a request reaches that step.
 
 ### 9 Oct 2026 (v1.4.0: every pending item)
 - The owner asked to "fix every pending item in one go", then publish.

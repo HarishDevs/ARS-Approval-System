@@ -60,6 +60,14 @@ The number of levels and how they combine is unlimited. There are no fixed "Leve
 | F-15 | Comments on a request | Built and verified 1 Oct 2026 |
 | F-16 | Handing over pending approvals | Built and tested on MySQL 1 Oct 2026 |
 | F-54 | DoA view derived from workflows | Built 1 Oct 2026; reads DoA matrices 8 Oct 2026 |
+| F-85 | Drafts: autosave, restore, discard, submit | Built 9 Oct 2026 (v1.5.0) |
+| F-86 | Search and saved views | Built 9 Oct 2026 (v1.5.0) |
+| F-87 | Bulk approval | Built 9 Oct 2026 (v1.5.0) |
+| F-88 | Mentions in comments | Built 9 Oct 2026 (v1.5.0) |
+| F-89 | Notification choices | Built 9 Oct 2026 (v1.5.0) |
+| F-91 | Due soon, workload and handover suggestions | Built 9 Oct 2026 (v1.5.0) |
+| F-92 | Request summary PDF | Built 9 Oct 2026 (v1.5.0) |
+| F-93 | Request ids and Super Admin failure alerts | Built 9 Oct 2026 (v1.5.0) |
 | F-84 | Custom approval → approval type (IT) | Built 9 Oct 2026 (v1.4.0) |
 | F-83 | Backups and restore | Built 9 Oct 2026 (v1.4.0) |
 | F-82 | Late approvals: reminder and escalation levels | Built 9 Oct 2026 (v1.4.0) |
@@ -742,6 +750,44 @@ flowchart TD
 - A choice, or a skip rule, holds up to 10 conditions, joined by **all of these** or **any one of these**.
 - A path of a choice can hold another choice, up to 3 deep.
 - The level map writes the rule as "Amount is more than 5,00,000 or Nature is Capex".
+
+## F-85 Drafts (v1.5.0, D-108)
+```mermaid
+flowchart LR
+  T[Typing in New request / Custom approval] -->|1.5 s pause or leaving a field| S[Save draft: own row per person + form, version checked]
+  S -->|other tab saved first| C[Stop saving; ask to reload]
+  M[My work: Your drafts] --> R[Form opens restored: Restored your draft from …]
+  R --> D[Discard draft → confirm → removed]
+  R --> U[Submit request] --> X[Draft removed]
+  J[Job runner] --> E[Drafts older than 30 days removed]
+```
+Files aren't kept in drafts; the restore note says to add them again.
+
+## F-86 Search and saved views (v1.5.0, D-108)
+`/users/search`: number, title or name; status, my role (raised / approver), type, department (IT), dates, sorting; 25 a page. Only requests the person may see are found (requester, has or had a task, active delegate, or IT). **Save view** keeps the filters privately; a default view opens when Search opens with no filters.
+
+## F-87 Bulk approval (v1.5.0, D-108)
+```mermaid
+flowchart LR
+  Q[Waiting for me] --> T[Tick plain approvals, max 25] --> V[Review: the list + optional comment] --> Y[Yes, approve N]
+  Y --> E[Each one: decideTask (lock, version, rules, DoA, audit, messages)]
+  E --> O[Per item: approved / skipped (held, work task, already decided) / not approved]
+```
+
+## F-88 Mentions (v1.5.0, D-112)
+Comment with `@UserID` → for each mentioned person: can they already see the request (requester, task holder or decider, active delegate, IT)? **Yes** → "You were mentioned" (inbox + email), instead of the plain new-comment message. **No** → not told, and the writer is told who wasn't. The audit records who was mentioned.
+
+## F-89 Notification choices (v1.5.0, D-110)
+Profile → Notifications → **Settings**: per kind of message, email and WhatsApp on/off. Security and "work waiting for you" are locked on. A switched-off message is recorded as SKIPPED / USER_PREFERENCE; the in-app list always gets it.
+
+## F-91 Due soon, workload, handover (v1.5.0, D-112)
+Job runner: at 75 % of a step's response time → one "due soon" to the approver and their delegate. Then the F-82 reminder and escalations as before. **Admin → Workload:** per person waiting, overdue, on hold, age bands, median, oldest. **Hand over** (user page) suggests the eligible people with the fewest waiting.
+
+## F-92 Request summary PDF (v1.5.0, D-111)
+Request page → **Download PDF** → `/api/requests/[id]/summary.pdf` → same check as the page (else 404) → A4 PDF: details, levels and decisions, files, history, footer (who, when, page x of y) → audit REQUEST_SUMMARY_DOWNLOADED.
+
+## F-93 Request ids and failure alerts (v1.5.0, D-112)
+Every request gets an id (CF-Ray or new) → passed to the server and returned as `x-request-id` → error log lines carry it → "Copy details for IT" (Help, error page) shows it as Reference. Job runner fails, or the daily backup fails → Super Admin gets one alert a day per kind (inbox + email).
 
 ## F-82 Late approvals (v1.4.0, D-100)
 With a response time T: **T** brings a reminder to the approver and their delegate. **2×T** goes to the manager and IT, **3×T** to the manager's manager, and **4×T** one level higher. How far it goes is set in Super Admin → General. Time on hold doesn't count, and a handover restarts the clock.

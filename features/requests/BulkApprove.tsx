@@ -27,7 +27,8 @@ export function BulkApprove({ items }: { items: QueueItem[] }) {
       else if (next.size < MAX) next.add(value);
       return next;
     });
-  if (eligible.length < 2) return null;
+  // Hidden with fewer than two to pick, unless it still has results to show.
+  if (eligible.length < 2 && outcomes.length === 0) return null;
   const chosen = eligible.filter((item) => picked.has(key(item)));
 
   return (

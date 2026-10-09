@@ -103,8 +103,8 @@ export function TestModePanel({ versionId, form, people, lookups = NO_LOOKUPS }:
           )}
           {view.skippedReasons.length > 0 && (
             <div className="text-label">
-              <p className="font-medium">Skipped</p>
-              <ul className="list-disc pl-5 text-ink-muted">
+              <p className="text-ink-muted">Skipped: {view.skipped.join(", ")}</p>
+              <ul aria-label="Why steps were skipped" className="list-disc pl-5 text-ink-muted">
                 {view.skippedReasons.map((line, index) => (
                   <li key={index}>{line}</li>
                 ))}

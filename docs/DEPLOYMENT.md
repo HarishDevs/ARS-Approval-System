@@ -407,6 +407,12 @@ To rebuild a full import file for a brand-new environment: apply the migrations 
 4. The start command applies any new migrations by itself. Migrations only ever **add**, so older code keeps working on a newer database.
 5. Run the Smoke suite (Part L, short version).
 
+### v1.5.0 notes
+- One new migration (`202610100900_v150_user_comfort.sql`), additive. The start command applies it.
+- One new package, `pdf-lib`, which is pure JavaScript. Nothing extra to set in GoDaddy.
+- Every response carries `x-request-id`: Cloudflare's CF-Ray, or a new id. Error lines in the runtime log carry the same `requestId`, and users see it as "Reference" in **Copy details for IT**.
+- Checklist: `docs/development/GO_LIVE_CHECKLIST.md`.
+
 ### Roll back
 - In GoDaddy, redeploy the previous good commit or tag. Or, on GitHub, revert the bad commit on `main` and let it redeploy.
 - The database doesn't need rolling back: migrations are additive.
@@ -441,14 +447,16 @@ To rebuild a full import file for a brand-new environment: apply the migrations 
 
 ---
 
-## Part O: Known limits (v1.4.0)
+## Part O: Known limits (v1.5.0)
 - **Break-glass** sign-in needs the WhatsApp code (Q-015).
 - **WhatsApp** messages go out only once their template is live (Part H): 26 templates, 6 of them new in v1.4.0 (work task, FYI, resumed, changes made, removed, moving again). Email and in-app always go out.
 - **Owner decisions kept (D-078):**
   - one person may approve more than one level;
   - requests don't expire;
   - rejection is final;
-  - no drafts, admin cancel or auditor role.
+  - no admin cancel or auditor role. Drafts were added in v1.5.0 (D-108).
+- **v1.5.0 messages without WhatsApp templates:** "You were mentioned", "Approval due soon" and the Super Admin's job/backup alert go by email and in-app only (D-112).
+- **PDF summary** uses the built-in Helvetica font: ₹ is written "Rs.", and other scripts (e.g. Hindi) as "?" (D-111).
 - **Choices** can be nested up to 3 deep; a rule has up to 10 conditions, all or any (D-099).
 - **Approving from WhatsApp** (reply buttons) isn't available; the message links to the request.
 - **Delivery receipts** depend on CEOITBox's webhook (G6); until it's set, WhatsApp rows stay SENT.

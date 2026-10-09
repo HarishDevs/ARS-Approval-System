@@ -17,7 +17,18 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
-- **Now:** v1.4.0 is pushed: every code item is done.
+- **Now (9 Oct 2026):** v1.5.0 is pushed and tagged. The owner's development spec, all 14 features:
+  - My work, tracker, drafts, search and saved views, phone cards;
+  - notification choices, bulk approval, out of office, @mentions, PDF summary;
+  - test mode against the live version; workload, due soon and handover suggestions;
+  - help; request ids and Super Admin alerts.
+  - Local checks: unit 328, integration 97 (×3), E2E 47, QA 27, origin 1, production audit 0.
+  - Reports: `docs/development/`.
+- **Next, the owner:** `docs/development/GO_LIVE_CHECKLIST.md`.
+  1. Fix the cron secret (live shows jobRunner NEVER).
+  2. Back up, then Publish v1.5.0.
+  3. Run the 15-minute smoke test.
+- **Earlier (v1.4.0):** every code item done.
   - Work and FYI steps; designation and requester sources; and/or rules and nested choices; IT recovery for stuck steps.
   - Multi-level escalation; delete through the engine; the integrity fixes; the security fixes and the origin lock.
   - Health endpoint; daily backups with a restore drill; WhatsApp receipts; audit CSV and sign-in history; custom approval attachments.
@@ -260,22 +271,22 @@ Found during S8-06:
 ## Session log — v1.5.0: owner's development spec (9 Oct 2026), planned before starting
 Plan and feature map: `docs/development/ENHANCEMENT_IMPLEMENTATION_PLAN.md`.
 - [x] V150-00 Phase 0: baseline (v1.4.0 live, CI green, local suites green), feature map, plan (done 9 Oct 2026)
-- [ ] V150-01 Migration: request_drafts, saved_views, notification_preferences, user_flags, DUE_SOON
-- [ ] V150-02 #14 correlation ids (x-request-id) and Super Admin alerts on job/backup failure; GO_LIVE_CHECKLIST
-- [ ] V150-03 #1 My Work sections (due soon/overdue, returned, drafts, recently completed)
-- [ ] V150-04 #2 tracker summary (waiting for, since, next step, progress) and text status labels
-- [ ] V150-05 #3 drafts with autosave, recovery, discard, version check, expiry (predefined and custom)
-- [ ] V150-06 #4 global search with access in SQL, filters, paging; saved views
-- [ ] V150-07 #5 phone layouts (cards), action bar first, touch targets; phone E2E
-- [ ] V150-08 #6 notification preferences (mandatory groups locked), SKIPPED/USER_PREFERENCE
-- [ ] V150-09 #7 bulk approve via decideTask, per-item results, max 25
-- [ ] V150-10 #8 out of office: Upcoming/Active/Ended, preview, policy text
-- [ ] V150-11 #9 @mentions of people who can see the request, notified once
-- [ ] V150-12 #10 approval summary PDF (access-checked, audited)
-- [ ] V150-13 #11 test mode detail + version comparison
-- [ ] V150-14 #12 workload page, DUE_SOON reminder, handover suggestions
-- [ ] V150-15 #13 help page, first-use checklist, copy details for IT
-- [ ] V150-16 Regression, docs (CHANGELOG, TEST_AND_RELEASE_REPORT, USER-GUIDE, DEPLOYMENT), living files, push
+- [x] V150-01 Migration: request_drafts, saved_views, notification_preferences, user_flags, DUE_SOON (done 9 Oct 2026)
+- [x] V150-02 #14 correlation ids (x-request-id) and Super Admin alerts on job/backup failure; GO_LIVE_CHECKLIST (done 9 Oct 2026)
+- [x] V150-03 #1 My Work sections (due soon/overdue, returned, drafts, recently completed) (done 9 Oct 2026)
+- [x] V150-04 #2 tracker summary (waiting for, since, next step, progress) and text status labels (done 9 Oct 2026)
+- [x] V150-05 #3 drafts with autosave, recovery, discard, version check, expiry (predefined and custom) (done 9 Oct 2026)
+- [x] V150-06 #4 global search with access in SQL, filters, paging; saved views (done 9 Oct 2026)
+- [x] V150-07 #5 phone layouts (cards), action bar first, touch targets; phone E2E (done 9 Oct 2026)
+- [x] V150-08 #6 notification preferences (mandatory groups locked), SKIPPED/USER_PREFERENCE (done 9 Oct 2026)
+- [x] V150-09 #7 bulk approve via decideTask, per-item results, max 25 (done 9 Oct 2026)
+- [x] V150-10 #8 out of office: Upcoming/Active/Ended, preview, policy text (done 9 Oct 2026)
+- [x] V150-11 #9 @mentions of people who can see the request, notified once (done 9 Oct 2026)
+- [x] V150-12 #10 approval summary PDF (access-checked, audited) (done 9 Oct 2026)
+- [x] V150-13 #11 test mode detail + version comparison (done 9 Oct 2026)
+- [x] V150-14 #12 workload page, DUE_SOON reminder, handover suggestions (done 9 Oct 2026)
+- [x] V150-15 #13 help page, first-use checklist, copy details for IT (done 9 Oct 2026)
+- [x] V150-16 Regression, docs (CHANGELOG, TEST_AND_RELEASE_REPORT, GO_LIVE_CHECKLIST, USER-GUIDE, DEPLOYMENT, RELEASE-NOTES), living files, push (done 9 Oct 2026)
 
 ## Session log — v1.4.0: every pending item (9 Oct 2026), planned before starting
 Owner: "fix every pending items in one go and then ill publish".

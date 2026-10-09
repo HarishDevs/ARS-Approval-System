@@ -28,7 +28,7 @@ The audit (`docs/APPLICATION_CURRENT_STATE_AUDIT.md`) was written against v1.3.5
 | 7 | Bulk approval | none | Waiting for me: select several approval tasks → review → approve. Each one goes through `decideTask` (locks, versions, DoA, audit). Per-item result; at most 25 at a time; work tasks, holds and non-approve actions excluded | no |
 | 8 | Delegation / absence | Out of office with dates, overlap check (row lock), end, audit (done) | Show Upcoming / Active / Ended; a preview of what the delegate will see now; time-zone note; explicit policy text (covers waiting and new approvals while active). Blocked-step recovery done v1.4.0 | no |
 | 9 | Comments + mentions | Append-only comments; participants notified | `@` mentions limited to people who can already see the request; mentioned people get a "mentioned you" message once; rendering stays plain text. **Decided:** no internal-only notes and no threads (a second visibility model; not asked by staff) | no |
-| 10 | Approval summary PDF | none | `/api/requests/[id]/summary.pdf`: same access check as the page; A4; Unicode font; timeline, decisions, fields, attachment names; "exported summary" note; audited | no; **dependency:** `pdf-lib` + `@pdf-lib/fontkit` + Noto Sans (OFL) |
+| 10 | Approval summary PDF | none | `/api/requests/[id]/summary.pdf`: same access check as the page; A4; Unicode font; timeline, decisions, fields, attachment names; "exported summary" note; audited | no; **dependency:** `pdf-lib` only (built-in Helvetica; fontkit and Noto Sans dropped, D-111) |
 | 11 | Simulation + version comparison | Test mode (simulate) | Test mode also shows skipped steps and choice outcomes. A "Compare with live version" diff (steps, approvers, rules, form fields, DoA). Impact note: requests in progress keep their version (D-050). Unsaved warning and archive done v1.4.0; AND/OR and nesting done v1.4.0 | no |
 | 12 | Workload + SLA alerts | Approver dashboard; escalation levels; scan fix (done v1.4.0) | Workload page: per approver, pending, overdue, age bands (<1 d, 1–3 d, 3–7 d, >7 d), median wait. "Due soon" reminder at 75 % of the response time (once). Handover suggests eligible people with the least pending | `task_reminders.kind` + DUE_SOON |
 | 13 | Guided help | Field hints; user guide (docs) | `/users/help`: how-tos, status glossary, search; a first-use checklist on My Work (dismissal stored server-side); "Copy details for IT" (request number, page, version; no form values) | `user_flags` |
@@ -58,7 +58,7 @@ Recovery: additive only, so the v1.4.0 code ignores the new tables. A failed run
 ## Risks and how they are handled
 - **Policy (#6):** making notifications optional changes D-008 (email and WhatsApp for everything). The owner asked for preferences in the spec. Mandatory groups stay on, and "approval needed" stays mandatory so approvals aren't missed.
 - **Bulk approval (#7):** never bypasses the engine. Each item is a normal `decideTask`; there is no shared transaction, so a failure affects one item only.
-- **PDF (#10):** a new dependency, with a font file in the repo (~0.5 MB). It is pure JS, so nothing native for GoDaddy.
+- **PDF (#10):** a new dependency, pure JS, so nothing native for GoDaddy. **As built:** `pdf-lib` only, with no font file. Text outside Latin-1 is written as a stand-in (D-111).
 - **Search (#4):** access is built into the SQL (the same rule as `loadRequestView`): requester, task holder or decider, active delegator's tasks, or admin.
 
 ## Progress
