@@ -1,5 +1,6 @@
 import { StopDelegationButton } from "@/features/requests/DelegationForms";
 import type { DelegationItem } from "@/lib/db/repositories/collab.repository";
+import { SafeText } from "@/features/ui/SafeText";
 
 const STATE_STYLE: Record<DelegationItem["state"], { label: string; style: string }> = {
   ACTIVE: { label: "Active", style: "bg-success-50 text-success-600" },
@@ -24,7 +25,7 @@ export function DelegationList({ items, personId, canEnd }: { items: DelegationI
               </p>
               <p className="text-caption text-ink-muted">
                 {item.startsOn} to {item.endsOn}
-                {item.reason ? ` · ${item.reason}` : ""}
+                {item.reason ? <SafeText text={` · ${item.reason}`} /> : ""}
               </p>
             </div>
             <div className="flex items-center gap-3">

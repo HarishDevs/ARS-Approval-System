@@ -17,19 +17,14 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
-- **Now:** **v1.3.1 is pushed** (9 Oct 2026). The end-to-end QA master prompt was run and all loader defects fixed (`docs/qa/E2E-QA-REPORT.md`).
-  - **Loader audit:** 45 / 45 green (pass rate 100 % of executed).
-  - **New QA suite:** 26 / 27.
-  - **Full regression green:** 259 unit, 64 integration, 25 e2e.
-- **Owner decisions needed:** Q-017 (dependency upgrades: DEF-E1) and Q-018 (the rate-limit IP source behind GoDaddy/Cloudflare: DEF-E2).
-- **Then, on GoDaddy:**
-  - Update Preview → Publish v1.3.1;
-  - untick the junior designations;
-  - Google sign-in as itsupport@arsenergy.co.in;
-  - provider keys; templates; cron; break-glass;
-  - import the staff;
-  - rotate the Firebase key that was pasted in chat.
-- **Still open:** Q-015, Q-017, Q-018; the real staff list.
+- **Now:** v1.3.1 is live and was tested live (QA session 15). One live defect was found: Cloudflare rewrote email addresses (React #418 on the import and audit pages). It is fixed in **v1.3.2** (pushed), with a CI guard.
+- **Next, the owner:**
+  - GoDaddy: Update Preview → Publish v1.3.2;
+  - answer Q-017 (dependency upgrades) and Q-018 (is all traffic through Cloudflare?);
+  - approve the live data tests (L15-08);
+  - load departments, designations (tick approvers), users and groups with Import data; build the approval types;
+  - finish the WhatsApp templates (11/20 live).
+- **Still open:** Q-015, Q-017, Q-018.
 
 ---
 
@@ -255,6 +250,27 @@ Found during S8-06:
 - [x] S8-12 Google sign-in reached UNKNOWN_ACCOUNT: itadmin@ is an alias. The Super Admin now signs in as itsupport@arsenergy.co.in (D-082, migration + non-overwriting seed, v1.0.5) (done 8 Oct 2026)
 - [ ] S8-01b Go-live on GoDaddy with the owner, following docs/DEPLOYMENT.md (the owner is at the wizard's "Add secrets" step)
 - [x] S8-04 Update the three living files; commit and push (done 8 Oct 2026)
+
+## Session log — QA session 15: live test on approval.arssteels.net (9 Oct 2026)
+Owner: "I have opened Google Chrome, test it live", then, signed in as IT Admin, "test every left-out thing here".
+Rules on production: view only, plus client-side checks where nothing reaches the server. Anything that writes data, or messages real people, waits for the owner's go-ahead.
+- [x] L15-01 Find the right browser: 3 Chrome profiles connected; Browser 2 = Harish Kumar (plain user), Browser 1 = IT Admin (done 9 Oct 2026)
+- [x] L15-02 Version: v1.3.1 live (`/api/auth/status` 200); behind Cloudflare (`server: cloudflare`, `cf-ray`) (done 9 Oct 2026)
+- [x] L15-03 Access: a plain user gets 404 on all 23 Admin/Super Admin URLs; IT Admin gets 200 on all 33 pages, each ≤ 0.71 s; unknown page 404; downloads (CSV templates, dashboard CSV) 200 (done 9 Oct 2026)
+- [x] L15-04 Live state: Resend and CEOITBox keys configured; WhatsApp templates 11/20 live; 2 users; 0 departments, designations, groups and approval types (done 9 Oct 2026)
+- [x] L15-05 v1.3.1 fixes live:
+  - a failed submit shows a message and keeps the input (the POST was stopped in the browser; nothing sent);
+  - builder: key follows the label, dropdown list editor refuses duplicates, 8 field types, date picker in conditions;
+  - busy button #53769E; 0 unnamed controls (done 9 Oct 2026)
+- [x] L15-06 **Live defect L-01:** React #418 on /admin/import and /superadmin/audit. Cloudflare rewrote email addresses shown as plain text: the import guide's example and the audit details. The same risk applies to any user-written text. **Fixed:** SafeText on the import guide, audit details, request titles, comments, field values, timeline, step comments, notifications, delegation reasons, page titles; CI test `tests/e2e/cloudflare-safe.spec.ts` (fails without the fix, passes with it) (done 9 Oct 2026)
+- [x] L15-07 Regression: 259 unit, 64 integration, 26 e2e; QA suite 26/27 (QA-SEC-06 still waiting on Q-018) (done 9 Oct 2026)
+- [ ] L15-08 **Waiting for the owner's go-ahead (writes live data / sends real messages):**
+  - raise → approve → reject on live with labelled test records;
+  - import the real masters;
+  - Super Admin delete;
+  - test-send of email and WhatsApp to the owner's own address and number;
+  - the live sign-in rate-limit probe (Q-018)
+- [ ] L15-09 After the v1.3.2 Publish: re-check /admin/import and /superadmin/audit for #418
 
 ## Session log — QA session 14: end-to-end master prompt + fixing the loader defects (9 Oct 2026)
 Owner: "Test these now (Claude_End_to_End_Application_Testing_Master_Prompt.docx) and, along with that, complete the failed tests from the previous test if it is possible to integrate." Taken as the go-ahead for Q-016 (fix the loader defects).

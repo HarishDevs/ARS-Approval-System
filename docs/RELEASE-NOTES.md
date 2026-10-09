@@ -1,5 +1,9 @@
 # Release notes
 
+## v1.3.2 (9 Oct 2026): fix from the live test
+- **Live fix:** the Import data page and the Audit log raised a page error (React #418) on the live site. Cloudflare rewrote the email addresses they showed. Addresses are now shown so Cloudflare leaves them alone, here and in everything people type (request titles, comments, field values, timeline, notifications, out-of-office reasons).
+- A new automated check fails the build if any page shows an address in a form Cloudflare would rewrite.
+
 ## v1.3.1 (9 Oct 2026): reliability fixes from the QA audits
 - **Forms no longer crash the page.** When the server errors, the connection drops, an upload is cut off, or the session has ended, the form now says so ("You're offline…", "Couldn't reach the server…", "Your session has ended…") and keeps what you typed. Before, the page went blank with "Application error".
 - **No endless spinners:** after 30 seconds a form stops waiting and says the action may still have gone through.

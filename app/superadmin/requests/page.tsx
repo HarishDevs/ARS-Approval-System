@@ -6,6 +6,7 @@ import { RequestStatusPill } from "@/features/requests/StatusPill";
 import { DeleteRequestButton } from "@/features/superadmin/DeleteRequestButton";
 import { listAllRequests } from "@/lib/db/repositories/request-admin.repository";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
+import { SafeText } from "@/features/ui/SafeText";
 
 const STATUS_OPTIONS = [
   ["", "Any status"],
@@ -101,7 +102,9 @@ export default async function SuperAdminRequestsPage({ searchParams }: { searchP
                         {item.requestNo}
                       </Link>
                     )}
-                    <p className="max-w-xs truncate text-caption text-ink-muted">{item.title}</p>
+                    <p className="max-w-xs truncate text-caption text-ink-muted">
+                      <SafeText text={item.title} />
+                    </p>
                   </td>
                   <td>
                     {item.requesterName}

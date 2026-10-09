@@ -4,6 +4,7 @@ import { EmptyState, PageHeader } from "@/features/shell/PageHeader";
 import { MarkAllReadButton } from "@/features/shell/MarkAllReadButton";
 import { listInbox } from "@/lib/db/repositories/collab.repository";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
+import { SafeText } from "@/features/ui/SafeText";
 
 // In-app inbox (P1-44). Links are stored as full URLs for email; here they
 // open inside the app.
@@ -35,9 +36,11 @@ export default async function NotificationsPage() {
               <>
                 <p className="flex items-center gap-2 font-medium">
                   {!item.read && <span aria-label="Unread" className="h-2 w-2 rounded-full bg-primary-600" />}
-                  {item.title}
+                  <SafeText text={item.title} />
                 </p>
-                <p className="text-label text-ink-muted">{item.message}</p>
+                <p className="text-label text-ink-muted">
+                  <SafeText text={item.message} />
+                </p>
                 <p className="text-caption text-ink-faint">{formatIndiaTime(item.createdAt)}</p>
               </>
             );

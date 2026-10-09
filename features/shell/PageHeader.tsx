@@ -6,7 +6,7 @@ export function PageHeader({ title, description, children }: { title: string; de
   return (
     <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
       <div className="min-w-0">
-        <h1 className="text-title font-semibold tracking-tight">{title}</h1>
+        <h1 className="text-title font-semibold tracking-tight">{typeof title === "string" ? <SafeText text={title} /> : title}</h1>
         {description && (
           <p className="mt-1.5 max-w-3xl text-ink-muted">
             <SafeText text={description} />

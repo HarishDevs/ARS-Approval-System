@@ -2,6 +2,7 @@ import Link from "next/link";
 import { PageHeader, EmptyState } from "@/features/shell/PageHeader";
 import { requireArea } from "@/server/authorization/guards";
 import { listAuditActions, listAuditEntries } from "@/lib/db/repositories/audit.repository";
+import { SafeText } from "@/features/ui/SafeText";
 
 const PAGE_SIZE = 100;
 
@@ -65,7 +66,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
                   <td>
                     <span className={`badge ${entry.result === "SUCCESS" ? "bg-success-50 text-success-600" : "bg-danger-50 text-danger-600"}`}>{entry.result}</span>
                   </td>
-                  <td className="max-w-md break-words font-mono text-caption text-ink-muted">{entry.metadata ? JSON.stringify(entry.metadata) : ""}</td>
+                  <td className="max-w-md break-words font-mono text-caption text-ink-muted">{entry.metadata ? <SafeText text={JSON.stringify(entry.metadata)} /> : ""}</td>
                 </tr>
               ))}
             </tbody>

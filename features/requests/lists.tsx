@@ -3,6 +3,7 @@ import { RequestStatusPill } from "@/features/requests/StatusPill";
 import { EmptyState } from "@/features/shell/PageHeader";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 import type { MyRequestItem, QueueItem } from "@/lib/db/repositories/approvals.repository";
+import { SafeText } from "@/features/ui/SafeText";
 
 export function QueueTable({ items }: { items: QueueItem[] }) {
   if (items.length === 0) return <EmptyState title="Nothing waiting for you" body="Requests that need your approval appear here." />;
@@ -23,7 +24,7 @@ export function QueueTable({ items }: { items: QueueItem[] }) {
             <tr key={item.taskKey + item.requestId}>
               <td>
                 <Link href={`/users/requests/${item.requestId}`} className="link">
-                  {item.title}
+                  <SafeText text={item.title} />
                 </Link>
                 <p className="text-caption text-ink-muted">{item.requestNo}</p>
               </td>
@@ -72,7 +73,7 @@ export function MyRequestsTable({ items }: { items: MyRequestItem[] }) {
             <tr key={item.id}>
               <td>
                 <Link href={`/users/requests/${item.id}`} className="link">
-                  {item.title}
+                  <SafeText text={item.title} />
                 </Link>
                 <p className="text-caption text-ink-muted">{item.requestNo}</p>
               </td>

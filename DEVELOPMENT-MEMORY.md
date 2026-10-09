@@ -154,7 +154,7 @@
 | D-078 | 8 Oct 2026 | **Policy kept as it is** (owner: "keep as it is"):<br>• one person may approve more than one level of a request, directly or as a delegate (Q-QA-10);<br>• requests don't expire (Q-QA-03);<br>• rejection stays final.<br>**v1.0.0 is the first production release**; GoDaddy deploys the tagged commit, and only when CI is green on all three jobs. | Owner, 8 Oct 2026 |
 | D-079 | 8 Oct 2026 | **The live address is `approval.arssteels.net`**, singular (the owner created this subdomain). It replaces `approvals.arssteels.net` in D-034 and earlier entries. `APP_BASE_URL=https://approval.arssteels.net`. The code's fallback, the docs, the template samples and the tests were all updated. Earlier log entries keep the old spelling as history. | Owner, 8 Oct 2026 |
 | D-080 | 8 Oct 2026 | **Email sender `approvals@arssteels.net`** (the owner verified arssteels.net in Resend), with **Reply-to `itadmin@arssteels.co.in`** (new setting `email.reply_to`). This supersedes the earlier sender itadmin@arssteels.co.in (D-037). Builds clean `.next` first, because GoDaddy reuses the app folder (v1.0.3). | Owner, 8 Oct 2026 |
-| D-081 | 8 Oct 2026 | **GoDaddy runs the app behind Cloudflare**, whose email obfuscation rewrites addresses in the HTML. Every address shown on a page goes through `<Email>` / `<SafeText>` (features/ui/SafeText.tsx). New screens must do the same, or React hydration breaks (#418). | Claude, from the live console |
+| D-081 | 8 Oct 2026 | **GoDaddy runs the app behind Cloudflare**, whose email obfuscation rewrites addresses in the HTML. Every address shown on a page goes through `<Email>` / `<SafeText>` (features/ui/SafeText.tsx). New screens must do the same, or React hydration breaks (#418). **Extended 9 Oct 2026 (v1.3.2):** this applies to any user-written text too (titles, comments, field values, timeline, notifications); CI test `tests/e2e/cloudflare-safe.spec.ts` guards it. | Claude, from the live console |
 | D-082 | 8 Oct 2026 | **The Super Admin's Google sign-in is `itsupport@arsenergy.co.in`**. `itadmin@arssteels.co.in` is an alias of arunram@arssteels.co.in, and Google ID tokens carry the primary address, so login_logs showed UNKNOWN_ACCOUNT.<br>• Migration 202610081400 moves the bootstrap account (User ID `itadmin`, roles unchanged) once, only if it's unlinked.<br>• The bootstrap seed now only creates the account and never overwrites it.<br>• **Rule for staff:** create users with their **primary** Google email, never an alias. | Owner, 8 Oct 2026 |
 | D-083 | 8 Oct 2026 | **The three parts of the app are called "spaces" on screen** (My approvals, Admin, Super Admin), not "areas". One **account menu** at the top right holds the name, email, the current space badge, **Switch space**, Notifications, Sign-in & devices and Sign out. The sidebar holds only the current space's pages, and on phones it opens as a drawer. Code identifiers (`AppArea`, `requireArea`) keep their names. | Owner, 8 Oct 2026 (three UI reviews) |
 | D-084 | 8 Oct 2026 | **Bulk import of master data by CSV** (F-59): users, departments, designations, approver groups and holidays, from the Admin **and** the Super Admin space.<br>• **Check** is a dry run; **Import** re-plans inside one transaction and writes every row or none.<br>• Matched by User ID, code or date: it creates or updates, and never deletes or deactivates.<br>• The same rules as the forms (D-025, D-047); audit per record + `IMPORT_COMPLETED`; downloads of current data are audited (`IMPORT_DATA_DOWNLOADED`).<br>• CSV, not XLSX: no extra library, and Excel opens and saves it. Approval types are not imported; they are built and tested in the workflow builder. | Owner request, 8 Oct 2026 |
@@ -199,6 +199,21 @@
 | Q-018 | **Rate-limit IP source (DEF-E2):** is all traffic to approval.arssteels.net forced through Cloudflare? If yes, use `CF-Connecting-IP`; if not, the right-most X-Forwarded-For entry added by GoDaddy's proxy. A wrong choice could put all users on one address. | Before go-live | Open, waiting on the owner |
 
 ## 5. Work log (newest first)
+
+### 9 Oct 2026 (QA session 15: live test, v1.3.2)
+- **Tested on approval.arssteels.net in the owner's Chrome.** Browser 1 = IT Admin; Browser 2 = Harish Kumar.
+- **Production rules:** view only; client-side checks where nothing reached the server (a failed submit was simulated by stopping the POST in the browser).
+- **Live state:**
+  - v1.3.1, behind Cloudflare;
+  - all 33 pages 200 for IT Admin (≤ 0.71 s); plain user 404 on the admin spaces; security headers present;
+  - Resend and CEOITBox configured; 11/20 WhatsApp templates live;
+  - no masters or approval types yet (2 users).
+- **v1.3.1 fixes confirmed live:** form failure message with input kept; builder key/list/date/lookup; readable busy button; named controls.
+- **Defect L-01 (live):** React #418 on /admin/import and /superadmin/audit, because Cloudflare email obfuscation rewrote plain-text addresses (D-081 again).
+  - Fixed with SafeText in those pages and in every place that shows user-written text.
+  - New CI test `cloudflare-safe.spec.ts` (verified red without the fix, green with it).
+- **Regression:** 259 unit / 64 integration / 26 e2e; QA 26/27.
+- **Waiting for the owner:** live tests that write data or send real messages (L15-08).
 
 ### 9 Oct 2026 (QA session 14: end-to-end master prompt, fixes, retest, v1.3.1)
 - **Baseline** (all green): 254 unit, 64 integration, 25 e2e; migrations idempotent. `npm audit`: 13 production findings (6 high) in next/postcss and firebase/firebase-admin chains (DEF-E1, needs approval).

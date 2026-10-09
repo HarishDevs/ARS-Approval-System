@@ -6,6 +6,7 @@ import { IMPORT_KINDS, IMPORT_LIMITS, IMPORT_SPECS, type ImportKind } from "@/se
 import { toCsv } from "@/server/import/csv";
 import type { PlannedRow, RowAction } from "@/server/import/plan";
 import { Spinner } from "@/features/ui/Spinner";
+import { SafeText } from "@/features/ui/SafeText";
 
 // Bulk import screen (S10-05/06, F-59): choose what, download the template
 // or the current data, upload a CSV, check it (nothing saved), then import
@@ -176,8 +177,12 @@ export function ImportPanel({ initialKind }: { initialKind: ImportKind }) {
                   <tr key={column.name}>
                     <td className="font-mono">{column.name}</td>
                     <td>{column.required ? "Required" : "Optional"}</td>
-                    <td className="text-ink-muted">{column.help}</td>
-                    <td className="font-mono text-ink-muted">{column.example}</td>
+                    <td className="text-ink-muted">
+                      <SafeText text={column.help} />
+                    </td>
+                    <td className="font-mono text-ink-muted">
+                      <SafeText text={column.example} />
+                    </td>
                   </tr>
                 ))}
               </tbody>

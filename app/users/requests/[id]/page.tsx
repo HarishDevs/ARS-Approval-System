@@ -13,6 +13,7 @@ import { listActiveUserOptions } from "@/lib/db/repositories/admin-users.reposit
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 import { DeleteRequestButton } from "@/features/superadmin/DeleteRequestButton";
 import { loadFieldLookups } from "@/lib/db/repositories/lookups.repository";
+import { SafeText } from "@/features/ui/SafeText";
 
 // F-14 request page. loadRequestView applies the record-level check
 // (D-057); anyone else gets the same 404 as a request that doesn't exist.
@@ -51,9 +52,11 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
         </p>
       )}
       {view.changesComment && (
-        <p className="mb-4 rounded-md border border-warning-600/30 bg-warning-50 px-3 py-2 text-label text-warning-600">Changes asked: {view.changesComment}</p>
+        <p className="mb-4 rounded-md border border-warning-600/30 bg-warning-50 px-3 py-2 text-label text-warning-600">Changes asked: <SafeText text={view.changesComment} />
+        </p>
       )}
-      {view.holdReason && <p className="mb-4 rounded-md bg-warning-50 px-3 py-2 text-label text-warning-600">On hold: {view.holdReason}</p>}
+      {view.holdReason && <p className="mb-4 rounded-md bg-warning-50 px-3 py-2 text-label text-warning-600">On hold: <SafeText text={view.holdReason} />
+        </p>}
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="space-y-6">
@@ -89,7 +92,9 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
                 {view.fields.map((field) => (
                   <div key={field.key}>
                     <dt className="text-caption text-ink-muted">{field.label}</dt>
-                    <dd className="whitespace-pre-wrap">{field.value}</dd>
+                    <dd className="whitespace-pre-wrap">
+                      <SafeText text={field.value} />
+                    </dd>
                   </div>
                 ))}
               </dl>
@@ -129,7 +134,9 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
                   <p>
                     <span className="font-medium">{comment.authorName}</span> <span className="text-caption text-ink-faint">· {formatIndiaTime(comment.createdAt)}</span>
                   </p>
-                  <p className="mt-0.5 whitespace-pre-wrap">{comment.body}</p>
+                  <p className="mt-0.5 whitespace-pre-wrap">
+                    <SafeText text={comment.body} />
+                  </p>
                 </li>
               ))}
             </ul>
@@ -141,7 +148,9 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
           <ol className="space-y-3 border-l border-line pl-4">
             {view.timeline.map((entry) => (
               <li key={entry.id} className="text-label">
-                <p>{entry.text}</p>
+                <p>
+                  <SafeText text={entry.text} />
+                </p>
                 <p className="text-caption text-ink-faint">{formatIndiaTime(entry.at)}</p>
               </li>
             ))}

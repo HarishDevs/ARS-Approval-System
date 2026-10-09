@@ -1,5 +1,6 @@
 import { StepStatusPill, taskStatusText } from "@/features/requests/StatusPill";
 import type { MapStage, MapStep } from "@/server/approvals/step-map";
+import { SafeText } from "@/features/ui/SafeText";
 
 // The full level map (F-14): every level in order; parallel steps side by
 // side; choices show both paths, the one not taken greyed out (D-068).
@@ -29,7 +30,7 @@ function StepCard({ step }: { step: MapStep }) {
               <li key={`${person.userId}-${person.status}`} className="text-label">
                 <span className="font-medium">{person.name}</span> <span className={status.style}>· {status.label}</span>
                 {person.decidedByName && <span className="text-ink-muted"> (by {person.decidedByName})</span>}
-                {person.comment && <p className="mt-0.5 rounded bg-surface-muted px-2 py-1 text-caption text-ink-muted">“{person.comment}”</p>}
+                {person.comment && <p className="mt-0.5 rounded bg-surface-muted px-2 py-1 text-caption text-ink-muted">“<SafeText text={person.comment} />”</p>}
               </li>
             );
           })}
