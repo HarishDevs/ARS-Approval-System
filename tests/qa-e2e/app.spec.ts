@@ -467,7 +467,7 @@ test("QA-A11Y-01 every form control has a name; one h1; page language set; image
   await page.goto("/login");
   await check("/login");
   await as(context, "E2E_ADMIN");
-  for (const url of ["/users", "/users/new", "/admin/workflows/new", "/admin/import", "/admin/dashboards/utilisation", "/admin/organisation"]) {
+  for (const url of ["/users", "/users/new", "/users/custom", "/admin/workflows/new", "/admin/import", "/admin/dashboards/utilisation", "/admin/organisation"]) {
     await page.goto(url);
     await check(url);
   }

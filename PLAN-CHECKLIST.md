@@ -17,14 +17,18 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
-- **Now:** v1.3.1 is live and was tested live (QA session 15). One live defect was found: Cloudflare rewrote email addresses (React #418 on the import and audit pages). It is fixed in **v1.3.2** (pushed), with a CI guard.
-- **Next, the owner:**
-  - GoDaddy: Update Preview → Publish v1.3.2;
-  - answer Q-017 (dependency upgrades) and Q-018 (is all traffic through Cloudflare?);
-  - approve the live data tests (L15-08);
-  - load departments, designations (tick approvers), users and groups with Import data; build the approval types;
-  - finish the WhatsApp templates (11/20 live).
-- **Still open:** Q-015, Q-017, Q-018.
+- **Now:** live test done (9 Oct 2026). **WhatsApp works end to end; email does not** (Resend 403: the From domain isn't verified in the Resend account that owns the key). The test data was cleaned up. v1.3.3 is pushed (accessible "People" picker), on top of v1.3.2 (Cloudflare-safe addresses).
+- **Owner, to make email work:**
+  1. Open the Resend account whose API key is in the app (not the empty "arsenergy" team), or use "arsenergy".
+  2. Domains → Add `arssteels.net` (or a subdomain such as `mail.arssteels.net`, then change the From address to match) → add the DNS records where arssteels.net's DNS is managed → Verify.
+  3. If you used another team, create an API key there and paste it into Super Admin → Providers & security → Resend API key.
+  4. Press "Send test email".
+- **Also:**
+  - set up the cron job (Part I) so failed sends are retried;
+  - GoDaddy: Publish v1.3.3;
+  - answer Q-017 and Q-018;
+  - load the masters and build the approval types.
+- **Still open:** Q-015, Q-017, Q-018, Q-019 (Resend account).
 
 ---
 
@@ -264,13 +268,21 @@ Rules on production: view only, plus client-side checks where nothing reaches th
   - busy button #53769E; 0 unnamed controls (done 9 Oct 2026)
 - [x] L15-06 **Live defect L-01:** React #418 on /admin/import and /superadmin/audit. Cloudflare rewrote email addresses shown as plain text: the import guide's example and the audit details. The same risk applies to any user-written text. **Fixed:** SafeText on the import guide, audit details, request titles, comments, field values, timeline, step comments, notifications, delegation reasons, page titles; CI test `tests/e2e/cloudflare-safe.spec.ts` (fails without the fix, passes with it) (done 9 Oct 2026)
 - [x] L15-07 Regression: 259 unit, 64 integration, 26 e2e; QA suite 26/27 (QA-SEC-06 still waiting on Q-018) (done 9 Oct 2026)
-- [ ] L15-08 **Waiting for the owner's go-ahead (writes live data / sends real messages):**
+- [x] L15-08 (done 9 Oct 2026 for mail/WhatsApp; the owner approved: "test the mail and WhatsApp in live… create some data… afterwards we can delete it") **Waiting for the owner's go-ahead (writes live data / sends real messages):**
   - raise → approve → reject on live with labelled test records;
   - import the real masters;
   - Super Admin delete;
   - test-send of email and WhatsApp to the owner's own address and number;
   - the live sign-in rate-limit probe (Q-018)
-- [ ] L15-09 After the v1.3.2 Publish: re-check /admin/import and /superadmin/audit for #418
+- [x] L15-10 **Live notification test** (done 9 Oct 2026):
+  - provider test: WhatsApp SENT; email FAILED with Resend HTTP 403;
+  - test data: designation QA_TEST (approver) given to IT Admin; Harish raised custom CUS-2026-000002; IT Admin commented and approved;
+  - deliveries: APPROVAL_NEEDED, REQUEST_COMMENT and REQUEST_APPROVED were WhatsApp SENT and email FAILED (403);
+  - cleanup: request soft-deleted (reason recorded); IT Admin designation back to Not set; QA_TEST made inactive, not an approver
+- [x] L15-11 **Email root cause:** Resend refuses with 403. The Resend team "arsenergy" open in the owner's Chrome has no domains and no API keys, so the key in the app belongs to another Resend account where `arssteels.net` (the From domain) is not verified. **Owner action:** verify a sending domain in the Resend account that owns the key, or verify it in "arsenergy" and create a new key there. Then paste the key in Super Admin → Providers & security, and Send test email (done 9 Oct 2026: diagnosed)
+- [x] L15-12 **Retries never ran:** every failed email shows 1 try with a "Next try" time long past, so the cron job (`/api/jobs/run`) is not set up on GoDaddy (DEPLOYMENT Part I). Also outstanding: 9 security WhatsApp templates (8 waiting for Meta, break-glass rejected) (done 9 Oct 2026: diagnosed)
+- [x] L15-13 Found live: the "People" picker on Custom approval / builder steps had no accessible name. Fixed (`aria-label`); QA-A11Y-01 now covers /users/custom (done 9 Oct 2026)
+- [ ] L15-09 After the v1.3.2/1.3.3 Publish: re-check /admin/import and /superadmin/audit for #418
 
 ## Session log — QA session 14: end-to-end master prompt + fixing the loader defects (9 Oct 2026)
 Owner: "Test these now (Claude_End_to_End_Application_Testing_Master_Prompt.docx) and, along with that, complete the failed tests from the previous test if it is possible to integrate." Taken as the go-ahead for Q-016 (fix the loader defects).

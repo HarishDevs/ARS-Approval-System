@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| App | ARS Approval Platform **v1.3.2** (`docs/RELEASE-NOTES.md`) |
+| App | ARS Approval Platform **v1.3.3** (`docs/RELEASE-NOTES.md`) |
 | Address | **https://approval.arssteels.net** (one app: `/users`, `/admin`, `/superadmin`) |
 | Hosting | GoDaddy **Node.js Hosting** ("Deploy your Node.js app"), from GitHub `HarishDevs/ARS-Approval-System`, branch `main` |
 | Database | MySQL 8 in GoDaddy cPanel |
@@ -192,6 +192,11 @@ GoDaddy → **My Products** → **Node.js Hosting** (host.godaddy.com/hosting) �
    - From name `ARS Approvals`;
    - **Save**.
 2. **Send test email**: it arrives in the itadmin inbox. If not, see Part N.
+3. **If it says "Resend rejected the email (HTTP 403)"** (seen live on 9 Oct 2026): the From domain isn't verified in the **Resend account that owns this API key**.
+   - In that account: **Domains → Add domain** → `arssteels.net` (or a subdomain such as `mail.arssteels.net`, and then set the From address to match, e.g. `approvals@mail.arssteels.net`).
+   - Add the DNS records Resend shows, where arssteels.net's DNS is managed → **Verify**.
+   - If you verified it in a different Resend team, create an API key there (Sending access) and paste it here.
+   - Then **Send test email** again.
 
 ### G3. WhatsApp (CEOITBox)
 1. **Admin → Users & roles → IT Admin (Super Admin)** → WhatsApp number **9150091870** → **Save changes**. The app stores it as 919150091870.

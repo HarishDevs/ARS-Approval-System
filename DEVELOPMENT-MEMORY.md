@@ -197,8 +197,23 @@
 | Q-016 | **Loader audit fixes** (docs/qa/LOADER-QA-REPORT.md): may I fix DEF-02 (High: a failed form answer crashes the page), DEF-03 (no time limit) and DEF-06 (unreadable busy button) before the next Publish, then DEF-01/04 and the Low ones? | Before the next Publish | **Answered 9 Oct 2026:** owner said complete the failed tests → all 9 fixed and retested (QA session 14) |
 | Q-017 | **Dependency upgrades (DEF-E1):** `npm audit` shows 6 high / 7 moderate in production deps. Upgrade Next to 15.5.27 (patch) and firebase-admin to 14.5.0 (minor) now, and plan the firebase client major upgrade? | Before or with the next Publish | Open, waiting on the owner |
 | Q-018 | **Rate-limit IP source (DEF-E2):** is all traffic to approval.arssteels.net forced through Cloudflare? If yes, use `CF-Connecting-IP`; if not, the right-most X-Forwarded-For entry added by GoDaddy's proxy. A wrong choice could put all users on one address. | Before go-live | Open, waiting on the owner |
+| Q-019 | **Which Resend account holds the API key in Super Admin?** The "arsenergy" team (open in Chrome) is empty. Email works only once the From domain (`approvals@arssteels.net`) is verified in the account that owns the key, or a new key from a team with a verified domain is entered. | Before go-live (no email is delivered today) | Open, waiting on the owner |
 
 ## 5. Work log (newest first)
+
+### 9 Oct 2026 (QA session 15b: live email and WhatsApp test, v1.3.3)
+- The owner approved live test data and messages to their own addresses.
+- **Deliveries before the test:** every email FAILED (EMAIL_REQUEST_FAILED, 1 try, retries never ran, so there is no cron job); WhatsApp SENT where a template is live, SKIPPED for security events (templates waiting for Meta).
+- **Provider test:** WhatsApp SENT to +91 91500 91870; email "Resend rejected the email (HTTP 403)".
+- **Resend dashboard (owner's Chrome):** team "arsenergy" has no domains, no keys and no logs, so the configured key belongs to a different Resend account where arssteels.net isn't verified.
+- **End-to-end test:**
+  - designation QA_TEST (approver) given to IT Admin;
+  - Harish Kumar raised custom CUS-2026-000002 → APPROVAL_NEEDED to IT Admin;
+  - IT Admin commented → REQUEST_COMMENT to Harish; approved → REQUEST_APPROVED to Harish;
+  - all three were WhatsApp SENT and email FAILED (403).
+- **Cleanup:** CUS-2026-000002 soft-deleted with a reason (shows on the Deleted tab); IT Admin's designation reset; QA_TEST inactive and not an approver. The owner's earlier CUS-2026-000001 was left untouched.
+- **Clicks in the background Chrome windows didn't reach the page,** so the forms were submitted with `requestSubmit` from the page (same handlers).
+- **Fixed:** the "People" multi-select had no accessible name (`aria-label`); QA-A11Y-01 extended to /users/custom.
 
 ### 9 Oct 2026 (QA session 15: live test, v1.3.2)
 - **Tested on approval.arssteels.net in the owner's Chrome.** Browser 1 = IT Admin; Browser 2 = Harish Kumar.

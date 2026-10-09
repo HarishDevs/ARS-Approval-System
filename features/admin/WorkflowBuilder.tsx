@@ -622,6 +622,7 @@ function StepEditor({
           <label className="field-label">People (hold Ctrl to pick several)</label>
           <select
             multiple
+            aria-label="People (hold Ctrl to pick several)"
             value={pick.userIds.map(String)}
             onChange={(event) => onChange({ ...step, approvers: { kind: "PEOPLE", userIds: [...event.target.selectedOptions].map((option) => Number(option.value)) } })}
             className="field-input h-32 py-2"

@@ -1,5 +1,9 @@
 # Release notes
 
+## v1.3.3 (9 Oct 2026)
+- The "People" picker (custom approvals and workflow steps) now has an accessible name for screen readers.
+- Live notification test: WhatsApp works for request events. Email is blocked by Resend (HTTP 403) until the sending domain is verified in the Resend account that owns the API key (see DEPLOYMENT.md G2).
+
 ## v1.3.2 (9 Oct 2026): fix from the live test
 - **Live fix:** the Import data page and the Audit log raised a page error (React #418) on the live site. Cloudflare rewrote the email addresses they showed. Addresses are now shown so Cloudflare leaves them alone, here and in everything people type (request titles, comments, field values, timeline, notifications, out-of-office reasons).
 - A new automated check fails the build if any page shows an address in a form Cloudflare would rewrite.
