@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
+import { Providers } from "@/app/providers";
+import { THEME_COOKIE, parseTheme, themeAttribute } from "@/server/ui/theme";
 import { REQUEST_ID_HEADER } from "@/lib/logging/request-id";
 import "../styles/globals.css";
 
@@ -18,17 +20,26 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, title: "Approvals", statusBarStyle: "default" },
 };
 
-export const viewport: Viewport = { themeColor: "#003B6E" };
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#003B6E" },
+    { media: "(prefers-color-scheme: dark)", color: "#0e131b" },
+  ],
+};
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   // #14: the page's reference, for "Copy details for IT" and error pages.
   const requestId = (await headers()).get(REQUEST_ID_HEADER) ?? "";
+  // UI-02: the saved theme is painted on the first byte (no flash).
+  const theme = parseTheme((await cookies()).get(THEME_COOKIE)?.value);
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={inter.variable} data-theme={themeAttribute(theme)} suppressHydrationWarning>
       <head>
         <meta name="ars-request-id" content={requestId} />
       </head>
-      <body className="bg-page font-sans text-body text-ink antialiased">{children}</body>
+      <body className="bg-page font-sans text-body text-ink antialiased">
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }

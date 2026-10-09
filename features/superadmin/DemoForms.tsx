@@ -18,6 +18,9 @@ export function LoadDemoForm() {
 
 export function RetireDemoForm() {
   const { result, pending, onSubmit, confirmBar } = useActionForm(retireDemoAction, {
+    confirmTitle: "Retire the demo people?",
+    confirmLabel: "Yes, retire them",
+    confirmTone: "danger",
     confirm: "Make every demo person inactive? Approvals still waiting with them will block until IT hands them over.",
   });
   return (
@@ -33,6 +36,8 @@ export function RetireDemoForm() {
 
 export function TryAsButton({ userId, name }: { userId: number; name: string }) {
   const { result, pending, onSubmit, confirmBar } = useActionForm(tryAsAction, {
+    confirmTitle: `Try the app as ${name}?`,
+    confirmLabel: "Yes, switch",
     confirm: `Continue as ${name}? You'll be signed out of your Super Admin session; sign in again to come back.`,
   });
   return (

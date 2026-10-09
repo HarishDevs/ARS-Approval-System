@@ -48,7 +48,7 @@ test("the builder offers step kinds, all/any rules and choices inside choices", 
   await page.getByRole("button", { name: "Create workflow (as draft)" }).click();
   await expect(page).toHaveURL(/\/admin\/workflows\/\d+\?created=1/);
   await page.getByRole("button", { name: "Publish version 1" }).click();
-  await page.getByRole("button", { name: "Yes, continue" }).click();
+  await page.getByRole("button", { name: "Yes, publish" }).click();
   await expect(page.getByText("Live", { exact: true })).toBeVisible();
 });
 

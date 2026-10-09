@@ -31,7 +31,7 @@ export function NewGroupForm() {
 export function GroupEditor({ group, people }: { group: { id: number; code: string; name: string; active: boolean; members: { id: number; name: string; active: boolean }[] }; people: Option[] }) {
   const details = useActionForm(saveGroupAction);
   const add = useActionForm(groupMemberAction, { resetOnSuccess: true });
-  const remove = useActionForm(groupMemberAction, { confirm: "Remove this person from the group? Approvals already sent to them stay with them." });
+  const remove = useActionForm(groupMemberAction, { confirm: "Approvals already sent to them stay with them.", confirmTitle: "Remove this person from the group?", confirmLabel: "Yes, remove", confirmTone: "danger" });
   const memberIds = new Set(group.members.map((member) => member.id));
 
   return (

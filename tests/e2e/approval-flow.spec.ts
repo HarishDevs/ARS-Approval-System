@@ -29,7 +29,7 @@ test("IT builds, tests and publishes a two-level workflow", async ({ page, conte
   await expect(page.getByText("HOD (Must approve): Harini HOD")).toBeVisible();
 
   await page.getByRole("button", { name: "Publish version 1" }).click();
-  await page.getByRole("button", { name: "Yes, continue" }).click();
+  await page.getByRole("button", { name: "Yes, publish" }).click();
   await expect(page.getByText("Live", { exact: true })).toBeVisible();
 });
 

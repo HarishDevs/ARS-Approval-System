@@ -4,7 +4,7 @@ import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { RequestStatusPill } from "@/features/requests/StatusPill";
 import { StepMap, TrackerBanner } from "@/features/requests/StepMap";
-import { BlockedStepForm, DecisionForm, ReopenForm, ResumeForm, WithdrawForm } from "@/features/requests/ActionPanel";
+import { BlockedStepForm, DecisionForm, MobileDecisionBar, ReopenForm, ResumeForm, WithdrawForm } from "@/features/requests/ActionPanel";
 import { PromoteCustomForm } from "@/features/admin/PromoteCustomForm";
 import { listApproverOptions } from "@/lib/db/repositories/approvers.repository";
 import { RequestForm } from "@/features/requests/RequestForm";
@@ -98,6 +98,16 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
               {view.canResume && <ResumeForm requestId={view.id} />}
             </section>
           )}
+          {view.myTasks[0] && (
+            <MobileDecisionBar
+              requestId={view.id}
+              taskKey={view.myTasks[0].taskKey}
+              work={view.myTasks[0].work}
+              label={view.myTasks[0].forName ? `${view.myTasks[0].label} (for ${view.myTasks[0].forName})` : view.myTasks[0].label}
+            />
+          )}
+          {/* Room for the phone decision bar, so it never covers the page's end. */}
+          {view.myTasks[0] && <div aria-hidden="true" className="h-16 md:hidden" />}
           {view.canResubmit && (
             <section>
               <h2 className="mb-3 font-semibold">Update and resubmit</h2>

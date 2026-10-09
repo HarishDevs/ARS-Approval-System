@@ -22,7 +22,7 @@ test("IT can sign a person out everywhere and deactivate them, after confirming"
     const signOut = page.locator("form").filter({ hasText: "Ends every open session" });
     await signOut.getByRole("button", { name: "Sign out everywhere" }).click();
     await expect(signOut.getByRole("alertdialog")).toContainText("Sign Lee Leaver out on every device?");
-    await signOut.getByRole("button", { name: "Yes, continue" }).click();
+    await signOut.getByRole("button", { name: "Yes, sign out" }).click();
     await expect(signOut.getByText("Ended 1 session.")).toBeVisible();
     await expect
       .poll(async () => {
@@ -39,7 +39,7 @@ test("IT can sign a person out everywhere and deactivate them, after confirming"
     expect(Number(still[0]?.active)).toBe(1);
 
     await deactivate.getByRole("button", { name: "Deactivate user" }).click();
-    await deactivate.getByRole("button", { name: "Yes, continue" }).click();
+    await deactivate.getByRole("button", { name: "Yes, deactivate" }).click();
     await expect(page.getByRole("button", { name: "Reactivate user" })).toBeVisible();
     const [after] = await connection.query<(RowDataPacket & { active: number })[]>("SELECT active FROM users WHERE id = ?", [userId]);
     expect(Number(after[0]?.active)).toBe(0);

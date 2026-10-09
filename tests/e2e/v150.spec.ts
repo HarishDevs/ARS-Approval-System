@@ -103,7 +103,11 @@ test("#5 on a phone the HOD finds it as a card and approves it", async ({ page, 
   await page.goto("/users/queue");
   await page.getByRole("link", { name: bulkTitles[0]! }).first().click();
   await expect(page).toHaveURL(new RegExp(`${bulkPaths[0]}$`));
-  await page.getByRole("button", { name: "Approve", exact: true }).click();
+  // RA-02: the phone decision bar opens a drawer with the comment and that one action.
+  await page.getByRole("region", { name: "Your decision" }).getByRole("button", { name: "Approve" }).click();
+  const drawer = page.getByRole("dialog", { name: "Approve" });
+  await expect(drawer.getByLabel(/Comment/)).toBeFocused();
+  await drawer.getByRole("button", { name: "Approve", exact: true }).click();
   await expect(page.getByText(/Approved by Harini HOD/).first()).toBeVisible();
   const width = await page.evaluate(() => document.documentElement.scrollWidth);
   expect(width).toBeLessThanOrEqual(392);

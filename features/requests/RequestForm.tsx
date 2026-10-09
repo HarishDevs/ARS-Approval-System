@@ -3,6 +3,7 @@
 import { resubmitAction, submitRequestAction } from "@/app/users/actions";
 import { useState } from "react";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
+import { ErrorSummary } from "@/features/ui/Field";
 import { NO_LOOKUPS, type FieldLookups, type FormField } from "@/server/forms/fields";
 import { ACCEPT_ATTRIBUTE } from "@/server/attachments/files";
 import { DraftStatus, useDraftAutosave } from "@/features/requests/useDraftAutosave";
@@ -51,6 +52,9 @@ export function RequestForm({
   // D-QA-01: one key per form; a retried submit returns the same request.
   const [submissionKey] = useState(() => crypto.randomUUID());
   const possibleDuplicate = Boolean(result && !result.ok && result.fieldErrors?.allowDuplicate);
+  // FB-06: every field problem listed at the top, linked to the field.
+  const summaryErrors = result && !result.ok && result.fieldErrors ? Object.fromEntries(Object.entries(result.fieldErrors).filter(([key]) => key !== "allowDuplicate").map(([key, message]) => [key === "title" || key === "attachments" ? key : `f-${key}`, message])) : undefined;
+  const summaryLabels: Record<string, string> = { title: "Title", attachments: "Attachments", ...Object.fromEntries(fields.map((field) => [`f-${field.key}`, field.label])) };
 
   return (
     <form ref={autosave.formRef} onSubmit={onSubmit} className="card">
@@ -63,6 +67,7 @@ export function RequestForm({
       {requestId && <input type="hidden" name="requestId" value={requestId} />}
       {mode === "submit" && <input type="hidden" name="submissionKey" value={submissionKey} />}
       <div className="space-y-5 px-5 py-5">
+        <ErrorSummary errors={summaryErrors} labels={summaryLabels} />
         {mode === "submit" && (
           <div>
             <label htmlFor="title" className="field-label">
@@ -78,8 +83,18 @@ export function RequestForm({
               {field.label}
               {!field.required && <span className="font-normal text-ink-faint"> (optional)</span>}
             </label>
-            <FieldInput field={field} people={approverPeople && approverFields.includes(field.key) ? approverPeople : people} lookups={lookups} defaultValue={initial?.[field.key] ?? ""} />
-            {field.help && <p className="mt-1 text-caption text-ink-muted">{field.help}</p>}
+            <FieldInput
+              field={field}
+              people={approverPeople && approverFields.includes(field.key) ? approverPeople : people}
+              lookups={lookups}
+              defaultValue={initial?.[field.key] ?? ""}
+              error={result && !result.ok ? result.fieldErrors?.[field.key] : undefined}
+            />
+            {field.help && (
+              <p id={`f-${field.key}-hint`} className="mt-1 text-caption text-ink-muted">
+                {field.help}
+              </p>
+            )}
             <FieldError result={result} name={field.key} />
           </div>
         ))}
@@ -135,18 +150,21 @@ export function RequestForm({
   );
 }
 
-function FieldInput({ field, people, lookups, defaultValue }: { field: FormField; people: { id: number; label: string }[]; lookups: FieldLookups; defaultValue: string }) {
+function FieldInput({ field, people, lookups, defaultValue, error }: { field: FormField; people: { id: number; label: string }[]; lookups: FieldLookups; defaultValue: string; error?: string }) {
   const id = `f-${field.key}`;
+  // FB-06: the hint and the error are read with the control.
+  const describedBy = [field.help ? `${id}-hint` : null, error ? `${field.key}-error` : null].filter(Boolean).join(" ") || undefined;
+  const a11y = { "aria-invalid": error ? true : undefined, "aria-describedby": describedBy, "aria-required": field.required || undefined };
   switch (field.type) {
     case "LONG_TEXT":
-      return <textarea id={id} name={field.key} defaultValue={defaultValue} rows={4} className="field-input h-auto py-2.5" />;
+      return <textarea id={id} name={field.key} {...a11y} defaultValue={defaultValue} rows={4} className="field-input h-auto py-2.5" />;
     case "NUMBER":
-      return <input id={id} name={field.key} defaultValue={defaultValue} inputMode="decimal" placeholder="e.g. 12,50,000" className="field-input" />;
+      return <input id={id} name={field.key} {...a11y} defaultValue={defaultValue} inputMode="decimal" placeholder="e.g. 12,50,000" className="field-input" />;
     case "DATE":
-      return <input id={id} name={field.key} type="date" defaultValue={defaultValue} className="field-input" />;
+      return <input id={id} name={field.key} {...a11y} type="date" defaultValue={defaultValue} className="field-input" />;
     case "CHOICE":
       return (
-        <select id={id} name={field.key} defaultValue={defaultValue} className="field-input">
+        <select id={id} name={field.key} {...a11y} defaultValue={defaultValue} className="field-input">
           <option value="">Choose…</option>
           {field.options?.map((option) => (
             <option key={option} value={option}>
@@ -158,7 +176,7 @@ function FieldInput({ field, people, lookups, defaultValue }: { field: FormField
     case "LOOKUP": {
       const items = field.source ? lookups[field.source] : [];
       return (
-        <select id={id} name={field.key} defaultValue={defaultValue} className="field-input">
+        <select id={id} name={field.key} {...a11y} defaultValue={defaultValue} className="field-input">
           <option value="">Choose…</option>
           {/* A value saved earlier that is no longer active stays selectable. */}
           {defaultValue && !items.some((item) => item.code === defaultValue) && <option value={defaultValue}>{defaultValue}</option>}
@@ -172,7 +190,7 @@ function FieldInput({ field, people, lookups, defaultValue }: { field: FormField
     }
     case "PERSON":
       return (
-        <select id={id} name={field.key} defaultValue={defaultValue} className="field-input">
+        <select id={id} name={field.key} {...a11y} defaultValue={defaultValue} className="field-input">
           <option value="">Choose a person…</option>
           {people.map((person) => (
             <option key={person.id} value={person.id}>
@@ -182,6 +200,6 @@ function FieldInput({ field, people, lookups, defaultValue }: { field: FormField
         </select>
       );
     default:
-      return <input id={id} name={field.key} defaultValue={defaultValue} className="field-input" />;
+      return <input id={id} name={field.key} {...a11y} defaultValue={defaultValue} className="field-input" />;
   }
 }

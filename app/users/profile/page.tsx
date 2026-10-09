@@ -5,11 +5,14 @@ import { Email, SafeText } from "@/features/ui/SafeText";
 import { getOwnProfile } from "@/lib/db/repositories/users.repository";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 import { accessLabel, maskWhatsApp } from "@/features/ui/labels";
+import { ThemeChoice } from "@/features/shell/ThemeControls";
+import { getUserSetting } from "@/lib/db/repositories/user-settings.repository";
+import { THEME_SETTING, parseTheme } from "@/server/ui/theme";
 
 // The signed-in person's details, read-only: IT keeps them in Admin → Users.
 export default async function ProfilePage() {
   const { user } = await requireArea("users");
-  const profile = await getOwnProfile(user.id);
+  const [profile, theme] = await Promise.all([getOwnProfile(user.id), getUserSetting(user.id, THEME_SETTING).catch(() => null)]);
   const rows: { label: string; value: React.ReactNode }[] = [
     { label: "Name", value: <SafeText text={user.name} /> },
     { label: "User ID", value: user.loginId },
@@ -36,6 +39,9 @@ export default async function ProfilePage() {
           ))}
         </dl>
         <p className="border-t border-line px-5 py-3 text-label text-ink-muted">Something wrong? Only IT can change these details, so ask IT to update them.</p>
+      </section>
+      <section className="card mt-6 max-w-2xl px-5 py-4" aria-label="Appearance">
+        <ThemeChoice initial={parseTheme(theme)} />
       </section>
     </>
   );

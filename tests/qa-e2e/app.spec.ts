@@ -43,7 +43,7 @@ test("QA-SETUP publish the default type (DoA: manager, HOD, senior above ₹10 l
   await page.getByRole("button", { name: "Create workflow (as draft)" }).click();
   await expect(page).toHaveURL(/\/admin\/workflows\/\d+\?created=1/);
   await page.getByRole("button", { name: "Publish version 1" }).click();
-  await page.getByRole("button", { name: "Yes, continue" }).click();
+  await page.getByRole("button", { name: "Yes, publish" }).click();
   await expect(page.getByText("Live", { exact: true })).toBeVisible();
   writeFileSync(STATE, JSON.stringify({ stamp }));
 });
@@ -256,7 +256,7 @@ test("QA-BL-03 withdraw: the request closes and leaves the approver's queue", as
   const { id } = await raise(page, `QA withdraw ${stamp}`);
   await page.getByLabel("Reason for withdrawing").fill("Raised twice");
   await page.getByRole("button", { name: "Withdraw" }).click();
-  await page.getByRole("button", { name: "Yes, continue" }).click();
+  await page.getByRole("button", { name: "Yes, withdraw" }).click();
   await expect(page.getByText(/Withdrawn/).first()).toBeVisible();
   await as(context, "E2E_MGR");
   await page.goto("/users/queue");
@@ -291,7 +291,7 @@ test("QA-BL-05 the Super Admin reopens an approved request; it runs through the 
   await page.goto(path);
   await page.getByLabel("Reason for reopening").fill("Amount corrected by finance");
   await page.getByRole("button", { name: "Reopen" }).click();
-  await page.getByRole("button", { name: "Yes, continue" }).click();
+  await page.getByRole("button", { name: "Yes, reopen" }).click();
   await expect.poll(() => count("SELECT status = 'IN_PROGRESS' AS n FROM approval_requests WHERE id = ?", [id])).toBe(1);
   const pending = await count("SELECT COUNT(*) AS n FROM approval_tasks WHERE request_id = ? AND status = 'PENDING'", [id]);
   note("QA-BL-05", { reopened: true, pendingTasks: pending });

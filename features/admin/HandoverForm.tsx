@@ -7,7 +7,7 @@ import type { Option } from "@/features/admin/UserForm";
 // F-16: required before deactivating someone with pending approvals.
 // #12: suggests the eligible people with the fewest approvals waiting.
 export function HandoverForm({ id, name, pending, people, suggestions = [] }: { id: number; name: string; pending: number; people: Option[]; suggestions?: (Option & { pending: number })[] }) {
-  const { result, pending: busy, formRef, onSubmit, confirmBar } = useActionForm(handoverAction, { confirm: `Move ${name}'s ${pending} pending approval(s)?` });
+  const { result, pending: busy, formRef, onSubmit, confirmBar } = useActionForm(handoverAction, { confirm: `${name}'s ${pending} pending approval(s) go to the person you chose, with a fresh response time.`, confirmTitle: "Hand over approvals?", confirmLabel: "Yes, hand over" });
   const choose = (personId: number) => {
     const select = formRef.current?.elements.namedItem("toUserId");
     if (select instanceof HTMLSelectElement) select.value = String(personId);

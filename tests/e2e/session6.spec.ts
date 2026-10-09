@@ -41,7 +41,7 @@ test("the template creator drafts a message; submitting needs the CEOITBox key",
   await expect(page.getByText("Draft version 1 saved", { exact: false })).toBeVisible();
   await page.reload();
   await page.getByRole("button", { name: "Submit to Meta for approval" }).click();
-  await page.getByRole("button", { name: "Yes, continue" }).click();
+  await page.getByRole("button", { name: "Yes, submit" }).click();
   await expect(page.getByText("CEOITBox API key is not configured.")).toBeVisible();
 });
 
@@ -49,7 +49,7 @@ test("'Try as' a demo buyer; raise a purchase with a quote attached", async ({ p
   await as(context, "E2E_SUPER");
   await page.goto("/superadmin/demo");
   await page.getByRole("row", { name: /demo\.buyer/ }).getByRole("button", { name: "Try as" }).click();
-  await page.getByRole("button", { name: "Yes, continue" }).click();
+  await page.getByRole("button", { name: "Yes, switch" }).click();
   await expect(page).toHaveURL(/\/users$/);
   await expect(page.getByText("You're trying the app as Arjun Das (demo)", { exact: false })).toBeVisible();
 

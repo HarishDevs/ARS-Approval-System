@@ -39,7 +39,7 @@ test("the Super Admin deletes a request with a reason; it leaves the approver's 
   await page.getByRole("button", { name: "Create workflow (as draft)" }).click();
   await expect(page).toHaveURL(/\/admin\/workflows\/\d+\?created=1/);
   await page.getByRole("button", { name: "Publish version 1" }).click();
-  await page.getByRole("button", { name: "Yes, continue" }).click();
+  await page.getByRole("button", { name: "Yes, publish" }).click();
   await expect(page.getByText("Live", { exact: true })).toBeVisible();
 
   await as(context, "E2E_REQ");

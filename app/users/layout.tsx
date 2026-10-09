@@ -10,7 +10,7 @@ export default async function UsersLayout({ children }: { children: React.ReactN
       area="users"
       user={user}
       nav={[
-        { href: "/users", label: "Overview" },
+        { href: "/users", label: "My work" },
         { href: "/users/queue", label: "Waiting for me" },
         { href: "/users/requests", label: "My requests" },
         { href: "/users/new", label: "New request" },

@@ -23,7 +23,7 @@ test("IT sets a DoA matrix when creating an approval type, and publishes it", as
   await page.getByRole("button", { name: "Create workflow (as draft)" }).click();
   await expect(page).toHaveURL(/\/admin\/workflows\/\d+\?created=1/);
   await page.getByRole("button", { name: "Publish version 1" }).click();
-  await page.getByRole("button", { name: "Yes, continue" }).click();
+  await page.getByRole("button", { name: "Yes, publish" }).click();
   await expect(page.getByText("Live", { exact: true })).toBeVisible();
 
   await page.goto("/admin/doa");
@@ -51,7 +51,7 @@ test("QA fixes on screen: a negative amount is refused; a repeat title asks firs
   await page.getByLabel("Title").fill("Forklift battery");
   await page.getByLabel(/Amount/).fill("-5,000");
   await page.getByRole("button", { name: "Submit request" }).click();
-  await expect(page.getByText("Enter 0 or more.")).toBeVisible();
+  await expect(page.getByText("Enter 0 or more.", { exact: true })).toBeVisible();
 
   await page.getByLabel(/Amount/).fill("1,50,000");
   await page.getByRole("button", { name: "Submit request" }).click();

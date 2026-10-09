@@ -137,7 +137,7 @@ export function ImportPanel({ initialKind }: { initialKind: ImportKind }) {
               disabled={locked}
               onClick={() => reset(item)}
               className={`rounded-full border px-4 py-1.5 text-label font-semibold transition-colors disabled:opacity-60 ${
-                item === kind ? "border-primary-600 bg-primary-600 text-white" : "border-line bg-surface text-ink hover:bg-surface-muted"
+                item === kind ? "border-primary-solid bg-primary-solid text-on-solid" : "border-line bg-surface text-ink hover:bg-surface-muted"
               }`}
             >
               {IMPORT_SPECS[item].label}

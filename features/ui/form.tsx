@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ActionResult } from "@/lib/http/action-result";
 import { Spinner } from "@/features/ui/Spinner";
+import { ConfirmDialog } from "@/features/ui/Dialog";
 
 // Server Action forms. React 19 resets a <form action={…}> after every
 // submit, which wipes what the user typed when the server returns a
@@ -19,6 +20,11 @@ type Action = (previous: ActionResult | null, formData: FormData) => Promise<Act
 // forever: after ACTION_TIMEOUT_MS it stops waiting and says the action may
 // still have gone through.
 export const ACTION_TIMEOUT_MS = 30_000;
+// FB-04: the shell's session watcher listens for this and shows its dialog.
+export const SESSION_ENDED_EVENT = "ars:session-ended";
+function announceSessionEnded() {
+  if (typeof window !== "undefined") window.dispatchEvent(new Event(SESSION_ENDED_EVENT));
+}
 export const SESSION_ENDED = "Your session has ended. Sign in again to continue (copy anything you typed first).";
 const OFFLINE = "You're offline. Check your connection, then try again — what you typed is still here.";
 const UNREACHABLE = "Couldn't reach the server. Check your connection and try again — what you typed is still here.";
@@ -44,11 +50,18 @@ export function guardAction(action: Action, timeoutMs = ACTION_TIMEOUT_MS): Acti
       const result = await Promise.race([action(previous, formData), timeout]);
       // Actions answer "Not found." to anyone they can't identify; when that
       // is because the session ended, say so (DEF-07).
-      if (!result.ok && result.message === "Not found." && (await signedIn()) === false) return { ok: false, message: SESSION_ENDED };
+      if (!result.ok && result.message === "Not found." && (await signedIn()) === false) {
+        announceSessionEnded();
+        return { ok: false, message: SESSION_ENDED };
+      }
       return result;
     } catch {
       if (typeof navigator !== "undefined" && navigator.onLine === false) return { ok: false, message: OFFLINE };
-      return { ok: false, message: (await signedIn()) === false ? SESSION_ENDED : UNREACHABLE };
+      if ((await signedIn()) === false) {
+        announceSessionEnded();
+        return { ok: false, message: SESSION_ENDED };
+      }
+      return { ok: false, message: UNREACHABLE };
     } finally {
       clearTimeout(timer);
     }
@@ -58,7 +71,15 @@ export function guardAction(action: Action, timeoutMs = ACTION_TIMEOUT_MS): Acti
 // A form with `confirm` asks in the page, not with window.confirm: embedded
 // browsers and some managed browsers block pop-up dialogs silently, which
 // made the action look dead. Render `confirmBar` inside the form.
-export function useActionForm(action: Action, options: { resetOnSuccess?: boolean; confirm?: string } = {}) {
+export interface ConfirmOptions {
+  resetOnSuccess?: boolean;
+  confirm?: string; // what will happen, in words
+  confirmTitle?: string; // e.g. "Deactivate Lee Leaver?"
+  confirmLabel?: string; // the action, named (default "Yes, continue")
+  confirmTone?: "primary" | "danger";
+}
+
+export function useActionForm(action: Action, options: ConfirmOptions = {}) {
   const guarded = useMemo(() => guardAction(action), [action]);
   // Busy state is the form's own (QA session 14): React's useActionState
   // stays "pending" until the Server Action's own request settles, so a
@@ -83,7 +104,7 @@ export function useActionForm(action: Action, options: { resetOnSuccess?: boolea
   }
   const [awaiting, setAwaiting] = useState<FormData | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
-  const { resetOnSuccess, confirm } = options;
+  const { resetOnSuccess, confirm, confirmTitle, confirmLabel, confirmTone } = options;
 
   useEffect(() => {
     if (result?.ok && resetOnSuccess) formRef.current?.reset();
@@ -101,26 +122,22 @@ export function useActionForm(action: Action, options: { resetOnSuccess?: boolea
     dispatch(formData);
   }
 
-  const confirmBar = awaiting ? (
-    <div role="alertdialog" aria-label="Please confirm" className="mt-2 space-y-2 rounded-md border border-warning-600/40 bg-warning-50 px-3 py-2 text-label">
-      <p>{confirm}</p>
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          className="btn-primary btn-compact"
-          onClick={() => {
-            const formData = awaiting;
-            setAwaiting(null);
-            dispatch(formData);
-          }}
-        >
-          Yes, continue
-        </button>
-        <button type="button" className="btn-secondary btn-compact" onClick={() => setAwaiting(null)}>
-          Cancel
-        </button>
-      </div>
-    </div>
+  // A real dialog (UI-03): focus moves into it, the page behind is inert,
+  // Escape cancels and focus returns to the button that asked.
+  const confirmBar = confirm ? (
+    <ConfirmDialog
+      open={awaiting !== null}
+      title={confirmTitle ?? "Please confirm"}
+      body={confirm}
+      confirmLabel={confirmLabel ?? "Yes, continue"}
+      tone={confirmTone ?? "primary"}
+      onCancel={() => setAwaiting(null)}
+      onConfirm={() => {
+        const formData = awaiting;
+        setAwaiting(null);
+        if (formData) dispatch(formData);
+      }}
+    />
   ) : null;
 
   return { result, pending, formRef, onSubmit, confirmBar };
@@ -174,5 +191,9 @@ export function ResultMessage({ result }: { result: ActionResult | null }) {
 export function FieldError({ result, name }: { result: ActionResult | null; name: string }) {
   const message = result && !result.ok ? result.fieldErrors?.[name] : undefined;
   if (!message) return null;
-  return <p className="mt-1 text-caption text-danger-600">{message}</p>;
+  return (
+    <p id={`${name}-error`} className="mt-1 text-caption text-danger-600">
+      {message}
+    </p>
+  );
 }

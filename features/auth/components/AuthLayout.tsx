@@ -7,7 +7,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
     <main className="grid min-h-full lg:grid-cols-2">
       <section
         aria-hidden="true"
-        className="relative hidden overflow-hidden bg-gradient-to-br from-primary-600 to-[#003B6E] px-16 py-14 text-white lg:flex lg:flex-col lg:justify-end"
+        className="relative hidden overflow-hidden bg-gradient-to-br from-primary-solid to-[#003B6E] px-16 py-14 text-white lg:flex lg:flex-col lg:justify-end"
       >
         <div className="pointer-events-none absolute -right-40 -top-40 h-[560px] w-[560px] rounded-full border-[56px] border-white/10" />
         <div className="pointer-events-none absolute -bottom-52 -left-24 h-[420px] w-[420px] rounded-full border-[48px] border-white/10" />

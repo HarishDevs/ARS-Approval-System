@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { EmptyState, PageHeader } from "@/features/shell/PageHeader";
+import { PageHeader } from "@/features/shell/PageHeader";
+import { DataTable } from "@/features/ui/DataTable";
+import { Badge } from "@/features/ui/Display";
 import { requireArea } from "@/server/authorization/guards";
 import { listUsersForAdmin } from "@/lib/db/repositories/admin-users.repository";
 import { Email } from "@/features/ui/SafeText";
@@ -51,45 +53,47 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
         </button>
       </form>
 
-      {items.length === 0 ? (
-        <EmptyState title="No users found" body={search ? "Try a different search." : "Add the first user to get started."} />
-      ) : (
-        <div className="card overflow-x-auto">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>User ID</th>
-                <th>Department</th>
-                <th>Sign-in</th>
-                <th>Roles</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((user) => (
-                <tr key={user.id}>
-                  <td>
-                    <Link href={`/admin/users/${user.id}`} className="link">
-                      {user.name}
-                    </Link>
-                    <p className="text-caption text-ink-muted"><Email address={user.email} /></p>
-                  </td>
-                  <td>{user.loginId}</td>
-                  <td>{user.departmentName ?? <span className="text-ink-faint">—</span>}</td>
-                  <td>{user.signInMethod === "GOOGLE" ? "Google" : "Password + WhatsApp"}</td>
-                  <td>{user.roles.filter((role) => role !== "USER").map((role) => ROLE_LABEL[role]).join(", ") || "User"}</td>
-                  <td className="space-x-1 whitespace-nowrap">
-                    <span className={`badge ${user.active ? "bg-success-50 text-success-600" : "bg-surface-muted text-ink-muted"}`}>{user.active ? "Active" : "Inactive"}</span>
-                    {user.locked && <span className="badge bg-danger-50 text-danger-600">Locked</span>}
-                    {user.isBreakGlass && <span className="badge bg-warning-50 text-warning-600">Break-glass</span>}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <DataTable
+        caption="Users"
+        storageKey="admin-users"
+        empty={{ title: "No users found", body: search ? "Try a different search." : "Add the first user to get started." }}
+        initialSort={{ key: "name", direction: "asc" }}
+        columns={[
+          { key: "name", header: "Name", sortable: true },
+          { key: "login", header: "User ID", sortable: true },
+          { key: "department", header: "Department", sortable: true, optional: true },
+          { key: "signIn", header: "Sign-in", optional: true },
+          { key: "roles", header: "Roles", optional: true },
+          { key: "status", header: "Status", sortable: true },
+        ]}
+        rows={items.map((user) => ({
+          id: user.id,
+          sort: { name: user.name, login: user.loginId, department: user.departmentName, status: user.active ? 0 : 1 },
+          cells: {
+            name: (
+              <>
+                <Link href={`/admin/users/${user.id}`} className="link">
+                  {user.name}
+                </Link>
+                <span className="block text-caption text-ink-muted">
+                  <Email address={user.email} />
+                </span>
+              </>
+            ),
+            login: user.loginId,
+            department: user.departmentName ?? <span className="text-ink-faint">—</span>,
+            signIn: user.signInMethod === "GOOGLE" ? "Google" : "Password + WhatsApp",
+            roles: user.roles.filter((role) => role !== "USER").map((role) => ROLE_LABEL[role]).join(", ") || "User",
+            status: (
+              <span className="inline-flex flex-wrap gap-1">
+                <Badge tone={user.active ? "success" : "neutral"}>{user.active ? "Active" : "Inactive"}</Badge>
+                {user.locked && <Badge tone="danger">Locked</Badge>}
+                {user.isBreakGlass && <Badge tone="warning">Break-glass</Badge>}
+              </span>
+            ),
+          },
+        }))}
+      />
 
       {pages > 1 && (
         <div className="mt-4 flex items-center gap-4 text-label">

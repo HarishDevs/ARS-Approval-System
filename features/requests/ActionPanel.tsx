@@ -1,16 +1,21 @@
 "use client";
 
 import { useState } from "react";
+import { Check, MessageSquareWarning, PauseCircle, XCircle } from "lucide-react";
+import { Dialog } from "@/features/ui/Dialog";
 import { decideAction, reopenAction, resolveBlockedAction, resumeAction, withdrawAction } from "@/app/users/actions";
 import { FieldError, ResultMessage, useActionForm } from "@/features/ui/form";
 
 // What the signed-in person can do on this request right now (F-14). The
 // server decides again on every press (F-12).
 // A work task (D-097) is marked done, or sent back; it can't be rejected.
-export function DecisionForm({ requestId, taskKey, label, work = false }: { requestId: number; taskKey: string; label: string; work?: boolean }) {
+export type DecisionKind = "APPROVE" | "REQUEST_CHANGES" | "HOLD" | "REJECT";
+
+export function DecisionForm({ requestId, taskKey, label, work = false, only, idPrefix = "comment" }: { requestId: number; taskKey: string; label: string; work?: boolean; only?: DecisionKind; idPrefix?: string }) {
   const { result, pending, onSubmit } = useActionForm(decideAction);
+  const shows = (kind: DecisionKind) => !only || only === kind;
   return (
-    <form onSubmit={onSubmit} className="space-y-3 px-5 py-4">
+    <form onSubmit={onSubmit} className={only ? "space-y-3" : "space-y-3 px-5 py-4"}>
       <input type="hidden" name="requestId" value={requestId} />
       <input type="hidden" name="taskKey" value={taskKey} />
       {work && <input type="hidden" name="work" value="1" />}
@@ -18,25 +23,31 @@ export function DecisionForm({ requestId, taskKey, label, work = false }: { requ
         {work ? "Your task" : "Your decision"}: {label}
       </p>
       <div>
-        <label htmlFor={`comment-${taskKey}`} className="field-label">
+        <label htmlFor={`${idPrefix}-${taskKey}`} className="field-label">
           Comment <span className="font-normal text-ink-faint">{work ? "(say what you did; required to ask for changes)" : "(required to reject or ask for changes)"}</span>
         </label>
-        <textarea id={`comment-${taskKey}`} name="comment" rows={3} maxLength={2000} className="field-input h-auto py-2.5" />
+        <textarea id={`${idPrefix}-${taskKey}`} name="comment" rows={3} maxLength={2000} data-autofocus={only ? true : undefined} className="field-input h-auto py-2.5" />
         <FieldError result={result} name="comment" />
       </div>
       <div className="flex flex-wrap gap-2">
-        <button type="submit" name="decision" value="APPROVE" disabled={pending} className="btn-primary btn-compact">
-          {work ? "Mark as done" : "Approve"}
-        </button>
-        <button type="submit" name="decision" value="REQUEST_CHANGES" disabled={pending} className="btn-secondary btn-compact">
-          Ask for changes
-        </button>
-        <button type="submit" name="decision" value="HOLD" disabled={pending} className="btn-secondary btn-compact">
-          Put on hold
-        </button>
-        {!work && (
-          <button type="submit" name="decision" value="REJECT" disabled={pending} className="btn-secondary btn-compact text-danger-600">
-            Reject
+        {shows("APPROVE") && (
+          <button type="submit" name="decision" value="APPROVE" disabled={pending} className="btn-primary btn-compact">
+            {pending && only ? "Working…" : work ? "Mark as done" : "Approve"}
+          </button>
+        )}
+        {shows("REQUEST_CHANGES") && (
+          <button type="submit" name="decision" value="REQUEST_CHANGES" disabled={pending} className={only ? "btn-primary btn-compact" : "btn-secondary btn-compact"}>
+            {pending && only ? "Working…" : "Ask for changes"}
+          </button>
+        )}
+        {shows("HOLD") && (
+          <button type="submit" name="decision" value="HOLD" disabled={pending} className={only ? "btn-primary btn-compact" : "btn-secondary btn-compact"}>
+            {pending && only ? "Working…" : "Put on hold"}
+          </button>
+        )}
+        {!work && shows("REJECT") && (
+          <button type="submit" name="decision" value="REJECT" disabled={pending} className={only ? "btn-danger btn-compact" : "btn-secondary btn-compact text-danger-600"}>
+            {pending && only ? "Working…" : "Reject"}
           </button>
         )}
       </div>
@@ -136,7 +147,7 @@ export function ResumeForm({ requestId }: { requestId: number }) {
 }
 
 export function WithdrawForm({ requestId }: { requestId: number }) {
-  const { result, pending, onSubmit, confirmBar } = useActionForm(withdrawAction, { confirm: "Withdraw this request? It can't be undone; you'd raise a new one instead." });
+  const { result, pending, onSubmit, confirmBar } = useActionForm(withdrawAction, { confirmTitle: "Withdraw this request?", confirmLabel: "Yes, withdraw", confirmTone: "danger", confirm: "Withdraw this request? It can't be undone; you'd raise a new one instead." });
   return (
     <form onSubmit={onSubmit} className="space-y-2 px-5 py-4">
       <input type="hidden" name="requestId" value={requestId} />
@@ -153,7 +164,7 @@ export function WithdrawForm({ requestId }: { requestId: number }) {
 }
 
 export function ReopenForm({ requestId }: { requestId: number }) {
-  const { result, pending, onSubmit, confirmBar } = useActionForm(reopenAction, { confirm: "Reopen this approved request? It goes through every level again." });
+  const { result, pending, onSubmit, confirmBar } = useActionForm(reopenAction, { confirm: "It goes through every level again.", confirmTitle: "Reopen this approved request?", confirmLabel: "Yes, reopen" });
   return (
     <form onSubmit={onSubmit} className="space-y-2 px-5 py-4">
       <input type="hidden" name="requestId" value={requestId} />
@@ -167,5 +178,36 @@ export function ReopenForm({ requestId }: { requestId: number }) {
       <ResultMessage result={result} />
       {confirmBar}
     </form>
+  );
+}
+
+// RA-02: on phones, the actions the person may take stay at the bottom of
+// the screen. Each opens a drawer with the comment box and that one action,
+// which goes through the same server action (and checks) as the full form.
+export function MobileDecisionBar({ requestId, taskKey, label, work = false }: { requestId: number; taskKey: string; label: string; work?: boolean }) {
+  const [open, setOpen] = useState<DecisionKind | null>(null);
+  const actions: { kind: DecisionKind; label: string; icon: React.ReactNode; style: string }[] = [
+    { kind: "APPROVE", label: work ? "Done" : "Approve", icon: <Check aria-hidden="true" className="h-4 w-4" />, style: "btn-primary" },
+    { kind: "REQUEST_CHANGES", label: "Changes", icon: <MessageSquareWarning aria-hidden="true" className="h-4 w-4" />, style: "btn-secondary" },
+    { kind: "HOLD", label: "Hold", icon: <PauseCircle aria-hidden="true" className="h-4 w-4" />, style: "btn-secondary" },
+    ...(work ? [] : [{ kind: "REJECT" as const, label: "Reject", icon: <XCircle aria-hidden="true" className="h-4 w-4" />, style: "btn-secondary text-danger-600" }]),
+  ];
+  const titles: Record<DecisionKind, string> = { APPROVE: work ? "Mark as done" : "Approve", REQUEST_CHANGES: "Ask for changes", HOLD: "Put on hold", REJECT: "Reject" };
+  return (
+    <>
+      <div role="region" aria-label="Your decision" className="fixed inset-x-0 bottom-[calc(56px+env(safe-area-inset-bottom))] z-sticky border-t border-line bg-surface px-3 py-2 shadow-overlay md:hidden">
+        <div className={`grid gap-2 ${actions.length === 4 ? "grid-cols-4" : "grid-cols-3"}`}>
+          {actions.map((action) => (
+            <button key={action.kind} type="button" onClick={() => setOpen(action.kind)} className={`${action.style} btn-compact flex-col !gap-0.5 !px-1 !text-[12px]`}>
+              {action.icon}
+              {action.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <Dialog open={open !== null} onClose={() => setOpen(null)} variant="drawer" title={open ? titles[open] : ""} description={label}>
+        {open && <DecisionForm requestId={requestId} taskKey={taskKey} label={label} work={work} only={open} idPrefix="drawer-comment" />}
+      </Dialog>
+    </>
   );
 }

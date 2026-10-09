@@ -36,7 +36,7 @@ export function SaveViewForm({ query }: { query: Record<string, string> }) {
 function ViewRow({ view }: { view: ViewItem }) {
   const [renaming, setRenaming] = useState(false);
   const manage = useActionForm(manageViewAction);
-  const remove = useActionForm(manageViewAction, { confirm: `Delete the view "${view.name}"?` });
+  const remove = useActionForm(manageViewAction, { confirm: `The view "${view.name}" is removed. Requests aren't affected.`, confirmTitle: "Delete this view?", confirmLabel: "Yes, delete", confirmTone: "danger" });
   return (
     <li className="flex flex-wrap items-center gap-2 py-2">
       <Link href={view.href} className="link font-medium">

@@ -99,7 +99,7 @@ export function TemplateEditor({
         <div>
           <p className="field-label">Preview with sample values</p>
           <div className="rounded-lg bg-success-50 p-4">
-            <div className="max-w-sm whitespace-pre-wrap rounded-lg bg-white px-3 py-2 text-label shadow-sm">
+            <div className="max-w-sm whitespace-pre-wrap rounded-lg bg-raised px-3 py-2 text-label shadow-sm">
               <SafeText text={previewNamed(body, variables)} />
               {footer && <p className="mt-2 text-caption text-ink-faint">{footer}</p>}
             </div>
@@ -139,7 +139,7 @@ export function TemplateEditor({
 }
 
 export function SubmitTemplateButton({ code, name }: { code: string; name: string }) {
-  const { result, pending, onSubmit, confirmBar } = useActionForm(submitTemplateAction, { confirm: `Submit ${name} to Meta through CEOITBox? After this, changes need a new version.` });
+  const { result, pending, onSubmit, confirmBar } = useActionForm(submitTemplateAction, { confirmTitle: "Submit to Meta?", confirmLabel: "Yes, submit", confirm: `Submit ${name} to Meta through CEOITBox? After this, changes need a new version.` });
   return (
     <form onSubmit={onSubmit} className="space-y-2">
       <input type="hidden" name="code" value={code} />

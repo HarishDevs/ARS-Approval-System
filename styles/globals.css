@@ -2,27 +2,143 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ARS brand tokens (D:\Omniroute\assets\tokens\tokens.css, D-022). */
+/* ARS brand tokens (D:\Omniroute\assets\tokens\tokens.css, D-022) and the
+   v1.6.0 design tokens (UI-01). Components use only these variables (through
+   the Tailwind colour names). "-600" colours are for text, icons and marks;
+   "-solid" colours are fills that carry white text, so both stay readable in
+   light and dark (UI-02). Text colours were darkened slightly in v1.6.0 so
+   faint, success and warning text meet 4.5:1 on white. */
 :root {
+  color-scheme: light;
   --color-primary-50: #eef4fb;
   --color-primary-100: #c9daee;
   --color-primary-600: #005398;
   --color-primary-700: #003f75;
+  --color-primary-solid: #005398;
+  --color-primary-solid-hover: #003f75;
+  --color-primary-solid-disabled: #53769e;
   --color-accent-red: #ed1c25;
   --color-text-primary: #0f172a;
   --color-text-secondary: #475569;
-  --color-text-placeholder: #94a3b8;
+  --color-text-placeholder: #64748b;
+  --color-text-on-solid: #ffffff;
   --color-border-default: #e2e8f0;
+  --color-border-strong: #cbd5e1;
   --color-surface-white: #ffffff;
   --color-surface-muted: #f1f5f9;
   --color-surface-page: #f8fafc;
+  --color-surface-raised: #ffffff;
+  --color-overlay: rgba(15, 23, 42, 0.45);
   --color-success-50: #dcfce7;
-  --color-success-600: #16a34a;
+  --color-success-600: #15803d;
+  --color-success-solid: #15803d;
   --color-warning-50: #ffedd5;
-  --color-warning-600: #ea580c;
+  --color-warning-600: #c2410c;
+  --color-warning-solid: #c2410c;
   --color-error-50: #fdecec;
   --color-error-200: #f8c9cb;
-  --color-error-600: #dc2626;
+  --color-error-600: #c81e1e;
+  --color-error-solid: #dc2626;
+  --color-error-solid-hover: #b91c1c;
+  --color-info-50: #e0f2fe;
+  --color-info-600: #0369a1;
+  --color-focus: #005398;
+  --shadow-card: 0 8px 24px rgba(15, 23, 42, 0.08);
+  --shadow-button: 0 4px 12px rgba(0, 83, 152, 0.22);
+  --shadow-overlay: 0 20px 48px rgba(15, 23, 42, 0.22);
+  --motion-fast: 120ms;
+  --motion-base: 200ms;
+  --motion-slow: 320ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --z-header: 30;
+  --z-sticky: 35;
+  --z-drawer: 50;
+  --z-dialog: 60;
+  --z-toast: 70;
+  --z-palette: 80;
+}
+
+/* Dark: chosen in Profile (data-theme on <html>), or the device setting when
+   the person chose "System" (no data-theme). */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-primary-50: #10243a;
+  --color-primary-100: #1b3a5c;
+  --color-primary-600: #7cb7ef;
+  --color-primary-700: #a6cdf5;
+  --color-primary-solid: #2a6fb5;
+  --color-primary-solid-hover: #3580cc;
+  --color-primary-solid-disabled: #2b4560;
+  --color-accent-red: #ff5a60;
+  --color-text-primary: #e5e9f0;
+  --color-text-secondary: #b3bdcc;
+  --color-text-placeholder: #8a96a8;
+  --color-text-on-solid: #ffffff;
+  --color-border-default: #2a3546;
+  --color-border-strong: #3a4659;
+  --color-surface-white: #151c27;
+  --color-surface-muted: #1e2734;
+  --color-surface-page: #0e131b;
+  --color-surface-raised: #1a2230;
+  --color-overlay: rgba(0, 0, 0, 0.6);
+  --color-success-50: #0f2c1c;
+  --color-success-600: #6ee7a0;
+  --color-success-solid: #15803d;
+  --color-warning-50: #33210f;
+  --color-warning-600: #fdba74;
+  --color-warning-solid: #b45309;
+  --color-error-50: #351517;
+  --color-error-200: #6b2226;
+  --color-error-600: #fca5a5;
+  --color-error-solid: #c62828;
+  --color-error-solid-hover: #dc2626;
+  --color-info-50: #0b2a3d;
+  --color-info-600: #7dd3fc;
+  --color-focus: #7cb7ef;
+  --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-button: 0 4px 12px rgba(0, 0, 0, 0.35);
+  --shadow-overlay: 0 20px 48px rgba(0, 0, 0, 0.55);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+  --color-primary-50: #10243a;
+  --color-primary-100: #1b3a5c;
+  --color-primary-600: #7cb7ef;
+  --color-primary-700: #a6cdf5;
+  --color-primary-solid: #2a6fb5;
+  --color-primary-solid-hover: #3580cc;
+  --color-primary-solid-disabled: #2b4560;
+  --color-accent-red: #ff5a60;
+  --color-text-primary: #e5e9f0;
+  --color-text-secondary: #b3bdcc;
+  --color-text-placeholder: #8a96a8;
+  --color-text-on-solid: #ffffff;
+  --color-border-default: #2a3546;
+  --color-border-strong: #3a4659;
+  --color-surface-white: #151c27;
+  --color-surface-muted: #1e2734;
+  --color-surface-page: #0e131b;
+  --color-surface-raised: #1a2230;
+  --color-overlay: rgba(0, 0, 0, 0.6);
+  --color-success-50: #0f2c1c;
+  --color-success-600: #6ee7a0;
+  --color-success-solid: #15803d;
+  --color-warning-50: #33210f;
+  --color-warning-600: #fdba74;
+  --color-warning-solid: #b45309;
+  --color-error-50: #351517;
+  --color-error-200: #6b2226;
+  --color-error-600: #fca5a5;
+  --color-error-solid: #c62828;
+  --color-error-solid-hover: #dc2626;
+  --color-info-50: #0b2a3d;
+  --color-info-600: #7dd3fc;
+  --color-focus: #7cb7ef;
+  --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-button: 0 4px 12px rgba(0, 0, 0, 0.35);
+  --shadow-overlay: 0 20px 48px rgba(0, 0, 0, 0.55);
+  }
 }
 
 html,
@@ -36,7 +152,7 @@ body {
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-primary-600);
+  outline: 2px solid var(--color-focus);
   outline-offset: 2px;
 }
 
@@ -58,7 +174,7 @@ body {
   }
   /* Disabled/busy: a muted blue that keeps white text at 4.72:1 (QA DEF-06). */
   .btn-primary {
-    @apply inline-flex h-[46px] w-full items-center justify-center gap-2 rounded-md bg-primary-600 px-5 text-body font-semibold text-white shadow-button transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:bg-[#53769e] disabled:shadow-none;
+    @apply inline-flex h-[46px] w-full items-center justify-center gap-2 rounded-md bg-primary-solid px-5 text-body font-semibold text-on-solid shadow-button transition-colors hover:bg-primary-solid-hover disabled:cursor-not-allowed disabled:bg-primary-solid-disabled disabled:shadow-none;
   }
   .btn-secondary {
     @apply inline-flex h-[46px] w-full items-center justify-center gap-3 rounded-md border border-line bg-surface px-5 text-body font-medium text-ink transition-colors hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-60;
@@ -95,6 +211,22 @@ body {
   .link {
     @apply font-semibold text-primary-600 hover:text-primary-700 hover:underline;
   }
+  /* v1.6.0 additions (UI-03). */
+  .btn-danger {
+    @apply inline-flex h-[46px] w-full items-center justify-center gap-2 rounded-md bg-danger-solid px-5 text-body font-semibold text-on-solid transition-colors hover:bg-danger-solid-hover disabled:cursor-not-allowed disabled:opacity-60;
+  }
+  .btn-ghost {
+    @apply inline-flex h-9 items-center justify-center gap-1.5 rounded-md px-2.5 text-label font-medium text-ink-muted transition-colors hover:bg-surface-muted hover:text-ink disabled:cursor-not-allowed disabled:opacity-60;
+  }
+  .field-invalid {
+    @apply border-danger-600 focus:border-danger-600 focus:ring-danger-200;
+  }
+  .data-table tbody th {
+    @apply text-label font-normal normal-case tracking-normal text-ink;
+  }
+  .skip-link {
+    @apply sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-palette focus:rounded-md focus:bg-primary-solid focus:px-4 focus:py-2 focus:text-on-solid;
+  }
 }
 
 /* Phones and tablets (spec #5): fingers need bigger targets than a mouse. */
@@ -104,5 +236,16 @@ body {
   }
   .field-input {
     min-height: 44px;
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }

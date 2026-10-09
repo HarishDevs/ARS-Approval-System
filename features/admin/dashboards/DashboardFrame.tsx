@@ -45,7 +45,7 @@ export function DashboardFrame({
             href={`/admin/dashboards/${item.slug}?${query}`}
             aria-current={item.slug === slug ? "page" : undefined}
             className={`rounded-full border px-4 py-1.5 text-label font-semibold transition-colors ${
-              item.slug === slug ? "border-primary-600 bg-primary-600 text-white" : "border-line bg-surface text-ink hover:bg-surface-muted"
+              item.slug === slug ? "border-primary-solid bg-primary-solid text-on-solid" : "border-line bg-surface text-ink hover:bg-surface-muted"
             }`}
           >
             {item.label}

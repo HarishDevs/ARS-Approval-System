@@ -5,8 +5,8 @@ import { ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 
 // Account actions on the user page (F-06). Each is a tiny form so it works
 // without client-side routing and is checked again on the server.
-function Command({ id, command, label, body, danger, confirm }: { id: number; command: string; label: string; body: string; danger?: boolean; confirm?: string }) {
-  const { result, pending, onSubmit, confirmBar } = useActionForm(userCommandAction, { confirm });
+function Command({ id, command, label, body, danger, confirm, confirmLabel }: { id: number; command: string; label: string; body: string; danger?: boolean; confirm?: string; confirmLabel?: string }) {
+  const { result, pending, onSubmit, confirmBar } = useActionForm(userCommandAction, { confirm, confirmTitle: `${label}?`, confirmLabel, confirmTone: danger ? "danger" : "primary" });
   return (
     <form onSubmit={onSubmit} className="space-y-2 px-5 py-4">
       <input type="hidden" name="id" value={id} />
@@ -52,7 +52,7 @@ export function UserCommands({
       )}
       {locked && <Command id={id} command="unlock" label="Unlock account" body="Clears a lock from wrong passwords or from “This wasn't me”." />}
       {active && (
-        <Command id={id} command="signout" label="Sign out everywhere" body={`Ends every open session (${openSessionCount} now).`} confirm={`Sign ${name} out on every device?`} />
+        <Command id={id} command="signout" label="Sign out everywhere" body={`Ends every open session (${openSessionCount} now).`} confirm={`Sign ${name} out on every device?`} confirmLabel="Yes, sign out" />
       )}
       {active ? (
         <Command
@@ -62,6 +62,7 @@ export function UserCommands({
           body="Blocks sign-in and ends every session. History is kept; you can reactivate later."
           danger
           confirm={`Deactivate ${name}? They will be signed out everywhere and can't sign in.`}
+          confirmLabel="Yes, deactivate"
         />
       ) : (
         <Command id={id} command="reactivate" label="Reactivate user" body="Allows sign-in again." />

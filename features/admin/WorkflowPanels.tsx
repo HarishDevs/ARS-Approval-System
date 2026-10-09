@@ -143,7 +143,7 @@ export function TestModePanel({ versionId, form, people, lookups = NO_LOOKUPS }:
 }
 
 export function PublishButton({ workflowId, versionId, versionNo }: { workflowId: number; versionId: number; versionNo: number }) {
-  const { result, pending, onSubmit, confirmBar } = useActionForm(publishAction, { confirm: `Publish version ${versionNo}? New requests will use it straight away.` });
+  const { result, pending, onSubmit, confirmBar } = useActionForm(publishAction, { confirmTitle: `Publish version ${versionNo}?`, confirmLabel: "Yes, publish", confirm: `Publish version ${versionNo}? New requests will use it straight away.` });
   return (
     <form onSubmit={onSubmit} className="space-y-2">
       <input type="hidden" name="workflowId" value={workflowId} />
@@ -210,7 +210,7 @@ export function DetailsForm({
 
 // Remove an approval type that was never used (two-step confirmation).
 export function DeleteWorkflowForm({ workflowId, name }: { workflowId: number; name: string }) {
-  const { result, pending, onSubmit, confirmBar } = useActionForm(deleteWorkflowAction, { confirm: `Remove "${name}" for good? This can't be undone.` });
+  const { result, pending, onSubmit, confirmBar } = useActionForm(deleteWorkflowAction, { confirm: `Remove "${name}" for good? This can't be undone.`, confirmTitle: "Remove this approval type?", confirmLabel: "Yes, remove", confirmTone: "danger" });
   return (
     <form onSubmit={onSubmit} className="card space-y-2 px-5 py-4">
       <input type="hidden" name="workflowId" value={workflowId} />

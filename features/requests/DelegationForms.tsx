@@ -54,7 +54,7 @@ export function DelegationForm({ people, today, userId }: { people: { id: number
 }
 
 export function StopDelegationButton({ delegationId }: { delegationId: number }) {
-  const { result, pending, onSubmit, confirmBar } = useActionForm(stopDelegationAction, { confirm: "End this out-of-office now?" });
+  const { result, pending, onSubmit, confirmBar } = useActionForm(stopDelegationAction, { confirm: "Your delegate stops seeing your approvals straight away.", confirmTitle: "End this out-of-office now?", confirmLabel: "Yes, end it" });
   return (
     <form onSubmit={onSubmit} className="flex items-center gap-2">
       <input type="hidden" name="delegationId" value={delegationId} />

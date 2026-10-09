@@ -115,7 +115,7 @@ test("test mode follows the date and department conditions", async ({ page, cont
   await expect(page.getByText(/Skipped: .*Urgent check/)).toHaveCount(0);
 
   await page.getByRole("button", { name: "Publish version 1" }).click();
-  await page.getByRole("button", { name: "Yes, continue" }).click();
+  await page.getByRole("button", { name: "Yes, publish" }).click();
   await expect(page.getByText("Live", { exact: true })).toBeVisible();
 });
 
@@ -131,9 +131,15 @@ test("a requester fills every field type; values are checked, stored and shown b
   await page.getByLabel("Title").fill("Spare motors for line 2");
   await page.getByLabel(/Amount/).fill("75,000");
   await page.getByRole("button", { name: "Submit request" }).click();
-  await expect(page.getByText("Purchase type is required.")).toBeVisible();
-  await expect(page.getByText("Needed by is required.")).toBeVisible();
-  await expect(page.getByText("Department is required.")).toBeVisible();
+  await expect(page.getByText("Purchase type is required.", { exact: true })).toBeVisible();
+  await expect(page.getByText("Needed by is required.", { exact: true })).toBeVisible();
+  await expect(page.getByText("Department is required.", { exact: true })).toBeVisible();
+  // FB-06: a summary at the top takes focus and links to each field.
+  const summary = page.getByRole("alert").filter({ hasText: "Please fix 3 things" });
+  await expect(summary).toBeFocused();
+  await summary.getByRole("link", { name: /Needed by/ }).click();
+  await expect(page.getByLabel("Needed by")).toBeFocused();
+  await expect(page.getByLabel("Needed by")).toHaveAttribute("aria-invalid", "true");
 
   await page.getByLabel("Purchase type").selectOption("Opex");
   await page.getByLabel("Needed by").fill("2026-12-01");

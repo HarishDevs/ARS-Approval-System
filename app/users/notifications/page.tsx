@@ -48,7 +48,7 @@ export default async function NotificationsPage({ searchParams }: { searchParams
             const body = (
               <>
                 <p className="flex items-center gap-2 font-medium">
-                  {!item.read && <span aria-label="Unread" className="h-2 w-2 rounded-full bg-primary-600" />}
+                  {!item.read && <span className="h-2 w-2 rounded-full bg-primary-600"><span className="sr-only">Unread</span></span>}
                   <SafeText text={item.title} />
                 </p>
                 <p className="text-label text-ink-muted">

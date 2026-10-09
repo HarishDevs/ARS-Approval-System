@@ -71,7 +71,7 @@ export function ProfileMenu({
           <span className="block text-label font-semibold leading-tight text-ink">{name}</span>
           <span className="mt-0.5 inline-block rounded-full bg-primary-50 px-2 py-px text-[11px] font-semibold leading-4 text-primary-700">{spaceLabel}</span>
         </span>
-        <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-600 text-caption font-semibold text-white">
+        <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-solid text-caption font-semibold text-on-solid">
           {initials}
         </span>
         <svg viewBox="0 0 20 20" className="hidden h-4 w-4 text-ink-faint sm:block" fill="currentColor" aria-hidden="true">
@@ -106,7 +106,7 @@ export function ProfileMenu({
             </Link>
             <Link href="/users/notifications" role="menuitem" className={item}>
               Notifications
-              {unread > 0 && <span className="rounded-full bg-danger-600 px-1.5 text-[11px] font-semibold leading-[18px] text-white">{unread > 99 ? "99+" : unread}</span>}
+              {unread > 0 && <span className="rounded-full bg-danger-solid px-1.5 text-[11px] font-semibold leading-[18px] text-on-solid">{unread > 99 ? "99+" : unread}</span>}
             </Link>
             <Link href="/users/security" role="menuitem" className={item}>
               Sign-in &amp; devices
