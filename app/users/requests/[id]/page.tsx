@@ -16,6 +16,7 @@ import { formatIndiaTime } from "@/server/notifications/security-messages";
 import { DeleteRequestButton } from "@/features/superadmin/DeleteRequestButton";
 import { loadFieldLookups } from "@/lib/db/repositories/lookups.repository";
 import { SafeText } from "@/features/ui/SafeText";
+import { listMentionable } from "@/lib/db/repositories/collab.repository";
 
 // F-14 request page. loadRequestView applies the record-level check
 // (D-057); anyone else gets the same 404 as a request that doesn't exist.
@@ -26,6 +27,7 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
   const view = await loadRequestView(Number(id), { id: user.id, roles: user.roles });
   if (!view) notFound();
   const query = await searchParams;
+  const mentionable = (await listMentionable(view.id)).filter((person) => person.loginId !== user.loginId);
   const submitted = query.submitted === "1";
   const lookups = view.canResubmit && view.form.some((field) => field.type === "LOOKUP") ? await loadFieldLookups() : undefined;
   const people =
@@ -167,7 +169,7 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
               ))}
             </ul>
           )}
-          <CommentForm requestId={view.id} />
+          <CommentForm requestId={view.id} people={mentionable} />
         </section>
         <section className="card h-fit px-5 py-4">
           <h2 className="mb-3 font-semibold">Timeline</h2>

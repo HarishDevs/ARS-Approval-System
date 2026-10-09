@@ -37,6 +37,19 @@ export async function commentAudience(requestId: number, db: Queryable = getDbPo
   return rows.map((row) => row.user_id);
 }
 
+// #9: people already on a request (requester and anyone with a task), for
+// the "mention" shortcuts under the comment box.
+export async function listMentionable(requestId: number, db: Queryable = getDbPool()): Promise<{ loginId: string; name: string }[]> {
+  const [rows] = await db.query<(RowDataPacket & { login_id: string; name: string })[]>(
+    `SELECT DISTINCT u.login_id, u.name FROM users u
+     WHERE u.active = TRUE AND u.is_break_glass = FALSE AND (u.id = (SELECT requester_id FROM approval_requests WHERE id = ?)
+       OR u.id IN (SELECT approver_id FROM approval_tasks WHERE request_id = ?))
+     ORDER BY u.name LIMIT 30`,
+    [requestId, requestId],
+  );
+  return rows.map((row) => ({ loginId: row.login_id, name: row.name }));
+}
+
 // ---- delegations (D-062) ---------------------------------------------------------------
 export interface DelegationItem {
   id: number;

@@ -78,14 +78,18 @@ export async function commentAction(_previous: ActionResult | null, formData: Fo
   const me = await actor();
   const requestId = num(formData.get("requestId"));
   if (!me || requestId === null) return NOT_FOUND;
+  let notVisible: string[] = [];
   try {
     const result = await addComment(requestId, String(formData.get("body") ?? ""), me);
     if (!result.ok) return { ok: false, message: result.message, fieldErrors: { body: result.message } };
+    notVisible = result.value.notVisible;
   } catch (error) {
     logError("commentAction failed", error);
     return { ok: false, message: "Couldn't post. Please try again." };
   }
   revalidatePath(`/users/requests/${requestId}`);
+  // #9: say plainly who wasn't told (they can't see this request).
+  if (notVisible.length > 0) return { ok: true, message: `Posted. Not notified (they can't see this request, or the User ID is wrong): ${notVisible.map((id) => `@${id}`).join(", ")}.` };
   return { ok: true, message: "Posted." };
 }
 

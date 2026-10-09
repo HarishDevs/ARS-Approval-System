@@ -10,7 +10,8 @@ import {
   insertComment,
   insertDelegation,
 } from "@/lib/db/repositories/collab.repository";
-import { findUserById } from "@/lib/db/repositories/users.repository";
+import { findUserById, findUserByLoginId } from "@/lib/db/repositories/users.repository";
+import { parseMentions } from "@/server/approvals/mentions";
 import { withTransaction } from "@/lib/db/transaction";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { getEnv } from "@/config/environment";
@@ -23,7 +24,27 @@ const isAdmin = (actor: Actor) => actor.roles.includes("IT_ADMIN") || actor.role
 const baseUrl = () => getEnv().APP_BASE_URL ?? "https://approval.arssteels.net";
 
 // ---- comments (F-15, D-061) -------------------------------------------------------
-export async function addComment(requestId: number, body: string, actor: Actor): Promise<Result<{ id: number }>> {
+// #9: who a comment mentions and who of them may see the request. Someone
+// who can't see it is never told (and the writer is told they weren't).
+async function resolveMentions(text: string, request: { id: number; requesterId: number }, actorId: number): Promise<{ visible: number[]; notVisible: string[] }> {
+  const visible: number[] = [];
+  const notVisible: string[] = [];
+  for (const loginId of parseMentions(text)) {
+    const user = await findUserByLoginId(loginId);
+    if (!user || !user.active || user.isBreakGlass) {
+      notVisible.push(loginId);
+      continue;
+    }
+    if (user.id === actorId) continue;
+    const sees = user.id === request.requesterId || isAdmin({ id: user.id, roles: user.roles }) || (await isParticipant(request.id, user.id));
+    if (sees) {
+      if (!visible.includes(user.id)) visible.push(user.id);
+    } else notVisible.push(loginId);
+  }
+  return { visible, notVisible };
+}
+
+export async function addComment(requestId: number, body: string, actor: Actor): Promise<Result<{ id: number; notVisible: string[] }>> {
   const text = body.trim();
   if (text.length < 1) return { ok: false, code: "EMPTY", message: "Write a comment first." };
   if (text.length > 2000) return { ok: false, code: "TOO_LONG", message: "Keep it under 2,000 characters." };
@@ -32,11 +53,25 @@ export async function addComment(requestId: number, body: string, actor: Actor):
   if (!request || !allowed) return { ok: false, code: "NOT_FOUND", message: "Not found." };
 
   const id = await insertComment(requestId, actor.id, text);
-  await recordAudit({ actorUserId: actor.id, action: "REQUEST_COMMENTED", entityType: "REQUEST", entityId: requestId, metadata: { commentId: id } });
+  const mentions = await resolveMentions(text, request, actor.id);
+  await recordAudit({ actorUserId: actor.id, action: "REQUEST_COMMENTED", entityType: "REQUEST", entityId: requestId, metadata: { commentId: id, mentioned: mentions.visible } });
   try {
     const author = (await findUserById(actor.id))?.name ?? "Someone";
     const link = requestLink(baseUrl(), requestId);
-    const audience = (await commentAudience(requestId)).filter((userId) => userId !== actor.id);
+    // Each person hears once: a mention replaces the plain "new comment".
+    // Mentions go to the inbox and email (no WhatsApp template for them yet).
+    for (const userId of mentions.visible) {
+      await notify({
+        eventType: "REQUEST_MENTION",
+        userId,
+        title: "You were mentioned",
+        message: `${author} mentioned you on ${request.requestNo}: ${text.slice(0, 140)}`,
+        deepLink: link,
+        email: { subject: `${author} mentioned you on ${request.requestNo}`, text: `${author} mentioned you in a comment on ${request.requestNo} · ${request.title}:\n\n${text}\n\n${link}` },
+        whatsappVariables: null,
+      });
+    }
+    const audience = (await commentAudience(requestId)).filter((userId) => userId !== actor.id && !mentions.visible.includes(userId));
     for (const userId of audience) {
       await notify({
         eventType: "REQUEST_COMMENT",
@@ -51,7 +86,7 @@ export async function addComment(requestId: number, body: string, actor: Actor):
   } catch (error) {
     logError("addComment: notify failed", error, { requestId });
   }
-  return { ok: true, value: { id } };
+  return { ok: true, value: { id, notVisible: mentions.notVisible } };
 }
 
 // ---- delegation (F-30, D-062) ---------------------------------------------------------
