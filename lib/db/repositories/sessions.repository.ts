@@ -98,7 +98,7 @@ export async function revokeAllSessionsForUser(userId: number, reason: string, d
 
 // Audit S-07: a security link (e.g. "This wasn't me") works once. Returns
 // false when the link was already used. Only a hash of the link is kept.
-export async function useSecurityLinkOnce(tokenHash: string, db: Queryable = getDbPool()): Promise<boolean> {
+export async function claimSecurityLink(tokenHash: string, db: Queryable = getDbPool()): Promise<boolean> {
   const [result] = await db.query<ResultSetHeader>("INSERT IGNORE INTO used_security_links (token_hash) VALUES (?)", [tokenHash]);
   return result.affectedRows === 1;
 }
