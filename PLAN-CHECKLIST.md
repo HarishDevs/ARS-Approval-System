@@ -257,6 +257,26 @@ Found during S8-06:
 - [x] S8-01b Go-live on GoDaddy with the owner, following docs/DEPLOYMENT.md (the owner is at the wizard's "Add secrets" step) (done 9 Oct 2026: live since 8 Oct 2026)
 - [x] S8-04 Update the three living files; commit and push (done 8 Oct 2026)
 
+## Session log — v1.5.0: owner's development spec (9 Oct 2026), planned before starting
+Plan and feature map: `docs/development/ENHANCEMENT_IMPLEMENTATION_PLAN.md`.
+- [x] V150-00 Phase 0: baseline (v1.4.0 live, CI green, local suites green), feature map, plan (done 9 Oct 2026)
+- [ ] V150-01 Migration: request_drafts, saved_views, notification_preferences, user_flags, DUE_SOON
+- [ ] V150-02 #14 correlation ids (x-request-id) and Super Admin alerts on job/backup failure; GO_LIVE_CHECKLIST
+- [ ] V150-03 #1 My Work sections (due soon/overdue, returned, drafts, recently completed)
+- [ ] V150-04 #2 tracker summary (waiting for, since, next step, progress) and text status labels
+- [ ] V150-05 #3 drafts with autosave, recovery, discard, version check, expiry (predefined and custom)
+- [ ] V150-06 #4 global search with access in SQL, filters, paging; saved views
+- [ ] V150-07 #5 phone layouts (cards), action bar first, touch targets; phone E2E
+- [ ] V150-08 #6 notification preferences (mandatory groups locked), SKIPPED/USER_PREFERENCE
+- [ ] V150-09 #7 bulk approve via decideTask, per-item results, max 25
+- [ ] V150-10 #8 out of office: Upcoming/Active/Ended, preview, policy text
+- [ ] V150-11 #9 @mentions of people who can see the request, notified once
+- [ ] V150-12 #10 approval summary PDF (access-checked, audited)
+- [ ] V150-13 #11 test mode detail + version comparison
+- [ ] V150-14 #12 workload page, DUE_SOON reminder, handover suggestions
+- [ ] V150-15 #13 help page, first-use checklist, copy details for IT
+- [ ] V150-16 Regression, docs (CHANGELOG, TEST_AND_RELEASE_REPORT, USER-GUIDE, DEPLOYMENT), living files, push
+
 ## Session log — v1.4.0: every pending item (9 Oct 2026), planned before starting
 Owner: "fix every pending items in one go and then ill publish".
 - [x] V140-01 Engine: work steps (approval step in WORK mode: "Mark as done", may be the requester, no reject), NOTIFY steps (FYI, moves on), DESIGNATION and REQUESTER approver sources (done 9 Oct 2026: v1.4.0)
