@@ -3,7 +3,7 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { SESSION_COOKIE_NAME } from "@/lib/session/constants";
 import { verifySessionToken, verifyPurposeToken } from "@/lib/session/token";
-import { isSessionActive, revokeAllSessionsForUser, revokeSession, touchSession } from "@/lib/db/repositories/sessions.repository";
+import { isSessionActive, revokeAllSessionsForUser, revokeSession, touchSession, useSecurityLinkOnce } from "@/lib/db/repositories/sessions.repository";
 import { findUserById, securityLockUser, listUserIdsWithRole } from "@/lib/db/repositories/users.repository";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { notify } from "@/server/notifications/notify";
@@ -11,6 +11,7 @@ import { accountSecuredMessage } from "@/server/notifications/security-messages"
 import { NOT_ME_PURPOSE } from "@/server/auth/complete-sign-in";
 import type { AuthenticatedUser } from "@/types/auth";
 import { getNumberSetting } from "@/server/settings/values";
+import { createHash } from "node:crypto";
 
 export interface CurrentSession {
   sessionId: string;
@@ -74,6 +75,8 @@ export async function reportNotMe(token: string, ipAddress: string | null): Prom
   if (!payload) return "INVALID_LINK";
   const user = await findUserById(payload.uid);
   if (!user) return "INVALID_LINK";
+  // Once used, the same link can't lock the account again after IT unlocks it.
+  if (!(await useSecurityLinkOnce(createHash("sha256").update(token).digest("hex")))) return "INVALID_LINK";
 
   await revokeAllSessionsForUser(user.id, "NOT_ME_REPORTED");
   await securityLockUser(user.id);

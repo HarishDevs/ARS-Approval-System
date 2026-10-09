@@ -9,6 +9,7 @@ import {
   normaliseWhatsAppNumber,
   type Actor,
   type TargetUser,
+  checkContactChange,
 } from "@/server/admin/user-rules";
 
 const superAdmin: Actor = { id: 1, roles: ["USER", "IT_ADMIN", "SUPER_ADMIN"] };
@@ -89,5 +90,25 @@ describe("WhatsApp numbers", () => {
     expect(normaliseWhatsAppNumber("")).toBeNull();
     expect(isValidWhatsAppNumber("919876543210")).toBe(true);
     expect(isValidWhatsAppNumber("12345")).toBe(false);
+  });
+});
+
+describe("contact details of another IT Admin (audit P-04)", () => {
+  const itA = { id: 10, roles: ["USER", "IT_ADMIN"] as const };
+  const itB = { id: 11, roles: ["USER", "IT_ADMIN"] as const, active: true, isBreakGlass: false };
+  const staff = { id: 12, roles: ["USER"] as const, active: true, isBreakGlass: false };
+  const superAdmin = { id: 1, roles: ["USER", "IT_ADMIN", "SUPER_ADMIN"] as const };
+
+  it("an IT Admin can't change another IT Admin's email, number or sign-in, or send them a set-password link", () => {
+    expect(checkContactChange(itA, itB, { email: true }).ok).toBe(false);
+    expect(checkContactChange(itA, itB, { whatsappNumber: true }).ok).toBe(false);
+    expect(checkContactChange(itA, itB, { setPasswordLink: true }).ok).toBe(false);
+  });
+
+  it("their own, staff's, or anything by the Super Admin is fine; other fields are fine", () => {
+    expect(checkContactChange(itA, { ...itB, id: 10 }, { email: true }).ok).toBe(true);
+    expect(checkContactChange(itA, staff, { email: true }).ok).toBe(true);
+    expect(checkContactChange(superAdmin, itB, { email: true }).ok).toBe(true);
+    expect(checkContactChange(itA, itB, {}).ok).toBe(true);
   });
 });

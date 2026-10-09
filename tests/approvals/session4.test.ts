@@ -104,3 +104,12 @@ describe("DoA view (D-065)", () => {
     expect(deriveDoaTable({ stages: [{ kind: "STEP", step: newStep("a", "A") }] }).bands).toEqual([{ from: 0, to: null, levels: ["A"] }]);
   });
 });
+
+describe("multi-level escalation (D-100)", () => {
+  it("adds one level per extra response time, up to the levels allowed, each once", () => {
+    const base = { taskId: 1, isDue: true, isEscalationDue: false, reminded: false, escalated: false };
+    expect(slaActions({ ...base, levelsDue: 3, levelsAllowed: 2, sent: [] })).toEqual(["REMINDER", "ESCALATION", "ESCALATION_2"]);
+    expect(slaActions({ ...base, levelsDue: 3, levelsAllowed: 3, sent: ["REMINDER", "ESCALATION"] })).toEqual(["ESCALATION_2", "ESCALATION_3"]);
+    expect(slaActions({ ...base, levelsDue: 1, levelsAllowed: 3, sent: ["REMINDER", "ESCALATION"] })).toEqual([]);
+  });
+});

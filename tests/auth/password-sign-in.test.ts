@@ -137,15 +137,16 @@ describe("password + WhatsApp OTP sign-in (F-02)", () => {
     expect(wrong.sentCodes).toEqual([]);
   });
 
-  it("locks after too many wrong passwords and alerts the user", async () => {
+  it("locks after too many wrong passwords and alerts the user, without telling the guesser (S-06)", async () => {
     const { deps } = passwordDeps(user, { recordFailedPassword: async () => ({ failedCount: 5, locked: true }) });
-    await expectAuthError(startPasswordSignInWithDeps("EMP005", "Wrong1234", context, deps), "AUTH_ACCOUNT_LOCKED");
+    await expectAuthError(startPasswordSignInWithDeps("EMP005", "Wrong1234", context, deps), "AUTH_INVALID_CREDENTIALS");
     expect(deps.notify).toHaveBeenCalledWith(expect.objectContaining({ eventType: "ACCOUNT_LOCKED", userId: 5 }));
   });
 
-  it("a locked account can't sign in even with the right password", async () => {
+  it("a locked account can't sign in even with the right password; only the right password hears it's locked", async () => {
     const { deps, sentCodes } = passwordDeps(userRecord({ lockedSecondsRemaining: 300 }));
     await expectAuthError(startPasswordSignInWithDeps("EMP005", "Correct123", context, deps), "AUTH_ACCOUNT_LOCKED");
+    await expectAuthError(startPasswordSignInWithDeps("EMP005", "Wrong1234", context, deps), "AUTH_INVALID_CREDENTIALS");
     expect(sentCodes).toEqual([]);
   });
 

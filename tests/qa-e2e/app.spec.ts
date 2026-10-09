@@ -127,10 +127,14 @@ test("QA-AUTH-04 wrong passwords: one generic answer, lockout after 5, a per-Use
   const real = await message(await post("E2E_STAFF", "198.51.100.1"));
   const unknown = await message(await post(`nobody-${stamp}`, "198.51.100.1"));
   // 2. Lockout: a password-sign-in user is locked on the 5th wrong password.
+  // Since v1.4.0 (S-06) the guesser isn't told: the answer stays the same as
+  // for an unknown User ID; the owner gets the lock alert instead.
   await sql("UPDATE users SET sign_in_method = 'PASSWORD', whatsapp_number = '919800000001', failed_login_count = 0, locked_until = NULL WHERE login_id = 'E2E_HOD'");
   const lockMessages: string[] = [];
+  let lockedInDb = false;
   try {
-    for (let i = 0; i < 5; i += 1) lockMessages.push(await message(await post("E2E_HOD", "198.51.100.2")));
+    for (let i = 0; i < 6; i += 1) lockMessages.push(await message(await post("E2E_HOD", "198.51.100.2")));
+    lockedInDb = (await count("SELECT COUNT(*) FROM users WHERE login_id = 'E2E_HOD' AND locked_until > CURRENT_TIMESTAMP")) === 1;
   } finally {
     await sql("UPDATE users SET sign_in_method = 'GOOGLE', whatsapp_number = NULL, failed_login_count = 0, locked_until = NULL WHERE login_id = 'E2E_HOD'");
   }
@@ -139,7 +143,8 @@ test("QA-AUTH-04 wrong passwords: one generic answer, lockout after 5, a per-Use
   for (let i = 0; i < 11; i += 1) statuses.push((await post(`limit-${stamp}`, "198.51.100.3")).status());
   note("QA-AUTH-04", { realVsUnknown: [real, unknown], lockMessages, perLoginStatuses: statuses });
   expect(real).toBe(unknown);
-  expect(lockMessages[4]).toMatch(/locked/i);
+  expect(lockedInDb, "the account is locked after the 5th wrong password").toBe(true);
+  expect(new Set(lockMessages), "every answer, before and after the lock, is the generic one").toEqual(new Set([unknown]));
   expect(statuses[10]).toBe(429);
 });
 

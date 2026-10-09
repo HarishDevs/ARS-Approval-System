@@ -57,6 +57,11 @@ export async function googleSignInWithDeps(
   if (!identity.email || !identity.emailVerified) {
     return fail(null, "EMAIL_NOT_VERIFIED", new AuthError("AUTH_NOT_ALLOWED", GENERIC_GOOGLE_FAILED));
   }
+  // The Firebase project is shared with the Power BI site: only a real Google
+  // sign-in counts here, not another provider with the same email (audit P-03).
+  if (identity.provider !== "google.com") {
+    return fail(null, "NOT_GOOGLE_PROVIDER", new AuthError("AUTH_NOT_ALLOWED", GENERIC_GOOGLE_FAILED));
+  }
 
   let user = await deps.findUserByFirebaseUid(identity.uid);
   if (!user) {

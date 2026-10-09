@@ -15,7 +15,7 @@ import { AuthError } from "@/server/auth/errors";
 import { consumeOtpCode, issueOtp, loadOpenChallenge, type OtpChallengeResult, type OtpDeps } from "@/server/auth/otp-flow";
 import { defaultOtpDeps } from "@/server/auth/password-sign-in";
 import { completeSignIn, defaultCompleteSignInDeps, type CompleteSignInDeps, type CompleteSignInResult } from "@/server/auth/complete-sign-in";
-import { checkCanEdit, type Actor } from "@/server/admin/user-rules";
+import { checkCanEdit, checkContactChange, type Actor } from "@/server/admin/user-rules";
 import { logError } from "@/lib/logging/logger";
 import type { RequestContext } from "@/types/auth";
 
@@ -86,8 +86,11 @@ export async function sendSetPasswordLinkWithDeps(
 ): Promise<{ ok: true; value: string } | { ok: false; message: string }> {
   const user = await deps.findUserById(userId);
   if (!user) return { ok: false, message: "User not found." };
-  const edit = checkCanEdit(actor, { id: user.id, roles: user.roles, active: user.active, isBreakGlass: user.isBreakGlass });
+  const target = { id: user.id, roles: user.roles, active: user.active, isBreakGlass: user.isBreakGlass };
+  const edit = checkCanEdit(actor, target);
   if (!edit.ok) return edit;
+  const contact = checkContactChange(actor, target, { setPasswordLink: true });
+  if (!contact.ok) return contact;
   if (user.isBreakGlass) return { ok: false, message: "The break-glass password is set only from the hosting console." };
   if (!user.active) return { ok: false, message: "Reactivate the user first." };
   if (user.signInMethod !== "PASSWORD") return { ok: false, message: "This user signs in with Google, so no password is needed." };

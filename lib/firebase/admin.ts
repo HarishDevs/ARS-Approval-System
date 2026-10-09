@@ -44,9 +44,11 @@ export interface VerifiedGoogleIdentity {
   uid: string;
   email: string | null;
   emailVerified: boolean;
+  // How the person signed in to Firebase, e.g. "google.com" (audit P-03).
+  provider: string | null;
 }
 
 export async function verifyGoogleIdToken(idToken: string): Promise<VerifiedGoogleIdentity> {
   const decoded = await getAuth(getFirebaseAdminApp()).verifyIdToken(idToken, true);
-  return { uid: decoded.uid, email: decoded.email ?? null, emailVerified: decoded.email_verified ?? false };
+  return { uid: decoded.uid, email: decoded.email ?? null, emailVerified: decoded.email_verified ?? false, provider: decoded.firebase?.sign_in_provider ?? null };
 }

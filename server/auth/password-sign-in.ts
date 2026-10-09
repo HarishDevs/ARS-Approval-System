@@ -90,10 +90,15 @@ export async function startPasswordSignInWithDeps(
     throw new AuthError("AUTH_INVALID_CREDENTIALS", GENERIC_SIGN_IN_FAILED);
   }
 
+  // Audit S-06: "locked" is only said to someone who knows the password;
+  // anyone else gets the same answer as for an unknown User ID, so the
+  // message can't be used to find out which IDs exist. The owner is told
+  // about the lock on WhatsApp and email anyway.
   if (user.lockedSecondsRemaining > 0) {
-    await deps.burnPasswordCheck(password);
+    const knowsPassword = await deps.verifyPassword(password, user.passwordHash);
     await logFailure(user.id, "LOCKED");
-    throw new AuthError("AUTH_ACCOUNT_LOCKED", "This account is locked. Try again later or contact IT.", user.lockedSecondsRemaining);
+    if (knowsPassword) throw new AuthError("AUTH_ACCOUNT_LOCKED", "This account is locked. Try again later or contact IT.", user.lockedSecondsRemaining);
+    throw new AuthError("AUTH_INVALID_CREDENTIALS", GENERIC_SIGN_IN_FAILED);
   }
 
   const passwordOk = await deps.verifyPassword(password, user.passwordHash);
@@ -104,7 +109,6 @@ export async function startPasswordSignInWithDeps(
       if (locked) {
         await deps.recordAudit({ actorUserId: user.id, action: "ACCOUNT_LOCKED", entityType: "USER", entityId: user.id, result: "FAILURE", ipAddress: context.ipAddress });
         await deps.notify({ eventType: "ACCOUNT_LOCKED", userId: user.id, ...accountLockedMessage(user.name, config.lockoutMinutes) });
-        throw new AuthError("AUTH_ACCOUNT_LOCKED", "Too many wrong passwords. The account is locked for a while.", config.lockoutMinutes * 60);
       }
     }
     throw new AuthError("AUTH_INVALID_CREDENTIALS", GENERIC_SIGN_IN_FAILED);

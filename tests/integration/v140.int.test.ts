@@ -184,3 +184,31 @@ describe("custom approvals leave no orphan (audit R-06)", () => {
     expect(Number(after[0]?.total)).toBe(Number(before[0]?.total));
   });
 });
+
+describe("escalation goes up the management chain (D-100)", () => {
+  it("at 3.5 times the response time: reminder, the manager, then the manager's manager; nothing twice", async () => {
+    const { runSlaChecks } = await import("@/server/jobs/sla");
+    const top = await createUser({ name: "Top" });
+    const middle = await createUser({ name: "Middle", managerId: top });
+    const slow = await createUser({ name: "Slow", managerId: middle });
+    const workflowId = await publish(chain({ id: "a", kind: "APPROVAL", label: "Slow step", approvers: [{ type: "USER", userId: slow }], completion: { type: "ALL" }, slaHours: 10 }));
+    const id = await raise(workflowId);
+    await getDbPool().query(
+      `UPDATE approval_tasks SET created_at = DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 35 HOUR), due_at = DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 25 HOUR),
+         escalate_at = DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 15 HOUR) WHERE request_id = ?`,
+      [id],
+    );
+    await runSlaChecks();
+    await runSlaChecks();
+    const [kinds] = await getDbPool().query<(RowDataPacket & { kind: string })[]>(
+      "SELECT m.kind FROM task_reminders m JOIN approval_tasks t ON t.id = m.task_id WHERE t.request_id = ? ORDER BY m.kind",
+      [id],
+    );
+    expect(kinds.map((row) => row.kind)).toEqual(["REMINDER", "ESCALATION", "ESCALATION_2"]);
+    const [told] = await getDbPool().query<(RowDataPacket & { user_id: number; title: string })[]>(
+      "SELECT user_id, title FROM notifications WHERE event_type = 'APPROVAL_ESCALATED' AND user_id IN (?, ?) ORDER BY id",
+      [middle, top],
+    );
+    expect(told.map((row) => `${row.user_id === middle ? "middle" : "top"}:${row.title}`)).toEqual(["middle:Approval escalated", "top:Approval escalated (level 2)"]);
+  });
+});

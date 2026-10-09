@@ -42,6 +42,16 @@ export function checkCanEdit(actor: Actor, target: TargetUser): RuleResult {
   return OK;
 }
 
+// Audit P-04: the email, WhatsApp number and sign-in method are how an
+// account is reached (and how a set-password link arrives), so another IT
+// Admin's are changed by the Super Admin only; otherwise one IT Admin could
+// take over another's account. Your own you may change.
+export function checkContactChange(actor: Actor, target: TargetUser, changes: { email?: boolean; whatsappNumber?: boolean; signInMethod?: boolean; setPasswordLink?: boolean }): RuleResult {
+  const touchesAccess = Boolean(changes.email || changes.whatsappNumber || changes.signInMethod || changes.setPasswordLink);
+  if (!touchesAccess || target.id === actor.id || isSuperAdmin(actor) || !isAdmin(target)) return OK;
+  return deny("Only the Super Admin can change another IT Admin's email, WhatsApp number or sign-in method, or send them a set-password link.");
+}
+
 // USER is always present; it is added, never removed.
 export function normaliseRoles(roles: readonly string[]): RoleCode[] {
   const set = new Set<RoleCode>(["USER"]);

@@ -7,7 +7,8 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { connect } = require("./env");
 
-const MIGRATIONS_DIR = path.join(__dirname, "..", "..", "database", "migrations");
+// MIGRATIONS_DIR: only for the resume test (tests/integration/migrate.int.test.ts).
+const MIGRATIONS_DIR = process.env.MIGRATIONS_DIR || path.join(__dirname, "..", "..", "database", "migrations");
 
 // Splits a file into statements. Plain statements end with ";". A trigger
 // body contains ";" itself, so it is wrapped between "-- @begin" and
@@ -51,6 +52,16 @@ async function main() {
         applied_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
 
+    // MySQL can't roll back table changes, so a file that fails halfway is
+    // partly applied. Progress is saved per statement: after fixing the cause,
+    // the next run carries on from the statement that failed (audit R-10).
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS schema_migration_progress (
+        filename    VARCHAR(255) NOT NULL PRIMARY KEY,
+        statements_done INT NOT NULL,
+        updated_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+
     const [rows] = await connection.query("SELECT filename FROM schema_migrations");
     const applied = new Set(rows.map((row) => row.filename));
     const pending = fs
@@ -65,12 +76,28 @@ async function main() {
     }
 
     for (const filename of pending) {
-      console.log(`Applying ${filename} ...`);
       const sql = fs.readFileSync(path.join(MIGRATIONS_DIR, filename), "utf8");
-      for (const statement of splitStatements(sql)) {
-        await connection.query(statement);
+      const statements = splitStatements(sql);
+      const [progress] = await connection.query("SELECT statements_done FROM schema_migration_progress WHERE filename = ?", [filename]);
+      const start = progress[0] ? Number(progress[0].statements_done) : 0;
+      console.log(start ? `Resuming ${filename} at statement ${start + 1} of ${statements.length} ...` : `Applying ${filename} ...`);
+      for (let index = start; index < statements.length; index += 1) {
+        try {
+          await connection.query(statements[index]);
+        } catch (error) {
+          const first = statements[index].split("\n").find((line) => line.trim() && !line.trim().startsWith("--")) ?? "";
+          error.message =
+            `${filename}, statement ${index + 1} of ${statements.length} (${first.trim().slice(0, 80)}): ${error.message}\n` +
+            `Statements 1 to ${index} of this file are applied and recorded. Fix the cause, then start again: it carries on from statement ${index + 1}.`;
+          throw error;
+        }
+        await connection.query(
+          "INSERT INTO schema_migration_progress (filename, statements_done) VALUES (?, ?) ON DUPLICATE KEY UPDATE statements_done = VALUES(statements_done)",
+          [filename, index + 1],
+        );
       }
       await connection.query("INSERT INTO schema_migrations (filename) VALUES (?)", [filename]);
+      await connection.query("DELETE FROM schema_migration_progress WHERE filename = ?", [filename]);
     }
     console.log(`Done. Applied ${pending.length} migration(s).`);
   } finally {

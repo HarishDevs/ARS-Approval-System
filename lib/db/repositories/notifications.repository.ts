@@ -1,6 +1,6 @@
 import "server-only";
 import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
-import { getDbPool } from "@/lib/db/client";
+import { getDbPool, type Queryable } from "@/lib/db/client";
 import { sealPayload } from "@/lib/security/delivery-payload";
 import { logError } from "@/lib/logging/logger";
 
@@ -119,4 +119,18 @@ export async function listRecentDeliveries(limit: number): Promise<DeliveryListI
     canRetry: row.status === "FAILED" && Number(row.has_payload) === 1,
     nextRetryAt: row.next_retry_at,
   }));
+}
+
+// S8-03: WhatsApp delivery and read receipts, matched by the provider's
+// message id. A receipt never moves a status backwards (read stays read).
+export async function recordDeliveryReceipt(providerReference: string, status: "DELIVERED" | "READ", db: Queryable = getDbPool()): Promise<number> {
+  const [result] = await db.query<ResultSetHeader>(
+    status === "READ"
+      ? `UPDATE notification_deliveries SET status = 'READ', read_at = COALESCE(read_at, CURRENT_TIMESTAMP), delivered_at = COALESCE(delivered_at, CURRENT_TIMESTAMP)
+         WHERE provider = 'CEOITBOX' AND provider_reference = ? AND status IN ('SENT', 'DELIVERED', 'READ')`
+      : `UPDATE notification_deliveries SET status = IF(status = 'READ', 'READ', 'DELIVERED'), delivered_at = COALESCE(delivered_at, CURRENT_TIMESTAMP)
+         WHERE provider = 'CEOITBOX' AND provider_reference = ? AND status IN ('SENT', 'DELIVERED', 'READ')`,
+    [providerReference],
+  );
+  return result.affectedRows;
 }

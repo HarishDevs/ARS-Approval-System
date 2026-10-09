@@ -11,6 +11,7 @@ import {
   insertDelegation,
 } from "@/lib/db/repositories/collab.repository";
 import { findUserById } from "@/lib/db/repositories/users.repository";
+import { withTransaction } from "@/lib/db/transaction";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { getEnv } from "@/config/environment";
 import { notify } from "@/server/notifications/notify";
@@ -80,10 +81,14 @@ export async function createDelegation(
   // D-085: the delegate approves for you, so they must be an approver.
   const notApprover = await checkChosenApprover(input.delegateId);
   if (notApprover) return { ok: false, code: "NOT_APPROVER", message: notApprover };
-  if (await hasOverlappingDelegation(input.userId, input.startsOn, input.endsOn)) {
-    return { ok: false, code: "OVERLAP", message: "These dates overlap an existing out-of-office. End that one first." };
-  }
-  const id = await insertDelegation({ ...input, reason: input.reason?.trim().slice(0, 200) || null, createdBy: actor.id });
+  // The person's row is locked while checking and saving, so two requests at
+  // once can't both pass the overlap check (audit gap: overlap was code-only).
+  const id = await withTransaction(async (db) => {
+    await db.query("SELECT id FROM users WHERE id = ? FOR UPDATE", [input.userId]);
+    if (await hasOverlappingDelegation(input.userId, input.startsOn, input.endsOn, db)) return null;
+    return insertDelegation({ ...input, reason: input.reason?.trim().slice(0, 200) || null, createdBy: actor.id }, db);
+  });
+  if (id === null) return { ok: false, code: "OVERLAP", message: "These dates overlap an existing out-of-office. End that one first." };
   await recordAudit({ actorUserId: actor.id, action: "DELEGATION_CREATED", entityType: "USER", entityId: input.userId, metadata: { delegationId: id, delegateId: input.delegateId, startsOn: input.startsOn, endsOn: input.endsOn } });
   await tellBoth(person.id, person.name, delegate.id, delegate.name, `from ${input.startsOn} to ${input.endsOn}`, true);
   return { ok: true, value: { id } };

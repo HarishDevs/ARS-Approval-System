@@ -15,7 +15,7 @@ import { revokeAllSessionsForUser } from "@/lib/db/repositories/sessions.reposit
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { notify } from "@/server/notifications/notify";
 import { signInMethodChangedMessage, whatsappChangedMessage } from "@/server/notifications/security-messages";
-import { checkCanEdit, checkDeactivate, checkManager, checkRoleChange, type Actor, type TargetUser } from "@/server/admin/user-rules";
+import { checkCanEdit, checkContactChange, checkDeactivate, checkManager, checkRoleChange, type Actor, type TargetUser } from "@/server/admin/user-rules";
 import { diffFields, type ParsedUserInput } from "@/server/admin/user-input";
 import { logError } from "@/lib/logging/logger";
 import { countPendingTasks } from "@/server/approvals/service";
@@ -122,6 +122,8 @@ export async function updateUser(id: number, input: ParsedUserInput, actor: Admi
   };
   const after = record(input);
   const changes = diffFields(before, after);
+  const contact = checkContactChange(actor, target, { email: before.email !== after.email, whatsappNumber: before.whatsappNumber !== after.whatsappNumber, signInMethod: before.signInMethod !== after.signInMethod });
+  if (!contact.ok) return { ok: false, message: contact.message };
   const rolesChanged = existing.roles.join(",") !== input.roles.join(",");
   if (!Object.keys(changes).length && !rolesChanged) return { ok: true, value: undefined };
 
