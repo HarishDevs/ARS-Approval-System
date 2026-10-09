@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Breadcrumbs } from "@/features/ui/Display";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { UserForm } from "@/features/admin/UserForm";
@@ -28,6 +29,7 @@ export default async function UserDetailPage({ params, searchParams }: { params:
 
   return (
     <>
+      <Breadcrumbs items={[{ href: "/admin", label: "Admin" }, { href: "/admin/users", label: "Users & roles" }, { label: user.name }]} />
       <PageHeader title={user.name} description={`${user.loginId} · ${user.email}`}>
         <Link href="/admin/users" className="link text-label">
           ← All users

@@ -8,6 +8,7 @@ import { getUserSetting } from "@/lib/db/repositories/user-settings.repository";
 import { ThemeSync } from "@/features/shell/ThemeControls";
 import { OfflineBanner, SessionWatch } from "@/features/shell/SessionWatch";
 import { BottomNav } from "@/features/shell/BottomNav";
+import { CommandPalette, type PaletteLink } from "@/features/shell/CommandPalette";
 import { countPendingTasksFor } from "@/lib/db/repositories/approvals.repository";
 import { THEME_SETTING, parseTheme } from "@/server/ui/theme";
 import { Bell } from "lucide-react";
@@ -49,6 +50,26 @@ export async function AppShell({
     getUserSetting(user.id, THEME_SETTING).catch(() => null),
     countPendingTasksFor(user.id).catch(() => 0),
   ]);
+  // WS-03: everywhere the person can go, for the command palette.
+  const userPages: PaletteLink[] = [
+    { href: "/users", label: "My work", group: "My approvals" },
+    { href: "/users/queue", label: "Waiting for me", group: "My approvals" },
+    { href: "/users/requests", label: "My requests", group: "My approvals" },
+    { href: "/users/new", label: "New request", group: "My approvals" },
+    { href: "/users/custom", label: "Custom approval", group: "My approvals" },
+    { href: "/users/search", label: "Search requests", group: "My approvals" },
+    { href: "/users/notifications", label: "Notifications", group: "Profile" },
+    { href: "/users/notifications/settings", label: "Notification settings", group: "Profile" },
+    { href: "/users/delegation", label: "Out of office", group: "Profile" },
+    { href: "/users/security", label: "Sign-in & devices", group: "Profile" },
+    { href: "/users/profile", label: "Profile and theme", group: "Profile" },
+    { href: "/users/help", label: "Help", group: "My approvals" },
+  ];
+  const palettePages: PaletteLink[] = [
+    ...(area === "users" ? [] : nav.map((item) => ({ href: item.href, label: item.label, group: SPACE_LABEL[area] }))),
+    ...userPages,
+    ...spaces.filter((other) => other !== area && other !== "users").map((other) => ({ href: `/${other}`, label: `${SPACE_LABEL[other]} space`, group: "Spaces" })),
+  ];
   // The "Waiting for me" entry shows the real count (RA-01).
   const items = nav.map((item) => (item.href === "/users/queue" ? { ...item, count: waiting } : item));
 
@@ -71,6 +92,7 @@ export async function AppShell({
         <header className="sticky top-0 z-header flex h-topbar items-center justify-between gap-4 border-b border-line bg-surface px-4 sm:px-6">
           <MobileNav items={items} spaceLabel={SPACE_LABEL[area]} />
           <div className="ml-auto flex items-center gap-2">
+            <CommandPalette pages={palettePages} />
             <Link
               href="/users/notifications"
               aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}

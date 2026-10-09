@@ -1,16 +1,18 @@
 import Link from "next/link";
+import { Breadcrumbs } from "@/features/ui/Display";
 import { notFound } from "next/navigation";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { RequestStatusPill } from "@/features/requests/StatusPill";
 import { StepMap, TrackerBanner } from "@/features/requests/StepMap";
-import { BlockedStepForm, DecisionForm, MobileDecisionBar, ReopenForm, ResumeForm, WithdrawForm } from "@/features/requests/ActionPanel";
+import { BlockedStepForm, DecisionForm, DecisionShortcuts, MobileDecisionBar, ReopenForm, ResumeForm, WithdrawForm } from "@/features/requests/ActionPanel";
 import { PromoteCustomForm } from "@/features/admin/PromoteCustomForm";
 import { listApproverOptions } from "@/lib/db/repositories/approvers.repository";
 import { RequestForm } from "@/features/requests/RequestForm";
 import { CommentForm } from "@/features/requests/Discussion";
 import { AddFilesForm } from "@/features/requests/Attachments";
 import { loadRequestView } from "@/server/approvals/view";
+import { recordView } from "@/lib/db/repositories/recent.repository";
 import { listActiveUserOptions } from "@/lib/db/repositories/admin-users.repository";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 import { DeleteRequestButton } from "@/features/superadmin/DeleteRequestButton";
@@ -20,12 +22,14 @@ import { listMentionable } from "@/lib/db/repositories/collab.repository";
 
 // F-14 request page. loadRequestView applies the record-level check
 // (D-057); anyone else gets the same 404 as a request that doesn't exist.
-export default async function RequestPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ submitted?: string; files?: string }> }) {
+export default async function RequestPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ submitted?: string; files?: string; act?: string }> }) {
   const { user } = await requireArea("users");
   const { id } = await params;
   if (!/^\d+$/.test(id)) notFound();
   const view = await loadRequestView(Number(id), { id: user.id, roles: user.roles });
   if (!view) notFound();
+  // WS-04: remember the visit (only after the access check passed).
+  await recordView(user.id, view.id).catch(() => undefined);
   const query = await searchParams;
   const mentionable = (await listMentionable(view.id)).filter((person) => person.loginId !== user.loginId);
   const submitted = query.submitted === "1";
@@ -44,6 +48,13 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
 
   return (
     <>
+      <Breadcrumbs
+        items={[
+          { href: "/users", label: "My work" },
+          view.myTasks.length > 0 ? { href: "/users/queue", label: "Waiting for me" } : view.requesterId === user.id ? { href: "/users/requests", label: "My requests" } : { href: "/users/search", label: "Search" },
+          { label: view.requestNo },
+        ]}
+      />
       <PageHeader title={view.title} description={`${view.requestNo} · ${view.workflowName} · raised by ${view.requesterName}${view.round > 1 ? ` · round ${view.round}` : ""}`}>
         <div className="flex flex-wrap items-center gap-3">
           <RequestStatusPill status={view.status} />
@@ -103,6 +114,15 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
               requestId={view.id}
               taskKey={view.myTasks[0].taskKey}
               work={view.myTasks[0].work}
+              label={view.myTasks[0].forName ? `${view.myTasks[0].label} (for ${view.myTasks[0].forName})` : view.myTasks[0].label}
+            />
+          )}
+          {view.myTasks[0] && (
+            <DecisionShortcuts
+              requestId={view.id}
+              taskKey={view.myTasks[0].taskKey}
+              work={view.myTasks[0].work}
+              initial={query.act}
               label={view.myTasks[0].forName ? `${view.myTasks[0].label} (for ${view.myTasks[0].forName})` : view.myTasks[0].label}
             />
           )}

@@ -161,7 +161,27 @@ export async function listInbox(userId: number, limit: number, beforeId?: number
 }
 
 export async function markAllRead(userId: number, db: Queryable = getDbPool()): Promise<number> {
-  const [result] = await db.query<ResultSetHeader>("UPDATE notifications SET read_at = CURRENT_TIMESTAMP WHERE user_id = ? AND read_at IS NULL", [userId]);
+  return (await markAllReadReturningIds(userId, db)).length;
+}
+
+// WS / FB-03: which ones were marked, so "Undo" can put exactly those back.
+export async function markAllReadReturningIds(userId: number, db: Queryable = getDbPool()): Promise<number[]> {
+  const [rows] = await db.query<(RowDataPacket & { id: number })[]>("SELECT id FROM notifications WHERE user_id = ? AND read_at IS NULL ORDER BY id DESC LIMIT 1000", [userId]);
+  const ids = rows.map((row) => row.id);
+  if (ids.length > 0) await db.query<ResultSetHeader>("UPDATE notifications SET read_at = CURRENT_TIMESTAMP WHERE user_id = ? AND id IN (?) AND read_at IS NULL", [userId, ids]);
+  return ids;
+}
+
+// Only the person's own notifications are ever touched (user_id in every query).
+export async function markRead(userId: number, ids: readonly number[], db: Queryable = getDbPool()): Promise<number> {
+  if (ids.length === 0) return 0;
+  const [result] = await db.query<ResultSetHeader>("UPDATE notifications SET read_at = CURRENT_TIMESTAMP WHERE user_id = ? AND id IN (?) AND read_at IS NULL", [userId, ids.slice(0, 1000)]);
+  return result.affectedRows;
+}
+
+export async function markUnread(userId: number, ids: readonly number[], db: Queryable = getDbPool()): Promise<number> {
+  if (ids.length === 0) return 0;
+  const [result] = await db.query<ResultSetHeader>("UPDATE notifications SET read_at = NULL WHERE user_id = ? AND id IN (?)", [userId, ids.slice(0, 1000)]);
   return result.affectedRows;
 }
 

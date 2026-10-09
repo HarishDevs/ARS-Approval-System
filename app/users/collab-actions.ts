@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { requireApiArea } from "@/server/authorization/guards";
 import { submitCustomRequest, type Actor } from "@/server/approvals/service";
 import { addComment, createDelegation, stopDelegation } from "@/server/approvals/collab";
-import { markAllRead } from "@/lib/db/repositories/collab.repository";
+import { markAllReadReturningIds, markRead, markUnread } from "@/lib/db/repositories/collab.repository";
 import { builderSpecSchema } from "@/server/workflows/builder";
 import { addAttachments, filesFrom, prepareFiles } from "@/server/attachments/service";
 import { logError } from "@/lib/logging/logger";
@@ -133,7 +133,46 @@ export async function stopDelegationAction(_previous: ActionResult | null, formD
 export async function markAllReadAction(): Promise<ActionResult> {
   const me = await actor();
   if (!me) return NOT_FOUND;
-  await markAllRead(me.id);
-  revalidatePath("/users", "layout");
-  return { ok: true, message: "All caught up." };
+  try {
+    const ids = await markAllReadReturningIds(me.id);
+    revalidatePath("/users", "layout");
+    return { ok: true, message: "All caught up.", data: { ids } };
+  } catch (error) {
+    logError("markAllReadAction failed", error);
+    return { ok: false, message: "Couldn't mark them as read. Please try again." };
+  }
+}
+
+// Ids come from the browser: the repository only touches the person's own.
+const idList = (value: FormDataEntryValue | null) =>
+  String(value ?? "")
+    .split(",")
+    .filter((part) => /^\d{1,12}$/.test(part))
+    .map(Number)
+    .slice(0, 1000);
+
+export async function markReadAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const me = await actor();
+  if (!me) return NOT_FOUND;
+  try {
+    await markRead(me.id, idList(formData.get("ids")));
+    revalidatePath("/users", "layout");
+    return { ok: true, message: "Marked as read." };
+  } catch (error) {
+    logError("markReadAction failed", error);
+    return { ok: false, message: "Couldn't mark it as read." };
+  }
+}
+
+export async function markUnreadAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const me = await actor();
+  if (!me) return NOT_FOUND;
+  try {
+    await markUnread(me.id, idList(formData.get("ids")));
+    revalidatePath("/users", "layout");
+    return { ok: true, message: "Marked as unread." };
+  } catch (error) {
+    logError("markUnreadAction failed", error);
+    return { ok: false, message: "Couldn't undo. Please try again." };
+  }
 }

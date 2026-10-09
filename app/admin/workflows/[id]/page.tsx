@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Breadcrumbs } from "@/features/ui/Display";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { WorkflowBuilder } from "@/features/admin/WorkflowBuilder";
@@ -30,6 +31,7 @@ export default async function WorkflowPage({ params, searchParams }: { params: P
 
   return (
     <>
+      <Breadcrumbs items={[{ href: "/admin", label: "Admin" }, { href: "/admin/workflows", label: "Approval types" }, { label: workflow.name }]} />
       <PageHeader title={workflow.name} description={`${workflow.code} · numbers ${workflow.requestPrefix}-YYYY-000001 · ${published ? `version ${published.versionNo} is live` : "not published yet"}`}>
         <Link href="/admin/workflows" className="link text-label">
           ← All workflows

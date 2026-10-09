@@ -24,18 +24,25 @@ export function QueueTable({ items }: { items: QueueItem[] }) {
           <li key={item.taskKey + item.requestId}>
             <Link
               href={`/users/requests/${item.requestId}`}
-              className="block px-4 py-3 active:bg-surface-muted"
+              data-queue-link
+              className="block px-4 py-3 focus-visible:bg-surface-muted active:bg-surface-muted"
             >
               <p className="font-medium text-primary-700">
                 <SafeText text={item.title} />
               </p>
               <p className="text-caption text-ink-muted">
                 {item.requestNo} · from {item.requesterName}
+                {item.typeName ? ` · ${item.typeName}` : ""}
               </p>
               <p className="mt-1 text-label">
                 {item.work && (
                   <span className="mr-1.5 rounded-full bg-primary-50 px-2 py-px text-caption font-semibold text-primary-700">
                     To do
+                  </span>
+                )}
+                {item.onHold && (
+                  <span className="mr-1.5 rounded-full bg-warning-50 px-2 py-px text-caption font-semibold text-warning-600">
+                    On hold
                   </span>
                 )}
                 {item.nodeLabel}
@@ -73,11 +80,13 @@ export function QueueTable({ items }: { items: QueueItem[] }) {
                   <Link
                     href={`/users/requests/${item.requestId}`}
                     className="link"
+                    data-queue-link
                   >
                     <SafeText text={item.title} />
                   </Link>
                   <p className="text-caption text-ink-muted">
                     {item.requestNo}
+                    {item.typeName ? ` · ${item.typeName}` : ""}
                   </p>
                 </td>
                 <td>{item.requesterName}</td>
@@ -85,6 +94,11 @@ export function QueueTable({ items }: { items: QueueItem[] }) {
                   {item.work && (
                     <span className="mr-1.5 rounded-full bg-primary-50 px-2 py-px text-caption font-semibold text-primary-700">
                       To do
+                    </span>
+                  )}
+                  {item.onHold && (
+                    <span className="mr-1.5 rounded-full bg-warning-50 px-2 py-px text-caption font-semibold text-warning-600">
+                      On hold
                     </span>
                   )}
                   {item.nodeLabel}

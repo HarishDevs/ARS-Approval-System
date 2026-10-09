@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Breadcrumbs } from "@/features/ui/Display";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { requireArea } from "@/server/authorization/guards";
@@ -25,6 +26,7 @@ export default async function TemplatePage({ params }: { params: Promise<{ code:
 
   return (
     <>
+      <Breadcrumbs items={[{ href: "/superadmin", label: "Super Admin" }, { href: "/superadmin/templates", label: "WhatsApp templates" }, { label: templateLabel(entry.eventType) }]} />
       <PageHeader title={templateLabel(entry.eventType)} description={`${entry.purpose} Sent to: ${entry.sentTo}. App event ${entry.eventType}. Matching email subject: “${entry.emailSubject}”.`}>
         <Link href="/superadmin/templates" className="link text-label">
           ← All templates

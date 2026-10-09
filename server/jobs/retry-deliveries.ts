@@ -6,6 +6,7 @@ import { tryConsumeWhatsAppRateLimit } from "@/lib/db/repositories/whatsapp.repo
 import { getEmailConfig, getWhatsAppConfig } from "@/server/settings/values";
 import { logError } from "@/lib/logging/logger";
 import { pruneExpiredDrafts } from "@/lib/db/repositories/drafts.repository";
+import { pruneRecentViews } from "@/lib/db/repositories/recent.repository";
 
 // Retry runner (F-41, P1-48, D-058). Called by cPanel cron through the
 // signed /api/jobs/run endpoint. Pure decisions (backoff) are exported for
@@ -90,6 +91,6 @@ export async function runDeliveryRetriesWithDeps(deps: RetryDeps, options: { lim
 
 export const runDeliveryRetries = (options?: { limit?: number; onlyIds?: readonly number[] }) => runDeliveryRetriesWithDeps(defaultDeps, options);
 
-export async function runHousekeeping(): Promise<{ rateLimitHitsDeleted: number; payloadsCleared: number; draftsExpired: number }> {
-  return { rateLimitHitsDeleted: await pruneRateLimitHits(), payloadsCleared: await pruneDeliveryPayloads(), draftsExpired: await pruneExpiredDrafts() };
+export async function runHousekeeping(): Promise<{ rateLimitHitsDeleted: number; payloadsCleared: number; draftsExpired: number; recentViewsPruned: number }> {
+  return { rateLimitHitsDeleted: await pruneRateLimitHits(), payloadsCleared: await pruneDeliveryPayloads(), draftsExpired: await pruneExpiredDrafts(), recentViewsPruned: await pruneRecentViews() };
 }

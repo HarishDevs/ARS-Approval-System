@@ -1,5 +1,6 @@
 import "server-only";
 import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
+import { visibleToSql } from "@/lib/db/repositories/visibility";
 import { getDbPool, type Queryable } from "@/lib/db/client";
 import { likeEscape, SEARCH_PAGE_SIZE, type SearchFilters } from "@/server/search/filters";
 import type { InstanceStatus } from "@/server/engine/types";
@@ -25,14 +26,12 @@ const INDIA_DATE = (column: string) => `DATE(DATE_ADD(${column}, INTERVAL 330 MI
 export async function searchRequests(viewer: { id: number; isAdmin: boolean }, filters: SearchFilters, db: Queryable = getDbPool()): Promise<{ items: SearchItem[]; total: number }> {
   const where: string[] = ["r.deleted_at IS NULL"];
   const params: unknown[] = [];
-  const involvement = `(r.requester_id = ?
-      OR EXISTS (SELECT 1 FROM approval_tasks x WHERE x.request_id = r.id AND (x.approver_id = ? OR x.decided_by = ?))
-      OR EXISTS (SELECT 1 FROM approval_tasks x JOIN delegations d ON d.user_id = x.approver_id
-                 WHERE x.request_id = r.id AND d.delegate_id = ? AND d.ended_at IS NULL
-                   AND DATE(DATE_ADD(UTC_TIMESTAMP(), INTERVAL 330 MINUTE)) BETWEEN d.starts_on AND d.ends_on))`;
+  // The same rule as the request page (visibility.ts); v1.6.0 fixes a gap
+  // where a delegate also found requests their colleague had already decided.
+  const visible = visibleToSql("r");
   if (!viewer.isAdmin) {
-    where.push(involvement);
-    params.push(viewer.id, viewer.id, viewer.id, viewer.id);
+    where.push(visible.sql);
+    params.push(...visible.params(viewer.id));
   }
   if (filters.role === "raised") {
     where.push("r.requester_id = ?");

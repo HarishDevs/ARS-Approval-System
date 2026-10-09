@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { isTyping } from "@/features/shell/shortcuts";
 import { Check, MessageSquareWarning, PauseCircle, XCircle } from "lucide-react";
 import { Dialog } from "@/features/ui/Dialog";
 import { decideAction, reopenAction, resolveBlockedAction, resumeAction, withdrawAction } from "@/app/users/actions";
@@ -209,5 +211,35 @@ export function MobileDecisionBar({ requestId, taskKey, label, work = false }: {
         {open && <DecisionForm requestId={requestId} taskKey={taskKey} label={label} work={work} only={open} idPrefix="drawer-comment" />}
       </Dialog>
     </>
+  );
+}
+
+// WS-02: A / C on the request page (or arriving from the queue with
+// ?act=approve|changes) open that one action in a dialog. Nothing is decided
+// until the person presses the action's button there.
+export function DecisionShortcuts({ requestId, taskKey, label, work = false, initial }: { requestId: number; taskKey: string; label: string; work?: boolean; initial?: string }) {
+  const start: DecisionKind | null = initial === "approve" ? "APPROVE" : initial === "changes" ? "REQUEST_CHANGES" : null;
+  const [open, setOpen] = useState<DecisionKind | null>(start);
+  const router = useRouter();
+  const pathname = usePathname();
+  useEffect(() => {
+    // Drop ?act from the address so a reload doesn't reopen it.
+    if (start) router.replace(pathname, { scroll: false });
+  }, [start, router, pathname]);
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.ctrlKey || event.metaKey || event.altKey || isTyping(event.target) || document.querySelector("dialog[open]")) return;
+      const key = event.key.toLowerCase();
+      if (key === "a") setOpen("APPROVE");
+      if (key === "c") setOpen("REQUEST_CHANGES");
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+  const title = open === "APPROVE" ? (work ? "Mark as done?" : "Approve this request?") : "Ask for changes";
+  return (
+    <Dialog open={open !== null} onClose={() => setOpen(null)} title={title} description={label} size="sm">
+      {open && <DecisionForm requestId={requestId} taskKey={taskKey} label={label} work={work} only={open} idPrefix="shortcut-comment" />}
+    </Dialog>
   );
 }

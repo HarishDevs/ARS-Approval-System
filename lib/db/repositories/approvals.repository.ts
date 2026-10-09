@@ -5,6 +5,7 @@ import type { EngineEvent, InstanceState, InstanceStatus, WorkflowDefinition, Wo
 import type { FormField } from "@/server/forms/fields";
 import type { BuilderSpec } from "@/server/workflows/builder";
 import { INDIA_TODAY_SQL } from "@/lib/db/repositories/directory.repository";
+import { queueFilterSql, type QueueFilter } from "@/server/approvals/queue-filters";
 import { addWorkingHours, type WorkingCalendar } from "@/server/workflows/calendar";
 
 function dueTimes(createdAt: Date, hours: number | null, calendar?: WorkingCalendar): [Date | null, Date | null] {
@@ -454,6 +455,7 @@ export interface QueueItem {
   forName: string | null; // set when this is a delegated task
   work: boolean; // a work task to mark done (D-097)
   onHold: boolean; // the request is on hold (can't be bulk-approved)
+  typeName?: string; // the approval type (Waiting for me, v1.6.0)
 }
 
 // My pending approvals, plus those of anyone who named me as their
@@ -466,6 +468,8 @@ const PENDING_FOR = `
      JOIN approval_requests r ON r.id = t.request_id
      JOIN users u ON u.id = r.requester_id
      JOIN users a ON a.id = t.approver_id
+     JOIN workflow_versions v ON v.id = r.workflow_version_id
+     JOIN workflow_definitions w ON w.id = v.workflow_id
      WHERE t.status = 'PENDING' AND r.status IN ('IN_PROGRESS', 'ON_HOLD') AND r.deleted_at IS NULL AND (r.requester_id <> ? OR t.task_type = 'WORK')
        AND (t.approver_id = ? OR t.approver_id IN (
              SELECT d.user_id FROM delegations d
@@ -508,20 +512,27 @@ export async function listAttentionTasksFor(userId: number, limit = 10, db: Quer
   };
 }
 
-export async function countPendingTasksFor(userId: number, db: Queryable = getDbPool()): Promise<number> {
-  const [rows] = await db.query<(RowDataPacket & { total: number })[]>(`SELECT COUNT(*) AS total ${PENDING_FOR}`, [userId, userId, userId]);
+export async function countPendingTasksFor(userId: number, filter?: QueueFilter, db: Queryable = getDbPool()): Promise<number> {
+  const extra = filter ? queueFilterSql(filter) : { where: "", params: [] };
+  const [rows] = await db.query<(RowDataPacket & { total: number })[]>(`SELECT COUNT(*) AS total ${PENDING_FOR}${extra.where}`, [userId, userId, userId, ...extra.params]);
   return Number(rows[0]?.total ?? 0);
 }
 
-export async function listPendingTasksFor(userId: number, page: { limit: number; offset: number } = { limit: 500, offset: 0 }, db: Queryable = getDbPool()): Promise<QueueItem[]> {
+export async function listPendingTasksFor(
+  userId: number,
+  page: { limit: number; offset: number } = { limit: 500, offset: 0 },
+  db: Queryable = getDbPool(),
+  filter?: QueueFilter,
+): Promise<QueueItem[]> {
+  const extra = filter ? queueFilterSql(filter) : { where: "", params: [], orderBy: "t.created_at, t.id" };
   const [rows] = await db.query<
-    (RowDataPacket & { request_id: number; request_no: string; title: string; requester_name: string; task_key: string; node_label: string; task_type: string; request_status: string; created_at: Date; due_at: Date | null; overdue: number; approver_id: number; approver_name: string })[]
+    (RowDataPacket & { request_id: number; request_no: string; title: string; requester_name: string; task_key: string; node_label: string; task_type: string; request_status: string; created_at: Date; due_at: Date | null; overdue: number; approver_id: number; approver_name: string; type_name: string })[]
   >(
     `SELECT t.request_id, r.request_no, r.title, u.name AS requester_name, t.task_key, t.node_label, t.task_type, r.status AS request_status, t.created_at, t.due_at,
-            (t.due_at IS NOT NULL AND t.due_at < CURRENT_TIMESTAMP) AS overdue, t.approver_id, a.name AS approver_name
-     ${PENDING_FOR}
-     ORDER BY t.created_at, t.id LIMIT ? OFFSET ?`,
-    [userId, userId, userId, page.limit, page.offset],
+            (t.due_at IS NOT NULL AND t.due_at < CURRENT_TIMESTAMP) AS overdue, t.approver_id, a.name AS approver_name, w.name AS type_name
+     ${PENDING_FOR}${extra.where}
+     ORDER BY ${extra.orderBy} LIMIT ? OFFSET ?`,
+    [userId, userId, userId, ...extra.params, page.limit, page.offset],
   );
   return rows.map((row) => ({
     requestId: row.request_id,
@@ -536,11 +547,22 @@ export async function listPendingTasksFor(userId: number, page: { limit: number;
     forName: row.approver_id === userId ? null : row.approver_name,
     work: row.task_type === "WORK",
     onHold: row.request_status === "ON_HOLD",
+    typeName: row.type_name,
   }));
 }
 
-// Requester, anyone with a task on it (now or before), or the active
-// delegate of someone with a pending task on it (D-057, D-062).
+// WS-01: the approval types in this person's queue, for the filter.
+export async function queueTypesFor(userId: number, db: Queryable = getDbPool()): Promise<{ id: number; name: string; count: number }[]> {
+  const [rows] = await db.query<(RowDataPacket & { id: number; name: string; total: number })[]>(
+    `SELECT w.id, w.name, COUNT(*) AS total ${PENDING_FOR} GROUP BY w.id, w.name ORDER BY w.name`,
+    [userId, userId, userId],
+  );
+  return rows.map((row) => ({ id: row.id, name: row.name, count: Number(row.total) }));
+}
+
+// Requester, anyone with a task on it (now or before), the active delegate
+// of someone with a pending task on it (D-057, D-062), or a consultee
+// (EN-06). Kept equal to visibleToSql (visibility.ts).
 export async function isParticipant(requestId: number, userId: number, db: Queryable = getDbPool()): Promise<boolean> {
   const [rows] = await db.query<(RowDataPacket & { found: number })[]>(
     `SELECT 1 AS found FROM approval_requests WHERE id = ? AND requester_id = ?
@@ -548,8 +570,9 @@ export async function isParticipant(requestId: number, userId: number, db: Query
      UNION SELECT 1 FROM approval_tasks t JOIN delegations d ON d.user_id = t.approver_id
        WHERE t.request_id = ? AND t.status = 'PENDING' AND d.delegate_id = ? AND d.ended_at IS NULL
          AND ${INDIA_TODAY_SQL} BETWEEN d.starts_on AND d.ends_on
+     UNION SELECT 1 FROM consultations c WHERE c.request_id = ? AND c.consultee_id = ?
      LIMIT 1`,
-    [requestId, userId, requestId, userId, userId, requestId, userId],
+    [requestId, userId, requestId, userId, userId, requestId, userId, requestId, userId],
   );
   return rows.length > 0;
 }

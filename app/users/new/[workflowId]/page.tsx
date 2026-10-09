@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Breadcrumbs } from "@/features/ui/Display";
 import { notFound } from "next/navigation";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
@@ -29,6 +30,7 @@ export default async function RaiseRequestPage({ params }: { params: Promise<{ w
 
   return (
     <>
+      <Breadcrumbs items={[{ href: "/users", label: "My work" }, { href: "/users/new", label: "New request" }, { label: workflow.name }]} />
       <PageHeader title={workflow.name} description="Fill in the details. Approvers are chosen automatically from the rules IT has set.">
         <Link href="/users/new" className="link text-label">
           ← All types

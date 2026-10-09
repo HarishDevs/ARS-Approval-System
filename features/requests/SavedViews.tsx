@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { manageViewAction, saveViewAction } from "@/app/users/search-actions";
-import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
+import { useRouter } from "next/navigation";
+import { manageViewAction, restoreViewAction, saveViewAction } from "@/app/users/search-actions";
+import { FieldError, ResultMessage, SubmitButton, guardAction, useActionForm } from "@/features/ui/form";
+import { useToast } from "@/features/ui/Toast";
 
 // Saved views (#4): private, named searches. Opening one is a plain link.
 export interface ViewItem {
@@ -36,7 +38,40 @@ export function SaveViewForm({ query }: { query: Record<string, string> }) {
 function ViewRow({ view }: { view: ViewItem }) {
   const [renaming, setRenaming] = useState(false);
   const manage = useActionForm(manageViewAction);
-  const remove = useActionForm(manageViewAction, { confirm: `The view "${view.name}" is removed. Requests aren't affected.`, confirmTitle: "Delete this view?", confirmLabel: "Yes, delete", confirmTone: "danger" });
+  // FB-03: deleting is reversible, so it happens at once with "Undo".
+  const [deleting, setDeleting] = useState(false);
+  const toast = useToast();
+  const router = useRouter();
+  const remove = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setDeleting(true);
+    const result = await guardAction(manageViewAction)(null, new FormData(event.currentTarget));
+    setDeleting(false);
+    if (!result.ok) {
+      toast({ tone: "error", title: "Not deleted", body: result.message });
+      return;
+    }
+    const removed = (result.data as { removed?: { name: string; query: Record<string, string>; isDefault: boolean } } | undefined)?.removed;
+    router.refresh();
+    toast({
+      tone: "success",
+      title: `Deleted "${view.name}"`,
+      action: removed
+        ? {
+            label: "Undo",
+            onClick: async () => {
+              const data = new FormData();
+              data.set("name", removed.name);
+              data.set("query", JSON.stringify(removed.query));
+              if (removed.isDefault) data.set("isDefault", "1");
+              const undo = await guardAction(restoreViewAction)(null, data);
+              router.refresh();
+              toast(undo.ok ? { tone: "info", title: `"${removed.name}" is back` } : { tone: "error", title: "Couldn't undo", body: undo.message });
+            },
+          }
+        : undefined,
+    });
+  };
   return (
     <li className="flex flex-wrap items-center gap-2 py-2">
       <Link href={view.href} className="link font-medium">
@@ -68,13 +103,12 @@ function ViewRow({ view }: { view: ViewItem }) {
                 {view.isDefault ? "Stop opening by default" : "Open by default"}
               </button>
             </form>
-            <form onSubmit={remove.onSubmit}>
+            <form onSubmit={remove}>
               <input type="hidden" name="id" value={view.id} />
               <input type="hidden" name="command" value="delete" />
-              <button type="submit" className="link text-label text-danger-600" disabled={remove.pending}>
-                Delete
+              <button type="submit" className="link text-label text-danger-600" disabled={deleting} aria-label={`Delete the view ${view.name}`}>
+                {deleting ? "Deleting…" : "Delete"}
               </button>
-              {remove.confirmBar}
             </form>
           </>
         )}

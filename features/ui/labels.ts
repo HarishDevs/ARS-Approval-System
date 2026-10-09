@@ -23,3 +23,6 @@ export const REQUEST_STATUS_OPTIONS = [
   ["REJECTED", "Rejected"],
   ["CANCELLED", "Withdrawn"],
 ] as const;
+
+// The same words as the status pill (D-017), for plain-text places.
+export const STATUS_WORD: Record<string, string> = Object.fromEntries(REQUEST_STATUS_OPTIONS.filter(([value]) => value !== "")) as Record<string, string>;

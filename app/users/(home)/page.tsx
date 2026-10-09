@@ -4,6 +4,7 @@ import { PageHeader } from "@/features/shell/PageHeader";
 import { displayName } from "@/features/shell/AppShell";
 import { MyRequestsTable, QueueTable } from "@/features/requests/lists";
 import { countPendingTasksFor, listAttentionTasksFor, listMyRequests, listPendingTasksFor } from "@/lib/db/repositories/approvals.repository";
+import { listRecent } from "@/lib/db/repositories/recent.repository";
 import { listDrafts } from "@/lib/db/repositories/drafts.repository";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 import { SafeText } from "@/features/ui/SafeText";
@@ -17,13 +18,14 @@ const RECENT_DAYS = 30;
 
 export default async function UsersHome() {
   const { user } = await requireArea("users");
-  const [queue, waiting, attention, mine, drafts, onboarded] = await Promise.all([
+  const [queue, waiting, attention, mine, drafts, onboarded, recent] = await Promise.all([
     listPendingTasksFor(user.id, { limit: 5, offset: 0 }),
     countPendingTasksFor(user.id),
     listAttentionTasksFor(user.id, 10),
     listMyRequests(user.id),
     listDrafts(user.id, 5),
     hasFlag(user.id, "ONBOARDING_DONE"),
+    listRecent({ id: user.id, isAdmin: user.roles.includes("IT_ADMIN") || user.roles.includes("SUPER_ADMIN") }, 5).catch(() => []),
   ]);
   const name = displayName(user.name);
   const words = name.split(/\s+/);
@@ -106,6 +108,27 @@ export default async function UsersHome() {
                   <span className="text-label text-ink-muted"> · {draft.typeName}</span>
                 </span>
                 <span className="text-caption text-ink-muted">saved {formatIndiaTime(draft.updatedAt)}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {recent.length > 0 && (
+        <section className="mt-8" aria-labelledby="recently-viewed">
+          <h2 id="recently-viewed" className="mb-3 text-card-title font-semibold">
+            Recently viewed
+          </h2>
+          <ul className="card divide-y divide-line">
+            {recent.map((item) => (
+              <li key={item.id} className="flex flex-wrap items-baseline justify-between gap-2 px-5 py-3">
+                <span className="min-w-0">
+                  <Link href={`/users/requests/${item.id}`} className="link font-medium">
+                    <SafeText text={item.title} />
+                  </Link>
+                  <span className="text-label text-ink-muted"> · {item.requestNo}</span>
+                </span>
+                <span className="text-caption text-ink-muted">opened {formatIndiaTime(item.viewedAt)}</span>
               </li>
             ))}
           </ul>
