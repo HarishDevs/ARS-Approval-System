@@ -10,8 +10,9 @@ import { listApproverOptions } from "@/lib/db/repositories/approvers.repository"
 import { approverFieldKeys } from "@/server/approvals/approver-rules";
 import { loadFieldLookups } from "@/lib/db/repositories/lookups.repository";
 import { findDraft } from "@/lib/db/repositories/drafts.repository";
+import { followUpSource, followUpValues } from "@/server/approvals/follow-up";
 
-export default async function RaiseRequestPage({ params }: { params: Promise<{ workflowId: string }> }) {
+export default async function RaiseRequestPage({ params, searchParams }: { params: Promise<{ workflowId: string }>; searchParams: Promise<{ followUp?: string }> }) {
   const { user } = await requireArea("users");
   const { workflowId } = await params;
   if (!/^\d+$/.test(workflowId)) notFound();
@@ -27,6 +28,10 @@ export default async function RaiseRequestPage({ params }: { params: Promise<{ w
   // #3: the person's own draft for this type, if any (scoped by user id).
   const draftKey = `WF:${workflow.id}`;
   const draft = await findDraft(user.id, draftKey);
+  // EN-08: a follow-up of an approved request (access-checked again here).
+  const raw = (await searchParams).followUp;
+  const source = await followUpSource(raw && /^\d{1,10}$/.test(raw) ? Number(raw) : null, { id: user.id, roles: user.roles });
+  const followUpInitial = source ? followUpValues(version.form, source) : null;
 
   return (
     <>
@@ -36,8 +41,14 @@ export default async function RaiseRequestPage({ params }: { params: Promise<{ w
           ← All types
         </Link>
       </PageHeader>
+      {source && (
+        <p role="status" className="mb-4 max-w-2xl rounded-md bg-primary-50 px-3 py-2 text-label text-primary-700">
+          Follow-up to {source.requestNo}. Matching details were copied in; check them before you submit. It gets its own number and approvals, and the two are linked.
+        </p>
+      )}
       <div className="max-w-2xl">
         <RequestForm
+          followUpOf={source?.id}
           mode="submit"
           workflowId={workflow.id}
           fields={version.form}
@@ -45,8 +56,8 @@ export default async function RaiseRequestPage({ params }: { params: Promise<{ w
           approverPeople={approverPeople}
           approverFields={approverFields}
           lookups={lookups}
-          initial={draft?.fields}
-          initialTitle={draft?.title}
+          initial={followUpInitial ?? draft?.fields}
+          initialTitle={source ? `Follow-up: ${source.title}`.slice(0, 200) : draft?.title}
           draft={{ key: draftKey, version: draft?.version ?? null, savedAt: draft ? draft.updatedAt.toISOString() : null }}
         />
       </div>

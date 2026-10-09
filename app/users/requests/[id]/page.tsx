@@ -5,7 +5,9 @@ import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { RequestStatusPill } from "@/features/requests/StatusPill";
 import { StepMap, TrackerBanner } from "@/features/requests/StepMap";
-import { BlockedStepForm, DecisionForm, DecisionShortcuts, MobileDecisionBar, ReopenForm, ResumeForm, WithdrawForm } from "@/features/requests/ActionPanel";
+import { AnswerQuestionForm, BlockedStepForm, DecisionForm, DecisionShortcuts, DelegateTaskForm, MobileDecisionBar, RecallForm, ReopenForm, ResumeForm, WithdrawForm } from "@/features/requests/ActionPanel";
+import { Advice, Links } from "@/features/requests/Collaboration";
+import { STATUS_WORD } from "@/features/ui/labels";
 import { PromoteCustomForm } from "@/features/admin/PromoteCustomForm";
 import { listApproverOptions } from "@/lib/db/repositories/approvers.repository";
 import { RequestForm } from "@/features/requests/RequestForm";
@@ -41,6 +43,14 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
     view.canResubmit && view.form.some((field) => field.type === "PERSON")
       ? (await listActiveUserOptions()).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` }))
       : [];
+  // v1.6.0: colleagues to pass an approval to (approver-eligible) or to ask for advice (anyone active).
+  const colleagues =
+    view.myTasks.length > 0
+      ? {
+          approvers: (await listApproverOptions()).filter((person) => person.id !== user.id && person.id !== view.requesterId).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` })),
+          anyone: (await listActiveUserOptions()).filter((person) => person.id !== user.id && person.id !== view.requesterId).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` })),
+        }
+      : null;
   // Blocked steps (IT): approval steps take approver-eligible people; work any active person.
   const assignable = view.blockedSteps.length
     ? {
@@ -84,8 +94,13 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
         <p className="mb-4 rounded-md border border-warning-600/30 bg-warning-50 px-3 py-2 text-label text-warning-600">Changes asked: <SafeText text={view.changesComment} />
         </p>
       )}
-      {view.holdReason && <p className="mb-4 rounded-md bg-warning-50 px-3 py-2 text-label text-warning-600">On hold: <SafeText text={view.holdReason} />
+      {view.holdReason && !view.question && <p className="mb-4 rounded-md bg-warning-50 px-3 py-2 text-label text-warning-600">On hold: <SafeText text={view.holdReason} />
         </p>}
+      {view.question && !view.canAnswerQuestion && (
+        <p className="mb-4 rounded-md bg-warning-50 px-3 py-2 text-label text-warning-600">
+          Waiting for the requester to answer {view.question.byName}: <SafeText text={view.question.text} />
+        </p>
+      )}
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="space-y-6">
@@ -97,17 +112,25 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
               ))}
             </section>
           )}
+          {view.canAnswerQuestion && view.question && (
+            <section className="card divide-y divide-line border-warning-600" aria-label="A question for you">
+              <h2 className="px-5 py-4 font-semibold">A question for you</h2>
+              <AnswerQuestionForm requestId={view.id} question={view.question.text} byName={view.question.byName} />
+            </section>
+          )}
           {(view.myTasks.length > 0 || view.canResume) && (
             <section className="card divide-y divide-line border-primary-600">
               <h2 className="px-5 py-4 font-semibold">Needs your action</h2>
               {view.myTasks.map((task) => (
-                <DecisionForm
-                  key={task.taskKey}
-                  requestId={view.id}
-                  taskKey={task.taskKey}
-                  work={task.work}
-                  label={task.forName ? `${task.label} (for ${task.forName}, as their delegate)` : task.label}
-                />
+                <div key={task.taskKey}>
+                  <DecisionForm
+                    requestId={view.id}
+                    taskKey={task.taskKey}
+                    work={task.work}
+                    label={task.forName ? `${task.label} (for ${task.forName}, as their delegate)` : task.label}
+                  />
+                  {colleagues && <DelegateTaskForm requestId={view.id} taskKey={task.taskKey} people={task.work ? colleagues.anyone : colleagues.approvers} />}
+                </div>
               ))}
               {view.canResume && <ResumeForm requestId={view.id} />}
             </section>
@@ -137,8 +160,9 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
               <RequestForm mode="resubmit" requestId={view.id} fields={view.form} people={people} initial={view.rawFields} lookups={lookups} />
             </section>
           )}
-          {(view.canWithdraw || view.canReopen) && (
+          {(view.canWithdraw || view.canReopen || view.canRecall) && (
             <section className="card divide-y divide-line">
+              {view.canRecall && <RecallForm requestId={view.id} />}
               {view.canWithdraw && <WithdrawForm requestId={view.id} />}
               {view.canReopen && <ReopenForm requestId={view.id} />}
             </section>
@@ -250,6 +274,36 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
           )}
           <CommentForm requestId={view.id} people={mentionable} />
         </section>
+        </SectionBoundary>
+        <SectionBoundary label="Advice">
+          <Advice
+            requestId={view.id}
+            canAsk={view.canConsult}
+            people={colleagues?.anyone ?? []}
+            rows={view.consultations.map((row) => ({
+              id: row.id,
+              byName: row.requestedByName,
+              consulteeName: row.consulteeName,
+              question: row.question,
+              answer: row.answer,
+              status: row.status,
+              askedAt: formatIndiaTime(row.createdAt),
+              mine: row.consulteeId === user.id && row.status === "OPEN",
+            }))}
+          />
+        </SectionBoundary>
+        <SectionBoundary label="Linked requests">
+          <Links
+            requestId={view.id}
+            followUpHref={view.canFollowUp ? `/users/new?followUp=${view.id}` : null}
+            rows={view.links.map((link) => ({
+              id: link.id,
+              requestNo: link.requestNo,
+              title: link.title,
+              status: STATUS_WORD[link.status] ?? link.status,
+              relation: link.kind === "RELATED" ? "Related" : link.direction === "to" ? "Follow-up" : "Follow-up of",
+            }))}
+          />
         </SectionBoundary>
         <SectionBoundary label="History">
           <section className="card h-fit px-5 py-4" aria-labelledby="history">

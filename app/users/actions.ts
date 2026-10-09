@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireApiArea } from "@/server/authorization/guards";
-import { decideTask, holdTask, reopenRequest, resolveBlockedStep, resubmitRequest, resumeRequest, submitRequest, withdrawRequest, type Actor } from "@/server/approvals/service";
+import { answerInfo, askForInfo, decideTask, delegateTask, holdTask, recallRequest, reopenRequest, resolveBlockedStep, resubmitRequest, resumeRequest, submitRequest, withdrawRequest, type Actor } from "@/server/approvals/service";
+import { linkFollowUp } from "@/server/approvals/consult";
 import { addAttachments, filesFrom, prepareFiles } from "@/server/attachments/service";
 import { logError } from "@/lib/logging/logger";
 import { deleteDraft } from "@/lib/db/repositories/drafts.repository";
@@ -60,6 +61,9 @@ export async function submitRequestAction(_previous: ActionResult | null, formDa
     );
     if (!result.ok) return { ok: false, message: result.message, fieldErrors: result.fieldErrors };
     requestId = result.value.requestId;
+    // EN-08: raised as a follow-up of an approved request the person can see.
+    const followUpOf = num(formData.get("followUpOf"));
+    if (followUpOf !== null && !result.value.repeated) await linkFollowUp({ sourceId: followUpOf, followUpId: requestId }, me).catch((error) => logError("follow-up link failed", error));
     // A repeated submit already has its files from the first time.
     if (result.value.repeated) files.files.length = 0;
     // The draft has become a request (#3).
@@ -79,12 +83,13 @@ export async function submitRequestAction(_previous: ActionResult | null, formDa
   redirect(`/users/requests/${requestId}?submitted=1${filesSaved ? "" : "&files=failed"}`);
 }
 
-const DECISIONS = new Set(["APPROVE", "REJECT", "REQUEST_CHANGES", "HOLD"]);
+const DECISIONS = new Set(["APPROVE", "REJECT", "REQUEST_CHANGES", "HOLD", "INFO"]);
 const DONE: Record<string, string> = {
   APPROVE: "Approved.",
   REJECT: "Rejected. The requester has been told.",
   REQUEST_CHANGES: "Sent back for changes. The requester has been told.",
   HOLD: "Put on hold.",
+  INFO: "Question sent. The request waits for the answer.",
 };
 
 export async function decideAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
@@ -100,7 +105,9 @@ export async function decideAction(_previous: ActionResult | null, formData: For
     const result =
       decision === "HOLD"
         ? await holdTask({ requestId, taskKey, reason: comment || undefined }, me)
-        : await decideTask({ requestId, taskKey, decision: decision as "APPROVE" | "REJECT" | "REQUEST_CHANGES", comment: comment || undefined }, me);
+        : decision === "INFO"
+          ? await askForInfo({ requestId, taskKey, question: comment }, me)
+          : await decideTask({ requestId, taskKey, decision: decision as "APPROVE" | "REJECT" | "REQUEST_CHANGES", comment: comment || undefined }, me);
     if (!result.ok) return { ok: false, message: result.message };
   } catch (error) {
     logError("decideAction failed", error, { decision });
@@ -274,4 +281,64 @@ export async function bulkApproveAction(_previous: ActionResult | null, formData
     logError("bulkApproveAction failed", error);
     return { ok: false, message: "Something went wrong. Please try again." };
   }
+}
+
+// ---- v1.6.0 (EN-04, EN-05, EN-07) -------------------------------------------------
+const text = (value: FormDataEntryValue | null, max = 2000) => String(value ?? "").trim().slice(0, max + 1);
+
+export async function recallAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const me = await actor();
+  const requestId = num(formData.get("requestId"));
+  if (!me || requestId === null) return NOT_FOUND;
+  const reason = text(formData.get("reason"), 500);
+  if (reason.length < 3) return { ok: false, message: "Say why you're recalling it.", fieldErrors: { reason: "Give a reason (3 to 500 characters)." } };
+  try {
+    const result = await recallRequest({ requestId, reason }, me);
+    if (!result.ok) return { ok: false, message: result.message };
+  } catch (error) {
+    logError("recallAction failed", error);
+    return { ok: false, message: "Something went wrong. Please try again." };
+  }
+  revalidatePath(`/users/requests/${requestId}`);
+  revalidatePath("/users");
+  return { ok: true, message: "Recalled. Change it below, then resubmit." };
+}
+
+export async function answerInfoAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const me = await actor();
+  const requestId = num(formData.get("requestId"));
+  if (!me || requestId === null) return NOT_FOUND;
+  const answer = text(formData.get("answer"));
+  if (!answer) return { ok: false, message: "Write your answer.", fieldErrors: { answer: "Write your answer." } };
+  if (answer.length > 2000) return { ok: false, message: "Keep it under 2,000 characters.", fieldErrors: { answer: "Keep it under 2,000 characters." } };
+  try {
+    const result = await answerInfo({ requestId, answer }, me);
+    if (!result.ok) return { ok: false, message: result.message };
+  } catch (error) {
+    logError("answerInfoAction failed", error);
+    return { ok: false, message: "Something went wrong. Please try again." };
+  }
+  revalidatePath(`/users/requests/${requestId}`);
+  return { ok: true, message: "Answer sent. The approver can decide now." };
+}
+
+export async function delegateTaskAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const me = await actor();
+  const requestId = num(formData.get("requestId"));
+  const taskKey = String(formData.get("taskKey") ?? "");
+  const toUserId = num(formData.get("toUserId"));
+  if (!me || requestId === null || !taskKey) return NOT_FOUND;
+  if (toUserId === null) return { ok: false, message: "Choose a colleague.", fieldErrors: { toUserId: "Choose a colleague." } };
+  const reason = text(formData.get("reason"), 500);
+  if (reason.length < 3) return { ok: false, message: "Say why.", fieldErrors: { reason: "Give a reason (3 to 500 characters)." } };
+  try {
+    const result = await delegateTask({ requestId, taskKey, toUserId, reason }, me);
+    if (!result.ok) return { ok: false, message: result.message };
+  } catch (error) {
+    logError("delegateTaskAction failed", error);
+    return { ok: false, message: "Something went wrong. Please try again." };
+  }
+  revalidatePath(`/users/requests/${requestId}`);
+  revalidatePath("/users");
+  return { ok: true, message: "Passed on. They've been told." };
 }

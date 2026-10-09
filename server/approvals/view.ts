@@ -11,6 +11,9 @@ import type { Actor } from "@/server/approvals/service";
 import { listAttachments } from "@/lib/db/repositories/attachments.repository";
 import { formatSize, previewKind } from "@/server/attachments/files";
 import { listRevisions } from "@/lib/db/repositories/revisions.repository";
+import { listConsultations, type Consultation } from "@/lib/db/repositories/consult.repository";
+import { visibleLinks } from "@/server/approvals/consult";
+import type { LinkedRequest } from "@/lib/db/repositories/consult.repository";
 import { diffRounds, type FieldChange } from "@/server/approvals/revisions";
 
 // Everything the request page shows (F-14), after the record-level check
@@ -40,6 +43,14 @@ export interface RequestView {
   // RD-03: after a resubmit, what changed since the round before (null when
   // round 1; "unrecorded" for requests from before v1.6.0).
   changes: { round: number; fields: FieldChange[]; files: string[] } | "unrecorded" | null;
+  // v1.6.0 (EN-04..EN-08)
+  canRecall: boolean;
+  question: { text: string; byName: string; at: string } | null; // an approver's open question (EN-05)
+  canAnswerQuestion: boolean;
+  canConsult: boolean;
+  consultations: Consultation[];
+  links: LinkedRequest[];
+  canFollowUp: boolean;
   canAddFiles: boolean;
   canResume: boolean;
   canResubmit: boolean;
@@ -82,7 +93,7 @@ export async function loadRequestView(requestId: number, viewer: Actor): Promise
     .filter((value): value is number => typeof value === "number");
   const actorIds = timelineRows.flatMap((row) => {
     const payload = row.payload as unknown as Record<string, unknown>;
-    const single = ["actorId", "approverId", "onBehalfOf", "fromId", "toId"].map((key) => payload[key]);
+    const single = ["actorId", "approverId", "onBehalfOf", "fromId", "toId", "consulteeId", "askedBy"].map((key) => payload[key]);
     const lists = Array.isArray(payload.userIds) ? (payload.userIds as unknown[]) : [];
     return [...single, ...lists].filter((value): value is number => typeof value === "number");
   });
@@ -165,6 +176,13 @@ export async function loadRequestView(requestId: number, viewer: Actor): Promise
       };
     })(),
     canAddFiles: ["IN_PROGRESS", "ON_HOLD", "CHANGES_REQUIRED"].includes(state.status),
+    canRecall: request.requesterId === viewer.id && (state.status === "IN_PROGRESS" || state.status === "ON_HOLD"),
+    question: state.status === "ON_HOLD" && state.hold?.kind === "INFO" ? { text: state.hold.reason ?? "", byName: nameOf(state.hold.by), at: state.hold.at } : null,
+    canAnswerQuestion: state.status === "ON_HOLD" && state.hold?.kind === "INFO" && request.requesterId === viewer.id,
+    canConsult: (state.status === "IN_PROGRESS" || state.status === "ON_HOLD") && myPending.length > 0,
+    consultations: await listConsultations(requestId),
+    links: await visibleLinks(requestId, viewer),
+    canFollowUp: state.status === "APPROVED",
     canResume: state.status === "ON_HOLD" && (isAdmin(viewer) || myPending.some((task) => task.nodeId === holdNode)),
     canResubmit: state.status === "CHANGES_REQUIRED" && request.requesterId === viewer.id,
     canWithdraw: ["IN_PROGRESS", "ON_HOLD", "CHANGES_REQUIRED"].includes(state.status) && request.requesterId === viewer.id,

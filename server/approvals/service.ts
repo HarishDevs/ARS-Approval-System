@@ -41,7 +41,7 @@ import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { getEnv } from "@/config/environment";
 import { notify } from "@/server/notifications/notify";
 import { messagesForEvents } from "@/server/approvals/messages";
-import { decide, putOnHold, reassignTask, reopen, resolveBlocked, resubmit, resume, simulate, startInstance, validateWorkflow, withdraw, EngineError } from "@/server/engine";
+import { answerInformation, askForInformation, decide, putOnHold, reassignTask, recall, reopen, resolveBlocked, resubmit, resume, simulate, startInstance, validateWorkflow, withdraw, EngineError } from "@/server/engine";
 import type { BlockAction, Decision, EngineEvent, EngineResult, FormData as EngineFormData, RestartPolicy, ValidationResult, WorkflowDefinition, WorkflowNode } from "@/server/engine";
 import { insertRevision } from "@/lib/db/repositories/revisions.repository";
 import { claimOutbox, dropOutboxForDeletedRequests, insertOutbox, listStaleOutbox, markOutboxSent } from "@/lib/db/repositories/outbox.repository";
@@ -509,6 +509,19 @@ async function afterChange(
       await recordAudit({ actorUserId: actor.id, action: "REQUEST_UNBLOCKED", entityType: "REQUEST", entityId: requestId, metadata: { step: event.nodeId, how: event.action, userIds: event.userIds ?? [], reason: event.reason } }, db);
     } else if (event.type === "RESUMED" && event.heldSince) {
       await extendDueTimes(requestId, (Date.now() - new Date(event.heldSince).getTime()) / 1000, db);
+    } else if (event.type === "INFO_ANSWERED") {
+      // EN-05: waiting for the answer doesn't count against the response time.
+      await extendDueTimes(requestId, (Date.now() - new Date(event.heldSince).getTime()) / 1000, db);
+      await recordAudit({ actorUserId: actor.id, action: "REQUEST_INFO_ANSWERED", entityType: "REQUEST", entityId: requestId, metadata: { askedBy: event.askedBy } }, db);
+    } else if (event.type === "INFO_REQUESTED") {
+      await recordAudit({ actorUserId: actor.id, action: "REQUEST_INFO_REQUESTED", entityType: "REQUEST", entityId: requestId, metadata: { step: event.nodeId } }, db);
+    } else if (event.type === "RECALLED") {
+      await recordAudit({ actorUserId: actor.id, action: "REQUEST_RECALLED", entityType: "REQUEST", entityId: requestId, metadata: { reason: event.reason, closedTasks: event.closedTaskIds } }, db);
+    } else if (event.type === "TASK_REASSIGNED") {
+      await recordAudit(
+        { actorUserId: actor.id, action: event.byApprover ? "TASK_DELEGATED" : "TASK_HANDED_OVER", entityType: "REQUEST", entityId: requestId, metadata: { task: event.taskId, from: event.fromId, to: event.toId, reason: event.reason ?? null } },
+        db,
+      );
     }
   }
   const reassigned = events.filter((event) => event.type === "TASK_REASSIGNED").map((event) => (event as { taskId: string }).taskId);
@@ -561,6 +574,49 @@ async function policyForRequest(requestId: number, typePolicy: (workflowId: numb
     [requestId],
   );
   return rows[0] ? typePolicy(rows[0].workflow_id) : "REQUESTING_STEP";
+}
+
+// ---- v1.6.0: recall, questions, passing an approval on (EN-04, EN-05, EN-07) -----------
+// Recall: only the requester, while it is still waiting (BD-1).
+export function recallRequest(input: { requestId: number; reason: string }, actor: Actor) {
+  return mutate(input.requestId, actor, (request, definition, directory) => {
+    if (request.requesterId !== actor.id) throw new EngineError("NOT_AUTHORISED", "Only the person who raised the request can recall it.");
+    return recall(definition, request.state, { actorId: actor.id, reason: input.reason }, context(request), directory);
+  });
+}
+
+// An approver asks the requester a question (BD-2).
+export function askForInfo(input: { requestId: number; taskKey: string; question: string }, actor: Actor) {
+  return mutate(input.requestId, actor, (request, _definition, directory) => askForInformation(request.state, { taskId: input.taskKey, actorId: actor.id, question: input.question }, context(request), directory));
+}
+
+export function answerInfo(input: { requestId: number; answer: string }, actor: Actor) {
+  return mutate(input.requestId, actor, (request) => answerInformation(request.state, { actorId: actor.id, answer: input.answer }, context(request)));
+}
+
+// EN-07 (BD-10): the approver (or their delegate) passes their own pending
+// approval to a colleague. Approval steps need an approver-eligible person
+// (D-085); work steps any active person. Never the requester, never someone
+// already on the step, never back to someone who held it this round, and at
+// most 3 hand-ons per approval. Immediate; both are told; audited.
+export const MAX_HAND_ONS = 3;
+export function delegateTask(input: { requestId: number; taskKey: string; toUserId: number; reason: string }, actor: Actor) {
+  return mutate(input.requestId, actor, (request, definition, directory, { snapshot }) => {
+    const task = request.state.tasks.find((candidate) => candidate.id === input.taskKey);
+    if (!task || task.status !== "PENDING") throw new EngineError("INVALID_REASSIGN", "This approval is no longer waiting.");
+    if (task.approverId !== actor.id && !directory.canActFor(actor.id, task.approverId)) throw new EngineError("NOT_AUTHORISED", "Only the person this approval is waiting for can pass it on.");
+    const reason = input.reason.trim();
+    if (reason.length < 3) throw new EngineError("COMMENT_REQUIRED", "Say why you're passing it on.");
+    if (input.toUserId === actor.id || input.toUserId === task.approverId) throw new EngineError("INVALID_REASSIGN", "Choose someone else.");
+    if ((task.previousApprovers ?? []).includes(input.toUserId)) throw new EngineError("INVALID_REASSIGN", "That person already passed this approval on; it can't go back to them.");
+    if ((task.previousApprovers ?? []).length >= MAX_HAND_ONS) throw new EngineError("INVALID_REASSIGN", `This approval has been passed on ${MAX_HAND_ONS} times already. Ask IT to hand it over.`);
+    const node = definition.nodes.find((candidate) => candidate.id === task.nodeId);
+    const work = node?.kind === "APPROVAL" && node.mode === "WORK";
+    const target = snapshot.users.find((user) => user.id === input.toUserId);
+    if (!target || !target.active || target.isBreakGlass) throw new EngineError("INVALID_REASSIGN", "Choose an active person.");
+    if (!work && target.approver === false) throw new EngineError("INVALID_REASSIGN", "Choose someone who can approve (Manager and above).");
+    return reassignTask(request.state, { taskId: task.id, toUserId: input.toUserId, actorId: actor.id, reason, byApprover: true }, context(request), directory);
+  });
 }
 
 // ---- blocked steps (D-098) ---------------------------------------------------------

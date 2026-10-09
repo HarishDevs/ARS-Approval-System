@@ -28,6 +28,7 @@ export function RequestForm({
   lookups = NO_LOOKUPS,
   initial,
   initialTitle,
+  followUpOf,
   draft,
 }: {
   mode: "submit" | "resubmit";
@@ -42,6 +43,7 @@ export function RequestForm({
   lookups?: FieldLookups;
   initial?: Record<string, string>;
   initialTitle?: string;
+  followUpOf?: number; // EN-08: linked to this approved request on submit
   draft?: DraftInfo;
 }) {
   const { result, pending, onSubmit } = useActionForm(mode === "submit" ? submitRequestAction : resubmitAction);
@@ -66,6 +68,7 @@ export function RequestForm({
       {workflowId && <input type="hidden" name="workflowId" value={workflowId} />}
       {requestId && <input type="hidden" name="requestId" value={requestId} />}
       {mode === "submit" && <input type="hidden" name="submissionKey" value={submissionKey} />}
+      {followUpOf && <input type="hidden" name="followUpOf" value={followUpOf} />}
       <div className="space-y-5 px-5 py-5">
         <ErrorSummary errors={summaryErrors} labels={summaryLabels} />
         {mode === "submit" && (

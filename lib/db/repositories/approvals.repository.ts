@@ -340,6 +340,11 @@ export async function lockRequest(id: number, db: Queryable): Promise<RequestRec
   return rows[0] ? toRequest(rows[0]) : null;
 }
 
+export async function findRequestByNumber(requestNo: string, db: Queryable = getDbPool()): Promise<RequestRecord | null> {
+  const [rows] = await db.query<RequestRow[]>(`SELECT ${REQUEST_COLUMNS} FROM approval_requests WHERE request_no = ? AND deleted_at IS NULL LIMIT 1`, [requestNo]);
+  return rows[0] ? toRequest(rows[0]) : null;
+}
+
 export async function findRequest(id: number, db: Queryable = getDbPool()): Promise<RequestRecord | null> {
   const [rows] = await db.query<RequestRow[]>(`SELECT ${REQUEST_COLUMNS} FROM approval_requests WHERE id = ? AND deleted_at IS NULL LIMIT 1`, [id]);
   return rows[0] ? toRequest(rows[0]) : null;
@@ -427,7 +432,13 @@ export async function extendDueTimes(requestId: number, seconds: number, db: Que
 }
 
 // The timeline holds the engine's events plus the service's own markers.
-export type TimelineEvent = EngineEvent | { type: "SUBMITTED"; requestNo: string } | { type: "ATTACHMENTS_ADDED"; actorId: number; names: string[] };
+export type TimelineEvent =
+  | EngineEvent
+  | { type: "SUBMITTED"; requestNo: string }
+  | { type: "ATTACHMENTS_ADDED"; actorId: number; names: string[] }
+  // v1.6.0 (EN-06): advice asked and given; no effect on the approval itself.
+  | { type: "CONSULTED"; consultationId: number; consulteeId: number; actorId: number; question: string }
+  | { type: "CONSULT_ANSWERED"; consultationId: number; actorId: number; answer: string };
 
 export async function appendEvents(requestId: number, events: readonly TimelineEvent[], actorId: number | null, db: Queryable): Promise<void> {
   if (events.length === 0) return;

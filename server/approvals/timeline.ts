@@ -37,7 +37,19 @@ export function describeEvent(event: TimelineEvent, labelOf: (nodeId: string) =>
     case "RESUBMITTED":
       return `Resubmitted (round ${event.round})`;
     case "TASK_REASSIGNED":
-      return `"${labelOf(event.nodeId)}" handed over from ${nameOf(event.fromId)} to ${nameOf(event.toId)} by ${nameOf(event.actorId)}`;
+      return event.byApprover
+        ? `${nameOf(event.actorId)} passed "${labelOf(event.nodeId)}" to ${nameOf(event.toId)}${event.reason ? `: ${event.reason}` : ""}`
+        : `"${labelOf(event.nodeId)}" handed over from ${nameOf(event.fromId)} to ${nameOf(event.toId)} by ${nameOf(event.actorId)}`;
+    case "RECALLED":
+      return `Recalled by ${nameOf(event.actorId)} to change it: ${event.reason}`;
+    case "INFO_REQUESTED":
+      return `${nameOf(event.actorId)} asked a question at "${labelOf(event.nodeId)}": ${event.question}`;
+    case "INFO_ANSWERED":
+      return `${nameOf(event.actorId)} answered: ${event.answer}`;
+    case "CONSULTED":
+      return `${nameOf(event.actorId)} asked ${nameOf(event.consulteeId)} for advice: ${event.question}`;
+    case "CONSULT_ANSWERED":
+      return `${nameOf(event.actorId)} gave advice: ${event.answer}`;
     case "WITHDRAWN":
       return `Withdrawn by ${nameOf(event.actorId)}${event.reason ? `: ${event.reason}` : ""}`;
     case "REOPENED":
@@ -94,6 +106,15 @@ export function eventKind(event: TimelineEvent): TimelineKind {
       return "resubmit";
     case "TASK_REASSIGNED":
       return "handover";
+    case "RECALLED":
+      return "withdraw";
+    case "INFO_REQUESTED":
+      return "hold";
+    case "INFO_ANSWERED":
+      return "resume";
+    case "CONSULTED":
+    case "CONSULT_ANSWERED":
+      return "info";
     case "WITHDRAWN":
       return "withdraw";
     case "BLOCK_RESOLVED":

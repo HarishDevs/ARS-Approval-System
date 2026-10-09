@@ -5,13 +5,13 @@ import { usePathname, useRouter } from "next/navigation";
 import { isTyping } from "@/features/shell/shortcuts";
 import { Check, MessageSquareWarning, PauseCircle, XCircle } from "lucide-react";
 import { Dialog } from "@/features/ui/Dialog";
-import { decideAction, reopenAction, resolveBlockedAction, resumeAction, withdrawAction } from "@/app/users/actions";
+import { answerInfoAction, decideAction, delegateTaskAction, recallAction, reopenAction, resolveBlockedAction, resumeAction, withdrawAction } from "@/app/users/actions";
 import { FieldError, ResultMessage, useActionForm } from "@/features/ui/form";
 
 // What the signed-in person can do on this request right now (F-14). The
 // server decides again on every press (F-12).
 // A work task (D-097) is marked done, or sent back; it can't be rejected.
-export type DecisionKind = "APPROVE" | "REQUEST_CHANGES" | "HOLD" | "REJECT";
+export type DecisionKind = "APPROVE" | "REQUEST_CHANGES" | "HOLD" | "REJECT" | "INFO";
 
 export function DecisionForm({ requestId, taskKey, label, work = false, only, idPrefix = "comment" }: { requestId: number; taskKey: string; label: string; work?: boolean; only?: DecisionKind; idPrefix?: string }) {
   const { result, pending, onSubmit } = useActionForm(decideAction);
@@ -26,7 +26,8 @@ export function DecisionForm({ requestId, taskKey, label, work = false, only, id
       </p>
       <div>
         <label htmlFor={`${idPrefix}-${taskKey}`} className="field-label">
-          Comment <span className="font-normal text-ink-faint">{work ? "(say what you did; required to ask for changes)" : "(required to reject or ask for changes)"}</span>
+          {only === "INFO" ? "Your question for the requester" : "Comment"}{" "}
+          {only !== "INFO" && <span className="font-normal text-ink-faint">{work ? "(say what you did; required to ask for changes or a question)" : "(required to reject, ask for changes or ask a question)"}</span>}
         </label>
         <textarea id={`${idPrefix}-${taskKey}`} name="comment" rows={3} maxLength={2000} data-autofocus={only ? true : undefined} className="field-input h-auto py-2.5" />
         <FieldError result={result} name="comment" />
@@ -45,6 +46,11 @@ export function DecisionForm({ requestId, taskKey, label, work = false, only, id
         {shows("HOLD") && (
           <button type="submit" name="decision" value="HOLD" disabled={pending} className={only ? "btn-primary btn-compact" : "btn-secondary btn-compact"}>
             {pending && only ? "Working…" : "Put on hold"}
+          </button>
+        )}
+        {shows("INFO") && (
+          <button type="submit" name="decision" value="INFO" disabled={pending} className={only ? "btn-primary btn-compact" : "btn-secondary btn-compact"}>
+            {pending && only ? "Working…" : "Ask a question"}
           </button>
         )}
         {!work && shows("REJECT") && (
@@ -194,7 +200,7 @@ export function MobileDecisionBar({ requestId, taskKey, label, work = false }: {
     { kind: "HOLD", label: "Hold", icon: <PauseCircle aria-hidden="true" className="h-4 w-4" />, style: "btn-secondary" },
     ...(work ? [] : [{ kind: "REJECT" as const, label: "Reject", icon: <XCircle aria-hidden="true" className="h-4 w-4" />, style: "btn-secondary text-danger-600" }]),
   ];
-  const titles: Record<DecisionKind, string> = { APPROVE: work ? "Mark as done" : "Approve", REQUEST_CHANGES: "Ask for changes", HOLD: "Put on hold", REJECT: "Reject" };
+  const titles: Record<DecisionKind, string> = { APPROVE: work ? "Mark as done" : "Approve", REQUEST_CHANGES: "Ask for changes", HOLD: "Put on hold", REJECT: "Reject", INFO: "Ask a question" };
   return (
     <>
       <div role="region" aria-label="Your decision" className="fixed inset-x-0 bottom-[calc(56px+env(safe-area-inset-bottom))] z-sticky border-t border-line bg-surface px-3 py-2 shadow-overlay md:hidden">
@@ -241,5 +247,91 @@ export function DecisionShortcuts({ requestId, taskKey, label, work = false, ini
     <Dialog open={open !== null} onClose={() => setOpen(null)} title={title} description={label} size="sm">
       {open && <DecisionForm requestId={requestId} taskKey={taskKey} label={label} work={work} only={open} idPrefix="shortcut-comment" />}
     </Dialog>
+  );
+}
+
+// EN-04 (BD-1): the requester takes it back to change it.
+export function RecallForm({ requestId }: { requestId: number }) {
+  const { result, pending, onSubmit, confirmBar } = useActionForm(recallAction, {
+    confirmTitle: "Recall this request?",
+    confirm: "The approvers waiting on it are told it isn't needed for now. Decisions already made stay. You then change it and resubmit.",
+    confirmLabel: "Yes, recall",
+  });
+  return (
+    <form onSubmit={onSubmit} className="space-y-2 px-5 py-4">
+      <input type="hidden" name="requestId" value={requestId} />
+      <p className="font-medium">Need to change something?</p>
+      <label htmlFor="recall-reason" className="field-label">
+        Reason for recalling
+      </label>
+      <input id="recall-reason" name="reason" maxLength={500} className="field-input" placeholder="e.g. Wrong quote attached" />
+      <FieldError result={result} name="reason" />
+      <button type="submit" disabled={pending} className="btn-secondary btn-compact">
+        {pending ? "Working…" : "Recall to change it"}
+      </button>
+      <ResultMessage result={result} />
+      {confirmBar}
+    </form>
+  );
+}
+
+// EN-05: the approver's question, answered by the requester.
+export function AnswerQuestionForm({ requestId, question, byName }: { requestId: number; question: string; byName: string }) {
+  const { result, pending, onSubmit } = useActionForm(answerInfoAction);
+  return (
+    <form onSubmit={onSubmit} className="space-y-2 px-5 py-4">
+      <input type="hidden" name="requestId" value={requestId} />
+      <p className="font-medium">{byName} asked:</p>
+      <blockquote className="rounded-md border-l-4 border-warning-600 bg-warning-50 px-3 py-2 text-label">{question}</blockquote>
+      <label htmlFor="info-answer" className="field-label">
+        Your answer
+      </label>
+      <textarea id="info-answer" name="answer" rows={3} maxLength={2000} className="field-input h-auto py-2.5" />
+      <FieldError result={result} name="answer" />
+      <button type="submit" disabled={pending} className="btn-primary btn-compact">
+        {pending ? "Sending…" : "Send answer"}
+      </button>
+      <ResultMessage result={result} />
+    </form>
+  );
+}
+
+// EN-07 (BD-10): pass my own approval to a colleague.
+export function DelegateTaskForm({ requestId, taskKey, people }: { requestId: number; taskKey: string; people: { id: number; label: string }[] }) {
+  const { result, pending, onSubmit, confirmBar } = useActionForm(delegateTaskAction, {
+    confirmTitle: "Pass this approval on?",
+    confirm: "It moves to the colleague you chose straight away, with a fresh response time. You won't be able to decide it unless it comes back.",
+    confirmLabel: "Yes, pass it on",
+  });
+  return (
+    <details className="px-5 py-3">
+      <summary className="cursor-pointer text-label font-semibold text-primary-600">Pass this to a colleague</summary>
+      <form onSubmit={onSubmit} className="mt-3 space-y-2">
+        <input type="hidden" name="requestId" value={requestId} />
+        <input type="hidden" name="taskKey" value={taskKey} />
+        <label htmlFor={`delegate-to-${taskKey}`} className="field-label">
+          Colleague
+        </label>
+        <select id={`delegate-to-${taskKey}`} name="toUserId" defaultValue="" className="field-input">
+          <option value="">Choose…</option>
+          {people.map((person) => (
+            <option key={person.id} value={person.id}>
+              {person.label}
+            </option>
+          ))}
+        </select>
+        <FieldError result={result} name="toUserId" />
+        <label htmlFor={`delegate-reason-${taskKey}`} className="field-label">
+          Why
+        </label>
+        <input id={`delegate-reason-${taskKey}`} name="reason" maxLength={500} className="field-input" placeholder="e.g. They manage this budget" />
+        <FieldError result={result} name="reason" />
+        <button type="submit" disabled={pending} className="btn-secondary btn-compact">
+          {pending ? "Working…" : "Pass it on"}
+        </button>
+        <ResultMessage result={result} />
+        {confirmBar}
+      </form>
+    </details>
   );
 }

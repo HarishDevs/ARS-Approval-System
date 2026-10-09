@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { requireApiArea } from "@/server/authorization/guards";
 import { submitCustomRequest, type Actor } from "@/server/approvals/service";
 import { addComment, createDelegation, stopDelegation } from "@/server/approvals/collab";
+import { answerConsultation, consult, linkRequests } from "@/server/approvals/consult";
 import { markAllReadReturningIds, markRead, markUnread } from "@/lib/db/repositories/collab.repository";
 import { builderSpecSchema } from "@/server/workflows/builder";
 import { addAttachments, filesFrom, prepareFiles } from "@/server/attachments/service";
@@ -175,4 +176,55 @@ export async function markUnreadAction(_previous: ActionResult | null, formData:
     logError("markUnreadAction failed", error);
     return { ok: false, message: "Couldn't undo. Please try again." };
   }
+}
+
+// ---- v1.6.0 consultation and links (EN-06, EN-08) ------------------------------
+export async function consultAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const me = await actor();
+  const requestId = num(formData.get("requestId"));
+  const consulteeId = num(formData.get("consulteeId"));
+  if (!me || requestId === null) return NOT_FOUND;
+  if (consulteeId === null) return { ok: false, message: "Choose a colleague.", fieldErrors: { consulteeId: "Choose a colleague." } };
+  try {
+    const result = await consult({ requestId, consulteeId, question: String(formData.get("question") ?? "") }, me);
+    if (!result.ok) return { ok: false, message: result.message, fieldErrors: result.code === "EMPTY" || result.code === "TOO_LONG" ? { question: result.message } : undefined };
+  } catch (error) {
+    logError("consultAction failed", error);
+    return { ok: false, message: "Couldn't send. Please try again." };
+  }
+  revalidatePath(`/users/requests/${requestId}`);
+  return { ok: true, message: "Asked. You'll be told when they answer." };
+}
+
+export async function answerConsultAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const me = await actor();
+  const consultationId = num(formData.get("consultationId"));
+  const requestId = num(formData.get("requestId"));
+  if (!me || consultationId === null || requestId === null) return NOT_FOUND;
+  try {
+    const result = await answerConsultation({ consultationId, answer: String(formData.get("answer") ?? "") }, me);
+    if (!result.ok) return { ok: false, message: result.message, fieldErrors: result.code === "EMPTY" || result.code === "TOO_LONG" ? { answer: result.message } : undefined };
+  } catch (error) {
+    logError("answerConsultAction failed", error);
+    return { ok: false, message: "Couldn't send. Please try again." };
+  }
+  revalidatePath(`/users/requests/${requestId}`);
+  return { ok: true, message: "Thanks, your advice was sent." };
+}
+
+export async function linkAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const me = await actor();
+  const requestId = num(formData.get("requestId"));
+  const otherNo = String(formData.get("otherRequestNo") ?? "").trim();
+  if (!me || requestId === null) return NOT_FOUND;
+  if (!/^[A-Za-z0-9-]{4,40}$/.test(otherNo)) return { ok: false, message: "Enter a request number.", fieldErrors: { otherRequestNo: "e.g. PUR-2026-000123" } };
+  try {
+    const result = await linkRequests({ requestId, otherRequestNo: otherNo }, me);
+    if (!result.ok) return { ok: false, message: result.message, fieldErrors: { otherRequestNo: result.message } };
+  } catch (error) {
+    logError("linkAction failed", error);
+    return { ok: false, message: "Couldn't link. Please try again." };
+  }
+  revalidatePath(`/users/requests/${requestId}`);
+  return { ok: true, message: "Linked." };
 }

@@ -169,6 +169,9 @@ export interface ApprovalTask {
   decidedBy?: number; // the authenticated actor (G-01)
   onBehalfOf?: number; // set when a delegate acted
   comment?: string;
+  // EN-07: who held this task before an approver handed it on (this round),
+  // so it can't be passed round in a circle.
+  previousApprovers?: number[];
 }
 
 export interface NodeState {
@@ -185,7 +188,9 @@ export interface InstanceState {
   nodes: Record<string, NodeState>;
   tasks: ApprovalTask[];
   joins: Record<string, string[]>; // join node id → ids of edges that arrived
-  hold?: { nodeId: string; by: number; at: string; reason?: string };
+  // kind INFO (EN-05): the approver asked the requester a question; the
+  // requester's answer resumes it. A plain hold has no kind.
+  hold?: { nodeId: string; by: number; at: string; reason?: string; kind?: "HOLD" | "INFO" };
   // openNodeIds: every step that was still open when changes were asked, so
   // a restart "at the requesting step" also restarts parallel branches.
   changesRequested?: { nodeId: string; by: number; at: string; comment: string; openNodeIds: string[] };
@@ -210,10 +215,14 @@ export type EngineEvent =
   | { type: "RESUBMITTED"; round: number; restartNodeId: string; changesAskedBy?: number }
   | { type: "NOTIFIED"; nodeId: string; userIds: number[]; note?: string }
   | { type: "BLOCK_RESOLVED"; nodeId: string; actorId: number; action: BlockAction["action"]; userIds?: number[]; reason: string }
-  | { type: "TASK_REASSIGNED"; taskId: string; nodeId: string; fromId: number; toId: number; actorId: number }
+  | { type: "TASK_REASSIGNED"; taskId: string; nodeId: string; fromId: number; toId: number; actorId: number; reason?: string; byApprover?: boolean }
   | { type: "WITHDRAWN"; actorId: number; reason?: string; closedTaskIds: string[]; approverIds: number[] }
   | { type: "DELETED"; actorId: number; reason: string; closedTaskIds: string[]; approverIds: number[]; wasOpen: boolean }
-  | { type: "REOPENED"; actorId: number; reason: string; round: number };
+  | { type: "REOPENED"; actorId: number; reason: string; round: number }
+  // v1.6.0 (EN-04, EN-05)
+  | { type: "RECALLED"; actorId: number; reason: string; closedTaskIds: string[]; approverIds: number[] }
+  | { type: "INFO_REQUESTED"; nodeId: string; actorId: number; question: string }
+  | { type: "INFO_ANSWERED"; actorId: number; answer: string; askedBy: number; heldSince: string; pendingApproverIds: number[] };
 
 export type Decision = "APPROVE" | "REJECT" | "REQUEST_CHANGES";
 
@@ -241,7 +250,8 @@ export type EngineErrorCode =
   | "NOT_OPEN"
   | "NOT_APPROVED"
   | "NOT_BLOCKED"
-  | "INVALID_ACTION";
+  | "INVALID_ACTION"
+  | "NOT_RECALLABLE";
 
 export class EngineError extends Error {
   constructor(

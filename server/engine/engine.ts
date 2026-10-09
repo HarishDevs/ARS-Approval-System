@@ -634,7 +634,7 @@ export function reopen(
 // and can't already have a task on the same step in this round.
 export function reassignTask(
   previous: InstanceState,
-  input: { taskId: string; toUserId: number; actorId: number },
+  input: { taskId: string; toUserId: number; actorId: number; reason?: string; byApprover?: boolean },
   context: EngineContext,
   directory: Directory,
 ): EngineResult {
@@ -650,11 +650,23 @@ export function reassignTask(
   const clash = state.tasks.some((other) => other.nodeId === task.nodeId && other.round === task.round && other.approverId === input.toUserId && other.status !== "CANCELLED");
   if (clash) throw new EngineError("INVALID_REASSIGN", "That person is already an approver on this step.");
   const fromId = task.approverId;
+  task.previousApprovers = [...(task.previousApprovers ?? []), fromId];
   task.approverId = input.toUserId;
   state.seq += 1;
   return {
     state,
-    events: [{ type: "TASK_REASSIGNED", taskId: task.id, nodeId: task.nodeId, fromId, toId: input.toUserId, actorId: input.actorId }],
+    events: [
+      {
+        type: "TASK_REASSIGNED",
+        taskId: task.id,
+        nodeId: task.nodeId,
+        fromId,
+        toId: input.toUserId,
+        actorId: input.actorId,
+        ...(input.reason ? { reason: input.reason } : {}),
+        ...(input.byApprover ? { byApprover: true } : {}),
+      },
+    ],
   };
 }
 
@@ -729,4 +741,60 @@ export function resolveBlocked(
     throw new EngineError("INVALID_ACTION", "This step can't be moved on by hand.");
   }
   return { state, events: run.events };
+}
+
+// Recall (EN-04, BD-1): the requester takes their own request back to change
+// it, while it is still waiting (or on hold). Like "ask for changes", but by
+// the requester: pending approvals close, every decision already made stays
+// in the history, and resubmitting restarts every step that was open (the
+// type's restart rule applies). Who may recall is the caller's rule.
+export function recall(definition: WorkflowDefinition, previous: InstanceState, input: { actorId: number; reason: string }, context: EngineContext, directory: Directory): EngineResult {
+  if (previous.status !== "IN_PROGRESS" && previous.status !== "ON_HOLD") {
+    throw new EngineError("NOT_RECALLABLE", "Only a request that is still waiting for approval can be recalled.");
+  }
+  const reason = input.reason.trim();
+  if (!reason) throw new EngineError("COMMENT_REQUIRED", "Please say why you're recalling it.");
+  const graph = new Graph(definition);
+  const openNodeIds = Object.entries(previous.nodes)
+    .filter(([, nodeState]) => nodeState.status === "ACTIVE" || nodeState.status === "BLOCKED")
+    .map(([id]) => id)
+    .filter((id) => graph.node(id).kind === "APPROVAL");
+  if (openNodeIds.length === 0) throw new EngineError("NOT_RECALLABLE", "There is no open step to recall it from.");
+  const state = clone(previous);
+  const run = new Run(graph, state, context, directory);
+  const pending = state.tasks.filter((task) => task.status === "PENDING");
+  state.status = "CHANGES_REQUIRED";
+  delete state.hold;
+  state.changesRequested = { nodeId: openNodeIds[0]!, by: input.actorId, at: context.now, comment: reason, openNodeIds };
+  run.closeTasks(null, "CANCELLED");
+  run.endActiveSteps();
+  run.events.push({ type: "RECALLED", actorId: input.actorId, reason, closedTaskIds: pending.map((task) => task.id), approverIds: [...new Set(pending.map((task) => task.approverId))] });
+  return { state, events: run.events };
+}
+
+// Ask for information (EN-05, BD-2): the approver (or their delegate) asks
+// the requester a question. The request waits on hold (the response time
+// stops, nobody else decides meanwhile) until the requester answers.
+export function askForInformation(previous: InstanceState, input: { taskId: string; actorId: number; question: string }, context: EngineContext, directory: Directory): EngineResult {
+  const question = input.question.trim();
+  if (!question) throw new EngineError("COMMENT_REQUIRED", "Please write the question.");
+  const held = putOnHold(previous, { taskId: input.taskId, actorId: input.actorId, reason: question }, context, directory);
+  const nodeId = held.state.hold!.nodeId;
+  held.state.hold = { ...held.state.hold!, kind: "INFO" };
+  return { state: held.state, events: [{ type: "INFO_REQUESTED", nodeId, actorId: input.actorId, question }] };
+}
+
+// The requester's answer resumes it. Only for a question (an ordinary hold
+// is resumed by the approver).
+export function answerInformation(previous: InstanceState, input: { actorId: number; answer: string }, context: EngineContext): EngineResult {
+  if (previous.status !== "ON_HOLD" || previous.hold?.kind !== "INFO") throw new EngineError("NOT_ON_HOLD", "Nobody is waiting for an answer on this request.");
+  if (input.actorId !== context.requesterId) throw new EngineError("NOT_AUTHORISED", "Only the person who raised the request can answer.");
+  const answer = input.answer.trim();
+  if (!answer) throw new EngineError("COMMENT_REQUIRED", "Please write your answer.");
+  const hold = previous.hold;
+  const state = clone(previous);
+  state.status = "IN_PROGRESS";
+  delete state.hold;
+  const pendingApproverIds = [...new Set(state.tasks.filter((task) => task.status === "PENDING").map((task) => task.approverId))];
+  return { state, events: [{ type: "INFO_ANSWERED", actorId: input.actorId, answer, askedBy: hold.by, heldSince: hold.at, pendingApproverIds }] };
 }

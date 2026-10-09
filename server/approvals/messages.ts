@@ -98,9 +98,46 @@ export function messagesForEvents(
           deepLink: link,
           email: {
             subject: `Approval needed: ${request.requestNo}`,
-            text: `An approval was handed over to you (the previous approver is no longer available).\n\n${ref}\n\nOpen it here (sign-in required): ${link}`,
+            text: event.byApprover
+              ? `An approver passed this approval to you${event.reason ? ` (${event.reason})` : ""}.\n\n${ref}\n\nOpen it here (sign-in required): ${link}`
+              : `An approval was handed over to you (the previous approver is no longer available).\n\n${ref}\n\nOpen it here (sign-in required): ${link}`,
           },
           whatsappVariables: vars({ requester_name: request.requesterName }),
+        });
+        break;
+      case "RECALLED":
+        for (const approverId of event.approverIds) {
+          out.push({
+            eventType: "REQUEST_RECALLED",
+            userId: approverId,
+            title: "Request recalled",
+            message: `Not needed for now: ${request.requesterName} recalled ${ref} to change it. ${event.reason}`,
+            deepLink: link,
+            email: { subject: `Recalled: ${request.requestNo}`, text: `${request.requesterName} recalled this request to change it, so your approval isn't needed for now. You'll be asked again if it comes back to you.\n\n${ref}\nReason: ${event.reason}\n\n${link}` },
+            whatsappVariables: null,
+          });
+        }
+        break;
+      case "INFO_REQUESTED":
+        out.push({
+          eventType: "INFORMATION_REQUESTED",
+          userId: request.requesterId,
+          title: "A question about your request",
+          message: `An approver asked about ${ref}: ${event.question}`,
+          deepLink: link,
+          email: { subject: `Question about ${request.requestNo}`, text: `An approver needs more information before deciding.\n\n${ref}\nQuestion: ${event.question}\n\nAnswer it here (sign-in required): ${link}` },
+          whatsappVariables: null,
+        });
+        break;
+      case "INFO_ANSWERED":
+        out.push({
+          eventType: "INFORMATION_ANSWERED",
+          userId: event.askedBy,
+          title: "Your question was answered",
+          message: `${request.requesterName} answered about ${ref}: ${event.answer.slice(0, 140)}`,
+          deepLink: link,
+          email: { subject: `Answered: ${request.requestNo}`, text: `${request.requesterName} answered your question. The request is waiting for your decision again.\n\n${ref}\nAnswer: ${event.answer}\n\n${link}` },
+          whatsappVariables: null,
         });
         break;
       case "INSTANCE_APPROVED":

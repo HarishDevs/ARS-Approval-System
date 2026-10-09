@@ -57,3 +57,20 @@ CREATE TABLE request_revisions (
   CONSTRAINT fk_request_revisions_request FOREIGN KEY (request_id) REFERENCES approval_requests(id),
   CONSTRAINT fk_request_revisions_user FOREIGN KEY (created_by) REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- EN-08 Linked requests: "related" both ways, or "follow-up" (raised from an
+-- approved request). A link never gives access: each side is shown only to
+-- people who can already see it.
+CREATE TABLE request_links (
+  id               BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  from_request_id  BIGINT UNSIGNED NOT NULL,
+  to_request_id    BIGINT UNSIGNED NOT NULL,
+  kind             ENUM('RELATED', 'FOLLOW_UP') NOT NULL,
+  created_by       BIGINT UNSIGNED NOT NULL,
+  created_at       DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT uq_request_links_pair UNIQUE (from_request_id, to_request_id),
+  INDEX idx_request_links_to (to_request_id),
+  CONSTRAINT fk_request_links_from FOREIGN KEY (from_request_id) REFERENCES approval_requests(id),
+  CONSTRAINT fk_request_links_to FOREIGN KEY (to_request_id) REFERENCES approval_requests(id),
+  CONSTRAINT fk_request_links_user FOREIGN KEY (created_by) REFERENCES users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
