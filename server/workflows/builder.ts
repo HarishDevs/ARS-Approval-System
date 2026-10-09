@@ -13,6 +13,25 @@ const comparisonSchema = z.object({
   value: z.union([z.string(), z.number(), z.boolean(), z.array(z.union([z.string(), z.number()]))]).optional(),
 });
 
+// A rule is one comparison, or several joined by "all of" / "any of"
+// (D-099). Old specs hold a single comparison and stay valid.
+const conditionGroupSchema = z.object({
+  match: z.enum(["ALL", "ANY"]),
+  conditions: z.array(comparisonSchema).min(1, "Add at least one condition.").max(10),
+});
+const conditionSpecSchema = z.union([comparisonSchema, conditionGroupSchema]);
+export type BuilderCondition = z.infer<typeof conditionSpecSchema>;
+export type BuilderConditionGroup = z.infer<typeof conditionGroupSchema>;
+
+export const isConditionGroup = (condition: BuilderCondition): condition is BuilderConditionGroup => "match" in condition;
+
+// Builder rule → engine condition.
+export function toCondition(condition: BuilderCondition): Condition {
+  if (!isConditionGroup(condition)) return condition as Comparison;
+  if (condition.conditions.length === 1) return condition.conditions[0] as Comparison;
+  return { op: condition.match === "ALL" ? "AND" : "OR", conditions: condition.conditions as Comparison[] };
+}
+
 const approverPickSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("PEOPLE"), userIds: z.array(z.number().int().positive()).min(1, "Pick at least one person.").max(50) }),
   z.object({ kind: z.literal("ROLE"), roleCode: z.string().min(1).max(50) }),
@@ -22,17 +41,23 @@ const approverPickSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("DEPARTMENT_HOD"), departmentId: z.number().int().positive() }),
   z.object({ kind: z.literal("GROUP"), groupId: z.number().int().positive() }),
   z.object({ kind: z.literal("FORM_FIELD_USER"), fieldKey: z.string().min(1).max(50) }),
+  z.object({ kind: z.literal("DESIGNATION"), designationId: z.number().int().positive(), sameDepartment: z.boolean().optional() }),
+  z.object({ kind: z.literal("REQUESTER") }),
 ]);
 
 const ruleSchema = z.enum(["ALL", "ANY_ONE", "ANY_N"]);
 
+// type (D-097): APPROVE decides; WORK is a task to mark done (hand-off after
+// approval, F-32); NOTIFY tells people and moves on.
 const stepSchema = z.object({
   id: z.string().regex(/^[a-z0-9_]{1,30}$/),
   label: z.string().trim().min(1, "Every step needs a name.").max(100),
+  type: z.enum(["APPROVE", "WORK", "NOTIFY"]).optional(),
+  note: z.string().trim().max(300).optional(),
   approvers: approverPickSchema,
   rule: ruleSchema,
   n: z.number().int().min(1).max(50).optional(),
-  skipWhen: comparisonSchema.nullish(),
+  skipWhen: conditionSpecSchema.nullish(),
   onNoApprover: z.enum(["BLOCK", "SKIP"]).optional(),
   slaHours: z.number().int().min(1, "Use at least 1 hour.").max(720, "Use at most 720 hours (30 days).").nullish(),
 });
@@ -49,19 +74,37 @@ const plainStageSchemas = [
   }),
 ] as const;
 
-// Inside a choice: one step or parallel steps (choices aren't nested, D-068).
-const innerStageSchema = z.discriminatedUnion("kind", [...plainStageSchemas]);
+// Inside a choice: steps, parallel steps, or another choice (D-099: up to
+// three choices deep; D-068 allowed none).
+type PlainStage = z.infer<(typeof plainStageSchemas)[number]>;
+export interface BuilderBranch {
+  kind: "BRANCH";
+  id: string;
+  label: string;
+  condition: BuilderCondition;
+  then: BuilderInnerStage[];
+  otherwise: BuilderInnerStage[];
+}
+export type BuilderInnerStage = PlainStage | BuilderBranch;
 
-const branchStageSchema = z
-  .object({
-    kind: z.literal("BRANCH"),
-    id: z.string().regex(/^[a-z0-9_]{1,30}$/),
-    label: z.string().trim().min(1).max(100),
-    condition: comparisonSchema,
-    then: z.array(innerStageSchema).max(20),
-    otherwise: z.array(innerStageSchema).max(20),
-  })
-  .refine((stage) => stage.then.length + stage.otherwise.length > 0, { message: "A choice needs levels on at least one path." });
+const branchStageSchema: z.ZodType<BuilderBranch> = z.lazy(() =>
+  z
+    .object({
+      kind: z.literal("BRANCH"),
+      id: z.string().regex(/^[a-z0-9_]{1,30}$/),
+      label: z.string().trim().min(1).max(100),
+      condition: conditionSpecSchema,
+      then: z.array(innerStageSchema).max(20),
+      otherwise: z.array(innerStageSchema).max(20),
+    })
+    .refine((stage) => stage.then.length + stage.otherwise.length > 0, { message: "A choice needs levels on at least one path." }),
+);
+const innerStageSchema: z.ZodType<BuilderInnerStage> = z.lazy(() => z.union([z.discriminatedUnion("kind", [...plainStageSchemas]), branchStageSchema]));
+
+export const MAX_CHOICE_DEPTH = 3;
+function choiceDepth(stages: readonly (BuilderStage | BuilderInnerStage)[]): number {
+  return Math.max(0, ...stages.map((stage) => (stage.kind === "BRANCH" ? 1 + Math.max(choiceDepth(stage.then), choiceDepth(stage.otherwise)) : 0)));
+}
 
 // DoA matrix (D-075, F-58): the approval authority of one approval type.
 // Bands are cut at rising limits (inclusive upper limit; the last band is
@@ -96,13 +139,12 @@ const stageSchema = z.union([z.discriminatedUnion("kind", [...plainStageSchemas]
 
 export const builderSpecSchema = z
   .object({ stages: z.array(stageSchema).min(1, "Add at least one step.").max(30) })
-  .refine((spec) => spec.stages.filter((stage) => stage.kind === "DOA").length <= 1, { message: "An approval type has one DoA matrix." });
+  .refine((spec) => spec.stages.filter((stage) => stage.kind === "DOA").length <= 1, { message: "An approval type has one DoA matrix." })
+  .refine((spec) => choiceDepth(spec.stages) <= MAX_CHOICE_DEPTH, { message: `Choices can be nested at most ${MAX_CHOICE_DEPTH} deep.` });
 
 export type ApproverPick = z.infer<typeof approverPickSchema>;
 export type BuilderStep = z.infer<typeof stepSchema>;
 export type BuilderStage = z.infer<typeof stageSchema>;
-export type BuilderInnerStage = z.infer<typeof innerStageSchema>;
-export type BuilderBranch = z.infer<typeof branchStageSchema>;
 export type BuilderDoa = z.infer<typeof doaStageSchema>;
 export type BuilderSpec = z.infer<typeof builderSpecSchema>;
 
@@ -118,6 +160,8 @@ export function toSources(pick: ApproverPick): ApproverSource[] {
       return [{ type: "GROUP", groupId: pick.groupId }];
     case "FORM_FIELD_USER":
       return [{ type: "FORM_FIELD_USER", fieldKey: pick.fieldKey }];
+    case "DESIGNATION":
+      return [{ type: "DESIGNATION", designationId: pick.designationId, ...(pick.sameDepartment ? { sameDepartment: true } : {}) }];
     default:
       return [{ type: pick.kind }];
   }
@@ -130,13 +174,17 @@ function toRule(rule: BuilderStep["rule"], n: number | undefined): CompletionRul
 const stepNodeId = (step: BuilderStep) => `step_${step.id}`;
 
 function stepNode(step: BuilderStep): WorkflowNode {
+  if (step.type === "NOTIFY") {
+    return { id: stepNodeId(step), kind: "NOTIFY", label: step.label, recipients: toSources(step.approvers), ...(step.note ? { note: step.note } : {}) };
+  }
   return {
     id: stepNodeId(step),
     kind: "APPROVAL",
     label: step.label,
     approvers: toSources(step.approvers),
     completion: toRule(step.rule, step.n),
-    ...(step.skipWhen ? { skipIf: step.skipWhen as Comparison } : {}),
+    ...(step.type === "WORK" ? { mode: "WORK" as const } : {}),
+    ...(step.skipWhen ? { skipIf: toCondition(step.skipWhen) } : {}),
     ...(step.onNoApprover ? { onNoApprover: step.onNoApprover } : {}),
     ...(step.slaHours ? { slaHours: step.slaHours } : {}),
   };
@@ -149,7 +197,7 @@ export type CompileResult = { ok: true; definition: WorkflowDefinition } | { ok:
 // last node, or the choice itself when a path is empty).
 interface LooseEnd {
   from: string;
-  condition?: Comparison;
+  condition?: Condition;
   isDefault?: boolean;
   order?: number;
 }
@@ -216,7 +264,7 @@ export function compileBuilder(spec: BuilderSpec): CompileResult {
         const choiceId = `choice_${stage.id}`;
         nodes.push({ id: choiceId, kind: "CONDITION", label: stage.label });
         connectAll(ends, choiceId);
-        const thenEnds = emit(stage.then, [{ from: choiceId, condition: stage.condition as Comparison, order: 1 }]);
+        const thenEnds = emit(stage.then, [{ from: choiceId, condition: toCondition(stage.condition), order: 1 }]);
         const otherwiseEnds = emit(stage.otherwise, [{ from: choiceId, isDefault: true }]);
         ends = [...thenEnds, ...otherwiseEnds];
       }

@@ -3,6 +3,8 @@ import { validateWorkflow } from "@/server/engine/validate";
 import {
   EngineError,
   type ApprovalNode,
+  type BlockAction,
+  type NotifyNode,
   type ApprovalTask,
   type ApproverSource,
   type CompletionRule,
@@ -67,8 +69,9 @@ function required(rule: CompletionRule, total: number): number {
 }
 
 // Resolve approver sources to active user ids. The requester is never
-// their own approver (no self-approval), and duplicates collapse into one task.
-export function resolveApprovers(sources: ApproverSource[], context: EngineContext, directory: Directory): number[] {
+// their own approver (no self-approval) unless the step is work or an FYI
+// (allowRequester); duplicates collapse into one task.
+export function resolveApprovers(sources: ApproverSource[], context: EngineContext, directory: Directory, options: { allowRequester?: boolean } = {}): number[] {
   const ids: number[] = [];
   const add = (id: number | null | undefined) => {
     if (typeof id === "number" && Number.isInteger(id) && id > 0) ids.push(id);
@@ -103,10 +106,23 @@ export function resolveApprovers(sources: ApproverSource[], context: EngineConte
         (Array.isArray(value) ? value : [value]).forEach((item) => add(typeof item === "string" ? Number(item) : (item as number)));
         break;
       }
+      case "DESIGNATION": {
+        const department = source.sameDepartment ? directory.departmentOf(context.requesterId) : null;
+        directory
+          .usersWithDesignation(source.designationId)
+          .filter((id) => !source.sameDepartment || (department !== null && directory.departmentOf(id) === department))
+          .forEach(add);
+        break;
+      }
+      case "REQUESTER":
+        add(context.requesterId);
+        break;
     }
   }
-  return [...new Set(ids)].filter((id) => id !== context.requesterId && directory.isActive(id));
+  return [...new Set(ids)].filter((id) => (options.allowRequester || id !== context.requesterId) && directory.isActive(id));
 }
+
+const isWork = (node: WorkflowNode): boolean => node.kind === "APPROVAL" && node.mode === "WORK";
 
 // --------------------------------------------------------------- runtime --
 
@@ -146,7 +162,7 @@ class Run {
     }
   }
 
-  private arrive(edge: WorkflowEdge): void {
+  arrive(edge: WorkflowEdge): void {
     const target = this.graph.node(edge.to);
     if (target.kind === "JOIN") {
       this.arriveAtJoin(target, edge);
@@ -219,7 +235,22 @@ class Run {
       case "APPROVAL":
         this.activateApproval(node);
         return;
+      case "NOTIFY":
+        this.activateNotify(node);
+        return;
     }
+  }
+
+  // FYI: tell the people, then carry straight on (nothing to decide).
+  private activateNotify(node: NotifyNode): void {
+    const nodeState = this.state.nodes[node.id]!;
+    const userIds = resolveApprovers(node.recipients, this.context, this.directory, { allowRequester: true });
+    nodeState.status = "APPROVED";
+    nodeState.activatedAt = this.context.now;
+    nodeState.completedAt = this.context.now;
+    nodeState.notified = userIds;
+    this.events.push({ type: "NOTIFIED", nodeId: node.id, userIds, ...(node.note ? { note: node.note } : {}) });
+    this.advanceFrom(node.id);
   }
 
   private activateApproval(node: ApprovalNode): void {
@@ -230,7 +261,7 @@ class Run {
       this.skip(node.id, "SKIP_CONDITION");
       return;
     }
-    const approvers = resolveApprovers(node.approvers, this.context, this.directory);
+    const approvers = resolveApprovers(node.approvers, this.context, this.directory, { allowRequester: isWork(node) });
     if (approvers.length === 0) {
       if (node.onNoApprover === "SKIP") this.skip(node.id, "NO_APPROVER");
       else this.block(node.id, "NO_ELIGIBLE_APPROVER");
@@ -240,7 +271,16 @@ class Run {
       this.block(node.id, "NOT_ENOUGH_APPROVERS");
       return;
     }
+    this.openTasks(node, approvers);
+  }
+
+  // The step waits for these people (resolved, or chosen by IT for a
+  // blocked step).
+  openTasks(node: ApprovalNode, approvers: readonly number[]): void {
+    const nodeState = this.state.nodes[node.id]!;
     nodeState.status = "ACTIVE";
+    nodeState.activatedAt = this.context.now;
+    nodeState.reason = undefined;
     this.events.push({ type: "NODE_ACTIVATED", nodeId: node.id });
     for (const approverId of approvers) {
       const task: ApprovalTask = {
@@ -256,7 +296,7 @@ class Run {
     }
   }
 
-  private skip(nodeId: string, reason: "SKIP_CONDITION" | "NO_APPROVER"): void {
+  skip(nodeId: string, reason: "SKIP_CONDITION" | "NO_APPROVER" | "SKIPPED_BY_IT"): void {
     const nodeState = this.state.nodes[nodeId]!;
     nodeState.status = "SKIPPED";
     nodeState.completedAt = this.context.now;
@@ -378,19 +418,21 @@ export function decide(
   const state = clone(previous);
   const task = state.tasks.find((candidate) => candidate.id === input.taskId);
   if (!task || task.status !== "PENDING") throw new EngineError("NOT_AUTHORISED", "This approval is not waiting for you.");
+  const graph = new Graph(definition);
+  const node = graph.node(task.nodeId);
+  if (node.kind !== "APPROVAL") throw new EngineError("UNKNOWN_NODE", "Task is not on an approval step.");
+  const work = node.mode === "WORK";
   const isApprover = task.approverId === input.actorId;
   const isDelegate = !isApprover && directory.canActFor(input.actorId, task.approverId);
-  if ((!isApprover && !isDelegate) || input.actorId === context.requesterId) {
+  // Nobody approves their own request; a work task may be the requester's own.
+  if ((!isApprover && !isDelegate) || (input.actorId === context.requesterId && !work)) {
     throw new EngineError("NOT_AUTHORISED", "You are not allowed to decide this approval.");
   }
+  if (work && input.decision === "REJECT") throw new EngineError("INVALID_ACTION", "A work task is marked as done, or sent back for changes; it can't be rejected.");
   const comment = input.comment?.trim();
   if ((input.decision === "REJECT" || input.decision === "REQUEST_CHANGES") && !comment) {
     throw new EngineError("COMMENT_REQUIRED", "Please give a reason.");
   }
-
-  const graph = new Graph(definition);
-  const node = graph.node(task.nodeId);
-  if (node.kind !== "APPROVAL") throw new EngineError("UNKNOWN_NODE", "Task is not on an approval step.");
   const run = new Run(graph, state, context, directory);
 
   task.decidedAt = context.now;
@@ -463,7 +505,8 @@ export function resume(previous: InstanceState, input: { actorId: number; isAdmi
   const state = clone(previous);
   state.status = "IN_PROGRESS";
   delete state.hold;
-  return { state, events: [{ type: "RESUMED", actorId: input.actorId }] };
+  const pendingApproverIds = [...new Set(state.tasks.filter((task) => task.status === "PENDING").map((task) => task.approverId))];
+  return { state, events: [{ type: "RESUMED", actorId: input.actorId, heldSince: hold.at, pendingApproverIds }] };
 }
 
 export type RestartPolicy = "BEGINNING" | "REQUESTING_STEP";
@@ -508,7 +551,7 @@ export function resubmit(
       }
     }
   }
-  run.events.push({ type: "RESUBMITTED", round: state.round, restartNodeId });
+  run.events.push({ type: "RESUBMITTED", round: state.round, restartNodeId, changesAskedBy: previous.changesRequested.by });
   if (policy === "REQUESTING_STEP") {
     const restartIds = [...new Set([restartNodeId, ...previous.changesRequested.openNodeIds])];
     for (const id of restartIds) {
@@ -546,6 +589,21 @@ export function withdraw(previous: InstanceState, input: { actorId: number; reas
   delete state.hold;
   const reason = input.reason?.trim();
   return { state, events: [{ type: "WITHDRAWN", actorId: input.actorId, ...(reason ? { reason } : {}), closedTaskIds: closed, approverIds: [...approverIds] }] };
+}
+
+// Super Admin delete (D-086, audit R-04): an open request is closed the same
+// way as a withdrawal, so its saved state and its task rows agree and the
+// people waiting on it are told. A finished request keeps its outcome.
+export function cancelForDeletion(previous: InstanceState, input: { actorId: number; reason: string }): EngineResult {
+  const reason = input.reason.trim();
+  if (!reason) throw new EngineError("COMMENT_REQUIRED", "Please give a reason.");
+  const open = previous.status === "IN_PROGRESS" || previous.status === "ON_HOLD" || previous.status === "CHANGES_REQUIRED";
+  if (!open) {
+    return { state: previous, events: [{ type: "DELETED", actorId: input.actorId, reason, closedTaskIds: [], approverIds: [], wasOpen: false }] };
+  }
+  const withdrawn = withdraw(previous, { actorId: input.actorId, reason });
+  const event = withdrawn.events[0] as Extract<EngineEvent, { type: "WITHDRAWN" }>;
+  return { state: withdrawn.state, events: [{ type: "DELETED", actorId: input.actorId, reason, closedTaskIds: event.closedTaskIds, approverIds: event.approverIds, wasOpen: true }] };
 }
 
 // Reopen (F-29, D-066): an approved request starts again from the first
@@ -603,4 +661,72 @@ export function reassignTask(
 export function pendingTasksFor(state: InstanceState, userId: number, directory: Directory): ApprovalTask[] {
   if (state.status !== "IN_PROGRESS" && state.status !== "ON_HOLD") return [];
   return state.tasks.filter((task) => task.status === "PENDING" && (task.approverId === userId || directory.canActFor(userId, task.approverId)));
+}
+
+// Blocked step recovery (D-098, audit X-03). Only a step the engine marked
+// BLOCKED can be moved on, and only by IT (the caller checks the role):
+//   ASSIGN    approval/work step: these people decide it now
+//   SKIP      approval/work step: treated as not needed
+//   RETRY     resolve the approvers / the choice again (after fixing the masters)
+//   TAKE_PATH choice step: follow this path
+export function resolveBlocked(
+  definition: WorkflowDefinition,
+  previous: InstanceState,
+  input: { nodeId: string; actorId: number; reason: string } & BlockAction,
+  context: EngineContext,
+  directory: Directory,
+): EngineResult {
+  if (previous.status !== "IN_PROGRESS") throw new EngineError("NOT_IN_PROGRESS", "Only a request waiting for approval can be moved on.");
+  const reason = input.reason.trim();
+  if (!reason) throw new EngineError("COMMENT_REQUIRED", "Please give a reason.");
+  if (previous.nodes[input.nodeId]?.status !== "BLOCKED") throw new EngineError("NOT_BLOCKED", "This step isn't blocked any more. Reload the page.");
+  const graph = new Graph(definition);
+  const node = graph.node(input.nodeId);
+  const state = clone(previous);
+  const run = new Run(graph, state, context, directory);
+  run.events.push({
+    type: "BLOCK_RESOLVED",
+    nodeId: node.id,
+    actorId: input.actorId,
+    action: input.action,
+    reason,
+    ...(input.action === "ASSIGN" ? { userIds: input.userIds } : {}),
+  });
+  if (node.kind === "APPROVAL") {
+    if (input.action === "ASSIGN") {
+      const work = node.mode === "WORK";
+      const people = [...new Set(input.userIds)];
+      if (people.length === 0) throw new EngineError("INVALID_ACTION", "Choose at least one person.");
+      if (people.some((id) => !directory.isActive(id))) throw new EngineError("INVALID_ACTION", "Everyone chosen must be an active person.");
+      if (!work && people.includes(context.requesterId)) throw new EngineError("INVALID_ACTION", "The requester can't approve their own request.");
+      const need = required(node.completion, people.length);
+      if (people.length < need) throw new EngineError("INVALID_ACTION", `This step needs at least ${need} people.`);
+      run.openTasks(node, people);
+    } else if (input.action === "SKIP") {
+      run.skip(node.id, "SKIPPED_BY_IT");
+    } else if (input.action === "RETRY") {
+      run.activate(node);
+    } else {
+      throw new EngineError("INVALID_ACTION", "A path can only be chosen on a choice step.");
+    }
+  } else if (node.kind === "CONDITION") {
+    const nodeState = state.nodes[node.id]!;
+    if (input.action === "TAKE_PATH") {
+      const edge = (graph.outgoing.get(node.id) ?? []).find((candidate) => candidate.id === input.edgeId);
+      if (!edge) throw new EngineError("INVALID_ACTION", "That path doesn't leave this step.");
+      nodeState.status = "APPROVED";
+      nodeState.reason = undefined;
+      nodeState.completedAt = context.now;
+      run.events.push({ type: "BRANCH_TAKEN", nodeId: node.id, edgeId: edge.id, isDefault: Boolean(edge.isDefault) });
+      run.arrive(edge);
+    } else if (input.action === "RETRY") {
+      nodeState.reason = undefined;
+      run.activate(node);
+    } else {
+      throw new EngineError("INVALID_ACTION", "On a choice step, pick a path or try again.");
+    }
+  } else {
+    throw new EngineError("INVALID_ACTION", "This step can't be moved on by hand.");
+  }
+  return { state, events: run.events };
 }

@@ -2,7 +2,7 @@ import type { TimelineEvent } from "@/lib/db/repositories/approvals.repository";
 
 // One plain sentence per timeline event (F-14). Pure and unit-tested.
 // Internal bookkeeping events return null and are not shown.
-export function describeEvent(event: TimelineEvent, labelOf: (nodeId: string) => string, nameOf: (userId: number) => string): string | null {
+export function describeEvent(event: TimelineEvent, labelOf: (nodeId: string) => string, nameOf: (userId: number) => string, isWork?: (nodeId: string) => boolean): string | null {
   switch (event.type) {
     case "SUBMITTED":
       return `Submitted as ${event.requestNo}`;
@@ -12,14 +12,14 @@ export function describeEvent(event: TimelineEvent, labelOf: (nodeId: string) =>
       return `Sent to ${nameOf(event.approverId)} for "${labelOf(event.nodeId)}"`;
     case "TASK_DECIDED": {
       if (event.decision === "REQUEST_CHANGES") return null; // CHANGES_REQUESTED carries the reason
-      const verb = event.decision === "APPROVE" ? "Approved" : "Rejected";
+      const verb = event.decision === "APPROVE" ? (isWork?.(event.nodeId) ? "Marked done" : "Approved") : "Rejected";
       const who = event.onBehalfOf ? `${nameOf(event.actorId)} for ${nameOf(event.onBehalfOf)}` : nameOf(event.actorId);
       return `${verb} by ${who} at "${labelOf(event.nodeId)}"`;
     }
     case "NODE_APPROVED":
       return `"${labelOf(event.nodeId)}" complete`;
     case "NODE_SKIPPED":
-      return `"${labelOf(event.nodeId)}" skipped (${event.reason === "SKIP_CONDITION" ? "its condition didn't apply" : "nobody to approve"})`;
+      return `"${labelOf(event.nodeId)}" skipped (${event.reason === "SKIP_CONDITION" ? "its condition didn't apply" : event.reason === "SKIPPED_BY_IT" ? "by IT" : "nobody to approve"})`;
     case "NODE_BLOCKED":
       return `"${labelOf(event.nodeId)}" is blocked: ${event.reason === "NO_MATCHING_BRANCH" ? "no path matches" : "no eligible approver"}. IT has been told.`;
     case "TASKS_CLOSED":
@@ -42,6 +42,15 @@ export function describeEvent(event: TimelineEvent, labelOf: (nodeId: string) =>
       return `Withdrawn by ${nameOf(event.actorId)}${event.reason ? `: ${event.reason}` : ""}`;
     case "REOPENED":
       return `Reopened by ${nameOf(event.actorId)} (round ${event.round}): ${event.reason}`;
+    case "NOTIFIED":
+      return event.userIds.length ? `"${labelOf(event.nodeId)}": ${event.userIds.map(nameOf).join(", ")} told for information` : `"${labelOf(event.nodeId)}": nobody to tell`;
+    case "BLOCK_RESOLVED": {
+      const how =
+        event.action === "ASSIGN" ? `given to ${(event.userIds ?? []).map(nameOf).join(", ")}` : event.action === "SKIP" ? "skipped" : event.action === "RETRY" ? "tried again" : "sent down a chosen path";
+      return `"${labelOf(event.nodeId)}" ${how} by ${nameOf(event.actorId)}: ${event.reason}`;
+    }
+    case "DELETED":
+      return `Removed by ${nameOf(event.actorId)}: ${event.reason}`;
     case "BRANCH_TAKEN":
     case "NODE_ACTIVATED":
       return null;

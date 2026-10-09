@@ -1,6 +1,9 @@
 import { evaluateCondition } from "@/server/engine/conditions";
-import { doaBandIndex, findDoa, type BuilderInnerStage, type BuilderSpec, type BuilderStage } from "@/server/workflows/builder";
+import { doaBandIndex, findDoa, isConditionGroup, toCondition, type BuilderCondition, type BuilderInnerStage, type BuilderSpec, type BuilderStage } from "@/server/workflows/builder";
 import type { Comparison } from "@/server/engine/types";
+
+// The comparisons inside a builder rule (one, or an all/any group).
+const comparisonsOf = (condition: BuilderCondition): Comparison[] => (isConditionGroup(condition) ? (condition.conditions as Comparison[]) : [condition as Comparison]);
 
 // DoA view (F-54, D-065, D-075): an approval type's DoA matrix, or limits
 // written as "skip this step when amount …", turned into a table of amount
@@ -26,20 +29,24 @@ export function deriveDoaTable(spec: BuilderSpec, fieldOverride?: string): DoaTa
   const field = fieldOverride ?? findDoa(spec)?.field ?? "amount";
   const thresholds = new Set<number>();
   const otherConditions: string[] = [];
-  const note = (condition: Comparison | null | undefined, label: string) => {
-    if (!condition) return;
-    if (condition.field === field && AMOUNT_OPERATORS.has(condition.operator) && typeof condition.value === "number") thresholds.add(condition.value);
-    else otherConditions.push(`${label} (depends on ${condition.field})`);
+  const note = (rule: BuilderCondition | null | undefined, label: string) => {
+    if (!rule) return;
+    for (const condition of comparisonsOf(rule)) {
+      if (condition.field === field && AMOUNT_OPERATORS.has(condition.operator) && typeof condition.value === "number") thresholds.add(condition.value);
+      else otherConditions.push(`${label} (depends on ${condition.field})`);
+    }
   };
+  // A rule that reads only the amount can be worked out per amount band.
+  const onlyAmount = (rule: BuilderCondition) => comparisonsOf(rule).every((condition) => condition.field === field);
   const scan = (stages: readonly AnyStage[]) => {
     for (const stage of stages) {
-      if (stage.kind === "STEP") note(stage.step.skipWhen as Comparison | null | undefined, stage.step.label);
-      else if (stage.kind === "PARALLEL") stage.steps.forEach((step) => note(step.skipWhen as Comparison | null | undefined, step.label));
+      if (stage.kind === "STEP") note(stage.step.skipWhen, stage.step.label);
+      else if (stage.kind === "PARALLEL") stage.steps.forEach((step) => note(step.skipWhen, step.label));
       else if (stage.kind === "DOA") {
         if (stage.field === field) stage.limits.forEach((limit) => thresholds.add(limit));
         else otherConditions.push(`${stage.label} (depends on ${stage.field})`);
       } else {
-        note(stage.condition as Comparison, stage.label);
+        note(stage.condition, stage.label);
         scan(stage.then);
         scan(stage.otherwise);
       }
@@ -54,9 +61,8 @@ export function deriveDoaTable(spec: BuilderSpec, fieldOverride?: string): DoaTa
   const levelsIn = (stages: readonly AnyStage[], amount: number, maybe: boolean): string[] =>
     stages.flatMap((stage) => {
       const mark = (label: string) => (maybe ? `${label} (maybe)` : label);
-      const keep = (skip: unknown) => {
-        const condition = skip as Comparison | null | undefined;
-        return !condition || condition.field !== field || !evaluateCondition(condition, { [field]: amount });
+      const keep = (skip: BuilderCondition | null | undefined) => {
+        return !skip || !onlyAmount(skip) || !evaluateCondition(toCondition(skip), { [field]: amount });
       };
       if (stage.kind === "STEP") return keep(stage.step.skipWhen) ? [mark(stage.step.label)] : [];
       if (stage.kind === "PARALLEL") {
@@ -70,8 +76,8 @@ export function deriveDoaTable(spec: BuilderSpec, fieldOverride?: string): DoaTa
         const band = doaBandIndex(stage.limits, amount);
         return stage.levels.filter((level) => level.bands[band]).map((level) => mark(level.step.label));
       }
-      if (stage.condition.field === field) {
-        return evaluateCondition(stage.condition as Comparison, { [field]: amount }) ? levelsIn(stage.then, amount, maybe) : levelsIn(stage.otherwise, amount, maybe);
+      if (onlyAmount(stage.condition)) {
+        return evaluateCondition(toCondition(stage.condition), { [field]: amount }) ? levelsIn(stage.then, amount, maybe) : levelsIn(stage.otherwise, amount, maybe);
       }
       return [...levelsIn(stage.then, amount, true), ...levelsIn(stage.otherwise, amount, true)];
     });

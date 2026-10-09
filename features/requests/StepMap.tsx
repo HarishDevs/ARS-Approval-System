@@ -18,14 +18,23 @@ function StepCard({ step }: { step: MapStep }) {
   return (
     <div className={`rounded-md border p-3 ${step.status === "ACTIVE" ? "border-primary-600 bg-primary-50/40" : "border-line bg-surface"}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="font-medium">{step.label}</p>
+        <p className="font-medium">
+          {step.type === "WORK" && <span className="mr-1.5 rounded-full bg-primary-50 px-2 py-px text-caption font-semibold text-primary-700">Work</span>}
+          {step.type === "NOTIFY" && <span className="mr-1.5 rounded-full bg-surface-muted px-2 py-px text-caption font-semibold text-ink-muted">FYI</span>}
+          {step.label}
+        </p>
         <StepStatusPill status={step.status} />
       </div>
       <p className="mt-0.5 text-caption text-ink-muted">{step.reason ?? step.rule}</p>
       {step.people.length > 0 && (
         <ul className="mt-2 space-y-1.5">
           {step.people.map((person) => {
-            const status = taskStatusText(person.status);
+            const status =
+              person.status === "TOLD"
+                ? { label: "told", style: "text-ink-muted" }
+                : step.type === "WORK" && person.status === "APPROVED"
+                  ? { label: "done", style: "text-success-600" }
+                  : taskStatusText(person.status);
             return (
               <li key={`${person.userId}-${person.status}`} className="text-label">
                 <span className="font-medium">{person.name}</span> <span className={status.style}>· {status.label}</span>

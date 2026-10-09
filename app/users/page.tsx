@@ -3,21 +3,21 @@ import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { displayName } from "@/features/shell/AppShell";
 import { MyRequestsTable, QueueTable } from "@/features/requests/lists";
-import { listMyRequests, listPendingTasksFor } from "@/lib/db/repositories/approvals.repository";
+import { countPendingTasksFor, listMyRequests, listPendingTasksFor } from "@/lib/db/repositories/approvals.repository";
 
 // Overview of the My approvals space (S9-11): a short greeting, compact KPI
 // tiles, then what's waiting and what you raised. Navigation stays in the
 // sidebar.
 export default async function UsersHome() {
   const { user } = await requireArea("users");
-  const [queue, mine] = await Promise.all([listPendingTasksFor(user.id), listMyRequests(user.id)]);
+  const [queue, waiting, mine] = await Promise.all([listPendingTasksFor(user.id, { limit: 5, offset: 0 }), countPendingTasksFor(user.id), listMyRequests(user.id)]);
   const name = displayName(user.name);
   const words = name.split(/\s+/);
   const greetingName = words.length <= 2 ? name : words[0];
   const open = mine.filter((item) => item.status === "IN_PROGRESS" || item.status === "ON_HOLD").length;
   const changes = mine.filter((item) => item.status === "CHANGES_REQUIRED").length;
   const tiles = [
-    { label: "Waiting for me", value: queue.length, href: "/users/queue", alert: queue.length > 0 },
+    { label: "Waiting for me", value: waiting, href: "/users/queue", alert: waiting > 0 },
     { label: "My open requests", value: open, href: "/users/requests?status=IN_PROGRESS", alert: false },
     { label: "Changes asked of me", value: changes, href: "/users/requests?status=CHANGES_REQUIRED", alert: changes > 0 },
   ];
@@ -40,13 +40,13 @@ export default async function UsersHome() {
       <section className="mt-8">
         <div className="mb-3 flex items-baseline justify-between">
           <h2 className="text-card-title font-semibold">Waiting for me</h2>
-          {queue.length > 5 && (
+          {waiting > 5 && (
             <Link href="/users/queue" className="link text-label">
-              All {queue.length}
+              All {waiting}
             </Link>
           )}
         </div>
-        <QueueTable items={queue.slice(0, 5)} />
+        <QueueTable items={queue} />
       </section>
       <section className="mt-8">
         <div className="mb-3 flex items-baseline justify-between">

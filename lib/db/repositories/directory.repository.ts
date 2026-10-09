@@ -7,7 +7,7 @@ import type { Directory } from "@/server/engine/types";
 // enough for ARS (hundreds of people) to read whole; approvers are then
 // resolved against the same snapshot for the whole engine call.
 export interface DirectorySnapshot {
-  users: { id: number; active: boolean; managerId: number | null; departmentId: number | null; isBreakGlass: boolean; approver?: boolean }[];
+  users: { id: number; active: boolean; managerId: number | null; departmentId: number | null; isBreakGlass: boolean; approver?: boolean; designationId?: number | null }[];
   departmentHods: Map<number, number | null>;
   roleMembers: Map<string, number[]>;
   groupMembers: Map<number, number[]>;
@@ -19,9 +19,11 @@ export interface DirectorySnapshot {
 export const INDIA_TODAY_SQL = "DATE(DATE_ADD(UTC_TIMESTAMP(), INTERVAL 330 MINUTE))";
 
 export async function loadDirectorySnapshot(db: Queryable = getDbPool()): Promise<DirectorySnapshot> {
-  const [users] = await db.query<(RowDataPacket & { id: number; active: number; reporting_manager_id: number | null; department_id: number | null; is_break_glass: number; approver: number })[]>(
+  const [users] = await db.query<(RowDataPacket & { id: number; active: number; reporting_manager_id: number | null; department_id: number | null; is_break_glass: number; approver: number; designation_id: number | null })[]>(
     // approver: the designation is ticked as Approver (D-085), for checking choices.
-    `SELECT u.id, u.active, u.reporting_manager_id, u.department_id, u.is_break_glass, COALESCE(d.is_approver, FALSE) AS approver
+    // designation_id only when the designation is active (D-097 source).
+    `SELECT u.id, u.active, u.reporting_manager_id, u.department_id, u.is_break_glass, COALESCE(d.is_approver, FALSE) AS approver,
+            IF(d.active, u.designation_id, NULL) AS designation_id
      FROM users u LEFT JOIN designations d ON d.id = u.designation_id`,
   );
   const [departments] = await db.query<(RowDataPacket & { id: number; hod_user_id: number | null; active: number })[]>("SELECT id, hod_user_id, active FROM departments");
@@ -51,6 +53,7 @@ export async function loadDirectorySnapshot(db: Queryable = getDbPool()): Promis
       departmentId: row.department_id,
       isBreakGlass: row.is_break_glass === 1,
       approver: Number(row.approver) === 1,
+      designationId: row.designation_id === null ? null : Number(row.designation_id),
     })),
     departmentHods: new Map(departments.filter((row) => row.active === 1).map((row) => [row.id, row.hod_user_id])),
     roleMembers,
@@ -80,5 +83,7 @@ export function toDirectory(snapshot: DirectorySnapshot): Directory {
     usersWithRole: (roleCode) => snapshot.roleMembers.get(roleCode) ?? [],
     groupMembers: (groupId) => snapshot.groupMembers.get(groupId) ?? [],
     canActFor: (actorId, approverId) => eligible(actorId) !== null && (snapshot.delegations.get(actorId)?.has(approverId) ?? false),
+    usersWithDesignation: (designationId) => snapshot.users.filter((user) => user.designationId === designationId).map((user) => user.id),
+    departmentOf: (userId) => byId.get(userId)?.departmentId ?? null,
   };
 }

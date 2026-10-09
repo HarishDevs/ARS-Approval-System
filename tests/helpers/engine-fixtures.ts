@@ -17,6 +17,7 @@ import type {
 //   7  ED, 8 MD, 9 CFO
 //   11 inactive user
 //   12 delegate who may act for 7 (ED)
+// Designation 20 "Manager": 2, 3, 4, 7. Departments: 1, 2, 3, 4 in 10; 7 in 20.
 export function makeDirectory(overrides: Partial<Directory> = {}): Directory {
   const managers: Record<number, number> = { 1: 2, 2: 3 };
   const inactive = new Set([11]);
@@ -29,6 +30,8 @@ export function makeDirectory(overrides: Partial<Directory> = {}): Directory {
     usersWithRole: (code) => (code === "FINANCE" ? [4, 5, 6] : code === "EMPTY" ? [] : []),
     groupMembers: (groupId) => (groupId === 1 ? [4, 5, 6, 7] : []),
     canActFor: (actor, approver) => (delegations[actor] ?? []).includes(approver),
+    usersWithDesignation: (designationId) => (designationId === 20 ? [2, 3, 4, 7] : []),
+    departmentOf: (id) => ([1, 2, 3, 4].includes(id) ? 10 : id === 7 ? 20 : null),
     ...overrides,
   };
 }

@@ -258,6 +258,26 @@ Found during S8-06:
 - [ ] S8-01b Go-live on GoDaddy with the owner, following docs/DEPLOYMENT.md (the owner is at the wizard's "Add secrets" step)
 - [x] S8-04 Update the three living files; commit and push (done 8 Oct 2026)
 
+## Session log — v1.4.0: every pending item (9 Oct 2026), planned before starting
+Owner: "fix every pending items in one go and then ill publish".
+- [ ] V140-01 Engine: work steps (approval step in WORK mode: "Mark as done", may be the requester, no reject), NOTIFY steps (FYI, moves on), DESIGNATION and REQUESTER approver sources
+- [ ] V140-02 Engine + UI: BLOCKED-step recovery by IT (assign people / skip / try again / pick a path), audited
+- [ ] V140-03 Builder: and/or conditions (several comparisons, all or any) for choices and skip rules; choices inside choices (up to 3 deep); step types and the new sources
+- [ ] V140-04 Notifications: work task assigned, FYI, resumed, resubmitted, blocked step resolved; templates in the catalogue; NODE_SKIPPED stays on the timeline only
+- [ ] V140-05 Decisions also written to the audit log; hold time extends due times; handover restarts the response clock and reminders
+- [ ] V140-06 Integrity: R-04 soft delete through the engine state, R-05 publish lock, R-06 custom approval in one transaction, R-08 SLA scan, R-09 IST year, R-10 migration failure reporting, delegation overlap lock, outbox skips deleted requests
+- [ ] V140-07 Security: S-06 locked-account message, S-07 single-use "not me" link, P-01 Cloudflare origin secret, P-03 Google provider check, P-04 IT Admin contact edits by Super Admin only, P-05 https-only provider URL, P-06 log redaction, P-07 Origin check on API posts; P-02/P-08/P-09 decided and documented
+- [ ] V140-08 Health endpoint `/api/health`; database + attachments backup script with rotation, restore script, restore drill run locally
+- [ ] V140-09 Multi-level escalation (manager, then manager's manager), configurable
+- [ ] V140-10 S8-02: audit log CSV export, login history (Super Admin and own), attachments on custom approvals; work hand-off after approval = work steps (V140-01)
+- [ ] V140-11 S8-03: CEOITBox delivery/read webhook (secret header) shown on Message deliveries
+- [ ] V140-12 Workflows: delete unused, archive, unsaved-changes warning; resubmit restart policy per approval type; custom approvals in dashboard filters
+- [ ] V140-13 Lists: Waiting-for-me paging; notifications history paging
+- [ ] V140-14 UI loose ends (D-02) and duplicates (D-03); admin home query into a repository; one time format
+- [ ] V140-15 Tooling: dev dependency advisories (D-01); CI runs the QA suite and `npm audit`; local load test script and run
+- [ ] V140-16 Docs: README, E2E report, DEPLOYMENT Part O/known limits, user guide (GL-06), living files
+- [ ] V140-17 Owner-only (not code): publish, cron secret, masters, Meta template approvals, key rotation, UAT/pilot sign-off
+
 ## Session log — v1.3.5: Profile page and application audit (9 Oct 2026)
 - [x] V135-01 Profile page: details tab + Notifications, Out of office, Sign-in & devices as tabs; sidebar and account menu updated (D-095, F-77) (done 9 Oct 2026)
 - [x] V135-02 e2e `profile.spec.ts`; `/users/profile` added to the Cloudflare address check; e2e 28/28 (done 9 Oct 2026)

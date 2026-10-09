@@ -6,7 +6,7 @@ import type { MyRequestItem, QueueItem } from "@/lib/db/repositories/approvals.r
 import { SafeText } from "@/features/ui/SafeText";
 
 export function QueueTable({ items }: { items: QueueItem[] }) {
-  if (items.length === 0) return <EmptyState title="Nothing waiting for you" body="Requests that need your approval appear here." />;
+  if (items.length === 0) return <EmptyState title="Nothing waiting for you" body="Requests that need your approval, and work given to you, appear here." />;
   return (
     <div className="card overflow-x-auto">
       <table className="data-table">
@@ -30,6 +30,7 @@ export function QueueTable({ items }: { items: QueueItem[] }) {
               </td>
               <td>{item.requesterName}</td>
               <td>
+                {item.work && <span className="mr-1.5 rounded-full bg-primary-50 px-2 py-px text-caption font-semibold text-primary-700">To do</span>}
                 {item.nodeLabel}
                 {item.forName && <p className="text-caption text-ink-muted">for {item.forName} (you&apos;re covering)</p>}
               </td>

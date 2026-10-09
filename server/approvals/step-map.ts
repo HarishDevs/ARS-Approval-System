@@ -1,6 +1,6 @@
-import { doaBandIndex, type BuilderInnerStage, type BuilderSpec, type BuilderStage, type BuilderStep } from "@/server/workflows/builder";
+import { doaBandIndex, isConditionGroup, toCondition, type BuilderCondition, type BuilderInnerStage, type BuilderSpec, type BuilderStage, type BuilderStep } from "@/server/workflows/builder";
 import { evaluateCondition } from "@/server/engine/conditions";
-import type { ApprovalNode, CompletionRule, FormData, InstanceState, NodeStatus, TaskStatus, WorkflowDefinition } from "@/server/engine/types";
+import type { ApprovalNode, CompletionRule, FormData, InstanceState, NodeStatus, NotifyNode, TaskStatus, WorkflowDefinition } from "@/server/engine/types";
 
 // The request page's level map (S3-05b, F-14): every level and branch with
 // its status and people. Pure and unit-tested. Uses the builder's stages
@@ -8,7 +8,7 @@ import type { ApprovalNode, CompletionRule, FormData, InstanceState, NodeStatus,
 export interface MapPerson {
   userId: number;
   name: string;
-  status: TaskStatus;
+  status: TaskStatus | "TOLD";
   decidedByName?: string; // only when a delegate acted
   comment?: string;
   decidedAt?: string;
@@ -22,6 +22,7 @@ export interface MapStep {
   reason?: string; // skipped / blocked reason
   people: MapPerson[];
   notTaken?: boolean; // on the path a choice didn't take (D-068)
+  type?: "WORK" | "NOTIFY"; // D-097; an approval step has none
 }
 
 export interface MapStage {
@@ -63,9 +64,16 @@ export function describeCondition(condition: { field: string; operator: string; 
   return `${fieldLabel(condition.field)} ${words}${value ? ` ${value}` : ""}`.trim();
 }
 
-export function describeRule(rule: CompletionRule, count: number): string {
-  if (rule.type === "ALL") return count > 1 ? `All ${count} must approve` : "Must approve";
-  if (rule.type === "ANY_ONE") return count > 1 ? `Any one of ${count}` : "Must approve";
+// A builder rule in words: one comparison, or "A and B" / "A or B".
+export function describeBuilderCondition(condition: BuilderCondition, fieldLabel: (key: string) => string): string {
+  if (!isConditionGroup(condition)) return describeCondition(condition, fieldLabel);
+  return condition.conditions.map((item) => describeCondition(item, fieldLabel)).join(condition.match === "ALL" ? " and " : " or ");
+}
+
+export function describeRule(rule: CompletionRule, count: number, work = false): string {
+  const verb = work ? "mark it done" : "approve";
+  if (rule.type === "ALL") return count > 1 ? `All ${count} must ${verb}` : `Must ${verb}`;
+  if (rule.type === "ANY_ONE") return count > 1 ? `Any one of ${count}` : `Must ${verb}`;
   return `Any ${rule.n} of ${count}`;
 }
 
@@ -81,7 +89,22 @@ const REASONS: Record<string, string> = {
   NO_ELIGIBLE_APPROVER: "Blocked: no eligible approver (IT has been told)",
   NOT_ENOUGH_APPROVERS: "Blocked: not enough approvers (IT has been told)",
   NO_MATCHING_BRANCH: "Blocked: no path matches (IT has been told)",
+  SKIPPED_BY_IT: "Skipped by IT",
 };
+
+// FYI step (D-097): who was told, once it was reached.
+function mapNotify(node: NotifyNode, state: InstanceState, names: ReadonlyMap<number, string>): MapStep {
+  const nodeState = state.nodes[node.id];
+  const told = nodeState?.notified ?? [];
+  return {
+    nodeId: node.id,
+    label: node.label,
+    status: nodeState?.status ?? "WAITING",
+    rule: node.note ? `For information: ${node.note}` : "For information, nothing to do",
+    people: told.map((userId) => ({ userId, name: names.get(userId) ?? `User #${userId}`, status: "TOLD" as const })),
+    type: "NOTIFY",
+  };
+}
 
 function mapStep(node: ApprovalNode, state: InstanceState, names: ReadonlyMap<number, string>): MapStep {
   const nodeState = state.nodes[node.id];
@@ -103,27 +126,28 @@ function mapStep(node: ApprovalNode, state: InstanceState, names: ReadonlyMap<nu
     nodeId: node.id,
     label: node.label,
     status: nodeState?.status ?? "WAITING",
-    rule: describeRule(node.completion, Math.max(people.length, 1)),
+    rule: describeRule(node.completion, Math.max(people.length, 1), node.mode === "WORK"),
     ...(reason ? { reason } : {}),
     people,
+    ...(node.mode === "WORK" ? { type: "WORK" as const } : {}),
   };
 }
 
 // Approval nodes in the order a request meets them (breadth-first from Start).
-function graphOrder(definition: WorkflowDefinition): ApprovalNode[] {
+function graphOrder(definition: WorkflowDefinition): (ApprovalNode | NotifyNode)[] {
   const next = new Map<string, string[]>();
   for (const edge of definition.edges) next.set(edge.from, [...(next.get(edge.from) ?? []), edge.to]);
   const byId = new Map(definition.nodes.map((node) => [node.id, node]));
   const start = definition.nodes.find((node) => node.kind === "START");
   const seen = new Set<string>();
-  const order: ApprovalNode[] = [];
+  const order: (ApprovalNode | NotifyNode)[] = [];
   const queue = start ? [start.id] : [];
   while (queue.length) {
     const id = queue.shift()!;
     if (seen.has(id)) continue;
     seen.add(id);
     const node = byId.get(id);
-    if (node?.kind === "APPROVAL") order.push(node);
+    if (node?.kind === "APPROVAL" || node?.kind === "NOTIFY") order.push(node);
     queue.push(...(next.get(id) ?? []));
   }
   return order;
@@ -137,16 +161,17 @@ export function buildStepMap(
   context: { formData?: FormData; fieldLabel?: (key: string) => string } = {},
 ): MapStage[] {
   const approvalNodes = new Map(
-    definition.nodes.filter((node): node is ApprovalNode => node.kind === "APPROVAL").map((node) => [node.id, node]),
+    definition.nodes.filter((node): node is ApprovalNode | NotifyNode => node.kind === "APPROVAL" || node.kind === "NOTIFY").map((node) => [node.id, node]),
   );
   const nodeFor = (step: BuilderStep) => approvalNodes.get(`step_${step.id}`);
+  const mapAny = (node: ApprovalNode | NotifyNode) => (node.kind === "NOTIFY" ? mapNotify(node, state, names) : mapStep(node, state, names));
   const fieldLabel = context.fieldLabel ?? ((key: string) => key);
 
   // A level not reached yet whose skip condition already holds on the form
   // is shown as skipped now, like DoA levels (S12): the engine will skip it.
   const withPreview = (step: MapStep, builderStep: BuilderStep): MapStep =>
-    step.status === "WAITING" && builderStep.skipWhen && context.formData && evaluateCondition(builderStep.skipWhen, context.formData)
-      ? { ...step, status: "SKIPPED", reason: `Skipped: ${describeCondition(builderStep.skipWhen, fieldLabel)}` }
+    step.status === "WAITING" && builderStep.skipWhen && context.formData && evaluateCondition(toCondition(builderStep.skipWhen), context.formData)
+      ? { ...step, status: "SKIPPED", reason: `Skipped: ${describeBuilderCondition(builderStep.skipWhen, fieldLabel)}` }
       : step;
 
   const mapStages = (stages: readonly (BuilderStage | BuilderInnerStage)[], notTaken: boolean): MapStage[] => {
@@ -154,11 +179,11 @@ export function buildStepMap(
     for (const stage of stages) {
       if (stage.kind === "STEP") {
         const node = nodeFor(stage.step);
-        if (node) out.push({ kind: "STEP", label: node.label, steps: [{ ...withPreview(mapStep(node, state, names), stage.step), ...(notTaken ? { notTaken } : {}) }] });
+        if (node) out.push({ kind: "STEP", label: node.label, steps: [{ ...withPreview(mapAny(node), stage.step), ...(notTaken ? { notTaken } : {}) }] });
       } else if (stage.kind === "PARALLEL") {
         const steps = stage.steps.flatMap((builderStep) => {
           const node = nodeFor(builderStep);
-          return node ? [{ ...withPreview(mapStep(node, state, names), builderStep), ...(notTaken ? { notTaken } : {}) }] : [];
+          return node ? [{ ...withPreview(mapAny(node), builderStep), ...(notTaken ? { notTaken } : {}) }] : [];
         });
         const joinRule: CompletionRule = stage.join === "ANY_N" ? { type: "ANY_N", n: stage.n ?? 1 } : { type: stage.join };
         out.push({ kind: "PARALLEL", label: stage.label, joinRule: describeJoin(joinRule), steps });
@@ -172,7 +197,7 @@ export function buildStepMap(
         for (const level of stage.levels) {
           const node = nodeFor(level.step);
           if (!node) continue;
-          const step = mapStep(node, state, names);
+          const step = mapAny(node);
           const notNeeded =
             (step.status === "SKIPPED" && state.nodes[node.id]?.reason === "SKIP_CONDITION") || (step.status === "WAITING" && band !== null && !level.bands[band]);
           const doaStep = notNeeded ? { ...step, status: "SKIPPED" as const, reason: "Not needed at this amount (DoA)" } : step;
@@ -180,8 +205,8 @@ export function buildStepMap(
         }
       } else {
         const reached = state.nodes[`choice_${stage.id}`]?.status === "APPROVED";
-        const thenTaken = reached && context.formData ? evaluateCondition(stage.condition, context.formData) : null;
-        const label = describeCondition(stage.condition, fieldLabel);
+        const thenTaken = reached && context.formData ? evaluateCondition(toCondition(stage.condition), context.formData) : null;
+        const label = describeBuilderCondition(stage.condition, fieldLabel);
         out.push({
           kind: "CHOICE",
           label: `${stage.label}: if ${label}`,
@@ -197,7 +222,7 @@ export function buildStepMap(
   };
 
   if (spec) return mapStages(spec.stages, false);
-  return graphOrder(definition).map((node) => ({ kind: "STEP", label: node.label, steps: [mapStep(node, state, names)] }));
+  return graphOrder(definition).map((node) => ({ kind: "STEP", label: node.label, steps: [mapAny(node)] }));
 }
 
 // Everyone the page needs a name for.

@@ -26,6 +26,8 @@ export interface WorkflowRecord {
   requestPrefix: string;
   ownerUserId: number | null;
   active: boolean;
+  // After "changes asked", restart from the step that asked, or from the first level (D-101).
+  resubmitPolicy?: "REQUESTING_STEP" | "BEGINNING";
 }
 
 export interface WorkflowVersionRecord {
@@ -53,13 +55,23 @@ export async function insertWorkflow(
 }
 
 export async function findWorkflow(id: number, db: Queryable = getDbPool()): Promise<WorkflowRecord | null> {
-  const [rows] = await db.query<(RowDataPacket & { id: number; code: string; name: string; description: string | null; kind: WorkflowRecord["kind"]; request_prefix: string; owner_user_id: number | null; active: number })[]>(
-    "SELECT id, code, name, description, kind, request_prefix, owner_user_id, active FROM workflow_definitions WHERE id = ? LIMIT 1",
+  const [rows] = await db.query<(RowDataPacket & { id: number; code: string; name: string; description: string | null; kind: WorkflowRecord["kind"]; request_prefix: string; owner_user_id: number | null; active: number; resubmit_policy: WorkflowRecord["resubmitPolicy"] })[]>(
+    "SELECT id, code, name, description, kind, request_prefix, owner_user_id, active, resubmit_policy FROM workflow_definitions WHERE id = ? LIMIT 1",
     [id],
   );
   const row = rows[0];
   return row
-    ? { id: row.id, code: row.code, name: row.name, description: row.description, kind: row.kind, requestPrefix: row.request_prefix, ownerUserId: row.owner_user_id, active: row.active === 1 }
+    ? {
+        id: row.id,
+        code: row.code,
+        name: row.name,
+        description: row.description,
+        kind: row.kind,
+        requestPrefix: row.request_prefix,
+        ownerUserId: row.owner_user_id,
+        active: row.active === 1,
+        resubmitPolicy: row.resubmit_policy ?? "REQUESTING_STEP",
+      }
     : null;
 }
 
@@ -171,24 +183,56 @@ export async function listWorkflows(filter: { kind?: WorkflowRecord["kind"]; own
   }));
 }
 
-export async function updateWorkflowDetails(id: number, input: { name: string; description: string | null; active: boolean }, db: Queryable = getDbPool()): Promise<void> {
-  await db.query<ResultSetHeader>("UPDATE workflow_definitions SET name = ?, description = ?, active = ? WHERE id = ?", [input.name, input.description, input.active, id]);
+export async function updateWorkflowDetails(
+  id: number,
+  input: { name: string; description: string | null; active: boolean; resubmitPolicy?: WorkflowRecord["resubmitPolicy"] },
+  db: Queryable = getDbPool(),
+): Promise<void> {
+  await db.query<ResultSetHeader>("UPDATE workflow_definitions SET name = ?, description = ?, active = ?, resubmit_policy = COALESCE(?, resubmit_policy) WHERE id = ?", [
+    input.name,
+    input.description,
+    input.active,
+    input.resubmitPolicy ?? null,
+    id,
+  ]);
 }
 
-// Archive the old published version, then publish this one (same transaction).
-export async function publishWorkflowVersion(versionId: number, workflowId: number, publishedBy: number, db: Queryable = getDbPool()): Promise<void> {
+// Archive the old published version, then publish this one (same
+// transaction). The approval type's row is locked first, so two people
+// publishing at once queue up; returns false if this version is no longer a
+// draft (audit R-05), and then nothing changes.
+export async function publishWorkflowVersion(versionId: number, workflowId: number, publishedBy: number, db: Queryable = getDbPool()): Promise<boolean> {
+  await db.query("SELECT id FROM workflow_definitions WHERE id = ? FOR UPDATE", [workflowId]);
+  const [draft] = await db.query<(RowDataPacket & { id: number })[]>("SELECT id FROM workflow_versions WHERE id = ? AND workflow_id = ? AND status = 'DRAFT' FOR UPDATE", [versionId, workflowId]);
+  if (draft.length === 0) return false;
   await db.query<ResultSetHeader>("UPDATE workflow_versions SET status = 'ARCHIVED' WHERE workflow_id = ? AND status = 'PUBLISHED'", [workflowId]);
-  await db.query<ResultSetHeader>(
+  const [result] = await db.query<ResultSetHeader>(
     "UPDATE workflow_versions SET status = 'PUBLISHED', published_by = ?, published_at = CURRENT_TIMESTAMP WHERE id = ? AND status = 'DRAFT'",
     [publishedBy, versionId],
   );
+  return result.affectedRows === 1;
+}
+
+// An approval type nobody has used can be removed completely (with its
+// versions); one with requests can only be switched off (archived).
+export async function deleteUnusedWorkflow(id: number, db: Queryable): Promise<boolean> {
+  await db.query("SELECT id FROM workflow_definitions WHERE id = ? FOR UPDATE", [id]);
+  const [used] = await db.query<(RowDataPacket & { total: number })[]>(
+    "SELECT COUNT(*) AS total FROM approval_requests r JOIN workflow_versions v ON v.id = r.workflow_version_id WHERE v.workflow_id = ?",
+    [id],
+  );
+  if (Number(used[0]?.total ?? 0) > 0) return false;
+  await db.query<ResultSetHeader>("DELETE FROM workflow_versions WHERE workflow_id = ?", [id]);
+  const [result] = await db.query<ResultSetHeader>("DELETE FROM workflow_definitions WHERE id = ?", [id]);
+  return result.affectedRows === 1;
 }
 
 // ---- request numbers -------------------------------------------------------------
 // PREFIX-YYYY-000001. The row lock makes concurrent submissions queue, so
 // numbers are unique and gap-free per prefix and year.
 export async function nextRequestNumber(prefix: string, db: Queryable = getDbPool()): Promise<string> {
-  const [yearRows] = await db.query<(RowDataPacket & { year: number })[]>("SELECT YEAR(CURRENT_TIMESTAMP) AS year");
+  // The year in India, whatever the database server's time zone (audit R-09).
+  const [yearRows] = await db.query<(RowDataPacket & { year: number })[]>("SELECT YEAR(DATE_ADD(UTC_TIMESTAMP(), INTERVAL 330 MINUTE)) AS year");
   const year = Number(yearRows[0]!.year);
   await db.query<ResultSetHeader>("INSERT INTO request_sequences (prefix, year, current_value) VALUES (?, ?, 0) ON DUPLICATE KEY UPDATE prefix = prefix", [prefix, year]);
   const [rows] = await db.query<(RowDataPacket & { current_value: number })[]>("SELECT current_value FROM request_sequences WHERE prefix = ? AND year = ? FOR UPDATE", [prefix, year]);
@@ -316,11 +360,13 @@ export async function syncTasks(requestId: number, state: InstanceState, nodes: 
   if (state.tasks.length === 0) return;
   const labels = new Map(nodes.map((node) => [node.id, node.label]));
   const sla = new Map(nodes.map((node) => [node.id, node.kind === "APPROVAL" ? (node.slaHours ?? null) : null]));
+  const work = new Set(nodes.filter((node) => node.kind === "APPROVAL" && node.mode === "WORK").map((node) => node.id));
   const rows = state.tasks.map((task) => [
     requestId,
     task.id,
     task.nodeId,
     (labels.get(task.nodeId) ?? task.nodeId).slice(0, 200),
+    work.has(task.nodeId) ? "WORK" : "APPROVAL",
     task.round,
     task.approverId,
     task.status,
@@ -333,11 +379,39 @@ export async function syncTasks(requestId: number, state: InstanceState, nodes: 
   ]);
   // approver_id is updated too: a handover (F-16) moves a pending task.
   await db.query<ResultSetHeader>(
-    `INSERT INTO approval_tasks (request_id, task_key, node_id, node_label, round, approver_id, status, decided_by, on_behalf_of, comment, created_at, due_at, escalate_at, decided_at)
+    `INSERT INTO approval_tasks (request_id, task_key, node_id, node_label, task_type, round, approver_id, status, decided_by, on_behalf_of, comment, created_at, due_at, escalate_at, decided_at)
      VALUES ?
      ON DUPLICATE KEY UPDATE approver_id = VALUES(approver_id), status = VALUES(status), decided_by = VALUES(decided_by), on_behalf_of = VALUES(on_behalf_of),
        comment = VALUES(comment), decided_at = VALUES(decided_at)`,
     [rows],
+  );
+}
+
+// Handover (audit R-07): the new person gets the full response time from
+// now, and the reminders already sent to the previous person don't count.
+export async function restartTaskClock(requestId: number, taskKeys: readonly string[], nodes: readonly WorkflowNode[], db: Queryable, calendar?: WorkingCalendar): Promise<void> {
+  if (taskKeys.length === 0) return;
+  const sla = new Map(nodes.map((node) => [node.id, node.kind === "APPROVAL" ? (node.slaHours ?? null) : null]));
+  const [rows] = await db.query<(RowDataPacket & { id: number; node_id: string })[]>(
+    "SELECT id, node_id FROM approval_tasks WHERE request_id = ? AND task_key IN (?) AND status = 'PENDING'",
+    [requestId, taskKeys],
+  );
+  const now = new Date();
+  for (const row of rows) {
+    const [due, escalate] = dueTimes(now, sla.get(row.node_id) ?? null, calendar);
+    await db.query<ResultSetHeader>("UPDATE approval_tasks SET due_at = ?, escalate_at = ? WHERE id = ?", [due, escalate, row.id]);
+    await db.query<ResultSetHeader>("DELETE FROM task_reminders WHERE task_id = ?", [row.id]);
+  }
+}
+
+// Time on hold doesn't count against the response time (audit A-03 gap):
+// on resume, open due times move on by how long the request was held.
+export async function extendDueTimes(requestId: number, seconds: number, db: Queryable): Promise<void> {
+  if (!(seconds > 0)) return;
+  await db.query<ResultSetHeader>(
+    `UPDATE approval_tasks SET due_at = DATE_ADD(due_at, INTERVAL ? SECOND), escalate_at = DATE_ADD(escalate_at, INTERVAL ? SECOND)
+     WHERE request_id = ? AND status = 'PENDING' AND due_at IS NOT NULL`,
+    [Math.round(seconds), Math.round(seconds), requestId],
   );
 }
 
@@ -368,26 +442,38 @@ export interface QueueItem {
   dueAt: Date | null;
   overdue: boolean;
   forName: string | null; // set when this is a delegated task
+  work: boolean; // a work task to mark done (D-097)
 }
 
 // My pending approvals, plus those of anyone who named me as their
 // delegate today (D-062). Never my own requests.
-export async function listPendingTasksFor(userId: number, db: Queryable = getDbPool()): Promise<QueueItem[]> {
-  const [rows] = await db.query<
-    (RowDataPacket & { request_id: number; request_no: string; title: string; requester_name: string; task_key: string; node_label: string; created_at: Date; due_at: Date | null; overdue: number; approver_id: number; approver_name: string })[]
-  >(
-    `SELECT t.request_id, r.request_no, r.title, u.name AS requester_name, t.task_key, t.node_label, t.created_at, t.due_at,
-            (t.due_at IS NOT NULL AND t.due_at < CURRENT_TIMESTAMP) AS overdue, t.approver_id, a.name AS approver_name
+// What waits for a person: their approvals (never on their own requests)
+// and their work tasks (which may be on their own, D-097), plus those of
+// anyone who named them their delegate today. Oldest first, a page at a time.
+const PENDING_FOR = `
      FROM approval_tasks t
      JOIN approval_requests r ON r.id = t.request_id
      JOIN users u ON u.id = r.requester_id
      JOIN users a ON a.id = t.approver_id
-     WHERE t.status = 'PENDING' AND r.status IN ('IN_PROGRESS', 'ON_HOLD') AND r.deleted_at IS NULL AND r.requester_id <> ?
+     WHERE t.status = 'PENDING' AND r.status IN ('IN_PROGRESS', 'ON_HOLD') AND r.deleted_at IS NULL AND (r.requester_id <> ? OR t.task_type = 'WORK')
        AND (t.approver_id = ? OR t.approver_id IN (
              SELECT d.user_id FROM delegations d
-             WHERE d.delegate_id = ? AND d.ended_at IS NULL AND ${INDIA_TODAY_SQL} BETWEEN d.starts_on AND d.ends_on))
-     ORDER BY t.created_at`,
-    [userId, userId, userId],
+             WHERE d.delegate_id = ? AND d.ended_at IS NULL AND ${INDIA_TODAY_SQL} BETWEEN d.starts_on AND d.ends_on))`;
+
+export async function countPendingTasksFor(userId: number, db: Queryable = getDbPool()): Promise<number> {
+  const [rows] = await db.query<(RowDataPacket & { total: number })[]>(`SELECT COUNT(*) AS total ${PENDING_FOR}`, [userId, userId, userId]);
+  return Number(rows[0]?.total ?? 0);
+}
+
+export async function listPendingTasksFor(userId: number, page: { limit: number; offset: number } = { limit: 500, offset: 0 }, db: Queryable = getDbPool()): Promise<QueueItem[]> {
+  const [rows] = await db.query<
+    (RowDataPacket & { request_id: number; request_no: string; title: string; requester_name: string; task_key: string; node_label: string; task_type: string; created_at: Date; due_at: Date | null; overdue: number; approver_id: number; approver_name: string })[]
+  >(
+    `SELECT t.request_id, r.request_no, r.title, u.name AS requester_name, t.task_key, t.node_label, t.task_type, t.created_at, t.due_at,
+            (t.due_at IS NOT NULL AND t.due_at < CURRENT_TIMESTAMP) AS overdue, t.approver_id, a.name AS approver_name
+     ${PENDING_FOR}
+     ORDER BY t.created_at, t.id LIMIT ? OFFSET ?`,
+    [userId, userId, userId, page.limit, page.offset],
   );
   return rows.map((row) => ({
     requestId: row.request_id,
@@ -400,6 +486,7 @@ export async function listPendingTasksFor(userId: number, db: Queryable = getDbP
     dueAt: row.due_at,
     overdue: Number(row.overdue) === 1,
     forName: row.approver_id === userId ? null : row.approver_name,
+    work: row.task_type === "WORK",
   }));
 }
 

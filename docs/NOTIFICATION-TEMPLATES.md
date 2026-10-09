@@ -30,16 +30,22 @@ Rules kept so Meta accepts them:
 | 8 | `ars_request_comment_v1` | Someone commented on a request this person is part of. | The requester and everyone with an approval on it | 4 |
 | 9 | `ars_approval_reminder_v1` | An approval has passed its response time (working hours). | The approver (and their delegate) | 3 |
 | 10 | `ars_approval_escalated_v1` | An approver hasn't acted for twice the response time. | The approver's manager and the IT team | 5 |
-| 11 | `ars_request_blocked_v1` | A request can't move on (no approver found, or no path matches). | The IT team | 5 |
-| 12 | `ars_new_login_v1` | A sign-in from a new device or browser. | The person who signed in | 5 |
-| 13 | `ars_account_locked_v1` | Too many wrong passwords locked the account for a while. | The account holder | 2 |
-| 14 | `ars_account_secured_v1` | The person pressed "This wasn't me"; every session was ended and the account locked. | The account holder | 1 |
-| 15 | `ars_security_alert_v1` | Someone reported a sign-in that wasn't them. | The Super Admin | 2 |
-| 16 | `ars_super_admin_signin_v1` | The Super Admin account signed in. | The Super Admin | 4 |
-| 17 | `ars_break_glass_used_v1` | The sealed emergency (break-glass) account signed in. | The Super Admin | 4 |
-| 18 | `ars_password_changed_v1` | The password was set or changed; every device was signed out. | The account holder | 2 |
-| 19 | `ars_whatsapp_changed_v1` | IT changed the WhatsApp number on the account (sent to the new number). | The account holder | 1 |
-| 20 | `ars_signin_method_changed_v1` | IT switched the person between Google sign-in and User ID + password. | The account holder | 2 |
+| 11 | `ars_task_assigned_v1` | A work step (e.g. raise the PO after approval) is given to this person. | The person who has to do the work | 4 |
+| 12 | `ars_request_fyi_v1` | An FYI step: the request reached a point this person should know about. Nothing to do. | The people the FYI step names | 5 |
+| 13 | `ars_request_resumed_v1` | A request on hold is back in progress. | The requester and the approvers it waits for | 3 |
+| 14 | `ars_request_resubmitted_v1` | The requester made the changes this approver asked for. | The approver who asked for changes | 4 |
+| 15 | `ars_request_deleted_v1` | IT removed the person's request (e.g. a test or a mistake). | The requester | 3 |
+| 16 | `ars_request_unblocked_v1` | IT fixed the step that was holding up the request. | The requester | 4 |
+| 17 | `ars_request_blocked_v1` | A request can't move on (no approver found, or no path matches). | The IT team | 5 |
+| 18 | `ars_new_login_v1` | A sign-in from a new device or browser. | The person who signed in | 5 |
+| 19 | `ars_account_locked_v1` | Too many wrong passwords locked the account for a while. | The account holder | 2 |
+| 20 | `ars_account_secured_v1` | The person pressed "This wasn't me"; every session was ended and the account locked. | The account holder | 1 |
+| 21 | `ars_security_alert_v1` | Someone reported a sign-in that wasn't them. | The Super Admin | 2 |
+| 22 | `ars_super_admin_signin_v1` | The Super Admin account signed in. | The Super Admin | 4 |
+| 23 | `ars_break_glass_used_v1` | The sealed emergency (break-glass) account signed in. | The Super Admin | 4 |
+| 24 | `ars_password_changed_v1` | The password was set or changed; every device was signed out. | The account holder | 2 |
+| 25 | `ars_whatsapp_changed_v1` | IT changed the WhatsApp number on the account (sent to the new number). | The account holder | 1 |
+| 26 | `ars_signin_method_changed_v1` | IT switched the person between Google sign-in and User ID + password. | The account holder | 2 |
 
 ## Approvals messages
 
@@ -408,6 +414,227 @@ Manoj Menon hasn't acted on "HOD approval" for twice the allowed time.
 Request: PUR-2026-000123: Laptop for the new engineer
 
 IT can hand it over if needed: https://approval.arssteels.net/users/requests/123
+
+— ARS Approvals
+```
+
+### `ars_task_assigned_v1`
+- **When:** A work step (e.g. raise the PO after approval) is given to this person.
+- **Sent to:** The person who has to do the work
+- **Category / language:** Utility / English
+- **App event:** `TASK_ASSIGNED` (registry code `WA_TASK_ASSIGNED_V1`)
+- **Matching email subject:** Task for you: PUR-2026-000123
+
+Body to paste into CEOITBox:
+```
+Task for you
+
+There is work for you on {{1}}: {{2}}.
+What to do: {{3}}
+
+Open it, do the work, then mark it done: {{4}}
+
+— ARS Approvals
+```
+
+| Variable | Holds | Sample for Meta |
+|---|---|---|
+| `{{1}}` | Request number | PUR-2026-000123 |
+| `{{2}}` | Request title | Laptop for the new engineer |
+| `{{3}}` | Work | Raise the purchase order |
+| `{{4}}` | Link to the request | https://approval.arssteels.net/users/requests/123 |
+
+What the person sees (with the samples):
+```
+Task for you
+
+There is work for you on PUR-2026-000123: Laptop for the new engineer.
+What to do: Raise the purchase order
+
+Open it, do the work, then mark it done: https://approval.arssteels.net/users/requests/123
+
+— ARS Approvals
+```
+
+### `ars_request_fyi_v1`
+- **When:** An FYI step: the request reached a point this person should know about. Nothing to do.
+- **Sent to:** The people the FYI step names
+- **Category / language:** Utility / English
+- **App event:** `REQUEST_FYI` (registry code `WA_REQUEST_FYI_V1`)
+- **Matching email subject:** FYI: PUR-2026-000123
+
+Body to paste into CEOITBox:
+```
+For your information
+
+{{1}}: {{2}} reached "{{3}}".
+{{4}}
+
+Nothing to do. Details: {{5}}
+
+— ARS Approvals
+```
+
+| Variable | Holds | Sample for Meta |
+|---|---|---|
+| `{{1}}` | Request number | PUR-2026-000123 |
+| `{{2}}` | Request title | Laptop for the new engineer |
+| `{{3}}` | Step | Budget booked |
+| `{{4}}` | Note (may be a dash) | PO raised |
+| `{{5}}` | Link to the request | https://approval.arssteels.net/users/requests/123 |
+
+What the person sees (with the samples):
+```
+For your information
+
+PUR-2026-000123: Laptop for the new engineer reached "Budget booked".
+PO raised
+
+Nothing to do. Details: https://approval.arssteels.net/users/requests/123
+
+— ARS Approvals
+```
+
+### `ars_request_resumed_v1`
+- **When:** A request on hold is back in progress.
+- **Sent to:** The requester and the approvers it waits for
+- **Category / language:** Utility / English
+- **App event:** `REQUEST_RESUMED` (registry code `WA_REQUEST_RESUMED_V1`)
+- **Matching email subject:** Resumed: PUR-2026-000123
+
+Body to paste into CEOITBox:
+```
+Request resumed
+
+{{1}}: {{2}} is no longer on hold.
+
+Details: {{3}}
+
+— ARS Approvals
+```
+
+| Variable | Holds | Sample for Meta |
+|---|---|---|
+| `{{1}}` | Request number | PUR-2026-000123 |
+| `{{2}}` | Request title | Laptop for the new engineer |
+| `{{3}}` | Link to the request | https://approval.arssteels.net/users/requests/123 |
+
+What the person sees (with the samples):
+```
+Request resumed
+
+PUR-2026-000123: Laptop for the new engineer is no longer on hold.
+
+Details: https://approval.arssteels.net/users/requests/123
+
+— ARS Approvals
+```
+
+### `ars_request_resubmitted_v1`
+- **When:** The requester made the changes this approver asked for.
+- **Sent to:** The approver who asked for changes
+- **Category / language:** Utility / English
+- **App event:** `REQUEST_RESUBMITTED` (registry code `WA_REQUEST_RESUBMITTED_V1`)
+- **Matching email subject:** Resubmitted: PUR-2026-000123
+
+Body to paste into CEOITBox:
+```
+Changes made
+
+{{1}} made the changes you asked for on {{2}}: {{3}}.
+
+Open it here (sign-in needed): {{4}}
+
+— ARS Approvals
+```
+
+| Variable | Holds | Sample for Meta |
+|---|---|---|
+| `{{1}}` | Raised by | Ravi Kumar |
+| `{{2}}` | Request number | PUR-2026-000123 |
+| `{{3}}` | Request title | Laptop for the new engineer |
+| `{{4}}` | Link to the request | https://approval.arssteels.net/users/requests/123 |
+
+What the person sees (with the samples):
+```
+Changes made
+
+Ravi Kumar made the changes you asked for on PUR-2026-000123: Laptop for the new engineer.
+
+Open it here (sign-in needed): https://approval.arssteels.net/users/requests/123
+
+— ARS Approvals
+```
+
+### `ars_request_deleted_v1`
+- **When:** IT removed the person's request (e.g. a test or a mistake).
+- **Sent to:** The requester
+- **Category / language:** Utility / English
+- **App event:** `REQUEST_DELETED` (registry code `WA_REQUEST_DELETED_V1`)
+- **Matching email subject:** Removed: PUR-2026-000123
+
+Body to paste into CEOITBox:
+```
+Request removed
+
+Your request {{1}}: {{2}} was removed by IT.
+Reason: {{3}}
+
+Ask IT if you think this is a mistake.
+
+— ARS Approvals
+```
+
+| Variable | Holds | Sample for Meta |
+|---|---|---|
+| `{{1}}` | Request number | PUR-2026-000123 |
+| `{{2}}` | Request title | Laptop for the new engineer |
+| `{{3}}` | Reason | Raised twice by mistake |
+
+What the person sees (with the samples):
+```
+Request removed
+
+Your request PUR-2026-000123: Laptop for the new engineer was removed by IT.
+Reason: Raised twice by mistake
+
+Ask IT if you think this is a mistake.
+
+— ARS Approvals
+```
+
+### `ars_request_unblocked_v1`
+- **When:** IT fixed the step that was holding up the request.
+- **Sent to:** The requester
+- **Category / language:** Utility / English
+- **App event:** `REQUEST_UNBLOCKED` (registry code `WA_REQUEST_UNBLOCKED_V1`)
+- **Matching email subject:** Moving again: PUR-2026-000123
+
+Body to paste into CEOITBox:
+```
+Request moving again
+
+{{1}}: {{2}} is moving again. IT fixed the step "{{3}}".
+
+Details: {{4}}
+
+— ARS Approvals
+```
+
+| Variable | Holds | Sample for Meta |
+|---|---|---|
+| `{{1}}` | Request number | PUR-2026-000123 |
+| `{{2}}` | Request title | Laptop for the new engineer |
+| `{{3}}` | Level | Finance approval |
+| `{{4}}` | Link to the request | https://approval.arssteels.net/users/requests/123 |
+
+What the person sees (with the samples):
+```
+Request moving again
+
+PUR-2026-000123: Laptop for the new engineer is moving again. IT fixed the step "Finance approval".
+
+Details: https://approval.arssteels.net/users/requests/123
 
 — ARS Approvals
 ```

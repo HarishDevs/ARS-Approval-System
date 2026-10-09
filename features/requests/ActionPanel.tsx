@@ -1,27 +1,32 @@
 "use client";
 
-import { decideAction, reopenAction, resumeAction, withdrawAction } from "@/app/users/actions";
+import { useState } from "react";
+import { decideAction, reopenAction, resolveBlockedAction, resumeAction, withdrawAction } from "@/app/users/actions";
 import { FieldError, ResultMessage, useActionForm } from "@/features/ui/form";
 
 // What the signed-in person can do on this request right now (F-14). The
 // server decides again on every press (F-12).
-export function DecisionForm({ requestId, taskKey, label }: { requestId: number; taskKey: string; label: string }) {
+// A work task (D-097) is marked done, or sent back; it can't be rejected.
+export function DecisionForm({ requestId, taskKey, label, work = false }: { requestId: number; taskKey: string; label: string; work?: boolean }) {
   const { result, pending, onSubmit } = useActionForm(decideAction);
   return (
     <form onSubmit={onSubmit} className="space-y-3 px-5 py-4">
       <input type="hidden" name="requestId" value={requestId} />
       <input type="hidden" name="taskKey" value={taskKey} />
-      <p className="font-medium">Your decision: {label}</p>
+      {work && <input type="hidden" name="work" value="1" />}
+      <p className="font-medium">
+        {work ? "Your task" : "Your decision"}: {label}
+      </p>
       <div>
         <label htmlFor={`comment-${taskKey}`} className="field-label">
-          Comment <span className="font-normal text-ink-faint">(required to reject or ask for changes)</span>
+          Comment <span className="font-normal text-ink-faint">{work ? "(say what you did; required to ask for changes)" : "(required to reject or ask for changes)"}</span>
         </label>
         <textarea id={`comment-${taskKey}`} name="comment" rows={3} maxLength={2000} className="field-input h-auto py-2.5" />
         <FieldError result={result} name="comment" />
       </div>
       <div className="flex flex-wrap gap-2">
         <button type="submit" name="decision" value="APPROVE" disabled={pending} className="btn-primary btn-compact">
-          Approve
+          {work ? "Mark as done" : "Approve"}
         </button>
         <button type="submit" name="decision" value="REQUEST_CHANGES" disabled={pending} className="btn-secondary btn-compact">
           Ask for changes
@@ -29,10 +34,88 @@ export function DecisionForm({ requestId, taskKey, label }: { requestId: number;
         <button type="submit" name="decision" value="HOLD" disabled={pending} className="btn-secondary btn-compact">
           Put on hold
         </button>
-        <button type="submit" name="decision" value="REJECT" disabled={pending} className="btn-secondary btn-compact text-danger-600">
-          Reject
-        </button>
+        {!work && (
+          <button type="submit" name="decision" value="REJECT" disabled={pending} className="btn-secondary btn-compact text-danger-600">
+            Reject
+          </button>
+        )}
       </div>
+      <ResultMessage result={result} />
+    </form>
+  );
+}
+
+// IT moves a blocked step on (D-098): give it to people, skip it, try the
+// approvers again after fixing the masters, or pick a path on a choice.
+export interface BlockedStep {
+  nodeId: string;
+  label: string;
+  kind: "APPROVAL" | "CONDITION";
+  work: boolean;
+  reason: string;
+  paths: { edgeId: string; label: string }[];
+}
+
+export function BlockedStepForm({ requestId, step, people }: { requestId: number; step: BlockedStep; people: { id: number; label: string }[] }) {
+  const { result, pending, onSubmit } = useActionForm(resolveBlockedAction);
+  const choices = step.kind === "CONDITION" ? (["TAKE_PATH", "RETRY"] as const) : (["ASSIGN", "SKIP", "RETRY"] as const);
+  const [action, setAction] = useState<(typeof choices)[number]>(choices[0]);
+  const words: Record<string, string> = {
+    ASSIGN: step.work ? "Give this task to:" : "These people approve this step:",
+    SKIP: "Skip this step (it isn't needed)",
+    RETRY: "Try again (after fixing the department, designation or group)",
+    TAKE_PATH: "Send it down this path:",
+  };
+  return (
+    <form onSubmit={onSubmit} className="space-y-3 px-5 py-4">
+      <input type="hidden" name="requestId" value={requestId} />
+      <input type="hidden" name="nodeId" value={step.nodeId} />
+      <p className="font-medium">
+        Blocked: {step.label} <span className="font-normal text-ink-muted">({step.reason})</span>
+      </p>
+      <fieldset className="space-y-2">
+        <legend className="sr-only">How to move it on</legend>
+        {choices.map((choice) => (
+          <label key={choice} className="flex items-start gap-2 text-label">
+            <input type="radio" name="action" value={choice} checked={action === choice} onChange={() => setAction(choice)} className="mt-1" />
+            <span>{words[choice]}</span>
+          </label>
+        ))}
+      </fieldset>
+      {action === "ASSIGN" && (
+        <div>
+          <label htmlFor={`assign-${step.nodeId}`} className="field-label">
+            People (hold Ctrl to pick several)
+          </label>
+          <select id={`assign-${step.nodeId}`} name="userIds" multiple className="field-input h-32 py-2">
+            {people.map((person) => (
+              <option key={person.id} value={person.id}>
+                {person.label}
+              </option>
+            ))}
+          </select>
+          <FieldError result={result} name="userIds" />
+        </div>
+      )}
+      {action === "TAKE_PATH" && (
+        <select name="edgeId" aria-label="Path" className="field-input">
+          {step.paths.map((path) => (
+            <option key={path.edgeId} value={path.edgeId}>
+              {path.label}
+            </option>
+          ))}
+        </select>
+      )}
+      <div>
+        <label htmlFor={`unblock-reason-${step.nodeId}`} className="field-label">
+          Reason <span className="font-normal text-ink-faint">(shown on the timeline and to the requester)</span>
+        </label>
+        <input id={`unblock-reason-${step.nodeId}`} name="reason" maxLength={500} className="field-input" />
+        <FieldError result={result} name="reason" />
+      </div>
+      <button type="submit" disabled={pending} className="btn-primary btn-compact">
+        {pending ? "Working…" : "Move it on"}
+      </button>
       <ResultMessage result={result} />
     </form>
   );

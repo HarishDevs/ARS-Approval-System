@@ -1,5 +1,5 @@
 import { collectFields, isGroup } from "@/server/engine/conditions";
-import type { Comparison, Condition, WorkflowDefinition, WorkflowEdge, WorkflowNode } from "@/server/engine/types";
+import type { ApproverSource, Comparison, Condition, WorkflowDefinition, WorkflowEdge, WorkflowNode } from "@/server/engine/types";
 
 // Workflow validator (P3-04, F-50). Runs before a workflow is published and
 // on every custom approval before submission (P5-03). Errors block; warnings
@@ -29,6 +29,7 @@ export interface ValidationContext {
   knownUserIds?: readonly number[];
   knownDepartmentIds?: readonly number[];
   knownGroupIds?: readonly number[];
+  knownDesignationIds?: readonly number[];
   formFieldKeys?: readonly string[];
 }
 
@@ -72,7 +73,7 @@ export function validateWorkflow(definition: WorkflowDefinition, context: Valida
   const ends = [...nodes.values()].filter((node) => node.kind === "END");
   if (starts.length !== 1) errors.push({ code: "START_COUNT", message: "A workflow needs exactly one Start." });
   if (ends.length === 0) errors.push({ code: "END_MISSING", message: "A workflow needs an End." });
-  if (![...nodes.values()].some((node) => node.kind === "APPROVAL")) {
+  if (![...nodes.values()].some((node) => node.kind === "APPROVAL" && node.mode !== "WORK")) {
     errors.push({ code: "NO_APPROVAL_STEP", message: "A workflow needs at least one approval step." });
   }
 
@@ -92,6 +93,11 @@ export function validateWorkflow(definition: WorkflowDefinition, context: Valida
         validateApprovalNode(node, errors, warnings, context);
         if (outs.length !== 1) errors.push({ code: "APPROVAL_OUTGOING", message: `"${node.label}" must lead to exactly one next step.`, ...where });
         if (node.skipIf) validateCondition(node.skipIf, node.id, undefined, errors, warnings, context);
+        break;
+      case "NOTIFY":
+        if (!node.recipients.length) errors.push({ code: "NOTIFY_RECIPIENTS_MISSING", message: `"${node.label}" tells nobody. Pick who to inform.`, ...where });
+        node.recipients.forEach((source) => checkSource(source, node.label, where, errors, context));
+        if (outs.length !== 1) errors.push({ code: "NOTIFY_OUTGOING", message: `"${node.label}" must lead to exactly one next step.`, ...where });
         break;
       case "SPLIT":
         if (outs.length < 2) errors.push({ code: "SPLIT_BRANCHES", message: `"${node.label}" needs at least two parallel branches.`, ...where });
@@ -177,41 +183,17 @@ function validateApprovalNode(
   const userIds = new Set<number>();
   let onlyUsers = true;
   for (const source of node.approvers) {
-    switch (source.type) {
-      case "USER":
-        if (userIds.has(source.userId)) warnings.push({ code: "APPROVER_DUPLICATE", message: `"${node.label}" lists the same person twice.`, ...where });
-        userIds.add(source.userId);
-        if (context.knownUserIds && !context.knownUserIds.includes(source.userId)) {
-          errors.push({ code: "APPROVER_UNKNOWN_USER", message: `"${node.label}" names a person who doesn't exist or is inactive.`, ...where });
-        }
-        break;
-      case "ROLE":
-        onlyUsers = false;
-        if (context.knownRoleCodes && !context.knownRoleCodes.includes(source.roleCode)) {
-          errors.push({ code: "APPROVER_UNKNOWN_ROLE", message: `"${node.label}" uses role "${source.roleCode}", which doesn't exist.`, ...where });
-        }
-        break;
-      case "DEPARTMENT_HOD":
-        onlyUsers = false;
-        if (context.knownDepartmentIds && !context.knownDepartmentIds.includes(source.departmentId)) {
-          errors.push({ code: "APPROVER_UNKNOWN_DEPARTMENT", message: `"${node.label}" uses a department that doesn't exist.`, ...where });
-        }
-        break;
-      case "GROUP":
-        onlyUsers = false;
-        if (context.knownGroupIds && !context.knownGroupIds.includes(source.groupId)) {
-          errors.push({ code: "APPROVER_UNKNOWN_GROUP", message: `"${node.label}" uses a group that doesn't exist.`, ...where });
-        }
-        break;
-      case "FORM_FIELD_USER":
-        onlyUsers = false;
-        if (context.formFieldKeys && !context.formFieldKeys.includes(source.fieldKey)) {
-          errors.push({ code: "APPROVER_UNKNOWN_FIELD", message: `"${node.label}" reads the approver from field "${source.fieldKey}", which isn't on the form.`, ...where });
-        }
-        break;
-      default:
-        onlyUsers = false;
+    if (source.type === "USER") {
+      if (userIds.has(source.userId)) warnings.push({ code: "APPROVER_DUPLICATE", message: `"${node.label}" lists the same person twice.`, ...where });
+      userIds.add(source.userId);
+    } else {
+      onlyUsers = false;
     }
+    // No self-approval: the requester can only be given work, never a decision.
+    if (source.type === "REQUESTER" && node.mode !== "WORK") {
+      errors.push({ code: "APPROVER_IS_REQUESTER", message: `"${node.label}": the requester can't approve their own request. Make it a work step, or pick someone else.`, ...where });
+    }
+    checkSource(source, node.label, where, errors, context);
   }
   if (node.completion.type === "ANY_N") {
     if (node.completion.n < 1) errors.push({ code: "ANY_N_INVALID", message: `"${node.label}" needs a number of approvals of 1 or more.`, ...where });
@@ -220,6 +202,44 @@ function validateApprovalNode(
     } else if (node.completion.n === 1) {
       warnings.push({ code: "ANY_N_IS_ANY_ONE", message: `"${node.label}": "any 1" is the same as "any one".`, ...where });
     }
+  }
+}
+
+// Whether a source can ever match anybody (G-09).
+function checkSource(source: ApproverSource, label: string, where: { nodeId: string }, errors: ValidationIssue[], context: ValidationContext): void {
+  switch (source.type) {
+    case "USER":
+      if (context.knownUserIds && !context.knownUserIds.includes(source.userId)) {
+        errors.push({ code: "APPROVER_UNKNOWN_USER", message: `"${label}" names a person who doesn't exist or is inactive.`, ...where });
+      }
+      break;
+    case "ROLE":
+      if (context.knownRoleCodes && !context.knownRoleCodes.includes(source.roleCode)) {
+        errors.push({ code: "APPROVER_UNKNOWN_ROLE", message: `"${label}" uses role "${source.roleCode}", which doesn't exist.`, ...where });
+      }
+      break;
+    case "DEPARTMENT_HOD":
+      if (context.knownDepartmentIds && !context.knownDepartmentIds.includes(source.departmentId)) {
+        errors.push({ code: "APPROVER_UNKNOWN_DEPARTMENT", message: `"${label}" uses a department that doesn't exist.`, ...where });
+      }
+      break;
+    case "GROUP":
+      if (context.knownGroupIds && !context.knownGroupIds.includes(source.groupId)) {
+        errors.push({ code: "APPROVER_UNKNOWN_GROUP", message: `"${label}" uses a group that doesn't exist.`, ...where });
+      }
+      break;
+    case "DESIGNATION":
+      if (context.knownDesignationIds && !context.knownDesignationIds.includes(source.designationId)) {
+        errors.push({ code: "APPROVER_UNKNOWN_DESIGNATION", message: `"${label}" uses a designation that doesn't exist or isn't active.`, ...where });
+      }
+      break;
+    case "FORM_FIELD_USER":
+      if (context.formFieldKeys && !context.formFieldKeys.includes(source.fieldKey)) {
+        errors.push({ code: "APPROVER_UNKNOWN_FIELD", message: `"${label}" reads the approver from field "${source.fieldKey}", which isn't on the form.`, ...where });
+      }
+      break;
+    default:
+      break;
   }
 }
 

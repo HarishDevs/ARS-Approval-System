@@ -4,7 +4,8 @@ import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { RequestStatusPill } from "@/features/requests/StatusPill";
 import { StepMap } from "@/features/requests/StepMap";
-import { DecisionForm, ReopenForm, ResumeForm, WithdrawForm } from "@/features/requests/ActionPanel";
+import { BlockedStepForm, DecisionForm, ReopenForm, ResumeForm, WithdrawForm } from "@/features/requests/ActionPanel";
+import { listApproverOptions } from "@/lib/db/repositories/approvers.repository";
 import { RequestForm } from "@/features/requests/RequestForm";
 import { CommentForm } from "@/features/requests/Discussion";
 import { AddFilesForm } from "@/features/requests/Attachments";
@@ -30,6 +31,13 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
     view.canResubmit && view.form.some((field) => field.type === "PERSON")
       ? (await listActiveUserOptions()).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` }))
       : [];
+  // Blocked steps (IT): approval steps take approver-eligible people; work any active person.
+  const assignable = view.blockedSteps.length
+    ? {
+        approvers: (await listApproverOptions()).filter((person) => person.id !== view.requesterId).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` })),
+        anyone: (await listActiveUserOptions()).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` })),
+      }
+    : null;
 
   return (
     <>
@@ -60,11 +68,25 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="space-y-6">
+          {view.blockedSteps.length > 0 && assignable && (
+            <section className="card divide-y divide-line border-warning-600">
+              <h2 className="px-5 py-4 font-semibold">Stuck: needs IT</h2>
+              {view.blockedSteps.map((step) => (
+                <BlockedStepForm key={step.nodeId} requestId={view.id} step={step} people={step.work ? assignable.anyone : assignable.approvers} />
+              ))}
+            </section>
+          )}
           {(view.myTasks.length > 0 || view.canResume) && (
             <section className="card divide-y divide-line border-primary-600">
               <h2 className="px-5 py-4 font-semibold">Needs your action</h2>
               {view.myTasks.map((task) => (
-                <DecisionForm key={task.taskKey} requestId={view.id} taskKey={task.taskKey} label={task.forName ? `${task.label} (for ${task.forName}, as their delegate)` : task.label} />
+                <DecisionForm
+                  key={task.taskKey}
+                  requestId={view.id}
+                  taskKey={task.taskKey}
+                  work={task.work}
+                  label={task.forName ? `${task.label} (for ${task.forName}, as their delegate)` : task.label}
+                />
               ))}
               {view.canResume && <ResumeForm requestId={view.id} />}
             </section>

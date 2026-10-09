@@ -46,6 +46,17 @@ export async function listStaleOutbox(limit: number, db: Queryable = getDbPool()
   return rows.map((row) => row.id);
 }
 
+// Messages queued for a request before it was deleted are dropped (marked
+// sent, never delivered); the deletion's own messages, queued after, still go.
+export async function dropOutboxForDeletedRequests(db: Queryable = getDbPool()): Promise<number> {
+  const [result] = await db.query<ResultSetHeader>(
+    `UPDATE notification_outbox o JOIN approval_requests r ON r.id = o.request_id
+     SET o.sent_at = CURRENT_TIMESTAMP(3)
+     WHERE o.sent_at IS NULL AND r.deleted_at IS NOT NULL AND o.created_at < r.deleted_at`,
+  );
+  return result.affectedRows;
+}
+
 export async function pruneOutbox(db: Queryable = getDbPool()): Promise<number> {
   const [result] = await db.query<ResultSetHeader>("DELETE FROM notification_outbox WHERE sent_at IS NOT NULL AND sent_at < DATE_SUB(CURRENT_TIMESTAMP(3), INTERVAL 30 DAY)");
   return result.affectedRows;

@@ -50,7 +50,13 @@ export type ApproverSource =
   | { type: "REQUESTER_DEPARTMENT_HOD" }
   | { type: "DEPARTMENT_HOD"; departmentId: number }
   | { type: "GROUP"; groupId: number }
-  | { type: "FORM_FIELD_USER"; fieldKey: string };
+  | { type: "FORM_FIELD_USER"; fieldKey: string }
+  // Everyone active with this designation; optionally only in the
+  // requester's own department (D-097).
+  | { type: "DESIGNATION"; designationId: number; sameDepartment?: boolean }
+  // The person who raised the request: for work steps and FYI only, never
+  // an approver (no self-approval).
+  | { type: "REQUESTER" };
 
 export type CompletionRule = { type: "ALL" } | { type: "ANY_ONE" } | { type: "ANY_N"; n: number };
 
@@ -79,6 +85,18 @@ export interface ApprovalNode extends BaseNode {
   // Respond-within time (F-31). The engine only carries it; the job runner
   // turns it into reminders and escalation.
   slaHours?: number;
+  // WORK (D-097): a task to do rather than a decision ("Mark as done"). It
+  // can go to the requester, can't be rejected, and changes can still be
+  // asked. Default APPROVE.
+  mode?: "APPROVE" | "WORK";
+}
+
+// FYI (D-097): tells people the request reached this point, then moves on
+// at once. Nobody has to act.
+export interface NotifyNode extends BaseNode {
+  kind: "NOTIFY";
+  recipients: ApproverSource[];
+  note?: string;
 }
 
 export interface SplitNode extends BaseNode {
@@ -95,7 +113,7 @@ export interface ConditionNode extends BaseNode {
   kind: "CONDITION";
 }
 
-export type WorkflowNode = StartNode | EndNode | ApprovalNode | SplitNode | JoinNode | ConditionNode;
+export type WorkflowNode = StartNode | EndNode | ApprovalNode | SplitNode | JoinNode | ConditionNode | NotifyNode;
 
 export interface WorkflowEdge {
   id: string;
@@ -121,6 +139,8 @@ export interface Directory {
   hodOfDepartment(departmentId: number): number | null;
   usersWithRole(roleCode: string): number[];
   groupMembers(groupId: number): number[];
+  usersWithDesignation(designationId: number): number[];
+  departmentOf(userId: number): number | null;
   // Delegation (D-018): may `actorId` act for `approverId` right now?
   canActFor(actorId: number, approverId: number): boolean;
 }
@@ -156,6 +176,7 @@ export interface NodeState {
   activatedAt?: string;
   completedAt?: string;
   reason?: string;
+  notified?: number[]; // FYI step: who was told
 }
 
 export interface InstanceState {
@@ -176,7 +197,7 @@ export type EngineEvent =
   | { type: "NODE_ACTIVATED"; nodeId: string }
   | { type: "TASK_CREATED"; taskId: string; nodeId: string; approverId: number }
   | { type: "NODE_APPROVED"; nodeId: string }
-  | { type: "NODE_SKIPPED"; nodeId: string; reason: "SKIP_CONDITION" | "NO_APPROVER" }
+  | { type: "NODE_SKIPPED"; nodeId: string; reason: "SKIP_CONDITION" | "NO_APPROVER" | "SKIPPED_BY_IT" }
   | { type: "NODE_BLOCKED"; nodeId: string; reason: "NO_ELIGIBLE_APPROVER" | "NOT_ENOUGH_APPROVERS" | "NO_MATCHING_BRANCH" }
   | { type: "TASK_DECIDED"; taskId: string; nodeId: string; decision: Decision; actorId: number; onBehalfOf?: number }
   | { type: "TASKS_CLOSED"; nodeId: string; taskIds: string[]; status: "NOT_REQUIRED" | "CANCELLED" }
@@ -185,13 +206,23 @@ export type EngineEvent =
   | { type: "INSTANCE_REJECTED"; nodeId: string; actorId: number; comment: string }
   | { type: "CHANGES_REQUESTED"; nodeId: string; actorId: number; comment: string }
   | { type: "PUT_ON_HOLD"; nodeId: string; actorId: number; reason?: string }
-  | { type: "RESUMED"; actorId: number }
-  | { type: "RESUBMITTED"; round: number; restartNodeId: string }
+  | { type: "RESUMED"; actorId: number; heldSince?: string; pendingApproverIds?: number[] }
+  | { type: "RESUBMITTED"; round: number; restartNodeId: string; changesAskedBy?: number }
+  | { type: "NOTIFIED"; nodeId: string; userIds: number[]; note?: string }
+  | { type: "BLOCK_RESOLVED"; nodeId: string; actorId: number; action: BlockAction["action"]; userIds?: number[]; reason: string }
   | { type: "TASK_REASSIGNED"; taskId: string; nodeId: string; fromId: number; toId: number; actorId: number }
   | { type: "WITHDRAWN"; actorId: number; reason?: string; closedTaskIds: string[]; approverIds: number[] }
+  | { type: "DELETED"; actorId: number; reason: string; closedTaskIds: string[]; approverIds: number[]; wasOpen: boolean }
   | { type: "REOPENED"; actorId: number; reason: string; round: number };
 
 export type Decision = "APPROVE" | "REJECT" | "REQUEST_CHANGES";
+
+// How IT moves a blocked step on (D-098).
+export type BlockAction =
+  | { action: "ASSIGN"; userIds: number[] } // approval/work step: these people decide
+  | { action: "SKIP" } // treat the step as not needed
+  | { action: "RETRY" } // resolve the approvers again (after fixing the masters)
+  | { action: "TAKE_PATH"; edgeId: string }; // choice with no matching path
 
 export interface EngineResult {
   state: InstanceState;
@@ -208,7 +239,9 @@ export type EngineErrorCode =
   | "UNKNOWN_NODE"
   | "INVALID_REASSIGN"
   | "NOT_OPEN"
-  | "NOT_APPROVED";
+  | "NOT_APPROVED"
+  | "NOT_BLOCKED"
+  | "INVALID_ACTION";
 
 export class EngineError extends Error {
   constructor(

@@ -97,8 +97,3 @@ export async function markRequestDeleted(id: number, deletedBy: number, reason: 
     id,
   ]);
 }
-
-export async function cancelPendingTasks(requestId: number, db: Queryable): Promise<number> {
-  const [result] = await db.query<ResultSetHeader>("UPDATE approval_tasks SET status = 'CANCELLED' WHERE request_id = ? AND status = 'PENDING'", [requestId]);
-  return result.affectedRows;
-}

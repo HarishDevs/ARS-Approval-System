@@ -4,6 +4,8 @@ import { withTransaction } from "@/lib/db/transaction";
 import { getDbPool } from "@/lib/db/client";
 import {
   appendEvents,
+  deleteUnusedWorkflow,
+  extendDueTimes,
   findPublishedVersion,
   findWorkflow,
   findWorkflowVersion,
@@ -16,6 +18,7 @@ import {
   lockRequest,
   nextRequestNumber,
   publishWorkflowVersion,
+  restartTaskClock,
   saveRequestState,
   syncTasks,
   userNames,
@@ -36,9 +39,9 @@ import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { getEnv } from "@/config/environment";
 import { notify } from "@/server/notifications/notify";
 import { messagesForEvents } from "@/server/approvals/messages";
-import { decide, putOnHold, reassignTask, reopen, resubmit, resume, simulate, startInstance, validateWorkflow, withdraw, EngineError } from "@/server/engine";
-import type { Decision, EngineEvent, EngineResult, FormData as EngineFormData, RestartPolicy, ValidationResult, WorkflowDefinition } from "@/server/engine";
-import { claimOutbox, insertOutbox, listStaleOutbox, markOutboxSent } from "@/lib/db/repositories/outbox.repository";
+import { decide, putOnHold, reassignTask, reopen, resolveBlocked, resubmit, resume, simulate, startInstance, validateWorkflow, withdraw, EngineError } from "@/server/engine";
+import type { BlockAction, Decision, EngineEvent, EngineResult, FormData as EngineFormData, RestartPolicy, ValidationResult, WorkflowDefinition, WorkflowNode } from "@/server/engine";
+import { claimOutbox, dropOutboxForDeletedRequests, insertOutbox, listStaleOutbox, markOutboxSent } from "@/lib/db/repositories/outbox.repository";
 import type { NotifyInput } from "@/server/notifications/notify";
 import { logError } from "@/lib/logging/logger";
 import type { RoleCode } from "@/types/auth";
@@ -97,12 +100,28 @@ async function validationContext(db: Pick<PoolConnection, "query"> = getDbPool()
   const [roles] = await db.query<(RowDataPacket & { code: string })[]>("SELECT code FROM roles WHERE active = TRUE");
   const [departments] = await db.query<(RowDataPacket & { id: number })[]>("SELECT id FROM departments WHERE active = TRUE");
   const [groups] = await db.query<(RowDataPacket & { id: number })[]>("SELECT id FROM approver_groups WHERE active = TRUE");
+  const [designations] = await db.query<(RowDataPacket & { id: number })[]>("SELECT id FROM designations WHERE active = TRUE");
   return {
     knownUserIds: users.map((row) => row.id),
     knownRoleCodes: roles.map((row) => row.code),
     knownDepartmentIds: departments.map((row) => row.id),
     knownGroupIds: groups.map((row) => row.id),
+    knownDesignationIds: designations.map((row) => row.id),
   };
+}
+
+async function nonApproverDesignations(definition: WorkflowDefinition): Promise<string[]> {
+  const uses = definition.nodes.flatMap((node) =>
+    node.kind === "APPROVAL" && node.mode !== "WORK"
+      ? node.approvers.filter((source) => source.type === "DESIGNATION").map((source) => ({ label: node.label, id: (source as { designationId: number }).designationId }))
+      : [],
+  );
+  if (uses.length === 0) return [];
+  const [rows] = await getDbPool().query<(RowDataPacket & { id: number; name: string })[]>("SELECT id, name FROM designations WHERE id IN (?) AND is_approver = FALSE", [
+    [...new Set(uses.map((use) => use.id))],
+  ]);
+  const names = new Map(rows.map((row) => [row.id, row.name]));
+  return uses.filter((use) => names.has(use.id)).map((use) => `"${use.label}": ${names.get(use.id)} isn't ticked as an approver designation.`);
 }
 
 export async function checkWorkflow(definition: WorkflowDefinition, formFieldKeys?: readonly string[]): Promise<ValidationResult> {
@@ -142,6 +161,9 @@ async function resolveContent(content: WorkflowContent, previousNamed: readonly 
   const statuses = await approverStatuses(named);
   const notApprovers = ineligibleChoices(named.filter((id) => statuses.has(id)), previousNamed, statuses);
   if (notApprovers.length) return { ok: false, code: "NOT_APPROVER", message: notApprovers.join(" ") };
+  // D-085/D-097: an approval step by designation needs an approver designation.
+  const wrongDesignations = await nonApproverDesignations(definition);
+  if (wrongDesignations.length) return { ok: false, code: "NOT_APPROVER", message: wrongDesignations.join(" ") };
   const validation = await checkWorkflow(definition, form.map((field) => field.key));
   return { ok: true, value: { definition, builder: content.builder ?? null, form, validation } };
 }
@@ -209,10 +231,12 @@ export async function publishVersion(versionId: number, actor: Actor): Promise<R
   if (version.status !== "DRAFT") return { ok: false, code: "NOT_DRAFT", message: "Only a draft can be published." };
   const validation = await checkWorkflow(version.definition, version.form.map((field) => field.key));
   if (!validation.valid) return { ok: false, code: "INVALID_WORKFLOW", message: "Fix the errors before publishing.", validation };
-  await withTransaction(async (connection) => {
-    await publishWorkflowVersion(version.id, workflow.id, actor.id, connection);
+  const published = await withTransaction(async (connection) => {
+    if (!(await publishWorkflowVersion(version.id, workflow.id, actor.id, connection))) return false;
     await recordAudit({ actorUserId: actor.id, action: "WORKFLOW_PUBLISHED", entityType: "WORKFLOW", entityId: workflow.id, metadata: { versionNo: version.versionNo } }, connection);
+    return true;
   });
+  if (!published) return { ok: false, code: "NOT_DRAFT", message: "Someone else just published or replaced this version. Reload the page." };
   return { ok: true, value: { versionNo: version.versionNo } };
 }
 
@@ -274,21 +298,22 @@ async function requesterName(id: number, db: Pick<PoolConnection, "query">): Pro
 // dies first, the job runner sends what's left. A failed send never undoes
 // the action.
 async function prepareMessages(
-  change: { request: RequestRecord; events: EngineEvent[]; requesterName: string },
+  change: { request: RequestRecord; events: EngineEvent[]; requesterName: string; nodes?: readonly WorkflowNode[] },
   db: Pick<PoolConnection, "query">,
 ): Promise<NotifyInput[]> {
   const blocked = change.events.some((event) => event.type === "NODE_BLOCKED");
   const adminIds = blocked ? await listUserIdsWithRole("IT_ADMIN", db) : [];
-  const nodes = blocked ? ((await findWorkflowVersion(change.request.workflowVersionId, db))?.definition.nodes ?? []) : [];
+  const nodes: readonly WorkflowNode[] = change.nodes ?? (await findWorkflowVersion(change.request.workflowVersionId, db))?.definition.nodes ?? [];
   const labelOf = (nodeId: string) => nodes.find((node) => node.id === nodeId)?.label ?? nodeId;
+  const isWorkStep = (nodeId: string) => nodes.some((node) => node.id === nodeId && node.kind === "APPROVAL" && node.mode === "WORK");
   return messagesForEvents(
     change.events,
     { id: change.request.id, requestNo: change.request.requestNo, title: change.request.title, requesterId: change.request.requesterId, requesterName: change.requesterName },
-    { baseUrl: getEnv().APP_BASE_URL ?? "https://approval.arssteels.net", adminIds, labelOf },
+    { baseUrl: getEnv().APP_BASE_URL ?? "https://approval.arssteels.net", adminIds, labelOf, isWorkStep },
   );
 }
 
-async function queueMessages(change: { request: RequestRecord; events: EngineEvent[]; requesterName: string }, db: Pick<PoolConnection, "query">): Promise<number[]> {
+export async function queueMessages(change: { request: RequestRecord; events: EngineEvent[]; requesterName: string; nodes?: readonly WorkflowNode[] }, db: Pick<PoolConnection, "query">): Promise<number[]> {
   return insertOutbox(change.request.id, await prepareMessages(change, db), db);
 }
 
@@ -310,8 +335,9 @@ export async function deliverOutbox(ids: readonly number[]): Promise<number> {
 }
 
 // Job runner: whatever the in-process sender didn't finish.
-export async function runOutbox(): Promise<{ outboxSent: number }> {
-  return { outboxSent: await deliverOutbox(await listStaleOutbox(200)) };
+export async function runOutbox(): Promise<{ outboxSent: number; outboxDropped: number }> {
+  const outboxDropped = await dropOutboxForDeletedRequests();
+  return { outboxSent: await deliverOutbox(await listStaleOutbox(200)), outboxDropped };
 }
 
 async function announce(changed: Changed): Promise<void> {
@@ -404,12 +430,15 @@ async function mutate(requestId: number, actor: Actor, step: Step): Promise<Resu
       if (!(await saveRequestState(request.id, request.stateVersion, result.state, result.formData ?? null, connection))) {
         throw new ServiceError("CONFLICT", "Someone else just changed this request. Reload and try again.");
       }
-      await syncTasks(request.id, result.state, version.definition.nodes, connection, await loadWorkingCalendar(connection));
+      const calendar = await loadWorkingCalendar(connection);
+      await syncTasks(request.id, result.state, version.definition.nodes, connection, calendar);
       await appendEvents(request.id, result.events, actor.id, connection);
+      await afterChange(request.id, result.events, version.definition.nodes, actor, connection, calendar);
       const change = {
         request: { ...request, state: result.state, status: result.state.status, round: result.state.round, stateVersion: request.stateVersion + 1 },
         events: result.events,
         requesterName: await requesterName(request.requesterId, connection),
+        nodes: version.definition.nodes,
       };
       return { ...change, outboxIds: await queueMessages(change, connection) };
     });
@@ -419,6 +448,34 @@ async function mutate(requestId: number, actor: Actor, step: Step): Promise<Resu
   }
   await announce(changed);
   return { ok: true, value: { status: changed.request.status } };
+}
+
+// Bookkeeping every change shares:
+// - decisions also go to the audit log (audit gap: they were timeline-only);
+// - a handover restarts the response clock for the new person (R-07);
+// - time on hold doesn't count against the response time.
+async function afterChange(
+  requestId: number,
+  events: readonly EngineEvent[],
+  nodes: readonly WorkflowNode[],
+  actor: Actor,
+  db: Pick<PoolConnection, "query">,
+  calendar: Awaited<ReturnType<typeof loadWorkingCalendar>>,
+): Promise<void> {
+  for (const event of events) {
+    if (event.type === "TASK_DECIDED") {
+      await recordAudit(
+        { actorUserId: actor.id, action: "REQUEST_DECIDED", entityType: "REQUEST", entityId: requestId, onBehalfOfUserId: event.onBehalfOf ?? null, metadata: { decision: event.decision, step: event.nodeId, task: event.taskId } },
+        db,
+      );
+    } else if (event.type === "BLOCK_RESOLVED") {
+      await recordAudit({ actorUserId: actor.id, action: "REQUEST_UNBLOCKED", entityType: "REQUEST", entityId: requestId, metadata: { step: event.nodeId, how: event.action, userIds: event.userIds ?? [], reason: event.reason } }, db);
+    } else if (event.type === "RESUMED" && event.heldSince) {
+      await extendDueTimes(requestId, (Date.now() - new Date(event.heldSince).getTime()) / 1000, db);
+    }
+  }
+  const reassigned = events.filter((event) => event.type === "TASK_REASSIGNED").map((event) => (event as { taskId: string }).taskId);
+  await restartTaskClock(requestId, reassigned, nodes, db, calendar);
 }
 
 const context = (request: RequestRecord) => ({ requesterId: request.requesterId, formData: request.formData as EngineFormData, now: now() });
@@ -443,6 +500,9 @@ export function resumeRequest(requestId: number, actor: Actor) {
 // field values, if given, are checked against the request's form version.
 export async function resubmitRequest(input: { requestId: number; fields?: Record<string, string | undefined>; policy?: RestartPolicy }, actor: Actor) {
   const lookups = input.fields ? await loadFieldLookups() : undefined;
+  // D-101: where to restart is set per approval type (default: the step that asked).
+  const typePolicy = async (versionWorkflowId: number) => (await findWorkflow(versionWorkflowId))?.resubmitPolicy ?? "REQUESTING_STEP";
+  const policy = input.policy ?? (await policyForRequest(input.requestId, typePolicy));
   return mutate(input.requestId, actor, (request, definition, directory, { version, snapshot }) => {
     if (request.requesterId !== actor.id) throw new EngineError("NOT_AUTHORISED", "Only the person who raised the request can resubmit it.");
     let formData = request.formData as EngineFormData;
@@ -453,8 +513,27 @@ export async function resubmitRequest(input: { requestId: number; fields?: Recor
       if (Object.keys(doaErrors).length) throw new FormError(doaErrors);
       formData = parsed.data;
     }
-    const result = resubmit(definition, request.state, input.policy ?? "REQUESTING_STEP", { requesterId: request.requesterId, formData, now: now() }, directory);
+    const result = resubmit(definition, request.state, policy, { requesterId: request.requesterId, formData, now: now() }, directory);
     return { ...result, formData: input.fields ? formData : undefined };
+  });
+}
+
+async function policyForRequest(requestId: number, typePolicy: (workflowId: number) => Promise<RestartPolicy>): Promise<RestartPolicy> {
+  const [rows] = await getDbPool().query<(RowDataPacket & { workflow_id: number })[]>(
+    "SELECT v.workflow_id FROM approval_requests r JOIN workflow_versions v ON v.id = r.workflow_version_id WHERE r.id = ?",
+    [requestId],
+  );
+  return rows[0] ? typePolicy(rows[0].workflow_id) : "REQUESTING_STEP";
+}
+
+// ---- blocked steps (D-098) ---------------------------------------------------------
+// IT moves a step on that found nobody to approve (or no path).
+export function resolveBlockedStep(input: { requestId: number; nodeId: string; reason: string } & BlockAction, actor: Actor) {
+  return mutate(input.requestId, actor, (request, definition, directory) => {
+    if (!isAdmin(actor)) throw new ServiceError("NOT_AUTHORISED", "Only IT can move a blocked step on.");
+    const { requestId: _requestId, ...rest } = input;
+    void _requestId;
+    return resolveBlocked(definition, request.state, { ...rest, actorId: actor.id }, context(request), directory);
   });
 }
 
@@ -472,6 +551,7 @@ export function checkCustomSpec(spec: BuilderSpec, requesterId: number): string[
   // A DoA matrix belongs to an approval type the IT team owns (D-075).
   if (spec.stages.some((stage) => stage.kind === "DOA")) problems.push("Custom approvals don't use a DoA matrix; pick the levels directly.");
   for (const step of allSteps(spec)) {
+    if ((step.type ?? "APPROVE") !== "APPROVE") continue; // work and FYI may be your own
     if (step.approvers.kind === "PEOPLE" && step.approvers.userIds.every((id) => id === requesterId)) {
       problems.push(`"${step.label}": you can't approve your own request. Pick someone else.`);
     }
@@ -514,9 +594,22 @@ export async function submitCustomRequest(
     actor,
   );
   if (!created.ok) return created;
+  // R-06: if publishing or submitting fails, the one-off approval type made
+  // for it is removed again, so no orphan is left behind.
+  const discard = () => withTransaction((connection) => deleteUnusedWorkflow(created.value.workflowId, connection)).catch((error) => logError("custom approval: cleanup failed", error));
   const published = await publishVersion(created.value.versionId, actor);
-  if (!published.ok) return published;
-  return submitRequest({ workflowId: created.value.workflowId, title: input.title, fields: input.fields, submissionKey: input.submissionKey, allowDuplicate: true, isCustom: true }, actor);
+  if (!published.ok) {
+    await discard();
+    return published;
+  }
+  try {
+    const submitted = await submitRequest({ workflowId: created.value.workflowId, title: input.title, fields: input.fields, submissionKey: input.submissionKey, allowDuplicate: true, isCustom: true }, actor);
+    if (!submitted.ok || submitted.value.repeated) await discard();
+    return submitted;
+  } catch (error) {
+    await discard();
+    throw error;
+  }
 }
 
 // ---- handover (F-16, D-064) --------------------------------------------------------------

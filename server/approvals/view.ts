@@ -28,7 +28,9 @@ export interface RequestView {
   fields: { key: string; label: string; value: string }[];
   stages: MapStage[];
   timeline: { id: number; at: Date; text: string }[];
-  myTasks: { taskKey: string; label: string; forName: string | null }[];
+  myTasks: { taskKey: string; label: string; forName: string | null; work: boolean }[];
+  // IT only (D-098): steps that found nobody / no path, with what can be done.
+  blockedSteps: { nodeId: string; label: string; kind: "APPROVAL" | "CONDITION"; work: boolean; reason: string; paths: { edgeId: string; label: string }[] }[];
   comments: CommentItem[];
   attachments: { id: number; name: string; size: string; uploaderName: string; createdAt: Date; round: number }[];
   canAddFiles: boolean;
@@ -62,7 +64,9 @@ export async function loadRequestView(requestId: number, viewer: Actor): Promise
   const timelineRows = await listTimeline(requestId);
   const actorIds = timelineRows.flatMap((row) => {
     const payload = row.payload as unknown as Record<string, unknown>;
-    return ["actorId", "approverId", "onBehalfOf"].map((key) => payload[key]).filter((value): value is number => typeof value === "number");
+    const single = ["actorId", "approverId", "onBehalfOf", "fromId", "toId"].map((key) => payload[key]);
+    const lists = Array.isArray(payload.userIds) ? (payload.userIds as unknown[]) : [];
+    return [...single, ...lists].filter((value): value is number => typeof value === "number");
   });
   const names = await userNames([...new Set([request.requesterId, ...peopleInState(state), ...personFieldIds, ...actorIds])]);
   const lookupNames = version.form.some((field) => field.type === "LOOKUP") ? await loadLookupNames() : undefined;
@@ -71,11 +75,33 @@ export async function loadRequestView(requestId: number, viewer: Actor): Promise
   const nameOf = (userId: number) => names.get(userId) ?? `User #${userId}`;
 
   // Mine, plus those of anyone who named me their delegate today (D-062);
-  // never on my own request.
+  // never an approval on my own request (work on it may be mine, D-097).
+  const workNodes = new Set(version.definition.nodes.filter((node) => node.kind === "APPROVAL" && node.mode === "WORK").map((node) => node.id));
   const delegators = await activeDelegatorsFor(viewer.id);
   const myPending = state.tasks.filter(
-    (task) => task.status === "PENDING" && task.round === state.round && (task.approverId === viewer.id || delegators.has(task.approverId)) && request.requesterId !== viewer.id,
+    (task) =>
+      task.status === "PENDING" &&
+      task.round === state.round &&
+      (task.approverId === viewer.id || delegators.has(task.approverId)) &&
+      (request.requesterId !== viewer.id || workNodes.has(task.nodeId)),
   );
+  const edgeLabel = (edgeId: string) => {
+    const edge = version.definition.edges.find((item) => item.id === edgeId);
+    return edge ? `${edge.isDefault ? "Otherwise" : "When it matches"} → ${labelOf(edge.to)}` : edgeId;
+  };
+  const blockedSteps =
+    isAdmin(viewer) && state.status === "IN_PROGRESS"
+      ? version.definition.nodes
+          .filter((node) => state.nodes[node.id]?.status === "BLOCKED" && (node.kind === "APPROVAL" || node.kind === "CONDITION"))
+          .map((node) => ({
+            nodeId: node.id,
+            label: node.label,
+            kind: node.kind as "APPROVAL" | "CONDITION",
+            work: workNodes.has(node.id),
+            reason: state.nodes[node.id]?.reason === "NO_MATCHING_BRANCH" ? "No path matches" : state.nodes[node.id]?.reason === "NOT_ENOUGH_APPROVERS" ? "Not enough approvers" : "Nobody eligible to approve",
+            paths: node.kind === "CONDITION" ? version.definition.edges.filter((edge) => edge.from === node.id).map((edge) => ({ edgeId: edge.id, label: edgeLabel(edge.id) })) : [],
+          }))
+      : [];
   const holdNode = state.hold?.nodeId;
 
   return {
@@ -95,12 +121,13 @@ export async function loadRequestView(requestId: number, viewer: Actor): Promise
       fieldLabel: (key) => version.form.find((field) => field.key === key)?.label ?? key,
     }),
     timeline: timelineRows
-      .map((row) => ({ id: row.id, at: row.createdAt, text: describeEvent(row.payload, labelOf, nameOf) }))
+      .map((row) => ({ id: row.id, at: row.createdAt, text: describeEvent(row.payload, labelOf, nameOf, (nodeId) => workNodes.has(nodeId)) }))
       .filter((row): row is { id: number; at: Date; text: string } => row.text !== null),
     myTasks:
       state.status === "IN_PROGRESS"
-        ? myPending.map((task) => ({ taskKey: task.id, label: labelOf(task.nodeId), forName: task.approverId === viewer.id ? null : nameOf(task.approverId) }))
+        ? myPending.map((task) => ({ taskKey: task.id, label: labelOf(task.nodeId), forName: task.approverId === viewer.id ? null : nameOf(task.approverId), work: workNodes.has(task.nodeId) }))
         : [],
+    blockedSteps,
     comments: await listComments(requestId),
     attachments: (await listAttachments(requestId)).map((file) => ({ id: file.id, name: file.name, size: formatSize(file.sizeBytes), uploaderName: file.uploaderName, createdAt: file.createdAt, round: file.round })),
     canAddFiles: ["IN_PROGRESS", "ON_HOLD", "CHANGES_REQUIRED"].includes(state.status),

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireApiArea } from "@/server/authorization/guards";
-import { decideTask, holdTask, reopenRequest, resubmitRequest, resumeRequest, submitRequest, withdrawRequest, type Actor } from "@/server/approvals/service";
+import { decideTask, holdTask, reopenRequest, resolveBlockedStep, resubmitRequest, resumeRequest, submitRequest, withdrawRequest, type Actor } from "@/server/approvals/service";
 import { addAttachments, filesFrom, prepareFiles } from "@/server/attachments/service";
 import { logError } from "@/lib/logging/logger";
 import type { ActionResult } from "@/lib/http/action-result";
@@ -104,7 +104,41 @@ export async function decideAction(_previous: ActionResult | null, formData: For
   }
   revalidatePath(`/users/requests/${requestId}`);
   revalidatePath("/users");
-  return { ok: true, message: DONE[decision] };
+  return { ok: true, message: decision === "APPROVE" && formData.get("work") === "1" ? "Marked as done." : DONE[decision] };
+}
+
+// IT moves a blocked step on (D-098). The service checks the role again.
+const BLOCK_ACTIONS = new Set(["ASSIGN", "SKIP", "RETRY", "TAKE_PATH"]);
+
+export async function resolveBlockedAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const me = await actor();
+  const requestId = num(formData.get("requestId"));
+  const nodeId = String(formData.get("nodeId") ?? "");
+  const action = String(formData.get("action") ?? "");
+  if (!me || requestId === null || !/^[A-Za-z0-9_-]{1,80}$/.test(nodeId) || !BLOCK_ACTIONS.has(action)) return NOT_FOUND;
+  const reason = String(formData.get("reason") ?? "").trim();
+  if (reason.length < 3 || reason.length > 500) return { ok: false, message: "Give a short reason.", fieldErrors: { reason: "Give a reason (3 to 500 characters)." } };
+  const userIds = formData
+    .getAll("userIds")
+    .map((value) => num(value))
+    .filter((value): value is number => value !== null);
+  if (action === "ASSIGN" && userIds.length === 0) return { ok: false, message: "Choose at least one person.", fieldErrors: { userIds: "Choose at least one person." } };
+  const edgeId = String(formData.get("edgeId") ?? "");
+  try {
+    const how =
+      action === "ASSIGN"
+        ? { action: "ASSIGN" as const, userIds }
+        : action === "TAKE_PATH"
+          ? { action: "TAKE_PATH" as const, edgeId }
+          : { action: action as "SKIP" | "RETRY" };
+    const result = await resolveBlockedStep({ requestId, nodeId, reason, ...how }, me);
+    if (!result.ok) return { ok: false, message: result.message };
+  } catch (error) {
+    logError("resolveBlockedAction failed", error, { action });
+    return { ok: false, message: "Something went wrong. Please try again." };
+  }
+  revalidatePath(`/users/requests/${requestId}`);
+  return { ok: true, message: "Done. The request is moving again." };
 }
 
 export async function resumeAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {

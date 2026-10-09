@@ -20,7 +20,13 @@ export function requestLink(baseUrl: string, requestId: number): string {
 export function messagesForEvents(
   events: readonly EngineEvent[],
   request: RequestSummary,
-  context: { baseUrl: string; adminIds: readonly number[]; labelOf?: (nodeId: string) => string },
+  context: {
+    baseUrl: string;
+    adminIds: readonly number[];
+    labelOf?: (nodeId: string) => string;
+    // D-097: a work step's task is "to do", not "to approve".
+    isWorkStep?: (nodeId: string) => boolean;
+  },
 ): NotifyInput[] {
   const link = requestLink(context.baseUrl, request.id);
   const ref = `${request.requestNo} · ${request.title}`;
@@ -30,6 +36,22 @@ export function messagesForEvents(
   for (const event of events) {
     switch (event.type) {
       case "TASK_CREATED":
+        if (context.isWorkStep?.(event.nodeId)) {
+          const step = context.labelOf?.(event.nodeId) ?? event.nodeId;
+          out.push({
+            eventType: "TASK_ASSIGNED",
+            userId: event.approverId,
+            title: "Task for you",
+            message: `${step}: ${ref}`,
+            deepLink: link,
+            email: {
+              subject: `Task for you: ${request.requestNo}`,
+              text: `There is work for you on this request: ${step}.\n\n${ref}\n\nOpen it, do the work, then mark it done (sign-in required): ${link}`,
+            },
+            whatsappVariables: vars({ step, requester_name: request.requesterName }),
+          });
+          break;
+        }
         out.push({
           eventType: "APPROVAL_NEEDED",
           userId: event.approverId,
@@ -128,6 +150,93 @@ export function messagesForEvents(
           whatsappVariables: vars({ reason: event.reason ?? "" }),
         });
         break;
+      case "NOTIFIED": {
+        const step = context.labelOf?.(event.nodeId) ?? event.nodeId;
+        for (const userId of event.userIds) {
+          out.push({
+            eventType: "REQUEST_FYI",
+            userId,
+            title: "For your information",
+            message: `${step}: ${ref}${event.note ? `. ${event.note}` : ""}`,
+            deepLink: link,
+            email: {
+              subject: `FYI: ${request.requestNo}`,
+              text: `For your information (nothing to do): ${step}.\n\n${ref}${event.note ? `\n${event.note}` : ""}\n\n${link}`,
+            },
+            whatsappVariables: vars({ step, note: event.note ?? "" }),
+          });
+        }
+        break;
+      }
+      case "RESUMED": {
+        const told = new Set<number>([request.requesterId, ...(event.pendingApproverIds ?? [])]);
+        told.delete(event.actorId);
+        for (const userId of told) {
+          out.push({
+            eventType: "REQUEST_RESUMED",
+            userId,
+            title: "Request resumed",
+            message: `Back in progress after a hold: ${ref}`,
+            deepLink: link,
+            email: { subject: `Resumed: ${request.requestNo}`, text: `This request is no longer on hold and is waiting for approval again.\n\n${ref}\n\n${link}` },
+            whatsappVariables: vars(),
+          });
+        }
+        break;
+      }
+      case "RESUBMITTED":
+        // The approvers it now waits for are told by TASK_CREATED; the person
+        // who asked for the changes hears that they were made.
+        if (event.changesAskedBy && event.changesAskedBy !== request.requesterId) {
+          out.push({
+            eventType: "REQUEST_RESUBMITTED",
+            userId: event.changesAskedBy,
+            title: "Changes made",
+            message: `${request.requesterName} made the changes you asked for: ${ref}`,
+            deepLink: link,
+            email: {
+              subject: `Resubmitted: ${request.requestNo}`,
+              text: `${request.requesterName} made the changes you asked for and resubmitted the request.\n\n${ref}\n\n${link}`,
+            },
+            whatsappVariables: vars({ requester_name: request.requesterName }),
+          });
+        }
+        break;
+      case "DELETED":
+        for (const approverId of event.approverIds) {
+          out.push({
+            eventType: "REQUEST_WITHDRAWN",
+            userId: approverId,
+            title: "Request removed",
+            message: `No longer needed: ${ref} was removed by IT.`,
+            deepLink: null,
+            email: { subject: `Removed: ${request.requestNo}`, text: `This request was removed by IT, so your approval is no longer needed.\n\n${ref}\nReason: ${event.reason}` },
+            whatsappVariables: vars({ requester_name: request.requesterName }),
+          });
+        }
+        out.push({
+          eventType: "REQUEST_DELETED",
+          userId: request.requesterId,
+          title: "Request removed",
+          message: `${ref} was removed by IT. Reason: ${event.reason}`,
+          deepLink: null,
+          email: { subject: `Removed: ${request.requestNo}`, text: `Your request was removed by IT.\n\n${ref}\nReason: ${event.reason}\n\nAsk IT if you think this is a mistake.` },
+          whatsappVariables: vars({ reason: event.reason }),
+        });
+        break;
+      case "BLOCK_RESOLVED": {
+        const step = context.labelOf?.(event.nodeId) ?? event.nodeId;
+        out.push({
+          eventType: "REQUEST_UNBLOCKED",
+          userId: request.requesterId,
+          title: "Request moving again",
+          message: `IT moved ${ref} on at step "${step}".`,
+          deepLink: link,
+          email: { subject: `Moving again: ${request.requestNo}`, text: `IT fixed the step that was holding up your request ("${step}").\n\n${ref}\nNote from IT: ${event.reason}\n\n${link}` },
+          whatsappVariables: vars({ step }),
+        });
+        break;
+      }
       case "NODE_BLOCKED": {
         // Never silently approved: IT must fix the missing approver (G-02).
         const step = context.labelOf?.(event.nodeId) ?? event.nodeId;
