@@ -58,3 +58,67 @@ export function describeEvent(event: TimelineEvent, labelOf: (nodeId: string) =>
       return null;
   }
 }
+
+// RD-01: what kind of moment each event is, for its icon and colour. The
+// words always come from describeEvent; the kind only adds the picture.
+export type TimelineKind = "submit" | "file" | "assign" | "approve" | "reject" | "changes" | "step" | "skip" | "block" | "hold" | "resume" | "resubmit" | "handover" | "withdraw" | "done" | "info" | "admin";
+
+export function eventKind(event: TimelineEvent): TimelineKind {
+  switch (event.type) {
+    case "SUBMITTED":
+      return "submit";
+    case "ATTACHMENTS_ADDED":
+      return "file";
+    case "TASK_CREATED":
+      return "assign";
+    case "TASK_DECIDED":
+      return event.decision === "REJECT" ? "reject" : "approve";
+    case "NODE_APPROVED":
+      return "step";
+    case "NODE_SKIPPED":
+      return "skip";
+    case "NODE_BLOCKED":
+      return "block";
+    case "INSTANCE_APPROVED":
+      return "done";
+    case "INSTANCE_REJECTED":
+      return "reject";
+    case "CHANGES_REQUESTED":
+      return "changes";
+    case "PUT_ON_HOLD":
+      return "hold";
+    case "RESUMED":
+      return "resume";
+    case "RESUBMITTED":
+    case "REOPENED":
+      return "resubmit";
+    case "TASK_REASSIGNED":
+      return "handover";
+    case "WITHDRAWN":
+      return "withdraw";
+    case "BLOCK_RESOLVED":
+    case "DELETED":
+      return "admin";
+    default:
+      return "info";
+  }
+}
+
+// "2 h ago" style, against a given now (pure; server-rendered).
+export function relativeTime(at: Date, now: Date): string {
+  const seconds = Math.round((now.getTime() - at.getTime()) / 1000);
+  if (seconds < 60) return "just now";
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours} h ago`;
+  const days = Math.round(hours / 24);
+  if (days < 30) return days === 1 ? "yesterday" : `${days} days ago`;
+  const months = Math.round(days / 30);
+  return months < 12 ? `${months} month${months === 1 ? "" : "s"} ago` : `${Math.round(months / 12)} year${months < 24 ? "" : "s"} ago`;
+}
+
+// The India date a moment falls on, for grouping by day.
+export function indiaDay(at: Date): string {
+  return new Date(at.getTime() + 330 * 60_000).toISOString().slice(0, 10);
+}

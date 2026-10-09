@@ -103,6 +103,28 @@ export function checkCount(existing: number, adding: number): string | null {
   return null;
 }
 
+// RD-02: only these may be shown in the browser. Never SVG or HTML (they can
+// carry script); every other type is always a download.
+export function previewKind(contentType: string): "image" | "pdf" | null {
+  if (contentType === "image/png" || contentType === "image/jpeg" || contentType === "image/webp") return "image";
+  if (contentType === "application/pdf") return "pdf";
+  return null;
+}
+
+export function inlineHeaders(name: string, contentType: string, size: number): Record<string, string> {
+  const ascii = name.replace(/[^\x20-\x7e]/g, "_").replace(/["\\]/g, "_");
+  return {
+    "Content-Type": contentType,
+    "Content-Length": String(size),
+    "Content-Disposition": `inline; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(name)}`,
+    "X-Content-Type-Options": "nosniff",
+    "Cache-Control": "private, no-store",
+    "Cross-Origin-Resource-Policy": "same-origin",
+    // Images: nothing at all may run. PDFs: the browser's own viewer only.
+    "Content-Security-Policy": contentType === "application/pdf" ? "default-src 'none'; object-src 'none'; frame-ancestors 'self'" : "default-src 'none'; sandbox; frame-ancestors 'self'",
+  };
+}
+
 // Always a download, never shown inline, with a safe ASCII fallback name.
 export function downloadHeaders(name: string, contentType: string, size: number): Record<string, string> {
   const ascii = name.replace(/[^\x20-\x7e]/g, "_").replace(/["\\]/g, "_");

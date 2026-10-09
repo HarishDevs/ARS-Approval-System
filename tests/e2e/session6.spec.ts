@@ -68,7 +68,7 @@ test("'Try as' a demo buyer; raise a purchase with a quote attached", async ({ p
   // ₹50,000 is under the first band: only the SCM head approves.
   await expect(page.getByText("Purchase & SCM head").first()).toBeVisible();
   await expect(page.getByText(/Arjun Das \(demo\) attached quote\.pdf/)).toBeVisible();
-  const link = page.getByRole("link", { name: "quote.pdf" });
+  const link = page.getByRole("link", { name: "Download quote.pdf" });
   downloadPath = (await link.getAttribute("href")) ?? "";
   const response = await page.request.get(downloadPath);
   expect(response.status()).toBe(200);

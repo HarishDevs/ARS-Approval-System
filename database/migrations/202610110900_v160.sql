@@ -42,3 +42,18 @@ CREATE TABLE consultations (
   CONSTRAINT fk_consultations_requested_by FOREIGN KEY (requested_by) REFERENCES users(id),
   CONSTRAINT fk_consultations_consultee FOREIGN KEY (consultee_id) REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- RD-03 What was submitted in each round, so a resubmission can show what
+-- changed. Written by the service when a request is submitted, resubmitted
+-- or reopened; older requests have no rows (the page says so).
+CREATE TABLE request_revisions (
+  request_id   BIGINT UNSIGNED NOT NULL,
+  round        INT UNSIGNED    NOT NULL,
+  title        VARCHAR(200)    NOT NULL,
+  fields_json  JSON            NOT NULL,
+  created_by   BIGINT UNSIGNED NOT NULL,
+  created_at   DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (request_id, round),
+  CONSTRAINT fk_request_revisions_request FOREIGN KEY (request_id) REFERENCES approval_requests(id),
+  CONSTRAINT fk_request_revisions_user FOREIGN KEY (created_by) REFERENCES users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

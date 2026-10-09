@@ -32,6 +32,9 @@ function sameSecret(given: string | null, expected: string): boolean {
 }
 
 const UNSAFE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+// Routes that send files set their own, stricter policy (a sandbox for
+// attachments and the PDF summary, RD-02); the page policy mustn't replace it.
+const FILE_ROUTE = /^\/api\/(attachments\/\d+|requests\/\d+\/summary\.pdf)$/;
 // Called by machines, not browsers: the cron job and the provider webhook.
 const MACHINE_APIS = ["/api/jobs/", "/api/webhooks/"];
 
@@ -78,7 +81,7 @@ export function middleware(request: NextRequest) {
   requestHeaders.set("Content-Security-Policy", csp);
   requestHeaders.set(REQUEST_ID_HEADER, requestId);
   const response = NextResponse.next({ request: { headers: requestHeaders } });
-  response.headers.set("Content-Security-Policy", csp);
+  if (!FILE_ROUTE.test(pathname)) response.headers.set("Content-Security-Policy", csp);
   response.headers.set(REQUEST_ID_HEADER, requestId);
   return response;
 }

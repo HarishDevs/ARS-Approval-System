@@ -73,21 +73,68 @@ test("FB-03 mark all as read is instant and can be undone", async ({ page, conte
   await page.getByRole("button", { name: "Mark all as read" }).click();
   await expect(page.getByText(/marked as read/)).toBeVisible();
   await expect(page.getByText("Unread")).toHaveCount(0);
-  await page.getByRole("button", { name: "Undo" }).click();
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
   await expect(page.getByText("Back to unread")).toBeVisible();
   await expect(page.getByText("Unread").first()).toBeAttached();
 });
 
 test("FB-03 deleting a saved view can be undone", async ({ page, context }) => {
+  const name = `E2E undo ${Date.now().toString(36)}`;
   await as(context, "E2E_REQ");
   await page.goto("/users/search?q=E2E");
-  await page.getByLabel("Save this search as").fill("E2E undo view");
+  await page.getByLabel("Save this search as").fill(name);
   await page.getByRole("button", { name: "Save view" }).click();
-  await expect(page.getByRole("link", { name: "E2E undo view" })).toBeVisible();
-  await page.getByRole("button", { name: "Delete the view E2E undo view" }).click();
-  await expect(page.getByText('Deleted "E2E undo view"')).toBeVisible();
-  await expect(page.getByRole("link", { name: "E2E undo view" })).toHaveCount(0);
-  await page.getByRole("button", { name: "Undo" }).click();
-  await expect(page.getByText('"E2E undo view" is back')).toBeVisible();
-  await expect(page.getByRole("link", { name: "E2E undo view" })).toBeVisible();
+  await expect(page.getByRole("link", { name })).toBeVisible();
+  await page.getByRole("button", { name: `Delete the view ${name}` }).click();
+  await expect(page.getByText(`Deleted "${name}"`)).toBeVisible();
+  await expect(page.getByRole("link", { name })).toHaveCount(0);
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  await expect(page.getByText(`"${name}" is back`)).toBeVisible();
+  await expect(page.getByRole("link", { name })).toBeVisible();
+});
+
+// A 1×1 PNG, built in the test (nothing downloaded).
+const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
+
+test("RD-01/RD-03 the history is grouped by day, and a resubmit shows what changed", async ({ page, context }) => {
+  await as(context, "E2E_REQ");
+  await page.goto("/users/requests?q=Laptop");
+  await page.getByRole("link", { name: "Laptop for the new engineer" }).first().click();
+  const changes = page.getByRole("region", { name: "What changed in round 2" });
+  await expect(changes).toBeVisible();
+  await expect(changes).toContainText("Amount");
+  await expect(changes).toContainText("82,000");
+  const history = page.getByRole("region", { name: "Timeline" });
+  await expect(history.getByText("Resubmitted (round 2)", { exact: true })).toBeVisible();
+  await expect(history.locator("time").first()).toHaveAttribute("datetime", /\d{4}-\d{2}-\d{2}T/);
+});
+
+test("RD-02 an image previews inside the page; other files only download", async ({ page, context }) => {
+  await as(context, "E2E_REQ");
+  await page.goto("/users/requests?q=desks");
+  await page.getByRole("link", { name: "E2E bulk desks" }).first().click();
+  await page.getByLabel("Choose files to attach").setInputFiles([
+    { name: "site-photo.png", mimeType: "image/png", buffer: PNG },
+    { name: "notes.txt", mimeType: "text/plain", buffer: Buffer.from("plain notes") },
+  ]);
+  await page.getByRole("button", { name: "Attach", exact: true }).click();
+  await page.getByRole("button", { name: "Preview site-photo.png" }).click();
+  const preview = page.getByRole("dialog", { name: "site-photo.png" });
+  const image = preview.getByRole("img", { name: "site-photo.png" });
+  await expect(image).toBeVisible();
+  expect(await image.evaluate((node: HTMLImageElement) => node.naturalWidth)).toBe(1);
+  await page.keyboard.press("Escape");
+
+  const href = await page.getByRole("link", { name: "Download notes.txt" }).getAttribute("href");
+  const text = await page.request.get(`${href}?inline=1`);
+  expect(text.headers()["content-disposition"]).toMatch(/^attachment;/);
+  // Downloads keep their own sandbox policy too (the page policy doesn't replace it).
+  expect(text.headers()["content-security-policy"]).toContain("sandbox");
+  const imageHref = await page.getByRole("link", { name: "Download site-photo.png" }).getAttribute("href");
+  const inline = await page.request.get(`${imageHref}?inline=1`);
+  expect(inline.headers()["content-disposition"]).toMatch(/^inline;/);
+  expect(inline.headers()["content-security-policy"]).toContain("sandbox");
+  // An outsider gets the same 404 for the preview as for the download.
+  await as(context, "E2E_STAFF");
+  expect((await page.request.get(`${imageHref}?inline=1`)).status()).toBe(404);
 });

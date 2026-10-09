@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { ActionResult } from "@/lib/http/action-result";
 import { Spinner } from "@/features/ui/Spinner";
 import { ConfirmDialog } from "@/features/ui/Dialog";
@@ -88,6 +89,7 @@ export function useActionForm(action: Action, options: ConfirmOptions = {}) {
   const [pending, setPending] = useState(false);
   const busy = useRef(false);
   const latest = useRef<ActionResult | null>(null);
+  const router = useRouter();
   function dispatch(formData: FormData) {
     if (busy.current) return;
     busy.current = true;
@@ -96,6 +98,10 @@ export function useActionForm(action: Action, options: ConfirmOptions = {}) {
       .then((next) => {
         latest.current = next;
         setResult(next);
+        // The action's revalidatePath answer doesn't always repaint a page
+        // that streams behind a loading skeleton (v1.6.0 testing); ask for
+        // the page again so what's shown always matches the server.
+        if (next.ok) router.refresh();
       })
       .finally(() => {
         busy.current = false;

@@ -9,6 +9,9 @@ Severity: **P0** critical, **P1** major workflow or access, **P2** significant, 
 | V6-D02 | P3 | A page error replaces the whole space, including the navigation (single root `error.tsx`) | Open → Phase 2 |
 | V6-D03 | P3 | Mark-all-read reloads the page; no undo | Open → Phase 4 |
 | V6-D04 | P3 | Hex colours outside the tokens (disabled button, auth screens) | Open → Phase 1 |
+| V6-D05 | P3 | Search also listed requests where the person had been a delegate for a task that was already decided; opening one gave 404 (search and the request page used different rules) | **Fixed** (Phase 4): one shared rule, `lib/db/repositories/visibility.ts`; integration test |
+| V6-D06 | P2 | Found while building: on Next 15.5 a route-level `loading.tsx` (a) turns a later `notFound()` into HTTP 200, and (b) now and then stops the page refreshing after a Server Action (4/4 failures with it, 4/4 passes without, same test) | **Fixed by design**: skeletons only on read-only pages that never call `notFound()`, listed in `tests/ui/loading-guard.test.ts`; forms also ask for a refresh after success (`useActionForm`) |
+| V6-D07 | P3 | The middleware replaced the sandbox CSP that attachment downloads set for themselves (since v1.0) | **Fixed** (Phase 5): file routes keep their own policy; E2E checks the header |
 
 ## Security and compliance
 | ID | Sev | Issue | Status |

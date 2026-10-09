@@ -43,6 +43,7 @@ import { notify } from "@/server/notifications/notify";
 import { messagesForEvents } from "@/server/approvals/messages";
 import { decide, putOnHold, reassignTask, reopen, resolveBlocked, resubmit, resume, simulate, startInstance, validateWorkflow, withdraw, EngineError } from "@/server/engine";
 import type { BlockAction, Decision, EngineEvent, EngineResult, FormData as EngineFormData, RestartPolicy, ValidationResult, WorkflowDefinition, WorkflowNode } from "@/server/engine";
+import { insertRevision } from "@/lib/db/repositories/revisions.repository";
 import { claimOutbox, dropOutboxForDeletedRequests, insertOutbox, listStaleOutbox, markOutboxSent } from "@/lib/db/repositories/outbox.repository";
 import type { NotifyInput } from "@/server/notifications/notify";
 import { logError } from "@/lib/logging/logger";
@@ -414,6 +415,7 @@ export async function submitRequest(
       const id = await insertRequest({ requestNo, workflowVersionId: version.id, requesterId: actor.id, title, formData, state: result.state, submissionKey: input.submissionKey ?? null }, connection);
       await syncTasks(id, result.state, version.definition.nodes, connection, await loadWorkingCalendar(connection));
       await appendEvents(id, [{ type: "SUBMITTED", requestNo }, ...result.events], actor.id, connection);
+      await insertRevision(id, result.state.round, title, formData, actor.id, connection);
       const request: RequestRecord = {
         id,
         requestNo,
@@ -462,6 +464,12 @@ async function mutate(requestId: number, actor: Actor, step: Step): Promise<Resu
       const calendar = await loadWorkingCalendar(connection);
       await syncTasks(request.id, result.state, version.definition.nodes, connection, calendar);
       await appendEvents(request.id, result.events, actor.id, connection);
+      // RD-03: a new round keeps what was submitted in it (and, for a
+      // request from before v1.6.0, what the previous round had).
+      if (result.state.round > request.round) {
+        await insertRevision(request.id, request.round, request.title, request.formData, request.requesterId, connection);
+        await insertRevision(request.id, result.state.round, request.title, result.formData ?? request.formData, actor.id, connection);
+      }
       await afterChange(request.id, result.events, version.definition.nodes, actor, connection, calendar);
       const change = {
         request: { ...request, state: result.state, status: result.state.status, round: result.state.round, stateVersion: request.stateVersion + 1 },

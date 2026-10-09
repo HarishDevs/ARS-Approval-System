@@ -4,12 +4,14 @@ import { findRequest, findWorkflow, findWorkflowVersion, isParticipant, listTime
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { activeDelegatorsFor, listComments, type CommentItem } from "@/lib/db/repositories/collab.repository";
 import { buildStepMap, peopleInState, summarizeTracker, type MapStage, type TrackerSummary } from "@/server/approvals/step-map";
-import { describeEvent } from "@/server/approvals/timeline";
+import { describeEvent, eventKind, type TimelineKind } from "@/server/approvals/timeline";
 import { displayValue, type FormField } from "@/server/forms/fields";
 import type { FormData as EngineFormData, InstanceStatus } from "@/server/engine/types";
 import type { Actor } from "@/server/approvals/service";
 import { listAttachments } from "@/lib/db/repositories/attachments.repository";
-import { formatSize } from "@/server/attachments/files";
+import { formatSize, previewKind } from "@/server/attachments/files";
+import { listRevisions } from "@/lib/db/repositories/revisions.repository";
+import { diffRounds, type FieldChange } from "@/server/approvals/revisions";
 
 // Everything the request page shows (F-14), after the record-level check
 // (P1-30a layer 3, D-057): the requester, anyone with a task on it, or
@@ -29,12 +31,15 @@ export interface RequestView {
   fields: { key: string; label: string; value: string }[];
   stages: MapStage[];
   tracker: TrackerSummary;
-  timeline: { id: number; at: Date; text: string }[];
+  timeline: { id: number; at: Date; text: string; kind: TimelineKind }[];
   myTasks: { taskKey: string; label: string; forName: string | null; work: boolean }[];
   // IT only (D-098): steps that found nobody / no path, with what can be done.
   blockedSteps: { nodeId: string; label: string; kind: "APPROVAL" | "CONDITION"; work: boolean; reason: string; paths: { edgeId: string; label: string }[] }[];
   comments: CommentItem[];
-  attachments: { id: number; name: string; size: string; uploaderName: string; createdAt: Date; round: number }[];
+  attachments: { id: number; name: string; size: string; uploaderName: string; createdAt: Date; round: number; preview: "image" | "pdf" | null }[];
+  // RD-03: after a resubmit, what changed since the round before (null when
+  // round 1; "unrecorded" for requests from before v1.6.0).
+  changes: { round: number; fields: FieldChange[]; files: string[] } | "unrecorded" | null;
   canAddFiles: boolean;
   canResume: boolean;
   canResubmit: boolean;
@@ -70,13 +75,18 @@ export async function loadRequestView(requestId: number, viewer: Actor): Promise
     .map((field) => request.formData[field.key])
     .filter((value): value is number => typeof value === "number");
   const timelineRows = await listTimeline(requestId);
+  const revisions = state.round > 1 ? await listRevisions(requestId) : [];
+  const revisionPeople = version.form
+    .filter((field) => field.type === "PERSON")
+    .flatMap((field) => revisions.map((revision) => revision.fields[field.key]))
+    .filter((value): value is number => typeof value === "number");
   const actorIds = timelineRows.flatMap((row) => {
     const payload = row.payload as unknown as Record<string, unknown>;
     const single = ["actorId", "approverId", "onBehalfOf", "fromId", "toId"].map((key) => payload[key]);
     const lists = Array.isArray(payload.userIds) ? (payload.userIds as unknown[]) : [];
     return [...single, ...lists].filter((value): value is number => typeof value === "number");
   });
-  const names = await userNames([...new Set([request.requesterId, ...peopleInState(state), ...personFieldIds, ...actorIds])]);
+  const names = await userNames([...new Set([request.requesterId, ...peopleInState(state), ...personFieldIds, ...actorIds, ...revisionPeople])]);
   const lookupNames = version.form.some((field) => field.type === "LOOKUP") ? await loadLookupNames() : undefined;
   const labels = new Map(version.definition.nodes.map((node) => [node.id, node.label]));
   const labelOf = (nodeId: string) => labels.get(nodeId) ?? nodeId;
@@ -112,6 +122,7 @@ export async function loadRequestView(requestId: number, viewer: Actor): Promise
       : [];
   const holdNode = state.hold?.nodeId;
 
+  const attachmentRows = await listAttachments(requestId);
   const stages = buildStepMap(version.definition, state, version.builder, names, {
     formData: request.formData as EngineFormData,
     fieldLabel: (key) => version.form.find((field) => field.key === key)?.label ?? key,
@@ -133,15 +144,26 @@ export async function loadRequestView(requestId: number, viewer: Actor): Promise
     stages,
     tracker: summarizeTracker(stages, { status: state.status, requesterName: nameOf(request.requesterId), closedAt: closedAt(state), holdSince: state.hold?.at ?? null }),
     timeline: timelineRows
-      .map((row) => ({ id: row.id, at: row.createdAt, text: describeEvent(row.payload, labelOf, nameOf, (nodeId) => workNodes.has(nodeId)) }))
-      .filter((row): row is { id: number; at: Date; text: string } => row.text !== null),
+      .map((row) => ({ id: row.id, at: row.createdAt, text: describeEvent(row.payload, labelOf, nameOf, (nodeId) => workNodes.has(nodeId)), kind: eventKind(row.payload) }))
+      .filter((row): row is { id: number; at: Date; text: string; kind: TimelineKind } => row.text !== null),
     myTasks:
       state.status === "IN_PROGRESS"
         ? myPending.map((task) => ({ taskKey: task.id, label: labelOf(task.nodeId), forName: task.approverId === viewer.id ? null : nameOf(task.approverId), work: workNodes.has(task.nodeId) }))
         : [],
     blockedSteps,
     comments: await listComments(requestId),
-    attachments: (await listAttachments(requestId)).map((file) => ({ id: file.id, name: file.name, size: formatSize(file.sizeBytes), uploaderName: file.uploaderName, createdAt: file.createdAt, round: file.round })),
+    attachments: attachmentRows.map((file) => ({ id: file.id, name: file.name, size: formatSize(file.sizeBytes), uploaderName: file.uploaderName, createdAt: file.createdAt, round: file.round, preview: previewKind(file.contentType) })),
+    changes: (() => {
+      if (state.round <= 1) return null;
+      const before = revisions.find((revision) => revision.round === state.round - 1);
+      const after = revisions.find((revision) => revision.round === state.round);
+      if (!before || !after) return "unrecorded" as const;
+      return {
+        round: state.round,
+        fields: diffRounds(version.form, before, after, (field, value) => displayValue(field, value, names, lookupNames)),
+        files: attachmentRows.filter((file) => file.round === state.round).map((file) => file.name),
+      };
+    })(),
     canAddFiles: ["IN_PROGRESS", "ON_HOLD", "CHANGES_REQUIRED"].includes(state.status),
     canResume: state.status === "ON_HOLD" && (isAdmin(viewer) || myPending.some((task) => task.nodeId === holdNode)),
     canResubmit: state.status === "CHANGES_REQUIRED" && request.requesterId === viewer.id,

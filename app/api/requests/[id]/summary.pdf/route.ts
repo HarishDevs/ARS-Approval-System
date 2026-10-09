@@ -58,6 +58,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
         "Content-Length": String(bytes.length),
         "Cache-Control": "private, no-store",
         "X-Content-Type-Options": "nosniff",
+        "Content-Security-Policy": "default-src 'none'; sandbox",
       },
     });
   } catch (error) {

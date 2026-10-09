@@ -11,6 +11,9 @@ import { listApproverOptions } from "@/lib/db/repositories/approvers.repository"
 import { RequestForm } from "@/features/requests/RequestForm";
 import { CommentForm } from "@/features/requests/Discussion";
 import { AddFilesForm } from "@/features/requests/Attachments";
+import { AttachmentList } from "@/features/requests/AttachmentList";
+import { Timeline } from "@/features/requests/Timeline";
+import { SectionBoundary } from "@/features/ui/SectionBoundary";
 import { loadRequestView } from "@/server/approvals/view";
 import { recordView } from "@/lib/db/repositories/recent.repository";
 import { listActiveUserOptions } from "@/lib/db/repositories/admin-users.repository";
@@ -140,6 +143,49 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
               {view.canReopen && <ReopenForm requestId={view.id} />}
             </section>
           )}
+          {view.changes === "unrecorded" && (
+            <p className="card px-5 py-3 text-label text-ink-muted">This request was resubmitted before changes were recorded, so what changed in round {view.round} can&apos;t be shown.</p>
+          )}
+          {view.changes && view.changes !== "unrecorded" && (
+            <section className="card px-5 py-4" aria-labelledby="changes">
+              <h2 id="changes" className="mb-1 font-semibold">
+                What changed in round {view.changes.round}
+              </h2>
+              {view.changes.fields.length === 0 && view.changes.files.length === 0 ? (
+                <p className="text-label text-ink-muted">Resubmitted without changing the details.</p>
+              ) : (
+                <dl className="mt-2 divide-y divide-line text-label">
+                  {view.changes.fields.map((change) => (
+                    <div key={change.key} className="grid gap-1 py-2 sm:grid-cols-3 sm:gap-4">
+                      <dt className="text-ink-muted">
+                        {change.label} <span className="text-caption">({change.kind === "added" ? "added" : change.kind === "removed" ? "removed" : "changed"})</span>
+                      </dt>
+                      <dd className="sm:col-span-2">
+                        {change.kind !== "added" && (
+                          <del className="mr-2 text-ink-muted">
+                            <span className="sr-only">Before: </span>
+                            <SafeText text={change.before} />
+                          </del>
+                        )}
+                        {change.kind !== "removed" && (
+                          <ins className="font-medium no-underline">
+                            <span className="sr-only">Now: </span>
+                            <SafeText text={change.after} />
+                          </ins>
+                        )}
+                      </dd>
+                    </div>
+                  ))}
+                  {view.changes.files.length > 0 && (
+                    <div className="grid gap-1 py-2 sm:grid-cols-3 sm:gap-4">
+                      <dt className="text-ink-muted">Files added</dt>
+                      <dd className="break-all sm:col-span-2">{view.changes.files.join(", ")}</dd>
+                    </div>
+                  )}
+                </dl>
+              )}
+            </section>
+          )}
           <section className="card px-5 py-4" aria-labelledby="levels">
             <h2 id="levels" className="mb-3 font-semibold">
               Approval levels
@@ -164,27 +210,26 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
           )}
         </div>
         <div className="space-y-6">
-        <section className="card px-5 py-4">
-          <h2 className="mb-3 font-semibold">Attachments</h2>
-          {view.attachments.length === 0 ? (
-            <p className="mb-3 text-label text-ink-muted">No files attached.</p>
-          ) : (
-            <ul className="mb-4 space-y-2">
-              {view.attachments.map((file) => (
-                <li key={file.id} className="text-label">
-                  <a href={`/api/attachments/${file.id}`} className="link break-all" download>
-                    {file.name}
-                  </a>
-                  <p className="text-caption text-ink-faint">
-                    {file.size} · {file.uploaderName} · {formatIndiaTime(file.createdAt)}
-                    {view.round > 1 ? ` · round ${file.round}` : ""}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          )}
-          {view.canAddFiles && <AddFilesForm requestId={view.id} />}
-        </section>
+        <SectionBoundary label="Attachments">
+          <section className="card px-5 py-4">
+            <h2 className="mb-3 font-semibold">Attachments</h2>
+            {view.attachments.length === 0 ? (
+              <p className="mb-3 text-label text-ink-muted">No files attached.</p>
+            ) : (
+              <AttachmentList
+                files={view.attachments.map((file) => ({
+                  id: file.id,
+                  name: file.name,
+                  size: file.size,
+                  preview: file.preview,
+                  meta: `${file.uploaderName} · ${formatIndiaTime(file.createdAt)}${view.round > 1 ? ` · round ${file.round}` : ""}`,
+                }))}
+              />
+            )}
+            {view.canAddFiles && <AddFilesForm requestId={view.id} />}
+          </section>
+        </SectionBoundary>
+        <SectionBoundary label="Discussion">
         <section className="card px-5 py-4">
           <h2 className="mb-3 font-semibold">Discussion</h2>
           {view.comments.length === 0 ? (
@@ -205,19 +250,15 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
           )}
           <CommentForm requestId={view.id} people={mentionable} />
         </section>
-        <section className="card h-fit px-5 py-4">
-          <h2 className="mb-3 font-semibold">Timeline</h2>
-          <ol className="space-y-3 border-l border-line pl-4">
-            {view.timeline.map((entry) => (
-              <li key={entry.id} className="text-label">
-                <p>
-                  <SafeText text={entry.text} />
-                </p>
-                <p className="text-caption text-ink-faint">{formatIndiaTime(entry.at)}</p>
-              </li>
-            ))}
-          </ol>
-        </section>
+        </SectionBoundary>
+        <SectionBoundary label="History">
+          <section className="card h-fit px-5 py-4" aria-labelledby="history">
+            <h2 id="history" className="mb-3 font-semibold">
+              Timeline
+            </h2>
+            <Timeline entries={view.timeline} />
+          </section>
+        </SectionBoundary>
         {view.isCustom && (user.roles.includes("IT_ADMIN") || user.roles.includes("SUPER_ADMIN")) && (
           <section className="card h-fit px-5 py-4">
             <h2 className="mb-1 font-semibold">Reuse these levels</h2>
