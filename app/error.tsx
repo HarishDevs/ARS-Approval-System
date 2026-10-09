@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { CopyForIt } from "@/features/help/CopyForIt";
 
 // Anything that still goes wrong while showing a page lands here, inside the
 // app's own look, instead of Next's blank "Application error" (QA session 14,
 // DEF-02 / TC-083). Nothing technical is shown (D-016).
-export default function ErrorPage({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
+export default function ErrorPage({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   return (
     <main className="flex min-h-full flex-col items-center justify-center gap-4 px-4 py-16 text-center">
       <p className="text-caption font-semibold uppercase tracking-wider text-ink-muted">Something went wrong</p>
@@ -19,6 +20,8 @@ export default function ErrorPage({ reset }: { error: Error & { digest?: string 
           Go to my approvals
         </Link>
       </div>
+      {/* #14: a reference IT can find in the server log. */}
+      <CopyForIt digest={error.digest} />
     </main>
   );
 }

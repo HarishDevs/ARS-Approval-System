@@ -1,4 +1,20 @@
 import "server-only";
+import { headers } from "next/headers";
+import { REQUEST_ID_HEADER } from "@/lib/logging/request-id";
+
+// #14: error lines carry the request's id (set by the middleware), so the
+// reference a user copies can be found. Outside a request (tests, scripts)
+// there is none and the line is written as before.
+function withRequestId(write: (requestId: string | null) => void): void {
+  try {
+    headers().then(
+      (list) => write(list.get(REQUEST_ID_HEADER)),
+      () => write(null),
+    );
+  } catch {
+    write(null);
+  }
+}
 
 // Structured server-side log lines. Never pass secrets, tokens, OTP codes or
 // passwords in `context`. Extra provider fields go before the stack so the
@@ -8,7 +24,7 @@ export function logError(message: string, error: unknown, context?: Record<strin
     error instanceof Error
       ? { name: error.name, message: error.message, ...extraFields(error), stack: error.stack }
       : { message: String(error) };
-  console.error(JSON.stringify({ level: "error", message, ...context, error: detail }));
+  withRequestId((requestId) => console.error(JSON.stringify({ level: "error", message, ...(requestId ? { requestId } : {}), ...context, error: detail })));
 }
 
 export function logInfo(message: string, context?: Record<string, unknown>): void {

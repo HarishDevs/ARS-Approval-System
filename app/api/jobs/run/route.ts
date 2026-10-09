@@ -11,6 +11,8 @@ import { recordRunnerHeartbeat } from "@/lib/db/repositories/jobs.repository";
 import { runDailyBackup } from "@/server/ops/backup";
 import { runDailyTemplateSync } from "@/server/notifications/template-registry";
 import { logError, logInfo } from "@/lib/logging/logger";
+import { alertSuperAdmin } from "@/server/ops/alerts";
+import { REQUEST_ID_HEADER } from "@/lib/logging/request-id";
 
 // Cron entry point (F-41, D-058). cPanel cron, every 5 minutes:
 //   curl -s -X POST -H "x-job-secret: $JOB_RUNNER_SECRET" https://approval.arssteels.net/api/jobs/run
@@ -26,6 +28,7 @@ function secretMatches(given: string | null): boolean {
 
 export async function POST(request: NextRequest) {
   if (!secretMatches(request.headers.get("x-job-secret"))) return apiError("NOT_FOUND", "Not found.", 404);
+  const reference = request.headers.get(REQUEST_ID_HEADER);
   try {
     const outbox = await runOutbox();
     const retries = await runDeliveryRetries();
@@ -37,11 +40,14 @@ export async function POST(request: NextRequest) {
       logError("job runner: backup failed", error);
       return { backup: "FAILED" as const };
     });
+    // #14: the Super Admin hears about a failed backup (once a day).
+    if (backup.backup === "FAILED") await alertSuperAdmin("BACKUP_FAILED", reference);
     await recordRunnerHeartbeat();
     logInfo("job runner finished", { ...outbox, ...retries, ...sla, ...templates, ...housekeeping, ...backup });
     return apiSuccess({ outbox, retries, sla, templates, housekeeping, backup });
   } catch (error) {
     logError("job runner failed", error);
+    await alertSuperAdmin("JOB_RUNNER_FAILED", reference);
     return apiError("SYSTEM_ERROR", "Job run failed.", 500);
   }
 }

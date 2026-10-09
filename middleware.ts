@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { SESSION_COOKIE_NAME } from "@/lib/session/constants";
 import { buildCsp, createNonce } from "@/lib/security/csp";
+import { pickRequestId, REQUEST_ID_HEADER } from "@/lib/logging/request-id";
 
 // Layer 1 of 3 (P1-30a): only checks that a session cookie is present.
 // Roles and the session row are checked on the server in every layout,
@@ -36,6 +37,9 @@ const MACHINE_APIS = ["/api/jobs/", "/api/webhooks/"];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  // #14: one id per request (Cloudflare's CF-Ray when present, else new).
+  // A caller's own x-request-id is not trusted.
+  const requestId = pickRequestId(request.headers.get("cf-ray"));
 
   // Audit P-01 (D-102): with ORIGIN_SECRET set, only requests that came
   // through Cloudflare (a Transform Rule adds the x-ars-origin header) are
@@ -72,8 +76,10 @@ export function middleware(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-nonce", nonce);
   requestHeaders.set("Content-Security-Policy", csp);
+  requestHeaders.set(REQUEST_ID_HEADER, requestId);
   const response = NextResponse.next({ request: { headers: requestHeaders } });
   response.headers.set("Content-Security-Policy", csp);
+  response.headers.set(REQUEST_ID_HEADER, requestId);
   return response;
 }
 
