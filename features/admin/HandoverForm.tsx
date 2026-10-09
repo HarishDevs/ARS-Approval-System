@@ -5,10 +5,15 @@ import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/featur
 import type { Option } from "@/features/admin/UserForm";
 
 // F-16: required before deactivating someone with pending approvals.
-export function HandoverForm({ id, name, pending, people }: { id: number; name: string; pending: number; people: Option[] }) {
-  const { result, pending: busy, onSubmit, confirmBar } = useActionForm(handoverAction, { confirm: `Move ${name}'s ${pending} pending approval(s)?` });
+// #12: suggests the eligible people with the fewest approvals waiting.
+export function HandoverForm({ id, name, pending, people, suggestions = [] }: { id: number; name: string; pending: number; people: Option[]; suggestions?: (Option & { pending: number })[] }) {
+  const { result, pending: busy, formRef, onSubmit, confirmBar } = useActionForm(handoverAction, { confirm: `Move ${name}'s ${pending} pending approval(s)?` });
+  const choose = (personId: number) => {
+    const select = formRef.current?.elements.namedItem("toUserId");
+    if (select instanceof HTMLSelectElement) select.value = String(personId);
+  };
   return (
-    <form onSubmit={onSubmit} className="space-y-2 px-5 py-4">
+    <form ref={formRef} onSubmit={onSubmit} className="space-y-2 px-5 py-4">
       <input type="hidden" name="id" value={id} />
       <p className="font-medium">Hand over pending approvals</p>
       <p className="text-label text-ink-muted">
@@ -25,6 +30,16 @@ export function HandoverForm({ id, name, pending, people }: { id: number; name: 
             ))}
           </select>
           <FieldError result={result} name="toUserId" />
+          {suggestions.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 text-caption">
+              <span className="text-ink-muted">Fewest waiting:</span>
+              {suggestions.map((person) => (
+                <button key={person.id} type="button" className="badge bg-surface-muted text-ink hover:bg-line" onClick={() => choose(person.id)}>
+                  {person.label} · {person.pending} waiting
+                </button>
+              ))}
+            </div>
+          )}
           <SubmitButton pending={busy} variant="secondary" className="btn-compact">
             Hand over
           </SubmitButton>

@@ -13,6 +13,8 @@ import { DelegationForm } from "@/features/requests/DelegationForms";
 import { DelegationList } from "@/features/requests/DelegationList";
 import { countPendingTasks } from "@/server/approvals/service";
 import { indiaToday, listDelegationsInvolving } from "@/lib/db/repositories/collab.repository";
+import { pendingCountsByApprover } from "@/lib/db/repositories/workload.repository";
+import { suggestHandover } from "@/server/workload/summary";
 
 export default async function UserDetailPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ created?: string }> }) {
   const { user: actor } = await requireArea("admin");
@@ -93,7 +95,13 @@ export default async function UserDetailPage({ params, searchParams }: { params:
           />
           {canEdit && (
             <section className="card">
-              <HandoverForm id={user.id} name={user.name} pending={pending} people={options.managers} />
+              <HandoverForm
+                id={user.id}
+                name={user.name}
+                pending={pending}
+                people={options.managers}
+                suggestions={pending > 0 ? suggestHandover(options.managers, await pendingCountsByApprover(), user.id) : []}
+              />
             </section>
           )}
           {canEdit && user.active && (

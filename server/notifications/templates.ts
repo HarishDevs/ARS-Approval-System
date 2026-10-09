@@ -39,6 +39,7 @@ const SHORT_LABEL: Record<string, string> = {
   REQUEST_COMMENT: "New comment",
   REQUEST_MENTION: "You were mentioned",
   APPROVAL_REMINDER: "Approval reminder",
+  APPROVAL_DUE_SOON: "Approval due soon",
   APPROVAL_ESCALATED: "Approval escalated",
   REQUEST_BLOCKED: "Request blocked",
   TASK_ASSIGNED: "Task for you",
