@@ -1,0 +1,40 @@
+{"tc":"DIAG-074","at":"2026-10-09T06:56:30.910Z","apiCalls":["http://localhost:3100/api/auth/password/start"],"pageErrors":[],"visibleText":"ARS STEELS · APPROVALS\n\nEvery approval,\none clear path.\n\nRaise a request, route it through as many levels as it needs, and see exactly who has approved and who is next.\n\nAny\nnumber of levels\nOne\nplace for every request\nFull\nhistory, always\n\n© 2026 ARS Steels & Alloy International Pvt. Ltd.\n\nWelcome back\n\nSign in to ARS Approvals\n\nUser ID\nPassword\nShow\nForgot password?\n\nSomething went wrong. Please try again.\n\nContinue\nor\nContinue with Google\n\nNeed access? Contact IT Support: itadmin@arssteels.co"}
+{"tc":"DIAG-040b","at":"2026-10-09T06:56:38.025Z","urlFrom":null,"fromField":"2026-04-01","renderedFilterFrom":"2026-04-01"}
+{"tc":"TC-001/002","at":"2026-10-09T06:56:40.453Z","firstVisibleMs":267,"reloadVisibleMs":107,"nav":{"ttfb":17,"domContentLoaded":201,"load":207},"leftoverLoaders":0,"note":"Pages are server-rendered: HTML arrives complete; no client loader is needed on first load"}
+{"tc":"TC-003","at":"2026-10-09T06:56:50.624Z","dashboardsSkeletonShown":true,"usersPageFeedbackWithin1200ms":false,"oldPageStillShownWhileWaiting":true,"usersPageMs":3133}
+{"tc":"TC-004","at":"2026-10-09T06:56:52.546Z","loaderAppearedAfterMs":65,"totalMs":150,"buttonWidthBefore":115.34375,"buttonWidthDuring":89.71875}
+{"tc":"TC-005/024","at":"2026-10-09T06:56:57.512Z","actions":1,"stillWorkingAt3s":true,"totalMs":4484}
+{"tc":"TC-006/028","at":"2026-10-09T06:56:58.045Z","unknownRouteStatus":404,"unknownRecordStatus":404}
+{"tc":"TC-007","at":"2026-10-09T06:56:59.834Z","leftoverLoaders":0}
+{"tc":"TC-008","at":"2026-10-09T06:57:00.747Z","signedInVisitToLoginLandsOn":"/admin/dashboards","note":"Google/password sign-in itself needs Firebase/WhatsApp, not available in the test env"}
+{"tc":"TC-009/026","at":"2026-10-09T06:57:04.544Z","stuck":false,"redirectedToLogin":false,"message":"none","crashed":true}
+{"tc":"TC-010","at":"2026-10-09T06:57:10.614Z","finalHeading":"Working calendar","finalUrl":"/admin/calendar","leftoverLoaders":0}
+{"tc":"TC-011/016/077","at":"2026-10-09T06:57:11.187Z","workingButtonsWhileHeld":1,"otherSaveEnabled":true,"workingAfter":0}
+{"tc":"TC-012/013/014","at":"2026-10-09T06:57:15.338Z","uiClicks":3,"actionPosts":1,"requestsCreated":1}
+{"tc":"TC-015","at":"2026-10-09T06:57:16.188Z","roundTrips":1,"note":"Validation runs on the server (one round trip, brief loader); no client-side pre-check"}
+{"tc":"TC-017/029","at":"2026-10-09T06:57:19.908Z","crashedToErrorPage":true,"loaderStuck":false,"errorMessages":0}
+{"tc":"TC-018/030/070","at":"2026-10-09T06:57:56.626Z","waitedMs":35000,"stillSpinning":true,"cancelOrRetryOffered":false}
+{"tc":"TC-020/079","at":"2026-10-09T06:57:59.792Z","uiClicks":2,"actionPosts":1,"approvedTasks":1}
+{"tc":"TC-021","at":"2026-10-09T06:58:01.411Z","keptRequestRejected":0,"rejectedRequestRejected":1}
+{"tc":"TC-022","at":"2026-10-09T06:58:05.878Z","approvedTasks":1,"tabsToldItWasAlreadyDone":1}
+{"tc":"TC-023/033","at":"2026-10-09T06:58:06.898Z","dataShown":true,"emptyStateShown":true}
+{"tc":"TC-025/034/050","at":"2026-10-09T06:58:09.346Z","errorShownOn400":true,"otherButtonLockedWhileBusy":true,"downloadedFile":"ars-departments-template.csv"}
+{"tc":"TC-027/067/084","at":"2026-10-09T06:58:10.872Z","adminPageStatus":404,"adminApiStatus":404,"replayStatus":200,"replaySaysNotFound":true,"requestStillPresent":1}
+{"tc":"TC-031/032","at":"2026-10-09T06:58:14.495Z","crashedToErrorPage":true,"loaderStuck":false,"connectionMessage":0,"recoveredAfterRetry":false}
+{"tc":"TC-035/036","at":"2026-10-09T06:58:23.469Z","skeletonTiles":4,"finalTiles":4,"cumulativeLayoutShift":0,"note":"The table is a single grey block in the skeleton, not rows"}
+{"tc":"TC-039/040","at":"2026-10-09T06:58:30.561Z","feedbackWhileApplying":false,"finalFrom":null,"fromFieldShows":"2026-04-01"}
+{"tc":"TC-041","at":"2026-10-09T06:58:34.567Z","feedbackWhileLoadingPage2":false,"firstRowChanged":true}
+{"tc":"TC-045/047/048","at":"2026-10-09T06:58:40.132Z","loaderDuringUpload":true,"actions":1,"wrongTypeRefused":true,"tooBigRefused":true,"loaderStuck":false,"progressShown":"indeterminate only (button text)"}
+{"tc":"TC-046/082","at":"2026-10-09T06:58:54.963Z","uploadMs":13293,"pageResponsiveDuringUpload":true,"progress":"indeterminate (no % shown)"}
+{"tc":"TC-049","at":"2026-10-09T06:58:58.628Z","crashedToErrorPage":true,"loaderStuck":false,"errorMessages":0,"partialFileSaved":0}
+{"tc":"TC-051/052/075/078","at":"2026-10-09T06:59:02.527Z","csvFile":"ars-approvers-2026-04-01-to-2026-10-09.csv","actions":1,"statusBarWhileChecking":true,"statusBarAfter":0,"importOfferedWithProblems":0,"goodRowSaved":0}
+{"tc":"TC-060/061/080","at":"2026-10-09T06:59:03.400Z","desktop":{"visible":true,"insideWidth":true,"horizontalScroll":false},"mobile":{"visible":true,"insideWidth":true,"horizontalScroll":false},"zoom200":{"visible":true,"insideWidth":true,"horizontalScroll":false}}
+{"tc":"TC-062/068","at":"2026-10-09T06:59:05.732Z","cpuThrottle":"6x","rows":300,"checkMs":1247,"longTaskTotalMs":857}
+{"tc":"TC-063/064","at":"2026-10-09T06:59:06.698Z","tabReachesPostButton":"Post comment","enterSubmits":true,"genericForm":{"formAriaBusy":null,"buttonAriaDisabled":null,"liveRegionNearButton":false},"importStatusRegion":1,"importAriaBusy":1}
+{"tc":"TC-065/066/081","at":"2026-10-09T06:59:08.484Z","reducedMotionAnimationDuration":"1e-05s","statusContrast":9.64,"busyButtonContrast":1.42,"busyButtonColors":{"fg":"rgb(255, 255, 255)","bg":"rgb(201, 218, 238)"},"darkPreferenceBodyBg":"rgb(248, 250, 252)","note":"The app has no dark theme; it stays light"}
+{"tc":"TC-069","at":"2026-10-09T06:59:10.888Z","cycles":10,"domNodesBefore":125,"domNodesAfter":163,"heapBeforeMB":10,"heapAfterMB":10,"leftoverStatusBars":0}
+{"tc":"TC-071","at":"2026-10-09T06:59:13.805Z","resultShownOnReturn":true}
+{"tc":"TC-072/073","at":"2026-10-09T06:59:23.715Z","requestsAfterRefreshDuringSubmit":0,"requestsAfterCloseDuringSubmit":1,"note":"0 = the browser cut the request before it reached the server; 1 = completed once"}
+{"tc":"TC-074","at":"2026-10-09T06:59:27.774Z","signInShowsMessage":false,"signInStuck":false,"formCrashedToErrorPage":true,"formLoaderStuck":false}
+{"tc":"TC-076","at":"2026-10-09T06:59:33.532Z","shownText":"MY APPROVALS\n\nOverview\nWaiting for me\nMy requests\nNew request\nCustom approval\nOut of office\nNotifications\nSign-in & devices\n1\nRavi Requester\nMy approvals\nRR\nQA base mv0m3xzk\n\nQAL-2026-000001 · QA Loader Type · raised by Ravi Requester\n\nIn progress\n← Back\n\nWithdraw this request\n\nCloses it now. Anyone","commentSaved":0,"loaderStuck":false,"toldToSignIn":false,"url":"/users/requests/1"}
+{"tc":"TC-085","at":"2026-10-09T06:59:36.090Z","replayStatus":200,"approvedTasks":1,"approvalEvents":1}

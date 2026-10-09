@@ -167,6 +167,7 @@
 - **Conditions** are type-aware: dates compare by calendar order (engine + validator accept YYYY-MM-DD for before/after); lists, options and people are picked, not typed.
 - **Test mode** keeps the valid sample values.
 - **The level map** previews skip conditions that already hold. | Owner, 8 Oct 2026 |
+| D-089 | 9 Oct 2026 | **The loader/loading-state audit suite lives outside CI** (`tests/qa-loaders/`, `playwright.loaders.config.ts`). It asserts the target behaviour, using intercepted Server Actions and page fetches (slow, 500, abort, offline, malformed, replay) and DB counts, so it stays red until the defects in `docs/qa/LOADER-QA-REPORT.md` are fixed. Once they are, it can join CI. | Claude, QA session 13 |
 | D-033 | 28 Sep 2026 | **Staff data is provided by the admin. Roles are assigned per user, by the admin only. Users are added or made inactive in the Admin Portal** (never hard-deleted, so history and audit stay intact). *Resolves Q-010.* | Owner (answer 7) |
 
 ## 4. Open questions (must be answered before the phase shown)
@@ -188,8 +189,33 @@
 | Q-013 | **Notification templates:** the owner will send the WhatsApp (and email) wording for the events N-06 to N-20; the Meta template names come after approval | Phase 1 notifications | Open, waiting on the owner **7 Oct 2026: all 20 formats delivered (docs/NOTIFICATION-TEMPLATES.md); the owner creates them in CEOITBox and switches each on in /superadmin/templates** |
 | Q-014 | OTP template | Phase 1 | **Resolved 28 Sep → confirmed by the owner: reuse `wa_login_otp_v1`** (D-042) |
 | Q-015 | **Break-glass and WhatsApp:** the break-glass account signs in with a password **plus the WhatsApp code** (D-025). If WhatsApp or CEOITBox is down, which is exactly when break-glass may be needed, it can't sign in. Keep the code, or skip it only during the console-enabled window? | Go-live | Open, waiting on the owner (built conservatively: the code is required) |
+| Q-016 | **Loader audit fixes** (docs/qa/LOADER-QA-REPORT.md): may I fix DEF-02 (High: a failed form answer crashes the page), DEF-03 (no time limit) and DEF-06 (unreadable busy button) before the next Publish, then DEF-01/04 and the Low ones? | Before the next Publish | Open, waiting on the owner |
 
 ## 5. Work log (newest first)
+
+### 9 Oct 2026 (QA session 13: loader audit, TC-001…TC-085)
+- **Method:**
+  - reconnaissance and a loader inventory (12 loaders: L-01…L-12; no `error.tsx` anywhere, no branded animation);
+  - an executable Playwright suite against a production build and the e2e DB, run 3 times with stable results;
+  - diagnostics for TC-040 and TC-074.
+- **Corrected my own script mistakes before reporting:**
+  - locator clashes ("Attach", "Continue");
+  - a `main` element missing after a redirect;
+  - `isVisible({ timeout })` not waiting;
+  - a preset equal to the default period.
+- **Results:** 51 PASS / 19 FAIL / 2 BLOCKED (TC-044, 083 need fault injection) / 13 N/A; coverage 97.2 %, pass rate 72.9 %.
+- **Strong:** every transaction-integrity case. Single records on double clicks, concurrent approvals, replays, and close/refresh during a submit; a replayed Super Admin delete as a plain user was refused. All verified in the DB.
+- **Defects:**
+  - DEF-02 (High): any failed, offline, malformed, cut-off or unauthenticated form answer crashes the page (`useActionForm` + no error boundary);
+  - DEF-03: no time limit;
+  - DEF-06: busy button contrast 1.42:1;
+  - DEF-01: no navigation feedback outside Dashboards/Import;
+  - DEF-04: rapid dashboard period changes show a different period from the address;
+  - DEF-05: no aria-busy/live region on ordinary forms;
+  - DEF-07: "Not found." when the session ends mid-request;
+  - DEF-08: "Working…" flash and button width jump;
+  - DEF-09: the first period-link click after a cold start is ignored (cause not established).
+- No application code changed; fixes wait for the owner (Q-016).
 
 ### 8 Oct 2026 (build session 12: form field creator tested and fixed, v1.3.0)
 - The owner asked for the whole flow creation form to be tested, database-backed dropdowns, the dropdown creator and the date selector fixed, every data type checked, and an e2e test.

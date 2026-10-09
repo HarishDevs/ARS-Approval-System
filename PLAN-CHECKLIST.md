@@ -17,19 +17,21 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
-- **Now:** **v1.3.0 is pushed** (8 Oct 2026): the form field creator is fixed and extended (F-75, D-088).
-  - Fixed: the dropdown list editor, keys that follow the label, number boxes, and type-aware conditions with dates.
-  - New: Department and Designation fields filled from the database.
-  - Covered by a full e2e test of the builder.
-  - Together with v1.0.4–v1.2.0, it waits for the owner's Publish.
-- **Next, with the owner:**
-  - GoDaddy: Update Preview → check it's healthy → **Publish to Live**;
+- **Now:** **the loader QA audit is done** (9 Oct 2026, `docs/qa/LOADER-QA-REPORT.md`).
+  - 85 cases: 51 pass, 19 fail, 2 blocked, 13 not applicable; coverage 97.2 %, pass rate 72.9 %.
+  - 9 defects: 1 High, 4 Medium, 4 Low. No application code was changed.
+- **Next:** the owner decides on fixes (Q-016). **Recommended before the next Publish:**
+  - DEF-02: a failed form answer crashes the page and loses input;
+  - DEF-03: no time limit on requests;
+  - DEF-06: unreadable busy button.
+- **Then, with the owner on GoDaddy:**
+  - Publish v1.3.0 (+ fixes);
   - untick the junior designations;
   - Google sign-in as itsupport@arsenergy.co.in;
-  - provider keys; WhatsApp templates; cron; break-glass;
-  - import the real staff;
+  - provider keys; templates; cron; break-glass;
+  - import the staff;
   - rotate the Firebase key that was pasted in chat.
-- **Still open:** Q-015; the real staff list.
+- **Still open:** Q-015; Q-016; the real staff list.
 
 ---
 
@@ -255,6 +257,15 @@ Found during S8-06:
 - [x] S8-12 Google sign-in reached UNKNOWN_ACCOUNT: itadmin@ is an alias. The Super Admin now signs in as itsupport@arsenergy.co.in (D-082, migration + non-overwriting seed, v1.0.5) (done 8 Oct 2026)
 - [ ] S8-01b Go-live on GoDaddy with the owner, following docs/DEPLOYMENT.md (the owner is at the wizard's "Add secrets" step)
 - [x] S8-04 Update the three living files; commit and push (done 8 Oct 2026)
+
+## Session log — QA session 13: loader and loading-state audit (9 Oct 2026)
+Owner: "Master prompt: complete web application loader testing and QA audit" (TC-001 to TC-085). Testing only; defects are reported, and fixes wait for the owner's go-ahead.
+- [x] Q13-01 Reconnaissance: loader inventory (loading.tsx, SubmitButton "Working…", Spinner, import/delete/download loaders, auth buttons), error boundaries, existing tests (done 9 Oct 2026)
+- [x] Q13-02 Executable audit suite `tests/qa-loaders/` with its own config (`playwright.loaders.config.ts`; not part of CI, because it asserts the target behaviour and will fail where there are defects). It uses network interception of server actions and fetches: delay, 500, abort, offline, malformed, replay (done 9 Oct 2026)
+- [x] Q13-03 Run it against a production build with the e2e test database; collect measurements (done 9 Oct 2026)
+- [x] Q13-04 Report `docs/qa/LOADER-QA-REPORT.md`: inventory, register TC-001..085, defects, summary, management summary, remediation plan (done 9 Oct 2026)
+- [ ] Q13-06 **Waiting for the owner's go-ahead:** fix DEF-02 (High), DEF-03 and DEF-06 before the next Publish; then DEF-01/04; then DEF-05/07/08/09. The regression tests are already in `tests/qa-loaders/`
+- [x] Q13-05 Living files; commit and push (tests + report only; no app changes) (done 9 Oct 2026)
 
 ## Session log — build session 12: the form field creator, tested and fixed (8 Oct 2026)
 Owner: "Test the Flow creation form entirely; add a field creation option with database values like departments as a dropdown; the Dropdown Creator is not working properly; the date selector is not working as a date; check all the field creator's data types; create an end-to-end test case and run it."
