@@ -82,7 +82,10 @@ export function toDirectory(snapshot: DirectorySnapshot): Directory {
     hodOfDepartment: (departmentId) => snapshot.departmentHods.get(departmentId) ?? null,
     usersWithRole: (roleCode) => snapshot.roleMembers.get(roleCode) ?? [],
     groupMembers: (groupId) => snapshot.groupMembers.get(groupId) ?? [],
-    canActFor: (actorId, approverId) => eligible(actorId) !== null && (snapshot.delegations.get(actorId)?.has(approverId) ?? false),
+    // #8: the delegate is checked again when they act: still active and
+    // still approver-eligible (D-085), not just when they were named.
+    canActFor: (actorId, approverId) =>
+      eligible(actorId) !== null && byId.get(actorId)?.approver !== false && (snapshot.delegations.get(actorId)?.has(approverId) ?? false),
     usersWithDesignation: (designationId) => snapshot.users.filter((user) => user.designationId === designationId).map((user) => user.id),
     departmentOf: (userId) => byId.get(userId)?.departmentId ?? null,
   };

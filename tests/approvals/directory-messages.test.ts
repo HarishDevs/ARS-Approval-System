@@ -44,6 +44,11 @@ describe("directory snapshot → engine directory", () => {
     expect(directory.canActFor(3, 2)).toBe(false);
     expect(directory.canActFor(1, 9)).toBe(false);
   });
+
+  it("a delegate who is no longer approver-eligible can't act (#8)", () => {
+    const changed = toDirectory({ ...snapshot, users: snapshot.users.map((user) => (user.id === 1 ? { ...user, approver: false } : user)) });
+    expect(changed.canActFor(1, 2)).toBe(false);
+  });
 });
 
 describe("who hears about what", () => {

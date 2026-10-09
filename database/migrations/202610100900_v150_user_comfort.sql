@@ -56,3 +56,13 @@ CREATE TABLE user_flags (
 -- #12 "Due soon" reminder before the response time runs out.
 ALTER TABLE task_reminders
   MODIFY COLUMN kind ENUM('REMINDER', 'ESCALATION', 'ESCALATION_2', 'ESCALATION_3', 'DUE_SOON') NOT NULL;
+
+-- #8 Out of office: when its start and its end were written to the audit log
+-- (the job runner does it once each; dates alone don't leave a trace).
+ALTER TABLE delegations
+  ADD COLUMN activation_logged_at DATETIME NULL AFTER ended_by,
+  ADD COLUMN expiry_logged_at     DATETIME NULL AFTER activation_logged_at;
+-- Out of office set before v1.5.0 was already logged when it was created:
+-- don't write a burst of late start/end entries on the first run.
+UPDATE delegations SET activation_logged_at = created_at WHERE starts_on <= CURRENT_DATE;
+UPDATE delegations SET expiry_logged_at = created_at WHERE ends_on < CURRENT_DATE;

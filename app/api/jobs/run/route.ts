@@ -4,6 +4,7 @@ import { getEnv } from "@/config/environment";
 import { apiError, apiSuccess } from "@/lib/http/api-response";
 import { runDeliveryRetries, runHousekeeping } from "@/server/jobs/retry-deliveries";
 import { runSlaChecks } from "@/server/jobs/sla";
+import { auditDelegationDates } from "@/server/jobs/delegations";
 import { runOutbox } from "@/server/approvals/service";
 import { pruneOutbox } from "@/lib/db/repositories/outbox.repository";
 import { recordRunnerHeartbeat } from "@/lib/db/repositories/jobs.repository";
@@ -30,7 +31,7 @@ export async function POST(request: NextRequest) {
     const retries = await runDeliveryRetries();
     const sla = await runSlaChecks();
     const templates = await runDailyTemplateSync();
-    const housekeeping = { ...(await runHousekeeping()), outboxPruned: await pruneOutbox() };
+    const housekeeping = { ...(await runHousekeeping()), outboxPruned: await pruneOutbox(), ...(await auditDelegationDates()) };
     // Once a day (D-104). A failed backup is logged but doesn't stop the runner.
     const backup = await runDailyBackup().catch((error) => {
       logError("job runner: backup failed", error);
