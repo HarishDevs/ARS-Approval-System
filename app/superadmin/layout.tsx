@@ -20,6 +20,7 @@ export default async function SuperAdminLayout({ children }: { children: React.R
         { href: "/superadmin/demo", label: "Demo data" },
         { href: "/superadmin/deliveries", label: "Message deliveries" },
         { href: "/superadmin/audit", label: "Audit log" },
+        { href: "/superadmin/logins", label: "Sign-in history" },
       ]}
     >
       {children}

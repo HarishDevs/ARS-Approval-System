@@ -4,16 +4,9 @@ import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { MyRequestsTable } from "@/features/requests/lists";
 import { searchMyRequests } from "@/lib/db/repositories/approvals.repository";
+import { REQUEST_STATUS_OPTIONS } from "@/features/ui/labels";
 
-const STATUS_OPTIONS = [
-  ["", "Any status"],
-  ["IN_PROGRESS", "In progress"],
-  ["ON_HOLD", "On hold"],
-  ["CHANGES_REQUIRED", "Changes required"],
-  ["APPROVED", "Approved"],
-  ["REJECTED", "Rejected"],
-  ["CANCELLED", "Withdrawn"],
-] as const;
+const STATUS_OPTIONS = REQUEST_STATUS_OPTIONS;
 
 // My requests (F-14) with search, status filter and paging (D-QA-11).
 export default async function MyRequestsPage({ searchParams }: { searchParams: Promise<{ q?: string; status?: string; page?: string }> }) {

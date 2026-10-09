@@ -40,18 +40,19 @@
   "devDependencies": {
     "@eslint/eslintrc": "3.2.0",
     "@playwright/test": "1.63.0",
-    "@types/node": "22.10.2",
+    "@types/node": "22.20.5",
     "@types/react": "19.0.2",
     "@types/react-dom": "19.0.2",
-    "@vitejs/plugin-react": "4.3.4",
-    "@vitest/coverage-v8": "2.1.9",
+    "@vitejs/plugin-react": "5.2.0",
+    "@vitest/coverage-v8": "5.0.3",
     "autoprefixer": "10.4.20",
     "eslint": "9.39.5",
     "eslint-config-next": "15.5.27",
     "jsdom": "25.0.1",
     "postcss": "8.5.28",
     "tailwindcss": "3.4.17",
-    "vitest": "2.1.9"
+    "vite": "7.3.7",
+    "vitest": "5.0.3"
   },
   "overrides": {
     "next": {
@@ -59,6 +60,7 @@
     },
     "@firebase/firestore": {
       "@grpc/grpc-js": "1.14.6"
-    }
+    },
+    "postcss-selector-parser": "7.1.6"
   }
 }

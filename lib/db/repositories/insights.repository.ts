@@ -59,7 +59,7 @@ export async function loadInsights(db: Queryable = getDbPool()): Promise<Insight
             SUM(t.status = 'APPROVED') AS approved, SUM(t.status = 'REJECTED') AS rejected, SUM(t.status = 'CHANGES_REQUESTED') AS changes,
             AVG(TIMESTAMPDIFF(MINUTE, t.created_at, t.decided_at)) / 60 AS avg_hours
      FROM approval_tasks t JOIN approval_requests r ON r.id = t.request_id AND r.deleted_at IS NULL JOIN users u ON u.id = t.decided_by
-     WHERE t.decided_at >= DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 30 DAY) AND t.status IN ('APPROVED', 'REJECTED', 'CHANGES_REQUESTED')
+     WHERE t.decided_at >= DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 30 DAY) AND t.status IN ('APPROVED', 'REJECTED', 'CHANGES_REQUESTED') AND t.task_type = 'APPROVAL'
      GROUP BY u.id, u.name ORDER BY approved + rejected + changes DESC LIMIT 50`,
   );
   const [byMonth] = await db.query<RowDataPacket[]>(
@@ -78,4 +78,21 @@ export async function loadInsights(db: Queryable = getDbPool()): Promise<Insight
     byPerson: byPerson.map((row) => ({ name: row.name, approved: n(row.approved), rejected: n(row.rejected), changes: n(row.changes), avgHours: n(row.avg_hours) })),
     byMonth: byMonth.map((row) => ({ month: row.month, raised: n(row.raised), approved: n(row.approved), rejected: n(row.rejected), withdrawn: n(row.withdrawn), open: n(row.open_count) })),
   };
+}
+
+// Live counts for the admin home cards (S9-13; moved here from the page, audit D-03).
+export async function adminHomeCounts(): Promise<Record<string, number>> {
+  const [rows] = await getDbPool().query<(RowDataPacket & Record<string, number>)[]>(
+    `SELECT
+       (SELECT COUNT(*) FROM workflow_definitions d JOIN workflow_versions v ON v.workflow_id = d.id AND v.status = 'PUBLISHED'
+         WHERE d.kind = 'PREDEFINED' AND d.active = TRUE) AS live_types,
+       (SELECT COUNT(DISTINCT d.id) FROM workflow_definitions d JOIN workflow_versions v ON v.workflow_id = d.id AND v.status = 'DRAFT'
+         WHERE d.kind = 'PREDEFINED') AS drafts,
+       (SELECT COUNT(*) FROM users WHERE active = TRUE AND is_break_glass = FALSE) AS users,
+       (SELECT COUNT(*) FROM approver_groups WHERE active = TRUE) AS groups_n,
+       (SELECT COUNT(*) FROM departments WHERE active = TRUE) AS departments,
+       (SELECT COUNT(*) FROM holidays WHERE holiday_on >= CURRENT_DATE) AS holidays,
+       (SELECT COUNT(*) FROM approval_requests WHERE status IN ('IN_PROGRESS','ON_HOLD','CHANGES_REQUIRED') AND deleted_at IS NULL) AS open_requests`,
+  );
+  return rows[0] ?? {};
 }

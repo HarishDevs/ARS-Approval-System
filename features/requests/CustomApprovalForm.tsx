@@ -6,6 +6,7 @@ import { LevelsEditor, newStepId, type BuilderOptions } from "@/features/admin/W
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import type { BuilderStage } from "@/server/workflows/builder";
 import type { FormField } from "@/server/forms/fields";
+import { ACCEPT_ATTRIBUTE } from "@/server/attachments/files";
 
 // Custom approval (F-33, D-060): anyone picks anyone, any mix of levels.
 const CUSTOM_FIELDS: FormField[] = [{ key: "amount", label: "Amount (₹)", type: "NUMBER", required: false, min: 0 }];
@@ -43,6 +44,14 @@ export function CustomApprovalForm({ options }: { options: BuilderOptions }) {
           </label>
           <input id="c-amount" name="amount" inputMode="decimal" placeholder="e.g. 45,000" className="field-input" />
           <FieldError result={result} name="amount" />
+        </div>
+        <div>
+          <label htmlFor="c-attachments" className="field-label">
+            Attachments <span className="font-normal text-ink-faint">(optional)</span>
+          </label>
+          <input id="c-attachments" name="attachments" type="file" multiple accept={ACCEPT_ATTRIBUTE} className="block w-full text-label file:mr-3 file:rounded-md file:border-0 file:bg-surface-muted file:px-3 file:py-2" />
+          <p className="mt-1 text-caption text-ink-muted">Quotes, invoices, photos: PDF, images, Word, Excel, PowerPoint, CSV or text. Up to 5 files of 10 MB each.</p>
+          <FieldError result={result} name="attachments" />
         </div>
       </section>
       <LevelsEditor

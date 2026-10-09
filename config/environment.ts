@@ -29,6 +29,10 @@ const envSchema = z.object({
   // Where request attachments are kept (D-072): outside the web root, on
   // GoDaddy's persistent disk. Defaults to ./storage/uploads.
   UPLOAD_DIR: optional(z.string().min(1)),
+  // Backups (D-104): a folder on the persistent disk, outside the web root.
+  // Defaults to ./storage/backups. Files older than BACKUP_KEEP_DAYS go.
+  BACKUP_DIR: optional(z.string().min(1)),
+  BACKUP_KEEP_DAYS: optional(z.coerce.number().int().min(1).max(365)),
 });
 
 export type Env = z.infer<typeof envSchema>;

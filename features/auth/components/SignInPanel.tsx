@@ -5,14 +5,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { GoogleButton } from "@/features/auth/components/GoogleButton";
 import { safeNextPath } from "@/lib/http/safe-next";
+import { postJson } from "@/features/auth/components/auth-client";
 
 type Challenge = { challengeToken: string; maskedNumber: string; expiresInSeconds: number; resendAfterSeconds: number };
-type ApiBody<T> = { success: true; data: T } | { success: false; error: { code: string; message: string } };
-
-async function post<T>(url: string, body: unknown): Promise<ApiBody<T>> {
-  const response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-  return (await response.json().catch(() => ({ success: false, error: { code: "NETWORK", message: "Something went wrong. Please try again." } }))) as ApiBody<T>;
-}
+// The shared helper: a dropped connection becomes a message, never a stuck button.
+const post = postJson;
 
 export function SignInPanel({ nextPath }: { nextPath: string }) {
   const router = useRouter();

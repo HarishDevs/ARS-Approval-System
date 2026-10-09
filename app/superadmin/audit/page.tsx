@@ -3,6 +3,8 @@ import { PageHeader, EmptyState } from "@/features/shell/PageHeader";
 import { requireArea } from "@/server/authorization/guards";
 import { listAuditActions, listAuditEntries } from "@/lib/db/repositories/audit.repository";
 import { SafeText } from "@/features/ui/SafeText";
+import { formatIndiaTime } from "@/server/notifications/security-messages";
+import { indiaToday } from "@/lib/db/repositories/collab.repository";
 
 const PAGE_SIZE = 100;
 
@@ -16,6 +18,8 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
   const beforeId = params.before && /^\d+$/.test(params.before) ? Number(params.before) : undefined;
   const entries = await listAuditEntries({ action, beforeId }, PAGE_SIZE);
   const last = entries.at(-1);
+  const today = await indiaToday();
+  const monthAgo = new Date(Date.parse(`${today}T00:00:00Z`) - 29 * 86_400_000).toISOString().slice(0, 10);
 
   return (
     <>
@@ -38,6 +42,25 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
           Filter
         </button>
       </form>
+      <form className="mb-6 flex flex-wrap items-end gap-3 rounded-md border border-line bg-surface p-3" method="get" action="/api/superadmin/audit">
+        <p className="w-full text-label font-semibold">Download as CSV (up to 50,000 entries)</p>
+        <div>
+          <label htmlFor="export-from" className="field-label">
+            From
+          </label>
+          <input id="export-from" type="date" name="from" defaultValue={monthAgo} className="field-input" />
+        </div>
+        <div>
+          <label htmlFor="export-to" className="field-label">
+            To
+          </label>
+          <input id="export-to" type="date" name="to" defaultValue={today} className="field-input" />
+        </div>
+        {action && <input type="hidden" name="action" value={action} />}
+        <button type="submit" className="btn-secondary btn-compact h-11">
+          Download CSV{action ? ` (${action})` : ""}
+        </button>
+      </form>
       {entries.length === 0 ? (
         <EmptyState title="No entries" body="Nothing matches this filter." />
       ) : (
@@ -56,7 +79,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
             <tbody>
               {entries.map((entry) => (
                 <tr key={entry.id}>
-                  <td className="whitespace-nowrap">{entry.occurredAt.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}</td>
+                  <td className="whitespace-nowrap">{formatIndiaTime(entry.occurredAt)}</td>
                   <td>{entry.actorName ?? "System"}</td>
                   <td className="font-medium">{entry.action}</td>
                   <td className="text-ink-muted">

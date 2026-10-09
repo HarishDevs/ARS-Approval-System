@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Email } from "@/features/ui/SafeText";
+import { postJson } from "@/features/auth/components/auth-client";
 
 export function NotMeConfirm({ token }: { token: string }) {
   const [state, setState] = useState<"idle" | "busy" | "done" | "error">("idle");
@@ -9,16 +10,12 @@ export function NotMeConfirm({ token }: { token: string }) {
 
   async function confirm() {
     setState("busy");
-    const response = await fetch("/api/auth/not-me", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token }),
-    });
-    const body = await response.json().catch(() => null);
-    if (response.ok && body?.success) setState("done");
+    // postJson turns a dropped connection into a message (audit D-02).
+    const body = await postJson<{ secured: boolean }>("/api/auth/not-me", { token });
+    if (body.success) setState("done");
     else {
       setState("error");
-      setMessage(body?.error?.message ?? "Something went wrong. Contact IT.");
+      setMessage(body.error.code === "NETWORK" ? "Couldn't reach the server. Check your connection and try again." : body.error.message);
     }
   }
 

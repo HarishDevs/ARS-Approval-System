@@ -6,6 +6,9 @@ import { MarkAllReadButton } from "@/features/shell/MarkAllReadButton";
 import { listInbox } from "@/lib/db/repositories/collab.repository";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 import { SafeText } from "@/features/ui/SafeText";
+import { PendingLink } from "@/features/ui/PendingLink";
+
+const PAGE_SIZE = 50;
 
 // In-app inbox (P1-44). Links are stored as full URLs for email; here they
 // open inside the app.
@@ -19,9 +22,12 @@ function appPath(link: string | null): string | null {
   }
 }
 
-export default async function NotificationsPage() {
+export default async function NotificationsPage({ searchParams }: { searchParams: Promise<{ before?: string }> }) {
   const { user } = await requireArea("users");
-  const items = await listInbox(user.id, 50);
+  const before = (await searchParams).before;
+  const beforeId = before && /^\d+$/.test(before) ? Number(before) : undefined;
+  const items = await listInbox(user.id, PAGE_SIZE, beforeId);
+  const last = items.at(-1);
   return (
     <>
       <PageHeader title="Notifications" description="Everything we've told you by email or WhatsApp, in one place.">
@@ -59,6 +65,20 @@ export default async function NotificationsPage() {
             );
           })}
         </ul>
+      )}
+      {(beforeId || (items.length === PAGE_SIZE && last)) && (
+        <nav aria-label="Pages" className="mt-4 flex items-center gap-3 text-label">
+          {beforeId ? (
+            <PendingLink href="/users/notifications" className="btn-secondary btn-compact">
+              ← Newest
+            </PendingLink>
+          ) : null}
+          {items.length === PAGE_SIZE && last ? (
+            <PendingLink href={`/users/notifications?before=${last.id}`} className="btn-secondary btn-compact">
+              Older →
+            </PendingLink>
+          ) : null}
+        </nav>
       )}
     </>
   );

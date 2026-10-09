@@ -7,6 +7,7 @@ import { runSlaChecks } from "@/server/jobs/sla";
 import { runOutbox } from "@/server/approvals/service";
 import { pruneOutbox } from "@/lib/db/repositories/outbox.repository";
 import { recordRunnerHeartbeat } from "@/lib/db/repositories/jobs.repository";
+import { runDailyBackup } from "@/server/ops/backup";
 import { runDailyTemplateSync } from "@/server/notifications/template-registry";
 import { logError, logInfo } from "@/lib/logging/logger";
 
@@ -30,9 +31,14 @@ export async function POST(request: NextRequest) {
     const sla = await runSlaChecks();
     const templates = await runDailyTemplateSync();
     const housekeeping = { ...(await runHousekeeping()), outboxPruned: await pruneOutbox() };
+    // Once a day (D-104). A failed backup is logged but doesn't stop the runner.
+    const backup = await runDailyBackup().catch((error) => {
+      logError("job runner: backup failed", error);
+      return { backup: "FAILED" as const };
+    });
     await recordRunnerHeartbeat();
-    logInfo("job runner finished", { ...outbox, ...retries, ...sla, ...templates, ...housekeeping });
-    return apiSuccess({ outbox, retries, sla, templates, housekeeping });
+    logInfo("job runner finished", { ...outbox, ...retries, ...sla, ...templates, ...housekeeping, ...backup });
+    return apiSuccess({ outbox, retries, sla, templates, housekeeping, backup });
   } catch (error) {
     logError("job runner failed", error);
     return apiError("SYSTEM_ERROR", "Job run failed.", 500);

@@ -5,6 +5,7 @@ import { requireArea } from "@/server/authorization/guards";
 import { SETTING_DEFINITIONS, type SettingDefinition } from "@/server/settings/definitions";
 import { resolveSettingForDisplay } from "@/server/settings/resolve";
 import { listRawSettings, listSettingHistory } from "@/lib/db/repositories/settings.repository";
+import { formatIndiaTime } from "@/server/notifications/security-messages";
 
 const GROUPS: { group: SettingDefinition["group"]; title: string; description: string }[] = [
   { group: "EMAIL", title: "Email", description: "Resend, sending from the ARS address. GoDaddy blocks SMTP, so email goes over HTTPS." },
@@ -51,7 +52,7 @@ export default async function SettingsPage() {
                     <p className="text-ink-muted">
                       {entry.newRef === "cleared" ? "Removed" : entry.newRef?.startsWith("fp:") ? "Key replaced" : `Set to ${entry.newRef?.slice(2) ?? ""}`}
                       {" · "}
-                      {entry.changedByName ?? "System"} · {entry.changedAt.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}
+                      {entry.changedByName ?? "System"} · {formatIndiaTime(entry.changedAt)}
                     </p>
                   </li>
                 ))}

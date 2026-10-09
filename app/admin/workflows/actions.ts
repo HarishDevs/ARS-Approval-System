@@ -5,7 +5,8 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getAdminActor, parseId } from "@/server/admin/actor";
 import { addDraftVersion, createWorkflow, publishVersion, simulateVersion } from "@/server/approvals/service";
-import { findWorkflow, updateWorkflowDetails } from "@/lib/db/repositories/approvals.repository";
+import { deleteUnusedWorkflow, findWorkflow, updateWorkflowDetails } from "@/lib/db/repositories/approvals.repository";
+import { withTransaction } from "@/lib/db/transaction";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { builderSpecSchema } from "@/server/workflows/builder";
 import { formSchema } from "@/server/forms/fields";
@@ -136,8 +137,9 @@ export async function updateDetailsAction(_previous: ActionResult | null, formDa
   if (name.length < 3 || name.length > 150) return { ok: false, message: "Check the highlighted fields.", fieldErrors: { name: "Enter a name (3 to 150 characters)." } };
   const description = String(formData.get("description") ?? "").trim().slice(0, 1000) || null;
   const active = formData.get("active") === "on";
+  const resubmitPolicy = formData.get("resubmitPolicy") === "BEGINNING" ? "BEGINNING" : "REQUESTING_STEP";
   try {
-    await updateWorkflowDetails(workflowId, { name, description, active });
+    await updateWorkflowDetails(workflowId, { name, description, active, resubmitPolicy });
     await recordAudit({
       actorUserId: actor.id,
       action: "WORKFLOW_DETAILS_UPDATED",
@@ -145,7 +147,7 @@ export async function updateDetailsAction(_previous: ActionResult | null, formDa
       entityId: workflowId,
       sessionId: actor.sessionId,
       ipAddress: actor.ipAddress,
-      metadata: { before: { name: workflow.name, active: workflow.active }, after: { name, active, description } },
+      metadata: { before: { name: workflow.name, active: workflow.active, resubmitPolicy: workflow.resubmitPolicy }, after: { name, active, description, resubmitPolicy } },
     });
   } catch (error) {
     logError("updateDetailsAction failed", error);
@@ -154,4 +156,34 @@ export async function updateDetailsAction(_previous: ActionResult | null, formDa
   revalidatePath(`/admin/workflows/${workflowId}`);
   revalidatePath("/admin/workflows");
   return { ok: true, message: active ? "Saved." : "Saved. People can no longer raise new requests of this type; running ones continue." };
+}
+
+// An approval type nobody has raised a request on can be removed for good
+// (audit gap A-05); one that has been used can only be closed (archived) with
+// "Open for new requests" off, so its history stays.
+export async function deleteWorkflowAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const actor = await getAdminActor();
+  const workflowId = parseId(formData.get("workflowId"));
+  if (!actor || workflowId === null) return NOT_FOUND;
+  const workflow = await findWorkflow(workflowId);
+  if (!workflow || workflow.kind !== "PREDEFINED") return NOT_FOUND;
+  let removed = false;
+  try {
+    removed = await withTransaction(async (db) => {
+      const done = await deleteUnusedWorkflow(workflowId, db);
+      if (done) {
+        await recordAudit(
+          { actorUserId: actor.id, action: "WORKFLOW_DELETED", entityType: "WORKFLOW", entityId: workflowId, sessionId: actor.sessionId, ipAddress: actor.ipAddress, metadata: { code: workflow.code, name: workflow.name } },
+          db,
+        );
+      }
+      return done;
+    });
+  } catch (error) {
+    logError("deleteWorkflowAction failed", error);
+    return { ok: false, message: "Couldn't remove it. Please try again." };
+  }
+  if (!removed) return { ok: false, message: "Requests were raised on this approval type, so it can't be removed. Untick \"Open for new requests\" to archive it instead." };
+  revalidatePath("/admin/workflows");
+  redirect("/admin/workflows?removed=1");
 }

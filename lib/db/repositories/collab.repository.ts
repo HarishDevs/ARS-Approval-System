@@ -138,10 +138,11 @@ export async function countUnread(userId: number, db: Queryable = getDbPool()): 
   return Number(rows[0]?.total ?? 0);
 }
 
-export async function listInbox(userId: number, limit: number, db: Queryable = getDbPool()): Promise<InboxItem[]> {
+// Newest first, a page at a time: `beforeId` continues after the last one shown.
+export async function listInbox(userId: number, limit: number, beforeId?: number, db: Queryable = getDbPool()): Promise<InboxItem[]> {
   const [rows] = await db.query<(RowDataPacket & { id: number; title: string; message: string; deep_link: string | null; created_at: Date; read_at: Date | null })[]>(
-    "SELECT id, title, message, deep_link, created_at, read_at FROM notifications WHERE user_id = ? ORDER BY id DESC LIMIT ?",
-    [userId, limit],
+    `SELECT id, title, message, deep_link, created_at, read_at FROM notifications WHERE user_id = ? ${beforeId ? "AND id < ?" : ""} ORDER BY id DESC LIMIT ?`,
+    beforeId ? [userId, beforeId, limit] : [userId, limit],
   );
   return rows.map((row) => ({ id: row.id, title: row.title, message: row.message, deepLink: row.deep_link, createdAt: row.created_at, read: row.read_at !== null }));
 }

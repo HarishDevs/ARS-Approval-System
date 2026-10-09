@@ -1,27 +1,10 @@
 import Link from "next/link";
-import type { RowDataPacket } from "mysql2/promise";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { requireArea } from "@/server/authorization/guards";
-import { getDbPool } from "@/lib/db/client";
+import { adminHomeCounts as counts } from "@/lib/db/repositories/insights.repository";
 
 // Admin space overview (S9-13): every module is live, so each card links to
 // it with a live count. Equal heights; 3 columns on wide screens.
-async function counts(): Promise<Record<string, number>> {
-  const [rows] = await getDbPool().query<(RowDataPacket & Record<string, number>)[]>(
-    `SELECT
-       (SELECT COUNT(*) FROM workflow_definitions d JOIN workflow_versions v ON v.workflow_id = d.id AND v.status = 'PUBLISHED'
-         WHERE d.kind = 'PREDEFINED' AND d.active = TRUE) AS live_types,
-       (SELECT COUNT(DISTINCT d.id) FROM workflow_definitions d JOIN workflow_versions v ON v.workflow_id = d.id AND v.status = 'DRAFT'
-         WHERE d.kind = 'PREDEFINED') AS drafts,
-       (SELECT COUNT(*) FROM users WHERE active = TRUE AND is_break_glass = FALSE) AS users,
-       (SELECT COUNT(*) FROM approver_groups WHERE active = TRUE) AS groups_n,
-       (SELECT COUNT(*) FROM departments WHERE active = TRUE) AS departments,
-       (SELECT COUNT(*) FROM holidays WHERE holiday_on >= CURRENT_DATE) AS holidays,
-       (SELECT COUNT(*) FROM approval_requests WHERE status IN ('IN_PROGRESS','ON_HOLD','CHANGES_REQUIRED') AND deleted_at IS NULL) AS open_requests`,
-  );
-  return rows[0] ?? {};
-}
-
 const n = (value: unknown) => Number(value ?? 0).toLocaleString("en-IN");
 
 export default async function AdminHome() {

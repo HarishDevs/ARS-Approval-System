@@ -3,9 +3,10 @@ import { EmptyState, PageHeader } from "@/features/shell/PageHeader";
 import { requireArea } from "@/server/authorization/guards";
 import { listWorkflows } from "@/lib/db/repositories/approvals.repository";
 
-export default async function WorkflowsPage() {
+export default async function WorkflowsPage({ searchParams }: { searchParams: Promise<{ removed?: string }> }) {
   await requireArea("admin");
   const workflows = await listWorkflows({ kind: "PREDEFINED" });
+  const removed = (await searchParams).removed === "1";
   return (
     <>
       <PageHeader title="Workflows" description="Predefined approval types: the form people fill in and the levels it goes through.">
@@ -13,6 +14,11 @@ export default async function WorkflowsPage() {
           New workflow
         </Link>
       </PageHeader>
+      {removed && (
+        <p role="status" className="mb-4 rounded-md bg-success-50 px-3 py-2 text-label text-success-600">
+          The approval type was removed.
+        </p>
+      )}
       {workflows.length === 0 ? (
         <EmptyState title="No workflows yet" body="Create the first approval type, e.g. Purchase & SCM Approval." />
       ) : (

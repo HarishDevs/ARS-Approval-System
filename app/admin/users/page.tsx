@@ -3,9 +3,9 @@ import { EmptyState, PageHeader } from "@/features/shell/PageHeader";
 import { requireArea } from "@/server/authorization/guards";
 import { listUsersForAdmin } from "@/lib/db/repositories/admin-users.repository";
 import { Email } from "@/features/ui/SafeText";
+import { ROLE_LABEL } from "@/features/ui/labels";
 
 const PAGE_SIZE = 50;
-const ROLE_LABEL = { USER: "User", IT_ADMIN: "IT Admin", SUPER_ADMIN: "Super Admin" } as const;
 
 // F-06 user list. Search and filter are plain GET parameters.
 export default async function UsersPage({ searchParams }: { searchParams: Promise<{ q?: string; status?: string; page?: string }> }) {

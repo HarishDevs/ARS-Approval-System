@@ -7,16 +7,9 @@ import { DeleteRequestButton } from "@/features/superadmin/DeleteRequestButton";
 import { listAllRequests } from "@/lib/db/repositories/request-admin.repository";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 import { SafeText } from "@/features/ui/SafeText";
+import { REQUEST_STATUS_OPTIONS } from "@/features/ui/labels";
 
-const STATUS_OPTIONS = [
-  ["", "Any status"],
-  ["IN_PROGRESS", "In progress"],
-  ["ON_HOLD", "On hold"],
-  ["CHANGES_REQUIRED", "Changes required"],
-  ["APPROVED", "Approved"],
-  ["REJECTED", "Rejected"],
-  ["CANCELLED", "Withdrawn"],
-] as const;
+const STATUS_OPTIONS = REQUEST_STATUS_OPTIONS;
 
 // Super Admin → Requests (S11-10, D-086, F-73): every request, searchable,
 // with Delete; the Deleted tab lists what was deleted, by whom and why.

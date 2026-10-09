@@ -43,7 +43,7 @@ export default async function DeliveriesPage() {
             <tbody>
               {deliveries.map((delivery) => (
                 <tr key={delivery.id}>
-                  <td className="whitespace-nowrap">{delivery.createdAt.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}</td>
+                  <td className="whitespace-nowrap">{formatIndiaTime(delivery.createdAt)}</td>
                   <td>{delivery.eventType}</td>
                   <td>{delivery.recipientName}</td>
                   <td>{delivery.channel === "EMAIL" ? "Email" : "WhatsApp"}</td>

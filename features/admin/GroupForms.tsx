@@ -31,7 +31,7 @@ export function NewGroupForm() {
 export function GroupEditor({ group, people }: { group: { id: number; code: string; name: string; active: boolean; members: { id: number; name: string; active: boolean }[] }; people: Option[] }) {
   const details = useActionForm(saveGroupAction);
   const add = useActionForm(groupMemberAction, { resetOnSuccess: true });
-  const remove = useActionForm(groupMemberAction);
+  const remove = useActionForm(groupMemberAction, { confirm: "Remove this person from the group? Approvals already sent to them stay with them." });
   const memberIds = new Set(group.members.map((member) => member.id));
 
   return (
@@ -64,6 +64,7 @@ export function GroupEditor({ group, people }: { group: { id: number; code: stri
           </li>
         ))}
       </ul>
+      {remove.confirmBar}
       <form ref={add.formRef} onSubmit={add.onSubmit} className="flex flex-wrap items-center gap-2">
         <input type="hidden" name="groupId" value={group.id} />
         <input type="hidden" name="command" value="add" />

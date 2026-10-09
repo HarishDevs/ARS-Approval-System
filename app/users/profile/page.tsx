@@ -4,8 +4,7 @@ import { ProfileTabs } from "@/features/shell/ProfileTabs";
 import { Email, SafeText } from "@/features/ui/SafeText";
 import { getOwnProfile } from "@/lib/db/repositories/users.repository";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
-
-const ROLE_LABEL = { USER: "User", IT_ADMIN: "IT Admin", SUPER_ADMIN: "Super Admin" } as const;
+import { accessLabel, maskWhatsApp } from "@/features/ui/labels";
 
 // The signed-in person's details, read-only: IT keeps them in Admin → Users.
 export default async function ProfilePage() {
@@ -15,11 +14,11 @@ export default async function ProfilePage() {
     { label: "Name", value: <SafeText text={user.name} /> },
     { label: "User ID", value: user.loginId },
     { label: "Email", value: <Email address={user.email} /> },
-    { label: "WhatsApp", value: user.whatsappNumber ? `+${user.whatsappNumber.slice(0, 2)} ••••• ${user.whatsappNumber.slice(-4)}` : "Not set" },
+    { label: "WhatsApp", value: maskWhatsApp(user.whatsappNumber) ?? "Not set" },
     { label: "Department", value: profile?.departmentName ? <SafeText text={profile.departmentName} /> : "Not set" },
     { label: "Designation", value: profile?.designationName ? <SafeText text={profile.designationName} /> : "Not set" },
     { label: "Reporting manager", value: profile?.reportingManagerName ? <SafeText text={profile.reportingManagerName} /> : "Not set" },
-    { label: "Access", value: user.roles.filter((role) => role !== "USER").map((role) => ROLE_LABEL[role]).join(", ") || "User" },
+    { label: "Access", value: accessLabel(user.roles) },
     { label: "Last sign-in", value: profile?.lastLoginAt ? formatIndiaTime(profile.lastLoginAt) : "—" },
   ];
   return (

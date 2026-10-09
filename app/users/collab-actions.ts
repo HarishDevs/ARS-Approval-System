@@ -7,6 +7,7 @@ import { submitCustomRequest, type Actor } from "@/server/approvals/service";
 import { addComment, createDelegation, stopDelegation } from "@/server/approvals/collab";
 import { markAllRead } from "@/lib/db/repositories/collab.repository";
 import { builderSpecSchema } from "@/server/workflows/builder";
+import { addAttachments, filesFrom, prepareFiles } from "@/server/attachments/service";
 import { logError } from "@/lib/logging/logger";
 import type { ActionResult } from "@/lib/http/action-result";
 
@@ -35,7 +36,11 @@ export async function submitCustomAction(_previous: ActionResult | null, formDat
   } catch {
     return { ok: false, message: "The levels couldn't be read. Reload the page and try again." };
   }
+  // S8-02: files on a custom approval, checked before anything is saved (F-18).
+  const files = await prepareFiles(filesFrom(formData));
+  if (!files.ok) return { ok: false, message: files.message, fieldErrors: { attachments: files.message } };
   let requestId: number;
+  let filesSaved = true;
   try {
     const result = await submitCustomRequest(
       {
@@ -52,12 +57,19 @@ export async function submitCustomAction(_previous: ActionResult | null, formDat
     );
     if (!result.ok) return { ok: false, message: result.message, fieldErrors: result.fieldErrors };
     requestId = result.value.requestId;
+    if (result.value.repeated) files.files.length = 0;
   } catch (error) {
     logError("submitCustomAction failed", error);
     return { ok: false, message: "Couldn't submit. Please try again." };
   }
+  try {
+    filesSaved = (await addAttachments(requestId, files.files, me, { requesterOnly: true })).ok;
+  } catch (error) {
+    logError("submitCustomAction: attachments failed", error, { requestId });
+    filesSaved = false;
+  }
   revalidatePath("/users");
-  redirect(`/users/requests/${requestId}?submitted=1`);
+  redirect(`/users/requests/${requestId}?submitted=1${filesSaved ? "" : "&files=failed"}`);
 }
 
 export async function commentAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {

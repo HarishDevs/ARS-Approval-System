@@ -126,3 +126,89 @@ export async function listAuditActions(db: Queryable = getDbPool()): Promise<str
   const [rows] = await db.query<(RowDataPacket & { action: string })[]>("SELECT DISTINCT action FROM audit_logs ORDER BY action");
   return rows.map((row) => row.action);
 }
+
+// S8-02: the audit log as CSV, newest first, between two dates (India time).
+export async function listAuditForExport(filter: { action?: string; from: string; to: string }, limit: number, db: Queryable = getDbPool()): Promise<AuditListItem[]> {
+  // occurred_at is UTC; the dates are India dates (UTC+5:30).
+  const where = ["a.occurred_at >= DATE_SUB(?, INTERVAL 330 MINUTE)", "a.occurred_at < DATE_SUB(DATE_ADD(?, INTERVAL 1 DAY), INTERVAL 330 MINUTE)"];
+  const params: unknown[] = [`${filter.from} 00:00:00`, `${filter.to} 00:00:00`];
+  if (filter.action) {
+    where.push("a.action = ?");
+    params.push(filter.action);
+  }
+  params.push(limit);
+  const [rows] = await db.query<
+    (RowDataPacket & { id: number; occurred_at: Date; name: string | null; action: string; entity_type: string; entity_id: string | null; result: "SUCCESS" | "FAILURE"; ip_address: string | null; metadata_json: unknown })[]
+  >(
+    `SELECT a.id, a.occurred_at, u.name, a.action, a.entity_type, a.entity_id, a.result, a.ip_address, a.metadata_json
+     FROM audit_logs a LEFT JOIN users u ON u.id = a.actor_user_id
+     WHERE ${where.join(" AND ")}
+     ORDER BY a.id DESC LIMIT ?`,
+    params,
+  );
+  return rows.map((row) => ({
+    id: row.id,
+    occurredAt: row.occurred_at,
+    actorName: row.name,
+    action: row.action,
+    entityType: row.entity_type,
+    entityId: row.entity_id,
+    result: row.result,
+    ipAddress: row.ip_address,
+    metadata: row.metadata_json,
+  }));
+}
+
+// S8-02 login history: sign-in attempts, newest first.
+export interface LoginHistoryItem {
+  id: number;
+  occurredAt: Date;
+  userId: number | null;
+  userName: string | null;
+  loginId: string | null;
+  method: "GOOGLE" | "PASSWORD_OTP";
+  step: string;
+  success: boolean;
+  failureReason: string | null;
+  ipAddress: string | null;
+  userAgent: string | null;
+  newDevice: boolean;
+}
+
+export async function listLoginHistory(filter: { userId?: number; outcome?: "SUCCESS" | "FAILURE"; beforeId?: number }, limit: number, db: Queryable = getDbPool()): Promise<LoginHistoryItem[]> {
+  const where: string[] = [];
+  const params: unknown[] = [];
+  if (filter.userId) {
+    where.push("l.user_id = ?");
+    params.push(filter.userId);
+  }
+  if (filter.outcome) where.push(filter.outcome === "SUCCESS" ? "l.success = TRUE" : "l.success = FALSE");
+  if (filter.beforeId) {
+    where.push("l.id < ?");
+    params.push(filter.beforeId);
+  }
+  params.push(limit);
+  const [rows] = await db.query<
+    (RowDataPacket & { id: number; occurred_at: Date; user_id: number | null; name: string | null; login_id: string | null; auth_method: "GOOGLE" | "PASSWORD_OTP"; step: string; success: number; failure_reason: string | null; ip_address: string | null; user_agent: string | null; new_device: number })[]
+  >(
+    `SELECT l.id, l.occurred_at, l.user_id, u.name, u.login_id, l.auth_method, l.step, l.success, l.failure_reason, l.ip_address, l.user_agent, l.new_device
+     FROM login_logs l LEFT JOIN users u ON u.id = l.user_id
+     ${where.length ? `WHERE ${where.join(" AND ")}` : ""}
+     ORDER BY l.id DESC LIMIT ?`,
+    params,
+  );
+  return rows.map((row) => ({
+    id: row.id,
+    occurredAt: row.occurred_at,
+    userId: row.user_id,
+    userName: row.name,
+    loginId: row.login_id,
+    method: row.auth_method,
+    step: row.step,
+    success: Number(row.success) === 1,
+    failureReason: row.failure_reason,
+    ipAddress: row.ip_address,
+    userAgent: row.user_agent,
+    newDevice: Number(row.new_device) === 1,
+  }));
+}

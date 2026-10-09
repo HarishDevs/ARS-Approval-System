@@ -52,7 +52,7 @@ export function AddHolidayForm() {
 }
 
 export function RemoveHolidayButton({ date }: { date: string }) {
-  const { pending, onSubmit } = useActionForm(holidayAction);
+  const { pending, onSubmit, confirmBar } = useActionForm(holidayAction, { confirm: `Remove the holiday on ${date}? Due times already set stay as they are.` });
   return (
     <form onSubmit={onSubmit}>
       <input type="hidden" name="command" value="remove" />
@@ -60,6 +60,7 @@ export function RemoveHolidayButton({ date }: { date: string }) {
       <SubmitButton pending={pending} variant="secondary" className="btn-compact h-8">
         Remove
       </SubmitButton>
+      {confirmBar}
     </form>
   );
 }

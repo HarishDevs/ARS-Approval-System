@@ -160,7 +160,8 @@ export interface ApproverRow {
   onTimePercent: number | null;
 }
 
-// Tasks given in the period (by the India date the task was created). The
+// Approval tasks given in the period (by the India date the task was
+// created); work tasks (D-097) aren't approvals and aren't counted. The
 // department filter is the approver's department here.
 export async function loadApprovers(filter: DashboardFilter, db: Queryable = getDbPool()): Promise<ApproverRow[]> {
   const scope = requestScope(filter, { department: "none" });
@@ -188,7 +189,7 @@ export async function loadApprovers(filter: DashboardFilter, db: Queryable = get
      JOIN users a ON a.id = t.approver_id
      LEFT JOIN designations g ON g.id = a.designation_id
      LEFT JOIN departments d ON d.id = a.department_id
-     WHERE ${where} ${departmentSql}
+     WHERE ${where} ${departmentSql} AND t.task_type = 'APPROVAL'
      GROUP BY a.id, a.name, g.name, d.name
      ORDER BY assigned DESC, a.name`,
     params,

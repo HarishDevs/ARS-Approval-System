@@ -1,6 +1,6 @@
 "use client";
 
-import { publishAction, simulateAction, updateDetailsAction } from "@/app/admin/workflows/actions";
+import { publishAction, simulateAction, updateDetailsAction, deleteWorkflowAction } from "@/app/admin/workflows/actions";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import { NO_LOOKUPS, type FieldLookups, type FormField } from "@/server/forms/fields";
 import type { SimulationView } from "@/server/approvals/service";
@@ -114,7 +114,19 @@ export function PublishButton({ workflowId, versionId, versionNo }: { workflowId
   );
 }
 
-export function DetailsForm({ workflowId, name, description, active }: { workflowId: number; name: string; description: string | null; active: boolean }) {
+export function DetailsForm({
+  workflowId,
+  name,
+  description,
+  active,
+  resubmitPolicy = "REQUESTING_STEP",
+}: {
+  workflowId: number;
+  name: string;
+  description: string | null;
+  active: boolean;
+  resubmitPolicy?: "REQUESTING_STEP" | "BEGINNING";
+}) {
   const { result, pending, onSubmit } = useActionForm(updateDetailsAction);
   return (
     <form onSubmit={onSubmit} className="card space-y-3 px-5 py-4">
@@ -133,12 +145,38 @@ export function DetailsForm({ workflowId, name, description, active }: { workflo
         </label>
         <input id="d-desc" name="description" defaultValue={description ?? ""} className="field-input" />
       </div>
+      <div>
+        <label htmlFor="d-resubmit" className="field-label">
+          After &quot;changes asked&quot;, a resubmitted request starts again
+        </label>
+        <select id="d-resubmit" name="resubmitPolicy" defaultValue={resubmitPolicy} className="field-input">
+          <option value="REQUESTING_STEP">at the step that asked (earlier approvals stand)</option>
+          <option value="BEGINNING">from the first level (everyone approves again)</option>
+        </select>
+      </div>
       <label className="flex items-center gap-2 text-label">
-        <input type="checkbox" name="active" defaultChecked={active} /> Open for new requests
+        <input type="checkbox" name="active" defaultChecked={active} /> Open for new requests <span className="text-ink-faint">(untick to archive)</span>
       </label>
       <SubmitButton pending={pending} variant="secondary" className="btn-compact">
         Save details
       </SubmitButton>
+      <ResultMessage result={result} />
+    </form>
+  );
+}
+
+// Remove an approval type that was never used (two-step confirmation).
+export function DeleteWorkflowForm({ workflowId, name }: { workflowId: number; name: string }) {
+  const { result, pending, onSubmit, confirmBar } = useActionForm(deleteWorkflowAction, { confirm: `Remove "${name}" for good? This can't be undone.` });
+  return (
+    <form onSubmit={onSubmit} className="card space-y-2 px-5 py-4">
+      <input type="hidden" name="workflowId" value={workflowId} />
+      <h2 className="font-semibold">Remove this approval type</h2>
+      <p className="text-label text-ink-muted">Only if no request was ever raised on it. Otherwise archive it above.</p>
+      <SubmitButton pending={pending} variant="secondary" className="btn-compact text-danger-600">
+        Remove approval type
+      </SubmitButton>
+      {confirmBar}
       <ResultMessage result={result} />
     </form>
   );

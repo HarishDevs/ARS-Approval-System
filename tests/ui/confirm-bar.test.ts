@@ -20,7 +20,7 @@ describe("forms that ask for confirmation", () => {
       .filter((file) => !file.endsWith(path.join("ui", "form.tsx"))) // the hook itself
       .filter((file) => {
         const text = readFileSync(file, "utf8");
-        return /useActionForm\([^)]*confirm/.test(text) && !text.includes("{confirmBar}");
+        return /useActionForm\([^)]*confirm/.test(text) && !/\{(\w+\.)?confirmBar\}/.test(text);
       })
       .map((file) => path.relative(root, file));
     expect(missing).toEqual([]);

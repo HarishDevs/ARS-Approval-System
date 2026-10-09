@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { WorkflowBuilder } from "@/features/admin/WorkflowBuilder";
-import { DetailsForm, PublishButton, TestModePanel } from "@/features/admin/WorkflowPanels";
+import { DeleteWorkflowForm, DetailsForm, PublishButton, TestModePanel } from "@/features/admin/WorkflowPanels";
 import { loadBuilderOptions } from "@/features/admin/workflow-options";
 import { namedApprovers } from "@/server/approvals/approver-rules";
 import { listActiveUserOptions } from "@/lib/db/repositories/admin-users.repository";
@@ -80,7 +80,8 @@ export default async function WorkflowPage({ params, searchParams }: { params: P
             ))}
           </section>
           {latest && <TestModePanel versionId={latest.id} form={latest.form} people={everyone} lookups={options.lookups} />}
-          <DetailsForm workflowId={workflow.id} name={workflow.name} description={workflow.description ?? null} active={workflow.active} />
+          <DetailsForm workflowId={workflow.id} name={workflow.name} description={workflow.description ?? null} active={workflow.active} resubmitPolicy={workflow.resubmitPolicy} />
+          <DeleteWorkflowForm workflowId={workflow.id} name={workflow.name} />
         </div>
       </div>
     </>
