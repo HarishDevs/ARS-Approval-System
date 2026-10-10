@@ -2,7 +2,7 @@ import Link from "next/link";
 import { FilePenLine } from "lucide-react";
 import { RequestStatusPill } from "@/features/requests/StatusPill";
 import { SafeText } from "@/features/ui/SafeText";
-import { displayValue, type FormField } from "@/server/forms/fields";
+import { CONFIDENTIAL_TEXT, displayValue, isConfidential, type FormField } from "@/server/forms/fields";
 import { findAmendment, listAmendments, type AmendmentRecord } from "@/server/approvals/amendments";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 import type { InstanceStatus } from "@/server/engine/types";
@@ -11,13 +11,19 @@ import type { InstanceStatus } from "@/server/engine/types";
 // the viewer may see this request). On an original: its amendments, which
 // one is in force, and an Amend link for the requester. On an amendment:
 // what it changes and why.
-function Changes({ amendment, form }: { amendment: AmendmentRecord; form: readonly FormField[] }) {
+function Changes({ amendment, form, hideConfidential }: { amendment: AmendmentRecord; form: readonly FormField[]; hideConfidential?: boolean }) {
   const names = new Map<number, string>();
   return (
     <ul className="mt-1 space-y-0.5 text-label">
       {amendment.changes.map((change) => {
         const field = form.find((item) => item.key === change.key);
         if (!field) return null;
+        if (hideConfidential && isConfidential(field))
+          return (
+            <li key={change.key}>
+              <span className="font-medium">{field.label}:</span> {CONFIDENTIAL_TEXT}
+            </li>
+          );
         return (
           <li key={change.key}>
             <span className="font-medium">{field.label}:</span> <del className="text-ink-muted">{displayValue(field, change.from, names)}</del> → <ins className="no-underline">{displayValue(field, change.to, names)}</ins>
@@ -28,7 +34,7 @@ function Changes({ amendment, form }: { amendment: AmendmentRecord; form: readon
   );
 }
 
-export async function AmendmentsCard({ requestId, form, canAmend }: { requestId: number; form: readonly FormField[]; canAmend: boolean }) {
+export async function AmendmentsCard({ requestId, form, canAmend, hideConfidential = false }: { requestId: number; form: readonly FormField[]; canAmend: boolean; hideConfidential?: boolean }) {
   const asAmendment = await findAmendment(requestId);
   if (asAmendment) {
     return (
@@ -43,7 +49,7 @@ export async function AmendmentsCard({ requestId, form, canAmend }: { requestId:
         <p className="mt-1 text-label">
           Why: <SafeText text={asAmendment.reason} />
         </p>
-        <Changes amendment={asAmendment} form={form} />
+        <Changes hideConfidential={hideConfidential} amendment={asAmendment} form={form} />
         <p className="mt-2 text-caption text-ink-muted">If this is approved, the new values replace the old ones on {asAmendment.originalNo}. If it is rejected or withdrawn, nothing changes there.</p>
       </section>
     );
@@ -85,7 +91,7 @@ export async function AmendmentsCard({ requestId, form, canAmend }: { requestId:
               <p className="text-label">
                 Why: <SafeText text={amendment.reason} />
               </p>
-              <Changes amendment={amendment} form={form} />
+              <Changes hideConfidential={hideConfidential} amendment={amendment} form={form} />
             </li>
           ))}
         </ol>

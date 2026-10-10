@@ -1,4 +1,4 @@
-export type RoleCode = "SUPER_ADMIN" | "IT_ADMIN" | "USER";
+export type RoleCode = "SUPER_ADMIN" | "IT_ADMIN" | "USER" | "EXPORTER"; // EXPORTER: v1.7.0 (A9) "Can export"
 export type SignInMethod = "GOOGLE" | "PASSWORD";
 export type AuthMethod = "GOOGLE" | "PASSWORD_OTP" | "DEMO";
 export type AppArea = "users" | "admin" | "superadmin";

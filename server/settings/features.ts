@@ -23,3 +23,12 @@ export async function enabledFeatures(user: { roles: readonly string[] }): Promi
   const values = await Promise.all(features.map((feature) => featureOn(feature, user)));
   return Object.fromEntries(features.map((feature, index) => [feature, values[index]])) as Record<Feature, boolean>;
 }
+
+// v1.7.0 (A9): may this person download reports? A separate permission only
+// when the Super Admin limits downloads to the "Can export" role.
+export async function canExport(user: { roles: readonly string[] } | null): Promise<boolean> {
+  if (!user) return false;
+  const mode = await getSettingValue("features.exports").catch(() => null);
+  if (mode !== "ROLE") return true;
+  return user.roles.includes("EXPORTER") || user.roles.includes("IT_ADMIN") || user.roles.includes("SUPER_ADMIN");
+}

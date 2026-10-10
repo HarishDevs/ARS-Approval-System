@@ -2,6 +2,8 @@ import { getDbPool } from "@/lib/db/client";
 import { getRunnerHeartbeat } from "@/lib/db/repositories/jobs.repository";
 import { logError } from "@/lib/logging/logger";
 import packageJson from "@/package.json";
+import { after } from "next/server";
+import { checkJobRunnerStopped } from "@/server/ops/alerts";
 
 // Health check for an uptime monitor (audit X-09, D-103). Public and cheap:
 // 200 when the app and the database answer, 503 when the database doesn't.
@@ -18,6 +20,8 @@ export async function GET() {
     database = true;
     const heartbeat = await getRunnerHeartbeat();
     jobRunner = heartbeat === null ? "NEVER" : heartbeat.minutesAgo <= 15 ? "OK" : "LATE";
+    // A5: after the answer is sent, tell the Super Admin if the runner stopped.
+    if (jobRunner === "LATE") after(() => checkJobRunnerStopped().then(() => undefined));
   } catch (error) {
     logError("health: database check failed", error);
   }

@@ -269,7 +269,29 @@ export function TypeSettingsForm({ workflowId, settings, form }: { workflowId: n
               <option value="BLOCK">block (IT can still submit with a reason)</option>
             </select>
           </label>
+          <label className="flex items-center gap-2">
+            counting
+            <select name="dupScope" defaultValue={settings.duplicates.scope} className="field-input w-auto" aria-label="Whose requests count as duplicates">
+              <option value="ANY">anyone&apos;s requests</option>
+              <option value="SAME_REQUESTER">the same person&apos;s requests</option>
+              <option value="SAME_DEPARTMENT">the same department&apos;s requests</option>
+            </select>
+          </label>
         </div>
+      </fieldset>
+      <fieldset className="space-y-2">
+        <legend className="field-label">Must be unique (never repeated on an open or approved request of this type)</legend>
+        <div className="flex flex-wrap gap-3">
+          {fields
+            .filter((field) => ["TEXT", "NUMBER", "DATE", "CHOICE", "LOOKUP"].includes(field.type))
+            .map((field) => (
+              <label key={field.key} className="flex items-center gap-2 text-label">
+                <input type="checkbox" name="uniqueField" value={field.key} defaultChecked={settings.unique.fields.includes(field.key)} />
+                {field.label}
+              </label>
+            ))}
+        </div>
+        <p className="text-caption text-ink-muted">For identifiers such as an invoice or PO number. A repeat is refused for everyone, at any date; a rejected or withdrawn request frees the value.</p>
       </fieldset>
       <div className="flex flex-wrap items-end gap-3">
         <div>

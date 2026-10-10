@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { featureOn } from "@/server/settings/features";
+import { canExport, featureOn } from "@/server/settings/features";
 import { notFound } from "next/navigation";
 import { Download } from "lucide-react";
 import { requireArea } from "@/server/authorization/guards";
@@ -28,7 +28,9 @@ function show(cell: Cell, column: Column): string {
 export default async function ReportPage({ params, searchParams }: { params: Promise<{ key: string }>; searchParams: Promise<Record<string, string | undefined>> }) {
   const { user } = await requireArea("users");
   if (!(await featureOn("reports", user))) notFound();
-  const scheduling = await featureOn("scheduled_reports", user);
+  // A9: downloads (and emailed schedules, which carry a file) may need "Can export".
+  const exporting = await canExport(user);
+  const scheduling = exporting && (await featureOn("scheduled_reports", user));
   const { key } = await params;
   const raw = await searchParams;
   const query = cleanQuery(raw);
@@ -45,6 +47,9 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
     <>
       <Breadcrumbs items={[{ href: "/users", label: "My work" }, { href: "/users/reports", label: "Reports" }, { label: report.name }]} />
       <PageHeader title={report.name} description={`${report.description} ${scope.label}${report.usesPeriod ? ` · ${filter.period.label} (${filter.period.from} to ${filter.period.to})` : " · right now"}.`}>
+        {!exporting ? (
+          <p className="text-caption text-ink-muted">Downloads are limited to people with the Can export permission.</p>
+        ) : (
         <div className="flex flex-wrap gap-2">
           {(["xlsx", "csv", "pdf"] as const).map((format) => (
             <a key={format} href={download(format)} className="btn-secondary btn-compact inline-flex items-center gap-1.5" download>
@@ -53,6 +58,7 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
             </a>
           ))}
         </div>
+        )}
       </PageHeader>
 
       <form method="get" className="card mb-4 flex flex-wrap items-end gap-3 px-4 py-3" aria-label="Filters">

@@ -46,7 +46,12 @@ export interface FormField {
   defaultValue?: string; // filled in on a new request
   neededBy?: boolean; // DATE only: the request's "needed by" date (calendar)
   maxFiles?: number; // ATTACHMENT only: 1–5 (default 5)
+  confidential?: boolean; // v1.7.0 (A8): only the requester, approvers and IT see the value
 }
+
+// A8: what everyone else sees in place of a confidential value.
+export const CONFIDENTIAL_TEXT = "Confidential";
+export const isConfidential = (field: Pick<FormField, "confidential" | "type">) => Boolean(field.confidential) && field.type !== "SECTION";
 
 const ruleSchema = z.object({ field: z.string().regex(/^[a-z][a-z0-9_]{0,49}$/), op: z.enum(RULE_OPERATORS), value: z.string().trim().max(100).optional() });
 
@@ -66,6 +71,7 @@ export const formFieldSchema = z.object({
   defaultValue: z.string().trim().max(200).optional(),
   neededBy: z.boolean().optional(),
   maxFiles: z.number().int().min(1).max(MAX_FIELD_FILES).optional(),
+  confidential: z.boolean().optional(),
 });
 
 export const formSchema = z.array(formFieldSchema).max(40);
@@ -103,6 +109,7 @@ export function checkFormDefinition(fields: readonly FormField[]): string[] {
     } else if (field.formula) problems.push(`"${field.label}" has a formula but isn't a calculated field.`);
     if (field.type === "SECTION" && (field.required || field.requiredIf)) problems.push(`"${field.label}" is a heading; it can't be required.`);
     if (field.neededBy && field.type !== "DATE") problems.push(`"${field.label}": only a date can be the "needed by" date.`);
+    if (field.confidential && field.type === "SECTION") problems.push(`"${field.label}" is a heading; it can't be confidential.`);
     if (field.maxFiles !== undefined && field.type !== "ATTACHMENT") problems.push(`"${field.label}" has a file limit but isn't an attachment field.`);
     if (field.type === "ATTACHMENT" && field.defaultValue) problems.push(`"${field.label}" is an attachment field; it can't have a default value.`);
     for (const [name, rule] of [["show", field.showIf], ["require", field.requiredIf]] as const) {

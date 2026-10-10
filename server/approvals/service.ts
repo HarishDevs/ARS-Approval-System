@@ -844,6 +844,50 @@ export async function handOverPendingTasks(fromUserId: number, toUserId: number,
   return { ok: true, value: report };
 }
 
+// v1.7.0 (A3): IT moves chosen pending tasks (any approvers) to one person,
+// each through the normal locked path, with a result for every item. An
+// approval step needs an approver-eligible person (D-085); a work step any
+// active person; never the requester, never the person who already holds it.
+export const BULK_REASSIGN_MAX = 100;
+export type ReassignOutcome = { requestId: number; taskKey: string; requestNo: string | null; ok: boolean; message: string };
+
+export async function bulkReassign(items: readonly { requestId: number; taskKey: string }[], toUserId: number, reason: string, actor: Actor): Promise<Result<ReassignOutcome[]>> {
+  if (!isAdmin(actor)) return { ok: false, code: "FORBIDDEN", message: "Only IT can reassign approvals." };
+  const why = reason.trim();
+  if (why.length < 3) return { ok: false, code: "COMMENT_REQUIRED", message: "Say why they're being moved." };
+  const unique = [...new Map(items.map((item) => [`${item.requestId}:${item.taskKey}`, item])).values()].slice(0, BULK_REASSIGN_MAX);
+  const outcomes: ReassignOutcome[] = [];
+  for (const item of unique) {
+    const [rows] = await getDbPool().query<(RowDataPacket & { request_no: string })[]>("SELECT request_no FROM approval_requests WHERE id = ? AND deleted_at IS NULL", [item.requestId]);
+    const requestNo = rows[0]?.request_no ?? null;
+    if (!requestNo) {
+      outcomes.push({ ...item, requestNo, ok: false, message: "Not found." });
+      continue;
+    }
+    try {
+      const result = await mutate(item.requestId, actor, (request, definition, directory, { snapshot }) => {
+        const task = request.state.tasks.find((candidate) => candidate.id === item.taskKey);
+        if (!task || task.status !== "PENDING" || task.round !== request.state.round) throw new EngineError("INVALID_REASSIGN", "No longer waiting.");
+        if (!["IN_PROGRESS", "ON_HOLD"].includes(request.state.status)) throw new EngineError("INVALID_REASSIGN", "The request isn't open for approval.");
+        if (task.approverId === toUserId) throw new EngineError("INVALID_REASSIGN", "Already with that person.");
+        if (request.requesterId === toUserId) throw new EngineError("INVALID_REASSIGN", "That person raised the request.");
+        const node = definition.nodes.find((candidate) => candidate.id === task.nodeId);
+        const work = node?.kind === "APPROVAL" && node.mode === "WORK";
+        const target = snapshot.users.find((user) => user.id === toUserId);
+        if (!target || !target.active || target.isBreakGlass) throw new EngineError("INVALID_REASSIGN", "Choose an active person.");
+        if (!work && target.approver === false) throw new EngineError("INVALID_REASSIGN", "That person can't approve (Manager and above).");
+        return reassignTask(request.state, { taskId: task.id, toUserId, actorId: actor.id, reason: why }, context(request), directory);
+      });
+      outcomes.push({ ...item, requestNo, ok: result.ok, message: result.ok ? "Moved." : result.message });
+    } catch (error) {
+      logError("bulk reassign item failed", error, { requestId: item.requestId });
+      outcomes.push({ ...item, requestNo, ok: false, message: "Something went wrong with this one. Try it on its own." });
+    }
+  }
+  await recordAudit({ actorUserId: actor.id, action: "APPROVALS_BULK_REASSIGNED", entityType: "USER", entityId: toUserId, metadata: { moved: outcomes.filter((outcome) => outcome.ok).length, failed: outcomes.filter((outcome) => !outcome.ok).length } });
+  return { ok: true, value: outcomes };
+}
+
 export async function countPendingTasks(userId: number): Promise<number> {
   const [rows] = await getDbPool().query<(RowDataPacket & { total: number })[]>(
     `SELECT COUNT(*) AS total FROM approval_tasks t JOIN approval_requests r ON r.id = t.request_id

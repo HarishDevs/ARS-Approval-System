@@ -326,6 +326,12 @@ export function FormFieldsEditor({ form, setForm, lockedKeys }: { form: FormFiel
                     The requester picks from the active {SOURCE_LABEL[field.source].toLowerCase()} kept in Admin → Departments. New ones appear by themselves.
                   </p>
                 )}
+                {field.type !== "SECTION" && (
+                  <label className="flex items-center gap-2 text-label">
+                    <input type="checkbox" checked={Boolean(field.confidential)} onChange={(event) => update(index, (item) => ({ ...item, confidential: event.target.checked || undefined }))} />
+                    Confidential: only the requester, the approvers and IT see the value (hidden from collaborators, advisers and in exports)
+                  </label>
+                )}
                 {field.type === "DATE" && (
                   <div className="space-y-1">
                     <p className="text-caption text-ink-muted">The requester picks a date from a calendar.</p>

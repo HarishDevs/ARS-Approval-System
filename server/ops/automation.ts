@@ -11,6 +11,7 @@ import { runDailyTemplateSync } from "@/server/notifications/template-registry";
 import { countByReason, findStuckRequests } from "@/server/ops/stuck";
 import { evaluateAlerts, runDueSchedules } from "@/server/reports/schedules";
 import { logError } from "@/lib/logging/logger";
+import { runExpiryNotices } from "@/server/approvals/expiry";
 
 // Automation inventory (unified prompt FN11, Addendum B). Every background
 // job the platform runs, what it does, how it is retried and how IT
@@ -139,6 +140,18 @@ export const AUTOMATIONS: readonly Automation[] = [
     owner: "Each rule's owner",
   },
   {
+    key: "expiry",
+    name: "Approval expiry notices",
+    what: "Tells requesters 7 days before an approval stops being valid (types with \"approval valid for\" days).",
+    trigger: "Every job run.",
+    everyMinutes: 5,
+    retry: "The next run picks up anything missed.",
+    idempotency: "Each request is claimed before its notice is queued, so it is told once.",
+    onFailure: "Recorded here; the next run tries again.",
+    recovery: "None needed.",
+    owner: "IT team",
+  },
+  {
     key: "stuck",
     name: "Stuck-request scan",
     what: "Counts open requests that need IT (blocked steps, inactive approvers, no activity, unsent messages).",
@@ -164,6 +177,7 @@ const STEPS: Record<string, () => Promise<StepResult>> = {
   backup: () => runDailyBackup(),
   reports: async () => ({ ...(await runDueSchedules()) }),
   alerts: async () => ({ ...(await evaluateAlerts()) }),
+  expiry: async () => ({ ...(await runExpiryNotices()) }),
   stuck: async () => {
     const counts = countByReason(await findStuckRequests());
     return { ...counts };

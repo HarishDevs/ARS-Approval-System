@@ -7,6 +7,7 @@ import { releaseOutboxForResend } from "@/lib/db/repositories/outbox.repository"
 import { deliverOutbox } from "@/server/approvals/service";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { logError } from "@/lib/logging/logger";
+import { recheckAndFix } from "@/server/ops/repair";
 import type { ActionResult } from "@/lib/http/action-result";
 
 // FN2 / FN11: IT's actions on the Needs attention list. Snoozing hides a
@@ -46,5 +47,21 @@ export async function resendRequestMessagesAction(_previous: ActionResult | null
   } catch (error) {
     logError("resendRequestMessagesAction failed", error);
     return { ok: false, message: "Couldn't resend. Please try again." };
+  }
+}
+
+// v1.7.0 (A6): re-check an INCONSISTENT request and make its task records
+// match the workflow (audited). Never changes the workflow state.
+export async function recheckRequestAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const actor = await getAdminActor();
+  const requestId = parseId(formData.get("requestId"));
+  if (!actor || requestId === null) return { ok: false, message: "Not found." };
+  try {
+    const outcome = await recheckAndFix(requestId, actor);
+    revalidatePath("/admin/attention");
+    return outcome.ok ? { ok: outcome.fixed || outcome.diagnosis.kind === "OK", message: outcome.message } : outcome;
+  } catch (error) {
+    logError("recheckRequestAction failed", error);
+    return { ok: false, message: "Couldn't re-check. Please try again." };
   }
 }

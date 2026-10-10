@@ -1,7 +1,7 @@
 import type { RoleCode } from "@/types/auth";
 
 // Words and formats shown in several places, kept in one spot (audit D-03).
-export const ROLE_LABEL: Record<RoleCode, string> = { USER: "User", IT_ADMIN: "IT Admin", SUPER_ADMIN: "Super Admin" };
+export const ROLE_LABEL: Record<RoleCode, string> = { USER: "User", EXPORTER: "Can export", IT_ADMIN: "IT Admin", SUPER_ADMIN: "Super Admin" };
 
 // The admin roles of a person, or "User".
 export function accessLabel(roles: readonly RoleCode[]): string {

@@ -62,23 +62,28 @@ export interface DraftListItem {
   updatedAt: Date;
 }
 
-// My Work: the person's drafts, newest first, with the type's name.
+// My Work: the person's drafts, newest first, with the type's name. An
+// amendment draft (A11) shows the request it amends.
 export async function listDrafts(userId: number, limit = 20, db: Queryable = getDbPool()): Promise<DraftListItem[]> {
-  const [rows] = await db.query<(RowDataPacket & { draft_key: string; title: string | null; updated_at: Date; type_name: string | null })[]>(
-    `SELECT d.draft_key, d.title, d.updated_at, w.name AS type_name
+  const [rows] = await db.query<(RowDataPacket & { draft_key: string; title: string | null; updated_at: Date; type_name: string | null; amend_no: string | null; amend_title: string | null })[]>(
+    `SELECT d.draft_key, d.title, d.updated_at, w.name AS type_name, a.request_no AS amend_no, a.title AS amend_title
      FROM request_drafts d
      LEFT JOIN workflow_definitions w ON d.draft_key LIKE 'WF:%' AND w.id = CAST(SUBSTRING(d.draft_key, 4) AS UNSIGNED)
-     WHERE d.user_id = ? AND d.expires_at > CURRENT_TIMESTAMP AND (d.draft_key = 'CUSTOM' OR (w.id IS NOT NULL AND w.active = TRUE))
+     LEFT JOIN approval_requests a ON d.draft_key LIKE 'AM:%' AND a.id = CAST(SUBSTRING(d.draft_key, 4) AS UNSIGNED) AND a.requester_id = d.user_id AND a.deleted_at IS NULL AND a.status = 'APPROVED'
+     WHERE d.user_id = ? AND d.expires_at > CURRENT_TIMESTAMP AND (d.draft_key = 'CUSTOM' OR (w.id IS NOT NULL AND w.active = TRUE) OR a.id IS NOT NULL)
      ORDER BY d.updated_at DESC LIMIT ?`,
     [userId, limit],
   );
-  return rows.map((row) => ({
-    key: row.draft_key,
-    title: row.title?.trim() || "(no title yet)",
-    typeName: row.draft_key === "CUSTOM" ? "Custom approval" : (row.type_name ?? "Approval"),
-    href: row.draft_key === "CUSTOM" ? "/users/custom" : `/users/new/${row.draft_key.slice(3)}`,
-    updatedAt: row.updated_at,
-  }));
+  return rows.map((row) => {
+    const amendment = row.draft_key.startsWith("AM:");
+    return {
+      key: row.draft_key,
+      title: amendment ? (row.amend_title ?? "(amendment)") : row.title?.trim() || "(no title yet)",
+      typeName: row.draft_key === "CUSTOM" ? "Custom approval" : amendment ? `Amendment of ${row.amend_no ?? "a request"}` : (row.type_name ?? "Approval"),
+      href: row.draft_key === "CUSTOM" ? "/users/custom" : amendment ? `/users/requests/${row.draft_key.slice(3)}/amend` : `/users/new/${row.draft_key.slice(3)}`,
+      updatedAt: row.updated_at,
+    };
+  });
 }
 
 export async function pruneExpiredDrafts(db: Queryable = getDbPool()): Promise<number> {

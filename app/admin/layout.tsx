@@ -1,5 +1,7 @@
 import { requireArea } from "@/server/authorization/guards";
 import { AppShell } from "@/features/shell/AppShell";
+import { after } from "next/server";
+import { checkJobRunnerStopped } from "@/server/ops/alerts";
 import { featureOn } from "@/server/settings/features";
 
 export const dynamic = "force-dynamic";
@@ -9,6 +11,8 @@ export const dynamic = "force-dynamic";
 // IT_ADMIN or SUPER_ADMIN role the visitor gets a plain 404.
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user } = await requireArea("admin");
+  // A5: a stopped job runner is noticed when IT opens a page (after it renders).
+  after(() => checkJobRunnerStopped().then(() => undefined));
   const analytics = await featureOn("analytics", user);
   return (
     <AppShell

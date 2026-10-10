@@ -314,7 +314,32 @@ export async function insertRequest(
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, IF(? IN ('APPROVED', 'REJECTED', 'CANCELLED'), CURRENT_TIMESTAMP, NULL))`,
     [input.requestNo, input.workflowVersionId, input.requesterId, input.submissionKey ?? null, input.title, JSON.stringify(input.formData), input.state.status, input.state.round, JSON.stringify(input.state), input.state.status],
   );
+  if (input.state.status === "APPROVED") await stampValidity(result.insertId, db);
   return result.insertId;
+}
+
+// v1.7.0 (A1): when a request is approved, the type's "approval valid for"
+// days (at that moment) fix its valid-until date. A later policy change
+// never moves the date of an approval already given.
+export async function stampValidity(requestId: number, db: Queryable = getDbPool()): Promise<void> {
+  const [rows] = await db.query<(RowDataPacket & { settings_json: unknown })[]>(
+    `SELECT w.settings_json FROM approval_requests r
+     JOIN workflow_versions v ON v.id = r.workflow_version_id JOIN workflow_definitions w ON w.id = v.workflow_id
+     WHERE r.id = ? AND r.status = 'APPROVED' AND r.valid_until IS NULL`,
+    [requestId],
+  );
+  if (!rows[0]) return;
+  const days = parseTypeSettings(rows[0].settings_json).validityDays;
+  if (!days) return;
+  await db.query<ResultSetHeader>(
+    "UPDATE approval_requests SET valid_until = DATE_ADD(COALESCE(closed_at, CURRENT_TIMESTAMP), INTERVAL ? DAY), expiry_notified_at = NULL WHERE id = ? AND valid_until IS NULL",
+    [days, requestId],
+  );
+}
+
+export async function findValidity(requestId: number, db: Queryable = getDbPool()): Promise<Date | null> {
+  const [rows] = await db.query<(RowDataPacket & { valid_until: Date | null })[]>("SELECT valid_until FROM approval_requests WHERE id = ? AND status = 'APPROVED'", [requestId]);
+  return rows[0]?.valid_until ?? null;
 }
 
 // D-QA-01: the request a form already created (a retried submit).
@@ -369,10 +394,12 @@ export async function saveRequestState(
     `UPDATE approval_requests
      SET state_json = ?, status = ?, round = ?, state_version = state_version + 1,
          form_data_json = COALESCE(?, form_data_json),
-         closed_at = IF(? IN ('APPROVED', 'REJECTED', 'CANCELLED'), COALESCE(closed_at, CURRENT_TIMESTAMP), NULL)
+         closed_at = IF(? IN ('APPROVED', 'REJECTED', 'CANCELLED'), COALESCE(closed_at, CURRENT_TIMESTAMP), NULL),
+         valid_until = IF(? = 'APPROVED', valid_until, NULL)
      WHERE id = ? AND state_version = ?`,
-    [JSON.stringify(state), state.status, state.round, formData ? JSON.stringify(formData) : null, state.status, id, expectedVersion],
+    [JSON.stringify(state), state.status, state.round, formData ? JSON.stringify(formData) : null, state.status, state.status, id, expectedVersion],
   );
+  if (result.affectedRows === 1 && state.status === "APPROVED") await stampValidity(id, db);
   return result.affectedRows === 1;
 }
 

@@ -51,6 +51,8 @@ const FIELD_WORDS: Record<string, string> = {
   source: "list",
   help: "help text",
   neededBy: "needed-by setting",
+  confidential: "confidential setting",
+  maxFiles: "file limit",
 };
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);

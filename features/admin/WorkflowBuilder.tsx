@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { createWorkflowAction, saveDraftAction } from "@/app/admin/workflows/actions";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import type { FieldLookups, FormField } from "@/server/forms/fields";
+import { RequestForm } from "@/features/requests/RequestForm";
 import { ConditionValueInput, FormFieldsEditor, freshCondition, needsValue, operatorsFor } from "@/features/admin/FormFieldsEditor";
 import { doaBandLabels, isConditionGroup, MAX_CHOICE_DEPTH, type ApproverPick, type BuilderCondition, type BuilderDoa, type BuilderInnerStage, type BuilderStage, type BuilderStep } from "@/server/workflows/builder";
 
@@ -76,6 +77,7 @@ export function WorkflowBuilder({
 }) {
   const [stages, setStages] = useState<BuilderStage[]>(initialStages);
   const [form, setForm] = useState<FormField[]>(initialForm);
+  const [previewing, setPreviewing] = useState(false); // A4
   // Keys already saved never change (S12-02).
   const [lockedKeys] = useState(() => initialForm.map((field) => field.key));
   // Random ids: a counter restarts on every page load and would collide
@@ -104,6 +106,7 @@ export function WorkflowBuilder({
 
 
   return (
+    <>
     <form onSubmit={onSubmit} className="space-y-6">
       {workflowId && <input type="hidden" name="workflowId" value={workflowId} />}
       <input type="hidden" name="spec" value={JSON.stringify({ stages })} />
@@ -144,6 +147,12 @@ export function WorkflowBuilder({
       )}
 
       <FormFieldsEditor form={form} setForm={setForm} lockedKeys={lockedKeys} />
+      <div className="flex flex-wrap items-center gap-3">
+        <button type="button" className="btn-secondary btn-compact" aria-expanded={previewing} aria-controls="form-preview" onClick={() => setPreviewing((open) => !open)}>
+          {previewing ? "Hide form preview" : "Preview the form"}
+        </button>
+        <span className="text-caption text-ink-muted">See the form as requesters will, with its rules and formulas working. Nothing is saved or sent.</span>
+      </div>
 
       <LevelsEditor stages={stages} setStages={setStages} options={options} form={form} newId={newId} />
 
@@ -171,6 +180,15 @@ export function WorkflowBuilder({
         </div>
       )}
     </form>
+    {previewing && (
+      <section id="form-preview" aria-labelledby="form-preview-title" className="mt-6 rounded-lg border-2 border-dashed border-primary-200 p-3">
+        <h2 id="form-preview-title" className="mb-3 px-2 font-semibold">
+          Form preview <span className="font-normal text-ink-muted">(unsaved changes included)</span>
+        </h2>
+        <RequestForm key={JSON.stringify(form)} preview mode="submit" fields={form} people={options.people} lookups={options.lookups} />
+      </section>
+    )}
+    </>
   );
 }
 

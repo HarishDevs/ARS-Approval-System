@@ -135,6 +135,8 @@ export async function submitAmendmentAction(_previous: ActionResult | null, form
     if (!result.ok) return { ok: false, message: result.message, fieldErrors: result.fieldErrors, data: result.readiness ? { readiness: result.readiness } : undefined };
     requestId = result.value.requestId;
     if (result.value.repeated) files.files.length = 0;
+    // A11: the amendment draft has become a request.
+    await deleteDraft(me.id, `AM:${originalId}`).catch((error) => logError("submitAmendmentAction: draft cleanup failed", error));
   } catch (error) {
     logError("submitAmendmentAction failed", error);
     return { ok: false, message: "Couldn't submit. Please try again." };

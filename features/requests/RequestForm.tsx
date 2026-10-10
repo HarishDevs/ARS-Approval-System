@@ -42,6 +42,7 @@ export function RequestForm({
   amendment,
   existingFiles = NO_FILES,
   collaboratorOptions,
+  preview = false,
 }: {
   mode: "submit" | "resubmit";
   workflowId?: number;
@@ -64,6 +65,8 @@ export function RequestForm({
   existingFiles?: Record<string, number>;
   // v1.6.1: people the requester can add to follow the request (new requests).
   collaboratorOptions?: PersonOption[];
+  // v1.7.0 (A4): the form builder's preview. Rules and formulas work; nothing is sent.
+  preview?: boolean;
 }) {
   const { result, pending, onSubmit } = useActionForm(amendment ? submitAmendmentAction : mode === "submit" ? submitRequestAction : resubmitAction);
   const locked = (key: string) => Boolean(amendment && !amendment.amendable.includes(key));
@@ -79,6 +82,7 @@ export function RequestForm({
   const [checking, setChecking] = useState(false);
   const [checkFailed, setCheckFailed] = useState<string | null>(null);
   const [signature, setSignature] = useState("");
+  const [previewTried, setPreviewTried] = useState(false);
   const fileCount = useCallback((form: HTMLFormElement, key: string) => ((form.elements.namedItem(`file:${key}`) as HTMLInputElement | null)?.files?.length ?? 0) + (existingFiles[key] ?? 0), [existingFiles]);
   const attachmentFields = useMemo(() => fields.filter((field) => field.type === "ATTACHMENT"), [fields]);
   const signatureOf = useCallback((form: HTMLFormElement) => {
@@ -164,7 +168,15 @@ export function RequestForm({
   return (
     <form
       ref={autosave.formRef}
-      onSubmit={onSubmit}
+      onSubmit={
+        preview
+          ? (event) => {
+              event.preventDefault();
+              setPreviewTried(true);
+            }
+          : onSubmit
+      }
+      aria-label={preview ? "Form preview" : undefined}
       onInput={(event) => {
         readForm(event.currentTarget);
         setSignature(signatureOf(event.currentTarget));
@@ -199,7 +211,7 @@ export function RequestForm({
               <label htmlFor="f-amendReason" className="field-label">
                 Why does it need amending?
               </label>
-              <textarea id="f-amendReason" name="amendReason" rows={3} maxLength={1000} aria-required="true" aria-invalid={result && !result.ok && result.fieldErrors?.amendReason ? true : undefined} className="field-input h-auto py-2.5" placeholder="e.g. The vendor revised the quote" />
+              <textarea id="f-amendReason" name="amendReason" defaultValue={initial?.amendReason ?? ""} rows={3} maxLength={1000} aria-required="true" aria-invalid={result && !result.ok && result.fieldErrors?.amendReason ? true : undefined} className="field-input h-auto py-2.5" placeholder="e.g. The vendor revised the quote" />
               <FieldError result={result} name="amendReason" />
               <FieldError result={result} name="amendment" />
             </div>
@@ -308,7 +320,13 @@ export function RequestForm({
           {amendment ? "Submit amendment" : mode === "submit" ? "Submit request" : "Resubmit"}
         </SubmitButton>
         <div className="min-w-0 flex-1">
-          <ResultMessage result={result} />
+          {preview ? (
+            <p role="status" className="text-label text-ink-muted">
+              {previewTried ? "Preview only: nothing was submitted. Required fields and checks are applied by the server on a real submit." : "Preview: try the fields and rules. Nothing is saved or sent."}
+            </p>
+          ) : (
+            <ResultMessage result={result} />
+          )}
         </div>
       </div>
       {draft && (

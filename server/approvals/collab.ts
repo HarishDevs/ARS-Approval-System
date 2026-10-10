@@ -1,4 +1,6 @@
 import "server-only";
+import type { RowDataPacket } from "mysql2/promise";
+import { getDbPool } from "@/lib/db/client";
 import { checkChosenApprover } from "@/server/approvals/approver-check";
 import { findRequest, isParticipant } from "@/lib/db/repositories/approvals.repository";
 import {
@@ -138,22 +140,27 @@ export async function stopDelegation(id: number, actor: Actor): Promise<Result<n
   return { ok: true, value: null };
 }
 
-async function tellBoth(userId: number, userName: string, delegateId: number, delegateName: string, when: string, started: boolean): Promise<void> {
+// v1.7.0 (A7): when cover ends (early or by date), both are told how many
+// approvals are back with the person. Tasks always stayed theirs (a
+// delegate acts for them), so nothing moves; queues follow the dates.
+export async function tellBoth(userId: number, userName: string, delegateId: number, delegateName: string, when: string, started: boolean): Promise<void> {
   try {
     const title = started ? "Out-of-office set" : "Out-of-office ended";
+    const waiting = started ? 0 : await pendingFor(userId);
+    const back = waiting ? ` ${waiting} approval${waiting === 1 ? " is" : "s are"} waiting for you in Waiting for me.` : "";
     await notify({
       eventType: started ? "DELEGATION_STARTED" : "DELEGATION_ENDED",
       userId,
       title,
-      message: started ? `${delegateName} can approve for you ${when}.` : `${delegateName} can no longer approve for you.`,
-      email: { subject: title, text: started ? `${delegateName} can approve on your behalf ${when}.` : `${delegateName} can no longer approve on your behalf.` },
+      message: started ? `${delegateName} can approve for you ${when}.` : `${delegateName} can no longer approve for you.${back}`,
+      email: { subject: title, text: started ? `${delegateName} can approve on your behalf ${when}.` : `${delegateName} can no longer approve on your behalf.${back}` },
       whatsappVariables: null,
     });
     await notify({
       eventType: started ? "DELEGATION_STARTED" : "DELEGATION_ENDED",
       userId: delegateId,
       title: started ? `You're covering for ${userName}` : `No longer covering for ${userName}`,
-      message: started ? `You can approve for ${userName} ${when}. Their approvals appear in Waiting for me.` : `You no longer approve for ${userName}.`,
+      message: started ? `You can approve for ${userName} ${when}. Their approvals appear in Waiting for me.` : `You no longer approve for ${userName}.${waiting ? ` Their ${waiting} pending approval${waiting === 1 ? " has" : "s have"} gone back to them.` : ""}`,
       email: {
         subject: started ? `You're covering for ${userName}` : `No longer covering for ${userName}`,
         text: started ? `${userName} named you as their delegate ${when}. Their pending approvals appear in "Waiting for me".` : `You no longer approve on behalf of ${userName}.`,
@@ -163,4 +170,13 @@ async function tellBoth(userId: number, userName: string, delegateId: number, de
   } catch (error) {
     logError("delegation: notify failed", error);
   }
+}
+
+async function pendingFor(userId: number): Promise<number> {
+  const [rows] = await getDbPool().query<(RowDataPacket & { total: number })[]>(
+    `SELECT COUNT(*) AS total FROM approval_tasks t JOIN approval_requests r ON r.id = t.request_id
+     WHERE t.approver_id = ? AND t.status = 'PENDING' AND r.status IN ('IN_PROGRESS', 'ON_HOLD') AND r.deleted_at IS NULL`,
+    [userId],
+  );
+  return Number(rows[0]?.total ?? 0);
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { resendRequestMessagesAction, snoozeStuckAction } from "@/app/admin/attention/actions";
+import { recheckRequestAction, resendRequestMessagesAction, snoozeStuckAction } from "@/app/admin/attention/actions";
 import { resendOutboxAction, runJobsNowAction } from "@/app/superadmin/automation/actions";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 
@@ -65,3 +65,6 @@ export const ResendRequestMessages = ({ requestId }: { requestId: number }) => (
 export const ResendOutbox = ({ outboxId }: { outboxId: number }) => <OneButton action={resendOutboxAction} fields={{ outboxId }} label="Resend" />;
 
 export const RunJobsNow = ({ job, label }: { job?: string; label: string }) => <OneButton action={runJobsNowAction} fields={job ? { job } : {}} label={label} />;
+
+// v1.7.0 (A6): makes the task records match the workflow again; never changes the workflow.
+export const RecheckRequest = ({ requestId }: { requestId: number }) => <OneButton action={recheckRequestAction} fields={{ requestId }} label="Re-check and fix" />;

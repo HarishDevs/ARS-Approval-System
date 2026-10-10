@@ -1,11 +1,11 @@
 import "server-only";
 import { loadLookupNames } from "@/lib/db/repositories/lookups.repository";
-import { findRequest, findWorkflow, findWorkflowVersion, isParticipant, listTimeline, userNames } from "@/lib/db/repositories/approvals.repository";
+import { findRequest, findValidity, findWorkflow, findWorkflowVersion, isParticipant, listTimeline, userNames } from "@/lib/db/repositories/approvals.repository";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { activeDelegatorsFor, listComments, type CommentItem } from "@/lib/db/repositories/collab.repository";
 import { buildStepMap, peopleInState, summarizeTracker, type MapStage, type TrackerSummary } from "@/server/approvals/step-map";
 import { describeEvent, eventKind, type TimelineKind } from "@/server/approvals/timeline";
-import { displayValue, storedLines, type FormField } from "@/server/forms/fields";
+import { CONFIDENTIAL_TEXT, displayValue, isConfidential, storedLines, type FormField } from "@/server/forms/fields";
 import type { Line } from "@/server/forms/dynamic";
 import type { FormData as EngineFormData, InstanceStatus } from "@/server/engine/types";
 import type { Actor } from "@/server/approvals/service";
@@ -66,6 +66,8 @@ export interface RequestView {
   canReopen: boolean;
   changesComment: string | null;
   holdReason: string | null;
+  validUntil: Date | null; // A1: approved requests of types with a validity period
+  confidentialHidden: boolean; // A8: some values are hidden from this viewer
 }
 
 const isAdmin = (actor: Actor) => actor.roles.includes("IT_ADMIN") || actor.roles.includes("SUPER_ADMIN");
@@ -141,7 +143,14 @@ export async function loadRequestView(requestId: number, viewer: Actor): Promise
       : [];
   const holdNode = state.hold?.nodeId;
 
-  const attachmentRows = await listAttachments(requestId);
+  // A8: confidential values are for the requester, IT, and anyone who holds
+  // or decided a task on the request (or covers a pending one today).
+  const canSeeConfidential =
+    request.requesterId === viewer.id ||
+    isAdmin(viewer) ||
+    state.tasks.some((task) => task.approverId === viewer.id || task.decidedBy === viewer.id || (task.status === "PENDING" && delegators.has(task.approverId)));
+  const hiddenKeys = new Set(canSeeConfidential ? [] : version.form.filter(isConfidential).map((field) => field.key));
+  const attachmentRows = (await listAttachments(requestId)).filter((file) => !file.fieldKey || !hiddenKeys.has(file.fieldKey));
   const submissionCheck = await findSubmissionCheck(requestId);
   const stages = buildStepMap(version.definition, state, version.builder, names, {
     formData: request.formData as EngineFormData,
@@ -161,16 +170,20 @@ export async function loadRequestView(requestId: number, viewer: Actor): Promise
     requesterId: request.requesterId,
     requesterName: nameOf(request.requesterId),
     form: version.form,
-    rawFields: Object.fromEntries(Object.entries(request.formData).map(([key, value]) => [key, value === null || value === undefined ? "" : String(value)])),
+    rawFields: Object.fromEntries(Object.entries(request.formData).filter(([key]) => !hiddenKeys.has(key.replace(/__lines$/, ""))).map(([key, value]) => [key, value === null || value === undefined ? "" : String(value)])),
     fields: version.form
       .filter((field) => field.type !== "SECTION")
-      .map((field) => ({
+      .map((field) =>
+        hiddenKeys.has(field.key)
+          ? { key: field.key, label: field.label, value: CONFIDENTIAL_TEXT }
+          : {
         key: field.key,
         label: field.label,
         value: displayValue(field, request.formData[field.key], names, lookupNames),
         ...(field.type === "LINE_ITEMS" ? { lines: storedLines(request.formData, field.key) } : {}),
         ...(field.type === "ATTACHMENT" ? { files: attachmentRows.filter((file) => file.fieldKey === field.key).map((file) => file.id) } : {}),
-      })),
+            },
+      ),
     stages,
     tracker: summarizeTracker(stages, { status: state.status, requesterName: nameOf(request.requesterId), closedAt: closedAt(state), holdSince: state.hold?.at ?? null }),
     timeline: timelineRows
@@ -190,7 +203,7 @@ export async function loadRequestView(requestId: number, viewer: Actor): Promise
       if (!before || !after) return "unrecorded" as const;
       return {
         round: state.round,
-        fields: diffRounds(version.form, before, after, (field, value) => displayValue(field, value, names, lookupNames)),
+        fields: diffRounds(version.form, before, after, (field, value) => displayValue(field, value, names, lookupNames)).map((change) => (hiddenKeys.has(change.key) ? { ...change, before: CONFIDENTIAL_TEXT, after: CONFIDENTIAL_TEXT } : change)),
         files: attachmentRows.filter((file) => file.round === state.round).map((file) => file.name),
       };
     })(),
@@ -210,6 +223,8 @@ export async function loadRequestView(requestId: number, viewer: Actor): Promise
     canReopen: state.status === "APPROVED" && viewer.roles.includes("SUPER_ADMIN"),
     changesComment: state.status === "CHANGES_REQUIRED" ? (state.changesRequested?.comment ?? null) : null,
     holdReason: state.status === "ON_HOLD" ? (state.hold?.reason ?? null) : null,
+    validUntil: state.status === "APPROVED" ? await findValidity(requestId) : null,
+    confidentialHidden: hiddenKeys.size > 0,
   };
 }
 

@@ -32,6 +32,7 @@ import { DeleteRequestButton } from "@/features/superadmin/DeleteRequestButton";
 import { loadFieldLookups } from "@/lib/db/repositories/lookups.repository";
 import { SafeText } from "@/features/ui/SafeText";
 import { listMentionable } from "@/lib/db/repositories/collab.repository";
+import { expiryState } from "@/server/approvals/expiry-rules";
 
 // F-14 request page. loadRequestView applies the record-level check
 // (D-057); anyone else gets the same 404 as a request that doesn't exist.
@@ -96,6 +97,7 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
       <PageHeader title={view.title} description={`${view.requestNo} · ${view.workflowName} · raised by ${view.requesterName}${view.round > 1 ? ` · round ${view.round}` : ""}`}>
         <div className="flex flex-wrap items-center gap-3">
           <RequestStatusPill status={view.status} />
+          <ValidityBadge validUntil={view.validUntil} />
           {/* #10: a plain download, not a page (no prefetch). */}
           <a href={`/api/requests/${view.id}/summary.pdf`} className="link text-label" download>
             Download PDF
@@ -246,6 +248,7 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
           {view.fields.length > 0 && (
             <section className="card px-5 py-4">
               <h2 className="mb-3 font-semibold">Details</h2>
+              {view.confidentialHidden && <p className="-mt-2 mb-3 text-caption text-ink-muted">Some values are confidential: only the requester, the approvers and IT see them.</p>}
               <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
                 {view.fields.map((field) => (
                   <div key={field.key} className={field.lines?.length || field.files?.length ? "sm:col-span-2" : undefined}>
@@ -342,7 +345,7 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
         </section>
         </SectionBoundary>
         <SectionBoundary label="Amendments">
-          <AmendmentsCard requestId={view.id} form={view.form} canAmend={canAmend} />
+          <AmendmentsCard hideConfidential={view.confidentialHidden} requestId={view.id} form={view.form} canAmend={canAmend} />
         </SectionBoundary>
         {templatesOn && view.requesterId === user.id && !view.isCustom && view.workflowActive && (
           <section className="card space-y-2 px-5 py-4" aria-label="Reuse this request">
@@ -407,5 +410,23 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
         </div>
       </div>
     </>
+  );
+}
+
+// A1: how long the approval stays valid (types with a validity period).
+function ValidityBadge({ validUntil }: { validUntil: Date | null }) {
+  const state = expiryState(validUntil);
+  if (state === "NONE" || !validUntil) return null;
+  const day = validUntil.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" });
+  if (state === "EXPIRED")
+    return (
+      <span data-testid="validity" className="rounded-full bg-danger-50 px-2.5 py-0.5 text-caption font-semibold text-danger-600">
+        Expired on {day}
+      </span>
+    );
+  return (
+    <span data-testid="validity" className={`rounded-full px-2.5 py-0.5 text-caption font-semibold ${state === "EXPIRING" ? "bg-warning-50 text-warning-600" : "bg-surface-muted text-ink-muted"}`}>
+      Valid until {day}
+    </span>
   );
 }

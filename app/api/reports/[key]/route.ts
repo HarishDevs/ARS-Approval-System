@@ -5,7 +5,7 @@ import { CONTENT_TYPE, exportReport, fileName, type ExportFormat } from "@/serve
 import { hitRateLimit } from "@/lib/db/repositories/jobs.repository";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { apiError } from "@/lib/http/api-response";
-import { featureOn } from "@/server/settings/features";
+import { canExport, featureOn } from "@/server/settings/features";
 import { logError } from "@/lib/logging/logger";
 
 // Report export (Addendum A §10, D-123): CSV, XLSX or PDF of a catalogue
@@ -21,6 +21,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return apiError("NOT_FOUND", "Not found.", 404);
   }
   if (!(await featureOn("reports", session.user))) return apiError("NOT_FOUND", "Not found.", 404);
+  // A9: downloads may be limited to the "Can export" role.
+  if (!(await canExport(session.user))) return apiError("FORBIDDEN", "Downloads are limited to people with the Can export permission. Ask IT.", 403);
   try {
     const { key } = await params;
     const search = Object.fromEntries(request.nextUrl.searchParams);

@@ -9,6 +9,7 @@ import { listApproverOptions } from "@/lib/db/repositories/approvers.repository"
 import { approverFieldKeys } from "@/server/approvals/approver-rules";
 import { loadFieldLookups } from "@/lib/db/repositories/lookups.repository";
 import { amendmentPlan, rawOf } from "@/server/approvals/amendments";
+import { findDraft } from "@/lib/db/repositories/drafts.repository";
 
 // FN5: amend an approved request (D-120). Only the fields the approval type
 // allows can change; the amendment is approved through the steps again.
@@ -40,6 +41,12 @@ export default async function AmendRequestPage({ params }: { params: Promise<{ i
   const approverFields = approverFieldKeys(version.definition);
   const lookups = version.form.some((field) => field.type === "LOOKUP") ? await loadFieldLookups() : undefined;
   const approverPeople = approverFields.length ? (await listApproverOptions()).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` })) : undefined;
+  // A11: the requester's own amendment draft. Only amendable fields and the
+  // reason come back from it; everything else is the effective value.
+  const draftKey = `AM:${plan.original.id}`;
+  const draft = await findDraft(user.id, draftKey);
+  const allowed = new Set([...plan.amendable.map((field) => field.key), ...plan.amendable.map((field) => `${field.key}__lines`), "amendReason"]);
+  const initial = { ...rawOf(plan.effective), ...Object.fromEntries(Object.entries(draft?.fields ?? {}).filter(([key]) => allowed.has(key))) };
 
   return (
     <>
@@ -65,7 +72,8 @@ export default async function AmendRequestPage({ params }: { params: Promise<{ i
             approverPeople={approverPeople}
             approverFields={approverFields}
             lookups={lookups}
-            initial={rawOf(plan.effective)}
+            initial={initial}
+            draft={{ key: draftKey, version: draft?.version ?? null, savedAt: draft ? draft.updatedAt.toISOString() : null }}
             amendment={{ originalId: plan.original.id, originalNo: plan.original.requestNo, title: plan.original.title, amendable: plan.amendable.map((field) => field.key) }}
           />
         </div>

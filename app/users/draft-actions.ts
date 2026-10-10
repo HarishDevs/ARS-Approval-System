@@ -5,6 +5,7 @@ import { cleanDraftContent, isEmptyDraft, parseDraftKey } from "@/server/drafts/
 import { deleteDraft, saveDraft } from "@/lib/db/repositories/drafts.repository";
 import { findPublishedVersion, findWorkflow } from "@/lib/db/repositories/approvals.repository";
 import { logError } from "@/lib/logging/logger";
+import { amendmentPlan } from "@/server/approvals/amendments";
 
 // Autosave for the raise-a-request and custom approval forms (#3, D-108).
 // Called by the form itself, not by a submit. Nothing here creates a
@@ -14,28 +15,32 @@ export type DraftSaveResult =
   | { ok: false; reason: "CONFLICT"; message: string }
   | { ok: false; reason: "SIGNED_OUT" | "INVALID" | "FAILED"; message: string };
 
-async function owner(): Promise<number | null> {
+async function owner(): Promise<{ id: number; roles: string[] } | null> {
   try {
-    return (await requireApiArea("users")).user.id;
+    const { user } = await requireApiArea("users");
+    return { id: user.id, roles: [...user.roles] };
   } catch {
     return null;
   }
 }
 
-async function draftable(key: ReturnType<typeof parseDraftKey>): Promise<boolean> {
+async function draftable(key: ReturnType<typeof parseDraftKey>, user: { id: number; roles: string[] }): Promise<boolean> {
   if (!key) return false;
   if (key.kind === "CUSTOM") return true;
+  // A11: only the requester, while the request can be amended.
+  if (key.kind === "AMENDMENT") return (await amendmentPlan(key.originalId, { id: user.id, roles: user.roles as never })).ok;
   const workflow = await findWorkflow(key.workflowId);
   return Boolean(workflow && workflow.active && workflow.kind === "PREDEFINED" && (await findPublishedVersion(workflow.id)));
 }
 
 export async function saveDraftAction(input: { key: string; title?: string; fields?: Record<string, string>; version: number | null }): Promise<DraftSaveResult> {
-  const userId = await owner();
-  if (!userId) return { ok: false, reason: "SIGNED_OUT", message: "Your session has ended, so the draft wasn't saved. Copy anything important, then sign in again." };
+  const user = await owner();
+  const userId = user?.id ?? null;
+  if (!user || !userId) return { ok: false, reason: "SIGNED_OUT", message: "Your session has ended, so the draft wasn't saved. Copy anything important, then sign in again." };
   const key = parseDraftKey(input?.key);
   const content = cleanDraftContent({ title: input?.title, fields: input?.fields });
   const version = input?.version === null || (Number.isInteger(input?.version) && Number(input.version) > 0) ? input.version : undefined;
-  if (!key || !content || version === undefined || !(await draftable(key))) return { ok: false, reason: "INVALID", message: "This draft can't be saved." };
+  if (!key || !content || version === undefined || !(await draftable(key, user))) return { ok: false, reason: "INVALID", message: "This draft can't be saved." };
   try {
     if (isEmptyDraft(content) && version === null) return { ok: true, version: 0, savedAt: new Date().toISOString() };
     const saved = await saveDraft(userId, key.key, content, version || null);
@@ -48,7 +53,7 @@ export async function saveDraftAction(input: { key: string; title?: string; fiel
 }
 
 export async function discardDraftAction(input: { key: string }): Promise<{ ok: boolean; message: string }> {
-  const userId = await owner();
+  const userId = (await owner())?.id ?? null;
   const key = parseDraftKey(input?.key);
   if (!userId || !key) return { ok: false, message: "Not found." };
   try {

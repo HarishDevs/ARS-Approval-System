@@ -16,7 +16,7 @@ import { listTemplates } from "@/lib/db/repositories/templates.repository";
 import { TemplatePicker } from "@/features/requests/Templates";
 import { featureOn } from "@/server/settings/features";
 
-export default async function RaiseRequestPage({ params, searchParams }: { params: Promise<{ workflowId: string }>; searchParams: Promise<{ followUp?: string; template?: string; from?: string }> }) {
+export default async function RaiseRequestPage({ params, searchParams }: { params: Promise<{ workflowId: string }>; searchParams: Promise<{ followUp?: string; template?: string; from?: string; refresh?: string }> }) {
   const { user } = await requireArea("users");
   const { workflowId } = await params;
   if (!/^\d+$/.test(workflowId)) notFound();
@@ -49,12 +49,17 @@ export default async function RaiseRequestPage({ params, searchParams }: { param
   const templates = templatesOn ? await listTemplates(user.id, workflow.id) : [];
   const base: Record<string, string> = explicit ? filled.values : { ...(followUpInitial ?? draft?.fields ?? {}) };
   const sources: Record<string, string> = explicit ? { ...filled.sources } : Object.fromEntries(Object.keys(followUpInitial ?? {}).map((key) => [key, "follow-up"]));
+  // A11: "Refresh from profile" puts the profile's current values back, even
+  // over a draft or a copied value.
+  const refresh = query.refresh === "profile";
   for (const [key, value] of Object.entries(filled.values)) {
-    if (filled.sources[key] === "profile" && !base[key]) {
+    if (filled.sources[key] === "profile" && (refresh || !base[key])) {
       base[key] = value;
       sources[key] = "profile";
     }
   }
+  const profileFields = version.form.some((field) => field.type === "LOOKUP" && (field.source === "DEPARTMENT" || field.source === "DESIGNATION"));
+  const refreshHref = `/users/new/${workflow.id}?${new URLSearchParams({ ...(query.template ? { template: query.template } : {}), ...(query.from ? { from: query.from } : {}), ...(query.followUp ? { followUp: query.followUp } : {}), refresh: "profile" }).toString()}`;
 
   return (
     <>
@@ -75,12 +80,21 @@ export default async function RaiseRequestPage({ params, searchParams }: { param
           {filled.dropped > 0 ? ` ${filled.dropped} value${filled.dropped === 1 ? "" : "s"} no longer match the form and ${filled.dropped === 1 ? "was" : "were"} left out.` : ""}
         </p>
       )}
+      {profileFields && (
+        <p className="mb-3 max-w-2xl text-label text-ink-muted">
+          Department or designation changed?{" "}
+          <Link href={refreshHref} className="link" data-testid="refresh-profile">
+            Refresh from profile
+          </Link>
+          {refresh ? " · refreshed from your current profile." : ""}
+        </p>
+      )}
       {templates.length > 0 && <TemplatePicker workflowId={workflow.id} templates={templates.map((template) => ({ id: template.id, name: template.name }))} />}
       <div className="max-w-2xl">
         <RequestForm
           // Remount when the starting point changes (template / earlier request):
           // the editors take their starting values only once.
-          key={`${query.template ?? ""}:${query.from ?? ""}:${query.followUp ?? ""}`}
+          key={`${query.template ?? ""}:${query.from ?? ""}:${query.followUp ?? ""}:${query.refresh ?? ""}`}
           followUpOf={source?.id}
           mode="submit"
           workflowId={workflow.id}

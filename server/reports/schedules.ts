@@ -15,7 +15,7 @@ import { getEmailConfig } from "@/server/settings/values";
 import { notify } from "@/server/notifications/notify";
 import { getEnv } from "@/config/environment";
 import { logError } from "@/lib/logging/logger";
-import { featureMode } from "@/server/settings/features";
+import { canExport, featureMode } from "@/server/settings/features";
 
 // D-124: OFF stops both jobs; IT_ONLY runs only for IT team owners.
 async function allowedFor(person: Owner): Promise<boolean> {
@@ -148,6 +148,10 @@ export async function runDueSchedules(limit = 20): Promise<{ reportsSent: number
       }
       if (!(await allowedFor(person))) {
         await finish("SKIPPED", "Scheduled reports are switched off for this person at the moment.");
+        continue;
+      }
+      if (!(await canExport(person))) {
+        await finish("SKIPPED", "Downloads are limited to the Can export permission, which the owner doesn't have.");
         continue;
       }
       const ran = await runReport(row.reportKey, cleanQuery(row.query), { id: person.id, roles: person.roles }, now);

@@ -24,7 +24,7 @@ export type RuleResult = { ok: true } | { ok: false; message: string };
 const OK: RuleResult = { ok: true };
 const deny = (message: string): RuleResult => ({ ok: false, message });
 
-export const ASSIGNABLE_ROLES: readonly RoleCode[] = ["USER", "IT_ADMIN", "SUPER_ADMIN"];
+export const ASSIGNABLE_ROLES: readonly RoleCode[] = ["USER", "EXPORTER", "IT_ADMIN", "SUPER_ADMIN"];
 
 const isSuperAdmin = (subject: { roles: readonly RoleCode[] }) => subject.roles.includes("SUPER_ADMIN");
 const isAdmin = (subject: { roles: readonly RoleCode[] }) => subject.roles.includes("IT_ADMIN") || isSuperAdmin(subject);

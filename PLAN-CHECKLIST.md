@@ -17,6 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (10 Oct 2026):** v1.7.0 in progress: lists A, B and C (V170-*).
 - **Now (10 Oct 2026):** v1.6.1, owner request: attachment fields in the form builder, and collaborators on requests. Pushed; not deployed.
 - **Now (10 Oct 2026):** v1.6.0 is tagged and pushed; it is **not deployed**.
   - **Scope:** the master prompt plus the unified master prompt.
@@ -282,6 +283,33 @@ Found during S8-06:
 - [x] S8-12 Google sign-in reached UNKNOWN_ACCOUNT: itadmin@ is an alias. The Super Admin now signs in as itsupport@arsenergy.co.in (D-082, migration + non-overwriting seed, v1.0.5) (done 8 Oct 2026)
 - [x] S8-01b Go-live on GoDaddy with the owner, following docs/DEPLOYMENT.md (the owner is at the wizard's "Add secrets" step) (done 9 Oct 2026: live since 8 Oct 2026)
 - [x] S8-04 Update the three living files; commit and push (done 8 Oct 2026)
+
+## Session log — v1.7.0: lists A, B and C (10 Oct 2026), planned before starting
+Owner: "Work on A, B and C in one Go" (the non-completed points list of 10 Oct 2026). No deploy; the owner publishes.
+- [x] V170-A01 Approval expiry: enforce the workflow's validity days; "Valid until" and an Expired badge on the request; a pre-expiry notice (7 days before) from the job runner (done 10 Oct 2026)
+- [x] V170-A02 Needed-by calendar: a month calendar of open requests by their needed-by date (my requests and my approvals) (done 10 Oct 2026)
+- [x] V170-A03 Bulk reassignment of pending tasks (IT), with a per-item result list (done 10 Oct 2026)
+- [x] V170-A04 Form preview in the builder (renders the saved fields read-only, with rules) (done 10 Oct 2026)
+- [x] V170-A05 Super Admin alert when the scheduled jobs stop (no job run for 2 hours) (done 10 Oct 2026)
+- [x] V170-A06 Safe "re-check and fix" for requests flagged INCONSISTENT (recomputes status from the tasks; audit; never deletes) (done 10 Oct 2026)
+- [x] V170-A07 Delegation end: tasks given to a delegate are listed back to the original approver and both are told (done 10 Oct 2026)
+- [x] V170-A08 Confidential form fields: masked in view, reports and exports for anyone but the requester, the approvers and IT (done 10 Oct 2026)
+- [x] V170-A09 Optional separate export permission (switch: exports need the role "Can export") (done 10 Oct 2026)
+- [x] V170-A10 Duplicate check scope (any requester / same requester / same department) and must-be-unique identifier fields (done 10 Oct 2026)
+- [x] V170-A11 "Refresh from profile" on the new-request form; amendment drafts (done 10 Oct 2026)
+- [ ] V170-B01 Dashboard drill-down: KPI cards and chart bars open the matching filtered list
+- [ ] V170-B02 More filters: status, approver, step, SLA status, aging bucket
+- [ ] V170-B03 KPIs: due today, due in 7 days, median completion, first-pass approval, rework and withdrawal rates
+- [ ] V170-B04 Comparisons: this month vs last month, vs the same month last year, department vs organisation
+- [ ] V170-B05 Charts: status breakdown, overdue trend, SLA breaches over time, backlog trend, decision trend, department × step heatmap
+- [ ] V170-B06 Report schedules: edit, several recipients
+- [ ] V170-B07 Saved views: shared and default views
+- [ ] V170-B08 Alerts: severity, quiet hours, channel choice
+- [ ] V170-C01 Performance: p95 timings for the analytics queries, index review migration
+- [ ] V170-C02 Large exports in the background with a download link
+- [ ] V170-C03 Scripted backup-restore check
+- [ ] V170-C04 Rate limits on the readiness check and the analytics pages
+- [ ] V170-T Tests (unit, integration, e2e), full regression, register, living files, v1.7.0 tag, CI green
 
 ## Session log — v1.6.1: attachment fields and collaborators (10 Oct 2026), planned before starting
 Owner: "attachments in the approval flow creation as add field and datatype; for each approval the requester can add anyone in the organisation as collaborator, multiple collaborators".

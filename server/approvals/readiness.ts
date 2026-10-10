@@ -27,7 +27,7 @@ export interface DuplicateCandidate {
   reason: string;
 }
 export interface ReadinessItem {
-  code: "FIELD" | "TITLE" | "DOCUMENTS" | "CONFIG" | "ROUTING" | "DUPLICATE" | "RECENT_DUPLICATE" | "BUDGET" | "DEPARTMENT";
+  code: "FIELD" | "TITLE" | "DOCUMENTS" | "CONFIG" | "ROUTING" | "DUPLICATE" | "RECENT_DUPLICATE" | "BUDGET" | "DEPARTMENT" | "UNIQUE";
   severity: Severity;
   message: string;
   field?: string; // form field key, "title" or "attachments"
@@ -125,18 +125,24 @@ export async function assessReadiness(
   if (parsed.ok && !input.isCustom) {
     const keys = settings.duplicates.fields.filter((key) => input.version.form.some((field) => field.key === key));
     const values = keys.map((key) => parsed.data[key]);
+    // A10: whose requests count.
+    const scope = settings.duplicates.scope;
+    const departmentId = snapshot.users.find((user) => user.id === input.requester.id)?.departmentId ?? null;
+    const byDepartment = scope === "SAME_DEPARTMENT" && departmentId !== null;
+    const scopeSql = scope === "SAME_REQUESTER" ? " AND r.requester_id = ?" : byDepartment ? " AND r.requester_id IN (SELECT id FROM users WHERE department_id = ?)" : "";
+    const scopeParams = scope === "SAME_REQUESTER" ? [input.requester.id] : byDepartment ? [departmentId] : [];
     if (keys.length > 0 && values.every((value) => value !== undefined && value !== null && value !== "")) {
       const where = keys.map(() => "LOWER(JSON_UNQUOTE(JSON_EXTRACT(r.form_data_json, ?))) = LOWER(?)").join(" AND ");
       const params = keys.flatMap((key, index) => [`$.${key}`, String(values[index])]);
       const [rows] = await db.query<(RowDataPacket & { id: number; request_no: string; status: string; requester_id: number })[]>(
         `SELECT r.id, r.request_no, r.status, r.requester_id FROM approval_requests r JOIN workflow_versions v ON v.id = r.workflow_version_id
-         WHERE v.workflow_id = ? AND r.deleted_at IS NULL AND r.status IN (?) AND r.submitted_at > DATE_SUB(CURRENT_TIMESTAMP, INTERVAL ? DAY) AND ${where}${amendmentOf ? " AND r.id <> ? AND NOT EXISTS (SELECT 1 FROM request_amendments ra WHERE ra.amendment_id = r.id AND ra.original_id = ?)" : ""}
+         WHERE v.workflow_id = ? AND r.deleted_at IS NULL AND r.status IN (?) AND r.submitted_at > DATE_SUB(CURRENT_TIMESTAMP, INTERVAL ? DAY) AND ${where}${scopeSql}${amendmentOf ? " AND r.id <> ? AND NOT EXISTS (SELECT 1 FROM request_amendments ra WHERE ra.amendment_id = r.id AND ra.original_id = ?)" : ""}
          ORDER BY r.id DESC LIMIT 5${latest}`,
-        [input.workflow.id, OPEN_OR_APPROVED, settings.duplicates.windowDays, ...params, ...(amendmentOf ? [amendmentOf, amendmentOf] : [])],
+        [input.workflow.id, OPEN_OR_APPROVED, settings.duplicates.windowDays, ...params, ...scopeParams, ...(amendmentOf ? [amendmentOf, amendmentOf] : [])],
       );
       if (rows.length > 0) {
         const visible = await visibleIds(rows.map((row) => row.id), input.requester, db);
-        const reason = `the same ${keys.map(labelOf).join(" and ")}`;
+        const reason = `the same ${keys.map(labelOf).join(" and ")}${scope === "SAME_REQUESTER" ? " (from you)" : byDepartment ? " (in your department)" : ""}`;
         const candidates: DuplicateCandidate[] = rows.map((row) => (visible.has(row.id) ? { id: row.id, requestNo: row.request_no, status: row.status, reason } : { id: null, requestNo: null, status: null, reason }));
         const blocking = settings.duplicates.policy === "BLOCK" && !isAdmin(input.requester.roles);
         items.push({
@@ -148,6 +154,30 @@ export async function assessReadiness(
           candidates,
         });
       }
+    }
+  }
+  // 3b. A10: must-be-unique identifiers, any date, anyone's request; always
+  //     blocking. Under the type lock at submit, so two can't pass together.
+  if (parsed.ok && !input.isCustom) {
+    for (const key of settings.unique.fields.filter((item) => input.version.form.some((field) => field.key === item))) {
+      const value = parsed.data[key];
+      if (value === undefined || value === null || value === "") continue;
+      const [rows] = await db.query<(RowDataPacket & { id: number; request_no: string; status: string })[]>(
+        `SELECT r.id, r.request_no, r.status FROM approval_requests r JOIN workflow_versions v ON v.id = r.workflow_version_id
+         WHERE v.workflow_id = ? AND r.deleted_at IS NULL AND r.status IN (?) AND LOWER(TRIM(JSON_UNQUOTE(JSON_EXTRACT(r.form_data_json, ?)))) = LOWER(TRIM(?))${amendmentOf ? " AND r.id <> ? AND NOT EXISTS (SELECT 1 FROM request_amendments ra WHERE ra.amendment_id = r.id AND ra.original_id = ?)" : ""}
+         ORDER BY r.id DESC LIMIT 3${latest}`,
+        [input.workflow.id, OPEN_OR_APPROVED, `$.${key}`, String(value), ...(amendmentOf ? [amendmentOf, amendmentOf] : [])],
+      );
+      if (!rows.length) continue;
+      const visible = await visibleIds(rows.map((row) => row.id), input.requester, db);
+      const reason = `the same ${labelOf(key)}`;
+      items.push({
+        code: "UNIQUE",
+        severity: "BLOCKING",
+        field: key,
+        message: `${labelOf(key)} must be unique: a request with this value is already open or approved. Check the value, or ask IT.`,
+        candidates: rows.map((row) => (visible.has(row.id) ? { id: row.id, requestNo: row.request_no, status: row.status, reason } : { id: null, requestNo: null, status: null, reason })),
+      });
     }
   }
   // An amendment repeats the original's title on purpose.

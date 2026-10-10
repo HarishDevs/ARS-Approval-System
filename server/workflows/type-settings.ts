@@ -11,8 +11,14 @@ export const typeSettingsSchema = z.object({
       fields: z.array(z.string().regex(/^[a-z][a-z0-9_]{0,49}$/)).max(5).default([]),
       windowDays: z.number().int().min(1).max(730).default(90),
       policy: z.enum(["WARN", "BLOCK"]).default("WARN"),
+      // v1.7.0 (A10): whose requests count: anyone's, the same person's, or the same department's.
+      scope: z.enum(["ANY", "SAME_REQUESTER", "SAME_DEPARTMENT"]).default("ANY"),
     })
-    .default({ fields: [], windowDays: 90, policy: "WARN" }),
+    .default({ fields: [], windowDays: 90, policy: "WARN", scope: "ANY" }),
+  // v1.7.0 (A10): identifiers that must never repeat on an open or approved
+  // request of this type (e.g. invoice number). Always blocking, any date.
+  // Submissions of a type are serialised by its row lock, so two can't pass together.
+  unique: z.object({ fields: z.array(z.string().regex(/^[a-z][a-z0-9_]{0,49}$/)).max(5).default([]) }).default({ fields: [] }),
   attachments: z.object({ minimum: z.number().int().min(0).max(20).default(0), note: z.string().trim().max(200).optional() }).default({ minimum: 0 }),
   budget: z.object({ enabled: z.boolean().default(false), amountField: z.string().regex(/^[a-z][a-z0-9_]{0,49}$/).default("amount") }).default({ enabled: false, amountField: "amount" }),
   validityDays: z.number().int().min(1).max(3650).nullable().default(null),

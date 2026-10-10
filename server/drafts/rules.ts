@@ -7,11 +7,13 @@ const MAX_FIELDS = 80;
 const MAX_VALUE = 5000;
 const MAX_SPEC = 64_000;
 
-// WF:<workflowId> for a predefined type, CUSTOM for a custom approval.
-export type DraftKey = { kind: "WORKFLOW"; workflowId: number; key: string } | { kind: "CUSTOM"; key: "CUSTOM" };
+// WF:<workflowId> for a predefined type, CUSTOM for a custom approval,
+// AM:<requestId> for an amendment of an approved request (v1.7.0, A11).
+export type DraftKey = { kind: "WORKFLOW"; workflowId: number; key: string } | { kind: "CUSTOM"; key: "CUSTOM" } | { kind: "AMENDMENT"; originalId: number; key: string };
 
 export function parseDraftKey(key: unknown): DraftKey | null {
   if (key === "CUSTOM") return { kind: "CUSTOM", key: "CUSTOM" };
+  if (typeof key === "string" && /^AM:\d{1,10}$/.test(key)) return { kind: "AMENDMENT", originalId: Number(key.slice(3)), key };
   if (typeof key === "string" && /^WF:\d{1,10}$/.test(key)) return { kind: "WORKFLOW", workflowId: Number(key.slice(3)), key };
   return null;
 }

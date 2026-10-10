@@ -1,5 +1,7 @@
 import { requireArea } from "@/server/authorization/guards";
 import { AppShell } from "@/features/shell/AppShell";
+import { after } from "next/server";
+import { checkJobRunnerStopped } from "@/server/ops/alerts";
 
 export const dynamic = "force-dynamic";
 
@@ -7,6 +9,8 @@ export const dynamic = "force-dynamic";
 // system health, audit export, break-glass. 404 for everyone else.
 export default async function SuperAdminLayout({ children }: { children: React.ReactNode }) {
   const { user } = await requireArea("superadmin");
+  // A5: a stopped job runner is noticed when IT opens a page (after it renders).
+  after(() => checkJobRunnerStopped().then(() => undefined));
   return (
     <AppShell
       area="superadmin"

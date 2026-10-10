@@ -29,6 +29,9 @@ export const SETTING_DEFINITIONS: readonly SettingDefinition[] = [
   { key: "features.reports", group: "FEATURES", label: "Reports and downloads (ON, OFF or IT_ONLY)", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF", "IT_ONLY"]), defaultValue: "ON" },
   { key: "features.scheduled_reports", group: "FEATURES", label: "Scheduled reports and alerts (ON, OFF or IT_ONLY)", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF", "IT_ONLY"]), defaultValue: "ON" },
   { key: "features.amendments", group: "FEATURES", label: "Amendments after approval (ON, OFF or IT_ONLY)", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF", "IT_ONLY"]), defaultValue: "ON" },
+  // v1.7.0 (A9): downloads for everyone (default), or only people with the
+  // "Can export" role (IT and the Super Admin always can).
+  { key: "features.exports", group: "FEATURES", label: "Report downloads: EVERYONE, or ROLE (only people with the Can export role, plus IT)", valueType: "STRING", encrypted: false, schema: z.enum(["EVERYONE", "ROLE"]), defaultValue: "EVERYONE" },
   { key: "features.templates", group: "FEATURES", label: "Request templates and raise again (ON, OFF or IT_ONLY)", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF", "IT_ONLY"]), defaultValue: "ON" },
   // Retention (FN10, D-126): 0 = not set, keep for ever. Setting a value only
   // changes the dry run; nothing is archived or deleted automatically.

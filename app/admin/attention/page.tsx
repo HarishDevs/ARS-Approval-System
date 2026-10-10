@@ -4,7 +4,7 @@ import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { Badge, EmptyState } from "@/features/ui/Display";
 import { SafeText } from "@/features/ui/SafeText";
-import { ResendRequestMessages, SnoozeForm } from "@/features/admin/AttentionForms";
+import { RecheckRequest, ResendRequestMessages, SnoozeForm } from "@/features/admin/AttentionForms";
 import { countByReason, findStuckRequests, STUCK_REASONS, type StuckReason } from "@/server/ops/stuck";
 import { getNumberSetting } from "@/server/settings/values";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
@@ -78,6 +78,7 @@ export default async function AttentionPage({ searchParams }: { searchParams: Pr
                         </Link>
                       )}
                       {item.reason === "MESSAGES_UNSENT" && <ResendRequestMessages requestId={item.requestId} />}
+                      {item.reason === "INCONSISTENT" && <RecheckRequest requestId={item.requestId} />}
                     </div>
                     <SnoozeForm requestId={item.requestId} reason={item.reason} requestNo={item.requestNo} />
                   </td>

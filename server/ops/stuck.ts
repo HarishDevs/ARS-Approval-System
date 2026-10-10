@@ -15,7 +15,7 @@ export const STUCK_REASONS: Record<StuckReason, { label: string; action: string 
   NO_ACTIVITY: { label: "No activity for a long time", action: "Check with the approver, or remind them." },
   WAITING_REQUESTER: { label: "Sent back, not resubmitted", action: "Ask the requester to resubmit or withdraw it." },
   MESSAGES_UNSENT: { label: "Messages not sent", action: "Resend the messages from Automation." },
-  INCONSISTENT: { label: "Workflow state doesn't add up", action: "Don't change it by hand: report it to the developer with the request number. Moving a blocked step on or a hand-over may fix it." },
+  INCONSISTENT: { label: "Workflow state doesn't add up", action: "Use Re-check and fix: it makes the task records match the workflow (audited). If it says it can't, report the request number to the developer." },
 };
 
 export interface StuckItem {
