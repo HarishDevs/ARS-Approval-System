@@ -268,16 +268,30 @@ Found during S8-06:
 - [x] S8-01b Go-live on GoDaddy with the owner, following docs/DEPLOYMENT.md (the owner is at the wizard's "Add secrets" step) (done 9 Oct 2026: live since 8 Oct 2026)
 - [x] S8-04 Update the three living files; commit and push (done 8 Oct 2026)
 
+## Session log — v1.6.0: unified master prompt (10 Oct 2026), planned before starting
+Prompt: `docs/requirements/UNIFIED_MASTER_PROMPT.md`. Status register: `docs/IMPLEMENTATION_STATUS_REGISTER.md` (generated from `docs/register/status.json` by `node scripts/docs/build-register.mjs`). Build order: `docs/IMPLEMENTATION_PLAN.md` (unified section).
+- [x] U-00 Register of every atomic requirement (1,857 rows), Not feasible table with blockers (done 10 Oct 2026, 53b96fd)
+- [x] U-01 Smart forms: show/required-if rules, safe formulas (CALC), line items in paise, sections (done 10 Oct 2026, 491a012)
+- [x] U-02 FN1 readiness checker, FN3 duplicate detection, EN-09 budgets, FN4 autofill and templates (done 10 Oct 2026, 8809552)
+- [x] U-03 FN2 stuck detection, FN11 automation inventory + job-run history + safe resend, FN8 retry rules (done 10 Oct 2026, 4c0f635, f53c599)
+- [ ] U-04 FN5 amendments after approval, workflow version diff and restore, FN7 migration assistant
+- [ ] U-05 Analytics foundation: classification, aging, periods, metric dictionary in code
+- [ ] U-06 Role dashboards, KPI cards, SVG charts, FN6 department scorecards
+- [ ] U-07 Reports catalogue, exports (CSV formula-safe, XLSX, PDF), analytics saved views, scheduled reports, alert rules
+- [ ] U-08 FN9 config promotion, FN10 retention and legal hold (dry run), feature flags
+- [ ] U-09 Remaining v1.6.0: watchers, calendar (neededBy), builder sections/preview, approval expiry (validityDays), bulk reassignment
+- [ ] U-10 Verification, required docs, living files, version bump, tag, push; final report (§6.1)
+
 ## Session log — v1.6.0: master prompt (audit, UI modernisation, features, validation), 9 Oct 2026, planned before starting
 Plan: `docs/IMPLEMENTATION_PLAN.md`. Acceptance criteria: `docs/FEATURE_ACCEPTANCE_CRITERIA.md`.
 - [x] V160-00 Phase 0: audit re-read, repository inspected, baseline recorded, plan and the 4 docs (done 9 Oct 2026)
-- [ ] V160-01 Phase 1: tokens, dark mode (user_settings), UI kit, icons, DataTable
-- [ ] V160-02 Phase 2: skeletons, per-space errors, toasts and undo, session-expired dialog, offline banner, error summary, 404/403
-- [ ] V160-03 Phase 3: bottom navigation with counts, sticky actions with a drawer, skip link, axe in E2E
-- [ ] V160-04 Phase 4: queue filters, shortcuts, command palette, recently viewed, breadcrumbs, instant read state
-- [ ] V160-05 Phase 5: timeline, file preview, resubmission diff (request_revisions)
-- [ ] V160-06 Phase 6: conditional and calculated fields, line items, recall, ask for info, consultation, request delegation, links and follow-ups, budgets, expiry
-- [ ] V160-07 Phase 7: templates, watchers, calendar, builder sections and preview
+- [x] V160-01 Phase 1: tokens, dark mode (user_settings), UI kit, icons, DataTable (done 10 Oct 2026, 934d8a9)
+- [x] V160-02 Phase 2: skeletons, per-space errors, toasts and undo, session-expired dialog, offline banner, error summary, 404/403 (done 10 Oct 2026, 934d8a9)
+- [x] V160-03 Phase 3: bottom navigation with counts, sticky actions with a drawer, skip link, axe in E2E (done 10 Oct 2026, 934d8a9)
+- [x] V160-04 Phase 4: queue filters, shortcuts, command palette, recently viewed, breadcrumbs, instant read state (done 10 Oct 2026, 78715cb)
+- [x] V160-05 Phase 5: timeline, file preview, resubmission diff (request_revisions) (done 10 Oct 2026, 324ef40)
+- [~] V160-06 Phase 6 (recall, ask for info, consultation, delegation, links done 076a3bc; smart forms 491a012; budgets 8809552; expiry still open): conditional and calculated fields, line items, recall, ask for info, consultation, request delegation, links and follow-ups, budgets, expiry
+- [~] V160-07 Phase 7 (templates done 8809552; watchers, calendar, builder sections and preview open): templates, watchers, calendar, builder sections and preview
 - [ ] V160-08 Phase 8: version diff and restore, analytics, weekly HOD report (off), bulk reassignment
 - [ ] V160-09 Phases 9–12: standardise routes, performance, security review, full tests, IMPLEMENTATION_REPORT, go-live checklist, living files, push
 

@@ -777,6 +777,56 @@ flowchart LR
 ## F-88 Mentions (v1.5.0, D-112)
 Comment with `@UserID` → for each mentioned person: can they already see the request (requester, task holder or decider, active delegate, IT)? **Yes** → "You were mentioned" (inbox + email), instead of the plain new-comment message. **No** → not told, and the writer is told who wasn't. The audit records who was mentioned.
 
+## F-94 Recall, ask for information, consult, delegate (v1.6.0)
+- **Recall:** the requester can recall a request before anyone has decided. It returns to them for changes, and approvers are told.
+- **Ask for information:** an approver can ask the requester a question. The request goes on hold until the requester answers, then comes back to the same approver.
+- **Consult:** an approver can ask anyone for an opinion. The consultee can see the request and answer, but never decides.
+- **Delegate one task:** an approver can hand one task to an eligible person. There is no circular delegation and at most 3 hops.
+- **Links and follow-ups:** "Raise a follow-up" on an approved request starts a new linked request; links show on both requests.
+
+## F-95 Smart forms (v1.6.0, D-114)
+Builder field:
+- Show if / Required if: a rule on another field.
+- Calculated: a formula over number fields, with + − × ÷, brackets and round().
+- Line items: description, quantity, rate, GST %.
+- Section: a heading.
+
+When the requester types, the page works out totals and shows or hides fields live. On submit, the server recomputes everything, clears hidden fields and checks the required ones. The line-items total (or a calculated field) can be the DoA amount.
+
+## F-96 Check before submitting (v1.6.0, D-115, D-116)
+```mermaid
+flowchart LR
+  F[Requester fills the form] --> C[Check before submitting<br/>no writes]
+  C --> P{Result}
+  P -->|Ready| S[Submit]
+  P -->|Warnings| A["Tick 'I've read the warnings'<br/>+ reason for a possible duplicate"] --> S
+  P -->|Blocked| X[Fix the linked fields] --> C
+  F -. changes after a check .-> St[Result marked out of date]
+  S --> T["Server: lock the type → re-run every check<br/>→ store the result, reason, budget figures"] --> R[Request page: 'Checked at submission']
+```
+- **Blocking:** required fields and formats, title, DoA/approver problems, missing files, invalid workflow, a duplicate under a BLOCK policy (non-admins), over budget under the BLOCK budget policy.
+- **Warnings:** possible duplicate (same values in the type's match fields within N days), same title within minutes, no budget loaded, over budget (WARN policy). Routing and missing-department notes are shown but needn't be confirmed.
+- **Budgets:** Admin → Budgets per department and financial year (April–March), with a warn-at percentage. Committed = open and approved requests.
+
+## F-97 Templates, raise again, profile autofill (v1.6.0, D-117)
+- **Save a template:** on one of your own requests, choose **Save as a template** and give it a name.
+- **Start from a template:** New request → type → pick from "Start from one of your templates".
+- **Raise again:** on one of your own requests, **Raise again like this** starts a new request with the same values.
+- **Profile autofill:** empty Department and Designation fields fill from your profile.
+
+Each prefilled field shows where its value came from. People, calculated values and files are never copied.
+
+## F-98 Needs attention and Automation (v1.6.0, D-118)
+- **IT → Needs attention:**
+  - shows blocked steps, inactive approvers with no delegate, no activity for N days, sent back and not resubmitted, and messages not sent;
+  - each finding says why, since when and what to do;
+  - from here IT can **Resend messages** or **Hide for a while** (with a reason, audited).
+- **Super Admin → Automation:**
+  - the inventory, with each job's health (Running / Late / Last run failed / Never run);
+  - **Run now** for all jobs or one, with each job's run history;
+  - Messages not sent, with **Resend**.
+- **Every 5 minutes**, cron calls the job runner. Each job runs and is recorded on its own, and a failure alerts the Super Admin once a day.
+
 ## F-89 Notification choices (v1.5.0, D-110)
 Profile → Notifications → **Settings**: per kind of message, email and WhatsApp on/off. Security and "work waiting for you" are locked on. A switched-off message is recorded as SKIPPED / USER_PREFERENCE; the in-app list always gets it.
 

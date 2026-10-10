@@ -261,6 +261,38 @@
 - **New messages:** "mentioned you", "due soon" and the Super Admin's job/backup alert go by inbox and email. There are no WhatsApp templates for them yet (an owner choice).
 - **Request ids (#14):** each request gets an id, from Cloudflare's CF-Ray or a new UUID. A caller's own id is never trusted. The id is shown as the "Reference" and is written in error logs.
 - **Super Admin alerts:** at most once a day per kind. | Claude, 9 Oct 2026 |
+| D-113 | 10 Oct 2026 | **Route-level `loading.tsx` only on read-only list pages.** In Next 15.5 a route skeleton turns a later `notFound()` into HTTP 200 and can block the refresh after a Server Action. Pages with actions and `[id]` pages have none; list pages sit in route groups. `tests/ui/loading-guard.test.ts` enforces the allow-list, and `useActionForm` calls `router.refresh()` after success. | Claude, 10 Oct 2026 |
+| D-114 | 10 Oct 2026 | **Smart forms are worked out on the server.**
+- Show-if and required-if rules, CALC fields (a safe formula parser, no eval) and LINE_ITEMS (paise, BigInt, at most 100 lines).
+- On submit the server recomputes every calculated value and total, ignores what the browser sent, and clears hidden fields.
+- CALC and LINE_ITEMS can be the DoA amount. | Claude, 10 Oct 2026 |
+| D-115 | 10 Oct 2026 | **Submission readiness (FN1) and duplicates (FN3):**
+- One service (`server/approvals/readiness.ts`). It runs read-only for "Check before submitting" and again inside the submit transaction, taking the approval-type lock first and then using FOR SHARE reads, so two submits can't both pass.
+- Only duplicate and budget warnings need confirming; routing and missing-department notes don't.
+- A possible duplicate needs a reason (5+ characters), which is stored and audited (`DUPLICATE_WARNING_OVERRIDDEN`).
+- A BLOCK policy applies to requesters; IT can override with a reason.
+- Matches the person can't open show no number or link.
+- A repeated submission key re-reads under the lock, so a double click still makes one request. | Claude, 10 Oct 2026 |
+| D-116 | 10 Oct 2026 | **Budgets (EN-09):**
+- Per department per financial year (April–March, India time).
+- Committed = the checked amounts of open and approved requests; withdrawn and rejected requests stop counting.
+- No budget loaded is a warning, never "unlimited".
+- Over budget warns by default; `general.budget_policy` = BLOCK refuses (an owner decision). | Claude, 10 Oct 2026 |
+| D-117 | 10 Oct 2026 | **Autofill and templates (FN4):**
+- Sources are the person's profile (department, designation), their own templates and their own earlier requests only.
+- People fields, calculated fields and files are never copied. Values that no longer fit the form are dropped and counted.
+- An explicit choice (template or "raise again") wins over the draft; the profile fills only empty fields.
+- Each prefilled field says where its value came from. | Claude, 10 Oct 2026 |
+| D-118 | 10 Oct 2026 | **Workflow reliability (FN2, FN8, FN11):**
+- Every automation step is recorded in `job_runs` (counts only) and runs on its own.
+- Health is OK / LATE / FAILING / NEVER.
+- Stuck detection is read-only; IT fixes through existing audited actions or snoozes with a reason.
+- Resend releases only unsent rows that aren't being sent, so a message is never sent twice. Recovery never touches decisions.
+- Run now and Resend on Automation are Super Admin only; Needs attention is for the IT team. | Claude, 10 Oct 2026 |
+| D-119 | 10 Oct 2026 | **Status register:**
+- Statuses are exactly Implemented / Yet to do / Not feasible.
+- A Not feasible row needs a blocker, a prerequisite and an alternative.
+- Plant/business unit, cost centre, ERP integrations, APM/DB/deploy telemetry and request-level due dates are Not feasible with today's data. | Claude, 10 Oct 2026 |
 | D-033 | 28 Sep 2026 | **Staff data is provided by the admin. Roles are assigned per user, by the admin only. Users are added or made inactive in the Admin Portal** (never hard-deleted, so history and audit stay intact). *Resolves Q-010.* | Owner (answer 7) |
 
 ## 4. Open questions (must be answered before the phase shown)
@@ -288,6 +320,29 @@
 | Q-019 | **Which Resend account holds the API key in Super Admin?** The "arsenergy" team (open in Chrome) is empty. Email works only once the From domain (`approvals@arssteels.net`) is verified in the account that owns the key, or a new key from a team with a verified domain is entered. | Before go-live (no email is delivered today) | **Answered 9 Oct 2026:** the key is "New Api Approval" in the Resend team "arssteels" (harishkumar.t@arssteels.com). The owner verified `arssteels.net` there; Resend's log showed "API key not authorized for this domain" for a few minutes after verification, then the test email was **sent** |
 
 ## 5. Work log (newest first)
+
+### 10 Oct 2026 (v1.6.0: master prompt, then the unified master prompt)
+- **Source:** the master prompt (audit, UI modernisation, features, validation), then `ARS_Approval_Platform_Unified_Claude_Code_Master_Prompt.md` ("Build this"). Copy: `docs/requirements/UNIFIED_MASTER_PROMPT.md`.
+- **Built, v1.6.0 phases 0–6a:**
+  - UI kit, dark mode, skeletons, toasts and undo, error summary;
+  - bottom navigation, command palette, shortcuts, queue filters;
+  - timeline, file preview, resubmission diff;
+  - recall, ask for information, consultation, delegation, links and follow-ups.
+- **Built, unified prompt:**
+  - the status register (1,857 rows);
+  - smart forms (D-114);
+  - readiness, duplicates, budgets, autofill and templates (D-115..D-117);
+  - Needs attention, Automation, job-run history and safe resend (D-118);
+  - `docs/AUTOMATION_INVENTORY_AND_RECOVERY.md`.
+- **Fixed on the way:**
+  - V6-D01..D07 (KNOWN_ISSUES);
+  - the double-click submit under the type lock;
+  - line items lost from templates and resubmit;
+  - the new-request form not remounting when started from a template.
+- **Checks:** unit 359, integration 122, E2E 66/66 (axe in dark and light).
+- **Register:** 316 Implemented, 1,499 Yet to do, 42 Not feasible.
+- **Not deployed:** pushed to GitHub only; the live site stays on v1.4.0 until the owner publishes.
+- **Next:** U-04 amendments, version diff and migration (PLAN-CHECKLIST).
 
 ### 9 Oct 2026 (v1.5.0: owner's development spec)
 - **Source:** the owner gave the development spec (14 features, phases 0–5) and said "Go ahead".
