@@ -293,6 +293,24 @@
 - Statuses are exactly Implemented / Yet to do / Not feasible.
 - A Not feasible row needs a blocker, a prerequisite and an alternative.
 - Plant/business unit, cost centre, ERP integrations, APM/DB/deploy telemetry and request-level due dates are Not feasible with today's data. | Claude, 10 Oct 2026 |
+| D-120 | 10 Oct 2026 | **Amendments after approval (FN5):**
+- An amendment is a new request of the same type, raised by the original requester. It changes only the fields the type marks as amendable; everything else is taken from the values in force.
+- It always goes through the type's current workflow again, with DoA re-evaluated.
+- The original request and its decisions never change. The values in force are the latest APPROVED amendment's; a rejected or withdrawn amendment changes nothing.
+- One open amendment at a time (the original is locked FOR UPDATE).
+- The original isn't treated as a duplicate of its amendment.
+- Only the change in amount counts against the budget, and a reduction counts only once approved.
+- Cost centre isn't in the data (Not feasible). | Claude, 10 Oct 2026 |
+| D-121 | 10 Oct 2026 | **Version history and the migration assistant (FN7):**
+- **Compare:** any two versions (steps, routes, fields).
+- **Restore:** copies an older version as a new draft with the same step ids; only when no draft exists.
+- **Migration:** moves open requests from an older version to the live one, IT only.
+  - A dry run gives a verdict for each request; warnings need an explicit yes.
+  - A reached step that has gone must be mapped onto a live step of the same kind.
+  - Finished requests, step-kind changes and part-way parallel joins can't be moved.
+  - Each request moves in its own locked transaction, re-checked on its current state. The state is lined up with the target: new steps start WAITING, and unreached old steps are dropped.
+  - Runs and per-request outcomes are recorded, with an audit entry and a timeline event.
+  - Undo: restore the old version, publish it and move the requests back. | Claude, 10 Oct 2026 |
 | D-033 | 28 Sep 2026 | **Staff data is provided by the admin. Roles are assigned per user, by the admin only. Users are added or made inactive in the Admin Portal** (never hard-deleted, so history and audit stay intact). *Resolves Q-010.* | Owner (answer 7) |
 
 ## 4. Open questions (must be answered before the phase shown)
@@ -342,7 +360,8 @@
 - **Checks:** unit 359, integration 122, E2E 66/66 (axe in dark and light).
 - **Register:** 316 Implemented, 1,499 Yet to do, 42 Not feasible.
 - **Not deployed:** pushed to GitHub only; the live site stays on v1.4.0 until the owner publishes.
-- **Next:** U-04 amendments, version diff and migration (PLAN-CHECKLIST).
+- **Later the same day:** amendments (D-120), version compare/restore and the migration assistant (D-121). Checks: unit 368, integration 128, E2E 69/69. Register: 385 / 1,429 / 43.
+- **Next:** U-05 analytics foundation (PLAN-CHECKLIST).
 
 ### 9 Oct 2026 (v1.5.0: owner's development spec)
 - **Source:** the owner gave the development spec (14 features, phases 0–5) and said "Go ahead".

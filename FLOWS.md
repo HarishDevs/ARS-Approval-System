@@ -827,6 +827,26 @@ Each prefilled field shows where its value came from. People, calculated values 
   - Messages not sent, with **Resend**.
 - **Every 5 minutes**, cron calls the job runner. Each job runs and is recorded on its own, and a failure alerts the Super Admin once a day.
 
+## F-99 Amend an approved request (v1.6.0, D-120)
+1. **IT:** on the approval type, open Submission checks → **Amendments after approval** and tick the fields that may change.
+2. **Requester:** on their approved request, choose **Amendments → Amend**. Only the allowed fields can be edited; the rest are shown locked. They give a reason and submit.
+3. **Approval runs again.** The amendment is a new request, "Amendment: …", and goes through the type's current steps with DoA worked out on the new values.
+4. **Outcome:**
+   - **Approved:** the original shows "Amended: the values in force are from …".
+   - **Rejected or withdrawn:** nothing changes.
+5. **One at a time:** while an amendment is open, another can't be raised.
+
+## F-100 Compare versions, restore, move open requests (v1.6.0, D-121)
+Workflow page → **Versions**:
+- **Compare with live:** steps, routes and fields added, removed or changed.
+- **Restore as draft:** copies an older version as a new draft, which is then checked and published as usual.
+- **Move N open requests to the live version:** opens a page that checks each request. Each gets one of four results: Compatible, Compatible with warnings, Needs manual review (map a removed step onto a live step of the same kind) or Can't be moved safely.
+
+To move requests:
+1. Choose the requests (Compatible ones are pre-ticked; tick "Move requests with warnings" if needed).
+2. Press **Move selected** and confirm.
+3. Each request is checked again as it moves. The page shows the run's result; the history lists each request's outcome, and the request's timeline says "Moved from workflow version N to M".
+
 ## F-89 Notification choices (v1.5.0, D-110)
 Profile → Notifications → **Settings**: per kind of message, email and WhatsApp on/off. Security and "work waiting for you" are locked on. A switched-off message is recorded as SKIPPED / USER_PREFERENCE; the in-app list always gets it.
 

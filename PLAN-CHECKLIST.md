@@ -274,7 +274,7 @@ Prompt: `docs/requirements/UNIFIED_MASTER_PROMPT.md`. Status register: `docs/IMP
 - [x] U-01 Smart forms: show/required-if rules, safe formulas (CALC), line items in paise, sections (done 10 Oct 2026, 491a012)
 - [x] U-02 FN1 readiness checker, FN3 duplicate detection, EN-09 budgets, FN4 autofill and templates (done 10 Oct 2026, 8809552)
 - [x] U-03 FN2 stuck detection, FN11 automation inventory + job-run history + safe resend, FN8 retry rules (done 10 Oct 2026, 4c0f635, f53c599)
-- [ ] U-04 FN5 amendments after approval, workflow version diff and restore, FN7 migration assistant
+- [x] U-04 FN5 amendments after approval, workflow version diff and restore, FN7 migration assistant (done 10 Oct 2026, 98b9cd7, e3fb158)
 - [ ] U-05 Analytics foundation: classification, aging, periods, metric dictionary in code
 - [ ] U-06 Role dashboards, KPI cards, SVG charts, FN6 department scorecards
 - [ ] U-07 Reports catalogue, exports (CSV formula-safe, XLSX, PDF), analytics saved views, scheduled reports, alert rules

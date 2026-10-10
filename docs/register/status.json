@@ -50,9 +50,9 @@
   "test": "request-summary.test.ts, v150 e2e"
  },
  "M1.1-11": {
-  "status": "Yet to do",
-  "action": "Simulation + live comparison done; version-to-version diff and restore still to build",
-  "evidence": "test-mode.int"
+  "status": "Implemented",
+  "evidence": "server/workflows/version-diff.ts; app/admin/workflows/[id]/compare; restoreVersionAction; test mode (simulation)",
+  "test": "unit version-migration.test.ts; e2e v160-smart-zversions.spec.ts; test-mode.int"
  },
  "M1.1-12": {
   "status": "Yet to do",
@@ -80,9 +80,9 @@
   "test": "integration readiness.int.test.ts (autofill and templates); e2e v160-smart-readiness.spec.ts"
  },
  "M1.1-17": {
-  "status": "Yet to do",
-  "action": "To build (unified prompt)",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "server/approvals/amendments.ts; server/approvals/service.ts checkAmendment; app/users/requests/[id]/amend; features/requests/Amendments.tsx",
+  "test": "integration amendments.int.test.ts; e2e v160-smart-zamend.spec.ts"
  },
  "M1.1-18": {
   "status": "Yet to do",
@@ -90,9 +90,9 @@
   "evidence": ""
  },
  "M1.1-19": {
-  "status": "Yet to do",
-  "action": "To build (unified prompt)",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "server/workflows/migration-plan.ts; server/workflows/migration.ts; app/admin/workflows/[id]/migrate",
+  "test": "unit version-migration.test.ts; integration migration.int.test.ts; e2e v160-smart-zversions.spec.ts"
  },
  "M1.1-20": {
   "status": "Yet to do",
@@ -2537,5 +2537,346 @@
   "status": "Yet to do",
   "action": "Add timeout and partial-success cases to the retry tests",
   "evidence": "Safe retry, duplicate clicks and permission failures are covered"
+ },
+ "FN5-7.1-01": {
+  "status": "Implemented",
+  "evidence": "server/approvals/amendments.ts; server/approvals/service.ts checkAmendment; app/users/requests/[id]/amend; features/requests/Amendments.tsx (type setting: amendable fields; others locked)",
+  "test": "integration amendments.int.test.ts; e2e v160-smart-zamend.spec.ts"
+ },
+ "FN5-7.1-02": {
+  "status": "Implemented",
+  "evidence": "server/approvals/amendments.ts; server/approvals/service.ts checkAmendment; app/users/requests/[id]/amend; features/requests/Amendments.tsx (Amendments card: from → to)",
+  "test": "integration amendments.int.test.ts; e2e v160-smart-zamend.spec.ts"
+ },
+ "FN5-7.1-03": {
+  "status": "Implemented",
+  "evidence": "server/approvals/amendments.ts; server/approvals/service.ts checkAmendment; app/users/requests/[id]/amend; features/requests/Amendments.tsx (required, 10+ characters)",
+  "test": "integration amendments.int.test.ts; e2e v160-smart-zamend.spec.ts"
+ },
+ "FN5-7.1-04": {
+  "status": "Implemented",
+  "evidence": "server/approvals/amendments.ts; server/approvals/service.ts checkAmendment; app/users/requests/[id]/amend; features/requests/Amendments.tsx (attachments on the amendment request)",
+  "test": "integration amendments.int.test.ts; e2e v160-smart-zamend.spec.ts"
+ },
+ "FN5-7.1-05": {
+  "status": "Implemented",
+  "evidence": "server/approvals/amendments.ts; server/approvals/service.ts checkAmendment; app/users/requests/[id]/amend; features/requests/Amendments.tsx (parseFormSubmission + readiness on merged values)",
+  "test": "integration amendments.int.test.ts; e2e v160-smart-zamend.spec.ts"
+ },
+ "FN5-7.1-06": {
+  "status": "Implemented",
+  "evidence": "server/approvals/amendments.ts; server/approvals/service.ts checkAmendment; app/users/requests/[id]/amend; features/requests/Amendments.tsx (runs the type's current workflow; DoA re-evaluated)",
+  "test": "integration amendments.int.test.ts; e2e v160-smart-zamend.spec.ts"
+ },
+ "FN5-7.1-07": {
+  "status": "Implemented",
+  "evidence": "server/approvals/amendments.ts; server/approvals/service.ts checkAmendment; app/users/requests/[id]/amend; features/requests/Amendments.tsx (always a fresh approval)",
+  "test": "integration amendments.int.test.ts; e2e v160-smart-zamend.spec.ts"
+ },
+ "FN5-7.1-08": {
+  "status": "Implemented",
+  "evidence": "server/approvals/amendments.ts; server/approvals/service.ts checkAmendment; app/users/requests/[id]/amend; features/requests/Amendments.tsx (amendment request status)",
+  "test": "integration amendments.int.test.ts; e2e v160-smart-zamend.spec.ts"
+ },
+ "FN5-7.1-09": {
+  "status": "Implemented",
+  "evidence": "server/approvals/amendments.ts; server/approvals/service.ts checkAmendment; app/users/requests/[id]/amend; features/requests/Amendments.tsx (normal approval notifications)",
+  "test": "integration amendments.int.test.ts; e2e v160-smart-zamend.spec.ts"
+ },
+ "FN5-7.1-10": {
+  "status": "Implemented",
+  "evidence": "server/approvals/amendments.ts; server/approvals/service.ts checkAmendment; app/users/requests/[id]/amend; features/requests/Amendments.tsx (the amendment request's outcome)",
+  "test": "integration amendments.int.test.ts; e2e v160-smart-zamend.spec.ts"
+ },
+ "FN5-7.1-11": {
+  "status": "Implemented",
+  "evidence": "server/approvals/amendments.ts; server/approvals/service.ts checkAmendment; app/users/requests/[id]/amend; features/requests/Amendments.tsx (request_amendments changes; AMENDMENT_SUBMITTED audit)",
+  "test": "integration amendments.int.test.ts; e2e v160-smart-zamend.spec.ts"
+ },
+ "FN5-7.1-12": {
+  "status": "Implemented",
+  "evidence": "server/approvals/amendments.ts; server/approvals/service.ts checkAmendment; app/users/requests/[id]/amend; features/requests/Amendments.tsx (any amendable NUMBER/LINE_ITEMS field; budget delta)",
+  "test": "integration amendments.int.test.ts; e2e v160-smart-zamend.spec.ts"
+ },
+ "FN5-7.1-13": {
+  "status": "Implemented",
+  "evidence": "server/approvals/amendments.ts; server/approvals/service.ts checkAmendment; app/users/requests/[id]/amend; features/requests/Amendments.tsx (amendable DATE fields)",
+  "test": "integration amendments.int.test.ts; e2e v160-smart-zamend.spec.ts"
+ },
+ "FN5-7.1-14": {
+  "status": "Implemented",
+  "evidence": "server/approvals/amendments.ts; server/approvals/service.ts checkAmendment; app/users/requests/[id]/amend; features/requests/Amendments.tsx (amendable TEXT/LONG_TEXT fields)",
+  "test": "integration amendments.int.test.ts; e2e v160-smart-zamend.spec.ts"
+ },
+ "FN5-7.1-15": {
+  "status": "Implemented",
+  "evidence": "server/approvals/amendments.ts; server/approvals/service.ts checkAmendment; app/users/requests/[id]/amend; features/requests/Amendments.tsx (amendable vendor field)",
+  "test": "integration amendments.int.test.ts; e2e v160-smart-zamend.spec.ts"
+ },
+ "FN5-7.1-16": {
+  "status": "Not feasible",
+  "blocker": "No cost-centre attribute exists on users, departments or requests (schema checked)",
+  "prerequisite": "Owner: supply a cost-centre master and mapping",
+  "alternative": "A form field can carry a cost centre and be made amendable"
+ },
+ "FN5-7.1-17": {
+  "status": "Implemented",
+  "evidence": "server/approvals/amendments.ts; server/approvals/service.ts checkAmendment; app/users/requests/[id]/amend; features/requests/Amendments.tsx (files on the amendment)",
+  "test": "integration amendments.int.test.ts; e2e v160-smart-zamend.spec.ts"
+ },
+ "FN5-7.2-01": {
+  "status": "Yet to do",
+  "action": "Save amendment drafts (server draft per original)",
+  "evidence": "Amendments are submitted directly from the form"
+ },
+ "FN5-7.2-02": {
+  "status": "Implemented",
+  "evidence": "server/approvals/amendments.ts; server/approvals/service.ts checkAmendment; app/users/requests/[id]/amend; features/requests/Amendments.tsx (submitted)",
+  "test": "integration amendments.int.test.ts; e2e v160-smart-zamend.spec.ts"
+ },
+ "FN5-7.2-03": {
+  "status": "Implemented",
+  "evidence": "server/approvals/amendments.ts; server/approvals/service.ts checkAmendment; app/users/requests/[id]/amend; features/requests/Amendments.tsx (IN_PROGRESS)",
+  "test": "integration amendments.int.test.ts; e2e v160-smart-zamend.spec.ts"
+ },
+ "FN5-7.2-04": {
+  "status": "Implemented",
+  "evidence": "server/approvals/amendments.ts; server/approvals/service.ts checkAmendment; app/users/requests/[id]/amend; features/requests/Amendments.tsx (APPROVED → values in force)",
+  "test": "integration amendments.int.test.ts; e2e v160-smart-zamend.spec.ts"
+ },
+ "FN5-7.2-05": {
+  "status": "Implemented",
+  "evidence": "server/approvals/amendments.ts; server/approvals/service.ts checkAmendment; app/users/requests/[id]/amend; features/requests/Amendments.tsx (REJECTED → nothing changes)",
+  "test": "integration amendments.int.test.ts; e2e v160-smart-zamend.spec.ts"
+ },
+ "FN5-7.2-06": {
+  "status": "Implemented",
+  "evidence": "server/approvals/amendments.ts; server/approvals/service.ts checkAmendment; app/users/requests/[id]/amend; features/requests/Amendments.tsx (withdraw like any request)",
+  "test": "integration amendments.int.test.ts; e2e v160-smart-zamend.spec.ts"
+ },
+ "FN5-7.3-01": {
+  "status": "Implemented",
+  "evidence": "server/approvals/amendments.ts; server/approvals/service.ts checkAmendment; app/users/requests/[id]/amend; features/requests/Amendments.tsx (requester only, approved only, type allows)",
+  "test": "integration amendments.int.test.ts; e2e v160-smart-zamend.spec.ts"
+ },
+ "FN5-7.3-02": {
+  "status": "Implemented",
+  "evidence": "server/approvals/amendments.ts; server/approvals/service.ts checkAmendment; app/users/requests/[id]/amend; features/requests/Amendments.tsx (merge takes only amendable fields)",
+  "test": "integration amendments.int.test.ts; e2e v160-smart-zamend.spec.ts"
+ },
+ "FN5-7.3-03": {
+  "status": "Implemented",
+  "evidence": "server/approvals/amendments.ts; server/approvals/service.ts checkAmendment; app/users/requests/[id]/amend; features/requests/Amendments.tsx (original never changed; values in force derived)",
+  "test": "integration amendments.int.test.ts; e2e v160-smart-zamend.spec.ts"
+ },
+ "FN5-7.3-04": {
+  "status": "Implemented",
+  "evidence": "server/approvals/amendments.ts; server/approvals/service.ts checkAmendment; app/users/requests/[id]/amend; features/requests/Amendments.tsx (always re-approved)",
+  "test": "integration amendments.int.test.ts; e2e v160-smart-zamend.spec.ts"
+ },
+ "FN5-7.3-05": {
+  "status": "Implemented",
+  "evidence": "server/approvals/amendments.ts; server/approvals/service.ts checkAmendment; app/users/requests/[id]/amend; features/requests/Amendments.tsx (locked fields; DoA re-run)",
+  "test": "integration amendments.int.test.ts; e2e v160-smart-zamend.spec.ts"
+ },
+ "FN5-7.3-06": {
+  "status": "Implemented",
+  "evidence": "server/approvals/amendments.ts; server/approvals/service.ts checkAmendment; app/users/requests/[id]/amend; features/requests/Amendments.tsx (AMENDMENT_SUBMITTED + normal decision audit)",
+  "test": "integration amendments.int.test.ts; e2e v160-smart-zamend.spec.ts"
+ },
+ "FN5-7.4-01": {
+  "status": "Implemented",
+  "evidence": "server/approvals/amendments.ts; server/approvals/service.ts checkAmendment; app/users/requests/[id]/amend; features/requests/Amendments.tsx",
+  "test": "integration amendments.int.test.ts; e2e v160-smart-zamend.spec.ts"
+ },
+ "FN5-7.4-02": {
+  "status": "Implemented",
+  "evidence": "server/approvals/amendments.ts; server/approvals/service.ts checkAmendment; app/users/requests/[id]/amend; features/requests/Amendments.tsx (original row unchanged)",
+  "test": "integration amendments.int.test.ts; e2e v160-smart-zamend.spec.ts"
+ },
+ "FN5-7.4-03": {
+  "status": "Implemented",
+  "evidence": "server/approvals/amendments.ts; server/approvals/service.ts checkAmendment; app/users/requests/[id]/amend; features/requests/Amendments.tsx (type's workflow on the new values)",
+  "test": "integration amendments.int.test.ts; e2e v160-smart-zamend.spec.ts"
+ },
+ "FN5-7.4-04": {
+  "status": "Implemented",
+  "evidence": "server/approvals/amendments.ts; server/approvals/service.ts checkAmendment; app/users/requests/[id]/amend; features/requests/Amendments.tsx (derived from APPROVED amendments only)",
+  "test": "integration amendments.int.test.ts; e2e v160-smart-zamend.spec.ts"
+ },
+ "FN5-7.4-05": {
+  "status": "Implemented",
+  "evidence": "server/approvals/amendments.ts; server/approvals/service.ts checkAmendment; app/users/requests/[id]/amend; features/requests/Amendments.tsx (original locked FOR UPDATE; one open amendment)",
+  "test": "integration amendments.int.test.ts; e2e v160-smart-zamend.spec.ts"
+ },
+ "FN5-7.4-06": {
+  "status": "Implemented",
+  "evidence": "server/approvals/amendments.ts; server/approvals/service.ts checkAmendment; app/users/requests/[id]/amend; features/requests/Amendments.tsx (financial, rejected, permission, concurrent)",
+  "test": "integration amendments.int.test.ts; e2e v160-smart-zamend.spec.ts"
+ },
+ "FN7-9.1-01": {
+  "status": "Implemented",
+  "evidence": "server/workflows/migration-plan.ts; server/workflows/migration.ts; app/admin/workflows/[id]/migrate (from)",
+  "test": "unit version-migration.test.ts; integration migration.int.test.ts; e2e v160-smart-zversions.spec.ts"
+ },
+ "FN7-9.1-02": {
+  "status": "Implemented",
+  "evidence": "server/workflows/migration-plan.ts; server/workflows/migration.ts; app/admin/workflows/[id]/migrate (live version)",
+  "test": "unit version-migration.test.ts; integration migration.int.test.ts; e2e v160-smart-zversions.spec.ts"
+ },
+ "FN7-9.1-03": {
+  "status": "Implemented",
+  "evidence": "server/workflows/migration-plan.ts; server/workflows/migration.ts; app/admin/workflows/[id]/migrate (open requests on the version)",
+  "test": "unit version-migration.test.ts; integration migration.int.test.ts; e2e v160-smart-zversions.spec.ts"
+ },
+ "FN7-9.1-04": {
+  "status": "Implemented",
+  "evidence": "server/workflows/migration-plan.ts; server/workflows/migration.ts; app/admin/workflows/[id]/migrate (Waiting at)",
+  "test": "unit version-migration.test.ts; integration migration.int.test.ts; e2e v160-smart-zversions.spec.ts"
+ },
+ "FN7-9.1-05": {
+  "status": "Implemented",
+  "evidence": "server/workflows/migration-plan.ts; server/workflows/migration.ts; app/admin/workflows/[id]/migrate (reached steps kept)",
+  "test": "unit version-migration.test.ts; integration migration.int.test.ts; e2e v160-smart-zversions.spec.ts"
+ },
+ "FN7-9.1-06": {
+  "status": "Implemented",
+  "evidence": "server/workflows/migration-plan.ts; server/workflows/migration.ts; app/admin/workflows/[id]/migrate (tasks kept, renamed with mapping)",
+  "test": "unit version-migration.test.ts; integration migration.int.test.ts; e2e v160-smart-zversions.spec.ts"
+ },
+ "FN7-9.1-07": {
+  "status": "Implemented",
+  "evidence": "server/workflows/migration-plan.ts; server/workflows/migration.ts; app/admin/workflows/[id]/migrate (part-way joins block)",
+  "test": "unit version-migration.test.ts; integration migration.int.test.ts; e2e v160-smart-zversions.spec.ts"
+ },
+ "FN7-9.1-08": {
+  "status": "Implemented",
+  "evidence": "server/workflows/migration-plan.ts; server/workflows/migration.ts; app/admin/workflows/[id]/migrate (tasks and consultations are untouched)",
+  "test": "unit version-migration.test.ts; integration migration.int.test.ts; e2e v160-smart-zversions.spec.ts"
+ },
+ "FN7-9.1-09": {
+  "status": "Implemented",
+  "evidence": "server/workflows/migration-plan.ts; server/workflows/migration.ts; app/admin/workflows/[id]/migrate (route changes in compare)",
+  "test": "unit version-migration.test.ts; integration migration.int.test.ts; e2e v160-smart-zversions.spec.ts"
+ },
+ "FN7-9.1-10": {
+  "status": "Implemented",
+  "evidence": "server/workflows/migration-plan.ts; server/workflows/migration.ts; app/admin/workflows/[id]/migrate (new required fields warn)",
+  "test": "unit version-migration.test.ts; integration migration.int.test.ts; e2e v160-smart-zversions.spec.ts"
+ },
+ "FN7-9.1-11": {
+  "status": "Implemented",
+  "evidence": "server/workflows/migration-plan.ts; server/workflows/migration.ts; app/admin/workflows/[id]/migrate (approver/rule changes warn)",
+  "test": "unit version-migration.test.ts; integration migration.int.test.ts; e2e v160-smart-zversions.spec.ts"
+ },
+ "FN7-9.1-12": {
+  "status": "Implemented",
+  "evidence": "server/workflows/migration-plan.ts; server/workflows/migration.ts; app/admin/workflows/[id]/migrate (removed/renamed reached steps need mapping)",
+  "test": "unit version-migration.test.ts; integration migration.int.test.ts; e2e v160-smart-zversions.spec.ts"
+ },
+ "FN7-9.1-13": {
+  "status": "Implemented",
+  "evidence": "server/workflows/migration-plan.ts; server/workflows/migration.ts; app/admin/workflows/[id]/migrate (approver changes on the waiting step warn)",
+  "test": "unit version-migration.test.ts; integration migration.int.test.ts; e2e v160-smart-zversions.spec.ts"
+ },
+ "FN7-9.1-14": {
+  "status": "Implemented",
+  "evidence": "server/workflows/migration-plan.ts; server/workflows/migration.ts; app/admin/workflows/[id]/migrate (kind changes block)",
+  "test": "unit version-migration.test.ts; integration migration.int.test.ts; e2e v160-smart-zversions.spec.ts"
+ },
+ "FN7-9.1-15": {
+  "status": "Implemented",
+  "evidence": "server/workflows/migration-plan.ts; server/workflows/migration.ts; app/admin/workflows/[id]/migrate (VERDICT_LABEL)",
+  "test": "unit version-migration.test.ts; integration migration.int.test.ts; e2e v160-smart-zversions.spec.ts"
+ },
+ "FN7-9.1-16": {
+  "status": "Implemented",
+  "evidence": "server/workflows/migration-plan.ts; server/workflows/migration.ts; app/admin/workflows/[id]/migrate (VERDICT_LABEL)",
+  "test": "unit version-migration.test.ts; integration migration.int.test.ts; e2e v160-smart-zversions.spec.ts"
+ },
+ "FN7-9.1-17": {
+  "status": "Implemented",
+  "evidence": "server/workflows/migration-plan.ts; server/workflows/migration.ts; app/admin/workflows/[id]/migrate (VERDICT_LABEL)",
+  "test": "unit version-migration.test.ts; integration migration.int.test.ts; e2e v160-smart-zversions.spec.ts"
+ },
+ "FN7-9.1-18": {
+  "status": "Implemented",
+  "evidence": "server/workflows/migration-plan.ts; server/workflows/migration.ts; app/admin/workflows/[id]/migrate (VERDICT_LABEL)",
+  "test": "unit version-migration.test.ts; integration migration.int.test.ts; e2e v160-smart-zversions.spec.ts"
+ },
+ "FN7-9.2-01": {
+  "status": "Implemented",
+  "evidence": "server/workflows/migration-plan.ts; server/workflows/migration.ts; app/admin/workflows/[id]/migrate (dry run)",
+  "test": "unit version-migration.test.ts; integration migration.int.test.ts; e2e v160-smart-zversions.spec.ts"
+ },
+ "FN7-9.2-02": {
+  "status": "Implemented",
+  "evidence": "server/workflows/migration-plan.ts; server/workflows/migration.ts; app/admin/workflows/[id]/migrate (step mapping, same kind only)",
+  "test": "unit version-migration.test.ts; integration migration.int.test.ts; e2e v160-smart-zversions.spec.ts"
+ },
+ "FN7-9.2-03": {
+  "status": "Implemented",
+  "evidence": "server/workflows/migration-plan.ts; server/workflows/migration.ts; app/admin/workflows/[id]/migrate (decisions untouched)",
+  "test": "unit version-migration.test.ts; integration migration.int.test.ts; e2e v160-smart-zversions.spec.ts"
+ },
+ "FN7-9.2-04": {
+  "status": "Implemented",
+  "evidence": "server/workflows/migration-plan.ts; server/workflows/migration.ts; app/admin/workflows/[id]/migrate (re-checked inside the lock)",
+  "test": "unit version-migration.test.ts; integration migration.int.test.ts; e2e v160-smart-zversions.spec.ts"
+ },
+ "FN7-9.2-05": {
+  "status": "Implemented",
+  "evidence": "server/workflows/migration-plan.ts; server/workflows/migration.ts; app/admin/workflows/[id]/migrate (IT only; confirm dialog)",
+  "test": "unit version-migration.test.ts; integration migration.int.test.ts; e2e v160-smart-zversions.spec.ts"
+ },
+ "FN7-9.2-06": {
+  "status": "Implemented",
+  "evidence": "server/workflows/migration-plan.ts; server/workflows/migration.ts; app/admin/workflows/[id]/migrate (workflow_migrations from/to)",
+  "test": "unit version-migration.test.ts; integration migration.int.test.ts; e2e v160-smart-zversions.spec.ts"
+ },
+ "FN7-9.2-07": {
+  "status": "Implemented",
+  "evidence": "server/workflows/migration-plan.ts; server/workflows/migration.ts; app/admin/workflows/[id]/migrate (items + audit + timeline event)",
+  "test": "unit version-migration.test.ts; integration migration.int.test.ts; e2e v160-smart-zversions.spec.ts"
+ },
+ "FN7-9.2-08": {
+  "status": "Implemented",
+  "evidence": "server/workflows/migration-plan.ts; server/workflows/migration.ts; app/admin/workflows/[id]/migrate (undo note: restore, publish, move back)",
+  "test": "unit version-migration.test.ts; integration migration.int.test.ts; e2e v160-smart-zversions.spec.ts"
+ },
+ "FN7-9.2-09": {
+  "status": "Implemented",
+  "evidence": "server/workflows/migration-plan.ts; server/workflows/migration.ts; app/admin/workflows/[id]/migrate (batches of up to 200 with per-request outcomes)",
+  "test": "unit version-migration.test.ts; integration migration.int.test.ts; e2e v160-smart-zversions.spec.ts"
+ },
+ "FN7-9.3-01": {
+  "status": "Implemented",
+  "evidence": "server/workflows/migration-plan.ts; server/workflows/migration.ts; app/admin/workflows/[id]/migrate (planMigration writes nothing)",
+  "test": "unit version-migration.test.ts; integration migration.int.test.ts; e2e v160-smart-zversions.spec.ts"
+ },
+ "FN7-9.3-02": {
+  "status": "Implemented",
+  "evidence": "server/workflows/migration-plan.ts; server/workflows/migration.ts; app/admin/workflows/[id]/migrate (MANUAL/BLOCKED skipped)",
+  "test": "unit version-migration.test.ts; integration migration.int.test.ts; e2e v160-smart-zversions.spec.ts"
+ },
+ "FN7-9.3-03": {
+  "status": "Implemented",
+  "evidence": "server/workflows/migration-plan.ts; server/workflows/migration.ts; app/admin/workflows/[id]/migrate (decided tasks unchanged)",
+  "test": "unit version-migration.test.ts; integration migration.int.test.ts; e2e v160-smart-zversions.spec.ts"
+ },
+ "FN7-9.3-04": {
+  "status": "Implemented",
+  "evidence": "server/workflows/migration-plan.ts; server/workflows/migration.ts; app/admin/workflows/[id]/migrate (per-request outcomes)",
+  "test": "unit version-migration.test.ts; integration migration.int.test.ts; e2e v160-smart-zversions.spec.ts"
+ },
+ "FN7-9.3-05": {
+  "status": "Implemented",
+  "evidence": "server/workflows/migration-plan.ts; server/workflows/migration.ts; app/admin/workflows/[id]/migrate (one transaction per request; FAILED leaves it unchanged)",
+  "test": "unit version-migration.test.ts; integration migration.int.test.ts; e2e v160-smart-zversions.spec.ts"
+ },
+ "FN7-9.3-06": {
+  "status": "Implemented",
+  "evidence": "server/workflows/migration-plan.ts; server/workflows/migration.ts; app/admin/workflows/[id]/migrate (older versions, parallel joins, incompatible states)",
+  "test": "unit version-migration.test.ts; integration migration.int.test.ts; e2e v160-smart-zversions.spec.ts"
  }
 }
