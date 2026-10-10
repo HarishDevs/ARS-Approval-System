@@ -393,8 +393,12 @@ test("QA-FILE-01 dashboard CSV matches the page; attachment downloads keep name 
   await page.getByLabel("Choose files to attach").setInputFiles({ name: "quote 1.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.4\n%QA\n%%EOF") });
   await page.getByRole("button", { name: "Attach", exact: true }).click();
   await expect(page.getByText("quote 1.pdf").first()).toBeVisible();
-  const href = await page.getByRole("link", { name: /quote 1\.pdf/ }).first().getAttribute("href");
+  // v1.6.0 (RD-02): "Download" downloads; "Open … in a new tab" previews inline.
+  const href = await page.getByRole("link", { name: "Download quote 1.pdf" }).first().getAttribute("href");
   const file = await page.request.get(href!);
+  const previewHref = await page.getByRole("link", { name: "Open quote 1.pdf in a new tab" }).first().getAttribute("href");
+  const preview = await page.request.get(previewHref!);
+  expect(preview.headers()["content-disposition"]).toContain("inline");
   await as(context, "E2E_ADMIN");
   await page.goto("/admin/dashboards/raisers");
   const raisedOnScreen = await page.getByRole("row", { name: /Ravi Requester/ }).getByRole("cell").nth(1).innerText();

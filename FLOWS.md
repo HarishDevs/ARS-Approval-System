@@ -847,6 +847,37 @@ To move requests:
 2. Press **Move selected** and confirm.
 3. Each request is checked again as it moves. The page shows the run's result; the history lists each request's outcome, and the request's timeline says "Moved from workflow version N to M".
 
+## F-101 Analytics (v1.6.0, D-122)
+**Sidebar -> Analytics.**
+1. Choose whose numbers: My requests, My approvals, My team, My department, or Whole organisation (IT only).
+2. Choose the period, approval type and, for the organisation, the raiser's department.
+3. Read the page:
+   - **Right now** cards show open, waiting, overdue, back with the requester, on hold and blocked;
+   - **period** cards show each figure against the previous equal period;
+   - charts each have "Show as a table".
+
+**How these are worked out** opens the metric dictionary. **Save these filters** keeps a view.
+
+## F-102 Reports, schedules and alerts (v1.6.0, D-123)
+**Sidebar -> Reports.**
+1. Pick a report; filter it; download Excel, CSV or PDF.
+2. Optionally:
+   - **Email this to me regularly** (daily, weekly or monthly, India time). It runs with your permissions at that time; three failures, or losing access, pause it.
+   - **My alerts:** "tell me when *overdue tasks* for *my department* reaches *5*". You're told in the app and by email, at most once a day while it stays over the line.
+
+## F-103 Import and export approval types (v1.6.0, D-125)
+1. **On the test site:** type -> Versions -> **Export live version** (JSON file).
+2. **On the live site:** Approval types -> **Import** -> **Check the file**. The check shows the diff, anything missing here (people, groups, departments) and any validation problems.
+3. **Import as a draft**, then check it and publish as usual.
+
+## F-104 Legal holds, retention, feature switches (v1.6.0, D-124, D-126)
+- **Super Admin -> Retention & holds -> Place a hold:**
+  - give a reference, the owner, what it covers (a request, a person, or an approval type) and the reason;
+  - held requests can't be deleted;
+  - **Release** needs a reason;
+  - the retention dry run shows what the configured durations would affect. Nothing is deleted.
+- **Super Admin -> Providers & security -> Feature switches:** ON, OFF, or IT_ONLY for each new feature.
+
 ## F-89 Notification choices (v1.5.0, D-110)
 Profile → Notifications → **Settings**: per kind of message, email and WhatsApp on/off. Security and "work waiting for you" are locked on. A switched-off message is recorded as SKIPPED / USER_PREFERENCE; the in-app list always gets it.
 

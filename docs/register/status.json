@@ -65,9 +65,9 @@
   "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
  },
  "M1.1-14": {
-  "status": "Yet to do",
-  "action": "To build (unified prompt)",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "server/ops/stuck.ts; Needs attention",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
  },
  "M1.1-15": {
   "status": "Implemented",
@@ -85,9 +85,9 @@
   "test": "integration amendments.int.test.ts; e2e v160-smart-zamend.spec.ts"
  },
  "M1.1-18": {
-  "status": "Yet to do",
-  "action": "To build (unified prompt)",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "department scorecard report",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
  },
  "M1.1-19": {
   "status": "Implemented",
@@ -95,24 +95,24 @@
   "test": "unit version-migration.test.ts; integration migration.int.test.ts; e2e v160-smart-zversions.spec.ts"
  },
  "M1.1-20": {
-  "status": "Yet to do",
-  "action": "To build (unified prompt)",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "resend, run now, migration with re-check (FN8 rows)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
  },
  "M1.1-21": {
-  "status": "Yet to do",
-  "action": "To build (unified prompt)",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "server/workflows/promotion.ts",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
  },
  "M1.1-22": {
-  "status": "Yet to do",
-  "action": "To build (unified prompt)",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "legal holds and retention dry run",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
  },
  "M1.1-23": {
-  "status": "Yet to do",
-  "action": "To build (unified prompt)",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "Automation: run now, resend; Needs attention",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
  },
  "M1.1-24": {
   "status": "Implemented",
@@ -165,24 +165,24 @@
   "test": "document review; metric dictionary unit test"
  },
  "M2.1-09": {
-  "status": "Yet to do",
-  "action": "Write the document with evidence",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "docs/SECURITY_AND_AUTHORIZATION_REVIEW.md",
+  "test": "document review"
  },
  "M2.1-10": {
-  "status": "Yet to do",
-  "action": "Write the document with evidence",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "docs/BACKUP_RESTORE_AND_ROLLBACK.md",
+  "test": "document review"
  },
  "M2.1-11": {
-  "status": "Yet to do",
-  "action": "Write the document with evidence",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "docs/IMPLEMENTATION_REPORT.md",
+  "test": "document review"
  },
  "M2.1-12": {
-  "status": "Yet to do",
-  "action": "Write the document with evidence",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "docs/GO_LIVE_READINESS_CHECKLIST.md",
+  "test": "document review"
  },
  "M4-01": {
   "status": "Implemented",
@@ -7243,9 +7243,9 @@
   "test": "see docs/ANALYTICS_TEST_MATRIX.md"
  },
  "A18.4-03": {
-  "status": "Yet to do",
-  "action": "BACKUP_RESTORE_AND_ROLLBACK.md to write",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "docs/BACKUP_RESTORE_AND_ROLLBACK.md §4",
+  "test": "document review"
  },
  "A18.4-04": {
   "status": "Implemented",
@@ -8746,23 +8746,835 @@
   "test": "see docs/ANALYTICS_TEST_MATRIX.md"
  },
  "AAC13Docum-03": {
-  "status": "Yet to do",
-  "action": "To write in IMPLEMENTATION_REPORT",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "docs/IMPLEMENTATION_REPORT.md §10–11; BACKUP_RESTORE_AND_ROLLBACK.md §3",
+  "test": "document review"
  },
  "AAC13Docum-04": {
-  "status": "Yet to do",
-  "action": "IMPLEMENTATION_REPORT to write",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "docs/IMPLEMENTATION_REPORT.md §14",
+  "test": "document review"
  },
  "AAC13Docum-05": {
-  "status": "Yet to do",
-  "action": "BACKUP_RESTORE_AND_ROLLBACK to write",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "docs/BACKUP_RESTORE_AND_ROLLBACK.md; GO_LIVE_READINESS_CHECKLIST.md",
+  "test": "document review"
  },
  "AAC13Docum-06": {
   "status": "Implemented",
   "evidence": "nothing deployed",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BA-04": {
+  "status": "Implemented",
+  "evidence": "stuck detection and reconciliation check",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BA-05": {
+  "status": "Implemented",
+  "evidence": "migration preview and confirm; snooze with reason; blocked-step tools; audits",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BA-07": {
+  "status": "Implemented",
+  "evidence": "claims on outbox, slots and alerts; re-checks inside locks",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BA-08": {
+  "status": "Implemented",
+  "evidence": "reconciliation check (task rows vs engine state)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BC-05": {
+  "status": "Implemented",
+  "evidence": "timeline events and PDF summary",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BC-06": {
+  "status": "Yet to do",
+  "action": "Not every operation is covered by an integrity test",
+  "evidence": ""
+ },
+ "BD-01": {
+  "status": "Yet to do",
+  "action": "Jobs and messages monitored; availability and error rates are not",
+  "evidence": ""
+ },
+ "BD-02": {
+  "status": "Yet to do",
+  "action": "Late runs shown on Automation, but no alert if cron stops entirely",
+  "evidence": ""
+ },
+ "BD-03": {
+  "status": "Implemented",
+  "evidence": "job_runs history",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BD-06": {
+  "status": "Implemented",
+  "evidence": "Automation is Super Admin only",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BD-07": {
+  "status": "Implemented",
+  "evidence": "counts only; no payloads or secrets",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BE-02": {
+  "status": "Yet to do",
+  "action": "Backup checks not automated",
+  "evidence": ""
+ },
+ "BE-03": {
+  "status": "Yet to do",
+  "action": "Owner to agree RTO/RPO",
+  "evidence": ""
+ },
+ "BE-04": {
+  "status": "Implemented",
+  "evidence": "DEPLOYMENT Part P; BACKUP_RESTORE_AND_ROLLBACK.md",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BE-06": {
+  "status": "Yet to do",
+  "action": "Post-restore consistency check not scripted",
+  "evidence": ""
+ },
+ "BE-07": {
+  "status": "Implemented",
+  "evidence": "BACKUP_RESTORE_AND_ROLLBACK.md",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BE-08": {
+  "status": "Implemented",
+  "evidence": "backups never overwrite; restore into a new database",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BF-01": {
+  "status": "Implemented",
+  "evidence": "step response times; escalation levels; alert rules",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BF-02": {
+  "status": "Implemented",
+  "evidence": "working calendar and holidays (plant calendars: no plant data)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BF-03": {
+  "status": "Implemented",
+  "evidence": "escalation to managers; delegates",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BF-04": {
+  "status": "Implemented",
+  "evidence": "Workload page; approver workload; hand-over suggestions",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BF-05": {
+  "status": "Implemented",
+  "evidence": "overdue counts; blocked steps; inactive approvers",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BF-06": {
+  "status": "Implemented",
+  "evidence": "task_reminders records each level once",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BF-07": {
+  "status": "Implemented",
+  "evidence": "reminder and reassignment events",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BF-08": {
+  "status": "Implemented",
+  "evidence": "reminders never change workflow state",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BG-05": {
+  "status": "Implemented",
+  "evidence": "delivery statuses only from provider evidence (receipts)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BG-06": {
+  "status": "Implemented",
+  "evidence": "Automation health",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BG-07": {
+  "status": "Implemented",
+  "evidence": "decisions locked with state_version; no approve-by-reply",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BH-01": {
+  "status": "Implemented",
+  "evidence": "integration tests reconcile figures with records",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BH-02": {
+  "status": "Implemented",
+  "evidence": "metric dictionary",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BH-03": {
+  "status": "Implemented",
+  "evidence": "limitations doc; dashes for missing data",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BH-04": {
+  "status": "Implemented",
+  "evidence": "reports and PDF summaries",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BH-05": {
+  "status": "Implemented",
+  "evidence": "scoped exports",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BH-06": {
+  "status": "Implemented",
+  "evidence": "REPORT_EXPORTED audit",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BH-07": {
+  "status": "Implemented",
+  "evidence": "SQL aggregation; scoped data",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BI-01": {
+  "status": "Implemented",
+  "evidence": "feature switches",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BI-02": {
+  "status": "Implemented",
+  "evidence": "IT_ONLY trial mode",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BI-03": {
+  "status": "Implemented",
+  "evidence": "environment variables per environment; settings per database",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BI-04": {
+  "status": "Implemented",
+  "evidence": "BACKUP_RESTORE_AND_ROLLBACK.md",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BI-05": {
+  "status": "Implemented",
+  "evidence": "switches hide features; no data removed",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BI-06": {
+  "status": "Implemented",
+  "evidence": "access checks independent of switches",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BI-07": {
+  "status": "Implemented",
+  "evidence": "nothing deployed",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BJ-01": {
+  "status": "Implemented",
+  "evidence": "state_version locking; concurrency tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BJ-02": {
+  "status": "Implemented",
+  "evidence": "submission keys; slot and claim tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BJ-03": {
+  "status": "Implemented",
+  "evidence": "abandoned runs closed; expiring claims",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BJ-04": {
+  "status": "Implemented",
+  "evidence": "inactive approver detection; checks at every action",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BJ-05": {
+  "status": "Implemented",
+  "evidence": "versions kept; migration assistant",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BJ-06": {
+  "status": "Implemented",
+  "evidence": "no-budget warning",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BJ-07": {
+  "status": "Implemented",
+  "evidence": "outbox, retries, messages not sent",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BJ-08": {
+  "status": "Yet to do",
+  "action": "Bulk reassignment not built",
+  "evidence": ""
+ },
+ "BJ-09": {
+  "status": "Implemented",
+  "evidence": "drafts autosave; session-ended dialog",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BJ-10": {
+  "status": "Implemented",
+  "evidence": "restore drill; migrations tested from scratch",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BJ-11": {
+  "status": "Implemented",
+  "evidence": "access tests for search, files and exports",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BJ-12": {
+  "status": "Yet to do",
+  "action": "Inconsistent states are detected; automatic recovery not built",
+  "evidence": ""
+ },
+ "FN10-12.1-01": {
+  "status": "Implemented",
+  "evidence": "server/ops/governance.ts: holds and the requests retention class",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN10-12.1-02": {
+  "status": "Implemented",
+  "evidence": "decisions belong to the request; held with it",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN10-12.1-03": {
+  "status": "Implemented",
+  "evidence": "audit log is append-only and never pruned",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN10-12.1-04": {
+  "status": "Implemented",
+  "evidence": "files belong to the request; held with it",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN10-12.1-05": {
+  "status": "Implemented",
+  "evidence": "comments belong to the request; held with it",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN10-12.1-06": {
+  "status": "Implemented",
+  "evidence": "notifications retention class (dry run)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN10-12.1-07": {
+  "status": "Not feasible",
+  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers)",
+  "prerequisite": "Owner: choose an integration and supply API access",
+  "alternative": "Not applicable until an integration exists"
+ },
+ "FN10-12.1-08": {
+  "status": "Yet to do",
+  "action": "No archive tier exists",
+  "evidence": ""
+ },
+ "FN10-12.1-09": {
+  "status": "Implemented",
+  "evidence": "exports are never stored",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN10-12.1-10": {
+  "status": "Implemented",
+  "evidence": "workflow versions are kept for ever",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN10-12.1-11": {
+  "status": "Implemented",
+  "evidence": "retention starts at the closing date",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN10-12.1-12": {
+  "status": "Implemented",
+  "evidence": "retention settings (0 = keep for ever)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN10-12.1-13": {
+  "status": "Implemented",
+  "evidence": "dry run counts records past the date",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN10-12.1-14": {
+  "status": "Yet to do",
+  "action": "No clean-up runs: needs an approved policy and a separate decision",
+  "evidence": ""
+ },
+ "FN10-12.1-15": {
+  "status": "Implemented",
+  "evidence": "legal_holds",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN10-12.1-16": {
+  "status": "Implemented",
+  "evidence": "reason required",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN10-12.1-17": {
+  "status": "Implemented",
+  "evidence": "hold owner",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN10-12.1-18": {
+  "status": "Implemented",
+  "evidence": "created_at / released_at",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN10-12.1-19": {
+  "status": "Implemented",
+  "evidence": "requests covered per hold",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN10-12.1-20": {
+  "status": "Implemented",
+  "evidence": "settings_change_history versions the retention settings",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN10-12.1-21": {
+  "status": "Yet to do",
+  "action": "No executions exist yet",
+  "evidence": ""
+ },
+ "FN10-12.2-01": {
+  "status": "Implemented",
+  "evidence": "Super Admin only",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN10-12.2-02": {
+  "status": "Implemented",
+  "evidence": "reason required to place and to release",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN10-12.2-03": {
+  "status": "Implemented",
+  "evidence": "Retention & holds page",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN10-12.2-04": {
+  "status": "Implemented",
+  "evidence": "request, person or approval type; related rows kept by housekeeping",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN10-12.2-05": {
+  "status": "Implemented",
+  "evidence": "dry run shows records past the date that a hold keeps",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN10-12.2-06": {
+  "status": "Implemented",
+  "evidence": "LEGAL_HOLD_CREATED / LEGAL_HOLD_RELEASED audits",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN10-12.3-01": {
+  "status": "Implemented",
+  "evidence": "message payloads cleared after sending",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN10-12.3-02": {
+  "status": "Implemented",
+  "evidence": "Super Admin only",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN10-12.3-03": {
+  "status": "Implemented",
+  "evidence": "holds block deletion for everyone, including the Super Admin",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN10-12.3-04": {
+  "status": "Implemented",
+  "evidence": "soft delete only",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN10-12.3-05": {
+  "status": "Implemented",
+  "evidence": "no permanent deletion exists",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN10-12.3-06": {
+  "status": "Yet to do",
+  "action": "No retention jobs exist yet",
+  "evidence": ""
+ },
+ "FN10-12.3-07": {
+  "status": "Implemented",
+  "evidence": "dry run",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN10-12.3-08": {
+  "status": "Implemented",
+  "evidence": "no permanent deletion; see BACKUP_RESTORE_AND_ROLLBACK.md",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN10-12.4-01": {
+  "status": "Yet to do",
+  "action": "Durations wait for the owner's approved policy",
+  "evidence": ""
+ },
+ "FN10-12.4-02": {
+  "status": "Implemented",
+  "evidence": "housekeeping skips held rows; deletion refused",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN10-12.4-03": {
+  "status": "Implemented",
+  "evidence": "audits",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN10-12.4-04": {
+  "status": "Yet to do",
+  "action": "No retention processing exists yet",
+  "evidence": ""
+ },
+ "FN10-12.4-05": {
+  "status": "Implemented",
+  "evidence": "holds cover the request and its related records",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN10-12.4-06": {
+  "status": "Implemented",
+  "evidence": "integration governance.int.test.ts (overlap, release, dry run)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN6-8.1-01": {
+  "status": "Implemented",
+  "evidence": "department scorecard (raised)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN6-8.1-02": {
+  "status": "Implemented",
+  "evidence": "department scorecard (approved)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN6-8.1-03": {
+  "status": "Implemented",
+  "evidence": "department summary report (rejected)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN6-8.1-04": {
+  "status": "Implemented",
+  "evidence": "department scorecard (open now)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN6-8.1-05": {
+  "status": "Implemented",
+  "evidence": "department scorecard (overdue tasks now)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN6-8.1-06": {
+  "status": "Yet to do",
+  "action": "Median per department not shown (average is)",
+  "evidence": ""
+ },
+ "FN6-8.1-07": {
+  "status": "Implemented",
+  "evidence": "department scorecard (average hours to decide)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN6-8.1-08": {
+  "status": "Implemented",
+  "evidence": "department scorecard (decided in time %)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN6-8.1-09": {
+  "status": "Yet to do",
+  "action": "Rework rate per department not computed",
+  "evidence": ""
+ },
+ "FN6-8.1-10": {
+  "status": "Yet to do",
+  "action": "Not built per department",
+  "evidence": ""
+ },
+ "FN6-8.1-11": {
+  "status": "Implemented",
+  "evidence": "where requests wait (by step) in department scope",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN6-8.1-12": {
+  "status": "Implemented",
+  "evidence": "aging charts in department scope",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN6-8.1-13": {
+  "status": "Implemented",
+  "evidence": "raised by approval type in department scope",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN6-8.2-01": {
+  "status": "Implemented",
+  "evidence": "raiser department filter (organisation); department scope",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN6-8.2-02": {
+  "status": "Implemented",
+  "evidence": "period presets and custom range",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN6-8.2-03": {
+  "status": "Implemented",
+  "evidence": "approval type filter",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN6-8.2-04": {
+  "status": "Implemented",
+  "evidence": "change vs previous period",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN6-8.2-05": {
+  "status": "Implemented",
+  "evidence": "trend chart",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN6-8.2-06": {
+  "status": "Implemented",
+  "evidence": "department scorecard report",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN6-8.2-07": {
+  "status": "Yet to do",
+  "action": "Drill-down from the scorecard not built",
+  "evidence": ""
+ },
+ "FN6-8.2-08": {
+  "status": "Implemented",
+  "evidence": "Excel, CSV, PDF",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN6-8.2-09": {
+  "status": "Yet to do",
+  "action": "Empty and error states exist; loading and partial-data states not built",
+  "evidence": ""
+ },
+ "FN6-8.3-01": {
+  "status": "Implemented",
+  "evidence": "department and organisation scopes only, on the server",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN6-8.3-02": {
+  "status": "Implemented",
+  "evidence": "export scoped on the server",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN6-8.3-03": {
+  "status": "Implemented",
+  "evidence": "aggregates only on the scorecard",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN6-8.3-04": {
+  "status": "Implemented",
+  "evidence": "request pages keep their own access check",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN6-8.4-01": {
+  "status": "Implemented",
+  "evidence": "integration tests on known data",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN6-8.4-02": {
+  "status": "Implemented",
+  "evidence": "India dates throughout",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN6-8.4-03": {
+  "status": "Implemented",
+  "evidence": "No department row; limitations doc",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN6-8.4-04": {
+  "status": "Implemented",
+  "evidence": "same definitions for every row",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN6-8.4-05": {
+  "status": "Implemented",
+  "evidence": "same scoped run for screen and file",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN6-8.4-06": {
+  "status": "Yet to do",
+  "action": "Not measured at volume",
+  "evidence": ""
+ },
+ "FN9-11.1-01": {
+  "status": "Implemented",
+  "evidence": "server/workflows/promotion.ts (definition and builder)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN9-11.1-02": {
+  "status": "Implemented",
+  "evidence": "form in the export",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN9-11.1-03": {
+  "status": "Implemented",
+  "evidence": "form rules travel with the form",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN9-11.1-04": {
+  "status": "Implemented",
+  "evidence": "DoA bands travel in the builder",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN9-11.1-05": {
+  "status": "Yet to do",
+  "action": "Notification templates are not promoted (they are per-provider and owner-approved)",
+  "evidence": ""
+ },
+ "FN9-11.1-06": {
+  "status": "Not feasible",
+  "blocker": "No plant or business-unit attribute exists on users, departments or requests (schema checked)",
+  "prerequisite": "Owner: define plants and assign departments to them",
+  "alternative": "Department is the organisational unit used everywhere"
+ },
+ "FN9-11.1-07": {
+  "status": "Implemented",
+  "evidence": "step response times travel with the workflow",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN9-11.1-08": {
+  "status": "Yet to do",
+  "action": "Reference data (departments, groups) is matched by code, not created",
+  "evidence": ""
+ },
+ "FN9-11.1-09": {
+  "status": "Yet to do",
+  "action": "Feature switches are not promoted",
+  "evidence": ""
+ },
+ "FN9-11.2-01": {
+  "status": "Implemented",
+  "evidence": "Export live version",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN9-11.2-02": {
+  "status": "Implemented",
+  "evidence": "Import page",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN9-11.2-03": {
+  "status": "Implemented",
+  "evidence": "format, source version and checksum in the file",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN9-11.2-04": {
+  "status": "Implemented",
+  "evidence": "form and layout schemas checked",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN9-11.2-05": {
+  "status": "Implemented",
+  "evidence": "people, groups, departments, designations must exist",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN9-11.2-06": {
+  "status": "Implemented",
+  "evidence": "references resolved in the destination; checksum",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN9-11.2-07": {
+  "status": "Implemented",
+  "evidence": "diff against the latest version here",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN9-11.2-08": {
+  "status": "Implemented",
+  "evidence": "Check the file (no changes)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN9-11.2-09": {
+  "status": "Implemented",
+  "evidence": "Check the file is a dry run",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN9-11.2-10": {
+  "status": "Implemented",
+  "evidence": "confirm dialog; IT only",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN9-11.2-11": {
+  "status": "Implemented",
+  "evidence": "WORKFLOW_EXPORTED / WORKFLOW_IMPORTED audits",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN9-11.2-12": {
+  "status": "Implemented",
+  "evidence": "import is a draft; restore an earlier version as a draft to roll back",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN9-11.3-01": {
+  "status": "Implemented",
+  "evidence": "always lands as a draft; nothing goes live",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN9-11.3-02": {
+  "status": "Implemented",
+  "evidence": "source address shown on the check",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN9-11.3-03": {
+  "status": "Implemented",
+  "evidence": "no secrets in a workflow export",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN9-11.3-04": {
+  "status": "Implemented",
+  "evidence": "unresolved references listed",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN9-11.3-05": {
+  "status": "Implemented",
+  "evidence": "live submission checks never changed by an import",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN9-11.3-06": {
+  "status": "Implemented",
+  "evidence": "IT only; publish is a separate step",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN9-11.3-07": {
+  "status": "Implemented",
+  "evidence": "configuration only",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN9-11.4-01": {
+  "status": "Implemented",
+  "evidence": "diff on the check",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN9-11.4-02": {
+  "status": "Implemented",
+  "evidence": "checksum, schema and reference checks",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN9-11.4-03": {
+  "status": "Implemented",
+  "evidence": "no secrets exported",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN9-11.4-04": {
+  "status": "Yet to do",
+  "action": "Destination is the app you are signed in to; not stated on the page",
+  "evidence": ""
+ },
+ "FN9-11.4-05": {
+  "status": "Implemented",
+  "evidence": "audits",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN9-11.4-06": {
+  "status": "Implemented",
+  "evidence": "one draft insert; nothing else written on failure",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "FN9-11.4-07": {
+  "status": "Implemented",
+  "evidence": "integration promotion.int.test.ts",
   "test": "see docs/ANALYTICS_TEST_MATRIX.md"
  }
 }

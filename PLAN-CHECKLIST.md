@@ -17,6 +17,20 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (10 Oct 2026):** v1.6.0 is tagged and pushed; it is **not deployed**.
+  - **Scope:** the master prompt plus the unified master prompt.
+  - **Register:** 1,287 Implemented, 504 Yet to do, 66 Not feasible (`docs/IMPLEMENTATION_STATUS_REGISTER.md`).
+  - **Local checks:** unit 389, integration 146 (x3), E2E 73, QA 27, origin 1.
+  - **Report:** `docs/IMPLEMENTATION_REPORT.md`.
+- **Next, the owner:** `docs/GO_LIVE_READINESS_CHECKLIST.md`.
+  1. Fix the cron secret.
+  2. Back up, then publish v1.6.0.
+  3. Choose the first feature-switch settings.
+  4. Run the smoke test.
+- **Next, development (v1.7.0):** U-09, then the register's Yet to do themes:
+  - analytics chart breadth, filters and drill-down;
+  - missed-cron alert; recovery of inconsistent states;
+  - field-level masking.
 - **Now (9 Oct 2026):** v1.5.0 is pushed and tagged. The owner's development spec, all 14 features:
   - My work, tracker, drafts, search and saved views, phone cards;
   - notification choices, bulk approval, out of office, @mentions, PDF summary;
@@ -275,12 +289,12 @@ Prompt: `docs/requirements/UNIFIED_MASTER_PROMPT.md`. Status register: `docs/IMP
 - [x] U-02 FN1 readiness checker, FN3 duplicate detection, EN-09 budgets, FN4 autofill and templates (done 10 Oct 2026, 8809552)
 - [x] U-03 FN2 stuck detection, FN11 automation inventory + job-run history + safe resend, FN8 retry rules (done 10 Oct 2026, 4c0f635, f53c599)
 - [x] U-04 FN5 amendments after approval, workflow version diff and restore, FN7 migration assistant (done 10 Oct 2026, 98b9cd7, e3fb158)
-- [ ] U-05 Analytics foundation: classification, aging, periods, metric dictionary in code
-- [ ] U-06 Role dashboards, KPI cards, SVG charts, FN6 department scorecards
-- [ ] U-07 Reports catalogue, exports (CSV formula-safe, XLSX, PDF), analytics saved views, scheduled reports, alert rules
-- [ ] U-08 FN9 config promotion, FN10 retention and legal hold (dry run), feature flags
-- [ ] U-09 Remaining v1.6.0: watchers, calendar (neededBy), builder sections/preview, approval expiry (validityDays), bulk reassignment
-- [ ] U-10 Verification, required docs, living files, version bump, tag, push; final report (§6.1)
+- [x] U-05 Analytics foundation: classification, aging, periods, metric dictionary in code (done 10 Oct 2026, 8d9d7dc)
+- [x] U-06 Role dashboards, KPI cards, SVG charts, FN6 department scorecards (done 10 Oct 2026, 8d9d7dc, 2ebac42; more chart types remain in the register)
+- [x] U-07 Reports catalogue, exports (CSV formula-safe, XLSX, PDF), analytics saved views, scheduled reports, alert rules (done 10 Oct 2026, c2bdc5d)
+- [x] U-08 FN9 config promotion, FN10 retention and legal hold (dry run), feature flags (done 10 Oct 2026, 2ebac42)
+- [ ] U-09 Remaining v1.6.0: watchers, calendar (neededBy), builder sections/preview, approval expiry (validityDays), bulk reassignment (not started; carried to v1.7.0, register Yet to do)
+- [x] U-10 Verification, required docs, living files, version bump, tag, push; final report (§6.1) (done 10 Oct 2026, v1.6.0)
 
 ## Session log — v1.6.0: master prompt (audit, UI modernisation, features, validation), 9 Oct 2026, planned before starting
 Plan: `docs/IMPLEMENTATION_PLAN.md`. Acceptance criteria: `docs/FEATURE_ACCEPTANCE_CRITERIA.md`.

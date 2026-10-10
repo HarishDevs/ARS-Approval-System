@@ -311,6 +311,29 @@
   - Each request moves in its own locked transaction, re-checked on its current state. The state is lined up with the target: new steps start WAITING, and unreached old steps are dropped.
   - Runs and per-request outcomes are recorded, with an audit entry and a timeline event.
   - Undo: restore the old version, publish it and move the requests back. | Claude, 10 Oct 2026 |
+| D-122 | 10 Oct 2026 | **Analytics semantics and scopes (Addendum A):**
+- **Pending vs overdue.** Pending = a PENDING task on an IN_PROGRESS request. Overdue = past `due_at`, which is in working hours and paused by holds. Steps without a response time are never overdue.
+- **"Approaching"** reuses the 75 % due-soon rule.
+- **Counting.** Requests and tasks are counted apart and never added. Aging uses calendar time (since raised and at the current step, separately).
+- **Periods.** India time. Raised counts by submission date, outcomes by closing date, decisions by decision date; the comparison is the equally long previous period.
+- **Scopes** are resolved on the server: My requests, My approvals, My team (reporting manager), My department (HOD) and Whole organisation (IT only).
+- **Freshness.** Figures are live queries with an "As of" time; there is no cache.
+- **Metric dictionary** lives in code (`server/analytics/metrics.ts`) and is rendered as a page and a doc.
+- **Charts:** SVG with semantic tokens, dash, marker and pattern encoding, and a table view. The palette validator was unavailable (noted as a limitation). | Claude, 10 Oct 2026 |
+| D-123 | 10 Oct 2026 | **Reports, exports, schedules, alerts:**
+- **Catalogue.** A code catalogue with per-report scopes. One run path (`prepareReport`) serves the screen, the files and the schedules.
+- **Exports.** CSV through the formula guard; our own XLSX writer (OOXML in a ZIP, inline strings only, no dependency); PDF via pdf-lib. 5,000 rows max, 20 downloads a minute, audited without data.
+- **Schedules** run with the owner's current permissions. Each slot is claimed once (unique schedule + due time). The file is emailed to the owner only (5 MB cap). Inactive owners or lost access pause the schedule, as do three failures in a row.
+- **Alerts** check the owner's current scope. They fire once per crossing and cool-down, claimed on the rule, by inbox and email. | Claude, 10 Oct 2026 |
+| D-124 | 10 Oct 2026 | **Feature switches** (`features.*`) are ON, OFF or IT_ONLY (an IT trial) for analytics, reports, scheduled reports and alerts, amendments and templates. They only hide features: access checks stay, no data is removed, and the jobs respect them. | Claude, 10 Oct 2026 |
+| D-125 | 10 Oct 2026 | **Configuration promotion (FN9):**
+- Export the live version as JSON with portable references (login id, group, department and designation codes) and a SHA-256 checksum. The checksum proves integrity, not authenticity.
+- Import checks the checksum, schemas, references and validation, shows a diff, and only ever creates a DRAFT.
+- Live submission checks of an existing type are never changed by an import; a new type brings its checks.
+- Both directions are audited. | Claude, 10 Oct 2026 |
+| D-126 | 10 Oct 2026 | **Legal holds and retention (FN10):**
+- Holds are placed by the Super Admin only, on a request, a person or an approval type, with a reason to place and to release. They block request deletion for everyone, and housekeeping keeps related rows.
+- Retention durations default to 0 (keep for ever) and feed a dry run only. There is no archival or deletion execution until the owner approves a policy and makes a separate decision. | Claude, 10 Oct 2026 |
 | D-033 | 28 Sep 2026 | **Staff data is provided by the admin. Roles are assigned per user, by the admin only. Users are added or made inactive in the Admin Portal** (never hard-deleted, so history and audit stay intact). *Resolves Q-010.* | Owner (answer 7) |
 
 ## 4. Open questions (must be answered before the phase shown)
@@ -361,7 +384,15 @@
 - **Register:** 316 Implemented, 1,499 Yet to do, 42 Not feasible.
 - **Not deployed:** pushed to GitHub only; the live site stays on v1.4.0 until the owner publishes.
 - **Later the same day:** amendments (D-120), version compare/restore and the migration assistant (D-121). Checks: unit 368, integration 128, E2E 69/69. Register: 385 / 1,429 / 43.
-- **Next:** U-05 analytics foundation (PLAN-CHECKLIST).
+- **Then, the same day:**
+  - analytics (D-122);
+  - reports, exports, schedules and alerts (D-123);
+  - department scorecard and reconciliation check;
+  - feature switches (D-124), promotion (D-125), legal holds (D-126);
+  - the required docs (analytics audit, limitations, test matrix, security review, backup/rollback, go-live checklist, implementation report).
+- **CI finding:** QA-FILE-01 had failed on GitHub since the RD-02 file-preview change. The test took the preview link; it now checks both links.
+- **Final:** version 1.6.0, tag `v1.6.0`. Register: 1,287 / 504 / 66. **Not deployed.**
+- **Next:** the owner's go-live checklist; v1.7.0 starts with U-09.
 
 ### 9 Oct 2026 (v1.5.0: owner's development spec)
 - **Source:** the owner gave the development spec (14 features, phases 0–5) and said "Go ahead".

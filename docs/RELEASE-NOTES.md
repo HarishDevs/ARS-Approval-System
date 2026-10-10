@@ -1,5 +1,31 @@
 # Release notes
 
+## v1.6.0 (10 Oct 2026): clearer, safer, measurable
+**For everyone**
+- **A refreshed look:** dark mode, a command palette (Ctrl K), keyboard shortcuts in Waiting for me, clearer errors with a summary at the top, toasts with Undo, and a phone navigation bar.
+- **Check before submitting:** see missing fields, missing files, possible duplicates and the budget position before you submit. Possible duplicates need a short reason.
+- **Smarter forms:** fields that appear only when needed, worked-out amounts, and line items with GST.
+- **Templates and "raise again":** save a request as a template, or start a new one from an earlier request. Your department fills in from your profile.
+- **Amend an approved request** (where IT allows it): change the allowed fields with a reason. The approval steps run again; the original approval stays on record.
+- **Recall** a request before anyone decides; **answer questions** from approvers; see **links and follow-ups**.
+- **Analytics:** your requests, your approvals, your team or department; KPI cards compared with the previous period; charts with table views; aging and response-time status.
+- **Reports:** ready-made reports in Excel, CSV or PDF; save filters; have a report emailed to you on a schedule; set alerts when a number crosses your line.
+
+**For approvers**
+- **Ask for information**, **ask a colleague for advice**, or **pass one approval** to an eligible colleague.
+
+**For IT**
+- **Needs attention:** blocked steps, inactive approvers, requests with no activity, unsent messages and workflow states that don't add up, each with what to do.
+- **Submission checks per type:** duplicate fields, minimum files, budget check, amendable fields.
+- **Budgets** per department and financial year.
+- **Versions:** compare any two, restore an old one as a draft, and **move open requests** to the live version safely.
+- **Import and export** approval types between the test and live sites (always as a draft).
+
+**For the Super Admin**
+- **Automation:** every background job, its health and history; run now; resend messages that weren't sent.
+- **Retention & legal holds:** holds stop records being deleted; the retention dry run shows what a policy would affect (nothing is deleted).
+- **Feature switches:** turn new features on, off, or on for the IT team only.
+
 ## v1.5.0 (9 Oct 2026): easier every day
 **For everyone**
 - **My work** (the first page) shows what needs you first: due soon and overdue, waiting for you, returned for changes, your drafts, your recent requests and what finished lately. New people see a short "five things to know" list until they hide it.
