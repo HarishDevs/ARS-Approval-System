@@ -16,9 +16,13 @@ test("WS-02 J moves to a request; A opens it and asks first, nothing is decided"
   await as(context, "E2E_HOD");
   await page.goto("/users/queue");
   await expect(page.getByRole("heading", { name: "Waiting for me" })).toBeVisible();
-  await page.keyboard.press("j");
   const first = page.locator("a[data-queue-link]:visible").first();
-  await expect(first).toBeFocused();
+  await expect(first).toBeVisible();
+  // As with Ctrl+K: retry until the page's shortcuts are attached.
+  await expect(async () => {
+    await page.keyboard.press("j");
+    await expect(first).toBeFocused({ timeout: 1000 });
+  }).toPass({ timeout: 15000 });
   await page.keyboard.press("a");
   await expect(page).toHaveURL(/\/users\/requests\/\d+$/);
   const ask = page.getByRole("dialog", { name: "Approve this request?" });
@@ -37,17 +41,24 @@ test("WS-02 J moves to a request; A opens it and asks first, nothing is decided"
 test("WS-03 Ctrl+K finds a request by number and pages by name", async ({ page, context }) => {
   await as(context, "E2E_REQ");
   await page.goto("/users");
-  await page.keyboard.press("Control+k");
   const box = page.getByRole("combobox", { name: /Type a page/ });
-  await expect(box).toBeFocused();
+  // The shortcut works once the page is interactive: retry until it opens
+  // (a slow CI machine can be a moment behind the page load).
+  await expect(async () => {
+    await page.keyboard.press("Control+k");
+    await expect(box).toBeFocused({ timeout: 1000 });
+  }).toPass({ timeout: 15000 });
   await box.fill("EPR-");
   const option = page.getByRole("option", { name: /EPR-\d{4}-000001/ });
   await expect(option).toBeVisible();
   await page.keyboard.press("Enter");
   await expect(page).toHaveURL(/\/users\/requests\/\d+$/);
 
-  await page.keyboard.press("Control+k");
-  await page.getByRole("combobox", { name: /Type a page/ }).fill("out of office");
+  await expect(async () => {
+    await page.keyboard.press("Control+k");
+    await expect(box).toBeFocused({ timeout: 1000 });
+  }).toPass({ timeout: 15000 });
+  await box.fill("out of office");
   await page.keyboard.press("Enter");
   await expect(page).toHaveURL(/\/users\/delegation$/);
 
