@@ -201,6 +201,7 @@ describe("B06 schedule recipients", () => {
 
 describe("B08 alert severity, quiet hours and channels", () => {
   it("quiet hours hold a warning; a critical alert goes at once, inbox only when chosen", async () => {
+    await getDbPool().query("INSERT IGNORE INTO user_roles (user_id, role_id) SELECT ?, id FROM roles WHERE code = 'IT_ADMIN'", [approver]); // v1.7.1: alerts are IT only
     const hour = new Date(Date.now() + 330 * 60_000).getUTCHours();
     const quiet = { quietStart: hour, quietEnd: (hour + 2) % 24 };
     const held = await createAlertRule({ userId: approver, metric: "OVERDUE_TASKS", scopeKind: "APPROVALS", threshold: 1, param: null, cooldownHours: 24, severity: "WARNING", ...quiet });

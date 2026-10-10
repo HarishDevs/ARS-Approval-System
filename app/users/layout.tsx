@@ -12,7 +12,7 @@ export default async function UsersLayout({ children }: { children: React.ReactN
       area="users"
       user={user}
       nav={[
-        { href: "/users", label: "My work" },
+        { href: "/users", label: "Overview" },
         { href: "/users/queue", label: "Waiting for me" },
         { href: "/users/requests", label: "My requests" },
         { href: "/users/new", label: "New request" },
@@ -20,9 +20,6 @@ export default async function UsersLayout({ children }: { children: React.ReactN
         { href: "/users/search", label: "Search" },
         { href: "/users/calendar", label: "Calendar" },
         ...(features.analytics ? [{ href: "/users/analytics", label: "Analytics" }] : []),
-        ...(features.reports ? [{ href: "/users/reports", label: "Reports" }] : []),
-        { href: "/users/help", label: "Help" },
-        { href: "/users/profile", label: "Profile", also: ["/users/notifications", "/users/delegation", "/users/security"] },
       ]}
     >
       {children}

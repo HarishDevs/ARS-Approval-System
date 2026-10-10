@@ -52,20 +52,19 @@ export async function AppShell({
   ]);
   // WS-03: everywhere the person can go, for the command palette.
   const userPages: PaletteLink[] = [
-    { href: "/users", label: "My work", group: "My approvals" },
+    { href: "/users", label: "Overview", group: "My approvals" },
     { href: "/users/queue", label: "Waiting for me", group: "My approvals" },
     { href: "/users/requests", label: "My requests", group: "My approvals" },
     { href: "/users/new", label: "New request", group: "My approvals" },
     { href: "/users/custom", label: "Custom approval", group: "My approvals" },
     { href: "/users/search", label: "Search requests", group: "My approvals" },
     { href: "/users/analytics", label: "Analytics", group: "My approvals" },
-    { href: "/users/reports", label: "Reports", group: "My approvals" },
     { href: "/users/notifications", label: "Notifications", group: "Profile" },
     { href: "/users/notifications/settings", label: "Notification settings", group: "Profile" },
     { href: "/users/delegation", label: "Out of office", group: "Profile" },
     { href: "/users/security", label: "Sign-in & devices", group: "Profile" },
     { href: "/users/profile", label: "Profile and theme", group: "Profile" },
-    { href: "/users/help", label: "Help", group: "My approvals" },
+    { href: "/users/help", label: "Help", group: "Profile" },
   ];
   const palettePages: PaletteLink[] = [
     ...(area === "users" ? [] : nav.map((item) => ({ href: item.href, label: item.label, group: SPACE_LABEL[area] }))),

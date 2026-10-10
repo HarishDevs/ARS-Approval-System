@@ -1,5 +1,13 @@
 # Release notes
 
+## v1.7.1 (10 Oct 2026): navigation tidy-up, reports for IT only
+- **Analytics keeps your space:** opening Analytics from the Admin space now stays in the Admin space (`/admin/analytics`, starting at the whole organisation). In My approvals it's still `/users/analytics`. The drill-down lists and "How these are worked out" stay in the same space too.
+- **Help and Profile have moved** from the sidebar to the account menu (your name, top right) in every space, next to Notifications and Sign-in & devices.
+- **"My work" is now "Overview".**
+- **Reports are for the IT team and the Super Admin only.** They are now in the Admin space (**Admin → Reports**), with downloads, scheduled reports, alerts and background exports. Everyone else gets "not found" on the pages and the download links, and Reports is no longer in their sidebar. Old `/users/reports` links take IT to the new place.
+  - In the job runner, an existing schedule owned by someone who isn't IT is skipped, and their alert rules are switched off.
+  - Analytics itself is unchanged for everyone.
+
 ## v1.7.0 (10 Oct 2026): expiry, calendar, deeper analytics, background exports
 **For everyone**
 - **Approval expiry:** for approval types with "Approval valid for (days)", an approved request shows **Valid until …** (amber in its last 7 days) or **Expired on …**. The requester is told 7 days before. The date is fixed when the request is approved.

@@ -17,7 +17,8 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
-- **Now (10 Oct 2026):** v1.7.0 (lists A, B and C, V170-*) is built, tested and tagged; it is **not deployed**. Register: 1,326 Implemented, 465 Yet to do, 66 Not feasible.
+- **Now (10 Oct 2026):** v1.7.1 (owner: Analytics keeps the Admin space; Help and Profile in the account menu; Overview; Reports IT only) is tagged, not deployed.
+- **Earlier (10 Oct 2026):** v1.7.0 (lists A, B and C, V170-*) is built, tested and tagged; it is **not deployed**. Register: 1,326 Implemented, 465 Yet to do, 66 Not feasible.
 - **Next, the owner:** back up, then publish v1.7.0 (one additive migration). Afterwards: optionally set Report downloads = ROLE and give people "Can export"; run `npm run db:verify-backup` against a downloaded backup into an empty database.
 - **Next, development:** remaining register themes (delegated/reassigned analytics, SLA due-date calendar, aging heatmap, scheduled-report status states, restore-verification history in the app).
 - **Now (10 Oct 2026):** v1.6.1, owner request: attachment fields in the form builder, and collaborators on requests. Pushed; not deployed.
@@ -285,6 +286,14 @@ Found during S8-06:
 - [x] S8-12 Google sign-in reached UNKNOWN_ACCOUNT: itadmin@ is an alias. The Super Admin now signs in as itsupport@arsenergy.co.in (D-082, migration + non-overwriting seed, v1.0.5) (done 8 Oct 2026)
 - [x] S8-01b Go-live on GoDaddy with the owner, following docs/DEPLOYMENT.md (the owner is at the wizard's "Add secrets" step) (done 9 Oct 2026: live since 8 Oct 2026)
 - [x] S8-04 Update the three living files; commit and push (done 8 Oct 2026)
+
+## Session log — v1.7.1: navigation and reports access (10 Oct 2026), planned before starting
+Owner: "when I am in Admin portal and click on Analytics it switches the spaces to My Approvals; remove Help and Profile from the sidebar and add them in the top-right space panel for all; change My Work to Overview; restrict reports to admin only and remove them from side navigation".
+- [x] V171-01 Analytics in the Admin space: /admin/analytics (+ list, metrics) share the screens with /users/analytics; the Admin sidebar links there (done 10 Oct 2026)
+- [x] V171-02 Help and Profile out of the sidebar, into the account menu (Help added; Profile was there) for every space (done 10 Oct 2026)
+- [x] V171-03 "My work" renamed "Overview" (sidebar, palette, phone bar, breadcrumbs, not-found pages, help, user guide) (done 10 Oct 2026)
+- [x] V171-04 Reports IT/Super Admin only: canUseReports on pages, /api/reports, /api/exports, report actions, background exports, schedules and alerts in the job runner; pages moved to /admin/reports; old links redirect IT, 404 for others; removed from the user sidebar, added to the Admin sidebar (done 10 Oct 2026)
+- [x] V171-05 Tests: e2e v171-nav.spec.ts; integration and e2e updated for IT-only reports; full regression (done 10 Oct 2026)
 
 ## Session log — v1.7.0: lists A, B and C (10 Oct 2026), planned before starting
 Owner: "Work on A, B and C in one Go" (the non-completed points list of 10 Oct 2026). No deploy; the owner publishes.

@@ -32,3 +32,11 @@ export async function canExport(user: { roles: readonly string[] } | null): Prom
   if (mode !== "ROLE") return true;
   return user.roles.includes("EXPORTER") || user.roles.includes("IT_ADMIN") || user.roles.includes("SUPER_ADMIN");
 }
+
+// v1.7.1 (owner): reports (downloads, schedules, alerts, background exports)
+// are for the IT team and the Super Admin only. Checked on the server at
+// every entry point and in the job runner, never only by hiding a link.
+export async function canUseReports(user: { roles: readonly string[] } | null): Promise<boolean> {
+  if (!user || !(user.roles.includes("IT_ADMIN") || user.roles.includes("SUPER_ADMIN"))) return false;
+  return featureOn("reports", user);
+}

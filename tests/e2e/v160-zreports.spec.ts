@@ -10,7 +10,7 @@ async function as(context: BrowserContext, loginId: string) {
 
 test("IT opens a report, downloads Excel, CSV and PDF, saves the view, schedules it and adds an alert", async ({ page, context }) => {
   await as(context, "E2E_ADMIN");
-  await page.goto("/users/reports");
+  await page.goto("/admin/reports");
   await expect(page.getByRole("heading", { name: "Reports", exact: true })).toBeVisible();
   await page.getByRole("link", { name: /Request register/ }).click();
   await expect(page.getByRole("heading", { name: "Request register" })).toBeVisible();
@@ -43,7 +43,7 @@ test("IT opens a report, downloads Excel, CSV and PDF, saves the view, schedules
   await page.getByRole("button", { name: "Schedule" }).click();
   await expect(page.getByText(/Scheduled\. It is emailed to you/)).toBeVisible();
 
-  await page.goto("/users/reports");
+  await page.goto("/admin/reports");
   await expect(page.getByText(/Every Monday at 08:00/)).toBeVisible();
   const alerts = page.getByRole("region", { name: "My alerts" });
   await alerts.getByLabel("Tell me when").selectOption("OVERDUE_TASKS");
@@ -55,12 +55,10 @@ test("IT opens a report, downloads Excel, CSV and PDF, saves the view, schedules
   await expect(page.getByRole("region", { name: "My alerts" }).getByRole("button", { name: /Switch off alert #\d+/ })).toBeVisible();
 });
 
-test("a requester can't download someone else's view of the data or an organisation-only report", async ({ page, context }) => {
+test("a requester can't download reports at all (v1.7.1: IT only)", async ({ page, context }) => {
   await as(context, "E2E_REQ");
   const register = await page.request.get("/api/reports/request_register?scope=ORGANISATION&format=csv");
-  expect(register.status()).toBe(200); // falls back to their own requests
-  const text = await register.text();
-  expect(text).not.toContain("Elena Admin");
+  expect(register.status()).toBe(404);
   expect((await page.request.get("/api/reports/department_summary?format=csv")).status()).toBe(404);
   expect((await page.request.get("/api/reports/nonsense?format=csv")).status()).toBe(404);
   await context.clearCookies();

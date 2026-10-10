@@ -2,7 +2,7 @@ import { requireArea } from "@/server/authorization/guards";
 import { AppShell } from "@/features/shell/AppShell";
 import { after } from "next/server";
 import { checkJobRunnerStopped } from "@/server/ops/alerts";
-import { featureOn } from "@/server/settings/features";
+import { canUseReports, featureOn } from "@/server/settings/features";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +14,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   // A5: a stopped job runner is noticed when IT opens a page (after it renders).
   after(() => checkJobRunnerStopped().then(() => undefined));
   const analytics = await featureOn("analytics", user);
+  const reports = await canUseReports(user);
   return (
     <AppShell
       area="admin"
@@ -21,7 +22,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       nav={[
         { href: "/admin", label: "Overview" },
         { href: "/admin/attention", label: "Needs attention" },
-        ...(analytics ? [{ href: "/users/analytics?scope=ORGANISATION", label: "Analytics" }] : []),
+        ...(analytics ? [{ href: "/admin/analytics", label: "Analytics" }] : []),
+        ...(reports ? [{ href: "/admin/reports", label: "Reports" }] : []),
         { href: "/admin/insights", label: "Insights" },
         { href: "/admin/dashboards", label: "Dashboards" },
         { href: "/admin/workload", label: "Workload" },

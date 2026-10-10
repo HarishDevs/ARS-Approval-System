@@ -1,18 +1,17 @@
 import { expect, test } from "@playwright/test";
 import { sessionCookie } from "./db";
 
-// The user sidebar has one "Profile" entry; Notifications, Out of office and
-// Sign-in & devices are tabs on it, at their old addresses (links in emails
-// and WhatsApp keep working).
-test("Profile groups the personal pages as tabs, and the sidebar keeps Profile highlighted", async ({ page, context }) => {
+// Profile is opened from the account menu (v1.7.1: not in the sidebar);
+// Notifications, Out of office and Sign-in & devices are tabs on it, at
+// their old addresses (links in emails and WhatsApp keep working).
+test("Profile groups the personal pages as tabs; it lives in the account menu, not the sidebar", async ({ page, context }) => {
   await context.addCookies([await sessionCookie("E2E_REQ")]);
   await page.goto("/users/profile");
 
   const sidebar = page.getByRole("navigation", { name: "Main" }).first();
-  for (const gone of ["Out of office", "Notifications", "Sign-in & devices"]) {
+  for (const gone of ["Out of office", "Notifications", "Sign-in & devices", "Profile", "Help"]) {
     await expect(sidebar.getByRole("link", { name: gone, exact: true })).toHaveCount(0);
   }
-  await expect(sidebar.getByRole("link", { name: "Profile" })).toHaveAttribute("aria-current", "page");
   await expect(page.getByRole("heading", { name: "Your details" })).toBeVisible();
   await expect(page.getByText("User ID", { exact: true })).toBeVisible();
   await expect(page.getByText("E2E_REQ", { exact: true })).toBeVisible();
@@ -28,7 +27,6 @@ test("Profile groups the personal pages as tabs, and the sidebar keeps Profile h
     await expect(page).toHaveURL(path);
     await expect(page.getByRole("heading", { level: 1, name: heading })).toBeVisible();
     await expect(tabs.getByRole("link", { name: label })).toHaveAttribute("aria-current", "page");
-    await expect(sidebar.getByRole("link", { name: "Profile" })).toHaveAttribute("aria-current", "page");
   }
 
   await page.getByRole("button", { name: /Account menu/ }).click();

@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import { requireApiArea } from "@/server/authorization/guards";
 import { openExport } from "@/server/reports/background";
 import { CONTENT_TYPE } from "@/server/reports/export";
-import { canExport } from "@/server/settings/features";
+import { canExport, canUseReports } from "@/server/settings/features";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { apiError } from "@/lib/http/api-response";
 import { logError } from "@/lib/logging/logger";
@@ -19,6 +19,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
   try {
     const { id } = await params;
     if (!/^\d{1,10}$/.test(id)) return apiError("NOT_FOUND", "Not found.", 404);
+    if (!(await canUseReports(session.user))) return apiError("NOT_FOUND", "Not found.", 404);
     if (!(await canExport(session.user))) return apiError("FORBIDDEN", "Downloads are limited to people with the Can export permission. Ask IT.", 403);
     const file = await openExport(Number(id), session.user.id);
     if (!file) return apiError("NOT_FOUND", "Not found, or no longer kept.", 404);

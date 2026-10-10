@@ -8,7 +8,7 @@ import { getEnv } from "@/config/environment";
 import { cleanQuery, prepareReport, runReport, type ReportQuery } from "@/server/reports/run";
 import { exportReport, fileName, type ExportFormat } from "@/server/reports/export";
 import { BACKGROUND_MAX_ROWS, MAX_ROWS, rowCap } from "@/server/reports/catalogue";
-import { canExport } from "@/server/settings/features";
+import { canExport, canUseReports } from "@/server/settings/features";
 import { notify } from "@/server/notifications/notify";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { logError } from "@/lib/logging/logger";
@@ -50,6 +50,7 @@ export async function listExports(userId: number, limit = 10): Promise<ExportJob
 }
 
 export async function requestExport(user: { id: number; roles: readonly string[] }, reportKey: string, query: ReportQuery, format: ExportFormat): Promise<{ ok: true; id: number } | { ok: false; message: string }> {
+  if (!(await canUseReports(user))) return { ok: false, message: "Not found." };
   if (!(await canExport(user))) return { ok: false, message: "Downloads are limited to people with the Can export permission." };
   if (!(await prepareReport(reportKey, query, user))) return { ok: false, message: "Not found." };
   const db = getDbPool();
@@ -83,6 +84,7 @@ export async function runExportJob(id: number): Promise<"DONE" | "FAILED" | "SKI
     const person = await rolesOf(job.user_id);
     if (!person?.active) return await fail("The account is inactive.");
     const viewer = { id: job.user_id, roles: person.roles };
+    if (!(await canUseReports(viewer))) return await fail("Reports are for the IT team only.");
     if (!(await canExport(viewer))) return await fail("Downloads are limited to the Can export permission.");
     const query = cleanQuery((typeof job.query_json === "string" ? JSON.parse(job.query_json) : job.query_json) as Record<string, unknown>);
     const now = new Date();
@@ -113,7 +115,7 @@ export async function runExportJob(id: number): Promise<"DONE" | "FAILED" | "SKI
       userId: job.user_id,
       title: "Your export is ready",
       message: `${ran.report.name}: ${ran.result.rows.length.toLocaleString("en-IN")} rows. Download it within ${EXPORT_KEEP_DAYS} days.`,
-      deepLink: `${base}/users/reports#exports`,
+      deepLink: `${base}/admin/reports#exports`,
       email: null,
       whatsappVariables: null,
     }).catch((error) => logError("export notify failed", error, { exportId: id }));

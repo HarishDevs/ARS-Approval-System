@@ -7,12 +7,12 @@ import { CopyForIt } from "@/features/help/CopyForIt";
 // #13 help page: how-tos, the status words used everywhere (D-017), and
 // "Copy details for IT".
 const TOPICS: HelpTopic[] = [
-  { id: "raise", group: "How to", title: "Raise a request", body: "Choose New request, pick the type, fill in the form and add files. Your typing is saved as a draft as you go; you can come back to it from My work.", link: { href: "/users/new", label: "New request" } },
+  { id: "raise", group: "How to", title: "Raise a request", body: "Choose New request, pick the type, fill in the form and add files. Your typing is saved as a draft as you go; you can come back to it from Overview.", link: { href: "/users/new", label: "New request" } },
   { id: "custom", group: "How to", title: "Ask anyone for approval (custom approval)", body: "Custom approval lets you set your own levels and pick the approvers (Manager and above). Nobody approves their own request.", link: { href: "/users/custom", label: "Custom approval" } },
   { id: "decide", group: "How to", title: "Approve, reject, ask for changes or put on hold", body: "Open the request from Waiting for me. Approve or Reject; Ask for changes sends it back to the requester; Put on hold pauses it (the response time stops) until it is resumed.", link: { href: "/users/queue", label: "Waiting for me" } },
   { id: "bulk", group: "How to", title: "Approve several at once", body: "On Waiting for me, tick straightforward approvals and review them before approving. Work tasks and requests on hold are done one by one.", link: { href: "/users/queue", label: "Waiting for me" } },
   { id: "todo", group: "How to", title: "To do (work tasks)", body: "Some steps are tasks to do rather than decisions, for example raising a PO. They show a To do badge in Waiting for me; open the request and choose Mark as done." },
-  { id: "draft", group: "How to", title: "Drafts", body: "A request you started but didn't submit is kept for 30 days. Open it from My work to carry on, or discard it. Submitting removes the draft." },
+  { id: "draft", group: "How to", title: "Drafts", body: "A request you started but didn't submit is kept for 30 days. Open it from Overview to carry on, or discard it. Submitting removes the draft." },
   { id: "search", group: "How to", title: "Find a request", body: "Search looks through the requests you can see by number, title, type, status and dates. Save a search as a view to reuse it.", link: { href: "/users/search", label: "Search" } },
   { id: "mention", group: "How to", title: "Mention someone in a comment", body: "Type @ and their User ID. Only people who can already see the request are told; you are shown anyone who wasn't." },
   { id: "pdf", group: "How to", title: "Download a summary", body: "On a request, Download PDF gives the details, levels, decisions and history in one file." },

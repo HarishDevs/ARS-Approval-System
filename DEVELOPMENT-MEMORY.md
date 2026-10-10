@@ -387,6 +387,10 @@
 - `scripts/database/verify-backup.js` restores into a separate empty database only and compares every table's rows and the triggers with the file.
 - Analytics pages are limited to 40 loads a minute per person; the readiness check to 20.
 - Indexes added on the period columns after measuring (docs/PERFORMANCE_ANALYTICS.md). | Owner list C; Claude, 10 Oct 2026 |
+| D-137 | 10 Oct 2026 | **Reports are for IT only; navigation tidy-up (owner, v1.7.1; supersedes the "everyone" part of D-123):**
+- Reports (catalogue, downloads, schedules, alerts, background exports) are for IT Admins and the Super Admin, checked on the server by `canUseReports` at every entry point and in the job runner. They live in the Admin space (`/admin/reports`). Analytics stays for everyone.
+- Analytics has the same screens in both spaces (`/users/analytics`, `/admin/analytics`), so opening it never changes the space.
+- Help and Profile are in the account menu, not the sidebar; "My work" is "Overview". | Owner; Claude, 10 Oct 2026 |
 | D-033 | 28 Sep 2026 | **Staff data is provided by the admin. Roles are assigned per user, by the admin only. Users are added or made inactive in the Admin Portal** (never hard-deleted, so history and audit stay intact). *Resolves Q-010.* | Owner (answer 7) |
 
 ## 4. Open questions (must be answered before the phase shown)
@@ -414,6 +418,15 @@
 | Q-019 | **Which Resend account holds the API key in Super Admin?** The "arsenergy" team (open in Chrome) is empty. Email works only once the From domain (`approvals@arssteels.net`) is verified in the account that owns the key, or a new key from a team with a verified domain is entered. | Before go-live (no email is delivered today) | **Answered 9 Oct 2026:** the key is "New Api Approval" in the Resend team "arssteels" (harishkumar.t@arssteels.com). The owner verified `arssteels.net` there; Resend's log showed "API key not authorized for this domain" for a few minutes after verification, then the test email was **sent** |
 
 ## 5. Work log (newest first)
+
+### 10 Oct 2026 (v1.7.1: navigation and reports access)
+- **Source:** owner screenshot. Analytics from the Admin portal switched the space to My approvals.
+- **Built (D-137):**
+  - Analytics in the Admin space;
+  - Help and Profile in the account menu;
+  - "Overview" instead of "My work";
+  - Reports for IT only, in the Admin space.
+- **Checks:** unit 417, integration 176, E2E 85, QA 27, origin 1.
 
 ### 10 Oct 2026 (v1.7.0: lists A, B and C)
 - **Source:** owner, "Work on A, B and C in one Go" (the non-completed points list given the same day).

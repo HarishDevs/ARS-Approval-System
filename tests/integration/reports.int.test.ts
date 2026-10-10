@@ -81,7 +81,7 @@ describe("reports", () => {
 
 describe("scheduled reports", () => {
   it("a due slot is claimed once even when two runs overlap; the next slot moves on", async () => {
-    const id = await createSchedule({ userId: requester, reportKey: "request_register", query: { type: String(workflowId) }, format: "csv", frequency: "DAILY", weekday: null, monthDay: null, hourIst: 8 });
+    const id = await createSchedule({ userId: admin.id, reportKey: "request_register", query: { type: String(workflowId) }, format: "csv", frequency: "DAILY", weekday: null, monthDay: null, hourIst: 8 });
     await getDbPool().query("UPDATE report_schedules SET next_run_at = DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 1 MINUTE) WHERE id = ?", [id]);
     await Promise.all([runDueSchedules(), runDueSchedules()]);
     const [runs] = await getDbPool().query<RowDataPacket[]>("SELECT status, message FROM report_runs WHERE schedule_id = ?", [id]);
@@ -91,6 +91,15 @@ describe("scheduled reports", () => {
     const [[schedule]] = await getDbPool().query<RowDataPacket[]>("SELECT next_run_at > CURRENT_TIMESTAMP AS moved_on, failures FROM report_schedules WHERE id = ?", [id]);
     expect(Number(schedule!.moved_on)).toBe(1);
     expect(Number(schedule!.failures)).toBe(1);
+  });
+
+  it("v1.7.1: reports are for IT only; a requester's schedule is skipped, never sent", async () => {
+    const id = await createSchedule({ userId: requester, reportKey: "request_register", query: {}, format: "csv", frequency: "DAILY", weekday: null, monthDay: null, hourIst: 8 });
+    await getDbPool().query("UPDATE report_schedules SET next_run_at = DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 1 MINUTE) WHERE id = ?", [id]);
+    await runDueSchedules();
+    const [[run]] = await getDbPool().query<RowDataPacket[]>("SELECT status, message FROM report_runs WHERE schedule_id = ?", [id]);
+    expect(run).toMatchObject({ status: "SKIPPED", message: expect.stringMatching(/IT team only/) });
+    await getDbPool().query("UPDATE report_schedules SET active = FALSE WHERE id = ?", [id]);
   });
 
   it("an inactive owner's schedule is paused, not run", async () => {
@@ -128,6 +137,8 @@ describe("feature switches (D-124)", () => {
 
 describe("alert rules", () => {
   it("fire once on crossing, not again while over the line, and again after dropping back", async () => {
+    // v1.7.1: alerts are part of Reports, for the IT team only.
+    await getDbPool().query("INSERT IGNORE INTO user_roles (user_id, role_id) SELECT ?, id FROM roles WHERE code = 'IT_ADMIN'", [approver]);
     const id = await createAlertRule({ userId: approver, metric: "PENDING_OLDER", scopeKind: "APPROVALS", threshold: 2, param: 1, cooldownHours: 24 });
     const events = async () => {
       const [[row]] = await getDbPool().query<RowDataPacket[]>("SELECT COUNT(*) AS n FROM alert_events WHERE rule_id = ?", [id]);
@@ -144,7 +155,7 @@ describe("alert rules", () => {
     await evaluateAlerts();
     const [[rule]] = await getDbPool().query<RowDataPacket[]>("SELECT firing, latest_value FROM alert_rules WHERE id = ?", [id]);
     expect(rule).toMatchObject({ firing: 0, latest_value: 0 });
-    // A requester can't hold an alert on a scope they don't have.
+    // A requester can't hold an alert at all (reports are IT only): it is switched off.
     const bad = await createAlertRule({ userId: requester, metric: "STUCK", scopeKind: "ORGANISATION", threshold: 1, param: null, cooldownHours: 24 });
     await evaluateAlerts();
     const [[disabled]] = await getDbPool().query<RowDataPacket[]>("SELECT active FROM alert_rules WHERE id = ?", [bad]);

@@ -89,7 +89,7 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
     <>
       <Breadcrumbs
         items={[
-          { href: "/users", label: "My work" },
+          { href: "/users", label: "Overview" },
           view.myTasks.length > 0 ? { href: "/users/queue", label: "Waiting for me" } : view.requesterId === user.id ? { href: "/users/requests", label: "My requests" } : { href: "/users/search", label: "Search" },
           { label: view.requestNo },
         ]}

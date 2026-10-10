@@ -8,15 +8,15 @@ You are signed out after **2 hours without activity**, and 12 hours after signin
 
 ## 1. Everyone
 
-### My work
-The first page after signing in. Tiles show what is waiting for you, what is overdue, your open requests and what was sent back. Below are, in order: **due soon / overdue**, **waiting for me**, **returned for changes**, **your drafts**, **your recent requests** and **finished lately**.
+### Overview
+The first page (called "My work" before v1.7.1) after signing in. Tiles show what is waiting for you, what is overdue, your open requests and what was sent back. Below are, in order: **due soon / overdue**, **waiting for me**, **returned for changes**, **your drafts**, **your recent requests** and **finished lately**.
 
 ### Raise a request
 1. **New request** → pick the approval type (e.g. *Purchase & SCM Approval*).
 2. Fill in the form. Add files if needed: up to 5 at a time, 10 MB each (PDF, images, Word, Excel, PowerPoint, CSV, text).
 3. **Submit request.** You see its number (e.g. `PUR-2026-000123`), and the first approvers are told by email and WhatsApp.
 
-**Drafts:** what you type is saved as a draft as you go ("Draft saved 10:42"). If you leave, open it again from **My work → Your drafts**. **Discard draft** clears it. Files aren't kept in drafts, so add them again before submitting. Drafts are removed when you submit, or after 30 days.
+**Drafts:** what you type is saved as a draft as you go ("Draft saved 10:42"). If you leave, open it again from **Overview → Your drafts**. **Discard draft** clears it. Files aren't kept in drafts, so add them again before submitting. Drafts are removed when you submit, or after 30 days.
 
 A line above the **level map** says who it's waiting for, since when, and what comes next. The **level map** on the request shows every level, who approves, and where it is now. Levels that the amount (DoA) or a rule doesn't need show as *skipped*.
 
@@ -44,7 +44,7 @@ Comments can't be edited or removed. To tell someone in particular, type `@` and
 **Download PDF** at the top of a request: details, levels, who decided what, files and history.
 
 ### Help
-**Help** in the sidebar: how-tos and what each status means. If something goes wrong, use **Copy details for IT** and paste it in your message to IT. It contains a reference IT can look up, and nothing private.
+**Help** in the account menu (your name, top right): how-tos and what each status means. If something goes wrong, use **Copy details for IT** and paste it in your message to IT. It contains a reference IT can look up, and nothing private.
 
 ### Profile
 **Profile** in the sidebar (or the menu at the top right):

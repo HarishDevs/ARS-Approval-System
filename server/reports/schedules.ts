@@ -15,7 +15,7 @@ import { getEmailConfig } from "@/server/settings/values";
 import { notify } from "@/server/notifications/notify";
 import { getEnv } from "@/config/environment";
 import { logError } from "@/lib/logging/logger";
-import { canExport, featureMode } from "@/server/settings/features";
+import { canExport, canUseReports, featureMode } from "@/server/settings/features";
 
 // D-124: OFF stops both jobs; IT_ONLY runs only for IT team owners.
 async function allowedFor(person: Owner): Promise<boolean> {
@@ -143,7 +143,7 @@ export async function scheduleAudience(row: Pick<ScheduleRow, "reportKey" | "que
   let skippedPeople = 0;
   for (const recipientId of row.recipients.filter((item) => item !== person.id)) {
     const other = await owner(recipientId);
-    if (!other?.active || !(await canExport(other))) {
+    if (!other?.active || !(await canUseReports(other)) || !(await canExport(other))) {
       skippedPeople += 1;
       continue;
     }
@@ -196,6 +196,10 @@ export async function runDueSchedules(limit = 20): Promise<{ reportsSent: number
         await finish("SKIPPED", "Scheduled reports are switched off for this person at the moment.");
         continue;
       }
+      if (!(await canUseReports(person))) {
+        await finish("SKIPPED", "Reports are for the IT team only; the owner no longer has access.");
+        continue;
+      }
       if (!(await canExport(person))) {
         await finish("SKIPPED", "Downloads are limited to the Can export permission, which the owner doesn't have.");
         continue;
@@ -218,7 +222,7 @@ export async function runDueSchedules(limit = 20): Promise<{ reportsSent: number
         const bytes = typeof file === "string" ? Buffer.byteLength(file) : file.byteLength;
         totalBytes += bytes;
         const params = new URLSearchParams(cleanQuery(row.query) as Record<string, string>).toString();
-        const link = `${base()}/users/reports/${row.reportKey}${params ? `?${params}` : ""}`;
+        const link = `${base()}/admin/reports/${row.reportKey}${params ? `?${params}` : ""}`;
         const attach = bytes <= MAX_ATTACHMENT_BYTES;
         attachedAll &&= attach;
         const why = entry.person.id === person.id ? "You get this because you scheduled it." : `You get this because ${person.name} added you to their scheduled report. It shows what you can see.`;
@@ -227,7 +231,7 @@ export async function runDueSchedules(limit = 20): Promise<{ reportsSent: number
           {
             to: entry.person.email,
             subject: `ARS Approvals: ${entry.ran.report.name} (${describeSchedule(row).toLowerCase()})`,
-            text: `${entry.ran.report.name}\n${meta.scopeLabel}${meta.periodLabel ? ` · ${meta.periodLabel}` : ""}\n${entry.ran.result.rows.length} row${entry.ran.result.rows.length === 1 ? "" : "s"}${entry.ran.result.truncated ? " (first rows only)" : ""}.\n\n${attach ? "The report is attached." : "The report is too large to attach."} Open it in the app:\n${link}\n\n${why} Manage schedules: ${base()}/users/reports`,
+            text: `${entry.ran.report.name}\n${meta.scopeLabel}${meta.periodLabel ? ` · ${meta.periodLabel}` : ""}\n${entry.ran.result.rows.length} row${entry.ran.result.rows.length === 1 ? "" : "s"}${entry.ran.result.truncated ? " (first rows only)" : ""}.\n\n${attach ? "The report is attached." : "The report is too large to attach."} Open it in the app:\n${link}\n\n${why} Manage schedules: ${base()}/admin/reports`,
             attachments: attach ? [{ filename: fileName(row.reportKey, row.format, now), content: file }] : undefined,
           },
           { fetch },
@@ -368,6 +372,11 @@ export async function evaluateAlerts(limit = 200): Promise<{ alertsChecked: numb
         continue;
       }
       if (!(await allowedFor(person))) continue;
+      if (!(await canUseReports(person))) {
+        // v1.7.1: alerts are part of Reports (IT only); a rule whose owner lost access is switched off.
+        await db.query("UPDATE alert_rules SET active = FALSE WHERE id = ?", [rule.id]);
+        continue;
+      }
       const value = await alertValue(rule, { id: person.id, roles: person.roles });
       if (value === null) {
         await db.query("UPDATE alert_rules SET active = FALSE WHERE id = ?", [rule.id]); // the scope is no longer theirs
@@ -400,8 +409,8 @@ export async function evaluateAlerts(limit = 200): Promise<{ alertsChecked: numb
           userId: person.id,
           title: `${level}: a number crossed your line`,
           message,
-          deepLink: `${base()}/users/analytics?scope=${rule.scopeKind}`,
-          email: rule.channels === "INBOX" ? null : { subject: `ARS Approvals ${level.toLowerCase()}: ${label}`, text: `${message}\n\nOpen Analytics: ${base()}/users/analytics?scope=${rule.scopeKind}\n\nYou get this at most once every ${rule.cooldownHours} hours while it stays over the line. Manage your alerts: ${base()}/users/reports#alerts` },
+          deepLink: `${base()}/admin/analytics?scope=${rule.scopeKind}`,
+          email: rule.channels === "INBOX" ? null : { subject: `ARS Approvals ${level.toLowerCase()}: ${label}`, text: `${message}\n\nOpen Analytics: ${base()}/admin/analytics?scope=${rule.scopeKind}\n\nYou get this at most once every ${rule.cooldownHours} hours while it stays over the line. Manage your alerts: ${base()}/admin/reports#alerts` },
           whatsappVariables: null,
         }).catch((error) => logError("alert notify failed", error, { ruleId: rule.id }));
         out.alertsFired += 1;

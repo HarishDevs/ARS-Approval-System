@@ -9,7 +9,7 @@ export default function NotFound() {
       <h1 className="text-title font-semibold">This page isn&apos;t available</h1>
       <p className="max-w-sm text-ink-muted">The link may be wrong, the item may have been removed, or it may not be shared with you.</p>
       <Link href="/users" className="link">
-        Go to My work
+        Go to Overview
       </Link>
     </main>
   );

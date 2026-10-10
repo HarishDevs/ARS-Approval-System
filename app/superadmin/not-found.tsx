@@ -21,7 +21,7 @@ export default function NotFound() {
         </button>
       </form>
       <Link href="/users" className="link">
-        Go to My work
+        Go to Overview
       </Link>
     </div>
   );

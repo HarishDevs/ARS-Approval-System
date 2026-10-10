@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 // RA-01: on phones the main destinations sit at the bottom, in thumb reach.
 // The waiting count comes from the server (only the person's own work).
 const ITEMS = [
-  { href: "/users", label: "My work", icon: Home, exact: true },
+  { href: "/users", label: "Overview", icon: Home, exact: true },
   { href: "/users/queue", label: "Waiting", icon: Inbox },
   { href: "/users/new", label: "New", icon: FilePlus2 },
   { href: "/users/search", label: "Search", icon: FileSearch },

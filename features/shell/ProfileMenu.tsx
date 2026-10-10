@@ -6,7 +6,8 @@ import { useEffect, useRef, useState } from "react";
 import { Email } from "@/features/ui/SafeText";
 
 // One user menu at the top right (S9-01..03): who you are, which space
-// you're in, switching space, and signing out. Closes on a click outside,
+// you're in, switching space, Profile, Notifications, Sign-in and Help
+// (v1.7.1: Profile and Help live here, not in the sidebar), and signing out. Closes on a click outside,
 // Escape, or a page change.
 export interface SpaceLink {
   href: string;
@@ -110,6 +111,9 @@ export function ProfileMenu({
             </Link>
             <Link href="/users/security" role="menuitem" className={item}>
               Sign-in &amp; devices
+            </Link>
+            <Link href="/users/help" role="menuitem" className={item}>
+              Help
             </Link>
           </div>
           <div className="border-t border-line pt-2">

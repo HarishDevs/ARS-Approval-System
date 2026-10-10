@@ -933,6 +933,11 @@ Reports → My alerts: choose **Severity**, **Tell me by** (app inbox, or inbox 
 3. It prints table, row and trigger counts and "OK", or the problems. It refuses the live database.
 4. Drop the check database afterwards.
 
+## F-117 Navigation (v1.7.1, D-137)
+- **Sidebar (My approvals):** Overview, Waiting for me, My requests, New request, Custom approval, Search, Calendar, Analytics.
+- **Account menu (your name, top right, every space):** switch space, Profile, Notifications, Sign-in & devices, Help, Sign out.
+- **Admin sidebar:** … Analytics (`/admin/analytics`, stays in Admin), Reports (IT and Super Admin only) …
+
 ## F-89 Notification choices (v1.5.0, D-110)
 Profile → Notifications → **Settings**: per kind of message, email and WhatsApp on/off. Security and "work waiting for you" are locked on. A switched-off message is recorded as SKIPPED / USER_PREFERENCE; the in-app list always gets it.
 
