@@ -17,7 +17,9 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
-- **Now (10 Oct 2026):** v1.7.0 in progress: lists A, B and C (V170-*).
+- **Now (10 Oct 2026):** v1.7.0 (lists A, B and C, V170-*) is built, tested and tagged; it is **not deployed**. Register: 1,326 Implemented, 465 Yet to do, 66 Not feasible.
+- **Next, the owner:** back up, then publish v1.7.0 (one additive migration). Afterwards: optionally set Report downloads = ROLE and give people "Can export"; run `npm run db:verify-backup` against a downloaded backup into an empty database.
+- **Next, development:** remaining register themes (delegated/reassigned analytics, SLA due-date calendar, aging heatmap, scheduled-report status states, restore-verification history in the app).
 - **Now (10 Oct 2026):** v1.6.1, owner request: attachment fields in the form builder, and collaborators on requests. Pushed; not deployed.
 - **Now (10 Oct 2026):** v1.6.0 is tagged and pushed; it is **not deployed**.
   - **Scope:** the master prompt plus the unified master prompt.
@@ -297,19 +299,19 @@ Owner: "Work on A, B and C in one Go" (the non-completed points list of 10 Oct 2
 - [x] V170-A09 Optional separate export permission (switch: exports need the role "Can export") (done 10 Oct 2026)
 - [x] V170-A10 Duplicate check scope (any requester / same requester / same department) and must-be-unique identifier fields (done 10 Oct 2026)
 - [x] V170-A11 "Refresh from profile" on the new-request form; amendment drafts (done 10 Oct 2026)
-- [ ] V170-B01 Dashboard drill-down: KPI cards and chart bars open the matching filtered list
-- [ ] V170-B02 More filters: status, approver, step, SLA status, aging bucket
-- [ ] V170-B03 KPIs: due today, due in 7 days, median completion, first-pass approval, rework and withdrawal rates
-- [ ] V170-B04 Comparisons: this month vs last month, vs the same month last year, department vs organisation
-- [ ] V170-B05 Charts: status breakdown, overdue trend, SLA breaches over time, backlog trend, decision trend, department × step heatmap
-- [ ] V170-B06 Report schedules: edit, several recipients
-- [ ] V170-B07 Saved views: shared and default views
-- [ ] V170-B08 Alerts: severity, quiet hours, channel choice
-- [ ] V170-C01 Performance: p95 timings for the analytics queries, index review migration
-- [ ] V170-C02 Large exports in the background with a download link
-- [ ] V170-C03 Scripted backup-restore check
-- [ ] V170-C04 Rate limits on the readiness check and the analytics pages
-- [ ] V170-T Tests (unit, integration, e2e), full regression, register, living files, v1.7.0 tag, CI green
+- [x] V170-B01 Dashboard drill-down: KPI cards and chart bars open the matching filtered list (done 10 Oct 2026)
+- [x] V170-B02 More filters: status, approver, step, SLA status, aging bucket (done 10 Oct 2026)
+- [x] V170-B03 KPIs: due today, due in 7 days, median completion, first-pass approval, rework and withdrawal rates (done 10 Oct 2026)
+- [x] V170-B04 Comparisons: this month vs last month, vs the same month last year, department vs organisation (done 10 Oct 2026)
+- [x] V170-B05 Charts: status breakdown, overdue trend, SLA breaches over time, backlog trend, decision trend, department × step heatmap (done 10 Oct 2026)
+- [x] V170-B06 Report schedules: edit, several recipients (done 10 Oct 2026)
+- [x] V170-B07 Saved views: shared and default views (done 10 Oct 2026)
+- [x] V170-B08 Alerts: severity, quiet hours, channel choice (done 10 Oct 2026)
+- [x] V170-C01 Performance: p95 timings for the analytics queries, index review migration (done 10 Oct 2026)
+- [x] V170-C02 Large exports in the background with a download link (done 10 Oct 2026)
+- [x] V170-C03 Scripted backup-restore check (done 10 Oct 2026)
+- [x] V170-C04 Rate limits on the readiness check and the analytics pages (done 10 Oct 2026)
+- [x] V170-T Tests (unit, integration, e2e), full regression, register, living files, v1.7.0 tag, CI green (done 10 Oct 2026: unit 417, integration 175, E2E 82, QA 27, origin 1, perf 3 local)
 
 ## Session log — v1.6.1: attachment fields and collaborators (10 Oct 2026), planned before starting
 Owner: "attachments in the approval flow creation as add field and datatype; for each approval the requester can add anyone in the organisation as collaborator, multiple collaborators".

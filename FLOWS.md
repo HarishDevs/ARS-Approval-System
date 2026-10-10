@@ -890,6 +890,49 @@ To move requests:
 - **What collaborators can do:** see the request, comment and add files. They are told when it is approved, rejected, sent back, resubmitted or withdrawn. They never approve.
 - **Finding them:** collaborators see these requests under **My requests → Shared with me**.
 
+## F-107 Approval expiry (v1.7.0, D-129)
+1. **IT:** approval type → Submission checks → "Approval valid for (days)".
+2. **On approval:** the request gets a valid-until date (approval time + days).
+3. **Request page:** "Valid until …" (amber in the last 7 days), then "Expired on …".
+4. **7 days before:** the requester is told once (inbox and email).
+
+## F-108 Needed-by calendar (v1.7.0)
+**Sidebar → Calendar.** A month of requests by their "needed by" date (the date field IT ticked "needed by"). Choose **Mine and waiting on me** or **All I can see**. Previous and next month links; a list below the grid.
+
+## F-109 Move pending tasks (v1.7.0, IT)
+1. **Workload → Move pending tasks.** Narrow by who has them and by approval type.
+2. Tick tasks (up to 100), choose who takes them, give a reason, confirm.
+3. Each task is moved through the normal locked path (timeline, both told) and gets its own result line. Approval steps need someone who can approve; work steps anyone active; never the requester.
+
+## F-110 Form preview (v1.7.0, IT)
+Workflow builder → **Preview the form**: the form as requesters see it, including unsaved changes, with rules and formulas working. Submitting it only says "Preview only: nothing was submitted."
+
+## F-111 Re-check and fix (v1.7.0, IT, D-131)
+Needs attention → a request flagged "Workflow state doesn't add up" → **Re-check and fix**. Either "nothing to fix", "fixed: task records now match", or "can't be fixed by a button: report it". Audited; the workflow itself never changes.
+
+## F-112 Analytics drill-down and filters (v1.7.0, D-134)
+1. Analytics → set the period, **Compare with**, type, department and **More filters** (status now, approver, step, response time, open for).
+2. Click a count card, a bar, a legend entry or a heatmap cell: the list of requests behind it opens, with the same filters.
+3. **← Back to Analytics** returns with the filters kept.
+4. Saved views: **Share** (everyone sees the name and filters, with their own numbers), **Make default** (opens with it).
+
+## F-113 Scheduled report recipients and edits (v1.7.0, D-135)
+Reports → My scheduled reports → **Change**: how often, day, time, format, and **Also send to** (people in the app). Each recipient gets the report with their own permissions; anyone without access is skipped (shown in the delivery note).
+
+## F-114 Alert options (v1.7.0, D-135)
+Reports → My alerts: choose **Severity**, **Tell me by** (app inbox, or inbox and email) and optional **Quiet hours**. A warning during quiet hours waits until they end; a critical alert is sent at once.
+
+## F-115 Large export in the background (v1.7.0, D-136)
+1. A report → **Large export in the background** → format → **Make the export**.
+2. You are told in the app when it's ready.
+3. Reports → **My exports** → **Download** (within 7 days; only you).
+
+## F-116 Backup check (v1.7.0, D-136, Super Admin)
+1. Create an empty database (cPanel).
+2. Run `npm run db:verify-backup -- <backup file> --into=<empty database> --report=backup-check.json`.
+3. It prints table, row and trigger counts and "OK", or the problems. It refuses the live database.
+4. Drop the check database afterwards.
+
 ## F-89 Notification choices (v1.5.0, D-110)
 Profile → Notifications → **Settings**: per kind of message, email and WhatsApp on/off. Security and "work waiting for you" are locked on. A switched-off message is recorded as SKIPPED / USER_PREFERENCE; the in-app list always gets it.
 

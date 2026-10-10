@@ -1,4 +1,5 @@
 import "server-only";
+import { AsyncLocalStorage } from "node:async_hooks";
 import type { RowDataPacket } from "mysql2/promise";
 import { getDbPool } from "@/lib/db/client";
 import { requestScopeSql, taskScopeSql, type Scope, type ScopeKind, type Viewer } from "@/server/analytics/scope";
@@ -55,9 +56,15 @@ function scoped(scope: Scope, viewer: Viewer, filter: AnalyticsFilter, level: "r
   return { sql: parts.join(" AND "), params };
 }
 
+// v1.7.0 (C02): background exports run with a higher row cap; everything
+// else (screen, downloads, schedules) keeps MAX_ROWS.
+export const BACKGROUND_MAX_ROWS = 50000;
+export const rowCap = new AsyncLocalStorage<number>();
+
 async function query(sql: string, params: unknown[]): Promise<{ rows: RowDataPacket[]; truncated: boolean }> {
-  const [rows] = await getDbPool().query<RowDataPacket[]>(`${sql} LIMIT ${MAX_ROWS + 1}`, params);
-  return { rows: rows.slice(0, MAX_ROWS), truncated: rows.length > MAX_ROWS };
+  const cap = rowCap.getStore() ?? MAX_ROWS;
+  const [rows] = await getDbPool().query<RowDataPacket[]>(`${sql} LIMIT ${cap + 1}`, params);
+  return { rows: rows.slice(0, cap), truncated: rows.length > cap };
 }
 
 const EVERYONE: readonly ScopeKind[] = ["MINE", "APPROVALS", "TEAM", "DEPARTMENT", "ORGANISATION"];

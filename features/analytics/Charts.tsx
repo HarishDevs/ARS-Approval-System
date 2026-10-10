@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowDownRight, ArrowUpRight, Info, Minus } from "lucide-react";
 import { percentChange } from "@/server/analytics/semantics";
 import { METRIC } from "@/server/analytics/metrics";
+import { heatStep } from "@/server/analytics/derived";
 
 // Analytics building blocks (Addendum A, D-122). Server components, plain
 // SVG/HTML, theme tokens only. Identity is never colour alone: lines differ
@@ -31,6 +32,7 @@ export function KpiCard({
   lowerIsBetter = false,
   href,
   note,
+  compareLabel = "previous period",
 }: {
   metric: string;
   value: number | null;
@@ -38,6 +40,7 @@ export function KpiCard({
   lowerIsBetter?: boolean;
   href?: string;
   note?: string;
+  compareLabel?: string; // B04: what the change is against
 }) {
   const definition = METRIC[metric];
   const unit = definition?.unit ?? "count";
@@ -92,7 +95,7 @@ export function KpiCard({
               )}
               <span>
                 {change > 0 ? "+" : ""}
-                {change.toLocaleString("en-IN")}% vs previous period (
+                {change.toLocaleString("en-IN")}% vs {compareLabel} (
                 {fmt(previous ?? null, unit)})
               </span>
             </>
@@ -161,11 +164,15 @@ export function LineChart({
   labels,
   series,
   values,
+  help,
+  empty = "Nothing raised or decided in this period.",
 }: {
   title: string;
   labels: string[];
   series: Series[];
   values: Record<string, number[]>;
+  help?: string;
+  empty?: string;
 }) {
   const width = 720;
   const height = 240;
@@ -209,11 +216,12 @@ export function LineChart({
           ))}
         </span>
       </figcaption>
+      {help && <p className="-mt-1 mb-2 text-caption text-ink-muted">{help}</p>}
       {series.every((item) =>
         (values[item.key] ?? []).every((value) => value === 0),
       ) ? (
         <p className="py-6 text-center text-label text-ink-muted">
-          Nothing raised or decided in this period.
+          {empty}
         </p>
       ) : (
         <svg
@@ -394,6 +402,7 @@ export function StackedBar({
     value: number;
     colorVar: string;
     pattern?: boolean;
+    href?: string; // B01: open the requests behind this part
   }[];
   help?: string;
 }) {
@@ -442,7 +451,13 @@ export function StackedBar({
                         : `var(${part.colorVar})`,
                     }}
                   />
-                  {part.label}
+                  {part.href && part.value > 0 ? (
+                    <Link href={part.href} className="link">
+                      {part.label}
+                    </Link>
+                  ) : (
+                    part.label
+                  )}
                 </span>
                 <span className="tabular-nums font-medium">
                   {part.value.toLocaleString("en-IN")}
@@ -454,6 +469,67 @@ export function StackedBar({
             ))}
           </ul>
         </>
+      )}
+    </section>
+  );
+}
+
+// v1.7.0 (B05): a grid of counts, shaded by size in one hue (five steps).
+// Every cell prints its number, so the shade is never the only cue.
+const HEAT_MIX = [0, 12, 28, 46, 66, 86];
+
+export function Heatmap({ title, help, rows, columns, cells, cellHref }: { title: string; help?: string; rows: string[]; columns: string[]; cells: Record<string, Record<string, number>>; cellHref?: (row: string, column: string) => string }) {
+  const max = Math.max(0, ...rows.flatMap((row) => columns.map((column) => cells[row]?.[column] ?? 0)));
+  return (
+    <section aria-label={title} className="card px-4 py-3">
+      <h2 className="font-semibold">{title}</h2>
+      {help && <p className="text-caption text-ink-muted">{help}</p>}
+      {rows.length === 0 || columns.length === 0 ? (
+        <p className="mt-2 text-label text-ink-muted">Nothing is waiting right now.</p>
+      ) : (
+        <div className="mt-3 overflow-x-auto">
+          <table className="w-full border-separate text-caption" style={{ borderSpacing: 2 }}>
+            <caption className="sr-only">{title}</caption>
+            <thead>
+              <tr>
+                <th scope="col" className="px-2 py-1 text-left font-semibold text-ink-muted">
+                  Department
+                </th>
+                {columns.map((column) => (
+                  <th key={column} scope="col" className="max-w-28 truncate px-2 py-1 text-left font-semibold text-ink-muted" title={column}>
+                    {column}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row}>
+                  <th scope="row" className="whitespace-nowrap px-2 py-1 text-left font-normal">
+                    {row}
+                  </th>
+                  {columns.map((column) => {
+                    const value = cells[row]?.[column] ?? 0;
+                    const step = heatStep(value, max);
+                    const style = step ? { background: `color-mix(in srgb, var(--color-primary-600) ${HEAT_MIX[step]}%, transparent)` } : undefined;
+                    const text = step >= 4 ? "text-on-solid font-semibold" : "text-ink";
+                    return (
+                      <td key={column} className={`min-w-12 rounded px-2 py-1.5 text-right tabular-nums ${step ? text : "text-ink-faint"}`} style={style} title={`${row} · ${column}: ${value}`}>
+                        {value > 0 && cellHref ? (
+                          <Link href={cellHref(row, column)} className="underline-offset-2 hover:underline">
+                            {value}
+                          </Link>
+                        ) : (
+                          value || "·"
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </section>
   );

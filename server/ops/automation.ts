@@ -12,6 +12,7 @@ import { countByReason, findStuckRequests } from "@/server/ops/stuck";
 import { evaluateAlerts, runDueSchedules } from "@/server/reports/schedules";
 import { logError } from "@/lib/logging/logger";
 import { runExpiryNotices } from "@/server/approvals/expiry";
+import { runExportJobs } from "@/server/reports/background";
 
 // Automation inventory (unified prompt FN11, Addendum B). Every background
 // job the platform runs, what it does, how it is retried and how IT
@@ -152,6 +153,18 @@ export const AUTOMATIONS: readonly Automation[] = [
     owner: "IT team",
   },
   {
+    key: "exports",
+    name: "Background exports",
+    what: "Makes large report exports people asked for, and removes export files after 7 days.",
+    trigger: "Every job run (and straight after each request).",
+    everyMinutes: 5,
+    retry: "A failed export is marked failed with the reason; the person asks again. A run that died is put back in the queue after 30 minutes.",
+    idempotency: "Each export is claimed (queued → running) before it is made, so it is made once.",
+    onFailure: "The export shows as failed on Reports; the next run carries on with the rest.",
+    recovery: "The person asks for the export again.",
+    owner: "Each export's owner; Super Admin for storage",
+  },
+  {
     key: "stuck",
     name: "Stuck-request scan",
     what: "Counts open requests that need IT (blocked steps, inactive approvers, no activity, unsent messages).",
@@ -178,6 +191,7 @@ const STEPS: Record<string, () => Promise<StepResult>> = {
   reports: async () => ({ ...(await runDueSchedules()) }),
   alerts: async () => ({ ...(await evaluateAlerts()) }),
   expiry: async () => ({ ...(await runExpiryNotices()) }),
+  exports: async () => ({ ...(await runExportJobs()) }),
   stuck: async () => {
     const counts = countByReason(await findStuckRequests());
     return { ...counts };

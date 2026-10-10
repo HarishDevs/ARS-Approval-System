@@ -35,9 +35,9 @@
   "test": "bulk.int, v150 e2e #7"
  },
  "M1.1-08": {
-  "status": "Yet to do",
-  "action": "Delegation done (OOO, request-level pass-on, handover suggestions); safe bulk reassignment workspace still to build",
-  "evidence": "engine-v160.int, delegations.int"
+  "status": "Implemented",
+  "evidence": "server/approvals/service.ts bulkReassign; app/admin/workload/reassign (v1.7.0 A3) with delegation, pass-on and handover",
+  "test": "tests/integration/v170-a.int.test.ts A3; e2e v170-abc.spec.ts"
  },
  "M1.1-09": {
   "status": "Implemented",
@@ -3351,14 +3351,14 @@
   "evidence": ""
  },
  "A12-03": {
-  "status": "Yet to do",
-  "action": "Not built",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "Response-time status bar → drill list of requests with a task past its response time; definition in the metric dictionary (B01)",
+  "test": "tests/integration/v170-bc.int.test.ts B02"
  },
  "A12-04": {
-  "status": "Yet to do",
-  "action": "Not built",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "Raised by department bar → drill list filtered to the department (B01)",
+  "test": "tests/integration/v170-bc.int.test.ts B01"
  },
  "A12-05": {
   "status": "Yet to do",
@@ -3535,9 +3535,9 @@
   "test": "see docs/ANALYTICS_TEST_MATRIX.md"
  },
  "A15.2-02": {
-  "status": "Yet to do",
-  "action": "Not built",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "alert_rules.severity INFO/WARNING/CRITICAL (B08)",
+  "test": "tests/integration/v170-bc.int.test.ts B08"
  },
  "A15.2-03": {
   "status": "Implemented",
@@ -3555,14 +3555,14 @@
   "evidence": ""
  },
  "A15.2-06": {
-  "status": "Yet to do",
-  "action": "Inbox and email only; no channel choice",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "alert_rules.channels INBOX / INBOX_EMAIL (B08)",
+  "test": "tests/integration/v170-bc.int.test.ts B08"
  },
  "A15.2-07": {
-  "status": "Yet to do",
-  "action": "Quiet hours not built",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "Cool-down (frequency) and quiet hours quiet_start/quiet_end (B08)",
+  "test": "tests/integration/v170-bc.int.test.ts B08; tests/analytics/v170-derived.test.ts"
  },
  "A15.2-08": {
   "status": "Yet to do",
@@ -3635,9 +3635,9 @@
   "test": "see docs/ANALYTICS_TEST_MATRIX.md"
  },
  "A15.3-08": {
-  "status": "Yet to do",
-  "action": "Quiet hours not built",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "evaluateAlerts holds firings in quiet hours; CRITICAL ignores them (B08)",
+  "test": "tests/integration/v170-bc.int.test.ts B08"
  },
  "A15.3-09": {
   "status": "Implemented",
@@ -3910,9 +3910,9 @@
   "test": "see docs/ANALYTICS_TEST_MATRIX.md"
  },
  "A3.1-08": {
-  "status": "Yet to do",
-  "action": "Upcoming deadlines (needed-by calendar) not built; amendment actions exist",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "app/users/calendar (needed-by calendar, A2); amendment actions on the request page",
+  "test": "tests/integration/v170-a.int.test.ts A2; e2e v170-abc.spec.ts"
  },
  "A3.1-09": {
   "status": "Implemented",
@@ -4147,9 +4147,9 @@
   "test": "see docs/ANALYTICS_TEST_MATRIX.md"
  },
  "A3.5-04": {
-  "status": "Yet to do",
-  "action": "Field-level masking for confidential fields not built",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "server/forms/fields.ts confidential; server/approvals/view.ts masking (page, PDF, change history, amendments) (A8)",
+  "test": "tests/integration/v170-a.int.test.ts A8"
  },
  "A3.5-05": {
   "status": "Yet to do",
@@ -4157,9 +4157,9 @@
   "evidence": ""
  },
  "A3.5-06": {
-  "status": "Yet to do",
-  "action": "Separate export/schedule permissions not built (everyone may for their own scope)",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "server/settings/features.ts canExport; role EXPORTER; features.exports EVERYONE/ROLE gates downloads, schedules and background exports (A9). Reports are a fixed catalogue (no report authoring)",
+  "test": "tests/integration/v170-a.int.test.ts A9"
  },
  "A3.5-07": {
   "status": "Implemented",
@@ -4252,9 +4252,9 @@
   "test": "see docs/ANALYTICS_TEST_MATRIX.md"
  },
  "A4.2-05": {
-  "status": "Yet to do",
-  "action": "Decision trend chart over time not built (period comparison exists)",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "app/users/analytics: Decisions and response times passed chart (My approvals scope uses the person's own decisions) (B05)",
+  "test": "tests/integration/v170-bc.int.test.ts B05; tests/analytics/v170-derived.test.ts"
  },
  "A4.2-06": {
   "status": "Implemented",
@@ -4418,9 +4418,9 @@
   "test": "see docs/ANALYTICS_TEST_MATRIX.md"
  },
  "A5-06": {
-  "status": "Yet to do",
-  "action": "Only some cards link to their records; add drill-down to every card",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "Count cards, bars, chart legends and heatmap cells open /users/analytics/list with the same filters; rate and time cards are explained by the metric dictionary (B01)",
+  "test": "tests/integration/v170-bc.int.test.ts B01; e2e v170-abc.spec.ts"
  },
  "A5-07": {
   "status": "Implemented",
@@ -4568,9 +4568,9 @@
   "test": "see docs/ANALYTICS_TEST_MATRIX.md"
  },
  "A5.1-25": {
-  "status": "Yet to do",
-  "action": "Median completion card not built (median decision time is in a report)",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "lib/db/repositories/analytics-more.repository.ts loadQuality; server/analytics/derived.ts (median) (B03)",
+  "test": "tests/integration/v170-bc.int.test.ts B03; tests/analytics/v170-derived.test.ts"
  },
  "A5.1-26": {
   "status": "Yet to do",
@@ -4758,9 +4758,9 @@
   "test": "see docs/ANALYTICS_TEST_MATRIX.md"
  },
  "A5.2-29": {
-  "status": "Yet to do",
-  "action": "Decision trend chart not built",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "History decisions chart (approve, reject, send back per bucket) (B05)",
+  "test": "tests/integration/v170-bc.int.test.ts B05"
  },
  "A5.2-30": {
   "status": "Yet to do",
@@ -4863,9 +4863,9 @@
   "test": "see docs/ANALYTICS_TEST_MATRIX.md"
  },
  "A5.3-17": {
-  "status": "Yet to do",
-  "action": "Median completion card not built",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "loadQuality median completion (B03)",
+  "test": "tests/integration/v170-bc.int.test.ts B03"
  },
  "A5.3-18": {
   "status": "Implemented",
@@ -4878,14 +4878,14 @@
   "test": "see docs/ANALYTICS_TEST_MATRIX.md"
  },
  "A5.3-20": {
-  "status": "Yet to do",
-  "action": "First-pass approval rate not computed",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "loadQuality first-pass approval rate (B03)",
+  "test": "tests/integration/v170-bc.int.test.ts B03; tests/analytics/v170-derived.test.ts"
  },
  "A5.3-21": {
-  "status": "Yet to do",
-  "action": "Rework rate not computed (sent back count is)",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "loadQuality rework rate (B03)",
+  "test": "tests/integration/v170-bc.int.test.ts B03; tests/analytics/v170-derived.test.ts"
  },
  "A5.3-22": {
   "status": "Implemented",
@@ -4893,9 +4893,9 @@
   "test": "see docs/ANALYTICS_TEST_MATRIX.md"
  },
  "A5.3-23": {
-  "status": "Yet to do",
-  "action": "Withdrawal rate not computed (count is)",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "loadQuality withdrawal rate; drill to withdrawn requests (B03)",
+  "test": "tests/integration/v170-bc.int.test.ts B03; tests/analytics/v170-derived.test.ts"
  },
  "A5.3-24": {
   "status": "Implemented",
@@ -5186,9 +5186,9 @@
   "test": "see docs/ANALYTICS_TEST_MATRIX.md"
  },
  "A6.1-03": {
-  "status": "Yet to do",
-  "action": "Status chart not built (outcome counts are KPI cards)",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "app/users/analytics: What became of the requests raised (status bar with drill-down) (B05)",
+  "test": "tests/integration/v170-bc.int.test.ts B05"
  },
  "A6.1-04": {
   "status": "Yet to do",
@@ -5276,19 +5276,19 @@
   "evidence": ""
  },
  "A6.2-08": {
-  "status": "Yet to do",
-  "action": "Not built",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "History: response times passed per bucket (B05)",
+  "test": "tests/integration/v170-bc.int.test.ts B05; tests/analytics/v170-derived.test.ts"
  },
  "A6.2-09": {
-  "status": "Yet to do",
-  "action": "Not built",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "History: backlog at each bucket end and decisions per bucket (B05)",
+  "test": "tests/integration/v170-bc.int.test.ts B05; tests/analytics/v170-derived.test.ts"
  },
  "A6.2-10": {
-  "status": "Yet to do",
-  "action": "Not built",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "History: overdue at each bucket end (B05)",
+  "test": "tests/integration/v170-bc.int.test.ts B05; tests/analytics/v170-derived.test.ts"
  },
  "A6.2-11": {
   "status": "Yet to do",
@@ -6025,9 +6025,9 @@
   "test": "see docs/ANALYTICS_TEST_MATRIX.md"
  },
  "A9.1-03": {
-  "status": "Yet to do",
-  "action": "Calendar month vs previous calendar month not offered (equal-length comparison is)",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "server/analytics/periods.ts comparisonPeriod (this month vs same days of last month; last month vs the month before) (B04)",
+  "test": "tests/analytics/v170-derived.test.ts; e2e v170-abc.spec.ts"
  },
  "A9.1-04": {
   "status": "Yet to do",
@@ -6422,9 +6422,9 @@
   "test": "see docs/ANALYTICS_TEST_MATRIX.md"
  },
  "AFilterbehav-03": {
-  "status": "Yet to do",
-  "action": "Drill-down does not carry filters yet",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "server/analytics/query.ts readFilter/withParams shared by the dashboard and the drill-down list (B01)",
+  "test": "tests/analytics/v170-derived.test.ts; e2e v170-abc.spec.ts"
  },
  "AFilterbehav-04": {
   "status": "Implemented",
@@ -6457,14 +6457,14 @@
   "test": "see docs/ANALYTICS_TEST_MATRIX.md"
  },
  "ASavedviews-02": {
-  "status": "Yet to do",
-  "action": "Not built",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "lib/db/repositories/analytics-views.repository.ts shared views; features/analytics/ReportForms.tsx SavedViews (B07)",
+  "test": "tests/integration/v170-bc.int.test.ts B07"
  },
  "ASavedviews-03": {
-  "status": "Yet to do",
-  "action": "Not built",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "setDefaultView; analytics and report pages open the default view (B07)",
+  "test": "tests/integration/v170-bc.int.test.ts B07"
  },
  "ASavedviews-04": {
   "status": "Yet to do",
@@ -6497,14 +6497,14 @@
   "test": "see docs/ANALYTICS_TEST_MATRIX.md"
  },
  "ADrilldowns-01": {
-  "status": "Yet to do",
-  "action": "Not built",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "readFilter carries every active filter to /users/analytics/list (B01)",
+  "test": "tests/analytics/v170-derived.test.ts; e2e v170-abc.spec.ts"
  },
  "ADrilldowns-02": {
-  "status": "Yet to do",
-  "action": "Not built",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "Period (India dates), scope and filters preserved (B01)",
+  "test": "tests/analytics/v170-derived.test.ts; e2e v170-abc.spec.ts"
  },
  "ADrilldowns-03": {
   "status": "Implemented",
@@ -6512,9 +6512,9 @@
   "test": "see docs/ANALYTICS_TEST_MATRIX.md"
  },
  "ADrilldowns-04": {
-  "status": "Yet to do",
-  "action": "Field masking not built",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "Drill lists show no form values; confidential fields masked on the request page (A8)",
+  "test": "tests/integration/v170-a.int.test.ts A8"
  },
  "ADrilldowns-05": {
   "status": "Implemented",
@@ -6607,9 +6607,9 @@
   "test": "see docs/ANALYTICS_TEST_MATRIX.md"
  },
  "AExportrequi-09": {
-  "status": "Yet to do",
-  "action": "No streaming; capped at 5,000 rows",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "server/reports/background.ts: background exports up to 50,000 rows (C02)",
+  "test": "tests/integration/v170-bc.int.test.ts C02; e2e v170-abc.spec.ts"
  },
  "AExportrequi-10": {
   "status": "Implemented",
@@ -6702,9 +6702,9 @@
   "evidence": ""
  },
  "ARequiredcap-01": {
-  "status": "Yet to do",
-  "action": "Create and switch on/off; editing not built",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "server/reports/schedules.ts updateSchedule; ScheduleForm edit on Reports (B06)",
+  "test": "tests/integration/v170-bc.int.test.ts B06"
  },
  "ARequiredcap-02": {
   "status": "Yet to do",
@@ -6727,9 +6727,9 @@
   "test": "see docs/ANALYTICS_TEST_MATRIX.md"
  },
  "ARequiredcap-06": {
-  "status": "Yet to do",
-  "action": "Owner only",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "recipients_json; scheduleAudience runs each recipient's own permissions, skips anyone without access (B06)",
+  "test": "tests/integration/v170-bc.int.test.ts B06"
  },
  "ARequiredcap-07": {
   "status": "Implemented",
@@ -7223,9 +7223,9 @@
   "evidence": ""
  },
  "A18.3-09": {
-  "status": "Yet to do",
-  "action": "Index review for analytics queries not done",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "Migration 202610140900_v170.sql: indexes on submitted_at, closed_at, decided_at, (request_id, status) (C01)",
+  "test": "docs/PERFORMANCE_ANALYTICS.md; tests/perf/analytics.perf.test.ts"
  },
  "A18.3-10": {
   "status": "Implemented",
@@ -7293,9 +7293,9 @@
   "evidence": ""
  },
  "A18.5-03": {
-  "status": "Yet to do",
-  "action": "Not done",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "Indexes added after reviewing the analytics queries; timings measured (C01)",
+  "test": "docs/PERFORMANCE_ANALYTICS.md"
  },
  "A18.5-04": {
   "status": "Yet to do",
@@ -7328,9 +7328,9 @@
   "test": "see docs/ANALYTICS_TEST_MATRIX.md"
  },
  "A18.5-10": {
-  "status": "Yet to do",
-  "action": "Not built",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "server/reports/background.ts; job step exports; /api/exports/[id] (C02)",
+  "test": "tests/integration/v170-bc.int.test.ts C02; e2e v170-abc.spec.ts"
  },
  "A18.5-11": {
   "status": "Yet to do",
@@ -7498,19 +7498,19 @@
   "test": "see docs/ANALYTICS_TEST_MATRIX.md"
  },
  "A19.2-11": {
-  "status": "Yet to do",
-  "action": "Browser download only",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "Reports → My exports: being made (C02)",
+  "test": "e2e v170-abc.spec.ts"
  },
  "A19.2-12": {
-  "status": "Yet to do",
-  "action": "Browser download only",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "Reports → My exports: Download; in-app notice when ready (C02)",
+  "test": "tests/integration/v170-bc.int.test.ts C02; e2e v170-abc.spec.ts"
  },
  "A19.2-13": {
-  "status": "Yet to do",
-  "action": "Plain error response",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "Reports → My exports: failed with the reason (C02)",
+  "test": "tests/integration/v170-bc.int.test.ts C02"
  },
  "A19.2-14": {
   "status": "Yet to do",
@@ -7623,9 +7623,9 @@
   "test": "see docs/ANALYTICS_TEST_MATRIX.md"
  },
  "A19.4-03": {
-  "status": "Yet to do",
-  "action": "Not built",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "Drill-down and Back to Analytics keep the filters (B01)",
+  "test": "e2e v170-abc.spec.ts"
  },
  "A19.4-04": {
   "status": "Implemented",

@@ -114,3 +114,30 @@ export function bucketLabel(key: string, grain: Grain): string {
   if (grain === "month") return new Date(`${key}-01T00:00:00Z`).toLocaleDateString("en-IN", { month: "short", year: "2-digit", timeZone: "UTC" });
   return new Date(`${key}T00:00:00Z`).toLocaleDateString("en-IN", { day: "2-digit", month: "short", timeZone: "UTC" });
 }
+
+// v1.7.0 (B04): what to compare with.
+// - PREVIOUS: the period just before. For this month, the same days of the
+//   previous calendar month (1st to the same date, shortened in a short
+//   month); for last month, the whole month before. Otherwise as long, just before.
+// - LAST_YEAR: the same dates a year earlier (29 Feb becomes 28 Feb).
+export type CompareMode = "PREVIOUS" | "LAST_YEAR";
+
+const minusYear = (iso: string) => {
+  const [year, month, day] = iso.split("-").map(Number) as [number, number, number];
+  const last = new Date(Date.UTC(year - 1, month, 0)).getUTCDate();
+  return `${year - 1}-${String(month).padStart(2, "0")}-${String(Math.min(day, last)).padStart(2, "0")}`;
+};
+
+export function comparisonPeriod(period: Period, mode: CompareMode): Period {
+  if (mode === "LAST_YEAR") return { key: "custom", label: "Same period last year", from: minusYear(period.from), to: minusYear(period.to) };
+  if (period.key === "this_month" || period.key === "last_month") {
+    const [year, month] = period.from.split("-").map(Number) as [number, number];
+    const prevYear = month === 1 ? year - 1 : year;
+    const prevMonth = month === 1 ? 12 : month - 1;
+    const prevLast = new Date(Date.UTC(prevYear, prevMonth, 0)).getUTCDate();
+    const start = `${prevYear}-${String(prevMonth).padStart(2, "0")}-01`;
+    const day = period.key === "last_month" ? prevLast : Math.min(Number(period.to.slice(8)), prevLast);
+    return { key: "custom", label: "Previous month", from: start, to: `${start.slice(0, 8)}${String(day).padStart(2, "0")}` };
+  }
+  return previousPeriod(period);
+}

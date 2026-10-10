@@ -1,5 +1,47 @@
 # Release notes
 
+## v1.7.0 (10 Oct 2026): expiry, calendar, deeper analytics, background exports
+**For everyone**
+- **Approval expiry:** for approval types with "Approval valid for (days)", an approved request shows **Valid until …** (amber in its last 7 days) or **Expired on …**. The requester is told 7 days before. The date is fixed when the request is approved.
+- **Needed-by calendar** (menu: **Calendar**): requests by their "needed by" date, by month. Choose "Mine and waiting on me" or "All I can see".
+- **Refresh from profile** on a new request puts your current department and designation back into the form.
+- **Amendments keep a draft** while you type, like new requests, and appear under Your drafts.
+- **Confidential fields:** values IT marks confidential are shown only to the requester, the approvers and IT. Collaborators and advisers see "Confidential", and so do the PDF summary and the change history.
+
+**Analytics and reports**
+- **Click a number to see the requests behind it.** KPI cards, bars, chart legends and heatmap cells open a list with the same filters.
+- **More filters:** status now, approver, step, response-time state, and how long a request has been open.
+- **New numbers:**
+  - due today and in the next 7 days;
+  - typical (median) time to decide;
+  - approved first time;
+  - rework rate;
+  - withdrawal rate.
+- **Compare with** the previous period (this month is compared with the same days of last month), or the **same period last year**. Team and department views show a **comparison with the whole organisation** (rates and times only).
+- **New charts:**
+  - what became of the requests raised;
+  - backlog and overdue over time;
+  - decisions and response times passed over time;
+  - a **department × step heatmap** of where tasks wait.
+- **Saved views:** share a view with everyone (each person still sees only their own numbers), and make one your **default**.
+- **Scheduled reports:** change a schedule, and send it to **other people too**. Each person gets the report with their own permissions; anyone who can't see it is skipped.
+- **Alerts:** choose a **severity**, **quiet hours** (critical alerts ignore them) and **app inbox only** or inbox and email.
+- **Large exports in the background:** up to 50,000 rows for Excel and CSV. You're told in the app when the file is ready; download it from Reports → My exports within 7 days.
+
+**For IT**
+- **Form preview** in the workflow builder: try the form, with its rules and formulas, before saving.
+- **Move pending tasks** (Workload → Move pending tasks): tick tasks from anyone, choose one person and give a reason. Every task gets its own result.
+- **Re-check and fix** on Needs attention, for requests flagged "Workflow state doesn't add up". It makes the task records match the workflow (audited). It never changes the workflow itself and never deletes anything.
+- **Duplicate checks** can count anyone's requests, the same person's, or the same department's. New: **must-be-unique fields** (an invoice or PO number can't repeat on an open or approved request).
+- When an out-of-office cover ends, both people are told how many approvals are back with the person.
+
+**For the Super Admin**
+- **Scheduled jobs stopped** alert: if the 5-minute job run hasn't run for 2 hours, you're told (at most once a day). The check runs when the health check is called or an IT page is opened.
+- **Optional download permission:** Providers & security → Feature switches → **Report downloads: ROLE** limits downloads, emailed schedules and background exports to people with the new **Can export** role (plus IT).
+- **Backup check:** `npm run db:verify-backup -- <backup file> --into=<empty database>` restores a backup into a separate empty database and proves every table, row count and trigger came back. It refuses the live database. See BACKUP_RESTORE_AND_ROLLBACK.md.
+- **Performance:** measured p95 timings and new indexes (docs/PERFORMANCE_ANALYTICS.md). Analytics pages and the readiness check are rate-limited per person.
+- Database: one migration, additive only (`202610140900_v170.sql`). v1.6.2 still runs on it, so rollback is a republish.
+
 ## v1.6.2 (10 Oct 2026): backups on GoDaddy
 - Backups now go to **Private Storage** (`/private/backups`) when `BACKUP_DIR` isn't set: the only folder the app can write to that is kept across publishes. A cPanel home folder (`/home/...`) isn't visible to the app and made backups fail.
 - When a backup fails, **Back up now** and **Automation** now say why in plain words (folder not writable, folder can't be created, disk full, database permission), with the folder it tried.

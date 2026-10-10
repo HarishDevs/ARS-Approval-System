@@ -48,3 +48,12 @@ export function alertDecision(rule: { threshold: number; firing: boolean; lastFi
   const cooled = !rule.lastFiredAt || now.getTime() - rule.lastFiredAt.getTime() >= rule.cooldownHours * 3_600_000;
   return { fire: !rule.firing || cooled, firing: true };
 }
+
+// v1.7.0 (B08): quiet hours in India time, start inclusive, end exclusive.
+// 22 to 7 wraps past midnight; equal or missing hours mean no quiet time.
+export function inQuietHours(rule: { quietStart: number | null; quietEnd: number | null }, now: Date): boolean {
+  const { quietStart: start, quietEnd: end } = rule;
+  if (start === null || end === null || start === end) return false;
+  const hour = new Date(now.getTime() + 330 * 60_000).getUTCHours();
+  return start < end ? hour >= start && hour < end : hour >= start || hour < end;
+}

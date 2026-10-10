@@ -39,6 +39,8 @@ Unified prompt FN2, FN8, FN11 and Addendum B (monitoring). The live version of t
 | housekeeping | Housekeeping (drafts, rate limits, payloads, old queue rows, job history) | Every run | Next run continues | Deletes only data past its retention | Data kept a little longer; nothing lost | None needed | Super Admin |
 | delegations | Delegation start and end audit | Every run | Next run | Each start and end recorded once | Delegations still apply by date | None needed | IT team |
 | backup | Daily backup | Daily | Each run tries until today's backup exists | At most one a day; never overwrites | Super Admin alerted | Back up now (Super Admin home) | Super Admin |
+| expiry | Approval expiry notices (v1.7.0) | Every run | Next run | Each request claimed before its notice | Recorded; next run | None needed | IT team |
+| exports | Background exports (v1.7.0) | Every run, and right after each request | A run that died is re-queued after 30 min | Each export claimed (queued → running) | Shown as failed on Reports | Ask again | Each export's owner |
 | stuck | Stuck-request scan | Every run | Next run | Read-only | Needs attention still works | None needed | IT team |
 
 **Not automated, so not in the inventory:**

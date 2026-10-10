@@ -3,7 +3,7 @@ import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { getDbPool } from "@/lib/db/client";
 import { runReport, cleanQuery } from "@/server/reports/run";
 import { exportReport, fileName, type ExportFormat } from "@/server/reports/export";
-import { nextRunAt, describeSchedule, alertDecision, type Frequency } from "@/server/reports/schedule-time";
+import { nextRunAt, describeSchedule, alertDecision, inQuietHours, type Frequency } from "@/server/reports/schedule-time";
 import { resolveScope, taskScopeSql, type ScopeKind } from "@/server/analytics/scope";
 import { loadNow, type AnalyticsFilter } from "@/lib/db/repositories/analytics.repository";
 import { indiaToday, resolvePeriod } from "@/server/analytics/periods";
@@ -60,9 +60,14 @@ export interface ScheduleRow {
   lastRunAt: Date | null;
   lastStatus: string | null;
   failures: number;
+  recipients: number[]; // B06: extra recipients (user ids)
 }
 
-type Row = RowDataPacket & { id: number; user_id: number; report_key: string; query_json: unknown; format: ExportFormat; frequency: Frequency; weekday: number | null; month_day: number | null; hour_ist: number; active: number; next_run_at: Date; last_run_at: Date | null; last_status: string | null; failures: number };
+type Row = RowDataPacket & { id: number; user_id: number; report_key: string; query_json: unknown; format: ExportFormat; frequency: Frequency; weekday: number | null; month_day: number | null; hour_ist: number; active: number; next_run_at: Date; last_run_at: Date | null; last_status: string | null; failures: number; recipients_json: unknown };
+const recipientsOf = (value: unknown): number[] => {
+  const parsed = typeof value === "string" ? (JSON.parse(value) as unknown) : value;
+  return Array.isArray(parsed) ? parsed.filter((item): item is number => Number.isInteger(item) && item > 0).slice(0, 10) : [];
+};
 const toSchedule = (row: Row): ScheduleRow => ({
   id: row.id,
   userId: row.user_id,
@@ -78,6 +83,7 @@ const toSchedule = (row: Row): ScheduleRow => ({
   lastRunAt: row.last_run_at,
   lastStatus: row.last_status,
   failures: row.failures,
+  recipients: recipientsOf(row.recipients_json),
 });
 
 export async function listSchedules(userId: number): Promise<ScheduleRow[]> {
@@ -85,16 +91,27 @@ export async function listSchedules(userId: number): Promise<ScheduleRow[]> {
   return rows.map(toSchedule);
 }
 
-export async function createSchedule(input: { userId: number; reportKey: string; query: Record<string, string>; format: ExportFormat; frequency: Frequency; weekday: number | null; monthDay: number | null; hourIst: number }): Promise<number> {
+export async function createSchedule(input: { userId: number; reportKey: string; query: Record<string, string>; format: ExportFormat; frequency: Frequency; weekday: number | null; monthDay: number | null; hourIst: number; recipients?: number[] }): Promise<number> {
   const db = getDbPool();
   const [[count]] = await db.query<RowDataPacket[]>("SELECT COUNT(*) AS n FROM report_schedules WHERE user_id = ? AND active = TRUE", [input.userId]);
   if (Number(count?.n ?? 0) >= 20) throw new Error("TOO_MANY");
   const next = nextRunAt({ frequency: input.frequency, weekday: input.weekday, monthDay: input.monthDay, hourIst: input.hourIst }, new Date());
   const [result] = await db.query<ResultSetHeader>(
-    "INSERT INTO report_schedules (user_id, report_key, query_json, format, frequency, weekday, month_day, hour_ist, next_run_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-    [input.userId, input.reportKey, JSON.stringify(input.query), input.format, input.frequency, input.weekday, input.monthDay, input.hourIst, next],
+    "INSERT INTO report_schedules (user_id, report_key, query_json, format, frequency, weekday, month_day, hour_ist, recipients_json, next_run_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    [input.userId, input.reportKey, JSON.stringify(input.query), input.format, input.frequency, input.weekday, input.monthDay, input.hourIst, JSON.stringify(input.recipients ?? []), next],
   );
   return result.insertId;
+}
+
+// B06: change when, how and to whom (owner only). The next run is worked
+// out again from now; the run history stays.
+export async function updateSchedule(userId: number, id: number, input: { format: ExportFormat; frequency: Frequency; weekday: number | null; monthDay: number | null; hourIst: number; recipients: number[] }): Promise<boolean> {
+  const next = nextRunAt({ frequency: input.frequency, weekday: input.weekday, monthDay: input.monthDay, hourIst: input.hourIst }, new Date());
+  const [result] = await getDbPool().query<ResultSetHeader>(
+    "UPDATE report_schedules SET format = ?, frequency = ?, weekday = ?, month_day = ?, hour_ist = ?, recipients_json = ?, next_run_at = IF(active, ?, next_run_at) WHERE id = ? AND user_id = ?",
+    [input.format, input.frequency, input.weekday, input.monthDay, input.hourIst, JSON.stringify(input.recipients.slice(0, 10)), next, id, userId],
+  );
+  return result.affectedRows === 1;
 }
 
 export async function setScheduleActive(userId: number, id: number, active: boolean): Promise<boolean> {
@@ -113,6 +130,35 @@ export async function listRuns(userId: number, limit = 20): Promise<{ scheduleId
     [userId, limit],
   );
   return rows.map((row) => ({ scheduleId: row.schedule_id, reportKey: row.report_key, dueAt: row.due_at, status: row.status, rows: row.row_count === null ? null : Number(row.row_count), message: row.message }));
+}
+
+// B06: who gets a schedule's report: the owner, then each extra recipient
+// with their own permissions at the time it runs. Someone who can't run the
+// report for the same scope, is inactive, or may not download, is skipped
+// (a schedule never widens what anyone sees).
+type Ran = NonNullable<Awaited<ReturnType<typeof runReport>>>;
+export async function scheduleAudience(row: Pick<ScheduleRow, "reportKey" | "query" | "recipients">, person: Owner, ran: Ran, now: Date): Promise<{ audience: { person: Owner; ran: Ran }[]; skippedPeople: number }> {
+  const wantedScope = typeof row.query.scope === "string" ? row.query.scope : ran.scope.kind;
+  const audience: { person: Owner; ran: Ran }[] = [{ person, ran }];
+  let skippedPeople = 0;
+  for (const recipientId of row.recipients.filter((item) => item !== person.id)) {
+    const other = await owner(recipientId);
+    if (!other?.active || !(await canExport(other))) {
+      skippedPeople += 1;
+      continue;
+    }
+    const theirs = await runReport(row.reportKey, cleanQuery({ ...row.query, scope: wantedScope }), { id: other.id, roles: other.roles }, now);
+    if (!theirs || theirs.scope.kind !== wantedScope) {
+      skippedPeople += 1;
+      continue;
+    }
+    audience.push({ person: other, ran: theirs });
+  }
+  return { audience, skippedPeople };
+}
+
+export async function ownerOf(userId: number) {
+  return owner(userId);
 }
 
 // Job runner step. Each slot is claimed by inserting its report_runs row
@@ -160,23 +206,38 @@ export async function runDueSchedules(limit = 20): Promise<{ reportsSent: number
         await finish("SKIPPED", "The owner can no longer run this report; the schedule is paused.");
         continue;
       }
-      const meta = { title: ran.report.name, scopeLabel: ran.scope.label, periodLabel: ran.report.usesPeriod ? `${ran.filter.period.label} (${ran.filter.period.from} to ${ran.filter.period.to})` : null, generatedAt: now, generatedBy: `${person.name} (scheduled)` };
-      const file = await exportReport(row.format, ran.result, meta);
-      const bytes = typeof file === "string" ? Buffer.byteLength(file) : file.byteLength;
-      const params = new URLSearchParams(cleanQuery(row.query) as Record<string, string>).toString();
-      const link = `${base()}/users/reports/${row.reportKey}${params ? `?${params}` : ""}`;
-      const attach = bytes <= MAX_ATTACHMENT_BYTES;
-      await sendEmail(
-        await getEmailConfig(),
-        {
-          to: person.email,
-          subject: `ARS Approvals: ${ran.report.name} (${describeSchedule(row).toLowerCase()})`,
-          text: `${ran.report.name}\n${meta.scopeLabel}${meta.periodLabel ? ` · ${meta.periodLabel}` : ""}\n${ran.result.rows.length} row${ran.result.rows.length === 1 ? "" : "s"}${ran.result.truncated ? " (first rows only)" : ""}.\n\n${attach ? "The report is attached." : "The report is too large to attach."} Open it in the app:\n${link}\n\nYou get this because you scheduled it. Manage your schedules: ${base()}/users/reports`,
-          attachments: attach ? [{ filename: fileName(row.reportKey, row.format, now), content: file }] : undefined,
-        },
-        { fetch },
-      );
-      await finish("SENT", attach ? "Sent with the file attached." : "Sent with a link (file too large to attach).", { rows: ran.result.rows.length, bytes });
+      // B06: the owner, then each extra recipient, each with their own
+      // permissions at the time it runs. Someone who can't run this report
+      // for the same scope, or may not download, is skipped (never widened).
+      const { audience, skippedPeople } = await scheduleAudience(row, person, ran, now);
+      let totalBytes = 0;
+      let attachedAll = true;
+      for (const entry of audience) {
+        const meta = { title: entry.ran.report.name, scopeLabel: entry.ran.scope.label, periodLabel: entry.ran.report.usesPeriod ? `${entry.ran.filter.period.label} (${entry.ran.filter.period.from} to ${entry.ran.filter.period.to})` : null, generatedAt: now, generatedBy: `${person.name} (scheduled)` };
+        const file = await exportReport(row.format, entry.ran.result, meta);
+        const bytes = typeof file === "string" ? Buffer.byteLength(file) : file.byteLength;
+        totalBytes += bytes;
+        const params = new URLSearchParams(cleanQuery(row.query) as Record<string, string>).toString();
+        const link = `${base()}/users/reports/${row.reportKey}${params ? `?${params}` : ""}`;
+        const attach = bytes <= MAX_ATTACHMENT_BYTES;
+        attachedAll &&= attach;
+        const why = entry.person.id === person.id ? "You get this because you scheduled it." : `You get this because ${person.name} added you to their scheduled report. It shows what you can see.`;
+        await sendEmail(
+          await getEmailConfig(),
+          {
+            to: entry.person.email,
+            subject: `ARS Approvals: ${entry.ran.report.name} (${describeSchedule(row).toLowerCase()})`,
+            text: `${entry.ran.report.name}\n${meta.scopeLabel}${meta.periodLabel ? ` · ${meta.periodLabel}` : ""}\n${entry.ran.result.rows.length} row${entry.ran.result.rows.length === 1 ? "" : "s"}${entry.ran.result.truncated ? " (first rows only)" : ""}.\n\n${attach ? "The report is attached." : "The report is too large to attach."} Open it in the app:\n${link}\n\n${why} Manage schedules: ${base()}/users/reports`,
+            attachments: attach ? [{ filename: fileName(row.reportKey, row.format, now), content: file }] : undefined,
+          },
+          { fetch },
+        );
+      }
+      const rows = ran.result.rows.length;
+      const bytes = totalBytes;
+      const attach = attachedAll;
+      const extra = audience.length > 1 || skippedPeople ? ` To ${audience.length} ${audience.length === 1 ? "person" : "people"}${skippedPeople ? `, ${skippedPeople} skipped (no access)` : ""}.` : "";
+      await finish("SENT", `${attach ? "Sent with the file attached." : "Sent with a link (file too large to attach)."}${extra}`, { rows, bytes });
     } catch (error) {
       logError("scheduled report failed", error, { scheduleId: row.id });
       await finish("FAILED", error instanceof Error ? `${error.name}: ${error.message}` : "Failed").catch(() => undefined);
@@ -209,21 +270,48 @@ export interface AlertRule {
   lastValue: number | null;
   lastCheckedAt: Date | null;
   lastFiredAt: Date | null;
+  // B08
+  severity: AlertSeverity;
+  quietStart: number | null;
+  quietEnd: number | null;
+  channels: "INBOX" | "INBOX_EMAIL";
 }
+export type AlertSeverity = "INFO" | "WARNING" | "CRITICAL";
+export const SEVERITY_LABEL: Record<AlertSeverity, string> = { INFO: "Information", WARNING: "Warning", CRITICAL: "Critical" };
 
-type AlertRow = RowDataPacket & { id: number; user_id: number; metric: string; scope_kind: ScopeKind; threshold: number; param: number | null; cooldown_hours: number; active: number; firing: number; latest_value: number | null; last_checked_at: Date | null; last_fired_at: Date | null };
-const toRule = (row: AlertRow): AlertRule => ({ id: row.id, userId: row.user_id, metric: row.metric, scopeKind: row.scope_kind, threshold: row.threshold, param: row.param, cooldownHours: row.cooldown_hours, active: Boolean(row.active), firing: Boolean(row.firing), lastValue: row.latest_value, lastCheckedAt: row.last_checked_at, lastFiredAt: row.last_fired_at });
+type AlertRow = RowDataPacket & { id: number; user_id: number; metric: string; scope_kind: ScopeKind; threshold: number; param: number | null; cooldown_hours: number; active: number; firing: number; latest_value: number | null; last_checked_at: Date | null; last_fired_at: Date | null; severity: AlertSeverity | null; quiet_start: number | null; quiet_end: number | null; channels: "INBOX" | "INBOX_EMAIL" | null };
+const toRule = (row: AlertRow): AlertRule => ({
+  id: row.id,
+  userId: row.user_id,
+  metric: row.metric,
+  scopeKind: row.scope_kind,
+  threshold: row.threshold,
+  param: row.param,
+  cooldownHours: row.cooldown_hours,
+  active: Boolean(row.active),
+  firing: Boolean(row.firing),
+  lastValue: row.latest_value,
+  lastCheckedAt: row.last_checked_at,
+  lastFiredAt: row.last_fired_at,
+  severity: row.severity ?? "WARNING",
+  quietStart: row.quiet_start,
+  quietEnd: row.quiet_end,
+  channels: row.channels ?? "INBOX_EMAIL",
+});
 
 export async function listAlertRules(userId: number): Promise<AlertRule[]> {
   const [rows] = await getDbPool().query<AlertRow[]>("SELECT * FROM alert_rules WHERE user_id = ? ORDER BY id DESC LIMIT 50", [userId]);
   return rows.map(toRule);
 }
 
-export async function createAlertRule(input: { userId: number; metric: string; scopeKind: ScopeKind; threshold: number; param: number | null; cooldownHours: number }): Promise<number> {
+export async function createAlertRule(input: { userId: number; metric: string; scopeKind: ScopeKind; threshold: number; param: number | null; cooldownHours: number; severity?: AlertSeverity; quietStart?: number | null; quietEnd?: number | null; channels?: "INBOX" | "INBOX_EMAIL" }): Promise<number> {
   const db = getDbPool();
   const [[count]] = await db.query<RowDataPacket[]>("SELECT COUNT(*) AS n FROM alert_rules WHERE user_id = ? AND active = TRUE", [input.userId]);
   if (Number(count?.n ?? 0) >= 20) throw new Error("TOO_MANY");
-  const [result] = await db.query<ResultSetHeader>("INSERT INTO alert_rules (user_id, metric, scope_kind, threshold, param, cooldown_hours) VALUES (?, ?, ?, ?, ?, ?)", [input.userId, input.metric, input.scopeKind, input.threshold, input.param, input.cooldownHours]);
+  const [result] = await db.query<ResultSetHeader>(
+    "INSERT INTO alert_rules (user_id, metric, scope_kind, threshold, param, cooldown_hours, severity, quiet_start, quiet_end, channels) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    [input.userId, input.metric, input.scopeKind, input.threshold, input.param, input.cooldownHours, input.severity ?? "WARNING", input.quietStart ?? null, input.quietEnd ?? null, input.channels ?? "INBOX_EMAIL"],
+  );
   return result.insertId;
 }
 
@@ -267,10 +355,10 @@ export async function alertValue(rule: Pick<AlertRule, "metric" | "scopeKind" | 
 
 // Job runner step: check every active rule; tell the owner (inbox + email)
 // when it crosses the line, at most once per cool-down.
-export async function evaluateAlerts(limit = 200): Promise<{ alertsChecked: number; alertsFired: number }> {
+export async function evaluateAlerts(limit = 200): Promise<{ alertsChecked: number; alertsFired: number; alertsHeld: number }> {
   const db = getDbPool();
   const [rows] = await db.query<AlertRow[]>("SELECT * FROM alert_rules WHERE active = TRUE ORDER BY id LIMIT ?", [limit]);
-  const out = { alertsChecked: 0, alertsFired: 0 };
+  const out = { alertsChecked: 0, alertsFired: 0, alertsHeld: 0 };
   if ((await featureMode("scheduled_reports")) === "OFF") return out;
   for (const rule of rows.map(toRule)) {
     try {
@@ -288,6 +376,13 @@ export async function evaluateAlerts(limit = 200): Promise<{ alertsChecked: numb
       const now = new Date();
       const decision = alertDecision(rule, value, now);
       out.alertsChecked += 1;
+      // B08: quiet hours hold a firing back (CRITICAL never waits); it goes
+      // out on the first check after they end, if still over the line.
+      if (decision.fire && rule.severity !== "CRITICAL" && inQuietHours(rule, now)) {
+        await db.query("UPDATE alert_rules SET latest_value = ?, last_checked_at = CURRENT_TIMESTAMP WHERE id = ?", [value, rule.id]);
+        out.alertsHeld += 1;
+        continue;
+      }
       if (decision.fire) {
         // Claim the firing first, so a parallel run can't send it twice.
         const [claimed] = await db.query<ResultSetHeader>(
@@ -299,13 +394,14 @@ export async function evaluateAlerts(limit = 200): Promise<{ alertsChecked: numb
         const metric = ALERT_METRICS[rule.metric]!;
         const label = metric.needsDays ? metric.label.replace("N", String(rule.param ?? 3)) : metric.label;
         const message = `${label}: ${value}${metric.unit === "%" ? "%" : ""} (your line is ${rule.threshold}${metric.unit === "%" ? "%" : ""}).`;
+        const level = SEVERITY_LABEL[rule.severity];
         await notify({
           eventType: "ANALYTICS_ALERT",
           userId: person.id,
-          title: "Alert: a number crossed your line",
+          title: `${level}: a number crossed your line`,
           message,
           deepLink: `${base()}/users/analytics?scope=${rule.scopeKind}`,
-          email: { subject: `ARS Approvals alert: ${label}`, text: `${message}\n\nOpen Analytics: ${base()}/users/analytics?scope=${rule.scopeKind}\n\nYou get this at most once every ${rule.cooldownHours} hours while it stays over the line. Manage your alerts: ${base()}/users/reports#alerts` },
+          email: rule.channels === "INBOX" ? null : { subject: `ARS Approvals ${level.toLowerCase()}: ${label}`, text: `${message}\n\nOpen Analytics: ${base()}/users/analytics?scope=${rule.scopeKind}\n\nYou get this at most once every ${rule.cooldownHours} hours while it stays over the line. Manage your alerts: ${base()}/users/reports#alerts` },
           whatsappVariables: null,
         }).catch((error) => logError("alert notify failed", error, { ruleId: rule.id }));
         out.alertsFired += 1;

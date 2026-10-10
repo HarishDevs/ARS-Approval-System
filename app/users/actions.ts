@@ -14,6 +14,7 @@ import { addCollaborators, collaboratorIdsFrom } from "@/server/approvals/collab
 import { findRequest, findWorkflowVersion } from "@/lib/db/repositories/approvals.repository";
 import { logError } from "@/lib/logging/logger";
 import { deleteDraft } from "@/lib/db/repositories/drafts.repository";
+import { hitRateLimit } from "@/lib/db/repositories/jobs.repository";
 import { bulkApprove, BULK_MAX } from "@/server/approvals/bulk";
 import type { ActionResult } from "@/lib/http/action-result";
 
@@ -418,10 +419,14 @@ export async function delegateTaskAction(_previous: ActionResult | null, formDat
 
 // FN1 "Check before submitting": the same checks as the submit, nothing
 // saved. attachmentCount is how many files are chosen in the form.
+const READINESS_PER_MINUTE = 20;
+
 export async function checkReadinessAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
   const me = await actor();
   const workflowId = num(formData.get("workflowId"));
   if (!me || workflowId === null) return NOT_FOUND;
+  // C04: the check runs the whole submission logic; 20 a minute per person.
+  if ((await hitRateLimit(`readiness:${me.id}`, 60).catch(() => 0)) > READINESS_PER_MINUTE) return { ok: false, message: "Checked many times in the last minute. Wait a moment and try again." };
   const workflow = await findWorkflow(workflowId);
   const version = workflow && workflow.active && workflow.kind === "PREDEFINED" ? await findPublishedVersion(workflow.id) : null;
   if (!workflow || !version) return NOT_FOUND;

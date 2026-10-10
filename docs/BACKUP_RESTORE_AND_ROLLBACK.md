@@ -20,6 +20,24 @@ Safety rules:
 
 Follow DEPLOYMENT Part P: restore the dump into a **new** database (`…_restoretest`), compare table counts, then decide. `scripts/database/restore.js` refuses to run without `--confirm-database=<name>`. CI repeats this drill on every build (`tests/integration/backup.int.test.ts`, which checks every table).
 
+**Scripted check (v1.7.0):**
+
+1. Create an **empty** database (cPanel → MySQL Databases), and give the app's MySQL user all privileges on it.
+2. Run:
+
+   ```
+   npm run db:verify-backup -- <ars-db-YYYYMMDD-HHMMSS.sql.gz> --into=<empty_database> --report=backup-check.json
+   ```
+
+3. Read the result:
+   - It restores the file there and compares, for every table, the restored rows with the rows in the file.
+   - It also checks that every trigger came back and that the audit log and timeline still refuse changes.
+   - It prints counts only, never data or settings.
+   - Exit code 0 means OK. It also writes a JSON report.
+4. Drop the check database afterwards.
+
+The script refuses the app's own database (`DB_NAME`) and any database that already has tables. CI runs it on every build (`tests/integration/v170-bc.int.test.ts`).
+
 Never restore over the live database without the owner's explicit decision. Before any restore, take a fresh backup.
 
 **After a restore, check:**

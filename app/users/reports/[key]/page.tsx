@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { canExport, featureOn } from "@/server/settings/features";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Download } from "lucide-react";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { Breadcrumbs } from "@/features/ui/Display";
-import { DeleteViewButton, SaveViewForm, ScheduleForm } from "@/features/analytics/ReportForms";
+import { BackgroundExportForm, SavedViews, SaveViewForm, ScheduleForm } from "@/features/analytics/ReportForms";
+import { listActiveUserOptions } from "@/lib/db/repositories/admin-users.repository";
 import { cleanQuery, runReport } from "@/server/reports/run";
 import { PERIOD_LABEL, type PeriodKey } from "@/server/analytics/periods";
 import { dashboardChoices } from "@/lib/db/repositories/dashboards.repository";
@@ -39,6 +40,10 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
   const { report, scope, scopes, filter, result } = ran;
   const choices = await dashboardChoices();
   const views = await listViews(user.id, key);
+  // B07: opening a report with no filters uses your default view for it.
+  const defaultView = Object.keys(raw).length === 0 ? views.find((view) => view.isDefault && Object.keys(view.query).length > 0) : undefined;
+  if (defaultView) redirect(`/users/reports/${key}?${new URLSearchParams(defaultView.query).toString()}`);
+  const people = scheduling ? (await listActiveUserOptions()).filter((person) => person.id !== user.id).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` })) : [];
   const effective: Record<string, string> = { ...(query as Record<string, string>), scope: scope.kind, period: filter.period.key };
   if (filter.period.key === "custom") Object.assign(effective, { from: filter.period.from, to: filter.period.to });
   const download = (format: string) => `/api/reports/${key}?${new URLSearchParams({ ...effective, format }).toString()}`;
@@ -139,21 +144,10 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
       </form>
 
       <div className="mb-4 flex flex-wrap items-start gap-6">
-        {views.length > 0 && (
-          <p className="text-label">
-            Saved:{" "}
-            {views.map((view) => (
-              <span key={view.id} className="mr-2 inline-flex items-center rounded-full border border-line px-2.5 py-0.5">
-                <Link href={`/users/reports/${key}?${new URLSearchParams(view.query).toString()}`} className="link">
-                  {view.name}
-                </Link>
-                <DeleteViewButton viewId={view.id} name={view.name} />
-              </span>
-            ))}
-          </p>
-        )}
+        <SavedViews views={views.map((view) => ({ id: view.id, name: view.name, href: `/users/reports/${key}?${new URLSearchParams(view.query).toString()}`, mine: view.mine, shared: view.shared, isDefault: view.isDefault, ownerName: view.ownerName }))} />
         <SaveViewForm target={key} query={effective} />
-        {scheduling && <ScheduleForm reportKey={key} query={effective} />}
+        {scheduling && <ScheduleForm reportKey={key} query={effective} people={people} />}
+        {exporting && <BackgroundExportForm reportKey={key} query={effective} truncated={result.truncated} />}
       </div>
 
       <div className="card overflow-x-auto">

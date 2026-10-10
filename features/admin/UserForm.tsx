@@ -25,7 +25,7 @@ export interface UserFormValues {
 
 const ROLE_INFO: { role: RoleCode; label: string; body: string }[] = [
   { role: "USER", label: "User", body: "Raise requests, create custom approvals, approve what is assigned. Everyone has this." },
-  { role: "EXPORTER", label: "Can export", body: "Download reports (CSV, Excel, PDF) when the Super Admin limits downloads to this role." },
+  { role: "EXPORTER", label: "Can export", body: "Download reports (CSV, Excel, PDF) when downloads are limited to this permission." },
   { role: "IT_ADMIN", label: "IT Admin", body: "The Admin space: approval types, workflows, DoA, users and departments." },
   { role: "SUPER_ADMIN", label: "Super Admin", body: "Providers, security, audit log. Only a Super Admin can grant this." },
 ];

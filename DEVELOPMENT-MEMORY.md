@@ -352,6 +352,41 @@
 - The Node.js app runs in a container (`/app`). It can persist files only under Private Storage (`/private`); a cPanel `/home/<user>` path is not visible to it (ENOENT on live).
 - `BACKUP_DIR` defaults to a `backups` folder beside `UPLOAD_DIR` (`/private/backups`).
 - Backup failures are explained in plain words. | Found on live; Claude, 10 Oct 2026 |
+| D-129 | 10 Oct 2026 | **Approval expiry is fixed at approval (v1.7.0, A1):**
+- When a request of a type with "Approval valid for (days)" is approved, `valid_until` = approval time + those days. A later change to the type's setting never moves dates already given.
+- It is cleared if the request leaves APPROVED (reopen).
+- The requester is told once, 7 days before (job step `expiry`, claimed per request).
+- Expiry is shown (Valid until / Expired on). It doesn't block amendments, which are how an approval is renewed. | Owner list A; Claude, 10 Oct 2026 |
+| D-130 | 10 Oct 2026 | **Stopped job runner is noticed from outside (A5):**
+- A stopped cron can't report itself. The check runs when `/api/health` is called (uptime monitor) and when IT or the Super Admin open a page, after the answer is sent.
+- "Stopped" = last run over 2 hours ago (a runner that never ran shows NEVER on System health instead).
+- At most one look per 10 minutes per process; the alert at most once a day (`JOB_RUNNER_STOPPED`). | Claude, 10 Oct 2026 |
+| D-131 | 10 Oct 2026 | **Re-check and fix changes copies, never the record (A6):**
+- The workflow state (`state_json`) is the record; `approval_tasks` are its copy for queues and reminders.
+- "Re-check and fix" rewrites task rows from the state and closes pending rows the state doesn't have (CANCELLED, never deleted), audited as `REQUEST_REPAIRED`.
+- "In progress with no open step" is reported, never auto-fixed. | Claude, 10 Oct 2026 |
+| D-132 | 10 Oct 2026 | **Confidential fields and the Can export permission (A8, A9):**
+- A field marked confidential is shown only to the requester, IT, and anyone who holds or decided a task on the request (or covers a pending one today). Everyone else (collaborators, advisers, the PDF they download) sees "Confidential". Drill-down lists and reports never show form values.
+- Downloads stay open to everyone by default. Super Admin can set `features.exports` = ROLE: then downloads, emailed schedules and background exports need the new role **Can export** (`EXPORTER`), or IT. | Owner list A; Claude, 10 Oct 2026 |
+| D-133 | 10 Oct 2026 | **Duplicate scope and unique identifiers (A10):**
+- Duplicate checks can count anyone's requests (default), the same person's or the same department's.
+- Must-be-unique fields (up to 5 per type) refuse a repeat on any open or approved request of the type, at any date, for everyone including IT; a rejected or withdrawn request frees the value.
+- Race safety comes from the per-type row lock already taken at submit (D-QA), not a database unique index, so no data migration is needed. | Owner list A; Claude, 10 Oct 2026 |
+| D-134 | 10 Oct 2026 | **Analytics drill-down, filters and comparisons (list B):**
+- One reader (`server/analytics/query.ts`) turns the address into filters for both the dashboard and the drill-down list, so a list always matches the number it came from.
+- Extra filters (status now, approver, step, response-time state, age) are conditions on the request and narrow every number.
+- "Previous period" for this month = the same days of last month; for last month = the month before; "Same period last year" is a choice.
+- Team and department views compare with organisation rates and times only (never records).
+- History charts (backlog, overdue, passed response times) are worked out from request and task times; there is no history table. | Owner list B; Claude, 10 Oct 2026 |
+| D-135 | 10 Oct 2026 | **Schedules with recipients, shared views, alert options (B06–B08):**
+- Extra schedule recipients are people in the app (by user id, up to 10). Each gets the report run with **their own** permissions for the same scope; anyone who can't is skipped. A schedule never widens what someone sees.
+- A shared view shares its name and filters only; each viewer gets their own numbers. One default view per person and page.
+- Alerts have a severity, optional quiet hours (India time; CRITICAL ignores them; a held alert goes after they end) and a channel (inbox, or inbox and email). | Owner list B; Claude, 10 Oct 2026 |
+| D-136 | 10 Oct 2026 | **Background exports, backup check, rate limits, indexes (list C):**
+- Background exports run with the owner's permissions when made, up to 50,000 rows (CSV, Excel; PDF stays 5,000). They are written to private storage beside backups, downloadable by the owner for 7 days, then removed by the job runner.
+- `scripts/database/verify-backup.js` restores into a separate empty database only and compares every table's rows and the triggers with the file.
+- Analytics pages are limited to 40 loads a minute per person; the readiness check to 20.
+- Indexes added on the period columns after measuring (docs/PERFORMANCE_ANALYTICS.md). | Owner list C; Claude, 10 Oct 2026 |
 | D-033 | 28 Sep 2026 | **Staff data is provided by the admin. Roles are assigned per user, by the admin only. Users are added or made inactive in the Admin Portal** (never hard-deleted, so history and audit stay intact). *Resolves Q-010.* | Owner (answer 7) |
 
 ## 4. Open questions (must be answered before the phase shown)
@@ -379,6 +414,30 @@
 | Q-019 | **Which Resend account holds the API key in Super Admin?** The "arsenergy" team (open in Chrome) is empty. Email works only once the From domain (`approvals@arssteels.net`) is verified in the account that owns the key, or a new key from a team with a verified domain is entered. | Before go-live (no email is delivered today) | **Answered 9 Oct 2026:** the key is "New Api Approval" in the Resend team "arssteels" (harishkumar.t@arssteels.com). The owner verified `arssteels.net` there; Resend's log showed "API key not authorized for this domain" for a few minutes after verification, then the test email was **sent** |
 
 ## 5. Work log (newest first)
+
+### 10 Oct 2026 (v1.7.0: lists A, B and C)
+- **Source:** owner, "Work on A, B and C in one Go" (the non-completed points list given the same day).
+- **A (D-129 to D-133):**
+  - approval expiry with a 7-day notice; a needed-by calendar; bulk move of pending tasks; form preview in the builder;
+  - a stopped-job-runner alert; re-check and fix for inconsistent requests; delegation-end notices;
+  - confidential fields; an optional Can export permission;
+  - duplicate scope and must-be-unique fields; refresh from profile; amendment drafts.
+- **B (D-134, D-135):**
+  - drill-down lists with filters carried; status, approver, step, response-time and age filters;
+  - due today and in 7 days, median time, first-pass, rework and withdrawal rates;
+  - month-on-month and year-on-year comparisons, and team or department vs organisation;
+  - status mix, backlog, overdue, passed response times, decision trend and a department × step heatmap;
+  - schedule editing with recipients (each gets their own permissions); shared and default views;
+  - alert severity, quiet hours and channel.
+- **C (D-136):**
+  - p95 measurement (docs/PERFORMANCE_ANALYTICS.md) and new indexes;
+  - background exports (up to 50,000 rows, 7 days);
+  - `npm run db:verify-backup`;
+  - rate limits on Analytics and the readiness check.
+- **Fixed on the way:**
+  - CI E2E QA-AZ-02 failed on list A's push: the "Can export" description mentioned "Super Admin", so the test's checkbox match found it. Reworded. Lesson: run the QA suite locally before every push.
+  - Two v160 E2E tests relied on wording changed in this batch. The wording was restored.
+- **Checks (local, before the tag):** unit 417, integration 175, E2E 82, QA 27, origin 1, perf 3 (local only).
 
 ### 10 Oct 2026 (v1.6.1: attachment fields and collaborators)
 - **Source:** the owner asked for an attachment field type in the approval flow builder, and multiple collaborators per request.

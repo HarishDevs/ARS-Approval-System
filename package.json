@@ -1,6 +1,6 @@
 {
   "name": "ars-approval-system",
-  "version": "1.6.2",
+  "version": "1.7.0",
   "private": true,
   "description": "ARS Approval Platform — multi-level approvals in any custom manner",
   "engines": {
@@ -21,7 +21,8 @@
     "db:up": "docker compose up -d mysql",
     "db:migrate": "node scripts/database/migrate.js",
     "db:seed": "node scripts/database/seed.js",
-    "db:check": "node scripts/database/check-privileges.js"
+    "db:check": "node scripts/database/check-privileges.js",
+    "db:verify-backup": "node scripts/database/verify-backup.js"
   },
   "dependencies": {
     "clsx": "2.1.1",

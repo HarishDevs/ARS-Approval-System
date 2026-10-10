@@ -2,7 +2,7 @@ import "server-only";
 import type { RowDataPacket } from "mysql2/promise";
 import { getDbPool, type Queryable } from "@/lib/db/client";
 import { requestScopeSql, taskScopeSql, type Scope, type Viewer } from "@/server/analytics/scope";
-import { APPROACHING_SHARE, type AgingKey, type SlaStatus, agingBucket } from "@/server/analytics/semantics";
+import { AGING_BUCKETS, APPROACHING_SHARE, type AgingKey, type SlaStatus, agingBucket } from "@/server/analytics/semantics";
 import { bucketKey, buckets, grainFor, type Grain, type Period } from "@/server/analytics/periods";
 
 // Role analytics queries (Addendum A, D-122). Every query is scoped on the
@@ -13,7 +13,18 @@ export interface AnalyticsFilter {
   period: Period;
   workflowId: number | null; // -1 = custom approvals
   departmentId: number | null; // raiser's department (organisation scope only)
+  // v1.7.0 (B02): narrow to requests with this status, a task held or decided
+  // by this person, a task at this step, a pending task in this response-time
+  // state, or open requests of this age. Each is a condition on the request.
+  status?: RequestStatusFilter | null;
+  approverId?: number | null;
+  step?: string | null;
+  sla?: PendingSla | null;
+  aging?: AgingKey | null;
 }
+
+export type RequestStatusFilter = "IN_PROGRESS" | "ON_HOLD" | "CHANGES_REQUIRED" | "APPROVED" | "REJECTED" | "CANCELLED";
+export type PendingSla = "WITHIN" | "APPROACHING" | "BREACHED" | "PAUSED" | "NOT_CONFIGURED";
 
 const n = (value: unknown) => Number(value ?? 0);
 const orNull = (value: unknown) => (value === null || value === undefined ? null : Number(value));
@@ -25,7 +36,7 @@ const JOINS = `FROM approval_requests r
   JOIN workflow_definitions w ON w.id = v.workflow_id
   JOIN users rq ON rq.id = r.requester_id`;
 
-function where(scope: Scope, viewer: Viewer, filter: AnalyticsFilter, level: "request" | "task" | "pending" = "request"): { sql: string; params: unknown[] } {
+export function where(scope: Scope, viewer: Viewer, filter: AnalyticsFilter, level: "request" | "task" | "pending" = "request"): { sql: string; params: unknown[] } {
   const scoped = level === "request" ? requestScopeSql(scope, viewer) : taskScopeSql(scope, viewer, level === "pending");
   const parts = ["r.deleted_at IS NULL", scoped.sql];
   const params = [...scoped.params];
@@ -38,8 +49,42 @@ function where(scope: Scope, viewer: Viewer, filter: AnalyticsFilter, level: "re
     parts.push("rq.department_id = ?");
     params.push(filter.departmentId);
   }
+  if (filter.status) {
+    parts.push("r.status = ?");
+    params.push(filter.status);
+  }
+  if (filter.approverId) {
+    parts.push("EXISTS (SELECT 1 FROM approval_tasks fa WHERE fa.request_id = r.id AND (fa.approver_id = ? OR fa.decided_by = ?))");
+    params.push(filter.approverId, filter.approverId);
+  }
+  if (filter.step) {
+    parts.push("EXISTS (SELECT 1 FROM approval_tasks fs WHERE fs.request_id = r.id AND fs.node_label = ?)");
+    params.push(filter.step);
+  }
+  if (filter.sla) {
+    parts.push(`EXISTS (SELECT 1 FROM approval_tasks fx WHERE fx.request_id = r.id AND fx.status = 'PENDING' AND fx.task_type = 'APPROVAL' AND ${SLA_SQL[filter.sla]})`);
+    if (filter.sla === "APPROACHING" || filter.sla === "WITHIN") params.push(APPROACHING_SHARE);
+  }
+  if (filter.aging) {
+    const index = AGING_BUCKETS.findIndex((bucket) => bucket.key === filter.aging);
+    const min = index > 0 ? AGING_BUCKETS[index - 1]!.maxHours : 0;
+    const max = AGING_BUCKETS[index]!.maxHours;
+    parts.push(`r.status IN ${OPEN} AND TIMESTAMPDIFF(MINUTE, r.submitted_at, CURRENT_TIMESTAMP) >= ?${Number.isFinite(max) ? " AND TIMESTAMPDIFF(MINUTE, r.submitted_at, CURRENT_TIMESTAMP) < ?" : ""}`);
+    params.push(min * 60, ...(Number.isFinite(max) ? [max * 60] : []));
+  }
   return { sql: parts.join(" AND "), params };
 }
+
+// B02: a pending task's response-time state, as in loadSla / slaStatus().
+const SLA_SQL: Record<PendingSla, string> = {
+  NOT_CONFIGURED: "fx.due_at IS NULL",
+  PAUSED: "fx.due_at IS NOT NULL AND r.status = 'ON_HOLD'",
+  BREACHED: "fx.due_at IS NOT NULL AND r.status = 'IN_PROGRESS' AND fx.due_at < CURRENT_TIMESTAMP",
+  APPROACHING:
+    "fx.due_at IS NOT NULL AND r.status = 'IN_PROGRESS' AND fx.due_at >= CURRENT_TIMESTAMP AND TIMESTAMPDIFF(SECOND, fx.created_at, CURRENT_TIMESTAMP) >= ? * TIMESTAMPDIFF(SECOND, fx.created_at, fx.due_at)",
+  WITHIN:
+    "fx.due_at IS NOT NULL AND r.status = 'IN_PROGRESS' AND fx.due_at >= CURRENT_TIMESTAMP AND TIMESTAMPDIFF(SECOND, fx.created_at, CURRENT_TIMESTAMP) < ? * TIMESTAMPDIFF(SECOND, fx.created_at, fx.due_at)",
+};
 
 export interface Kpis {
   raised: number;
