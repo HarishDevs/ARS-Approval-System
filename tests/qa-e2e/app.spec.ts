@@ -306,6 +306,9 @@ test("QA-SEC-01 stored XSS in a title and a comment is shown as text, never run"
   await page.getByLabel("Add a comment").fill(payload);
   await page.getByRole("button", { name: "Post comment" }).click();
   await expect(page.getByText(payload).first()).toBeVisible();
+  // The page refreshes itself after a post; let that finish before leaving
+  // (on a slow CI machine it could cancel the next navigation).
+  await page.waitForLoadState("networkidle");
   await as(context, "E2E_MGR");
   await page.goto(path);
   await page.goto("/users/queue");
