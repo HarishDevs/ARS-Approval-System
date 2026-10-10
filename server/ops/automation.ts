@@ -25,6 +25,7 @@ export interface Automation {
   idempotency: string;
   onFailure: string;
   recovery: string;
+  owner: string; // who acts when it fails
 }
 
 export const AUTOMATIONS: readonly Automation[] = [
@@ -38,6 +39,7 @@ export const AUTOMATIONS: readonly Automation[] = [
     idempotency: "Each message is claimed before sending, so only one sender sends it; sent messages are never sent again.",
     onFailure: "The message stays unsent and is listed under Messages not sent.",
     recovery: "Resend (gives the message fresh tries; never sends one already sent).",
+    owner: "Super Admin (providers); IT team for the affected requests",
   },
   {
     key: "deliveries",
@@ -49,6 +51,7 @@ export const AUTOMATIONS: readonly Automation[] = [
     idempotency: "Each delivery is leased before a retry; a sent delivery is never retried.",
     onFailure: "The delivery stays FAILED in the delivery log.",
     recovery: "Retry now on Deliveries.",
+    owner: "Super Admin",
   },
   {
     key: "sla",
@@ -60,6 +63,7 @@ export const AUTOMATIONS: readonly Automation[] = [
     idempotency: "Each reminder and escalation level is recorded once per task (task_reminders), so it is never sent twice.",
     onFailure: "Recorded here; the next run tries again.",
     recovery: "Run the jobs now, or wait for the next run.",
+    owner: "IT team",
   },
   {
     key: "templates",
@@ -71,6 +75,7 @@ export const AUTOMATIONS: readonly Automation[] = [
     idempotency: "Only reads statuses and stores them.",
     onFailure: "Recorded here; templates keep their last known status.",
     recovery: "Sync now on Templates.",
+    owner: "Super Admin",
   },
   {
     key: "housekeeping",
@@ -82,6 +87,7 @@ export const AUTOMATIONS: readonly Automation[] = [
     idempotency: "Deletes only what is past its retention; running twice deletes nothing more.",
     onFailure: "Recorded here; nothing is lost, data is just kept a little longer.",
     recovery: "None needed.",
+    owner: "Super Admin",
   },
   {
     key: "delegations",
@@ -93,6 +99,7 @@ export const AUTOMATIONS: readonly Automation[] = [
     idempotency: "Each start and end is recorded once.",
     onFailure: "Recorded here; delegations still apply by date.",
     recovery: "None needed.",
+    owner: "IT team",
   },
   {
     key: "backup",
@@ -104,6 +111,7 @@ export const AUTOMATIONS: readonly Automation[] = [
     idempotency: "Makes at most one backup a day; never overwrites an existing backup.",
     onFailure: "The Super Admin is alerted (once a day).",
     recovery: "Back up now on the Super Admin home page.",
+    owner: "Super Admin",
   },
   {
     key: "stuck",
@@ -115,6 +123,7 @@ export const AUTOMATIONS: readonly Automation[] = [
     idempotency: "Read-only.",
     onFailure: "Recorded here; the Needs attention page still works.",
     recovery: "None needed.",
+    owner: "IT team (Needs attention)",
   },
 ];
 

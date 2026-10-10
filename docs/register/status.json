@@ -1717,5 +1717,825 @@
   "status": "Yet to do",
   "action": "Run the template journey at 375 px in the mobile e2e pass",
   "evidence": "Captions are plain text linked to fields; e2e covers desktop only"
+ },
+ "FN2-4.1-01": {
+  "status": "Implemented",
+  "evidence": "server/ops/stuck.ts; app/admin/attention (Needs attention): BLOCKED_STEP (nobody eligible)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN2-4.1-02": {
+  "status": "Implemented",
+  "evidence": "server/ops/stuck.ts; app/admin/attention (Needs attention): INACTIVE_APPROVER",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN2-4.1-03": {
+  "status": "Implemented",
+  "evidence": "server/ops/stuck.ts; app/admin/attention (Needs attention): NO_ACTIVITY (general.stuck_idle_days)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN2-4.1-05": {
+  "status": "Implemented",
+  "evidence": "server/ops/stuck.ts; app/admin/attention (Needs attention): MESSAGES_UNSENT + failed job runs",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN2-4.1-06": {
+  "status": "Implemented",
+  "evidence": "server/ops/stuck.ts; app/admin/attention (Needs attention): INACTIVE_APPROVER excludes people with an active delegate",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN2-4.1-07": {
+  "status": "Implemented",
+  "evidence": "server/ops/stuck.ts; app/admin/attention (Needs attention): job runs FAILED; MESSAGES_UNSENT",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN2-4.1-09": {
+  "status": "Implemented",
+  "evidence": "server/ops/stuck.ts; app/admin/attention (Needs attention): BLOCKED_STEP (no path matches)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN2-4.1-10": {
+  "status": "Implemented",
+  "evidence": "server/ops/stuck.ts; app/admin/attention (Needs attention): NO_ACTIVITY includes ON_HOLD (question waiting); WAITING_REQUESTER",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN2-4.1-04": {
+  "status": "Yet to do",
+  "action": "Detect open requests with no pending task and no blocked step (inconsistent state) and offer an engine re-evaluation",
+  "evidence": ""
+ },
+ "FN2-4.1-08": {
+  "status": "Yet to do",
+  "action": "Detect open requests with no pending task and no blocked step (inconsistent state) and offer an engine re-evaluation",
+  "evidence": ""
+ },
+ "FN2-4.1-16": {
+  "status": "Yet to do",
+  "action": "Detect open requests with no pending task and no blocked step (inconsistent state) and offer an engine re-evaluation",
+  "evidence": ""
+ },
+ "FN2-4.1-11": {
+  "status": "Implemented",
+  "evidence": "server/ops/stuck.ts; app/admin/attention (Needs attention) (a healthy pending request is not listed)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN2-4.1-12": {
+  "status": "Implemented",
+  "evidence": "server/jobs/sla.ts due-soon notes; queue due filters",
+  "test": "integration sla tests"
+ },
+ "FN2-4.1-13": {
+  "status": "Implemented",
+  "evidence": "server/jobs/sla.ts reminders/escalations; queue overdue filter",
+  "test": "integration sla tests"
+ },
+ "FN2-4.1-14": {
+  "status": "Implemented",
+  "evidence": "server/ops/stuck.ts; app/admin/attention (Needs attention)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN2-4.1-15": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts (FAILED runs); outbox gave-up rows",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN2-4.2-01": {
+  "status": "Implemented",
+  "evidence": "server/ops/stuck.ts; app/admin/attention (Needs attention) (counts per filter)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN2-4.2-02": {
+  "status": "Implemented",
+  "evidence": "server/ops/stuck.ts; app/admin/attention (Needs attention) (filter chips by reason)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN2-4.2-03": {
+  "status": "Implemented",
+  "evidence": "server/ops/stuck.ts; app/admin/attention (Needs attention) (Since column)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN2-4.2-07": {
+  "status": "Implemented",
+  "evidence": "server/ops/stuck.ts; app/admin/attention (Needs attention) (What to do column)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN2-4.2-08": {
+  "status": "Implemented",
+  "evidence": "server/ops/stuck.ts; app/admin/attention (Needs attention) (Resend messages; blocked steps moved on from the request page, D-098)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN2-4.2-04": {
+  "status": "Yet to do",
+  "action": "Show the current step on the Needs attention list",
+  "evidence": ""
+ },
+ "FN2-4.2-05": {
+  "status": "Yet to do",
+  "action": "Show the current assignee on the Needs attention list",
+  "evidence": "Shown for inactive approvers only"
+ },
+ "FN2-4.2-06": {
+  "status": "Yet to do",
+  "action": "Show the latest job-run reference on stuck items caused by automation",
+  "evidence": "Run references shown on Automation"
+ },
+ "FN2-4.2-09": {
+  "status": "Yet to do",
+  "action": "Track resolution status per finding (beyond snooze) with history",
+  "evidence": "Snoozes are audited (STUCK_SNOOZED)"
+ },
+ "FN2-4.3-01": {
+  "status": "Implemented",
+  "evidence": "app/superadmin/deliveries (Retry now); server/jobs/retry-deliveries.ts",
+  "test": "unit retry-deliveries tests"
+ },
+ "FN2-4.3-02": {
+  "status": "Implemented",
+  "evidence": "lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN2-4.3-03": {
+  "status": "Yet to do",
+  "action": "Re-evaluate assignments of expired delegations automatically",
+  "evidence": ""
+ },
+ "FN2-4.3-04": {
+  "status": "Implemented",
+  "evidence": "app/users/requests/[id] BlockedStepForm lists eligible approvers (D-098)",
+  "test": "e2e v140-ui.spec.ts D-098"
+ },
+ "FN2-4.3-05": {
+  "status": "Implemented",
+  "evidence": "server/jobs/sla.ts escalation levels (general.escalation_levels)",
+  "test": "integration sla tests"
+ },
+ "FN2-4.3-06": {
+  "status": "Yet to do",
+  "action": "Detect open requests with no pending task and no blocked step (inconsistent state) and offer an engine re-evaluation",
+  "evidence": ""
+ },
+ "FN2-4.4-01": {
+  "status": "Implemented",
+  "evidence": "server/ops/stuck.ts; app/admin/attention (Needs attention)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN2-4.4-02": {
+  "status": "Implemented",
+  "evidence": "server/ops/stuck.ts; app/admin/attention (Needs attention) (healthy request test)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN2-4.4-03": {
+  "status": "Implemented",
+  "evidence": "server/ops/stuck.ts; app/admin/attention (Needs attention) (read-only queries)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN2-4.4-04": {
+  "status": "Implemented",
+  "evidence": "server/ops/stuck.ts; app/admin/attention (Needs attention) (requireArea admin; actions check getAdminActor)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN2-4.4-05": {
+  "status": "Implemented",
+  "evidence": "server/ops/stuck.ts; app/admin/attention (Needs attention) (STUCK_SNOOZED, OUTBOX_RESENT audits)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN2-4.4-06": {
+  "status": "Implemented",
+  "evidence": "server/ops/stuck.ts; app/admin/attention (Needs attention) (resend touches messages only, never decisions)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN2-4.4-07": {
+  "status": "Yet to do",
+  "action": "Add an expired-delegation case to reliability.int.test.ts",
+  "evidence": "False positives, missing assignee and failed background work are covered"
+ },
+ "FN8-10.1-01": {
+  "status": "Implemented",
+  "evidence": "Workflow transitions are single transactions (service.mutate); their side effects are outbox rows that can be resent: lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN8-10.1-02": {
+  "status": "Implemented",
+  "evidence": "lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim); app/superadmin/deliveries (Retry now); server/jobs/retry-deliveries.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN8-10.1-03": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts (Run now on template sync)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN8-10.1-04": {
+  "status": "Implemented",
+  "evidence": "Transitions are all-or-nothing transactions with state_version checks; nothing is left half-done to re-evaluate",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN8-10.1-05": {
+  "status": "Yet to do",
+  "action": "Document and test reprocessing of provider delivery-receipt callbacks",
+  "evidence": "server/notifications/receipts.ts updates are idempotent status writes"
+ },
+ "FN8-10.1-06": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts (abandoned runs closed; Run now)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN8-10.1-07": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts Run now",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN8-10.1-08": {
+  "status": "Implemented",
+  "evidence": "lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN8-10.1-09": {
+  "status": "Yet to do",
+  "action": "Detect open requests with no pending task and no blocked step (inconsistent state) and offer an engine re-evaluation",
+  "evidence": ""
+ },
+ "FN8-10.1-10": {
+  "status": "Implemented",
+  "evidence": "server/approvals/autofill.ts Raise again like this (a new request, new number and history)",
+  "test": "integration readiness.int.test.ts"
+ },
+ "FN8-10.2-01": {
+  "status": "Implemented",
+  "evidence": "lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim) (outbox id, request, event type)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN8-10.2-02": {
+  "status": "Implemented",
+  "evidence": "lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim) (sent_at, claimed_at)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN8-10.2-03": {
+  "status": "Implemented",
+  "evidence": "lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim) (sent rows are never released)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN8-10.2-04": {
+  "status": "Implemented",
+  "evidence": "lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim) (claim before send)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN8-10.2-05": {
+  "status": "Implemented",
+  "evidence": "lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim) (Super Admin / IT checks; deleted requests excluded)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN8-10.2-06": {
+  "status": "Implemented",
+  "evidence": "lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim) (claimed in the last 10 minutes = left alone)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN8-10.2-07": {
+  "status": "Implemented",
+  "evidence": "lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim) (one message or one request's messages)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN8-10.2-08": {
+  "status": "Implemented",
+  "evidence": "lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim) (OUTBOX_RESENT / JOBS_RUN_MANUALLY audits with run reference)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN8-10.3-01": {
+  "status": "Implemented",
+  "evidence": "lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN8-10.3-02": {
+  "status": "Implemented",
+  "evidence": "lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN8-10.3-03": {
+  "status": "Implemented",
+  "evidence": "lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN8-10.3-04": {
+  "status": "Implemented",
+  "evidence": "lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim) (each message is its own unit, so partial sends are already reconciled)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN8-10.3-05": {
+  "status": "Implemented",
+  "evidence": "lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN8-10.3-06": {
+  "status": "Yet to do",
+  "action": "Add timeout and worker-crash cases to the retry tests",
+  "evidence": "Duplicate clicks and concurrent claims are covered"
+ },
+ "FN11-13.1-01": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.1-02": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.1-03": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.1-04": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.1-06": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.1-12": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.1-13": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.1-07": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts (WhatsApp template sync)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.1-09": {
+  "status": "Implemented",
+  "evidence": "No background file processing: uploads are checked and stored during the request (no async job)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.1-05": {
+  "status": "Yet to do",
+  "action": "Add scheduled reports to the inventory when they are built (Addendum A)",
+  "evidence": ""
+ },
+ "FN11-13.1-08": {
+  "status": "Not feasible",
+  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers)",
+  "prerequisite": "Owner: choose an integration and supply API access",
+  "alternative": "Not applicable until an integration exists"
+ },
+ "FN11-13.1-10": {
+  "status": "Yet to do",
+  "action": "List imports and exports in the inventory with their recovery",
+  "evidence": "Imports run synchronously with a result page"
+ },
+ "FN11-13.1-11": {
+  "status": "Yet to do",
+  "action": "List provider delivery-receipt webhooks in the inventory",
+  "evidence": ""
+ },
+ "FN11-13.1-14": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts (inventory columns)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.1-15": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts (inventory columns)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.1-16": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts (inventory columns)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.1-17": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts (inventory columns)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.1-18": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts (inventory columns)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.1-19": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts (inventory columns)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.1-20": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts (inventory columns)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.1-21": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts (inventory columns)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.1-22": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts (inventory columns)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.1-23": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts (inventory columns)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.2-01": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim); app/superadmin/deliveries (Retry now); server/jobs/retry-deliveries.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.2-02": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim); app/superadmin/deliveries (Retry now); server/jobs/retry-deliveries.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.2-03": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim); app/superadmin/deliveries (Retry now); server/jobs/retry-deliveries.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.2-04": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim); app/superadmin/deliveries (Retry now); server/jobs/retry-deliveries.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.2-05": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim); app/superadmin/deliveries (Retry now); server/jobs/retry-deliveries.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.2-06": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim); app/superadmin/deliveries (Retry now); server/jobs/retry-deliveries.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.2-08": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim); app/superadmin/deliveries (Retry now); server/jobs/retry-deliveries.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.2-07": {
+  "status": "Yet to do",
+  "action": "Show 'retrying' (claimed) distinctly on Messages not sent",
+  "evidence": ""
+ },
+ "FN11-13.2-09": {
+  "status": "Yet to do",
+  "action": "Show messages dropped for deleted requests as Cancelled",
+  "evidence": ""
+ },
+ "FN11-13.2-10": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim); app/superadmin/deliveries (Retry now); server/jobs/retry-deliveries.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.2-11": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim); app/superadmin/deliveries (Retry now); server/jobs/retry-deliveries.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.2-12": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim); app/superadmin/deliveries (Retry now); server/jobs/retry-deliveries.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.2-13": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim); app/superadmin/deliveries (Retry now); server/jobs/retry-deliveries.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.2-16": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim); app/superadmin/deliveries (Retry now); server/jobs/retry-deliveries.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.2-17": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim); app/superadmin/deliveries (Retry now); server/jobs/retry-deliveries.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.2-18": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim); app/superadmin/deliveries (Retry now); server/jobs/retry-deliveries.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.2-19": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim); app/superadmin/deliveries (Retry now); server/jobs/retry-deliveries.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.2-20": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim); app/superadmin/deliveries (Retry now); server/jobs/retry-deliveries.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.2-14": {
+  "status": "Yet to do",
+  "action": "Show the last attempt time on Messages not sent",
+  "evidence": "Shown on Deliveries"
+ },
+ "FN11-13.2-15": {
+  "status": "Yet to do",
+  "action": "Classify failures (provider, configuration, data, timeout) on job runs and messages",
+  "evidence": ""
+ },
+ "FN11-13.2-21": {
+  "status": "Yet to do",
+  "action": "Track recovery status for each failed item",
+  "evidence": ""
+ },
+ "FN11-13.3-01": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; server/ops/stuck.ts; app/admin/attention (Needs attention); app/superadmin/deliveries (Retry now); server/jobs/retry-deliveries.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.3-03": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; server/ops/stuck.ts; app/admin/attention (Needs attention); app/superadmin/deliveries (Retry now); server/jobs/retry-deliveries.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.3-05": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; server/ops/stuck.ts; app/admin/attention (Needs attention); app/superadmin/deliveries (Retry now); server/jobs/retry-deliveries.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.3-06": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; server/ops/stuck.ts; app/admin/attention (Needs attention); app/superadmin/deliveries (Retry now); server/jobs/retry-deliveries.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.3-08": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; server/ops/stuck.ts; app/admin/attention (Needs attention); app/superadmin/deliveries (Retry now); server/jobs/retry-deliveries.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.3-02": {
+  "status": "Yet to do",
+  "action": "Offer Resend messages on the request page for IT",
+  "evidence": ""
+ },
+ "FN11-13.3-04": {
+  "status": "Not feasible",
+  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers)",
+  "prerequisite": "Owner: choose an integration and supply API access",
+  "alternative": "Not applicable until an integration exists"
+ },
+ "FN11-13.3-07": {
+  "status": "Yet to do",
+  "action": "Bulk-operation result pages with per-item retry",
+  "evidence": ""
+ },
+ "FN11-13.3-09": {
+  "status": "Yet to do",
+  "action": "Failed import/export records with retry",
+  "evidence": ""
+ },
+ "FN11-13.3-10": {
+  "status": "Implemented",
+  "evidence": "lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim) (Resend)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.3-11": {
+  "status": "Not feasible",
+  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers)",
+  "prerequisite": "Owner: choose an integration and supply API access",
+  "alternative": "Not applicable until an integration exists"
+ },
+ "FN11-13.3-12": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts (Run now)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.3-13": {
+  "status": "Implemented",
+  "evidence": "lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim) (resend the queued event's messages)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.3-14": {
+  "status": "Yet to do",
+  "action": "Retry Export once exports are built (Addendum A)",
+  "evidence": ""
+ },
+ "FN11-13.3-15": {
+  "status": "Yet to do",
+  "action": "Detect open requests with no pending task and no blocked step (inconsistent state) and offer an engine re-evaluation",
+  "evidence": ""
+ },
+ "FN11-13.5-01": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim); app/superadmin/deliveries (Retry now); server/jobs/retry-deliveries.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.5-02": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim); app/superadmin/deliveries (Retry now); server/jobs/retry-deliveries.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.5-03": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim); app/superadmin/deliveries (Retry now); server/jobs/retry-deliveries.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.5-04": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim); app/superadmin/deliveries (Retry now); server/jobs/retry-deliveries.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.5-05": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim); app/superadmin/deliveries (Retry now); server/jobs/retry-deliveries.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.5-06": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim); app/superadmin/deliveries (Retry now); server/jobs/retry-deliveries.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.5-07": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim); app/superadmin/deliveries (Retry now); server/jobs/retry-deliveries.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.5-09": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim); app/superadmin/deliveries (Retry now); server/jobs/retry-deliveries.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.5-10": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim); app/superadmin/deliveries (Retry now); server/jobs/retry-deliveries.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.5-11": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim); app/superadmin/deliveries (Retry now); server/jobs/retry-deliveries.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.5-12": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim); app/superadmin/deliveries (Retry now); server/jobs/retry-deliveries.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.5-13": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim); app/superadmin/deliveries (Retry now); server/jobs/retry-deliveries.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.5-14": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim); app/superadmin/deliveries (Retry now); server/jobs/retry-deliveries.ts",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.5-08": {
+  "status": "Yet to do",
+  "action": "Classify retryable and non-retryable errors explicitly",
+  "evidence": ""
+ },
+ "FN11-13.5-15": {
+  "status": "Not feasible",
+  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers)",
+  "prerequisite": "Owner: choose an integration and supply API access",
+  "alternative": "Not applicable until an integration exists"
+ },
+ "FN11-13.6-01": {
+  "status": "Implemented",
+  "evidence": "Retry and resend actions are IT/Super Admin only, checked on the server in each action; they never touch decisions",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.6-02": {
+  "status": "Implemented",
+  "evidence": "Retry and resend actions are IT/Super Admin only, checked on the server in each action; they never touch decisions",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.6-03": {
+  "status": "Implemented",
+  "evidence": "Retry and resend actions are IT/Super Admin only, checked on the server in each action; they never touch decisions",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.6-04": {
+  "status": "Implemented",
+  "evidence": "Retry and resend actions are IT/Super Admin only, checked on the server in each action; they never touch decisions",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.6-05": {
+  "status": "Implemented",
+  "evidence": "Retry and resend actions are IT/Super Admin only, checked on the server in each action; they never touch decisions",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.6-06": {
+  "status": "Implemented",
+  "evidence": "Retry and resend actions are IT/Super Admin only, checked on the server in each action; they never touch decisions",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.7-01": {
+  "status": "Implemented",
+  "evidence": "features/admin/AttentionForms.tsx result messages; app/superadmin/automation",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.7-02": {
+  "status": "Implemented",
+  "evidence": "features/admin/AttentionForms.tsx result messages; app/superadmin/automation",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.7-03": {
+  "status": "Implemented",
+  "evidence": "features/admin/AttentionForms.tsx result messages; app/superadmin/automation",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.7-04": {
+  "status": "Implemented",
+  "evidence": "features/admin/AttentionForms.tsx result messages; app/superadmin/automation",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.7-05": {
+  "status": "Implemented",
+  "evidence": "features/admin/AttentionForms.tsx result messages; app/superadmin/automation",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.7-06": {
+  "status": "Implemented",
+  "evidence": "features/admin/AttentionForms.tsx result messages; app/superadmin/automation",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.7-07": {
+  "status": "Implemented",
+  "evidence": "features/admin/AttentionForms.tsx result messages; app/superadmin/automation",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.7-08": {
+  "status": "Implemented",
+  "evidence": "features/admin/AttentionForms.tsx result messages; app/superadmin/automation",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.7-09": {
+  "status": "Implemented",
+  "evidence": "features/admin/AttentionForms.tsx result messages; app/superadmin/automation",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.7-10": {
+  "status": "Implemented",
+  "evidence": "features/admin/AttentionForms.tsx result messages; app/superadmin/automation",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.8-01": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.8-03": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.8-04": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.8-05": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.8-06": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.8-08": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.8-09": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.8-10": {
+  "status": "Implemented",
+  "evidence": "server/ops/automation.ts; app/superadmin/automation; lib/db/repositories/job-runs.repository.ts; lib/db/repositories/outbox.repository.ts releaseOutboxForResend; server/approvals/service.ts deliverOutbox (claim)",
+  "test": "integration reliability.int.test.ts; e2e v160-reliability.spec.ts"
+ },
+ "FN11-13.8-02": {
+  "status": "Yet to do",
+  "action": "Recovery actions for imports, exports and request pages",
+  "evidence": "Messages, deliveries and every job have recovery"
+ },
+ "FN11-13.8-07": {
+  "status": "Not feasible",
+  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers)",
+  "prerequisite": "Owner: choose an integration and supply API access",
+  "alternative": "Not applicable until an integration exists"
+ },
+ "FN11-13.8-11": {
+  "status": "Yet to do",
+  "action": "Add timeout and partial-success cases to the retry tests",
+  "evidence": "Safe retry, duplicate clicks and permission failures are covered"
  }
 }

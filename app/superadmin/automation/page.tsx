@@ -99,6 +99,7 @@ export default async function AutomationPage({ searchParams }: { searchParams: P
                 <td className="min-w-56 space-y-2 text-caption">
                   <span className="block">{automation.onFailure}</span>
                   <span className="block text-ink-muted">Recover: {automation.recovery}</span>
+                  <span className="block text-ink-muted">Owner: {automation.owner}</span>
                   <RunJobsNow job={automation.key} label="Run now" />
                 </td>
               </tr>
