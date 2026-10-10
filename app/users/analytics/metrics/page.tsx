@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
+import { featureOn } from "@/server/settings/features";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { METRICS } from "@/server/analytics/metrics";
@@ -6,7 +8,8 @@ import { AGING_BUCKETS, APPROACHING_SHARE } from "@/server/analytics/semantics";
 
 // The metric dictionary in the app (Addendum A): what each number means.
 export default async function MetricsPage() {
-  await requireArea("users");
+  const { user } = await requireArea("users");
+  if (!(await featureOn("analytics", user))) notFound();
   return (
     <>
       <PageHeader title="How the numbers are worked out" description="Every figure on Analytics and in reports follows these definitions. Times are India time; deleted requests are never counted.">

@@ -7,6 +7,7 @@ import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { loadWorkingCalendar } from "@/lib/db/repositories/calendar.repository";
 import { cancelForDeletion } from "@/server/engine";
 import { deliverOutbox, queueMessages, type Actor, type Result } from "@/server/approvals/service";
+import { isHeld } from "@/server/ops/governance";
 
 // Super Admin deletes a request (S11-08, D-086, F-73). Soft delete: hidden
 // from every screen, queue, job and report; the row, timeline and audit log
@@ -23,6 +24,8 @@ export async function deleteRequest(
   const done = await withTransaction(async (db) => {
     const request = await lockRequest(input.requestId, db);
     if (!request) return { ok: false, code: "NOT_FOUND", message: "This request doesn't exist or was already deleted." } as const;
+    // FN10: a legal hold blocks deletion, for everyone.
+    if (await isHeld(request.id, db)) return { ok: false, code: "LEGAL_HOLD", message: "This request is under a legal hold and can't be deleted. Release the hold first (Super Admin → Retention & holds)." } as const;
     const version = await findWorkflowVersion(request.workflowVersionId, db);
     const result = cancelForDeletion(request.state, { actorId: actor.id, reason: reason.slice(0, 500) });
     if (result.state !== request.state) {

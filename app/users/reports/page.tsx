@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
+import { featureOn } from "@/server/settings/features";
 import { FileBarChart } from "lucide-react";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
@@ -15,6 +17,8 @@ export const dynamic = "force-dynamic";
 // Reports catalogue, my schedules and my alerts (Addendum A §10, §15).
 export default async function ReportsPage() {
   const { user } = await requireArea("users");
+  if (!(await featureOn("reports", user))) notFound();
+  const scheduling = await featureOn("scheduled_reports", user);
   const viewer = { id: user.id, roles: user.roles };
   const scopes = await availableScopes(viewer);
   const reports = reportsFor(scopes.map((scope) => scope.kind));
@@ -105,7 +109,7 @@ export default async function ReportsPage() {
             })}
           </ul>
         )}
-        {metrics.length ? <AlertForm scopes={scopes.map((scope) => ({ kind: scope.kind, label: scope.label }))} metrics={metrics} /> : <p className="text-label text-ink-muted">No alerts are available for your role yet.</p>}
+        {!scheduling ? <p className="text-label text-ink-muted">Scheduled reports and alerts are switched off at the moment.</p> : metrics.length ? <AlertForm scopes={scopes.map((scope) => ({ kind: scope.kind, label: scope.label }))} metrics={metrics} /> : <p className="text-label text-ink-muted">No alerts are available for your role yet.</p>}
       </section>
     </>
   );

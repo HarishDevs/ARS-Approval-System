@@ -20,6 +20,7 @@ import { SubmissionChecks } from "@/features/requests/SubmissionChecks";
 import { SaveTemplateForm } from "@/features/requests/Templates";
 import { AmendmentsCard } from "@/features/requests/Amendments";
 import { amendmentPlan } from "@/server/approvals/amendments";
+import { featureOn } from "@/server/settings/features";
 import { SectionBoundary } from "@/features/ui/SectionBoundary";
 import { loadRequestView } from "@/server/approvals/view";
 import { recordView } from "@/lib/db/repositories/recent.repository";
@@ -56,6 +57,7 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
           anyone: (await listActiveUserOptions()).filter((person) => person.id !== user.id && person.id !== view.requesterId).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` })),
         }
       : null;
+  const templatesOn = await featureOn("templates", user);
   // FN5: the requester may amend an approved request when the type allows it.
   const canAmend = view.requesterId === user.id && view.status === "APPROVED" && (await amendmentPlan(view.id, { id: user.id, roles: user.roles })).ok;
   // Blocked steps (IT): approval steps take approver-eligible people; work any active person.
@@ -317,7 +319,7 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
         <SectionBoundary label="Amendments">
           <AmendmentsCard requestId={view.id} form={view.form} canAmend={canAmend} />
         </SectionBoundary>
-        {view.requesterId === user.id && !view.isCustom && view.workflowActive && (
+        {templatesOn && view.requesterId === user.id && !view.isCustom && view.workflowActive && (
           <section className="card space-y-2 px-5 py-4" aria-label="Reuse this request">
             <Link href={`/users/new/${view.workflowId}?from=${view.id}`} className="link text-label">
               Raise again like this

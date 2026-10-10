@@ -14,6 +14,7 @@ import { followUpSource, followUpValues } from "@/server/approvals/follow-up";
 import { prefill, SOURCE_LABEL } from "@/server/approvals/autofill";
 import { listTemplates } from "@/lib/db/repositories/templates.repository";
 import { TemplatePicker } from "@/features/requests/Templates";
+import { featureOn } from "@/server/settings/features";
 
 export default async function RaiseRequestPage({ params, searchParams }: { params: Promise<{ workflowId: string }>; searchParams: Promise<{ followUp?: string; template?: string; from?: string }> }) {
   const { user } = await requireArea("users");
@@ -40,9 +41,10 @@ export default async function RaiseRequestPage({ params, searchParams }: { param
   // FN4: a template or an earlier request the person chose explicitly wins
   // over the draft; otherwise the draft (their own typing) wins. Profile
   // values only fill fields that are still empty.
-  const explicit = idOf(query.template) !== null || idOf(query.from) !== null;
-  const filled = await prefill({ user: { id: user.id, roles: user.roles }, workflowId: workflow.id, form: version.form, templateId: idOf(query.template), fromRequestId: idOf(query.from) });
-  const templates = await listTemplates(user.id, workflow.id);
+  const templatesOn = await featureOn("templates", user);
+  const explicit = templatesOn && (idOf(query.template) !== null || idOf(query.from) !== null);
+  const filled = await prefill({ user: { id: user.id, roles: user.roles }, workflowId: workflow.id, form: version.form, templateId: templatesOn ? idOf(query.template) : null, fromRequestId: templatesOn ? idOf(query.from) : null });
+  const templates = templatesOn ? await listTemplates(user.id, workflow.id) : [];
   const base: Record<string, string> = explicit ? filled.values : { ...(followUpInitial ?? draft?.fields ?? {}) };
   const sources: Record<string, string> = explicit ? { ...filled.sources } : Object.fromEntries(Object.keys(followUpInitial ?? {}).map((key) => [key, "follow-up"]));
   for (const [key, value] of Object.entries(filled.values)) {

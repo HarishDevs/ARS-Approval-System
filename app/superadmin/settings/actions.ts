@@ -12,7 +12,7 @@ import type { ActionResult } from "@/lib/http/action-result";
 // Server Actions for /superadmin/settings (F-52). Each re-checks the Super
 // Admin area on the server; Next.js also rejects cross-site calls by
 // comparing Origin and Host (D-048).
-const GROUPS = new Set<SettingDefinition["group"]>(["GENERAL", "AUTHENTICATION", "EMAIL", "WHATSAPP"]);
+const GROUPS = new Set<SettingDefinition["group"]>(["GENERAL", "AUTHENTICATION", "EMAIL", "WHATSAPP", "FEATURES", "RETENTION"]);
 const NOT_FOUND: ActionResult = { ok: false, message: "Not found." };
 
 export async function saveSettingsAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {

@@ -293,6 +293,100 @@ export const REPORTS: readonly ReportDefinition[] = [
     },
   },
   {
+    key: "department_scorecard",
+    name: "Department scorecard",
+    description: "Per raiser's department: volume, outcomes, time to decide, decisions in time and the backlog now. In the organisation view the first row is the whole organisation, for comparison.",
+    scopes: ["DEPARTMENT", "ORGANISATION"],
+    usesPeriod: true,
+    run: async (scope, viewer, filter) => {
+      const w = scoped(scope, viewer, filter);
+      const t = scoped(scope, viewer, filter, "task");
+      const period = [filter.period.from, filter.period.to];
+      const [raised] = await getDbPool().query<RowDataPacket[]>(
+        `SELECT rq.department_id AS dept, COUNT(*) AS raised ${JOINS} WHERE ${w.sql} AND ${INDIA_DATE("r.submitted_at")} BETWEEN ? AND ? GROUP BY rq.department_id`,
+        [...w.params, ...period],
+      );
+      const [closed] = await getDbPool().query<RowDataPacket[]>(
+        `SELECT rq.department_id AS dept, SUM(r.status = 'APPROVED') AS approved, SUM(r.status = 'REJECTED') AS rejected,
+                AVG(CASE WHEN r.status IN ('APPROVED', 'REJECTED') THEN TIMESTAMPDIFF(MINUTE, r.submitted_at, r.closed_at) / 60 END) AS hours
+         ${JOINS} WHERE ${w.sql} AND r.closed_at IS NOT NULL AND ${INDIA_DATE("r.closed_at")} BETWEEN ? AND ? GROUP BY rq.department_id`,
+        [...w.params, ...period],
+      );
+      const [decided] = await getDbPool().query<RowDataPacket[]>(
+        `SELECT rq.department_id AS dept, SUM(t.due_at IS NOT NULL AND t.decided_at <= t.due_at) AS on_time, SUM(t.due_at IS NOT NULL) AS timed
+         ${TASK_JOINS} WHERE ${t.sql} AND t.task_type = 'APPROVAL' AND t.decided_at IS NOT NULL AND t.status IN ('APPROVED', 'REJECTED', 'CHANGES_REQUESTED') AND ${INDIA_DATE("t.decided_at")} BETWEEN ? AND ?
+         GROUP BY rq.department_id`,
+        [...t.params, ...period],
+      );
+      const [now] = await getDbPool().query<RowDataPacket[]>(
+        `SELECT rq.department_id AS dept, COUNT(DISTINCT CASE WHEN r.status IN ('IN_PROGRESS', 'ON_HOLD', 'CHANGES_REQUIRED') THEN r.id END) AS open_n,
+                SUM(t.status = 'PENDING' AND r.status = 'IN_PROGRESS' AND t.due_at < CURRENT_TIMESTAMP) AS overdue
+         ${JOINS} LEFT JOIN approval_tasks t ON t.request_id = r.id WHERE ${w.sql} GROUP BY rq.department_id`,
+        w.params,
+      );
+      const [departments] = await getDbPool().query<RowDataPacket[]>("SELECT id, name FROM departments ORDER BY name");
+      type Score = { raised: number; approved: number; rejected: number; hours: number | null; hoursWeight: number; onTime: number; timed: number; open: number; overdue: number };
+      const empty = (): Score => ({ raised: 0, approved: 0, rejected: 0, hours: null, hoursWeight: 0, onTime: 0, timed: 0, open: 0, overdue: 0 });
+      const scores = new Map<string, Score>();
+      const get = (dept: unknown) => {
+        const key = dept === null || dept === undefined ? "none" : String(dept);
+        if (!scores.has(key)) scores.set(key, empty());
+        return scores.get(key)!;
+      };
+      for (const row of raised) get(row.dept).raised = Number(row.raised);
+      for (const row of closed) Object.assign(get(row.dept), { approved: Number(row.approved), rejected: Number(row.rejected), hours: num(row.hours), hoursWeight: Number(row.approved) + Number(row.rejected) });
+      for (const row of decided) Object.assign(get(row.dept), { onTime: Number(row.on_time), timed: Number(row.timed) });
+      for (const row of now) Object.assign(get(row.dept), { open: Number(row.open_n), overdue: Number(row.overdue ?? 0) });
+      const nameOf = new Map(departments.map((row) => [String(row.id), String(row.name)]));
+      const toRow = (label: string, s: Score): Cell[] => [
+        label,
+        s.raised,
+        s.approved,
+        s.approved + s.rejected ? round1((s.approved / (s.approved + s.rejected)) * 100) : null,
+        round1(s.hours),
+        s.timed ? round1((s.onTime / s.timed) * 100) : null,
+        s.open,
+        s.overdue,
+      ];
+      const rows = [...scores.entries()].filter(([, s]) => s.raised || s.approved || s.rejected || s.open || s.timed).map(([key, s]) => ({ label: key === "none" ? "No department" : (nameOf.get(key) ?? key), s }));
+      rows.sort((a, b) => b.s.raised - a.s.raised);
+      const out: Cell[][] = rows.map((row) => toRow(row.label, row.s));
+      if (scope.kind === "ORGANISATION" && rows.length) {
+        const total = empty();
+        let weighted = 0;
+        for (const { s } of rows) {
+          total.raised += s.raised;
+          total.approved += s.approved;
+          total.rejected += s.rejected;
+          total.onTime += s.onTime;
+          total.timed += s.timed;
+          total.open += s.open;
+          total.overdue += s.overdue;
+          if (s.hours !== null) {
+            weighted += s.hours * s.hoursWeight;
+            total.hoursWeight += s.hoursWeight;
+          }
+        }
+        total.hours = total.hoursWeight ? weighted / total.hoursWeight : null;
+        out.unshift(toRow("Whole organisation", total));
+      }
+      return {
+        columns: [
+          { key: "department", label: "Department", kind: "text" },
+          { key: "raised", label: "Raised", kind: "number" },
+          { key: "approved", label: "Approved", kind: "number" },
+          { key: "rate", label: "Approval rate %", kind: "percent" },
+          { key: "hours", label: "Average hours to decide", kind: "hours" },
+          { key: "onTime", label: "Decided in time %", kind: "percent" },
+          { key: "open", label: "Open now", kind: "number" },
+          { key: "overdue", label: "Overdue tasks now", kind: "number" },
+        ],
+        rows: out,
+        truncated: false,
+      };
+    },
+  },
+  {
     key: "budget_position",
     name: "Budget position",
     description: "Each department's budget for the current financial year: committed, available and used.",

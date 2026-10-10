@@ -7,7 +7,7 @@ export type SettingValueType = "STRING" | "NUMBER" | "BOOLEAN";
 
 export interface SettingDefinition {
   key: string;
-  group: "GENERAL" | "AUTHENTICATION" | "EMAIL" | "WHATSAPP";
+  group: "GENERAL" | "AUTHENTICATION" | "EMAIL" | "WHATSAPP" | "FEATURES" | "RETENTION";
   label: string;
   valueType: SettingValueType;
   encrypted: boolean;
@@ -22,6 +22,18 @@ export const SETTING_DEFINITIONS: readonly SettingDefinition[] = [
   { key: "general.budget_policy", group: "GENERAL", label: "Over-budget requests: WARN (warn, ask to confirm) or BLOCK (refuse)", valueType: "STRING", encrypted: false, schema: z.enum(["WARN", "BLOCK"]), defaultValue: "WARN" },
   // FN2: an open request with no activity for this many days is listed as possibly stuck.
   { key: "general.stuck_idle_days", group: "GENERAL", label: "Days without activity before a request is listed as possibly stuck", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(1).max(90), defaultValue: "7" },
+  // Feature switches (Addendum B, D-124): ON, OFF, or IT_ONLY for a trial with
+  // the IT team first. A switch only hides or shows a feature; who may see
+  // what is still decided by the server-side access checks.
+  { key: "features.analytics", group: "FEATURES", label: "Analytics (ON, OFF or IT_ONLY)", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF", "IT_ONLY"]), defaultValue: "ON" },
+  { key: "features.reports", group: "FEATURES", label: "Reports and downloads (ON, OFF or IT_ONLY)", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF", "IT_ONLY"]), defaultValue: "ON" },
+  { key: "features.scheduled_reports", group: "FEATURES", label: "Scheduled reports and alerts (ON, OFF or IT_ONLY)", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF", "IT_ONLY"]), defaultValue: "ON" },
+  { key: "features.amendments", group: "FEATURES", label: "Amendments after approval (ON, OFF or IT_ONLY)", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF", "IT_ONLY"]), defaultValue: "ON" },
+  { key: "features.templates", group: "FEATURES", label: "Request templates and raise again (ON, OFF or IT_ONLY)", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF", "IT_ONLY"]), defaultValue: "ON" },
+  // Retention (FN10, D-126): 0 = not set, keep for ever. Setting a value only
+  // changes the dry run; nothing is archived or deleted automatically.
+  { key: "retention.requests_years", group: "RETENTION", label: "Keep finished requests for (years; 0 = keep for ever)", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(0).max(50), defaultValue: "0" },
+  { key: "retention.notifications_days", group: "RETENTION", label: "Keep in-app notifications for (days; 0 = keep for ever)", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(0).max(3650), defaultValue: "0" },
   { key: "general.timezone", group: "GENERAL", label: "Timezone", valueType: "STRING", encrypted: false, schema: z.string().trim().min(1).max(100), defaultValue: "Asia/Kolkata" },
 
   // OTP and sign-in security (P1-12, P1-15, P1-16, P1-17). Safe min/max bounds

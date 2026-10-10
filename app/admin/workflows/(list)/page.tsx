@@ -10,9 +10,14 @@ export default async function WorkflowsPage({ searchParams }: { searchParams: Pr
   return (
     <>
       <PageHeader title="Workflows" description="Predefined approval types: the form people fill in and the levels it goes through.">
-        <Link href="/admin/workflows/new" className="btn-primary btn-compact">
-          New workflow
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/admin/workflows/import" className="btn-secondary btn-compact">
+            Import
+          </Link>
+          <Link href="/admin/workflows/new" className="btn-primary btn-compact">
+            New workflow
+          </Link>
+        </div>
       </PageHeader>
       {removed && (
         <p role="status" className="mb-4 rounded-md bg-success-50 px-3 py-2 text-label text-success-600">

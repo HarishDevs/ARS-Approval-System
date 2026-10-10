@@ -77,9 +77,10 @@ export async function markRetryFailed(id: number, failureCode: string, retryInMi
 // long after a set-password link (72 h) has expired.
 export async function pruneDeliveryPayloads(db: Queryable = getDbPool()): Promise<number> {
   const [result] = await db.query<ResultSetHeader>(
-    `UPDATE notification_deliveries SET payload_json = NULL
-     WHERE payload_json IS NOT NULL AND (status <> 'FAILED' OR created_at < DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 7 DAY))
-     LIMIT 5000`,
+    `UPDATE notification_deliveries d JOIN notifications n ON n.id = d.notification_id
+     SET d.payload_json = NULL
+     WHERE d.payload_json IS NOT NULL AND (d.status <> 'FAILED' OR d.created_at < DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 7 DAY))
+       AND NOT EXISTS (SELECT 1 FROM legal_holds h WHERE h.released_at IS NULL AND h.scope_type = 'REQUESTER' AND h.scope_id = n.user_id)`,
   );
   return result.affectedRows;
 }

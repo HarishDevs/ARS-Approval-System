@@ -12,6 +12,8 @@ const GROUPS: { group: SettingDefinition["group"]; title: string; description: s
   { group: "WHATSAPP", title: "WhatsApp", description: "CEOITBox, the same number and account as the Power BI site." },
   { group: "AUTHENTICATION", title: "Sign-in security", description: "Code, lockout and device limits. Each value has safe minimum and maximum bounds." },
   { group: "GENERAL", title: "General", description: "Application name and timezone." },
+  { group: "RETENTION", title: "Retention", description: "How long records are kept. 0 keeps them for ever. These values only feed the dry run on Retention & holds; nothing is deleted automatically." },
+  { group: "FEATURES", title: "Feature switches", description: "Turn new features on, off, or on for the IT team only (a trial before everyone). Switching off hides a feature; no data is removed." },
 ];
 
 // F-52: Super Admin only. Page, layout and every action check this separately.

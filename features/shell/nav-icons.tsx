@@ -1,6 +1,7 @@
 import {
   AlertTriangle,
   ChartLine,
+  Archive,
   FileBarChart,
   BarChart3,
   Bot,
@@ -70,6 +71,7 @@ const ICONS: Record<string, LucideIcon> = {
   "/superadmin/demo": Users,
   "/superadmin/deliveries": BellRing,
   "/superadmin/automation": Bot,
+  "/superadmin/retention": Archive,
   "/superadmin/audit": History,
   "/superadmin/logins": KeyRound,
 };

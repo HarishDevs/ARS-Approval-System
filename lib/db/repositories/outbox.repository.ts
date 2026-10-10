@@ -2,6 +2,7 @@ import "server-only";
 import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { getDbPool, type Queryable } from "@/lib/db/client";
 import type { NotifyInput } from "@/server/notifications/notify";
+import { HELD_SQL } from "@/server/ops/governance";
 
 // Notification outbox (D-QA-06). Written inside the action's transaction,
 // so a committed decision always has its messages on record.
@@ -58,7 +59,11 @@ export async function dropOutboxForDeletedRequests(db: Queryable = getDbPool()):
 }
 
 export async function pruneOutbox(db: Queryable = getDbPool()): Promise<number> {
-  const [result] = await db.query<ResultSetHeader>("DELETE FROM notification_outbox WHERE sent_at IS NOT NULL AND sent_at < DATE_SUB(CURRENT_TIMESTAMP(3), INTERVAL 30 DAY)");
+  // FN10: rows of a request under a legal hold are kept.
+  const [result] = await db.query<ResultSetHeader>(
+    `DELETE o FROM notification_outbox o LEFT JOIN approval_requests r ON r.id = o.request_id
+     WHERE o.sent_at IS NOT NULL AND o.sent_at < DATE_SUB(CURRENT_TIMESTAMP(3), INTERVAL 30 DAY) AND (r.id IS NULL OR NOT ${HELD_SQL("r")})`,
+  );
   return result.affectedRows;
 }
 

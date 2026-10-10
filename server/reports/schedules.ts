@@ -15,6 +15,13 @@ import { getEmailConfig } from "@/server/settings/values";
 import { notify } from "@/server/notifications/notify";
 import { getEnv } from "@/config/environment";
 import { logError } from "@/lib/logging/logger";
+import { featureMode } from "@/server/settings/features";
+
+// D-124: OFF stops both jobs; IT_ONLY runs only for IT team owners.
+async function allowedFor(person: Owner): Promise<boolean> {
+  const mode = await featureMode("scheduled_reports");
+  return mode === "ON" || (mode === "IT_ONLY" && (person.roles.includes("IT_ADMIN") || person.roles.includes("SUPER_ADMIN")));
+}
 
 // Scheduled reports and alert rules (Addendum A §10.5, §15, D-123). Both
 // run inside the job runner and always use the owner's permissions at the
@@ -114,6 +121,7 @@ export async function listRuns(userId: number, limit = 20): Promise<{ scheduleId
 export async function runDueSchedules(limit = 20): Promise<{ reportsSent: number; reportsFailed: number; reportsSkipped: number }> {
   const db = getDbPool();
   const out = { reportsSent: 0, reportsFailed: 0, reportsSkipped: 0 };
+  if ((await featureMode("scheduled_reports")) === "OFF") return out;
   const [due] = await db.query<Row[]>("SELECT * FROM report_schedules WHERE active = TRUE AND next_run_at <= CURRENT_TIMESTAMP ORDER BY next_run_at LIMIT ?", [limit]);
   for (const row of due.map(toSchedule)) {
     let runId: number;
@@ -136,6 +144,10 @@ export async function runDueSchedules(limit = 20): Promise<{ reportsSent: number
       if (!person || !person.active) {
         await db.query("UPDATE report_schedules SET active = FALSE WHERE id = ?", [row.id]);
         await finish("SKIPPED", "The owner is inactive; the schedule is paused.");
+        continue;
+      }
+      if (!(await allowedFor(person))) {
+        await finish("SKIPPED", "Scheduled reports are switched off for this person at the moment.");
         continue;
       }
       const ran = await runReport(row.reportKey, cleanQuery(row.query), { id: person.id, roles: person.roles }, now);
@@ -255,6 +267,7 @@ export async function evaluateAlerts(limit = 200): Promise<{ alertsChecked: numb
   const db = getDbPool();
   const [rows] = await db.query<AlertRow[]>("SELECT * FROM alert_rules WHERE active = TRUE ORDER BY id LIMIT ?", [limit]);
   const out = { alertsChecked: 0, alertsFired: 0 };
+  if ((await featureMode("scheduled_reports")) === "OFF") return out;
   for (const rule of rows.map(toRule)) {
     try {
       const person = await owner(rule.userId);
@@ -262,6 +275,7 @@ export async function evaluateAlerts(limit = 200): Promise<{ alertsChecked: numb
         await db.query("UPDATE alert_rules SET active = FALSE WHERE id = ?", [rule.id]);
         continue;
       }
+      if (!(await allowedFor(person))) continue;
       const value = await alertValue(rule, { id: person.id, roles: person.roles });
       if (value === null) {
         await db.query("UPDATE alert_rules SET active = FALSE WHERE id = ?", [rule.id]); // the scope is no longer theirs

@@ -85,6 +85,19 @@ describe("stuck-request detection (FN2)", () => {
   });
 });
 
+describe("reconciliation (BA-08)", () => {
+  it("flags an in-progress request whose task rows don't match the workflow, or with no open step", async () => {
+    const id = await raise(approver);
+    expect(await reasonsFor(id)).not.toContain("INCONSISTENT");
+    // A task row closed behind the engine's back.
+    await getDbPool().query("UPDATE approval_tasks SET status = 'CANCELLED' WHERE request_id = ?", [id]);
+    const found = (await findStuckRequests({ idleDays: 7, limit: 500 })).find((item) => item.requestId === id && item.reason === "INCONSISTENT");
+    expect(found?.detail).toMatch(/Task records don't match the workflow \(0 recorded, 1 in the workflow\)/);
+    await getDbPool().query("UPDATE approval_requests SET state_json = JSON_SET(state_json, '$.nodes.a.status', 'APPROVED') WHERE id = ?", [id]);
+    expect((await findStuckRequests({ idleDays: 7, limit: 500 })).find((item) => item.requestId === id && item.reason === "INCONSISTENT")?.detail).toBe("In progress, but no step is open");
+  });
+});
+
 describe("messages the sender gave up on (FN11)", () => {
   it("are listed and resent once; a message being sent, or sent, is never released", async () => {
     const id = await raise(approver);

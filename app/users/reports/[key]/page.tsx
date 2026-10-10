@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { featureOn } from "@/server/settings/features";
 import { notFound } from "next/navigation";
 import { Download } from "lucide-react";
 import { requireArea } from "@/server/authorization/guards";
@@ -26,6 +27,8 @@ function show(cell: Cell, column: Column): string {
 // One report (Addendum A §10): filters, preview, downloads, schedule, views.
 export default async function ReportPage({ params, searchParams }: { params: Promise<{ key: string }>; searchParams: Promise<Record<string, string | undefined>> }) {
   const { user } = await requireArea("users");
+  if (!(await featureOn("reports", user))) notFound();
+  const scheduling = await featureOn("scheduled_reports", user);
   const { key } = await params;
   const raw = await searchParams;
   const query = cleanQuery(raw);
@@ -144,7 +147,7 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
           </p>
         )}
         <SaveViewForm target={key} query={effective} />
-        <ScheduleForm reportKey={key} query={effective} />
+        {scheduling && <ScheduleForm reportKey={key} query={effective} />}
       </div>
 
       <div className="card overflow-x-auto">

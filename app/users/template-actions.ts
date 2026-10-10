@@ -9,6 +9,7 @@ import { reusableValues } from "@/server/approvals/autofill";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { logError } from "@/lib/logging/logger";
 import type { ActionResult } from "@/lib/http/action-result";
+import { featureOn } from "@/server/settings/features";
 
 // FN4 / RP-01 personal templates. Saved from the person's own request (or
 // the form they are filling in); only reusable values are kept.
@@ -27,6 +28,7 @@ export async function saveTemplateFromRequestAction(_previous: ActionResult | nu
   const user = await me();
   const requestId = id(formData.get("requestId"));
   if (!user || requestId === null) return { ok: false, message: "Not found." };
+  if (!(await featureOn("templates", user))) return { ok: false, message: "Templates are switched off at the moment." };
   const name = cleanName(formData.get("templateName"));
   if (name.length < 2) return { ok: false, message: "Give the template a name.", fieldErrors: { templateName: "Use 2 to 80 characters." } };
   const view = await loadRequestView(requestId, user);

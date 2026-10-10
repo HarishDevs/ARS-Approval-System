@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
+import { featureOn } from "@/server/settings/features";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { BarList, KpiCard, LineChart, StackedBar, hoursText } from "@/features/analytics/Charts";
@@ -19,6 +21,7 @@ export const dynamic = "force-dynamic";
 // metric dictionary; "How these are worked out" opens it.
 export default async function AnalyticsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const { user } = await requireArea("users");
+  if (!(await featureOn("analytics", user))) notFound();
   const viewer = { id: user.id, roles: user.roles };
   const query = await searchParams;
   const { scope, scopes } = await resolveScope(query.scope, viewer);

@@ -7,7 +7,7 @@ import { getNumberSetting } from "@/server/settings/values";
 // IT, with the reason, since when, and what to do. Nothing is changed here;
 // each fix goes through the normal audited actions (move a blocked step on,
 // hand over tasks, resend messages). A finding can be snoozed.
-export type StuckReason = "BLOCKED_STEP" | "INACTIVE_APPROVER" | "NO_ACTIVITY" | "WAITING_REQUESTER" | "MESSAGES_UNSENT";
+export type StuckReason = "BLOCKED_STEP" | "INACTIVE_APPROVER" | "NO_ACTIVITY" | "WAITING_REQUESTER" | "MESSAGES_UNSENT" | "INCONSISTENT";
 
 export const STUCK_REASONS: Record<StuckReason, { label: string; action: string }> = {
   BLOCKED_STEP: { label: "A step nobody can act on", action: "Open the request and give the step to someone, or skip it." },
@@ -15,6 +15,7 @@ export const STUCK_REASONS: Record<StuckReason, { label: string; action: string 
   NO_ACTIVITY: { label: "No activity for a long time", action: "Check with the approver, or remind them." },
   WAITING_REQUESTER: { label: "Sent back, not resubmitted", action: "Ask the requester to resubmit or withdraw it." },
   MESSAGES_UNSENT: { label: "Messages not sent", action: "Resend the messages from Automation." },
+  INCONSISTENT: { label: "Workflow state doesn't add up", action: "Don't change it by hand: report it to the developer with the request number. Moving a blocked step on or a hand-over may fix it." },
 };
 
 export interface StuckItem {
@@ -102,6 +103,22 @@ export async function findStuckRequests(options: { idleDays?: number; limit?: nu
   );
   push("MESSAGES_UNSENT", unsent);
 
+  // Reconciliation (BA-08): an in-progress request must have an open step,
+  // and its task rows must match the engine state.
+  const [open] = await db.query<(RowDataPacket & { id: number; request_no: string; title: string; updated_at: Date; state_json: unknown; pending_rows: number; snoozed: number })[]>(
+    `SELECT r.id, r.request_no, r.title, r.updated_at, r.state_json,
+            (SELECT COUNT(*) FROM approval_tasks t WHERE t.request_id = r.id AND t.status = 'PENDING') AS pending_rows,
+            NOT ${NOT_SNOOZED("INCONSISTENT")} AS snoozed
+     FROM approval_requests r WHERE r.deleted_at IS NULL AND r.status = 'IN_PROGRESS' ORDER BY r.id DESC LIMIT 2000`,
+  );
+  for (const row of open) {
+    if (Number(row.snoozed)) continue;
+    const state = (typeof row.state_json === "string" ? JSON.parse(row.state_json) : row.state_json) as { nodes?: Record<string, { status: string }>; tasks?: { status: string }[] };
+    const openSteps = Object.values(state.nodes ?? {}).filter((node) => node.status === "ACTIVE" || node.status === "BLOCKED").length;
+    const statePending = (state.tasks ?? []).filter((task) => task.status === "PENDING").length;
+    const detail = openSteps === 0 ? "In progress, but no step is open" : statePending !== Number(row.pending_rows) ? `Task records don't match the workflow (${Number(row.pending_rows)} recorded, ${statePending} in the workflow)` : null;
+    if (detail) items.push({ requestId: row.id, requestNo: row.request_no, title: row.title, reason: "INCONSISTENT", since: row.updated_at, days: Math.floor((Date.now() - new Date(row.updated_at).getTime()) / 86_400_000), detail, personId: null });
+  }
   return items.sort((a, b) => a.since.getTime() - b.since.getTime());
 }
 

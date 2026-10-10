@@ -57,7 +57,14 @@ export default async function WorkflowPage({ params, searchParams }: { params: P
         </div>
         <div className="space-y-6">
           <section className="card divide-y divide-line">
-            <h2 className="px-5 py-4 font-semibold">Versions</h2>
+            <h2 className="flex items-center justify-between gap-2 px-5 py-4 font-semibold">
+              Versions
+              {published && workflow.kind === "PREDEFINED" && (
+                <a href={`/api/admin/workflows/${workflow.id}/export`} className="link text-label font-normal" download>
+                  Export live version
+                </a>
+              )}
+            </h2>
             {versions.map((version) => (
               <div key={version.id} className="space-y-2 px-5 py-3 text-label">
                 <div className="flex items-center justify-between gap-2">

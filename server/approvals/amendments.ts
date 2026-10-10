@@ -4,6 +4,7 @@ import { getDbPool, type Queryable } from "@/lib/db/client";
 import { findPublishedVersion, findRequest, findWorkflow, findWorkflowVersion, type RequestRecord, type WorkflowRecord, type WorkflowVersionRecord } from "@/lib/db/repositories/approvals.repository";
 import { submitRequest, type Actor, type AmendmentChange, type Result } from "@/server/approvals/service";
 import type { FormField } from "@/server/forms/fields";
+import { featureOn } from "@/server/settings/features";
 import type { FormData as EngineFormData } from "@/server/engine";
 
 // FN5 amendments after approval (D-120). An amendment is a new request of
@@ -79,6 +80,7 @@ export interface AmendmentPlan {
 export async function amendmentPlan(requestId: number, actor: Actor): Promise<{ ok: true; plan: AmendmentPlan } | { ok: false; reason: string }> {
   const original = await findRequest(requestId);
   if (!original || original.requesterId !== actor.id) return { ok: false, reason: "Not found." };
+  if (!(await featureOn("amendments", actor))) return { ok: false, reason: "Amendments are switched off at the moment." };
   if (await findAmendment(requestId)) return { ok: false, reason: "This is an amendment. Amend the original request instead." };
   if (original.status !== "APPROVED") return { ok: false, reason: "Only an approved request can be amended." };
   const originalVersion = await findWorkflowVersion(original.workflowVersionId);

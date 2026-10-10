@@ -1,5 +1,6 @@
 import { requireArea } from "@/server/authorization/guards";
 import { AppShell } from "@/features/shell/AppShell";
+import { featureOn } from "@/server/settings/features";
 
 export const dynamic = "force-dynamic";
 
@@ -8,6 +9,7 @@ export const dynamic = "force-dynamic";
 // IT_ADMIN or SUPER_ADMIN role the visitor gets a plain 404.
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user } = await requireArea("admin");
+  const analytics = await featureOn("analytics", user);
   return (
     <AppShell
       area="admin"
@@ -15,7 +17,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       nav={[
         { href: "/admin", label: "Overview" },
         { href: "/admin/attention", label: "Needs attention" },
-        { href: "/users/analytics?scope=ORGANISATION", label: "Analytics" },
+        ...(analytics ? [{ href: "/users/analytics?scope=ORGANISATION", label: "Analytics" }] : []),
         { href: "/admin/insights", label: "Insights" },
         { href: "/admin/dashboards", label: "Dashboards" },
         { href: "/admin/workload", label: "Workload" },

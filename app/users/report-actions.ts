@@ -9,6 +9,9 @@ import { availableScopes, type ScopeKind } from "@/server/analytics/scope";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { logError } from "@/lib/logging/logger";
 import type { ActionResult } from "@/lib/http/action-result";
+import { featureOn } from "@/server/settings/features";
+
+const OFF: ActionResult = { ok: false, message: "Scheduled reports and alerts are switched off at the moment." };
 
 // Saved views, scheduled reports and alert rules (Addendum A §10.5, §11,
 // §15, D-123). Everything is the signed-in person's own; scope is checked
@@ -50,6 +53,7 @@ export async function createScheduleAction(_previous: ActionResult | null, formD
   const user = await me();
   const reportKey = text(formData.get("reportKey"), 60);
   if (!user) return { ok: false, message: "Not found." };
+  if (!(await featureOn("scheduled_reports", user))) return OFF;
   const query = queryFrom(formData);
   // Only a report the person can run now can be scheduled.
   if (!(await prepareReport(reportKey, query, user))) return { ok: false, message: "Not found." };
@@ -85,6 +89,7 @@ export async function toggleScheduleAction(_previous: ActionResult | null, formD
 export async function createAlertAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
   const user = await me();
   if (!user) return { ok: false, message: "Not found." };
+  if (!(await featureOn("scheduled_reports", user))) return OFF;
   const metric = String(formData.get("metric"));
   const scopeKind = String(formData.get("scope")) as ScopeKind;
   const threshold = Number(formData.get("threshold"));

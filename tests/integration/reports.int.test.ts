@@ -71,6 +71,10 @@ describe("reports", () => {
     expect(pending?.scope.kind).toBe("APPROVALS");
     expect(pending?.result.rows).toHaveLength(3);
     expect(pending?.result.rows[0]![8]).toMatch(/Within response time|Approaching/);
+    const scorecard = await runReport("department_scorecard", { type: String(workflowId), period: "7d" }, admin);
+    expect(scorecard?.result.rows[0]![0]).toBe("Whole organisation");
+    expect(scorecard?.result.rows[0]![1]).toBe(3);
+    expect(await prepareReport("department_scorecard", {}, person(requester))).toBeNull();
     expect(reportXlsx(org!.result, { title: "t", scopeLabel: "s", periodLabel: null, generatedAt: new Date(), generatedBy: "x" }).byteLength).toBeGreaterThan(500);
   });
 });
@@ -97,6 +101,28 @@ describe("scheduled reports", () => {
     await runDueSchedules();
     const [[row]] = await getDbPool().query<RowDataPacket[]>("SELECT s.active, r.status FROM report_schedules s JOIN report_runs r ON r.schedule_id = s.id WHERE s.id = ?", [id]);
     expect(row).toMatchObject({ active: 0, status: "SKIPPED" });
+  });
+});
+
+describe("feature switches (D-124)", () => {
+  it("OFF stops scheduled reports; IT_ONLY keeps them for the IT team; ON is the default", async () => {
+    const { featureOn } = await import("@/server/settings/features");
+    expect(await featureOn("reports", person(requester))).toBe(true);
+    await getDbPool().query("INSERT INTO system_settings (setting_key, setting_group, value) VALUES ('features.scheduled_reports', 'FEATURES', 'IT_ONLY') ON DUPLICATE KEY UPDATE value = 'IT_ONLY'");
+    try {
+      expect(await featureOn("scheduled_reports", person(requester))).toBe(false);
+      expect(await featureOn("scheduled_reports", admin)).toBe(true);
+      await getDbPool().query("UPDATE system_settings SET value = 'OFF' WHERE setting_key = 'features.scheduled_reports'");
+      expect(await featureOn("scheduled_reports", admin)).toBe(false);
+      const id = await createSchedule({ userId: requester, reportKey: "request_register", query: {}, format: "csv", frequency: "DAILY", weekday: null, monthDay: null, hourIst: 8 });
+      await getDbPool().query("UPDATE report_schedules SET next_run_at = DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 1 MINUTE) WHERE id = ?", [id]);
+      expect(await runDueSchedules()).toEqual({ reportsSent: 0, reportsFailed: 0, reportsSkipped: 0 });
+      const [runs] = await getDbPool().query<RowDataPacket[]>("SELECT id FROM report_runs WHERE schedule_id = ?", [id]);
+      expect(runs).toHaveLength(0);
+      await getDbPool().query("UPDATE report_schedules SET active = FALSE WHERE id = ?", [id]);
+    } finally {
+      await getDbPool().query("DELETE FROM system_settings WHERE setting_key = 'features.scheduled_reports'");
+    }
   });
 });
 
