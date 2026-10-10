@@ -5,7 +5,8 @@ import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { activeDelegatorsFor, listComments, type CommentItem } from "@/lib/db/repositories/collab.repository";
 import { buildStepMap, peopleInState, summarizeTracker, type MapStage, type TrackerSummary } from "@/server/approvals/step-map";
 import { describeEvent, eventKind, type TimelineKind } from "@/server/approvals/timeline";
-import { displayValue, type FormField } from "@/server/forms/fields";
+import { displayValue, storedLines, type FormField } from "@/server/forms/fields";
+import type { Line } from "@/server/forms/dynamic";
 import type { FormData as EngineFormData, InstanceStatus } from "@/server/engine/types";
 import type { Actor } from "@/server/approvals/service";
 import { listAttachments } from "@/lib/db/repositories/attachments.repository";
@@ -31,7 +32,7 @@ export interface RequestView {
   requesterName: string;
   form: FormField[];
   rawFields: Record<string, string>; // for the resubmit form
-  fields: { key: string; label: string; value: string }[];
+  fields: { key: string; label: string; value: string; lines?: Line[] }[];
   stages: MapStage[];
   tracker: TrackerSummary;
   timeline: { id: number; at: Date; text: string; kind: TimelineKind }[];
@@ -151,7 +152,14 @@ export async function loadRequestView(requestId: number, viewer: Actor): Promise
     requesterName: nameOf(request.requesterId),
     form: version.form,
     rawFields: Object.fromEntries(Object.entries(request.formData).map(([key, value]) => [key, value === null || value === undefined ? "" : String(value)])),
-    fields: version.form.map((field) => ({ key: field.key, label: field.label, value: displayValue(field, request.formData[field.key], names, lookupNames) })),
+    fields: version.form
+      .filter((field) => field.type !== "SECTION")
+      .map((field) => ({
+        key: field.key,
+        label: field.label,
+        value: displayValue(field, request.formData[field.key], names, lookupNames),
+        ...(field.type === "LINE_ITEMS" ? { lines: storedLines(request.formData, field.key) } : {}),
+      })),
     stages,
     tracker: summarizeTracker(stages, { status: state.status, requesterName: nameOf(request.requesterId), closedAt: closedAt(state), holdSince: state.hold?.at ?? null }),
     timeline: timelineRows

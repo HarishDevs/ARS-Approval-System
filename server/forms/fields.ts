@@ -1,9 +1,14 @@
 import { z } from "zod";
 import type { FormData as EngineFormData } from "@/server/engine/types";
+import { RULE_OPERATORS, computeLines, dependencyOrder, evaluateFormula, formatPaise, formulaFields, paiseToRupees, parseFormula, roundTo, ruleHolds, visibleFields, type FieldRule, type Line, type LineInput } from "@/server/forms/dynamic";
 
 // Form fields belong to a workflow version (D-055, S3-01a): a running
 // request keeps the fields it was raised with. Pure and unit-tested.
-export const FIELD_TYPES = ["TEXT", "LONG_TEXT", "NUMBER", "DATE", "CHOICE", "PERSON", "LOOKUP"] as const;
+// v1.6.0: CALC (worked out by a formula), LINE_ITEMS (quantity × rate +
+// GST, total in the field's own key), SECTION (a heading; holds no value).
+export const FIELD_TYPES = ["TEXT", "LONG_TEXT", "NUMBER", "DATE", "CHOICE", "PERSON", "LOOKUP", "CALC", "LINE_ITEMS", "SECTION"] as const;
+// Types whose value is a number (usable in formulas, rules and the DoA).
+export const NUMERIC_TYPES: readonly string[] = ["NUMBER", "CALC", "LINE_ITEMS"];
 export type FieldType = (typeof FIELD_TYPES)[number];
 
 // LOOKUP fields take their options from the database (S12-06, D-088): the
@@ -30,7 +35,16 @@ export interface FormField {
   source?: LookupSource; // LOOKUP only
   help?: string;
   min?: number; // NUMBER only: the smallest value allowed (e.g. 0 for amounts, D-QA-04)
+  // v1.6.0 smart forms
+  showIf?: FieldRule; // shown only when this holds (otherwise cleared)
+  requiredIf?: FieldRule; // required only when this holds
+  formula?: string; // CALC only, e.g. "quantity * rate * (1 + gst / 100)"
+  decimals?: number; // CALC only: 0–4 (default 2)
+  defaultValue?: string; // filled in on a new request
+  neededBy?: boolean; // DATE only: the request's "needed by" date (calendar)
 }
+
+const ruleSchema = z.object({ field: z.string().regex(/^[a-z][a-z0-9_]{0,49}$/), op: z.enum(RULE_OPERATORS), value: z.string().trim().max(100).optional() });
 
 export const formFieldSchema = z.object({
   key: z.string().regex(/^[a-z][a-z0-9_]{0,49}$/, "Field keys use lowercase letters, numbers and _ (e.g. amount)."),
@@ -41,6 +55,12 @@ export const formFieldSchema = z.object({
   source: z.enum(LOOKUP_SOURCES).optional(),
   help: z.string().trim().max(200).optional(),
   min: z.number().finite().optional(),
+  showIf: ruleSchema.optional(),
+  requiredIf: ruleSchema.optional(),
+  formula: z.string().trim().max(500).optional(),
+  decimals: z.number().int().min(0).max(4).optional(),
+  defaultValue: z.string().trim().max(200).optional(),
+  neededBy: z.boolean().optional(),
 });
 
 export const formSchema = z.array(formFieldSchema).max(40);
@@ -59,7 +79,37 @@ export function checkFormDefinition(fields: readonly FormField[]): string[] {
     if (field.type === "LOOKUP" && !field.source) problems.push(`"${field.label}" needs a list to choose from (departments or designations).`);
     if (field.type !== "LOOKUP" && field.source) problems.push(`"${field.label}" has a list but isn't a list field.`);
     if (!field.label.trim()) problems.push("Every field needs a label.");
+    // v1.6.0 smart forms
+    if (field.type === "CALC") {
+      if (!field.formula) problems.push(`"${field.label}" needs a formula.`);
+      else {
+        try {
+          const refs = formulaFields(parseFormula(field.formula));
+          for (const ref of refs) {
+            const target = fields.find((other) => other.key === ref);
+            if (!target) problems.push(`"${field.label}": the formula uses "${ref}", which isn't a field on this form.`);
+            else if (!NUMERIC_TYPES.includes(target.type)) problems.push(`"${field.label}": "${target.label}" isn't a number, so it can't be used in a formula.`);
+          }
+        } catch (error) {
+          problems.push(`"${field.label}": ${(error as Error).message}`);
+        }
+      }
+      if (field.required) problems.push(`"${field.label}" is worked out, so it can't be marked required.`);
+    } else if (field.formula) problems.push(`"${field.label}" has a formula but isn't a calculated field.`);
+    if (field.type === "SECTION" && (field.required || field.requiredIf)) problems.push(`"${field.label}" is a heading; it can't be required.`);
+    if (field.neededBy && field.type !== "DATE") problems.push(`"${field.label}": only a date can be the "needed by" date.`);
+    for (const [name, rule] of [["show", field.showIf], ["require", field.requiredIf]] as const) {
+      if (!rule) continue;
+      const target = fields.find((other) => other.key === rule.field);
+      if (!target) problems.push(`"${field.label}": the ${name} rule uses "${rule.field}", which isn't a field on this form.`);
+      else if (target.key === field.key) problems.push(`"${field.label}": a rule can't depend on the field itself.`);
+      else if (target.type === "SECTION") problems.push(`"${field.label}": a rule can't use a heading.`);
+      else if (["GT", "GTE", "LT", "LTE"].includes(rule.op) && !NUMERIC_TYPES.includes(target.type)) problems.push(`"${field.label}": "more/less than" needs a number field.`);
+      else if (!["FILLED", "EMPTY"].includes(rule.op) && !rule.value) problems.push(`"${field.label}": the ${name} rule needs a value.`);
+    }
   }
+  if (problems.length === 0 && dependencyOrder(fields) === null) problems.push("Some fields depend on each other in a circle (their rules or formulas). Remove one of the links.");
+  if (fields.filter((field) => field.neededBy).length > 1) problems.push('Only one date can be the "needed by" date.');
   return problems;
 }
 
@@ -77,12 +127,11 @@ export function parseFormSubmission(
 ): FormParseResult {
   const data: EngineFormData = {};
   const errors: Record<string, string> = {};
+  // 1. Typed values for every field the person can type in.
   for (const field of fields) {
+    if (field.type === "SECTION" || field.type === "CALC") continue;
     const value = (raw[field.key] ?? "").trim();
-    if (value === "") {
-      if (field.required) errors[field.key] = `${field.label} is required.`;
-      continue;
-    }
+    if (value === "") continue;
     switch (field.type) {
       case "TEXT":
         if (value.length > 200) errors[field.key] = "Use 200 characters or fewer.";
@@ -121,9 +170,75 @@ export function parseFormSubmission(
         else data[field.key] = id;
         break;
       }
+      case "LINE_ITEMS": {
+        // The browser sends the rows as JSON; totals are worked out here.
+        let inputs: LineInput[] = [];
+        try {
+          const parsed = JSON.parse(value) as unknown;
+          if (!Array.isArray(parsed)) throw new Error("not a list");
+          inputs = parsed
+            .filter((row): row is Record<string, unknown> => typeof row === "object" && row !== null)
+            .map((row) => ({ description: String(row.description ?? ""), quantity: String(row.quantity ?? ""), rate: String(row.rate ?? ""), gst: row.gst === undefined ? undefined : String(row.gst) }))
+            .filter((row) => row.description.trim() || row.quantity.trim() || row.rate.trim());
+        } catch {
+          errors[field.key] = "The lines couldn't be read. Check them and try again.";
+          break;
+        }
+        if (inputs.length === 0) break;
+        const result = computeLines(inputs);
+        if (!result.ok) errors[field.key] = result.message;
+        else {
+          data[field.key] = paiseToRupees(result.totalPaise);
+          data[linesKey(field.key)] = JSON.stringify(result.lines);
+        }
+        break;
+      }
+    }
+  }
+  // 2. Calculated fields, in dependency order, from the typed values only.
+  const order = dependencyOrder(fields) ?? fields.map((field) => field.key);
+  const byKey = new Map(fields.map((field) => [field.key, field]));
+  for (const key of order) {
+    const field = byKey.get(key);
+    if (!field || field.type !== "CALC" || !field.formula) continue;
+    try {
+      const value = evaluateFormula(parseFormula(field.formula), data as Record<string, string | number | null>);
+      if (value !== null && Number.isFinite(value)) data[field.key] = roundTo(value, field.decimals ?? 2);
+    } catch {
+      // the form check refuses bad formulas; nothing to add here
+    }
+  }
+  // 3. Hidden fields are cleared (and their problems don't count); then
+  //    "required" and "required when" are checked on what is shown.
+  const shown = visibleFields(fields, data as Record<string, string | number | null>);
+  for (const field of fields) {
+    if (!shown.has(field.key)) {
+      delete data[field.key];
+      delete data[linesKey(field.key)];
+      delete errors[field.key];
+      continue;
+    }
+    if (field.type === "SECTION" || field.type === "CALC") continue;
+    const required = field.required || (field.requiredIf ? ruleHolds(field.requiredIf, data as Record<string, string | number | null>) : false);
+    if (required && (data[field.key] === undefined || data[field.key] === "") && !errors[field.key]) {
+      errors[field.key] = field.type === "LINE_ITEMS" ? `Add at least one line to ${field.label}.` : `${field.label} is required.`;
     }
   }
   return Object.keys(errors).length ? { ok: false, errors, data } : { ok: true, data };
+}
+
+// Where a line-items field keeps its rows (the total is under its own key).
+export const linesKey = (key: string) => `${key}__lines`;
+
+export function storedLines(formData: Record<string, unknown>, key: string): Line[] {
+  const raw = formData[linesKey(key)];
+  if (typeof raw !== "string") return [];
+  try {
+    const parsed = JSON.parse(raw) as Line[];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
 }
 
 // For showing stored values back on the request page.
@@ -134,6 +249,8 @@ export function displayValue(field: FormField, value: unknown, names: ReadonlyMa
   }
   if (field.type === "LOOKUP" && field.source && typeof value === "string") return lookupNames?.get(`${field.source}:${value}`) ?? value;
   if (field.type === "NUMBER" && typeof value === "number") return value.toLocaleString("en-IN");
+  if (field.type === "CALC" && typeof value === "number") return value.toLocaleString("en-IN", { maximumFractionDigits: field.decimals ?? 2 });
+  if (field.type === "LINE_ITEMS" && typeof value === "number") return `${formatPaise(Math.round(value * 100))}`;
   if (field.type === "PERSON" && typeof value === "number") return names.get(value) ?? `User #${value}`;
   return String(value);
 }

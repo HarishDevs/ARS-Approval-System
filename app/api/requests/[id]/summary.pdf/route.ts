@@ -3,6 +3,7 @@ import { requireApiArea } from "@/server/authorization/guards";
 import { loadRequestView } from "@/server/approvals/view";
 import { buildRequestSummaryPdf } from "@/server/pdf/request-summary";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
+import { formatPaise } from "@/server/forms/dynamic";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { apiError } from "@/lib/http/api-response";
 import { logError } from "@/lib/logging/logger";
@@ -41,7 +42,11 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       statusLabel: STATUS[view.status] ?? view.status,
       requesterName: view.requesterName,
       progress: view.tracker.headline,
-      fields: view.fields.map((field) => ({ label: field.label, value: field.value })),
+      // Line items are written out row by row under their total.
+      fields: view.fields.map((field) => ({
+        label: field.label,
+        value: field.lines?.length ? [field.value, ...field.lines.map((line) => `${line.description}: ${line.quantity} × Rs. ${line.rate}${Number(line.gst) ? ` + ${line.gst}% GST` : ""} = ${formatPaise(line.totalPaise).replace("₹", "Rs. ")}`)].join("\n") : field.value,
+      })),
       stages: withIndiaTimes(view.stages),
       timeline: view.timeline.map((entry) => ({ at: formatIndiaTime(entry.at), text: entry.text })),
       attachments: view.attachments.map((file) => ({ name: file.name, size: file.size })),

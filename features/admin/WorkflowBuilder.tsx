@@ -244,7 +244,7 @@ function StageList({
   const personFields = form.filter((field) => field.type === "PERSON");
   const kindLabel = (stage: BuilderStage) => (stage.kind === "STEP" ? "one step" : stage.kind === "PARALLEL" ? "parallel steps" : stage.kind === "DOA" ? "DoA matrix" : "a choice");
   const hasDoa = stages.some((stage) => stage.kind === "DOA");
-  const numberFields = form.filter((field) => field.type === "NUMBER");
+  const numberFields = form.filter((field) => ["NUMBER", "CALC", "LINE_ITEMS"].includes(field.type));
 
   return (
     <>
@@ -422,7 +422,7 @@ function DoaEditor({
   newId: () => string;
 }) {
   const bandLabels = doaBandLabels(stage.limits);
-  const numberFields = form.filter((field) => field.type === "NUMBER");
+  const numberFields = form.filter((field) => ["NUMBER", "CALC", "LINE_ITEMS"].includes(field.type));
   const setLevel = (index: number, level: BuilderDoa["levels"][number]) => onChange({ ...stage, levels: stage.levels.map((item, i) => (i === index ? level : item)) });
   const moveLevel = (index: number, delta: number) => {
     const target = index + delta;

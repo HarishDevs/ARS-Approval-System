@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Breadcrumbs } from "@/features/ui/Display";
+import { formatPaise } from "@/server/forms/dynamic";
 import { notFound } from "next/navigation";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
@@ -222,10 +223,41 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
               <h2 className="mb-3 font-semibold">Details</h2>
               <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
                 {view.fields.map((field) => (
-                  <div key={field.key}>
+                  <div key={field.key} className={field.lines?.length ? "sm:col-span-2" : undefined}>
                     <dt className="text-caption text-ink-muted">{field.label}</dt>
                     <dd className="whitespace-pre-wrap">
-                      <SafeText text={field.value} />
+                      {field.lines?.length ? (
+                        <div className="mt-1 overflow-x-auto rounded-md border border-line">
+                          <table className="data-table">
+                            <caption className="sr-only">{field.label}</caption>
+                            <thead>
+                              <tr>
+                                <th scope="col">Description</th>
+                                <th scope="col" className="text-right">Qty</th>
+                                <th scope="col" className="text-right">Rate</th>
+                                <th scope="col" className="text-right">GST %</th>
+                                <th scope="col" className="text-right">Total</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {field.lines.map((line, index) => (
+                                <tr key={index}>
+                                  <td>
+                                    <SafeText text={line.description} />
+                                  </td>
+                                  <td className="text-right tabular-nums">{line.quantity}</td>
+                                  <td className="text-right tabular-nums">{formatPaise(Math.round(Number(line.rate) * 100))}</td>
+                                  <td className="text-right tabular-nums">{line.gst}</td>
+                                  <td className="text-right tabular-nums">{formatPaise(line.totalPaise)}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                          <p className="border-t border-line px-4 py-2 text-right font-semibold tabular-nums">Total {field.value}</p>
+                        </div>
+                      ) : (
+                        <SafeText text={field.value} />
+                      )}
                     </dd>
                   </div>
                 ))}

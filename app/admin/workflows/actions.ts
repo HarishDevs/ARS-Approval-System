@@ -116,6 +116,8 @@ export async function simulateAction(_previous: ActionResult | null, formData: F
   const fields: Record<string, string> = {};
   for (const [key, value] of formData.entries()) {
     if (key.startsWith("field:") && typeof value === "string") fields[key.slice(6)] = value;
+    // Line items in test mode: one sample line with the total entered.
+    if (key.startsWith("lines:") && typeof value === "string" && value.trim()) fields[key.slice(6)] = JSON.stringify([{ description: "Sample total", quantity: "1", rate: value.replace(/[,\s₹]/g, "") }]);
   }
   try {
     const view = await simulateVersion(versionId, { requesterId, fields });

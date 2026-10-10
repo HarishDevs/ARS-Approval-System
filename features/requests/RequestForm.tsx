@@ -1,7 +1,9 @@
 "use client";
 
 import { resubmitAction, submitRequestAction } from "@/app/users/actions";
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { LineItemsEditor } from "@/features/requests/LineItemsEditor";
+import { describeRule, evaluateFormula, parseFormula, ruleHolds, visibleFields } from "@/server/forms/dynamic";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import { ErrorSummary } from "@/features/ui/Field";
 import { NO_LOOKUPS, type FieldLookups, type FormField } from "@/server/forms/fields";
@@ -58,8 +60,50 @@ export function RequestForm({
   const summaryErrors = result && !result.ok && result.fieldErrors ? Object.fromEntries(Object.entries(result.fieldErrors).filter(([key]) => key !== "allowDuplicate").map(([key, message]) => [key === "title" || key === "attachments" ? key : `f-${key}`, message])) : undefined;
   const summaryLabels: Record<string, string> = { title: "Title", attachments: "Attachments", ...Object.fromEntries(fields.map((field) => [`f-${field.key}`, field.label])) };
 
+  // EN-01/02: live values decide which fields show and what is worked out.
+  // The server applies the same rules again on submit.
+  const start = useMemo(() => {
+    const values: Record<string, string> = {};
+    for (const field of fields) values[field.key] = initial?.[field.key] ?? (mode === "submit" ? (field.defaultValue ?? "") : "");
+    return values;
+  }, [fields, initial, mode]);
+  const [values, setValues] = useState<Record<string, string | number | null>>(start);
+  const readForm = (form: HTMLFormElement) => {
+    const data = new FormData(form);
+    setValues((current) => {
+      const next: Record<string, string | number | null> = { ...current };
+      for (const field of fields) if (field.type !== "LINE_ITEMS" && field.type !== "CALC" && field.type !== "SECTION") next[field.key] = String(data.get(field.key) ?? "");
+      return next;
+    });
+  };
+  const nudge = autosave.nudge;
+  const onLines = useCallback(
+    (key: string) => (total: number | null) => {
+      setValues((current) => (current[key] === total ? current : { ...current, [key]: total }));
+      nudge();
+    },
+    [nudge],
+  );
+  const lineHandlers = useMemo(() => Object.fromEntries(fields.filter((field) => field.type === "LINE_ITEMS").map((field) => [field.key, onLines(field.key)])), [fields, onLines]);
+  const calculated = useMemo(() => {
+    const out: Record<string, number | null> = {};
+    const scope: Record<string, string | number | null> = { ...values };
+    for (const field of fields) {
+      if (field.type !== "CALC" || !field.formula) continue;
+      try {
+        out[field.key] = evaluateFormula(parseFormula(field.formula), scope);
+        scope[field.key] = out[field.key] ?? null;
+      } catch {
+        out[field.key] = null;
+      }
+    }
+    return out;
+  }, [fields, values]);
+  const shown = useMemo(() => visibleFields(fields, { ...values, ...calculated }), [fields, values, calculated]);
+  const labelOf = (key: string) => fields.find((field) => field.key === key)?.label ?? key;
+
   return (
-    <form ref={autosave.formRef} onSubmit={onSubmit} className="card">
+    <form ref={autosave.formRef} onSubmit={onSubmit} onInput={(event) => readForm(event.currentTarget)} onChange={(event) => readForm(event.currentTarget)} className="card">
       {draft && restoredAt && (
         <p role="status" className="border-b border-line bg-primary-50/50 px-5 py-2 text-label text-primary-700">
           Restored your draft from {restoredAt.toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kolkata" })}. Files aren&apos;t kept in drafts: add them again before submitting.
@@ -80,27 +124,51 @@ export function RequestForm({
             <FieldError result={result} name="title" />
           </div>
         )}
-        {fields.map((field) => (
-          <div key={field.key}>
-            <label htmlFor={`f-${field.key}`} className="field-label">
-              {field.label}
-              {!field.required && <span className="font-normal text-ink-faint"> (optional)</span>}
-            </label>
-            <FieldInput
-              field={field}
-              people={approverPeople && approverFields.includes(field.key) ? approverPeople : people}
-              lookups={lookups}
-              defaultValue={initial?.[field.key] ?? ""}
-              error={result && !result.ok ? result.fieldErrors?.[field.key] : undefined}
-            />
-            {field.help && (
-              <p id={`f-${field.key}-hint`} className="mt-1 text-caption text-ink-muted">
-                {field.help}
-              </p>
-            )}
-            <FieldError result={result} name={field.key} />
-          </div>
-        ))}
+        {fields.map((field) => {
+          const visible = shown.has(field.key);
+          const error = result && !result.ok ? result.fieldErrors?.[field.key] : undefined;
+          if (field.type === "SECTION") {
+            return visible ? (
+              <div key={field.key} className="border-t border-line pt-4">
+                <h3 className="font-semibold">{field.label}</h3>
+                {field.help && <p className="text-label text-ink-muted">{field.help}</p>}
+              </div>
+            ) : null;
+          }
+          const required = field.required || (field.requiredIf ? ruleHolds(field.requiredIf, { ...values, ...calculated }) : false);
+          return (
+            // A field hidden by its rule is disabled, so it isn't sent (the server clears it anyway).
+            <fieldset key={field.key} hidden={!visible} disabled={!visible} className="min-w-0">
+              <label htmlFor={`f-${field.key}`} className="field-label">
+                {field.label}
+                {!required && field.type !== "CALC" && <span className="font-normal text-ink-faint"> (optional)</span>}
+              </label>
+              {field.type === "CALC" ? (
+                <output id={`f-${field.key}`} aria-live="polite" className="field-input flex items-center bg-surface tabular-nums">
+                  {calculated[field.key] === null || calculated[field.key] === undefined ? <span className="text-ink-faint">Fill in the fields it uses</span> : calculated[field.key]!.toLocaleString("en-IN", { maximumFractionDigits: field.decimals ?? 2 })}
+                </output>
+              ) : field.type === "LINE_ITEMS" ? (
+                <LineItemsEditor name={field.key} label={field.label} defaultValue={initial?.[field.key] ?? ""} invalid={Boolean(error)} describedBy={error ? `${field.key}-error` : undefined} onChange={lineHandlers[field.key]!} />
+              ) : (
+                <FieldInput
+                  field={field}
+                  people={approverPeople && approverFields.includes(field.key) ? approverPeople : people}
+                  lookups={lookups}
+                  defaultValue={start[field.key] ?? ""}
+                  error={error}
+                />
+              )}
+              {field.type === "CALC" && field.formula && <p className="mt-1 text-caption text-ink-muted">Worked out automatically: {field.formula}</p>}
+              {field.requiredIf && <p className="mt-1 text-caption text-ink-muted">Required when {describeRule(field.requiredIf, labelOf)}.</p>}
+              {field.help && (
+                <p id={`f-${field.key}-hint`} className="mt-1 text-caption text-ink-muted">
+                  {field.help}
+                </p>
+              )}
+              <FieldError result={result} name={field.key} />
+            </fieldset>
+          );
+        })}
         <div>
           <label htmlFor="f-attachments" className="field-label">
             {mode === "submit" ? "Attachments" : "Add files"} <span className="font-normal text-ink-faint">(optional)</span>

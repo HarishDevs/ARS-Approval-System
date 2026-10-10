@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { LOOKUP_SOURCES, type FieldLookups, type FieldType, type FormField, type LookupSource } from "@/server/forms/fields";
+import { LOOKUP_SOURCES, NUMERIC_TYPES, type FieldLookups, type FieldType, type FormField, type LookupSource } from "@/server/forms/fields";
+import { RULE_OPERATORS, RULE_WORDS, formulaFields, parseFormula, type FieldRule } from "@/server/forms/dynamic";
 import type { Comparison } from "@/server/engine/types";
 
 type ConditionValue = string | number;
@@ -23,6 +24,10 @@ const TYPE_CHOICES: { value: string; label: string }[] = [
   { value: "LOOKUP:DEPARTMENT", label: "Department (from the list)" },
   { value: "LOOKUP:DESIGNATION", label: "Designation (from the list)" },
   { value: "PERSON", label: "Person" },
+  // v1.6.0 smart forms
+  { value: "CALC", label: "Calculated (formula)" },
+  { value: "LINE_ITEMS", label: "Line items (qty × rate + GST)" },
+  { value: "SECTION", label: "Section heading" },
 ];
 export const SOURCE_LABEL: Record<LookupSource, string> = { DEPARTMENT: "Departments", DESIGNATION: "Designations" };
 
@@ -48,7 +53,75 @@ function withType(field: FormField, value: string): FormField {
     ...(type === "CHOICE" ? { options: field.options ?? [] } : {}),
     ...(type === "NUMBER" && field.min !== undefined ? { min: field.min } : {}),
     ...(type === "LOOKUP" ? { source: source && (LOOKUP_SOURCES as readonly string[]).includes(source) ? source : "DEPARTMENT" } : {}),
+    ...(type === "CALC" ? { formula: field.formula ?? "", required: false } : {}),
+    ...(type === "SECTION" ? { required: false } : {}),
+    ...(field.showIf ? { showIf: field.showIf } : {}),
+    ...(field.requiredIf && type !== "SECTION" && type !== "CALC" ? { requiredIf: field.requiredIf } : {}),
+    ...(field.defaultValue && ["TEXT", "NUMBER", "CHOICE", "DATE"].includes(type) ? { defaultValue: field.defaultValue } : {}),
   };
+}
+
+// The rule editor for "show only when" / "required when" (EN-01).
+function RuleEditor({ label, rule, others, onChange }: { label: string; rule: FieldRule | undefined; others: FormField[]; onChange: (rule: FieldRule | undefined) => void }) {
+  if (!rule) {
+    return (
+      <button type="button" className="link text-label" disabled={others.length === 0} onClick={() => onChange({ field: others[0]!.key, op: "FILLED" })}>
+        + {label}
+      </button>
+    );
+  }
+  const target = others.find((other) => other.key === rule.field);
+  const numeric = target ? NUMERIC_TYPES.includes(target.type) : false;
+  const operators = RULE_OPERATORS.filter((op) => numeric || !["GT", "GTE", "LT", "LTE"].includes(op));
+  return (
+    <div className="flex flex-wrap items-center gap-2 rounded-md bg-surface-muted px-3 py-2 text-label">
+      <span className="font-medium">{label}</span>
+      <select aria-label={`${label}: field`} value={rule.field} onChange={(event) => onChange({ ...rule, field: event.target.value })} className="field-input w-auto">
+        {others.map((other) => (
+          <option key={other.key} value={other.key}>
+            {other.label || other.key}
+          </option>
+        ))}
+      </select>
+      <select aria-label={`${label}: test`} value={rule.op} onChange={(event) => onChange({ ...rule, op: event.target.value as FieldRule["op"] })} className="field-input w-auto">
+        {operators.map((op) => (
+          <option key={op} value={op}>
+            {RULE_WORDS[op]}
+          </option>
+        ))}
+      </select>
+      {rule.op !== "FILLED" && rule.op !== "EMPTY" &&
+        (target?.type === "CHOICE" ? (
+          <select aria-label={`${label}: value`} value={rule.value ?? ""} onChange={(event) => onChange({ ...rule, value: event.target.value })} className="field-input w-auto">
+            <option value="">Choose…</option>
+            {(target.options ?? []).map((option) => (
+              <option key={option}>{option}</option>
+            ))}
+          </select>
+        ) : (
+          <input aria-label={`${label}: value`} value={rule.value ?? ""} onChange={(event) => onChange({ ...rule, value: event.target.value.slice(0, 100) })} inputMode={numeric ? "decimal" : undefined} className="field-input w-40" />
+        ))}
+      <button type="button" className="link text-danger-600" onClick={() => onChange(undefined)} aria-label={`Remove: ${label}`}>
+        Remove
+      </button>
+    </div>
+  );
+}
+
+// Live check of a formula against the form (EN-02).
+function formulaProblem(formula: string, form: FormField[], self: string): string | null {
+  if (!formula.trim()) return "Write a formula, e.g. quantity * rate.";
+  try {
+    for (const ref of formulaFields(parseFormula(formula))) {
+      const target = form.find((field) => field.key === ref);
+      if (!target) return `"${ref}" isn't a field on this form.`;
+      if (target.key === self) return "A formula can't use its own field.";
+      if (!NUMERIC_TYPES.includes(target.type)) return `"${target.label}" isn't a number.`;
+    }
+    return null;
+  } catch (error) {
+    return (error as Error).message;
+  }
 }
 
 // A number box that keeps the text being typed and reports a number (or
@@ -215,7 +288,7 @@ export function FormFieldsEditor({ form, setForm, lockedKeys }: { form: FormFiel
                 ))}
               </select>
               <label className="flex h-11 items-center gap-2 text-label">
-                <input type="checkbox" aria-label={`Required: ${name}`} checked={field.required} onChange={(event) => update(index, (item) => ({ ...item, required: event.target.checked }))} />
+                <input type="checkbox" aria-label={`Required: ${name}`} checked={field.required} disabled={field.type === "CALC" || field.type === "SECTION"} onChange={(event) => update(index, (item) => ({ ...item, required: event.target.checked }))} />
                 Required
               </label>
               <button
@@ -250,7 +323,70 @@ export function FormFieldsEditor({ form, setForm, lockedKeys }: { form: FormFiel
                     The requester picks from the active {SOURCE_LABEL[field.source].toLowerCase()} kept in Admin → Departments. New ones appear by themselves.
                   </p>
                 )}
-                {field.type === "DATE" && <p className="text-caption text-ink-muted">The requester picks a date from a calendar.</p>}
+                {field.type === "DATE" && (
+                  <div className="space-y-1">
+                    <p className="text-caption text-ink-muted">The requester picks a date from a calendar.</p>
+                    <label className="flex items-center gap-2 text-label">
+                      <input type="checkbox" checked={Boolean(field.neededBy)} onChange={(event) => update(index, (item) => ({ ...item, neededBy: event.target.checked || undefined }))} />
+                      This is the &quot;needed by&quot; date (shown in the calendar and reports)
+                    </label>
+                  </div>
+                )}
+                {field.type === "CALC" && (
+                  <div className="space-y-1">
+                    <label className="field-label" htmlFor={`formula-${index}`}>
+                      Formula
+                    </label>
+                    <input
+                      id={`formula-${index}`}
+                      value={field.formula ?? ""}
+                      onChange={(event) => update(index, (item) => ({ ...item, formula: event.target.value.slice(0, 500) }))}
+                      placeholder="e.g. quantity * rate * (1 + gst / 100)"
+                      className="field-input font-mono"
+                    />
+                    <p className={`text-caption ${formulaProblem(field.formula ?? "", form, field.key) ? "text-danger-600" : "text-ink-muted"}`}>
+                      {formulaProblem(field.formula ?? "", form, field.key) ??
+                        `Uses + − × ÷, brackets and round(x, 2). Number fields you can use: ${form.filter((other) => NUMERIC_TYPES.includes(other.type) && other.key !== field.key).map((other) => other.key).join(", ") || "none yet"}.`}
+                    </p>
+                    <label className="flex items-center gap-2 text-label">
+                      Decimal places
+                      <select value={field.decimals ?? 2} onChange={(event) => update(index, (item) => ({ ...item, decimals: Number(event.target.value) }))} className="field-input w-20">
+                        {[0, 1, 2, 3, 4].map((digits) => (
+                          <option key={digits}>{digits}</option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+                )}
+                {field.type === "LINE_ITEMS" && <p className="text-caption text-ink-muted">The requester adds rows of description, quantity, rate (₹) and GST %. The total (worked out in paise on the server) is this field&apos;s value, so it can be the DoA amount or used in a formula.</p>}
+                {field.type === "SECTION" && <p className="text-caption text-ink-muted">A heading that groups the fields below it. It holds no value.</p>}
+                {["TEXT", "NUMBER", "DATE"].includes(field.type) && (
+                  <input
+                    aria-label={`Default value for ${name}`}
+                    type={field.type === "DATE" ? "date" : "text"}
+                    value={field.defaultValue ?? ""}
+                    onChange={(event) => update(index, (item) => ({ ...item, defaultValue: event.target.value ? event.target.value.slice(0, 200) : undefined }))}
+                    placeholder="Default value on a new request (optional)"
+                    className="field-input"
+                  />
+                )}
+                {field.type === "CHOICE" && (field.options ?? []).length > 0 && (
+                  <label className="flex flex-wrap items-center gap-2 text-label">
+                    Default choice
+                    <select value={field.defaultValue ?? ""} onChange={(event) => update(index, (item) => ({ ...item, defaultValue: event.target.value || undefined }))} className="field-input w-auto">
+                      <option value="">None</option>
+                      {(field.options ?? []).map((option) => (
+                        <option key={option}>{option}</option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+                <div className="flex flex-col gap-2">
+                  <RuleEditor label="Show only when" rule={field.showIf} others={form.filter((other, i) => i !== index && other.type !== "SECTION" && other.key)} onChange={(showIf) => update(index, (item) => ({ ...item, showIf }))} />
+                  {field.type !== "CALC" && field.type !== "SECTION" && (
+                    <RuleEditor label="Required when" rule={field.requiredIf} others={form.filter((other, i) => i !== index && other.type !== "SECTION" && other.key)} onChange={(requiredIf) => update(index, (item) => ({ ...item, requiredIf }))} />
+                  )}
+                </div>
               </div>
             </div>
           );
@@ -297,7 +433,7 @@ const ALL: Record<string, [Operator, string][]> = {
 
 export function operatorsFor(field: FormField | undefined): [Operator, string][] {
   if (!field) return ALL.NUMBER!;
-  return ALL[field.type === "NUMBER" || field.type === "DATE" ? field.type : "OTHER"]!;
+  return ALL[NUMERIC_TYPES.includes(field.type) ? "NUMBER" : field.type === "DATE" ? "DATE" : "OTHER"]!;
 }
 
 export function needsValue(operator: Operator): boolean {
@@ -334,6 +470,8 @@ export function ConditionValueInput({
     </select>
   );
   switch (field?.type) {
+    case "CALC":
+    case "LINE_ITEMS":
     case "NUMBER":
       return <NumberDraftInput label="Value" value={typeof current === "number" ? current : undefined} onChange={(next) => onChange(next ?? "")} placeholder="e.g. 500000" className="field-input w-40" />;
     case "DATE":

@@ -119,7 +119,10 @@ describe("DoA checks", () => {
     expect(checkDoaForm(parsed, [AMOUNT])).toEqual([]);
     expect(checkDoaForm(parsed, [])).toEqual(['The DoA reads "amount", which isn\'t on the form. Add a number field with that key.']);
     expect(checkDoaForm(parsed, [{ ...AMOUNT, required: false }])[0]).toContain("Make \"Amount (₹)\" required");
-    expect(checkDoaForm(parsed, [{ ...AMOUNT, type: "TEXT" }])[0]).toContain("must be a number field");
+    expect(checkDoaForm(parsed, [{ ...AMOUNT, type: "TEXT" }])[0]).toContain("must be a number, a calculated field or line items");
+    // v1.6.0: a calculated or line-items total can be the DoA amount.
+    expect(checkDoaForm(parsed, [{ ...AMOUNT, type: "CALC", required: false, formula: "1" }])).toEqual([]);
+    expect(checkDoaForm(parsed, [{ ...AMOUNT, type: "LINE_ITEMS" }])).toEqual([]);
   });
 
   it("a fresh matrix is valid as it comes", () => {

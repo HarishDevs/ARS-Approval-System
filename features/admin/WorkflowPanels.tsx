@@ -31,12 +31,15 @@ export function TestModePanel({ versionId, form, people, lookups = NO_LOOKUPS }:
           </select>
           <FieldError result={result} name="requesterId" />
         </div>
-        {form.map((field) => (
+        {form.filter((field) => field.type !== "SECTION" && field.type !== "CALC").map((field) => (
           <div key={field.key}>
             <label htmlFor={`sim-${field.key}`} className="field-label">
               {field.label}
+              {field.type === "LINE_ITEMS" && <span className="font-normal text-ink-faint"> (sample total, ₹)</span>}
             </label>
-            {field.type === "CHOICE" ? (
+            {field.type === "LINE_ITEMS" ? (
+              <input id={`sim-${field.key}`} name={`lines:${field.key}`} inputMode="decimal" className="field-input" />
+            ) : field.type === "CHOICE" ? (
               <select id={`sim-${field.key}`} name={`field:${field.key}`} defaultValue="" className="field-input">
                 <option value="">—</option>
                 {field.options?.map((option) => (

@@ -347,8 +347,9 @@ export function checkDoaForm(spec: BuilderSpec, form: readonly FormField[]): str
   const field = form.find((item) => item.key === doa.field);
   if (!field) return [`The DoA reads "${doa.field}", which isn't on the form. Add a number field with that key.`];
   const problems: string[] = [];
-  if (field.type !== "NUMBER") problems.push(`The DoA field "${field.label}" must be a number field.`);
-  if (!field.required) problems.push(`Make "${field.label}" required: the DoA needs it to pick the approvers.`);
+  // v1.6.0: a calculated total or a line-items total can drive the DoA too.
+  if (!["NUMBER", "CALC", "LINE_ITEMS"].includes(field.type)) problems.push(`The DoA field "${field.label}" must be a number, a calculated field or line items.`);
+  if (!field.required && field.type !== "CALC") problems.push(`Make "${field.label}" required: the DoA needs it to pick the approvers.`);
   return problems;
 }
 
