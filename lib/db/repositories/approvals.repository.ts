@@ -445,7 +445,9 @@ export type TimelineEvent =
   | { type: "ATTACHMENTS_ADDED"; actorId: number; names: string[] }
   // v1.6.0 (EN-06): advice asked and given; no effect on the approval itself.
   | { type: "CONSULTED"; consultationId: number; consulteeId: number; actorId: number; question: string }
-  | { type: "CONSULT_ANSWERED"; consultationId: number; actorId: number; answer: string };
+  | { type: "CONSULT_ANSWERED"; consultationId: number; actorId: number; answer: string }
+  // FN7: IT moved the request to another workflow version.
+  | { type: "VERSION_MIGRATED"; actorId: number; fromVersionNo: number; toVersionNo: number; migrationId: number };
 
 export async function appendEvents(requestId: number, events: readonly TimelineEvent[], actorId: number | null, db: Queryable): Promise<void> {
   if (events.length === 0) return;

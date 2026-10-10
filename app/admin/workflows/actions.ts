@@ -8,6 +8,7 @@ import { addDraftVersion, createWorkflow, publishVersion, simulateVersion } from
 import { deleteUnusedWorkflow, findRequest, findWorkflow, findWorkflowVersion, listVersions, updateWorkflowDetails, updateWorkflowSettings } from "@/lib/db/repositories/approvals.repository";
 import { NUMERIC_TYPES } from "@/server/forms/fields";
 import { typeSettingsSchema } from "@/server/workflows/type-settings";
+import { runMigration } from "@/server/workflows/migration";
 import { withTransaction } from "@/lib/db/transaction";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { builderSpecSchema } from "@/server/workflows/builder";
@@ -275,4 +276,52 @@ export async function updateTypeSettingsAction(_previous: ActionResult | null, f
   }
   revalidatePath(`/admin/workflows/${workflowId}`);
   return { ok: true, message: "Saved. New submissions use these checks; requests already raised keep theirs." };
+}
+
+// Restore an older version as a new draft (version history). The draft is
+// checked like any other before it can be published; nothing goes live here.
+export async function restoreVersionAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const actor = await getAdminActor();
+  const workflowId = parseId(formData.get("workflowId"));
+  const versionId = parseId(formData.get("versionId"));
+  if (!actor || workflowId === null || versionId === null) return { ok: false, message: "Not found." };
+  const versions = await listVersions(workflowId);
+  const version = versions.find((item) => item.id === versionId);
+  if (!version) return { ok: false, message: "Not found." };
+  if (versions[0]?.status === "DRAFT") return { ok: false, message: `Version ${versions[0].versionNo} is already a draft. Publish it, or change it, before restoring another.` };
+  try {
+    const result = await addDraftVersion(workflowId, version.builder ? { builder: version.builder, form: version.form } : { definition: version.definition, form: version.form }, actor);
+    if (!result.ok) return { ok: false, message: result.message };
+    await recordAudit({ actorUserId: actor.id, action: "WORKFLOW_VERSION_RESTORED", entityType: "WORKFLOW", entityId: workflowId, sessionId: actor.sessionId, ipAddress: actor.ipAddress, metadata: { fromVersion: version.versionNo, newVersion: result.value.versionNo } });
+    revalidatePath(`/admin/workflows/${workflowId}`);
+    return { ok: true, message: `Version ${version.versionNo} copied as draft version ${result.value.versionNo}. Check it, then publish.` };
+  } catch (error) {
+    logError("restoreVersionAction failed", error);
+    return { ok: false, message: "Couldn't restore. Please try again." };
+  }
+}
+
+// FN7: move chosen open requests from an older version to the live one.
+export async function runMigrationAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const actor = await getAdminActor();
+  const workflowId = parseId(formData.get("workflowId"));
+  const fromVersionId = parseId(formData.get("fromVersionId"));
+  if (!actor || workflowId === null || fromVersionId === null) return { ok: false, message: "Not found." };
+  const requestIds = formData.getAll("requestId").map((value) => parseId(value)).filter((value): value is number => value !== null);
+  const mapping: Record<string, string> = {};
+  for (const [key, value] of formData.entries()) {
+    if (key.startsWith("map:") && typeof value === "string" && value) mapping[key.slice(4)] = value;
+  }
+  let migrationId: number;
+  try {
+    const result = await runMigration({ workflowId, fromVersionId, requestIds, mapping, acceptWarnings: formData.get("acceptWarnings") === "on" }, actor);
+    if (!result.ok) return { ok: false, message: result.message };
+    migrationId = result.report.migrationId;
+  } catch (error) {
+    logError("runMigrationAction failed", error);
+    return { ok: false, message: "The migration stopped part-way. Requests already moved stay moved; see the run history." };
+  }
+  revalidatePath(`/admin/workflows/${workflowId}`);
+  // The result stays on screen as a banner for this run (the list below changes).
+  redirect(`/admin/workflows/${workflowId}/migrate?from=${fromVersionId}&run=${migrationId}`);
 }

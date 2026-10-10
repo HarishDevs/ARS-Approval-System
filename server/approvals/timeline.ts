@@ -63,6 +63,8 @@ export function describeEvent(event: TimelineEvent, labelOf: (nodeId: string) =>
     }
     case "DELETED":
       return `Removed by ${nameOf(event.actorId)}: ${event.reason}`;
+    case "VERSION_MIGRATED":
+      return `Moved from workflow version ${event.fromVersionNo} to version ${event.toVersionNo} by ${nameOf(event.actorId)}`;
     case "BRANCH_TAKEN":
     case "NODE_ACTIVATED":
       return null;
@@ -119,6 +121,7 @@ export function eventKind(event: TimelineEvent): TimelineKind {
       return "withdraw";
     case "BLOCK_RESOLVED":
     case "DELETED":
+    case "VERSION_MIGRATED":
       return "admin";
     default:
       return "info";

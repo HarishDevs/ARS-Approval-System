@@ -11,6 +11,8 @@ import { listActiveUserOptions } from "@/lib/db/repositories/admin-users.reposit
 import { requireArea } from "@/server/authorization/guards";
 import { findWorkflow, listVersions } from "@/lib/db/repositories/approvals.repository";
 import { validateVersion } from "@/server/approvals/service";
+import { openCountsByVersion } from "@/server/workflows/migration";
+import { RestoreVersionButton } from "@/features/admin/VersionTools";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 
 const VERSION_STYLE = { DRAFT: "bg-warning-50 text-warning-600", PUBLISHED: "bg-success-50 text-success-600", ARCHIVED: "bg-surface-muted text-ink-muted" } as const;
@@ -28,6 +30,8 @@ export default async function WorkflowPage({ params, searchParams }: { params: P
   const latest = versions[0];
   const published = versions.find((version) => version.status === "PUBLISHED");
   const latestChecks = latest && latest.status === "DRAFT" ? await validateVersion(latest.id) : null;
+  // FN7: open requests per version, for the move link.
+  const openCounts = await openCountsByVersion(workflow.id);
   const created = (await searchParams).created === "1";
 
   return (
@@ -64,6 +68,21 @@ export default async function WorkflowPage({ params, searchParams }: { params: P
                   Saved {formatIndiaTime(version.createdAt)}
                   {version.publishedAt ? ` · published ${formatIndiaTime(version.publishedAt)}` : ""}
                 </p>
+                {version.id !== latest?.id || version.status !== "DRAFT" ? (
+                  <div className="flex flex-wrap items-center gap-3">
+                    {published && version.id !== published.id && (
+                      <Link href={`/admin/workflows/${workflow.id}/compare?from=${version.versionNo}&to=${published.versionNo}`} className="link text-caption">
+                        Compare with live
+                      </Link>
+                    )}
+                    {published && version.id !== published.id && (openCounts.get(version.id) ?? 0) > 0 && (
+                      <Link href={`/admin/workflows/${workflow.id}/migrate?from=${version.id}`} className="link text-caption">
+                        Move {openCounts.get(version.id)} open request{openCounts.get(version.id) === 1 ? "" : "s"} to the live version
+                      </Link>
+                    )}
+                    {version.id !== latest?.id && latest?.status !== "DRAFT" && <RestoreVersionButton workflowId={workflow.id} versionId={version.id} versionNo={version.versionNo} />}
+                  </div>
+                ) : null}
                 {version.id === latest?.id && version.status === "DRAFT" && latestChecks && (
                   <>
                     {latestChecks.errors.map((issue) => (
