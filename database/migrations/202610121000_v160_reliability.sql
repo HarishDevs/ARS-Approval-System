@@ -31,3 +31,4 @@ CREATE TABLE stuck_snoozes (
   CONSTRAINT fk_stuck_snoozes_request FOREIGN KEY (request_id) REFERENCES approval_requests(id),
   CONSTRAINT fk_stuck_snoozes_user FOREIGN KEY (created_by) REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+

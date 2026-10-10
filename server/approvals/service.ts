@@ -379,6 +379,40 @@ async function announce(changed: Changed): Promise<void> {
   await deliverOutbox(changed.outboxIds);
 }
 
+// FN5 amendment of an approved request (see server/approvals/amendments.ts).
+export interface AmendmentInput {
+  originalId: number;
+  reason: string;
+  basePaise: number | null;
+  effective: EngineFormData; // the values being amended (typed)
+}
+export interface AmendmentChange {
+  key: string;
+  from: unknown;
+  to: unknown;
+}
+
+const OPEN_STATUSES = ["IN_PROGRESS", "ON_HOLD", "CHANGES_REQUIRED"];
+
+async function checkAmendment(amendment: AmendmentInput, data: EngineFormData, form: readonly FormField[], connection: Pick<PoolConnection, "query">): Promise<AmendmentChange[]> {
+  const [original] = await connection.query<(RowDataPacket & { status: string; deleted_at: Date | null })[]>("SELECT status, deleted_at FROM approval_requests WHERE id = ? FOR UPDATE", [amendment.originalId]);
+  if (!original[0] || original[0].deleted_at || original[0].status !== "APPROVED") throw new FormError({ amendment: "Only an approved request can be amended." }, "Only an approved request can be amended.");
+  const [open] = await connection.query<(RowDataPacket & { request_no: string })[]>(
+    `SELECT r.request_no FROM request_amendments a JOIN approval_requests r ON r.id = a.amendment_id
+     WHERE a.original_id = ? AND r.deleted_at IS NULL AND r.status IN (?) LIMIT 1 FOR UPDATE`,
+    [amendment.originalId, OPEN_STATUSES],
+  );
+  if (open[0]) throw new FormError({ amendment: `Amendment ${open[0].request_no} is still in progress. Wait for its decision, or withdraw it.` }, "An amendment is already in progress.");
+  const changes: AmendmentChange[] = [];
+  for (const field of form) {
+    if (field.type === "SECTION") continue;
+    const keys = field.type === "LINE_ITEMS" ? [field.key, `${field.key}__lines`] : [field.key];
+    if (keys.some((key) => JSON.stringify(data[key] ?? null) !== JSON.stringify(amendment.effective[key] ?? null))) changes.push({ key: field.key, from: amendment.effective[field.key] ?? null, to: data[field.key] ?? null });
+  }
+  if (!changes.length) throw new FormError({ amendment: "Nothing has changed. Change at least one value." }, "Nothing has changed.");
+  return changes;
+}
+
 class AlreadySubmitted extends Error {
   constructor(
     readonly requestId: number,
@@ -393,7 +427,7 @@ export async function submitRequest(
   // FN1: attachmentCount (files with the submit), acknowledged (warnings
   // confirmed; allowDuplicate is the older name), overrideReason (why a
   // possible duplicate isn't one).
-  input: { workflowId: number; title: string; fields: Record<string, string | undefined>; submissionKey?: string | null; allowDuplicate?: boolean; acknowledged?: boolean; overrideReason?: string; attachmentCount?: number; isCustom?: boolean },
+  input: { workflowId: number; title: string; fields: Record<string, string | undefined>; submissionKey?: string | null; allowDuplicate?: boolean; acknowledged?: boolean; overrideReason?: string; attachmentCount?: number; isCustom?: boolean; amendment?: AmendmentInput },
   actor: Actor,
 ): Promise<Result<{ requestId: number; requestNo: string; status: string; repeated?: boolean }>> {
   // D-QA-01: the same form sent again (retry after a timeout) → the request it already made.
@@ -415,7 +449,7 @@ export async function submitRequest(
       // (it locks the type and the budget row, so two submits can't both
       // pass a duplicate or budget check).
       const assessed = await assessReadiness(
-        { workflow, version, title: input.title, fields: input.fields, attachmentCount: input.attachmentCount ?? 0, requester: actor, isCustom: input.isCustom },
+        { workflow, version, title: input.title, fields: input.fields, attachmentCount: input.attachmentCount ?? 0, requester: actor, isCustom: input.isCustom, amendment: input.amendment ? { originalId: input.amendment.originalId, basePaise: input.amendment.basePaise } : undefined },
         { db: connection, lock: true, approverFieldErrors: (definition, data, snap) => approverFieldErrors(definition, data, snap) },
       );
       // A copy of this submit (same key) that got the type lock first wins;
@@ -445,6 +479,9 @@ export async function submitRequest(
       if (readiness.needsReason && reason.length < 5) {
         throw new FormError({ overrideReason: "Say why this isn't a duplicate (at least 5 characters)." }, "Say why this isn't a duplicate.", readiness);
       }
+      // FN5: one amendment at a time, of a request that is still approved,
+      // and it must change something.
+      const changes = input.amendment ? await checkAmendment(input.amendment, assessed.data, version.form, connection) : null;
       const snapshot = await loadDirectorySnapshot(connection);
       const parsed = { data: assessed.data };
       const formData = parsed.data;
@@ -456,6 +493,17 @@ export async function submitRequest(
       await insertRevision(id, result.state.round, title, formData, actor.id, connection);
       await insertSubmissionCheck(id, readiness, { acknowledged: confirmed, overrideReason: reason || null }, connection);
       if (readiness.needsReason) await recordAudit({ actorUserId: actor.id, action: "DUPLICATE_WARNING_OVERRIDDEN", entityType: "REQUEST", entityId: id, metadata: { reason } }, connection);
+      if (input.amendment && changes) {
+        await connection.query("INSERT INTO request_amendments (original_id, amendment_id, reason, changes_json, base_paise, created_by) VALUES (?, ?, ?, ?, ?, ?)", [
+          input.amendment.originalId,
+          id,
+          input.amendment.reason,
+          JSON.stringify(changes),
+          input.amendment.basePaise,
+          actor.id,
+        ]);
+        await recordAudit({ actorUserId: actor.id, action: "AMENDMENT_SUBMITTED", entityType: "REQUEST", entityId: input.amendment.originalId, metadata: { amendmentId: id, requestNo, fields: changes.map((change) => change.key) } }, connection);
+      }
       const request: RequestRecord = {
         id,
         requestNo,
@@ -618,7 +666,10 @@ async function syncBudgetAmount(requestId: number): Promise<void> {
   const workflow = version ? await findWorkflow(version.workflowId) : null;
   if (!request || !workflow?.settings?.budget.enabled) return;
   const amount = request.formData[workflow.settings.budget.amountField];
-  await updateCommittedAmount(requestId, typeof amount === "number" ? Math.round(amount * 100) : null);
+  // FN5: an amendment counts only its change against the amount it amended.
+  const [base] = await getDbPool().query<(RowDataPacket & { base_paise: number | null })[]>("SELECT base_paise FROM request_amendments WHERE amendment_id = ?", [requestId]);
+  const basePaise = base[0]?.base_paise === null || base[0]?.base_paise === undefined ? 0 : Number(base[0].base_paise);
+  await updateCommittedAmount(requestId, typeof amount === "number" ? Math.round(amount * 100) - basePaise : null);
 }
 
 async function policyForRequest(requestId: number, typePolicy: (workflowId: number) => Promise<RestartPolicy>): Promise<RestartPolicy> {

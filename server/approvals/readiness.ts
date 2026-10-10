@@ -58,6 +58,10 @@ export interface ReadinessInput {
   attachmentCount: number;
   requester: { id: number; roles: readonly string[] };
   isCustom?: boolean;
+  // FN5: an amendment of an approved request. The original (and its other
+  // amendments) aren't duplicates of it, and only the change in amount
+  // counts against the budget.
+  amendment?: { originalId: number; basePaise: number | null };
 }
 
 const isAdmin = (roles: readonly string[]) => roles.includes("IT_ADMIN") || roles.includes("SUPER_ADMIN");
@@ -117,6 +121,7 @@ export async function assessReadiness(
   }
 
   // 3. Possible duplicates: the type's matching fields, in its window.
+  const amendmentOf = input.amendment?.originalId ?? null;
   if (parsed.ok && !input.isCustom) {
     const keys = settings.duplicates.fields.filter((key) => input.version.form.some((field) => field.key === key));
     const values = keys.map((key) => parsed.data[key]);
@@ -125,9 +130,9 @@ export async function assessReadiness(
       const params = keys.flatMap((key, index) => [`$.${key}`, String(values[index])]);
       const [rows] = await db.query<(RowDataPacket & { id: number; request_no: string; status: string; requester_id: number })[]>(
         `SELECT r.id, r.request_no, r.status, r.requester_id FROM approval_requests r JOIN workflow_versions v ON v.id = r.workflow_version_id
-         WHERE v.workflow_id = ? AND r.deleted_at IS NULL AND r.status IN (?) AND r.submitted_at > DATE_SUB(CURRENT_TIMESTAMP, INTERVAL ? DAY) AND ${where}
+         WHERE v.workflow_id = ? AND r.deleted_at IS NULL AND r.status IN (?) AND r.submitted_at > DATE_SUB(CURRENT_TIMESTAMP, INTERVAL ? DAY) AND ${where}${amendmentOf ? " AND r.id <> ? AND NOT EXISTS (SELECT 1 FROM request_amendments ra WHERE ra.amendment_id = r.id AND ra.original_id = ?)" : ""}
          ORDER BY r.id DESC LIMIT 5${latest}`,
-        [input.workflow.id, OPEN_OR_APPROVED, settings.duplicates.windowDays, ...params],
+        [input.workflow.id, OPEN_OR_APPROVED, settings.duplicates.windowDays, ...params, ...(amendmentOf ? [amendmentOf, amendmentOf] : [])],
       );
       if (rows.length > 0) {
         const visible = await visibleIds(rows.map((row) => row.id), input.requester, db);
@@ -145,7 +150,8 @@ export async function assessReadiness(
       }
     }
   }
-  if (title) {
+  // An amendment repeats the original's title on purpose.
+  if (title && !input.amendment) {
     const recent = await findRecentDuplicate({ requesterId: input.requester.id, title, workflowId: input.isCustom ? null : input.workflow.id }, db);
     if (recent) items.push({ code: "RECENT_DUPLICATE", severity: "WARNING", message: `You raised “${title}” as ${recent} a few minutes ago. If this is a separate request, confirm and submit again.` });
   }
@@ -166,13 +172,14 @@ export async function assessReadiness(
         [departmentId, fy],
       );
       const [[committed]] = await db.query<RowDataPacket[]>(
-        `SELECT COALESCE(SUM(c.request_paise), 0) AS paise FROM request_submission_checks c JOIN approval_requests r ON r.id = c.request_id
+        `SELECT COALESCE(SUM(CASE WHEN c.request_paise < 0 AND r.status <> 'APPROVED' THEN 0 ELSE c.request_paise END), 0) AS paise FROM request_submission_checks c JOIN approval_requests r ON r.id = c.request_id
          WHERE c.budget_department = ? AND c.budget_fy = ? AND r.deleted_at IS NULL AND r.status IN (?)${latest}`,
         [departmentId, fy, OPEN_OR_APPROVED],
       );
-      const requestPaise = Math.round(amount * 100);
+      // An amendment counts only its change against the effective amount.
+      const requestPaise = Math.round(amount * 100) - (input.amendment?.basePaise ?? 0);
       const row = budgetRows[0];
-      const position = budgetPosition({ budgetPaise: row ? Number(row.amount_paise) : null, warnPercent: row ? Number(row.warn_percent) : 90, committedPaise: Number(committed?.paise ?? 0), requestPaise });
+      const position = budgetPosition({ budgetPaise: row ? Number(row.amount_paise) : null, warnPercent: row ? Number(row.warn_percent) : 90, committedPaise: Number(committed?.paise ?? 0), requestPaise: Math.max(0, requestPaise) });
       Object.assign(budget, { state: position.state, departmentId, fy, budgetPaise: row ? Number(row.amount_paise) : null, committedPaise: Number(committed?.paise ?? 0), requestPaise });
       const department = (await departmentName(departmentId, db)) ?? "your department";
       if (position.state === "NO_BUDGET") {

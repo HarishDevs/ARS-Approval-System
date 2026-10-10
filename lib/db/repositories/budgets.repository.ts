@@ -19,7 +19,7 @@ export interface BudgetRow {
 export async function listBudgets(fy: number, db: Queryable = getDbPool()): Promise<BudgetRow[]> {
   const [rows] = await db.query<(RowDataPacket & { id: number; name: string; amount_paise: number | null; warn_percent: number | null; updated_at: Date | null; updated_by_name: string | null; committed: number; requests: number })[]>(
     `SELECT d.id, d.name, b.amount_paise, b.warn_percent, b.updated_at, u.name AS updated_by_name,
-            (SELECT COALESCE(SUM(c.request_paise), 0) FROM request_submission_checks c JOIN approval_requests r ON r.id = c.request_id
+            (SELECT COALESCE(SUM(CASE WHEN c.request_paise < 0 AND r.status <> 'APPROVED' THEN 0 ELSE c.request_paise END), 0) FROM request_submission_checks c JOIN approval_requests r ON r.id = c.request_id
               WHERE c.budget_department = d.id AND c.budget_fy = ? AND r.deleted_at IS NULL AND r.status IN ('IN_PROGRESS', 'ON_HOLD', 'CHANGES_REQUIRED', 'APPROVED')) AS committed,
             (SELECT COUNT(*) FROM request_submission_checks c JOIN approval_requests r ON r.id = c.request_id
               WHERE c.budget_department = d.id AND c.budget_fy = ? AND r.deleted_at IS NULL AND r.status IN ('IN_PROGRESS', 'ON_HOLD', 'CHANGES_REQUIRED', 'APPROVED')) AS requests

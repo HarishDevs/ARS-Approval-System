@@ -1,6 +1,6 @@
 "use client";
 
-import { checkReadinessAction, resubmitAction, submitRequestAction } from "@/app/users/actions";
+import { checkReadinessAction, resubmitAction, submitAmendmentAction, submitRequestAction } from "@/app/users/actions";
 import { ReadinessPanel } from "@/features/requests/ReadinessPanel";
 import type { Readiness } from "@/server/approvals/readiness";
 import { guardAction } from "@/features/ui/form";
@@ -36,6 +36,7 @@ export function RequestForm({
   followUpOf,
   draft,
   sources = {},
+  amendment,
 }: {
   mode: "submit" | "resubmit";
   workflowId?: number;
@@ -52,8 +53,11 @@ export function RequestForm({
   followUpOf?: number; // EN-08: linked to this approved request on submit
   sources?: Record<string, string>; // FN4: where a starting value came from
   draft?: DraftInfo;
+  // FN5: amending an approved request; only these fields can change.
+  amendment?: { originalId: number; originalNo: string; title: string; amendable: string[] };
 }) {
-  const { result, pending, onSubmit } = useActionForm(mode === "submit" ? submitRequestAction : resubmitAction);
+  const { result, pending, onSubmit } = useActionForm(amendment ? submitAmendmentAction : mode === "submit" ? submitRequestAction : resubmitAction);
+  const locked = (key: string) => Boolean(amendment && !amendment.amendable.includes(key));
   const restoredAt = draft?.savedAt ? new Date(draft.savedAt) : null;
   const autosave = useDraftAutosave({ draftKey: draft?.key ?? "", initialVersion: draft?.version ?? null, savedAt: null, disabled: !draft });
   const [confirmDiscard, setConfirmDiscard] = useState(false);
@@ -94,7 +98,7 @@ export function RequestForm({
   const possibleDuplicate = Boolean(result && !result.ok && result.fieldErrors?.allowDuplicate && (!readiness || onlyRecentDuplicate));
   // FB-06: every field problem listed at the top, linked to the field.
   const summaryErrors = result && !result.ok && result.fieldErrors ? Object.fromEntries(Object.entries(result.fieldErrors).filter(([key]) => key !== "allowDuplicate").map(([key, message]) => [key === "title" || key === "attachments" ? key : `f-${key}`, message])) : undefined;
-  const summaryLabels: Record<string, string> = { title: "Title", attachments: "Attachments", ...Object.fromEntries(fields.map((field) => [`f-${field.key}`, field.label])) };
+  const summaryLabels: Record<string, string> = { title: "Title", attachments: "Attachments", "f-amendReason": "Why it needs amending", "f-amendment": "Amendment", ...Object.fromEntries(fields.map((field) => [`f-${field.key}`, field.label])) };
 
   // EN-01/02: live values decide which fields show and what is worked out.
   // The server applies the same rules again on submit.
@@ -108,7 +112,7 @@ export function RequestForm({
     const data = new FormData(form);
     setValues((current) => {
       const next: Record<string, string | number | null> = { ...current };
-      for (const field of fields) if (field.type !== "LINE_ITEMS" && field.type !== "CALC" && field.type !== "SECTION") next[field.key] = String(data.get(field.key) ?? "");
+      for (const field of fields) if (field.type !== "LINE_ITEMS" && field.type !== "CALC" && field.type !== "SECTION" && !locked(field.key)) next[field.key] = String(data.get(field.key) ?? "");
       return next;
     });
   };
@@ -161,9 +165,28 @@ export function RequestForm({
       {requestId && <input type="hidden" name="requestId" value={requestId} />}
       {mode === "submit" && <input type="hidden" name="submissionKey" value={submissionKey} />}
       {followUpOf && <input type="hidden" name="followUpOf" value={followUpOf} />}
+      {amendment && <input type="hidden" name="amendmentOf" value={amendment.originalId} />}
       <div className="space-y-5 px-5 py-5">
         <ErrorSummary errors={summaryErrors} labels={summaryLabels} />
-        {mode === "submit" && (
+        {amendment && (
+          <div id="f-amendment" tabIndex={-1} className="space-y-3">
+            <p className="text-label">
+              <span className="font-semibold">Amendment: {amendment.title}</span>
+              <span className="block text-ink-muted">
+                Changes {amendment.originalNo} once approved. Its approvals and history stay as they are; this goes through the approval steps again.
+              </span>
+            </p>
+            <div>
+              <label htmlFor="f-amendReason" className="field-label">
+                Why does it need amending?
+              </label>
+              <textarea id="f-amendReason" name="amendReason" rows={3} maxLength={1000} aria-required="true" aria-invalid={result && !result.ok && result.fieldErrors?.amendReason ? true : undefined} className="field-input h-auto py-2.5" placeholder="e.g. The vendor revised the quote" />
+              <FieldError result={result} name="amendReason" />
+              <FieldError result={result} name="amendment" />
+            </div>
+          </div>
+        )}
+        {mode === "submit" && !amendment && (
           <div>
             <label htmlFor="title" className="field-label">
               Title
@@ -186,7 +209,7 @@ export function RequestForm({
           const required = field.required || (field.requiredIf ? ruleHolds(field.requiredIf, { ...values, ...calculated }) : false);
           return (
             // A field hidden by its rule is disabled, so it isn't sent (the server clears it anyway).
-            <fieldset key={field.key} hidden={!visible} disabled={!visible} className="min-w-0">
+            <fieldset key={field.key} hidden={!visible} disabled={!visible || locked(field.key)} className="min-w-0">
               <label htmlFor={`f-${field.key}`} className="field-label">
                 {field.label}
                 {!required && field.type !== "CALC" && <span className="font-normal text-ink-faint"> (optional)</span>}
@@ -207,6 +230,7 @@ export function RequestForm({
                 />
               )}
               {sources[field.key] && <p className="mt-1 text-caption text-primary-700">{sources[field.key]}. You can change it.</p>}
+              {locked(field.key) && <p className="mt-1 text-caption text-ink-muted">Can&apos;t be changed by an amendment.</p>}
               {field.type === "CALC" && field.formula && <p className="mt-1 text-caption text-ink-muted">Worked out automatically: {field.formula}</p>}
               {field.requiredIf && <p className="mt-1 text-caption text-ink-muted">Required when {describeRule(field.requiredIf, labelOf)}.</p>}
               {field.help && (
@@ -255,7 +279,7 @@ export function RequestForm({
       )}
       <div className="flex flex-wrap items-center gap-3 border-t border-line px-5 py-4">
         <SubmitButton pending={pending} className="btn-compact">
-          {mode === "submit" ? "Submit request" : "Resubmit"}
+          {amendment ? "Submit amendment" : mode === "submit" ? "Submit request" : "Resubmit"}
         </SubmitButton>
         <div className="min-w-0 flex-1">
           <ResultMessage result={result} />

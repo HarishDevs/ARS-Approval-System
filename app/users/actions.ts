@@ -6,6 +6,7 @@ import { requireApiArea } from "@/server/authorization/guards";
 import { answerInfo, askForInfo, decideTask, delegateTask, holdTask, recallRequest, reopenRequest, resolveBlockedStep, resubmitRequest, resumeRequest, submitRequest, withdrawRequest, type Actor } from "@/server/approvals/service";
 import { linkFollowUp } from "@/server/approvals/consult";
 import { assessReadiness } from "@/server/approvals/readiness";
+import { amendmentPlan, amendmentTitle, mergeAmendmentFields, submitAmendment } from "@/server/approvals/amendments";
 import { findPublishedVersion, findWorkflow } from "@/lib/db/repositories/approvals.repository";
 import { addAttachments, filesFrom, prepareFiles } from "@/server/attachments/service";
 import { logError } from "@/lib/logging/logger";
@@ -16,7 +17,7 @@ import type { ActionResult } from "@/lib/http/action-result";
 // Server Actions for requests (F-14). Every one re-checks the session; the
 // service then enforces who may do what on the record (F-12, D-057).
 const NOT_FOUND: ActionResult = { ok: false, message: "Not found." };
-const RESERVED = new Set(["workflowId", "requestId", "title", "taskKey", "decision", "comment", "attachments", "submissionKey", "allowDuplicate", "acknowledged", "overrideReason", "followUpOf", "attachmentCount", "templateName"]);
+const RESERVED = new Set(["workflowId", "requestId", "title", "taskKey", "decision", "comment", "attachments", "submissionKey", "allowDuplicate", "acknowledged", "overrideReason", "followUpOf", "attachmentCount", "templateName", "amendmentOf", "amendReason", "amendment"]);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // D-QA-01: the form's one-time key (anything else is ignored).
@@ -89,6 +90,45 @@ export async function submitRequestAction(_previous: ActionResult | null, formDa
     filesSaved = saved.ok;
   } catch (error) {
     logError("submitRequestAction: attachments failed", error, { requestId });
+    filesSaved = false;
+  }
+  revalidatePath("/users");
+  redirect(`/users/requests/${requestId}?submitted=1${filesSaved ? "" : "&files=failed"}`);
+}
+
+// FN5: amend an approved request (D-120). Files go on the amendment.
+export async function submitAmendmentAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const me = await actor();
+  const originalId = num(formData.get("amendmentOf"));
+  if (!me || originalId === null) return NOT_FOUND;
+  const files = await prepareFiles(filesFrom(formData));
+  if (!files.ok) return { ok: false, message: files.message, fieldErrors: { attachments: files.message } };
+  let requestId: number;
+  let filesSaved = true;
+  try {
+    const result = await submitAmendment(
+      {
+        originalId,
+        fields: fieldsFrom(formData),
+        reason: String(formData.get("amendReason") ?? ""),
+        submissionKey: submissionKeyOf(formData),
+        acknowledged: formData.get("acknowledged") === "on",
+        overrideReason: String(formData.get("overrideReason") ?? "").slice(0, 500),
+        attachmentCount: files.files.length,
+      },
+      me,
+    );
+    if (!result.ok) return { ok: false, message: result.message, fieldErrors: result.fieldErrors, data: result.readiness ? { readiness: result.readiness } : undefined };
+    requestId = result.value.requestId;
+    if (result.value.repeated) files.files.length = 0;
+  } catch (error) {
+    logError("submitAmendmentAction failed", error);
+    return { ok: false, message: "Couldn't submit. Please try again." };
+  }
+  try {
+    filesSaved = (await addAttachments(requestId, files.files, me, { requesterOnly: true })).ok;
+  } catch (error) {
+    logError("submitAmendmentAction: attachments failed", error, { requestId });
     filesSaved = false;
   }
   revalidatePath("/users");
@@ -364,12 +404,20 @@ export async function checkReadinessAction(_previous: ActionResult | null, formD
   const workflow = await findWorkflow(workflowId);
   const version = workflow && workflow.active && workflow.kind === "PREDEFINED" ? await findPublishedVersion(workflow.id) : null;
   if (!workflow || !version) return NOT_FOUND;
+  // FN5: an amendment is checked as it will be submitted (merged values,
+  // the original excluded from duplicates, the budget change only).
+  const amendmentOf = num(formData.get("amendmentOf"));
+  const planned = amendmentOf !== null ? await amendmentPlan(amendmentOf, me) : null;
+  if (planned && !planned.ok) return { ok: false, message: planned.reason };
+  const plan = planned?.ok ? planned.plan : null;
+  if (plan && plan.workflow.id !== workflow.id) return NOT_FOUND;
   try {
     const { readiness } = await assessReadiness({
       workflow,
       version,
-      title: String(formData.get("title") ?? ""),
-      fields: fieldsFrom(formData),
+      title: plan ? amendmentTitle(plan.original) : String(formData.get("title") ?? ""),
+      fields: plan ? mergeAmendmentFields(plan, fieldsFrom(formData)) : fieldsFrom(formData),
+      amendment: plan ? { originalId: plan.original.id, basePaise: plan.basePaise } : undefined,
       attachmentCount: Math.max(0, Math.min(50, Number(formData.get("attachmentCount")) || 0)),
       requester: me,
     });
