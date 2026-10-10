@@ -9,6 +9,7 @@ import { answerConsultation, consult, linkRequests } from "@/server/approvals/co
 import { markAllReadReturningIds, markRead, markUnread } from "@/lib/db/repositories/collab.repository";
 import { builderSpecSchema } from "@/server/workflows/builder";
 import { addAttachments, filesFrom, prepareFiles } from "@/server/attachments/service";
+import { addCollaborators, collaboratorIdsFrom, removeCollaborator } from "@/server/approvals/collaborators";
 import { logError } from "@/lib/logging/logger";
 import { deleteDraft } from "@/lib/db/repositories/drafts.repository";
 import type { ActionResult } from "@/lib/http/action-result";
@@ -60,6 +61,9 @@ export async function submitCustomAction(_previous: ActionResult | null, formDat
     if (!result.ok) return { ok: false, message: result.message, fieldErrors: result.fieldErrors };
     requestId = result.value.requestId;
     if (result.value.repeated) files.files.length = 0;
+    // v1.6.1: people the requester chose to follow it.
+    const collaborators = collaboratorIdsFrom(formData);
+    if (collaborators.length && !result.value.repeated) await addCollaborators(requestId, collaborators, me).catch((error) => logError("custom: collaborators failed", error, { requestId }));
     await deleteDraft(me.id, "CUSTOM").catch((error) => logError("submitCustomAction: draft cleanup failed", error));
   } catch (error) {
     logError("submitCustomAction failed", error);
@@ -227,4 +231,38 @@ export async function linkAction(_previous: ActionResult | null, formData: FormD
   }
   revalidatePath(`/users/requests/${requestId}`);
   return { ok: true, message: "Linked." };
+}
+
+// v1.6.1 collaborators on the request page: the requester or IT adds people;
+// the requester, IT or the person themselves removes them.
+export async function addCollaboratorsAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const me = await actor();
+  const requestId = num(formData.get("requestId"));
+  if (!me || requestId === null) return NOT_FOUND;
+  try {
+    const result = await addCollaborators(requestId, collaboratorIdsFrom(formData), me);
+    if (!result.ok) return { ok: false, message: result.message, fieldErrors: { collaborator: result.message } };
+    revalidatePath(`/users/requests/${requestId}`);
+    const skipped = result.skipped.length ? ` Not added: ${result.skipped.join(", ")}.` : "";
+    return result.added.length ? { ok: true, message: `Added ${result.added.length} collaborator${result.added.length === 1 ? "" : "s"}; they have been told.${skipped}` } : { ok: false, message: `Nobody new to add.${skipped}` };
+  } catch (error) {
+    logError("addCollaboratorsAction failed", error);
+    return { ok: false, message: "Couldn't add. Please try again." };
+  }
+}
+
+export async function removeCollaboratorAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const me = await actor();
+  const requestId = num(formData.get("requestId"));
+  const userId = num(formData.get("userId"));
+  if (!me || requestId === null || userId === null) return NOT_FOUND;
+  try {
+    const result = await removeCollaborator(requestId, userId, me);
+    if (!result.ok) return { ok: false, message: result.message };
+  } catch (error) {
+    logError("removeCollaboratorAction failed", error);
+    return { ok: false, message: "Couldn't remove. Please try again." };
+  }
+  revalidatePath(`/users/requests/${requestId}`);
+  return { ok: true, message: userId === me.id ? "You no longer follow this request." : "Removed." };
 }

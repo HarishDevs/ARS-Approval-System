@@ -9,6 +9,9 @@ import { assessReadiness } from "@/server/approvals/readiness";
 import { amendmentPlan, amendmentTitle, mergeAmendmentFields, submitAmendment } from "@/server/approvals/amendments";
 import { findPublishedVersion, findWorkflow } from "@/lib/db/repositories/approvals.repository";
 import { addAttachments, filesFrom, prepareFiles } from "@/server/attachments/service";
+import { existingFieldCounts, prepareFieldFiles, reportedFieldCounts, saveFieldFiles } from "@/server/attachments/field-files";
+import { addCollaborators, collaboratorIdsFrom } from "@/server/approvals/collaborators";
+import { findRequest, findWorkflowVersion } from "@/lib/db/repositories/approvals.repository";
 import { logError } from "@/lib/logging/logger";
 import { deleteDraft } from "@/lib/db/repositories/drafts.repository";
 import { bulkApprove, BULK_MAX } from "@/server/approvals/bulk";
@@ -17,7 +20,7 @@ import type { ActionResult } from "@/lib/http/action-result";
 // Server Actions for requests (F-14). Every one re-checks the session; the
 // service then enforces who may do what on the record (F-12, D-057).
 const NOT_FOUND: ActionResult = { ok: false, message: "Not found." };
-const RESERVED = new Set(["workflowId", "requestId", "title", "taskKey", "decision", "comment", "attachments", "submissionKey", "allowDuplicate", "acknowledged", "overrideReason", "followUpOf", "attachmentCount", "templateName", "amendmentOf", "amendReason", "amendment"]);
+const RESERVED = new Set(["workflowId", "requestId", "title", "taskKey", "decision", "comment", "attachments", "submissionKey", "allowDuplicate", "acknowledged", "overrideReason", "followUpOf", "attachmentCount", "templateName", "amendmentOf", "amendReason", "amendment", "collaborator"]);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // D-QA-01: the form's one-time key (anything else is ignored).
@@ -42,7 +45,7 @@ function num(value: FormDataEntryValue | null): number | null {
 function fieldsFrom(formData: FormData): Record<string, string> {
   const fields: Record<string, string> = {};
   for (const [key, value] of formData.entries()) {
-    if (!RESERVED.has(key) && !key.startsWith("$") && typeof value === "string") fields[key] = value;
+    if (!RESERVED.has(key) && !key.startsWith("$") && !key.startsWith("fileCount:") && typeof value === "string") fields[key] = value;
   }
   return fields;
 }
@@ -55,6 +58,11 @@ export async function submitRequestAction(_previous: ActionResult | null, formDa
   // leaves a half-made request behind (F-18).
   const files = await prepareFiles(filesFrom(formData));
   if (!files.ok) return { ok: false, message: files.message, fieldErrors: { attachments: files.message } };
+  // v1.6.1 attachment fields: checked now; the count goes in the field.
+  const workflowRecord = await findWorkflow(workflowId);
+  const liveVersion = workflowRecord ? await findPublishedVersion(workflowRecord.id) : null;
+  const fieldFiles = await prepareFieldFiles(formData, liveVersion?.form ?? []);
+  if (!fieldFiles.ok) return { ok: false, message: fieldFiles.message, fieldErrors: { [fieldFiles.field]: fieldFiles.message } };
   let requestId: number;
   let filesSaved = true;
   try {
@@ -62,12 +70,12 @@ export async function submitRequestAction(_previous: ActionResult | null, formDa
       {
         workflowId,
         title: String(formData.get("title") ?? ""),
-        fields: fieldsFrom(formData),
+        fields: { ...fieldsFrom(formData), ...fieldFiles.values },
         submissionKey: submissionKeyOf(formData),
         allowDuplicate: formData.get("allowDuplicate") === "on",
         acknowledged: formData.get("acknowledged") === "on",
         overrideReason: String(formData.get("overrideReason") ?? "").slice(0, 500),
-        attachmentCount: files.files.length,
+        attachmentCount: files.files.length + fieldFiles.total,
       },
       me,
     );
@@ -78,7 +86,13 @@ export async function submitRequestAction(_previous: ActionResult | null, formDa
     const followUpOf = num(formData.get("followUpOf"));
     if (followUpOf !== null && !result.value.repeated) await linkFollowUp({ sourceId: followUpOf, followUpId: requestId }, me).catch((error) => logError("follow-up link failed", error));
     // A repeated submit already has its files from the first time.
-    if (result.value.repeated) files.files.length = 0;
+    if (result.value.repeated) {
+      files.files.length = 0;
+      fieldFiles.byField.clear();
+    }
+    // v1.6.1: people the requester chose to follow it.
+    const collaborators = collaboratorIdsFrom(formData);
+    if (collaborators.length && !result.value.repeated) await addCollaborators(requestId, collaborators, me).catch((error) => logError("submit: collaborators failed", error, { requestId }));
     // The draft has become a request (#3).
     await deleteDraft(me.id, `WF:${workflowId}`).catch((error) => logError("submitRequestAction: draft cleanup failed", error));
   } catch (error) {
@@ -87,7 +101,7 @@ export async function submitRequestAction(_previous: ActionResult | null, formDa
   }
   try {
     const saved = await addAttachments(requestId, files.files, me, { requesterOnly: true });
-    filesSaved = saved.ok;
+    filesSaved = saved.ok && (await saveFieldFiles(requestId, fieldFiles.byField, me));
   } catch (error) {
     logError("submitRequestAction: attachments failed", error, { requestId });
     filesSaved = false;
@@ -225,8 +239,12 @@ export async function resubmitAction(_previous: ActionResult | null, formData: F
   if (!me || requestId === null) return NOT_FOUND;
   const files = await prepareFiles(filesFrom(formData));
   if (!files.ok) return { ok: false, message: files.message, fieldErrors: { attachments: files.message } };
+  const current = await findRequest(requestId);
+  const currentVersion = current ? await findWorkflowVersion(current.workflowVersionId) : null;
+  const fieldFiles = await prepareFieldFiles(formData, currentVersion?.form ?? [], await existingFieldCounts(requestId));
+  if (!fieldFiles.ok) return { ok: false, message: fieldFiles.message, fieldErrors: { [fieldFiles.field]: fieldFiles.message } };
   try {
-    const result = await resubmitRequest({ requestId, fields: fieldsFrom(formData) }, me);
+    const result = await resubmitRequest({ requestId, fields: { ...fieldsFrom(formData), ...fieldFiles.values } }, me);
     if (!result.ok) return { ok: false, message: result.message, fieldErrors: result.fieldErrors };
   } catch (error) {
     logError("resubmitAction failed", error);
@@ -236,6 +254,7 @@ export async function resubmitAction(_previous: ActionResult | null, formData: F
   try {
     const saved = await addAttachments(requestId, files.files, me, { requesterOnly: true });
     if (!saved.ok) filesNote = ` The files weren't attached: ${saved.message}`;
+    else if (!(await saveFieldFiles(requestId, fieldFiles.byField, me))) filesNote = " Some files weren't attached; add them again below.";
   } catch (error) {
     logError("resubmitAction: attachments failed", error, { requestId });
     filesNote = " The files couldn't be saved; add them again below.";
@@ -416,7 +435,7 @@ export async function checkReadinessAction(_previous: ActionResult | null, formD
       workflow,
       version,
       title: plan ? amendmentTitle(plan.original) : String(formData.get("title") ?? ""),
-      fields: plan ? mergeAmendmentFields(plan, fieldsFrom(formData)) : fieldsFrom(formData),
+      fields: plan ? mergeAmendmentFields(plan, fieldsFrom(formData)) : { ...fieldsFrom(formData), ...reportedFieldCounts(formData, version.form) },
       amendment: plan ? { originalId: plan.original.id, basePaise: plan.basePaise } : undefined,
       attachmentCount: Math.max(0, Math.min(50, Number(formData.get("attachmentCount")) || 0)),
       requester: me,

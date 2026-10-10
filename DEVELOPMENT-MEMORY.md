@@ -334,6 +334,20 @@
 | D-126 | 10 Oct 2026 | **Legal holds and retention (FN10):**
 - Holds are placed by the Super Admin only, on a request, a person or an approval type, with a reason to place and to release. They block request deletion for everyone, and housekeeping keeps related rows.
 - Retention durations default to 0 (keep for ever) and feed a dry run only. There is no archival or deletion execution until the owner approves a policy and makes a separate decision. | Claude, 10 Oct 2026 |
+| D-127 | 10 Oct 2026 | **Attachment fields and collaborators (owner request, v1.6.1):**
+- **Attachment fields.**
+  - The new field type ATTACHMENT has `maxFiles` (1–5) and can be required.
+  - The browser sends `file:<key>`. The server checks each file (type, size, the 20-per-request limit) and puts the count in the field value, overwriting whatever the browser sent.
+  - Files carry `request_attachments.field_key`. On resubmit, files already in the field count.
+  - Rules on an attachment field can only test filled or empty.
+  - Never copied by templates, raise again or follow-ups. Not amendable, and not a duplicate match key.
+- **Collaborators** (`request_collaborators`).
+  - The requester or IT add any active person except the requester, up to 20, at submit or later.
+  - They see the request through `isParticipant` and `visibleToSql`, so search, mentions, files, the PDF and comments all follow. They can comment and add files, and can stop following.
+  - They are told when added and when the request is approved, rejected, sent back, resubmitted or withdrawn.
+  - They never approve and get no tasks.
+  - Adding and removing are audited and appear on the timeline.
+  - My requests has a "Shared with me" tab. | Owner request; Claude, 10 Oct 2026 |
 | D-033 | 28 Sep 2026 | **Staff data is provided by the admin. Roles are assigned per user, by the admin only. Users are added or made inactive in the Admin Portal** (never hard-deleted, so history and audit stay intact). *Resolves Q-010.* | Owner (answer 7) |
 
 ## 4. Open questions (must be answered before the phase shown)
@@ -361,6 +375,14 @@
 | Q-019 | **Which Resend account holds the API key in Super Admin?** The "arsenergy" team (open in Chrome) is empty. Email works only once the From domain (`approvals@arssteels.net`) is verified in the account that owns the key, or a new key from a team with a verified domain is entered. | Before go-live (no email is delivered today) | **Answered 9 Oct 2026:** the key is "New Api Approval" in the Resend team "arssteels" (harishkumar.t@arssteels.com). The owner verified `arssteels.net` there; Resend's log showed "API key not authorized for this domain" for a few minutes after verification, then the test email was **sent** |
 
 ## 5. Work log (newest first)
+
+### 10 Oct 2026 (v1.6.1: attachment fields and collaborators)
+- **Source:** the owner asked for an attachment field type in the approval flow builder, and multiple collaborators per request.
+- **Built (D-127):**
+  - the ATTACHMENT field type with server-side counting;
+  - collaborators, with a reusable PeoplePicker component;
+  - a Collaborators card on the request page and "Shared with me" in My requests.
+- **Checks:** unit 396, integration 152, E2E 76, QA 27, origin 1.
 
 ### 10 Oct 2026 (v1.6.0: master prompt, then the unified master prompt)
 - **Source:** the master prompt (audit, UI modernisation, features, validation), then `ARS_Approval_Platform_Unified_Claude_Code_Master_Prompt.md` ("Build this"). Copy: `docs/requirements/UNIFIED_MASTER_PROMPT.md`.

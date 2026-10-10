@@ -18,6 +18,8 @@ import { AttachmentList } from "@/features/requests/AttachmentList";
 import { Timeline } from "@/features/requests/Timeline";
 import { SubmissionChecks } from "@/features/requests/SubmissionChecks";
 import { SaveTemplateForm } from "@/features/requests/Templates";
+import { CollaboratorsCard } from "@/features/requests/CollaboratorsCard";
+import { listCollaborators } from "@/server/approvals/collaborators";
 import { AmendmentsCard } from "@/features/requests/Amendments";
 import { amendmentPlan } from "@/server/approvals/amendments";
 import { featureOn } from "@/server/settings/features";
@@ -58,6 +60,12 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
         }
       : null;
   const templatesOn = await featureOn("templates", user);
+  // v1.6.1 collaborators: the requester and IT manage them.
+  const collaborators = await listCollaborators(view.id);
+  const canManageCollaborators = view.requesterId === user.id || user.roles.includes("IT_ADMIN") || user.roles.includes("SUPER_ADMIN");
+  const collaboratorOptions = canManageCollaborators
+    ? (await listActiveUserOptions()).filter((person) => person.id !== view.requesterId).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` }))
+    : [];
   // FN5: the requester may amend an approved request when the type allows it.
   const canAmend = view.requesterId === user.id && view.status === "APPROVED" && (await amendmentPlan(view.id, { id: user.id, roles: user.roles })).ok;
   // Blocked steps (IT): approval steps take approver-eligible people; work any active person.
@@ -67,6 +75,14 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
         anyone: (await listActiveUserOptions()).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` })),
       }
     : null;
+
+  const fileRows = view.attachments.map((file) => ({
+    id: file.id,
+    name: file.name,
+    size: file.size,
+    preview: file.preview,
+    meta: `${file.fieldLabel ? `${file.fieldLabel} · ` : ""}${file.uploaderName} · ${formatIndiaTime(file.createdAt)}${view.round > 1 ? ` · round ${file.round}` : ""}`,
+  }));
 
   return (
     <>
@@ -166,7 +182,7 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
           {view.canResubmit && (
             <section>
               <h2 className="mb-3 font-semibold">Update and resubmit</h2>
-              <RequestForm mode="resubmit" requestId={view.id} fields={view.form} people={people} initial={view.rawFields} lookups={lookups} />
+              <RequestForm mode="resubmit" requestId={view.id} fields={view.form} people={people} initial={view.rawFields} lookups={lookups} existingFiles={Object.fromEntries(view.fields.filter((field) => field.files).map((field) => [field.key, field.files!.length]))} />
             </section>
           )}
           {(view.canWithdraw || view.canReopen || view.canRecall) && (
@@ -232,7 +248,7 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
               <h2 className="mb-3 font-semibold">Details</h2>
               <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
                 {view.fields.map((field) => (
-                  <div key={field.key} className={field.lines?.length ? "sm:col-span-2" : undefined}>
+                  <div key={field.key} className={field.lines?.length || field.files?.length ? "sm:col-span-2" : undefined}>
                     <dt className="text-caption text-ink-muted">{field.label}</dt>
                     <dd className="whitespace-pre-wrap">
                       {field.lines?.length ? (
@@ -264,6 +280,14 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
                           </table>
                           <p className="border-t border-line px-4 py-2 text-right font-semibold tabular-nums">Total {field.value}</p>
                         </div>
+                      ) : field.files ? (
+                        field.files.length ? (
+                          <div className="mt-1 whitespace-normal">
+                            <AttachmentList files={fileRows.filter((file) => field.files!.includes(file.id))} />
+                          </div>
+                        ) : (
+                          <span className="text-ink-muted">No files</span>
+                        )
                       ) : (
                         <SafeText text={field.value} />
                       )}
@@ -275,21 +299,22 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
           )}
         </div>
         <div className="space-y-6">
+        <SectionBoundary label="Collaborators">
+          <CollaboratorsCard
+            requestId={view.id}
+            viewerId={user.id}
+            canManage={canManageCollaborators}
+            options={collaboratorOptions}
+            rows={collaborators.map((row) => ({ userId: row.userId, name: row.name, loginId: row.loginId, addedByName: row.addedByName, addedAt: formatIndiaTime(row.addedAt) }))}
+          />
+        </SectionBoundary>
         <SectionBoundary label="Attachments">
           <section className="card px-5 py-4">
             <h2 className="mb-3 font-semibold">Attachments</h2>
             {view.attachments.length === 0 ? (
               <p className="mb-3 text-label text-ink-muted">No files attached.</p>
             ) : (
-              <AttachmentList
-                files={view.attachments.map((file) => ({
-                  id: file.id,
-                  name: file.name,
-                  size: file.size,
-                  preview: file.preview,
-                  meta: `${file.uploaderName} · ${formatIndiaTime(file.createdAt)}${view.round > 1 ? ` · round ${file.round}` : ""}`,
-                }))}
-              />
+              <AttachmentList files={fileRows} />
             )}
             {view.canAddFiles && <AddFilesForm requestId={view.id} />}
           </section>

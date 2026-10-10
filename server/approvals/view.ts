@@ -37,7 +37,7 @@ export interface RequestView {
   requesterName: string;
   form: FormField[];
   rawFields: Record<string, string>; // for the resubmit form
-  fields: { key: string; label: string; value: string; lines?: Line[] }[];
+  fields: { key: string; label: string; value: string; lines?: Line[]; files?: number[] }[]; // files: attachment ids (ATTACHMENT fields)
   stages: MapStage[];
   tracker: TrackerSummary;
   timeline: { id: number; at: Date; text: string; kind: TimelineKind }[];
@@ -45,7 +45,7 @@ export interface RequestView {
   // IT only (D-098): steps that found nobody / no path, with what can be done.
   blockedSteps: { nodeId: string; label: string; kind: "APPROVAL" | "CONDITION"; work: boolean; reason: string; paths: { edgeId: string; label: string }[] }[];
   comments: CommentItem[];
-  attachments: { id: number; name: string; size: string; uploaderName: string; createdAt: Date; round: number; preview: "image" | "pdf" | null }[];
+  attachments: { id: number; name: string; size: string; uploaderName: string; createdAt: Date; round: number; preview: "image" | "pdf" | null; fieldLabel: string | null }[];
   // RD-03: after a resubmit, what changed since the round before (null when
   // round 1; "unrecorded" for requests from before v1.6.0).
   changes: { round: number; fields: FieldChange[]; files: string[] } | "unrecorded" | null;
@@ -101,7 +101,7 @@ export async function loadRequestView(requestId: number, viewer: Actor): Promise
     .filter((value): value is number => typeof value === "number");
   const actorIds = timelineRows.flatMap((row) => {
     const payload = row.payload as unknown as Record<string, unknown>;
-    const single = ["actorId", "approverId", "onBehalfOf", "fromId", "toId", "consulteeId", "askedBy"].map((key) => payload[key]);
+    const single = ["actorId", "approverId", "onBehalfOf", "fromId", "toId", "consulteeId", "askedBy", "userId"].map((key) => payload[key]);
     const lists = Array.isArray(payload.userIds) ? (payload.userIds as unknown[]) : [];
     return [...single, ...lists].filter((value): value is number => typeof value === "number");
   });
@@ -169,6 +169,7 @@ export async function loadRequestView(requestId: number, viewer: Actor): Promise
         label: field.label,
         value: displayValue(field, request.formData[field.key], names, lookupNames),
         ...(field.type === "LINE_ITEMS" ? { lines: storedLines(request.formData, field.key) } : {}),
+        ...(field.type === "ATTACHMENT" ? { files: attachmentRows.filter((file) => file.fieldKey === field.key).map((file) => file.id) } : {}),
       })),
     stages,
     tracker: summarizeTracker(stages, { status: state.status, requesterName: nameOf(request.requesterId), closedAt: closedAt(state), holdSince: state.hold?.at ?? null }),
@@ -181,7 +182,7 @@ export async function loadRequestView(requestId: number, viewer: Actor): Promise
         : [],
     blockedSteps,
     comments: await listComments(requestId),
-    attachments: attachmentRows.map((file) => ({ id: file.id, name: file.name, size: formatSize(file.sizeBytes), uploaderName: file.uploaderName, createdAt: file.createdAt, round: file.round, preview: previewKind(file.contentType) })),
+    attachments: attachmentRows.map((file) => ({ id: file.id, name: file.name, size: formatSize(file.sizeBytes), uploaderName: file.uploaderName, createdAt: file.createdAt, round: file.round, preview: previewKind(file.contentType), fieldLabel: file.fieldKey ? (version.form.find((field) => field.key === file.fieldKey)?.label ?? null) : null })),
     changes: (() => {
       if (state.round <= 1) return null;
       const before = revisions.find((revision) => revision.round === state.round - 1);

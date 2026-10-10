@@ -17,7 +17,7 @@ export async function followUpSource(sourceId: number | null, actor: Actor): Pro
 export function followUpValues(target: readonly FormField[], source: { fields: Record<string, string>; form: readonly FormField[] }): Record<string, string> {
   const out: Record<string, string> = {};
   for (const field of target) {
-    if (field.type === "PERSON") continue;
+    if (field.type === "PERSON" || field.type === "ATTACHMENT") continue;
     const from = source.form.find((candidate) => candidate.key === field.key);
     const value = source.fields[field.key];
     if (!from || from.type !== field.type || value === undefined || value === "") continue;

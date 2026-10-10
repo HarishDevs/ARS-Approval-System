@@ -9,6 +9,7 @@ import { LineItemsEditor } from "@/features/requests/LineItemsEditor";
 import { describeRule, evaluateFormula, parseFormula, ruleHolds, visibleFields } from "@/server/forms/dynamic";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import { ErrorSummary } from "@/features/ui/Field";
+import { PeoplePicker, type PersonOption } from "@/features/ui/PeoplePicker";
 import { NO_LOOKUPS, type FieldLookups, type FormField } from "@/server/forms/fields";
 import { ACCEPT_ATTRIBUTE } from "@/server/attachments/files";
 import { DraftStatus, useDraftAutosave } from "@/features/requests/useDraftAutosave";
@@ -22,6 +23,8 @@ export interface DraftInfo {
 
 // Raise a request, or edit and resubmit one (F-14). The server re-checks
 // every field against the workflow version's form (D-055).
+const NO_FILES: Record<string, number> = {};
+
 export function RequestForm({
   mode,
   workflowId,
@@ -37,6 +40,8 @@ export function RequestForm({
   draft,
   sources = {},
   amendment,
+  existingFiles = NO_FILES,
+  collaboratorOptions,
 }: {
   mode: "submit" | "resubmit";
   workflowId?: number;
@@ -55,6 +60,10 @@ export function RequestForm({
   draft?: DraftInfo;
   // FN5: amending an approved request; only these fields can change.
   amendment?: { originalId: number; originalNo: string; title: string; amendable: string[] };
+  // v1.6.1: files already in each attachment field (resubmit, amend).
+  existingFiles?: Record<string, number>;
+  // v1.6.1: people the requester can add to follow the request (new requests).
+  collaboratorOptions?: PersonOption[];
 }) {
   const { result, pending, onSubmit } = useActionForm(amendment ? submitAmendmentAction : mode === "submit" ? submitRequestAction : resubmitAction);
   const locked = (key: string) => Boolean(amendment && !amendment.amendable.includes(key));
@@ -70,15 +79,17 @@ export function RequestForm({
   const [checking, setChecking] = useState(false);
   const [checkFailed, setCheckFailed] = useState<string | null>(null);
   const [signature, setSignature] = useState("");
-  const signatureOf = (form: HTMLFormElement) => {
+  const fileCount = useCallback((form: HTMLFormElement, key: string) => ((form.elements.namedItem(`file:${key}`) as HTMLInputElement | null)?.files?.length ?? 0) + (existingFiles[key] ?? 0), [existingFiles]);
+  const attachmentFields = useMemo(() => fields.filter((field) => field.type === "ATTACHMENT"), [fields]);
+  const signatureOf = useCallback((form: HTMLFormElement) => {
     const entries = [...new FormData(form).entries()].filter(([key, value]) => typeof value === "string" && !["submissionKey", "acknowledged", "allowDuplicate", "overrideReason"].includes(key)).map(([key, value]) => `${key}=${value as string}`);
     const files = (form.elements.namedItem("attachments") as HTMLInputElement | null)?.files?.length ?? 0;
-    return `${entries.sort().join("&")}|${files}`;
-  };
+    return `${entries.sort().join("&")}|${files}|${attachmentFields.map((field) => fileCount(form, field.key)).join(",")}`;
+  }, [attachmentFields, fileCount]);
   const submitted = result && !result.ok ? (result.data as { readiness?: Readiness } | undefined)?.readiness : undefined;
   useEffect(() => {
     if (submitted && autosave.formRef.current) setChecked({ readiness: submitted, signature: signatureOf(autosave.formRef.current) });
-  }, [submitted, autosave.formRef]);
+  }, [submitted, autosave.formRef, signatureOf]);
   const runCheck = async () => {
     const form = autosave.formRef.current;
     if (!form || !workflowId) return;
@@ -86,6 +97,11 @@ export function RequestForm({
     setCheckFailed(null);
     const data = new FormData(form);
     data.delete("attachments");
+    // Attachment fields: the check needs how many files, not the files.
+    for (const field of attachmentFields) {
+      data.delete(`file:${field.key}`);
+      data.set(`fileCount:${field.key}`, String(fileCount(form, field.key)));
+    }
     data.set("attachmentCount", String((form.elements.namedItem("attachments") as HTMLInputElement | null)?.files?.length ?? 0));
     const answer = await guardAction(checkReadinessAction)(null, data);
     setChecking(false);
@@ -104,15 +120,18 @@ export function RequestForm({
   // The server applies the same rules again on submit.
   const start = useMemo(() => {
     const values: Record<string, string> = {};
-    for (const field of fields) values[field.key] = initial?.[field.key] ?? (mode === "submit" ? (field.defaultValue ?? "") : "");
+    for (const field of fields) values[field.key] = field.type === "ATTACHMENT" ? (existingFiles[field.key] ? String(existingFiles[field.key]) : "") : (initial?.[field.key] ?? (mode === "submit" ? (field.defaultValue ?? "") : ""));
     return values;
-  }, [fields, initial, mode]);
+  }, [fields, initial, mode, existingFiles]);
   const [values, setValues] = useState<Record<string, string | number | null>>(start);
   const readForm = (form: HTMLFormElement) => {
     const data = new FormData(form);
     setValues((current) => {
       const next: Record<string, string | number | null> = { ...current };
-      for (const field of fields) if (field.type !== "LINE_ITEMS" && field.type !== "CALC" && field.type !== "SECTION" && !locked(field.key)) next[field.key] = String(data.get(field.key) ?? "");
+      for (const field of fields) {
+        if (field.type === "ATTACHMENT") next[field.key] = fileCount(form, field.key) || null;
+        else if (field.type !== "LINE_ITEMS" && field.type !== "CALC" && field.type !== "SECTION" && !locked(field.key)) next[field.key] = String(data.get(field.key) ?? "");
+      }
       return next;
     });
   };
@@ -222,6 +241,7 @@ export function RequestForm({
                 <LineItemsEditor name={field.key} label={field.label} defaultValue={initial?.[`${field.key}__lines`] ?? initial?.[field.key] ?? ""} invalid={Boolean(error)} describedBy={error ? `${field.key}-error` : undefined} onChange={lineHandlers[field.key]!} />
               ) : (
                 <FieldInput
+                  existing={existingFiles[field.key] ?? 0}
                   field={field}
                   people={approverPeople && approverFields.includes(field.key) ? approverPeople : people}
                   lookups={lookups}
@@ -250,6 +270,12 @@ export function RequestForm({
           <p className="mt-1 text-caption text-ink-muted">Quotes, invoices, photos: PDF, images, Word, Excel, PowerPoint, CSV or text. Up to 5 files of 10 MB each.</p>
           <FieldError result={result} name="attachments" />
         </div>
+        {mode === "submit" && !amendment && collaboratorOptions && (
+          <div>
+            <PeoplePicker name="collaborator" label="Collaborators (optional)" options={collaboratorOptions} help="Anyone in the organisation who should follow this request: they can see it, comment and add files, and are told how it goes. They don't approve anything." invalid={Boolean(result && !result.ok && result.fieldErrors?.collaborator)} />
+            <FieldError result={result} name="collaborator" />
+          </div>
+        )}
       </div>
       {mode === "submit" && workflowId && (
         <div className="mx-5 mb-4 space-y-3">
@@ -314,7 +340,7 @@ export function RequestForm({
   );
 }
 
-function FieldInput({ field, people, lookups, defaultValue, error }: { field: FormField; people: { id: number; label: string }[]; lookups: FieldLookups; defaultValue: string; error?: string }) {
+function FieldInput({ field, people, lookups, defaultValue, error, existing = 0 }: { field: FormField; people: { id: number; label: string }[]; lookups: FieldLookups; defaultValue: string; error?: string; existing?: number }) {
   const id = `f-${field.key}`;
   // FB-06: the hint and the error are read with the control.
   const describedBy = [field.help ? `${id}-hint` : null, error ? `${field.key}-error` : null].filter(Boolean).join(" ") || undefined;
@@ -350,6 +376,17 @@ function FieldInput({ field, people, lookups, defaultValue, error }: { field: Fo
             </option>
           ))}
         </select>
+      );
+    }
+    case "ATTACHMENT": {
+      const most = field.maxFiles ?? 5;
+      return (
+        <>
+          <input id={id} name={`file:${field.key}`} type="file" multiple={most > 1} accept={ACCEPT_ATTRIBUTE} {...a11y} className="block w-full text-label file:mr-3 file:rounded-md file:border-0 file:bg-surface-muted file:px-3 file:py-2" />
+          <p className="mt-1 text-caption text-ink-muted">
+            Up to {most} file{most === 1 ? "" : "s"}, 10 MB each.{existing ? ` ${existing} already attached; new files are added to them.` : ""}
+          </p>
+        </>
       );
     }
     case "PERSON":

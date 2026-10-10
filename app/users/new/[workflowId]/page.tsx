@@ -28,6 +28,8 @@ export default async function RaiseRequestPage({ params, searchParams }: { param
   const people = needsPeople ? (await listActiveUserOptions()).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` })) : [];
   const approverFields = approverFieldKeys(version.definition);
   const lookups = version.form.some((field) => field.type === "LOOKUP") ? await loadFieldLookups() : undefined;
+  // v1.6.1: anyone active can be a collaborator (not the requester).
+  const collaboratorOptions = (await listActiveUserOptions()).filter((person) => person.id !== user.id).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` }));
   const approverPeople = approverFields.length ? (await listApproverOptions()).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` })) : undefined;
   // #3: the person's own draft for this type, if any (scoped by user id).
   const draftKey = `WF:${workflow.id}`;
@@ -87,6 +89,7 @@ export default async function RaiseRequestPage({ params, searchParams }: { param
           approverPeople={approverPeople}
           approverFields={approverFields}
           lookups={lookups}
+          collaboratorOptions={collaboratorOptions}
           initial={base}
           sources={Object.fromEntries(Object.entries(sources).map(([key, value]) => [key, SOURCE_LABEL[value as keyof typeof SOURCE_LABEL] ?? ""]))}
           initialTitle={explicit ? (filled.title ?? undefined) : source ? `Follow-up: ${source.title}`.slice(0, 200) : draft?.title}

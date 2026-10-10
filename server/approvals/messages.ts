@@ -26,6 +26,8 @@ export function messagesForEvents(
     labelOf?: (nodeId: string) => string;
     // D-097: a work step's task is "to do", not "to approve".
     isWorkStep?: (nodeId: string) => boolean;
+    // v1.6.1: people following the request; told how it ends or comes back.
+    collaboratorIds?: readonly number[];
   },
 ): NotifyInput[] {
   const link = requestLink(context.baseUrl, request.id);
@@ -296,6 +298,32 @@ export function messagesForEvents(
       }
       default:
         break;
+    }
+  }
+  // v1.6.1 collaborators: an FYI when the request ends, is sent back,
+  // comes back, or is withdrawn. Never a request to act.
+  const followers = (context.collaboratorIds ?? []).filter((id) => id !== request.requesterId);
+  if (followers.length) {
+    for (const event of events) {
+      const what =
+        event.type === "INSTANCE_APPROVED" ? "was fully approved"
+        : event.type === "INSTANCE_REJECTED" ? `was rejected: ${event.comment}`
+        : event.type === "CHANGES_REQUESTED" ? "was sent back to the requester for changes"
+        : event.type === "RESUBMITTED" ? "was resubmitted and is with the approvers again"
+        : event.type === "WITHDRAWN" ? "was withdrawn by the requester"
+        : null;
+      if (!what) continue;
+      for (const userId of followers) {
+        out.push({
+          eventType: "COLLABORATOR_UPDATE",
+          userId,
+          title: "Update on a request you follow",
+          message: `${ref} ${what}.`,
+          deepLink: link,
+          email: { subject: `Update: ${request.requestNo}`, text: `A request you were added to ${what}.\n\n${ref}\nRaised by ${request.requesterName}\n\n${link}` },
+          whatsappVariables: null,
+        });
+      }
     }
   }
   return out;

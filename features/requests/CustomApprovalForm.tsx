@@ -8,6 +8,7 @@ import { LevelsEditor, newStepId, type BuilderOptions } from "@/features/admin/W
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import type { BuilderStage } from "@/server/workflows/builder";
 import type { FormField } from "@/server/forms/fields";
+import { PeoplePicker, type PersonOption } from "@/features/ui/PeoplePicker";
 import { ACCEPT_ATTRIBUTE } from "@/server/attachments/files";
 
 // Custom approval (F-33, D-060): anyone picks anyone, any mix of levels.
@@ -22,7 +23,7 @@ function restoredStages(spec: string | undefined): BuilderStage[] | null {
   }
 }
 
-export function CustomApprovalForm({ options, draft, initial }: { options: BuilderOptions; draft?: DraftInfo; initial?: { title: string; fields: Record<string, string> } }) {
+export function CustomApprovalForm({ options, draft, initial, collaboratorOptions = [] }: { options: BuilderOptions; draft?: DraftInfo; initial?: { title: string; fields: Record<string, string> }; collaboratorOptions?: PersonOption[] }) {
   const [stages, setStages] = useState<BuilderStage[]>(
     () =>
       restoredStages(initial?.fields.spec) ?? [{ kind: "STEP", step: { id: "s1", label: "First approval", approvers: { kind: "PEOPLE", userIds: [] }, rule: "ALL" } }],
@@ -82,6 +83,10 @@ export function CustomApprovalForm({ options, draft, initial }: { options: Build
           <input id="c-attachments" name="attachments" type="file" multiple accept={ACCEPT_ATTRIBUTE} className="block w-full text-label file:mr-3 file:rounded-md file:border-0 file:bg-surface-muted file:px-3 file:py-2" />
           <p className="mt-1 text-caption text-ink-muted">Quotes, invoices, photos: PDF, images, Word, Excel, PowerPoint, CSV or text. Up to 5 files of 10 MB each.</p>
           <FieldError result={result} name="attachments" />
+        </div>
+        <div>
+          <PeoplePicker name="collaborator" label="Collaborators (optional)" options={collaboratorOptions} help="Anyone in the organisation who should follow this request: they can see it, comment and add files, and are told how it goes. They don't approve anything." />
+          <FieldError result={result} name="collaborator" />
         </div>
       </section>
       <LevelsEditor

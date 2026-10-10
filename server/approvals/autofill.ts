@@ -37,7 +37,8 @@ export function reusableValues(form: readonly FormField[], source: { fields: Rec
     if (value === undefined || value === null || value === "" || key.endsWith("__lines")) continue;
     const field = form.find((item) => item.key === key);
     const before = source.form?.find((item) => item.key === key);
-    if (!field || field.type === "PERSON" || field.type === "CALC" || field.type === "SECTION" || (before && before.type !== field.type) || (field.type === "CHOICE" && !(field.options ?? []).includes(value))) {
+    // Files (and attachment fields) are never copied.
+    if (!field || field.type === "PERSON" || field.type === "CALC" || field.type === "SECTION" || field.type === "ATTACHMENT" || (before && before.type !== field.type) || (field.type === "CHOICE" && !(field.options ?? []).includes(value))) {
       if (field?.type !== "CALC" && field?.type !== "PERSON") dropped += 1;
       continue;
     }

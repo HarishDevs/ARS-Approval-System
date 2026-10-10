@@ -1,5 +1,13 @@
 # Release notes
 
+## v1.6.1 (10 Oct 2026): files in forms, and collaborators
+**For IT**
+- **Attachments as a form field:** in the workflow builder, add a field of type **Attachments (files)**. Make it required (at least one file) and choose up to 1–5 files. Requesters attach files right there, and the files show under that field on the request.
+
+**For everyone**
+- **Collaborators:** when you raise a request (standard or custom), add anyone in the organisation to follow it, as many as 20 people. They can see it, comment and add files, and they're told how it goes. They don't approve. Add or remove people later on the request page; a collaborator can stop following.
+- **My requests → Shared with me** lists the requests people added you to.
+
 ## v1.6.0 (10 Oct 2026): clearer, safer, measurable
 **For everyone**
 - **A refreshed look:** dark mode, a command palette (Ctrl K), keyboard shortcuts in Waiting for me, clearer errors with a summary at the top, toasts with Undo, and a phone navigation bar.

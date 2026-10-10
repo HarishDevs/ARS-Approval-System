@@ -65,6 +65,10 @@ export function describeEvent(event: TimelineEvent, labelOf: (nodeId: string) =>
       return `Removed by ${nameOf(event.actorId)}: ${event.reason}`;
     case "VERSION_MIGRATED":
       return `Moved from workflow version ${event.fromVersionNo} to version ${event.toVersionNo} by ${nameOf(event.actorId)}`;
+    case "COLLABORATORS_ADDED":
+      return `${nameOf(event.actorId)} added ${event.userIds.map(nameOf).join(", ")} as collaborator${event.userIds.length === 1 ? "" : "s"}`;
+    case "COLLABORATOR_REMOVED":
+      return event.userId === event.actorId ? `${nameOf(event.actorId)} stopped following this request` : `${nameOf(event.actorId)} removed ${nameOf(event.userId)} as a collaborator`;
     case "BRANCH_TAKEN":
     case "NODE_ACTIVATED":
       return null;
@@ -123,6 +127,9 @@ export function eventKind(event: TimelineEvent): TimelineKind {
     case "DELETED":
     case "VERSION_MIGRATED":
       return "admin";
+    case "COLLABORATORS_ADDED":
+    case "COLLABORATOR_REMOVED":
+      return "info";
     default:
       return "info";
   }

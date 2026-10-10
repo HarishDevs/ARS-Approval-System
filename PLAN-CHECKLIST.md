@@ -17,6 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (10 Oct 2026):** v1.6.1, owner request: attachment fields in the form builder, and collaborators on requests. Pushed; not deployed.
 - **Now (10 Oct 2026):** v1.6.0 is tagged and pushed; it is **not deployed**.
   - **Scope:** the master prompt plus the unified master prompt.
   - **Register:** 1,287 Implemented, 504 Yet to do, 66 Not feasible (`docs/IMPLEMENTATION_STATUS_REGISTER.md`).
@@ -281,6 +282,14 @@ Found during S8-06:
 - [x] S8-12 Google sign-in reached UNKNOWN_ACCOUNT: itadmin@ is an alias. The Super Admin now signs in as itsupport@arsenergy.co.in (D-082, migration + non-overwriting seed, v1.0.5) (done 8 Oct 2026)
 - [x] S8-01b Go-live on GoDaddy with the owner, following docs/DEPLOYMENT.md (the owner is at the wizard's "Add secrets" step) (done 9 Oct 2026: live since 8 Oct 2026)
 - [x] S8-04 Update the three living files; commit and push (done 8 Oct 2026)
+
+## Session log — v1.6.1: attachment fields and collaborators (10 Oct 2026), planned before starting
+Owner: "attachments in the approval flow creation as add field and datatype; for each approval the requester can add anyone in the organisation as collaborator, multiple collaborators".
+- [x] V161-01 Form builder: field type "Attachments (files)" with required and up to 1–5 files; files checked and counted on the server; stored against the field; shown under it; counted on resubmit; never copied by templates, raise again or follow-ups; not amendable or a duplicate key (done 10 Oct 2026)
+- [x] V161-02 Collaborators: a people picker (search, chips) on new requests and custom approvals; Collaborators card on the request page (add, remove, stop following); up to 20; requester or IT manage; visibility, search, mentions; told when added and when the request is approved, rejected, sent back, resubmitted or withdrawn; never approvers; timeline and audit (done 10 Oct 2026)
+- [x] V161-03 My requests → "Shared with me" (done 10 Oct 2026)
+- [x] V161-04 Tests: unit attachment-field.test.ts; integration collaborators.int.test.ts; e2e v161-attachments-collaborators.spec.ts; full regression green (done 10 Oct 2026)
+- Note: collaborators also cover the "watchers" part of U-09.
 
 ## Session log — v1.6.0: unified master prompt (10 Oct 2026), planned before starting
 Prompt: `docs/requirements/UNIFIED_MASTER_PROMPT.md`. Status register: `docs/IMPLEMENTATION_STATUS_REGISTER.md` (generated from `docs/register/status.json` by `node scripts/docs/build-register.mjs`). Build order: `docs/IMPLEMENTATION_PLAN.md` (unified section).

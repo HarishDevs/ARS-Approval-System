@@ -447,7 +447,10 @@ export type TimelineEvent =
   | { type: "CONSULTED"; consultationId: number; consulteeId: number; actorId: number; question: string }
   | { type: "CONSULT_ANSWERED"; consultationId: number; actorId: number; answer: string }
   // FN7: IT moved the request to another workflow version.
-  | { type: "VERSION_MIGRATED"; actorId: number; fromVersionNo: number; toVersionNo: number; migrationId: number };
+  | { type: "VERSION_MIGRATED"; actorId: number; fromVersionNo: number; toVersionNo: number; migrationId: number }
+  // v1.6.1: people added to follow the request, or removed.
+  | { type: "COLLABORATORS_ADDED"; actorId: number; userIds: number[] }
+  | { type: "COLLABORATOR_REMOVED"; actorId: number; userId: number };
 
 export async function appendEvents(requestId: number, events: readonly TimelineEvent[], actorId: number | null, db: Queryable): Promise<void> {
   if (events.length === 0) return;
@@ -581,8 +584,8 @@ export async function queueTypesFor(userId: number, db: Queryable = getDbPool())
 }
 
 // Requester, anyone with a task on it (now or before), the active delegate
-// of someone with a pending task on it (D-057, D-062), or a consultee
-// (EN-06). Kept equal to visibleToSql (visibility.ts).
+// of someone with a pending task on it (D-057, D-062), a consultee
+// (EN-06), or a collaborator (v1.6.1). Kept equal to visibleToSql (visibility.ts).
 export async function isParticipant(requestId: number, userId: number, db: Queryable = getDbPool()): Promise<boolean> {
   const [rows] = await db.query<(RowDataPacket & { found: number })[]>(
     `SELECT 1 AS found FROM approval_requests WHERE id = ? AND requester_id = ?
@@ -591,8 +594,9 @@ export async function isParticipant(requestId: number, userId: number, db: Query
        WHERE t.request_id = ? AND t.status = 'PENDING' AND d.delegate_id = ? AND d.ended_at IS NULL
          AND ${INDIA_TODAY_SQL} BETWEEN d.starts_on AND d.ends_on
      UNION SELECT 1 FROM consultations c WHERE c.request_id = ? AND c.consultee_id = ?
+     UNION SELECT 1 FROM request_collaborators k WHERE k.request_id = ? AND k.user_id = ? AND k.removed_at IS NULL
      LIMIT 1`,
-    [requestId, userId, requestId, userId, userId, requestId, userId, requestId, userId],
+    [requestId, userId, requestId, userId, userId, requestId, userId, requestId, userId, requestId, userId],
   );
   return rows.length > 0;
 }
@@ -642,10 +646,11 @@ const STATUSES: readonly InstanceStatus[] = ["IN_PROGRESS", "ON_HOLD", "CHANGES_
 
 export async function searchMyRequests(
   userId: number,
-  filter: { q?: string; status?: string; page?: number },
+  filter: { q?: string; status?: string; page?: number; shared?: boolean },
   db: Queryable = getDbPool(),
 ): Promise<{ items: MyRequestItem[]; total: number; page: number; pages: number }> {
-  const where = ["r.requester_id = ?", "r.deleted_at IS NULL"];
+  // v1.6.1: shared = requests the person was added to as a collaborator.
+  const where = [filter.shared ? "EXISTS (SELECT 1 FROM request_collaborators k WHERE k.request_id = r.id AND k.user_id = ? AND k.removed_at IS NULL)" : "r.requester_id = ?", "r.deleted_at IS NULL"];
   const params: unknown[] = [userId];
   const q = (filter.q ?? "").trim().slice(0, 100);
   if (q) {

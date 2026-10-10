@@ -28,6 +28,8 @@ const TYPE_CHOICES: { value: string; label: string }[] = [
   { value: "CALC", label: "Calculated (formula)" },
   { value: "LINE_ITEMS", label: "Line items (qty × rate + GST)" },
   { value: "SECTION", label: "Section heading" },
+  // v1.6.1
+  { value: "ATTACHMENT", label: "Attachments (files)" },
 ];
 export const SOURCE_LABEL: Record<LookupSource, string> = { DEPARTMENT: "Departments", DESIGNATION: "Designations" };
 
@@ -55,6 +57,7 @@ function withType(field: FormField, value: string): FormField {
     ...(type === "LOOKUP" ? { source: source && (LOOKUP_SOURCES as readonly string[]).includes(source) ? source : "DEPARTMENT" } : {}),
     ...(type === "CALC" ? { formula: field.formula ?? "", required: false } : {}),
     ...(type === "SECTION" ? { required: false } : {}),
+    ...(type === "ATTACHMENT" ? { maxFiles: field.maxFiles ?? 5 } : {}),
     ...(field.showIf ? { showIf: field.showIf } : {}),
     ...(field.requiredIf && type !== "SECTION" && type !== "CALC" ? { requiredIf: field.requiredIf } : {}),
     ...(field.defaultValue && ["TEXT", "NUMBER", "CHOICE", "DATE"].includes(type) ? { defaultValue: field.defaultValue } : {}),
@@ -360,6 +363,20 @@ export function FormFieldsEditor({ form, setForm, lockedKeys }: { form: FormFiel
                 )}
                 {field.type === "LINE_ITEMS" && <p className="text-caption text-ink-muted">The requester adds rows of description, quantity, rate (₹) and GST %. The total (worked out in paise on the server) is this field&apos;s value, so it can be the DoA amount or used in a formula.</p>}
                 {field.type === "SECTION" && <p className="text-caption text-ink-muted">A heading that groups the fields below it. It holds no value.</p>}
+                {field.type === "ATTACHMENT" && (
+                  <div className="space-y-1">
+                    <label className="flex flex-wrap items-center gap-2 text-label">
+                      Up to
+                      <select aria-label={`Most files for ${name}`} value={field.maxFiles ?? 5} onChange={(event) => update(index, (item) => ({ ...item, maxFiles: Number(event.target.value) }))} className="field-input w-20">
+                        {[1, 2, 3, 4, 5].map((count) => (
+                          <option key={count}>{count}</option>
+                        ))}
+                      </select>
+                      file(s)
+                    </label>
+                    <p className="text-caption text-ink-muted">The requester attaches files here (PDF, images, Word, Excel, PowerPoint, CSV or text; 10 MB each). Required means at least one file. The files are listed under this field on the request.</p>
+                  </div>
+                )}
                 {["TEXT", "NUMBER", "DATE"].includes(field.type) && (
                   <input
                     aria-label={`Default value for ${name}`}

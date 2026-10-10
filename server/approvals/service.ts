@@ -341,10 +341,14 @@ async function prepareMessages(
   const nodes: readonly WorkflowNode[] = change.nodes ?? (await findWorkflowVersion(change.request.workflowVersionId, db))?.definition.nodes ?? [];
   const labelOf = (nodeId: string) => nodes.find((node) => node.id === nodeId)?.label ?? nodeId;
   const isWorkStep = (nodeId: string) => nodes.some((node) => node.id === nodeId && node.kind === "APPROVAL" && node.mode === "WORK");
+  const [followers] = await db.query<(RowDataPacket & { user_id: number })[]>(
+    "SELECT c.user_id FROM request_collaborators c JOIN users u ON u.id = c.user_id WHERE c.request_id = ? AND c.removed_at IS NULL AND u.active = TRUE",
+    [change.request.id],
+  );
   return messagesForEvents(
     change.events,
     { id: change.request.id, requestNo: change.request.requestNo, title: change.request.title, requesterId: change.request.requesterId, requesterName: change.requesterName },
-    { baseUrl: getEnv().APP_BASE_URL ?? "https://approval.arssteels.net", adminIds, labelOf, isWorkStep },
+    { baseUrl: getEnv().APP_BASE_URL ?? "https://approval.arssteels.net", adminIds, labelOf, isWorkStep, collaboratorIds: followers.map((row) => row.user_id) },
   );
 }
 

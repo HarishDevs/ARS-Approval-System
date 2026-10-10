@@ -88,7 +88,7 @@ export async function amendmentPlan(requestId: number, actor: Actor): Promise<{ 
   const version = workflow?.active ? await findPublishedVersion(workflow.id) : null;
   if (!workflow || !version || workflow.kind === "CUSTOM") return { ok: false, reason: "This approval type can't be amended." };
   const allowed = new Set(workflow.settings?.amendableFields ?? []);
-  const amendable = version.form.filter((field) => allowed.has(field.key) && field.type !== "SECTION" && field.type !== "CALC");
+  const amendable = version.form.filter((field) => allowed.has(field.key) && field.type !== "SECTION" && field.type !== "CALC" && field.type !== "ATTACHMENT");
   if (!amendable.length) return { ok: false, reason: "This approval type doesn't allow amendments. IT can switch them on for chosen fields." };
   const { data: effective } = await effectiveValues(original);
   const amountField = workflow.settings?.budget.enabled ? workflow.settings.budget.amountField : null;

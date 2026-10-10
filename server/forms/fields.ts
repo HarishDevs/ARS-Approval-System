@@ -6,7 +6,10 @@ import { RULE_OPERATORS, computeLines, dependencyOrder, evaluateFormula, formatP
 // request keeps the fields it was raised with. Pure and unit-tested.
 // v1.6.0: CALC (worked out by a formula), LINE_ITEMS (quantity × rate +
 // GST, total in the field's own key), SECTION (a heading; holds no value).
-export const FIELD_TYPES = ["TEXT", "LONG_TEXT", "NUMBER", "DATE", "CHOICE", "PERSON", "LOOKUP", "CALC", "LINE_ITEMS", "SECTION"] as const;
+// v1.6.1: ATTACHMENT (files uploaded to this field; its value is the file count).
+export const FIELD_TYPES = ["TEXT", "LONG_TEXT", "NUMBER", "DATE", "CHOICE", "PERSON", "LOOKUP", "CALC", "LINE_ITEMS", "SECTION", "ATTACHMENT"] as const;
+// Most files one attachment field takes (the request limit of 20 still applies).
+export const MAX_FIELD_FILES = 5;
 // Types whose value is a number (usable in formulas, rules and the DoA).
 export const NUMERIC_TYPES: readonly string[] = ["NUMBER", "CALC", "LINE_ITEMS"];
 export type FieldType = (typeof FIELD_TYPES)[number];
@@ -42,6 +45,7 @@ export interface FormField {
   decimals?: number; // CALC only: 0–4 (default 2)
   defaultValue?: string; // filled in on a new request
   neededBy?: boolean; // DATE only: the request's "needed by" date (calendar)
+  maxFiles?: number; // ATTACHMENT only: 1–5 (default 5)
 }
 
 const ruleSchema = z.object({ field: z.string().regex(/^[a-z][a-z0-9_]{0,49}$/), op: z.enum(RULE_OPERATORS), value: z.string().trim().max(100).optional() });
@@ -61,6 +65,7 @@ export const formFieldSchema = z.object({
   decimals: z.number().int().min(0).max(4).optional(),
   defaultValue: z.string().trim().max(200).optional(),
   neededBy: z.boolean().optional(),
+  maxFiles: z.number().int().min(1).max(MAX_FIELD_FILES).optional(),
 });
 
 export const formSchema = z.array(formFieldSchema).max(40);
@@ -98,6 +103,8 @@ export function checkFormDefinition(fields: readonly FormField[]): string[] {
     } else if (field.formula) problems.push(`"${field.label}" has a formula but isn't a calculated field.`);
     if (field.type === "SECTION" && (field.required || field.requiredIf)) problems.push(`"${field.label}" is a heading; it can't be required.`);
     if (field.neededBy && field.type !== "DATE") problems.push(`"${field.label}": only a date can be the "needed by" date.`);
+    if (field.maxFiles !== undefined && field.type !== "ATTACHMENT") problems.push(`"${field.label}" has a file limit but isn't an attachment field.`);
+    if (field.type === "ATTACHMENT" && field.defaultValue) problems.push(`"${field.label}" is an attachment field; it can't have a default value.`);
     for (const [name, rule] of [["show", field.showIf], ["require", field.requiredIf]] as const) {
       if (!rule) continue;
       const target = fields.find((other) => other.key === rule.field);
@@ -105,6 +112,7 @@ export function checkFormDefinition(fields: readonly FormField[]): string[] {
       else if (target.key === field.key) problems.push(`"${field.label}": a rule can't depend on the field itself.`);
       else if (target.type === "SECTION") problems.push(`"${field.label}": a rule can't use a heading.`);
       else if (["GT", "GTE", "LT", "LTE"].includes(rule.op) && !NUMERIC_TYPES.includes(target.type)) problems.push(`"${field.label}": "more/less than" needs a number field.`);
+      else if (target.type === "ATTACHMENT" && !["FILLED", "EMPTY"].includes(rule.op)) problems.push(`"${field.label}": a rule on an attachment field can only check whether files were added.`);
       else if (!["FILLED", "EMPTY"].includes(rule.op) && !rule.value) problems.push(`"${field.label}": the ${name} rule needs a value.`);
     }
   }
@@ -170,6 +178,15 @@ export function parseFormSubmission(
         else data[field.key] = id;
         break;
       }
+      case "ATTACHMENT": {
+        // The server puts the number of files it received here; anything
+        // the browser sends for this key is overwritten (actions.ts).
+        const count = /^\d{1,3}$/.test(value) ? Number(value) : NaN;
+        if (!Number.isFinite(count)) errors[field.key] = "The files couldn't be read. Choose them again.";
+        else if (count > (field.maxFiles ?? MAX_FIELD_FILES)) errors[field.key] = `Add at most ${field.maxFiles ?? MAX_FIELD_FILES} file${(field.maxFiles ?? MAX_FIELD_FILES) === 1 ? "" : "s"} here.`;
+        else if (count > 0) data[field.key] = count;
+        break;
+      }
       case "LINE_ITEMS": {
         // The browser sends the rows as JSON; totals are worked out here.
         let inputs: LineInput[] = [];
@@ -221,7 +238,7 @@ export function parseFormSubmission(
     if (field.type === "SECTION" || field.type === "CALC") continue;
     const required = field.required || (field.requiredIf ? ruleHolds(field.requiredIf, data as Record<string, string | number | null>) : false);
     if (required && (data[field.key] === undefined || data[field.key] === "") && !errors[field.key]) {
-      errors[field.key] = field.type === "LINE_ITEMS" ? `Add at least one line to ${field.label}.` : `${field.label} is required.`;
+      errors[field.key] = field.type === "LINE_ITEMS" ? `Add at least one line to ${field.label}.` : field.type === "ATTACHMENT" ? `Attach at least one file to ${field.label}.` : `${field.label} is required.`;
     }
   }
   return Object.keys(errors).length ? { ok: false, errors, data } : { ok: true, data };
@@ -251,6 +268,7 @@ export function displayValue(field: FormField, value: unknown, names: ReadonlyMa
   if (field.type === "NUMBER" && typeof value === "number") return value.toLocaleString("en-IN");
   if (field.type === "CALC" && typeof value === "number") return value.toLocaleString("en-IN", { maximumFractionDigits: field.decimals ?? 2 });
   if (field.type === "LINE_ITEMS" && typeof value === "number") return `${formatPaise(Math.round(value * 100))}`;
+  if (field.type === "ATTACHMENT" && typeof value === "number") return `${value} file${value === 1 ? "" : "s"}`;
   if (field.type === "PERSON" && typeof value === "number") return names.get(value) ?? `User #${value}`;
   return String(value);
 }

@@ -878,6 +878,18 @@ To move requests:
   - the retention dry run shows what the configured durations would affect. Nothing is deleted.
 - **Super Admin -> Providers & security -> Feature switches:** ON, OFF, or IT_ONLY for each new feature.
 
+## F-105 Attachment field (v1.6.1, D-127)
+1. **IT:** workflow builder → Add field → type **Attachments (files)** → label, Required (at least one file), Up to 1–5 files.
+2. **Requester:** the field shows a file picker. Submitting without a file (when required) shows "Attach at least one file to …".
+3. **Request page:** the files are listed under the field in Details, and also under Attachments with the field's name.
+4. **Resubmit:** files already in the field count; new files are added to them.
+
+## F-106 Collaborators (v1.6.1, D-127)
+- **Adding people:** on a new request or custom approval, choose "Collaborators (optional)". Type a name or user id, pick people (they appear as chips) and submit. They are told by inbox and email.
+- **Request page → Collaborators:** the requester or IT adds or removes people (up to 20); a collaborator can **Stop following**.
+- **What collaborators can do:** see the request, comment and add files. They are told when it is approved, rejected, sent back, resubmitted or withdrawn. They never approve.
+- **Finding them:** collaborators see these requests under **My requests → Shared with me**.
+
 ## F-89 Notification choices (v1.5.0, D-110)
 Profile → Notifications → **Settings**: per kind of message, email and WhatsApp on/off. Security and "work waiting for you" are locked on. A switched-off message is recorded as SKIPPED / USER_PREFERENCE; the in-app list always gets it.
 

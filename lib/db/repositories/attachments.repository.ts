@@ -9,6 +9,7 @@ export interface AttachmentRecord {
   uploadedBy: number;
   uploaderName: string;
   round: number;
+  fieldKey: string | null; // the ATTACHMENT form field, if any (v1.6.1)
   name: string;
   storedPath: string;
   contentType: string;
@@ -23,6 +24,7 @@ interface AttachmentRow extends RowDataPacket {
   uploaded_by: number;
   uploader_name: string;
   round: number;
+  field_key: string | null;
   original_name: string;
   stored_path: string;
   content_type: string;
@@ -31,7 +33,7 @@ interface AttachmentRow extends RowDataPacket {
   created_at: Date;
 }
 
-const SELECT = `SELECT a.id, a.request_id, a.uploaded_by, u.name AS uploader_name, a.round, a.original_name, a.stored_path,
+const SELECT = `SELECT a.id, a.request_id, a.uploaded_by, u.name AS uploader_name, a.round, a.field_key, a.original_name, a.stored_path,
   a.content_type, a.size_bytes, a.sha256, a.created_at
   FROM request_attachments a JOIN users u ON u.id = a.uploaded_by`;
 
@@ -41,6 +43,7 @@ const toRecord = (row: AttachmentRow): AttachmentRecord => ({
   uploadedBy: row.uploaded_by,
   uploaderName: row.uploader_name,
   round: row.round,
+  fieldKey: row.field_key,
   name: row.original_name,
   storedPath: row.stored_path,
   contentType: row.content_type,
@@ -50,12 +53,12 @@ const toRecord = (row: AttachmentRow): AttachmentRecord => ({
 });
 
 export async function insertAttachment(
-  input: { requestId: number; uploadedBy: number; round: number; name: string; storedPath: string; contentType: string; sizeBytes: number; sha256: string },
+  input: { requestId: number; uploadedBy: number; round: number; fieldKey?: string | null; name: string; storedPath: string; contentType: string; sizeBytes: number; sha256: string },
   db: Queryable,
 ): Promise<number> {
   const [result] = await db.query<ResultSetHeader>(
-    "INSERT INTO request_attachments (request_id, uploaded_by, round, original_name, stored_path, content_type, size_bytes, sha256) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-    [input.requestId, input.uploadedBy, input.round, input.name, input.storedPath, input.contentType, input.sizeBytes, input.sha256],
+    "INSERT INTO request_attachments (request_id, uploaded_by, round, field_key, original_name, stored_path, content_type, size_bytes, sha256) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    [input.requestId, input.uploadedBy, input.round, input.fieldKey ?? null, input.name, input.storedPath, input.contentType, input.sizeBytes, input.sha256],
   );
   return result.insertId;
 }

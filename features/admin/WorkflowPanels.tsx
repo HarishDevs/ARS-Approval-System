@@ -37,6 +37,7 @@ export function TestModePanel({ versionId, form, people, lookups = NO_LOOKUPS }:
             <label htmlFor={`sim-${field.key}`} className="field-label">
               {field.label}
               {field.type === "LINE_ITEMS" && <span className="font-normal text-ink-faint"> (sample total, ₹)</span>}
+              {field.type === "ATTACHMENT" && <span className="font-normal text-ink-faint"> (number of files)</span>}
             </label>
             {field.type === "LINE_ITEMS" ? (
               <input id={`sim-${field.key}`} name={`lines:${field.key}`} inputMode="decimal" className="field-input" />
@@ -234,7 +235,8 @@ export function DeleteWorkflowForm({ workflowId, name }: { workflowId: number; n
 // default: nothing is checked that IT hasn't switched on.
 export function TypeSettingsForm({ workflowId, settings, form }: { workflowId: number; settings: TypeSettings; form: FormField[] }) {
   const { result, pending, onSubmit } = useActionForm(updateTypeSettingsAction);
-  const fields = form.filter((field) => field.type !== "SECTION");
+  // Attachment fields hold a file count: not a duplicate key, not amendable.
+  const fields = form.filter((field) => field.type !== "SECTION" && field.type !== "ATTACHMENT");
   const numeric = fields.filter((field) => ["NUMBER", "CALC", "LINE_ITEMS"].includes(field.type));
   return (
     <form onSubmit={onSubmit} className="card space-y-4 px-5 py-4">

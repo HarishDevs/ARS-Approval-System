@@ -9,14 +9,16 @@ import { REQUEST_STATUS_OPTIONS } from "@/features/ui/labels";
 const STATUS_OPTIONS = REQUEST_STATUS_OPTIONS;
 
 // My requests (F-14) with search, status filter and paging (D-QA-11).
-export default async function MyRequestsPage({ searchParams }: { searchParams: Promise<{ q?: string; status?: string; page?: string }> }) {
+export default async function MyRequestsPage({ searchParams }: { searchParams: Promise<{ q?: string; status?: string; page?: string; tab?: string }> }) {
   const { user } = await requireArea("users");
   const params = await searchParams;
   const q = (params.q ?? "").slice(0, 100);
   const status = params.status ?? "";
-  const result = await searchMyRequests(user.id, { q, status, page: Number(params.page) || 1 });
+  const shared = params.tab === "shared";
+  const result = await searchMyRequests(user.id, { q, status, page: Number(params.page) || 1, shared });
   const link = (page: number) => {
     const query = new URLSearchParams();
+    if (shared) query.set("tab", "shared");
     if (q) query.set("q", q);
     if (status) query.set("status", status);
     if (page > 1) query.set("page", String(page));
@@ -25,9 +27,18 @@ export default async function MyRequestsPage({ searchParams }: { searchParams: P
   };
   return (
     <>
-      <PageHeader title="My requests" description="Everything you've raised, with where it is now." />
+      <PageHeader title="My requests" description={shared ? "Requests other people added you to as a collaborator." : "Everything you've raised, with where it is now."} />
+      <nav aria-label="Which requests" className="mb-4 flex gap-2">
+        <Link href="/users/requests" aria-current={!shared ? "page" : undefined} className={`rounded-md px-3 py-1.5 text-label ${!shared ? "bg-primary-50 font-semibold text-primary-700" : "text-ink-muted hover:bg-surface-muted"}`}>
+          Raised by me
+        </Link>
+        <Link href="/users/requests?tab=shared" aria-current={shared ? "page" : undefined} className={`rounded-md px-3 py-1.5 text-label ${shared ? "bg-primary-50 font-semibold text-primary-700" : "text-ink-muted hover:bg-surface-muted"}`}>
+          Shared with me
+        </Link>
+      </nav>
       {/* One action bar: search, filter and the primary action together (S9-12). */}
       <form method="get" className="card mb-4 flex flex-wrap items-end gap-3 px-4 py-3" role="search">
+        {shared && <input type="hidden" name="tab" value="shared" />}
         <div className="min-w-0 flex-1">
           <label htmlFor="q" className="field-label">
             Search
@@ -50,7 +61,7 @@ export default async function MyRequestsPage({ searchParams }: { searchParams: P
           Search
         </button>
         {(q || status) && (
-          <Link href="/users/requests" className="link text-label">
+          <Link href={shared ? "/users/requests?tab=shared" : "/users/requests"} className="link text-label">
             Clear
           </Link>
         )}

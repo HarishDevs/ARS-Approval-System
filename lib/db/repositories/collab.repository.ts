@@ -43,9 +43,10 @@ export async function listMentionable(requestId: number, db: Queryable = getDbPo
   const [rows] = await db.query<(RowDataPacket & { login_id: string; name: string })[]>(
     `SELECT DISTINCT u.login_id, u.name FROM users u
      WHERE u.active = TRUE AND u.is_break_glass = FALSE AND (u.id = (SELECT requester_id FROM approval_requests WHERE id = ?)
-       OR u.id IN (SELECT approver_id FROM approval_tasks WHERE request_id = ?))
-     ORDER BY u.name LIMIT 30`,
-    [requestId, requestId],
+       OR u.id IN (SELECT approver_id FROM approval_tasks WHERE request_id = ?)
+       OR u.id IN (SELECT user_id FROM request_collaborators WHERE request_id = ? AND removed_at IS NULL))
+     ORDER BY u.name LIMIT 40`,
+    [requestId, requestId, requestId],
   );
   return rows.map((row) => ({ loginId: row.login_id, name: row.name }));
 }

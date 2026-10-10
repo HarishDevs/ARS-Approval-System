@@ -69,7 +69,7 @@ export async function addAttachments(
   requestId: number,
   files: readonly PreparedFile[],
   actor: Actor,
-  options: { requesterOnly?: boolean } = {},
+  options: { requesterOnly?: boolean; fieldKey?: string } = {},
 ): Promise<Result<{ count: number; duplicates: string[] }>> {
   if (files.length === 0) return { ok: true, value: { count: 0, duplicates: [] } };
   const request = await findRequest(requestId);
@@ -105,7 +105,7 @@ export async function addAttachments(
         await writeFile(path.join(root, storedPath), file.bytes, { flag: "wx" });
         written.push(path.join(root, storedPath));
         await insertAttachment(
-          { requestId, uploadedBy: actor.id, round: locked.round, name: file.name, storedPath, contentType: file.contentType, sizeBytes: file.bytes.length, sha256: file.sha256 },
+          { requestId, uploadedBy: actor.id, round: locked.round, fieldKey: options.fieldKey ?? null, name: file.name, storedPath, contentType: file.contentType, sizeBytes: file.bytes.length, sha256: file.sha256 },
           connection,
         );
       }
