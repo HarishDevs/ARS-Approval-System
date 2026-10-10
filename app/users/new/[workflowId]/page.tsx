@@ -11,8 +11,11 @@ import { approverFieldKeys } from "@/server/approvals/approver-rules";
 import { loadFieldLookups } from "@/lib/db/repositories/lookups.repository";
 import { findDraft } from "@/lib/db/repositories/drafts.repository";
 import { followUpSource, followUpValues } from "@/server/approvals/follow-up";
+import { prefill, SOURCE_LABEL } from "@/server/approvals/autofill";
+import { listTemplates } from "@/lib/db/repositories/templates.repository";
+import { TemplatePicker } from "@/features/requests/Templates";
 
-export default async function RaiseRequestPage({ params, searchParams }: { params: Promise<{ workflowId: string }>; searchParams: Promise<{ followUp?: string }> }) {
+export default async function RaiseRequestPage({ params, searchParams }: { params: Promise<{ workflowId: string }>; searchParams: Promise<{ followUp?: string; template?: string; from?: string }> }) {
   const { user } = await requireArea("users");
   const { workflowId } = await params;
   if (!/^\d+$/.test(workflowId)) notFound();
@@ -29,9 +32,25 @@ export default async function RaiseRequestPage({ params, searchParams }: { param
   const draftKey = `WF:${workflow.id}`;
   const draft = await findDraft(user.id, draftKey);
   // EN-08: a follow-up of an approved request (access-checked again here).
-  const raw = (await searchParams).followUp;
-  const source = await followUpSource(raw && /^\d{1,10}$/.test(raw) ? Number(raw) : null, { id: user.id, roles: user.roles });
+  const query = await searchParams;
+  const idOf = (value: string | undefined) => (value && /^\d{1,10}$/.test(value) ? Number(value) : null);
+  const raw = query.followUp;
+  const source = await followUpSource(idOf(raw), { id: user.id, roles: user.roles });
   const followUpInitial = source ? followUpValues(version.form, source) : null;
+  // FN4: a template or an earlier request the person chose explicitly wins
+  // over the draft; otherwise the draft (their own typing) wins. Profile
+  // values only fill fields that are still empty.
+  const explicit = idOf(query.template) !== null || idOf(query.from) !== null;
+  const filled = await prefill({ user: { id: user.id, roles: user.roles }, workflowId: workflow.id, form: version.form, templateId: idOf(query.template), fromRequestId: idOf(query.from) });
+  const templates = await listTemplates(user.id, workflow.id);
+  const base: Record<string, string> = explicit ? filled.values : { ...(followUpInitial ?? draft?.fields ?? {}) };
+  const sources: Record<string, string> = explicit ? { ...filled.sources } : Object.fromEntries(Object.keys(followUpInitial ?? {}).map((key) => [key, "follow-up"]));
+  for (const [key, value] of Object.entries(filled.values)) {
+    if (filled.sources[key] === "profile" && !base[key]) {
+      base[key] = value;
+      sources[key] = "profile";
+    }
+  }
 
   return (
     <>
@@ -46,8 +65,18 @@ export default async function RaiseRequestPage({ params, searchParams }: { param
           Follow-up to {source.requestNo}. Matching details were copied in; check them before you submit. It gets its own number and approvals, and the two are linked.
         </p>
       )}
+      {explicit && filled.origin && (
+        <p role="status" className="mb-4 max-w-2xl rounded-md bg-primary-50 px-3 py-2 text-label text-primary-700">
+          Started from {filled.origin}. Check every value before you submit.
+          {filled.dropped > 0 ? ` ${filled.dropped} value${filled.dropped === 1 ? "" : "s"} no longer match the form and ${filled.dropped === 1 ? "was" : "were"} left out.` : ""}
+        </p>
+      )}
+      {templates.length > 0 && <TemplatePicker workflowId={workflow.id} templates={templates.map((template) => ({ id: template.id, name: template.name }))} />}
       <div className="max-w-2xl">
         <RequestForm
+          // Remount when the starting point changes (template / earlier request):
+          // the editors take their starting values only once.
+          key={`${query.template ?? ""}:${query.from ?? ""}:${query.followUp ?? ""}`}
           followUpOf={source?.id}
           mode="submit"
           workflowId={workflow.id}
@@ -56,8 +85,9 @@ export default async function RaiseRequestPage({ params, searchParams }: { param
           approverPeople={approverPeople}
           approverFields={approverFields}
           lookups={lookups}
-          initial={followUpInitial ?? draft?.fields}
-          initialTitle={source ? `Follow-up: ${source.title}`.slice(0, 200) : draft?.title}
+          initial={base}
+          sources={Object.fromEntries(Object.entries(sources).map(([key, value]) => [key, SOURCE_LABEL[value as keyof typeof SOURCE_LABEL] ?? ""]))}
+          initialTitle={explicit ? (filled.title ?? undefined) : source ? `Follow-up: ${source.title}`.slice(0, 200) : draft?.title}
           draft={{ key: draftKey, version: draft?.version ?? null, savedAt: draft ? draft.updatedAt.toISOString() : null }}
         />
       </div>

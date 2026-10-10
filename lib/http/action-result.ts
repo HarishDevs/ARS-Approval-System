@@ -2,6 +2,6 @@
 // keyed by form field name. Never carries stack traces or provider details.
 export type ActionResult =
   | { ok: true; message?: string; data?: Record<string, unknown> }
-  | { ok: false; message: string; fieldErrors?: Record<string, string> };
+  | { ok: false; message: string; fieldErrors?: Record<string, string>; data?: Record<string, unknown> };
 
 export const IDLE: ActionResult | null = null;

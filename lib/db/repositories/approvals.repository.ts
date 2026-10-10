@@ -6,6 +6,7 @@ import type { FormField } from "@/server/forms/fields";
 import type { BuilderSpec } from "@/server/workflows/builder";
 import { INDIA_TODAY_SQL } from "@/lib/db/repositories/directory.repository";
 import { queueFilterSql, type QueueFilter } from "@/server/approvals/queue-filters";
+import { parseTypeSettings, type TypeSettings } from "@/server/workflows/type-settings";
 import { addWorkingHours, type WorkingCalendar } from "@/server/workflows/calendar";
 
 function dueTimes(createdAt: Date, hours: number | null, calendar?: WorkingCalendar): [Date | null, Date | null] {
@@ -29,6 +30,7 @@ export interface WorkflowRecord {
   active: boolean;
   // After "changes asked", restart from the step that asked, or from the first level (D-101).
   resubmitPolicy?: "REQUESTING_STEP" | "BEGINNING";
+  settings?: TypeSettings; // FN1/FN3/EN-09 submission policies
 }
 
 export interface WorkflowVersionRecord {
@@ -56,8 +58,8 @@ export async function insertWorkflow(
 }
 
 export async function findWorkflow(id: number, db: Queryable = getDbPool()): Promise<WorkflowRecord | null> {
-  const [rows] = await db.query<(RowDataPacket & { id: number; code: string; name: string; description: string | null; kind: WorkflowRecord["kind"]; request_prefix: string; owner_user_id: number | null; active: number; resubmit_policy: WorkflowRecord["resubmitPolicy"] })[]>(
-    "SELECT id, code, name, description, kind, request_prefix, owner_user_id, active, resubmit_policy FROM workflow_definitions WHERE id = ? LIMIT 1",
+  const [rows] = await db.query<(RowDataPacket & { id: number; code: string; name: string; description: string | null; kind: WorkflowRecord["kind"]; request_prefix: string; owner_user_id: number | null; active: number; resubmit_policy: WorkflowRecord["resubmitPolicy"]; settings_json: unknown })[]>(
+    "SELECT id, code, name, description, kind, request_prefix, owner_user_id, active, resubmit_policy, settings_json FROM workflow_definitions WHERE id = ? LIMIT 1",
     [id],
   );
   const row = rows[0];
@@ -72,8 +74,13 @@ export async function findWorkflow(id: number, db: Queryable = getDbPool()): Pro
         ownerUserId: row.owner_user_id,
         active: row.active === 1,
         resubmitPolicy: row.resubmit_policy ?? "REQUESTING_STEP",
+        settings: parseTypeSettings(row.settings_json),
       }
     : null;
+}
+
+export async function updateWorkflowSettings(id: number, settings: TypeSettings, db: Queryable = getDbPool()): Promise<void> {
+  await db.query<ResultSetHeader>("UPDATE workflow_definitions SET settings_json = ? WHERE id = ?", [JSON.stringify(settings), id]);
 }
 
 export async function insertWorkflowVersion(

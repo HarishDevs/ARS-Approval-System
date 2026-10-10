@@ -16,6 +16,8 @@ import { CommentForm } from "@/features/requests/Discussion";
 import { AddFilesForm } from "@/features/requests/Attachments";
 import { AttachmentList } from "@/features/requests/AttachmentList";
 import { Timeline } from "@/features/requests/Timeline";
+import { SubmissionChecks } from "@/features/requests/SubmissionChecks";
+import { SaveTemplateForm } from "@/features/requests/Templates";
 import { SectionBoundary } from "@/features/ui/SectionBoundary";
 import { loadRequestView } from "@/server/approvals/view";
 import { recordView } from "@/lib/db/repositories/recent.repository";
@@ -211,6 +213,7 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
               )}
             </section>
           )}
+          <SubmissionChecks check={view.submissionCheck} department={view.budgetDepartment} />
           <section className="card px-5 py-4" aria-labelledby="levels">
             <h2 id="levels" className="mb-3 font-semibold">
               Approval levels
@@ -307,6 +310,14 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
           <CommentForm requestId={view.id} people={mentionable} />
         </section>
         </SectionBoundary>
+        {view.requesterId === user.id && !view.isCustom && view.workflowActive && (
+          <section className="card space-y-2 px-5 py-4" aria-label="Reuse this request">
+            <Link href={`/users/new/${view.workflowId}?from=${view.id}`} className="link text-label">
+              Raise again like this
+            </Link>
+            <SaveTemplateForm requestId={view.id} />
+          </section>
+        )}
         <SectionBoundary label="Advice">
           <Advice
             requestId={view.id}

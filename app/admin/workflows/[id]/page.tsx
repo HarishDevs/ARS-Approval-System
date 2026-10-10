@@ -3,7 +3,8 @@ import { Breadcrumbs } from "@/features/ui/Display";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { WorkflowBuilder } from "@/features/admin/WorkflowBuilder";
-import { DeleteWorkflowForm, DetailsForm, PublishButton, TestModePanel } from "@/features/admin/WorkflowPanels";
+import { DeleteWorkflowForm, DetailsForm, PublishButton, TestModePanel, TypeSettingsForm } from "@/features/admin/WorkflowPanels";
+import { DEFAULT_TYPE_SETTINGS } from "@/server/workflows/type-settings";
 import { loadBuilderOptions } from "@/features/admin/workflow-options";
 import { namedApprovers } from "@/server/approvals/approver-rules";
 import { listActiveUserOptions } from "@/lib/db/repositories/admin-users.repository";
@@ -82,6 +83,7 @@ export default async function WorkflowPage({ params, searchParams }: { params: P
             ))}
           </section>
           {latest && <TestModePanel versionId={latest.id} form={latest.form} people={everyone} lookups={options.lookups} />}
+          {workflow.kind === "PREDEFINED" && <TypeSettingsForm workflowId={workflow.id} settings={workflow.settings ?? DEFAULT_TYPE_SETTINGS} form={latest?.form ?? []} />}
           <DetailsForm workflowId={workflow.id} name={workflow.name} description={workflow.description ?? null} active={workflow.active} resubmitPolicy={workflow.resubmitPolicy} />
           <DeleteWorkflowForm workflowId={workflow.id} name={workflow.name} />
         </div>

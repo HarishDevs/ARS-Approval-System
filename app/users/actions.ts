@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { requireApiArea } from "@/server/authorization/guards";
 import { answerInfo, askForInfo, decideTask, delegateTask, holdTask, recallRequest, reopenRequest, resolveBlockedStep, resubmitRequest, resumeRequest, submitRequest, withdrawRequest, type Actor } from "@/server/approvals/service";
 import { linkFollowUp } from "@/server/approvals/consult";
+import { assessReadiness } from "@/server/approvals/readiness";
+import { findPublishedVersion, findWorkflow } from "@/lib/db/repositories/approvals.repository";
 import { addAttachments, filesFrom, prepareFiles } from "@/server/attachments/service";
 import { logError } from "@/lib/logging/logger";
 import { deleteDraft } from "@/lib/db/repositories/drafts.repository";
@@ -14,7 +16,7 @@ import type { ActionResult } from "@/lib/http/action-result";
 // Server Actions for requests (F-14). Every one re-checks the session; the
 // service then enforces who may do what on the record (F-12, D-057).
 const NOT_FOUND: ActionResult = { ok: false, message: "Not found." };
-const RESERVED = new Set(["workflowId", "requestId", "title", "taskKey", "decision", "comment", "attachments", "submissionKey", "allowDuplicate"]);
+const RESERVED = new Set(["workflowId", "requestId", "title", "taskKey", "decision", "comment", "attachments", "submissionKey", "allowDuplicate", "acknowledged", "overrideReason", "followUpOf", "attachmentCount", "templateName"]);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // D-QA-01: the form's one-time key (anything else is ignored).
@@ -56,10 +58,20 @@ export async function submitRequestAction(_previous: ActionResult | null, formDa
   let filesSaved = true;
   try {
     const result = await submitRequest(
-      { workflowId, title: String(formData.get("title") ?? ""), fields: fieldsFrom(formData), submissionKey: submissionKeyOf(formData), allowDuplicate: formData.get("allowDuplicate") === "on" },
+      {
+        workflowId,
+        title: String(formData.get("title") ?? ""),
+        fields: fieldsFrom(formData),
+        submissionKey: submissionKeyOf(formData),
+        allowDuplicate: formData.get("allowDuplicate") === "on",
+        acknowledged: formData.get("acknowledged") === "on",
+        overrideReason: String(formData.get("overrideReason") ?? "").slice(0, 500),
+        attachmentCount: files.files.length,
+      },
       me,
     );
-    if (!result.ok) return { ok: false, message: result.message, fieldErrors: result.fieldErrors };
+    // FN1: the server's readiness result comes back for the panel.
+    if (!result.ok) return { ok: false, message: result.message, fieldErrors: result.fieldErrors, data: result.readiness ? { readiness: result.readiness } : undefined };
     requestId = result.value.requestId;
     // EN-08: raised as a follow-up of an approved request the person can see.
     const followUpOf = num(formData.get("followUpOf"));
@@ -341,4 +353,29 @@ export async function delegateTaskAction(_previous: ActionResult | null, formDat
   revalidatePath(`/users/requests/${requestId}`);
   revalidatePath("/users");
   return { ok: true, message: "Passed on. They've been told." };
+}
+
+// FN1 "Check before submitting": the same checks as the submit, nothing
+// saved. attachmentCount is how many files are chosen in the form.
+export async function checkReadinessAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const me = await actor();
+  const workflowId = num(formData.get("workflowId"));
+  if (!me || workflowId === null) return NOT_FOUND;
+  const workflow = await findWorkflow(workflowId);
+  const version = workflow && workflow.active && workflow.kind === "PREDEFINED" ? await findPublishedVersion(workflow.id) : null;
+  if (!workflow || !version) return NOT_FOUND;
+  try {
+    const { readiness } = await assessReadiness({
+      workflow,
+      version,
+      title: String(formData.get("title") ?? ""),
+      fields: fieldsFrom(formData),
+      attachmentCount: Math.max(0, Math.min(50, Number(formData.get("attachmentCount")) || 0)),
+      requester: me,
+    });
+    return { ok: true, message: readiness.status === "READY" ? "Ready to submit." : readiness.status === "WARNINGS" ? "Ready, with warnings to review." : "Not ready yet: fix the problems below.", data: { readiness } };
+  } catch (error) {
+    logError("checkReadinessAction failed", error);
+    return { ok: false, message: "The check couldn't run. You can still submit; the server checks everything again." };
+  }
 }

@@ -1,7 +1,10 @@
 "use client";
 
-import { resubmitAction, submitRequestAction } from "@/app/users/actions";
-import { useCallback, useMemo, useState } from "react";
+import { checkReadinessAction, resubmitAction, submitRequestAction } from "@/app/users/actions";
+import { ReadinessPanel } from "@/features/requests/ReadinessPanel";
+import type { Readiness } from "@/server/approvals/readiness";
+import { guardAction } from "@/features/ui/form";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { LineItemsEditor } from "@/features/requests/LineItemsEditor";
 import { describeRule, evaluateFormula, parseFormula, ruleHolds, visibleFields } from "@/server/forms/dynamic";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
@@ -32,6 +35,7 @@ export function RequestForm({
   initialTitle,
   followUpOf,
   draft,
+  sources = {},
 }: {
   mode: "submit" | "resubmit";
   workflowId?: number;
@@ -46,6 +50,7 @@ export function RequestForm({
   initial?: Record<string, string>;
   initialTitle?: string;
   followUpOf?: number; // EN-08: linked to this approved request on submit
+  sources?: Record<string, string>; // FN4: where a starting value came from
   draft?: DraftInfo;
 }) {
   const { result, pending, onSubmit } = useActionForm(mode === "submit" ? submitRequestAction : resubmitAction);
@@ -55,7 +60,38 @@ export function RequestForm({
   const [discardError, setDiscardError] = useState<string | null>(null);
   // D-QA-01: one key per form; a retried submit returns the same request.
   const [submissionKey] = useState(() => crypto.randomUUID());
-  const possibleDuplicate = Boolean(result && !result.ok && result.fieldErrors?.allowDuplicate);
+  // FN1 readiness: from "Check before submitting", or the server's answer
+  // to a submit that needs fixing or confirming.
+  const [checked, setChecked] = useState<{ readiness: Readiness; signature: string } | null>(null);
+  const [checking, setChecking] = useState(false);
+  const [checkFailed, setCheckFailed] = useState<string | null>(null);
+  const [signature, setSignature] = useState("");
+  const signatureOf = (form: HTMLFormElement) => {
+    const entries = [...new FormData(form).entries()].filter(([key, value]) => typeof value === "string" && !["submissionKey", "acknowledged", "allowDuplicate", "overrideReason"].includes(key)).map(([key, value]) => `${key}=${value as string}`);
+    const files = (form.elements.namedItem("attachments") as HTMLInputElement | null)?.files?.length ?? 0;
+    return `${entries.sort().join("&")}|${files}`;
+  };
+  const submitted = result && !result.ok ? (result.data as { readiness?: Readiness } | undefined)?.readiness : undefined;
+  useEffect(() => {
+    if (submitted && autosave.formRef.current) setChecked({ readiness: submitted, signature: signatureOf(autosave.formRef.current) });
+  }, [submitted, autosave.formRef]);
+  const runCheck = async () => {
+    const form = autosave.formRef.current;
+    if (!form || !workflowId) return;
+    setChecking(true);
+    setCheckFailed(null);
+    const data = new FormData(form);
+    data.delete("attachments");
+    data.set("attachmentCount", String((form.elements.namedItem("attachments") as HTMLInputElement | null)?.files?.length ?? 0));
+    const answer = await guardAction(checkReadinessAction)(null, data);
+    setChecking(false);
+    const readiness = (answer.data as { readiness?: Readiness } | undefined)?.readiness;
+    if (readiness) setChecked({ readiness, signature: signatureOf(form) });
+    else setCheckFailed(answer.message ?? "The check couldn't run.");
+  };
+  const readiness = checked?.readiness ?? null;
+  const onlyRecentDuplicate = Boolean(readiness?.needsConfirmation && readiness.items.filter((item) => item.severity === "WARNING").every((item) => item.code === "RECENT_DUPLICATE"));
+  const possibleDuplicate = Boolean(result && !result.ok && result.fieldErrors?.allowDuplicate && (!readiness || onlyRecentDuplicate));
   // FB-06: every field problem listed at the top, linked to the field.
   const summaryErrors = result && !result.ok && result.fieldErrors ? Object.fromEntries(Object.entries(result.fieldErrors).filter(([key]) => key !== "allowDuplicate").map(([key, message]) => [key === "title" || key === "attachments" ? key : `f-${key}`, message])) : undefined;
   const summaryLabels: Record<string, string> = { title: "Title", attachments: "Attachments", ...Object.fromEntries(fields.map((field) => [`f-${field.key}`, field.label])) };
@@ -103,7 +139,19 @@ export function RequestForm({
   const labelOf = (key: string) => fields.find((field) => field.key === key)?.label ?? key;
 
   return (
-    <form ref={autosave.formRef} onSubmit={onSubmit} onInput={(event) => readForm(event.currentTarget)} onChange={(event) => readForm(event.currentTarget)} className="card">
+    <form
+      ref={autosave.formRef}
+      onSubmit={onSubmit}
+      onInput={(event) => {
+        readForm(event.currentTarget);
+        setSignature(signatureOf(event.currentTarget));
+      }}
+      onChange={(event) => {
+        readForm(event.currentTarget);
+        setSignature(signatureOf(event.currentTarget));
+      }}
+      className="card"
+    >
       {draft && restoredAt && (
         <p role="status" className="border-b border-line bg-primary-50/50 px-5 py-2 text-label text-primary-700">
           Restored your draft from {restoredAt.toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kolkata" })}. Files aren&apos;t kept in drafts: add them again before submitting.
@@ -148,7 +196,7 @@ export function RequestForm({
                   {calculated[field.key] === null || calculated[field.key] === undefined ? <span className="text-ink-faint">Fill in the fields it uses</span> : calculated[field.key]!.toLocaleString("en-IN", { maximumFractionDigits: field.decimals ?? 2 })}
                 </output>
               ) : field.type === "LINE_ITEMS" ? (
-                <LineItemsEditor name={field.key} label={field.label} defaultValue={initial?.[field.key] ?? ""} invalid={Boolean(error)} describedBy={error ? `${field.key}-error` : undefined} onChange={lineHandlers[field.key]!} />
+                <LineItemsEditor name={field.key} label={field.label} defaultValue={initial?.[`${field.key}__lines`] ?? initial?.[field.key] ?? ""} invalid={Boolean(error)} describedBy={error ? `${field.key}-error` : undefined} onChange={lineHandlers[field.key]!} />
               ) : (
                 <FieldInput
                   field={field}
@@ -158,6 +206,7 @@ export function RequestForm({
                   error={error}
                 />
               )}
+              {sources[field.key] && <p className="mt-1 text-caption text-primary-700">{sources[field.key]}. You can change it.</p>}
               {field.type === "CALC" && field.formula && <p className="mt-1 text-caption text-ink-muted">Worked out automatically: {field.formula}</p>}
               {field.requiredIf && <p className="mt-1 text-caption text-ink-muted">Required when {describeRule(field.requiredIf, labelOf)}.</p>}
               {field.help && (
@@ -178,6 +227,26 @@ export function RequestForm({
           <FieldError result={result} name="attachments" />
         </div>
       </div>
+      {mode === "submit" && workflowId && (
+        <div className="mx-5 mb-4 space-y-3">
+          <ReadinessPanel readiness={readiness} labels={{ title: "Title", attachments: "Attachments", ...Object.fromEntries(fields.map((field) => [field.key, field.label])) }} stale={Boolean(checked && signature && signature !== checked.signature)} checking={checking} failed={checkFailed} onCheck={runCheck} />
+          {readiness?.needsConfirmation && !onlyRecentDuplicate && (
+            <label className="flex items-start gap-2 rounded-md border border-warning-600/40 bg-warning-50 px-3 py-2 text-label text-warning-600">
+              <input type="checkbox" name="acknowledged" className="mt-0.5" />
+              <span>I&apos;ve read the warnings and want to submit.</span>
+            </label>
+          )}
+          {readiness?.needsReason && (
+            <div>
+              <label htmlFor="overrideReason" className="field-label">
+                Why is this not a duplicate?
+              </label>
+              <input id="overrideReason" name="overrideReason" maxLength={500} className="field-input" placeholder="e.g. A second order for a different site" />
+              <FieldError result={result} name="overrideReason" />
+            </div>
+          )}
+        </div>
+      )}
       {possibleDuplicate && (
         <label className="mx-5 mb-4 flex items-start gap-2 rounded-md border border-warning-600/40 bg-warning-50 px-3 py-2 text-label text-warning-600">
           <input type="checkbox" name="allowDuplicate" className="mt-0.5" />

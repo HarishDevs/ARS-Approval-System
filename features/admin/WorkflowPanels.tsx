@@ -1,6 +1,7 @@
 "use client";
 
-import { publishAction, simulateAction, updateDetailsAction, deleteWorkflowAction } from "@/app/admin/workflows/actions";
+import { publishAction, simulateAction, updateDetailsAction, deleteWorkflowAction, updateTypeSettingsAction } from "@/app/admin/workflows/actions";
+import type { TypeSettings } from "@/server/workflows/type-settings";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import { NO_LOOKUPS, type FieldLookups, type FormField } from "@/server/forms/fields";
 import type { SimulationView } from "@/server/approvals/service";
@@ -223,6 +224,111 @@ export function DeleteWorkflowForm({ workflowId, name }: { workflowId: number; n
         Remove approval type
       </SubmitButton>
       {confirmBar}
+      <ResultMessage result={result} />
+    </form>
+  );
+}
+
+// Submission checks for this type (FN1, FN3, EN-09) and, for later
+// features, approval validity (EN-10) and amendments (FN5). All off by
+// default: nothing is checked that IT hasn't switched on.
+export function TypeSettingsForm({ workflowId, settings, form }: { workflowId: number; settings: TypeSettings; form: FormField[] }) {
+  const { result, pending, onSubmit } = useActionForm(updateTypeSettingsAction);
+  const fields = form.filter((field) => field.type !== "SECTION");
+  const numeric = fields.filter((field) => ["NUMBER", "CALC", "LINE_ITEMS"].includes(field.type));
+  return (
+    <form onSubmit={onSubmit} className="card space-y-4 px-5 py-4">
+      <input type="hidden" name="workflowId" value={workflowId} />
+      <div>
+        <h2 className="font-semibold">Submission checks</h2>
+        <p className="text-label text-ink-muted">Checked before a request is submitted (people can also check first). Off unless you switch them on.</p>
+      </div>
+      <fieldset className="space-y-2">
+        <legend className="field-label">Possible duplicates: match on</legend>
+        <div className="flex flex-wrap gap-3">
+          {fields.length === 0 && <span className="text-caption text-ink-faint">Save the form first.</span>}
+          {fields.map((field) => (
+            <label key={field.key} className="flex items-center gap-2 text-label">
+              <input type="checkbox" name="dupField" value={field.key} defaultChecked={settings.duplicates.fields.includes(field.key)} />
+              {field.label}
+            </label>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-center gap-3 text-label">
+          <label className="flex items-center gap-2">
+            within the last
+            <input name="dupWindow" type="number" min={1} max={730} defaultValue={settings.duplicates.windowDays} className="field-input w-24" aria-label="Days to look back for duplicates" />
+            days
+          </label>
+          <label className="flex items-center gap-2">
+            then
+            <select name="dupPolicy" defaultValue={settings.duplicates.policy} className="field-input w-auto" aria-label="What to do with a possible duplicate">
+              <option value="WARN">warn (the requester says why it isn&apos;t one)</option>
+              <option value="BLOCK">block (IT can still submit with a reason)</option>
+            </select>
+          </label>
+        </div>
+      </fieldset>
+      <div className="flex flex-wrap items-end gap-3">
+        <div>
+          <label htmlFor="minFiles" className="field-label">
+            Files required
+          </label>
+          <input id="minFiles" name="minFiles" type="number" min={0} max={20} defaultValue={settings.attachments.minimum} className="field-input w-24" />
+        </div>
+        <div className="min-w-60 flex-1">
+          <label htmlFor="filesNote" className="field-label">
+            Which files <span className="font-normal text-ink-faint">(shown to the requester)</span>
+          </label>
+          <input id="filesNote" name="filesNote" maxLength={200} defaultValue={settings.attachments.note ?? ""} placeholder="e.g. two quotes and the vendor form" className="field-input" />
+        </div>
+      </div>
+      <div className="flex flex-wrap items-end gap-3">
+        <label className="flex h-11 items-center gap-2 text-label">
+          <input type="checkbox" name="budgetEnabled" defaultChecked={settings.budget.enabled} />
+          Check against the department budget
+        </label>
+        <div>
+          <label htmlFor="budgetField" className="field-label">
+            Amount field
+          </label>
+          <select id="budgetField" name="budgetField" defaultValue={settings.budget.amountField} className="field-input w-auto">
+            {numeric.length === 0 && <option value="amount">amount</option>}
+            {numeric.map((field) => (
+              <option key={field.key} value={field.key}>
+                {field.label}
+              </option>
+            ))}
+          </select>
+          <FieldError result={result} name="budgetField" />
+        </div>
+        <div>
+          <label htmlFor="validityDays" className="field-label">
+            Approval valid for <span className="font-normal text-ink-faint">(days, optional)</span>
+          </label>
+          <input id="validityDays" name="validityDays" type="number" min={1} max={3650} defaultValue={settings.validityDays ?? ""} className="field-input w-28" />
+        </div>
+      </div>
+      <fieldset className="space-y-2">
+        <legend className="field-label">Amendments after approval</legend>
+        <label className="flex items-center gap-2 text-label">
+          <input type="checkbox" name="amendEnabled" defaultChecked={settings.amendableFields !== null} />
+          Allow the requester to propose changes to an approved request (they go through approval again)
+        </label>
+        <div className="flex flex-wrap gap-3 pl-6">
+          {fields
+            .filter((field) => field.type !== "CALC")
+            .map((field) => (
+              <label key={field.key} className="flex items-center gap-2 text-label">
+                <input type="checkbox" name="amendField" value={field.key} defaultChecked={settings.amendableFields?.includes(field.key) ?? false} />
+                {field.label}
+              </label>
+            ))}
+        </div>
+      </fieldset>
+      <SubmitButton pending={pending} variant="secondary" className="btn-compact">
+        Save checks
+      </SubmitButton>
       <ResultMessage result={result} />
     </form>
   );

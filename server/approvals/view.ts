@@ -12,6 +12,9 @@ import type { Actor } from "@/server/approvals/service";
 import { listAttachments } from "@/lib/db/repositories/attachments.repository";
 import { formatSize, previewKind } from "@/server/attachments/files";
 import { listRevisions } from "@/lib/db/repositories/revisions.repository";
+import { findSubmissionCheck, type SubmissionCheck } from "@/lib/db/repositories/checks.repository";
+import { getDbPool } from "@/lib/db/client";
+import type { RowDataPacket } from "mysql2/promise";
 import { listConsultations, type Consultation } from "@/lib/db/repositories/consult.repository";
 import { visibleLinks } from "@/server/approvals/consult";
 import type { LinkedRequest } from "@/lib/db/repositories/consult.repository";
@@ -25,6 +28,8 @@ export interface RequestView {
   requestNo: string;
   title: string;
   workflowName: string;
+  workflowId: number;
+  workflowActive: boolean;
   isCustom: boolean; // a custom approval (IT can make it an approval type, P5-04)
   status: InstanceStatus;
   round: number;
@@ -52,6 +57,8 @@ export interface RequestView {
   consultations: Consultation[];
   links: LinkedRequest[];
   canFollowUp: boolean;
+  submissionCheck: SubmissionCheck | null; // FN1/EN-09: what was checked at submit
+  budgetDepartment: string | null;
   canAddFiles: boolean;
   canResume: boolean;
   canResubmit: boolean;
@@ -135,6 +142,7 @@ export async function loadRequestView(requestId: number, viewer: Actor): Promise
   const holdNode = state.hold?.nodeId;
 
   const attachmentRows = await listAttachments(requestId);
+  const submissionCheck = await findSubmissionCheck(requestId);
   const stages = buildStepMap(version.definition, state, version.builder, names, {
     formData: request.formData as EngineFormData,
     fieldLabel: (key) => version.form.find((field) => field.key === key)?.label ?? key,
@@ -145,6 +153,8 @@ export async function loadRequestView(requestId: number, viewer: Actor): Promise
     requestNo: request.requestNo,
     title: request.title,
     workflowName: workflow.name,
+    workflowId: workflow.id,
+    workflowActive: workflow.active,
     isCustom: workflow.kind === "CUSTOM",
     status: state.status,
     round: state.round,
@@ -191,6 +201,8 @@ export async function loadRequestView(requestId: number, viewer: Actor): Promise
     consultations: await listConsultations(requestId),
     links: await visibleLinks(requestId, viewer),
     canFollowUp: state.status === "APPROVED",
+    submissionCheck,
+    budgetDepartment: submissionCheck?.budget.departmentId ? ((await departmentNameOf(submissionCheck.budget.departmentId)) ?? null) : null,
     canResume: state.status === "ON_HOLD" && (isAdmin(viewer) || myPending.some((task) => task.nodeId === holdNode)),
     canResubmit: state.status === "CHANGES_REQUIRED" && request.requesterId === viewer.id,
     canWithdraw: ["IN_PROGRESS", "ON_HOLD", "CHANGES_REQUIRED"].includes(state.status) && request.requesterId === viewer.id,
@@ -198,4 +210,9 @@ export async function loadRequestView(requestId: number, viewer: Actor): Promise
     changesComment: state.status === "CHANGES_REQUIRED" ? (state.changesRequested?.comment ?? null) : null,
     holdReason: state.status === "ON_HOLD" ? (state.hold?.reason ?? null) : null,
   };
+}
+
+async function departmentNameOf(id: number): Promise<string | null> {
+  const [rows] = await getDbPool().query<(RowDataPacket & { name: string })[]>("SELECT name FROM departments WHERE id = ?", [id]);
+  return rows[0]?.name ?? null;
 }

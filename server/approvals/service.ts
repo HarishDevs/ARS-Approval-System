@@ -8,6 +8,7 @@ import {
   deleteUnusedWorkflow,
   extendDueTimes,
   findPublishedVersion,
+  findRequest,
   findWorkflow,
   findWorkflowVersion,
   insertRequest,
@@ -44,6 +45,9 @@ import { messagesForEvents } from "@/server/approvals/messages";
 import { answerInformation, askForInformation, decide, putOnHold, reassignTask, recall, reopen, resolveBlocked, resubmit, resume, simulate, startInstance, validateWorkflow, withdraw, EngineError } from "@/server/engine";
 import type { BlockAction, Decision, EngineEvent, EngineResult, FormData as EngineFormData, RestartPolicy, ValidationResult, WorkflowDefinition, WorkflowNode } from "@/server/engine";
 import { insertRevision } from "@/lib/db/repositories/revisions.repository";
+import { insertSubmissionCheck, updateCommittedAmount } from "@/lib/db/repositories/checks.repository";
+import { assessReadiness, type Readiness } from "@/server/approvals/readiness";
+import type { InstanceStatus } from "@/server/engine/types";
 import { claimOutbox, dropOutboxForDeletedRequests, insertOutbox, listStaleOutbox, markOutboxSent } from "@/lib/db/repositories/outbox.repository";
 import type { NotifyInput } from "@/server/notifications/notify";
 import { logError } from "@/lib/logging/logger";
@@ -51,7 +55,7 @@ import type { RoleCode } from "@/types/auth";
 
 // The multi-level approval service (north star, S2-06, F-11 to F-13). The
 // engine decides; this layer loads, locks, saves and tells people.
-export type Result<T> = { ok: true; value: T } | { ok: false; code: string; message: string; validation?: ValidationResult; fieldErrors?: Record<string, string> };
+export type Result<T> = { ok: true; value: T } | { ok: false; code: string; message: string; validation?: ValidationResult; fieldErrors?: Record<string, string>; readiness?: Readiness };
 
 export interface Actor {
   id: number;
@@ -63,6 +67,7 @@ class FormError extends Error {
   constructor(
     readonly fieldErrors: Record<string, string>,
     readonly userMessage = "Check the highlighted fields.",
+    readonly readiness?: Readiness,
   ) {
     super("INVALID_FORM");
   }
@@ -374,8 +379,21 @@ async function announce(changed: Changed): Promise<void> {
   await deliverOutbox(changed.outboxIds);
 }
 
+class AlreadySubmitted extends Error {
+  constructor(
+    readonly requestId: number,
+    readonly requestNo: string,
+    readonly status: InstanceStatus,
+  ) {
+    super("already submitted");
+  }
+}
+
 export async function submitRequest(
-  input: { workflowId: number; title: string; fields: Record<string, string | undefined>; submissionKey?: string | null; allowDuplicate?: boolean; isCustom?: boolean },
+  // FN1: attachmentCount (files with the submit), acknowledged (warnings
+  // confirmed; allowDuplicate is the older name), overrideReason (why a
+  // possible duplicate isn't one).
+  input: { workflowId: number; title: string; fields: Record<string, string | undefined>; submissionKey?: string | null; allowDuplicate?: boolean; acknowledged?: boolean; overrideReason?: string; attachmentCount?: number; isCustom?: boolean },
   actor: Actor,
 ): Promise<Result<{ requestId: number; requestNo: string; status: string; repeated?: boolean }>> {
   // D-QA-01: the same form sent again (retry after a timeout) → the request it already made.
@@ -389,26 +407,46 @@ export async function submitRequest(
   const version = await findPublishedVersion(workflow.id);
   if (!version) return { ok: false, code: "NOT_PUBLISHED", message: "This approval type has no published version yet." };
   const title = input.title.trim();
-  const titleError = title.length < 3 || title.length > 200 ? "Give the request a title of 3 to 200 characters." : null;
 
   let changed: Changed;
   try {
     changed = await withTransaction(async (connection) => {
+      // FN1: the readiness service is the authority, inside this transaction
+      // (it locks the type and the budget row, so two submits can't both
+      // pass a duplicate or budget check).
+      const assessed = await assessReadiness(
+        { workflow, version, title: input.title, fields: input.fields, attachmentCount: input.attachmentCount ?? 0, requester: actor, isCustom: input.isCustom },
+        { db: connection, lock: true, approverFieldErrors: (definition, data, snap) => approverFieldErrors(definition, data, snap) },
+      );
+      // A copy of this submit (same key) that got the type lock first wins;
+      // read it with a locking read, past this transaction's snapshot.
+      if (input.submissionKey) {
+        const [copies] = await connection.query<(RowDataPacket & { id: number; request_no: string; status: InstanceStatus })[]>(
+          "SELECT id, request_no, status FROM approval_requests WHERE requester_id = ? AND submission_key = ? LIMIT 1 FOR SHARE",
+          [actor.id, input.submissionKey],
+        );
+        if (copies[0]) throw new AlreadySubmitted(copies[0].id, copies[0].request_no, copies[0].status);
+      }
+      const readiness = assessed.readiness;
+      const blocking = readiness.items.filter((item) => item.severity === "BLOCKING");
+      if (blocking.length) {
+        const fieldErrors: Record<string, string> = {};
+        for (const item of blocking) fieldErrors[item.field ?? "readiness"] ??= item.message;
+        throw new FormError(fieldErrors, blocking.some((item) => item.field) ? "Check the highlighted fields." : blocking[0]!.message, readiness);
+      }
+      const confirmed = Boolean(input.acknowledged || input.allowDuplicate);
+      if (readiness.needsConfirmation && !confirmed) {
+        const warnings = readiness.items.filter((item) => item.severity === "WARNING");
+        const onlyRecent = warnings.every((item) => item.code === "RECENT_DUPLICATE");
+        const message = onlyRecent ? warnings[0]!.message.replace("confirm and submit again", "tick “This is a separate request” and submit again") : "Please review the warnings below, confirm, and submit again.";
+        throw new FormError({ allowDuplicate: message }, message, readiness);
+      }
+      const reason = (input.overrideReason ?? "").trim();
+      if (readiness.needsReason && reason.length < 5) {
+        throw new FormError({ overrideReason: "Say why this isn't a duplicate (at least 5 characters)." }, "Say why this isn't a duplicate.", readiness);
+      }
       const snapshot = await loadDirectorySnapshot(connection);
-      const parsed = parseFormSubmission(version.form, input.fields, activeIds(snapshot), await loadFieldLookups(connection));
-      const doaErrors = parsed.ok ? { ...checkDoaAmount(version.builder, parsed.data), ...approverFieldErrors(version.definition, parsed.data, snapshot) } : {};
-      if (!parsed.ok || titleError || Object.keys(doaErrors).length) {
-        throw new FormError({ ...(parsed.ok ? {} : parsed.errors), ...doaErrors, ...(titleError ? { title: titleError } : {}) });
-      }
-      // D-QA-02: the same title on the same type a few minutes ago (two tabs,
-      // or a second click elsewhere). Checked once the form itself is valid.
-      if (!input.allowDuplicate) {
-        const duplicate = await findRecentDuplicate({ requesterId: actor.id, title, workflowId: input.isCustom ? null : workflow.id }, connection);
-        if (duplicate) {
-          const message = `You raised “${title}” as ${duplicate} a few minutes ago. If this is a separate request, tick “This is a separate request” and submit again.`;
-          throw new FormError({ allowDuplicate: message }, message);
-        }
-      }
+      const parsed = { data: assessed.data };
       const formData = parsed.data;
       const result = startInstance(version.definition, { requesterId: actor.id, formData, now: now() }, toDirectory(snapshot));
       const requestNo = await nextRequestNumber(workflow.requestPrefix, connection);
@@ -416,6 +454,8 @@ export async function submitRequest(
       await syncTasks(id, result.state, version.definition.nodes, connection, await loadWorkingCalendar(connection));
       await appendEvents(id, [{ type: "SUBMITTED", requestNo }, ...result.events], actor.id, connection);
       await insertRevision(id, result.state.round, title, formData, actor.id, connection);
+      await insertSubmissionCheck(id, readiness, { acknowledged: confirmed, overrideReason: reason || null }, connection);
+      if (readiness.needsReason) await recordAudit({ actorUserId: actor.id, action: "DUPLICATE_WARNING_OVERRIDDEN", entityType: "REQUEST", entityId: id, metadata: { reason } }, connection);
       const request: RequestRecord = {
         id,
         requestNo,
@@ -432,8 +472,9 @@ export async function submitRequest(
       return { ...change, outboxIds: await queueMessages(change, connection) };
     });
   } catch (error) {
-    if (error instanceof FormError) return { ok: false, code: error.fieldErrors.allowDuplicate ? "POSSIBLE_DUPLICATE" : "INVALID_FORM", message: error.userMessage, fieldErrors: error.fieldErrors };
+    if (error instanceof FormError) return { ok: false, code: error.fieldErrors.allowDuplicate ? "POSSIBLE_DUPLICATE" : "INVALID_FORM", message: error.userMessage, fieldErrors: error.fieldErrors, readiness: error.readiness };
     // Two copies of the same form racing: the unique key let one through.
+    if (error instanceof AlreadySubmitted) return { ok: true, value: { requestId: error.requestId, requestNo: error.requestNo, status: error.status, repeated: true } };
     if ((error as { code?: string })?.code === "ER_DUP_ENTRY" && input.submissionKey) {
       const earlier = await findBySubmissionKey(actor.id, input.submissionKey);
       if (earlier) return { ok: true, value: { requestId: earlier.id, requestNo: earlier.requestNo, status: earlier.status, repeated: true } };
@@ -553,7 +594,7 @@ export async function resubmitRequest(input: { requestId: number; fields?: Recor
   // D-101: where to restart is set per approval type (default: the step that asked).
   const typePolicy = async (versionWorkflowId: number) => (await findWorkflow(versionWorkflowId))?.resubmitPolicy ?? "REQUESTING_STEP";
   const policy = input.policy ?? (await policyForRequest(input.requestId, typePolicy));
-  return mutate(input.requestId, actor, (request, definition, directory, { version, snapshot }) => {
+  const result = await mutate(input.requestId, actor, (request, definition, directory, { version, snapshot }) => {
     if (request.requesterId !== actor.id) throw new EngineError("NOT_AUTHORISED", "Only the person who raised the request can resubmit it.");
     let formData = request.formData as EngineFormData;
     if (input.fields) {
@@ -566,6 +607,18 @@ export async function resubmitRequest(input: { requestId: number; fields?: Recor
     const result = resubmit(definition, request.state, policy, { requesterId: request.requesterId, formData, now: now() }, directory);
     return { ...result, formData: input.fields ? formData : undefined };
   });
+  // EN-09: a new amount moves the budget commitment with it.
+  if (result.ok && input.fields) await syncBudgetAmount(input.requestId).catch((error) => logError("resubmit: budget amount not updated", error, { requestId: input.requestId }));
+  return result;
+}
+
+async function syncBudgetAmount(requestId: number): Promise<void> {
+  const request = await findRequest(requestId);
+  const version = request ? await findWorkflowVersion(request.workflowVersionId) : null;
+  const workflow = version ? await findWorkflow(version.workflowId) : null;
+  if (!request || !workflow?.settings?.budget.enabled) return;
+  const amount = request.formData[workflow.settings.budget.amountField];
+  await updateCommittedAmount(requestId, typeof amount === "number" ? Math.round(amount * 100) : null);
 }
 
 async function policyForRequest(requestId: number, typePolicy: (workflowId: number) => Promise<RestartPolicy>): Promise<RestartPolicy> {

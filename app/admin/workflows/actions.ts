@@ -5,7 +5,9 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getAdminActor, parseId } from "@/server/admin/actor";
 import { addDraftVersion, createWorkflow, publishVersion, simulateVersion } from "@/server/approvals/service";
-import { deleteUnusedWorkflow, findRequest, findWorkflow, findWorkflowVersion, updateWorkflowDetails } from "@/lib/db/repositories/approvals.repository";
+import { deleteUnusedWorkflow, findRequest, findWorkflow, findWorkflowVersion, listVersions, updateWorkflowDetails, updateWorkflowSettings } from "@/lib/db/repositories/approvals.repository";
+import { NUMERIC_TYPES } from "@/server/forms/fields";
+import { typeSettingsSchema } from "@/server/workflows/type-settings";
 import { withTransaction } from "@/lib/db/transaction";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { builderSpecSchema } from "@/server/workflows/builder";
@@ -229,4 +231,48 @@ export async function promoteCustomAction(_previous: ActionResult | null, formDa
   }
   revalidatePath("/admin/workflows");
   redirect(`/admin/workflows/${workflowId}?created=1`);
+}
+
+// FN1/FN3/EN-09/EN-10/FN5 per-type submission policies. Field keys must be
+// on the newest version's form; numbers must be numbers. Audited.
+export async function updateTypeSettingsAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const actor = await getAdminActor();
+  const workflowId = parseId(formData.get("workflowId"));
+  if (!actor || workflowId === null) return NOT_FOUND;
+  const workflow = await findWorkflow(workflowId);
+  if (!workflow || workflow.kind !== "PREDEFINED") return NOT_FOUND;
+  const latest = (await listVersions(workflowId))[0];
+  const form = latest?.form ?? [];
+  const keys = new Set(form.map((field) => field.key));
+  const number = (name: string) => {
+    const raw = String(formData.get(name) ?? "").trim();
+    return raw === "" ? null : Number(raw);
+  };
+  const candidate = {
+    duplicates: {
+      fields: formData.getAll("dupField").map(String).filter((key) => keys.has(key)),
+      windowDays: number("dupWindow") ?? 90,
+      policy: formData.get("dupPolicy") === "BLOCK" ? "BLOCK" : "WARN",
+    },
+    attachments: { minimum: number("minFiles") ?? 0, note: String(formData.get("filesNote") ?? "").trim() || undefined },
+    budget: { enabled: formData.get("budgetEnabled") === "on", amountField: String(formData.get("budgetField") ?? "amount") },
+    validityDays: number("validityDays"),
+    amendableFields: formData.get("amendEnabled") === "on" ? formData.getAll("amendField").map(String).filter((key) => keys.has(key)) : null,
+  };
+  const parsed = typeSettingsSchema.safeParse(candidate);
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Check the values." };
+  const settings = parsed.data;
+  if (settings.budget.enabled) {
+    const field = form.find((item) => item.key === settings.budget.amountField);
+    if (!field || !NUMERIC_TYPES.includes(field.type)) return { ok: false, message: "Choose a number, calculated or line-items field for the budget amount.", fieldErrors: { budgetField: "Choose a number field." } };
+  }
+  try {
+    await updateWorkflowSettings(workflowId, settings);
+    await recordAudit({ actorUserId: actor.id, action: "WORKFLOW_POLICIES_UPDATED", entityType: "WORKFLOW", entityId: workflowId, sessionId: actor.sessionId, ipAddress: actor.ipAddress, metadata: { before: workflow.settings ?? null, after: settings } });
+  } catch (error) {
+    logError("updateTypeSettingsAction failed", error);
+    return { ok: false, message: "Couldn't save. Please try again." };
+  }
+  revalidatePath(`/admin/workflows/${workflowId}`);
+  return { ok: true, message: "Saved. New submissions use these checks; requests already raised keep theirs." };
 }

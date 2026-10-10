@@ -133,9 +133,11 @@ test("a requester fills every field type; values are checked, stored and shown b
   await page.getByRole("button", { name: "Submit request" }).click();
   await expect(page.getByText("Purchase type is required.", { exact: true })).toBeVisible();
   await expect(page.getByText("Needed by is required.", { exact: true })).toBeVisible();
-  await expect(page.getByText("Department is required.", { exact: true })).toBeVisible();
+  // FN4: Department comes from the requester's profile, so it isn't missing.
+  await expect(page.getByText("Department is required.", { exact: true })).toHaveCount(0);
+  await expect(page.getByRole("group").filter({ hasText: "Department" }).getByText("Filled from your profile. You can change it.")).toBeVisible();
   // FB-06: a summary at the top takes focus and links to each field.
-  const summary = page.getByRole("alert").filter({ hasText: "Please fix 3 things" });
+  const summary = page.getByRole("alert").filter({ hasText: "Please fix 2 things" });
   await expect(summary).toBeFocused();
   await summary.getByRole("link", { name: /Needed by/ }).click();
   await expect(page.getByLabel("Needed by")).toBeFocused();

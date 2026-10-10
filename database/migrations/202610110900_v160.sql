@@ -74,3 +74,57 @@ CREATE TABLE request_links (
   CONSTRAINT fk_request_links_to FOREIGN KEY (to_request_id) REFERENCES approval_requests(id),
   CONSTRAINT fk_request_links_user FOREIGN KEY (created_by) REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- FN1/FN3/EN-09 (unified prompt): per-type submission policies, kept apart
+-- from the versioned form (a policy change applies to new submissions).
+ALTER TABLE workflow_definitions
+  ADD COLUMN settings_json JSON NULL AFTER resubmit_policy;
+
+-- EN-09 Department budgets per financial year (April–March, India). Amounts
+-- in paise. warn_percent: an amber warning once commitments pass it.
+CREATE TABLE budgets (
+  id             BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  department_id  BIGINT UNSIGNED NOT NULL,
+  fy_start_year  SMALLINT UNSIGNED NOT NULL COMMENT '2026 = April 2026 to March 2027',
+  amount_paise   BIGINT UNSIGNED NOT NULL,
+  warn_percent   TINYINT UNSIGNED NOT NULL DEFAULT 90,
+  updated_by     BIGINT UNSIGNED NOT NULL,
+  updated_at     DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT uq_budgets_dept_fy UNIQUE (department_id, fy_start_year),
+  CONSTRAINT fk_budgets_department FOREIGN KEY (department_id) REFERENCES departments(id),
+  CONSTRAINT fk_budgets_user FOREIGN KEY (updated_by) REFERENCES users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- What the server checked when a request was submitted (FN1, FN3, EN-09):
+-- the readiness result, warnings acknowledged, override reason, and the
+-- budget position used. Written in the submit transaction; never changed.
+CREATE TABLE request_submission_checks (
+  request_id        BIGINT UNSIGNED PRIMARY KEY,
+  result_json       JSON            NOT NULL,
+  acknowledged      BOOLEAN         NOT NULL DEFAULT FALSE,
+  override_reason   VARCHAR(500)    NULL,
+  budget_department BIGINT UNSIGNED NULL,
+  budget_fy         SMALLINT UNSIGNED NULL,
+  budget_paise      BIGINT UNSIGNED NULL,
+  committed_paise   BIGINT UNSIGNED NULL COMMENT 'before this request',
+  request_paise     BIGINT UNSIGNED NULL,
+  budget_state      ENUM('NOT_CHECKED', 'NO_BUDGET', 'OK', 'WARN', 'OVER') NOT NULL DEFAULT 'NOT_CHECKED',
+  created_at        DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_submission_checks_budget (budget_department, budget_fy),
+  CONSTRAINT fk_submission_checks_request FOREIGN KEY (request_id) REFERENCES approval_requests(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- FN4 / RP-01 personal templates: reusable values for one approval type.
+CREATE TABLE request_templates (
+  id           BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id      BIGINT UNSIGNED NOT NULL,
+  workflow_id  BIGINT UNSIGNED NOT NULL,
+  name         VARCHAR(80)     NOT NULL,
+  title        VARCHAR(200)    NULL,
+  fields_json  JSON            NOT NULL,
+  created_at   DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at   DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT uq_request_templates_owner_name UNIQUE (user_id, workflow_id, name),
+  CONSTRAINT fk_request_templates_user FOREIGN KEY (user_id) REFERENCES users(id),
+  CONSTRAINT fk_request_templates_workflow FOREIGN KEY (workflow_id) REFERENCES workflow_definitions(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
