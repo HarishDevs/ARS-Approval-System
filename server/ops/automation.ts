@@ -6,7 +6,7 @@ import { auditDelegationDates } from "@/server/jobs/delegations";
 import { runOutbox } from "@/server/approvals/service";
 import { pruneOutbox } from "@/lib/db/repositories/outbox.repository";
 import { closeAbandonedRuns, finishJobRun, pruneJobRuns, startJobRun, summariseJobs, type JobSummary } from "@/lib/db/repositories/job-runs.repository";
-import { runDailyBackup } from "@/server/ops/backup";
+import { explainBackupError, runDailyBackup } from "@/server/ops/backup";
 import { runDailyTemplateSync } from "@/server/notifications/template-registry";
 import { countByReason, findStuckRequests } from "@/server/ops/stuck";
 import { evaluateAlerts, runDueSchedules } from "@/server/reports/schedules";
@@ -200,7 +200,7 @@ export async function runAutomations(input: { runRef?: string | null; trigger?: 
       logError("automation step failed", error, { job: automation.key, runRef });
       report.steps[automation.key] = { status: "FAILED" };
       report.failed.push(automation.key);
-      const summary = error instanceof Error ? `${error.name}: ${error.message}` : "Unknown error";
+      const summary = automation.key === "backup" ? explainBackupError(error) : error instanceof Error ? `${error.name}: ${error.message}` : "Unknown error";
       if (runId) await finishJobRun(runId, { status: "FAILED", errorCode: summary }).catch(() => undefined);
     }
   }

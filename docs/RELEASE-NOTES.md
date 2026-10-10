@@ -1,5 +1,10 @@
 # Release notes
 
+## v1.6.2 (10 Oct 2026): backups on GoDaddy
+- Backups now go to **Private Storage** (`/private/backups`) when `BACKUP_DIR` isn't set: the only folder the app can write to that is kept across publishes. A cPanel home folder (`/home/...`) isn't visible to the app and made backups fail.
+- When a backup fails, **Back up now** and **Automation** now say why in plain words (folder not writable, folder can't be created, disk full, database permission), with the folder it tried.
+- Deployment guide Part P corrected.
+
 ## v1.6.1 (10 Oct 2026): files in forms, and collaborators
 **For IT**
 - **Attachments as a form field:** in the workflow builder, add a field of type **Attachments (files)**. Make it required (at least one file) and choose up to 1–5 files. Requesters attach files right there, and the files show under that field on the request.

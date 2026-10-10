@@ -135,7 +135,7 @@ GoDaddy → **My Products** → **Node.js Hosting** (host.godaddy.com/hosting) �
 1. Click **Import from .env file** → choose `D:\Omniroute\deploy-secrets\ars-approvals.production.env`.
 2. Check the list:
    - **9 keys from the file:** NODE_ENV, APP_BASE_URL, SESSION_SECRET, ENCRYPTION_KEY, JOB_RUNNER_SECRET, UPLOAD_DIR, FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY.
-   - **v1.4.0, optional:** `BACKUP_DIR` (Part P; e.g. `/home/<cpanel-user>/ars-approvals-backups`), `BACKUP_KEEP_DAYS` (default 14), `ORIGIN_SECRET` (Part E2; add it only **after** the Cloudflare rule).
+   - **v1.4.0, optional:** `BACKUP_DIR` (Part P; `/private/backups`), `BACKUP_KEEP_DAYS` (default 14), `ORIGIN_SECRET` (Part E2; add it only **after** the Cloudflare rule).
    - Plus the five `DB_…` entries that GoDaddy adds itself (B2).
    - **No value says `CHANGE_ME`.**
    - `FIREBASE_PRIVATE_KEY` starts with `-----BEGIN PRIVATE KEY-----`. If the quotes were imported as part of the value, edit it and remove them.
@@ -468,10 +468,10 @@ To rebuild a full import file for a brand-new environment: apply the migrations 
 **What happens by itself:** once a day the job runner (Part I) writes a gzipped SQL copy of the whole database, `ars-db-YYYYMMDD-HHMMSS.sql.gz`, into `BACKUP_DIR`. It also copies new attachment files to `BACKUP_DIR/attachments`. Files older than `BACKUP_KEEP_DAYS` (default 14) are deleted.
 
 ### P1. Set it up
-1. cPanel → **File Manager** → in your home folder (not `public_html`) create `ars-approvals-backups`.
-2. GoDaddy → the app → secrets → `BACKUP_DIR` = `/home/<cpanel-user>/ars-approvals-backups` → **Publish**.
+1. The app runs in a container (`/app`) and can only write, persistently, to **Private Storage (`/private`)**. A cPanel home path such as `/home/<cpanel-user>/…` does **not** exist inside the app and fails with `ENOENT … mkdir` (found on live, 10 Oct 2026).
+2. GoDaddy → the app → secrets → `BACKUP_DIR` = **`/private/backups`** → **Publish**. From v1.6.2, leaving `BACKUP_DIR` unset also works: backups go to a `backups` folder beside `UPLOAD_DIR` (i.e. `/private/backups`).
 3. **Super Admin → Overview → Backups → Back up now**. The line turns green, showing the time and size.
-4. Every week or so, download the newest file from File Manager to a safe place off GoDaddy (e.g. the IT Google Drive). The server copy alone doesn't protect against losing the hosting account.
+4. Every week or so, download the newest file from File Manager → **Private Storage** → `backups` to a safe place off GoDaddy (e.g. the IT Google Drive). The server copy alone doesn't protect against losing the hosting account.
 
 ### P2. Restore drill (do it once now, then every quarter)
 Restore into a **new, empty** database, never straight over the live one.

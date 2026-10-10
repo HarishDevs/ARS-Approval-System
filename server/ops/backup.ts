@@ -24,8 +24,26 @@ export interface BackupReport {
   deletedOldFiles: number;
 }
 
+// Where backups go: BACKUP_DIR, else a "backups" folder beside the uploads
+// (on GoDaddy that is Private Storage, /private/backups, kept across
+// deploys), else storage/backups in the app folder (local development).
 export function backupDir(): string {
-  return path.resolve(getEnv().BACKUP_DIR ?? path.join(process.cwd(), "storage", "backups"));
+  const env = getEnv();
+  if (env.BACKUP_DIR) return path.resolve(env.BACKUP_DIR);
+  if (env.UPLOAD_DIR) return path.join(path.dirname(path.resolve(env.UPLOAD_DIR)), "backups");
+  return path.resolve(path.join(process.cwd(), "storage", "backups"));
+}
+
+// Why a backup failed, in plain words for the Super Admin (no secrets: a
+// folder path, an error code, a database error name).
+export function explainBackupError(error: unknown, dir = backupDir()): string {
+  const err = error as { code?: string; message?: string; sqlMessage?: string };
+  const code = err?.code ?? "";
+  if (code === "EACCES" || code === "EPERM" || code === "EROFS") return `The app isn't allowed to write to the backup folder ${dir}. On GoDaddy the app can only write to Private Storage: set BACKUP_DIR to /private/backups (GoDaddy → the app → Secrets), then Publish.`;
+  if (code === "ENOENT" || code === "ENOTDIR") return `The backup folder ${dir} can't be created (a part of the path doesn't exist where the app runs). On GoDaddy the app can only write to Private Storage: set BACKUP_DIR to /private/backups (GoDaddy → the app → Secrets), then Publish.`;
+  if (code === "ENOSPC" || code === "EDQUOT") return `There's no space left for the backup in ${dir}. Free up space (old backups, logs) in cPanel.`;
+  if (code.startsWith("ER_")) return `The database refused part of the backup (${code}${err.sqlMessage ? `: ${err.sqlMessage}` : ""}). The database user may lack a permission such as SHOW VIEW or TRIGGER.`;
+  return `The backup failed (${code || "error"}${err?.message ? `: ${String(err.message).slice(0, 160)}` : ""}). Backup folder: ${dir}.`;
 }
 
 const quoteId = (name: string) => `\`${name.replace(/`/g, "``")}\``;

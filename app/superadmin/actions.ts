@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireApiArea } from "@/server/authorization/guards";
-import { createBackup } from "@/server/ops/backup";
+import { createBackup, explainBackupError } from "@/server/ops/backup";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { getEnv } from "@/config/environment";
 import { logError } from "@/lib/logging/logger";
@@ -23,6 +23,6 @@ export async function backupNowAction(): Promise<ActionResult> {
     return { ok: true, message: `Backed up ${report.tables} tables (${report.rows.toLocaleString("en-IN")} rows) and ${report.attachmentsCopied} new attachment file(s).` };
   } catch (error) {
     logError("backup now failed", error);
-    return { ok: false, message: "The backup failed. See the server log, and check that the backup folder exists and can be written." };
+    return { ok: false, message: explainBackupError(error) };
   }
 }

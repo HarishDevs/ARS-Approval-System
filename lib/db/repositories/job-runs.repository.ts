@@ -40,7 +40,7 @@ export async function finishJobRun(id: number, outcome: { status: "OK" | "FAILED
   await db.query<ResultSetHeader>("UPDATE job_runs SET finished_at = CURRENT_TIMESTAMP(3), status = ?, counts_json = ?, error_code = ? WHERE id = ?", [
     outcome.status,
     outcome.counts ? JSON.stringify(outcome.counts) : null,
-    outcome.errorCode ? outcome.errorCode.slice(0, 200) : null,
+    outcome.errorCode ? outcome.errorCode.slice(0, 500) : null,
     id,
   ]);
 }

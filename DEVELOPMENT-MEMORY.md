@@ -348,6 +348,10 @@
   - They never approve and get no tasks.
   - Adding and removing are audited and appear on the timeline.
   - My requests has a "Shared with me" tab. | Owner request; Claude, 10 Oct 2026 |
+| D-128 | 10 Oct 2026 | **Backups live in Private Storage (supersedes the BACKUP_DIR advice in D-104):**
+- The Node.js app runs in a container (`/app`). It can persist files only under Private Storage (`/private`); a cPanel `/home/<user>` path is not visible to it (ENOENT on live).
+- `BACKUP_DIR` defaults to a `backups` folder beside `UPLOAD_DIR` (`/private/backups`).
+- Backup failures are explained in plain words. | Found on live; Claude, 10 Oct 2026 |
 | D-033 | 28 Sep 2026 | **Staff data is provided by the admin. Roles are assigned per user, by the admin only. Users are added or made inactive in the Admin Portal** (never hard-deleted, so history and audit stay intact). *Resolves Q-010.* | Owner (answer 7) |
 
 ## 4. Open questions (must be answered before the phase shown)
