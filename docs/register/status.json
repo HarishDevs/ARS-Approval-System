@@ -10,9 +10,9 @@
   "test": "unit tracker.test.ts, request-detail.test.ts; e2e v160-workspace RD-01"
  },
  "M1.1-03": {
-  "status": "Yet to do",
-  "action": "Smart forms: conditional/calculated fields and line items (in progress)",
-  "evidence": "Drafts/autosave done: drafts.int, v150 e2e"
+  "status": "Implemented",
+  "evidence": "lib drafts autosave; server/forms/dynamic.ts; server/forms/fields.ts parseFormSubmission; features/requests/LineItemsEditor.tsx",
+  "test": "drafts.int, v150 e2e; unit smart-forms.test.ts; e2e v160-smart-forms.spec.ts"
  },
  "M1.1-04": {
   "status": "Implemented",
@@ -60,9 +60,9 @@
   "evidence": "workload.int"
  },
  "M1.1-13": {
-  "status": "Yet to do",
-  "action": "To build (unified prompt)",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts; features/requests/ReadinessPanel.tsx; server/approvals/service.ts submitRequest",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
  },
  "M1.1-14": {
   "status": "Yet to do",
@@ -70,14 +70,14 @@
   "evidence": ""
  },
  "M1.1-15": {
-  "status": "Yet to do",
-  "action": "To build (unified prompt)",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts duplicate check; server/workflows/type-settings.ts; features/admin/WorkflowPanels.tsx TypeSettingsForm",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
  },
  "M1.1-16": {
-  "status": "Yet to do",
-  "action": "To build (unified prompt)",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "server/approvals/autofill.ts; app/users/new/[workflowId]/page.tsx; features/requests/Templates.tsx",
+  "test": "integration readiness.int.test.ts (autofill and templates); e2e v160-smart-readiness.spec.ts"
  },
  "M1.1-17": {
   "status": "Yet to do",
@@ -1136,5 +1136,586 @@
   "status": "Implemented",
   "evidence": "no reply-to-approve",
   "test": ""
+ },
+ "FN1-3.1-01": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts; features/requests/ReadinessPanel.tsx; server/approvals/service.ts submitRequest; server/forms/dynamic.ts; server/forms/fields.ts parseFormSubmission",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN1-3.1-02": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts; features/requests/ReadinessPanel.tsx; server/approvals/service.ts submitRequest; server/forms/dynamic.ts; server/forms/fields.ts parseFormSubmission",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN1-3.1-03": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts; features/requests/ReadinessPanel.tsx; server/approvals/service.ts submitRequest; server/forms/dynamic.ts; server/forms/fields.ts parseFormSubmission",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts; unit smart-forms.test.ts; e2e v160-smart-forms.spec.ts"
+ },
+ "FN1-3.1-04": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts; features/requests/ReadinessPanel.tsx; server/approvals/service.ts submitRequest; server/forms/dynamic.ts; server/forms/fields.ts parseFormSubmission",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN1-3.1-05": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts; features/requests/ReadinessPanel.tsx; server/approvals/service.ts submitRequest; server/forms/dynamic.ts; server/forms/fields.ts parseFormSubmission",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts; unit smart-forms.test.ts; e2e v160-smart-forms.spec.ts"
+ },
+ "FN1-3.1-06": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts; features/requests/ReadinessPanel.tsx; server/approvals/service.ts submitRequest; server/forms/dynamic.ts; server/forms/fields.ts parseFormSubmission",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts; unit smart-forms.test.ts; e2e v160-smart-forms.spec.ts"
+ },
+ "FN1-3.1-07": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts; features/requests/ReadinessPanel.tsx; server/approvals/service.ts submitRequest (DoA amount thresholds via approverFieldErrors; budget thresholds)",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN1-3.1-08": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts; features/requests/ReadinessPanel.tsx; server/approvals/service.ts submitRequest",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN1-3.1-09": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts; features/requests/ReadinessPanel.tsx; server/approvals/service.ts submitRequest",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN1-3.1-10": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts; features/requests/ReadinessPanel.tsx; server/approvals/service.ts submitRequest (department warning). Plant and cost centre: no such data (see FN4-6.1-03/04)",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN1-3.1-11": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts; features/requests/ReadinessPanel.tsx; server/approvals/service.ts submitRequest",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN1-3.1-12": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts; features/requests/ReadinessPanel.tsx; server/approvals/service.ts submitRequest",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN1-3.1-13": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts; features/requests/ReadinessPanel.tsx; server/approvals/service.ts submitRequest",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN1-3.1-14": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts; features/requests/ReadinessPanel.tsx; server/approvals/service.ts submitRequest",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN1-3.1-15": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts; features/requests/ReadinessPanel.tsx; server/approvals/service.ts submitRequest (title rules, approver-eligibility, DoA form checks)",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN1-3.1-16": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts; features/requests/ReadinessPanel.tsx; server/approvals/service.ts submitRequest",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN1-3.1-17": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts; features/requests/ReadinessPanel.tsx; server/approvals/service.ts submitRequest",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN1-3.1-18": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts; features/requests/ReadinessPanel.tsx; server/approvals/service.ts submitRequest",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN1-3.1-19": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts; features/requests/ReadinessPanel.tsx; server/approvals/service.ts submitRequest",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN1-3.1-20": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts; features/requests/ReadinessPanel.tsx; server/approvals/service.ts submitRequest",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN1-3.1-21": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts; features/requests/ReadinessPanel.tsx; server/approvals/service.ts submitRequest",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN1-3.1-22": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts; features/requests/ReadinessPanel.tsx; server/approvals/service.ts submitRequest",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN1-3.1-23": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts; features/requests/ReadinessPanel.tsx; server/approvals/service.ts submitRequest",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN1-3.1-24": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts; features/requests/ReadinessPanel.tsx; server/approvals/service.ts submitRequest",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN1-3.1-25": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts; features/requests/ReadinessPanel.tsx; server/approvals/service.ts submitRequest",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN1-3.2-01": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts; features/requests/ReadinessPanel.tsx; server/approvals/service.ts submitRequest",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN1-3.2-02": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts; features/requests/ReadinessPanel.tsx; server/approvals/service.ts submitRequest",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN1-3.2-03": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts; features/requests/ReadinessPanel.tsx; server/approvals/service.ts submitRequest (type lock taken first, FOR SHARE reads)",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN1-3.2-04": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts; features/requests/ReadinessPanel.tsx; server/approvals/service.ts submitRequest (fingerprint: stale result shown and re-run; submit re-assesses)",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN1-3.2-05": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts; features/requests/ReadinessPanel.tsx; server/approvals/service.ts submitRequest; checkReadinessAction makes no writes",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN1-3.3-01": {
+  "status": "Implemented",
+  "evidence": "features/requests/ReadinessPanel.tsx; features/requests/RequestForm.tsx runCheck",
+  "test": "e2e v160-smart-readiness.spec.ts"
+ },
+ "FN1-3.3-02": {
+  "status": "Implemented",
+  "evidence": "features/requests/ReadinessPanel.tsx; features/requests/RequestForm.tsx runCheck",
+  "test": "e2e v160-smart-readiness.spec.ts"
+ },
+ "FN1-3.3-03": {
+  "status": "Implemented",
+  "evidence": "features/requests/ReadinessPanel.tsx; features/requests/RequestForm.tsx runCheck",
+  "test": "e2e v160-smart-readiness.spec.ts"
+ },
+ "FN1-3.3-04": {
+  "status": "Implemented",
+  "evidence": "features/requests/ReadinessPanel.tsx; features/requests/RequestForm.tsx runCheck",
+  "test": "e2e v160-smart-readiness.spec.ts"
+ },
+ "FN1-3.3-05": {
+  "status": "Implemented",
+  "evidence": "features/requests/ReadinessPanel.tsx; features/requests/RequestForm.tsx runCheck",
+  "test": "e2e v160-smart-readiness.spec.ts"
+ },
+ "FN1-3.3-06": {
+  "status": "Implemented",
+  "evidence": "features/requests/ReadinessPanel.tsx; features/requests/RequestForm.tsx runCheck",
+  "test": "e2e v160-smart-readiness.spec.ts"
+ },
+ "FN1-3.3-07": {
+  "status": "Implemented",
+  "evidence": "features/requests/ReadinessPanel.tsx; features/requests/RequestForm.tsx runCheck",
+  "test": "e2e v160-smart-readiness.spec.ts"
+ },
+ "FN1-3.3-08": {
+  "status": "Implemented",
+  "evidence": "features/requests/ReadinessPanel.tsx; features/requests/RequestForm.tsx runCheck",
+  "test": "e2e v160-smart-readiness.spec.ts"
+ },
+ "FN1-3.4-01": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts; features/requests/ReadinessPanel.tsx; server/approvals/service.ts submitRequest",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN1-3.4-02": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts; features/requests/ReadinessPanel.tsx; server/approvals/service.ts submitRequest",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN1-3.4-03": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts; features/requests/ReadinessPanel.tsx; server/approvals/service.ts submitRequest",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN1-3.4-04": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts; features/requests/ReadinessPanel.tsx; server/approvals/service.ts submitRequest",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN1-3.4-05": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts; features/requests/ReadinessPanel.tsx; server/approvals/service.ts submitRequest",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN1-3.4-06": {
+  "status": "Yet to do",
+  "action": "Run the readiness journey at 375 px in the mobile e2e pass",
+  "evidence": "Panel uses the responsive layout; e2e covers desktop only"
+ },
+ "FN1-3.4-07": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts; features/requests/ReadinessPanel.tsx; server/approvals/service.ts submitRequest",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN3-5.1-01": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts duplicate check; server/workflows/type-settings.ts; features/admin/WorkflowPanels.tsx TypeSettingsForm (any form field can be a match field)",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN3-5.1-02": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts duplicate check; server/workflows/type-settings.ts; features/admin/WorkflowPanels.tsx TypeSettingsForm (any form field can be a match field)",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN3-5.1-03": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts duplicate check; server/workflows/type-settings.ts; features/admin/WorkflowPanels.tsx TypeSettingsForm (any form field can be a match field)",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN3-5.1-04": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts duplicate check; server/workflows/type-settings.ts; features/admin/WorkflowPanels.tsx TypeSettingsForm (any form field can be a match field)",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN3-5.1-05": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts duplicate check; server/workflows/type-settings.ts; features/admin/WorkflowPanels.tsx TypeSettingsForm (any form field can be a match field)",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN3-5.1-07": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts duplicate check; server/workflows/type-settings.ts; features/admin/WorkflowPanels.tsx TypeSettingsForm (windowDays)",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN3-5.1-10": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts duplicate check; server/workflows/type-settings.ts; features/admin/WorkflowPanels.tsx TypeSettingsForm (any form field can be a match field)",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN3-5.1-11": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts duplicate check; server/workflows/type-settings.ts; features/admin/WorkflowPanels.tsx TypeSettingsForm (any form field can be a match field)",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN3-5.1-06": {
+  "status": "Yet to do",
+  "action": "Offer requester as a match dimension (same person only vs anyone)",
+  "evidence": "Matching currently spans all requesters of the type"
+ },
+ "FN3-5.1-08": {
+  "status": "Yet to do",
+  "action": "Offer the requester's department as a match dimension",
+  "evidence": "A department LOOKUP form field can already be used"
+ },
+ "FN3-5.1-09": {
+  "status": "Not feasible",
+  "blocker": "No plant or business-unit attribute exists on users, departments or requests (schema checked)",
+  "prerequisite": "Owner: define plants and assign departments to them",
+  "alternative": "Department is the organisational unit used everywhere"
+ },
+ "FN3-5.1-12": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts duplicate check; server/workflows/type-settings.ts; features/admin/WorkflowPanels.tsx TypeSettingsForm; features/requests/ReadinessPanel.tsx candidates",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN3-5.1-13": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts duplicate check; server/workflows/type-settings.ts; features/admin/WorkflowPanels.tsx TypeSettingsForm; features/requests/ReadinessPanel.tsx candidates",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN3-5.1-14": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts duplicate check; server/workflows/type-settings.ts; features/admin/WorkflowPanels.tsx TypeSettingsForm; features/requests/ReadinessPanel.tsx candidates",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN3-5.1-15": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts duplicate check; server/workflows/type-settings.ts; features/admin/WorkflowPanels.tsx TypeSettingsForm; features/requests/ReadinessPanel.tsx candidates",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN3-5.1-16": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts duplicate check; server/workflows/type-settings.ts; features/admin/WorkflowPanels.tsx TypeSettingsForm; features/requests/ReadinessPanel.tsx candidates",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN3-5.1-17": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts duplicate check; server/workflows/type-settings.ts; features/admin/WorkflowPanels.tsx TypeSettingsForm; features/requests/ReadinessPanel.tsx candidates",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN3-5.1-18": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts duplicate check; server/workflows/type-settings.ts; features/admin/WorkflowPanels.tsx TypeSettingsForm; features/requests/ReadinessPanel.tsx candidates",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN3-5.1-19": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts duplicate check; server/workflows/type-settings.ts; features/admin/WorkflowPanels.tsx TypeSettingsForm; features/requests/ReadinessPanel.tsx candidates",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN3-5.1-20": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts duplicate check; server/workflows/type-settings.ts; features/admin/WorkflowPanels.tsx TypeSettingsForm (exact identifier match = DUPLICATE; same title within minutes = RECENT_DUPLICATE, weaker)",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN3-5.1-21": {
+  "status": "Implemented",
+  "evidence": "features/requests/ReadinessPanel.tsx check-failed state with Check again; submit re-runs the check on the server and fails closed",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN3-5.2-01": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts duplicate check; server/workflows/type-settings.ts; features/admin/WorkflowPanels.tsx TypeSettingsForm",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN3-5.2-02": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts duplicate check; server/workflows/type-settings.ts; features/admin/WorkflowPanels.tsx TypeSettingsForm (policy BLOCK, non-admins)",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN3-5.2-03": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts duplicate check; server/workflows/type-settings.ts; features/admin/WorkflowPanels.tsx TypeSettingsForm (IT can override with a reason)",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN3-5.2-04": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts duplicate check; server/workflows/type-settings.ts; features/admin/WorkflowPanels.tsx TypeSettingsForm",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN3-5.2-05": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts duplicate check; server/workflows/type-settings.ts; features/admin/WorkflowPanels.tsx TypeSettingsForm (type lock + FOR SHARE re-read at submit)",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN3-5.2-07": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts duplicate check; server/workflows/type-settings.ts; features/admin/WorkflowPanels.tsx TypeSettingsForm",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN3-5.2-06": {
+  "status": "Yet to do",
+  "action": "Add generated-column unique keys for identifiers a type marks as must-be-unique",
+  "evidence": "BLOCK policy plus the type lock prevents concurrent duplicates today"
+ },
+ "FN3-5.3-01": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts duplicate check; server/workflows/type-settings.ts; features/admin/WorkflowPanels.tsx TypeSettingsForm (candidates the person can't open show no id or number; visibility via visibleToSql)",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN3-5.3-02": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts duplicate check; server/workflows/type-settings.ts; features/admin/WorkflowPanels.tsx TypeSettingsForm (candidates the person can't open show no id or number; visibility via visibleToSql)",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN3-5.3-03": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts duplicate check; server/workflows/type-settings.ts; features/admin/WorkflowPanels.tsx TypeSettingsForm (candidates the person can't open show no id or number; visibility via visibleToSql)",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN3-5.3-04": {
+  "status": "Implemented",
+  "evidence": "Audit DUPLICATE_WARNING_OVERRIDDEN stores request ids and the reason only",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN3-5.4-01": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts duplicate check; server/workflows/type-settings.ts; features/admin/WorkflowPanels.tsx TypeSettingsForm; audit DUPLICATE_WARNING_OVERRIDDEN",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN3-5.4-02": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts duplicate check; server/workflows/type-settings.ts; features/admin/WorkflowPanels.tsx TypeSettingsForm; audit DUPLICATE_WARNING_OVERRIDDEN",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN3-5.4-03": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts duplicate check; server/workflows/type-settings.ts; features/admin/WorkflowPanels.tsx TypeSettingsForm; audit DUPLICATE_WARNING_OVERRIDDEN",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN3-5.4-04": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts duplicate check; server/workflows/type-settings.ts; features/admin/WorkflowPanels.tsx TypeSettingsForm; audit DUPLICATE_WARNING_OVERRIDDEN",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN3-5.4-05": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts duplicate check; server/workflows/type-settings.ts; features/admin/WorkflowPanels.tsx TypeSettingsForm; audit DUPLICATE_WARNING_OVERRIDDEN",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN3-5.4-06": {
+  "status": "Implemented",
+  "evidence": "server/approvals/readiness.ts duplicate check; server/workflows/type-settings.ts; features/admin/WorkflowPanels.tsx TypeSettingsForm; audit DUPLICATE_WARNING_OVERRIDDEN",
+  "test": "integration readiness.int.test.ts; e2e v160-smart-readiness.spec.ts"
+ },
+ "FN4-6.1-01": {
+  "status": "Implemented",
+  "evidence": "server/approvals/autofill.ts; app/users/new/[workflowId]/page.tsx; features/requests/Templates.tsx",
+  "test": "integration readiness.int.test.ts (autofill and templates); e2e v160-smart-readiness.spec.ts"
+ },
+ "FN4-6.1-02": {
+  "status": "Implemented",
+  "evidence": "server/approvals/autofill.ts; app/users/new/[workflowId]/page.tsx; features/requests/Templates.tsx",
+  "test": "integration readiness.int.test.ts (autofill and templates); e2e v160-smart-readiness.spec.ts"
+ },
+ "FN4-6.1-05": {
+  "status": "Implemented",
+  "evidence": "server/approvals/autofill.ts; app/users/new/[workflowId]/page.tsx; features/requests/Templates.tsx",
+  "test": "integration readiness.int.test.ts (autofill and templates); e2e v160-smart-readiness.spec.ts"
+ },
+ "FN4-6.1-06": {
+  "status": "Implemented",
+  "evidence": "server/approvals/autofill.ts; app/users/new/[workflowId]/page.tsx; features/requests/Templates.tsx",
+  "test": "integration readiness.int.test.ts (autofill and templates); e2e v160-smart-readiness.spec.ts"
+ },
+ "FN4-6.1-07": {
+  "status": "Implemented",
+  "evidence": "server/approvals/autofill.ts; app/users/new/[workflowId]/page.tsx; features/requests/Templates.tsx",
+  "test": "integration readiness.int.test.ts (autofill and templates); e2e v160-smart-readiness.spec.ts"
+ },
+ "FN4-6.1-09": {
+  "status": "Implemented",
+  "evidence": "server/approvals/autofill.ts; app/users/new/[workflowId]/page.tsx; features/requests/Templates.tsx",
+  "test": "integration readiness.int.test.ts (autofill and templates); e2e v160-smart-readiness.spec.ts"
+ },
+ "FN4-6.1-10": {
+  "status": "Implemented",
+  "evidence": "server/approvals/autofill.ts; app/users/new/[workflowId]/page.tsx; features/requests/Templates.tsx",
+  "test": "integration readiness.int.test.ts (autofill and templates); e2e v160-smart-readiness.spec.ts"
+ },
+ "FN4-6.1-12": {
+  "status": "Implemented",
+  "evidence": "server/approvals/autofill.ts; app/users/new/[workflowId]/page.tsx; features/requests/Templates.tsx",
+  "test": "integration readiness.int.test.ts (autofill and templates); e2e v160-smart-readiness.spec.ts"
+ },
+ "FN4-6.1-14": {
+  "status": "Implemented",
+  "evidence": "server/approvals/autofill.ts; app/users/new/[workflowId]/page.tsx; features/requests/Templates.tsx",
+  "test": "integration readiness.int.test.ts (autofill and templates); e2e v160-smart-readiness.spec.ts"
+ },
+ "FN4-6.1-15": {
+  "status": "Implemented",
+  "evidence": "server/approvals/autofill.ts; app/users/new/[workflowId]/page.tsx; features/requests/Templates.tsx",
+  "test": "integration readiness.int.test.ts (autofill and templates); e2e v160-smart-readiness.spec.ts"
+ },
+ "FN4-6.1-11": {
+  "status": "Implemented",
+  "evidence": "server/forms/dynamic.ts; server/forms/fields.ts parseFormSubmission (calculated fields fill from the fields they depend on)",
+  "test": "unit smart-forms.test.ts; e2e v160-smart-forms.spec.ts"
+ },
+ "FN4-6.1-03": {
+  "status": "Not feasible",
+  "blocker": "No plant or business-unit attribute exists on users, departments or requests (schema checked)",
+  "prerequisite": "Owner: define plants and assign departments to them",
+  "alternative": "Department is the organisational unit used everywhere"
+ },
+ "FN4-6.1-04": {
+  "status": "Not feasible",
+  "blocker": "No cost-centre attribute exists on users, departments or requests (schema checked)",
+  "prerequisite": "Owner: supply a cost-centre master and mapping",
+  "alternative": "A LOOKUP or TEXT form field can carry a cost centre per request type"
+ },
+ "FN4-6.1-08": {
+  "status": "Not feasible",
+  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers)",
+  "prerequisite": "Owner: choose an integration and supply API access",
+  "alternative": "Templates, earlier requests and profile data are used instead"
+ },
+ "FN4-6.1-13": {
+  "status": "Yet to do",
+  "action": "Add a Refresh from profile button on the new-request form",
+  "evidence": ""
+ },
+ "FN4-6.2-01": {
+  "status": "Implemented",
+  "evidence": "server/approvals/autofill.ts; app/users/new/[workflowId]/page.tsx; features/requests/Templates.tsx (SOURCE_LABEL caption per field)",
+  "test": "integration readiness.int.test.ts (autofill and templates); e2e v160-smart-readiness.spec.ts"
+ },
+ "FN4-6.2-02": {
+  "status": "Implemented",
+  "evidence": "server/approvals/autofill.ts; app/users/new/[workflowId]/page.tsx; features/requests/Templates.tsx (SOURCE_LABEL caption per field)",
+  "test": "integration readiness.int.test.ts (autofill and templates); e2e v160-smart-readiness.spec.ts"
+ },
+ "FN4-6.2-03": {
+  "status": "Implemented",
+  "evidence": "server/approvals/autofill.ts; app/users/new/[workflowId]/page.tsx; features/requests/Templates.tsx (SOURCE_LABEL caption per field)",
+  "test": "integration readiness.int.test.ts (autofill and templates); e2e v160-smart-readiness.spec.ts"
+ },
+ "FN4-6.2-04": {
+  "status": "Implemented",
+  "evidence": "server/approvals/autofill.ts; app/users/new/[workflowId]/page.tsx; features/requests/Templates.tsx (SOURCE_LABEL caption per field)",
+  "test": "integration readiness.int.test.ts (autofill and templates); e2e v160-smart-readiness.spec.ts"
+ },
+ "FN4-6.2-06": {
+  "status": "Implemented",
+  "evidence": "server/approvals/autofill.ts; app/users/new/[workflowId]/page.tsx; features/requests/Templates.tsx (SOURCE_LABEL caption per field)",
+  "test": "integration readiness.int.test.ts (autofill and templates); e2e v160-smart-readiness.spec.ts"
+ },
+ "FN4-6.2-05": {
+  "status": "Not feasible",
+  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers)",
+  "prerequisite": "Owner: choose an integration and supply API access",
+  "alternative": "Templates, earlier requests and profile data are used instead"
+ },
+ "FN4-6.3-01": {
+  "status": "Implemented",
+  "evidence": "server/approvals/autofill.ts; app/users/new/[workflowId]/page.tsx; features/requests/Templates.tsx (hidden fields cleared on submit)",
+  "test": "integration readiness.int.test.ts (autofill and templates); e2e v160-smart-readiness.spec.ts"
+ },
+ "FN4-6.3-02": {
+  "status": "Implemented",
+  "evidence": "server/approvals/autofill.ts; app/users/new/[workflowId]/page.tsx; features/requests/Templates.tsx (people fields, calculated fields and files are never copied)",
+  "test": "integration readiness.int.test.ts (autofill and templates); e2e v160-smart-readiness.spec.ts"
+ },
+ "FN4-6.3-03": {
+  "status": "Implemented",
+  "evidence": "server/approvals/autofill.ts; app/users/new/[workflowId]/page.tsx; features/requests/Templates.tsx (only values; new request number and history)",
+  "test": "integration readiness.int.test.ts (autofill and templates); e2e v160-smart-readiness.spec.ts"
+ },
+ "FN4-6.3-04": {
+  "status": "Implemented",
+  "evidence": "server/approvals/autofill.ts; app/users/new/[workflowId]/page.tsx; features/requests/Templates.tsx (parseFormSubmission re-checks everything)",
+  "test": "integration readiness.int.test.ts (autofill and templates); e2e v160-smart-readiness.spec.ts"
+ },
+ "FN4-6.3-05": {
+  "status": "Implemented",
+  "evidence": "server/approvals/autofill.ts; app/users/new/[workflowId]/page.tsx; features/requests/Templates.tsx (templates and earlier requests are the owner's only)",
+  "test": "integration readiness.int.test.ts (autofill and templates); e2e v160-smart-readiness.spec.ts"
+ },
+ "FN4-6.3-06": {
+  "status": "Not feasible",
+  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers)",
+  "prerequisite": "Owner: choose an integration and supply API access",
+  "alternative": "Templates, earlier requests and profile data are used instead"
+ },
+ "FN4-6.4-01": {
+  "status": "Implemented",
+  "evidence": "server/approvals/autofill.ts; app/users/new/[workflowId]/page.tsx; features/requests/Templates.tsx",
+  "test": "integration readiness.int.test.ts (autofill and templates); e2e v160-smart-readiness.spec.ts"
+ },
+ "FN4-6.4-02": {
+  "status": "Implemented",
+  "evidence": "server/approvals/autofill.ts; app/users/new/[workflowId]/page.tsx; features/requests/Templates.tsx",
+  "test": "integration readiness.int.test.ts (autofill and templates); e2e v160-smart-readiness.spec.ts"
+ },
+ "FN4-6.4-03": {
+  "status": "Implemented",
+  "evidence": "server/approvals/autofill.ts; app/users/new/[workflowId]/page.tsx; features/requests/Templates.tsx",
+  "test": "integration readiness.int.test.ts (autofill and templates); e2e v160-smart-readiness.spec.ts"
+ },
+ "FN4-6.4-04": {
+  "status": "Implemented",
+  "evidence": "server/approvals/autofill.ts; app/users/new/[workflowId]/page.tsx; features/requests/Templates.tsx (values that no longer fit are dropped and counted, never invented)",
+  "test": "integration readiness.int.test.ts (autofill and templates); e2e v160-smart-readiness.spec.ts"
+ },
+ "FN4-6.4-05": {
+  "status": "Yet to do",
+  "action": "Run the template journey at 375 px in the mobile e2e pass",
+  "evidence": "Captions are plain text linked to fields; e2e covers desktop only"
  }
 }
