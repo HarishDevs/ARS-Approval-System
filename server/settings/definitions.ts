@@ -20,6 +20,8 @@ export const SETTING_DEFINITIONS: readonly SettingDefinition[] = [
   { key: "general.escalation_levels", group: "GENERAL", label: "Escalation levels for late approvals (1 = manager, 2 = + manager's manager, 3 = one more)", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(1).max(3), defaultValue: "2" },
   // Unified prompt (BD-3): over-budget requests warn by default; BLOCK is an owner decision.
   { key: "general.budget_policy", group: "GENERAL", label: "Over-budget requests: WARN (warn, ask to confirm) or BLOCK (refuse)", valueType: "STRING", encrypted: false, schema: z.enum(["WARN", "BLOCK"]), defaultValue: "WARN" },
+  // FN2: an open request with no activity for this many days is listed as possibly stuck.
+  { key: "general.stuck_idle_days", group: "GENERAL", label: "Days without activity before a request is listed as possibly stuck", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(1).max(90), defaultValue: "7" },
   { key: "general.timezone", group: "GENERAL", label: "Timezone", valueType: "STRING", encrypted: false, schema: z.string().trim().min(1).max(100), defaultValue: "Asia/Kolkata" },
 
   // OTP and sign-in security (P1-12, P1-15, P1-16, P1-17). Safe min/max bounds

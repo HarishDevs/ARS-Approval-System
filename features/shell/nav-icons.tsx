@@ -1,5 +1,7 @@
 import {
+  AlertTriangle,
   BarChart3,
+  Bot,
   BellRing,
   Building2,
   CalendarDays,
@@ -50,6 +52,7 @@ const ICONS: Record<string, LucideIcon> = {
   "/admin/groups": Users,
   "/admin/doa": Scale,
   "/admin/budgets": Building2,
+  "/admin/attention": AlertTriangle,
   "/admin/calendar": CalendarDays,
   "/admin/users": UserCog,
   "/admin/organisation": Building2,
@@ -61,6 +64,7 @@ const ICONS: Record<string, LucideIcon> = {
   "/superadmin/import": Upload,
   "/superadmin/demo": Users,
   "/superadmin/deliveries": BellRing,
+  "/superadmin/automation": Bot,
   "/superadmin/audit": History,
   "/superadmin/logins": KeyRound,
 };

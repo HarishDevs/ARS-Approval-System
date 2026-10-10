@@ -1,0 +1,194 @@
+import "server-only";
+import crypto from "node:crypto";
+import { runDeliveryRetries, runHousekeeping } from "@/server/jobs/retry-deliveries";
+import { runSlaChecks } from "@/server/jobs/sla";
+import { auditDelegationDates } from "@/server/jobs/delegations";
+import { runOutbox } from "@/server/approvals/service";
+import { pruneOutbox } from "@/lib/db/repositories/outbox.repository";
+import { closeAbandonedRuns, finishJobRun, pruneJobRuns, startJobRun, summariseJobs, type JobSummary } from "@/lib/db/repositories/job-runs.repository";
+import { runDailyBackup } from "@/server/ops/backup";
+import { runDailyTemplateSync } from "@/server/notifications/template-registry";
+import { countByReason, findStuckRequests } from "@/server/ops/stuck";
+import { logError } from "@/lib/logging/logger";
+
+// Automation inventory (unified prompt FN11, Addendum B). Every background
+// job the platform runs, what it does, how it is retried and how IT
+// recovers it. The job runner runs each step on its own: one failing step
+// is recorded and the others still run.
+export interface Automation {
+  key: string;
+  name: string;
+  what: string;
+  trigger: string;
+  everyMinutes: number; // how often it is expected to succeed
+  retry: string;
+  idempotency: string;
+  onFailure: string;
+  recovery: string;
+}
+
+export const AUTOMATIONS: readonly Automation[] = [
+  {
+    key: "outbox",
+    name: "Send queued messages",
+    what: "Sends email and WhatsApp messages queued with each approval action that weren't sent straight away.",
+    trigger: "Every job run (cron, 5 minutes); also right after each action.",
+    everyMinutes: 5,
+    retry: "Up to 5 tries per message; after that it waits for IT.",
+    idempotency: "Each message is claimed before sending, so only one sender sends it; sent messages are never sent again.",
+    onFailure: "The message stays unsent and is listed under Messages not sent.",
+    recovery: "Resend (gives the message fresh tries; never sends one already sent).",
+  },
+  {
+    key: "deliveries",
+    name: "Retry failed deliveries",
+    what: "Retries email and WhatsApp deliveries the provider refused or timed out.",
+    trigger: "Every job run.",
+    everyMinutes: 5,
+    retry: "Backs off between tries; stops after the configured limit.",
+    idempotency: "Each delivery is leased before a retry; a sent delivery is never retried.",
+    onFailure: "The delivery stays FAILED in the delivery log.",
+    recovery: "Retry now on Deliveries.",
+  },
+  {
+    key: "sla",
+    name: "Reminders and escalations",
+    what: "Sends due-soon notes, reminders for late tasks and escalations to managers.",
+    trigger: "Every job run.",
+    everyMinutes: 5,
+    retry: "The next run picks up anything missed.",
+    idempotency: "Each reminder and escalation level is recorded once per task (task_reminders), so it is never sent twice.",
+    onFailure: "Recorded here; the next run tries again.",
+    recovery: "Run the jobs now, or wait for the next run.",
+  },
+  {
+    key: "templates",
+    name: "WhatsApp template status sync",
+    what: "Checks the approval status of WhatsApp templates with the provider once a day.",
+    trigger: "Daily, inside the job run.",
+    everyMinutes: 24 * 60,
+    retry: "Tried again on the next day's run.",
+    idempotency: "Only reads statuses and stores them.",
+    onFailure: "Recorded here; templates keep their last known status.",
+    recovery: "Sync now on Templates.",
+  },
+  {
+    key: "housekeeping",
+    name: "Housekeeping",
+    what: "Clears expired drafts, rate-limit records, old message payloads, old sent queue rows and job history over 90 days.",
+    trigger: "Every job run.",
+    everyMinutes: 5,
+    retry: "The next run continues.",
+    idempotency: "Deletes only what is past its retention; running twice deletes nothing more.",
+    onFailure: "Recorded here; nothing is lost, data is just kept a little longer.",
+    recovery: "None needed.",
+  },
+  {
+    key: "delegations",
+    name: "Delegation start and end",
+    what: "Records in the audit log when planned delegations start and end.",
+    trigger: "Every job run.",
+    everyMinutes: 5,
+    retry: "The next run picks up anything missed.",
+    idempotency: "Each start and end is recorded once.",
+    onFailure: "Recorded here; delegations still apply by date.",
+    recovery: "None needed.",
+  },
+  {
+    key: "backup",
+    name: "Daily backup",
+    what: "Makes the daily database backup and keeps the configured number of days.",
+    trigger: "Daily, inside the job run.",
+    everyMinutes: 24 * 60,
+    retry: "Each run tries again until today's backup exists.",
+    idempotency: "Makes at most one backup a day; never overwrites an existing backup.",
+    onFailure: "The Super Admin is alerted (once a day).",
+    recovery: "Back up now on the Super Admin home page.",
+  },
+  {
+    key: "stuck",
+    name: "Stuck-request scan",
+    what: "Counts open requests that need IT (blocked steps, inactive approvers, no activity, unsent messages).",
+    trigger: "Every job run.",
+    everyMinutes: 5,
+    retry: "The next run scans again.",
+    idempotency: "Read-only.",
+    onFailure: "Recorded here; the Needs attention page still works.",
+    recovery: "None needed.",
+  },
+];
+
+type StepResult = Record<string, number | string>;
+
+const STEPS: Record<string, () => Promise<StepResult>> = {
+  outbox: () => runOutbox(),
+  deliveries: async () => ({ ...(await runDeliveryRetries()) }) as StepResult,
+  sla: () => runSlaChecks(),
+  templates: () => runDailyTemplateSync(),
+  housekeeping: async () => ({ ...(await runHousekeeping()), outboxPruned: await pruneOutbox(), jobRunsPruned: await pruneJobRuns(), abandonedRunsClosed: await closeAbandonedRuns() }),
+  delegations: () => auditDelegationDates(),
+  backup: () => runDailyBackup(),
+  stuck: async () => {
+    const counts = countByReason(await findStuckRequests());
+    return { ...counts };
+  },
+};
+
+export interface RunReport {
+  runRef: string;
+  steps: Record<string, { status: "OK" | "FAILED"; counts?: StepResult }>;
+  failed: string[];
+}
+
+// Runs every step, recording each one. Errors are summarised by name and
+// message only (no payloads); details stay in the server log.
+export async function runAutomations(input: { runRef?: string | null; trigger?: "CRON" | "MANUAL"; only?: readonly string[] } = {}): Promise<RunReport> {
+  const runRef = input.runRef || crypto.randomUUID();
+  const report: RunReport = { runRef, steps: {}, failed: [] };
+  for (const automation of AUTOMATIONS) {
+    if (input.only && !input.only.includes(automation.key)) continue;
+    let runId: number | null = null;
+    try {
+      runId = await startJobRun({ runRef, jobKey: automation.key, trigger: input.trigger ?? "CRON" });
+    } catch (error) {
+      logError("automation: couldn't record the run", error, { job: automation.key });
+    }
+    try {
+      const counts = await STEPS[automation.key]!();
+      // backup "FAILED" is reported as a value, not thrown.
+      const failed = counts.backup === "FAILED";
+      report.steps[automation.key] = { status: failed ? "FAILED" : "OK", counts };
+      if (failed) report.failed.push(automation.key);
+      if (runId) await finishJobRun(runId, { status: failed ? "FAILED" : "OK", counts, errorCode: failed ? "BACKUP_FAILED" : null });
+    } catch (error) {
+      logError("automation step failed", error, { job: automation.key, runRef });
+      report.steps[automation.key] = { status: "FAILED" };
+      report.failed.push(automation.key);
+      const summary = error instanceof Error ? `${error.name}: ${error.message}` : "Unknown error";
+      if (runId) await finishJobRun(runId, { status: "FAILED", errorCode: summary }).catch(() => undefined);
+    }
+  }
+  return report;
+}
+
+export type AutomationHealth = "OK" | "LATE" | "FAILING" | "NEVER";
+
+// Missed-run detection: an automation is LATE when its last good run is
+// older than three of its intervals (at least 20 minutes), FAILING when its
+// latest run failed, NEVER when it has no record.
+export function healthOf(automation: Automation, summary: JobSummary | undefined, now = new Date()): AutomationHealth {
+  if (!summary?.lastRun) return "NEVER";
+  if (summary.lastRun.status === "FAILED") return "FAILING";
+  const limitMinutes = Math.max(automation.everyMinutes * 3, 20);
+  const okAt = summary.lastOkAt ?? null;
+  if (!okAt || now.getTime() - okAt.getTime() > limitMinutes * 60_000) return "LATE";
+  return "OK";
+}
+
+export async function loadAutomationBoard(): Promise<{ automation: Automation; summary: JobSummary | undefined; health: AutomationHealth }[]> {
+  const summaries = await summariseJobs(AUTOMATIONS.map((automation) => automation.key));
+  return AUTOMATIONS.map((automation) => {
+    const summary = summaries.get(automation.key);
+    return { automation, summary, health: healthOf(automation, summary) };
+  });
+}

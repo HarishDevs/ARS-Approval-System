@@ -61,3 +61,45 @@ export async function pruneOutbox(db: Queryable = getDbPool()): Promise<number> 
   const [result] = await db.query<ResultSetHeader>("DELETE FROM notification_outbox WHERE sent_at IS NOT NULL AND sent_at < DATE_SUB(CURRENT_TIMESTAMP(3), INTERVAL 30 DAY)");
   return result.affectedRows;
 }
+
+// ---- FN11 failed-automation recovery -----------------------------------------
+export interface UnsentOutbox {
+  id: number;
+  requestId: number | null;
+  requestNo: string | null;
+  eventType: string;
+  attempts: number;
+  createdAt: Date;
+  gaveUp: boolean; // 5 tries used: the runner no longer picks it up
+}
+
+// Unsent rows older than 30 minutes, or that the runner gave up on. Event
+// type only, never the message text or the recipient.
+export async function listUnsentOutbox(limit = 100, db: Queryable = getDbPool()): Promise<UnsentOutbox[]> {
+  const [rows] = await db.query<(RowDataPacket & { id: number; request_id: number | null; request_no: string | null; event_type: string | null; attempts: number; created_at: Date })[]>(
+    `SELECT o.id, o.request_id, r.request_no, JSON_UNQUOTE(JSON_EXTRACT(o.payload_json, '$.eventType')) AS event_type, o.attempts, o.created_at
+     FROM notification_outbox o LEFT JOIN approval_requests r ON r.id = o.request_id
+     WHERE o.sent_at IS NULL AND (o.attempts >= 5 OR o.created_at < DATE_SUB(CURRENT_TIMESTAMP(3), INTERVAL 30 MINUTE))
+     ORDER BY o.id LIMIT ?`,
+    [Math.min(limit, 500)],
+  );
+  return rows.map((row) => ({ id: row.id, requestId: row.request_id, requestNo: row.request_no, eventType: row.event_type ?? "UNKNOWN", attempts: Number(row.attempts), createdAt: row.created_at, gaveUp: Number(row.attempts) >= 5 }));
+}
+
+// Resend: give an unsent row fresh tries. A row being sent right now (claimed
+// in the last 10 minutes) or already sent is left alone, so a resend can
+// never send a message twice. Returns the ids released.
+export async function releaseOutboxForResend(input: { ids?: readonly number[]; requestId?: number }, db: Queryable = getDbPool()): Promise<number[]> {
+  const where = input.ids?.length ? "o.id IN (?)" : input.requestId ? "o.request_id = ?" : null;
+  if (!where) return [];
+  const [rows] = await db.query<(RowDataPacket & { id: number })[]>(
+    `SELECT o.id FROM notification_outbox o LEFT JOIN approval_requests r ON r.id = o.request_id
+     WHERE ${where} AND o.sent_at IS NULL AND (r.id IS NULL OR r.deleted_at IS NULL)
+       AND (o.claimed_at IS NULL OR o.claimed_at < DATE_SUB(CURRENT_TIMESTAMP(3), INTERVAL 10 MINUTE))`,
+    [input.ids?.length ? input.ids : input.requestId],
+  );
+  const ids = rows.map((row) => row.id);
+  if (!ids.length) return [];
+  await db.query<ResultSetHeader>("UPDATE notification_outbox SET attempts = 0, claimed_at = NULL WHERE id IN (?) AND sent_at IS NULL", [ids]);
+  return ids;
+}

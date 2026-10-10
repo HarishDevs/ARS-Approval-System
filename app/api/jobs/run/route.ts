@@ -2,14 +2,8 @@ import crypto from "node:crypto";
 import type { NextRequest } from "next/server";
 import { getEnv } from "@/config/environment";
 import { apiError, apiSuccess } from "@/lib/http/api-response";
-import { runDeliveryRetries, runHousekeeping } from "@/server/jobs/retry-deliveries";
-import { runSlaChecks } from "@/server/jobs/sla";
-import { auditDelegationDates } from "@/server/jobs/delegations";
-import { runOutbox } from "@/server/approvals/service";
-import { pruneOutbox } from "@/lib/db/repositories/outbox.repository";
 import { recordRunnerHeartbeat } from "@/lib/db/repositories/jobs.repository";
-import { runDailyBackup } from "@/server/ops/backup";
-import { runDailyTemplateSync } from "@/server/notifications/template-registry";
+import { runAutomations } from "@/server/ops/automation";
 import { logError, logInfo } from "@/lib/logging/logger";
 import { alertSuperAdmin } from "@/server/ops/alerts";
 import { REQUEST_ID_HEADER } from "@/lib/logging/request-id";
@@ -30,21 +24,15 @@ export async function POST(request: NextRequest) {
   if (!secretMatches(request.headers.get("x-job-secret"))) return apiError("NOT_FOUND", "Not found.", 404);
   const reference = request.headers.get(REQUEST_ID_HEADER);
   try {
-    const outbox = await runOutbox();
-    const retries = await runDeliveryRetries();
-    const sla = await runSlaChecks();
-    const templates = await runDailyTemplateSync();
-    const housekeeping = { ...(await runHousekeeping()), outboxPruned: await pruneOutbox(), ...(await auditDelegationDates()) };
-    // Once a day (D-104). A failed backup is logged but doesn't stop the runner.
-    const backup = await runDailyBackup().catch((error) => {
-      logError("job runner: backup failed", error);
-      return { backup: "FAILED" as const };
-    });
-    // #14: the Super Admin hears about a failed backup (once a day).
-    if (backup.backup === "FAILED") await alertSuperAdmin("BACKUP_FAILED", reference);
+    // Each automation runs and is recorded on its own (FN11): one failing
+    // step no longer stops the rest.
+    const report = await runAutomations({ runRef: reference, trigger: "CRON" });
+    // #14: the Super Admin hears about failures (once a day per kind).
+    if (report.failed.includes("backup")) await alertSuperAdmin("BACKUP_FAILED", reference);
+    if (report.failed.some((key) => key !== "backup")) await alertSuperAdmin("JOB_RUNNER_FAILED", reference);
     await recordRunnerHeartbeat();
-    logInfo("job runner finished", { ...outbox, ...retries, ...sla, ...templates, ...housekeeping, ...backup });
-    return apiSuccess({ outbox, retries, sla, templates, housekeeping, backup });
+    logInfo("job runner finished", { runRef: report.runRef, failed: report.failed });
+    return apiSuccess(report);
   } catch (error) {
     logError("job runner failed", error);
     await alertSuperAdmin("JOB_RUNNER_FAILED", reference);
