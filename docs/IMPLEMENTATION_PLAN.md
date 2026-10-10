@@ -176,3 +176,42 @@ No existing contract changes. Old requests stay readable.
   - docs updated;
   - pushed to GitHub;
   - no deploy.
+
+---
+
+# Unified master prompt (10 Oct 2026): build order
+
+- **Source:** `docs/requirements/UNIFIED_MASTER_PROMPT.md`.
+- **Register:** `docs/IMPLEMENTATION_STATUS_REGISTER.md`, generated from `docs/register/status.json` by `node scripts/docs/build-register.mjs`.
+- **Baseline:** 1,857 atomic requirements: 80 Implemented, 1,746 Yet to do, 31 Not feasible.
+- **Not feasible (data the platform doesn't hold):** plants, priority, a capacity model, ERP, API/database telemetry, deploy telemetry, a request-level due date.
+
+**Build order (the prompt's §6, adapted to the code):**
+1. **Smart forms** (in progress from v1.6.0 Phase 6): conditional and calculated fields, line items.
+2. **Requester productivity:**
+   - submission readiness checker (FN1);
+   - duplicate detection (FN3);
+   - autofill and templates (FN4);
+   - budget checks (EN-09).
+3. **Workflow reliability:**
+   - automation inventory;
+   - stuck-request detection (FN2);
+   - safe replay and retry (FN8, FN11);
+   - job-run history and missed-run alerts.
+4. **Controlled business changes:**
+   - amendments (FN5);
+   - workflow version diff, restore and migration assistant (FN7).
+5. **Analytics foundation:** classification of pending, overdue, SLA, blocked, stuck and awaiting-requester; aging buckets; periods (IST, financial year); safe statistics; the metric dictionary in code.
+6. **Role dashboards:** Requester, Approver, Admin and Super Admin. KPI cards with definitions and unavailable states; SVG charts with table alternatives (no new chart library); department scorecards (FN6).
+7. **Reports:**
+   - catalogue with metadata;
+   - CSV (formula-safe), XLSX (written with node:zlib, no dependency) and PDF exports;
+   - analytics saved views;
+   - scheduled reports with run history;
+   - alert rules with deduplication.
+8. **Governance:**
+   - configuration promotion (FN9);
+   - retention policies and legal holds, dry-run first (FN10);
+   - feature flags.
+9. **Remaining v1.6.0 items:** watchers, calendar, builder sections and preview, approval expiry, bulk reassignment.
+10. **Verification, documents and status reconciliation.**
