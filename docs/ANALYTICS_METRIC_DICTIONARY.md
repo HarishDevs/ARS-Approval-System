@@ -1,0 +1,57 @@
+# Analytics metric dictionary
+
+Generated from `server/analytics/metrics.ts` by `npx tsx scripts/docs/build-metrics.ts`. Shown in the app at **Analytics → How these are worked out** (`/users/analytics/metrics`). A unit test (`tests/analytics/semantics.test.ts`) fails if a metric is missing here.
+
+## Rules that apply to every metric
+
+- **Time zone and periods.** India time throughout.
+  - Raised counts by submission date.
+  - Approved, rejected and withdrawn count by closing date.
+  - Decisions count by decision date.
+  - The comparison is the equally long period just before.
+- **Deleted requests** are never counted.
+- **Scope is enforced on the server** (`server/analytics/scope.ts`):
+  - *My requests*: requests the person raised.
+  - *My approvals*: tasks given to or decided by the person.
+  - *My team*: requests raised by direct reports.
+  - *My department*: requests raised in departments the person is HOD of.
+  - *Whole organisation*: IT team and Super Admin only.
+- **Pending is not overdue.**
+  - A task is overdue only when its step has a response time (`slaHours`) and the due time has passed.
+  - Due times are in working hours (working calendar, holidays) and move on by the time a request spends on hold.
+  - Steps without a response time are never overdue.
+- **Requests and tasks are counted separately.** A request can have several outstanding tasks (parallel steps), and the two are never added together. Any-one and any-N steps create only the tasks the engine needs; the rest are closed as not needed and don't count as pending.
+- **Approaching** means 75% of the response time has been used. This is the platform's existing due-soon rule (F-91, D-112), not a new policy.
+- **Response-time statuses:** Within response time, Approaching response time, Response time passed, Paused (on hold), Decided in time, Decided late, No response time set. "Paused" is a task on a request that is on hold. There is no exclusion status, because the platform records no SLA exclusions.
+- **Age buckets** (Under 24 hours, 1–2 days, 3–7 days, 8–14 days, 15–30 days, Over 30 days) use elapsed calendar time. They are a display choice, not a business rule. Age since raised and time at the current step are separate measures.
+- **Figures are live.** They are computed when the page or report is opened; the time is shown as "As of …".
+
+## Metrics
+
+| Key | Metric | Meaning | Formula | Included | Left out | When | Unit | Source | Who sees it |
+|---|---|---|---|---|---|---|---|---|---|
+| `raised` | Raised | Requests submitted in the period. | COUNT(requests) where the India date of submission is in the period | Predefined and custom approvals in the scope and filters | Deleted requests; drafts (not submitted) | Period | count | approval_requests.submitted_at | Everyone, for the requests and tasks in the scope they may see |
+| `approved` | Approved | Requests fully approved in the period. | COUNT(requests) with status APPROVED and the India date of closing in the period | Requests raised earlier but approved in the period | Deleted requests; requests still open | Period | count | approval_requests.status, closed_at | Everyone, for the requests and tasks in the scope they may see |
+| `rejected` | Rejected | Requests rejected in the period. | COUNT(requests) with status REJECTED, closed in the period | Any step's rejection that ended the request | Deleted requests; sent back for changes (not a rejection) | Period | count | approval_requests.status, closed_at | Everyone, for the requests and tasks in the scope they may see |
+| `withdrawn` | Withdrawn | Requests the requester withdrew in the period. | COUNT(requests) with status CANCELLED, closed in the period | Withdrawals by the requester | Deleted requests (removed by the Super Admin) | Period | count | approval_requests.status, closed_at | Everyone, for the requests and tasks in the scope they may see |
+| `approval_rate` | Approval rate | Of the requests decided in the period, the share approved. | approved ÷ (approved + rejected) × 100 | Approved and rejected requests closed in the period | Withdrawn requests; open requests. Shown as — when nothing was decided | Period | percent | approval_requests | Everyone, for the requests and tasks in the scope they may see |
+| `avg_cycle_hours` | Average time to decide a request | From submission to the final approval or rejection, in calendar hours. | AVG(closed_at − submitted_at) for requests approved or rejected in the period | Time on hold and time with the requester | Withdrawn requests; open requests | Period | hours | approval_requests.submitted_at, closed_at | Everyone, for the requests and tasks in the scope they may see |
+| `decisions` | Decisions made | Approval decisions (approve, reject, send back) made in the period. | COUNT(approval tasks) decided in the period | Each approver's decision separately | Work steps (Mark as done); tasks closed as not needed or cancelled | Period | count | approval_tasks.decided_at | Everyone, for the requests and tasks in the scope they may see |
+| `avg_decision_hours` | Average time to decide a task | From the task reaching the approver to their decision, in calendar hours. | AVG(decided_at − created_at) for approval tasks decided in the period | Approve, reject and send back | Work steps; tasks not decided | Period | hours | approval_tasks | Everyone, for the requests and tasks in the scope they may see |
+| `on_time_rate` | Decided in time | Of the decisions on steps with a response time, the share made by the due time. | COUNT(decided_at ≤ due_at) ÷ COUNT(tasks with a due time) × 100 | Steps with a response time; the due time is in working hours and moves on by time on hold | Steps without a response time | Period | percent | approval_tasks.due_at, decided_at | Everyone, for the requests and tasks in the scope they may see |
+| `sent_back` | Sent back for changes | Decisions in the period that asked the requester for changes. | COUNT(approval tasks) with status CHANGES_REQUESTED decided in the period | Each send-back separately | Questions (ask for information) | Period | count | approval_tasks.status | Everyone, for the requests and tasks in the scope they may see |
+| `amendments` | Amendments raised | Amendments of approved requests raised in the period. | COUNT(request_amendments) created in the period | Open, approved, rejected and withdrawn amendments | Deleted amendments | Period | count | request_amendments | Everyone, for the requests and tasks in the scope they may see |
+| `duplicate_overrides` | Possible duplicates submitted anyway | Requests submitted in the period after a possible-duplicate warning, with a reason. | COUNT(submission checks) with an override reason, in the period | Warnings confirmed by the requester; IT overrides of a block | Duplicates confirmed as such (not recorded by the platform) | Period | count | request_submission_checks.override_reason | Everyone, for the requests and tasks in the scope they may see |
+| `budget_warnings` | Budget warnings | Requests submitted in the period that were near or over their department's budget. | COUNT(submission checks) with budget state WARN or OVER, in the period | Approval types with the budget check switched on | Types without the check; departments without a budget (shown as 'no budget') | Period | count | request_submission_checks.budget_state | Everyone, for the requests and tasks in the scope they may see |
+| `open_requests` | Open requests | Requests not yet finished. | COUNT(requests) with status IN_PROGRESS, ON_HOLD or CHANGES_REQUIRED | Waiting on approvers, on hold, and back with the requester | Deleted requests; finished requests | Now | count | approval_requests.status | Everyone, for the requests and tasks in the scope they may see |
+| `pending_requests` | Requests waiting for approvers | Unique requests with at least one outstanding approval task. | COUNT(DISTINCT request) with a PENDING task, request IN_PROGRESS | Sequential, parallel, any-one and any-N steps (only the tasks the engine needs) | Requests on hold or with the requester | Now | count | approval_tasks | Everyone, for the requests and tasks in the scope they may see |
+| `pending_tasks` | Outstanding approval tasks | Individual approvals still to be given. One request can have several. | COUNT(tasks) PENDING on requests IN_PROGRESS | Each approver's task separately | Tasks on requests on hold | Now | count | approval_tasks | Everyone, for the requests and tasks in the scope they may see |
+| `overdue_tasks` | Overdue tasks | Outstanding tasks past their due time. | COUNT(PENDING tasks) with due_at < now, request IN_PROGRESS | Steps with a response time (working hours, paused while on hold) | Steps without a response time (never overdue); requests on hold | Now | count | approval_tasks.due_at | Everyone, for the requests and tasks in the scope they may see |
+| `overdue_requests` | Requests with an overdue task | Unique requests with at least one overdue task. | COUNT(DISTINCT request) with an overdue task | As overdue tasks | As overdue tasks | Now | count | approval_tasks.due_at | Everyone, for the requests and tasks in the scope they may see |
+| `paused` | On hold | Requests on hold, including those waiting for the requester to answer a question. | COUNT(requests) with status ON_HOLD | Holds and questions | Sent back for changes | Now | count | approval_requests.status | Everyone, for the requests and tasks in the scope they may see |
+| `awaiting_requester` | Back with the requester | Requests sent back for changes and not yet resubmitted. | COUNT(requests) with status CHANGES_REQUIRED | All send-backs | Questions (those are on hold) | Now | count | approval_requests.status | Everyone, for the requests and tasks in the scope they may see |
+| `blocked` | Blocked | Requests with a step nobody can act on (no eligible approver, or no path matches). | COUNT(requests IN_PROGRESS) with a step in state BLOCKED | Steps waiting for IT to assign or skip | Holds | Now | count | approval_requests.state_json | Everyone, for the requests and tasks in the scope they may see |
+| `aging_submission` | Age since raised | How long open requests have been open, in calendar time. | now − submitted_at for open requests, in buckets | Open requests | Finished requests | Now | count | approval_requests.submitted_at | Everyone, for the requests and tasks in the scope they may see |
+| `aging_step` | Waiting at the current step | How long outstanding tasks have been with their approver, in calendar time. | now − task created_at for PENDING tasks, in buckets | Tasks on requests in progress or on hold | Decided tasks | Now | count | approval_tasks.created_at | Everyone, for the requests and tasks in the scope they may see |
+| `sla_status` | Response-time status | Where each task stands against its step's response time. | Not set / within / approaching (75 % used, the due-soon rule) / passed / paused (on hold) / decided in time / decided late | Outstanding tasks now and tasks decided in the period | Work steps | Now | count | approval_tasks.due_at, created_at, decided_at | Everyone, for the requests and tasks in the scope they may see |
+| `stuck` | Needs attention | Open requests that can't move on their own. | Blocked steps, inactive approvers without a delegate, no activity for N days, back with the requester for N days, unsent messages | See Needs attention | Snoozed findings until the snooze ends | Now | count | server/ops/stuck.ts | IT team and Super Admin |
