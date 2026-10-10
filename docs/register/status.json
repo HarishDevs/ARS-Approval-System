@@ -55,9 +55,9 @@
   "test": "unit version-migration.test.ts; e2e v160-smart-zversions.spec.ts; test-mode.int"
  },
  "M1.1-12": {
-  "status": "Yet to do",
-  "action": "Workload page and due-soon done; configurable SLA policy and alert rules still to build",
-  "evidence": "workload.int"
+  "status": "Implemented",
+  "evidence": "Workload page; due soon; alert rules (overdue tasks, tasks older than N days) per person",
+  "test": "workload.int; reports.int.test.ts; schedule.test.ts"
  },
  "M1.1-13": {
   "status": "Implemented",
@@ -115,9 +115,9 @@
   "evidence": ""
  },
  "M1.1-24": {
-  "status": "Yet to do",
-  "action": "To build (unified prompt)",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "/users/analytics (role scopes, KPI cards with comparison, charts with table views, SLA and aging); /users/reports (11 reports, CSV/XLSX/PDF, schedules, alerts); metric dictionary. Remaining items are listed under Addendum A rows",
+  "test": "analytics.int, reports.int, semantics/export/schedule unit tests, e2e v160-zanalytics, v160-zreports"
  },
  "M1.1-25": {
   "status": "Yet to do",
@@ -140,29 +140,29 @@
   "test": ""
  },
  "M2.1-04": {
-  "status": "Yet to do",
-  "action": "Write the document with evidence",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "docs/ANALYTICS_CURRENT_STATE_AUDIT.md",
+  "test": "document review; metric dictionary unit test"
  },
  "M2.1-05": {
-  "status": "Yet to do",
-  "action": "Write the document with evidence",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "docs/ANALYTICS_METRIC_DICTIONARY.md",
+  "test": "document review; metric dictionary unit test"
  },
  "M2.1-06": {
-  "status": "Yet to do",
-  "action": "Write the document with evidence",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "docs/ANALYTICS_TEST_MATRIX.md",
+  "test": "document review; metric dictionary unit test"
  },
  "M2.1-07": {
-  "status": "Yet to do",
-  "action": "Write the document with evidence",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "docs/ANALYTICS_LIMITATIONS_AND_DATA_GAPS.md",
+  "test": "document review; metric dictionary unit test"
  },
  "M2.1-08": {
-  "status": "Yet to do",
-  "action": "Write the document with evidence",
-  "evidence": ""
+  "status": "Implemented",
+  "evidence": "docs/AUTOMATION_INVENTORY_AND_RECOVERY.md",
+  "test": "document review; metric dictionary unit test"
  },
  "M2.1-09": {
   "status": "Yet to do",
@@ -2878,5 +2878,5891 @@
   "status": "Implemented",
   "evidence": "server/workflows/migration-plan.ts; server/workflows/migration.ts; app/admin/workflows/[id]/migrate (older versions, parallel joins, incompatible states)",
   "test": "unit version-migration.test.ts; integration migration.int.test.ts; e2e v160-smart-zversions.spec.ts"
+ },
+ "A10.1-01": {
+  "status": "Implemented",
+  "evidence": "request register (My requests)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.1-02": {
+  "status": "Implemented",
+  "evidence": "request register status column",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.1-03": {
+  "status": "Implemented",
+  "evidence": "pending/overdue approvals reports in My requests scope",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.1-04": {
+  "status": "Implemented",
+  "evidence": "request page timeline; PDF summary",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.1-05": {
+  "status": "Implemented",
+  "evidence": "request register (closed rows)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.1-06": {
+  "status": "Implemented",
+  "evidence": "request register status column",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.1-07": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A10.1-08": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A10.1-09": {
+  "status": "Implemented",
+  "evidence": "approval type summary (My requests)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.1-10": {
+  "status": "Implemented",
+  "evidence": "analytics trend (month grain over long periods)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.1-11": {
+  "status": "Implemented",
+  "evidence": "PDF summary",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.1-12": {
+  "status": "Implemented",
+  "evidence": "amendments report; resubmission diff",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.1-13": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A10.1-14": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A10.2-01": {
+  "status": "Implemented",
+  "evidence": "pending approvals report (My approvals)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.2-02": {
+  "status": "Implemented",
+  "evidence": "overdue approvals report",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.2-03": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A10.2-04": {
+  "status": "Implemented",
+  "evidence": "pending approvals report status column; response-time compliance",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.2-05": {
+  "status": "Yet to do",
+  "action": "Per-decision history report not built (aggregate is)",
+  "evidence": ""
+ },
+ "A10.2-06": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A10.2-07": {
+  "status": "Implemented",
+  "evidence": "turnaround by step (My approvals)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.2-08": {
+  "status": "Implemented",
+  "evidence": "pending approvals report (type and step)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.2-09": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A10.2-10": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A10.2-11": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A10.2-12": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A10.2-13": {
+  "status": "Implemented",
+  "evidence": "pending approvals report ordered by due time",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.2-14": {
+  "status": "Implemented",
+  "evidence": "approver performance for the period",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.3-01": {
+  "status": "Implemented",
+  "evidence": "department summary report",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.3-02": {
+  "status": "Implemented",
+  "evidence": "admin raisers dashboard with CSV",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.3-03": {
+  "status": "Yet to do",
+  "action": "HOD-named summary not built (department summary is)",
+  "evidence": ""
+ },
+ "A10.3-04": {
+  "status": "Implemented",
+  "evidence": "department summary (open)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.3-05": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A10.3-06": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A10.3-07": {
+  "status": "Implemented",
+  "evidence": "admin approvers dashboard with CSV; approver performance",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.3-08": {
+  "status": "Implemented",
+  "evidence": "approver performance (average hours)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.3-09": {
+  "status": "Implemented",
+  "evidence": "approval type summary",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.3-10": {
+  "status": "Implemented",
+  "evidence": "turnaround by step",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.3-11": {
+  "status": "Implemented",
+  "evidence": "turnaround by step; where requests wait",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.3-12": {
+  "status": "Implemented",
+  "evidence": "response-time compliance report",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.3-13": {
+  "status": "Implemented",
+  "evidence": "pending approvals report (hours at step)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.3-14": {
+  "status": "Implemented",
+  "evidence": "overdue approvals report",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.3-15": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A10.3-16": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A10.3-17": {
+  "status": "Implemented",
+  "evidence": "request register; summaries (rejected, withdrawn)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.3-18": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A10.3-19": {
+  "status": "Implemented",
+  "evidence": "Needs attention",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.3-20": {
+  "status": "Implemented",
+  "evidence": "Needs attention (blocked filter)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.3-21": {
+  "status": "Implemented",
+  "evidence": "Automation run history",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.3-22": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A10.3-23": {
+  "status": "Implemented",
+  "evidence": "Message deliveries",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.3-25": {
+  "status": "Implemented",
+  "evidence": "possible duplicates submitted anyway report",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.3-26": {
+  "status": "Implemented",
+  "evidence": "amendments report",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.3-27": {
+  "status": "Implemented",
+  "evidence": "budget position report",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.3-28": {
+  "status": "Implemented",
+  "evidence": "compare versions page",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.3-29": {
+  "status": "Implemented",
+  "evidence": "migration dry run and run history",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.3-30": {
+  "status": "Yet to do",
+  "action": "Promotion not built",
+  "evidence": ""
+ },
+ "A10.3-31": {
+  "status": "Implemented",
+  "evidence": "scheduled report deliveries",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.3-32": {
+  "status": "Yet to do",
+  "action": "Retention not built",
+  "evidence": ""
+ },
+ "A10.3-33": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A10.3-34": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A10.4-01": {
+  "status": "Implemented",
+  "evidence": "organisation analytics and request register",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.4-02": {
+  "status": "Implemented",
+  "evidence": "organisation pending/overdue reports",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.4-03": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A10.4-04": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A10.4-05": {
+  "status": "Implemented",
+  "evidence": "approval types list with versions",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.4-06": {
+  "status": "Implemented",
+  "evidence": "audit log with filters and CSV export",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.4-07": {
+  "status": "Implemented",
+  "evidence": "Automation",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.4-08": {
+  "status": "Implemented",
+  "evidence": "messages not sent",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.4-09": {
+  "status": "Implemented",
+  "evidence": "Message deliveries",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.4-10": {
+  "status": "Not feasible",
+  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers)",
+  "prerequisite": "Owner: choose an integration and supply API access",
+  "alternative": "Not applicable until an integration exists"
+ },
+ "A10.4-13": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A10.4-14": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A10.4-16": {
+  "status": "Yet to do",
+  "action": "Migration done; promotion not built",
+  "evidence": ""
+ },
+ "A10.4-17": {
+  "status": "Yet to do",
+  "action": "Retention not built",
+  "evidence": ""
+ },
+ "A10.4-18": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A10.4-19": {
+  "status": "Implemented",
+  "evidence": "scheduled report deliveries; Automation reports job",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.4-20": {
+  "status": "Implemented",
+  "evidence": "sign-in history; audit log export",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.5-01": {
+  "status": "Implemented",
+  "evidence": "catalogue key and name",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.5-02": {
+  "status": "Implemented",
+  "evidence": "catalogue description; scopes",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.5-03": {
+  "status": "Implemented",
+  "evidence": "catalogue scopes, checked on the server",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.5-04": {
+  "status": "Implemented",
+  "evidence": "default Last 30 days",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.5-05": {
+  "status": "Implemented",
+  "evidence": "filters per report",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.5-06": {
+  "status": "Yet to do",
+  "action": "Primary date field not stated per report",
+  "evidence": ""
+ },
+ "A10.5-07": {
+  "status": "Yet to do",
+  "action": "Reports don't link to the metric dictionary yet",
+  "evidence": ""
+ },
+ "A10.5-08": {
+  "status": "Yet to do",
+  "action": "Detail level not stated per report",
+  "evidence": ""
+ },
+ "A10.5-09": {
+  "status": "Implemented",
+  "evidence": "Excel, CSV, PDF",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.5-10": {
+  "status": "Implemented",
+  "evidence": "live; schedules daily/weekly/monthly",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.5-11": {
+  "status": "Implemented",
+  "evidence": "\"As of\" on every report",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A10.5-12": {
+  "status": "Yet to do",
+  "action": "Not stated per report",
+  "evidence": ""
+ },
+ "A10.5-13": {
+  "status": "Yet to do",
+  "action": "Not stated per report",
+  "evidence": ""
+ },
+ "A10.5-14": {
+  "status": "Yet to do",
+  "action": "Not stated per report",
+  "evidence": ""
+ },
+ "A12-01": {
+  "status": "Yet to do",
+  "action": "Only the approver's pending card links to the queue",
+  "evidence": ""
+ },
+ "A12-02": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A12-03": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A12-04": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A12-05": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A12-06": {
+  "status": "Yet to do",
+  "action": "Automation page has the details; no chart to drill from",
+  "evidence": ""
+ },
+ "A12-07": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A12-08": {
+  "status": "Not feasible",
+  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers)",
+  "prerequisite": "Owner: choose an integration and supply API access",
+  "alternative": "Not applicable until an integration exists"
+ },
+ "A12-09": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A12-10": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A12-11": {
+  "status": "Implemented",
+  "evidence": "Reports page: run history and switch back on",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A15.1-01": {
+  "status": "Implemented",
+  "evidence": "APPROVAL_NEEDED notification",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A15.1-02": {
+  "status": "Implemented",
+  "evidence": "due-soon notification (75 %)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A15.1-03": {
+  "status": "Implemented",
+  "evidence": "reminders and escalations",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A15.1-04": {
+  "status": "Implemented",
+  "evidence": "escalation at 2× the response time",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A15.1-05": {
+  "status": "Implemented",
+  "evidence": "question to the requester notification",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A15.1-06": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A15.1-07": {
+  "status": "Implemented",
+  "evidence": "blocked step: IT is told",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A15.1-08": {
+  "status": "Implemented",
+  "evidence": "alert rule: requests that need attention",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A15.1-09": {
+  "status": "Implemented",
+  "evidence": "Super Admin alert: job runner failed",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A15.1-10": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A15.1-11": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A15.1-12": {
+  "status": "Not feasible",
+  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers)",
+  "prerequisite": "Owner: choose an integration and supply API access",
+  "alternative": "Not applicable until an integration exists"
+ },
+ "A15.1-13": {
+  "status": "Not feasible",
+  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers)",
+  "prerequisite": "Owner: choose an integration and supply API access",
+  "alternative": "Not applicable until an integration exists"
+ },
+ "A15.1-14": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A15.1-15": {
+  "status": "Implemented",
+  "evidence": "alert rule: budget used",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A15.1-16": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A15.1-17": {
+  "status": "Yet to do",
+  "action": "Owner sees failures on Reports; no notification",
+  "evidence": ""
+ },
+ "A15.1-18": {
+  "status": "Not feasible",
+  "blocker": "There is no analytics refresh pipeline: every figure is a live query",
+  "prerequisite": "Only if analytics are materialized later",
+  "alternative": "Live figures with an As of time"
+ },
+ "A15.1-19": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A15.1-20": {
+  "status": "Implemented",
+  "evidence": "Super Admin alert: backup failed",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A15.1-21": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A15.1-22": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A15.1-23": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A15.1-24": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A15.1-25": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A15.1-26": {
+  "status": "Implemented",
+  "evidence": "new-sign-in alerts",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A15.2-01": {
+  "status": "Implemented",
+  "evidence": "alert metric",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A15.2-02": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A15.2-03": {
+  "status": "Implemented",
+  "evidence": "threshold",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A15.2-04": {
+  "status": "Implemented",
+  "evidence": "scope (my approvals, team, department, organisation)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A15.2-05": {
+  "status": "Yet to do",
+  "action": "Alerts go to their owner only",
+  "evidence": ""
+ },
+ "A15.2-06": {
+  "status": "Yet to do",
+  "action": "Inbox and email only; no channel choice",
+  "evidence": ""
+ },
+ "A15.2-07": {
+  "status": "Yet to do",
+  "action": "Quiet hours not built",
+  "evidence": ""
+ },
+ "A15.2-08": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A15.2-09": {
+  "status": "Implemented",
+  "evidence": "24-hour cool-down",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A15.2-10": {
+  "status": "Implemented",
+  "evidence": "switch on/off",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A15.2-11": {
+  "status": "Implemented",
+  "evidence": "last told time",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A15.2-12": {
+  "status": "Yet to do",
+  "action": "Delivery status not shown on the alert",
+  "evidence": ""
+ },
+ "A15.2-13": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A15.2-14": {
+  "status": "Implemented",
+  "evidence": "firing claimed on the rule before sending",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A15.3-01": {
+  "status": "Implemented",
+  "evidence": "cool-down, claims, at most 20 rules each",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A15.3-02": {
+  "status": "Implemented",
+  "evidence": "fires once per crossing and cool-down",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A15.3-03": {
+  "status": "Implemented",
+  "evidence": "alert_events (detected) vs notification_deliveries (delivered)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A15.3-04": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A15.3-05": {
+  "status": "Implemented",
+  "evidence": "alert_events",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A15.3-06": {
+  "status": "Implemented",
+  "evidence": "claim on the rule",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A15.3-07": {
+  "status": "Implemented",
+  "evidence": "claim on the rule; report slot claims",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A15.3-08": {
+  "status": "Yet to do",
+  "action": "Quiet hours not built",
+  "evidence": ""
+ },
+ "A15.3-09": {
+  "status": "Implemented",
+  "evidence": "alerts only notify; escalations follow the engine",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A15.4-01": {
+  "status": "Implemented",
+  "evidence": "outbox resend and report slots are idempotent",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A15.4-02": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A15.4-03": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A15.4-04": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A15.4-05": {
+  "status": "Implemented",
+  "evidence": "Resend and Run now are manual, IT/Super Admin only",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A16-01": {
+  "status": "Implemented",
+  "evidence": "metric key",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A16-02": {
+  "status": "Implemented",
+  "evidence": "metric name",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A16-03": {
+  "status": "Implemented",
+  "evidence": "meaning",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A16-04": {
+  "status": "Implemented",
+  "evidence": "formula",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A16-05": {
+  "status": "Implemented",
+  "evidence": "numerator in the formula",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A16-06": {
+  "status": "Implemented",
+  "evidence": "denominator in the formula",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A16-07": {
+  "status": "Implemented",
+  "evidence": "source",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A16-08": {
+  "status": "Implemented",
+  "evidence": "source columns",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A16-09": {
+  "status": "Implemented",
+  "evidence": "dictionary rules (date used per metric)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A16-10": {
+  "status": "Implemented",
+  "evidence": "India time",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A16-11": {
+  "status": "Implemented",
+  "evidence": "calendar vs working time stated",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A16-12": {
+  "status": "Implemented",
+  "evidence": "who sees it; scopes",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A16-13": {
+  "status": "Implemented",
+  "evidence": "left out",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A16-14": {
+  "status": "Implemented",
+  "evidence": "withdrawn rule",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A16-15": {
+  "status": "Implemented",
+  "evidence": "requests vs tasks rule",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A16-16": {
+  "status": "Yet to do",
+  "action": "Amendments counting as raised requests isn't stated yet",
+  "evidence": ""
+ },
+ "A16-17": {
+  "status": "Implemented",
+  "evidence": "paused rule",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A16-18": {
+  "status": "Implemented",
+  "evidence": "— for missing; no inference",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A16-19": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A16-20": {
+  "status": "Implemented",
+  "evidence": "live",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A16-21": {
+  "status": "Implemented",
+  "evidence": "ANALYTICS_LIMITATIONS_AND_DATA_GAPS.md",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A16-22": {
+  "status": "Yet to do",
+  "action": "Policy owner not stated per metric",
+  "evidence": ""
+ },
+ "A16-23": {
+  "status": "Implemented",
+  "evidence": "ANALYTICS_TEST_MATRIX.md",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A16.2-01": {
+  "status": "Implemented",
+  "evidence": "— and \"No earlier figure\"; zero only when counted",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A16.2-02": {
+  "status": "Implemented",
+  "evidence": "no inferred timestamps",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A16.2-03": {
+  "status": "Implemented",
+  "evidence": "no response time = not set, never overdue",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A16.2-04": {
+  "status": "Implemented",
+  "evidence": "cycle time only for closed requests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A16.2-05": {
+  "status": "Implemented",
+  "evidence": "request due dates aren't measured",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A16.2-06": {
+  "status": "Implemented",
+  "evidence": "analytics makes no delivery claims",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A16.2-07": {
+  "status": "Implemented",
+  "evidence": "no integration claims",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A16.2-08": {
+  "status": "Implemented",
+  "evidence": "stage durations from task rows",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A16.2-09": {
+  "status": "Implemented",
+  "evidence": "\"No department\" shown",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A16.2-10": {
+  "status": "Implemented",
+  "evidence": "confirmed duplicates not reported",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A16.2-11": {
+  "status": "Implemented",
+  "evidence": "\"No budget\" shown",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A16.2-12": {
+  "status": "Implemented",
+  "evidence": "normal display",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A16.2-13": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A16.2-14": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A16.2-15": {
+  "status": "Implemented",
+  "evidence": "not set / no budget / never run states",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A16.2-16": {
+  "status": "Implemented",
+  "evidence": "— for not applicable",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A16.2-17": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A16.2-18": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A3.1-01": {
+  "status": "Implemented",
+  "evidence": "/users/analytics (My requests scope); /users/requests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.1-02": {
+  "status": "Implemented",
+  "evidence": "request page timeline and tracker",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.1-03": {
+  "status": "Implemented",
+  "evidence": "analytics now counts (pending/overdue requests) in My requests scope",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.1-04": {
+  "status": "Implemented",
+  "evidence": "awaiting_requester KPI; My work",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.1-05": {
+  "status": "Implemented",
+  "evidence": "server drafts with autosave (v1.5.0)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.1-06": {
+  "status": "Implemented",
+  "evidence": "Submission checks card; readiness panel",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.1-07": {
+  "status": "Implemented",
+  "evidence": "My requests filters; request register report",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.1-08": {
+  "status": "Yet to do",
+  "action": "Upcoming deadlines (needed-by calendar) not built; amendment actions exist",
+  "evidence": ""
+ },
+ "A3.1-09": {
+  "status": "Implemented",
+  "evidence": "avg_cycle_hours in My requests scope",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.1-10": {
+  "status": "Implemented",
+  "evidence": "PDF summary; report exports",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.1-11": {
+  "status": "Implemented",
+  "evidence": "notifications with links",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.2-01": {
+  "status": "Implemented",
+  "evidence": "Waiting for me queue",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.2-02": {
+  "status": "Implemented",
+  "evidence": "overdue filter; overdue_tasks KPI",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.2-03": {
+  "status": "Yet to do",
+  "action": "Due today / next 7 days view not built",
+  "evidence": ""
+ },
+ "A3.2-04": {
+  "status": "Implemented",
+  "evidence": "response-time status in My approvals scope",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.2-05": {
+  "status": "Implemented",
+  "evidence": "aging at current step; pending approvals report sorted by due",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.2-06": {
+  "status": "Implemented",
+  "evidence": "by type and step in My approvals; priority is not in the data",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.2-07": {
+  "status": "Yet to do",
+  "action": "Delegated/reassigned activity analytics not built",
+  "evidence": ""
+ },
+ "A3.2-08": {
+  "status": "Implemented",
+  "evidence": "average (KPI) and median/p90 (turnaround report)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.2-09": {
+  "status": "Implemented",
+  "evidence": "approver performance report; sent back KPI",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.2-10": {
+  "status": "Implemented",
+  "evidence": "bulk approval (v1.5.0)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.2-11": {
+  "status": "Implemented",
+  "evidence": "blocked steps and Needs attention for IT",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.2-12": {
+  "status": "Implemented",
+  "evidence": "due-soon, reminders and escalation notifications",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.3-01": {
+  "status": "Implemented",
+  "evidence": "department breakdown, approver workload, approver performance report",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.3-02": {
+  "status": "Implemented",
+  "evidence": "pending/overdue KPIs and reports",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.3-03": {
+  "status": "Implemented",
+  "evidence": "response-time compliance report; SLA status chart",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.3-04": {
+  "status": "Implemented",
+  "evidence": "where requests wait; turnaround by step report",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.3-05": {
+  "status": "Implemented",
+  "evidence": "Needs attention",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.3-06": {
+  "status": "Yet to do",
+  "action": "Rework/resubmission trend chart not built (counts exist)",
+  "evidence": ""
+ },
+ "A3.3-07": {
+  "status": "Implemented",
+  "evidence": "Automation page: runs, failures, recovery",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.3-08": {
+  "status": "Implemented",
+  "evidence": "Message deliveries and messages not sent; no integrations exist",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.3-09": {
+  "status": "Yet to do",
+  "action": "Reassignment pattern analytics not built",
+  "evidence": ""
+ },
+ "A3.3-10": {
+  "status": "Implemented",
+  "evidence": "budget position report; budget warnings KPI",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.3-11": {
+  "status": "Implemented",
+  "evidence": "duplicate overrides and amendments reports and KPIs",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.3-12": {
+  "status": "Implemented",
+  "evidence": "version compare and migration assistant",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.3-13": {
+  "status": "Implemented",
+  "evidence": "Automation (reports/alerts jobs); schedule run history",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.3-14": {
+  "status": "Yet to do",
+  "action": "Retention and legal hold not built (FN10)",
+  "evidence": ""
+ },
+ "A3.4-01": {
+  "status": "Implemented",
+  "evidence": "Whole organisation analytics",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.4-02": {
+  "status": "Yet to do",
+  "action": "User/role/department distribution analytics not built",
+  "evidence": ""
+ },
+ "A3.4-03": {
+  "status": "Yet to do",
+  "action": "Sign-in anomaly analytics not built (sign-in history exists)",
+  "evidence": ""
+ },
+ "A3.4-04": {
+  "status": "Implemented",
+  "evidence": "Approval types list with live/latest versions",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.4-05": {
+  "status": "Implemented",
+  "evidence": "Automation page",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.4-06": {
+  "status": "Implemented",
+  "evidence": "Message deliveries; messages not sent",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.4-08": {
+  "status": "Not feasible",
+  "blocker": "No application performance, database or storage telemetry is instrumented on GoDaddy shared hosting",
+  "prerequisite": "Owner: add hosting monitoring (APM) or a monitoring service",
+  "alternative": "Job runs, logs with request ids and /api/health"
+ },
+ "A3.4-09": {
+  "status": "Implemented",
+  "evidence": "append-only audit log with export; configuration audits",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.4-10": {
+  "status": "Implemented",
+  "evidence": "Backups on Super Admin home; restore drill (DEPLOYMENT Part P)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.4-11": {
+  "status": "Yet to do",
+  "action": "Migration results exist; configuration promotion not built (FN9)",
+  "evidence": ""
+ },
+ "A3.4-12": {
+  "status": "Yet to do",
+  "action": "Retention not built (FN10)",
+  "evidence": ""
+ },
+ "A3.4-13": {
+  "status": "Implemented",
+  "evidence": "live figures with \"As of\"; automation health",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.4-14": {
+  "status": "Implemented",
+  "evidence": "reports job in Automation; delivery history",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.4-15": {
+  "status": "Not feasible",
+  "blocker": "No deployment or rollout telemetry exists (the owner publishes manually in cPanel)",
+  "prerequisite": "Owner: a deployment pipeline that records releases",
+  "alternative": "Release notes and git tags"
+ },
+ "A3.5-01": {
+  "status": "Implemented",
+  "evidence": "server/analytics/scope.ts; role areas",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.5-02": {
+  "status": "Implemented",
+  "evidence": "department scope (HOD); plant not in data",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.5-03": {
+  "status": "Implemented",
+  "evidence": "visibleToSql; scoped report queries",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.5-04": {
+  "status": "Yet to do",
+  "action": "Field-level masking for confidential fields not built",
+  "evidence": ""
+ },
+ "A3.5-05": {
+  "status": "Yet to do",
+  "action": "Aggregate-only permission separate from record view not built",
+  "evidence": ""
+ },
+ "A3.5-06": {
+  "status": "Yet to do",
+  "action": "Separate export/schedule permissions not built (everyone may for their own scope)",
+  "evidence": ""
+ },
+ "A3.5-07": {
+  "status": "Implemented",
+  "evidence": "Automation is Super Admin only; Needs attention IT only",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.5-08": {
+  "status": "Implemented",
+  "evidence": "schedules and alerts run with the owner's current permissions",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.5-09": {
+  "status": "Implemented",
+  "evidence": "scope re-resolved at each run; inactive owner pauses",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A3.5-10": {
+  "status": "Implemented",
+  "evidence": "REPORT_EXPORTED, REPORT_SCHEDULED, ALERT_RULE_CREATED audits",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A4.1-01": {
+  "status": "Implemented",
+  "evidence": "/users/analytics My requests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A4.1-02": {
+  "status": "Implemented",
+  "evidence": "pending/overdue counts; My requests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A4.1-03": {
+  "status": "Implemented",
+  "evidence": "request tracker and timeline",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A4.1-04": {
+  "status": "Implemented",
+  "evidence": "My requests; request register report",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A4.1-05": {
+  "status": "Implemented",
+  "evidence": "My work",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A4.1-06": {
+  "status": "Implemented",
+  "evidence": "readiness panel; submission checks",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A4.1-07": {
+  "status": "Yet to do",
+  "action": "Upcoming deadlines view not built",
+  "evidence": ""
+ },
+ "A4.1-08": {
+  "status": "Implemented",
+  "evidence": "trend and turnaround in My requests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A4.1-09": {
+  "status": "Yet to do",
+  "action": "Per-message delivery status for the person not shown",
+  "evidence": ""
+ },
+ "A4.1-10": {
+  "status": "Implemented",
+  "evidence": "amendments card; resubmission diff",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A4.2-01": {
+  "status": "Implemented",
+  "evidence": "Waiting for me",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A4.2-02": {
+  "status": "Implemented",
+  "evidence": "overdue and SLA status in My approvals",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A4.2-03": {
+  "status": "Implemented",
+  "evidence": "aging at current step; pending approvals report",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A4.2-04": {
+  "status": "Implemented",
+  "evidence": "by type and step",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A4.2-05": {
+  "status": "Yet to do",
+  "action": "Decision trend chart over time not built (period comparison exists)",
+  "evidence": ""
+ },
+ "A4.2-06": {
+  "status": "Implemented",
+  "evidence": "average decision time; turnaround by step",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A4.2-07": {
+  "status": "Yet to do",
+  "action": "Delegated/reassigned work view not built",
+  "evidence": ""
+ },
+ "A4.2-08": {
+  "status": "Implemented",
+  "evidence": "bulk approval",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A4.2-09": {
+  "status": "Implemented",
+  "evidence": "escalation notifications; Needs attention for IT",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A4.3-01": {
+  "status": "Implemented",
+  "evidence": "Whole organisation analytics",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A4.3-02": {
+  "status": "Implemented",
+  "evidence": "department breakdown; approver performance",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A4.3-03": {
+  "status": "Implemented",
+  "evidence": "pending/overdue KPIs and reports",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A4.3-04": {
+  "status": "Implemented",
+  "evidence": "SLA status; response-time compliance",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A4.3-05": {
+  "status": "Implemented",
+  "evidence": "where requests wait; turnaround by step",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A4.3-06": {
+  "status": "Implemented",
+  "evidence": "approver workload; capacity is not in the data",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A4.3-07": {
+  "status": "Implemented",
+  "evidence": "sent back, rejected, approval rate",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A4.3-08": {
+  "status": "Implemented",
+  "evidence": "Automation; deliveries",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A4.3-09": {
+  "status": "Implemented",
+  "evidence": "budget position; budget warnings",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A4.3-10": {
+  "status": "Implemented",
+  "evidence": "duplicate overrides; amendments",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A4.3-11": {
+  "status": "Implemented",
+  "evidence": "compare and migrate",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A4.3-12": {
+  "status": "Yet to do",
+  "action": "Scheduled reports done; governance operations (retention) not built",
+  "evidence": ""
+ },
+ "A4.4-01": {
+  "status": "Implemented",
+  "evidence": "Whole organisation analytics",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A4.4-02": {
+  "status": "Implemented",
+  "evidence": "analytics and Needs attention",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A4.4-03": {
+  "status": "Yet to do",
+  "action": "Access governance dashboard not built",
+  "evidence": ""
+ },
+ "A4.4-04": {
+  "status": "Implemented",
+  "evidence": "Automation",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A4.4-05": {
+  "status": "Implemented",
+  "evidence": "deliveries; no integrations",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A4.4-06": {
+  "status": "Not feasible",
+  "blocker": "No application performance, database or storage telemetry is instrumented on GoDaddy shared hosting",
+  "prerequisite": "Owner: add hosting monitoring (APM) or a monitoring service",
+  "alternative": "Job runs, logs with request ids and /api/health"
+ },
+ "A4.4-07": {
+  "status": "Implemented",
+  "evidence": "audit log, sign-in history, configuration audits",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A4.4-08": {
+  "status": "Implemented",
+  "evidence": "backups and restore drill",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A4.4-09": {
+  "status": "Yet to do",
+  "action": "Promotion not built",
+  "evidence": ""
+ },
+ "A4.4-10": {
+  "status": "Yet to do",
+  "action": "Data-quality checks not built; freshness shown",
+  "evidence": ""
+ },
+ "A4.4-11": {
+  "status": "Yet to do",
+  "action": "Retention not built",
+  "evidence": ""
+ },
+ "A5-01": {
+  "status": "Implemented",
+  "evidence": "metric dictionary names and meanings on every card",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5-02": {
+  "status": "Implemented",
+  "evidence": "\"—\" when there is nothing to compute",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5-03": {
+  "status": "Implemented",
+  "evidence": "unit formatting; period label in the header",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5-04": {
+  "status": "Implemented",
+  "evidence": "vs previous period, or \"No earlier figure to compare\"",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5-05": {
+  "status": "Implemented",
+  "evidence": "\"As of\" time on the page",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5-06": {
+  "status": "Yet to do",
+  "action": "Only some cards link to their records; add drill-down to every card",
+  "evidence": ""
+ },
+ "A5-07": {
+  "status": "Implemented",
+  "evidence": "filters offered per scope; checked on the server",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5-08": {
+  "status": "Yet to do",
+  "action": "Empty and error states exist; no route skeleton or stale state for analytics",
+  "evidence": ""
+ },
+ "A5-09": {
+  "status": "Implemented",
+  "evidence": "arrows with text; info icon with screen-reader text",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5-10": {
+  "status": "Implemented",
+  "evidence": "dictionary meaning and formula on each card",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5-11": {
+  "status": "Implemented",
+  "evidence": "change shown only when the previous value is non-zero",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.1-01": {
+  "status": "Implemented",
+  "evidence": "raised",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.1-02": {
+  "status": "Yet to do",
+  "action": "Draft count card not shown",
+  "evidence": ""
+ },
+ "A5.1-03": {
+  "status": "Implemented",
+  "evidence": "raised (submitted)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.1-04": {
+  "status": "Implemented",
+  "evidence": "pending_requests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.1-05": {
+  "status": "Implemented",
+  "evidence": "awaiting_requester; My work",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.1-06": {
+  "status": "Implemented",
+  "evidence": "awaiting_requester",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.1-07": {
+  "status": "Yet to do",
+  "action": "Questions are counted with holds; separate card not built",
+  "evidence": ""
+ },
+ "A5.1-08": {
+  "status": "Implemented",
+  "evidence": "approved",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.1-09": {
+  "status": "Implemented",
+  "evidence": "rejected",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.1-10": {
+  "status": "Implemented",
+  "evidence": "withdrawn",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.1-11": {
+  "status": "Implemented",
+  "evidence": "withdrawn (the platform has one cancelled state: withdrawn)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.1-12": {
+  "status": "Yet to do",
+  "action": "Recalled count not shown",
+  "evidence": ""
+ },
+ "A5.1-13": {
+  "status": "Implemented",
+  "evidence": "overdue_requests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.1-14": {
+  "status": "Yet to do",
+  "action": "Due today card not built",
+  "evidence": ""
+ },
+ "A5.1-15": {
+  "status": "Yet to do",
+  "action": "Due within seven days card not built",
+  "evidence": ""
+ },
+ "A5.1-16": {
+  "status": "Implemented",
+  "evidence": "response-time status (approaching)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.1-17": {
+  "status": "Implemented",
+  "evidence": "response-time status (passed)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.1-18": {
+  "status": "Yet to do",
+  "action": "Missing-documents count not shown",
+  "evidence": ""
+ },
+ "A5.1-19": {
+  "status": "Yet to do",
+  "action": "Readiness check outcomes are not recorded unless submitted",
+  "evidence": ""
+ },
+ "A5.1-20": {
+  "status": "Implemented",
+  "evidence": "duplicate_overrides",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.1-21": {
+  "status": "Yet to do",
+  "action": "No \"requires amendment\" state exists",
+  "evidence": ""
+ },
+ "A5.1-22": {
+  "status": "Yet to do",
+  "action": "Open amendments card not built (amendments raised is)",
+  "evidence": ""
+ },
+ "A5.1-23": {
+  "status": "Implemented",
+  "evidence": "approved with \"This month\"",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.1-24": {
+  "status": "Implemented",
+  "evidence": "avg_cycle_hours",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.1-25": {
+  "status": "Yet to do",
+  "action": "Median completion card not built (median decision time is in a report)",
+  "evidence": ""
+ },
+ "A5.1-26": {
+  "status": "Yet to do",
+  "action": "Fastest/longest request not shown",
+  "evidence": ""
+ },
+ "A5.1-27": {
+  "status": "Implemented",
+  "evidence": "trend by month grain",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.1-28": {
+  "status": "Yet to do",
+  "action": "Value submitted not aggregated",
+  "evidence": ""
+ },
+ "A5.1-29": {
+  "status": "Yet to do",
+  "action": "Value approved not aggregated",
+  "evidence": ""
+ },
+ "A5.1-30": {
+  "status": "Yet to do",
+  "action": "Unread notifications per request not shown",
+  "evidence": ""
+ },
+ "A5.1-31": {
+  "status": "Yet to do",
+  "action": "Draft recovery events not counted",
+  "evidence": ""
+ },
+ "A5.1-32": {
+  "status": "Yet to do",
+  "action": "Required-by deadlines view not built",
+  "evidence": ""
+ },
+ "A5.1-33": {
+  "status": "Implemented",
+  "evidence": "awaiting_requester",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.1-34": {
+  "status": "Yet to do",
+  "action": "Missing-information count not built",
+  "evidence": ""
+ },
+ "A5.1-35": {
+  "status": "Implemented",
+  "evidence": "approved/rejected/withdrawn and approval rate",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.2-01": {
+  "status": "Implemented",
+  "evidence": "pending_tasks (My approvals)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.2-02": {
+  "status": "Implemented",
+  "evidence": "overdue_tasks",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.2-03": {
+  "status": "Yet to do",
+  "action": "Due today card not built",
+  "evidence": ""
+ },
+ "A5.2-04": {
+  "status": "Yet to do",
+  "action": "Due within seven days card not built",
+  "evidence": ""
+ },
+ "A5.2-05": {
+  "status": "Implemented",
+  "evidence": "response-time status (approaching)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.2-06": {
+  "status": "Implemented",
+  "evidence": "response-time status (passed)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.2-07": {
+  "status": "Yet to do",
+  "action": "Oldest pending card not built (aging buckets are)",
+  "evidence": ""
+ },
+ "A5.2-08": {
+  "status": "Yet to do",
+  "action": "Longest current wait card not built",
+  "evidence": ""
+ },
+ "A5.2-09": {
+  "status": "Implemented",
+  "evidence": "pending_tasks",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.2-10": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A5.2-11": {
+  "status": "Implemented",
+  "evidence": "paused (on hold, including questions)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.2-12": {
+  "status": "Yet to do",
+  "action": "Consultations count not built",
+  "evidence": ""
+ },
+ "A5.2-13": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A5.2-14": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A5.2-15": {
+  "status": "Yet to do",
+  "action": "Reassignment count not built",
+  "evidence": ""
+ },
+ "A5.2-16": {
+  "status": "Implemented",
+  "evidence": "decisions with a custom period of today",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.2-17": {
+  "status": "Implemented",
+  "evidence": "decisions with Last 7 days",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.2-18": {
+  "status": "Implemented",
+  "evidence": "approver performance report, This month",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.2-19": {
+  "status": "Implemented",
+  "evidence": "approver performance report, This month",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.2-20": {
+  "status": "Implemented",
+  "evidence": "avg_decision_hours",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.2-21": {
+  "status": "Implemented",
+  "evidence": "turnaround by step report (median)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.2-22": {
+  "status": "Implemented",
+  "evidence": "turnaround by step report by type",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.2-23": {
+  "status": "Implemented",
+  "evidence": "where requests wait (My approvals)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.2-25": {
+  "status": "Implemented",
+  "evidence": "response-time status (approaching)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.2-26": {
+  "status": "Implemented",
+  "evidence": "bulk approval",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.2-27": {
+  "status": "Implemented",
+  "evidence": "blocked steps for IT; Needs attention",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.2-28": {
+  "status": "Implemented",
+  "evidence": "aging at the current step",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.2-29": {
+  "status": "Yet to do",
+  "action": "Decision trend chart not built",
+  "evidence": ""
+ },
+ "A5.2-30": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A5.2-31": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A5.2-32": {
+  "status": "Implemented",
+  "evidence": "sent_back",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.2-33": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A5.2-34": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A5.3-01": {
+  "status": "Implemented",
+  "evidence": "raised",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.3-02": {
+  "status": "Implemented",
+  "evidence": "approved, rejected, withdrawn",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.3-03": {
+  "status": "Implemented",
+  "evidence": "pending_requests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.3-04": {
+  "status": "Implemented",
+  "evidence": "overdue_requests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.3-05": {
+  "status": "Yet to do",
+  "action": "Due today card not built",
+  "evidence": ""
+ },
+ "A5.3-06": {
+  "status": "Implemented",
+  "evidence": "response-time status",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.3-07": {
+  "status": "Implemented",
+  "evidence": "response-time status",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.3-08": {
+  "status": "Implemented",
+  "evidence": "awaiting_requester; paused",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.3-09": {
+  "status": "Yet to do",
+  "action": "Consultations count not built",
+  "evidence": ""
+ },
+ "A5.3-10": {
+  "status": "Implemented",
+  "evidence": "blocked",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.3-11": {
+  "status": "Implemented",
+  "evidence": "stuck; blocked",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.3-12": {
+  "status": "Implemented",
+  "evidence": "messages not sent; failed job runs",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.3-13": {
+  "status": "Implemented",
+  "evidence": "Needs attention",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.3-14": {
+  "status": "Implemented",
+  "evidence": "messages not sent; deliveries",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.3-16": {
+  "status": "Implemented",
+  "evidence": "avg_cycle_hours",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.3-17": {
+  "status": "Yet to do",
+  "action": "Median completion card not built",
+  "evidence": ""
+ },
+ "A5.3-18": {
+  "status": "Implemented",
+  "evidence": "on_time_rate",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.3-19": {
+  "status": "Implemented",
+  "evidence": "response-time compliance report (late)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.3-20": {
+  "status": "Yet to do",
+  "action": "First-pass approval rate not computed",
+  "evidence": ""
+ },
+ "A5.3-21": {
+  "status": "Yet to do",
+  "action": "Rework rate not computed (sent back count is)",
+  "evidence": ""
+ },
+ "A5.3-22": {
+  "status": "Implemented",
+  "evidence": "approval rate (rejection = the remainder); rejected count",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.3-23": {
+  "status": "Yet to do",
+  "action": "Withdrawal rate not computed (count is)",
+  "evidence": ""
+ },
+ "A5.3-24": {
+  "status": "Implemented",
+  "evidence": "department breakdown (open)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.3-25": {
+  "status": "Yet to do",
+  "action": "Department overdue backlog not built",
+  "evidence": ""
+ },
+ "A5.3-26": {
+  "status": "Implemented",
+  "evidence": "approver workload",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.3-27": {
+  "status": "Implemented",
+  "evidence": "where requests wait",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.3-28": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A5.3-29": {
+  "status": "Implemented",
+  "evidence": "duplicate_overrides",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.3-30": {
+  "status": "Not feasible",
+  "blocker": "The platform records duplicate warnings and overrides, not confirmed duplicates",
+  "prerequisite": "A 'mark as duplicate' outcome would need a business process",
+  "alternative": "Possible duplicates submitted anyway"
+ },
+ "A5.3-31": {
+  "status": "Implemented",
+  "evidence": "budget_warnings",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.3-32": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A5.3-33": {
+  "status": "Yet to do",
+  "action": "No \"requires amendment\" state exists",
+  "evidence": ""
+ },
+ "A5.3-34": {
+  "status": "Yet to do",
+  "action": "Open amendments card not built",
+  "evidence": ""
+ },
+ "A5.3-35": {
+  "status": "Implemented",
+  "evidence": "Automation: scheduled reports job failures",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.3-36": {
+  "status": "Implemented",
+  "evidence": "approval types list with versions",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.3-37": {
+  "status": "Implemented",
+  "evidence": "migration verdicts with warnings",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.3-38": {
+  "status": "Yet to do",
+  "action": "Promotion not built",
+  "evidence": ""
+ },
+ "A5.3-39": {
+  "status": "Yet to do",
+  "action": "Retention not built",
+  "evidence": ""
+ },
+ "A5.3-40": {
+  "status": "Yet to do",
+  "action": "Legal hold not built",
+  "evidence": ""
+ },
+ "A5.3-41": {
+  "status": "Yet to do",
+  "action": "Data-quality checks not built",
+  "evidence": ""
+ },
+ "A5.3-42": {
+  "status": "Implemented",
+  "evidence": "Automation health (LATE/FAILING)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.3-43": {
+  "status": "Not feasible",
+  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers)",
+  "prerequisite": "Owner: choose an integration and supply API access",
+  "alternative": "Not applicable until an integration exists"
+ },
+ "A5.3-44": {
+  "status": "Implemented",
+  "evidence": "messages not sent (retry queue)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.3-45": {
+  "status": "Implemented",
+  "evidence": "Needs attention: no activity for N days",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.4-01": {
+  "status": "Implemented",
+  "evidence": "admin overview users count",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.4-02": {
+  "status": "Implemented",
+  "evidence": "admin overview active users",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.4-03": {
+  "status": "Yet to do",
+  "action": "Inactive users card not built",
+  "evidence": ""
+ },
+ "A5.4-04": {
+  "status": "Yet to do",
+  "action": "Users by role not built",
+  "evidence": ""
+ },
+ "A5.4-05": {
+  "status": "Yet to do",
+  "action": "Users by department not built; plant not in data",
+  "evidence": ""
+ },
+ "A5.4-06": {
+  "status": "Yet to do",
+  "action": "Sign-in failure count not built (history exists)",
+  "evidence": ""
+ },
+ "A5.4-07": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A5.4-08": {
+  "status": "Implemented",
+  "evidence": "Whole organisation analytics",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.4-09": {
+  "status": "Implemented",
+  "evidence": "Whole organisation analytics",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.4-10": {
+  "status": "Implemented",
+  "evidence": "admin overview live types",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.4-11": {
+  "status": "Implemented",
+  "evidence": "versions list; configuration audits",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.4-12": {
+  "status": "Implemented",
+  "evidence": "on_time_rate (organisation)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.4-13": {
+  "status": "Implemented",
+  "evidence": "failed job runs; blocked steps",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.4-14": {
+  "status": "Implemented",
+  "evidence": "Automation",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.4-15": {
+  "status": "Implemented",
+  "evidence": "messages not sent",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.4-16": {
+  "status": "Implemented",
+  "evidence": "messages that gave up",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.4-17": {
+  "status": "Implemented",
+  "evidence": "Automation failures (24 h)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.4-18": {
+  "status": "Implemented",
+  "evidence": "Automation LATE/FAILING",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.4-19": {
+  "status": "Implemented",
+  "evidence": "messages not sent",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.4-20": {
+  "status": "Yet to do",
+  "action": "Delivery success/failure rate not computed (list exists)",
+  "evidence": ""
+ },
+ "A5.4-23": {
+  "status": "Not feasible",
+  "blocker": "No application performance, database or storage telemetry is instrumented on GoDaddy shared hosting",
+  "prerequisite": "Owner: add hosting monitoring (APM) or a monitoring service",
+  "alternative": "Job runs, logs with request ids and /api/health"
+ },
+ "A5.4-27": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A5.4-28": {
+  "status": "Implemented",
+  "evidence": "Backups on Super Admin home; backup job",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.4-29": {
+  "status": "Yet to do",
+  "action": "Restore drill is documented, not tracked in the app",
+  "evidence": ""
+ },
+ "A5.4-30": {
+  "status": "Yet to do",
+  "action": "Promotion not built",
+  "evidence": ""
+ },
+ "A5.4-31": {
+  "status": "Implemented",
+  "evidence": "migration runs",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.4-32": {
+  "status": "Yet to do",
+  "action": "Retention not built",
+  "evidence": ""
+ },
+ "A5.4-33": {
+  "status": "Yet to do",
+  "action": "Legal hold not built",
+  "evidence": ""
+ },
+ "A5.4-34": {
+  "status": "Yet to do",
+  "action": "Security alert card not built",
+  "evidence": ""
+ },
+ "A5.4-36": {
+  "status": "Implemented",
+  "evidence": "\"As of\"; automation health",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.4-37": {
+  "status": "Implemented",
+  "evidence": "report runs failures",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.4-38": {
+  "status": "Implemented",
+  "evidence": "report runs failures",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A5.4-39": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.1-01": {
+  "status": "Implemented",
+  "evidence": "line chart: raised over time",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A6.1-02": {
+  "status": "Implemented",
+  "evidence": "line chart: approved and rejected over time",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A6.1-03": {
+  "status": "Yet to do",
+  "action": "Status chart not built (outcome counts are KPI cards)",
+  "evidence": ""
+ },
+ "A6.1-04": {
+  "status": "Yet to do",
+  "action": "Stacked trend with withdrawals not built (line chart of raised/approved/rejected exists)",
+  "evidence": ""
+ },
+ "A6.1-05": {
+  "status": "Implemented",
+  "evidence": "bar list: raised by department",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A6.1-06": {
+  "status": "Implemented",
+  "evidence": "bar list: raised by approval type",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A6.1-07": {
+  "status": "Implemented",
+  "evidence": "bar list by approval type (one workflow per type)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A6.1-08": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.1-09": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.1-10": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.1-11": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.1-12": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.1-13": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.2-01": {
+  "status": "Implemented",
+  "evidence": "bar list: outstanding tasks by time at the current step",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A6.2-02": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.2-03": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.2-04": {
+  "status": "Implemented",
+  "evidence": "approver workload bars (pending, with overdue)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A6.2-05": {
+  "status": "Implemented",
+  "evidence": "response-time status bar (approaching)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A6.2-06": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.2-07": {
+  "status": "Yet to do",
+  "action": "Table in the response-time compliance report; chart not built",
+  "evidence": ""
+ },
+ "A6.2-08": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.2-09": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.2-10": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.2-11": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.2-12": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.2-13": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.2-14": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.2-15": {
+  "status": "Implemented",
+  "evidence": "pending approvals report ordered by due time, with links",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A6.2-16": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.2-17": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.2-18": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.2-19": {
+  "status": "Implemented",
+  "evidence": "Needs attention counts by reason",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A6.3-01": {
+  "status": "Yet to do",
+  "action": "Average and median are columns in a report; chart not built",
+  "evidence": ""
+ },
+ "A6.3-02": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.3-03": {
+  "status": "Yet to do",
+  "action": "Durations are notes on the step bars; duration chart not built",
+  "evidence": ""
+ },
+ "A6.3-04": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.3-05": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.3-06": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.3-07": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.3-08": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.3-09": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.3-10": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.3-11": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.3-12": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.3-13": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.3-14": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.3-15": {
+  "status": "Implemented",
+  "evidence": "request page timeline (per-request events)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A6.3-16": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.3-17": {
+  "status": "Not feasible",
+  "blocker": "Delay reasons are not recorded on requests or tasks",
+  "prerequisite": "A delay-reason field and a business rule to fill it",
+  "alternative": "Where requests wait and turnaround by step"
+ },
+ "A6.4-01": {
+  "status": "Implemented",
+  "evidence": "approver workload bars",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A6.4-02": {
+  "status": "Implemented",
+  "evidence": "approver workload bars",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A6.4-03": {
+  "status": "Implemented",
+  "evidence": "approver workload (overdue per approver)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A6.4-04": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.4-05": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.4-06": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.4-07": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.4-08": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.4-09": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.4-10": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.4-11": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.4-14": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.4-15": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.4-16": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.5-01": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.5-02": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.5-03": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.5-04": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.5-05": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.5-06": {
+  "status": "Implemented",
+  "evidence": "budget position report (budget vs committed)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A6.5-07": {
+  "status": "Implemented",
+  "evidence": "budget position report (used %); Budgets page",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A6.5-08": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.5-09": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.5-10": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.5-11": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.5-12": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.5-13": {
+  "status": "Yet to do",
+  "action": "Changes are listed per amendment; amount totals not built",
+  "evidence": ""
+ },
+ "A6.5-14": {
+  "status": "Implemented",
+  "evidence": "duplicate detection on invoice-type fields; duplicates submitted anyway report",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A6.6-01": {
+  "status": "Yet to do",
+  "action": "Run history list exists; chart not built",
+  "evidence": ""
+ },
+ "A6.6-02": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.6-03": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.6-04": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.6-05": {
+  "status": "Implemented",
+  "evidence": "messages that gave up (Automation)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A6.6-06": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.6-07": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.6-08": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.6-09": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.6-10": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.6-13": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.6-14": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.6-15": {
+  "status": "Implemented",
+  "evidence": "scheduled report delivery history",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A6.6-16": {
+  "status": "Implemented",
+  "evidence": "migration runs: moved, skipped, failed",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A6.6-17": {
+  "status": "Yet to do",
+  "action": "Promotion not built",
+  "evidence": ""
+ },
+ "A6.6-18": {
+  "status": "Yet to do",
+  "action": "Retention not built",
+  "evidence": ""
+ },
+ "A6.6-19": {
+  "status": "Yet to do",
+  "action": "Backup list exists; restore verification history not tracked",
+  "evidence": ""
+ },
+ "A6.6-20": {
+  "status": "Not feasible",
+  "blocker": "No application performance, database or storage telemetry is instrumented on GoDaddy shared hosting",
+  "prerequisite": "Owner: add hosting monitoring (APM) or a monitoring service",
+  "alternative": "Job runs, logs with request ids and /api/health"
+ },
+ "A6.6-23": {
+  "status": "Not feasible",
+  "blocker": "There is no analytics refresh pipeline: every figure is a live query",
+  "prerequisite": "Only if analytics are materialized later",
+  "alternative": "Live figures with an As of time"
+ },
+ "A6.7-01": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.7-02": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.7-03": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.7-04": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.7-05": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.7-06": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.7-07": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.7-08": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.7-09": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.7-10": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A6.7-11": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A7.1-01": {
+  "status": "Implemented",
+  "evidence": "server/analytics/semantics.ts pending = PENDING task on an IN_PROGRESS request",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.1-02": {
+  "status": "Implemented",
+  "evidence": "parallel tasks counted per task and per request",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.1-03": {
+  "status": "Implemented",
+  "evidence": "any-one: the engine closes the other tasks as NOT_REQUIRED",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.1-04": {
+  "status": "Implemented",
+  "evidence": "any-N: the engine closes the rest once N have decided",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.1-05": {
+  "status": "Implemented",
+  "evidence": "any node in the graph is a stage",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.1-06": {
+  "status": "Implemented",
+  "evidence": "blocked steps counted separately (blocked)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.1-07": {
+  "status": "Yet to do",
+  "action": "Consultations are not counted as waiting work yet",
+  "evidence": ""
+ },
+ "A7.2-02": {
+  "status": "Implemented",
+  "evidence": "determined: an optional needed-by form field, not used as a deadline (audit §2)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.2-03": {
+  "status": "Implemented",
+  "evidence": "approval_tasks.due_at (step response time, working hours)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.2-04": {
+  "status": "Implemented",
+  "evidence": "approval_tasks.due_at",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.2-05": {
+  "status": "Implemented",
+  "evidence": "step response time (slaHours)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.2-06": {
+  "status": "Implemented",
+  "evidence": "determined: none exists (audit §2)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.2-07": {
+  "status": "Implemented",
+  "evidence": "determined: none exists (audit §2)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.2-08": {
+  "status": "Implemented",
+  "evidence": "determined: none exists (audit §2)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.2-09": {
+  "status": "Implemented",
+  "evidence": "report_schedules.next_run_at",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.2-11": {
+  "status": "Implemented",
+  "evidence": "determined: none exists (audit §2)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.3-01": {
+  "status": "Implemented",
+  "evidence": "not applicable: a task's clock starts when it is created (documented)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.3-02": {
+  "status": "Implemented",
+  "evidence": "slaStatus WITHIN",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.3-03": {
+  "status": "Implemented",
+  "evidence": "slaStatus APPROACHING (75 % due-soon rule)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.3-04": {
+  "status": "Implemented",
+  "evidence": "slaStatus BREACHED",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.3-05": {
+  "status": "Implemented",
+  "evidence": "slaStatus PAUSED (on hold)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.3-06": {
+  "status": "Implemented",
+  "evidence": "slaStatus COMPLETED_WITHIN",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.3-07": {
+  "status": "Implemented",
+  "evidence": "slaStatus COMPLETED_AFTER",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.3-08": {
+  "status": "Implemented",
+  "evidence": "slaStatus NOT_CONFIGURED",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.3-09": {
+  "status": "Yet to do",
+  "action": "No separate \"data unavailable\" state (missing due time shows as not set)",
+  "evidence": ""
+ },
+ "A7.3-10": {
+  "status": "Not feasible",
+  "blocker": "The platform records no SLA exclusions or exclusion reasons",
+  "prerequisite": "A business rule for exclusions and an exclusion reason on holds",
+  "alternative": "Paused (on hold) is shown; holds already stop the clock"
+ },
+ "A7.4-01": {
+  "status": "Implemented",
+  "evidence": "semantics.ts",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.4-02": {
+  "status": "Implemented",
+  "evidence": "semantics.ts (overdue)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.4-03": {
+  "status": "Implemented",
+  "evidence": "SLA BREACHED",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.4-04": {
+  "status": "Implemented",
+  "evidence": "blocked (BLOCKED steps)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.4-05": {
+  "status": "Implemented",
+  "evidence": "blocked and paused, kept apart",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.4-06": {
+  "status": "Implemented",
+  "evidence": "stuck (Needs attention)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.4-07": {
+  "status": "Implemented",
+  "evidence": "failed job runs; messages not sent",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.4-08": {
+  "status": "Implemented",
+  "evidence": "awaiting_requester",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.4-10": {
+  "status": "Implemented",
+  "evidence": "paused",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.4-11": {
+  "status": "Implemented",
+  "evidence": "TERMINAL_STATES",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.5-01": {
+  "status": "Implemented",
+  "evidence": "engine",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.5-02": {
+  "status": "Implemented",
+  "evidence": "pending tasks vs pending requests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.5-03": {
+  "status": "Implemented",
+  "evidence": "engine closes unselected tasks",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.5-04": {
+  "status": "Implemented",
+  "evidence": "engine threshold; outstanding tasks only",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.5-05": {
+  "status": "Implemented",
+  "evidence": "engine graph",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.5-06": {
+  "status": "Implemented",
+  "evidence": "step pending counts, task counts and unique request counts kept apart",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.6-01": {
+  "status": "Implemented",
+  "evidence": "AGING_BUCKETS",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.6-02": {
+  "status": "Implemented",
+  "evidence": "AGING_BUCKETS",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.6-03": {
+  "status": "Implemented",
+  "evidence": "AGING_BUCKETS",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.6-04": {
+  "status": "Implemented",
+  "evidence": "AGING_BUCKETS",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.6-05": {
+  "status": "Implemented",
+  "evidence": "AGING_BUCKETS",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.6-06": {
+  "status": "Implemented",
+  "evidence": "AGING_BUCKETS",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.6-07": {
+  "status": "Implemented",
+  "evidence": "age since raised",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.6-08": {
+  "status": "Implemented",
+  "evidence": "time at the current step",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A7.6-09": {
+  "status": "Yet to do",
+  "action": "Age since hand-over to the current approver not tracked separately",
+  "evidence": ""
+ },
+ "A7.6-10": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A7.6-11": {
+  "status": "Implemented",
+  "evidence": "Needs attention: no activity since the last event",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A8-01": {
+  "status": "Implemented",
+  "evidence": "neutral badges",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A8-02": {
+  "status": "Implemented",
+  "evidence": "success tokens",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A8-03": {
+  "status": "Implemented",
+  "evidence": "warning tokens",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A8-04": {
+  "status": "Implemented",
+  "evidence": "danger tokens",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A8-05": {
+  "status": "Implemented",
+  "evidence": "primary/info treatment for waiting states",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A8-06": {
+  "status": "Implemented",
+  "evidence": "neutral grey for not set / no budget / never run",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A8-07": {
+  "status": "Yet to do",
+  "action": "Legal hold not built",
+  "evidence": ""
+ },
+ "A9.1-01": {
+  "status": "Implemented",
+  "evidence": "previous equal-length period",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A9.1-02": {
+  "status": "Implemented",
+  "evidence": "Last 7 days vs the 7 before",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A9.1-03": {
+  "status": "Yet to do",
+  "action": "Calendar month vs previous calendar month not offered (equal-length comparison is)",
+  "evidence": ""
+ },
+ "A9.1-04": {
+  "status": "Yet to do",
+  "action": "Not offered",
+  "evidence": ""
+ },
+ "A9.1-05": {
+  "status": "Yet to do",
+  "action": "Not offered",
+  "evidence": ""
+ },
+ "A9.1-06": {
+  "status": "Yet to do",
+  "action": "Not offered",
+  "evidence": ""
+ },
+ "A9.1-07": {
+  "status": "Yet to do",
+  "action": "Not offered",
+  "evidence": ""
+ },
+ "A9.1-08": {
+  "status": "Implemented",
+  "evidence": "custom range vs previous equal-length period",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A9.2-01": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A9.2-02": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A9.2-03": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A9.2-04": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A9.2-05": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A9.2-06": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A9.3-01": {
+  "status": "Implemented",
+  "evidence": "decided in time vs the step response time",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A9.3-02": {
+  "status": "Implemented",
+  "evidence": "turnaround report: average and median",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A9.3-03": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A9.3-04": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A9.3-05": {
+  "status": "Yet to do",
+  "action": "Performance by version not built (configuration compare is)",
+  "evidence": ""
+ },
+ "A9.3-06": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A9.3-07": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A9.3-08": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A9.3-09": {
+  "status": "Implemented",
+  "evidence": "budget position report",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A9.4-01": {
+  "status": "Implemented",
+  "evidence": "percentChange returns none from zero; shown as \"No earlier figure\"",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A9.4-02": {
+  "status": "Implemented",
+  "evidence": "share returns none; shown as —",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A9.4-03": {
+  "status": "Yet to do",
+  "action": "Sample-size limitation not shown",
+  "evidence": ""
+ },
+ "A9.4-04": {
+  "status": "Implemented",
+  "evidence": "only equal-length periods are compared",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A9.4-05": {
+  "status": "Implemented",
+  "evidence": "dictionary rules; no efficiency claims",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A9.4-06": {
+  "status": "Implemented",
+  "evidence": "withdrawn counted and documented (dictionary)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A1-01": {
+  "status": "Implemented",
+  "evidence": "/users/analytics My requests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A1-02": {
+  "status": "Implemented",
+  "evidence": "/users/analytics My approvals",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A1-03": {
+  "status": "Implemented",
+  "evidence": "organisation analytics; reports; Needs attention",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A1-04": {
+  "status": "Implemented",
+  "evidence": "Automation; organisation analytics; audit and sign-in history",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A1-05": {
+  "status": "Implemented",
+  "evidence": "KPI cards, charts, tables, comparisons, aging, SLA status",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A1-06": {
+  "status": "Implemented",
+  "evidence": "reports, exports, schedules, alerts",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A1-07": {
+  "status": "Implemented",
+  "evidence": "metric dictionary; limitations; test matrix",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AConditional-01": {
+  "status": "Implemented",
+  "evidence": "overdue badges in the queue; overdue hours in Insights",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AConditional-02": {
+  "status": "Yet to do",
+  "action": "Remaining time not shown",
+  "evidence": ""
+ },
+ "AConditional-03": {
+  "status": "Yet to do",
+  "action": "Breach duration not shown",
+  "evidence": ""
+ },
+ "AConditional-04": {
+  "status": "Implemented",
+  "evidence": "neutral pending treatment",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AConditional-05": {
+  "status": "Implemented",
+  "evidence": "status pill Back with requester",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AConditional-06": {
+  "status": "Implemented",
+  "evidence": "Needs attention reason and badge",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AConditional-07": {
+  "status": "Implemented",
+  "evidence": "Needs attention badges by reason",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AConditional-08": {
+  "status": "Implemented",
+  "evidence": "Possible duplicate wording, never duplicate",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AConditional-09": {
+  "status": "Implemented",
+  "evidence": "budget warning badges",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AConditional-10": {
+  "status": "Implemented",
+  "evidence": "Automation: Last run failed",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AConditional-11": {
+  "status": "Yet to do",
+  "action": "Retrying not shown",
+  "evidence": ""
+ },
+ "AConditional-12": {
+  "status": "Implemented",
+  "evidence": "gave up badge with Resend",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AConditional-13": {
+  "status": "Implemented",
+  "evidence": "delivery FAILED styling",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AConditional-14": {
+  "status": "Not feasible",
+  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers)",
+  "prerequisite": "Owner: choose an integration and supply API access",
+  "alternative": "Not applicable until an integration exists"
+ },
+ "AConditional-15": {
+  "status": "Implemented",
+  "evidence": "a dash, never a made-up zero",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AConditional-16": {
+  "status": "Yet to do",
+  "action": "Legal hold not built",
+  "evidence": ""
+ },
+ "AConditional-17": {
+  "status": "Implemented",
+  "evidence": "backups shown only when a backup exists",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AConditional-18": {
+  "status": "Yet to do",
+  "action": "Stale warning not built (live figures)",
+  "evidence": ""
+ },
+ "ARequiredfil-01": {
+  "status": "Implemented",
+  "evidence": "period presets and custom range",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ARequiredfil-02": {
+  "status": "Implemented",
+  "evidence": "this/last financial year",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ARequiredfil-03": {
+  "status": "Implemented",
+  "evidence": "raiser department (organisation)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ARequiredfil-04": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "ARequiredfil-05": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "ARequiredfil-06": {
+  "status": "Implemented",
+  "evidence": "My team / My department scopes",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ARequiredfil-08": {
+  "status": "Implemented",
+  "evidence": "approval type filter",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ARequiredfil-09": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "ARequiredfil-10": {
+  "status": "Implemented",
+  "evidence": "approval type (one workflow per type)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ARequiredfil-11": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "ARequiredfil-12": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "ARequiredfil-14": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "ARequiredfil-15": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "ARequiredfil-16": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "ARequiredfil-17": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "ARequiredfil-18": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "ARequiredfil-19": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "ARequiredfil-20": {
+  "status": "Implemented",
+  "evidence": "Automation history filtered by job",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ARequiredfil-21": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "ARequiredfil-22": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "ARequiredfil-23": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "ARequiredfil-24": {
+  "status": "Not feasible",
+  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers)",
+  "prerequisite": "Owner: choose an integration and supply API access",
+  "alternative": "Not applicable until an integration exists"
+ },
+ "ARequiredfil-25": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "ARequiredfil-26": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "ARequiredfil-27": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "AFilterbehav-01": {
+  "status": "Implemented",
+  "evidence": "filters form shows the selection; header states the period",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AFilterbehav-02": {
+  "status": "Implemented",
+  "evidence": "All options and Reset",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AFilterbehav-03": {
+  "status": "Yet to do",
+  "action": "Drill-down does not carry filters yet",
+  "evidence": ""
+ },
+ "AFilterbehav-04": {
+  "status": "Implemented",
+  "evidence": "dates and India time stated",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AFilterbehav-05": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "AFilterbehav-06": {
+  "status": "Implemented",
+  "evidence": "scope re-resolved on the server; asking for more falls back",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AFilterbehav-07": {
+  "status": "Implemented",
+  "evidence": "department list only in the organisation scope",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AFilterbehav-08": {
+  "status": "Implemented",
+  "evidence": "native form controls",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ASavedviews-01": {
+  "status": "Implemented",
+  "evidence": "analytics_views per user",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ASavedviews-02": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "ASavedviews-03": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "ASavedviews-04": {
+  "status": "Yet to do",
+  "action": "Name only; no description",
+  "evidence": ""
+ },
+ "ASavedviews-05": {
+  "status": "Yet to do",
+  "action": "Filters only; no sort or columns",
+  "evidence": ""
+ },
+ "ASavedviews-06": {
+  "status": "Implemented",
+  "evidence": "scope re-checked when a view is opened",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ASavedviews-07": {
+  "status": "Yet to do",
+  "action": "Not shown",
+  "evidence": ""
+ },
+ "ASavedviews-08": {
+  "status": "Yet to do",
+  "action": "Delete and overwrite only",
+  "evidence": ""
+ },
+ "ASavedviews-09": {
+  "status": "Implemented",
+  "evidence": "unknown types and departments ignored (cleanQuery, choices check)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ADrilldowns-01": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "ADrilldowns-02": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "ADrilldowns-03": {
+  "status": "Implemented",
+  "evidence": "every destination checks access on the server",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ADrilldowns-04": {
+  "status": "Yet to do",
+  "action": "Field masking not built",
+  "evidence": ""
+ },
+ "ADrilldowns-05": {
+  "status": "Implemented",
+  "evidence": "charts do not open record details",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ADrilldowns-06": {
+  "status": "Implemented",
+  "evidence": "requests and tasks labelled apart",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ADrilldowns-07": {
+  "status": "Implemented",
+  "evidence": "breadcrumbs and back links",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ADrilldowns-08": {
+  "status": "Yet to do",
+  "action": "Preview capped at 200 rows; no paging",
+  "evidence": ""
+ },
+ "ADrilldowns-09": {
+  "status": "Implemented",
+  "evidence": "status columns and Needs attention reasons",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ADrilldowns-10": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "ASupportedfo-01": {
+  "status": "Implemented",
+  "evidence": "CSV",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ASupportedfo-02": {
+  "status": "Implemented",
+  "evidence": "XLSX (one sheet)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ASupportedfo-03": {
+  "status": "Implemented",
+  "evidence": "PDF reports; request summary PDF",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ASupportedfo-04": {
+  "status": "Implemented",
+  "evidence": "dashboard CSVs kept",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AExportrequi-01": {
+  "status": "Implemented",
+  "evidence": "scope re-resolved on the server",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AExportrequi-02": {
+  "status": "Implemented",
+  "evidence": "period and India time in the file header",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AExportrequi-03": {
+  "status": "Yet to do",
+  "action": "Applied type and department filters not printed in files",
+  "evidence": ""
+ },
+ "AExportrequi-04": {
+  "status": "Yet to do",
+  "action": "No dictionary reference in files yet",
+  "evidence": ""
+ },
+ "AExportrequi-05": {
+  "status": "Implemented",
+  "evidence": "generated time in the file",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AExportrequi-06": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "AExportrequi-07": {
+  "status": "Implemented",
+  "evidence": "fileName uses the report key and date only",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AExportrequi-08": {
+  "status": "Implemented",
+  "evidence": "UTF-8 with BOM for CSV; XML escaping for XLSX",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AExportrequi-09": {
+  "status": "Yet to do",
+  "action": "No streaming; capped at 5,000 rows",
+  "evidence": ""
+ },
+ "AExportrequi-10": {
+  "status": "Implemented",
+  "evidence": "5,000 rows; 5 MB attachment cap",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AExportrequi-11": {
+  "status": "Implemented",
+  "evidence": "REPORT_EXPORTED audit",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AExportrequi-12": {
+  "status": "Implemented",
+  "evidence": "CSV guard; XLSX inline strings",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AExportrequi-13": {
+  "status": "Implemented",
+  "evidence": "no personal data in file names",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AExportrequi-14": {
+  "status": "Implemented",
+  "evidence": "downloads need a signed-in session; no stored files",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AExportrequi-15": {
+  "status": "Implemented",
+  "evidence": "no temporary files are written",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "APDFsummary-01": {
+  "status": "Implemented",
+  "evidence": "request summary PDF",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "APDFsummary-02": {
+  "status": "Implemented",
+  "evidence": "request summary PDF",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "APDFsummary-03": {
+  "status": "Implemented",
+  "evidence": "request summary PDF",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "APDFsummary-04": {
+  "status": "Implemented",
+  "evidence": "request summary PDF",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "APDFsummary-05": {
+  "status": "Implemented",
+  "evidence": "request summary PDF",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "APDFsummary-06": {
+  "status": "Implemented",
+  "evidence": "request summary PDF",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "APDFsummary-07": {
+  "status": "Yet to do",
+  "action": "SLA status not in the PDF",
+  "evidence": ""
+ },
+ "APDFsummary-08": {
+  "status": "Implemented",
+  "evidence": "request summary PDF (same access as the page)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "APDFsummary-09": {
+  "status": "Yet to do",
+  "action": "Amendments not in the PDF",
+  "evidence": ""
+ },
+ "APDFsummary-10": {
+  "status": "Implemented",
+  "evidence": "request summary PDF footer",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "APDFsummary-11": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "APDFsummary-12": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "ARequiredcap-01": {
+  "status": "Yet to do",
+  "action": "Create and switch on/off; editing not built",
+  "evidence": ""
+ },
+ "ARequiredcap-02": {
+  "status": "Yet to do",
+  "action": "Report yes; saved view selection not built",
+  "evidence": ""
+ },
+ "ARequiredcap-03": {
+  "status": "Implemented",
+  "evidence": "period presets saved with the schedule",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ARequiredcap-04": {
+  "status": "Implemented",
+  "evidence": "email (the approved channel)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ARequiredcap-05": {
+  "status": "Implemented",
+  "evidence": "daily, weekly, monthly",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ARequiredcap-06": {
+  "status": "Yet to do",
+  "action": "Owner only",
+  "evidence": ""
+ },
+ "ARequiredcap-07": {
+  "status": "Implemented",
+  "evidence": "switch on/off; auto-pause",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ARequiredcap-08": {
+  "status": "Implemented",
+  "evidence": "recent deliveries",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ARequiredcap-09": {
+  "status": "Implemented",
+  "evidence": "next run and last status",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ARequiredcap-10": {
+  "status": "Implemented",
+  "evidence": "FAILED recorded; pause after three",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ARequiredcap-11": {
+  "status": "Implemented",
+  "evidence": "unique schedule and due slot",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ARequiredcap-12": {
+  "status": "Implemented",
+  "evidence": "owner permissions at run time",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ARequiredcap-13": {
+  "status": "Implemented",
+  "evidence": "report_runs",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AScheduledre-01": {
+  "status": "Implemented",
+  "evidence": "checked at creation (prepareReport) and at run time",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AScheduledre-02": {
+  "status": "Implemented",
+  "evidence": "owner only; re-resolved scope",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AScheduledre-03": {
+  "status": "Implemented",
+  "evidence": "inactive owner or lost access pauses",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AScheduledre-04": {
+  "status": "Implemented",
+  "evidence": "India time",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AScheduledre-05": {
+  "status": "Implemented",
+  "evidence": "India time has no daylight saving (documented)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AScheduledre-06": {
+  "status": "Implemented",
+  "evidence": "slot claims",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AScheduledre-07": {
+  "status": "Implemented",
+  "evidence": "next slot retries; pause after three",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AScheduledre-08": {
+  "status": "Implemented",
+  "evidence": "lost access pauses at once",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AScheduledre-09": {
+  "status": "Yet to do",
+  "action": "Execution and delivery failures share FAILED",
+  "evidence": ""
+ },
+ "AScheduledre-10": {
+  "status": "Implemented",
+  "evidence": "due slot in report_runs; generated time in the file",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AScheduledre-11": {
+  "status": "Implemented",
+  "evidence": "email to the owner only",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AScheduledre-12": {
+  "status": "Yet to do",
+  "action": "report_runs not pruned yet",
+  "evidence": ""
+ },
+ "AScheduledre-13": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "ASchedulingU-01": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "ASchedulingU-02": {
+  "status": "Implemented",
+  "evidence": "active",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ASchedulingU-03": {
+  "status": "Implemented",
+  "evidence": "switched off or paused",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ASchedulingU-04": {
+  "status": "Implemented",
+  "evidence": "RUNNING run rows",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ASchedulingU-05": {
+  "status": "Implemented",
+  "evidence": "SENT",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ASchedulingU-06": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "ASchedulingU-07": {
+  "status": "Implemented",
+  "evidence": "FAILED",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ASchedulingU-08": {
+  "status": "Yet to do",
+  "action": "Not separate from FAILED",
+  "evidence": ""
+ },
+ "ASchedulingU-09": {
+  "status": "Implemented",
+  "evidence": "SKIPPED: can no longer run",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ASchedulingU-10": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "ARequirements-01": {
+  "status": "Implemented",
+  "evidence": "Asia/Kolkata (general.timezone); India time throughout",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ARequirements-02": {
+  "status": "Implemented",
+  "evidence": "single India time (no per-user timezone in the product)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ARequirements-03": {
+  "status": "Implemented",
+  "evidence": "DATETIME UTC in the database",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ARequirements-04": {
+  "status": "Implemented",
+  "evidence": "India date conversion in queries and display",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ARequirements-05": {
+  "status": "Implemented",
+  "evidence": "India time on pages and in files",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ARequirements-06": {
+  "status": "Implemented",
+  "evidence": "inclusive India dates (documented)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ARequirements-07": {
+  "status": "Implemented",
+  "evidence": "unit tests at boundaries",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ARequirements-08": {
+  "status": "Implemented",
+  "evidence": "by the India date of the event",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ARequirements-09": {
+  "status": "Implemented",
+  "evidence": "dictionary: submitted, closed, decided dates",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ARequirements-10": {
+  "status": "Implemented",
+  "evidence": "April to March",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ARequirements-11": {
+  "status": "Implemented",
+  "evidence": "event time (dictionary)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ARequirements-12": {
+  "status": "Implemented",
+  "evidence": "no daylight saving in India time (documented)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ARequirements-13": {
+  "status": "Implemented",
+  "evidence": "nextRunAt in India time",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ARequirements-14": {
+  "status": "Yet to do",
+  "action": "Not documented",
+  "evidence": ""
+ },
+ "ARequirements-15": {
+  "status": "Implemented",
+  "evidence": "no historical rewrites",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AReportingda-01": {
+  "status": "Implemented",
+  "evidence": "raised by submission date",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AReportingda-02": {
+  "status": "Implemented",
+  "evidence": "outcomes by closing date",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AReportingda-03": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "AReportingda-04": {
+  "status": "Implemented",
+  "evidence": "decisions by decision date",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AReportingda-05": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "AReportingda-06": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "AReportingda-07": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A18.1-01": {
+  "status": "Implemented",
+  "evidence": "server/analytics/metrics.ts, semantics.ts",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.1-02": {
+  "status": "Implemented",
+  "evidence": "scope.ts; analytics.repository.ts",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.1-03": {
+  "status": "Implemented",
+  "evidence": "semantics.ts",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.1-04": {
+  "status": "Implemented",
+  "evidence": "slaStatus; loadSla",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.1-05": {
+  "status": "Implemented",
+  "evidence": "periods.ts",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.1-06": {
+  "status": "Implemented",
+  "evidence": "percentChange; previousPeriod; loadTrend",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.1-07": {
+  "status": "Implemented",
+  "evidence": "loadBreakdown; loadApproverLoad",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.1-08": {
+  "status": "Implemented",
+  "evidence": "buckets; loadTrend",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.1-09": {
+  "status": "Implemented",
+  "evidence": "server/reports",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.1-10": {
+  "status": "Implemented",
+  "evidence": "analytics-views.repository.ts",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.1-11": {
+  "status": "Implemented",
+  "evidence": "runDueSchedules",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.1-12": {
+  "status": "Implemented",
+  "evidence": "evaluateAlerts; alertDecision",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.1-13": {
+  "status": "Implemented",
+  "evidence": "live with As of",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.1-14": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A18.1-15": {
+  "status": "Implemented",
+  "evidence": "Automation; job runs",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.2-01": {
+  "status": "Implemented",
+  "evidence": "server functions behind server-rendered pages (no separate JSON API by design)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.2-02": {
+  "status": "Implemented",
+  "evidence": "server functions",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.2-03": {
+  "status": "Implemented",
+  "evidence": "server functions",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.2-04": {
+  "status": "Implemented",
+  "evidence": "reports",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.2-05": {
+  "status": "Implemented",
+  "evidence": "server functions",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.2-06": {
+  "status": "Implemented",
+  "evidence": "filter choices from dashboardChoices",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.2-07": {
+  "status": "Yet to do",
+  "action": "Detail lists not paginated",
+  "evidence": ""
+ },
+ "A18.2-08": {
+  "status": "Implemented",
+  "evidence": "catalogue and /users/reports/[key]",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.2-09": {
+  "status": "Implemented",
+  "evidence": "/api/reports/[key]",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.2-10": {
+  "status": "Implemented",
+  "evidence": "report actions",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.2-11": {
+  "status": "Implemented",
+  "evidence": "report actions and Reports page",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.2-12": {
+  "status": "Implemented",
+  "evidence": "alert actions and Reports page",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.2-13": {
+  "status": "Implemented",
+  "evidence": "As of",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.2-14": {
+  "status": "Implemented",
+  "evidence": "requireArea and requireApiArea",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.2-15": {
+  "status": "Implemented",
+  "evidence": "cleanQuery whitelist",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.2-16": {
+  "status": "Implemented",
+  "evidence": "30 days default; two years max",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.2-17": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A18.2-18": {
+  "status": "Implemented",
+  "evidence": "TypeScript result types",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.2-19": {
+  "status": "Implemented",
+  "evidence": "metric dictionary",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.2-20": {
+  "status": "Implemented",
+  "evidence": "apiError 404, 429, 500",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.2-21": {
+  "status": "Implemented",
+  "evidence": "20 exports a minute; row caps",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.2-22": {
+  "status": "Implemented",
+  "evidence": "As of",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.2-23": {
+  "status": "Implemented",
+  "evidence": "export, schedule and alert audits",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.3-01": {
+  "status": "Implemented",
+  "evidence": "analytics_views",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.3-02": {
+  "status": "Implemented",
+  "evidence": "catalogue in code",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.3-03": {
+  "status": "Implemented",
+  "evidence": "report_schedules",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.3-04": {
+  "status": "Implemented",
+  "evidence": "report_runs",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.3-05": {
+  "status": "Implemented",
+  "evidence": "REPORT_EXPORTED audit metadata",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.3-06": {
+  "status": "Implemented",
+  "evidence": "alert_rules, alert_events",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.3-07": {
+  "status": "Not feasible",
+  "blocker": "There is no analytics refresh pipeline: every figure is a live query",
+  "prerequisite": "Only if analytics are materialized later",
+  "alternative": "Live figures with an As of time"
+ },
+ "A18.3-08": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A18.3-09": {
+  "status": "Yet to do",
+  "action": "Index review for analytics queries not done",
+  "evidence": ""
+ },
+ "A18.3-10": {
+  "status": "Implemented",
+  "evidence": "job_runs, report_runs, alert_events, migration items, amendments",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.4-01": {
+  "status": "Implemented",
+  "evidence": "database/migrations",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.4-02": {
+  "status": "Implemented",
+  "evidence": "additive v1.6.0 migrations",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.4-03": {
+  "status": "Yet to do",
+  "action": "BACKUP_RESTORE_AND_ROLLBACK.md to write",
+  "evidence": ""
+ },
+ "A18.4-04": {
+  "status": "Implemented",
+  "evidence": "nothing dropped or rewritten",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.4-05": {
+  "status": "Implemented",
+  "evidence": "new tables; one column change on an unreleased table",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.4-06": {
+  "status": "Implemented",
+  "evidence": "integration database built from all migrations each run",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.4-07": {
+  "status": "Implemented",
+  "evidence": "none dropped or renamed",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.4-08": {
+  "status": "Implemented",
+  "evidence": "no backfills",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.4-09": {
+  "status": "Yet to do",
+  "action": "report_runs and alert_events retention not set",
+  "evidence": ""
+ },
+ "A18.4-10": {
+  "status": "Implemented",
+  "evidence": "nothing run in production",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.5-01": {
+  "status": "Implemented",
+  "evidence": "SQL aggregation",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.5-02": {
+  "status": "Yet to do",
+  "action": "Migration dry run loads requests one by one",
+  "evidence": ""
+ },
+ "A18.5-03": {
+  "status": "Yet to do",
+  "action": "Not done",
+  "evidence": ""
+ },
+ "A18.5-04": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A18.5-05": {
+  "status": "Implemented",
+  "evidence": "30 days default, two years max",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.5-06": {
+  "status": "Implemented",
+  "evidence": "no caches",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.5-07": {
+  "status": "Implemented",
+  "evidence": "no caches",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.5-08": {
+  "status": "Implemented",
+  "evidence": "no caches",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.5-09": {
+  "status": "Implemented",
+  "evidence": "no caches",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.5-10": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A18.5-11": {
+  "status": "Yet to do",
+  "action": "KPIs come from several reads, not one snapshot",
+  "evidence": ""
+ },
+ "A18.5-12": {
+  "status": "Yet to do",
+  "action": "Not measured",
+  "evidence": ""
+ },
+ "A18.5-13": {
+  "status": "Implemented",
+  "evidence": "live; As of",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.6-01": {
+  "status": "Implemented",
+  "evidence": "no materialization: live queries (decision documented)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.6-02": {
+  "status": "Implemented",
+  "evidence": "no materialization",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.6-03": {
+  "status": "Implemented",
+  "evidence": "no materialization",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.6-04": {
+  "status": "Implemented",
+  "evidence": "no materialization",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.6-05": {
+  "status": "Implemented",
+  "evidence": "no materialization",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.6-06": {
+  "status": "Implemented",
+  "evidence": "no materialization",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.6-07": {
+  "status": "Implemented",
+  "evidence": "no materialization",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.6-08": {
+  "status": "Implemented",
+  "evidence": "no materialization",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.6-09": {
+  "status": "Implemented",
+  "evidence": "no materialization",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A18.6-10": {
+  "status": "Implemented",
+  "evidence": "no materialization",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A19.1-01": {
+  "status": "Implemented",
+  "evidence": "Right now cards first",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A19.1-02": {
+  "status": "Implemented",
+  "evidence": "grouped: now, period, charts",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A19.1-03": {
+  "status": "Implemented",
+  "evidence": "scopes",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A19.1-04": {
+  "status": "Implemented",
+  "evidence": "legends and units",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A19.1-05": {
+  "status": "Implemented",
+  "evidence": "cards and charts in a grid",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A19.1-06": {
+  "status": "Implemented",
+  "evidence": "phone width test",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A19.1-07": {
+  "status": "Implemented",
+  "evidence": "scrolling tables",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A19.1-08": {
+  "status": "Implemented",
+  "evidence": "separate cards and statuses",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A19.1-09": {
+  "status": "Implemented",
+  "evidence": "requests vs tasks labels",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A19.1-10": {
+  "status": "Implemented",
+  "evidence": "table view for every chart",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A19.2-01": {
+  "status": "Yet to do",
+  "action": "No loading skeleton for analytics",
+  "evidence": ""
+ },
+ "A19.2-02": {
+  "status": "Implemented",
+  "evidence": "normal display",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A19.2-03": {
+  "status": "Implemented",
+  "evidence": "empty states",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A19.2-04": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A19.2-05": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A19.2-06": {
+  "status": "Implemented",
+  "evidence": "a dash",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A19.2-07": {
+  "status": "Implemented",
+  "evidence": "404 or not offered",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A19.2-08": {
+  "status": "Implemented",
+  "evidence": "session-ended dialog",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A19.2-09": {
+  "status": "Implemented",
+  "evidence": "error boundary",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A19.2-10": {
+  "status": "Implemented",
+  "evidence": "invalid filters fall back",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A19.2-11": {
+  "status": "Yet to do",
+  "action": "Browser download only",
+  "evidence": ""
+ },
+ "A19.2-12": {
+  "status": "Yet to do",
+  "action": "Browser download only",
+  "evidence": ""
+ },
+ "A19.2-13": {
+  "status": "Yet to do",
+  "action": "Plain error response",
+  "evidence": ""
+ },
+ "A19.2-14": {
+  "status": "Yet to do",
+  "action": "Not shown",
+  "evidence": ""
+ },
+ "A19.2-15": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A19.2-16": {
+  "status": "Implemented",
+  "evidence": "FAILED in recent deliveries",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A19.2-17": {
+  "status": "Implemented",
+  "evidence": "deliveries QUEUED",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A19.2-18": {
+  "status": "Implemented",
+  "evidence": "deliveries FAILED",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A19.2-19": {
+  "status": "Yet to do",
+  "action": "Not shown",
+  "evidence": ""
+ },
+ "A19.2-20": {
+  "status": "Implemented",
+  "evidence": "Sent.",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A19.2-21": {
+  "status": "Implemented",
+  "evidence": "Still failing.",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A19.2-22": {
+  "status": "Implemented",
+  "evidence": "not set, no budget, not configured states",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A19.2-23": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A19.3-01": {
+  "status": "Implemented",
+  "evidence": "responsive grid",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A19.3-02": {
+  "status": "Implemented",
+  "evidence": "headings and labels",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A19.3-03": {
+  "status": "Implemented",
+  "evidence": "keyboard",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A19.3-04": {
+  "status": "Implemented",
+  "evidence": "focus styles",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A19.3-05": {
+  "status": "Implemented",
+  "evidence": "aria labels; tables",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A19.3-06": {
+  "status": "Implemented",
+  "evidence": "text and icons with colour",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A19.3-07": {
+  "status": "Implemented",
+  "evidence": "en-IN formats and units",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A19.3-08": {
+  "status": "Implemented",
+  "evidence": "phone test",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A19.3-09": {
+  "status": "Implemented",
+  "evidence": "theme tokens; axe in both themes",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A19.3-10": {
+  "status": "Implemented",
+  "evidence": "theme setting kept",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A19.4-01": {
+  "status": "Implemented",
+  "evidence": "link cards highlight",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A19.4-02": {
+  "status": "Implemented",
+  "evidence": "destination titles",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A19.4-03": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A19.4-04": {
+  "status": "Implemented",
+  "evidence": "legends are not links",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A19.4-05": {
+  "status": "Implemented",
+  "evidence": "period and India time stated",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A19.4-06": {
+  "status": "Implemented",
+  "evidence": "table views",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ASecurityreq-01": {
+  "status": "Implemented",
+  "evidence": "server scope on every query and export",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ASecurityreq-02": {
+  "status": "Yet to do",
+  "action": "Field-level not built",
+  "evidence": ""
+ },
+ "ASecurityreq-03": {
+  "status": "Implemented",
+  "evidence": "scopes by role",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ASecurityreq-04": {
+  "status": "Implemented",
+  "evidence": "no stored exports",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ASecurityreq-05": {
+  "status": "Implemented",
+  "evidence": "no download links to expire",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ASecurityreq-06": {
+  "status": "Implemented",
+  "evidence": "owner checks on views, schedules, alerts",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ASecurityreq-07": {
+  "status": "Implemented",
+  "evidence": "whitelisted query, parameterised SQL, formula guard",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ASecurityreq-08": {
+  "status": "Implemented",
+  "evidence": "export rate limit; row caps",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ASecurityreq-09": {
+  "status": "Implemented",
+  "evidence": "no secrets in analytics",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ASecurityreq-10": {
+  "status": "Implemented",
+  "evidence": "scoped; no data in audits",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ASecurityreq-11": {
+  "status": "Implemented",
+  "evidence": "owner re-checked each run",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ASecurityreq-12": {
+  "status": "Implemented",
+  "evidence": "audits",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "ASecurityreq-13": {
+  "status": "Implemented",
+  "evidence": "plain error messages",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAuditevents-01": {
+  "status": "Implemented",
+  "evidence": "report definitions are code (git history)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAuditevents-02": {
+  "status": "Yet to do",
+  "action": "Created is audited; pause and resume not yet",
+  "evidence": ""
+ },
+ "AAuditevents-03": {
+  "status": "Implemented",
+  "evidence": "REPORT_EXPORTED",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAuditevents-04": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "AAuditevents-05": {
+  "status": "Yet to do",
+  "action": "Created is audited; switch on/off not yet",
+  "evidence": ""
+ },
+ "AAuditevents-06": {
+  "status": "Implemented",
+  "evidence": "OUTBOX_RESENT, JOBS_RUN_MANUALLY, DELIVERY_RETRIED",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAuditevents-07": {
+  "status": "Implemented",
+  "evidence": "settings changes recorded (settings_change_history)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAuditevents-08": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "AAuditevents-09": {
+  "status": "Yet to do",
+  "action": "Retention not built",
+  "evidence": ""
+ },
+ "AAuditevents-10": {
+  "status": "Implemented",
+  "evidence": "definitions are code; settings changes recorded",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A21-01": {
+  "status": "Yet to do",
+  "action": "Not measured",
+  "evidence": ""
+ },
+ "A21-02": {
+  "status": "Yet to do",
+  "action": "Not measured",
+  "evidence": ""
+ },
+ "A21-03": {
+  "status": "Yet to do",
+  "action": "Not measured",
+  "evidence": ""
+ },
+ "A21-04": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A21-05": {
+  "status": "Yet to do",
+  "action": "Not verified with query plans",
+  "evidence": ""
+ },
+ "A21-06": {
+  "status": "Yet to do",
+  "action": "Not measured",
+  "evidence": ""
+ },
+ "A21-07": {
+  "status": "Implemented",
+  "evidence": "slot claims (integration test)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A21-08": {
+  "status": "Implemented",
+  "evidence": "claims on outbox, slots, alerts",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A21-09": {
+  "status": "Implemented",
+  "evidence": "As of",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AReliability-01": {
+  "status": "Implemented",
+  "evidence": "two-year cap",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AReliability-02": {
+  "status": "Implemented",
+  "evidence": "5,000 rows",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AReliability-03": {
+  "status": "Yet to do",
+  "action": "No query timeouts",
+  "evidence": ""
+ },
+ "AReliability-04": {
+  "status": "Implemented",
+  "evidence": "delivery retries back off",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AReliability-05": {
+  "status": "Implemented",
+  "evidence": "slot claims",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AReliability-06": {
+  "status": "Implemented",
+  "evidence": "claims",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AReliability-07": {
+  "status": "Implemented",
+  "evidence": "logs and job runs",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AReliability-08": {
+  "status": "Implemented",
+  "evidence": "runner heartbeat; LATE health",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AReliability-09": {
+  "status": "Implemented",
+  "evidence": "no caches",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AReliability-10": {
+  "status": "Yet to do",
+  "action": "Analytics page has no section boundaries",
+  "evidence": ""
+ },
+ "AReliability-11": {
+  "status": "Implemented",
+  "evidence": "analytics only reads",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.1-01": {
+  "status": "Yet to do",
+  "action": "Main formulas tested in integration; not every one",
+  "evidence": ""
+ },
+ "A22.1-02": {
+  "status": "Implemented",
+  "evidence": "share and percentChange tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.1-03": {
+  "status": "Implemented",
+  "evidence": "SLA status tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.1-04": {
+  "status": "Implemented",
+  "evidence": "boundary tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.1-05": {
+  "status": "Implemented",
+  "evidence": "bucket edge tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.1-06": {
+  "status": "Implemented",
+  "evidence": "custom range tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.1-07": {
+  "status": "Implemented",
+  "evidence": "India date test",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.1-08": {
+  "status": "Implemented",
+  "evidence": "financial year tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.1-09": {
+  "status": "Implemented",
+  "evidence": "working-calendar tests for due times",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.1-10": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A22.1-11": {
+  "status": "Implemented",
+  "evidence": "no due time means not set",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.1-12": {
+  "status": "Implemented",
+  "evidence": "no response time means not set",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.1-13": {
+  "status": "Implemented",
+  "evidence": "zero denominators",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.1-14": {
+  "status": "Implemented",
+  "evidence": "empty data e2e",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.1-15": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A22.1-16": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A22.1-17": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A22.1-18": {
+  "status": "Implemented",
+  "evidence": "parallel counting test",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.1-19": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A22.1-20": {
+  "status": "Implemented",
+  "evidence": "requests vs tasks test",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.1-21": {
+  "status": "Implemented",
+  "evidence": "reliability tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.1-22": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A22.1-23": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A22.1-24": {
+  "status": "Implemented",
+  "evidence": "readiness tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.1-25": {
+  "status": "Implemented",
+  "evidence": "previous period test",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.1-26": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A22.2-01": {
+  "status": "Implemented",
+  "evidence": "scope tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.2-02": {
+  "status": "Implemented",
+  "evidence": "department scope test",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.2-03": {
+  "status": "Implemented",
+  "evidence": "requester-only rows test",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.2-04": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A22.2-05": {
+  "status": "Implemented",
+  "evidence": "scope fallback tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.2-06": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A22.2-07": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A22.2-08": {
+  "status": "Implemented",
+  "evidence": "export 404 tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.2-09": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A22.2-10": {
+  "status": "Implemented",
+  "evidence": "schedule tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.2-11": {
+  "status": "Implemented",
+  "evidence": "inactive owner test",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.2-12": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A22.2-13": {
+  "status": "Implemented",
+  "evidence": "resend and slot tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.2-14": {
+  "status": "Not feasible",
+  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers)",
+  "prerequisite": "Owner: choose an integration and supply API access",
+  "alternative": "Not applicable until an integration exists"
+ },
+ "A22.2-15": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A22.2-16": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A22.2-17": {
+  "status": "Yet to do",
+  "action": "Audit rows for exports not asserted",
+  "evidence": ""
+ },
+ "A22.3-01": {
+  "status": "Implemented",
+  "evidence": "e2e scopes",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.3-02": {
+  "status": "Implemented",
+  "evidence": "e2e KPI labels",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.3-03": {
+  "status": "Implemented",
+  "evidence": "e2e table view",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.3-04": {
+  "status": "Implemented",
+  "evidence": "e2e filters",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.3-05": {
+  "status": "Implemented",
+  "evidence": "e2e empty states",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.3-06": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A22.3-07": {
+  "status": "Implemented",
+  "evidence": "phone test",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.3-08": {
+  "status": "Implemented",
+  "evidence": "table view; axe",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.3-09": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A22.3-10": {
+  "status": "Implemented",
+  "evidence": "e2e save view",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.3-11": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A22.3-12": {
+  "status": "Implemented",
+  "evidence": "e2e schedule",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.3-13": {
+  "status": "Implemented",
+  "evidence": "e2e alert",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.3-14": {
+  "status": "Implemented",
+  "evidence": "e2e Run now; resend tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.3-15": {
+  "status": "Implemented",
+  "evidence": "SLA label tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.3-16": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A22.4-01": {
+  "status": "Implemented",
+  "evidence": "e2e submit journeys",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.4-02": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A22.4-03": {
+  "status": "Implemented",
+  "evidence": "e2e queues",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.4-04": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A22.4-05": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A22.4-06": {
+  "status": "Implemented",
+  "evidence": "e2e approvals",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.4-07": {
+  "status": "Yet to do",
+  "action": "Integration covers it; no e2e",
+  "evidence": ""
+ },
+ "A22.4-08": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A22.4-09": {
+  "status": "Implemented",
+  "evidence": "e2e outcomes",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.4-10": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A22.4-11": {
+  "status": "Yet to do",
+  "action": "No email in e2e",
+  "evidence": ""
+ },
+ "A22.4-12": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A22.4-13": {
+  "status": "Implemented",
+  "evidence": "resend integration tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.4-14": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A22.4-15": {
+  "status": "Implemented",
+  "evidence": "audit assertions in integration tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.5-01": {
+  "status": "Implemented",
+  "evidence": "engine and integration tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.5-02": {
+  "status": "Implemented",
+  "evidence": "engine and integration tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.5-03": {
+  "status": "Implemented",
+  "evidence": "engine tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.5-04": {
+  "status": "Implemented",
+  "evidence": "engine tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.5-05": {
+  "status": "Implemented",
+  "evidence": "engine tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.5-06": {
+  "status": "Implemented",
+  "evidence": "engine tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.5-07": {
+  "status": "Implemented",
+  "evidence": "engine tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.5-08": {
+  "status": "Implemented",
+  "evidence": "integration tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.5-09": {
+  "status": "Implemented",
+  "evidence": "integration tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.5-10": {
+  "status": "Implemented",
+  "evidence": "integration tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.5-11": {
+  "status": "Implemented",
+  "evidence": "integration tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.5-12": {
+  "status": "Implemented",
+  "evidence": "withdrawal tests (one cancelled state)",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.5-13": {
+  "status": "Implemented",
+  "evidence": "delegation tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.5-14": {
+  "status": "Implemented",
+  "evidence": "hand-over tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.5-15": {
+  "status": "Implemented",
+  "evidence": "out-of-office tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.5-16": {
+  "status": "Implemented",
+  "evidence": "blocked step tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.5-17": {
+  "status": "Implemented",
+  "evidence": "hold tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.5-18": {
+  "status": "Implemented",
+  "evidence": "reopen tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.5-19": {
+  "status": "Implemented",
+  "evidence": "migration tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.5-20": {
+  "status": "Implemented",
+  "evidence": "reliability tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.5-21": {
+  "status": "Not feasible",
+  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers)",
+  "prerequisite": "Owner: choose an integration and supply API access",
+  "alternative": "Not applicable until an integration exists"
+ },
+ "A22.6-01": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A22.6-02": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A22.6-03": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A22.6-04": {
+  "status": "Implemented",
+  "evidence": "concurrent schedule test",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.6-05": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A22.6-06": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A22.6-07": {
+  "status": "Implemented",
+  "evidence": "scope tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.6-08": {
+  "status": "Implemented",
+  "evidence": "404 tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.6-09": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A22.6-10": {
+  "status": "Implemented",
+  "evidence": "export tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.6-11": {
+  "status": "Implemented",
+  "evidence": "no export links exist",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.6-12": {
+  "status": "Implemented",
+  "evidence": "inactive owner test",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.6-13": {
+  "status": "Implemented",
+  "evidence": "no caches",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.6-14": {
+  "status": "Implemented",
+  "evidence": "slot and claim tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.6-15": {
+  "status": "Yet to do",
+  "action": "Not built",
+  "evidence": ""
+ },
+ "A22.7-01": {
+  "status": "Implemented",
+  "evidence": "full suites pass",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.7-02": {
+  "status": "Implemented",
+  "evidence": "full suites pass",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.7-03": {
+  "status": "Implemented",
+  "evidence": "full suites pass",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.7-04": {
+  "status": "Implemented",
+  "evidence": "full suites pass",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.7-05": {
+  "status": "Implemented",
+  "evidence": "full suites pass",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.7-06": {
+  "status": "Implemented",
+  "evidence": "full suites pass",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.7-07": {
+  "status": "Implemented",
+  "evidence": "full suites pass",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.7-08": {
+  "status": "Implemented",
+  "evidence": "full suites pass",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.7-09": {
+  "status": "Implemented",
+  "evidence": "full suites pass",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.7-10": {
+  "status": "Implemented",
+  "evidence": "full suites pass",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.7-11": {
+  "status": "Implemented",
+  "evidence": "full suites pass",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "A22.7-12": {
+  "status": "Not feasible",
+  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers)",
+  "prerequisite": "Owner: choose an integration and supply API access",
+  "alternative": "Not applicable until an integration exists"
+ },
+ "A22.7-13": {
+  "status": "Implemented",
+  "evidence": "dashboard CSV tests pass",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC01Audit-01": {
+  "status": "Implemented",
+  "evidence": "APPLICATION_CURRENT_STATE_AUDIT.md; ANALYTICS_CURRENT_STATE_AUDIT.md",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC01Audit-02": {
+  "status": "Implemented",
+  "evidence": "audit docs; KNOWN_ISSUES",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC01Audit-03": {
+  "status": "Implemented",
+  "evidence": "reused toCsv, pdf-lib, budgets, stuck detection",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC01Audit-04": {
+  "status": "Implemented",
+  "evidence": "decisions D-122, D-123",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC02Role-01": {
+  "status": "Implemented",
+  "evidence": "scopes",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC02Role-02": {
+  "status": "Implemented",
+  "evidence": "server-side scope",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC02Role-03": {
+  "status": "Implemented",
+  "evidence": "404 tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC03KPIc-01": {
+  "status": "Implemented",
+  "evidence": "metric dictionary",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC03KPIc-02": {
+  "status": "Implemented",
+  "evidence": "integration tests on a known dataset",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC03KPIc-03": {
+  "status": "Implemented",
+  "evidence": "requests vs tasks",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC03KPIc-04": {
+  "status": "Implemented",
+  "evidence": "a dash for missing",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC03KPIc-05": {
+  "status": "Implemented",
+  "evidence": "limitations doc",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC04Pendi-01": {
+  "status": "Implemented",
+  "evidence": "semantics",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC04Pendi-02": {
+  "status": "Implemented",
+  "evidence": "semantics",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC04Pendi-03": {
+  "status": "Implemented",
+  "evidence": "semantics",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC04Pendi-04": {
+  "status": "Implemented",
+  "evidence": "semantics",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC04Pendi-05": {
+  "status": "Implemented",
+  "evidence": "engine semantics",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC05Chart-01": {
+  "status": "Implemented",
+  "evidence": "charts with units and filters",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC05Chart-02": {
+  "status": "Implemented",
+  "evidence": "equal-length periods",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC05Chart-03": {
+  "status": "Yet to do",
+  "action": "Insufficient samples not flagged",
+  "evidence": ""
+ },
+ "AAC05Chart-04": {
+  "status": "Yet to do",
+  "action": "Drill-down limited",
+  "evidence": ""
+ },
+ "AAC06Condi-01": {
+  "status": "Implemented",
+  "evidence": "semantic tokens",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC06Condi-02": {
+  "status": "Implemented",
+  "evidence": "text and icons with colour",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC06Condi-03": {
+  "status": "Yet to do",
+  "action": "Stale not shown",
+  "evidence": ""
+ },
+ "AAC06Condi-04": {
+  "status": "Implemented",
+  "evidence": "no colour-only states",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC07Repor-01": {
+  "status": "Implemented",
+  "evidence": "catalogue; limitations doc",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC07Repor-02": {
+  "status": "Implemented",
+  "evidence": "same scoped run for screen and file",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC07Repor-03": {
+  "status": "Implemented",
+  "evidence": "export tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC07Repor-04": {
+  "status": "Implemented",
+  "evidence": "PDF summary uses the page access check",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC07Repor-05": {
+  "status": "Implemented",
+  "evidence": "period, India time, generated time in files",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC08Sched-01": {
+  "status": "Implemented",
+  "evidence": "schedules",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC08Sched-02": {
+  "status": "Yet to do",
+  "action": "Not separated",
+  "evidence": ""
+ },
+ "AAC08Sched-03": {
+  "status": "Implemented",
+  "evidence": "slot claims",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC08Sched-04": {
+  "status": "Implemented",
+  "evidence": "scope checks, cool-down, claims",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC08Sched-05": {
+  "status": "Implemented",
+  "evidence": "claims",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC09Date-01": {
+  "status": "Implemented",
+  "evidence": "boundary tests",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC09Date-02": {
+  "status": "Implemented",
+  "evidence": "dictionary",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC09Date-03": {
+  "status": "Implemented",
+  "evidence": "India time stated",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC09Date-04": {
+  "status": "Implemented",
+  "evidence": "no rewrites",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC10Secur-01": {
+  "status": "Yet to do",
+  "action": "Field-level restrictions not built",
+  "evidence": ""
+ },
+ "AAC10Secur-02": {
+  "status": "Implemented",
+  "evidence": "audits",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC10Secur-03": {
+  "status": "Implemented",
+  "evidence": "authenticated downloads",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC10Secur-04": {
+  "status": "Implemented",
+  "evidence": "scope re-checked",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC10Secur-05": {
+  "status": "Implemented",
+  "evidence": "re-checked at run time",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC11Perfo-01": {
+  "status": "Yet to do",
+  "action": "Not measured",
+  "evidence": ""
+ },
+ "AAC11Perfo-02": {
+  "status": "Implemented",
+  "evidence": "caps",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC11Perfo-03": {
+  "status": "Implemented",
+  "evidence": "analytics only reads",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC11Perfo-04": {
+  "status": "Implemented",
+  "evidence": "claim tests; no caches",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC12Quali-01": {
+  "status": "Implemented",
+  "evidence": "full suites pass",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC12Quali-02": {
+  "status": "Implemented",
+  "evidence": "reported in IMPLEMENTATION_REPORT",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC12Quali-03": {
+  "status": "Implemented",
+  "evidence": "counts from real runs",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC12Quali-04": {
+  "status": "Implemented",
+  "evidence": "KNOWN_ISSUES",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC13Docum-01": {
+  "status": "Implemented",
+  "evidence": "metric dictionary",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC13Docum-02": {
+  "status": "Implemented",
+  "evidence": "limitations doc",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "AAC13Docum-03": {
+  "status": "Yet to do",
+  "action": "To write in IMPLEMENTATION_REPORT",
+  "evidence": ""
+ },
+ "AAC13Docum-04": {
+  "status": "Yet to do",
+  "action": "IMPLEMENTATION_REPORT to write",
+  "evidence": ""
+ },
+ "AAC13Docum-05": {
+  "status": "Yet to do",
+  "action": "BACKUP_RESTORE_AND_ROLLBACK to write",
+  "evidence": ""
+ },
+ "AAC13Docum-06": {
+  "status": "Implemented",
+  "evidence": "nothing deployed",
+  "test": "see docs/ANALYTICS_TEST_MATRIX.md"
  }
 }
