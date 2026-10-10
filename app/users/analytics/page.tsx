@@ -9,6 +9,8 @@ import { loadAging, loadApproverLoad, loadBreakdown, loadKpis, loadNow, loadSla,
 import { dashboardChoices } from "@/lib/db/repositories/dashboards.repository";
 import { findStuckRequests } from "@/server/ops/stuck";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
+import { listViews } from "@/lib/db/repositories/analytics-views.repository";
+import { DeleteViewButton, SaveViewForm } from "@/features/analytics/ReportForms";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +29,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
   const departmentId = scope.kind === "ORGANISATION" && choices.departments.some((department) => String(department.id) === query.department) ? Number(query.department) : null;
   const filter: AnalyticsFilter = { period, workflowId, departmentId };
   const previous = previousPeriod(period);
+  const views = await listViews(user.id, "DASHBOARD");
   const [kpis, before, current, trend, aging, sla, byType, byDepartment, steps, approvers, stuck] = await Promise.all([
     loadKpis(scope, viewer, filter),
     loadKpis(scope, viewer, filter, previous),
@@ -130,6 +133,26 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
           Reset
         </Link>
       </form>
+
+      <div className="mb-6 flex flex-wrap items-start gap-6">
+        {views.length > 0 && (
+          <p className="text-label">
+            Saved:{" "}
+            {views.map((view) => (
+              <span key={view.id} className="mr-2 inline-flex items-center rounded-full border border-line px-2.5 py-0.5">
+                <Link href={`/users/analytics?${new URLSearchParams(view.query).toString()}`} className="link">
+                  {view.name}
+                </Link>
+                <DeleteViewButton viewId={view.id} name={view.name} />
+              </span>
+            ))}
+          </p>
+        )}
+        <SaveViewForm target="DASHBOARD" query={Object.fromEntries(Object.entries({ scope: scope.kind, period: period.key, from: period.key === "custom" ? period.from : "", to: period.key === "custom" ? period.to : "", type: query.type ?? "", department: query.department ?? "" }).filter(([, value]) => value))} />
+        <Link href="/users/reports" className="link text-label">
+          Reports and alerts
+        </Link>
+      </div>
 
       <h2 className="mb-2 text-label font-semibold uppercase tracking-wide text-ink-muted">Right now</h2>
       <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

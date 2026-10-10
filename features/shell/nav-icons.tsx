@@ -1,6 +1,7 @@
 import {
   AlertTriangle,
   ChartLine,
+  FileBarChart,
   BarChart3,
   Bot,
   BellRing,
@@ -55,6 +56,7 @@ const ICONS: Record<string, LucideIcon> = {
   "/admin/budgets": Building2,
   "/admin/attention": AlertTriangle,
   "/users/analytics": ChartLine,
+  "/users/reports": FileBarChart,
   "/users/analytics?scope=ORGANISATION": ChartLine,
   "/admin/calendar": CalendarDays,
   "/admin/users": UserCog,

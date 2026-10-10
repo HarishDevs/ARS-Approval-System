@@ -24,6 +24,8 @@ export interface SendEmailInput {
   subject: string;
   text: string;
   html?: string;
+  // Scheduled reports (D-123): small files only; the caller caps the size.
+  attachments?: { filename: string; content: Uint8Array | string }[];
 }
 
 export async function sendEmail(
@@ -49,6 +51,7 @@ export async function sendEmail(
         text: input.text,
         ...(config.replyTo ? { reply_to: config.replyTo } : {}),
         ...(input.html ? { html: input.html } : {}),
+        ...(input.attachments?.length ? { attachments: input.attachments.map((file) => ({ filename: file.filename.replace(/[^A-Za-z0-9._-]/g, "_"), content: Buffer.from(file.content).toString("base64") })) } : {}),
       }),
     });
   } catch (error) {

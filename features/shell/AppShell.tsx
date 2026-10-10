@@ -59,6 +59,7 @@ export async function AppShell({
     { href: "/users/custom", label: "Custom approval", group: "My approvals" },
     { href: "/users/search", label: "Search requests", group: "My approvals" },
     { href: "/users/analytics", label: "Analytics", group: "My approvals" },
+    { href: "/users/reports", label: "Reports", group: "My approvals" },
     { href: "/users/notifications", label: "Notifications", group: "Profile" },
     { href: "/users/notifications/settings", label: "Notification settings", group: "Profile" },
     { href: "/users/delegation", label: "Out of office", group: "Profile" },

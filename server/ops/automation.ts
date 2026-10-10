@@ -9,6 +9,7 @@ import { closeAbandonedRuns, finishJobRun, pruneJobRuns, startJobRun, summariseJ
 import { runDailyBackup } from "@/server/ops/backup";
 import { runDailyTemplateSync } from "@/server/notifications/template-registry";
 import { countByReason, findStuckRequests } from "@/server/ops/stuck";
+import { evaluateAlerts, runDueSchedules } from "@/server/reports/schedules";
 import { logError } from "@/lib/logging/logger";
 
 // Automation inventory (unified prompt FN11, Addendum B). Every background
@@ -114,6 +115,30 @@ export const AUTOMATIONS: readonly Automation[] = [
     owner: "Super Admin",
   },
   {
+    key: "reports",
+    name: "Scheduled reports",
+    what: "Emails each scheduled report when it is due, with the owner's current permissions.",
+    trigger: "Every job run (reports due since the last run).",
+    everyMinutes: 5,
+    retry: "A failed delivery is retried at its next slot; three failures in a row pause the schedule.",
+    idempotency: "Each slot is claimed once (unique schedule + due time), so a report is never sent twice for the same slot.",
+    onFailure: "Recorded in the schedule's run history; the owner sees it under Reports.",
+    recovery: "Fix the cause (usually email settings), then switch the schedule on again.",
+    owner: "The report's owner; Super Admin for email settings",
+  },
+  {
+    key: "alerts",
+    name: "Alert rules",
+    what: "Checks people's alert rules and tells them (inbox and email) when a number crosses their line.",
+    trigger: "Every job run.",
+    everyMinutes: 5,
+    retry: "The next run checks again.",
+    idempotency: "Each firing is claimed on the rule before sending; a rule fires at most once per cool-down while over the line.",
+    onFailure: "Recorded here; the rule is checked again next run.",
+    recovery: "None needed.",
+    owner: "Each rule's owner",
+  },
+  {
     key: "stuck",
     name: "Stuck-request scan",
     what: "Counts open requests that need IT (blocked steps, inactive approvers, no activity, unsent messages).",
@@ -137,6 +162,8 @@ const STEPS: Record<string, () => Promise<StepResult>> = {
   housekeeping: async () => ({ ...(await runHousekeeping()), outboxPruned: await pruneOutbox(), jobRunsPruned: await pruneJobRuns(), abandonedRunsClosed: await closeAbandonedRuns() }),
   delegations: () => auditDelegationDates(),
   backup: () => runDailyBackup(),
+  reports: async () => ({ ...(await runDueSchedules()) }),
+  alerts: async () => ({ ...(await evaluateAlerts()) }),
   stuck: async () => {
     const counts = countByReason(await findStuckRequests());
     return { ...counts };
