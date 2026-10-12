@@ -391,6 +391,13 @@
 - Reports (catalogue, downloads, schedules, alerts, background exports) are for IT Admins and the Super Admin, checked on the server by `canUseReports` at every entry point and in the job runner. They live in the Admin space (`/admin/reports`). Analytics stays for everyone.
 - Analytics has the same screens in both spaces (`/users/analytics`, `/admin/analytics`), so opening it never changes the space.
 - Help and Profile are in the account menu, not the sidebar; "My work" is "Overview". | Owner; Claude, 10 Oct 2026 |
+| D-138 | 12 Oct 2026 | **One filter engine for the personal lists (owner, v1.7.2):**
+- My requests and Collaborating share `server/requests/list-filters.ts`; Waiting for me extends `queue-filters.ts` the same way.
+- Every filter is an address-bar value, parsed and checked on the server and bound as a parameter.
+- The base set (raised by me / I'm a collaborator, not removed / waiting for me) is always applied first; filters only narrow it.
+- Filter choices (people, departments, steps, types) come only from that base set.
+- Saved views use the existing analytics views (targets my_requests, collaborating, queue), open to everyone (not reports).
+- The list pages have no route-level loading skeleton, because they host Server Actions (V6-D06). | Owner; Claude, 12 Oct 2026 |
 | D-033 | 28 Sep 2026 | **Staff data is provided by the admin. Roles are assigned per user, by the admin only. Users are added or made inactive in the Admin Portal** (never hard-deleted, so history and audit stay intact). *Resolves Q-010.* | Owner (answer 7) |
 
 ## 4. Open questions (must be answered before the phase shown)
@@ -418,6 +425,14 @@
 | Q-019 | **Which Resend account holds the API key in Super Admin?** The "arsenergy" team (open in Chrome) is empty. Email works only once the From domain (`approvals@arssteels.net`) is verified in the account that owns the key, or a new key from a team with a verified domain is entered. | Before go-live (no email is delivered today) | **Answered 9 Oct 2026:** the key is "New Api Approval" in the Resend team "arssteels" (harishkumar.t@arssteels.com). The owner verified `arssteels.net` there; Resend's log showed "API key not authorized for this domain" for a few minutes after verification, then the test email was **sent** |
 
 ## 5. Work log (newest first)
+
+### 12 Oct 2026 (v1.7.2: Collaborating screen and filters)
+- **Source:** owner asked for "a separate screen for all the approvals in which I am a collaborator, with a complete possible custom filter", then "filters in For me, My Requests also".
+- **Built (D-138):**
+  - /users/collaborating;
+  - a shared filter engine and screen for My requests and Collaborating;
+  - Waiting for me gains the extra filters and saved views.
+- **Checks:** unit 422, integration 182, E2E 88, QA 27, origin 1.
 
 ### 10 Oct 2026 (v1.7.1: navigation and reports access)
 - **Source:** owner screenshot. Analytics from the Admin portal switched the space to My approvals.

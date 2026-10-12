@@ -11,6 +11,12 @@ You are signed out after **2 hours without activity**, and 12 hours after signin
 ### Overview
 The first page (called "My work" before v1.7.1) after signing in. Tiles show what is waiting for you, what is overdue, your open requests and what was sent back. Below are, in order: **due soon / overdue**, **waiting for me**, **returned for changes**, **your drafts**, **your recent requests** and **finished lately**.
 
+### Collaborating, My requests and Waiting for me: filters
+- **Collaborating** lists the requests people added you to follow.
+- On all three lists, click a quick tab (Open, Sent back, Overdue…) or open **More filters**. You can combine search, status, type, people, step, due dates, files and date ranges.
+- Each filter in use shows as a chip; click it to remove it. **Clear all** resets.
+- **Save these filters** keeps the combination as a view; you can share it or make it your default.
+
 ### Raise a request
 1. **New request** → pick the approval type (e.g. *Purchase & SCM Approval*).
 2. Fill in the form. Add files if needed: up to 5 at a time, 10 MB each (PDF, images, Word, Excel, PowerPoint, CSV, text).

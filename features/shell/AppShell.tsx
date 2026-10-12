@@ -55,6 +55,7 @@ export async function AppShell({
     { href: "/users", label: "Overview", group: "My approvals" },
     { href: "/users/queue", label: "Waiting for me", group: "My approvals" },
     { href: "/users/requests", label: "My requests", group: "My approvals" },
+    { href: "/users/collaborating", label: "Collaborating", group: "My approvals" },
     { href: "/users/new", label: "New request", group: "My approvals" },
     { href: "/users/custom", label: "Custom approval", group: "My approvals" },
     { href: "/users/search", label: "Search requests", group: "My approvals" },

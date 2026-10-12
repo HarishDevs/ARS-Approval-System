@@ -17,7 +17,8 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
-- **Now (10 Oct 2026):** v1.7.1 (owner: Analytics keeps the Admin space; Help and Profile in the account menu; Overview; Reports IT only) is tagged, not deployed.
+- **Now (12 Oct 2026):** v1.7.2 (Collaborating screen; full filters on Collaborating, My requests and Waiting for me) is tagged, not deployed.
+- **Earlier (10 Oct 2026):** v1.7.1 (owner: Analytics keeps the Admin space; Help and Profile in the account menu; Overview; Reports IT only) is tagged, not deployed.
 - **Earlier (10 Oct 2026):** v1.7.0 (lists A, B and C, V170-*) is built, tested and tagged; it is **not deployed**. Register: 1,326 Implemented, 465 Yet to do, 66 Not feasible.
 - **Next, the owner:** back up, then publish v1.7.0 (one additive migration). Afterwards: optionally set Report downloads = ROLE and give people "Can export"; run `npm run db:verify-backup` against a downloaded backup into an empty database.
 - **Next, development:** remaining register themes (delegated/reassigned analytics, SLA due-date calendar, aging heatmap, scheduled-report status states, restore-verification history in the app).
@@ -286,6 +287,15 @@ Found during S8-06:
 - [x] S8-12 Google sign-in reached UNKNOWN_ACCOUNT: itadmin@ is an alias. The Super Admin now signs in as itsupport@arsenergy.co.in (D-082, migration + non-overwriting seed, v1.0.5) (done 8 Oct 2026)
 - [x] S8-01b Go-live on GoDaddy with the owner, following docs/DEPLOYMENT.md (the owner is at the wizard's "Add secrets" step) (done 9 Oct 2026: live since 8 Oct 2026)
 - [x] S8-04 Update the three living files; commit and push (done 8 Oct 2026)
+
+## Session log — v1.7.2: Collaborating screen (12 Oct 2026), planned before starting
+Owner: "a separate screen for all the approvals in which I am a collaborator, with a complete possible custom filter".
+- [x] V172-01 /users/collaborating in the sidebar: every request I'm a collaborator on (not removed, not deleted), with quick tabs and counts (done 12 Oct 2026)
+- [x] V172-02 Filters: text; several statuses; open/finished; type; raised by; requester's department; added by; current step; waiting with; overdue; due within N days; has files; approval valid/expired; raised, added, closed and last-activity date ranges; sort; rows per page; saved views (own, shareable, default) (done 12 Oct 2026)
+- [x] V172-03 Choices come only from my own collaborations (no names or types I couldn't already see); every value validated on the server (done 12 Oct 2026)
+- [x] V172-04 My requests → "Shared with me" goes to the new screen (done 12 Oct 2026)
+- [x] V172-06 Owner follow-up ("filters in For me, My Requests also"): the same filter engine on My requests; Waiting for me gains search, raised by, department, step, mine/covering, due within, files, raised and waiting-since dates, per page and saved views (done 12 Oct 2026)
+- [x] V172-05 Tests (unit filters, integration query, e2e), docs, living files, v1.7.2, CI (done 12 Oct 2026)
 
 ## Session log — v1.7.1: navigation and reports access (10 Oct 2026), planned before starting
 Owner: "when I am in Admin portal and click on Analytics it switches the spaces to My Approvals; remove Help and Profile from the sidebar and add them in the top-right space panel for all; change My Work to Overview; restrict reports to admin only and remove them from side navigation".

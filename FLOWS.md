@@ -938,6 +938,13 @@ Reports → My alerts: choose **Severity**, **Tell me by** (app inbox, or inbox 
 - **Account menu (your name, top right, every space):** switch space, Profile, Notifications, Sign-in & devices, Help, Sign out.
 - **Admin sidebar:** … Analytics (`/admin/analytics`, stays in Admin), Reports (IT and Super Admin only) …
 
+## F-118 Collaborating and list filters (v1.7.2, D-138)
+1. **Sidebar → Collaborating** (or My requests, or Waiting for me).
+2. Pick a quick tab, or open **More filters** and combine any of them, then **Apply**.
+3. Active filters show as chips; click one to remove it; **Clear all** resets.
+4. **Save these filters** → a named view (Share, Make default).
+5. Open a request from the list; Back returns to the same filtered list.
+
 ## F-89 Notification choices (v1.5.0, D-110)
 Profile → Notifications → **Settings**: per kind of message, email and WhatsApp on/off. Security and "work waiting for you" are locked on. A switched-off message is recorded as SKIPPED / USER_PREFERENCE; the in-app list always gets it.
 

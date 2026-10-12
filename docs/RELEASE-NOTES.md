@@ -1,5 +1,24 @@
 # Release notes
 
+## v1.7.2 (12 Oct 2026): Collaborating screen, and filters everywhere
+- **Collaborating** (sidebar): every request someone added you to follow, on its own screen. "Shared with me" in My requests now opens it.
+- **Filters for Collaborating and My requests:**
+  - quick tabs with counts (All, Open, Waiting for approvers, Sent back, On hold, Approved, Rejected, Withdrawn, Overdue);
+  - search (number, title, who raised it);
+  - several statuses at once, approval type (or custom approvals);
+  - who raised it, their department and who added you (Collaborating only);
+  - the step it's waiting at, and who it's waiting with;
+  - overdue, due within 1 to 30 days, with or without files, approval still valid / expiring / expired;
+  - date ranges for raised, added to you (Collaborating), closed and last activity;
+  - order (newest, oldest, latest activity, due soonest, request number, latest added) and 25, 50 or 100 per page.
+  - Every filter in use shows as a chip you can remove. Save filters as a view; you can share it or make it your default.
+- **Waiting for me:** the same idea. Besides Show, Approval type and Order, **More filters** has:
+  - search, raised by, their department, step;
+  - mine or covering for someone;
+  - due within, files, raised and waiting-since dates, and per page.
+  - Saved views work here too. Bulk approval appears when no filter is in use, as before.
+- The filter choices only list people, types and steps from your own lists. A filter can only narrow what you can already see.
+
 ## v1.7.1 (10 Oct 2026): navigation tidy-up, reports for IT only
 - **Analytics keeps your space:** opening Analytics from the Admin space now stays in the Admin space (`/admin/analytics`, starting at the whole organisation). In My approvals it's still `/users/analytics`. The drill-down lists and "How these are worked out" stay in the same space too.
 - **Help and Profile have moved** from the sidebar to the account menu (your name, top right) in every space, next to Notifications and Sign-in & devices.

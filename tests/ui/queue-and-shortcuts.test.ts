@@ -5,9 +5,11 @@ import { isTyping } from "@/features/shell/shortcuts";
 
 describe("Waiting for me filters (WS-01)", () => {
   it("reads only known values, with safe defaults", () => {
-    expect(parseQueueFilter({})).toEqual({ show: "all", typeId: null, sort: "oldest" });
-    expect(parseQueueFilter({ show: "overdue", type: "12", sort: "due" })).toEqual({ show: "overdue", typeId: 12, sort: "due" });
-    expect(parseQueueFilter({ show: "DROP TABLE", type: "1 OR 1=1", sort: "x" })).toEqual({ show: "all", typeId: null, sort: "oldest" });
+    // v1.7.2 added more filters; all default to "not set".
+    const none = { q: "", requesterId: null, departmentId: null, step: null, forWhom: null, dueWithinDays: null, hasFiles: null, raisedFrom: null, raisedTo: null, waitingFrom: null, waitingTo: null, size: 25 };
+    expect(parseQueueFilter({})).toEqual({ show: "all", typeId: null, sort: "oldest", ...none });
+    expect(parseQueueFilter({ show: "overdue", type: "12", sort: "due" })).toEqual({ show: "overdue", typeId: 12, sort: "due", ...none });
+    expect(parseQueueFilter({ show: "DROP TABLE", type: "1 OR 1=1", sort: "x", raisedBy: "1 OR 1=1", files: "maybe", for: "everyone", size: "9999" })).toEqual({ show: "all", typeId: null, sort: "oldest", ...none });
   });
 
   it("builds conditions with parameters only, and the order", () => {

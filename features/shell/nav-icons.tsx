@@ -31,6 +31,7 @@ import {
   User,
   UserCog,
   Users,
+  UsersRound,
   type LucideIcon,
 } from "lucide-react";
 
@@ -43,6 +44,7 @@ const ICONS: Record<string, LucideIcon> = {
   "/users/custom": ListChecks,
   "/users/search": FileSearch,
   "/users/calendar": CalendarDays,
+  "/users/collaborating": UsersRound,
   "/users/help": HelpCircle,
   "/users/profile": User,
   "/admin": LayoutDashboard,

@@ -24,7 +24,6 @@ const ALLOWED = [
   "app/users/help/loading.tsx",
   "app/users/new/(list)/loading.tsx",
   "app/users/profile/loading.tsx", // the theme choice doesn't need a refresh
-  "app/users/requests/(list)/loading.tsx",
 ];
 
 function find(dir: string, root: string): string[] {

@@ -563,7 +563,7 @@ export async function listAttentionTasksFor(userId: number, limit = 10, db: Quer
 }
 
 export async function countPendingTasksFor(userId: number, filter?: QueueFilter, db: Queryable = getDbPool()): Promise<number> {
-  const extra = filter ? queueFilterSql(filter) : { where: "", params: [] };
+  const extra = filter ? queueFilterSql(filter, userId) : { where: "", params: [] };
   const [rows] = await db.query<(RowDataPacket & { total: number })[]>(`SELECT COUNT(*) AS total ${PENDING_FOR}${extra.where}`, [userId, userId, userId, ...extra.params]);
   return Number(rows[0]?.total ?? 0);
 }
@@ -574,7 +574,7 @@ export async function listPendingTasksFor(
   db: Queryable = getDbPool(),
   filter?: QueueFilter,
 ): Promise<QueueItem[]> {
-  const extra = filter ? queueFilterSql(filter) : { where: "", params: [], orderBy: "t.created_at, t.id" };
+  const extra = filter ? queueFilterSql(filter, userId) : { where: "", params: [], orderBy: "t.created_at, t.id" };
   const [rows] = await db.query<
     (RowDataPacket & { request_id: number; request_no: string; title: string; requester_name: string; task_key: string; node_label: string; task_type: string; request_status: string; created_at: Date; due_at: Date | null; overdue: number; approver_id: number; approver_name: string; type_name: string })[]
   >(
@@ -608,6 +608,20 @@ export async function queueTypesFor(userId: number, db: Queryable = getDbPool())
     [userId, userId, userId],
   );
   return rows.map((row) => ({ id: row.id, name: row.name, count: Number(row.total) }));
+}
+
+// v1.7.2: choices for the Waiting for me filters, only from what waits for
+// the person now (no other names or departments).
+export async function queueChoicesFor(userId: number, db: Queryable = getDbPool()): Promise<{ requesters: { id: number; name: string }[]; departments: { id: number; name: string }[]; steps: string[]; covering: boolean }> {
+  const params = [userId, userId, userId];
+  const [requesters] = await db.query<(RowDataPacket & { id: number; name: string })[]>(`SELECT DISTINCT u.id, u.name ${PENDING_FOR} ORDER BY u.name LIMIT 300`, params);
+  const [departments] = await db.query<(RowDataPacket & { id: number; name: string })[]>(
+    `SELECT DISTINCT dp.id, dp.name ${PENDING_FOR.replace("JOIN users a ON a.id = t.approver_id", "JOIN users a ON a.id = t.approver_id JOIN departments dp ON dp.id = u.department_id")} ORDER BY dp.name LIMIT 200`,
+    params,
+  );
+  const [steps] = await db.query<(RowDataPacket & { step: string })[]>(`SELECT DISTINCT t.node_label AS step ${PENDING_FOR} ORDER BY step LIMIT 200`, params);
+  const [[covering]] = await db.query<RowDataPacket[]>(`SELECT EXISTS(SELECT 1 ${PENDING_FOR} AND t.approver_id <> ?) AS yes`, [...params, userId]);
+  return { requesters: requesters.map((row) => ({ id: row.id, name: row.name })), departments: departments.map((row) => ({ id: row.id, name: row.name })), steps: steps.map((row) => row.step), covering: Number(covering?.yes) === 1 };
 }
 
 // Requester, anyone with a task on it (now or before), the active delegate
