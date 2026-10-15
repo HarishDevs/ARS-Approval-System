@@ -14,12 +14,14 @@ const ITEMS = [
   { href: "/users/profile", label: "Profile", icon: User, also: ["/users/notifications", "/users/delegation", "/users/security"] },
 ];
 
-export function BottomNav({ waiting }: { waiting: number }) {
+export function BottomNav({ waiting, hidden = [] }: { waiting: number; hidden?: string[] }) {
   const pathname = usePathname();
+  // v1.8.0: pages hidden from this person (page access) are left out.
+  const items = ITEMS.filter((item) => !hidden.includes(item.href));
   return (
     <nav aria-label="Quick" className="fixed inset-x-0 bottom-0 z-header border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] md:hidden">
-      <ul className="grid grid-cols-5">
-        {ITEMS.map((item) => {
+      <ul className="grid" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
+        {items.map((item) => {
           const active = item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`) || (item.also ?? []).some((path) => pathname.startsWith(path));
           const Icon = item.icon;
           const count = item.href === "/users/queue" ? waiting : 0;

@@ -945,6 +945,26 @@ Reports → My alerts: choose **Severity**, **Tell me by** (app inbox, or inbox 
 4. **Save these filters** → a named view (Share, Make default).
 5. Open a request from the list; Back returns to the same filtered list.
 
+## F-119 My approved requests / Approved by me (v1.8.0, D-139)
+Sidebar → **My approved requests** or **Approved by me** → quick tab or **More filters** → open a request. Filters stay in the address; save them as a view.
+
+## F-120 Custom approval set-up (v1.8.0, D-140, IT)
+1. Admin → **Custom approval**.
+2. Add, change or remove fields (same builder as approval types).
+3. Step options: default and "People may change it".
+4. **Preview the fields** → **Save set-up** → confirm.
+5. New custom approvals use it; earlier requests keep their fields.
+
+## F-121 Page access (v1.8.0, D-141, Super Admin)
+1. Super Admin → **Page access**.
+2. Per page: the level for everyone (Full / View only / Hidden) → Save.
+3. **Departments and people** link → add a department or person rule, or change or remove one.
+4. **Check what a person can open** → choose the person → their level on every page.
+5. Effect: hidden pages leave the menus and answer "not found"; view-only pages show a note and refuse changes.
+
+## F-122 Inactivity sign-out (v1.8.0, D-142)
+After 28 minutes without activity (default 30): "Still there?" → **Stay signed in** or **Sign out now**. At 30 minutes: "You were signed out" → **Sign in again**. The Super Admin sets the minutes (Providers & security → Authentication) and is never signed out for inactivity.
+
 ## F-89 Notification choices (v1.5.0, D-110)
 Profile → Notifications → **Settings**: per kind of message, email and WhatsApp on/off. Security and "work waiting for you" are locked on. A switched-off message is recorded as SKIPPED / USER_PREFERENCE; the in-app list always gets it.
 

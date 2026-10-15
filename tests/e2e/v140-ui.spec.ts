@@ -129,7 +129,9 @@ test("IT turns a custom approval into a reusable approval type (P5-04)", async (
   await page.goto("/users/custom");
   await page.getByLabel("Title").fill("Team offsite in Ooty");
   await page.getByLabel("Details").fill("Two days, 12 people.");
-  await page.getByLabel("People (hold Ctrl to pick several)").selectOption({ label: "Manoj Manager (E2E_MGR)" });
+  // v1.8.0: search and pick, like Collaborators.
+  await page.getByRole("combobox", { name: /^People \(search and pick/ }).fill("Manoj");
+  await page.getByRole("option", { name: "Manoj Manager (E2E_MGR)" }).click();
   await page.getByRole("button", { name: "Submit custom approval" }).click();
   await expect(page).toHaveURL(/\/users\/requests\/\d+\?submitted=1/);
   const path = new URL(page.url()).pathname;

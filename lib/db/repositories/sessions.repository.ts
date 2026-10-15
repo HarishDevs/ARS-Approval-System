@@ -62,6 +62,18 @@ export async function createSession(
   );
 }
 
+// v1.8.0: seconds since the session was last used, or null when it is
+// revoked or past its absolute expiry. The idle limit is applied by the
+// caller, per person (the Super Admin is never signed out for inactivity).
+export async function sessionIdleSeconds(sessionId: string, userId: number, db: Queryable = getDbPool()): Promise<number | null> {
+  const [rows] = await db.query<(RowDataPacket & { idle: number })[]>(
+    `SELECT TIMESTAMPDIFF(SECOND, last_seen_at, CURRENT_TIMESTAMP) AS idle FROM user_sessions
+     WHERE id = ? AND user_id = ? AND revoked_at IS NULL AND expires_at > CURRENT_TIMESTAMP LIMIT 1`,
+    [sessionId, userId],
+  );
+  return rows[0] ? Math.max(0, Number(rows[0].idle)) : null;
+}
+
 // Live = not revoked, not past its absolute expiry, and used within the
 // idle limit (audit S-05; last_seen_at is refreshed at most once a minute).
 export async function isSessionActive(sessionId: string, userId: number, idleMinutes: number, db: Queryable = getDbPool()): Promise<boolean> {
@@ -74,9 +86,9 @@ export async function isSessionActive(sessionId: string, userId: number, idleMin
   return rows.length === 1;
 }
 
-export async function touchSession(sessionId: string, db: Queryable = getDbPool()): Promise<void> {
+export async function touchSession(sessionId: string, db: Queryable = getDbPool(), force = false): Promise<void> {
   await db.query<ResultSetHeader>(
-    "UPDATE user_sessions SET last_seen_at = CURRENT_TIMESTAMP WHERE id = ? AND last_seen_at < DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 1 MINUTE)",
+    `UPDATE user_sessions SET last_seen_at = CURRENT_TIMESTAMP WHERE id = ?${force ? "" : " AND last_seen_at < DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 1 MINUTE)"}`,
     [sessionId],
   );
 }

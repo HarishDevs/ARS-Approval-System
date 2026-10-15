@@ -398,6 +398,23 @@
 - Filter choices (people, departments, steps, types) come only from that base set.
 - Saved views use the existing analytics views (targets my_requests, collaborating, queue), open to everyone (not reports).
 - The list pages have no route-level loading skeleton, because they host Server Actions (V6-D06). | Owner; Claude, 12 Oct 2026 |
+| D-139 | 15 Oct 2026 | **Approved lists (owner, v1.8.0):** "My approved requests" = raised by me, status APPROVED. "Approved by me" = I decided an approval task with APPROVED (decided_by me, so approvals given for someone I cover count; on_behalf_of shows for whom), whatever happened to the request later. Same filter engine (D-138), with tabs and filters per list. | Owner; Claude, 15 Oct 2026 |
+| D-140 | 15 Oct 2026 | **Custom approval set-up (owner, v1.8.0):**
+- IT (Admin → Custom approval) sets the fields and, for "All of them must approve", "Respond within" and "If nobody to approve", a default and whether people may change it.
+- The server applies fixed options to every step (not FYIs) on submit.
+- Changes apply to new custom approvals only; each request keeps the form stored with its own workflow version (owner: OK).
+- "Specific people" is a search-and-pick picker; work tasks and FYIs list and accept anyone active (namedApprovers checks approval steps only), approval steps approver-eligible people only (D-085). | Owner; Claude, 15 Oct 2026 |
+| D-141 | 15 Oct 2026 | **Page access (owner, v1.8.0):**
+- Managed by the Super Admin only.
+- Every page of My approvals and Admin (server/authorization/pages.ts, with the API routes that belong to it) is Full, View or Hidden for everyone, a department or a person. Person beats department beats everyone; no rule = Full; a space's first page is never hidden.
+- Checked on the server in requireArea (page: Hidden → 404) and requireApiArea (Server Actions and change APIs need Full).
+- The page address comes from the middleware, signed with SESSION_SECRET. The middleware now also runs on prefetches. Without a valid address, a person with restrictions is refused (fail closed).
+- Never applies to the Super Admin. Audited (PAGE_ACCESS_CHANGED / PAGE_ACCESS_DENIED). | Owner; Claude, 15 Oct 2026 |
+| D-142 | 15 Oct 2026 | **Inactivity sign-out (owner, v1.8.0; supersedes the 120-minute default):**
+- 30 minutes by default; the Super Admin sets 5 to 480 minutes.
+- Applies to users and IT admins; the Super Admin is exempt (12-hour limit only).
+- The browser's session check no longer counts as activity (it used to keep an open tab signed in for ever). Activity in the page is reported at the next minute's check.
+- A warning with "Stay signed in" 2 minutes before. | Owner; Claude, 15 Oct 2026 |
 | D-033 | 28 Sep 2026 | **Staff data is provided by the admin. Roles are assigned per user, by the admin only. Users are added or made inactive in the Admin Portal** (never hard-deleted, so history and audit stay intact). *Resolves Q-010.* | Owner (answer 7) |
 
 ## 4. Open questions (must be answered before the phase shown)
@@ -425,6 +442,17 @@
 | Q-019 | **Which Resend account holds the API key in Super Admin?** The "arsenergy" team (open in Chrome) is empty. Email works only once the From domain (`approvals@arssteels.net`) is verified in the account that owns the key, or a new key from a team with a verified domain is entered. | Before go-live (no email is delivered today) | **Answered 9 Oct 2026:** the key is "New Api Approval" in the Resend team "arssteels" (harishkumar.t@arssteels.com). The owner verified `arssteels.net` there; Resend's log showed "API key not authorized for this domain" for a few minutes after verification, then the test email was **sent** |
 
 ## 5. Work log (newest first)
+
+### 15 Oct 2026 (v1.8.0: approved lists, custom approval set-up, page access, inactivity sign-out)
+- **Source:** owner request, plus the answers: timeout for users and admins, not the Super Admin; only the Super Admin manages pages; field changes apply to new custom approvals only.
+- **Built (D-139 to D-142):**
+  - /users/approved and /users/approved-by-me;
+  - Admin → Custom approval (fields, step options, preview) and DynamicFields shared with the request form;
+  - PeoplePicker in the step editor; work and FYI steps can name anyone;
+  - Super Admin → Page access with signed page addresses;
+  - inactivity sign-out with a warning.
+- **Found and fixed:** the browser's 5-minute session check refreshed the session, so an open tab was never signed out for inactivity.
+- **Checks:** unit 433, integration 188, E2E 92, QA 27, origin 1.
 
 ### 12 Oct 2026 (v1.7.2: Collaborating screen and filters)
 - **Source:** owner asked for "a separate screen for all the approvals in which I am a collaborator, with a complete possible custom filter", then "filters in For me, My Requests also".

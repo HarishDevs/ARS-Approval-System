@@ -17,6 +17,16 @@ The first page (called "My work" before v1.7.1) after signing in. Tiles show wha
 - Each filter in use shows as a chip; click it to remove it. **Clear all** resets.
 - **Save these filters** keeps the combination as a view; you can share it or make it your default.
 
+### My approved requests and Approved by me
+- **My approved requests** lists what you raised that was approved: when, by whom, and whether the approval is still valid.
+- **Approved by me** lists every request you approved a step of, including ones you approved for someone you cover, and where each one is now.
+- Both have quick tabs, **More filters**, removable filter chips and saved views, like My requests.
+
+### Signing out after no activity
+- For safety you're signed out after a while without activity (30 minutes unless IT set otherwise).
+- Two minutes before, the app asks "Still there?": choose **Stay signed in**.
+- Typing, clicking or scrolling counts as activity.
+
 ### Raise a request
 1. **New request** → pick the approval type (e.g. *Purchase & SCM Approval*).
 2. Fill in the form. Add files if needed: up to 5 at a time, 10 MB each (PDF, images, Word, Excel, PowerPoint, CSV, text).
@@ -27,12 +37,14 @@ The first page (called "My work" before v1.7.1) after signing in. Tiles show wha
 A line above the **level map** says who it's waiting for, since when, and what comes next. The **level map** on the request shows every level, who approves, and where it is now. Levels that the amount (DoA) or a rule doesn't need show as *skipped*.
 
 ### Custom approval
-For something without an approval type: **Custom approval** → title, details, amount (optional), files (optional) → pick who approves:
+For something without an approval type: **Custom approval** → title, the fields IT has set up (Admin → Custom approval), files (optional) → pick who approves:
 - **in order:** add a level for each;
 - **at the same time:** use *Add parallel steps*;
 - **depending on something:** use *Add a choice*.
 
 You can't approve your own request, but you can give yourself a **work task** (e.g. *Raise the PO* after approval).
+
+For **Specific people**, type a name and pick from the list. Approval steps list only people who can approve; a work task or an FYI can go to anyone. Options marked "(set by IT)" can't be changed.
 
 ### When an approver asks for changes
 You get a message. Open the request, change the fields or add files, then **Resubmit**. It goes back to the level that asked, or to the first level if the approval type is set that way.

@@ -3,7 +3,7 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { SESSION_COOKIE_NAME } from "@/lib/session/constants";
 import { verifySessionToken, verifyPurposeToken } from "@/lib/session/token";
-import { isSessionActive, revokeAllSessionsForUser, revokeSession, touchSession, claimSecurityLink } from "@/lib/db/repositories/sessions.repository";
+import { sessionIdleSeconds, revokeAllSessionsForUser, revokeSession, touchSession, claimSecurityLink } from "@/lib/db/repositories/sessions.repository";
 import { findUserById, securityLockUser, listUserIdsWithRole } from "@/lib/db/repositories/users.repository";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { notify } from "@/server/notifications/notify";
@@ -22,22 +22,50 @@ export interface CurrentSession {
 // and the user is re-read (active flag and roles) on every request, so a
 // deactivation, role change or "sign out everywhere" applies immediately.
 // cache(): layouts and pages each call this; it runs once per request.
-export const getCurrentSession = cache(loadCurrentSession);
+export const getCurrentSession = cache(() => loadCurrentSession(true));
 
-// Used only if the setting can't be read (the default is also 120).
-const IDLE_MINUTES_FALLBACK = 120;
+// v1.8.0 (owner): sign out after this many minutes without activity, for
+// users and IT admins. The Super Admin is never signed out for inactivity
+// (only by the 12-hour limit or by signing out).
+export const IDLE_MINUTES_FALLBACK = 30;
+export const isIdleExempt = (roles: readonly string[]) => roles.includes("SUPER_ADMIN");
 
-async function loadCurrentSession(): Promise<CurrentSession | null> {
+export async function idleLimitMinutes(): Promise<number> {
+  return getNumberSetting("auth.idle_timeout_minutes").catch(() => IDLE_MINUTES_FALLBACK);
+}
+
+// For the browser's session check: the same rules, but looking doesn't
+// count as activity (a check every minute must not keep a session alive).
+export async function peekSession(): Promise<{ signedIn: boolean; idleSecondsLeft: number | null }> {
+  const loaded = await loadCurrentSession(false);
+  if (!loaded) return { signedIn: false, idleSecondsLeft: null };
+  return { signedIn: true, idleSecondsLeft: loaded.idleSecondsLeft };
+}
+
+// "Stay signed in": counts as activity now.
+export async function keepSessionAlive(): Promise<boolean> {
+  const loaded = await loadCurrentSession(false);
+  if (!loaded) return false;
+  await touchSession(loaded.session.sessionId, undefined, true);
+  return true;
+}
+
+async function loadCurrentSession(touch: true): Promise<CurrentSession | null>;
+async function loadCurrentSession(touch: false): Promise<{ session: CurrentSession; idleSecondsLeft: number | null } | null>;
+async function loadCurrentSession(touch: boolean): Promise<CurrentSession | { session: CurrentSession; idleSecondsLeft: number | null } | null> {
   const token = (await cookies()).get(SESSION_COOKIE_NAME)?.value;
   const payload = verifySessionToken(token);
   if (!payload) return null;
-  const idleMinutes = await getNumberSetting("auth.idle_timeout_minutes").catch(() => IDLE_MINUTES_FALLBACK);
-  if (!(await isSessionActive(payload.sid, payload.uid, idleMinutes))) return null;
+  const idleSeconds = await sessionIdleSeconds(payload.sid, payload.uid);
+  if (idleSeconds === null) return null;
   const user = await findUserById(payload.uid);
   if (!user || !user.active || user.lockedSecondsRemaining > 0) return null;
   if (user.isBreakGlass && user.breakGlassSecondsRemaining <= 0) return null;
-  await touchSession(payload.sid);
-  return {
+  const exempt = isIdleExempt(user.roles);
+  const limitSeconds = exempt ? null : (await idleLimitMinutes()) * 60;
+  if (limitSeconds !== null && idleSeconds >= limitSeconds) return null;
+  if (touch) await touchSession(payload.sid);
+  const session: CurrentSession = {
     sessionId: payload.sid,
     user: {
       id: user.id,
@@ -52,6 +80,7 @@ async function loadCurrentSession(): Promise<CurrentSession | null> {
       isDemo: user.isDemo,
     },
   };
+  return touch ? session : { session, idleSecondsLeft: limitSeconds === null ? null : limitSeconds - idleSeconds };
 }
 
 export async function signOut(sessionId: string, userId: number, ipAddress: string | null): Promise<void> {

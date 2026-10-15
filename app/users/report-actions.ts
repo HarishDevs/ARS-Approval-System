@@ -15,7 +15,7 @@ import { requestExport, runExportJob } from "@/server/reports/background";
 
 const OFF: ActionResult = { ok: false, message: "Scheduled reports and alerts are switched off at the moment." };
 const NOT_FOUND: ActionResult = { ok: false, message: "Not found." };
-const LIST_TARGETS = ["my_requests", "collaborating", "queue"];
+const LIST_TARGETS = ["my_requests", "collaborating", "queue", "my_approved", "approved_by_me"];
 
 // v1.7.1: reports, schedules, alerts and exports are for IT and the Super
 // Admin only; Analytics saved views (target DASHBOARD) stay open to all.
@@ -66,7 +66,7 @@ export async function saveViewAction(_previous: ActionResult | null, formData: F
   if (!LIST_TARGETS.includes(target) && target !== "DASHBOARD" && !(await canUseReports(user))) return NOT_FOUND;
   if (name.length < 2) return { ok: false, message: "Give the view a name.", fieldErrors: { viewName: "Use 2 to 80 characters." } };
   if ((await saveView({ userId: user.id, target, name, query: queryFrom(formData) as Record<string, string>, shared: formData.get("shared") === "on" })) === "TOO_MANY") return { ok: false, message: "You have 100 saved views. Delete one first." };
-  revalidatePath(target === "DASHBOARD" ? "/users/analytics" : target === "my_requests" ? "/users/requests" : target === "collaborating" ? "/users/collaborating" : `/admin/reports/${target}`);
+  revalidatePath(target === "DASHBOARD" ? "/users/analytics" : target === "my_requests" ? "/users/requests" : target === "collaborating" ? "/users/collaborating" : target === "my_approved" ? "/users/approved" : target === "approved_by_me" ? "/users/approved-by-me" : `/admin/reports/${target}`);
   return { ok: true, message: `Saved "${name}".` };
 }
 
@@ -79,6 +79,8 @@ export async function deleteViewAction(_previous: ActionResult | null, formData:
   revalidatePath("/users/requests");
   revalidatePath("/users/collaborating");
   revalidatePath("/users/queue");
+  revalidatePath("/users/approved");
+  revalidatePath("/users/approved-by-me");
   revalidatePath("/admin/reports", "layout");
   return { ok: true, message: "View deleted." };
 }
@@ -184,6 +186,8 @@ export async function shareViewAction(_previous: ActionResult | null, formData: 
   revalidatePath("/users/requests");
   revalidatePath("/users/collaborating");
   revalidatePath("/users/queue");
+  revalidatePath("/users/approved");
+  revalidatePath("/users/approved-by-me");
   revalidatePath("/admin/reports", "layout");
   return { ok: true, message: shared ? "Shared: everyone can open it and sees their own numbers." : "No longer shared." };
 }
@@ -198,6 +202,8 @@ export async function defaultViewAction(_previous: ActionResult | null, formData
   revalidatePath("/users/requests");
   revalidatePath("/users/collaborating");
   revalidatePath("/users/queue");
+  revalidatePath("/users/approved");
+  revalidatePath("/users/approved-by-me");
   revalidatePath("/admin/reports", "layout");
   return { ok: true, message: isDefault ? "Opens with this view from now on." : "Default cleared." };
 }

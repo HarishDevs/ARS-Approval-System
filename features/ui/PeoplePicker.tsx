@@ -5,15 +5,43 @@ import { X } from "lucide-react";
 
 // Pick several people (v1.6.1 collaborators). Type to search by name or
 // user id, choose with the mouse or the arrow keys and Enter; each chosen
-// person is a chip with a remove button. Sends one hidden input per person.
+// person is a chip with a remove button. Sends one hidden input per person
+// (when it has a name). v1.8.0: can also be controlled (value + onChange),
+// e.g. the workflow step editor's "Specific people".
 export interface PersonOption {
   id: number;
   label: string;
 }
 
-export function PeoplePicker({ name, options, label, help, max = 20, initial = [], invalid }: { name: string; options: PersonOption[]; label: string; help?: string; max?: number; initial?: number[]; invalid?: boolean }) {
+export function PeoplePicker({
+  name,
+  options,
+  label,
+  help,
+  max = 20,
+  initial = [],
+  invalid,
+  value,
+  onChange,
+}: {
+  name?: string;
+  options: PersonOption[];
+  label: string;
+  help?: string;
+  max?: number;
+  initial?: number[];
+  invalid?: boolean;
+  value?: number[];
+  onChange?: (ids: number[]) => void;
+}) {
   const id = useId();
-  const [chosen, setChosen] = useState<number[]>(initial);
+  const [own, setOwn] = useState<number[]>(initial);
+  const chosen = value ?? own;
+  const setChosen = (update: (current: number[]) => number[]) => {
+    const next = update(chosen);
+    if (onChange) onChange(next);
+    if (value === undefined) setOwn(next);
+  };
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
@@ -51,7 +79,7 @@ export function PeoplePicker({ name, options, label, help, max = 20, initial = [
               <button type="button" onClick={() => remove(personId)} aria-label={`Remove ${byId.get(personId)?.label ?? personId}`} className="flex h-7 w-7 items-center justify-center rounded-full text-ink-muted hover:text-danger-600">
                 <X aria-hidden="true" className="h-3.5 w-3.5" />
               </button>
-              <input type="hidden" name={name} value={personId} />
+              {name && <input type="hidden" name={name} value={personId} />}
             </li>
           ))}
         </ul>

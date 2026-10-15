@@ -7,7 +7,7 @@ import { getRequestContext } from "@/lib/http/request-context";
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await requireApiArea("users");
+    const session = await requireApiArea("users", { change: true });
     await signOutEverywhere(session.user.id, session.user.id, "USER_SIGN_OUT_EVERYWHERE", getRequestContext(request).ipAddress);
     return clearSessionCookie(apiSuccess({ redirectTo: "/login" }));
   } catch {

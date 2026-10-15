@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { SESSION_COOKIE_NAME } from "@/lib/session/constants";
 import { buildCsp, createNonce } from "@/lib/security/csp";
 import { pickRequestId, REQUEST_ID_HEADER } from "@/lib/logging/request-id";
+import { PATH_HEADER, PATH_SIGNATURE_HEADER, signPath } from "@/lib/security/path-signature";
 
 // Layer 1 of 3 (P1-30a): only checks that a session cookie is present.
 // Roles and the session row are checked on the server in every layout,
@@ -38,7 +39,7 @@ const FILE_ROUTE = /^\/api\/(attachments\/\d+|requests\/\d+\/summary\.pdf)$/;
 // Called by machines, not browsers: the cron job and the provider webhook.
 const MACHINE_APIS = ["/api/jobs/", "/api/webhooks/"];
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   // #14: one id per request (Cloudflare's CF-Ray when present, else new).
   // A caller's own x-request-id is not trusted.
@@ -77,6 +78,16 @@ export function middleware(request: NextRequest) {
   }
 
   const requestHeaders = new Headers(request.headers);
+  // v1.8.0 page access: which page this request is for (a Server Action
+  // posts to its page's address), signed so it can't be faked. Any value a
+  // caller sent is replaced.
+  requestHeaders.delete(PATH_HEADER);
+  requestHeaders.delete(PATH_SIGNATURE_HEADER);
+  const signature = await signPath(pathname, process.env.SESSION_SECRET);
+  if (signature) {
+    requestHeaders.set(PATH_HEADER, pathname);
+    requestHeaders.set(PATH_SIGNATURE_HEADER, signature);
+  }
   requestHeaders.set("x-nonce", nonce);
   requestHeaders.set("Content-Security-Policy", csp);
   requestHeaders.set(REQUEST_ID_HEADER, requestId);
@@ -88,13 +99,8 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Skip static files and prefetches (they carry no HTML to protect).
-    {
-      source: "/((?!_next/static|_next/image|favicon.ico|brand/).*)",
-      missing: [
-        { type: "header", key: "next-router-prefetch" },
-        { type: "header", key: "purpose", value: "prefetch" },
-      ],
-    },
+    // Skip static files. v1.8.0: prefetches go through too, so every page
+    // request carries the signed page address (page access).
+    { source: "/((?!_next/static|_next/image|favicon.ico|brand/).*)" },
   ],
 };

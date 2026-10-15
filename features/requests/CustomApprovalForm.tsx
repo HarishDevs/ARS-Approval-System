@@ -4,15 +4,18 @@ import { useEffect, useState } from "react";
 import { DraftStatus, useDraftAutosave } from "@/features/requests/useDraftAutosave";
 import type { DraftInfo } from "@/features/requests/RequestForm";
 import { submitCustomAction } from "@/app/users/collab-actions";
-import { LevelsEditor, newStepId, type BuilderOptions } from "@/features/admin/WorkflowBuilder";
+import { LevelsEditor, newStepId, StepPolicyContext, type BuilderOptions } from "@/features/admin/WorkflowBuilder";
+import { DynamicFields } from "@/features/requests/DynamicFields";
+import { DEFAULT_STEP_POLICY, stepDefaults, type StepPolicy } from "@/server/workflows/step-policy";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import type { BuilderStage } from "@/server/workflows/builder";
-import type { FormField } from "@/server/forms/fields";
+import { NO_LOOKUPS, type FieldLookups, type FormField } from "@/server/forms/fields";
 import { PeoplePicker, type PersonOption } from "@/features/ui/PeoplePicker";
 import { ACCEPT_ATTRIBUTE } from "@/server/attachments/files";
 
 // Custom approval (F-33, D-060): anyone picks anyone, any mix of levels.
-const CUSTOM_FIELDS: FormField[] = [{ key: "amount", label: "Amount (₹)", type: "NUMBER", required: false, min: 0 }];
+// v1.8.0: the fields and step options are IT's set-up (Admin → Custom
+// approval); the server applies the same set-up on submit.
 
 function restoredStages(spec: string | undefined): BuilderStage[] | null {
   try {
@@ -23,10 +26,28 @@ function restoredStages(spec: string | undefined): BuilderStage[] | null {
   }
 }
 
-export function CustomApprovalForm({ options, draft, initial, collaboratorOptions = [] }: { options: BuilderOptions; draft?: DraftInfo; initial?: { title: string; fields: Record<string, string> }; collaboratorOptions?: PersonOption[] }) {
+export function CustomApprovalForm({
+  options,
+  draft,
+  initial,
+  collaboratorOptions = [],
+  fields,
+  policy = DEFAULT_STEP_POLICY,
+  lookups = NO_LOOKUPS,
+  people = [],
+}: {
+  options: BuilderOptions;
+  draft?: DraftInfo;
+  initial?: { title: string; fields: Record<string, string> };
+  collaboratorOptions?: PersonOption[];
+  fields: FormField[];
+  policy?: StepPolicy;
+  lookups?: FieldLookups;
+  people?: PersonOption[];
+}) {
   const [stages, setStages] = useState<BuilderStage[]>(
     () =>
-      restoredStages(initial?.fields.spec) ?? [{ kind: "STEP", step: { id: "s1", label: "First approval", approvers: { kind: "PEOPLE", userIds: [] }, rule: "ALL" } }],
+      restoredStages(initial?.fields.spec) ?? [{ kind: "STEP", step: { id: "s1", label: "First approval", approvers: { kind: "PEOPLE", userIds: [] }, ...stepDefaults(policy) } }],
   );
   const { result, pending, onSubmit } = useActionForm(submitCustomAction);
   const restoredAt = draft?.savedAt ? new Date(draft.savedAt) : null;
@@ -62,20 +83,7 @@ export function CustomApprovalForm({ options, draft, initial, collaboratorOption
           <input id="c-title" name="title" defaultValue={initial?.title ?? ""} placeholder="e.g. Approval to hire a temporary driver" className="field-input" />
           <FieldError result={result} name="title" />
         </div>
-        <div>
-          <label htmlFor="c-details" className="field-label">
-            Details
-          </label>
-          <textarea id="c-details" name="details" rows={4} defaultValue={initial?.fields.details ?? ""} placeholder="What you need approved, and why." className="field-input h-auto py-2.5" />
-          <FieldError result={result} name="details" />
-        </div>
-        <div className="max-w-xs">
-          <label htmlFor="c-amount" className="field-label">
-            Amount (₹) <span className="font-normal text-ink-faint">(optional)</span>
-          </label>
-          <input id="c-amount" name="amount" inputMode="decimal" defaultValue={initial?.fields.amount ?? ""} placeholder="e.g. 45,000" className="field-input" />
-          <FieldError result={result} name="amount" />
-        </div>
+        <DynamicFields fields={fields} mode="submit" people={people} lookups={lookups} initial={initial?.fields} result={result} onLinesChange={nudge} />
         <div>
           <label htmlFor="c-attachments" className="field-label">
             Attachments <span className="font-normal text-ink-faint">(optional)</span>
@@ -89,15 +97,17 @@ export function CustomApprovalForm({ options, draft, initial, collaboratorOption
           <FieldError result={result} name="collaborator" />
         </div>
       </section>
-      <LevelsEditor
-        stages={stages}
-        setStages={setStages}
-        options={options}
-        form={CUSTOM_FIELDS}
-        newId={newStepId}
-        title="Who approves"
-        hint="Pick anyone, in any order. Add parallel steps when several people should look at the same time. You can't approve your own request."
-      />
+      <StepPolicyContext.Provider value={policy}>
+        <LevelsEditor
+          stages={stages}
+          setStages={setStages}
+          options={options}
+          form={fields}
+          newId={newStepId}
+          title="Who approves"
+          hint="Pick anyone, in any order. Add parallel steps when several people should look at the same time. You can't approve your own request."
+        />
+      </StepPolicyContext.Provider>
       {possibleDuplicate && (
         <label className="flex items-start gap-2 rounded-md border border-warning-600/40 bg-warning-50 px-3 py-2 text-label text-warning-600">
           <input type="checkbox" name="allowDuplicate" className="mt-0.5" />

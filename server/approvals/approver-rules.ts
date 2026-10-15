@@ -42,10 +42,13 @@ export function ineligibleChoices(chosen: Iterable<number>, previous: Iterable<n
 }
 
 // People named directly in a workflow (USER sources).
+// v1.8.0 (owner): only approval steps need approver-eligible people; a work
+// task or an FYI can name anyone active (D-097).
 export function namedApprovers(definition: Pick<WorkflowDefinition, "nodes">): number[] {
   const ids = new Set<number>();
   for (const node of definition.nodes) {
     if (!("approvers" in node)) continue;
+    if (node.kind !== "APPROVAL" || node.mode === "WORK") continue;
     for (const source of node.approvers) if (source.type === "USER") ids.add(source.userId);
   }
   return [...ids];

@@ -11,6 +11,8 @@ import { builderSpecSchema } from "@/server/workflows/builder";
 import { addAttachments, filesFrom, prepareFiles } from "@/server/attachments/service";
 import { addCollaborators, collaboratorIdsFrom, removeCollaborator } from "@/server/approvals/collaborators";
 import { logError } from "@/lib/logging/logger";
+import { loadCustomConfig } from "@/server/approvals/custom-config";
+import { prepareFieldFiles, saveFieldFiles } from "@/server/attachments/field-files";
 import { deleteDraft } from "@/lib/db/repositories/drafts.repository";
 import type { ActionResult } from "@/lib/http/action-result";
 
@@ -42,6 +44,17 @@ export async function submitCustomAction(_previous: ActionResult | null, formDat
   // S8-02: files on a custom approval, checked before anything is saved (F-18).
   const files = await prepareFiles(filesFrom(formData));
   if (!files.ok) return { ok: false, message: files.message, fieldErrors: { attachments: files.message } };
+  // v1.8.0: the fields IT set up (Admin → Custom approval), and their files.
+  const { form } = await loadCustomConfig();
+  const fieldFiles = await prepareFieldFiles(formData, form);
+  if (!fieldFiles.ok) return { ok: false, message: fieldFiles.message, fieldErrors: { [fieldFiles.field]: fieldFiles.message } };
+  const fields: Record<string, string> = {};
+  for (const field of form) {
+    for (const key of [field.key, `${field.key}__lines`]) {
+      const value = formData.get(key);
+      if (typeof value === "string") fields[key] = value;
+    }
+  }
   let requestId: number;
   let filesSaved = true;
   try {
@@ -49,7 +62,7 @@ export async function submitCustomAction(_previous: ActionResult | null, formDat
       {
         title: String(formData.get("title") ?? ""),
         builder,
-        fields: { details: String(formData.get("details") ?? ""), amount: String(formData.get("amount") ?? "") },
+        fields: { ...fields, ...fieldFiles.values },
         submissionKey: (() => {
           const value = formData.get("submissionKey");
           return typeof value === "string" && /^[0-9a-f-]{36}$/i.test(value) ? value.toLowerCase() : null;
@@ -60,7 +73,10 @@ export async function submitCustomAction(_previous: ActionResult | null, formDat
     );
     if (!result.ok) return { ok: false, message: result.message, fieldErrors: result.fieldErrors };
     requestId = result.value.requestId;
-    if (result.value.repeated) files.files.length = 0;
+    if (result.value.repeated) {
+      files.files.length = 0;
+      fieldFiles.byField.clear();
+    }
     // v1.6.1: people the requester chose to follow it.
     const collaborators = collaboratorIdsFrom(formData);
     if (collaborators.length && !result.value.repeated) await addCollaborators(requestId, collaborators, me).catch((error) => logError("custom: collaborators failed", error, { requestId }));
@@ -70,7 +86,7 @@ export async function submitCustomAction(_previous: ActionResult | null, formDat
     return { ok: false, message: "Couldn't submit. Please try again." };
   }
   try {
-    filesSaved = (await addAttachments(requestId, files.files, me, { requesterOnly: true })).ok;
+    filesSaved = (await addAttachments(requestId, files.files, me, { requesterOnly: true })).ok && (await saveFieldFiles(requestId, fieldFiles.byField, me));
   } catch (error) {
     logError("submitCustomAction: attachments failed", error, { requestId });
     filesSaved = false;

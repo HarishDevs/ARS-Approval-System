@@ -17,7 +17,8 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
-- **Now (12 Oct 2026):** v1.7.2 (Collaborating screen; full filters on Collaborating, My requests and Waiting for me) is tagged, not deployed.
+- **Now (15 Oct 2026):** v1.8.0 (approved lists, custom approval set-up, page access, inactivity sign-out) is tagged, not deployed. After publishing: check Super Admin → Providers & security → sign-out after no activity (30 by default; an older saved value stays).
+- **Earlier (12 Oct 2026):** v1.7.2 (Collaborating screen; full filters on Collaborating, My requests and Waiting for me) is tagged, not deployed.
 - **Earlier (10 Oct 2026):** v1.7.1 (owner: Analytics keeps the Admin space; Help and Profile in the account menu; Overview; Reports IT only) is tagged, not deployed.
 - **Earlier (10 Oct 2026):** v1.7.0 (lists A, B and C, V170-*) is built, tested and tagged; it is **not deployed**. Register: 1,326 Implemented, 465 Yet to do, 66 Not feasible.
 - **Next, the owner:** back up, then publish v1.7.0 (one additive migration). Afterwards: optionally set Report downloads = ROLE and give people "Can export"; run `npm run db:verify-backup` against a downloaded backup into an empty database.
@@ -287,6 +288,16 @@ Found during S8-06:
 - [x] S8-12 Google sign-in reached UNKNOWN_ACCOUNT: itadmin@ is an alias. The Super Admin now signs in as itsupport@arsenergy.co.in (D-082, migration + non-overwriting seed, v1.0.5) (done 8 Oct 2026)
 - [x] S8-01b Go-live on GoDaddy with the owner, following docs/DEPLOYMENT.md (the owner is at the wizard's "Add secrets" step) (done 9 Oct 2026: live since 8 Oct 2026)
 - [x] S8-04 Update the three living files; commit and push (done 8 Oct 2026)
+
+## Session log — v1.8.0: approved lists, configurable custom approvals, page access, session timeout (15 Oct 2026), planned before starting
+Owner: two pages "My approved requests" and "Approved by me" with all filters; custom approval fields configurable from Admin; page visibility and rights per page by user and department (Super Admin only); 30-minute inactivity sign-out configurable by the Super Admin (users and IT admins, not the Super Admin); "Specific people" as search-and-select; work and FYI steps may pick anyone; "If nobody to approve", "Respond within", "All of them must approve" configurable in Admin with the custom approval fields. Custom fields changed apply to new custom approvals only (owner: OK).
+- [x] V180-01 My approved requests (/users/approved): my requests that were approved, with the list filters plus approved-on dates, approved by, validity and amended tabs (done 15 Oct 2026)
+- [x] V180-02 Approved by me (/users/approved-by-me): requests where I approved a step (myself or for someone), with the list filters plus my decision dates, my step, on behalf of, and the request's outcome (done 15 Oct 2026)
+- [x] V180-03 Session inactivity: default 30 minutes, Super Admin setting 5–480 minutes; users and IT admins only (never the Super Admin); the status check no longer keeps a session alive; warning 2 minutes before with "Stay signed in"; activity in the page counts (done 15 Oct 2026)
+- [x] V180-04 Admin → Custom approval: the fields (form builder) and step options ("If nobody to approve", "Respond within", "All of them must approve": default and whether people may change it); applied on the server; requests already raised keep theirs (done 15 Oct 2026)
+- [x] V180-05 Step editor: "Specific people" is a search-and-select picker; work and FYI steps list anyone active (approval steps only approvers); the server allows non-approvers on work and FYI steps (done 15 Oct 2026)
+- [x] V180-06 Page access (Super Admin): every page of My approvals and Admin; Hidden / View / Full for everyone, a department or a person (person over department over everyone); enforced on the server (404 when hidden, no changes when view-only, also API calls); sidebar hides hidden pages; signed page address from the middleware; never applies to the Super Admin; audited (done 15 Oct 2026)
+- [x] V180-07 Tests (unit, integration, e2e), docs, living files, v1.8.0, CI (done 15 Oct 2026)
 
 ## Session log — v1.7.2: Collaborating screen (12 Oct 2026), planned before starting
 Owner: "a separate screen for all the approvals in which I am a collaborator, with a complete possible custom filter".

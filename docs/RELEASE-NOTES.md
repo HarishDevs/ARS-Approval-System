@@ -1,5 +1,39 @@
 # Release notes
 
+## v1.8.0 (15 Oct 2026): approved lists, custom approval set-up, page access, inactivity sign-out
+**For everyone**
+- **My approved requests** (sidebar): your requests that were approved.
+  - Quick tabs: still valid, expiring, expired, no expiry, amended.
+  - Filters: approved by, approved-on dates, type, files, raised and activity dates.
+- **Approved by me** (sidebar): every request where you approved a step, yourself or for someone you cover, and what happened after.
+  - Quick tabs: still in progress, fully approved, rejected later, withdrawn, for someone else.
+  - Filters: step you approved, your approval dates, raised by, their department, and every list filter.
+- **Custom approval:** the fields are now set by IT. **Who approves → Specific people** is a search-and-pick box, like Collaborators.
+  - Work tasks and FYIs can name anyone in the organisation.
+  - Approval steps still list only people who can approve.
+  - Options IT has fixed are shown as "(set by IT)".
+- **Inactivity sign-out:** you're signed out after 30 minutes with no activity (the Super Admin can change this). Two minutes before, a "Still there?" message offers **Stay signed in**. Typing, clicking or scrolling in the page counts as activity.
+
+**For IT (Admin → Custom approval)**
+- **Fields:** set the fields everyone fills in on a custom approval, with the same field builder as approval types (rules, formulas, line items, files).
+- **Preview:** see the fields before saving.
+- **Step options:** for **All of them must approve**, **Respond within** and **If nobody to approve**, choose the default and whether people may change it. A fixed option is applied by the server whatever is sent.
+- **When it applies:** only to new custom approvals; requests already raised keep their own fields.
+- **Builder:** the approval type builder also uses search-and-pick for Specific people.
+
+**For the Super Admin**
+- **Page access** (Super Admin → Page access): every page of My approvals and the Admin space.
+  - Levels: **Full**, **View only** (can look, can't change anything) or **Hidden**.
+  - Who: everyone, a department or one person. The person's rule beats the department's, which beats everyone's.
+  - **Check what a person can open** shows the result for anyone.
+  - The first page of each space can be view-only but not hidden.
+  - Enforced on the server: a hidden page is "not found" and leaves the menus; a view-only page shows a note and refuses changes. Every change is in the audit log.
+  - Page access never applies to the Super Admin.
+- **Sign-out after no activity:** Providers & security → Authentication: 5 to 480 minutes, 30 by default.
+  - Applies to users and IT admins, never to the Super Admin.
+  - If you had saved a value before (the old default was 120), that value stays until you change it.
+- **Database:** one migration, additive only (`202610150900_v180.sql`). v1.7.2 still runs on it.
+
 ## v1.7.2 (12 Oct 2026): Collaborating screen, and filters everywhere
 - **Collaborating** (sidebar): every request someone added you to follow, on its own screen. "Shared with me" in My requests now opens it.
 - **Filters for Collaborating and My requests:**

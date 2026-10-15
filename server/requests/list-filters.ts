@@ -1,16 +1,18 @@
-// v1.7.2: one filter engine for the request lists people use every day
-// (My requests and Collaborating). Pure: parses the address bar, builds the
-// SQL conditions with bound values only, and writes the address back.
-// Anything unexpected is dropped, never passed on. The base condition (whose
-// requests these are) is always added by the caller and can't be widened by
-// any filter.
+// v1.7.2: one filter engine for the request lists people use every day.
+// v1.8.0: also My approved requests and Approved by me. Pure: parses the
+// address bar, builds the SQL conditions with bound values only, and writes
+// the address back. Anything unexpected is dropped, never passed on. The
+// base condition (whose requests these are) is always added by the caller
+// and can't be widened by any filter.
 export const LIST_STATUSES = ["IN_PROGRESS", "ON_HOLD", "CHANGES_REQUIRED", "APPROVED", "REJECTED", "CANCELLED"] as const;
 export type ListStatus = (typeof LIST_STATUSES)[number];
-export const LIST_SORTS = ["newest", "oldest", "activity", "due", "number", "added"] as const;
+export const LIST_SORTS = ["newest", "oldest", "activity", "due", "number", "added", "approved", "mine"] as const;
 export type ListSort = (typeof LIST_SORTS)[number];
 export const LIST_SIZES = [25, 50, 100] as const;
 export const VALIDITY = ["valid", "expiring", "expired"] as const;
-export type ListBase = "MINE" | "COLLAB";
+// MINE: raised by me. COLLAB: I'm a collaborator. APPROVED_MINE: raised by me
+// and approved. APPROVED_BY_ME: I approved a step (myself or for someone).
+export type ListBase = "MINE" | "COLLAB" | "APPROVED_MINE" | "APPROVED_BY_ME";
 
 export const STATUS_LABEL: Record<ListStatus, string> = {
   IN_PROGRESS: "In progress",
@@ -27,42 +29,69 @@ export const SORT_LABEL: Record<ListSort, string> = {
   due: "Due soonest first",
   number: "Request number",
   added: "Latest added first",
+  approved: "Latest approved first",
+  mine: "My latest approval first",
 };
 export const VALIDITY_LABEL: Record<(typeof VALIDITY)[number], string> = { valid: "Approval still valid", expiring: "Expires within 7 days", expired: "Approval expired" };
 
-// Quick tabs: a named set of statuses (or overdue).
-export const QUICK_TABS = [
-  { key: "all", label: "All" },
-  { key: "open", label: "Open" },
-  { key: "waiting", label: "Waiting for approvers" },
-  { key: "sentback", label: "Sent back" },
-  { key: "hold", label: "On hold" },
-  { key: "approved", label: "Approved" },
-  { key: "rejected", label: "Rejected" },
-  { key: "withdrawn", label: "Withdrawn" },
-  { key: "overdue", label: "Overdue" },
-] as const;
-export type QuickTab = (typeof QUICK_TABS)[number]["key"];
-const TAB_STATUSES: Record<QuickTab, ListStatus[]> = {
-  all: [],
-  open: ["IN_PROGRESS", "ON_HOLD", "CHANGES_REQUIRED"],
-  waiting: ["IN_PROGRESS"],
-  sentback: ["CHANGES_REQUIRED"],
-  hold: ["ON_HOLD"],
-  approved: ["APPROVED"],
-  rejected: ["REJECTED"],
-  withdrawn: ["CANCELLED"],
-  overdue: [],
+// What each list may filter or sort by, beyond the common filters.
+export const BASE_FEATURES: Record<ListBase, { people: boolean; collab: boolean; approvedBy: boolean; mine: boolean; amended: boolean; status: boolean; waiting: boolean; sorts: readonly ListSort[] }> = {
+  MINE: { people: false, collab: false, approvedBy: false, mine: false, amended: false, status: true, waiting: true, sorts: ["newest", "oldest", "activity", "due", "number"] },
+  COLLAB: { people: true, collab: true, approvedBy: false, mine: false, amended: false, status: true, waiting: true, sorts: ["newest", "oldest", "activity", "due", "number", "added"] },
+  APPROVED_MINE: { people: false, collab: false, approvedBy: true, mine: false, amended: true, status: false, waiting: false, sorts: ["approved", "newest", "oldest", "activity", "number"] },
+  APPROVED_BY_ME: { people: true, collab: false, approvedBy: false, mine: true, amended: false, status: true, waiting: true, sorts: ["mine", "newest", "oldest", "activity", "approved", "due", "number"] },
 };
+
+// Quick tabs: a named condition, per list.
+type TabDef = { key: string; label: string; statuses?: ListStatus[]; overdue?: boolean; validity?: (typeof VALIDITY)[number] | "none"; amended?: boolean; onBehalf?: boolean };
+const STATUS_TABS: TabDef[] = [
+  { key: "all", label: "All" },
+  { key: "open", label: "Open", statuses: ["IN_PROGRESS", "ON_HOLD", "CHANGES_REQUIRED"] },
+  { key: "waiting", label: "Waiting for approvers", statuses: ["IN_PROGRESS"] },
+  { key: "sentback", label: "Sent back", statuses: ["CHANGES_REQUIRED"] },
+  { key: "hold", label: "On hold", statuses: ["ON_HOLD"] },
+  { key: "approved", label: "Approved", statuses: ["APPROVED"] },
+  { key: "rejected", label: "Rejected", statuses: ["REJECTED"] },
+  { key: "withdrawn", label: "Withdrawn", statuses: ["CANCELLED"] },
+  { key: "overdue", label: "Overdue", overdue: true },
+];
+export const TABS: Record<ListBase, readonly TabDef[]> = {
+  MINE: STATUS_TABS,
+  COLLAB: STATUS_TABS,
+  APPROVED_MINE: [
+    { key: "all", label: "All" },
+    { key: "valid", label: "Still valid", validity: "valid" },
+    { key: "expiring", label: "Expiring soon", validity: "expiring" },
+    { key: "expired", label: "Expired", validity: "expired" },
+    { key: "noexpiry", label: "No expiry", validity: "none" },
+    { key: "amended", label: "Amended", amended: true },
+  ],
+  APPROVED_BY_ME: [
+    { key: "all", label: "All" },
+    { key: "open", label: "Still in progress", statuses: ["IN_PROGRESS", "ON_HOLD", "CHANGES_REQUIRED"] },
+    { key: "approved", label: "Fully approved", statuses: ["APPROVED"] },
+    { key: "rejected", label: "Rejected later", statuses: ["REJECTED"] },
+    { key: "withdrawn", label: "Withdrawn", statuses: ["CANCELLED"] },
+    { key: "behalf", label: "For someone else", onBehalf: true },
+  ],
+};
+// Kept for the lists that always had these (My requests, Collaborating).
+export const QUICK_TABS = STATUS_TABS;
+export type QuickTab = string;
+export const tabsFor = (base: ListBase) => TABS[base];
 
 export interface ListFilters {
   tab: QuickTab;
   q: string;
   statuses: ListStatus[];
   typeId: number | null; // -1 = custom approvals
-  requesterId: number | null; // COLLAB only
-  departmentId: number | null; // requester's department (COLLAB only)
+  requesterId: number | null; // COLLAB, APPROVED_BY_ME
+  departmentId: number | null; // requester's department (COLLAB, APPROVED_BY_ME)
   addedById: number | null; // COLLAB only
+  approvedById: number | null; // APPROVED_MINE: someone who approved it
+  myStep: string | null; // APPROVED_BY_ME: the step I approved
+  onBehalf: boolean | null; // APPROVED_BY_ME: approved for someone else (yes) / myself (no)
+  amended: boolean | null; // APPROVED_MINE
   step: string | null; // a step waiting now
   waitingWithId: number | null; // a person a step is waiting on now
   overdue: boolean;
@@ -73,8 +102,10 @@ export interface ListFilters {
   raisedTo: string | null;
   addedFrom: string | null; // COLLAB only
   addedTo: string | null;
-  closedFrom: string | null;
+  closedFrom: string | null; // "approved on" for APPROVED_MINE
   closedTo: string | null;
+  mineFrom: string | null; // APPROVED_BY_ME: when I approved
+  mineTo: string | null;
   activityFrom: string | null;
   activityTo: string | null;
   sort: ListSort;
@@ -93,36 +124,42 @@ const dateOf = (value: unknown) => {
   return text && DATE.test(text) ? text : null;
 };
 const range = (from: string | null, to: string | null): [string | null, string | null] => (from && to && to < from ? [to, from] : [from, to]);
+const positive = (value: number | null) => (value !== null && value > 0 ? value : null);
+const yesNo = (value: unknown) => (str(value) === "yes" ? true : str(value) === "no" ? false : null);
 
 export function parseListFilters(params: Record<string, unknown>, base: ListBase): ListFilters {
-  const collab = base === "COLLAB";
+  const can = BASE_FEATURES[base];
   const rawStatuses = ([] as unknown[]).concat(params.status ?? []).flatMap((value) => (typeof value === "string" ? value.split(",") : []));
-  const statuses = [...new Set(rawStatuses.filter((value): value is ListStatus => (LIST_STATUSES as readonly string[]).includes(value)))];
-  const tab = (QUICK_TABS.some((item) => item.key === str(params.tab)) ? str(params.tab) : "all") as QuickTab;
-  const sort = (LIST_SORTS as readonly string[]).includes(str(params.sort) ?? "") ? (str(params.sort) as ListSort) : "newest";
+  const statuses = can.status ? [...new Set(rawStatuses.filter((value): value is ListStatus => (LIST_STATUSES as readonly string[]).includes(value)))] : [];
+  const tab = tabsFor(base).some((item) => item.key === str(params.tab)) ? str(params.tab)! : "all";
+  const sort = can.sorts.includes(str(params.sort) as ListSort) ? (str(params.sort) as ListSort) : can.sorts[0]!;
   const size = LIST_SIZES.find((value) => String(value) === str(params.size)) ?? 25;
   const due = idOf(params.due);
   const page = idOf(params.page);
   const [raisedFrom, raisedTo] = range(dateOf(params.raisedFrom), dateOf(params.raisedTo));
-  const [addedFrom, addedTo] = collab ? range(dateOf(params.addedFrom), dateOf(params.addedTo)) : [null, null];
+  const [addedFrom, addedTo] = can.collab ? range(dateOf(params.addedFrom), dateOf(params.addedTo)) : [null, null];
   const [closedFrom, closedTo] = range(dateOf(params.closedFrom), dateOf(params.closedTo));
+  const [mineFrom, mineTo] = can.mine ? range(dateOf(params.mineFrom), dateOf(params.mineTo)) : [null, null];
   const [activityFrom, activityTo] = range(dateOf(params.activityFrom), dateOf(params.activityTo));
-  const files = str(params.files);
-  const step = str(params.step)?.trim().slice(0, 200) || null;
   const type = idOf(params.type);
+  const tabDef = tabsFor(base).find((item) => item.key === tab);
   return {
     tab,
     q: (str(params.q) ?? "").replace(/\s+/g, " ").trim().slice(0, 100),
     statuses,
     typeId: type !== null && (type === -1 || type > 0) ? type : null,
-    requesterId: collab ? positive(idOf(params.raisedBy)) : null,
-    departmentId: collab ? positive(idOf(params.dept)) : null,
-    addedById: collab ? positive(idOf(params.addedBy)) : null,
-    step,
-    waitingWithId: positive(idOf(params.waitingWith)),
-    overdue: str(params.overdue) === "1" || tab === "overdue",
-    dueWithinDays: due !== null && due >= 1 && due <= 90 ? due : null,
-    hasFiles: files === "yes" ? true : files === "no" ? false : null,
+    requesterId: can.people ? positive(idOf(params.raisedBy)) : null,
+    departmentId: can.people ? positive(idOf(params.dept)) : null,
+    addedById: can.collab ? positive(idOf(params.addedBy)) : null,
+    approvedById: can.approvedBy ? positive(idOf(params.approvedBy)) : null,
+    myStep: can.mine ? str(params.myStep)?.trim().slice(0, 200) || null : null,
+    onBehalf: can.mine ? yesNo(params.onBehalf) : null,
+    amended: can.amended ? yesNo(params.amended) : null,
+    step: can.waiting ? str(params.step)?.trim().slice(0, 200) || null : null,
+    waitingWithId: can.waiting ? positive(idOf(params.waitingWith)) : null,
+    overdue: can.waiting && (str(params.overdue) === "1" || Boolean(tabDef?.overdue)),
+    dueWithinDays: can.waiting && due !== null && due >= 1 && due <= 90 ? due : null,
+    hasFiles: yesNo(params.files),
     validity: (VALIDITY as readonly string[]).includes(str(params.validity) ?? "") ? (str(params.validity) as ListFilters["validity"]) : null,
     raisedFrom,
     raisedTo,
@@ -130,23 +167,28 @@ export function parseListFilters(params: Record<string, unknown>, base: ListBase
     addedTo,
     closedFrom,
     closedTo,
+    mineFrom,
+    mineTo,
     activityFrom,
     activityTo,
-    sort: sort === "added" && !collab ? "newest" : sort,
+    sort,
     size,
     page: page && page > 0 && page <= 10000 ? page : 1,
   };
 }
 
-const positive = (value: number | null) => (value !== null && value > 0 ? value : null);
-
 // Back to the address bar (only what differs from the defaults).
-export function listQuery(filters: Partial<ListFilters>, changes: Partial<ListFilters> = {}): Record<string, string> {
+export function listQuery(filters: Partial<ListFilters>, changes: Partial<ListFilters> = {}, base?: ListBase): Record<string, string> {
   const f = { ...filters, ...changes };
   const out: Record<string, string> = {};
   const put = (key: string, value: unknown) => {
     if (value !== null && value !== undefined && value !== "" && value !== false) out[key] = String(value);
   };
+  const yn = (key: string, value: boolean | null | undefined) => {
+    if (value === true) put(key, "yes");
+    if (value === false) put(key, "no");
+  };
+  const tabOverdue = base ? Boolean(tabsFor(base).find((item) => item.key === f.tab)?.overdue) : f.tab === "overdue";
   if (f.tab && f.tab !== "all") put("tab", f.tab);
   put("q", f.q);
   if (f.statuses?.length) put("status", f.statuses.join(","));
@@ -154,12 +196,15 @@ export function listQuery(filters: Partial<ListFilters>, changes: Partial<ListFi
   put("raisedBy", f.requesterId);
   put("dept", f.departmentId);
   put("addedBy", f.addedById);
+  put("approvedBy", f.approvedById);
+  put("myStep", f.myStep);
+  yn("onBehalf", f.onBehalf);
+  yn("amended", f.amended);
   put("step", f.step);
   put("waitingWith", f.waitingWithId);
-  if (f.overdue && f.tab !== "overdue") put("overdue", "1");
+  if (f.overdue && !tabOverdue) put("overdue", "1");
   put("due", f.dueWithinDays);
-  if (f.hasFiles === true) put("files", "yes");
-  if (f.hasFiles === false) put("files", "no");
+  yn("files", f.hasFiles);
   put("validity", f.validity);
   put("raisedFrom", f.raisedFrom);
   put("raisedTo", f.raisedTo);
@@ -167,36 +212,78 @@ export function listQuery(filters: Partial<ListFilters>, changes: Partial<ListFi
   put("addedTo", f.addedTo);
   put("closedFrom", f.closedFrom);
   put("closedTo", f.closedTo);
+  put("mineFrom", f.mineFrom);
+  put("mineTo", f.mineTo);
   put("activityFrom", f.activityFrom);
   put("activityTo", f.activityTo);
-  if (f.sort && f.sort !== "newest") put("sort", f.sort);
+  const defaultSort = base ? BASE_FEATURES[base].sorts[0] : "newest";
+  if (f.sort && f.sort !== defaultSort) put("sort", f.sort);
   if (f.size && f.size !== 25) put("size", f.size);
   if (f.page && f.page > 1) put("page", f.page);
   return out;
 }
 
-export function listHref(path: string, filters: Partial<ListFilters>, changes: Partial<ListFilters> = {}): string {
-  const text = new URLSearchParams(listQuery(filters, changes)).toString();
+export function listHref(path: string, filters: Partial<ListFilters>, changes: Partial<ListFilters> = {}, base?: ListBase): string {
+  const text = new URLSearchParams(listQuery(filters, changes, base)).toString();
   return text ? `${path}?${text}` : path;
 }
 
 // How many filters (beyond the tab, sort and paging) are in use.
-export function activeCount(f: ListFilters): number {
-  return [f.q, f.statuses.length, f.typeId, f.requesterId, f.departmentId, f.addedById, f.step, f.waitingWithId, f.overdue && f.tab !== "overdue", f.dueWithinDays, f.hasFiles !== null, f.validity, f.raisedFrom || f.raisedTo, f.addedFrom || f.addedTo, f.closedFrom || f.closedTo, f.activityFrom || f.activityTo].filter(Boolean).length;
+export function activeCount(f: ListFilters, base?: ListBase): number {
+  const tabOverdue = base ? Boolean(tabsFor(base).find((item) => item.key === f.tab)?.overdue) : f.tab === "overdue";
+  return [
+    f.q,
+    f.statuses.length,
+    f.typeId,
+    f.requesterId,
+    f.departmentId,
+    f.addedById,
+    f.approvedById,
+    f.myStep,
+    f.onBehalf !== null,
+    f.amended !== null,
+    f.step,
+    f.waitingWithId,
+    f.overdue && !tabOverdue,
+    f.dueWithinDays,
+    f.hasFiles !== null,
+    f.validity,
+    f.raisedFrom || f.raisedTo,
+    f.addedFrom || f.addedTo,
+    f.closedFrom || f.closedTo,
+    f.mineFrom || f.mineTo,
+    f.activityFrom || f.activityTo,
+  ].filter(Boolean).length;
 }
 
 const INDIA = (column: string) => `DATE(DATE_ADD(${column}, INTERVAL 330 MINUTE))`;
 const PENDING = "EXISTS (SELECT 1 FROM approval_tasks pt WHERE pt.request_id = r.id AND pt.status = 'PENDING' AND pt.round = r.round";
+// My approvals on a request (APPROVED_BY_ME); the caller binds my id first.
+const MY_APPROVAL = "EXISTS (SELECT 1 FROM approval_tasks ma WHERE ma.request_id = r.id AND ma.task_type = 'APPROVAL' AND ma.status = 'APPROVED' AND ma.decided_by = ?";
+const VALIDITY_SQL: Record<(typeof VALIDITY)[number] | "none", string> = {
+  valid: "r.status = 'APPROVED' AND r.valid_until > DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 7 DAY)",
+  expiring: "r.status = 'APPROVED' AND r.valid_until > CURRENT_TIMESTAMP AND r.valid_until <= DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 7 DAY)",
+  expired: "r.status = 'APPROVED' AND r.valid_until <= CURRENT_TIMESTAMP",
+  none: "r.valid_until IS NULL",
+};
+const AMENDED_SQL = "EXISTS (SELECT 1 FROM request_amendments am WHERE am.original_id = r.id)";
 
 // Conditions on r (request), w (workflow), u (requester) and, for COLLAB,
-// k (the person's collaborator row). Values are always parameters.
-export function listFilterSql(f: ListFilters, base: ListBase): { where: string[]; params: unknown[]; orderBy: string } {
+// k (the person's collaborator row). Values are always parameters. userId
+// is needed for the "my approval" conditions (APPROVED_BY_ME).
+export function listFilterSql(f: ListFilters, base: ListBase, userId = 0): { where: string[]; params: unknown[]; orderBy: string } {
   const where: string[] = [];
   const params: unknown[] = [];
-  const tabStatuses = TAB_STATUSES[f.tab];
-  if (tabStatuses.length) {
+  const tab = tabsFor(base).find((item) => item.key === f.tab);
+  if (tab?.statuses?.length) {
     where.push("r.status IN (?)");
-    params.push(tabStatuses);
+    params.push(tab.statuses);
+  }
+  if (tab?.validity) where.push(VALIDITY_SQL[tab.validity]);
+  if (tab?.amended) where.push(AMENDED_SQL);
+  if (tab?.onBehalf) {
+    where.push(`${MY_APPROVAL} AND ma.on_behalf_of IS NOT NULL)`);
+    params.push(userId);
   }
   if (f.statuses.length) {
     where.push("r.status IN (?)");
@@ -212,15 +299,15 @@ export function listFilterSql(f: ListFilters, base: ListBase): { where: string[]
     where.push("w.id = ?");
     params.push(f.typeId);
   }
+  if (f.requesterId !== null) {
+    where.push("r.requester_id = ?");
+    params.push(f.requesterId);
+  }
+  if (f.departmentId !== null) {
+    where.push("u.department_id = ?");
+    params.push(f.departmentId);
+  }
   if (base === "COLLAB") {
-    if (f.requesterId !== null) {
-      where.push("r.requester_id = ?");
-      params.push(f.requesterId);
-    }
-    if (f.departmentId !== null) {
-      where.push("u.department_id = ?");
-      params.push(f.departmentId);
-    }
     if (f.addedById !== null) {
       where.push("k.added_by = ?");
       params.push(f.addedById);
@@ -234,6 +321,29 @@ export function listFilterSql(f: ListFilters, base: ListBase): { where: string[]
       params.push(f.addedTo);
     }
   }
+  if (f.approvedById !== null) {
+    where.push("EXISTS (SELECT 1 FROM approval_tasks ab2 WHERE ab2.request_id = r.id AND ab2.status = 'APPROVED' AND ab2.task_type = 'APPROVAL' AND (ab2.decided_by = ? OR ab2.approver_id = ?))");
+    params.push(f.approvedById, f.approvedById);
+  }
+  if (base === "APPROVED_BY_ME") {
+    if (f.myStep) {
+      where.push(`${MY_APPROVAL} AND ma.node_label = ?)`);
+      params.push(userId, f.myStep);
+    }
+    if (f.onBehalf !== null) {
+      where.push(`${MY_APPROVAL} AND ma.on_behalf_of IS ${f.onBehalf ? "NOT " : ""}NULL)`);
+      params.push(userId);
+    }
+    if (f.mineFrom) {
+      where.push(`${MY_APPROVAL} AND ${INDIA("ma.decided_at")} >= ?)`);
+      params.push(userId, f.mineFrom);
+    }
+    if (f.mineTo) {
+      where.push(`${MY_APPROVAL} AND ${INDIA("ma.decided_at")} <= ?)`);
+      params.push(userId, f.mineTo);
+    }
+  }
+  if (f.amended !== null) where.push(`${f.amended ? "" : "NOT "}${AMENDED_SQL}`);
   if (f.step) {
     where.push(`${PENDING} AND pt.node_label = ?)`);
     params.push(f.step);
@@ -248,9 +358,7 @@ export function listFilterSql(f: ListFilters, base: ListBase): { where: string[]
     params.push(f.dueWithinDays);
   }
   if (f.hasFiles !== null) where.push(`${f.hasFiles ? "" : "NOT "}EXISTS (SELECT 1 FROM request_attachments ra WHERE ra.request_id = r.id)`);
-  if (f.validity === "valid") where.push("r.status = 'APPROVED' AND r.valid_until > DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 7 DAY)");
-  if (f.validity === "expiring") where.push("r.status = 'APPROVED' AND r.valid_until > CURRENT_TIMESTAMP AND r.valid_until <= DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 7 DAY)");
-  if (f.validity === "expired") where.push("r.status = 'APPROVED' AND r.valid_until <= CURRENT_TIMESTAMP");
+  if (f.validity) where.push(VALIDITY_SQL[f.validity]);
   for (const [value, sql] of [
     [f.raisedFrom, `${INDIA("r.submitted_at")} >= ?`],
     [f.raisedTo, `${INDIA("r.submitted_at")} <= ?`],
@@ -264,6 +372,7 @@ export function listFilterSql(f: ListFilters, base: ListBase): { where: string[]
     params.push(value);
   }
   const due = "(SELECT MIN(d.due_at) FROM approval_tasks d WHERE d.request_id = r.id AND d.status = 'PENDING')";
+  const mine = `(SELECT MAX(md.decided_at) FROM approval_tasks md WHERE md.request_id = r.id AND md.task_type = 'APPROVAL' AND md.status = 'APPROVED' AND md.decided_by = ${Number(userId) | 0})`;
   const orderBy =
     f.sort === "oldest"
       ? "r.submitted_at ASC, r.id ASC"
@@ -275,6 +384,10 @@ export function listFilterSql(f: ListFilters, base: ListBase): { where: string[]
             ? "r.request_no ASC"
             : f.sort === "added" && base === "COLLAB"
               ? "k.added_at DESC, r.id DESC"
-              : "r.submitted_at DESC, r.id DESC";
+              : f.sort === "approved"
+                ? "r.closed_at IS NULL, r.closed_at DESC, r.id DESC"
+                : f.sort === "mine" && base === "APPROVED_BY_ME"
+                  ? `${mine} DESC, r.id DESC`
+                  : "r.submitted_at DESC, r.id DESC";
   return { where, params, orderBy };
 }

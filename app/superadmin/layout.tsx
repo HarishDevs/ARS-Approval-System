@@ -18,6 +18,7 @@ export default async function SuperAdminLayout({ children }: { children: React.R
       nav={[
         { href: "/superadmin", label: "Overview" },
         { href: "/superadmin/settings", label: "Providers & security" },
+        { href: "/superadmin/pages", label: "Page access" },
         { href: "/superadmin/templates", label: "WhatsApp templates" },
         { href: "/superadmin/requests", label: "Requests" },
         { href: "/superadmin/import", label: "Import data" },

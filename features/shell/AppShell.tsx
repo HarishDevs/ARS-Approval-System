@@ -12,6 +12,8 @@ import { CommandPalette, type PaletteLink } from "@/features/shell/CommandPalett
 import { countPendingTasksFor } from "@/lib/db/repositories/approvals.repository";
 import { THEME_SETTING, parseTheme } from "@/server/ui/theme";
 import { Bell } from "lucide-react";
+import { isHiddenHref, navAccess } from "@/server/authorization/page-access";
+import { ViewOnlyNote } from "@/features/shell/ViewOnlyNote";
 import type { AppArea, AuthenticatedUser } from "@/types/auth";
 
 // The three spaces of the one app (D-034, S9-03: called "spaces" on screen).
@@ -45,17 +47,23 @@ export async function AppShell({
   children: React.ReactNode;
 }) {
   const spaces = areasForUser(user);
-  const [unread, theme, waiting] = await Promise.all([
+  const [unread, theme, waiting, access] = await Promise.all([
     countUnread(user.id).catch(() => 0),
     getUserSetting(user.id, THEME_SETTING).catch(() => null),
     countPendingTasksFor(user.id).catch(() => 0),
+    navAccess(user),
   ]);
+  // v1.8.0: pages hidden from this person (Super Admin's page access) are
+  // left out of the sidebar and the quick search; the server refuses them anyway.
+  const visible = (href: string) => !isHiddenHref(href, access.hidden);
   // WS-03: everywhere the person can go, for the command palette.
   const userPages: PaletteLink[] = [
     { href: "/users", label: "Overview", group: "My approvals" },
     { href: "/users/queue", label: "Waiting for me", group: "My approvals" },
     { href: "/users/requests", label: "My requests", group: "My approvals" },
     { href: "/users/collaborating", label: "Collaborating", group: "My approvals" },
+    { href: "/users/approved", label: "My approved requests", group: "My approvals" },
+    { href: "/users/approved-by-me", label: "Approved by me", group: "My approvals" },
     { href: "/users/new", label: "New request", group: "My approvals" },
     { href: "/users/custom", label: "Custom approval", group: "My approvals" },
     { href: "/users/search", label: "Search requests", group: "My approvals" },
@@ -68,12 +76,12 @@ export async function AppShell({
     { href: "/users/help", label: "Help", group: "Profile" },
   ];
   const palettePages: PaletteLink[] = [
-    ...(area === "users" ? [] : nav.map((item) => ({ href: item.href, label: item.label, group: SPACE_LABEL[area] }))),
-    ...userPages,
+    ...(area === "users" ? [] : nav.filter((item) => visible(item.href)).map((item) => ({ href: item.href, label: item.label, group: SPACE_LABEL[area] }))),
+    ...userPages.filter((item) => visible(item.href)),
     ...spaces.filter((other) => other !== area && other !== "users").map((other) => ({ href: `/${other}`, label: `${SPACE_LABEL[other]} space`, group: "Spaces" })),
   ];
   // The "Waiting for me" entry shows the real count (RA-01).
-  const items = nav.map((item) => (item.href === "/users/queue" ? { ...item, count: waiting } : item));
+  const items = nav.filter((item) => visible(item.href)).map((item) => (item.href === "/users/queue" ? { ...item, count: waiting } : item));
 
   return (
     <div className="flex min-h-full">
@@ -119,6 +127,7 @@ export async function AppShell({
         </header>
         <OfflineBanner />
         <SessionWatch />
+        <ViewOnlyNote patterns={access.viewOnly} />
         {user.isDemo && (
           <p role="status" className="border-b border-warning-600/30 bg-warning-50 px-4 py-2 text-label text-warning-600 sm:px-8">
             You&apos;re trying the app as {user.name}, a demo person. Sign out and sign in again to return to your own account.
@@ -127,7 +136,7 @@ export async function AppShell({
         <main id="main" tabIndex={-1} className="mx-auto w-full max-w-7xl flex-1 px-4 pb-28 pt-6 focus:outline-none sm:px-8 sm:pt-10 md:pb-10">
           {children}
         </main>
-        <BottomNav waiting={waiting} />
+        <BottomNav waiting={waiting} hidden={["/users", "/users/queue", "/users/new", "/users/search", "/users/profile"].filter((href) => !visible(href))} />
       </div>
     </div>
   );

@@ -51,6 +51,8 @@ import type { InstanceStatus } from "@/server/engine/types";
 import { claimOutbox, dropOutboxForDeletedRequests, insertOutbox, listStaleOutbox, markOutboxSent } from "@/lib/db/repositories/outbox.repository";
 import type { NotifyInput } from "@/server/notifications/notify";
 import { logError } from "@/lib/logging/logger";
+import { DEFAULT_CUSTOM_FORM, loadCustomConfig } from "@/server/approvals/custom-config";
+import { applyStepPolicy } from "@/server/workflows/step-policy";
 import type { RoleCode } from "@/types/auth";
 
 // The multi-level approval service (north star, S2-06, F-11 to F-13). The
@@ -742,10 +744,9 @@ export function resolveBlockedStep(input: { requestId: number; nodeId: string; r
 // Any user, any people, any mix of levels; submitted in one go as a CUSTOM
 // workflow they own. A step made only of the requester is refused (no
 // self-approval); everything else goes through the same validator.
-export const CUSTOM_FORM: FormField[] = [
-  { key: "details", label: "Details", type: "LONG_TEXT", required: true },
-  { key: "amount", label: "Amount (₹)", type: "NUMBER", required: false, min: 0 },
-];
+// v1.8.0: the fields and step options come from Admin → Custom approval
+// (server/approvals/custom-config.ts); these are the defaults.
+export const CUSTOM_FORM: FormField[] = DEFAULT_CUSTOM_FORM;
 
 export function checkCustomSpec(spec: BuilderSpec, requesterId: number): string[] {
   const problems: string[] = [];
@@ -776,9 +777,13 @@ export async function submitCustomRequest(
       return { ok: false, code: "POSSIBLE_DUPLICATE", message, fieldErrors: { allowDuplicate: message } };
     }
   }
-  const own = checkCustomSpec(input.builder, actor.id);
+  // v1.8.0: IT's set-up decides the fields and any fixed step options; a
+  // fixed option overrides whatever the browser sent.
+  const config = await loadCustomConfig();
+  const builder = applyStepPolicy(input.builder, config.policy);
+  const own = checkCustomSpec(builder, actor.id);
   if (own.length) return { ok: false, code: "SELF_APPROVAL", message: own.join(" ") };
-  const resolved = await resolveContent({ builder: input.builder, form: CUSTOM_FORM });
+  const resolved = await resolveContent({ builder, form: config.form });
   if (!resolved.ok) return resolved;
   if (!resolved.value.validation.valid) {
     return { ok: false, code: "INVALID_WORKFLOW", message: resolved.value.validation.errors.map((issue) => issue.message).join(" "), validation: resolved.value.validation };
@@ -789,8 +794,8 @@ export async function submitCustomRequest(
       name: input.title.trim().slice(0, 150) || "Custom approval",
       kind: "CUSTOM",
       requestPrefix: "CUS",
-      builder: input.builder,
-      form: CUSTOM_FORM,
+      builder,
+      form: config.form,
     },
     actor,
   );

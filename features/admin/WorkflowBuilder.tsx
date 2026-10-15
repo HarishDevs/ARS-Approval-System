@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { PeoplePicker } from "@/features/ui/PeoplePicker";
+import { NOBODY_TEXT, RULE_TEXT, stepDefaults, type StepPolicy } from "@/server/workflows/step-policy";
 import { createWorkflowAction, saveDraftAction } from "@/app/admin/workflows/actions";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import type { FieldLookups, FormField } from "@/server/forms/fields";
@@ -12,7 +14,8 @@ import { doaBandLabels, isConditionGroup, MAX_CHOICE_DEPTH, type ApproverPick, t
 // is one step or several steps in parallel. The server compiles, validates
 // and stores it; nothing here is trusted.
 export interface BuilderOptions {
-  people: { id: number; label: string }[];
+  people: { id: number; label: string }[]; // approver-eligible people (approval steps, D-085)
+  anyone?: { id: number; label: string }[]; // everyone active (work and FYI steps, v1.8.0)
   roles: { code: string; name: string }[];
   departments: { id: number; label: string }[];
   groups: { id: number; label: string }[];
@@ -21,6 +24,15 @@ export interface BuilderOptions {
 }
 
 type StepType = NonNullable<BuilderStep["type"]>;
+
+// v1.8.0: on the custom approval page, IT's step options (Admin → Custom
+// approval): a fixed option is shown, not offered, and new steps start with
+// the defaults. The server applies the same set-up on submit.
+export const StepPolicyContext = createContext<StepPolicy | null>(null);
+const useNewStepDefaults = () => {
+  const policy = useContext(StepPolicyContext);
+  return policy ? stepDefaults(policy) : {};
+};
 const STEP_TYPE_LABEL: Record<StepType, string> = {
   APPROVE: "Approval: they approve or reject",
   WORK: "Work task: they do it and mark it done",
@@ -250,7 +262,8 @@ function StageList({
   nested?: boolean;
   depth: number; // choices this list is inside (D-099: up to MAX_CHOICE_DEPTH)
 }) {
-  const newStep = (label: string): BuilderStep => ({ id: newId(), label, approvers: { kind: "REQUESTER_MANAGER" }, rule: "ALL" });
+  const defaults = useNewStepDefaults();
+  const newStep = (label: string): BuilderStep => ({ id: newId(), label, approvers: { kind: "REQUESTER_MANAGER" }, rule: "ALL" as const, ...defaults });
   const setStage = (index: number, stage: BuilderStage) => onChange(stages.map((item, i) => (i === index ? stage : item)));
   const move = (index: number, delta: number) => {
     const target = index + delta;
@@ -699,6 +712,7 @@ function StepEditor({
 }) {
   const pick = step.approvers;
   const skip = step.skipWhen ?? null;
+  const policy = useContext(StepPolicyContext);
   const type: StepType = step.type ?? "APPROVE";
   const designations = type === "APPROVE" ? options.designations.filter((item) => item.approver) : options.designations;
   // Changing the type keeps the people unless the requester can't do the new kind.
@@ -755,20 +769,16 @@ function StepEditor({
       )}
       {pick.kind === "PEOPLE" && (
         <div className="md:col-span-2">
-          <label className="field-label">People (hold Ctrl to pick several)</label>
-          <select
-            multiple
-            aria-label="People (hold Ctrl to pick several)"
-            value={pick.userIds.map(String)}
-            onChange={(event) => onChange({ ...step, approvers: { kind: "PEOPLE", userIds: [...event.target.selectedOptions].map((option) => Number(option.value)) } })}
-            className="field-input h-32 py-2"
-          >
-            {options.people.map((person) => (
-              <option key={person.id} value={person.id}>
-                {person.label}
-              </option>
-            ))}
-          </select>
+          {/* v1.8.0: search and pick, like Collaborators. Approval steps list
+              people who can approve; work tasks and FYIs list anyone active. */}
+          <PeoplePicker
+            label={type === "APPROVE" ? "People (search and pick; only people who can approve)" : "People (search and pick anyone)"}
+            options={type === "APPROVE" ? options.people : (options.anyone ?? options.people)}
+            value={pick.userIds}
+            onChange={(ids) => onChange({ ...step, approvers: { kind: "PEOPLE", userIds: ids } })}
+            max={50}
+            help={type === "APPROVE" ? "Type a name or user id. Managers and above can approve." : "Type a name or user id. Anyone active can do a work task or receive an FYI."}
+          />
         </div>
       )}
       {pick.kind === "ROLE" && (
@@ -826,12 +836,25 @@ function StepEditor({
       )}
       {type !== "NOTIFY" && (
       <div className="flex flex-wrap items-center gap-2 md:col-span-2">
+        {policy && !policy.rule.editable ? (
+          <span className="text-label text-ink-muted" data-testid="fixed-rule">
+            {policy.rule.value === "ANY_N" ? `Any ${policy.rule.n} of them` : type === "WORK" && policy.rule.value === "ALL" ? "All of them must mark it done" : RULE_TEXT[policy.rule.value]} (set by IT)
+          </span>
+        ) : (
+        <>
         <select value={step.rule} onChange={(event) => onChange({ ...step, rule: event.target.value as Rule })} className="field-input w-auto" aria-label="How many must approve">
           <option value="ALL">{type === "WORK" ? "All of them must mark it done" : "All of them must approve"}</option>
           <option value="ANY_ONE">Any one of them</option>
           <option value="ANY_N">Any N of them</option>
         </select>
         {step.rule === "ANY_N" && <input aria-label="N" type="number" min={1} value={step.n ?? 1} onChange={(event) => onChange({ ...step, n: Number(event.target.value) })} className="field-input w-24" />}
+        </>
+        )}
+        {policy && !policy.slaHours.editable ? (
+          <span className="text-label text-ink-muted" data-testid="fixed-sla">
+            {policy.slaHours.value ? `Respond within ${policy.slaHours.value} hours` : "No response time"} (set by IT)
+          </span>
+        ) : (
         <label className="flex items-center gap-2 text-label">
           Respond within
           <input
@@ -846,10 +869,17 @@ function StepEditor({
           />
           hours
         </label>
+        )}
+        {policy && !policy.onNoApprover.editable ? (
+          <span className="text-label text-ink-muted" data-testid="fixed-nobody">
+            {type === "WORK" ? "If nobody to do it" : "If nobody to approve"}: {NOBODY_TEXT[policy.onNoApprover.value].toLowerCase()} (set by IT)
+          </span>
+        ) : (
         <select value={step.onNoApprover ?? "BLOCK"} onChange={(event) => onChange({ ...step, onNoApprover: event.target.value as "BLOCK" | "SKIP" })} className="field-input w-auto" aria-label="If nobody resolves">
           <option value="BLOCK">{type === "WORK" ? "If nobody to do it" : "If nobody to approve"}: stop and tell IT</option>
           <option value="SKIP">{type === "WORK" ? "If nobody to do it" : "If nobody to approve"}: skip this step</option>
         </select>
+        )}
       </div>
       )}
       {!hideSkip && type !== "NOTIFY" && (
