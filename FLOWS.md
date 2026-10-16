@@ -983,6 +983,14 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 3. A recipient opens it from **Information inbox** (it is then marked read). If acknowledgement is asked, they press **Acknowledge**.
 4. The sender sees who read and who acknowledged, can **Withdraw** (reason) or **Archive**. After its expiry date it shows as Expired. Reminders go to people who haven't acknowledged.
 
+## F-131 Analytics Center (v1.12.0, D-156)
+1. Analytics (sidebar) → Executive overview opens.
+2. Choose whose numbers and the period → **Apply**.
+3. Switch tabs (Approvals, Tasks, Information, Employees, Departments, SLA, Trends, Data quality). Scope, period and comparison carry over.
+4. A number with a list behind it opens the list (Approval board; the oldest tasks and lowest-acknowledgement records link to the record, which applies its own access rule).
+5. **Download as CSV** (employees, departments, 24 months): the same scope and period; needs Can export; audited.
+6. "How these are worked out" → the dictionary, with each metric's board, reliability and limits.
+
 ## F-129 Google Calendar: set up and connect (v1.11.0, D-152)
 1. The owner creates the Google OAuth client (DEPLOYMENT Part Q).
 2. Super Admin → Integrations → Google Calendar → Save configuration → Test configuration (every check green) → Enable.

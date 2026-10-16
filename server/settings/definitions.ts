@@ -40,6 +40,8 @@ export const SETTING_DEFINITIONS: readonly SettingDefinition[] = [
   // changes the dry run; nothing is archived or deleted automatically.
   { key: "retention.requests_years", group: "RETENTION", label: "Keep finished requests for (years; 0 = keep for ever)", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(0).max(50), defaultValue: "0" },
   { key: "retention.notifications_days", group: "RETENTION", label: "Keep in-app notifications for (days; 0 = keep for ever)", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(0).max(3650), defaultValue: "0" },
+  // v1.12.0 (Analytics Center): age buckets for task and information backlogs, in days (e.g. 1,3,7,14 → under 1 day, 1–3, 4–7, 8–14, over 14).
+  { key: "analytics.aging_days", group: "GENERAL", label: "Analytics age buckets (days, comma-separated, e.g. 1,3,7,14)", valueType: "STRING", encrypted: false, schema: z.string().trim().regex(/^\d{1,3}(,\d{1,3}){0,5}$/, "Use up to 6 whole numbers of days, separated by commas."), defaultValue: "1,3,7,14" },
   { key: "general.timezone", group: "GENERAL", label: "Timezone", valueType: "STRING", encrypted: false, schema: z.string().trim().min(1).max(100), defaultValue: "Asia/Kolkata" },
 
   // OTP and sign-in security (P1-12, P1-15, P1-16, P1-17). Safe min/max bounds

@@ -1,7 +1,7 @@
 // Reporting periods in India time (D-122). Pure. A request belongs to a
 // period by the India date it was raised; decisions by the India date they
 // were made. Every period has an equally long previous period to compare.
-export type PeriodKey = "7d" | "30d" | "90d" | "this_month" | "last_month" | "this_quarter" | "this_fy" | "last_fy" | "custom";
+export type PeriodKey = "today" | "yesterday" | "7d" | "30d" | "90d" | "this_month" | "last_month" | "this_quarter" | "last_quarter" | "this_fy" | "last_fy" | "custom";
 
 export interface Period {
   key: PeriodKey;
@@ -11,12 +11,15 @@ export interface Period {
 }
 
 export const PERIOD_LABEL: Record<PeriodKey, string> = {
+  today: "Today",
+  yesterday: "Yesterday",
   "7d": "Last 7 days",
   "30d": "Last 30 days",
   "90d": "Last 90 days",
   this_month: "This month",
   last_month: "Last month",
   this_quarter: "This quarter",
+  last_quarter: "Previous quarter",
   this_fy: "This financial year",
   last_fy: "Last financial year",
   custom: "Custom",
@@ -43,6 +46,16 @@ export function resolvePeriod(input: { key?: string; from?: string; to?: string 
   const [year, month] = today.split("-").map(Number) as [number, number];
   const monthStart = (y: number, m: number) => `${y}-${String(m).padStart(2, "0")}-01`;
   switch (key) {
+    // v1.12.0 (Analytics Center brief §2.1).
+    case "today":
+      return { key, label: PERIOD_LABEL[key], from: today, to: today };
+    case "yesterday":
+      return { key, label: PERIOD_LABEL[key], from: addDays(today, -1), to: addDays(today, -1) };
+    case "last_quarter": {
+      const startMonth = [1, 4, 7, 10].filter((m) => m <= month).pop()!;
+      const prevStart = startMonth === 1 ? monthStart(year - 1, 10) : monthStart(year, startMonth - 3);
+      return { key, label: PERIOD_LABEL[key], from: prevStart, to: addDays(monthStart(year, startMonth), -1) };
+    }
     case "7d":
       return { key, label: PERIOD_LABEL[key], from: addDays(today, -6), to: today };
     case "90d":

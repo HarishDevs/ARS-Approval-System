@@ -4,7 +4,7 @@ import { featureOn } from "@/server/settings/features";
 import { requireArea } from "@/server/authorization/guards";
 import type { AnalyticsBase } from "@/features/analytics/AnalyticsScreen";
 import { PageHeader } from "@/features/shell/PageHeader";
-import { METRICS } from "@/server/analytics/metrics";
+import { ALL_METRICS as METRICS } from "@/server/analytics/metrics";
 import { AGING_BUCKETS, APPROACHING_SHARE } from "@/server/analytics/semantics";
 
 // The metric dictionary in the app (Addendum A): what each number means.
@@ -36,7 +36,7 @@ export async function MetricsScreen({ base }: { base: AnalyticsBase }) {
           <strong>Periods:</strong> raised by the submission date, approved/rejected/withdrawn by the closing date, decisions by the decision date. The comparison is the equally long period just before.
         </p>
       </section>
-      <div className="card overflow-x-auto">
+      <div className="card overflow-x-auto" tabIndex={0} role="region" aria-label="Metric dictionary (scrolls sideways)">
         <table className="data-table">
           <caption className="sr-only">Metric dictionary</caption>
           <thead>
@@ -46,6 +46,7 @@ export async function MetricsScreen({ base }: { base: AnalyticsBase }) {
               <th scope="col">Included</th>
               <th scope="col">Left out</th>
               <th scope="col">When</th>
+              <th scope="col">Board and reliability</th>
             </tr>
           </thead>
           <tbody>
@@ -61,6 +62,11 @@ export async function MetricsScreen({ base }: { base: AnalyticsBase }) {
                 <td className="min-w-48 align-top text-label">{metric.includes}</td>
                 <td className="min-w-48 align-top text-label">{metric.excludes}</td>
                 <td className="align-top text-label">{metric.timing === "Now" ? "Right now" : "In the period"}</td>
+                <td className="min-w-48 align-top text-label">
+                  {metric.board}
+                  <span className={`mt-1 block font-semibold ${metric.reliability === "Unavailable" ? "text-danger-600" : metric.reliability === "Partial" ? "text-warning-600" : "text-success-600"}`}>{metric.reliability ?? "Reliable"}</span>
+                  {metric.limits && <span className="mt-1 block text-caption text-ink-muted">{metric.limits}</span>}
+                </td>
               </tr>
             ))}
           </tbody>

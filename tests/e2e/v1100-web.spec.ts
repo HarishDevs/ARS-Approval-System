@@ -38,6 +38,8 @@ const PAGES: { who: string; paths: string[] }[] = [
       "/users/calendar?view=day",
       "/users/profile/calendar",
       "/users/analytics",
+      "/users/analytics?board=tasks",
+      "/users/analytics?board=employees",
       "/users/notifications",
       "/users/profile",
       "/users/security",
@@ -65,7 +67,9 @@ test("WEB-01/16/20: no page scrolls sideways at 360, 390, 768, 1366 and 1920 px"
     for (const viewport of VIEWPORTS) {
       await page.setViewportSize(viewport);
       for (const path of group.paths) {
-        const response = await page.goto(path);
+        // A navigation can be cut off by the previous page's own late
+        // navigation (seen once in CI); try that one again.
+        const response = await page.goto(path).catch(() => page.goto(path));
         expect(response?.status(), path).toBeLessThan(400);
         const extra = await sidewaysOverflow(page);
         if (extra > 1) problems.push(`${path} at ${viewport.width}px: ${extra}px too wide`);

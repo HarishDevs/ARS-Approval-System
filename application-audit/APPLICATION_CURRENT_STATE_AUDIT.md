@@ -98,3 +98,44 @@ Migration `202610170900_v1110_google_calendar.sql` is additive. It adds seven ta
 - Approval routing, DoA, delegation, tasks, information and notifications are untouched: the sync only reads them.
 - The job runner's other steps.
 - Page access: `/users/calendar` stays under `users.calendar`, and `/users/profile/calendar` under `users.profile`.
+
+## Part B: Analytics Center (v1.12.0)
+
+### Existing implementation (before v1.12.0)
+- **Approval analytics:** `/users/analytics` and `/admin/analytics`, one shared screen (`features/analytics/AnalyticsScreen.tsx`). It covers:
+  - KPIs with a comparison period;
+  - scopes (own, approvals, team, department, organisation), enforced on the server (`server/analytics/scope.ts`);
+  - periods in India time;
+  - response-time status, aging, by type / department / step / approver, a department × step heatmap, backlog and overdue trends;
+  - drill-down lists, saved views, a metric dictionary (`server/analytics/metrics.ts` → `docs/ANALYTICS_METRIC_DICTIONARY.md`), and a rate limit.
+- **Elsewhere:** reports (17 + 4 module reports, CSV/XLSX/PDF, schedules, alerts) and admin dashboards (utilisation, approvers, departments, raisers).
+- **Missing:**
+  - no task or information analytics (v1.9.0 added only registers and reports);
+  - no executive, employee, SLA-across-modules, trends or data-quality boards.
+
+### Data available, and the gaps
+| Module | Recorded | Not recorded |
+|---|---|---|
+| Approvals | `submitted_at`, `closed_at`, status, round; task `created_at`, `due_at` (working hours, moved by holds), `decided_at`, `decided_by`; timeline events; amendments; submission checks (duplicates, budget) | Request priority; a standard amount and currency across types; draft abandonment |
+| Tasks | `created_at`, `due_at`, `starts_on`, `completed_at`, `cancelled_at`, status (OPEN, IN_PROGRESS, BLOCKED, COMPLETED, CANCELLED), priority, type; `task_events` (START, BLOCK, UNBLOCK, COMPLETE, REOPEN, CANCEL, REASSIGN, EDIT with due changes, COMMENT) | Effort and time logs; dependencies; recurrence; project; due date at the time of completion (only the current one) |
+| Information | `created_at`, `published_at`, `withdrawn_at`, `effective_on`, `expires_on`, status, `ack_required`, priority, type; recipients fixed at publishing with `read_at` (first open) and `acknowledged_at`; notifications linked by `entity_type` / `entity_id`; delivery status per channel | Acknowledgement deadline; view counts beyond the first; the recipient group a person came through; email delivery receipts |
+| People | department, reporting manager, roles, active | Department history (attribution uses the department now) |
+
+### Reusable components
+- **Analytics core:** scopes, periods and comparison, `share` / `median` / `percentile`.
+- **UI:** `KpiCard`, `LineChart` (with a table view), `BarList`, `StackedBar`, `Heatmap`.
+- **Metrics and exports:** the metric registry and its doc generator; the CSV writer (formula-guarded); `canExport`; the rate limiter; `recordAudit`.
+
+### Schema changes
+- **None.** Every metric is computed from existing columns. Gaps are shown as unavailable rather than filled with substitutes.
+- **One new setting:** `analytics.aging_days` (configurable age buckets).
+
+### Security considerations
+- Every query is filtered by the viewer's scope on the server.
+- **Exports:** resolve the scope again on the server, need the Can export permission, are rate-limited and audited.
+- **Information titles:** in the "lowest acknowledgement" list they are shown only to the sender or IT.
+- **Departments board:** only for heads of department (their departments) and IT.
+- **No cross-user caching:** figures are computed per request.
+
+### Must not break
+- Approval analytics, its drill-down list, saved views (older views with approval filters still open the Approval board), the reports, the dashboards and the glossary.

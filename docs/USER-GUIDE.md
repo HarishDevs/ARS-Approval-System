@@ -94,6 +94,11 @@ Comments can't be edited or removed. To tell someone in particular, type `@` and
   - Your approvals and tasks with due times, information marked for calendars and your personal entries then appear in Google, and your Google events appear in ARS. Changes follow both ways.
   - **Sync now** runs it at once; **Review conflicts** asks you which version to keep when an entry changed in both places; **Disconnect** stops it (optionally removing the events ARS added).
   - A calendar change never approves, completes or acknowledges anything: do that in ARS.
+- **Analytics (sidebar, v1.12.0):** one page with tabs.
+  - **The tabs:** Executive overview, Approvals, Tasks, Information, Employees, Departments, SLA & performance, Trends, Data quality.
+  - **Choosing what you see:** choose whose numbers (your own, your team, your department, or everyone for IT), the period and the comparison, then **Apply**. The choice stays when you change tab.
+  - **"How these are worked out"** explains every number.
+  - **A figure shown as "not available"** isn't recorded by the app yet; it is never guessed.
 - **Calendar (sidebar):** month, week or day. Filter by Approvals, Tasks, Information, Needed by and Personal. **Add a personal entry** at the bottom; open an entry to edit or delete it. "From Google" marks entries from your Google Calendar.
 - **Sign-in & devices:** how you sign in, your last 10 sign-ins, and **Sign out everywhere** if a phone or laptop was lost.
 

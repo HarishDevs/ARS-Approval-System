@@ -1,3 +1,4 @@
+import { CENTER_METRICS } from "@/server/analytics/center-metrics";
 // Metric dictionary (Addendum A, D-122). One entry per number shown on a
 // dashboard, report or alert: what it means, how it is worked out, what is
 // in and out, and who can see it. Rendered as the in-app glossary and as
@@ -13,6 +14,11 @@ export interface Metric {
   unit: "count" | "percent" | "hours";
   source: string;
   scopes: string; // who sees it
+  // v1.12.0 (D-157): the Analytics Center board(s) showing it, how reliable
+  // it is with today's data, and its limits. Approval metrics: "Approval analytics", Reliable.
+  board?: string;
+  reliability?: "Reliable" | "Partial" | "Unavailable";
+  limits?: string;
 }
 
 const ALL = "Everyone, for the requests and tasks in the scope they may see";
@@ -57,4 +63,7 @@ export const METRICS: readonly Metric[] = [
   { key: "heatmap", name: "Where tasks wait, by department and step", meaning: "Outstanding approval and work tasks now, by the raiser's department and the step.", formula: "COUNT(PENDING tasks) grouped by raiser department × step label", includes: "Requests in progress or on hold", excludes: "Finished requests", timing: "Now", unit: "count", source: "approval_tasks.node_label, users.department_id", scopes: ALL },
 ];
 
-export const METRIC = Object.fromEntries(METRICS.map((metric) => [metric.key, metric])) as Record<string, Metric>;
+// v1.12.0: the Analytics Center's metrics join the same dictionary.
+export const ALL_METRICS: readonly Metric[] = [...METRICS.map((metric) => ({ board: "Approval analytics", reliability: "Reliable" as const, ...metric })), ...CENTER_METRICS];
+
+export const METRIC = Object.fromEntries(ALL_METRICS.map((metric) => [metric.key, metric])) as Record<string, Metric>;

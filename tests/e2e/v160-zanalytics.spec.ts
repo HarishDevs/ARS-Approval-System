@@ -10,7 +10,7 @@ async function as(context: BrowserContext, loginId: string) {
 
 test("IT sees the organisation; filters and periods apply; every chart has a table", async ({ page, context }) => {
   await as(context, "E2E_ADMIN");
-  await page.goto("/users/analytics");
+  await page.goto("/users/analytics?board=approvals"); // v1.12.0: Approval analytics is one of the boards
   await expect(page.getByRole("heading", { name: "Analytics", exact: true })).toBeVisible();
   const scopes = page.getByRole("navigation", { name: "Whose numbers" });
   await expect(scopes.getByRole("link", { name: "Whole organisation" })).toHaveAttribute("aria-current", "page");

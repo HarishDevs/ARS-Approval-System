@@ -1,5 +1,67 @@
 # Release notes
 
+## v1.12.0 (16 Oct 2026): the Analytics Center
+**One Analytics page, nine dashboards as tabs:**
+- Executive overview
+- Approval analytics (the existing approval dashboard)
+- Task analytics
+- Information analytics
+- Employee analytics
+- Department analytics
+- SLA & performance
+- Trends & forecasts
+- Data quality
+
+**How the boards work**
+- **Shared filters:** whose numbers (own, team, department, organisation), the period and the comparison. Filters carry over between tabs.
+- **New periods:** Today, Yesterday and Previous quarter.
+- **Every board** shows "As of" and India time.
+
+**Executive overview**
+- Approvals, tasks and information side by side, each against the previous period.
+- Approvals: raised, open, completed, completion rate, turnaround, overdue.
+- Tasks: created, open, completed, completion rate, overdue.
+- Information: published, awaiting acknowledgement, acknowledgement rate, opened in ARS.
+- People: active contributors.
+- **Also:** a 12-month activity chart, open and overdue work by module, departments' open work, and alerts. Each alert shows the fixed rule that raised it; there are no predictions.
+
+**Task analytics**
+- Status now; due today and in the next 7 days; no due date; reopened, postponed and reassigned.
+- Completion and cancellation rates; time to complete (average, median, 90th percentile).
+- Completed by the due date, and days late.
+- Age buckets (configurable: **Super Admin → Settings → Analytics age buckets**), breakdowns, and the oldest open tasks.
+
+**Information analytics**
+- Lifecycle (drafts, scheduled, active, expired, archived).
+- Acknowledgement rate over **eligible recipients**, and time to acknowledge.
+- "Opened in ARS", kept separate from acknowledgement; email/WhatsApp delivery kept separate from both.
+- Pending acknowledgements by age, rate by department, type and sender, and the lowest-rate records.
+
+**Employee and department analytics**
+- Each person's and each department's approval, task and information figures, in separate columns and never combined into one score.
+- Employees: search, sort and pages.
+- Departments: for heads of department and IT.
+
+**SLA & performance:** approval response times by department and step, and task due-date performance by priority.
+
+**Trends:** this period against the comparison period, and 12 months by module. A next-month estimate appears only once there are 12 months of history.
+
+**Data quality:** 14 checks (for example open tasks without a due date, published information with no recipients, people without a department), each with where to fix it.
+
+**Exports:** CSV of the employee, department and 24-month tables, with the same scope and period, and the scope, period and generation time at the top. Needs the Can export permission; audited.
+
+**Not available, and said so on screen (no invented numbers):**
+- overdue acknowledgements (information has no deadline field);
+- total views (only the first opening is recorded);
+- task effort and utilisation, dependencies and recurring tasks (not recorded or not supported).
+
+**Documents:**
+- the metric dictionary (`docs/ANALYTICS_METRIC_DICTIONARY.md`, also in the app) now has 76 metrics, each with its board, reliability and limits;
+- `application-audit/ANALYTICS_IMPLEMENTATION_TRACKER.md`;
+- `application-audit/ANALYTICS_TEST_REPORT.md`.
+
+**Database:** no migration. One new setting (`analytics.aging_days`).
+
 ## v1.11.0 (16 Oct 2026): Google Calendar two-way sync, and one calendar for everything
 **Super Admin → Integrations → Google Calendar** (new)
 - Set up the Google OAuth client. The client secret is stored encrypted and never shown again.

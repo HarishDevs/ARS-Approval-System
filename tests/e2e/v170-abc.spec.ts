@@ -48,7 +48,7 @@ test("A3 IT opens bulk reassignment from Workload", async ({ page, context }) =>
 
 test("B analytics: new KPIs, comparison, more filters, charts and drill-down", async ({ page, context }) => {
   await as(context, "E2E_ADMIN");
-  await page.goto("/users/analytics?scope=ORGANISATION&period=90d");
+  await page.goto("/users/analytics?board=approvals&scope=ORGANISATION&period=90d");
   await expect(page.getByText("Due today", { exact: true }).first()).toBeVisible();
   await expect(page.getByText("Approved first time", { exact: true }).first()).toBeVisible();
   await expect(page.getByRole("region", { name: "Where tasks wait, by department and step" })).toBeVisible();

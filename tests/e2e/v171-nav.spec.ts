@@ -20,6 +20,9 @@ test("Analytics from the Admin space keeps the Admin space; Reports are there to
   await expect(page).toHaveURL(/\/admin\/analytics/);
   await expect(page.getByRole("button", { name: /Account menu/ })).toContainText("Admin");
   await expect(page.getByRole("link", { name: "Whole organisation" })).toHaveAttribute("aria-current", "page");
+  // v1.12.0: the Executive overview opens first; the drill-down lists are on Approval analytics.
+  await page.getByRole("navigation", { name: "Dashboards" }).getByRole("link", { name: "Approval analytics" }).click();
+  await expect(page).toHaveURL(/\/admin\/analytics\?.*board=approvals/);
   await page.getByRole("link", { name: /Open requests/ }).first().click();
   await expect(page).toHaveURL(/\/admin\/analytics\/list\?/);
   await expect(page.getByRole("button", { name: /Account menu/ })).toContainText("Admin");

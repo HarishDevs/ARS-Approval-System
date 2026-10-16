@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { featureOn } from "@/server/settings/features";
+import { canExport, featureOn } from "@/server/settings/features";
+import { BoardTabs, CenterScreen } from "@/features/analytics/CenterScreen";
+import { parseBoard } from "@/server/analytics/center";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { BarList, Heatmap, KpiCard, LineChart, StackedBar, hoursText } from "@/features/analytics/Charts";
@@ -38,10 +40,16 @@ export async function AnalyticsScreen({ searchParams, base }: { searchParams: Re
   // C04: analytics is query-heavy; a burst of reloads is slowed down.
   const limited = await guardAnalyticsRate(user.id);
   const { scope, scopes } = await resolveScope(query.scope ?? (base === "/admin/analytics" ? "ORGANISATION" : undefined), viewer);
+  // v1.12.0 (D-156): the Analytics Center. Dashboards are tabs of this page.
+  // An older link or saved view with approval filters opens Approval analytics.
+  const APPROVAL_FILTERS = ["type", "department", "status", "approver", "step", "sla", "aging"];
+  const board = query.board ? parseBoard(query.board) : APPROVAL_FILTERS.some((key) => query[key]) ? "approvals" : "overview";
+  if (board !== "approvals" && !limited) return <CenterScreen base={base} board={board} query={query} scope={scope} scopes={scopes} viewer={viewer} canExport={await canExport(user)} />;
   const now = new Date();
   const period = resolvePeriod({ key: query.period, from: query.from, to: query.to }, indiaToday(now));
   const choices = await dashboardChoices();
   const { filter, compare, carried } = readFilter(query, { scope, period, typeIds: choices.types.map((type) => type.id), departmentIds: choices.departments.map((department) => department.id) });
+  carried.board = "approvals";
   const previous = comparisonPeriod(period, compare);
   const compareLabel = compare === "LAST_YEAR" ? "same period last year" : period.key === "this_month" || period.key === "last_month" ? "previous month" : "previous period";
   if (limited) {
@@ -98,10 +106,11 @@ export async function AnalyticsScreen({ searchParams, base }: { searchParams: Re
           How these are worked out
         </Link>
       </PageHeader>
+      <BoardTabs base={base} board="approvals" query={query} />
 
       <nav aria-label="Whose numbers" className="mb-3 flex flex-wrap gap-2">
         {scopes.map((item) => (
-          <Link key={item.kind} href={withParams(base, { scope: item.kind, period: period.key })} className={chip(item.kind === scope.kind)} aria-current={item.kind === scope.kind ? "page" : undefined}>
+          <Link key={item.kind} href={withParams(base, { board: "approvals", scope: item.kind, period: period.key })} className={chip(item.kind === scope.kind)} aria-current={item.kind === scope.kind ? "page" : undefined}>
             {item.label}
           </Link>
         ))}
@@ -109,6 +118,7 @@ export async function AnalyticsScreen({ searchParams, base }: { searchParams: Re
 
       <form method="get" className="card mb-6 space-y-3 px-4 py-3" aria-label="Filters">
         <input type="hidden" name="scope" value={scope.kind} />
+        <input type="hidden" name="board" value="approvals" />
         <div className="flex flex-wrap items-end gap-3">
           <div>
             <label htmlFor="period" className="field-label">
@@ -247,7 +257,7 @@ export async function AnalyticsScreen({ searchParams, base }: { searchParams: Re
           <button type="submit" className="btn-primary btn-compact">
             Apply
           </button>
-          <Link href={`${base}?scope=${scope.kind}`} className="link text-label">
+          <Link href={`${base}?board=approvals&scope=${scope.kind}`} className="link text-label">
             Reset
           </Link>
         </div>

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { agingBucket, countByBucket, median, percentChange, percentile, share, slaStatus } from "@/server/analytics/semantics";
 import { bucketKey, buckets, grainFor, indiaToday, previousPeriod, resolvePeriod } from "@/server/analytics/periods";
-import { METRICS } from "@/server/analytics/metrics";
+import { ALL_METRICS as METRICS } from "@/server/analytics/metrics";
 import fs from "node:fs";
 
 // Addendum A §7 definitions, periods and the metric dictionary (pure).

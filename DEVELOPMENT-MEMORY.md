@@ -415,6 +415,20 @@
 - Applies to users and IT admins; the Super Admin is exempt (12-hour limit only).
 - The browser's session check no longer counts as activity (it used to keep an open tab signed in for ever). Activity in the page is reported at the next minute's check.
 - A warning with "Stay signed in" 2 minutes before. | Owner; Claude, 15 Oct 2026 |
+| D-157 | 16 Oct 2026 | **Analytics Center metric rules (v1.12.0):**
+- **Rates:** never divide by zero; with nothing to divide by they show "—".
+- **Completion rates are cohorts:** of what was raised or created in the period (cancelled and withdrawn left out), the share finished by now.
+- **Acknowledgement rate:** eligible recipients (fixed at publishing) are the denominator. Opening and delivery are separate measures.
+- **On-time:** uses the real completion and due times only. No `updated_at` substitutes; tasks without a due date are counted separately.
+- **Department attribution:** requests by raiser, tasks by assignee, information by sender, acknowledgements by recipient, each by their department now.
+- **Unavailable metrics are shown as unavailable:** acknowledgement deadlines, total views, effort and utilisation, dependencies, recurrence.
+- **Every metric is in the dictionary** with its board, reliability and limits. | Owner brief; Claude, 16 Oct 2026 |
+| D-156 | 16 Oct 2026 | **One Analytics page with nine boards (v1.12.0):**
+- **Boards:** Executive overview, Approval analytics (the existing screen), Task, Information, Employee, Department, SLA & performance, Trends & forecasts, Data quality.
+- **Navigation:** the boards are tabs, not separate navigation items.
+- **Shared:** scope, period and comparison, which carry over between tabs. Older links with approval filters open the Approval board.
+- **Computing:** server-side aggregation only, the existing scopes, and no cross-user caching.
+- **Exports:** CSV (employees, departments, 24 months) with the same scope, rate-limited and audited. | Owner brief; Claude, 16 Oct 2026 |
 | D-155 | 16 Oct 2026 | **One calendar page (v1.11.0):**
 - `/users/calendar` shows approvals waiting on the person, their tasks, calendar-eligible information, needed-by dates and personal entries, by month, week or day, with filters.
 - Older `?month=` links still work. Each entry shows its source and its Google sync state.
@@ -514,6 +528,26 @@
 | Q-024 | **Google Calendar (v1.11.0):** create the Google Cloud OAuth client (Web application, redirect URI in DEPLOYMENT Part Q). Internal or External consent screen? If External, publish it: Testing mode limits access to 7 days. | Before enabling the integration | Open, waiting on the owner (16 Oct 2026) |
 
 ## 5. Work log (newest first)
+
+### 16 Oct 2026 (v1.12.0: Analytics Center)
+- **Owner brief:** a complete Analytics Center (D-156, D-157).
+- **Built:**
+  - board tabs on the Analytics page; Executive, Task, Information, Employee, Department, SLA, Trends and Data-quality boards;
+  - `analytics-center.repository.ts` (scoped SQL aggregation); `server/analytics/center.ts` (age buckets, alerts, forecasts);
+  - 39 new dictionary metrics with board, reliability and limits;
+  - Today / Yesterday / Previous quarter periods;
+  - a CSV export route;
+  - the `analytics.aging_days` setting.
+- **Tests:**
+  - unit (`v1120-center`);
+  - integration (`v1120-analytics`: denominators, cancelled and withdrawn, real timestamps, parallel approvers, scope isolation, empty periods, safe search);
+  - E2E (`v1120-analytics`).
+- **Bugs found while testing:**
+  - a reserved word used as a SQL alias (`over`);
+  - two metrics named "Overdue tasks", now unique with a test;
+  - the sender isn't a recipient of their own information (the test expectation was wrong; the behaviour is right).
+- **Reports:** `application-audit/ANALYTICS_IMPLEMENTATION_TRACKER.md`, `ANALYTICS_TEST_REPORT.md`, `APPLICATION_CURRENT_STATE_AUDIT.md` Part B.
+- **Also:** made the viewport E2E loop retry a navigation that is cut off (one CI flake on v1.11.0).
 
 ### 16 Oct 2026 (v1.11.0: Google Calendar two-way sync)
 - **Owner brief:** Super Admin-controlled Google Calendar with true two-way sync (D-152 to D-155).

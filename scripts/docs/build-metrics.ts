@@ -1,7 +1,7 @@
 // Writes docs/ANALYTICS_METRIC_DICTIONARY.md from server/analytics/metrics.ts.
 // Run: npx tsx scripts/docs/build-metrics.ts
 import fs from "node:fs";
-import { METRICS } from "../../server/analytics/metrics";
+import { ALL_METRICS as METRICS } from "../../server/analytics/metrics";
 import { AGING_BUCKETS, APPROACHING_SHARE, SLA_LABEL } from "../../server/analytics/semantics";
 
 const cell = (text: string) => text.replace(/\|/g, "\\|").replace(/\n/g, " ");
@@ -38,9 +38,9 @@ const lines = [
   "",
   "## Metrics",
   "",
-  "| Key | Metric | Meaning | Formula | Included | Left out | When | Unit | Source | Who sees it |",
-  "|---|---|---|---|---|---|---|---|---|---|",
-  ...METRICS.map((metric) => `| \`${metric.key}\` | ${cell(metric.name)} | ${cell(metric.meaning)} | ${cell(metric.formula)} | ${cell(metric.includes)} | ${cell(metric.excludes)} | ${metric.timing} | ${metric.unit} | ${cell(metric.source)} | ${cell(metric.scopes)} |`),
+  "| Key | Board | Metric | Meaning | Formula | Included | Left out | When | Unit | Source | Who sees it | Reliability | Limits |",
+  "|---|---|---|---|---|---|---|---|---|---|---|---|---|",
+  ...METRICS.map((metric) => `| \`${metric.key}\` | ${cell(metric.board ?? "")} | ${cell(metric.name)} | ${cell(metric.meaning)} | ${cell(metric.formula)} | ${cell(metric.includes)} | ${cell(metric.excludes)} | ${metric.timing} | ${metric.unit} | ${cell(metric.source)} | ${cell(metric.scopes)} | ${metric.reliability ?? "Reliable"} | ${cell(metric.limits ?? "—")} |`),
   "",
 ];
 fs.writeFileSync("docs/ANALYTICS_METRIC_DICTIONARY.md", lines.join("\n"));

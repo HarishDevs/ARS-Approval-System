@@ -34,7 +34,7 @@ export const PAGES: readonly PageDef[] = [
   { key: "users.custom", area: "users", label: "Custom approval", what: "Raising a custom approval.", paths: [under("/users/custom")] },
   { key: "users.search", area: "users", label: "Search", what: "Searching requests (and the Ctrl K quick search).", paths: [under("/users/search")], apis: [/^\/api\/me\/quick/] },
   { key: "users.calendar", area: "users", label: "Calendar", what: "The needed-by calendar.", paths: [under("/users/calendar")] },
-  { key: "users.analytics", area: "users", label: "Analytics (My approvals)", what: "Analytics for the person's own scopes.", paths: [under("/users/analytics")] },
+  { key: "users.analytics", area: "users", label: "Analytics (My approvals)", what: "Analytics for the person's own scopes.", paths: [under("/users/analytics")], apis: [/^\/api\/analytics\//] },
   // v1.9.0 (D-143): Task and Information modules.
   { key: "users.tasks", area: "users", label: "Tasks: lists", what: "My tasks, Assigned by me and Team tasks.", paths: [exact("/users/tasks"), under("/users/tasks/assigned"), under("/users/tasks/team")] },
   { key: "users.task_new", area: "users", label: "Tasks: new task", what: "Creating a task.", paths: [under("/users/tasks/new")] },
