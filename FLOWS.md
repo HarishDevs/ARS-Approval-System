@@ -1146,3 +1146,12 @@ Built 7 Oct 2026 as published approval types on the demo staff (D-071). People a
 | F-69 | IT Internal | START → IT Head → WORK (Assigned To) → END | A-10 |
 | F-70 | Price Realisation | START → PARALLEL(ALL: Ragu, G Chandra Mouli, Gopi K, Prabu) → ED → MD → END (approve vs acknowledge: decide) | A-11 |
 | F-71 | ASP / Plant / Branding / Training | Manager → HOD with corrected routing | A-12 |
+
+## Audit notes, 16 Oct 2026 (no flow changed; defects found against existing flows)
+The application audit (`application-audit/`) found these gaps between flows and code. Each flow is updated when its fix ships.
+- **F-26 Changes required → resubmission:** a level skipped by an amount band or condition stays skipped even if the resubmitted amount needs it (AUD-02); resubmit doesn't re-run the budget, unique and duplicate checks (AUD-11). Fix planned: V181-A1.
+- **F-22 Parallel / joins:** under an "any one / any N" join, one branch's rejection ends the request (AUD-06); owner decision DR-01.
+- **F-30 Delegation:** a delegate who is also a named approver can decide both tasks of one step (AUD-05). Fix planned: V181-A5.
+- **F-31 SLA, reminder, escalation** and **F-79 FYI steps:** escalation managers and FYI recipients receive links they can't open (AUD-09). Planned for Phase B.
+- **F-59 Bulk import:** the import doesn't apply the rule that only the Super Admin changes another IT Admin's contact details (AUD-01). Fix planned: V181-A2.
+- **F-121 Page access:** an action posted from an address that is no configured page isn't restricted (AUD-14). Fix planned: V181-A7.

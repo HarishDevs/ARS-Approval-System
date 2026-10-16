@@ -440,8 +440,28 @@
 | Q-017 | **Dependency upgrades (DEF-E1):** `npm audit` shows 6 high / 7 moderate in production deps. Upgrade Next to 15.5.27 (patch) and firebase-admin to 14.5.0 (minor) now, and plan the firebase client major upgrade? | Before or with the next Publish | **Answered 9 Oct 2026: yes → D-093** (done in v1.3.4) |
 | Q-018 | **Rate-limit IP source (DEF-E2):** is all traffic to approval.arssteels.net forced through Cloudflare? If yes, use `CF-Connecting-IP`; if not, the right-most X-Forwarded-For entry added by GoDaddy's proxy. A wrong choice could put all users on one address. | Before go-live | **Answered 9 Oct 2026: yes, all traffic goes through Cloudflare → D-092** (done in v1.3.4) |
 | Q-019 | **Which Resend account holds the API key in Super Admin?** The "arsenergy" team (open in Chrome) is empty. Email works only once the From domain (`approvals@arssteels.net`) is verified in the account that owns the key, or a new key from a team with a verified domain is entered. | Before go-live (no email is delivered today) | **Answered 9 Oct 2026:** the key is "New Api Approval" in the Resend team "arssteels" (harishkumar.t@arssteels.com). The owner verified `arssteels.net` there; Resend's log showed "API key not authorized for this domain" for a few minutes after verification, then the test email was **sent** |
+| Q-020 | **Production database time zone** (audit AUD-04): the app writes UTC times but compares them with the database clock, and never sets the session time zone. Run `SELECT @@global.time_zone, @@session.time_zone, NOW(), UTC_TIMESTAMP();` on live. | Before V181-A4 | Open, waiting on the owner (16 Oct 2026) |
+| Q-021 | **Is `ORIGIN_SECRET` set on GoDaddy, and may it become mandatory in production?** (audit AUD-15: without it, per-IP sign-in limits can be bypassed) | Before V181-A10 | Open, waiting on the owner (16 Oct 2026) |
+| Q-022 | **Resubmit after the amount or conditions change** (audit AUD-02, runtime-confirmed: a skipped higher DoA level stays skipped): restart from the earliest affected step (recommended) or from the beginning? | Before V181-A1 | Open, waiting on the owner (16 Oct 2026) |
+| Q-023 | **Further owner decisions from the audit:** DR-01 join rejection semantics; DR-02 no approval without a human decision; DR-03 controls on IT changing approvers' contact details; DR-04 Super Admin inactivity limit; DR-05 what an expired approval means; DR-06 retention durations; DR-08 off-site encrypted backups and RTO/RPO (see `application-audit/12_DECISION_REGISTER.md`) | Before Phase B and D | Open, waiting on the owner (16 Oct 2026) |
 
 ## 5. Work log (newest first)
+
+### 16 Oct 2026 (application audit, read-only)
+- **Source:** the owner's audit brief (discovery, technical audit, roadmap). No feature work; nothing in the app, database or deployment was changed.
+- **Output:** `application-audit/00` to `12`. The executive summary answers the ten questions. Other reports:
+  - a matrix of 157 features: 124 verified by tests, 6 code-verified, 18 partial, 5 broken, 4 not built;
+  - a finding register (AUD-01..29);
+  - 42 recommendations;
+  - roadmap phases A–E, with an implementation tracker and a decision register.
+- **Checks:** lint and typecheck OK; unit 433, integration 188, E2E 92, QA 27, origin 1 all pass; `npm audit --omit=dev` 0. Live `/api/health`: v1.8.0, database ok, **jobRunner OK**, so the old cron blocker in the docs is resolved on live.
+- **P1 findings:**
+  - **AUD-02**, resubmit keeps a skipped higher DoA level skipped. Runtime-confirmed: ₹5,000 → ₹50 lakh approved without the CFO.
+  - **AUD-01**, the CSV import skips the contact-change rule, so one IT Admin can take over another. Runtime-confirmed at planner level.
+  - **AUD-03**, the bootstrap seed re-grants Super Admin on every start.
+  - **AUD-04**, the database session time zone is never set. Potential; Q-020.
+- **Also runtime-confirmed:** delegate double vote (AUD-05); branch rejection under an ANY join (AUD-06).
+- **Recommended first task:** V181-A1 (resubmit re-routing), with A2 and A3 in the same release.
 
 ### 15 Oct 2026 (v1.8.0: approved lists, custom approval set-up, page access, inactivity sign-out)
 - **Source:** owner request, plus the answers: timeout for users and admins, not the Super Admin; only the Super Admin manages pages; field changes apply to new custom approvals only.

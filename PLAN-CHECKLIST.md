@@ -17,6 +17,14 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (16 Oct 2026):** a full read-only application audit is done and its reports are in `application-audit/` (00 to 12).
+  - **Live:** `/api/health` shows v1.8.0, database ok and jobRunner OK. The cron item below (A-OPS) is done on live.
+  - **Findings:** P0 none; P1 four (AUD-01 to AUD-04); P2 25.
+  - **Next:** Phase A of `application-audit/09_PRIORITIZED_DEVELOPMENT_ROADMAP.md`; the AUD1 checklist below holds the tasks.
+- **Next, the owner (no code):**
+  - run `SELECT @@global.time_zone, @@session.time_zone, NOW(), UTC_TIMESTAMP();` on the live database (Q-020);
+  - confirm `ORIGIN_SECRET` is set on GoDaddy (Q-021);
+  - answer Q-022: where resubmit restarts when the amount or conditions change.
 - **Now (15 Oct 2026):** v1.8.0 (approved lists, custom approval set-up, page access, inactivity sign-out) is tagged, not deployed. After publishing: check Super Admin → Providers & security → sign-out after no activity (30 by default; an older saved value stays).
 - **Earlier (12 Oct 2026):** v1.7.2 (Collaborating screen; full filters on Collaborating, My requests and Waiting for me) is tagged, not deployed.
 - **Earlier (10 Oct 2026):** v1.7.1 (owner: Analytics keeps the Admin space; Help and Profile in the account menu; Overview; Reports IT only) is tagged, not deployed.
@@ -288,6 +296,26 @@ Found during S8-06:
 - [x] S8-12 Google sign-in reached UNKNOWN_ACCOUNT: itadmin@ is an alias. The Super Admin now signs in as itsupport@arsenergy.co.in (D-082, migration + non-overwriting seed, v1.0.5) (done 8 Oct 2026)
 - [x] S8-01b Go-live on GoDaddy with the owner, following docs/DEPLOYMENT.md (the owner is at the wizard's "Add secrets" step) (done 9 Oct 2026: live since 8 Oct 2026)
 - [x] S8-04 Update the three living files; commit and push (done 8 Oct 2026)
+
+## Session log — application audit (16 Oct 2026), planned before starting
+Owner: a read-only, evidence-based audit of the whole application, then a roadmap. No feature development; reports go in `application-audit/`.
+- [x] AUD1-01 Discovery and domain audits (architecture/CI/tests, auth/security, engine and request lifecycle, Admin/Super Admin, analytics/notifications/jobs/integrations, database, UI/UX/performance) (done 16 Oct 2026)
+- [x] AUD1-02 Run every suite locally (lint, typecheck, unit 433, integration 188, E2E 92, QA 27, origin 1: all pass); npm audit (0); read-only live health check (done 16 Oct 2026)
+- [x] AUD1-03 Runtime probes (scratch tests, not in the repo) confirming D-01 resubmit DoA bypass, D-04 delegate double vote, D-03 branch rejection under an ANY join, SEC-01 import contact-change gap (done 16 Oct 2026)
+- [x] AUD1-04 Reports 00 to 12 in `application-audit/` (matrix of 157 features, finding register AUD-01..29, REC-01..42, roadmap A–E, tracker, decision register) (done 16 Oct 2026)
+- [x] AUD1-05 Living files, commit and push (done 16 Oct 2026)
+
+Phase A of the roadmap, planned here and not started (details in `application-audit/09` and `11`):
+- [ ] V181-A1 Re-route on resubmit when routing values change; readiness checks on resubmit (AUD-02, AUD-11; needs Q-022)
+- [ ] V181-A2 CSV import enforces the contact-change rule (AUD-01)
+- [ ] V181-A3 Bootstrap seed stops re-granting Super Admin (AUD-03)
+- [ ] V181-A4 Pin the DB session time zone to UTC; health reports it (AUD-04; after Q-020)
+- [ ] V181-A5 One person, one vote per step (AUD-05)
+- [ ] V181-A6 Outbox honours notify's result; job steps report soft failures (AUD-08, AUD-17)
+- [ ] V181-A7 Page access bound to actions; fail closed on unknown pages; security page exempt (AUD-14)
+- [ ] V181-A8 Confirmations on high-impact admin actions; demo-data guard (AUD-25)
+- [ ] V181-A9 Bring KNOWN_ISSUES, SECURITY review, GO_LIVE checklist and DEPLOYMENT up to date (AUD-29)
+- [ ] V181-A10 Origin lock required in production (AUD-15; after Q-021)
 
 ## Session log — v1.8.0: approved lists, configurable custom approvals, page access, session timeout (15 Oct 2026), planned before starting
 Owner: two pages "My approved requests" and "Approved by me" with all filters; custom approval fields configurable from Admin; page visibility and rights per page by user and department (Super Admin only); 30-minute inactivity sign-out configurable by the Super Admin (users and IT admins, not the Super Admin); "Specific people" as search-and-select; work and FYI steps may pick anyone; "If nobody to approve", "Respond within", "All of them must approve" configurable in Admin with the custom approval fields. Custom fields changed apply to new custom approvals only (owner: OK).
