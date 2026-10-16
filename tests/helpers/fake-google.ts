@@ -16,6 +16,13 @@ export const FAKE_REFRESH = "fake-refresh-token-1";
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 const apiError = (status: number, reason: string) => json(status, { error: { code: status, errors: [{ reason }], message: reason } });
 
+// The event as Google returns it (without the fake's own sequence number).
+function strip(event: Stored): GoogleEvent {
+  const copy: Partial<Stored> = { ...event };
+  delete copy.seq;
+  return copy as GoogleEvent;
+}
+
 export class FakeGoogle {
   calendars = new Map<string, Map<string, Stored>>();
   seq = 0;
@@ -120,7 +127,7 @@ export class FakeGoogle {
       const since = syncToken ? Number(syncToken.replace("st-", "")) : null;
       const all = [...store.values()].filter((event) => (since === null ? event.status !== "cancelled" : event.seq > since)).sort((a, b) => a.seq - b.seq);
       const offset = Number(url.searchParams.get("pageToken") ?? 0);
-      const page = all.slice(offset, offset + this.pageSize).map(({ seq: _seq, ...event }) => event);
+      const page = all.slice(offset, offset + this.pageSize).map(strip);
       const more = offset + this.pageSize < all.length;
       return json(200, { items: page, ...(more ? { nextPageToken: String(offset + this.pageSize) } : { nextSyncToken: `st-${this.seq}` }) });
     }
@@ -129,15 +136,13 @@ export class FakeGoogle {
       if (store.has(id)) return apiError(409, "duplicate");
       const created = this.stamp({ ...body!, id, status: body!.status ?? "confirmed", seq: 0 });
       store.set(id, created);
-      const { seq: _seq, ...event } = created;
-      return json(200, event);
+      return json(200, strip(created));
     }
     const existing = tail ? store.get(tail) : undefined;
     if (method === "PATCH") {
       if (!existing) return apiError(404, "notFound");
       Object.assign(existing, body);
-      const { seq: _seq, ...event } = this.stamp(existing);
-      return json(200, event);
+      return json(200, strip(this.stamp(existing)));
     }
     if (method === "DELETE") {
       if (!existing) return apiError(404, "notFound");

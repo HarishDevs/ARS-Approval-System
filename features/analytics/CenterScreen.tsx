@@ -370,7 +370,7 @@ async function Tasks({ scope, viewer, period, previous, compareLabel, buckets }:
           <KpiCard metric="t_reassigned" value={data.reassigned} previous={before.reassigned} compareLabel={compareLabel} />
           <KpiCard metric="t_blocked" value={data.blocked.count} note={data.blocked.avgHours === null ? undefined : `Blocked for ${hoursText(data.blocked.avgHours)} on average`} lowerIsBetter />
         </Grid>
-        <p className="mt-2 text-caption text-ink-muted">Every task has an assignee (it can't be saved without one), so &ldquo;tasks without an assignee&rdquo; is always 0. Tasks don&apos;t repeat and have no subtasks.</p>
+        <p className="mt-2 text-caption text-ink-muted">Every task has an assignee (it can&apos;t be saved without one), so &ldquo;tasks without an assignee&rdquo; is always 0. Tasks don&apos;t repeat and have no subtasks.</p>
       </Section>
       <Section title="Delivery against due dates" note="Only tasks with a due date count; the due date is the one the task has now.">
         <Grid>
