@@ -102,6 +102,14 @@ const ICONS: Record<string, LucideIcon> = {
   "/superadmin/logins": KeyRound,
 };
 
+// v1.9.2: the collapsible groups of the user sidebar.
+const SECTION_ICONS: Record<string, LucideIcon> = { "My Approvals": ClipboardCheck, Tasks: ListTodo, Information: Newspaper };
+
+export function SectionIcon({ section, className = "h-4 w-4" }: { section: string; className?: string }) {
+  const Icon = SECTION_ICONS[section];
+  return Icon ? <Icon aria-hidden="true" className={`shrink-0 ${className}`} /> : null;
+}
+
 export function NavIcon({ href, className = "h-4 w-4" }: { href: string; className?: string }) {
   const Icon = ICONS[href];
   return Icon ? <Icon aria-hidden="true" className={`shrink-0 ${className}`} /> : null;

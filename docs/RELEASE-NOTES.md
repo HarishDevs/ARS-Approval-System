@@ -1,5 +1,19 @@
 # Release notes
 
+## v1.9.2 (16 Oct 2026): the user sidebar, regrouped (owner)
+- **Order:** Overview; **My Approvals**; **Tasks**; **Information**; then Search, Calendar and Analytics.
+- **Collapsible groups:** My Approvals, Tasks and Information open and close like a dropdown.
+  - **My Approvals:** New request, Custom approval, Waiting for me, My requests, My approved requests, Approved by me, Collaborating.
+  - **Tasks:** My tasks, Assigned by me, Team tasks, New task.
+  - **Information:** Information inbox, Sent by me, New information.
+- **Group behaviour:**
+  - The group holding the page you're on opens by itself.
+  - The groups you open or close stay that way in this browser.
+  - A closed My Approvals shows the waiting count on its header.
+  - The same groups appear in the phone menu.
+  - Groups work with the keyboard (Enter or Space on the header).
+- **Admin and Super Admin:** sidebars unchanged.
+
 ## v1.9.1 (16 Oct 2026): fix for the v1.9.0 deploy
 - **Cause:** the GoDaddy preview stopped at start with "Process exited before becoming ready". The runtime log showed the migration stopping at statement 5 (`CREATE TRIGGER trg_task_events_no_update`): "You do not have the SUPER privilege and binary logging is enabled". The hosted database user may not create triggers.
 - **Fix:** the four new triggers, which guard the task and information history against edits, are now optional.

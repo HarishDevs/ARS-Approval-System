@@ -17,7 +17,8 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
-- **Now (16 Oct 2026):** v1.9.1 fixes the v1.9.0 deploy (hosted MySQL refused the new history triggers; now optional). Retry the preview build / publish v1.9.1.
+- **Now (16 Oct 2026):** v1.9.2: the user sidebar regrouped (collapsible My Approvals, Tasks, Information). Publish after v1.9.1's preview succeeds (or straight to v1.9.2).
+- **Earlier (16 Oct 2026):** v1.9.1 fixes the v1.9.0 deploy (hosted MySQL refused the new history triggers; now optional). Retry the preview build / publish v1.9.1.
 - **Earlier (16 Oct 2026):** v1.9.0 (Tasks, Information, module set-up, notification bell, sidebar; audit AUD-02, AUD-05, AUD-08 fixed) is tagged, not deployed. After publishing: back up first; create and publish the first Task and Information types in Admin; optionally add WhatsApp templates for WORK_TASK_ASSIGNED and INFO_PUBLISHED.
 - **Now (16 Oct 2026):** a full read-only application audit is done and its reports are in `application-audit/` (00 to 12).
   - **Live:** `/api/health` shows v1.8.0, database ok and jobRunner OK. The cron item below (A-OPS) is done on live.
@@ -298,6 +299,11 @@ Found during S8-06:
 - [x] S8-12 Google sign-in reached UNKNOWN_ACCOUNT: itadmin@ is an alias. The Super Admin now signs in as itsupport@arsenergy.co.in (D-082, migration + non-overwriting seed, v1.0.5) (done 8 Oct 2026)
 - [x] S8-01b Go-live on GoDaddy with the owner, following docs/DEPLOYMENT.md (the owner is at the wizard's "Add secrets" step) (done 9 Oct 2026: live since 8 Oct 2026)
 - [x] S8-04 Update the three living files; commit and push (done 8 Oct 2026)
+
+## Session log — v1.9.2: user sidebar regrouped (16 Oct 2026), planned before starting
+Owner: Overview; My Approvals, Tasks and Information as collapsible groups (pages in the given order); Search; Calendar; Analytics.
+- [x] V192-01 Collapsible groups in the sidebar (users space and phone menu), the owner's order, remembered choice, auto-open of the current group (done 16 Oct 2026)
+- [x] V192-02 Tests updated and a new sidebar E2E; docs; v1.9.2; push; CI (done 16 Oct 2026)
 
 ## Session log — v1.9.1: deploy fix (16 Oct 2026), planned before starting
 Owner: the v1.9.0 preview build on GoDaddy failed at start.

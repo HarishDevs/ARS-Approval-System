@@ -102,13 +102,13 @@ export async function AppShell({
         </div>
         <p className="shrink-0 px-6 pt-4 text-caption font-semibold uppercase tracking-wider text-ink-faint">{SPACE_LABEL[area]}</p>
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain" data-testid="sidebar-scroll">
-          <SideNav items={items} />
+          <SideNav items={items} collapsible={area === "users"} />
         </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-header flex h-topbar items-center justify-between gap-4 border-b border-line bg-surface px-4 sm:px-6">
-          <MobileNav items={items} spaceLabel={SPACE_LABEL[area]} />
+          <MobileNav items={items} spaceLabel={SPACE_LABEL[area]} collapsible={area === "users"} />
           <div className="ml-auto flex items-center gap-2">
             <CommandPalette pages={palettePages} />
             <NotificationBell initialUnread={unread} />

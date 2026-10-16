@@ -65,7 +65,7 @@ test("B analytics: new KPIs, comparison, more filters, charts and drill-down", a
   await page.getByRole("link", { name: /Open requests/ }).first().click();
   await expect(page).toHaveURL(/\/users\/analytics\/list\?.*status=IN_PROGRESS.*kind=open/);
   await expect(page.getByRole("heading", { name: "Open now" })).toBeVisible();
-  await expect(page.getByText(/request(s)? ?|No requests match/).first()).toBeVisible();
+  await expect(page.locator("main").getByText(/request(s)? ?|No requests match/).first()).toBeVisible();
   await page.getByRole("link", { name: "← Back to Analytics" }).click();
   await expect(page).toHaveURL(/\/users\/analytics\?.*status=IN_PROGRESS/);
 });

@@ -24,6 +24,7 @@ test("on a phone the sidebar opens as a drawer", async ({ page, context }) => {
   await page.goto("/users");
   await page.getByRole("button", { name: "Open menu" }).click();
   const drawer = page.getByRole("dialog", { name: "Menu" });
+  await drawer.getByRole("button", { name: "My Approvals" }).click();
   await drawer.getByRole("link", { name: "My requests" }).click();
   await expect(page).toHaveURL(/\/users\/requests$/);
   await expect(drawer).toBeHidden();

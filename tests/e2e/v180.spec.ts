@@ -31,6 +31,7 @@ test.afterAll(async () => {
 test("My approved requests and Approved by me are in the sidebar, with their filters", async ({ page, context }) => {
   await as(context, "E2E_REQ");
   await page.goto("/users");
+  await page.locator("aside nav").getByRole("button", { name: "My Approvals" }).click();
   await page.locator("aside nav").getByRole("link", { name: "My approved requests" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "My approved requests" })).toBeVisible();
   for (const tab of ["Still valid", "Expired", "No expiry", "Amended"]) await expect(page.getByRole("navigation", { name: "Quick filters" }).getByRole("link", { name: new RegExp(`^${tab} \\(`) })).toBeVisible();

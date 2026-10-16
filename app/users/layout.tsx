@@ -11,19 +11,17 @@ export default async function UsersLayout({ children }: { children: React.ReactN
     <AppShell
       area="users"
       user={user}
+      // v1.9.2 (owner): Overview; My Approvals, Tasks and Information as
+      // collapsible groups; then Search, Calendar and Analytics.
       nav={[
         { href: "/users", label: "Overview" },
-        { href: "/users/queue", label: "Waiting for me", section: "Approvals" },
-        { href: "/users/requests", label: "My requests", section: "Approvals" },
-        { href: "/users/collaborating", label: "Collaborating", section: "Approvals" },
-        { href: "/users/approved", label: "My approved requests", section: "Approvals" },
-        { href: "/users/approved-by-me", label: "Approved by me", section: "Approvals" },
-        { href: "/users/new", label: "New request", section: "Approvals" },
-        { href: "/users/custom", label: "Custom approval", section: "Approvals" },
-        { href: "/users/search", label: "Search", section: "Approvals" },
-        { href: "/users/calendar", label: "Calendar", section: "Approvals" },
-        ...(features.analytics ? [{ href: "/users/analytics", label: "Analytics", section: "Approvals" }] : []),
-        // v1.9.0 (D-143): the Task and Information modules.
+        { href: "/users/new", label: "New request", section: "My Approvals" },
+        { href: "/users/custom", label: "Custom approval", section: "My Approvals" },
+        { href: "/users/queue", label: "Waiting for me", section: "My Approvals" },
+        { href: "/users/requests", label: "My requests", section: "My Approvals" },
+        { href: "/users/approved", label: "My approved requests", section: "My Approvals" },
+        { href: "/users/approved-by-me", label: "Approved by me", section: "My Approvals" },
+        { href: "/users/collaborating", label: "Collaborating", section: "My Approvals" },
         ...(features.tasks
           ? [
               { href: "/users/tasks", label: "My tasks", section: "Tasks" },
@@ -39,6 +37,9 @@ export default async function UsersLayout({ children }: { children: React.ReactN
               { href: "/users/information/new", label: "New information", section: "Information" },
             ]
           : []),
+        { href: "/users/search", label: "Search" },
+        { href: "/users/calendar", label: "Calendar" },
+        ...(features.analytics ? [{ href: "/users/analytics", label: "Analytics" }] : []),
       ]}
     >
       {children}

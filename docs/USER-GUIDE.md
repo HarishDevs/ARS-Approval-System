@@ -27,6 +27,9 @@ The first page (called "My work" before v1.7.1) after signing in. Tiles show wha
 - Two minutes before, the app asks "Still there?": choose **Stay signed in**.
 - Typing, clicking or scrolling counts as activity.
 
+### The sidebar
+Overview at the top, then three groups that open and close like a dropdown: **My Approvals**, **Tasks** and **Information**. Click a group's name to show its pages. The group of the page you're on opens by itself, and the app remembers which groups you keep open. Search, Calendar and Analytics are below.
+
 ### Tasks
 - **New task:** choose the type, fill in the title, who should do it, priority, due date and the type's fields, then **Create task**.
 - **Assigned to you:** **Start**, then **Complete** (the type may ask for a note or a file). You can also mark it **Blocked** with the reason, and add comments and files.

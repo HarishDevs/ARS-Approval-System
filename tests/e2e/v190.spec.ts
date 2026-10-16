@@ -58,6 +58,7 @@ test("a task is created, started and completed with its note; the assignee hears
   const staff = await userIdByLogin("E2E_STAFF");
   await as(context, "E2E_REQ");
   await page.goto("/users");
+  await page.locator("aside nav").getByRole("button", { name: "Tasks" }).click();
   await page.locator("aside nav").getByRole("link", { name: "New task" }).click();
   await expect(page.getByRole("heading", { level: 1, name: /New task/ })).toBeVisible();
   await page.goto(`/users/tasks/new?type=${taskTypeUrl.split("/").pop()}`);
@@ -124,7 +125,7 @@ test("information is published, read (not acknowledged) and acknowledged", async
   expect(read!.read_at).not.toBeNull();
   expect(read!.acknowledged_at).toBeNull();
   await page.getByRole("button", { name: "Acknowledge" }).click();
-  await expect(page.getByText("Acknowledged. Thank you.")).toBeVisible();
+  await expect(page.getByTestId("ack-status")).toContainText("You acknowledged this");
 
   await as(context, "E2E_MGR");
   await page.goto(infoUrl);
@@ -160,6 +161,8 @@ test("the sidebar stays put and scrolls only when its entries don't fit", async 
   const tall = await scroller.evaluate((element) => ({ overflow: getComputedStyle(element).overflowY, fits: element.scrollHeight <= element.clientHeight }));
   expect(tall).toEqual({ overflow: "auto", fits: true });
   await page.setViewportSize({ width: 1280, height: 520 });
+  // With every group open the entries no longer fit: the sidebar scrolls.
+  for (const group of ["My Approvals", "Information"]) await page.locator("aside nav").getByRole("button", { name: group }).click();
   const short = await scroller.evaluate((element) => element.scrollHeight > element.clientHeight);
   expect(short).toBe(true);
   // The page scrolls; the sidebar stays in view (Help is a long page).
@@ -171,6 +174,37 @@ test("the sidebar stays put and scrolls only when its entries don't fit", async 
   // Every entry can still be reached.
   await scroller.evaluate((element) => element.scrollTo(0, element.scrollHeight));
   await expect(page.locator("aside nav").getByRole("link", { name: "New information" })).toBeInViewport();
+});
+
+test("the user sidebar: Overview, collapsible My Approvals / Tasks / Information, then Search, Calendar, Analytics", async ({ page, context }) => {
+  await as(context, "E2E_REQ");
+  await page.goto("/users");
+  const nav = page.locator("aside nav");
+  // Top-level order.
+  const top = await nav.evaluate((element) =>
+    Array.from(element.children).map((child) => (child.querySelector(":scope > button") ?? child).textContent?.trim().replace(/\s+/g, " ") ?? ""),
+  );
+  expect(top.map((text) => text.replace(/\s*\d+( waiting)?$/, ""))).toEqual(["Overview", "My Approvals", "Tasks", "Information", "Search", "Calendar", "Analytics"]);
+  // A group opens like a dropdown, with its pages in the owner's order.
+  const approvals = nav.getByRole("button", { name: "My Approvals" });
+  await expect(approvals).toHaveAttribute("aria-expanded", "false");
+  await expect(nav.getByRole("link", { name: "New request" })).toBeHidden();
+  await approvals.click();
+  await expect(approvals).toHaveAttribute("aria-expanded", "true");
+  const links = await page.getByTestId("nav-group-My Approvals").getByRole("link").allTextContents();
+  expect(links.map((text) => text.replace(/\d+ waiting$/, "").trim())).toEqual(["New request", "Custom approval", "Waiting for me", "My requests", "My approved requests", "Approved by me", "Collaborating"]);
+  // The choice is remembered on the next page.
+  await nav.getByRole("link", { name: "Search" }).click();
+  await expect(page).toHaveURL(/\/users\/search/);
+  await expect(page.locator("aside nav").getByRole("button", { name: "My Approvals" })).toHaveAttribute("aria-expanded", "true");
+  // The group holding the current page opens by itself and marks it.
+  await page.goto("/users/information/sent");
+  await expect(page.locator("aside nav").getByRole("button", { name: "Information" })).toHaveAttribute("aria-expanded", "true");
+  await expect(page.locator("aside nav").getByRole("link", { name: "Sent by me" })).toHaveAttribute("aria-current", "page");
+  // Closing a group hides its pages; keyboard works (Enter on the header).
+  await page.locator("aside nav").getByRole("button", { name: "Information" }).focus();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("aside nav").getByRole("link", { name: "Sent by me" })).toBeHidden();
 });
 
 test.afterAll(async () => {

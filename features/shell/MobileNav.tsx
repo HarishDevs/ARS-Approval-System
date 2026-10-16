@@ -6,7 +6,7 @@ import { SideNav, type NavItem } from "@/features/shell/SideNav";
 
 // Below 768 px the sidebar is hidden; this button opens it as a drawer
 // (S9-04). Closes on a page change, Escape or a tap outside.
-export function MobileNav({ items, spaceLabel }: { items: NavItem[]; spaceLabel: string }) {
+export function MobileNav({ items, spaceLabel, collapsible = false }: { items: NavItem[]; spaceLabel: string; collapsible?: boolean }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   useEffect(() => setOpen(false), [pathname]);
@@ -35,7 +35,7 @@ export function MobileNav({ items, spaceLabel }: { items: NavItem[]; spaceLabel:
               </button>
             </div>
             <p className="px-6 pt-3 text-caption font-semibold uppercase tracking-wider text-ink-faint">{spaceLabel}</p>
-            <SideNav items={items} />
+            <SideNav items={items} collapsible={collapsible} />
           </div>
           <button type="button" aria-label="Close menu" onClick={() => setOpen(false)} className="flex-1 bg-black/30" />
         </div>

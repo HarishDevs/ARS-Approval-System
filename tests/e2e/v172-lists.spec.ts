@@ -35,6 +35,7 @@ test.beforeAll(async () => {
 test("Collaborating is its own screen in the sidebar, with quick tabs and the full filter set", async ({ page, context }) => {
   await as(context, "E2E_STAFF");
   await page.goto("/users");
+  await page.locator("aside nav").getByRole("button", { name: "My Approvals" }).click();
   await page.locator("aside nav").getByRole("link", { name: "Collaborating" }).click();
   await expect(page).toHaveURL(/\/users\/collaborating$/);
   await expect(page.getByRole("heading", { level: 1, name: "Collaborating" })).toBeVisible();

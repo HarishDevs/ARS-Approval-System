@@ -983,6 +983,9 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 3. A recipient opens it from **Information inbox** (it is then marked read). If acknowledgement is asked, they press **Acknowledge**.
 4. The sender sees who read and who acknowledged, can **Withdraw** (reason) or **Archive**. After its expiry date it shows as Expired. Reminders go to people who haven't acknowledged.
 
+## F-127 User sidebar (v1.9.2, D-149)
+Overview → **My Approvals** ▾ / **Tasks** ▾ / **Information** ▾ (click to open the group's pages) → Search, Calendar, Analytics. The current page's group opens by itself; the open/closed choice is remembered.
+
 ## F-126 Notification bell (v1.9.0, D-146)
 1. Bell → a dropdown with the latest 10 and filters All / Approvals / Tasks / Information.
 2. Click one → its record opens and that one is marked read. **Mark all read** is a separate button.

@@ -415,6 +415,10 @@
 - Applies to users and IT admins; the Super Admin is exempt (12-hour limit only).
 - The browser's session check no longer counts as activity (it used to keep an open tab signed in for ever). Activity in the page is reported at the next minute's check.
 - A warning with "Stay signed in" 2 minutes before. | Owner; Claude, 15 Oct 2026 |
+| D-149 | 16 Oct 2026 | **User sidebar, regrouped (owner, v1.9.2):**
+- Order: Overview; My Approvals (New request, Custom approval, Waiting for me, My requests, My approved requests, Approved by me, Collaborating); Tasks (My tasks, Assigned by me, Team tasks, New task); Information (Information inbox, Sent by me, New information); Search; Calendar; Analytics.
+- The three groups are collapsible. The current page's group opens by itself; open or closed choices are kept in the browser (localStorage `ars.nav.groups`).
+- Admin and Super Admin sidebars keep plain headings. | Owner; Claude, 16 Oct 2026 |
 | D-148 | 16 Oct 2026 | **Optional triggers in migrations (v1.9.1):**
 - A trigger block may be marked `-- @optional`. When the database user isn't allowed to run it (hosted MySQL with binary logging refuses CREATE TRIGGER without SUPER), it is skipped with a warning naming the SQL file to run in phpMyAdmin. Other errors, and unmarked triggers, still stop the migration.
 - Used only for the v1.9.0 task and information history guards, because the app only inserts there.
@@ -476,6 +480,14 @@
 | Q-023 | **Further owner decisions from the audit:** DR-01 join rejection semantics; DR-02 no approval without a human decision; DR-03 controls on IT changing approvers' contact details; DR-04 Super Admin inactivity limit; DR-05 what an expired approval means; DR-06 retention durations; DR-08 off-site encrypted backups and RTO/RPO (see `application-audit/12_DECISION_REGISTER.md`) | Before Phase B and D | Open, waiting on the owner (16 Oct 2026) |
 
 ## 5. Work log (newest first)
+
+### 16 Oct 2026 (v1.9.2: user sidebar regrouped)
+- Owner's sidebar order, with collapsible My Approvals, Tasks and Information (D-149).
+- Tests:
+  - three E2E tests now open the group before clicking a page in it;
+  - one analytics test is scoped to the page content (hidden sidebar links matched "request");
+  - the acknowledgement test checks the lasting note;
+  - a new E2E test covers order, opening, remembering, the auto-open of the current group and the keyboard.
 
 ### 16 Oct 2026 (v1.9.1: deploy fix)
 - **Owner:** the v1.9.0 preview failed ("Process exited before becoming ready").
