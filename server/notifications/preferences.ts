@@ -25,7 +25,7 @@ export const EVENT_GROUPS: readonly EventGroup[] = [
     label: "Work waiting for you",
     help: "An approval or a task is waiting for you, or a request is stuck and needs IT. Always sent, so nothing waits unnoticed.",
     mandatory: true,
-    events: ["APPROVAL_NEEDED", "TASK_ASSIGNED", "REQUEST_BLOCKED"],
+    events: ["APPROVAL_NEEDED", "TASK_ASSIGNED", "REQUEST_BLOCKED", "WORK_TASK_ASSIGNED"],
   },
   {
     key: "MY_REQUESTS",
@@ -54,6 +54,22 @@ export const EVENT_GROUPS: readonly EventGroup[] = [
     help: "FYI steps, withdrawn requests, changes made after you asked, out-of-office changes.",
     mandatory: false,
     events: ["REQUEST_FYI", "REQUEST_WITHDRAWN", "REQUEST_RESUBMITTED", "DELEGATION_STARTED", "DELEGATION_ENDED"],
+  },
+  // v1.9.0: the Task and Information modules. The in-app notification is
+  // always kept; these choices are about email and WhatsApp.
+  {
+    key: "TASK_UPDATES",
+    label: "Task updates",
+    help: "Changes, comments, completion, due-soon and overdue reminders on tasks you're part of.",
+    mandatory: false,
+    events: ["WORK_TASK_UPDATED", "WORK_TASK_COMMENT", "WORK_TASK_COMPLETED", "WORK_TASK_REOPENED", "WORK_TASK_CANCELLED", "WORK_TASK_DUE_SOON", "WORK_TASK_OVERDUE"],
+  },
+  {
+    key: "INFORMATION",
+    label: "Information sent to you",
+    help: "New information, updates, withdrawals and acknowledgement reminders.",
+    mandatory: false,
+    events: ["INFO_PUBLISHED", "INFO_UPDATED", "INFO_WITHDRAWN", "INFO_ACK_REMINDER"],
   },
 ];
 

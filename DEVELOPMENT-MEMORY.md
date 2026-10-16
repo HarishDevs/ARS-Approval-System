@@ -415,6 +415,32 @@
 - Applies to users and IT admins; the Super Admin is exempt (12-hour limit only).
 - The browser's session check no longer counts as activity (it used to keep an open tab signed in for ever). Activity in the page is reported at the next minute's check.
 - A warning with "Stay signed in" 2 minutes before. | Owner; Claude, 15 Oct 2026 |
+| D-143 | 16 Oct 2026 | **Three business modules (owner, v1.9.0):**
+- **Approvals** stay on the one graph engine (D-001).
+- **Tasks** and **Information** are new, independent records with their own lifecycle, never stored only as notifications.
+- A task's completion never approves anything, and reading or acknowledging information never completes a task or approves anything.
+- A task may point to an approval request (`related_request_id`), but their states stay separate.
+- The approval engine's "work" steps stay part of approvals. | Owner; Claude, 16 Oct 2026 |
+| D-144 | 16 Oct 2026 | **Module set-up is configuration, versioned (v1.9.0):**
+- IT keeps **Task types** and **Information types** in the Admin space, each with a form made by the same field builder as approval types (D-055).
+- A type has versions: a draft is edited, checked, previewed and published; the published version is used for new records; each record keeps the version it was made with.
+- A type can be retired (no new records) and reactivated.
+- Fields of a published version are never changed in place; a new version is made instead.
+- Who may create a record of a type: everyone, chosen departments or chosen people.
+- Task types set the allowed steps (Blocked on or off; reopen; reassign; who may cancel), whether a completion note or file is required, default priority and due days, reminders and the assignment scope.
+- Information types set acknowledgement, expiry days, who may be sent to and reminders.
+- Every change is audited with before and after values. | Claude, 16 Oct 2026 |
+| D-145 | 16 Oct 2026 | **Information recipients are fixed when it is published (v1.9.0):**
+- Departments, groups and "everyone" are resolved into a person list at publishing and stored. People who join later don't receive it; people who leave keep their record.
+- Read (opened) and acknowledged (a separate button, when the type asks for it) are recorded separately, with time and person. | Claude, 16 Oct 2026 |
+| D-146 | 16 Oct 2026 | **Notification categories and the bell (owner, v1.9.0):**
+- Each notification has a category (APPROVAL, TASK, INFORMATION, SYSTEM) and its related record.
+- Older notifications get their category from their event type, using the same list.
+- The bell opens a dropdown of the latest 10 (newest first, by id) with type filters. **Read more** opens the Notifications page with All / Approvals / Tasks / Information views. Neither marks anything read by itself. | Owner; Claude, 16 Oct 2026 |
+| D-147 | 16 Oct 2026 | **Approval integrity and raiser scope (owner brief, v1.9.0):**
+- An approval type can be limited to departments or people who may raise it, checked on the server.
+- On resubmit, if the new values change the route (a skipped level, a condition or a DoA band), the request restarts from the beginning; the earlier history stays. This supersedes the per-type restart choice only when the route changes; owner question Q-022 can later choose "earliest affected step".
+- One person can't decide two tasks of the same step in the same round (audit AUD-05, AUD-02). | Owner; Claude, 16 Oct 2026 |
 | D-033 | 28 Sep 2026 | **Staff data is provided by the admin. Roles are assigned per user, by the admin only. Users are added or made inactive in the Admin Portal** (never hard-deleted, so history and audit stay intact). *Resolves Q-010.* | Owner (answer 7) |
 
 ## 4. Open questions (must be answered before the phase shown)
@@ -446,6 +472,21 @@
 | Q-023 | **Further owner decisions from the audit:** DR-01 join rejection semantics; DR-02 no approval without a human decision; DR-03 controls on IT changing approvers' contact details; DR-04 Super Admin inactivity limit; DR-05 what an expired approval means; DR-06 retention durations; DR-08 off-site encrypted backups and RTO/RPO (see `application-audit/12_DECISION_REGISTER.md`) | Before Phase B and D | Open, waiting on the owner (16 Oct 2026) |
 
 ## 5. Work log (newest first)
+
+### 16 Oct 2026 (v1.9.0: Approval, Task and Information modules)
+- **Source:** the owner brief "Configurable Approval, Task & Information Management System".
+- **Inventory first:** independent tasks and information didn't exist; only work and FYI steps inside approvals did. These stay part of approvals.
+- **Built (D-143 to D-147):**
+  - Task and Information types, with versions and audit;
+  - the two modules with their lifecycles, lists, pages, files and reminders;
+  - notification categories and the bell dropdown;
+  - the sidebar grouping and independent scrolling;
+  - six new field types;
+  - raiser scope for approval types;
+  - four reports.
+- **Fixed from the audit:** AUD-02 (resubmit re-routing), AUD-05 (one vote per step), AUD-08 (outbox).
+- **Register:** `application-audit/13_MODULES_IMPLEMENTATION_REGISTER.md`.
+- **Checks:** see the commit.
 
 ### 16 Oct 2026 (application audit, read-only)
 - **Source:** the owner's audit brief (discovery, technical audit, roadmap). No feature work; nothing in the app, database or deployment was changed.

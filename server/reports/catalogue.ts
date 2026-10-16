@@ -7,6 +7,7 @@ import { APPROACHING_SHARE, median, percentile, SLA_LABEL } from "@/server/analy
 import type { AnalyticsFilter } from "@/lib/db/repositories/analytics.repository";
 import { listBudgets } from "@/lib/db/repositories/budgets.repository";
 import { financialYear, fyLabel } from "@/server/workflows/type-settings";
+import { moduleReports } from "@/server/reports/module-reports";
 
 // Reports catalogue (Addendum A §10, D-123). Each report: who may run it
 // (scopes), its columns, and a scoped query capped at MAX_ROWS. The same
@@ -424,6 +425,8 @@ export const REPORTS: readonly ReportDefinition[] = [
       };
     },
   },
+  // v1.9.0: Task and Information reports.
+  ...moduleReports(() => rowCap.getStore() ?? MAX_ROWS),
 ];
 
 export const REPORT = Object.fromEntries(REPORTS.map((report) => [report.key, report])) as Record<string, ReportDefinition>;

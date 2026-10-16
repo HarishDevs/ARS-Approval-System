@@ -58,7 +58,7 @@ test("RA-03 axe finds no serious problems on the main pages, light and dark", as
   const conn = await db();
   await conn.query("DELETE FROM user_settings WHERE setting_key = 'ui.theme'");
   await conn.end();
-  const userPages = ["/users", "/users/queue", "/users/requests", "/users/new", "/users/search?q=E2E", "/users/help", "/users/profile", "/users/notifications", "/users/notifications/settings", "/users/delegation", requestPath];
+  const userPages = ["/users", "/users/queue", "/users/requests", "/users/new", "/users/search?q=E2E", "/users/help", "/users/profile", "/users/notifications", "/users/notifications/settings", "/users/delegation", "/users/tasks", "/users/tasks/new", "/users/information", "/users/information/new", requestPath];
   const problems: string[] = [];
   for (const theme of ["dark", "light"] as const) {
     await as(context, "E2E_REQ");
@@ -66,7 +66,7 @@ test("RA-03 axe finds no serious problems on the main pages, light and dark", as
     for (const url of userPages) problems.push(...(await scan(page, url)));
     await as(context, "E2E_SUPER");
     await context.addCookies([{ name: "ars_theme", value: theme, domain: "localhost", path: "/" }]);
-    for (const url of ["/admin", "/admin/users", "/admin/workload", "/admin/workflows", "/admin/attention", "/admin/budgets", "/users/analytics", "/users/analytics/metrics", "/admin/analytics", "/admin/reports", "/admin/reports/pending_approvals", "/superadmin", "/superadmin/deliveries", "/superadmin/automation", "/superadmin/retention", "/admin/workflows/import"]) problems.push(...(await scan(page, url)));
+    for (const url of ["/admin", "/admin/users", "/admin/workload", "/admin/workflows", "/admin/attention", "/admin/budgets", "/users/analytics", "/users/analytics/metrics", "/admin/analytics", "/admin/reports", "/admin/reports/pending_approvals", "/superadmin", "/superadmin/deliveries", "/superadmin/automation", "/superadmin/retention", "/admin/workflows/import", "/admin/task-types", "/admin/information-types"]) problems.push(...(await scan(page, url)));
   }
   expect(problems, problems.join("\n")).toEqual([]);
 });

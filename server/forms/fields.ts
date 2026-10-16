@@ -7,11 +7,16 @@ import { RULE_OPERATORS, computeLines, dependencyOrder, evaluateFormula, formatP
 // v1.6.0: CALC (worked out by a formula), LINE_ITEMS (quantity × rate +
 // GST, total in the field's own key), SECTION (a heading; holds no value).
 // v1.6.1: ATTACHMENT (files uploaded to this field; its value is the file count).
-export const FIELD_TYPES = ["TEXT", "LONG_TEXT", "NUMBER", "DATE", "CHOICE", "PERSON", "LOOKUP", "CALC", "LINE_ITEMS", "SECTION", "ATTACHMENT"] as const;
+// v1.9.0: CURRENCY (₹, two decimals), DATETIME (India time), MULTI_CHOICE
+// (several of the options), CHECKBOX (ticked = "Yes"), RADIO (one option,
+// shown as buttons), URL (http/https link).
+export const FIELD_TYPES = ["TEXT", "LONG_TEXT", "NUMBER", "DATE", "CHOICE", "PERSON", "LOOKUP", "CALC", "LINE_ITEMS", "SECTION", "ATTACHMENT", "CURRENCY", "DATETIME", "MULTI_CHOICE", "CHECKBOX", "RADIO", "URL"] as const;
 // Most files one attachment field takes (the request limit of 20 still applies).
 export const MAX_FIELD_FILES = 5;
 // Types whose value is a number (usable in formulas, rules and the DoA).
-export const NUMERIC_TYPES: readonly string[] = ["NUMBER", "CALC", "LINE_ITEMS"];
+export const NUMERIC_TYPES: readonly string[] = ["NUMBER", "CALC", "LINE_ITEMS", "CURRENCY"];
+// Types whose values come from the field's own list of options.
+export const OPTION_TYPES: readonly string[] = ["CHOICE", "RADIO", "MULTI_CHOICE"];
 export type FieldType = (typeof FIELD_TYPES)[number];
 
 // LOOKUP fields take their options from the database (S12-06, D-088): the
@@ -28,6 +33,9 @@ export function isIsoDate(value: unknown): value is string {
   const date = new Date(`${value}T00:00:00Z`);
   return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
+
+const DATETIME = /^(\d{4}-\d{2}-\d{2})T([01]\d|2[0-3]):([0-5]\d)$/;
+export const isDateTime = (value: unknown): value is string => typeof value === "string" && DATETIME.test(value) && isIsoDate(value.slice(0, 10));
 
 export interface FormField {
   key: string;
@@ -47,6 +55,11 @@ export interface FormField {
   neededBy?: boolean; // DATE only: the request's "needed by" date (calendar)
   maxFiles?: number; // ATTACHMENT only: 1–5 (default 5)
   confidential?: boolean; // v1.7.0 (A8): only the requester, approvers and IT see the value
+  // v1.9.0 (task and information forms): shown as a column in lists,
+  // matched by the list search, may be changed after the record is made.
+  listed?: boolean;
+  searchable?: boolean;
+  editable?: boolean;
 }
 
 // A8: what everyone else sees in place of a confidential value.
@@ -72,6 +85,9 @@ export const formFieldSchema = z.object({
   neededBy: z.boolean().optional(),
   maxFiles: z.number().int().min(1).max(MAX_FIELD_FILES).optional(),
   confidential: z.boolean().optional(),
+  listed: z.boolean().optional(),
+  searchable: z.boolean().optional(),
+  editable: z.boolean().optional(),
 });
 
 export const formSchema = z.array(formFieldSchema).max(40);
@@ -83,10 +99,13 @@ export function checkFormDefinition(fields: readonly FormField[]): string[] {
   for (const field of fields) {
     if (keys.has(field.key)) problems.push(`Two fields use the key "${field.key}".`);
     keys.add(field.key);
-    if (field.type === "CHOICE" && (!field.options || field.options.length < 2)) problems.push(`"${field.label}" needs at least two choices.`);
-    if (field.type !== "CHOICE" && field.options?.length) problems.push(`"${field.label}" has choices but isn't a choice field.`);
-    if (field.type === "CHOICE" && field.options && new Set(field.options.map((option) => option.toLowerCase())).size !== field.options.length) problems.push(`"${field.label}" has the same choice twice.`);
-    if (field.type !== "NUMBER" && field.min !== undefined) problems.push(`"${field.label}" has a minimum but isn't a number field.`);
+    const hasOptions = OPTION_TYPES.includes(field.type);
+    if (hasOptions && (!field.options || field.options.length < 2)) problems.push(`"${field.label}" needs at least two choices.`);
+    if (!hasOptions && field.options?.length) problems.push(`"${field.label}" has choices but isn't a choice field.`);
+    if (hasOptions && field.options && new Set(field.options.map((option) => option.toLowerCase())).size !== field.options.length) problems.push(`"${field.label}" has the same choice twice.`);
+    if (field.type !== "NUMBER" && field.type !== "CURRENCY" && field.min !== undefined) problems.push(`"${field.label}" has a minimum but isn't a number field.`);
+    if (hasOptions && field.defaultValue && !(field.options ?? []).includes(field.defaultValue)) problems.push(`"${field.label}": the default must be one of the choices.`);
+    if (field.type === "URL" && field.defaultValue && !isWebLink(field.defaultValue)) problems.push(`"${field.label}": the default must be a web link (https://…).`);
     if (field.type === "LOOKUP" && !field.source) problems.push(`"${field.label}" needs a list to choose from (departments or designations).`);
     if (field.type !== "LOOKUP" && field.source) problems.push(`"${field.label}" has a list but isn't a list field.`);
     if (!field.label.trim()) problems.push("Every field needs a label.");
@@ -156,13 +175,40 @@ export function parseFormSubmission(
         if (value.length > 4000) errors[field.key] = "Use 4000 characters or fewer.";
         else data[field.key] = value;
         break;
+      case "CURRENCY":
       case "NUMBER": {
         const cleaned = value.replace(/[,\s₹]/g, "");
         const number = Number(cleaned);
         if (cleaned === "" || !Number.isFinite(number)) errors[field.key] = "Enter a number.";
         else if (Math.abs(number) > 1e13) errors[field.key] = "That number is too large.";
         else if (field.min !== undefined && number < field.min) errors[field.key] = `Enter ${field.min.toLocaleString("en-IN")} or more.`;
+        else if (field.type === "CURRENCY" && !/^-?\d+(\.\d{1,2})?$/.test(cleaned)) errors[field.key] = "Use at most two decimal places (paise).";
         else data[field.key] = number;
+        break;
+      }
+      case "DATETIME":
+        if (!isDateTime(value)) errors[field.key] = "Choose a valid date and time.";
+        else data[field.key] = value;
+        break;
+      case "URL":
+        if (value.length > 500) errors[field.key] = "Use a link of 500 characters or fewer.";
+        else if (!isWebLink(value)) errors[field.key] = "Enter a web link starting with https:// or http://.";
+        else data[field.key] = value;
+        break;
+      case "CHECKBOX":
+        if (!["yes", "on", "true"].includes(value.toLowerCase())) errors[field.key] = "Tick the box or leave it empty.";
+        else data[field.key] = "Yes";
+        break;
+      case "MULTI_CHOICE": {
+        // The browser sends the ticked options as a JSON list.
+        let picked: unknown;
+        try {
+          picked = JSON.parse(value);
+        } catch {
+          picked = null;
+        }
+        if (!Array.isArray(picked) || picked.some((item) => typeof item !== "string" || !field.options?.includes(item))) errors[field.key] = "Choose from the options.";
+        else if (picked.length) data[field.key] = (field.options ?? []).filter((option) => (picked as string[]).includes(option));
         break;
       }
       case "DATE":
@@ -175,6 +221,7 @@ export function parseFormSubmission(
         else data[field.key] = option.code;
         break;
       }
+      case "RADIO":
       case "CHOICE":
         if (!field.options?.includes(value)) errors[field.key] = "Choose one of the options.";
         else data[field.key] = value;
@@ -244,11 +291,25 @@ export function parseFormSubmission(
     }
     if (field.type === "SECTION" || field.type === "CALC") continue;
     const required = field.required || (field.requiredIf ? ruleHolds(field.requiredIf, data as Record<string, string | number | null>) : false);
+    if (required && field.type === "CHECKBOX" && data[field.key] === undefined && !errors[field.key]) {
+      errors[field.key] = `Tick "${field.label}" to continue.`;
+      continue;
+    }
     if (required && (data[field.key] === undefined || data[field.key] === "") && !errors[field.key]) {
       errors[field.key] = field.type === "LINE_ITEMS" ? `Add at least one line to ${field.label}.` : field.type === "ATTACHMENT" ? `Attach at least one file to ${field.label}.` : `${field.label} is required.`;
     }
   }
   return Object.keys(errors).length ? { ok: false, errors, data } : { ok: true, data };
+}
+
+// A web link people can open: http or https only (never javascript: etc.).
+export function isWebLink(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return (url.protocol === "https:" || url.protocol === "http:") && Boolean(url.hostname);
+  } catch {
+    return false;
+  }
 }
 
 // Where a line-items field keeps its rows (the total is under its own key).
@@ -268,6 +329,12 @@ export function storedLines(formData: Record<string, unknown>, key: string): Lin
 // For showing stored values back on the request page.
 export function displayValue(field: FormField, value: unknown, names: ReadonlyMap<number, string>, lookupNames?: ReadonlyMap<string, string>): string {
   if (value === undefined || value === null || value === "") return "—";
+  if (Array.isArray(value)) return value.length ? value.map(String).join(", ") : "—";
+  if (field.type === "CURRENCY" && typeof value === "number") return `₹${value.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  if (field.type === "DATETIME" && isDateTime(value)) {
+    const [day, time] = value.split("T");
+    return `${new Date(`${day}T00:00:00Z`).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" })}, ${time}`;
+  }
   if (field.type === "DATE" && isIsoDate(value)) {
     return new Date(`${value}T00:00:00Z`).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" });
   }

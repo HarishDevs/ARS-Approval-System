@@ -1,5 +1,50 @@
 # Release notes
 
+## v1.9.0 (16 Oct 2026): Tasks, Information, the notification bell, module set-up
+**For everyone**
+- **Tasks** (sidebar → Tasks): create a task of a type IT set up, assign it to someone, and follow it to completion.
+  - **Steps:** start, mark blocked (if allowed), complete with a note or file when the type asks, reopen, cancel, reassign, edit, comment and attach files.
+  - **Lists:** My tasks, Assigned by me and Team tasks (people who report to you), with quick tabs (open, overdue, due in 2 days, blocked, completed, cancelled), search, filters, sorting and paging.
+  - **Reminders:** before a task is due, and once when it is overdue.
+  - **Separate from approvals:** a task can point to an approval request, but completing it never approves the request.
+- **Information** (sidebar → Information): send information of a type IT set up.
+  - **Recipients:** people, departments, groups or (if allowed) everyone, fixed when it's published.
+  - **Read and acknowledged are separate:** opening it marks it read; when acknowledgement is asked, recipients press **Acknowledge**. The sender sees who read and who acknowledged.
+  - **Lifecycle:** drafts, publishing, withdrawing (recipients are told), archiving and expiry dates.
+- **Notification bell:** opens a dropdown with your latest 10 notifications.
+  - Filters: All / Approvals / Tasks / Information.
+  - Opening one marks only that one read. **Mark all read** is a separate button.
+  - **Read more** opens the Notifications page with the same filter, which now has All, Approvals, Tasks, Information and System views.
+- **Sidebar:**
+  - entries are grouped by module (Approvals, Tasks, Information);
+  - it stays in place while the page scrolls;
+  - it scrolls on its own only when its entries don't fit.
+- **Approvals:**
+  - **Changed values re-route a resubmitted request.** If changing a request's values on resubmit changes its route (an amount band or a condition), it restarts from the first level, so no level the new values need is skipped.
+  - **One person, one vote per step:** one person can't decide two parts of the same step (for example as a delegate and as a named approver).
+  - **Some approval types are limited** to certain departments or people.
+
+**For IT (Admin)**
+- **Task types** and **Information types**: the form (same builder as approval types), how they work, and who may create them.
+  - **Lifecycle:** draft, check, preview, publish, version history, retire and reactivate.
+  - **Versions:** a published version is never changed in place, and records keep the version they were made with.
+  - **History:** every change is in the type's history and the audit log.
+- **New field types** for every form, approvals included:
+  - currency (₹, paise), date and time, multi-select, checkbox, radio buttons and web link (URL);
+  - for task and information forms, each field can be shown in lists, matched by search, or changeable later.
+- **Approval types: "Who may raise this type"** (everyone, chosen departments or chosen people). IT can always raise it.
+- **Reports:** Task register, Task workload by assignee, Information register, Outstanding acknowledgements.
+
+**For the Super Admin**
+- **Feature switches:** Task Management and Information Management (Providers & security → Features).
+- **Page access:** covers the new pages.
+- **Automation:** a new step, "Task and information reminders".
+- **Database:** one migration, additive only (`202610160900_v190.sql`). v1.8.0 still runs on it.
+- **Fixed from the audit:**
+  - AUD-02: resubmit routing.
+  - AUD-05: one vote per step.
+  - AUD-08: a queued message is no longer marked sent when it couldn't be recorded.
+
 ## v1.8.0 (15 Oct 2026): approved lists, custom approval set-up, page access, inactivity sign-out
 **For everyone**
 - **My approved requests** (sidebar): your requests that were approved.

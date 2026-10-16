@@ -1,4 +1,5 @@
 import "server-only";
+import { categoryOf, entityFromLink, type EntityRef } from "@/server/notifications/categories";
 import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { getDbPool, type Queryable } from "@/lib/db/client";
 import { sealPayload } from "@/lib/security/delivery-payload";
@@ -20,16 +21,20 @@ export async function findRecipient(userId: number): Promise<NotificationRecipie
   return row ? { id: row.id, name: row.name, email: row.email, whatsappNumber: row.whatsapp_number, active: row.active === 1 } : null;
 }
 
+// v1.9.0 (D-146): the module (category) and the record it is about are
+// stored with it, so the bell can filter and open the right record.
 export async function createNotification(input: {
   eventType: string;
   userId: number;
   title: string;
   message: string;
   deepLink: string | null;
+  entity?: EntityRef | null;
 }): Promise<number> {
+  const entity = input.entity ?? entityFromLink(input.deepLink);
   const [result] = await getDbPool().query<ResultSetHeader>(
-    "INSERT INTO notifications (event_type, user_id, title, message, deep_link) VALUES (?, ?, ?, ?, ?)",
-    [input.eventType, input.userId, input.title.slice(0, 200), input.message.slice(0, 1000), input.deepLink],
+    "INSERT INTO notifications (event_type, category, user_id, title, message, deep_link, entity_type, entity_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+    [input.eventType, categoryOf(input.eventType), input.userId, input.title.slice(0, 200), input.message.slice(0, 1000), input.deepLink, entity?.type ?? null, entity?.id ?? null],
   );
   return result.insertId;
 }

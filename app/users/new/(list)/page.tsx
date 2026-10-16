@@ -3,6 +3,7 @@ import { requireArea } from "@/server/authorization/guards";
 import { EmptyState, PageHeader } from "@/features/shell/PageHeader";
 import { listWorkflows } from "@/lib/db/repositories/approvals.repository";
 import { followUpSource } from "@/server/approvals/follow-up";
+import { departmentOfUser, mayRaise } from "@/server/approvals/raisers";
 
 // Pick an approval type: active, published predefined types (custom
 // approvals made by users come in a later session, P5).
@@ -11,7 +12,9 @@ export default async function NewRequestPage({ searchParams }: { searchParams: P
   const raw = (await searchParams).followUp;
   const source = await followUpSource(raw && /^\d{1,10}$/.test(raw) ? Number(raw) : null, { id: user.id, roles: user.roles });
   const suffix = source ? `?followUp=${source.id}` : "";
-  const types = (await listWorkflows({ kind: "PREDEFINED" })).filter((item) => item.active && item.publishedVersionNo !== null);
+  // v1.9.0 (D-147): only the types this person may raise.
+  const departmentId = await departmentOfUser(user.id);
+  const types = (await listWorkflows({ kind: "PREDEFINED" })).filter((item) => item.active && item.publishedVersionNo !== null && mayRaise(item.settings, { id: user.id, roles: user.roles, departmentId }));
   return (
     <>
       <PageHeader title="New request" description="Choose the kind of approval you need.">

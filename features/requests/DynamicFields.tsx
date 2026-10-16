@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import { MultiChoiceInput, parseMulti } from "@/features/requests/MultiChoiceInput";
 import { LineItemsEditor } from "@/features/requests/LineItemsEditor";
 import { describeRule, evaluateFormula, parseFormula, ruleHolds, visibleFields } from "@/server/forms/dynamic";
 import { FieldError } from "@/features/ui/form";
@@ -49,15 +50,19 @@ export function DynamicFields({
     for (const field of fields) values[field.key] = field.type === "ATTACHMENT" ? (existingFiles[field.key] ? String(existingFiles[field.key]) : "") : (initial?.[field.key] ?? (mode === "submit" ? (field.defaultValue ?? "") : ""));
     return values;
   }, [fields, initial, mode, existingFiles]);
-  const [values, setValues] = useState<Record<string, string | number | null>>(start);
+  type Live = string | number | null | string[];
+  const [values, setValues] = useState<Record<string, Live>>(() => Object.fromEntries(fields.map((field) => [field.key, field.type === "MULTI_CHOICE" ? parseMulti(start[field.key] ?? "") : (start[field.key] ?? "")])));
   const read = (element: HTMLElement) => {
     const form = element.closest("form");
     if (!form) return;
     const data = new FormData(form);
     setValues((current) => {
-      const next: Record<string, string | number | null> = { ...current };
+      const next: Record<string, Live> = { ...current };
       for (const field of fields) {
-        if (field.type === "ATTACHMENT") next[field.key] = ((form.elements.namedItem(`file:${field.key}`) as HTMLInputElement | null)?.files?.length ?? 0) + (existingFiles[field.key] ?? 0) || null;
+        // The tick boxes say what is chosen right now (their hidden list updates a moment later).
+        if (field.type === "MULTI_CHOICE") next[field.key] = Array.from(form.querySelectorAll<HTMLInputElement>(`input[data-multi="${field.key}"]:checked`)).map((box) => box.value);
+        else if (field.type === "CHECKBOX") next[field.key] = (form.elements.namedItem(field.key) as HTMLInputElement | null)?.checked ? "Yes" : "";
+        else if (field.type === "ATTACHMENT") next[field.key] = ((form.elements.namedItem(`file:${field.key}`) as HTMLInputElement | null)?.files?.length ?? 0) + (existingFiles[field.key] ?? 0) || null;
         else if (field.type !== "LINE_ITEMS" && field.type !== "CALC" && field.type !== "SECTION" && !locked(field.key)) next[field.key] = String(data.get(field.key) ?? "");
       }
       return next;
@@ -73,7 +78,7 @@ export function DynamicFields({
   const lineHandlers = useMemo(() => Object.fromEntries(fields.filter((field) => field.type === "LINE_ITEMS").map((field) => [field.key, onLines(field.key)])), [fields, onLines]);
   const calculated = useMemo(() => {
     const out: Record<string, number | null> = {};
-    const scope: Record<string, string | number | null> = { ...values };
+    const scope: Record<string, string | number | null> = Object.fromEntries(Object.entries(values).map(([key, value]) => [key, Array.isArray(value) ? value.join(", ") : value]));
     for (const field of fields) {
       if (field.type !== "CALC" || !field.formula) continue;
       try {
@@ -105,7 +110,7 @@ export function DynamicFields({
         return (
           // A field hidden by its rule is disabled, so it isn't sent (the server clears it anyway).
           <fieldset key={field.key} hidden={!visible} disabled={!visible || locked(field.key)} className="min-w-0">
-            <label htmlFor={`f-${field.key}`} className="field-label">
+            <label id={`f-${field.key}-label`} htmlFor={`f-${field.key}`} className="field-label">
               {field.label}
               {!required && field.type !== "CALC" && <span className="font-normal text-ink-faint"> (optional)</span>}
             </label>
@@ -145,6 +150,39 @@ export function FieldInput({ field, people, lookups, defaultValue, error, existi
       return <textarea id={id} name={field.key} {...a11y} defaultValue={defaultValue} rows={4} className="field-input h-auto py-2.5" />;
     case "NUMBER":
       return <input id={id} name={field.key} {...a11y} defaultValue={defaultValue} inputMode="decimal" placeholder="e.g. 12,50,000" className="field-input" />;
+    case "CURRENCY":
+      return (
+        <div className="relative">
+          <span aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted">
+            ₹
+          </span>
+          <input id={id} name={field.key} {...a11y} defaultValue={defaultValue} inputMode="decimal" placeholder="e.g. 12,500.50" className="field-input pl-7" />
+        </div>
+      );
+    case "DATETIME":
+      return <input id={id} name={field.key} {...a11y} type="datetime-local" defaultValue={defaultValue} className="field-input" />;
+    case "URL":
+      return <input id={id} name={field.key} {...a11y} type="url" defaultValue={defaultValue} placeholder="https://" className="field-input" />;
+    case "CHECKBOX":
+      return (
+        <label className="flex items-center gap-2 text-label">
+          <input id={id} name={field.key} {...a11y} type="checkbox" value="Yes" defaultChecked={defaultValue === "Yes"} />
+          Yes
+        </label>
+      );
+    case "RADIO":
+      return (
+        <div role="radiogroup" aria-labelledby={`${id}-label`} {...a11y} className="flex flex-wrap gap-x-5 gap-y-2">
+          {field.options?.map((option) => (
+            <label key={option} className="flex items-center gap-2 text-label">
+              <input type="radio" name={field.key} value={option} defaultChecked={defaultValue === option} />
+              {option}
+            </label>
+          ))}
+        </div>
+      );
+    case "MULTI_CHOICE":
+      return <MultiChoiceInput id={id} name={field.key} options={field.options ?? []} defaultValue={defaultValue} describedBy={describedBy} invalid={Boolean(error)} />;
     case "DATE":
       return <input id={id} name={field.key} {...a11y} type="date" defaultValue={defaultValue} className="field-input" />;
     case "CHOICE":

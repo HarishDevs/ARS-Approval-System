@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { areasForUser } from "@/server/authorization/policy";
 import { SideNav, type NavItem } from "@/features/shell/SideNav";
 import { MobileNav } from "@/features/shell/MobileNav";
@@ -11,7 +10,7 @@ import { BottomNav } from "@/features/shell/BottomNav";
 import { CommandPalette, type PaletteLink } from "@/features/shell/CommandPalette";
 import { countPendingTasksFor } from "@/lib/db/repositories/approvals.repository";
 import { THEME_SETTING, parseTheme } from "@/server/ui/theme";
-import { Bell } from "lucide-react";
+import { NotificationBell } from "@/features/shell/NotificationBell";
 import { isHiddenHref, navAccess } from "@/server/authorization/page-access";
 import { ViewOnlyNote } from "@/features/shell/ViewOnlyNote";
 import type { AppArea, AuthenticatedUser } from "@/types/auth";
@@ -68,6 +67,13 @@ export async function AppShell({
     { href: "/users/custom", label: "Custom approval", group: "My approvals" },
     { href: "/users/search", label: "Search requests", group: "My approvals" },
     { href: "/users/analytics", label: "Analytics", group: "My approvals" },
+    { href: "/users/tasks", label: "My tasks", group: "Tasks" },
+    { href: "/users/tasks/assigned", label: "Tasks assigned by me", group: "Tasks" },
+    { href: "/users/tasks/team", label: "Team tasks", group: "Tasks" },
+    { href: "/users/tasks/new", label: "New task", group: "Tasks" },
+    { href: "/users/information", label: "Information inbox", group: "Information" },
+    { href: "/users/information/sent", label: "Information sent by me", group: "Information" },
+    { href: "/users/information/new", label: "New information", group: "Information" },
     { href: "/users/notifications", label: "Notifications", group: "Profile" },
     { href: "/users/notifications/settings", label: "Notification settings", group: "Profile" },
     { href: "/users/delegation", label: "Out of office", group: "Profile" },
@@ -89,13 +95,15 @@ export async function AppShell({
         Skip to content
       </a>
       {theme && <ThemeSync theme={parseTheme(theme)} />}
-      <aside className="hidden w-sidebar shrink-0 flex-col border-r border-line bg-surface md:flex">
-        <div className="flex h-topbar items-center border-b border-line px-5">
+      <aside className="hidden w-sidebar shrink-0 flex-col border-r border-line bg-surface md:sticky md:top-0 md:flex md:h-dvh md:self-start" data-testid="sidebar">
+        <div className="flex h-topbar shrink-0 items-center border-b border-line px-5">
           {/* eslint-disable-next-line @next/next/no-img-element -- static SVG logo */}
           <img src="/brand/ars-green-steel.svg" alt="ARS Green Steel" className="h-9 w-auto" />
         </div>
-        <p className="px-6 pt-4 text-caption font-semibold uppercase tracking-wider text-ink-faint">{SPACE_LABEL[area]}</p>
-        <SideNav items={items} />
+        <p className="shrink-0 px-6 pt-4 text-caption font-semibold uppercase tracking-wider text-ink-faint">{SPACE_LABEL[area]}</p>
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain" data-testid="sidebar-scroll">
+          <SideNav items={items} />
+        </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -103,18 +111,7 @@ export async function AppShell({
           <MobileNav items={items} spaceLabel={SPACE_LABEL[area]} />
           <div className="ml-auto flex items-center gap-2">
             <CommandPalette pages={palettePages} />
-            <Link
-              href="/users/notifications"
-              aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}
-              className="relative flex h-9 w-9 items-center justify-center rounded-full text-ink-muted hover:bg-surface-muted hover:text-ink"
-            >
-              <Bell aria-hidden="true" className="h-5 w-5" />
-              {unread > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 min-w-[18px] rounded-full bg-danger-solid px-1 text-center text-[11px] font-semibold leading-[18px] text-on-solid">
-                  {unread > 99 ? "99+" : unread}
-                </span>
-              )}
-            </Link>
+            <NotificationBell initialUnread={unread} />
             <ProfileMenu
               name={displayName(user.name)}
               email={user.email}

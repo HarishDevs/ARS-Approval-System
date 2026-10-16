@@ -251,7 +251,8 @@ export type EngineErrorCode =
   | "NOT_APPROVED"
   | "NOT_BLOCKED"
   | "INVALID_ACTION"
-  | "NOT_RECALLABLE";
+  | "NOT_RECALLABLE"
+  | "ALREADY_DECIDED";
 
 export class EngineError extends Error {
   constructor(

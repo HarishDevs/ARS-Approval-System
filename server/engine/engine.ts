@@ -429,6 +429,12 @@ export function decide(
     throw new EngineError("NOT_AUTHORISED", "You are not allowed to decide this approval.");
   }
   if (work && input.decision === "REJECT") throw new EngineError("INVALID_ACTION", "A work task is marked as done, or sent back for changes; it can't be rejected.");
+  // v1.9.0 (audit AUD-05, D-147): one person, one vote per step. Someone who
+  // already decided another task of this step in this round (e.g. as a
+  // delegate and as a named approver) can't decide again.
+  if (state.tasks.some((other) => other.id !== task.id && other.nodeId === task.nodeId && other.round === task.round && other.decidedBy === input.actorId)) {
+    throw new EngineError("ALREADY_DECIDED", "You've already decided this step. Someone else has to decide the other part.");
+  }
   const comment = input.comment?.trim();
   if ((input.decision === "REJECT" || input.decision === "REQUEST_CHANGES") && !comment) {
     throw new EngineError("COMMENT_REQUIRED", "Please give a reason.");

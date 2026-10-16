@@ -13,6 +13,7 @@ import { evaluateAlerts, runDueSchedules } from "@/server/reports/schedules";
 import { logError } from "@/lib/logging/logger";
 import { runExpiryNotices } from "@/server/approvals/expiry";
 import { runExportJobs } from "@/server/reports/background";
+import { runModuleReminders } from "@/server/modules/jobs";
 
 // Automation inventory (unified prompt FN11, Addendum B). Every background
 // job the platform runs, what it does, how it is retried and how IT
@@ -153,6 +154,18 @@ export const AUTOMATIONS: readonly Automation[] = [
     owner: "IT team",
   },
   {
+    key: "modules",
+    name: "Task and information reminders",
+    what: "Reminds assignees before a task is due, tells the assignee and creator once when it is overdue, and reminds people who haven't acknowledged information (as each type is set up).",
+    trigger: "Every job run.",
+    everyMinutes: 5,
+    retry: "The next run picks up anything missed.",
+    idempotency: "Each reminder is claimed before it is queued (per task, kind and due time; per recipient), so it is sent once.",
+    onFailure: "Recorded here; the next run tries again.",
+    recovery: "None needed.",
+    owner: "IT team",
+  },
+  {
     key: "exports",
     name: "Background exports",
     what: "Makes large report exports people asked for, and removes export files after 7 days.",
@@ -191,6 +204,7 @@ const STEPS: Record<string, () => Promise<StepResult>> = {
   reports: async () => ({ ...(await runDueSchedules()) }),
   alerts: async () => ({ ...(await evaluateAlerts()) }),
   expiry: async () => ({ ...(await runExpiryNotices()) }),
+  modules: async () => ({ ...(await runModuleReminders()) }),
   exports: async () => ({ ...(await runExportJobs()) }),
   stuck: async () => {
     const counts = countByReason(await findStuckRequests());

@@ -21,7 +21,8 @@ export function followUpValues(target: readonly FormField[], source: { fields: R
     const from = source.form.find((candidate) => candidate.key === field.key);
     const value = source.fields[field.key];
     if (!from || from.type !== field.type || value === undefined || value === "") continue;
-    if (field.type === "CHOICE" && !(field.options ?? []).includes(value)) continue;
+    if (field.type === "MULTI_CHOICE") continue;
+    if ((field.type === "CHOICE" || field.type === "RADIO") && !(field.options ?? []).includes(value)) continue;
     out[field.key] = value;
   }
   return out;

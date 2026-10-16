@@ -27,6 +27,24 @@ The first page (called "My work" before v1.7.1) after signing in. Tiles show wha
 - Two minutes before, the app asks "Still there?": choose **Stay signed in**.
 - Typing, clicking or scrolling counts as activity.
 
+### Tasks
+- **New task:** choose the type, fill in the title, who should do it, priority, due date and the type's fields, then **Create task**.
+- **Assigned to you:** **Start**, then **Complete** (the type may ask for a note or a file). You can also mark it **Blocked** with the reason, and add comments and files.
+- **Your lists:**
+  - **My tasks**: assigned to you;
+  - **Assigned by me**: tasks you created;
+  - **Team tasks**: tasks of the people who report to you.
+- **Separate from approvals:** completing a task never approves a request.
+
+### Information
+- **New information:** choose the type, write the subject and message, choose recipients, then **Publish** (or **Save draft**).
+- **Recipients are fixed at publishing:** people who join a department later don't receive it.
+- **Information inbox:** opening an item marks it read. If it asks for acknowledgement, press **Acknowledge**.
+- **Sent by me:** shows who read and who acknowledged.
+
+### The notification bell
+Click the bell to see your latest 10, and filter Approvals, Tasks or Information. Click one to open it. **Read more** opens all your notifications.
+
 ### Raise a request
 1. **New request** → pick the approval type (e.g. *Purchase & SCM Approval*).
 2. Fill in the form. Add files if needed: up to 5 at a time, 10 MB each (PDF, images, Word, Excel, PowerPoint, CSV, text).

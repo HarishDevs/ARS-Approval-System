@@ -17,6 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (16 Oct 2026):** v1.9.0 (Tasks, Information, module set-up, notification bell, sidebar; audit AUD-02, AUD-05, AUD-08 fixed) is tagged, not deployed. After publishing: back up first; create and publish the first Task and Information types in Admin; optionally add WhatsApp templates for WORK_TASK_ASSIGNED and INFO_PUBLISHED.
 - **Now (16 Oct 2026):** a full read-only application audit is done and its reports are in `application-audit/` (00 to 12).
   - **Live:** `/api/health` shows v1.8.0, database ok and jobRunner OK. The cron item below (A-OPS) is done on live.
   - **Findings:** P0 none; P1 four (AUD-01 to AUD-04); P2 25.
@@ -296,6 +297,20 @@ Found during S8-06:
 - [x] S8-12 Google sign-in reached UNKNOWN_ACCOUNT: itadmin@ is an alias. The Super Admin now signs in as itsupport@arsenergy.co.in (D-082, migration + non-overwriting seed, v1.0.5) (done 8 Oct 2026)
 - [x] S8-01b Go-live on GoDaddy with the owner, following docs/DEPLOYMENT.md (the owner is at the wizard's "Add secrets" step) (done 9 Oct 2026: live since 8 Oct 2026)
 - [x] S8-04 Update the three living files; commit and push (done 8 Oct 2026)
+
+## Session log — v1.9.0: Approval, Task and Information modules (16 Oct 2026), planned before starting
+Owner brief: three independent business modules (Approval, Task, Information) configured by IT in the Admin space and operated by users, a notification bell dropdown (latest 10) with Approval / Task / Information views, and a sidebar that scrolls on its own. Reuse the engine, form builder, outbox, audit and page access; no second approval engine.
+- [x] V190-01 Inventory of what exists vs what is missing (`application-audit/13_MODULES_IMPLEMENTATION_REGISTER.md`), filled from the code (done 16 Oct 2026)
+- [x] V190-02 Shared form fields: currency, date and time, multi-select, checkbox, radio, URL; per-field "show in lists", "searchable", "can be edited later"; the same builder for all three modules (done 16 Oct 2026)
+- [x] V190-03 Module set-up (Admin): Task types and Information types with versioned forms (draft, check, preview, publish, retire, reactivate, version history, audit), who may create (everyone / departments / people), module on/off switches (Super Admin) (done 16 Oct 2026)
+- [x] V190-04 Task Management: independent tasks (number, type version, assignee, priority, due date, related request), lifecycle Open → In progress → (Blocked) → Completed / Cancelled, reopen and reassign by policy, comments, files, completion note or evidence, history, my / assigned by me / team lists with filters, due-soon and overdue reminders (done 16 Oct 2026)
+- [x] V190-05 Information Management: independent information (number, type version, recipients by person / department / group / everyone resolved at publishing), draft, publish, withdraw, archive, expiry, read and acknowledgement tracked separately, inbox / sent / details with recipient list, acknowledgement reminders (done 16 Oct 2026)
+- [x] V190-06 Approval module: who may raise each approval type (everyone / departments / people), enforced on the server; resubmit re-routes from the start when the changed values change the route (audit AUD-02); one person, one vote per step (AUD-05) (done 16 Oct 2026)
+- [x] V190-07 Notifications: a category (Approval / Task / Information / System) and the related record on each notification; the bell opens a dropdown of the latest 10 with type filters and Read more; the Notifications page has All / Approvals / Tasks / Information views; opening never marks everything read (done 16 Oct 2026)
+- [x] V190-08 Navigation: Tasks and Information in the sidebar (grouped by module), the sidebar stays put and scrolls only when its own entries don't fit; the page scrolls on its own (done 16 Oct 2026)
+- [x] V190-09 Page access for the new pages; server checks on every page, action and API; audit of every change (done 16 Oct 2026)
+- [x] V190-10 Reports: task and information reports in the Reports catalogue (IT) (done 16 Oct 2026)
+- [x] V190-11 Tests (unit, integration, e2e), docs, register, living files, v1.9.0, CI (done 16 Oct 2026)
 
 ## Session log — application audit (16 Oct 2026), planned before starting
 Owner: a read-only, evidence-based audit of the whole application, then a roadmap. No feature development; reports go in `application-audit/`.

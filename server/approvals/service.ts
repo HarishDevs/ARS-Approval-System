@@ -1,4 +1,6 @@
 import "server-only";
+import { routeChanged } from "@/server/engine/conditions";
+import { departmentOfUser, mayRaise } from "@/server/approvals/raisers";
 import type { PoolConnection, RowDataPacket } from "mysql2/promise";
 import { withTransaction } from "@/lib/db/transaction";
 import { getDbPool } from "@/lib/db/client";
@@ -365,7 +367,13 @@ export async function deliverOutbox(ids: readonly number[]): Promise<number> {
     try {
       const message = await claimOutbox(id);
       if (!message) continue;
-      await notify(message);
+      const summary = await notify(message);
+      // Audit AUD-08 (v1.9.0): nothing recorded (e.g. the database was busy)
+      // = not sent; the row is tried again after its claim runs out.
+      if (!summary.recorded && !summary.inactive) {
+        logError("approvals: outbox message not recorded; will retry", null, { outboxId: id });
+        continue;
+      }
       await markOutboxSent(id);
       sent += 1;
     } catch (error) {
@@ -443,6 +451,11 @@ export async function submitRequest(
   }
   const workflow = await findWorkflow(input.workflowId);
   if (!workflow || !workflow.active) return { ok: false, code: "NOT_FOUND", message: "This approval type isn't available." };
+  // v1.9.0 (D-147): types limited to some departments or people (amendments
+  // and custom approvals are the requester's own, so they aren't limited).
+  if (workflow.kind === "PREDEFINED" && !input.amendment && !mayRaise(workflow.settings, { id: actor.id, roles: actor.roles, departmentId: await departmentOfUser(actor.id) })) {
+    return { ok: false, code: "NOT_FOUND", message: "This approval type isn't available to you." };
+  }
   if (workflow.kind === "CUSTOM" && workflow.ownerUserId !== actor.id) return { ok: false, code: "NOT_FOUND", message: "This approval type isn't available." };
   const version = await findPublishedVersion(workflow.id);
   if (!version) return { ok: false, code: "NOT_PUBLISHED", message: "This approval type has no published version yet." };
@@ -658,7 +671,10 @@ export async function resubmitRequest(input: { requestId: number; fields?: Recor
       if (Object.keys(doaErrors).length) throw new FormError(doaErrors);
       formData = parsed.data;
     }
-    const result = resubmit(definition, request.state, policy, { requesterId: request.requesterId, formData, now: now() }, directory);
+    // v1.9.0 (audit AUD-02, D-147): new values that change the route restart
+    // it from the beginning, so a level they now need can't stay skipped.
+    const effectivePolicy = input.fields && routeChanged(definition, request.formData as EngineFormData, formData) ? "BEGINNING" : policy;
+    const result = resubmit(definition, request.state, effectivePolicy, { requesterId: request.requesterId, formData, now: now() }, directory);
     return { ...result, formData: input.fields ? formData : undefined };
   });
   // EN-09: a new amount moves the budget commitment with it.

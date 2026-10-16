@@ -1,4 +1,5 @@
 import "server-only";
+import { CATEGORY_SQL, type NotificationCategory } from "@/server/notifications/categories";
 import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { getDbPool, type Queryable } from "@/lib/db/client";
 import { INDIA_TODAY_SQL } from "@/lib/db/repositories/directory.repository";
@@ -138,6 +139,8 @@ export async function indiaToday(db: Queryable = getDbPool()): Promise<string> {
 }
 
 // ---- in-app inbox (bell, P1-44) -------------------------------------------------------------
+// v1.9.0 (D-146): each item has its module (category); the bell and the
+// Notifications page can show one module at a time.
 export interface InboxItem {
   id: number;
   title: string;
@@ -145,20 +148,46 @@ export interface InboxItem {
   deepLink: string | null;
   createdAt: Date;
   read: boolean;
+  category: NotificationCategory;
 }
 
-export async function countUnread(userId: number, db: Queryable = getDbPool()): Promise<number> {
-  const [rows] = await db.query<(RowDataPacket & { total: number })[]>("SELECT COUNT(*) AS total FROM notifications WHERE user_id = ? AND read_at IS NULL", [userId]);
+export async function countUnread(userId: number, db: Queryable = getDbPool(), category?: NotificationCategory | null): Promise<number> {
+  const [rows] = await db.query<(RowDataPacket & { total: number })[]>(
+    `SELECT COUNT(*) AS total FROM notifications n WHERE n.user_id = ? AND n.read_at IS NULL${category ? ` AND ${CATEGORY_SQL} = ?` : ""}`,
+    category ? [userId, category] : [userId],
+  );
   return Number(rows[0]?.total ?? 0);
 }
 
-// Newest first, a page at a time: `beforeId` continues after the last one shown.
-export async function listInbox(userId: number, limit: number, beforeId?: number, db: Queryable = getDbPool()): Promise<InboxItem[]> {
-  const [rows] = await db.query<(RowDataPacket & { id: number; title: string; message: string; deep_link: string | null; created_at: Date; read_at: Date | null })[]>(
-    `SELECT id, title, message, deep_link, created_at, read_at FROM notifications WHERE user_id = ? ${beforeId ? "AND id < ?" : ""} ORDER BY id DESC LIMIT ?`,
-    beforeId ? [userId, beforeId, limit] : [userId, limit],
+// Unread counts per module, in one query.
+export async function countUnreadByCategory(userId: number, db: Queryable = getDbPool()): Promise<Record<NotificationCategory, number>> {
+  const [rows] = await db.query<(RowDataPacket & { category: NotificationCategory; total: number })[]>(
+    `SELECT ${CATEGORY_SQL} AS category, COUNT(*) AS total FROM notifications n WHERE n.user_id = ? AND n.read_at IS NULL GROUP BY 1`,
+    [userId],
   );
-  return rows.map((row) => ({ id: row.id, title: row.title, message: row.message, deepLink: row.deep_link, createdAt: row.created_at, read: row.read_at !== null }));
+  const counts: Record<NotificationCategory, number> = { APPROVAL: 0, TASK: 0, INFORMATION: 0, SYSTEM: 0 };
+  for (const row of rows) counts[row.category] = Number(row.total);
+  return counts;
+}
+
+// Newest first (by id, so the order is stable), a page at a time: `beforeId`
+// continues after the last one shown. Only the person's own rows.
+export async function listInbox(userId: number, limit: number, beforeId?: number, db: Queryable = getDbPool(), category?: NotificationCategory | null): Promise<InboxItem[]> {
+  const where = ["n.user_id = ?"];
+  const params: unknown[] = [userId];
+  if (beforeId) {
+    where.push("n.id < ?");
+    params.push(beforeId);
+  }
+  if (category) {
+    where.push(`${CATEGORY_SQL} = ?`);
+    params.push(category);
+  }
+  const [rows] = await db.query<(RowDataPacket & { id: number; title: string; message: string; deep_link: string | null; created_at: Date; read_at: Date | null; category: NotificationCategory })[]>(
+    `SELECT n.id, n.title, n.message, n.deep_link, n.created_at, n.read_at, ${CATEGORY_SQL} AS category FROM notifications n WHERE ${where.join(" AND ")} ORDER BY n.id DESC LIMIT ?`,
+    [...params, limit],
+  );
+  return rows.map((row) => ({ id: row.id, title: row.title, message: row.message, deepLink: row.deep_link, createdAt: row.created_at, read: row.read_at !== null, category: row.category }));
 }
 
 export async function markAllRead(userId: number, db: Queryable = getDbPool()): Promise<number> {

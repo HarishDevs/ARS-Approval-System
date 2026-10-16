@@ -13,6 +13,7 @@ import { logError } from "@/lib/logging/logger";
 import { whatsappValue } from "@/server/notifications/templates";
 import { channelWanted } from "@/server/notifications/preferences";
 import { loadOptOuts } from "@/lib/db/repositories/preferences.repository";
+import type { EntityRef } from "@/server/notifications/categories";
 
 // Notification hub (F-40, P1-40..P1-47). One call = one event for one
 // recipient: an in-app row plus one delivery per channel (email + WhatsApp,
@@ -24,6 +25,7 @@ export interface NotifyInput {
   title: string;
   message: string;
   deepLink?: string | null;
+  entity?: EntityRef | null; // v1.9.0: the record it is about (else read from the link)
   email: { subject: string; text: string } | null;
   // Values by variable_key; mapped to the template's positional {{n}} slots.
   whatsappVariables: Record<string, string> | null;
@@ -77,6 +79,7 @@ export type ChannelOutcome = { status: "SENT" | "FAILED" | "SKIPPED"; code?: str
 // thrown: notify() still can't fail the business action.
 export interface NotifySummary {
   recorded: boolean;
+  inactive?: boolean; // nobody to tell (no such active person): nothing to retry
   email: ChannelOutcome;
   whatsapp: ChannelOutcome;
 }
@@ -87,13 +90,14 @@ export async function notifyWithDeps(input: NotifyInput, deps: NotifyDeps): Prom
   let recipient: NotificationRecipient | null;
   try {
     recipient = await deps.findRecipient(input.userId);
-    if (!recipient || !recipient.active) return summary;
+    if (!recipient || !recipient.active) return { ...summary, inactive: true };
     notificationId = await deps.createNotification({
       eventType: input.eventType,
       userId: input.userId,
       title: input.title,
       message: input.message,
       deepLink: input.deepLink ?? null,
+      entity: input.entity ?? null,
     });
     summary.recorded = true;
   } catch (error) {

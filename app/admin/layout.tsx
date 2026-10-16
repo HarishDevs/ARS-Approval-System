@@ -27,15 +27,18 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         { href: "/admin/insights", label: "Insights" },
         { href: "/admin/dashboards", label: "Dashboards" },
         { href: "/admin/workload", label: "Workload" },
-        { href: "/admin/workflows", label: "Approval types & workflows" },
-        { href: "/admin/custom-approval", label: "Custom approval" },
-        { href: "/admin/groups", label: "Approver groups" },
-        { href: "/admin/doa", label: "Approval authority (DoA)" },
-        { href: "/admin/budgets", label: "Budgets" },
-        { href: "/admin/calendar", label: "Working calendar" },
-        { href: "/admin/users", label: "Users & roles" },
-        { href: "/admin/organisation", label: "Departments" },
-        { href: "/admin/import", label: "Import data" },
+        { href: "/admin/workflows", label: "Approval types & workflows", section: "Approval set-up" },
+        { href: "/admin/custom-approval", label: "Custom approval", section: "Approval set-up" },
+        { href: "/admin/groups", label: "Approver groups", section: "Approval set-up" },
+        { href: "/admin/doa", label: "Approval authority (DoA)", section: "Approval set-up" },
+        { href: "/admin/budgets", label: "Budgets", section: "Approval set-up" },
+        // v1.9.0 (D-144): Task and Information set-up.
+        { href: "/admin/task-types", label: "Task types", section: "Task set-up" },
+        { href: "/admin/information-types", label: "Information types", section: "Information set-up" },
+        { href: "/admin/calendar", label: "Working calendar", section: "Organisation" },
+        { href: "/admin/users", label: "Users & roles", section: "Organisation" },
+        { href: "/admin/organisation", label: "Departments", section: "Organisation" },
+        { href: "/admin/import", label: "Import data", section: "Organisation" },
       ]}
     >
       {children}

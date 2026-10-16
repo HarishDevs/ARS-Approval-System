@@ -212,3 +212,16 @@ export async function listLoginHistory(filter: { userId?: number; outcome?: "SUC
     newDevice: Number(row.new_device) === 1,
   }));
 }
+
+// v1.9.0: one record's history (e.g. a task type's configuration changes).
+export async function listAuditForEntity(entityTypes: readonly string[], entityId: string | number, limit: number, db: Queryable = getDbPool()): Promise<AuditListItem[]> {
+  const [rows] = await db.query<
+    (RowDataPacket & { id: number; occurred_at: Date; name: string | null; action: string; entity_type: string; entity_id: string | null; result: "SUCCESS" | "FAILURE"; ip_address: string | null; metadata_json: unknown })[]
+  >(
+    `SELECT a.id, a.occurred_at, u.name, a.action, a.entity_type, a.entity_id, a.result, a.ip_address, a.metadata_json
+     FROM audit_logs a LEFT JOIN users u ON u.id = a.actor_user_id
+     WHERE a.entity_type IN (?) AND a.entity_id = ? ORDER BY a.id DESC LIMIT ?`,
+    [entityTypes, String(entityId), limit],
+  );
+  return rows.map((row) => ({ id: row.id, occurredAt: row.occurred_at, actorName: row.name, action: row.action, entityType: row.entity_type, entityId: row.entity_id, result: row.result, ipAddress: row.ip_address, metadata: row.metadata_json }));
+}

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Breadcrumbs } from "@/features/ui/Display";
 import { notFound } from "next/navigation";
+import { departmentOfUser, mayRaise } from "@/server/approvals/raisers";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { RequestForm } from "@/features/requests/RequestForm";
@@ -22,6 +23,8 @@ export default async function RaiseRequestPage({ params, searchParams }: { param
   if (!/^\d+$/.test(workflowId)) notFound();
   const workflow = await findWorkflow(Number(workflowId));
   if (!workflow || !workflow.active || workflow.kind !== "PREDEFINED") notFound();
+  // v1.9.0 (D-147): a type limited to some departments or people.
+  if (!mayRaise(workflow.settings, { id: user.id, roles: user.roles, departmentId: await departmentOfUser(user.id) })) notFound();
   const version = await findPublishedVersion(workflow.id);
   if (!version) notFound();
   const needsPeople = version.form.some((field) => field.type === "PERSON");

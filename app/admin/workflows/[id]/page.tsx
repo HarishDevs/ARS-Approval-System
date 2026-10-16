@@ -8,6 +8,7 @@ import { DEFAULT_TYPE_SETTINGS } from "@/server/workflows/type-settings";
 import { loadBuilderOptions } from "@/features/admin/workflow-options";
 import { namedApprovers } from "@/server/approvals/approver-rules";
 import { listActiveUserOptions } from "@/lib/db/repositories/admin-users.repository";
+import { listDepartments } from "@/lib/db/repositories/organisation.repository";
 import { requireArea } from "@/server/authorization/guards";
 import { findWorkflow, listVersions } from "@/lib/db/repositories/approvals.repository";
 import { validateVersion } from "@/server/approvals/service";
@@ -109,7 +110,15 @@ export default async function WorkflowPage({ params, searchParams }: { params: P
             ))}
           </section>
           {latest && <TestModePanel versionId={latest.id} form={latest.form} people={everyone} lookups={options.lookups} />}
-          {workflow.kind === "PREDEFINED" && <TypeSettingsForm workflowId={workflow.id} settings={workflow.settings ?? DEFAULT_TYPE_SETTINGS} form={latest?.form ?? []} />}
+          {workflow.kind === "PREDEFINED" && (
+            <TypeSettingsForm
+              workflowId={workflow.id}
+              settings={workflow.settings ?? DEFAULT_TYPE_SETTINGS}
+              form={latest?.form ?? []}
+              departments={(await listDepartments()).filter((department) => department.active).map((department) => ({ id: department.id, label: department.name }))}
+              people={everyone}
+            />
+          )}
           <DetailsForm workflowId={workflow.id} name={workflow.name} description={workflow.description ?? null} active={workflow.active} resubmitPolicy={workflow.resubmitPolicy} />
           <DeleteWorkflowForm workflowId={workflow.id} name={workflow.name} />
         </div>

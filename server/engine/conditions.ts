@@ -1,4 +1,4 @@
-import type { Comparison, Condition, ConditionGroup, FormData, ScalarValue } from "@/server/engine/types";
+import type { Comparison, Condition, ConditionGroup, FormData, ScalarValue, WorkflowDefinition } from "@/server/engine/types";
 
 // Evaluates edge / skip conditions against the request's form data.
 
@@ -93,4 +93,17 @@ export function collectFields(condition: Condition, into: Set<string> = new Set(
   if (isGroup(condition)) condition.conditions.forEach((child) => collectFields(child, into));
   else into.add(condition.field);
   return into;
+}
+
+// v1.9.0 (audit AUD-02, D-147): would these new values route the request
+// differently? True when any skip rule (incl. DoA bands, compiled as skipIf)
+// or branch condition gives a different answer for the old and new values.
+// Then a resubmit restarts from the beginning, so no level that the new
+// values need stays skipped.
+export function routeChanged(definition: WorkflowDefinition, before: FormData, after: FormData): boolean {
+  const conditions: Condition[] = [
+    ...definition.nodes.flatMap((node) => (node.kind === "APPROVAL" && node.skipIf ? [node.skipIf] : [])),
+    ...definition.edges.flatMap((edge) => (edge.condition ? [edge.condition] : [])),
+  ];
+  return conditions.some((condition) => evaluateCondition(condition, before) !== evaluateCondition(condition, after));
 }

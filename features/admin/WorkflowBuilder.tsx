@@ -5,7 +5,7 @@ import { PeoplePicker } from "@/features/ui/PeoplePicker";
 import { NOBODY_TEXT, RULE_TEXT, stepDefaults, type StepPolicy } from "@/server/workflows/step-policy";
 import { createWorkflowAction, saveDraftAction } from "@/app/admin/workflows/actions";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
-import type { FieldLookups, FormField } from "@/server/forms/fields";
+import { NUMERIC_TYPES, type FieldLookups, type FormField } from "@/server/forms/fields";
 import { RequestForm } from "@/features/requests/RequestForm";
 import { ConditionValueInput, FormFieldsEditor, freshCondition, needsValue, operatorsFor } from "@/features/admin/FormFieldsEditor";
 import { doaBandLabels, isConditionGroup, MAX_CHOICE_DEPTH, type ApproverPick, type BuilderCondition, type BuilderDoa, type BuilderInnerStage, type BuilderStage, type BuilderStep } from "@/server/workflows/builder";
@@ -275,7 +275,7 @@ function StageList({
   const personFields = form.filter((field) => field.type === "PERSON");
   const kindLabel = (stage: BuilderStage) => (stage.kind === "STEP" ? "one step" : stage.kind === "PARALLEL" ? "parallel steps" : stage.kind === "DOA" ? "DoA matrix" : "a choice");
   const hasDoa = stages.some((stage) => stage.kind === "DOA");
-  const numberFields = form.filter((field) => ["NUMBER", "CALC", "LINE_ITEMS"].includes(field.type));
+  const numberFields = form.filter((field) => NUMERIC_TYPES.includes(field.type));
 
   return (
     <>
@@ -453,7 +453,7 @@ function DoaEditor({
   newId: () => string;
 }) {
   const bandLabels = doaBandLabels(stage.limits);
-  const numberFields = form.filter((field) => ["NUMBER", "CALC", "LINE_ITEMS"].includes(field.type));
+  const numberFields = form.filter((field) => NUMERIC_TYPES.includes(field.type));
   const setLevel = (index: number, level: BuilderDoa["levels"][number]) => onChange({ ...stage, levels: stage.levels.map((item, i) => (i === index ? level : item)) });
   const moveLevel = (index: number, delta: number) => {
     const target = index + delta;

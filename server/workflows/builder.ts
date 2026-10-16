@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { ApproverSource, Comparison, CompletionRule, Condition, WorkflowDefinition, WorkflowEdge, WorkflowNode } from "@/server/engine/types";
-import type { FormField } from "@/server/forms/fields";
+import { NUMERIC_TYPES, type FormField } from "@/server/forms/fields";
 
 // Structured workflow builder (D-056, S3-05a, F-50). The IT team describes a
 // workflow as stages run in order; each stage is one step or several steps
@@ -348,7 +348,7 @@ export function checkDoaForm(spec: BuilderSpec, form: readonly FormField[]): str
   if (!field) return [`The DoA reads "${doa.field}", which isn't on the form. Add a number field with that key.`];
   const problems: string[] = [];
   // v1.6.0: a calculated total or a line-items total can drive the DoA too.
-  if (!["NUMBER", "CALC", "LINE_ITEMS"].includes(field.type)) problems.push(`The DoA field "${field.label}" must be a number, a calculated field or line items.`);
+  if (!NUMERIC_TYPES.includes(field.type)) problems.push(`The DoA field "${field.label}" must be a number, a calculated field or line items.`);
   if (!field.required && field.type !== "CALC") problems.push(`Make "${field.label}" required: the DoA needs it to pick the approvers.`);
   return problems;
 }

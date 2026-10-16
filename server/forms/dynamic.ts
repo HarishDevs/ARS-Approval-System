@@ -27,9 +27,9 @@ export const RULE_WORDS: Record<RuleOperator, string> = {
   EMPTY: "is empty",
 };
 
-type Value = string | number | boolean | null | undefined;
+type Value = string | number | boolean | null | undefined | readonly (string | number)[];
 
-const isEmpty = (value: Value) => value === undefined || value === null || value === "";
+const isEmpty = (value: Value) => value === undefined || value === null || value === "" || (Array.isArray(value) && value.length === 0);
 const asNumber = (value: Value): number | null => {
   if (typeof value === "number") return Number.isFinite(value) ? value : null;
   if (typeof value !== "string") return null;
@@ -45,6 +45,10 @@ export function ruleHolds(rule: FieldRule, values: Record<string, Value>): boole
   if (rule.op === "EMPTY") return isEmpty(value);
   if (isEmpty(value)) return false;
   const expected = rule.value ?? "";
+  if (Array.isArray(value)) {
+    const has = value.some((item) => String(item).trim().toLowerCase() === expected.trim().toLowerCase());
+    return rule.op === "EQ" ? has : rule.op === "NEQ" ? !has : false;
+  }
   if (rule.op === "EQ" || rule.op === "NEQ") {
     const left = asNumber(value);
     const right = asNumber(expected);

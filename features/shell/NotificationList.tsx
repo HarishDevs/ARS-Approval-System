@@ -19,6 +19,7 @@ export interface InboxRow {
   when: string;
   read: boolean;
   path: string | null;
+  type?: string; // v1.9.0: Approval / Task / Information / System
 }
 
 const ids = (list: readonly number[]) => {
@@ -99,6 +100,7 @@ export function NotificationList({ items, showMarkAll }: { items: InboxRow[]; sh
                     <span className="sr-only">Unread</span>
                   </span>
                 )}
+                {item.type && <span className="rounded bg-surface-muted px-1.5 py-0.5 text-[11px] font-semibold text-ink-muted">{item.type}</span>}
                 <SafeText text={item.title} />
               </p>
               <p className="text-label text-ink-muted">

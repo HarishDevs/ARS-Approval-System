@@ -965,6 +965,29 @@ Sidebar → **My approved requests** or **Approved by me** → quick tab or **Mo
 ## F-122 Inactivity sign-out (v1.8.0, D-142)
 After 28 minutes without activity (default 30): "Still there?" → **Stay signed in** or **Sign out now**. At 30 minutes: "You were signed out" → **Sign in again**. The Super Admin sets the minutes (Providers & security → Authentication) and is never signed out for inactivity.
 
+## F-123 Task types and Information types (v1.9.0, D-144, IT)
+1. Admin → **Task types** (or **Information types**) → **New type**: name, code and description.
+2. Edit the draft: the form fields (same builder as approval types), the behaviour options, and who may create.
+3. **Check and preview** → **Publish**. New records use the published version; earlier records keep theirs.
+4. Later: **Edit as a new draft** → publish again. **Retire** stops new records; **Reactivate** brings the type back. Every change is in the type's history.
+
+## F-124 Tasks (v1.9.0, D-143)
+1. Sidebar → **New task** → choose a task type → title, assignee (within the type's scope), due date, priority, the type's fields, files; optionally a related request → **Create task**. The assignee is told.
+2. The assignee: **Start** (In progress), **Blocked** (if the type allows, with a reason) and back, comments and files, then **Complete** (with the completion note or file the type asks for).
+3. The creator or IT may **Reassign** (if allowed) or **Cancel** (reason). After completion: **Reopen** (if allowed, reason).
+4. Lists: **My tasks** (assigned to me), **Assigned by me**, **Team tasks** (people who report to me; IT sees all), with filters, overdue and due-soon tabs. Reminders go before the due time and once when overdue.
+
+## F-125 Information (v1.9.0, D-143, D-145)
+1. Sidebar → **New information** → choose a type → subject, message, importance, the type's fields, files, recipients (people, departments, groups, or everyone if the type allows) → **Save draft** or **Publish**.
+2. At publishing the recipient list is fixed, and each recipient is told.
+3. A recipient opens it from **Information inbox** (it is then marked read). If acknowledgement is asked, they press **Acknowledge**.
+4. The sender sees who read and who acknowledged, can **Withdraw** (reason) or **Archive**. After its expiry date it shows as Expired. Reminders go to people who haven't acknowledged.
+
+## F-126 Notification bell (v1.9.0, D-146)
+1. Bell → a dropdown with the latest 10 and filters All / Approvals / Tasks / Information.
+2. Click one → its record opens and that one is marked read. **Mark all read** is a separate button.
+3. **Read more** → Notifications page (same filter kept) with All / Approvals / Tasks / Information views, paging, mark read or unread.
+
 ## F-89 Notification choices (v1.5.0, D-110)
 Profile → Notifications → **Settings**: per kind of message, email and WhatsApp on/off. Security and "work waiting for you" are locked on. A switched-off message is recorded as SKIPPED / USER_PREFERENCE; the in-app list always gets it.
 

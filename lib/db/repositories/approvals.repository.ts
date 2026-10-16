@@ -166,9 +166,9 @@ export async function listWorkflows(filter: { kind?: WorkflowRecord["kind"]; own
     params.push(filter.ownerUserId);
   }
   const [rows] = await db.query<
-    (RowDataPacket & { id: number; code: string; name: string; description: string | null; kind: WorkflowRecord["kind"]; request_prefix: string; owner_user_id: number | null; active: number; published_no: number | null; latest_no: number; request_count: number })[]
+    (RowDataPacket & { id: number; code: string; name: string; description: string | null; kind: WorkflowRecord["kind"]; request_prefix: string; owner_user_id: number | null; active: number; settings_json: unknown; published_no: number | null; latest_no: number; request_count: number })[]
   >(
-    `SELECT w.id, w.code, w.name, w.description, w.kind, w.request_prefix, w.owner_user_id, w.active,
+    `SELECT w.id, w.code, w.name, w.description, w.kind, w.request_prefix, w.owner_user_id, w.active, w.settings_json,
             (SELECT v.version_no FROM workflow_versions v WHERE v.workflow_id = w.id AND v.status = 'PUBLISHED') AS published_no,
             (SELECT MAX(v.version_no) FROM workflow_versions v WHERE v.workflow_id = w.id) AS latest_no,
             (SELECT COUNT(*) FROM approval_requests r JOIN workflow_versions v ON v.id = r.workflow_version_id WHERE v.workflow_id = w.id AND r.deleted_at IS NULL) AS request_count
@@ -188,6 +188,7 @@ export async function listWorkflows(filter: { kind?: WorkflowRecord["kind"]; own
     publishedVersionNo: row.published_no,
     latestVersionNo: Number(row.latest_no ?? 0),
     requestCount: Number(row.request_count),
+    settings: parseTypeSettings(row.settings_json),
   }));
 }
 

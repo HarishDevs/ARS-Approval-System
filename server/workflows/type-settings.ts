@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { accessSchema } from "@/server/modules/settings";
 
 // Per-approval-type submission policies (unified prompt FN1, FN3, EN-09,
 // EN-10, FN5). Kept on the type, not the versioned form: a policy change
@@ -23,6 +24,8 @@ export const typeSettingsSchema = z.object({
   budget: z.object({ enabled: z.boolean().default(false), amountField: z.string().regex(/^[a-z][a-z0-9_]{0,49}$/).default("amount") }).default({ enabled: false, amountField: "amount" }),
   validityDays: z.number().int().min(1).max(3650).nullable().default(null),
   amendableFields: z.array(z.string().regex(/^[a-z][a-z0-9_]{0,49}$/)).max(40).nullable().default(null), // null = none allowed
+  // v1.9.0 (owner brief §5.3, D-147): who may raise this type. Everyone by default.
+  raisers: accessSchema.default({ mode: "EVERYONE", departmentIds: [], userIds: [] }),
 });
 export type TypeSettings = z.infer<typeof typeSettingsSchema>;
 

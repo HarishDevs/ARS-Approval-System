@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { publishAction, simulateAction, updateDetailsAction, deleteWorkflowAction, updateTypeSettingsAction } from "@/app/admin/workflows/actions";
 import type { TypeSettings } from "@/server/workflows/type-settings";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
-import { NO_LOOKUPS, type FieldLookups, type FormField } from "@/server/forms/fields";
+import { PeoplePicker } from "@/features/ui/PeoplePicker";
+import { NO_LOOKUPS, NUMERIC_TYPES, type FieldLookups, type FormField } from "@/server/forms/fields";
 import type { SimulationView } from "@/server/approvals/service";
 
 // Test mode (P3-05): sample values → the exact route and names. Nothing is saved.
@@ -233,11 +235,24 @@ export function DeleteWorkflowForm({ workflowId, name }: { workflowId: number; n
 // Submission checks for this type (FN1, FN3, EN-09) and, for later
 // features, approval validity (EN-10) and amendments (FN5). All off by
 // default: nothing is checked that IT hasn't switched on.
-export function TypeSettingsForm({ workflowId, settings, form }: { workflowId: number; settings: TypeSettings; form: FormField[] }) {
+export function TypeSettingsForm({
+  workflowId,
+  settings,
+  form,
+  departments = [],
+  people = [],
+}: {
+  workflowId: number;
+  settings: TypeSettings;
+  form: FormField[];
+  departments?: { id: number; label: string }[];
+  people?: { id: number; label: string }[];
+}) {
   const { result, pending, onSubmit } = useActionForm(updateTypeSettingsAction);
+  const [raiserMode, setRaiserMode] = useState(settings.raisers.mode);
   // Attachment fields hold a file count: not a duplicate key, not amendable.
   const fields = form.filter((field) => field.type !== "SECTION" && field.type !== "ATTACHMENT");
-  const numeric = fields.filter((field) => ["NUMBER", "CALC", "LINE_ITEMS"].includes(field.type));
+  const numeric = fields.filter((field) => NUMERIC_TYPES.includes(field.type));
   return (
     <form onSubmit={onSubmit} className="card space-y-4 px-5 py-4">
       <input type="hidden" name="workflowId" value={workflowId} />
@@ -245,6 +260,27 @@ export function TypeSettingsForm({ workflowId, settings, form }: { workflowId: n
         <h2 className="font-semibold">Submission checks</h2>
         <p className="text-label text-ink-muted">Checked before a request is submitted (people can also check first). Off unless you switch them on.</p>
       </div>
+      <fieldset className="space-y-2" data-testid="raisers">
+        <legend className="field-label">Who may raise this type</legend>
+        <select aria-label="Who may raise this type" name="raiserMode" value={raiserMode} onChange={(event) => setRaiserMode(event.target.value as TypeSettings["raisers"]["mode"])} className="field-input w-auto">
+          <option value="EVERYONE">Everyone</option>
+          <option value="DEPARTMENTS">People in chosen departments</option>
+          <option value="PEOPLE">Chosen people</option>
+        </select>
+        {raiserMode === "DEPARTMENTS" && (
+          <div role="group" aria-label="Departments that may raise it" className="flex max-h-48 flex-wrap gap-x-5 gap-y-1 overflow-y-auto rounded-md border border-line p-3">
+            {departments.map((department) => (
+              <label key={department.id} className="flex items-center gap-2 text-label">
+                <input type="checkbox" name="raiserDept" value={department.id} defaultChecked={settings.raisers.departmentIds.includes(department.id)} />
+                {department.label}
+              </label>
+            ))}
+          </div>
+        )}
+        {raiserMode === "PEOPLE" && <PeoplePicker name="raiserPerson" label="People who may raise it" options={people} initial={settings.raisers.userIds} max={200} />}
+        <p className="text-caption text-ink-muted">Others don&apos;t see the type under New request, and the server refuses it. IT can always raise it.</p>
+        <FieldError result={result} name="raiserMode" />
+      </fieldset>
       <fieldset className="space-y-2">
         <legend className="field-label">Possible duplicates: match on</legend>
         <div className="flex flex-wrap gap-3">

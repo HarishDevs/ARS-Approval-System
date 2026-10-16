@@ -261,10 +261,17 @@ export async function updateTypeSettingsAction(_previous: ActionResult | null, f
     budget: { enabled: formData.get("budgetEnabled") === "on", amountField: String(formData.get("budgetField") ?? "amount") },
     validityDays: number("validityDays"),
     amendableFields: formData.get("amendEnabled") === "on" ? formData.getAll("amendField").map(String).filter((key) => keys.has(key)) : null,
+    raisers: {
+      mode: ["DEPARTMENTS", "PEOPLE"].includes(String(formData.get("raiserMode"))) ? String(formData.get("raiserMode")) : "EVERYONE",
+      departmentIds: formData.getAll("raiserDept").map(String).filter((value) => /^\d{1,10}$/.test(value)).map(Number),
+      userIds: formData.getAll("raiserPerson").map(String).filter((value) => /^\d{1,10}$/.test(value)).map(Number),
+    },
   };
   const parsed = typeSettingsSchema.safeParse(candidate);
   if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Check the values." };
   const settings = parsed.data;
+  if (settings.raisers.mode === "DEPARTMENTS" && settings.raisers.departmentIds.length === 0) return { ok: false, message: "Choose at least one department that may raise this type.", fieldErrors: { raiserMode: "Choose at least one department." } };
+  if (settings.raisers.mode === "PEOPLE" && settings.raisers.userIds.length === 0) return { ok: false, message: "Choose at least one person who may raise this type.", fieldErrors: { raiserMode: "Choose at least one person." } };
   if (settings.budget.enabled) {
     const field = form.find((item) => item.key === settings.budget.amountField);
     if (!field || !NUMERIC_TYPES.includes(field.type)) return { ok: false, message: "Choose a number, calculated or line-items field for the budget amount.", fieldErrors: { budgetField: "Choose a number field." } };

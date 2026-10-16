@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { LOOKUP_SOURCES, NUMERIC_TYPES, type FieldLookups, type FieldType, type FormField, type LookupSource } from "@/server/forms/fields";
+import { LOOKUP_SOURCES, NUMERIC_TYPES, OPTION_TYPES, type FieldLookups, type FieldType, type FormField, type LookupSource } from "@/server/forms/fields";
 import { RULE_OPERATORS, RULE_WORDS, formulaFields, parseFormula, type FieldRule } from "@/server/forms/dynamic";
 import type { Comparison } from "@/server/engine/types";
 
@@ -19,8 +19,14 @@ const TYPE_CHOICES: { value: string; label: string }[] = [
   { value: "TEXT", label: "Short text" },
   { value: "LONG_TEXT", label: "Long text" },
   { value: "NUMBER", label: "Number / amount" },
+  { value: "CURRENCY", label: "Currency (₹, paise)" },
   { value: "DATE", label: "Date" },
+  { value: "DATETIME", label: "Date and time" },
   { value: "CHOICE", label: "Dropdown (your options)" },
+  { value: "MULTI_CHOICE", label: "Multi-select (your options)" },
+  { value: "RADIO", label: "Radio buttons (your options)" },
+  { value: "CHECKBOX", label: "Checkbox (yes when ticked)" },
+  { value: "URL", label: "Web link (URL)" },
   { value: "LOOKUP:DEPARTMENT", label: "Department (from the list)" },
   { value: "LOOKUP:DESIGNATION", label: "Designation (from the list)" },
   { value: "PERSON", label: "Person" },
@@ -52,15 +58,18 @@ function withType(field: FormField, value: string): FormField {
     required: field.required,
     ...(field.help ? { help: field.help } : {}),
     type,
-    ...(type === "CHOICE" ? { options: field.options ?? [] } : {}),
-    ...(type === "NUMBER" && field.min !== undefined ? { min: field.min } : {}),
+    ...(OPTION_TYPES.includes(type) ? { options: field.options ?? [] } : {}),
+    ...((type === "NUMBER" || type === "CURRENCY") && field.min !== undefined ? { min: field.min } : {}),
     ...(type === "LOOKUP" ? { source: source && (LOOKUP_SOURCES as readonly string[]).includes(source) ? source : "DEPARTMENT" } : {}),
     ...(type === "CALC" ? { formula: field.formula ?? "", required: false } : {}),
     ...(type === "SECTION" ? { required: false } : {}),
     ...(type === "ATTACHMENT" ? { maxFiles: field.maxFiles ?? 5 } : {}),
     ...(field.showIf ? { showIf: field.showIf } : {}),
     ...(field.requiredIf && type !== "SECTION" && type !== "CALC" ? { requiredIf: field.requiredIf } : {}),
-    ...(field.defaultValue && ["TEXT", "NUMBER", "CHOICE", "DATE"].includes(type) ? { defaultValue: field.defaultValue } : {}),
+    ...(field.defaultValue && ["TEXT", "NUMBER", "CURRENCY", "CHOICE", "RADIO", "DATE", "URL"].includes(type) ? { defaultValue: field.defaultValue } : {}),
+    ...(field.listed ? { listed: true } : {}),
+    ...(field.searchable ? { searchable: true } : {}),
+    ...(field.editable ? { editable: true } : {}),
   };
 }
 
@@ -94,7 +103,7 @@ function RuleEditor({ label, rule, others, onChange }: { label: string; rule: Fi
         ))}
       </select>
       {rule.op !== "FILLED" && rule.op !== "EMPTY" &&
-        (target?.type === "CHOICE" ? (
+        (target && OPTION_TYPES.includes(target.type) ? (
           <select aria-label={`${label}: value`} value={rule.value ?? ""} onChange={(event) => onChange({ ...rule, value: event.target.value })} className="field-input w-auto">
             <option value="">Choose…</option>
             {(target.options ?? []).map((option) => (
@@ -241,7 +250,22 @@ export function ChoiceListEditor({ options, onChange, label }: { options: string
   );
 }
 
-export function FormFieldsEditor({ form, setForm, lockedKeys }: { form: FormField[]; setForm: (update: (all: FormField[]) => FormField[]) => void; lockedKeys: readonly string[] }) {
+// v1.9.0: `recordOptions` adds the task / information choices per field
+// (show in lists, searchable, editable later); `intro` replaces the
+// approval wording at the top.
+export function FormFieldsEditor({
+  form,
+  setForm,
+  lockedKeys,
+  recordOptions = false,
+  intro,
+}: {
+  form: FormField[];
+  setForm: (update: (all: FormField[]) => FormField[]) => void;
+  lockedKeys: readonly string[];
+  recordOptions?: boolean;
+  intro?: string;
+}) {
   // Keys of saved fields never change; a new field's key follows its label
   // until IT edits the key.
   const [editedKeys, setEditedKeys] = useState<Set<number>>(new Set());
@@ -251,7 +275,7 @@ export function FormFieldsEditor({ form, setForm, lockedKeys }: { form: FormFiel
     <section className="card">
       <div className="border-b border-line px-5 py-4">
         <h2 className="font-semibold">Form fields</h2>
-        <p className="text-label text-ink-muted">What the requester fills in. Steps can skip on these values, e.g. amount, a date or a department.</p>
+        <p className="text-label text-ink-muted">{intro ?? "What the requester fills in. Steps can skip on these values, e.g. amount, a date or a department."}</p>
       </div>
       <div className="divide-y divide-line">
         {form.map((field, index) => {
@@ -313,14 +337,14 @@ export function FormFieldsEditor({ form, setForm, lockedKeys }: { form: FormFiel
                   placeholder="Help text shown under the field (optional)"
                   className="field-input"
                 />
-                {field.type === "NUMBER" && (
+                {(field.type === "NUMBER" || field.type === "CURRENCY") && (
                   <div className="flex flex-wrap items-center gap-2 text-label">
                     Smallest value allowed
                     <NumberDraftInput label={`Smallest value for ${name}`} value={field.min} onChange={(min) => update(index, (item) => ({ ...item, min }))} placeholder="none" />
                     <span className="text-caption text-ink-faint">Use 0 for amounts. A DoA amount can never be negative.</span>
                   </div>
                 )}
-                {field.type === "CHOICE" && <ChoiceListEditor label={name} options={field.options ?? []} onChange={(options) => update(index, (item) => ({ ...item, options }))} />}
+                {OPTION_TYPES.includes(field.type) && <ChoiceListEditor label={name} options={field.options ?? []} onChange={(options) => update(index, (item) => ({ ...item, options }))} />}
                 {field.type === "LOOKUP" && field.source && (
                   <p className="text-caption text-ink-muted">
                     The requester picks from the active {SOURCE_LABEL[field.source].toLowerCase()} kept in Admin → Departments. New ones appear by themselves.
@@ -383,7 +407,10 @@ export function FormFieldsEditor({ form, setForm, lockedKeys }: { form: FormFiel
                     <p className="text-caption text-ink-muted">The requester attaches files here (PDF, images, Word, Excel, PowerPoint, CSV or text; 10 MB each). Required means at least one file. The files are listed under this field on the request.</p>
                   </div>
                 )}
-                {["TEXT", "NUMBER", "DATE"].includes(field.type) && (
+                {field.type === "DATETIME" && <p className="text-caption text-ink-muted">A date and a time of day, in India time.</p>}
+                {field.type === "CHECKBOX" && <p className="text-caption text-ink-muted">One tick box. Required means it must be ticked (e.g. &quot;I confirm the details are correct&quot;).</p>}
+                {field.type === "URL" && <p className="text-caption text-ink-muted">A web link starting with https:// or http://. Shown as a link that opens in a new tab.</p>}
+                {["TEXT", "NUMBER", "CURRENCY", "DATE", "URL"].includes(field.type) && (
                   <input
                     aria-label={`Default value for ${name}`}
                     type={field.type === "DATE" ? "date" : "text"}
@@ -393,7 +420,7 @@ export function FormFieldsEditor({ form, setForm, lockedKeys }: { form: FormFiel
                     className="field-input"
                   />
                 )}
-                {field.type === "CHOICE" && (field.options ?? []).length > 0 && (
+                {(field.type === "CHOICE" || field.type === "RADIO") && (field.options ?? []).length > 0 && (
                   <label className="flex flex-wrap items-center gap-2 text-label">
                     Default choice
                     <select value={field.defaultValue ?? ""} onChange={(event) => update(index, (item) => ({ ...item, defaultValue: event.target.value || undefined }))} className="field-input w-auto">
@@ -403,6 +430,22 @@ export function FormFieldsEditor({ form, setForm, lockedKeys }: { form: FormFiel
                       ))}
                     </select>
                   </label>
+                )}
+                {recordOptions && field.type !== "SECTION" && (
+                  <div className="flex flex-wrap gap-x-5 gap-y-1 text-label">
+                    <label className="flex items-center gap-2">
+                      <input type="checkbox" checked={Boolean(field.listed)} onChange={(event) => update(index, (item) => ({ ...item, listed: event.target.checked || undefined }))} />
+                      Show in lists
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input type="checkbox" checked={Boolean(field.searchable)} disabled={!["TEXT", "LONG_TEXT", "CHOICE", "RADIO", "NUMBER", "CURRENCY", "URL"].includes(field.type)} onChange={(event) => update(index, (item) => ({ ...item, searchable: event.target.checked || undefined }))} />
+                      Searchable
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input type="checkbox" checked={Boolean(field.editable)} disabled={field.type === "CALC" || field.type === "ATTACHMENT"} onChange={(event) => update(index, (item) => ({ ...item, editable: event.target.checked || undefined }))} />
+                      Can be changed after it&apos;s created
+                    </label>
+                  </div>
                 )}
                 <div className="flex flex-col gap-2">
                   <RuleEditor label="Show only when" rule={field.showIf} others={form.filter((other, i) => i !== index && other.type !== "SECTION" && other.key)} onChange={(showIf) => update(index, (item) => ({ ...item, showIf }))} />
@@ -495,11 +538,14 @@ export function ConditionValueInput({
   switch (field?.type) {
     case "CALC":
     case "LINE_ITEMS":
+    case "CURRENCY":
     case "NUMBER":
       return <NumberDraftInput label="Value" value={typeof current === "number" ? current : undefined} onChange={(next) => onChange(next ?? "")} placeholder="e.g. 500000" className="field-input w-40" />;
     case "DATE":
       return <input aria-label="Value" type="date" value={typeof current === "string" ? current : ""} onChange={(event) => onChange(event.target.value)} className="field-input w-auto" />;
     case "CHOICE":
+    case "RADIO":
+    case "MULTI_CHOICE":
       return select((field.options ?? []).map((option) => ({ value: option, label: option })));
     case "LOOKUP":
       return select((field.source ? lookups[field.source] : []).map((option) => ({ value: option.code, label: `${option.name} (${option.code})` })));
