@@ -84,16 +84,39 @@ describe("optional statements skipped when the user isn't allowed (v1.9.0)", () 
       await connection.query("SET GLOBAL log_bin_trust_function_creators = 0");
       const trigger = (name: string) => ["-- @begin", `CREATE TRIGGER ${name} BEFORE UPDATE ON log_t`, "FOR EACH ROW", "BEGIN", "  SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'append-only';", "END;", "-- @end"];
       fs.writeFileSync(path.join(dir, "202601020000_optional.sql"), ["CREATE TABLE log_t (id INT PRIMARY KEY);", "-- @optional", ...trigger("trg_optional"), "CREATE TABLE after_t (id INT PRIMARY KEY);"].join("\n"));
+      // Does this server refuse triggers to the app's user (like GoDaddy)?
+      // Some test servers (e.g. CI) run without binary logging, so they don't.
+      const app = await mysql.createConnection({ host, port, user: appUser, password: appPassword, database });
+      let refused = false;
+      try {
+        await app.query("CREATE TABLE probe_t (id INT PRIMARY KEY)");
+        await app.query("CREATE TRIGGER trg_probe BEFORE UPDATE ON probe_t FOR EACH ROW SET NEW.id = OLD.id");
+        await app.query("DROP TRIGGER trg_probe");
+      } catch (error) {
+        refused = (error as { code?: string }).code === "ER_BINLOG_CREATE_ROUTINE_NEED_SUPER";
+      } finally {
+        await app.query("DROP TABLE IF EXISTS probe_t").catch(() => undefined);
+        await app.end();
+      }
       const run = migrate();
-      expect(run.output).toContain("WARNING: skipped optional statement 2 of 3");
       expect(run.ok).toBe(true);
       const [tables] = await connection.query<mysql.RowDataPacket[]>("SELECT table_name AS name FROM information_schema.tables WHERE table_schema = ? AND table_name IN ('log_t', 'after_t')", [database]);
       expect(tables).toHaveLength(2);
-      // Without the marker the same refusal still stops the migration.
+      const [triggers] = await connection.query<mysql.RowDataPacket[]>("SELECT trigger_name AS name FROM information_schema.triggers WHERE trigger_schema = ?", [database]);
       fs.writeFileSync(path.join(dir, "202601030000_required.sql"), trigger("trg_required").join("\n"));
       const required = migrate();
-      expect(required.ok).toBe(false);
-      expect(required.output).toContain("SUPER");
+      if (refused) {
+        expect(run.output).toContain("WARNING: skipped optional statement 2 of 3");
+        expect(triggers).toHaveLength(0);
+        // Without the marker the same refusal still stops the migration.
+        expect(required.ok).toBe(false);
+        expect(required.output).toContain("SUPER");
+      } else {
+        // Allowed here: the optional trigger is simply created; nothing skipped.
+        expect(run.output).not.toContain("WARNING");
+        expect(triggers.map((row) => String(row.name ?? row.NAME))).toEqual(["trg_optional"]);
+        expect(required.ok).toBe(true);
+      }
     } finally {
       await connection.query(`SET GLOBAL log_bin_trust_function_creators = ${Number(before[0]!.trusted) ? 1 : 0}`);
       await connection.end();
