@@ -1,5 +1,14 @@
 # Release notes
 
+## v1.9.1 (16 Oct 2026): fix for the v1.9.0 deploy
+- **Cause:** the GoDaddy preview stopped at start with "Process exited before becoming ready". The runtime log showed the migration stopping at statement 5 (`CREATE TRIGGER trg_task_events_no_update`): "You do not have the SUPER privilege and binary logging is enabled". The hosted database user may not create triggers.
+- **Fix:** the four new triggers, which guard the task and information history against edits, are now optional.
+  - If the database refuses them, the migration prints a warning and carries on.
+  - The app only ever adds history rows, so it works the same without them.
+  - To add them anyway, run `database/optional/v190_append_only_triggers.sql` once in cPanel → phpMyAdmin → SQL.
+- **Safety:** the earlier triggers on the audit log, approval timeline and comments are unchanged, and a required trigger that is refused still stops the migration.
+- **Deploying:** statements 1–4 of the v1.9.0 migration are already on the database. The next start carries on from statement 5, with the same 15 statements in the same order.
+
 ## v1.9.0 (16 Oct 2026): Tasks, Information, the notification bell, module set-up
 **For everyone**
 - **Tasks** (sidebar → Tasks): create a task of a type IT set up, assign it to someone, and follow it to completion.

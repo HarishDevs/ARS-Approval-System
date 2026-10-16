@@ -85,7 +85,9 @@ CREATE TABLE tasks (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- A task's history: created, status changes, reassignments, comments, edits.
--- Append-only, like the approval timeline.
+-- Append-only, like the approval timeline. The two triggers are optional
+-- (hosted MySQL may refuse triggers to the app's user; see
+-- database/optional/v190_append_only_triggers.sql). The app only inserts.
 CREATE TABLE task_events (
   id           BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   task_id      BIGINT UNSIGNED NOT NULL,
@@ -101,6 +103,7 @@ CREATE TABLE task_events (
   INDEX idx_task_events_task (task_id, id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- @optional
 -- @begin
 CREATE TRIGGER trg_task_events_no_update BEFORE UPDATE ON task_events
 FOR EACH ROW
@@ -109,6 +112,7 @@ BEGIN
 END;
 -- @end
 
+-- @optional
 -- @begin
 CREATE TRIGGER trg_task_events_no_delete BEFORE DELETE ON task_events
 FOR EACH ROW
@@ -194,6 +198,7 @@ CREATE TABLE info_events (
   INDEX idx_info_events_info (info_id, id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- @optional
 -- @begin
 CREATE TRIGGER trg_info_events_no_update BEFORE UPDATE ON info_events
 FOR EACH ROW
@@ -202,6 +207,7 @@ BEGIN
 END;
 -- @end
 
+-- @optional
 -- @begin
 CREATE TRIGGER trg_info_events_no_delete BEFORE DELETE ON info_events
 FOR EACH ROW

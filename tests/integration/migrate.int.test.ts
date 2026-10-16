@@ -67,3 +67,36 @@ describe("migrations resume after a failure (R-10)", () => {
     await connection.end();
   });
 });
+
+// v1.9.0: GoDaddy's MySQL has binary logging on and refuses CREATE TRIGGER
+// to a user without SUPER. A block marked "-- @optional" is then skipped
+// with a warning, and the rest of the file still applies.
+describe("optional statements skipped when the user isn't allowed (v1.9.0)", () => {
+  it("skips the optional trigger, applies the rest; a required trigger still fails", async () => {
+    const connection = await root();
+    const [before] = await connection.query<mysql.RowDataPacket[]>("SELECT @@GLOBAL.log_bin_trust_function_creators AS trusted");
+    await connection.query(`DROP DATABASE IF EXISTS \`${database}\``);
+    await connection.query(`CREATE DATABASE \`${database}\``);
+    await connection.query(`GRANT ALL PRIVILEGES ON \`${database}\`.* TO ?@'%'`, [appUser]);
+    for (const name of fs.readdirSync(dir)) fs.rmSync(path.join(dir, name));
+    try {
+      // Like the host: binary logging on, creators not trusted.
+      await connection.query("SET GLOBAL log_bin_trust_function_creators = 0");
+      const trigger = (name: string) => ["-- @begin", `CREATE TRIGGER ${name} BEFORE UPDATE ON log_t`, "FOR EACH ROW", "BEGIN", "  SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'append-only';", "END;", "-- @end"];
+      fs.writeFileSync(path.join(dir, "202601020000_optional.sql"), ["CREATE TABLE log_t (id INT PRIMARY KEY);", "-- @optional", ...trigger("trg_optional"), "CREATE TABLE after_t (id INT PRIMARY KEY);"].join("\n"));
+      const run = migrate();
+      expect(run.output).toContain("WARNING: skipped optional statement 2 of 3");
+      expect(run.ok).toBe(true);
+      const [tables] = await connection.query<mysql.RowDataPacket[]>("SELECT table_name AS name FROM information_schema.tables WHERE table_schema = ? AND table_name IN ('log_t', 'after_t')", [database]);
+      expect(tables).toHaveLength(2);
+      // Without the marker the same refusal still stops the migration.
+      fs.writeFileSync(path.join(dir, "202601030000_required.sql"), trigger("trg_required").join("\n"));
+      const required = migrate();
+      expect(required.ok).toBe(false);
+      expect(required.output).toContain("SUPER");
+    } finally {
+      await connection.query(`SET GLOBAL log_bin_trust_function_creators = ${Number(before[0]!.trusted) ? 1 : 0}`);
+      await connection.end();
+    }
+  });
+});

@@ -2,6 +2,10 @@
 // Applies pending database/migrations/*.sql in filename order, tracked in
 // schema_migrations (safe to re-run). Naming: YYYYMMDDHHMM_description.sql.
 // Files may use "-- @delimiter $$" blocks for triggers (see splitStatements).
+// v1.9.0: a block marked "-- @optional" (just before "-- @begin") is skipped
+// with a warning when the database user isn't allowed to run it (hosted
+// MySQL with binary logging refuses CREATE TRIGGER without SUPER). The
+// warning names the SQL file IT can run once in phpMyAdmin instead.
 // Usage: npm run db:migrate
 const fs = require("node:fs");
 const path = require("node:path");
@@ -13,13 +17,23 @@ const MIGRATIONS_DIR = process.env.MIGRATIONS_DIR || path.join(__dirname, "..", 
 // Splits a file into statements. Plain statements end with ";". A trigger
 // body contains ";" itself, so it is wrapped between "-- @begin" and
 // "-- @end" lines and sent as one statement.
+const OPTIONAL = "-- @optional";
+// Errors that mean "not allowed here", for which an optional block is skipped.
+const PRIVILEGE_ERRORS = new Set(["ER_BINLOG_CREATE_ROUTINE_NEED_SUPER", "ER_SPECIFIC_ACCESS_DENIED_ERROR", "ER_TABLEACCESS_DENIED_ERROR", "ER_DBACCESS_DENIED_ERROR"]);
+const isOptional = (statement) => statement.startsWith(OPTIONAL);
+
 function splitStatements(sql) {
   const statements = [];
   const lines = sql.split(/\r?\n/);
   let buffer = [];
   let inBlock = false;
+  let optional = false;
   for (const line of lines) {
     const trimmed = line.trim();
+    if (trimmed === OPTIONAL) {
+      optional = true;
+      continue;
+    }
     if (trimmed === "-- @begin") {
       inBlock = true;
       buffer = [];
@@ -27,7 +41,8 @@ function splitStatements(sql) {
     }
     if (trimmed === "-- @end") {
       inBlock = false;
-      statements.push(buffer.join("\n"));
+      statements.push(`${optional ? `${OPTIONAL}\n` : ""}${buffer.join("\n")}`);
+      optional = false;
       buffer = [];
       continue;
     }
@@ -85,6 +100,16 @@ async function main() {
         try {
           await connection.query(statements[index]);
         } catch (error) {
+          if (isOptional(statements[index]) && PRIVILEGE_ERRORS.has(error.code)) {
+            const what = statements[index].split("\n").find((line) => line.trim() && !line.trim().startsWith("--")) ?? "";
+            console.log(`WARNING: skipped optional statement ${index + 1} of ${statements.length} in ${filename} (${what.trim().slice(0, 80)}): ${error.message}`);
+            console.log("  The app works without it. To add it, run database/optional/v190_append_only_triggers.sql once in phpMyAdmin.");
+            await connection.query(
+              "INSERT INTO schema_migration_progress (filename, statements_done) VALUES (?, ?) ON DUPLICATE KEY UPDATE statements_done = VALUES(statements_done)",
+              [filename, index + 1],
+            );
+            continue;
+          }
           const first = statements[index].split("\n").find((line) => line.trim() && !line.trim().startsWith("--")) ?? "";
           error.message =
             `${filename}, statement ${index + 1} of ${statements.length} (${first.trim().slice(0, 80)}): ${error.message}\n` +

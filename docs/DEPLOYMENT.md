@@ -439,6 +439,7 @@ To rebuild a full import file for a brand-new environment: apply the migrations 
 | "Your app is redirecting" warning | Root `/` redirects to `/login` | Settings → General → root path `/login` |
 | Import SQL shows "Unauthorized" | GoDaddy's import service refused the session | Skip the import: the first start creates the database (B1) |
 | Runtime log: `Migration failed: … TRIGGER command denied` | Hosted DB user can't create triggers | GoDaddy support ticket: the triggers protect the audit log and are required |
+| Runtime log: `WARNING: skipped optional statement … (CREATE TRIGGER …): You do not have the SUPER privilege and binary logging is enabled` | Binary logging is on and the app's user has no SUPER (v1.9.0+) | Nothing breaks. To add the optional history guards: cPanel → phpMyAdmin → app database → SQL → paste `database/optional/v190_append_only_triggers.sql` → Go |
 | No reminders or escalations | Cron missing, or wrong secret (the job answers 404) | Part I |
 | Build fails: `ENOENT … rename '/app/.next/export/500.html'` | GoDaddy reused the old `.next` folder | Fixed in v1.0.3 (the build cleans `.next` first): **Retry build** / **Update Preview** |
 | `Cannot find module 'mysql2/promise'` for a minute during Publish | The platform restarted the app before its packages were in place | Recovers by itself; if it repeats for more than 2 minutes, **Restart Published App** |

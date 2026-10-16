@@ -415,6 +415,10 @@
 - Applies to users and IT admins; the Super Admin is exempt (12-hour limit only).
 - The browser's session check no longer counts as activity (it used to keep an open tab signed in for ever). Activity in the page is reported at the next minute's check.
 - A warning with "Stay signed in" 2 minutes before. | Owner; Claude, 15 Oct 2026 |
+| D-148 | 16 Oct 2026 | **Optional triggers in migrations (v1.9.1):**
+- A trigger block may be marked `-- @optional`. When the database user isn't allowed to run it (hosted MySQL with binary logging refuses CREATE TRIGGER without SUPER), it is skipped with a warning naming the SQL file to run in phpMyAdmin. Other errors, and unmarked triggers, still stop the migration.
+- Used only for the v1.9.0 task and information history guards, because the app only inserts there.
+- The audit-log, timeline and comment triggers stay required (D-012). | Claude, 16 Oct 2026 |
 | D-143 | 16 Oct 2026 | **Three business modules (owner, v1.9.0):**
 - **Approvals** stay on the one graph engine (D-001).
 - **Tasks** and **Information** are new, independent records with their own lifecycle, never stored only as notifications.
@@ -472,6 +476,12 @@
 | Q-023 | **Further owner decisions from the audit:** DR-01 join rejection semantics; DR-02 no approval without a human decision; DR-03 controls on IT changing approvers' contact details; DR-04 Super Admin inactivity limit; DR-05 what an expired approval means; DR-06 retention durations; DR-08 off-site encrypted backups and RTO/RPO (see `application-audit/12_DECISION_REGISTER.md`) | Before Phase B and D | Open, waiting on the owner (16 Oct 2026) |
 
 ## 5. Work log (newest first)
+
+### 16 Oct 2026 (v1.9.1: deploy fix)
+- **Owner:** the v1.9.0 preview failed ("Process exited before becoming ready").
+- **GoDaddy Preview runtime log:** migration statement 5 (CREATE TRIGGER) refused: "You do not have the SUPER privilege and binary logging is enabled". Statements 1–4 were applied; live (Publish) stayed on v1.8.0 and is healthy.
+- **Fix (D-148):** optional trigger blocks in `migrate.js`; the four new history triggers are marked optional; `database/optional/v190_append_only_triggers.sql` is for phpMyAdmin; a DEPLOYMENT troubleshooting row was added.
+- **Test:** `tests/integration/migrate.int.test.ts` reproduces the host refusal (log_bin_trust_function_creators = 0 for the test).
 
 ### 16 Oct 2026 (v1.9.0: Approval, Task and Information modules)
 - **Source:** the owner brief "Configurable Approval, Task & Information Management System".
