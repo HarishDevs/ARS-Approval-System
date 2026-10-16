@@ -12,12 +12,13 @@ import { getRunnerHeartbeat } from "@/lib/db/repositories/jobs.repository";
 // at most once a day per kind (the audit log is the "already sent" record).
 // No details of the error go in the message: they are in the server log,
 // under the reference shown.
-export type OpsAlertKind = "JOB_RUNNER_FAILED" | "BACKUP_FAILED" | "JOB_RUNNER_STOPPED";
+export type OpsAlertKind = "JOB_RUNNER_FAILED" | "BACKUP_FAILED" | "JOB_RUNNER_STOPPED" | "CALENDAR_SYNC_FAILED";
 
 const TEXT: Record<OpsAlertKind, { title: string; body: string }> = {
   JOB_RUNNER_FAILED: { title: "Scheduled jobs failed", body: "The 5-minute job run (messages, reminders, backups) failed." },
   BACKUP_FAILED: { title: "Daily backup failed", body: "Today's database backup could not be made. The job runner will keep trying." },
   JOB_RUNNER_STOPPED: { title: "Scheduled jobs have stopped", body: "The 5-minute job run hasn't run for over 2 hours, so messages, reminders, expiry notices and backups are waiting. Check the cron job in cPanel." },
+  CALENDAR_SYNC_FAILED: { title: "Google Calendar sync is failing", body: "A Google Calendar sync has failed every retry. See Super Admin → Integrations → Google Calendar for the failed syncs and retry them." },
 };
 
 export async function alertSuperAdmin(kind: OpsAlertKind, reference: string | null): Promise<boolean> {

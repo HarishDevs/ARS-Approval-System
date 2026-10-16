@@ -4,7 +4,7 @@ import { getCurrentSession, type CurrentSession } from "@/server/auth/session";
 import { evaluateAreaAccess } from "@/server/authorization/policy";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import type { AppArea } from "@/types/auth";
-import { checkPageAccess, requestPage } from "@/server/authorization/page-access";
+import { checkPageAccess, checkPageKey, requestPage } from "@/server/authorization/page-access";
 
 export class ForbiddenError extends Error {
   constructor() {
@@ -44,12 +44,15 @@ export async function requireArea(area: AppArea): Promise<CurrentSession> {
 // caller maps it to a generic "not found" answer. v1.8.0: a Server Action
 // (or an API call marked `change`) also needs Full access to its page; a
 // view-only page can be read but not changed.
-export async function requireApiArea(area: AppArea, options: { change?: boolean } = {}): Promise<CurrentSession> {
+// G-3 (v1.10.0): `page` names the page the action belongs to; its rule is
+// checked as well as the rule of the address it was posted from.
+export async function requireApiArea(area: AppArea, options: { change?: boolean; page?: string } = {}): Promise<CurrentSession> {
   const session = await getCurrentSession();
   const result = evaluateAreaAccess(session?.user ?? null, area);
   if (result.allowed && session) {
     const change = options.change ?? (await requestPage()).isAction;
-    const page = await checkPageAccess(session.user, change);
+    const byPath = await checkPageAccess(session.user, change);
+    const page = byPath.ok && options.page ? await checkPageKey(session.user, options.page, change) : byPath;
     if (page.ok) return session;
     await recordAudit({ actorUserId: session.user.id, action: "PAGE_ACCESS_DENIED", entityType: "PAGE", entityId: page.pageKey ?? "unknown", result: "FAILURE", sessionId: session.sessionId, metadata: { reason: page.reason, change } });
     throw new ForbiddenError();

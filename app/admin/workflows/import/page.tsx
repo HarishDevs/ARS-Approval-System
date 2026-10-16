@@ -1,8 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { Breadcrumbs } from "@/features/ui/Display";
 import { ImportTypeForm } from "@/features/admin/ImportTypeForm";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Import an approval type" };
 
 // FN9 configuration promotion: import an approval type exported from
 // another environment (for example the test site) as a draft.

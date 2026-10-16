@@ -26,7 +26,7 @@ const REVALIDATE: Record<ImportKind, string[]> = {
 const preview = (plan: ImportPlan): ImportPreview => ({ kind: plan.kind, fileProblems: plan.fileProblems, rows: plan.rows, summary: plan.summary });
 
 export async function checkImportAction(formData: FormData): Promise<ImportActionResult> {
-  const actor = await getAdminActor();
+  const actor = await getAdminActor("admin.import");
   if (!actor) return NOT_FOUND;
   const kind = formData.get("kind");
   if (!isImportKind(kind)) return { ok: false, message: "Choose what to import." };
@@ -54,7 +54,7 @@ export async function checkImportAction(formData: FormData): Promise<ImportActio
 }
 
 export async function runImportAction(formData: FormData): Promise<ImportActionResult> {
-  const actor = await getAdminActor();
+  const actor = await getAdminActor("admin.import");
   if (!actor) return NOT_FOUND;
   const kind = formData.get("kind");
   if (!isImportKind(kind)) return { ok: false, message: "Choose what to import." };

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
@@ -7,6 +8,9 @@ import { listActiveUserOptions } from "@/lib/db/repositories/admin-users.reposit
 import { effectiveLevel, LEVEL_LABEL, PAGES } from "@/server/authorization/pages";
 import { getDbPool } from "@/lib/db/client";
 import type { RowDataPacket } from "mysql2/promise";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Page access" };
 
 export const dynamic = "force-dynamic";
 

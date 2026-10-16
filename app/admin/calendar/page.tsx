@@ -1,9 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { AddHolidayForm, RemoveHolidayButton, WorkingDaysForm } from "@/features/admin/CalendarForms";
 import { requireArea } from "@/server/authorization/guards";
 import { getWorkingDays, listHolidays } from "@/lib/db/repositories/calendar.repository";
 import { WEEKDAYS } from "@/server/workflows/calendar";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Working calendar" };
 
 // F-31 / D-067: response times count only working days.
 export default async function CalendarPage() {

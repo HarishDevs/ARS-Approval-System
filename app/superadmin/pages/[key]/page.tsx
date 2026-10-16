@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireArea } from "@/server/authorization/guards";
@@ -8,6 +9,9 @@ import { listAccessRules } from "@/lib/db/repositories/page-access.repository";
 import { listActiveUserOptions } from "@/lib/db/repositories/admin-users.repository";
 import { listDepartments } from "@/lib/db/repositories/organisation.repository";
 import { PAGE } from "@/server/authorization/pages";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Page access rule" };
 
 export const dynamic = "force-dynamic";
 

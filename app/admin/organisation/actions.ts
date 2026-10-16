@@ -9,7 +9,7 @@ import type { ActionResult } from "@/lib/http/action-result";
 const NOT_FOUND: ActionResult = { ok: false, message: "Not found." };
 
 export async function saveDepartmentAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  const actor = await getAdminActor();
+  const actor = await getAdminActor("admin.organisation");
   if (!actor) return NOT_FOUND;
   try {
     const result = await saveDepartment(parseId(formData.get("id")), formFields(formData, ["code", "name", "hodUserId", "active"]), actor);
@@ -23,7 +23,7 @@ export async function saveDepartmentAction(_previous: ActionResult | null, formD
 }
 
 export async function saveDesignationAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  const actor = await getAdminActor();
+  const actor = await getAdminActor("admin.organisation");
   if (!actor) return NOT_FOUND;
   try {
     const result = await saveDesignation(parseId(formData.get("id")), formFields(formData, ["code", "name", "isApprover", "active"]), actor);

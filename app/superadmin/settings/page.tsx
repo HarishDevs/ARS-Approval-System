@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { SettingsGroupForm } from "@/features/superadmin/SettingsGroupForm";
 import { TestSendPanel } from "@/features/superadmin/TestSendPanel";
@@ -6,6 +7,9 @@ import { SETTING_DEFINITIONS, type SettingDefinition } from "@/server/settings/d
 import { resolveSettingForDisplay } from "@/server/settings/resolve";
 import { listRawSettings, listSettingHistory } from "@/lib/db/repositories/settings.repository";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Settings & providers" };
 
 const GROUPS: { group: SettingDefinition["group"]; title: string; description: string }[] = [
   { group: "EMAIL", title: "Email", description: "Resend, sending from the ARS address. GoDaddy blocks SMTP, so email goes over HTTPS." },

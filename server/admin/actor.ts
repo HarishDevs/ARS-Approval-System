@@ -5,9 +5,12 @@ import type { AdminActor } from "@/server/admin/users";
 
 // Who is calling an /admin Server Action. null = not allowed; the action
 // answers "Not found." so nothing about the area is revealed (D-016).
-export async function getAdminActor(): Promise<AdminActor | null> {
+// G-3 (v1.10.0): `page` is the admin page the action belongs to (its key in
+// server/authorization/pages.ts), so a Hidden or View-only rule on it holds
+// wherever the action is posted from.
+export async function getAdminActor(page?: string): Promise<AdminActor | null> {
   try {
-    const session = await requireApiArea("admin");
+    const session = await requireApiArea("admin", { page });
     const { ipAddress } = await getActionContext();
     return { id: session.user.id, roles: session.user.roles, sessionId: session.sessionId, ipAddress };
   } catch {

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { areasForUser } from "@/server/authorization/policy";
 import { SideNav, type NavItem } from "@/features/shell/SideNav";
 import { MobileNav } from "@/features/shell/MobileNav";
@@ -97,8 +98,11 @@ export async function AppShell({
       {theme && <ThemeSync theme={parseTheme(theme)} />}
       <aside className="hidden w-sidebar shrink-0 flex-col border-r border-line bg-surface md:sticky md:top-0 md:flex md:h-dvh md:self-start" data-testid="sidebar">
         <div className="flex h-topbar shrink-0 items-center border-b border-line px-5">
-          {/* eslint-disable-next-line @next/next/no-img-element -- static SVG logo */}
-          <img src="/brand/ars-green-steel.svg" alt="ARS Green Steel" className="h-9 w-auto" />
+          {/* WEB-17 (v1.10.0): the logo goes to this space's first page. */}
+          <Link href={`/${area}`} aria-label={`ARS Green Steel: ${SPACE_LABEL[area]} home`} className="rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600">
+            {/* eslint-disable-next-line @next/next/no-img-element -- static SVG logo */}
+            <img src="/brand/ars-green-steel.svg" alt="" width={77} height={36} className="h-9 w-auto" />
+          </Link>
         </div>
         <p className="shrink-0 px-6 pt-4 text-caption font-semibold uppercase tracking-wider text-ink-faint">{SPACE_LABEL[area]}</p>
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain" data-testid="sidebar-scroll">
@@ -108,7 +112,7 @@ export async function AppShell({
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-header flex h-topbar items-center justify-between gap-4 border-b border-line bg-surface px-4 sm:px-6">
-          <MobileNav items={items} spaceLabel={SPACE_LABEL[area]} collapsible={area === "users"} />
+          <MobileNav items={items} spaceLabel={SPACE_LABEL[area]} home={`/${area}`} collapsible={area === "users"} />
           <div className="ml-auto flex items-center gap-2">
             <CommandPalette pages={palettePages} />
             <NotificationBell initialUnread={unread} />
@@ -130,10 +134,12 @@ export async function AppShell({
             You&apos;re trying the app as {user.name}, a demo person. Sign out and sign in again to return to your own account.
           </p>
         )}
-        <main id="main" tabIndex={-1} className="mx-auto w-full max-w-7xl flex-1 px-4 pb-28 pt-6 focus:outline-none sm:px-8 sm:pt-10 md:pb-10">
+        <main id="main" tabIndex={-1} className={`mx-auto w-full max-w-7xl flex-1 px-4 pt-6 focus:outline-none sm:px-8 sm:pt-10 md:pb-10 ${area === "users" ? "pb-28" : "pb-10"}`}>
           {children}
         </main>
-        <BottomNav waiting={waiting} hidden={["/users", "/users/queue", "/users/new", "/users/search", "/users/profile"].filter((href) => !visible(href))} />
+        {/* WEB-15 (v1.10.0): the phone bar holds My approvals destinations, so it
+            shows in that space only; Admin and Super Admin use the menu. */}
+        {area === "users" && <BottomNav waiting={waiting} hidden={["/users", "/users/queue", "/users/new", "/users/search", "/users/profile"].filter((href) => !visible(href))} />}
       </div>
     </div>
   );

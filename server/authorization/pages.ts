@@ -46,7 +46,10 @@ export const PAGES: readonly PageDef[] = [
   { key: "users.profile", area: "users", label: "Profile", what: "Personal details and theme.", paths: [under("/users/profile")] },
   { key: "users.notifications", area: "users", label: "Notifications", what: "The inbox and notification settings.", paths: [under("/users/notifications")] },
   { key: "users.delegation", area: "users", label: "Out of office", what: "Naming a delegate while away.", paths: [under("/users/delegation")] },
-  { key: "users.security", area: "users", label: "Sign-in & devices", what: "Sign-in history and signing out other devices.", paths: [under("/users/security")], apis: [/^\/api\/me\/sign-out-everywhere/] },
+  // SEC-17 (v1.10.0): "Sign-in & devices" is no longer on this list. It is a
+  // person's own security control (signing out a lost device), so a page
+  // rule must never hide it or make it view-only. Rules saved for it before
+  // are ignored.
   { key: "admin.overview", area: "admin", label: "Admin overview", what: "The Admin space's first page.", paths: [exact("/admin")], neverHidden: true },
   { key: "admin.attention", area: "admin", label: "Needs attention", what: "Stuck requests and their fixes.", paths: [under("/admin/attention")] },
   { key: "admin.analytics", area: "admin", label: "Analytics (Admin)", what: "Organisation analytics.", paths: [under("/admin/analytics")] },

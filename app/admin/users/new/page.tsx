@@ -1,8 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { UserForm } from "@/features/admin/UserForm";
 import { loadUserFormOptions } from "@/features/admin/user-options";
 import { requireArea } from "@/server/authorization/guards";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "New user" };
 
 export default async function NewUserPage() {
   const { user } = await requireArea("admin");

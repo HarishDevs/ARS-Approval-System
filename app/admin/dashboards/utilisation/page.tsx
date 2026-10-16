@@ -1,8 +1,12 @@
+import type { Metadata } from "next";
 import { DashboardFrame, DashboardTable, KpiTiles, MeasureBar, OutcomeBar } from "@/features/admin/dashboards/DashboardFrame";
 import { dashboardPage, type DashboardSearch } from "@/features/admin/dashboards/page-data";
 import { loadUtilisation } from "@/lib/db/repositories/dashboards.repository";
 import { approvalRate, hoursText } from "@/server/dashboards/filters";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Utilisation dashboard" };
 
 // Utilisation (F-74): every approval type, used or not, and how it ends.
 export default async function UtilisationPage({ searchParams }: { searchParams: DashboardSearch }) {

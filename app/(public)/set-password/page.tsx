@@ -1,10 +1,10 @@
+import { MailLink } from "@/features/ui/MailLink";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AuthLayout } from "@/features/auth/components/AuthLayout";
 import { SetPasswordPanel } from "@/features/auth/components/SetPasswordPanel";
 import { inspectSetPasswordLink } from "@/server/auth/set-password";
 import { getAuthSecurityConfig } from "@/server/settings/values";
-import { Email } from "@/features/ui/SafeText";
 
 export const metadata: Metadata = { title: "Set your password", referrer: "no-referrer" };
 export const dynamic = "force-dynamic";
@@ -24,7 +24,7 @@ export default async function SetPasswordPage({ searchParams }: { searchParams: 
       ) : (
         <div className="mt-8">
           <h1 className="text-display font-bold">Link not valid</h1>
-          <p className="mt-2 text-[15px] text-ink-muted">This link has expired or was already used. Ask IT (<Email address="itadmin@arssteels.co.in" />) to send a new one.</p>
+          <p className="mt-2 text-[15px] text-ink-muted">This link has expired or was already used. Ask IT (<MailLink address="itadmin@arssteels.co.in" />) to send a new one.</p>
           <Link href="/login" className="link mt-6 inline-block">
             Go to sign in
           </Link>

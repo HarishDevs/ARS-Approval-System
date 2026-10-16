@@ -1,6 +1,10 @@
+import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { requireArea } from "@/server/authorization/guards";
 import { canUseReports } from "@/server/settings/features";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Report" };
 
 // v1.7.1: old report links go to the Admin space (IT and Super Admin only).
 export default async function OldReportPage({ params, searchParams }: { params: Promise<{ key: string }>; searchParams: Promise<Record<string, string | undefined>> }) {

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { featureOn } from "@/server/settings/features";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -13,6 +14,9 @@ import { listRecordFiles } from "@/server/modules/files";
 import { isAdminActor, loadTaskFor, relatedRequestVisible } from "@/server/modules/tasks";
 import { COMPLETION_LABEL, indiaDateTimeText, PRIORITY_LABEL, utcToIndiaLocal } from "@/server/modules/settings";
 import { isOverdue, mayAssignTo, TASK_STATUS_LABEL } from "@/server/modules/task-rules";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Task" };
 
 export const dynamic = "force-dynamic";
 

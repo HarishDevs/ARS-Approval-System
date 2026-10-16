@@ -1,9 +1,13 @@
+import type { Metadata } from "next";
 import { PageHeader, EmptyState } from "@/features/shell/PageHeader";
 import { requireArea } from "@/server/authorization/guards";
 import { listRecentDeliveries } from "@/lib/db/repositories/notifications.repository";
 import { RetryButton } from "@/features/superadmin/RetryButton";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 import { getRunnerHeartbeat, type RunnerHeartbeat } from "@/lib/db/repositories/jobs.repository";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Message deliveries" };
 
 const STATUS_STYLE: Record<string, string> = {
   SENT: "bg-success-50 text-success-600",

@@ -9,7 +9,7 @@ import type { ActionResult } from "@/lib/http/action-result";
 // v1.8.0 (owner): Admin → Custom approval. IT Admin / Super Admin only; the
 // set-up is checked again on the server and audited.
 export async function saveCustomApprovalAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  const actor = await getAdminActor();
+  const actor = await getAdminActor("admin.custom_approval");
   if (!actor) return { ok: false, message: "Not found." };
   let form: unknown;
   let policy: unknown;

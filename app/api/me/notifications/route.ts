@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { requireApiArea } from "@/server/authorization/guards";
 import { countUnreadByCategory, listInbox, markAllReadReturningIds, markRead } from "@/lib/db/repositories/collab.repository";
 import { appPath, parseCategory, type NotificationCategory } from "@/server/notifications/categories";
+import { LIMITS, overLimit, tooManyResponse } from "@/server/security/limits";
 import { apiError } from "@/lib/http/api-response";
 import { logError } from "@/lib/logging/logger";
 
@@ -15,6 +16,7 @@ export async function GET(request: NextRequest) {
   try {
     // Reading your own notifications never changes a page, so it isn't a "change".
     const session = await requireApiArea("users", { change: false });
+    if (await overLimit(`notifications:${session.user.id}`, LIMITS.notifications)) return tooManyResponse();
     const category: NotificationCategory | null = parseCategory(request.nextUrl.searchParams.get("type"));
     const [items, unread] = await Promise.all([listInbox(session.user.id, 10, undefined, undefined, category), countUnreadByCategory(session.user.id)]);
     return Response.json(
@@ -33,6 +35,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await requireApiArea("users", { change: false });
+    if (await overLimit(`notifications:${session.user.id}`, LIMITS.notifications)) return tooManyResponse();
     const body = (await request.json().catch(() => null)) as { action?: unknown; ids?: unknown } | null;
     if (body?.action === "read-all") {
       const ids = await markAllReadReturningIds(session.user.id);

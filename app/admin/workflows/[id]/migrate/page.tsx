@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireArea } from "@/server/authorization/guards";
@@ -7,6 +8,9 @@ import { MigrationForm } from "@/features/admin/VersionTools";
 import { listMigrationItems, listMigrationRuns, planMigration } from "@/server/workflows/migration";
 import { VERDICT_LABEL } from "@/server/workflows/migration-plan";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Move requests to a version" };
 
 // FN7 migration assistant: open requests on an older version, a dry-run
 // verdict for each, step mapping for steps that were renamed or removed,

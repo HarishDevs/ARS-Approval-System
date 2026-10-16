@@ -1,8 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { requireArea } from "@/server/authorization/guards";
 import { adminHomeCounts as counts } from "@/lib/db/repositories/insights.repository";
 import { listModuleTypes } from "@/lib/db/repositories/module-types.repository";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Admin overview" };
 
 // Admin space overview (S9-13): every module is live, so each card links to
 // it with a live count. Equal heights; 3 columns on wide screens.

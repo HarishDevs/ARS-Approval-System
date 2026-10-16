@@ -14,7 +14,7 @@ import type { ActionResult } from "@/lib/http/action-result";
 const NOT_FOUND: ActionResult = { ok: false, message: "Not found." };
 
 export async function saveGroupAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  const actor = await getAdminActor();
+  const actor = await getAdminActor("admin.groups");
   if (!actor) return NOT_FOUND;
   const id = parseId(formData.get("id"));
   const name = String(formData.get("name") ?? "").trim();
@@ -42,7 +42,7 @@ export async function saveGroupAction(_previous: ActionResult | null, formData: 
 }
 
 export async function groupMemberAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  const actor = await getAdminActor();
+  const actor = await getAdminActor("admin.groups");
   if (!actor) return NOT_FOUND;
   const groupId = parseId(formData.get("groupId"));
   const userId = parseId(formData.get("userId"));

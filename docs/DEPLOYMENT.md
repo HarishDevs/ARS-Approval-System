@@ -28,6 +28,7 @@ Work through the parts **in order**. Tick each box as you go. Anything marked **
 - **Part N:** Troubleshooting
 - **Part O:** Known limits
 - **Part P:** Backups and restore (v1.4.0)
+- **Part Q:** Google Calendar (v1.11.0)
 
 ---
 
@@ -491,3 +492,27 @@ The automated version of this drill runs in every CI build (`tests/integration/b
 3. GoDaddy → the app → change the `DB_…` secrets to the restored database → **Publish**.
 4. Copy `BACKUP_DIR/attachments/*` back into `UPLOAD_DIR` (File Manager), keeping the folder structure.
 5. Anything done after the backup's time must be redone; the audit log of the old database (if it still exists) shows what.
+
+---
+
+## Part Q: Google Calendar (v1.11.0)
+Optional. Nothing changes until the Super Admin enables it.
+1. **Google Cloud Console** (console.cloud.google.com) → the ARS project:
+   - APIs & Services → Library → **Google Calendar API** → **Enable**.
+   - **OAuth consent screen:** Internal if all users are on the company's Google Workspace, else External.
+     - Scopes: `openid`, `email`, `.../auth/calendar.events`, `.../auth/calendar.calendarlist.readonly`.
+     - While External and in "Testing", only listed test users can connect, for 7 days at a time.
+   - **Credentials** → Create credentials → **OAuth client ID** → **Web application**.
+     - Authorised redirect URI: `https://approval.arssteels.net/api/integrations/google-calendar/callback`
+2. **Check:** `APP_BASE_URL` is `https://approval.arssteels.net` in the GoDaddy secrets. The cron job (Part I) must be running.
+3. **Super Admin → Integrations → Google Calendar:**
+   - paste the Client ID and secret → **Save configuration**;
+   - **Test configuration** (all green) → **Enable integration**.
+4. **Cloudflare:** Google posts change notifications to `/api/webhooks/google-calendar`. If a WAF or bot rule challenges POSTs there, add a skip rule for that path.
+5. **Verify:** connect your own account (Profile → Calendar). An approval or task with a due date appears in Google as "Approval due: …" / "Task due: …" within a few minutes.
+
+**Troubleshooting**
+- **"Google rejected the client ID or secret":** copy both again from Credentials.
+- **`redirect_uri_mismatch` on Google's screen:** the URI in Google must match the one shown on the ARS page exactly.
+- **Everyone shows "Needs reauthorising" after a week:** the consent screen is still in "Testing". Publish the app.
+- **`ENCRYPTION_KEY` changed:** enter the client secret again; everyone reconnects.

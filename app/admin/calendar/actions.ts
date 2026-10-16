@@ -13,7 +13,7 @@ import type { ActionResult } from "@/lib/http/action-result";
 const NOT_FOUND: ActionResult = { ok: false, message: "Not found." };
 
 export async function saveWorkingDaysAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  const actor = await getAdminActor();
+  const actor = await getAdminActor("admin.calendar");
   if (!actor) return NOT_FOUND;
   const days = formData.getAll("day").map(String).filter((day): day is Weekday => (WEEKDAYS as readonly string[]).includes(day));
   if (days.length === 0) return { ok: false, message: "Choose at least one working day." };
@@ -30,7 +30,7 @@ export async function saveWorkingDaysAction(_previous: ActionResult | null, form
 }
 
 export async function holidayAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  const actor = await getAdminActor();
+  const actor = await getAdminActor("admin.calendar");
   if (!actor) return NOT_FOUND;
   const date = String(formData.get("date") ?? "");
   const command = formData.get("command");

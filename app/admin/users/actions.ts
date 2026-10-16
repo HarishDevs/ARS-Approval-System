@@ -15,7 +15,7 @@ const NOT_FOUND: ActionResult = { ok: false, message: "Not found." };
 const USER_FIELDS = ["loginId", "name", "email", "whatsappNumber", "departmentId", "designationId", "reportingManagerId", "signInMethod"] as const;
 
 export async function createUserAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  const actor = await getAdminActor();
+  const actor = await getAdminActor("admin.users");
   if (!actor) return NOT_FOUND;
   const parsed = parseUserForm(formFields(formData, USER_FIELDS), formData.getAll("roles").map(String));
   if (!parsed.ok) return { ok: false, message: "Check the highlighted fields.", fieldErrors: parsed.fieldErrors };
@@ -34,7 +34,7 @@ export async function createUserAction(_previous: ActionResult | null, formData:
 }
 
 export async function updateUserAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  const actor = await getAdminActor();
+  const actor = await getAdminActor("admin.users");
   if (!actor) return NOT_FOUND;
   const id = parseId(formData.get("id"));
   if (id === null) return NOT_FOUND;
@@ -83,7 +83,7 @@ async function runCommand(command: Command, id: number, actor: NonNullable<Await
 }
 
 export async function userCommandAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  const actor = await getAdminActor();
+  const actor = await getAdminActor("admin.users");
   if (!actor) return NOT_FOUND;
   const id = parseId(formData.get("id"));
   if (id === null) return NOT_FOUND;
@@ -101,7 +101,7 @@ export async function userCommandAction(_previous: ActionResult | null, formData
 
 // F-16: move every pending approval of a person to someone else.
 export async function handoverAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  const actor = await getAdminActor();
+  const actor = await getAdminActor("admin.users");
   const fromId = parseId(formData.get("id"));
   const toId = parseId(formData.get("toUserId"));
   if (!actor || fromId === null) return NOT_FOUND;

@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { getSettingValue } from "@/server/settings/values";
 import { parseReceipts } from "@/server/notifications/receipts";
 import { recordDeliveryReceipt } from "@/lib/db/repositories/notifications.repository";
+import { LIMITS, overLimit, tooManyResponse } from "@/server/security/limits";
 import { logError, logInfo } from "@/lib/logging/logger";
 
 // CEOITBox delivery/read receipts (S8-03). Set in CEOITBox: this URL, and the
@@ -20,6 +21,9 @@ export async function POST(request: NextRequest) {
   if (!sameSecret(request.headers.get("x-webhook-secret"), expected)) {
     return Response.json({ success: false, error: { code: "NOT_FOUND", message: "Not found." } }, { status: 404 });
   }
+  // SEC-19 (v1.10.0): a looping sender is slowed down. Receipts only move a
+  // delivery forward (SENT → DELIVERED → READ), so a repeated one changes nothing.
+  if (await overLimit("webhook:ceoitbox", LIMITS.webhook)) return tooManyResponse();
   const text = await request.text();
   if (text.length > 256_000) return Response.json({ success: false, error: { code: "TOO_LARGE", message: "Too large." } }, { status: 413 });
   let body: unknown = null;

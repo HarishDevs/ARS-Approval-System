@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
@@ -8,6 +9,9 @@ import { listJobRuns } from "@/lib/db/repositories/job-runs.repository";
 import { listUnsentOutbox } from "@/lib/db/repositories/outbox.repository";
 import { getRunnerHeartbeat } from "@/lib/db/repositories/jobs.repository";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Automation & jobs" };
 
 export const dynamic = "force-dynamic";
 

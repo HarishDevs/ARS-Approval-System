@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Breadcrumbs } from "@/features/ui/Display";
 import { notFound } from "next/navigation";
@@ -16,6 +17,9 @@ import { prefill, SOURCE_LABEL } from "@/server/approvals/autofill";
 import { listTemplates } from "@/lib/db/repositories/templates.repository";
 import { TemplatePicker } from "@/features/requests/Templates";
 import { featureOn } from "@/server/settings/features";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "New request" };
 
 export default async function RaiseRequestPage({ params, searchParams }: { params: Promise<{ workflowId: string }>; searchParams: Promise<{ followUp?: string; template?: string; from?: string; refresh?: string }> }) {
   const { user } = await requireArea("users");

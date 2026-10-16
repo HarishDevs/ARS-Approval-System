@@ -5,6 +5,7 @@ import { buildRequestSummaryPdf } from "@/server/pdf/request-summary";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 import { formatPaise } from "@/server/forms/dynamic";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
+import { LIMITS, overLimit, tooManyResponse } from "@/server/security/limits";
 import { apiError } from "@/lib/http/api-response";
 import { logError } from "@/lib/logging/logger";
 import type { MapStage } from "@/server/approvals/step-map";
@@ -31,6 +32,7 @@ const withIndiaTimes = (stages: MapStage[]): MapStage[] =>
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await requireApiArea("users");
+    if (await overLimit(`pdf:${session.user.id}`, LIMITS.pdf)) return tooManyResponse("Too many PDF summaries in a minute. Wait a minute and try again.");
     const { id } = await params;
     if (!/^\d+$/.test(id)) return apiError("NOT_FOUND", "Not found.", 404);
     const view = await loadRequestView(Number(id), { id: session.user.id, roles: session.user.roles });

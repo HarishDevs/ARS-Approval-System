@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { requireArea } from "@/server/authorization/guards";
 import { ProfileTabs } from "@/features/shell/ProfileTabs";
@@ -7,6 +8,9 @@ import { countUnreadByCategory, listInbox } from "@/lib/db/repositories/collab.r
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 import { appPath, CATEGORY_LABEL, CATEGORY_SLUG, parseCategory, type NotificationCategory } from "@/server/notifications/categories";
 import { PendingLink } from "@/features/ui/PendingLink";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Notifications" };
 
 const PAGE_SIZE = 50;
 

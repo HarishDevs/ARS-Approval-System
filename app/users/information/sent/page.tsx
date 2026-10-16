@@ -1,4 +1,8 @@
+import type { Metadata } from "next";
 import { InfoListScreen } from "@/features/modules/InfoListScreen";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Information sent by me" };
 
 export const dynamic = "force-dynamic";
 

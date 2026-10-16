@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { requireArea } from "@/server/authorization/guards";
 import { ProfileTabs } from "@/features/shell/ProfileTabs";
 import { PageHeader } from "@/features/shell/PageHeader";
@@ -6,6 +7,9 @@ import { SafeText } from "@/features/ui/SafeText";
 import { listLoginHistory } from "@/lib/db/repositories/audit.repository";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 import { maskWhatsApp } from "@/features/ui/labels";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Sign-in & devices" };
 
 export default async function SecurityPage() {
   const { user } = await requireArea("users");

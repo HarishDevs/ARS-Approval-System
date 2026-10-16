@@ -1,7 +1,11 @@
+import type { Metadata } from "next";
 import { DashboardFrame, DashboardTable, KpiTiles, MeasureBar, OutcomeBar } from "@/features/admin/dashboards/DashboardFrame";
 import { dashboardPage, type DashboardSearch } from "@/features/admin/dashboards/page-data";
 import { loadDepartments } from "@/lib/db/repositories/dashboards.repository";
 import { approvalRate, hoursText } from "@/server/dashboards/filters";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Departments dashboard" };
 
 // Department-wise raised (F-74): by the raiser's department.
 export default async function DepartmentsDashboardPage({ searchParams }: { searchParams: DashboardSearch }) {

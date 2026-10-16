@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { featureOn } from "@/server/settings/features";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -13,6 +14,9 @@ import { listDepartments } from "@/lib/db/repositories/organisation.repository";
 import { listGroups } from "@/lib/db/repositories/groups.repository";
 import { mayCreate, parseInfoSettings, type InfoSettings } from "@/server/modules/settings";
 import type { FormField } from "@/server/forms/fields";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "New information" };
 
 export const dynamic = "force-dynamic";
 

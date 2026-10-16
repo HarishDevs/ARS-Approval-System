@@ -1,4 +1,8 @@
+import type { Metadata } from "next";
 import { AnalyticsListScreen } from "@/features/analytics/AnalyticsListScreen";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Analytics: requests" };
 
 export const dynamic = "force-dynamic";
 

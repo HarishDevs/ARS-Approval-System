@@ -14,6 +14,7 @@ import { logError } from "@/lib/logging/logger";
 import { runExpiryNotices } from "@/server/approvals/expiry";
 import { runExportJobs } from "@/server/reports/background";
 import { runModuleReminders } from "@/server/modules/jobs";
+import { runCalendarStep } from "@/server/calendar/jobs";
 
 // Automation inventory (unified prompt FN11, Addendum B). Every background
 // job the platform runs, what it does, how it is retried and how IT
@@ -166,6 +167,18 @@ export const AUTOMATIONS: readonly Automation[] = [
     owner: "IT team",
   },
   {
+    key: "calendar",
+    name: "Google Calendar sync",
+    what: "Two-way sync with the Google Calendars people connected: reconciles each connection on the set interval, handles Google's change notifications, renews watch channels, and retries failed syncs.",
+    trigger: "Every job run, when the integration is enabled (Super Admin → Integrations → Google Calendar).",
+    everyMinutes: 5,
+    retry: "Exponential backoff with jitter (1, 2, 4, 8 … minutes) up to the set retry limit; then the sync is marked failed for review.",
+    idempotency: "Each record has a fixed Google event id and a stored version, so a repeated sync never makes a second event; one sync per connection at a time.",
+    onFailure: "Shown on the Google Calendar page (failed syncs, with Retry); the Super Admin is alerted when retries run out.",
+    recovery: "Retry from the Google Calendar page, or a full resync for one person.",
+    owner: "Super Admin",
+  },
+  {
     key: "exports",
     name: "Background exports",
     what: "Makes large report exports people asked for, and removes export files after 7 days.",
@@ -206,6 +219,7 @@ const STEPS: Record<string, () => Promise<StepResult>> = {
   expiry: async () => ({ ...(await runExpiryNotices()) }),
   modules: async () => ({ ...(await runModuleReminders()) }),
   exports: async () => ({ ...(await runExportJobs()) }),
+  calendar: async () => ({ ...(await runCalendarStep()) }),
   stuck: async () => {
     const counts = countByReason(await findStuckRequests());
     return { ...counts };

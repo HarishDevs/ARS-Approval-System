@@ -12,6 +12,7 @@ import type { BuilderStage } from "@/server/workflows/builder";
 import { NO_LOOKUPS, type FieldLookups, type FormField } from "@/server/forms/fields";
 import { PeoplePicker, type PersonOption } from "@/features/ui/PeoplePicker";
 import { ACCEPT_ATTRIBUTE } from "@/server/attachments/files";
+import { ConfirmDialog } from "@/features/ui/Dialog";
 
 // Custom approval (F-33, D-060): anyone picks anyone, any mix of levels.
 // v1.8.0: the fields and step options are IT's set-up (Admin → Custom
@@ -64,6 +65,9 @@ export function CustomApprovalForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stages]);
   const [submissionKey] = useState(() => crypto.randomUUID());
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const [discarding, setDiscarding] = useState(false);
+  const [discardError, setDiscardError] = useState<string | null>(null);
   const possibleDuplicate = Boolean(result && !result.ok && result.fieldErrors?.allowDuplicate);
 
   return (
@@ -126,13 +130,37 @@ export function CustomApprovalForm({
         <DraftStatus
           state={autosave.state}
           restoredAt={restoredAt}
-          onDiscard={async () => {
-            if (!window.confirm("Discard this draft? What you typed is cleared.")) return;
-            const done = await autosave.discard().catch(() => ({ ok: false, message: "Couldn't reach the server. Try again." }));
-            if (done.ok) window.location.reload();
-            else window.alert(done.message);
+          onDiscard={() => {
+            setDiscardError(null);
+            setConfirmDiscard(true);
           }}
         />
+      )}
+      {/* WEB-11 (v1.10.0): the app's own confirmation, not the browser's. */}
+      <ConfirmDialog
+        open={confirmDiscard}
+        onCancel={() => setConfirmDiscard(false)}
+        onConfirm={async () => {
+          setDiscarding(true);
+          const done = await autosave.discard().catch(() => ({ ok: false, message: "Couldn't reach the server. Try again." }));
+          setDiscarding(false);
+          if (done.ok) window.location.reload();
+          else {
+            setConfirmDiscard(false);
+            setDiscardError(done.message);
+          }
+        }}
+        title="Discard this draft?"
+        body="What you typed is cleared. This can't be undone."
+        confirmLabel="Yes, discard"
+        busyLabel="Discarding…"
+        busy={discarding}
+        tone="danger"
+      />
+      {discardError && (
+        <p role="alert" className="text-label text-danger-600">
+          {discardError}
+        </p>
       )}
     </form>
   );

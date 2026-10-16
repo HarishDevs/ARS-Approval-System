@@ -1,9 +1,13 @@
+import type { Metadata } from "next";
 import { PageHeader, EmptyState } from "@/features/shell/PageHeader";
 import { PendingLink } from "@/features/ui/PendingLink";
 import { requireArea } from "@/server/authorization/guards";
 import { listLoginHistory } from "@/lib/db/repositories/audit.repository";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 import { SafeText } from "@/features/ui/SafeText";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Sign-in history" };
 
 const PAGE_SIZE = 100;
 const METHOD = { GOOGLE: "Google", PASSWORD_OTP: "Password + WhatsApp code" } as const;

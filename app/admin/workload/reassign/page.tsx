@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { requireArea } from "@/server/authorization/guards";
@@ -5,6 +6,9 @@ import { listReassignableTasks, pendingCountsByApprover } from "@/lib/db/reposit
 import { listActiveUserOptions } from "@/lib/db/repositories/admin-users.repository";
 import { listWorkflows } from "@/lib/db/repositories/approvals.repository";
 import { BulkReassign } from "@/features/admin/BulkReassign";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Move pending approvals" };
 
 // v1.7.0 (A3): bulk reassignment of pending tasks (IT). Narrow the list by
 // who holds the tasks and by approval type, tick, move.

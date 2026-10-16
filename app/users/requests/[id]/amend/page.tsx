@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/features/ui/Display";
@@ -10,6 +11,9 @@ import { approverFieldKeys } from "@/server/approvals/approver-rules";
 import { loadFieldLookups } from "@/lib/db/repositories/lookups.repository";
 import { amendmentPlan, rawOf } from "@/server/approvals/amendments";
 import { findDraft } from "@/lib/db/repositories/drafts.repository";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Amend request" };
 
 // FN5: amend an approved request (D-120). Only the fields the approval type
 // allows can change; the amendment is approved through the steps again.

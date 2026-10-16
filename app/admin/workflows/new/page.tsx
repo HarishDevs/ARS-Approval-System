@@ -1,8 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { WorkflowBuilder } from "@/features/admin/WorkflowBuilder";
 import { loadBuilderOptions } from "@/features/admin/workflow-options";
 import { requireArea } from "@/server/authorization/guards";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "New approval type" };
 
 export default async function NewWorkflowPage() {
   await requireArea("admin");

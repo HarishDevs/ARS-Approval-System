@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Breadcrumbs } from "@/features/ui/Display";
 import { notFound } from "next/navigation";
@@ -9,6 +10,9 @@ import { templateLabel } from "@/server/notifications/templates";
 import { SubmitTemplateButton, SyncTemplatesButton, TemplateEditor, TestTemplateButton } from "@/features/superadmin/TemplateForm";
 import { StatusBadge } from "@/features/superadmin/template-status";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Message template" };
 
 // One WhatsApp message's template: write, submit, sync, test, history.
 export default async function TemplatePage({ params }: { params: Promise<{ code: string }> }) {

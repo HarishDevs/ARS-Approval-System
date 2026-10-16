@@ -1,9 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { requireArea } from "@/server/authorization/guards";
 import { EmptyState, PageHeader } from "@/features/shell/PageHeader";
 import { listWorkflows } from "@/lib/db/repositories/approvals.repository";
 import { followUpSource } from "@/server/approvals/follow-up";
 import { departmentOfUser, mayRaise } from "@/server/approvals/raisers";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "New request" };
 
 // Pick an approval type: active, published predefined types (custom
 // approvals made by users come in a later session, P5).

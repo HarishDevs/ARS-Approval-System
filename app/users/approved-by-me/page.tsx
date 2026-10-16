@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
@@ -5,6 +6,9 @@ import { RequestListScreen, VIEW_TARGET } from "@/features/requests/RequestListS
 import { listChoices, listRequests, tabCounts } from "@/lib/db/repositories/request-lists.repository";
 import { listViews } from "@/lib/db/repositories/analytics-views.repository";
 import { parseListFilters } from "@/server/requests/list-filters";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Approved by me" };
 
 export const dynamic = "force-dynamic";
 

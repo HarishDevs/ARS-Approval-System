@@ -1,5 +1,6 @@
 import {
   AlertTriangle,
+  Plug,
   BadgeCheck,
   CheckCheck,
   ChartLine,
@@ -91,6 +92,7 @@ const ICONS: Record<string, LucideIcon> = {
   "/admin/import": Upload,
   "/superadmin": ShieldCheck,
   "/superadmin/settings": Settings,
+  "/superadmin/integrations": Plug,
   "/superadmin/templates": MessageSquareText,
   "/superadmin/requests": FileClock,
   "/superadmin/import": Upload,

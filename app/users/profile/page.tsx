@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { ProfileTabs } from "@/features/shell/ProfileTabs";
@@ -8,6 +9,9 @@ import { accessLabel, maskWhatsApp } from "@/features/ui/labels";
 import { ThemeChoice } from "@/features/shell/ThemeControls";
 import { getUserSetting } from "@/lib/db/repositories/user-settings.repository";
 import { THEME_SETTING, parseTheme } from "@/server/ui/theme";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Profile" };
 
 // The signed-in person's details, read-only: IT keeps them in Admin → Users.
 export default async function ProfilePage() {

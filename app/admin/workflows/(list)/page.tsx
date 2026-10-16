@@ -1,7 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { EmptyState, PageHeader } from "@/features/shell/PageHeader";
 import { requireArea } from "@/server/authorization/guards";
 import { listWorkflows } from "@/lib/db/repositories/approvals.repository";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Approval types" };
 
 export default async function WorkflowsPage({ searchParams }: { searchParams: Promise<{ removed?: string }> }) {
   await requireArea("admin");

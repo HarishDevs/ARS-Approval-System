@@ -10,6 +10,7 @@ export const PROFILE_TABS = [
   { href: "/users/notifications", label: "Notifications" },
   { href: "/users/delegation", label: "Out of office" },
   { href: "/users/security", label: "Sign-in & devices" },
+  { href: "/users/profile/calendar", label: "Calendar" },
 ] as const;
 
 export function ProfileTabs() {

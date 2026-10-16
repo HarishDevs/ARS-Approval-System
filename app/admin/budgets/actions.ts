@@ -10,7 +10,7 @@ import type { ActionResult } from "@/lib/http/action-result";
 // EN-09: IT keeps department budgets per financial year. Audited with the
 // old and new values.
 export async function saveBudgetAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  const actor = await getAdminActor();
+  const actor = await getAdminActor("admin.budgets");
   const departmentId = parseId(formData.get("departmentId"));
   const fy = parseId(formData.get("fy"));
   if (!actor || departmentId === null || fy === null || fy < 2020 || fy > 2100) return { ok: false, message: "Not found." };

@@ -1,9 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { requireArea } from "@/server/authorization/guards";
 import { listDemoPeople } from "@/server/demo/service";
 import { DEMO_GROUPS, PURCHASE_DOA_BANDS } from "@/server/demo/demo-data";
 import { LoadDemoForm, RetireDemoForm, TryAsButton } from "@/features/superadmin/DemoForms";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Demo data" };
 
 const lakh = (value: number) => `₹${(value / 100_000).toLocaleString("en-IN")} lakh`;
 

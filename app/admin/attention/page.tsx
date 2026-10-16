@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 import { requireArea } from "@/server/authorization/guards";
@@ -8,6 +9,9 @@ import { RecheckRequest, ResendRequestMessages, SnoozeForm } from "@/features/ad
 import { countByReason, findStuckRequests, STUCK_REASONS, type StuckReason } from "@/server/ops/stuck";
 import { getNumberSetting } from "@/server/settings/values";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Needs attention" };
 
 export const dynamic = "force-dynamic";
 

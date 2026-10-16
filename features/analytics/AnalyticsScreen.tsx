@@ -264,7 +264,7 @@ export async function AnalyticsScreen({ searchParams, base }: { searchParams: Re
       </div>
 
       <h2 className="mb-2 text-label font-semibold uppercase tracking-wide text-ink-muted">Right now</h2>
-      <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {approvals ? (
           <>
             <KpiCard metric="pending_tasks" value={current.pendingTasks} href="/users/queue" note="Waiting for you" />
@@ -286,7 +286,7 @@ export async function AnalyticsScreen({ searchParams, base }: { searchParams: Re
       </div>
 
       <h2 className="mb-2 text-label font-semibold uppercase tracking-wide text-ink-muted">{period.label}</h2>
-      <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {approvals ? (
           <>
             <KpiCard metric="decisions" value={kpis.decisions} previous={before.decisions} compareLabel={compareLabel} />
@@ -364,7 +364,7 @@ export async function AnalyticsScreen({ searchParams, base }: { searchParams: Re
         />
       </div>
 
-      <div className="mb-6 grid gap-6 lg:grid-cols-2">
+      <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <LineChart
           title="Backlog and overdue"
           help="Open requests, and approval tasks past their due time, at the end of each day, week or month."
@@ -396,7 +396,7 @@ export async function AnalyticsScreen({ searchParams, base }: { searchParams: Re
         />
       </div>
 
-      <div className="mb-6 grid gap-6 lg:grid-cols-3">
+      <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
         <StackedBar
           title="What became of the requests raised"
           help="Status now of the requests raised in the period."
@@ -425,7 +425,7 @@ export async function AnalyticsScreen({ searchParams, base }: { searchParams: Re
         <BarList title="Open requests by age since raised" rows={AGING_BUCKETS.map((bucket) => ({ label: bucket.label, value: aging.sinceSubmission[bucket.key], href: aging.sinceSubmission[bucket.key] ? drill("open", { aging: bucket.key }) : undefined }))} empty="No open requests." />
       </div>
 
-      <div className="mb-6 grid gap-6 lg:grid-cols-2">
+      <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <BarList title="Outstanding tasks by time at the current step" rows={AGING_BUCKETS.map((bucket) => ({ label: bucket.label, value: aging.atCurrentStep[bucket.key] }))} empty="No outstanding tasks." />
         <BarList title="Raised by approval type" rows={byType.map((row) => ({ label: row.name, value: row.raised, href: row.id ? drill("raised", { type: String(row.id) }) : undefined, note: `${row.approved} approved · ${row.rejected} rejected · ${row.open} open · ${hoursText(row.avgCycleHours)} average` }))} />
         {scope.kind === "ORGANISATION" && <BarList title="Raised by department" rows={byDepartment.map((row) => ({ label: row.name, value: row.raised, href: row.id ? drill("raised", { department: String(row.id) }) : undefined, note: `${row.approved} approved · ${row.open} open · ${hoursText(row.avgCycleHours)} average` }))} />}

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { X } from "lucide-react";
 import { requireArea } from "@/server/authorization/guards";
@@ -10,6 +11,9 @@ import { countPendingTasksFor, listPendingTasksFor, queueChoicesFor, queueTypesF
 import { listViews } from "@/lib/db/repositories/analytics-views.repository";
 import { SavedViews, SaveViewForm } from "@/features/analytics/ReportForms";
 import { QUEUE_SHOW_LABEL, QUEUE_SHOWS, QUEUE_SIZES, QUEUE_SORT_LABEL, QUEUE_SORTS, parseQueueFilter, queueFiltered, queueHref, type QueueFilter } from "@/server/approvals/queue-filters";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Waiting for me" };
 
 // Waiting for me (WS-01): filters and order are plain address-bar values,
 // so a filtered view can be bookmarked and Back keeps it.

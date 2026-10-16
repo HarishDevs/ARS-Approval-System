@@ -1,11 +1,15 @@
+import { Email } from "@/features/ui/SafeText";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { DataTable } from "@/features/ui/DataTable";
 import { Badge } from "@/features/ui/Display";
 import { requireArea } from "@/server/authorization/guards";
 import { listUsersForAdmin } from "@/lib/db/repositories/admin-users.repository";
-import { Email } from "@/features/ui/SafeText";
 import { ROLE_LABEL } from "@/features/ui/labels";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Users & roles" };
 
 const PAGE_SIZE = 50;
 

@@ -1,9 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { GroupEditor, NewGroupForm } from "@/features/admin/GroupForms";
 import { requireArea } from "@/server/authorization/guards";
 import { listGroups } from "@/lib/db/repositories/groups.repository";
 import { listApproverOptions } from "@/lib/db/repositories/approvers.repository";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Approver groups" };
 
 export default async function GroupsPage() {
   await requireArea("admin");

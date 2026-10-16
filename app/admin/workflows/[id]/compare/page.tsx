@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireArea } from "@/server/authorization/guards";
@@ -5,6 +6,9 @@ import { PageHeader } from "@/features/shell/PageHeader";
 import { Breadcrumbs } from "@/features/ui/Display";
 import { findWorkflow, listVersions } from "@/lib/db/repositories/approvals.repository";
 import { diffVersions, type Section } from "@/server/workflows/version-diff";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Compare versions" };
 
 // Version history: what changed between two versions of an approval type.
 export default async function CompareVersionsPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ from?: string; to?: string }> }) {

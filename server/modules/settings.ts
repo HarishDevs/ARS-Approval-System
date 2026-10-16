@@ -97,6 +97,9 @@ export const infoSettingsSchema = z.object({
   defaultPriority: z.enum(INFO_PRIORITIES),
   expiryDays: z.number().int().min(1).max(3650).nullable(),
   editableAfterPublish: z.boolean(),
+  // v1.11.0 (D-153): information of this type goes on recipients' calendars
+  // (and Google Calendar, if connected) on its effective date. Off unless set.
+  calendar: z.boolean().default(false),
 });
 export type InfoSettings = z.infer<typeof infoSettingsSchema>;
 
@@ -111,6 +114,7 @@ export const DEFAULT_INFO_SETTINGS: InfoSettings = {
   defaultPriority: "NORMAL",
   expiryDays: null,
   editableAfterPublish: false,
+  calendar: false,
 };
 
 export function parseTaskSettings(raw: unknown): TaskSettings {

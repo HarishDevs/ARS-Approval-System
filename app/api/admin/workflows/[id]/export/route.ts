@@ -9,7 +9,7 @@ import { logError } from "@/lib/logging/logger";
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   let session;
   try {
-    session = await requireApiArea("admin");
+    session = await requireApiArea("admin", { page: "admin.workflows" });
   } catch {
     return apiError("NOT_FOUND", "Not found.", 404);
   }
@@ -28,7 +28,11 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       },
     });
   } catch (error) {
+    // SEC-10 (v1.10.0, audit SEC-04): the reason stays in the server log;
+    // the answer is generic and carries a reference.
+    const message = error instanceof Error ? error.message : "";
+    if (/^Inactive or missing .+ can't be exported; fix the workflow first\.$/.test(message)) return apiError("VALIDATION", message, 400);
     logError("approval type export failed", error);
-    return apiError("VALIDATION", error instanceof Error ? error.message : "The export failed.", 400);
+    return apiError("SYSTEM_ERROR", "The export failed. Try again, or tell IT the reference below.", 500);
   }
 }

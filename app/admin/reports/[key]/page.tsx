@@ -1,4 +1,4 @@
-import Link from "next/link";
+import type { Metadata } from "next";
 import { canExport, featureOn } from "@/server/settings/features";
 import { notFound, redirect } from "next/navigation";
 import { Download } from "lucide-react";
@@ -14,6 +14,9 @@ import { dashboardChoices } from "@/lib/db/repositories/dashboards.repository";
 import { listViews } from "@/lib/db/repositories/analytics-views.repository";
 import type { Cell, Column } from "@/server/reports/catalogue";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Report" };
 
 export const dynamic = "force-dynamic";
 

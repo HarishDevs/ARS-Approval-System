@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireArea } from "@/server/authorization/guards";
@@ -12,6 +13,9 @@ import { listSavedViews, searchRequests } from "@/lib/db/repositories/search.rep
 import { listWorkflows } from "@/lib/db/repositories/approvals.repository";
 import { listDepartments } from "@/lib/db/repositories/organisation.repository";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Search" };
 
 // Global search (#4, D-109): every request you can see, in one place.
 // Access is decided in the SQL (search.repository.ts).

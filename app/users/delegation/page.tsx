@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { requireArea } from "@/server/authorization/guards";
 import { ProfileTabs } from "@/features/shell/ProfileTabs";
 import { PageHeader } from "@/features/shell/PageHeader";
@@ -7,6 +8,9 @@ import { indiaToday, listDelegationsInvolving } from "@/lib/db/repositories/coll
 import { listApproverOptions } from "@/lib/db/repositories/approvers.repository";
 import { listPendingTasksFor } from "@/lib/db/repositories/approvals.repository";
 import Link from "next/link";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Out of office" };
 
 // F-30 out of office: the delegate sees and decides your approvals while
 // it's active; every decision records both names.

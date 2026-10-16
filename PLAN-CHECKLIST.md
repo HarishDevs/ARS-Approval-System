@@ -17,7 +17,9 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
-- **Now (16 Oct 2026):** v1.9.2: the user sidebar regrouped (collapsible My Approvals, Tasks, Information). Publish after v1.9.1's preview succeeds (or straight to v1.9.2).
+- **Now (16 Oct 2026):** v1.11.0: Google Calendar two-way sync (needs the owner's Google OAuth client, Q-024, DEPLOYMENT Part Q). Next: v1.12.0 Analytics Center.
+- **Earlier (16 Oct 2026):** v1.10.0: security hardening and website fixes (39-item brief; see `application-audit/SECURITY_WEBSITE_FIX_TRACKER.md`). Owner items: Cloudflare "Always Use HTTPS" and `ORIGIN_SECRET` (Q-021).
+- **Earlier (16 Oct 2026):** v1.9.2: the user sidebar regrouped (collapsible My Approvals, Tasks, Information). Publish after v1.9.1's preview succeeds (or straight to v1.9.2).
 - **Earlier (16 Oct 2026):** v1.9.1 fixes the v1.9.0 deploy (hosted MySQL refused the new history triggers; now optional). Retry the preview build / publish v1.9.1.
 - **Earlier (16 Oct 2026):** v1.9.0 (Tasks, Information, module set-up, notification bell, sidebar; audit AUD-02, AUD-05, AUD-08 fixed) is tagged, not deployed. After publishing: back up first; create and publish the first Task and Information types in Admin; optionally add WhatsApp templates for WORK_TASK_ASSIGNED and INFO_PUBLISHED.
 - **Now (16 Oct 2026):** a full read-only application audit is done and its reports are in `application-audit/` (00 to 12).
@@ -299,6 +301,30 @@ Found during S8-06:
 - [x] S8-12 Google sign-in reached UNKNOWN_ACCOUNT: itadmin@ is an alias. The Super Admin now signs in as itsupport@arsenergy.co.in (D-082, migration + non-overwriting seed, v1.0.5) (done 8 Oct 2026)
 - [x] S8-01b Go-live on GoDaddy with the owner, following docs/DEPLOYMENT.md (the owner is at the wizard's "Add secrets" step) (done 9 Oct 2026: live since 8 Oct 2026)
 - [x] S8-04 Update the three living files; commit and push (done 8 Oct 2026)
+
+## Session log — v1.11.0: Google Calendar two-way sync (16 Oct 2026), planned before starting
+Owner brief: Super Admin-controlled Google Calendar integration with true two-way sync.
+- [x] V1110-01 Audit the current state (`application-audit/APPLICATION_CURRENT_STATE_AUDIT.md`, Part A) (done 16 Oct 2026)
+- [x] V1110-02 Migration: settings, connections, personal entries, links, jobs, conflicts, OAuth states (done 16 Oct 2026)
+- [x] V1110-03 Super Admin Integrations → Google Calendar: configure, test, enable/disable, maintenance, health, logs, failed + retry, connected + revoke, conflicts, audit (done 16 Oct 2026)
+- [x] V1110-04 OAuth connect/callback (state + nonce, encrypted tokens), Profile → Calendar tab (done 16 Oct 2026)
+- [x] V1110-05 Sync engine: incremental pull, 410 recovery, push with fixed ids, loops, deletions, conflicts; webhook; channel renewal; jobs step with backoff and dead-letter (done 16 Oct 2026)
+- [x] V1110-06 Modules: approval due, task due, needed-by, information "Show on calendars", personal entries (done 16 Oct 2026)
+- [x] V1110-07 Calendar month/week/day views, filters, source and sync indicators, personal entries (done 16 Oct 2026)
+- [x] V1110-08 Tests (unit, integration with fake Google, E2E), docs, final report, v1.11.0, push, CI (done 16 Oct 2026)
+
+## Session log — v1.10.0: security hardening and website fixes (16 Oct 2026), planned before starting
+Owner brief: 19 security checks and 20 website fixes, with an audit, a tracker and a final report.
+- [x] V1100-01 Audit the 39 items; write `application-audit/SECURITY_AND_WEBSITE_AUDIT.md` (done 16 Oct 2026)
+- [x] V1100-02 AUD-01: contact rule in the CSV import (done 16 Oct 2026)
+- [x] V1100-03 AUD-03: the seed gives roles only when none exist (done 16 Oct 2026)
+- [x] V1100-04 G-1/G-2/G-3: page rules bound to the action; Super Admin addresses; security page not restrictable (done 16 Oct 2026)
+- [x] V1100-05 Rate limits (PDF, quick, notifications, downloads, dashboard CSV, webhook) (done 16 Oct 2026)
+- [x] V1100-06 Headers: Cache-Control, CORS preflight, HTTPS redirect (done 16 Oct 2026)
+- [x] V1100-07 Audit gaps: lifecycle, schedule/alert toggles, dashboard CSV; generic export error (done 16 Oct 2026)
+- [x] V1100-08 Website: titles, favicon, logo link, copyright, phone menu, bottom bar, mailto, ConfirmDialog (done 16 Oct 2026)
+- [x] V1100-09 Tests: route inventory, SQL, middleware, integration, five-viewport E2E, link crawl, IDOR (done 16 Oct 2026)
+- [x] V1100-10 Tracker and final report; v1.10.0; push; CI (done 16 Oct 2026)
 
 ## Session log — v1.9.2: user sidebar regrouped (16 Oct 2026), planned before starting
 Owner: Overview; My Approvals, Tasks and Information as collapsible groups (pages in the given order); Search; Calendar; Analytics.

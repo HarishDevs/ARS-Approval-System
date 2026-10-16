@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { featureOn } from "@/server/settings/features";
@@ -15,6 +16,9 @@ import { ALERT_METRICS, SEVERITY_LABEL, listAlertRules, listRuns, listSchedules 
 import { describeSchedule } from "@/server/reports/schedule-time";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 import { listExports } from "@/server/reports/background";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Reports" };
 
 export const dynamic = "force-dynamic";
 

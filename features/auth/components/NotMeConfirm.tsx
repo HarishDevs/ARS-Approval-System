@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Email } from "@/features/ui/SafeText";
+import { MailLink } from "@/features/ui/MailLink";
 import { postJson } from "@/features/auth/components/auth-client";
 
 export function NotMeConfirm({ token }: { token: string }) {
@@ -25,7 +25,7 @@ export function NotMeConfirm({ token }: { token: string }) {
         <h1 className="text-title font-semibold">Your account is secured</h1>
         <p className="mt-2 text-ink-muted">
           We signed your account out on every device and locked it. IT will contact you to unlock it. You can reach them at{" "}
-          <span className="select-all font-medium text-ink"><Email address="itadmin@arssteels.co.in" /></span>.
+          <span className="select-all font-medium text-ink"><MailLink address="itadmin@arssteels.co.in" /></span>.
         </p>
       </div>
     );

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
@@ -5,6 +6,9 @@ import { Badge } from "@/features/ui/Display";
 import { CreateHoldForm, ReleaseHoldForm } from "@/features/superadmin/HoldForms";
 import { listHolds, retentionDryRun } from "@/server/ops/governance";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Data retention" };
 
 export const dynamic = "force-dynamic";
 

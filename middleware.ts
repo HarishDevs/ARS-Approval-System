@@ -24,6 +24,12 @@ function isPublic(pathname: string): boolean {
   return PUBLIC_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
 
+const STATIC_PREFIXES = ["/_next/", "/brand/", "/icons/"];
+const STATIC_FILES = new Set(["/manifest.webmanifest", "/favicon.ico", "/icon.svg", "/apple-icon.png", "/robots.txt"]);
+function isStaticAsset(pathname: string): boolean {
+  return STATIC_FILES.has(pathname) || STATIC_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+}
+
 // Same length and same characters, without stopping at the first difference.
 function sameSecret(given: string | null, expected: string): boolean {
   if (given === null || given.length !== expected.length) return false;
@@ -65,6 +71,23 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // SEC-08 (v1.10.0): plain-HTTP visits are sent to HTTPS. Cloudflare says
+  // which scheme the visitor used (CF-Visitor); the hop to GoDaddy is
+  // separate, so X-Forwarded-Proto there isn't the visitor's.
+  if (process.env.NODE_ENV === "production" && /"scheme"\s*:\s*"http"/.test(request.headers.get("cf-visitor") ?? "")) {
+    const secure = request.nextUrl.clone();
+    secure.protocol = "https:";
+    secure.port = "";
+    return NextResponse.redirect(secure, 308);
+  }
+
+  // SEC-07 (v1.10.0): no other site may call the API from a browser. A
+  // preflight gets no Access-Control-Allow-* headers, so the browser stops
+  // there; the app's own pages are same-origin and never send one.
+  if (request.method === "OPTIONS" && pathname.startsWith("/api/")) {
+    return new NextResponse(null, { status: 204, headers: { Allow: "GET, POST, HEAD", Vary: "Origin", "Cache-Control": "no-store" } });
+  }
+
   const nonce = createNonce();
   const csp = buildCsp(nonce, CSP_OPTIONS);
 
@@ -94,6 +117,10 @@ export async function middleware(request: NextRequest) {
   const response = NextResponse.next({ request: { headers: requestHeaders } });
   if (!FILE_ROUTE.test(pathname)) response.headers.set("Content-Security-Policy", csp);
   response.headers.set(REQUEST_ID_HEADER, requestId);
+  // SEC-18 (v1.10.0): signed-in pages and API answers are never kept by
+  // Cloudflare or a shared cache. Static files and the public brand assets
+  // keep their own caching.
+  if (!isStaticAsset(pathname)) response.headers.set("Cache-Control", "private, no-store, max-age=0");
   return response;
 }
 

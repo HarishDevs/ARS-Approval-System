@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Breadcrumbs } from "@/features/ui/Display";
 import { formatPaise } from "@/server/forms/dynamic";
@@ -33,6 +34,9 @@ import { loadFieldLookups } from "@/lib/db/repositories/lookups.repository";
 import { SafeText } from "@/features/ui/SafeText";
 import { listMentionable } from "@/lib/db/repositories/collab.repository";
 import { expiryState } from "@/server/approvals/expiry-rules";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Request" };
 
 // F-14 request page. loadRequestView applies the record-level check
 // (D-057); anyone else gets the same 404 as a request that doesn't exist.

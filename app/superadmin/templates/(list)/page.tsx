@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { requireArea } from "@/server/authorization/guards";
@@ -6,6 +7,9 @@ import { EMAIL_ONLY_EVENTS, EXISTING_OTP_TEMPLATE, templateLabel } from "@/serve
 import { SyncTemplatesButton } from "@/features/superadmin/TemplateForm";
 import { StatusBadge } from "@/features/superadmin/template-status";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Message templates" };
 
 // WhatsApp template creator (S7, D-076, F-42b): every WhatsApp message the
 // app sends, its live version, and the newest version in the works.

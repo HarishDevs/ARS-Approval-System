@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { requireArea } from "@/server/authorization/guards";
@@ -7,6 +8,9 @@ import { listRawSettings } from "@/lib/db/repositories/settings.repository";
 import { backupStatus } from "@/server/ops/backup";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 import { BackupNowButton } from "@/features/superadmin/BackupNowButton";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Super Admin" };
 
 // Shows whether each provider is configured, never the secret itself (D-016).
 export default async function SuperAdminHome() {

@@ -1,9 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { DepartmentForm, DesignationForm } from "@/features/admin/OrganisationForms";
 import { requireArea } from "@/server/authorization/guards";
 import { listDepartments, listDesignations } from "@/lib/db/repositories/organisation.repository";
 import { listApproverOptions } from "@/lib/db/repositories/approvers.repository";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Departments & designations" };
 
 // P1-01 / S2-03a. The HOD set here is who "requester's department HOD" and
 // "department HOD" resolve to in workflows.

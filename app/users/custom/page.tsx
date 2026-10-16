@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
@@ -7,6 +8,9 @@ import { findDraft } from "@/lib/db/repositories/drafts.repository";
 import { listActiveUserOptions } from "@/lib/db/repositories/admin-users.repository";
 import { loadCustomConfig } from "@/server/approvals/custom-config";
 import { loadFieldLookups } from "@/lib/db/repositories/lookups.repository";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Custom approval" };
 
 // F-33: any user, whenever needed (D-026, D-040).
 export default async function CustomApprovalPage() {

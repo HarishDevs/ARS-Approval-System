@@ -90,6 +90,11 @@ Comments can't be edited or removed. To tell someone in particular, type `@` and
 - **Profile:** your details. Only IT can change them.
 - **Notifications:** everything sent to you; *Older →* for earlier ones. **Settings** lets you switch off email or WhatsApp for updates on your requests, reminders, comments and FYIs. Approvals waiting for you and security messages always come.
 - **Out of office:** name someone to approve for you between two dates (up to 90 days, India dates, whole days). They see what is already waiting and anything new. Both names are recorded on every decision. The page lists what is waiting for you now.
+- **Calendar (Profile tab, v1.11.0):** connect your own Google Calendar.
+  - Your approvals and tasks with due times, information marked for calendars and your personal entries then appear in Google, and your Google events appear in ARS. Changes follow both ways.
+  - **Sync now** runs it at once; **Review conflicts** asks you which version to keep when an entry changed in both places; **Disconnect** stops it (optionally removing the events ARS added).
+  - A calendar change never approves, completes or acknowledges anything: do that in ARS.
+- **Calendar (sidebar):** month, week or day. Filter by Approvals, Tasks, Information, Needed by and Personal. **Add a personal entry** at the bottom; open an entry to edit or delete it. "From Google" marks entries from your Google Calendar.
 - **Sign-in & devices:** how you sign in, your last 10 sign-ins, and **Sign out everywhere** if a phone or laptop was lost.
 
 If you get a *new sign-in* alert that wasn't you, use its **This wasn't me** link. Your account is signed out everywhere and locked until IT unlocks it.
@@ -147,3 +152,9 @@ If you don't act in time: you get a **due soon** heads-up first, then a reminder
 - **Audit log:** every change; **Download CSV** for a date range.
 - **Sign-in history:** every sign-in attempt, with the reason it failed.
 - **Overview → Backups:** the last backup; **Back up now**. How to restore: deployment guide, Part P.
+- **Integrations → Google Calendar (v1.11.0):**
+  - set up the Google OAuth client, policies and modules;
+  - **Test configuration**, then **Enable**;
+  - watch health, failed syncs (**Retry**), connected people (**Revoke**, **Full resync**) and conflicts;
+  - Maintenance mode pauses syncing.
+  - Step by step: deployment guide, Part Q.

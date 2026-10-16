@@ -4,6 +4,7 @@ import { searchRequests } from "@/lib/db/repositories/search.repository";
 import { listRecent } from "@/lib/db/repositories/recent.repository";
 import { parseSearchFilters } from "@/server/search/filters";
 import { STATUS_WORD } from "@/features/ui/labels";
+import { LIMITS, overLimit, tooManyResponse } from "@/server/security/limits";
 import { apiError } from "@/lib/http/api-response";
 import { logError } from "@/lib/logging/logger";
 
@@ -13,6 +14,7 @@ import { logError } from "@/lib/logging/logger";
 export async function GET(request: NextRequest) {
   try {
     const session = await requireApiArea("users");
+    if (await overLimit(`quick:${session.user.id}`, LIMITS.quick)) return tooManyResponse();
     const viewer = { id: session.user.id, isAdmin: session.user.roles.includes("IT_ADMIN") || session.user.roles.includes("SUPER_ADMIN") };
     const q = (request.nextUrl.searchParams.get("q") ?? "").trim().slice(0, 100);
     const items =

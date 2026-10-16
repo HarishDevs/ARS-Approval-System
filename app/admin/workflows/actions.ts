@@ -38,7 +38,7 @@ function validationData(validation: ValidationResult) {
 }
 
 export async function createWorkflowAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  const actor = await getAdminActor();
+  const actor = await getAdminActor("admin.workflows");
   if (!actor) return NOT_FOUND;
   const content = parseContent(formData);
   if (!content.ok) return { ok: false, message: content.message };
@@ -72,7 +72,7 @@ export async function createWorkflowAction(_previous: ActionResult | null, formD
 }
 
 export async function saveDraftAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  const actor = await getAdminActor();
+  const actor = await getAdminActor("admin.workflows");
   const workflowId = parseId(formData.get("workflowId"));
   if (!actor || workflowId === null) return NOT_FOUND;
   const content = parseContent(formData);
@@ -94,7 +94,7 @@ export async function saveDraftAction(_previous: ActionResult | null, formData: 
 }
 
 export async function publishAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  const actor = await getAdminActor();
+  const actor = await getAdminActor("admin.workflows");
   const versionId = parseId(formData.get("versionId"));
   const workflowId = parseId(formData.get("workflowId"));
   if (!actor || versionId === null || workflowId === null) return NOT_FOUND;
@@ -111,7 +111,7 @@ export async function publishAction(_previous: ActionResult | null, formData: Fo
 }
 
 export async function simulateAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  const actor = await getAdminActor();
+  const actor = await getAdminActor("admin.workflows");
   const versionId = parseId(formData.get("versionId"));
   const requesterId = parseId(formData.get("requesterId"));
   if (!actor || versionId === null) return NOT_FOUND;
@@ -133,7 +133,7 @@ export async function simulateAction(_previous: ActionResult | null, formData: F
 }
 
 export async function updateDetailsAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  const actor = await getAdminActor();
+  const actor = await getAdminActor("admin.workflows");
   const workflowId = parseId(formData.get("workflowId"));
   if (!actor || workflowId === null) return NOT_FOUND;
   const workflow = await findWorkflow(workflowId);
@@ -167,7 +167,7 @@ export async function updateDetailsAction(_previous: ActionResult | null, formDa
 // (audit gap A-05); one that has been used can only be closed (archived) with
 // "Open for new requests" off, so its history stays.
 export async function deleteWorkflowAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  const actor = await getAdminActor();
+  const actor = await getAdminActor("admin.workflows");
   const workflowId = parseId(formData.get("workflowId"));
   if (!actor || workflowId === null) return NOT_FOUND;
   const workflow = await findWorkflow(workflowId);
@@ -197,7 +197,7 @@ export async function deleteWorkflowAction(_previous: ActionResult | null, formD
 // type: its levels and form are copied into a new draft, which IT then
 // reviews, tests and publishes like any other.
 export async function promoteCustomAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  const actor = await getAdminActor();
+  const actor = await getAdminActor("admin.workflows");
   const requestId = parseId(formData.get("requestId"));
   if (!actor || requestId === null) return NOT_FOUND;
   const request = await findRequest(requestId);
@@ -237,7 +237,7 @@ export async function promoteCustomAction(_previous: ActionResult | null, formDa
 // FN1/FN3/EN-09/EN-10/FN5 per-type submission policies. Field keys must be
 // on the newest version's form; numbers must be numbers. Audited.
 export async function updateTypeSettingsAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  const actor = await getAdminActor();
+  const actor = await getAdminActor("admin.workflows");
   const workflowId = parseId(formData.get("workflowId"));
   if (!actor || workflowId === null) return NOT_FOUND;
   const workflow = await findWorkflow(workflowId);
@@ -290,7 +290,7 @@ export async function updateTypeSettingsAction(_previous: ActionResult | null, f
 // Restore an older version as a new draft (version history). The draft is
 // checked like any other before it can be published; nothing goes live here.
 export async function restoreVersionAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  const actor = await getAdminActor();
+  const actor = await getAdminActor("admin.workflows");
   const workflowId = parseId(formData.get("workflowId"));
   const versionId = parseId(formData.get("versionId"));
   if (!actor || workflowId === null || versionId === null) return { ok: false, message: "Not found." };
@@ -312,7 +312,7 @@ export async function restoreVersionAction(_previous: ActionResult | null, formD
 
 // FN7: move chosen open requests from an older version to the live one.
 export async function runMigrationAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  const actor = await getAdminActor();
+  const actor = await getAdminActor("admin.workflows");
   const workflowId = parseId(formData.get("workflowId"));
   const fromVersionId = parseId(formData.get("fromVersionId"));
   if (!actor || workflowId === null || fromVersionId === null) return { ok: false, message: "Not found." };

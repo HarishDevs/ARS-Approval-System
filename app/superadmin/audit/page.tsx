@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader, EmptyState } from "@/features/shell/PageHeader";
 import { requireArea } from "@/server/authorization/guards";
@@ -5,6 +6,9 @@ import { listAuditActions, listAuditEntries } from "@/lib/db/repositories/audit.
 import { SafeText } from "@/features/ui/SafeText";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 import { indiaToday } from "@/lib/db/repositories/collab.repository";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Audit log" };
 
 const PAGE_SIZE = 100;
 

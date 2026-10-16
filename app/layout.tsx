@@ -16,7 +16,17 @@ export const metadata: Metadata = {
   title: { default: "ARS Approvals", template: "%s · ARS Approvals" },
   description: "ARS Steels approval platform",
   robots: { index: false, follow: false },
-  icons: { icon: "/brand/ars-mark.svg", apple: "/icons/apple-touch-icon.png" },
+  // WEB-04 (v1.10.0): the ARS mark as SVG, with PNG and ICO fallbacks made
+  // from the same brand icon for browsers that don't take SVG.
+  icons: {
+    icon: [
+      { url: "/brand/ars-mark.svg", type: "image/svg+xml" },
+      { url: "/icons/icon-192.png", type: "image/png", sizes: "192x192" },
+      { url: "/favicon.ico", sizes: "48x48" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/icons/apple-touch-icon.png",
+  },
   appleWebApp: { capable: true, title: "Approvals", statusBarStyle: "default" },
 };
 

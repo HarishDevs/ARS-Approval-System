@@ -40,6 +40,9 @@ export async function checkPageAccess(person: Person, change: boolean): Promise<
     // Without a trustworthy page address, someone with restrictions is
     // refused (fail closed); nobody else is affected.
     if (!known) return restricted ? { ok: false, reason: "UNKNOWN_PAGE", pageKey: null } : { ok: true, level: null };
+    // G-3 (v1.10.0): Super Admin pages are never a way in for anyone else
+    // (an admin action posted to /superadmin/import skipped the rules).
+    if (!page && (await requestPath())?.startsWith("/superadmin")) return { ok: false, reason: "UNKNOWN_PAGE", pageKey: null };
     if (!page) return { ok: true, level: null };
     const level = access.get(page.key) ?? "FULL";
     if (level === "HIDDEN") return { ok: false, reason: "HIDDEN", pageKey: page.key };
@@ -48,6 +51,26 @@ export async function checkPageAccess(person: Person, change: boolean): Promise<
   } catch (error) {
     logError("page access check failed", error);
     return { ok: false, reason: "UNKNOWN_PAGE", pageKey: null };
+  }
+}
+
+async function requestPath(): Promise<string | null> {
+  return (await headers()).get(PATH_HEADER);
+}
+
+// G-3 (v1.10.0): an action that belongs to a page names it, so the page's
+// rule applies wherever the action is posted from (another page sharing the
+// action, or an address that is no configured page).
+export async function checkPageKey(person: Person, pageKey: string, change: boolean): Promise<PageCheck> {
+  if (isPageExempt(person)) return { ok: true, level: null };
+  try {
+    const level = (await accessFor(person.id)).get(pageKey) ?? "FULL";
+    if (level === "HIDDEN") return { ok: false, reason: "HIDDEN", pageKey };
+    if (change && level === "VIEW") return { ok: false, reason: "VIEW_ONLY", pageKey };
+    return { ok: true, level };
+  } catch (error) {
+    logError("page access check failed", error);
+    return { ok: false, reason: "UNKNOWN_PAGE", pageKey };
   }
 }
 

@@ -415,6 +415,39 @@
 - Applies to users and IT admins; the Super Admin is exempt (12-hour limit only).
 - The browser's session check no longer counts as activity (it used to keep an open tab signed in for ever). Activity in the page is reported at the next minute's check.
 - A warning with "Stay signed in" 2 minutes before. | Owner; Claude, 15 Oct 2026 |
+| D-155 | 16 Oct 2026 | **One calendar page (v1.11.0):**
+- `/users/calendar` shows approvals waiting on the person, their tasks, calendar-eligible information, needed-by dates and personal entries, by month, week or day, with filters.
+- Older `?month=` links still work. Each entry shows its source and its Google sync state.
+- Personal entries (`calendar_items`) are visible only to their owner. | Owner brief; Claude, 16 Oct 2026 |
+| D-154 | 16 Oct 2026 | **Calendar sync runs from the 5-minute job runner (v1.11.0):** GoDaddy has no always-on worker.
+- **Reconciliation:** each connection is reconciled on the interval (default 15 min). Push notifications queue a sync sooner.
+- **Jobs:** collapse while waiting (one per connection and kind); one sync per connection at a time (lock); exponential backoff with jitter; DEAD after the retry limit, then a Super Admin alert. "Sync now" queues and runs after the response, never inside it. | Claude, 16 Oct 2026 |
+| D-153 | 16 Oct 2026 | **What syncs and how (v1.11.0):**
+- **Business dates:**
+  - approval due times (approver), task due times (assignee), needed-by (off by default), information with an effective date of types marked "Show on calendars";
+  - ARS is the source: Google edits are put back; Google deletions follow the policy (stop syncing, or recreate);
+  - **never** an approval, completion or acknowledgement.
+- **Personal entries:** two-way. Conflicts follow the policy (default: the person reviews).
+- **Events:** fixed ids per record (idempotent); a content hash means unchanged records write nothing; stored etags mean ARS's own writes don't loop; private; reference-only text by default. | Owner brief; Claude, 16 Oct 2026 |
+| D-152 | 16 Oct 2026 | **Google Calendar is set up by the Super Admin, connected by each person (v1.11.0):**
+- **Super Admin:** one OAuth client (secret encrypted, never shown); "Enabled" only after every check passes; the set-up gives no access to anyone's calendar.
+- **Each person:** OAuth with least-privilege scopes; single-use state + nonce cookie; tokens encrypted; disconnect revokes them.
+- **Owner:** creates the Google Cloud OAuth client (Q-024). | Owner brief; Claude, 16 Oct 2026 |
+| D-151 | 16 Oct 2026 | **Page rules follow the action (v1.10.0, G-3):**
+- An action or API that belongs to a page names its page key (`requireApiArea(area, { page })`, `getAdminActor(pageKey)`). Its rule is checked as well as the rule of the address it was posted to.
+- Super Admin addresses refuse everyone else.
+- "Sign-in & devices" is not restrictable (SEC-17): it is a personal security control. Rules saved for it before are ignored.
+- An API route must call `requireApiArea` unless it is on the reasoned public list in `tests/security/route-inventory.test.ts`. | Claude, 16 Oct 2026 |
+| D-150 | 16 Oct 2026 | **Security hardening (v1.10.0, owner brief SEC-01 to SEC-19):**
+- **Seed:** gives `itadmin` roles only when it has none (AUD-03).
+- **CSV import:** applies the P-04 contact rule (AUD-01).
+- **Headers:** `Cache-Control: private, no-store` on every non-static answer; API preflights get no CORS grant; production redirects visitors Cloudflare reports as plain HTTP.
+- **Limits:** per-person DB-backed limits on the costly signed-in routes and the webhook (`server/security/limits.ts`).
+- **Audit:** request lifecycle changes go to the central audit log.
+- **Not done, with reasons:**
+  - **CAPTCHA:** not added, because there are no anonymous forms (SEC-11).
+  - **Dependency findings:** accepted (build tooling only; the fixes are major upgrades).
+  - **Malware scanning:** not available on shared hosting. | Claude, 16 Oct 2026 |
 | D-149 | 16 Oct 2026 | **User sidebar, regrouped (owner, v1.9.2):**
 - Order: Overview; My Approvals (New request, Custom approval, Waiting for me, My requests, My approved requests, Approved by me, Collaborating); Tasks (My tasks, Assigned by me, Team tasks, New task); Information (Information inbox, Sent by me, New information); Search; Calendar; Analytics.
 - The three groups are collapsible. The current page's group opens by itself; open or closed choices are kept in the browser (localStorage `ars.nav.groups`).
@@ -478,8 +511,42 @@
 | Q-021 | **Is `ORIGIN_SECRET` set on GoDaddy, and may it become mandatory in production?** (audit AUD-15: without it, per-IP sign-in limits can be bypassed) | Before V181-A10 | Open, waiting on the owner (16 Oct 2026) |
 | Q-022 | **Resubmit after the amount or conditions change** (audit AUD-02, runtime-confirmed: a skipped higher DoA level stays skipped): restart from the earliest affected step (recommended) or from the beginning? | Before V181-A1 | Open, waiting on the owner (16 Oct 2026) |
 | Q-023 | **Further owner decisions from the audit:** DR-01 join rejection semantics; DR-02 no approval without a human decision; DR-03 controls on IT changing approvers' contact details; DR-04 Super Admin inactivity limit; DR-05 what an expired approval means; DR-06 retention durations; DR-08 off-site encrypted backups and RTO/RPO (see `application-audit/12_DECISION_REGISTER.md`) | Before Phase B and D | Open, waiting on the owner (16 Oct 2026) |
+| Q-024 | **Google Calendar (v1.11.0):** create the Google Cloud OAuth client (Web application, redirect URI in DEPLOYMENT Part Q). Internal or External consent screen? If External, publish it: Testing mode limits access to 7 days. | Before enabling the integration | Open, waiting on the owner (16 Oct 2026) |
 
 ## 5. Work log (newest first)
+
+### 16 Oct 2026 (v1.11.0: Google Calendar two-way sync)
+- **Owner brief:** Super Admin-controlled Google Calendar with true two-way sync (D-152 to D-155).
+- **Built:**
+  - migration (7 tables);
+  - Google client (fetch);
+  - sync engine: incremental pull with 410 recovery, desired-state push, conflicts, deletion policies;
+  - jobs step `calendar`;
+  - OAuth connect and callback; webhook;
+  - Super Admin Integrations page; Profile → Calendar tab;
+  - calendar month, week and day views with personal entries;
+  - information-type "Show on calendars".
+- **Tests:**
+  - unit (16);
+  - integration with a fake Google (18);
+  - E2E (4);
+  - the five-viewport check now includes the calendar pages.
+- **Reports:** `application-audit/APPLICATION_CURRENT_STATE_AUDIT.md` (Part A), `GOOGLE_CALENDAR_INTEGRATION_REPORT.md`.
+- **Owner next:** create the Google OAuth client (deployment guide, Part Q), then enable.
+
+### 16 Oct 2026 (v1.10.0: security hardening and website fixes)
+- **Owner brief, 39 items:** audit in `application-audit/SECURITY_AND_WEBSITE_AUDIT.md`; tracker in `SECURITY_WEBSITE_FIX_TRACKER.md`; summary in `SECURITY_AND_WEBSITE_FINAL_REPORT.md`.
+- **Security fixes:**
+  - AUD-01 (import contact rule), AUD-03 (seed);
+  - G-1, G-2, G-3 (page access bound to the action; D-151);
+  - SEC-17 (security page not restrictable);
+  - rate limits, Cache-Control, CORS preflight, HTTPS redirect;
+  - audit gaps; generic export error (D-150).
+- **Website fixes:** per-page titles (82 pages), favicon, logo link, dynamic copyright, phone menu focus, phone bar in My approvals only, mailto links, ConfirmDialog for discarding a custom draft.
+- **New tests:**
+  - `tests/security/v1100-security.test.ts`, `tests/security/route-inventory.test.ts`;
+  - `tests/integration/v1100.int.test.ts`;
+  - `tests/e2e/v1100-web.spec.ts` (five viewports, link crawl, 404, titles, menu, IDOR).
 
 ### 16 Oct 2026 (v1.9.2: user sidebar regrouped)
 - Owner's sidebar order, with collapsible My Approvals, Tasks and Information (D-149).

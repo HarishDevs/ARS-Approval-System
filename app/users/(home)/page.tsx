@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
@@ -10,6 +11,9 @@ import { formatIndiaTime } from "@/server/notifications/security-messages";
 import { SafeText } from "@/features/ui/SafeText";
 import { FirstUseChecklist } from "@/features/help/FirstUseChecklist";
 import { hasFlag } from "@/lib/db/repositories/user-flags.repository";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Overview" };
 
 // My Work (S9-11, spec #1): the next thing to do first. Every list uses the
 // same access rules as its full page (Waiting for me, My requests) and is

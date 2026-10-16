@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Breadcrumbs } from "@/features/ui/Display";
 import { notFound } from "next/navigation";
@@ -16,6 +17,9 @@ import { countPendingTasks } from "@/server/approvals/service";
 import { indiaToday, listDelegationsInvolving } from "@/lib/db/repositories/collab.repository";
 import { pendingCountsByApprover } from "@/lib/db/repositories/workload.repository";
 import { suggestHandover } from "@/server/workload/summary";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "User" };
 
 export default async function UserDetailPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ created?: string }> }) {
   const { user: actor } = await requireArea("admin");

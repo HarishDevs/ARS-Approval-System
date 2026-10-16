@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { parseCsv, unguardCell } from "@/server/import/csv";
 import { IMPORT_LIMITS, IMPORT_SPECS, type ImportKind } from "@/server/import/kinds";
-import { checkCanEdit, checkRoleChange, isValidWhatsAppNumber, normaliseRoles, normaliseWhatsAppNumber, ASSIGNABLE_ROLES } from "@/server/admin/user-rules";
+import { checkCanEdit, checkContactChange, checkRoleChange, isValidWhatsAppNumber, normaliseRoles, normaliseWhatsAppNumber, ASSIGNABLE_ROLES } from "@/server/admin/user-rules";
 import type { RoleCode, SignInMethod } from "@/types/auth";
 
 // Bulk import planner (S10-03, F-59). Pure: given the file and a snapshot
@@ -367,6 +367,11 @@ function planUsers(rows: Row[], snapshot: Snapshot): { planned: PlannedRow[]; op
       else {
         const roleCheck = checkRoleChange(snapshot.actor, target, roles, superAdmins);
         if (!roleCheck.ok) check.add("roles", roleCheck.message);
+        // AUD-01 (v1.10.0): the same contact rule as the user form (audit P-04),
+        // so an IT Admin can't change another IT Admin's email, WhatsApp
+        // number or sign-in method through a CSV import.
+        const contact = checkContactChange(snapshot.actor, target, { email: Boolean(changes.email), whatsappNumber: Boolean(changes.whatsappNumber), signInMethod: Boolean(changes.signInMethod) });
+        if (!contact.ok) check.add(changes.email ? "email" : changes.whatsappNumber ? "whatsapp_number" : "sign_in_method", contact.message);
       }
     }
     const changeNames = [...Object.keys(changes), ...(rolesChanged ? ["roles"] : [])];

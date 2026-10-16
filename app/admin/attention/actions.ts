@@ -14,7 +14,7 @@ import type { ActionResult } from "@/lib/http/action-result";
 // finding for a while (audited); Resend gives a request's unsent messages
 // fresh tries without ever sending one twice.
 export async function snoozeStuckAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  const actor = await getAdminActor();
+  const actor = await getAdminActor("admin.attention");
   const requestId = parseId(formData.get("requestId"));
   const reason = String(formData.get("reason") ?? "") as StuckReason;
   const days = Number(formData.get("days"));
@@ -34,7 +34,7 @@ export async function snoozeStuckAction(_previous: ActionResult | null, formData
 }
 
 export async function resendRequestMessagesAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  const actor = await getAdminActor();
+  const actor = await getAdminActor("admin.attention");
   const requestId = parseId(formData.get("requestId"));
   if (!actor || requestId === null) return { ok: false, message: "Not found." };
   try {
@@ -53,7 +53,7 @@ export async function resendRequestMessagesAction(_previous: ActionResult | null
 // v1.7.0 (A6): re-check an INCONSISTENT request and make its task records
 // match the workflow (audited). Never changes the workflow state.
 export async function recheckRequestAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  const actor = await getAdminActor();
+  const actor = await getAdminActor("admin.attention");
   const requestId = parseId(formData.get("requestId"));
   if (!actor || requestId === null) return { ok: false, message: "Not found." };
   try {

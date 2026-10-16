@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
@@ -7,6 +8,9 @@ import { listBudgets } from "@/lib/db/repositories/budgets.repository";
 import { budgetPosition, financialYear, fyLabel } from "@/server/workflows/type-settings";
 import { formatPaise } from "@/server/forms/dynamic";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Budgets" };
 
 // EN-09 department budgets. Committed = amounts of open and approved
 // requests checked against the budget at submit. A department without a

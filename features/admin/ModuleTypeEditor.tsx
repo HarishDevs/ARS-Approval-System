@@ -216,6 +216,7 @@ function InfoSettingsEditor({ settings, set, departments, people }: { settings: 
         </label>
         <NumberOrBlank label="Expires after" value={settings.expiryDays} onChange={(expiryDays) => set({ expiryDays })} min={1} max={3650} suffix="days by default (empty = no expiry)" />
         <Toggle label="Fields marked 'can be changed' can be edited after publishing" help="Recipients are told it was updated; the history keeps what changed." checked={settings.editableAfterPublish} onChange={(editableAfterPublish) => set({ editableAfterPublish })} />
+        <Toggle label="Show on calendars" help="Information of this type with an effective date appears on recipients' ARS calendars (and in Google Calendar for people who connected it). Acknowledging is still done in ARS." checked={settings.calendar} onChange={(calendar) => set({ calendar })} />
       </fieldset>
     </div>
   );

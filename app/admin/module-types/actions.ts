@@ -15,11 +15,14 @@ function moduleOf(formData: FormData): ModuleKind | null {
   return value === "TASK" || value === "INFO" ? value : null;
 }
 
+// G-3 (v1.10.0): each module's set-up page has its own access rule.
+const PAGE_KEY: Record<ModuleKind, string> = { TASK: "admin.task_types", INFO: "admin.information_types" };
+
 const NOT_FOUND: ActionResult = { ok: false, message: "Not found." };
 
 export async function createModuleTypeAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  const actor = await getAdminActor();
   const kind = moduleOf(formData);
+  const actor = kind ? await getAdminActor(PAGE_KEY[kind]) : null;
   if (!actor || !kind) return NOT_FOUND;
   let id: number;
   try {
@@ -35,8 +38,8 @@ export async function createModuleTypeAction(_previous: ActionResult | null, for
 }
 
 export async function saveModuleTypeDraftAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  const actor = await getAdminActor();
   const kind = moduleOf(formData);
+  const actor = kind ? await getAdminActor(PAGE_KEY[kind]) : null;
   const typeId = parseId(formData.get("typeId"));
   if (!actor || !kind || !typeId) return NOT_FOUND;
   let form: unknown;
@@ -61,8 +64,8 @@ export async function saveModuleTypeDraftAction(_previous: ActionResult | null, 
 }
 
 export async function moduleTypeCommandAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  const actor = await getAdminActor();
   const kind = moduleOf(formData);
+  const actor = kind ? await getAdminActor(PAGE_KEY[kind]) : null;
   const typeId = parseId(formData.get("typeId"));
   const command = String(formData.get("command") ?? "");
   if (!actor || !kind || !typeId) return NOT_FOUND;

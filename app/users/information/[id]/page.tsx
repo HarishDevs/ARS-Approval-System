@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { featureOn } from "@/server/settings/features";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -14,6 +15,9 @@ import { listRecordFiles } from "@/server/modules/files";
 import { indiaToday, loadInfoFor } from "@/server/modules/information";
 import { infoState, INFO_STATE_LABEL } from "@/server/modules/info-rules";
 import { indiaDateTimeText, INFO_PRIORITY_LABEL } from "@/server/modules/settings";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Information" };
 
 export const dynamic = "force-dynamic";
 

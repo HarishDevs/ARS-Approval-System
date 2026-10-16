@@ -1,7 +1,11 @@
+import type { Metadata } from "next";
 import { PageHeader, EmptyState } from "@/features/shell/PageHeader";
 import { requireArea } from "@/server/authorization/guards";
 import { findPublishedVersion, listWorkflows } from "@/lib/db/repositories/approvals.repository";
 import { deriveDoaTable, type DoaTable } from "@/server/workflows/doa";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Approval authority (DoA)" };
 
 // F-54 / D-065: the approval limits as they are actually set in the live
 // workflows (skip conditions on the amount). Changing them = a new version.

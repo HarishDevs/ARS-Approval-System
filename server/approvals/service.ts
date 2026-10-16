@@ -509,6 +509,7 @@ export async function submitRequest(
       const id = await insertRequest({ requestNo, workflowVersionId: version.id, requesterId: actor.id, title, formData, state: result.state, submissionKey: input.submissionKey ?? null }, connection);
       await syncTasks(id, result.state, version.definition.nodes, connection, await loadWorkingCalendar(connection));
       await appendEvents(id, [{ type: "SUBMITTED", requestNo }, ...result.events], actor.id, connection);
+      await recordAudit({ actorUserId: actor.id, action: "REQUEST_SUBMITTED", entityType: "REQUEST", entityId: id, metadata: { requestNo, workflowVersionId: version.id } }, connection); // SEC-12 (v1.10.0)
       await insertRevision(id, result.state.round, title, formData, actor.id, connection);
       await insertSubmissionCheck(id, readiness, { acknowledged: confirmed, overrideReason: reason || null }, connection);
       if (readiness.needsReason) await recordAudit({ actorUserId: actor.id, action: "DUPLICATE_WARNING_OVERRIDDEN", entityType: "REQUEST", entityId: id, metadata: { reason } }, connection);
@@ -595,6 +596,8 @@ async function mutate(requestId: number, actor: Actor, step: Step): Promise<Resu
   return { ok: true, value: { status: changed.request.status } };
 }
 
+const LIFECYCLE_AUDIT = { PUT_ON_HOLD: "REQUEST_PUT_ON_HOLD", WITHDRAWN: "REQUEST_WITHDRAWN", REOPENED: "REQUEST_REOPENED", RESUBMITTED: "REQUEST_RESUBMITTED" } as const;
+
 // Bookkeeping every change shares:
 // - decisions also go to the audit log (audit gap: they were timeline-only);
 // - a handover restarts the response clock for the new person (R-07);
@@ -615,8 +618,13 @@ async function afterChange(
       );
     } else if (event.type === "BLOCK_RESOLVED") {
       await recordAudit({ actorUserId: actor.id, action: "REQUEST_UNBLOCKED", entityType: "REQUEST", entityId: requestId, metadata: { step: event.nodeId, how: event.action, userIds: event.userIds ?? [], reason: event.reason } }, db);
-    } else if (event.type === "RESUMED" && event.heldSince) {
-      await extendDueTimes(requestId, (Date.now() - new Date(event.heldSince).getTime()) / 1000, db);
+    } else if (event.type === "RESUMED") {
+      if (event.heldSince) await extendDueTimes(requestId, (Date.now() - new Date(event.heldSince).getTime()) / 1000, db);
+      await recordAudit({ actorUserId: actor.id, action: "REQUEST_RESUMED", entityType: "REQUEST", entityId: requestId }, db);
+    } else if (event.type === "PUT_ON_HOLD" || event.type === "WITHDRAWN" || event.type === "REOPENED" || event.type === "RESUBMITTED") {
+      // SEC-12 (v1.10.0, audit AUD-12): the lifecycle changes are in the
+      // central audit log too, not only on the request's timeline.
+      await recordAudit({ actorUserId: actor.id, action: LIFECYCLE_AUDIT[event.type], entityType: "REQUEST", entityId: requestId }, db);
     } else if (event.type === "INFO_ANSWERED") {
       // EN-05: waiting for the answer doesn't count against the response time.
       await extendDueTimes(requestId, (Date.now() - new Date(event.heldSince).getTime()) / 1000, db);

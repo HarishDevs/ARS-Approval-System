@@ -1,7 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { requireArea } from "@/server/authorization/guards";
 import { loadInsights } from "@/lib/db/repositories/insights.repository";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Insights" };
 
 // F-70 / D-069 management dashboard: headline numbers as tiles, the detail
 // as plain tables (exact values matter more than shapes here).

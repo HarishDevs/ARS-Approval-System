@@ -1,4 +1,4 @@
-import { Email } from "@/features/ui/SafeText";
+import { MailLink } from "@/features/ui/MailLink";
 
 // Split layout for sign-in, set-password and forgot-password (asset pack
 // 00-login-split-layout-alt).
@@ -38,7 +38,8 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
               <dd className="text-label text-white/75">history, always</dd>
             </div>
           </dl>
-          <p className="mt-16 text-caption text-white/60">© 2026 ARS Steels &amp; Alloy International Pvt. Ltd.</p>
+          {/* WEB-09 (v1.10.0): the current year (India time), not a fixed one. */}
+          <p className="mt-16 text-caption text-white/60">© {indiaYear()} ARS Steels &amp; Alloy International Pvt. Ltd.</p>
         </div>
       </section>
 
@@ -48,10 +49,14 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
           <img src="/brand/ars-green-steel.svg" alt="ARS Green Steel" className="h-16 w-auto" />
           {children}
           <p className="mt-8 text-center text-body text-ink-muted">
-            Need access? Contact IT Support: <span className="select-all font-medium text-ink"><Email address="itadmin@arssteels.co.in" /></span>
+            Need access? Contact IT Support: <span className="select-all font-medium text-ink"><MailLink address="itadmin@arssteels.co.in" /></span>
           </p>
         </div>
       </section>
     </main>
   );
+}
+
+function indiaYear(): number {
+  return Number(new Intl.DateTimeFormat("en-IN", { timeZone: "Asia/Kolkata", year: "numeric" }).format(new Date()));
 }

@@ -1,5 +1,80 @@
 # Release notes
 
+## v1.11.0 (16 Oct 2026): Google Calendar two-way sync, and one calendar for everything
+**Super Admin → Integrations → Google Calendar** (new)
+- Set up the Google OAuth client. The client secret is stored encrypted and never shown again.
+- Set the policies: direction, privacy, event text, conflicts, deletions, reconcile interval, retries, which modules sync.
+- **Test configuration** checks the database, encryption, the redirect URI, Google's acceptance of the client, and the job runner. **Enable** works only when every check passes.
+- The page also shows health (last 24 h), connected people (with **Revoke** and **Full resync**), failed syncs (with **Retry** and **Retry all**), conflicts, the sync log and the audit history. There is a **Maintenance mode** that pauses syncing.
+
+**Profile → Calendar** (new)
+- Each person connects their own Google account. ARS asks only for calendar events, the calendar list and the account email.
+- They can choose a calendar, press **Sync now**, review conflicts, reauthorise, and disconnect (optionally removing the events ARS added).
+
+**What syncs**
+- **To Google:** approvals waiting on you (by due time), your tasks (by due time), information of types marked **Show on calendars** (on the effective date), your requests' needed-by dates (off by default), and your personal entries.
+- **Event text:** private, showing only the reference ("Approval due: PR-0042") and a link. No titles or amounts unless the Super Admin adds {title}.
+- **From Google:** your own Google events become personal entries in ARS. Edits and deletions follow both ways.
+- **A calendar change never approves, rejects, completes or acknowledges anything.**
+
+**How it syncs**
+- Incremental, using Google's sync tokens. Push notifications are renewed automatically, and every connection is reconciled every 15 minutes (configurable).
+- A retried sync never makes a duplicate. ARS's own writes are recognised, so nothing loops.
+- Failures are retried with backoff and then reported to the Super Admin.
+
+**Calendar page**
+- Month, week and day views; filters for Approvals, Tasks, Information, Needed by and Personal.
+- Entries from Google are marked, and each entry shows its sync status.
+- You can add, edit and delete personal entries.
+
+**Admin → Information types:** a new **Show on calendars** option (off by default).
+
+**Database:** one additive migration (7 new tables, no triggers). There are no new environment variables.
+
+**Before people can use it**, the owner creates the Google OAuth client. See `application-audit/GOOGLE_CALENDAR_INTEGRATION_REPORT.md` §4 and DEPLOYMENT Part Q.
+
+## v1.10.0 (16 Oct 2026): security hardening and website fixes
+The owner's 39-point brief: 19 security checks and 20 website fixes. Full detail is in `application-audit/SECURITY_WEBSITE_FIX_TRACKER.md`.
+
+**Security**
+- **CSV user import (AUD-01):** an IT Admin can no longer change another IT Admin's email, WhatsApp number or sign-in method by import. This is the same rule as the user form.
+- **Start-up seed (AUD-03):** a Super Admin role removed from `itadmin` now stays removed. The seed gives roles only to an account that has none.
+- **Page access follows the action (G-3):**
+  - Admin actions name their own page, so a Hidden or View-only rule holds wherever the action is posted from.
+  - Super Admin addresses refuse everyone else.
+  - "Out of office for someone else" needs Full access to Users & roles.
+  - The admin Analytics pages check the Admin area themselves.
+- **Sign-in & devices** can't be restricted by a page rule, so signing out a lost device always works.
+- **Limits:** PDF summaries, quick search, the notification list, downloads, dashboard CSV and the WhatsApp webhook have per-person limits. Going over answers "429, try again in a minute".
+- **Headers:**
+  - signed-in pages and API answers are `Cache-Control: private, no-store`;
+  - API preflights from other sites get no CORS permission;
+  - a plain-HTTP visit (as reported by Cloudflare) is sent to HTTPS.
+- **Audit log:** it now also records:
+  - request submit, hold, resume, withdraw, reopen and resubmit;
+  - pausing and resuming report schedules and alerts;
+  - dashboard CSV downloads.
+- **Approval-type export:** a failure no longer shows an internal error message.
+- **New tests:**
+  - an API-route and Server-Action inventory, which fails on any unguarded new route;
+  - SQL-injection checks for list sorting and search;
+  - a cross-user access check (requests, PDF, tasks, files, admin addresses).
+
+**Website**
+- **Page titles:** every page has its own browser title (for example "Waiting for me · ARS Approvals"). Record pages never show the record's content.
+- **Favicon:** ICO and PNG fallbacks.
+- **Logo:** clicking it goes to the space's first page.
+- **Copyright:** the year updates itself.
+- **Phone menu:**
+  - focus moves into the menu, Tab stays inside it, and Escape returns focus to the button;
+  - the list scrolls;
+  - the bottom bar shows in My approvals only.
+- **IT contact and user emails** are clickable (mailto).
+- **Discard draft (Custom approval):** uses the app's own confirmation instead of the browser's.
+- **Layout check:** an automated test confirms no page scrolls sideways at 360, 390, 768, 1366 or 1920 px across all spaces, every navigation link works, and the 404 page is correct.
+
+**No database migration.** The only database-related change is the seed rule.
+
 ## v1.9.2 (16 Oct 2026): the user sidebar, regrouped (owner)
 - **Order:** Overview; **My Approvals**; **Tasks**; **Information**; then Search, Calendar and Analytics.
 - **Collapsible groups:** My Approvals, Tasks and Information open and close like a dropdown.

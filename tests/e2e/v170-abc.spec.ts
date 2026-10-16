@@ -29,7 +29,7 @@ test("A4 the form builder previews the form, rules working, nothing sent", async
 test("A2 the needed-by calendar opens and moves between months", async ({ page, context }) => {
   await as(context, "E2E_REQ");
   await page.goto("/users/calendar?month=2031-03");
-  await expect(page.getByRole("heading", { name: "Needed-by calendar" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Calendar" })).toBeVisible(); // v1.11.0: one calendar for everything
   await expect(page.getByRole("heading", { name: "March 2031", exact: true })).toBeVisible();
   await page.getByRole("link", { name: "Next month" }).click();
   await expect(page.getByRole("heading", { name: "April 2031", exact: true })).toBeVisible();

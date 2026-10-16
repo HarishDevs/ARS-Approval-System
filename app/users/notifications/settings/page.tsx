@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
@@ -5,6 +6,9 @@ import { ProfileTabs } from "@/features/shell/ProfileTabs";
 import { PreferencesForm } from "@/features/shell/PreferencesForm";
 import { EVENT_GROUPS } from "@/server/notifications/preferences";
 import { loadOptOuts } from "@/lib/db/repositories/preferences.repository";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Notification settings" };
 
 // #6 notification settings (D-110). The in-app inbox always gets everything.
 export default async function NotificationSettingsPage() {

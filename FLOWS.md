@@ -983,6 +983,35 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 3. A recipient opens it from **Information inbox** (it is then marked read). If acknowledgement is asked, they press **Acknowledge**.
 4. The sender sees who read and who acknowledged, can **Withdraw** (reason) or **Archive**. After its expiry date it shows as Expired. Reminders go to people who haven't acknowledged.
 
+## F-129 Google Calendar: set up and connect (v1.11.0, D-152)
+1. The owner creates the Google OAuth client (DEPLOYMENT Part Q).
+2. Super Admin → Integrations → Google Calendar → Save configuration → Test configuration (every check green) → Enable.
+3. A person → Profile → Calendar → **Connect Google Account** → Google's consent screen → back to ARS (state and nonce checked) → Connected. The first full sync and a watch channel are queued.
+4. Optional: choose another calendar → a full resync. **Disconnect** (optionally removing ARS events) → tokens revoked and deleted.
+5. The Super Admin can **Revoke** anyone's connection, retry failed syncs, or run a full resync.
+
+## F-130 Google Calendar: two-way sync (v1.11.0, D-153, D-154)
+1. **Trigger:** every 5 minutes, the job runner queues a sync for each connection not synced within the interval. A Google push notification, Sync now, or a change to a personal entry queues one sooner.
+2. **Pull:** Google's changes since the last sync token.
+   - New Google event → personal entry.
+   - Changed → updated (or a conflict, if it also changed in ARS).
+   - Deleted → removed (personal) or the policy (business).
+   - Events ARS wrote, coming back unchanged (same etag), are skipped.
+   - 410 → a full relisting.
+3. **Push:** what ARS wants in the calendar (business dates + personal entries) against what was last written → create (fixed id), update (content changed) or remove (left the calendar: policy).
+4. **Failures:** retried with backoff; DEAD after the limit → Super Admin alert; Retry on the Integrations page.
+5. **Conflicts:** the person (or the Super Admin) keeps the ARS version, keeps the Google version, or leaves both.
+
+## F-128 Page access follows the action (v1.10.0, D-151)
+1. A person posts a change (Server Action or API).
+2. The area guard checks the role.
+3. The page rule of the posting address is checked.
+4. If the action names its own page (for example "admin.import"), that page's rule is checked too:
+   - Hidden → refused (404);
+   - View-only → refused for changes.
+5. Super Admin addresses refuse anyone who isn't a Super Admin.
+6. "Sign-in & devices" is never restricted.
+
 ## F-127 User sidebar (v1.9.2, D-149)
 Overview → **My Approvals** ▾ / **Tasks** ▾ / **Information** ▾ (click to open the group's pages) → Search, Calendar, Analytics. The current page's group opens by itself; the open/closed choice is remembered.
 

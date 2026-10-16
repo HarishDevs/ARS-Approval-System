@@ -169,6 +169,20 @@ describe("planImport: users", () => {
     expect(planImport("users", usersFile("boss,Big Boss Renamed,boss@example.com,,,,,,USER;SUPER_ADMIN"), snapshot()).rows[0]!.problems[0]!.message).toMatch(/Only the Super Admin/);
   });
 
+  it("AUD-01: an IT Admin can't change another IT Admin's email, WhatsApp or sign-in method by import", () => {
+    const base = snapshot(["USER", "IT_ADMIN"]);
+    base.actor = { id: 9, roles: ["USER", "IT_ADMIN"] }; // a different IT Admin
+    const email = planImport("users", usersFile("elena,Elena Admin,elena.new@example.com,919000000002,,,,GOOGLE,USER;IT_ADMIN"), base);
+    expect(email.rows[0]!.problems).toEqual([{ column: "email", message: expect.stringMatching(/Only the Super Admin can change another IT Admin/) }]);
+    expect(email.ops).toEqual([]);
+    const phone = planImport("users", usersFile("elena,Elena Admin,elena@example.com,919000000099,,,,GOOGLE,USER;IT_ADMIN"), base);
+    expect(phone.rows[0]!.problems[0]!.column).toBe("whatsapp_number");
+    // A name change is fine; so is the Super Admin; so is your own.
+    expect(planImport("users", usersFile("elena,Elena A,elena@example.com,919000000002,,,,GOOGLE,USER;IT_ADMIN"), base).summary.update).toBe(1);
+    expect(planImport("users", usersFile("elena,Elena Admin,elena.new@example.com,919000000002,,,,GOOGLE,USER;IT_ADMIN"), snapshot(["USER", "SUPER_ADMIN"])).summary.update).toBe(1);
+    expect(planImport("users", usersFile("elena,Elena Admin,elena.new@example.com,919000000002,,,,GOOGLE,USER;IT_ADMIN"), snapshot()).summary.update).toBe(1);
+  });
+
   it("never touches break-glass, and password sign-in needs WhatsApp", () => {
     const plan = planImport("users", usersFile("breakglass,Break Glass,bg@example.com,,,,,,", "pw,Pass Word,pw@example.com,,,,,PASSWORD,"), snapshot());
     expect(plan.rows[0]!.problems[0]!.message).toMatch(/break-glass/);

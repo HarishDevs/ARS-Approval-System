@@ -359,11 +359,11 @@ export function BarList({
             <li key={row.label} className="text-label">
               <div className="flex items-baseline justify-between gap-3">
                 {row.href ? (
-                  <Link href={row.href} className="link truncate">
+                  <Link href={row.href} className="link min-w-0 truncate">
                     {row.label}
                   </Link>
                 ) : (
-                  <span className="truncate">{row.label}</span>
+                  <span className="min-w-0 truncate">{row.label}</span>
                 )}
                 <span className="shrink-0 tabular-nums font-medium">
                   {fmt(row.value, unit)}

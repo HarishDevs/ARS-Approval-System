@@ -1,8 +1,12 @@
+import type { Metadata } from "next";
 import packageJson from "@/package.json";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { HelpTopics, type HelpTopic } from "@/features/help/HelpTopics";
 import { CopyForIt } from "@/features/help/CopyForIt";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Help" };
 
 // #13 help page: how-tos, the status words used everywhere (D-017), and
 // "Copy details for IT".

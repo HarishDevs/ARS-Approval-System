@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { PendingLink } from "@/features/ui/PendingLink";
 import { requireArea } from "@/server/authorization/guards";
@@ -8,6 +9,9 @@ import { listAllRequests } from "@/lib/db/repositories/request-admin.repository"
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 import { SafeText } from "@/features/ui/SafeText";
 import { REQUEST_STATUS_OPTIONS } from "@/features/ui/labels";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Requests (Super Admin)" };
 
 const STATUS_OPTIONS = REQUEST_STATUS_OPTIONS;
 

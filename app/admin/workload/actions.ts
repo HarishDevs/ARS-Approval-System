@@ -9,7 +9,7 @@ import type { ActionResult } from "@/lib/http/action-result";
 // v1.7.0 (A3): bulk reassignment. Each item is moved on its own; the result
 // lists every one.
 export async function bulkReassignAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  const actor = await getAdminActor();
+  const actor = await getAdminActor("admin.workload");
   if (!actor) return { ok: false, message: "Not found." };
   const toUserId = parseId(formData.get("toUserId"));
   if (toUserId === null) return { ok: false, message: "Choose who takes them.", fieldErrors: { toUserId: "Choose a person." } };

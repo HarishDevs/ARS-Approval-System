@@ -128,6 +128,8 @@ export async function toggleScheduleAction(_previous: ActionResult | null, formD
   const scheduleId = id(formData.get("scheduleId"));
   const active = formData.get("active") === "on";
   if (!user || scheduleId === null || !(await setScheduleActive(user.id, scheduleId, active))) return { ok: false, message: "Not found." };
+  // SEC-12 (v1.10.0, audit S-07): pausing and resuming are audited too.
+  await recordAudit({ actorUserId: user.id, action: active ? "REPORT_SCHEDULE_RESUMED" : "REPORT_SCHEDULE_PAUSED", entityType: "REPORT", entityId: scheduleId, sessionId: user.sessionId });
   revalidatePath("/admin/reports", "layout");
   return { ok: true, message: active ? "Switched on." : "Switched off." };
 }
@@ -170,6 +172,7 @@ export async function toggleAlertAction(_previous: ActionResult | null, formData
   const ruleId = id(formData.get("ruleId"));
   const active = formData.get("active") === "on";
   if (!user || ruleId === null || !(await setAlertActive(user.id, ruleId, active))) return { ok: false, message: "Not found." };
+  await recordAudit({ actorUserId: user.id, action: active ? "ALERT_RULE_RESUMED" : "ALERT_RULE_PAUSED", entityType: "ALERT", entityId: ruleId, sessionId: user.sessionId });
   revalidatePath("/admin/reports", "layout");
   return { ok: true, message: active ? "Switched on." : "Switched off." };
 }

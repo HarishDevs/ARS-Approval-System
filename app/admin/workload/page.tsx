@@ -1,8 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { requireArea } from "@/server/authorization/guards";
 import { listPendingTaskAges } from "@/lib/db/repositories/workload.repository";
 import { AGE_BANDS, ageText, summarizeWorkload } from "@/server/workload/summary";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Workload" };
 
 // #12 workload: who has how much waiting right now, its age and what is
 // overdue. A person's page has "Hand over pending approvals".

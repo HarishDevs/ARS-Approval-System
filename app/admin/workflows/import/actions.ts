@@ -25,7 +25,7 @@ async function readPackage(formData: FormData): Promise<{ ok: true; value: unkno
 }
 
 export async function previewImportAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  const actor = await getAdminActor();
+  const actor = await getAdminActor("admin.workflows");
   if (!actor) return { ok: false, message: "Not found." };
   const read = await readPackage(formData);
   if (!read.ok) return { ok: false, message: read.message, fieldErrors: { file: read.message } };
@@ -57,7 +57,7 @@ export async function previewImportAction(_previous: ActionResult | null, formDa
 }
 
 export async function applyImportAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  const actor = await getAdminActor();
+  const actor = await getAdminActor("admin.workflows");
   if (!actor) return { ok: false, message: "Not found." };
   const read = await readPackage(formData);
   if (!read.ok) return { ok: false, message: read.message };

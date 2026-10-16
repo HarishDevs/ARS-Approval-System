@@ -1,7 +1,11 @@
+import type { Metadata } from "next";
 import { DashboardFrame, DashboardTable, KpiTiles, MeasureBar } from "@/features/admin/dashboards/DashboardFrame";
 import { dashboardPage, type DashboardSearch } from "@/features/admin/dashboards/page-data";
 import { loadApprovers } from "@/lib/db/repositories/dashboards.repository";
 import { hoursText, percent } from "@/server/dashboards/filters";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Approvers dashboard" };
 
 // Approver-wise (F-74): approvals given to each person in the period.
 export default async function ApproversDashboardPage({ searchParams }: { searchParams: DashboardSearch }) {

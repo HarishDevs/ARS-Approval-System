@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Breadcrumbs } from "@/features/ui/Display";
 import { notFound } from "next/navigation";
@@ -15,6 +16,9 @@ import { validateVersion } from "@/server/approvals/service";
 import { openCountsByVersion } from "@/server/workflows/migration";
 import { RestoreVersionButton } from "@/features/admin/VersionTools";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Approval type" };
 
 const VERSION_STYLE = { DRAFT: "bg-warning-50 text-warning-600", PUBLISHED: "bg-success-50 text-success-600", ARCHIVED: "bg-surface-muted text-ink-muted" } as const;
 

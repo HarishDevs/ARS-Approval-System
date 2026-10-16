@@ -121,6 +121,15 @@ export async function createDelegationAction(_previous: ActionResult | null, for
   if (delegateId === null) return { ok: false, message: "Choose a delegate.", fieldErrors: { delegateId: "Choose a person." } };
   // IT can set one for someone else (userId); everyone else only for themselves.
   const userId = num(formData.get("userId")) ?? me.id;
+  // G-2 (v1.10.0): for someone else this is user management, so it also
+  // needs the Admin area and Full access to Users & roles.
+  if (userId !== me.id) {
+    try {
+      await requireApiArea("admin", { change: true, page: "admin.users" });
+    } catch {
+      return { ok: false, message: "You can only set your own out-of-office." };
+    }
+  }
   try {
     const result = await createDelegation(
       { userId, delegateId, startsOn: String(formData.get("startsOn") ?? ""), endsOn: String(formData.get("endsOn") ?? ""), reason: String(formData.get("reason") ?? "") },

@@ -1,9 +1,13 @@
+import type { Metadata } from "next";
 import { Fragment } from "react";
 import { DashboardFrame, KpiTiles, OutcomeBar, OutcomeLegend } from "@/features/admin/dashboards/DashboardFrame";
 import { dashboardPage, type DashboardSearch } from "@/features/admin/dashboards/page-data";
 import { loadRaisers, type RaiserRow } from "@/lib/db/repositories/dashboards.repository";
 import { approvalRate, hoursText } from "@/server/dashboards/filters";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
+
+// WEB-05 (v1.10.0): a plain, non-confidential browser title.
+export const metadata: Metadata = { title: "Raisers dashboard" };
 
 type Measure = "raised" | "approved" | "rejected" | "open" | "withdrawn";
 const total = (items: RaiserRow[], key: Measure) => items.reduce((sum, item) => sum + item[key], 0);

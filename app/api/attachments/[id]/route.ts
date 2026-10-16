@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { requireApiArea } from "@/server/authorization/guards";
 import { openAttachment } from "@/server/attachments/service";
 import { downloadHeaders, inlineHeaders, previewKind } from "@/server/attachments/files";
+import { LIMITS, overLimit, tooManyResponse } from "@/server/security/limits";
 import { apiError } from "@/lib/http/api-response";
 import { logError } from "@/lib/logging/logger";
 
@@ -12,6 +13,7 @@ import { logError } from "@/lib/logging/logger";
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await requireApiArea("users");
+    if (await overLimit(`download:${session.user.id}`, LIMITS.download)) return tooManyResponse();
     const { id } = await params;
     if (!/^\d+$/.test(id)) return apiError("NOT_FOUND", "Not found.", 404);
     const file = await openAttachment(Number(id), { id: session.user.id, roles: session.user.roles });
