@@ -50,8 +50,17 @@ const PAGES: { who: string; paths: string[] }[] = [
   { who: "E2E_SUPER", paths: ["/superadmin", "/superadmin/integrations/google-calendar", "/superadmin/settings", "/superadmin/audit", "/superadmin/pages"] },
 ];
 
+// Some pages navigate once more right after loading (a redirect or a
+// refresh); measure once the page has settled, and again if it moved on.
 async function sidewaysOverflow(page: Page): Promise<number> {
-  return page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  const measure = () => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  await page.waitForLoadState("load").catch(() => undefined);
+  try {
+    return await measure();
+  } catch {
+    await page.waitForLoadState("load").catch(() => undefined);
+    return measure();
+  }
 }
 
 test("WEB-01/16/20: no page scrolls sideways at 360, 390, 768, 1366 and 1920 px", async ({ page, context }) => {
