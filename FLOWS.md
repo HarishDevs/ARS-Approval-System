@@ -983,6 +983,12 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 3. A recipient opens it from **Information inbox** (it is then marked read). If acknowledgement is asked, they press **Acknowledge**.
 4. The sender sees who read and who acknowledged, can **Withdraw** (reason) or **Archive**. After its expiry date it shows as Expired. Reminders go to people who haven't acknowledged.
 
+## F-132 Signed out after inactivity (v1.12.1, D-158)
+1. No activity for the set minutes (default 30); a warning appears 2 minutes before ("Stay signed in").
+2. Time runs out → the session is ended → the page goes to **Signed out**: "Signed out after inactivity … no activity for 30 minutes".
+3. **Sign in again** → the sign-in page → back to the space they were in.
+4. The same page explains the other endings: 12-hour limit, signed out elsewhere or by IT, account switched off or locked.
+
 ## F-131 Analytics Center (v1.12.0, D-156)
 1. Analytics (sidebar) → Executive overview opens.
 2. Choose whose numbers and the period → **Apply**.

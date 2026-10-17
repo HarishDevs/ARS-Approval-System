@@ -92,7 +92,8 @@
 1. **Project:** console.cloud.google.com, the ARS project. The Firebase project can be reused, or a new one created.
 2. **API:** APIs & Services → Library → **Google Calendar API** → Enable.
 3. **OAuth consent screen:**
-   - Internal, if every user is in the company's Google Workspace; otherwise External.
+   - **User type: External.** ARS people use several domains (for example arssteels.com and arsenergy.co.in). With **Internal**, Google refuses everyone outside the project's own Workspace with **"Error 403: org_internal"**. To change it: Google Auth Platform → **Audience** → **Make external**.
+   - **Publishing status:** while it is "Testing", only the listed test users (up to 100) can connect, and their access lapses after 7 days. For everyone, press **Publish app**. Calendar scopes are "sensitive", so until Google verifies the app people see a "Google hasn't verified this app" screen (Advanced → continue), up to 100 users. Verification needs the home page, a privacy policy link and the verified domain.
    - App name "ARS Approvals", support email itadmin@arssteels.co.in.
    - Scopes:
      - `openid`

@@ -17,7 +17,8 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
-- **Now (16 Oct 2026):** v1.12.0: the Analytics Center (nine boards on the Analytics page). Owner choices pending: acknowledgement deadlines for information, and task effort fields, which would make the "not available" metrics possible.
+- **Now (17 Oct 2026):** v1.12.1: analytics dropdowns; sign-out after 30 minutes for everyone with a signed-out page; Google consent screen must be External (owner: Google Auth Platform → Audience → Make external → Publish).
+- **Earlier (16 Oct 2026):** v1.12.0: the Analytics Center (nine boards on the Analytics page). Owner choices pending: acknowledgement deadlines for information, and task effort fields, which would make the "not available" metrics possible.
 - **Earlier (16 Oct 2026):** v1.11.0: Google Calendar two-way sync (needs the owner's Google OAuth client, Q-024, DEPLOYMENT Part Q). Next: v1.12.0 Analytics Center.
 - **Earlier (16 Oct 2026):** v1.10.0: security hardening and website fixes (39-item brief; see `application-audit/SECURITY_WEBSITE_FIX_TRACKER.md`). Owner items: Cloudflare "Always Use HTTPS" and `ORIGIN_SECRET` (Q-021).
 - **Earlier (16 Oct 2026):** v1.9.2: the user sidebar regrouped (collapsible My Approvals, Tasks, Information). Publish after v1.9.1's preview succeeds (or straight to v1.9.2).
@@ -302,6 +303,12 @@ Found during S8-06:
 - [x] S8-12 Google sign-in reached UNKNOWN_ACCOUNT: itadmin@ is an alias. The Super Admin now signs in as itsupport@arsenergy.co.in (D-082, migration + non-overwriting seed, v1.0.5) (done 8 Oct 2026)
 - [x] S8-01b Go-live on GoDaddy with the owner, following docs/DEPLOYMENT.md (the owner is at the wizard's "Add secrets" step) (done 9 Oct 2026: live since 8 Oct 2026)
 - [x] S8-04 Update the three living files; commit and push (done 8 Oct 2026)
+
+## Session log — v1.12.1: owner follow-ups (17 Oct 2026), planned before starting
+- [x] V1121-01 Analytics: dashboard and scope as dropdowns (done 17 Oct 2026)
+- [x] V1121-02 Inactivity sign-out for everyone after 30 minutes; signed-out page with the reason and Sign in again (done 17 Oct 2026)
+- [x] V1121-03 Google Calendar for other domains: diagnose org_internal; consent screen External; guidance in the app and docs (done 17 Oct 2026)
+- [x] V1121-04 Tests, v1.12.1, push, CI (done 17 Oct 2026)
 
 ## Session log — v1.12.0: Analytics Center (16 Oct 2026), planned before starting
 Owner brief: a complete Analytics Center with Approval, Task and Information analytics on one page.

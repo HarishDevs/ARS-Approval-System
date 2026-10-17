@@ -74,6 +74,16 @@ export async function sessionIdleSeconds(sessionId: string, userId: number, db: 
   return rows[0] ? Math.max(0, Number(rows[0].idle)) : null;
 }
 
+// v1.12.1: why a session is no longer live (for the signed-out page).
+export async function sessionState(sessionId: string, userId: number, db: Queryable = getDbPool()): Promise<{ revokeReason: string | null; revoked: boolean; expired: boolean } | null> {
+  const [rows] = await db.query<(RowDataPacket & { revoke_reason: string | null; revoked: number; expired: number })[]>(
+    "SELECT revoke_reason, revoked_at IS NOT NULL AS revoked, expires_at <= CURRENT_TIMESTAMP AS expired FROM user_sessions WHERE id = ? AND user_id = ? LIMIT 1",
+    [sessionId, userId],
+  );
+  const row = rows[0];
+  return row ? { revokeReason: row.revoke_reason, revoked: Boolean(Number(row.revoked)), expired: Boolean(Number(row.expired)) } : null;
+}
+
 // Live = not revoked, not past its absolute expiry, and used within the
 // idle limit (audit S-05; last_seen_at is refreshed at most once a minute).
 export async function isSessionActive(sessionId: string, userId: number, idleMinutes: number, db: Queryable = getDbPool()): Promise<boolean> {

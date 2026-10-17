@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { canExport, featureOn } from "@/server/settings/features";
-import { BoardTabs, CenterScreen } from "@/features/analytics/CenterScreen";
+import { BoardPicker, CenterScreen } from "@/features/analytics/CenterScreen";
 import { parseBoard } from "@/server/analytics/center";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
@@ -90,7 +90,6 @@ export async function AnalyticsScreen({ searchParams, base }: { searchParams: Re
   ]);
   const drill = (kind: DrillKind, changes: Record<string, string | null> = {}) => withParams(`${base}/list`, carried, { kind, ...changes });
   const here = (changes: Record<string, string | null>) => withParams(base, carried, changes);
-  const chip = (active: boolean) => `rounded-full border px-3 py-1 text-label ${active ? "border-primary-600 bg-primary-50 font-semibold text-primary-700" : "border-line text-ink-muted hover:bg-surface-muted"}`;
   const approvals = scope.kind === "APPROVALS";
   const day = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
   const onTime = share(kpis.onTimeDecisions, kpis.timedDecisions);
@@ -106,15 +105,7 @@ export async function AnalyticsScreen({ searchParams, base }: { searchParams: Re
           How these are worked out
         </Link>
       </PageHeader>
-      <BoardTabs base={base} board="approvals" query={query} />
-
-      <nav aria-label="Whose numbers" className="mb-3 flex flex-wrap gap-2">
-        {scopes.map((item) => (
-          <Link key={item.kind} href={withParams(base, { board: "approvals", scope: item.kind, period: period.key })} className={chip(item.kind === scope.kind)} aria-current={item.kind === scope.kind ? "page" : undefined}>
-            {item.label}
-          </Link>
-        ))}
-      </nav>
+      <BoardPicker base={base} board="approvals" query={{ ...query, period: period.key }} scopes={scopes} scope={scope} />
 
       <form method="get" className="card mb-6 space-y-3 px-4 py-3" aria-label="Filters">
         <input type="hidden" name="scope" value={scope.kind} />

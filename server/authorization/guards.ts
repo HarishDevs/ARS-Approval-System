@@ -1,6 +1,6 @@
 import "server-only";
 import { notFound, redirect } from "next/navigation";
-import { getCurrentSession, type CurrentSession } from "@/server/auth/session";
+import { getCurrentSession, sessionEndReason, type CurrentSession } from "@/server/auth/session";
 import { evaluateAreaAccess } from "@/server/authorization/policy";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import type { AppArea } from "@/types/auth";
@@ -27,7 +27,11 @@ export async function requireArea(area: AppArea): Promise<CurrentSession> {
     await recordAudit({ actorUserId: session.user.id, action: "PAGE_ACCESS_DENIED", entityType: "PAGE", entityId: page.pageKey ?? "unknown", result: "FAILURE", sessionId: session.sessionId, metadata: { reason: page.reason } });
     notFound();
   }
-  if (!session) redirect(`/login?next=/${area}`);
+  if (!session) {
+    // v1.12.1 (D-158): a session that ended shows why, with a way back in.
+    const reason = await sessionEndReason().catch(() => null);
+    redirect(reason ? `/signed-out?reason=${reason}&next=/${area}` : `/login?next=/${area}`);
+  }
   await recordAudit({
     actorUserId: session.user.id,
     action: "AREA_ACCESS_DENIED",

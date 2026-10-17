@@ -499,9 +499,14 @@ The automated version of this drill runs in every CI build (`tests/integration/b
 Optional. Nothing changes until the Super Admin enables it.
 1. **Google Cloud Console** (console.cloud.google.com) → the ARS project:
    - APIs & Services → Library → **Google Calendar API** → **Enable**.
-   - **OAuth consent screen:** Internal if all users are on the company's Google Workspace, else External.
-     - Scopes: `openid`, `email`, `.../auth/calendar.events`, `.../auth/calendar.calendarlist.readonly`.
-     - While External and in "Testing", only listed test users can connect, for 7 days at a time.
+   - **OAuth consent screen** (Google Auth Platform):
+     - **Audience → User type: External.** ARS people sign in from more than one domain (arssteels.com, arsenergy.co.in, …). **Internal** lets in only the project's own Workspace; everyone else gets **"Error 403: org_internal"**. If it was created as Internal: Audience → **Make external**.
+     - **Scopes:** `openid`, `email`, `.../auth/calendar.events`, `.../auth/calendar.calendarlist.readonly`.
+     - **Publishing:**
+       - In "Testing", only listed test users (up to 100) can connect, for 7 days at a time.
+       - **Publish app** to open it to everyone.
+       - Calendar scopes are sensitive: until Google verifies the app, people see "Google hasn't verified this app" (Advanced → continue), for up to 100 users.
+       - Verification needs the home page, a privacy-policy link and the verified domain.
    - **Credentials** → Create credentials → **OAuth client ID** → **Web application**.
      - Authorised redirect URI: `https://approval.arssteels.net/api/integrations/google-calendar/callback`
 2. **Check:** `APP_BASE_URL` is `https://approval.arssteels.net` in the GoDaddy secrets. The cron job (Part I) must be running.

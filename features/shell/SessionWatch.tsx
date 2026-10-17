@@ -14,7 +14,9 @@ import { SESSION_ENDED_EVENT } from "@/features/ui/form";
 // v1.8.0: the check runs every minute and never counts as activity. Typing,
 // clicking or scrolling in the page does count: it is reported at the next
 // check. Two minutes before the inactivity sign-out a warning offers "Stay
-// signed in". (The Super Admin has no inactivity limit: no warning.)
+// signed in".
+// v1.12.1 (owner, D-158): when the session ends, the page goes to the
+// signed-out page, which says why and offers "Sign in again" (back here).
 const CHECK_EVERY_MS = 60_000;
 const WARN_SECONDS = 120;
 const ACTIVITY_EVENTS = ["keydown", "pointerdown", "wheel", "touchstart", "input"] as const;
@@ -25,6 +27,22 @@ export function SessionWatch() {
   const pathname = usePathname();
   const lastActivity = useRef(Date.now());
   const lastReported = useRef(Date.now());
+  // Ended: find out why, then go to the signed-out page.
+  useEffect(() => {
+    if (!ended) return;
+    let cancelled = false;
+    void fetch("/api/auth/status", { cache: "no-store" })
+      .then((response) => (response.ok ? (response.json() as Promise<{ reason?: string | null }>) : {}))
+      .catch(() => ({}) as { reason?: string | null })
+      .then((body) => {
+        if (cancelled) return;
+        const reason = (body as { reason?: string | null }).reason ?? "unknown";
+        window.location.assign(`/signed-out?reason=${encodeURIComponent(reason)}&next=${encodeURIComponent(pathname)}`);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ended, pathname]);
   const keepAlive = useCallback(async () => {
     try {
       const response = await fetch("/api/auth/keep-alive", { method: "POST", cache: "no-store" });
@@ -82,7 +100,6 @@ export function SessionWatch() {
     const tick = setTimeout(() => setLeft((value) => (value === null ? null : value - 1)), 1000);
     return () => clearTimeout(tick);
   }, [left, check]);
-  const signInHref = `/login?next=${encodeURIComponent(pathname)}`;
   const minutes = left === null ? "" : `${Math.floor(Math.max(0, left) / 60)}:${String(Math.max(0, left) % 60).padStart(2, "0")}`;
   return (
     <>
@@ -103,23 +120,6 @@ export function SessionWatch() {
             <button type="button" className="btn-primary btn-compact" onClick={() => void keepAlive()}>
               Stay signed in
             </button>
-          </>
-        }
-      />
-      <Dialog
-        open={ended}
-        onClose={() => setEnded(false)}
-        title="You were signed out"
-        description="For safety you are signed out after a while without activity, or when you sign out on another device. Copy anything you typed that isn't saved, then sign in again."
-        size="sm"
-        footer={
-          <>
-            <button type="button" className="btn-secondary btn-compact" onClick={() => setEnded(false)}>
-              Stay on this page
-            </button>
-            <a href={signInHref} className="btn-primary btn-compact">
-              Sign in again
-            </a>
           </>
         }
       />

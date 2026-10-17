@@ -3,7 +3,7 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { SESSION_COOKIE_NAME } from "@/lib/session/constants";
 import { verifySessionToken, verifyPurposeToken } from "@/lib/session/token";
-import { sessionIdleSeconds, revokeAllSessionsForUser, revokeSession, touchSession, claimSecurityLink } from "@/lib/db/repositories/sessions.repository";
+import { sessionIdleSeconds, sessionState, revokeAllSessionsForUser, revokeSession, touchSession, claimSecurityLink } from "@/lib/db/repositories/sessions.repository";
 import { findUserById, securityLockUser, listUserIdsWithRole } from "@/lib/db/repositories/users.repository";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { notify } from "@/server/notifications/notify";
@@ -24,11 +24,9 @@ export interface CurrentSession {
 // cache(): layouts and pages each call this; it runs once per request.
 export const getCurrentSession = cache(() => loadCurrentSession(true));
 
-// v1.8.0 (owner): sign out after this many minutes without activity, for
-// users and IT admins. The Super Admin is never signed out for inactivity
-// (only by the 12-hour limit or by signing out).
+// v1.8.0 (owner): sign out after this many minutes without activity.
+// v1.12.1 (owner, D-158): for everyone, the Super Admin included.
 export const IDLE_MINUTES_FALLBACK = 30;
-export const isIdleExempt = (roles: readonly string[]) => roles.includes("SUPER_ADMIN");
 
 export async function idleLimitMinutes(): Promise<number> {
   return getNumberSetting("auth.idle_timeout_minutes").catch(() => IDLE_MINUTES_FALLBACK);
@@ -61,9 +59,12 @@ async function loadCurrentSession(touch: boolean): Promise<CurrentSession | { se
   const user = await findUserById(payload.uid);
   if (!user || !user.active || user.lockedSecondsRemaining > 0) return null;
   if (user.isBreakGlass && user.breakGlassSecondsRemaining <= 0) return null;
-  const exempt = isIdleExempt(user.roles);
-  const limitSeconds = exempt ? null : (await idleLimitMinutes()) * 60;
-  if (limitSeconds !== null && idleSeconds >= limitSeconds) return null;
+  const limitSeconds = (await idleLimitMinutes()) * 60;
+  if (idleSeconds >= limitSeconds) {
+    // Ended for good: coming back later never revives it (D-158).
+    await revokeSession(payload.sid, IDLE_REASON);
+    return null;
+  }
   if (touch) await touchSession(payload.sid);
   const session: CurrentSession = {
     sessionId: payload.sid,
@@ -81,6 +82,26 @@ async function loadCurrentSession(touch: boolean): Promise<CurrentSession | { se
     },
   };
   return touch ? session : { session, idleSecondsLeft: limitSeconds === null ? null : limitSeconds - idleSeconds };
+}
+
+// v1.12.1 (D-158): why the person was signed out, for the signed-out page.
+export const IDLE_REASON = "IDLE_TIMEOUT";
+export type EndReason = "idle" | "expired" | "signed_out" | "revoked" | "deactivated" | "locked" | "unknown";
+
+export async function sessionEndReason(): Promise<EndReason | null> {
+  const token = (await cookies()).get(SESSION_COOKIE_NAME)?.value;
+  if (!token) return null;
+  const payload = verifySessionToken(token);
+  if (!payload) return "unknown";
+  const [state, user] = await Promise.all([sessionState(payload.sid, payload.uid), findUserById(payload.uid)]);
+  if (!user || !user.active) return "deactivated";
+  if (user.lockedSecondsRemaining > 0) return "locked";
+  if (!state) return "unknown";
+  if (state.revoked) return state.revokeReason === IDLE_REASON ? "idle" : state.revokeReason === "SIGN_OUT" ? "signed_out" : "revoked";
+  if (state.expired) return "expired";
+  const idle = await sessionIdleSeconds(payload.sid, payload.uid);
+  if (idle !== null && idle >= (await idleLimitMinutes()) * 60) return "idle";
+  return null; // still live
 }
 
 export async function signOut(sessionId: string, userId: number, ipAddress: string | null): Promise<void> {

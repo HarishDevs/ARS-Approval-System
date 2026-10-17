@@ -111,7 +111,7 @@ test("the Super Admin hides a page and makes another view-only", async ({ page, 
   await sql("DELETE FROM page_access_rules");
 });
 
-test("inactivity signs users and IT admins out, never the Super Admin", async ({ page, context }) => {
+test("inactivity signs everyone out (the Super Admin too, v1.12.1) and the signed-out page says why", async ({ page, context }) => {
   await sql("INSERT INTO system_settings (setting_key, setting_group, value_type, encrypted, value) VALUES ('auth.idle_timeout_minutes', 'AUTHENTICATION', 'NUMBER', FALSE, '5') ON DUPLICATE KEY UPDATE value = '5'");
   await as(context, "E2E_REQ");
   const status = await (await page.request.get("/api/auth/status")).json();
@@ -121,14 +121,20 @@ test("inactivity signs users and IT admins out, never the Super Admin", async ({
   // Looking at the status doesn't count as activity.
   const requester = await userIdByLogin("E2E_REQ");
   await sql("UPDATE user_sessions SET last_seen_at = DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 6 MINUTE) WHERE user_id = ? AND revoked_at IS NULL", [requester]);
-  expect(await (await page.request.get("/api/auth/status")).json()).toMatchObject({ signedIn: false });
-  await page.goto("/users");
-  await expect(page).toHaveURL(/\/login/);
+  expect(await (await page.request.get("/api/auth/status")).json()).toMatchObject({ signedIn: false, reason: "idle" });
+  await page.goto("/users/queue");
+  await expect(page).toHaveURL(/\/signed-out\?reason=idle/);
+  await expect(page.getByRole("heading", { name: "Signed out after inactivity" })).toBeVisible();
+  await expect(page.getByText(/no activity for 5 minutes/)).toBeVisible();
+  await expect(page.getByRole("link", { name: "Sign in again" })).toHaveAttribute("href", "/login?next=%2Fusers");
+  // The ended session stays ended even if activity starts again.
+  await sql("UPDATE user_sessions SET last_seen_at = CURRENT_TIMESTAMP WHERE user_id = ?", [requester]);
+  expect(await (await page.request.get("/api/auth/status")).json()).toMatchObject({ signedIn: false, reason: "idle" });
 
   await as(context, "E2E_SUPER");
   const superAdmin = await userIdByLogin("E2E_SUPER");
+  expect((await (await page.request.get("/api/auth/status")).json()).idleSecondsLeft).toBeGreaterThan(200);
   await sql("UPDATE user_sessions SET last_seen_at = DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 6 MINUTE) WHERE user_id = ? AND revoked_at IS NULL", [superAdmin]);
-  expect(await (await page.request.get("/api/auth/status")).json()).toEqual({ signedIn: true, idleSecondsLeft: null });
   await page.goto("/superadmin");
-  await expect(page).toHaveURL(/\/superadmin$/);
+  await expect(page).toHaveURL(/\/signed-out\?reason=idle/);
 });

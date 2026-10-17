@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { PageHeader } from "@/features/shell/PageHeader";
+import { AnalyticsPicker } from "@/features/analytics/AnalyticsPicker";
 import { BarList, KpiCard, LineChart, hoursText } from "@/features/analytics/Charts";
 import { BOARDS, departmentAlerts, forecastNext, moduleAlerts, monthLabel, agingBuckets, type Alert, type BoardKey } from "@/server/analytics/center";
 import { comparisonPeriod, indiaToday, PERIOD_LABEL, resolvePeriod, type CompareMode, type PeriodKey } from "@/server/analytics/periods";
@@ -37,26 +38,17 @@ export function boardHref(base: Base, query: Query, changes: Query): string {
   return text ? `${base}?${text}` : base;
 }
 
-export function BoardTabs({ base, board, query }: { base: Base; board: BoardKey; query: Query }) {
-  // Filters carry over between boards (scope, period, comparison).
-  const carry = { scope: query.scope, period: query.period, from: query.from, to: query.to, compare: query.compare };
+// v1.12.1 (owner): the dashboard and whose numbers are chosen from
+// dropdowns. Scope, period and comparison carry over between dashboards.
+export function BoardPicker({ base, board, query, scopes, scope }: { base: Base; board: BoardKey; query: Query; scopes: Scope[]; scope: Scope }) {
+  const carry = { scope: scope.kind, period: query.period, from: query.from, to: query.to, compare: query.compare };
   return (
-    <nav aria-label="Dashboards" className="-mx-4 mb-4 overflow-x-auto border-b border-line px-4 sm:mx-0 sm:px-0">
-      <ul className="flex min-w-max gap-1">
-        {BOARDS.map((item) => (
-          <li key={item.key}>
-            <Link
-              href={boardHref(base, carry, { board: item.key })}
-              aria-current={item.key === board ? "page" : undefined}
-              title={item.what}
-              className={`-mb-px block whitespace-nowrap border-b-2 px-3 py-2.5 text-label ${item.key === board ? "border-primary-600 font-semibold text-primary-700" : "border-transparent text-ink-muted hover:border-line hover:text-ink"}`}
-            >
-              {item.label}
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </nav>
+    <AnalyticsPicker
+      boards={BOARDS.map((item) => ({ value: item.key, label: item.label, href: boardHref(base, carry, { board: item.key }) }))}
+      board={board}
+      scopes={scopes.map((item) => ({ value: item.kind, label: item.label, href: boardHref(base, { ...carry, board }, { scope: item.kind }) }))}
+      scope={scope.kind}
+    />
   );
 }
 
@@ -153,7 +145,6 @@ export async function CenterScreen({ base, board, query, scope, scopes, viewer, 
   const buckets = agingBuckets(await getSettingValue("analytics.aging_days").catch(() => null));
   const carry: Query = { board, scope: scope.kind, period: period.key, from: query.from, to: query.to, compare: query.compare };
   const meta = BOARDS.find((item) => item.key === board)!;
-  const chip = (active: boolean) => `rounded-full border px-3 py-1 text-label ${active ? "border-primary-600 bg-primary-50 font-semibold text-primary-700" : "border-line text-ink-muted hover:bg-surface-muted"}`;
   const exportHref = (kind: string) => `/api/analytics/export?${new URLSearchParams(Object.entries({ ...carry, kind, base: base === "/admin/analytics" ? "admin" : "users", q: query.q, sort: query.sort }).filter((entry): entry is [string, string] => Boolean(entry[1]))).toString()}`;
 
   return (
@@ -163,16 +154,8 @@ export async function CenterScreen({ base, board, query, scope, scopes, viewer, 
           How these are worked out
         </Link>
       </PageHeader>
-      <BoardTabs base={base} board={board} query={query} />
+      <BoardPicker base={base} board={board} query={query} scopes={scopes} scope={scope} />
       <p className="mb-3 text-label text-ink-muted">{meta.what}</p>
-
-      <nav aria-label="Whose numbers" className="mb-3 flex flex-wrap gap-2">
-        {scopes.map((item) => (
-          <Link key={item.kind} href={boardHref(base, carry, { scope: item.kind })} className={chip(item.kind === scope.kind)} aria-current={item.kind === scope.kind ? "page" : undefined}>
-            {item.label}
-          </Link>
-        ))}
-      </nav>
 
       <form method="get" className="card mb-6 flex flex-wrap items-end gap-3 px-4 py-3" aria-label="Filters">
         <input type="hidden" name="board" value={board} />

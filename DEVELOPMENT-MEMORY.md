@@ -415,6 +415,15 @@
 - Applies to users and IT admins; the Super Admin is exempt (12-hour limit only).
 - The browser's session check no longer counts as activity (it used to keep an open tab signed in for ever). Activity in the page is reported at the next minute's check.
 - A warning with "Stay signed in" 2 minutes before. | Owner; Claude, 15 Oct 2026 |
+| D-158 | 17 Oct 2026 | **Inactivity sign-out for everyone, with a signed-out page (owner, v1.12.1):** supersedes the Super Admin exemption of v1.8.0.
+- After the set minutes without activity (default 30), any session is ended for good (revoked as IDLE_TIMEOUT).
+- The next visit, or the open page itself, goes to `/signed-out?reason=…`, which explains why and links to sign in again.
+- `/api/auth/status` reports the reason for the browser's own session only. | Owner; Claude, 17 Oct 2026 |
+| D-159 | 17 Oct 2026 | **Analytics pickers are dropdowns (owner, v1.12.1):** the dashboard and "Whose numbers" are selects that open the choice at once (D-156 otherwise unchanged). | Owner; Claude, 17 Oct 2026 |
+| D-160 | 17 Oct 2026 | **Google Calendar across domains (owner, v1.12.1):**
+- The Google OAuth consent screen must be External, and published, so people from every ARS domain can connect.
+- Internal gives "Error 403: org_internal".
+- No domain restriction in ARS. | Owner; Claude, 17 Oct 2026 |
 | D-157 | 16 Oct 2026 | **Analytics Center metric rules (v1.12.0):**
 - **Rates:** never divide by zero; with nothing to divide by they show "—".
 - **Completion rates are cohorts:** of what was raised or created in the period (cancelled and withdrawn left out), the share finished by now.
@@ -528,6 +537,16 @@
 | Q-024 | **Google Calendar (v1.11.0):** create the Google Cloud OAuth client (Web application, redirect URI in DEPLOYMENT Part Q). Internal or External consent screen? If External, publish it: Testing mode limits access to 7 days. | Before enabling the integration | Open, waiting on the owner (16 Oct 2026) |
 
 ## 5. Work log (newest first)
+
+### 17 Oct 2026 (v1.12.1: owner follow-ups)
+- **Analytics:** board tabs and scope chips → dropdowns (`features/analytics/AnalyticsPicker.tsx`); tests updated.
+- **Forced sign-out page (D-158):**
+  - `server/auth/session.ts`: nobody exempt; idle sessions revoked; `sessionEndReason`;
+  - `/signed-out` page;
+  - guard redirect with the reason; SessionWatch goes to the page;
+  - `/api/auth/status` gives the reason;
+  - E2E covers the requester and the Super Admin.
+- **Google "Error 403: org_internal" (D-160):** consent screen must be External; guidance added to the Super Admin page, DEPLOYMENT Part Q and the calendar report. Owner action in Google Cloud.
 
 ### 16 Oct 2026 (v1.12.0: Analytics Center)
 - **Owner brief:** a complete Analytics Center (D-156, D-157).

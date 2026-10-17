@@ -25,9 +25,10 @@ const BOARD_CHECKS: [string, RegExp | string][] = [
 test("IT opens every dashboard from the one Analytics page; the period carries over", async ({ page, context }) => {
   await as(context, "E2E_ADMIN");
   await page.goto("/users/analytics");
-  const tabs = page.getByRole("navigation", { name: "Dashboards" });
-  await expect(tabs.getByRole("link")).toHaveCount(9);
-  await expect(tabs.getByRole("link", { name: "Executive overview" })).toHaveAttribute("aria-current", "page");
+  // v1.12.1: dashboards and scopes are dropdowns.
+  const boards = page.getByLabel("Dashboard", { exact: true });
+  await expect(boards.locator("option")).toHaveCount(9);
+  await expect(boards).toHaveValue("overview");
   await expect(page.getByText("Tasks created", { exact: true }).first()).toBeVisible();
   await expect(page.getByText(/Overdue acknowledgements: not available/)).toBeVisible();
   await expect(page.getByTestId("center-refreshed")).toContainText("As of");
@@ -36,9 +37,9 @@ test("IT opens every dashboard from the one Analytics page; the period carries o
   await expect(page).toHaveURL(/period=last_quarter/);
   await expect(page.getByText(/Previous quarter/).first()).toBeVisible();
   for (const [tab, check] of BOARD_CHECKS) {
-    await page.getByRole("navigation", { name: "Dashboards" }).getByRole("link", { name: tab, exact: true }).click();
-    await expect(page.getByRole("navigation", { name: "Dashboards" }).getByRole("link", { name: tab, exact: true })).toHaveAttribute("aria-current", "page");
+    await page.getByLabel("Dashboard", { exact: true }).selectOption({ label: tab });
     await expect(page).toHaveURL(/period=last_quarter/);
+    await expect(page.getByLabel("Dashboard", { exact: true }).locator("option:checked")).toHaveText(tab);
     await expect(page.getByText(check).first()).toBeVisible();
   }
 });
@@ -65,7 +66,7 @@ test("employees: search, sort and a CSV with the same scope and period", async (
 test("a requester sees only their own row; department analytics and other scopes are refused", async ({ page, context }) => {
   await as(context, "E2E_REQ");
   await page.goto("/users/analytics?board=employees&scope=ORGANISATION");
-  await expect(page.getByRole("navigation", { name: "Whose numbers" }).getByRole("link", { name: "Whole organisation" })).toHaveCount(0);
+  await expect(page.getByLabel("Whose numbers").locator("option", { hasText: "Whole organisation" })).toHaveCount(0);
   await expect(page.getByTestId("employee-table").locator("tbody tr")).toHaveCount(1);
   await page.goto("/users/analytics?board=departments");
   await expect(page.getByText(/Department analytics are for heads of department/)).toBeVisible();
@@ -76,8 +77,17 @@ test("a requester sees only their own row; department analytics and other scopes
   expect(await own.text()).not.toContain("Scope: Whole organisation");
 });
 
+test("choosing whose numbers from the dropdown keeps the dashboard", async ({ page, context }) => {
+  await as(context, "E2E_ADMIN");
+  await page.goto("/users/analytics?board=tasks&scope=ORGANISATION");
+  await page.getByLabel("Whose numbers").selectOption({ label: "My requests" });
+  await expect(page).toHaveURL(/scope=MINE/);
+  await expect(page).toHaveURL(/board=tasks/);
+  await expect(page.getByText("Delivery against due dates").first()).toBeVisible();
+});
+
 test("older approval links still open Approval analytics", async ({ page, context }) => {
   await as(context, "E2E_ADMIN");
   await page.goto("/users/analytics?scope=ORGANISATION&status=OPEN");
-  await expect(page.getByRole("navigation", { name: "Dashboards" }).getByRole("link", { name: "Approval analytics" })).toHaveAttribute("aria-current", "page");
+  await expect(page.getByLabel("Dashboard", { exact: true })).toHaveValue("approvals");
 });

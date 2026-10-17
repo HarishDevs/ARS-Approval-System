@@ -1,5 +1,12 @@
 # Release notes
 
+## v1.12.1 (17 Oct 2026): analytics dropdowns, forced sign-out page, Google Calendar for every domain (owner)
+- **Analytics:** the dashboard and "Whose numbers" are now two dropdowns instead of a scrolling row of tabs and chips. Choosing one opens it straight away; the period and comparison carry over.
+- **Sign-out after 30 minutes without activity applies to everyone, the Super Admin included** (D-158).
+  - When it happens, the page goes to a new **Signed out** page that says why and has **Sign in again** (back to the same space). The reasons it can show: inactivity, the 12-hour limit, signed out on this device, ended from another device or by IT, account switched off, account locked.
+  - An ended session stays ended: coming back to the tab doesn't revive it.
+- **Google Calendar for people in every ARS domain:** "Error 403: org_internal" is Google refusing accounts outside the project's own Workspace because the consent screen is **Internal**. Set it to **External** and publish it (Google Auth Platform → Audience). The steps are now on the Super Admin Google Calendar page and in DEPLOYMENT Part Q. No code change was needed for other domains: ARS doesn't restrict which Google account a person connects.
+
 ## v1.12.0 (16 Oct 2026): the Analytics Center
 **One Analytics page, nine dashboards as tabs:**
 - Executive overview

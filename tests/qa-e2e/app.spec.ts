@@ -85,7 +85,9 @@ test("QA-AUTH-01 sign out ends the session on the server; Back can't show protec
   await page.goto("/users");
   note("QA-AUTH-01", { sessionRevoked: revoked, oldCookieUrl: new URL(page.url()).pathname });
   expect(revoked).toBe(1);
-  await expect(page).toHaveURL(/\/login/);
+  // v1.12.1 (D-158): an ended session lands on the signed-out page, which says why.
+  await expect(page).toHaveURL(/\/signed-out\?reason=signed_out/);
+  await expect(page.getByRole("heading", { name: "You signed out" })).toBeVisible();
 });
 
 test("QA-AUTH-02 a deactivated person is locked out at once", async ({ page, context }) => {
@@ -96,7 +98,8 @@ test("QA-AUTH-02 a deactivated person is locked out at once", async ({ page, con
   try {
     const response = await page.goto("/users");
     note("QA-AUTH-02", { status: response?.status(), url: new URL(page.url()).pathname });
-    expect(new URL(page.url()).pathname === "/login" || response?.status() === 404).toBe(true);
+    expect(["/login", "/signed-out"].includes(new URL(page.url()).pathname) || response?.status() === 404).toBe(true);
+    if (new URL(page.url()).pathname === "/signed-out") await expect(page.getByRole("heading", { name: "Your account isn't active" })).toBeVisible();
     await expect(page.getByRole("heading", { name: /Welcome back, Harini/ })).toHaveCount(0);
   } finally {
     await sql("UPDATE users SET active = TRUE WHERE login_id = 'E2E_HOD'");
@@ -115,7 +118,7 @@ test("QA-AUTH-03 a forged or tampered session cookie is not accepted", async ({ 
   const superVisible = await page.getByRole("heading", { name: "Super Admin" }).count();
   note("QA-AUTH-03", { landedOn: url, superAdminShown: superVisible });
   expect(superVisible).toBe(0);
-  expect(url).toMatch(/\/login|\/superadmin/);
+  expect(url).toMatch(/\/login|\/signed-out|\/superadmin/);
   await expect(page.getByText(/Providers & security/)).toHaveCount(0);
 });
 

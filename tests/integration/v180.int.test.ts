@@ -8,7 +8,7 @@ import { loadCustomConfig, saveCustomConfig } from "@/server/approvals/custom-co
 import { listAccessRules, rulesForPerson, setAccessRule } from "@/lib/db/repositories/page-access.repository";
 import { effectiveLevel } from "@/server/authorization/pages";
 import { sessionIdleSeconds } from "@/lib/db/repositories/sessions.repository";
-import { idleLimitMinutes, isIdleExempt } from "@/server/auth/session";
+import { idleLimitMinutes } from "@/server/auth/session";
 import { createDepartment, createUser, pendingTaskKey } from "./helpers";
 
 // v1.8.0 on real MySQL: the approved lists, the custom approval set-up as
@@ -187,10 +187,8 @@ describe("Page access rules", () => {
 });
 
 describe("Inactivity sign-out", () => {
-  it("defaults to 30 minutes; the Super Admin is exempt; idle time is measured from the last use", async () => {
+  it("defaults to 30 minutes for everyone (v1.12.1); idle time is measured from the last use", async () => {
     expect(await idleLimitMinutes()).toBe(30);
-    expect(isIdleExempt(["USER", "SUPER_ADMIN"])).toBe(true);
-    expect(isIdleExempt(["USER", "IT_ADMIN"])).toBe(false);
     const sid = crypto.randomUUID();
     await getDbPool().query(
       "INSERT INTO user_sessions (id, user_id, device_id, auth_method, expires_at, last_seen_at) VALUES (?, ?, NULL, 'GOOGLE', DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 1 HOUR), DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 31 MINUTE))",

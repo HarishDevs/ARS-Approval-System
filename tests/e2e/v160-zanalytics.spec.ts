@@ -12,8 +12,7 @@ test("IT sees the organisation; filters and periods apply; every chart has a tab
   await as(context, "E2E_ADMIN");
   await page.goto("/users/analytics?board=approvals"); // v1.12.0: Approval analytics is one of the boards
   await expect(page.getByRole("heading", { name: "Analytics", exact: true })).toBeVisible();
-  const scopes = page.getByRole("navigation", { name: "Whose numbers" });
-  await expect(scopes.getByRole("link", { name: "Whole organisation" })).toHaveAttribute("aria-current", "page");
+  await expect(page.getByLabel("Whose numbers")).toHaveValue("ORGANISATION");
   await expect(page.getByText("Open requests", { exact: true })).toBeVisible();
   await expect(page.getByText(/vs previous period|No earlier figure to compare/).first()).toBeVisible();
   await page.getByText("Show as a table").first().click();
@@ -32,10 +31,10 @@ test("IT sees the organisation; filters and periods apply; every chart has a tab
 test("a requester sees only their own numbers; the organisation scope is refused", async ({ page, context }) => {
   await as(context, "E2E_REQ");
   await page.goto("/users/analytics?scope=ORGANISATION");
-  const scopes = page.getByRole("navigation", { name: "Whose numbers" });
-  await expect(scopes.getByRole("link", { name: "Whole organisation" })).toHaveCount(0);
+  const scopes = page.getByLabel("Whose numbers");
+  await expect(scopes.locator("option", { hasText: "Whole organisation" })).toHaveCount(0);
   // Falls back to one of their own scopes.
-  await expect(scopes.locator('[aria-current="page"]')).toHaveText(/My requests|My approvals/);
+  await expect(scopes).toHaveValue(/^(MINE|APPROVALS)$/);
   await expect(page.getByLabel("Raiser's department")).toHaveCount(0);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload();

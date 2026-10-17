@@ -92,7 +92,11 @@ export default async function GoogleCalendarAdminPage() {
       <Card title="Google Cloud set-up" className="mb-6">
         <ol className="list-decimal space-y-1 pl-5 text-label">
           <li>Google Cloud Console → APIs &amp; Services → Library → enable <strong>Google Calendar API</strong>.</li>
-          <li>OAuth consent screen: add the scopes below. While the app is in &ldquo;Testing&rdquo;, only listed test users can connect and their access lapses after 7 days.</li>
+          <li>
+            OAuth consent screen (Google Auth Platform → Audience): set <strong>User type: External</strong>. ARS people use more than one domain; with &ldquo;Internal&rdquo; everyone outside the project&apos;s own
+            Workspace gets &ldquo;Error 403: org_internal&rdquo;. Add the scopes below. In &ldquo;Testing&rdquo; only listed test users can connect (access lapses after 7 days): <strong>Publish app</strong> to
+            open it to everyone.
+          </li>
           <li>Credentials → Create OAuth client ID → Web application. Authorised redirect URI, exactly:</li>
         </ol>
         <p className="mt-2 break-all rounded bg-surface-muted px-3 py-2 font-mono text-caption" data-testid="gcal-redirect">
