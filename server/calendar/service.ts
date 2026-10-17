@@ -328,7 +328,7 @@ export async function chooseCalendar(actor: Actor, calendarId: string): Promise<
   const calendars = await myCalendars(actor.id);
   if (!calendars.ok) return calendars;
   const chosen = calendars.value.find((calendar) => calendar.id === calendarId);
-  if (!chosen) return fail("Choose one of your calendars you can edit.");
+  if (!chosen) return fail("Choose one of the calendars you own.");
   if (chosen.id === connection.calendarId || (chosen.primary && connection.calendarId === "primary")) return ok(undefined);
   await stopConnectionChannel(connection, (await loadIntegration()).credentials);
   await resetConnectionState(connection.id); // links pointed at the old calendar

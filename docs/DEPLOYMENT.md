@@ -501,7 +501,7 @@ Optional. Nothing changes until the Super Admin enables it.
    - APIs & Services → Library → **Google Calendar API** → **Enable**.
    - **OAuth consent screen** (Google Auth Platform):
      - **Audience → User type: External.** ARS people sign in from more than one domain (arssteels.com, arsenergy.co.in, …). **Internal** lets in only the project's own Workspace; everyone else gets **"Error 403: org_internal"**. If it was created as Internal: Audience → **Make external**.
-     - **Scopes:** `openid`, `email`, `.../auth/calendar.events`, `.../auth/calendar.calendarlist.readonly`.
+     - **Scopes:** `openid`, `email`, `.../auth/calendar.events.owned` (calendars the person owns only), `.../auth/calendar.calendarlist.readonly`.
      - **Publishing:**
        - In "Testing", only listed test users (up to 100) can connect, for 7 days at a time.
        - **Publish app** to open it to everyone.

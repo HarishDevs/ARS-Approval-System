@@ -415,6 +415,11 @@
 - Applies to users and IT admins; the Super Admin is exempt (12-hour limit only).
 - The browser's session check no longer counts as activity (it used to keep an open tab signed in for ever). Activity in the page is reported at the next minute's check.
 - A warning with "Stay signed in" 2 minutes before. | Owner; Claude, 15 Oct 2026 |
+| D-161 | 17 Oct 2026 | **Public home page, privacy policy and terms (owner, v1.12.2):**
+- `/`, `/privacy` and `/terms` are public, for Google OAuth verification. `/` sends signed-in people to `/users`.
+- The privacy policy must stay true to what the calendar sync does (scopes, stored fields, encryption, revocation) and keep the Limited Use statement. Change the two together.
+- WEB-07 (no invented legal pages) is superseded: the pages state facts about the app; the owner approves the wording. | Owner; Claude, 17 Oct 2026 |
+| D-162 | 17 Oct 2026 | **Calendar scope narrowed to calendar.events.owned (v1.12.2):** least privilege for verification. Events list, insert, patch, delete and watch all accept it (Google reference, checked 17 Oct 2026); the calendar picker uses `minAccessRole=owner`. | Claude, 17 Oct 2026 |
 | D-158 | 17 Oct 2026 | **Inactivity sign-out for everyone, with a signed-out page (owner, v1.12.1):** supersedes the Super Admin exemption of v1.8.0.
 - After the set minutes without activity (default 30), any session is ended for good (revoked as IDLE_TIMEOUT).
 - The next visit, or the open page itself, goes to `/signed-out?reason=…`, which explains why and links to sign in again.
@@ -535,8 +540,22 @@
 | Q-022 | **Resubmit after the amount or conditions change** (audit AUD-02, runtime-confirmed: a skipped higher DoA level stays skipped): restart from the earliest affected step (recommended) or from the beginning? | Before V181-A1 | Open, waiting on the owner (16 Oct 2026) |
 | Q-023 | **Further owner decisions from the audit:** DR-01 join rejection semantics; DR-02 no approval without a human decision; DR-03 controls on IT changing approvers' contact details; DR-04 Super Admin inactivity limit; DR-05 what an expired approval means; DR-06 retention durations; DR-08 off-site encrypted backups and RTO/RPO (see `application-audit/12_DECISION_REGISTER.md`) | Before Phase B and D | Open, waiting on the owner (16 Oct 2026) |
 | Q-024 | **Google Calendar (v1.11.0):** create the Google Cloud OAuth client (Web application, redirect URI in DEPLOYMENT Part Q). Internal or External consent screen? If External, publish it: Testing mode limits access to 7 days. | Before enabling the integration | Open, waiting on the owner (16 Oct 2026) |
+| Q-025 | **Google OAuth verification (v1.12.2):**
+- Use a separate Cloud project from the Power BI site? Its name and logo show on that project's consent screens.
+- Support email: a Google Group or the filing account (itadmin@ is an alias).
+- Who approves the privacy policy and terms? | Before filing | Open, waiting on the owner (17 Oct 2026) |
 
 ## 5. Work log (newest first)
+
+### 17 Oct 2026 (v1.12.2: Google OAuth verification readiness)
+- **Owner:** asked for a verification-ready filing guide.
+- **App:**
+  - public `/` home, `/privacy` (with Limited Use) and `/terms`, public in middleware; links on the sign-in page;
+  - 120 px logo;
+  - scope narrowed to `calendar.events.owned` with an owner-only calendar list (D-161, D-162).
+- **Tests:** `v1122-public.spec.ts`; the viewport check covers the new pages and caught the privacy page overflowing at 360 px (long scope names), now fixed; calendar unit and integration tests are updated (scope, owner-only list).
+- **Guide:** a shared doc, "Google OAuth Verification Filing Guide – ARS Approvals": checklist, Branding values, scope justifications, domain verification, video script, submission, rejections, open questions.
+- **Open questions (Q-025):** which Cloud project (shared with Power BI?), support email, policy sign-off.
 
 ### 17 Oct 2026 (v1.12.1: owner follow-ups)
 - **Analytics:** board tabs and scope chips → dropdowns (`features/analytics/AnalyticsPicker.tsx`); tests updated.

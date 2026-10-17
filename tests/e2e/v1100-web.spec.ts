@@ -19,7 +19,7 @@ const VIEWPORTS = [
 ];
 
 const PAGES: { who: string; paths: string[] }[] = [
-  { who: "", paths: ["/login", "/forgot-password"] },
+  { who: "", paths: ["/", "/privacy", "/terms", "/login", "/forgot-password", "/signed-out?reason=idle"] },
   {
     who: "E2E_REQ",
     paths: [

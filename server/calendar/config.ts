@@ -108,10 +108,13 @@ export function redirectUri(baseUrl: string | undefined): string | null {
   }
 }
 
-// Least privilege (brief §4): read and write events, list the person's
-// calendars to choose one, and the account email to show what is connected.
-export const SCOPES = ["openid", "email", "https://www.googleapis.com/auth/calendar.events", "https://www.googleapis.com/auth/calendar.calendarlist.readonly"] as const;
-export const REQUIRED_SCOPE = "https://www.googleapis.com/auth/calendar.events";
+// Least privilege (brief §4): read and write events ON CALENDARS THE PERSON
+// OWNS (v1.12.2, D-162: calendar.events.owned, narrower than calendar.events,
+// which covers every calendar they can see; every Calendar method the sync
+// uses accepts it), list their calendars to choose one, and the account
+// email to show what is connected.
+export const SCOPES = ["openid", "email", "https://www.googleapis.com/auth/calendar.events.owned", "https://www.googleapis.com/auth/calendar.calendarlist.readonly"] as const;
+export const REQUIRED_SCOPE = "https://www.googleapis.com/auth/calendar.events.owned";
 
 export function hasRequiredScope(granted: string): boolean {
   return granted.split(/\s+/).includes(REQUIRED_SCOPE);

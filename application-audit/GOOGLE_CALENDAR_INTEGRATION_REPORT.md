@@ -98,7 +98,7 @@
    - Scopes:
      - `openid`
      - `email`
-     - `https://www.googleapis.com/auth/calendar.events`
+     - `https://www.googleapis.com/auth/calendar.events.owned` (v1.12.2: narrowed from calendar.events; calendars the person owns only)
      - `https://www.googleapis.com/auth/calendar.calendarlist.readonly`
    - **External apps in "Testing" mode** allow only the listed test users, and their access expires after 7 days. People then see "Reauthorise". For everyone to use it, publish the app; Google may require verification for calendar scopes.
 4. **Credentials:** → Create credentials → OAuth client ID → **Web application**.

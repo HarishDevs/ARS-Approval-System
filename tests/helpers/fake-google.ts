@@ -34,7 +34,7 @@ export class FakeGoogle {
   calls: { method: string; path: string }[] = [];
   failures: { match: (method: string, path: string) => boolean; status: number; reason: string; times: number }[] = [];
   email = "person@example.com";
-  grantScope = "openid email https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.calendarlist.readonly";
+  grantScope = "openid email https://www.googleapis.com/auth/calendar.events.owned https://www.googleapis.com/auth/calendar.calendarlist.readonly";
 
   private cal(id: string): Map<string, Stored> {
     if (!this.calendars.has(id)) this.calendars.set(id, new Map());
@@ -111,7 +111,15 @@ export class FakeGoogle {
     if (!bearer || !this.accessTokens.has(bearer)) return apiError(401, "authError");
 
     const path = url.pathname.replace("/calendar/v3", "");
-    if (path === "/users/me/calendarList") return json(200, { items: [{ id: "person@example.com", summary: "Person", primary: true, accessRole: "owner" }, { id: "team@group.calendar.google.com", summary: "Team", accessRole: "writer" }] });
+    if (path === "/users/me/calendarList") {
+      const all = [
+        { id: "person@example.com", summary: "Person", primary: true, accessRole: "owner" },
+        { id: "team@group.calendar.google.com", summary: "Team", accessRole: "writer" },
+      ];
+      // Like Google: minAccessRole=owner leaves out calendars the person can only write to.
+      const ownersOnly = url.searchParams.get("minAccessRole") === "owner";
+      return json(200, { items: all.filter((item) => !ownersOnly || item.accessRole === "owner") });
+    }
     if (path === "/channels/stop") return new Response(null, { status: 204 });
     const match = /^\/calendars\/([^/]+)\/events(?:\/(watch|[^/]+))?$/.exec(path);
     if (!match) return apiError(404, "notFound");

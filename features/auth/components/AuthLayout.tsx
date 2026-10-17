@@ -51,6 +51,15 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
           <p className="mt-8 text-center text-body text-ink-muted">
             Need access? Contact IT Support: <span className="select-all font-medium text-ink"><MailLink address="itadmin@arssteels.co.in" /></span>
           </p>
+          {/* v1.12.2 (D-161): the policies, reachable before signing in. */}
+          <p className="mt-3 flex gap-4 text-caption">
+            <a href="/privacy" className="link">
+              Privacy policy
+            </a>
+            <a href="/terms" className="link">
+              Terms of use
+            </a>
+          </p>
         </div>
       </section>
     </main>

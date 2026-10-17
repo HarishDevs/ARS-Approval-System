@@ -25,11 +25,13 @@ describe("configuration", () => {
   });
   it("builds the consent URL with least-privilege scopes, offline access and the state", () => {
     const url = new URL(authUrl({ clientId: "c", redirectUri: "https://a.test/cb", state: "s1" }));
-    expect(url.searchParams.get("scope")).toBe("openid email https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.calendarlist.readonly");
+    expect(url.searchParams.get("scope")).toBe("openid email https://www.googleapis.com/auth/calendar.events.owned https://www.googleapis.com/auth/calendar.calendarlist.readonly");
     expect(url.searchParams.get("access_type")).toBe("offline");
     expect(url.searchParams.get("state")).toBe("s1");
     expect(redirectUri("https://approval.arssteels.net")).toBe("https://approval.arssteels.net/api/integrations/google-calendar/callback");
-    expect(hasRequiredScope("openid https://www.googleapis.com/auth/calendar.events")).toBe(true);
+    expect(hasRequiredScope("openid https://www.googleapis.com/auth/calendar.events.owned")).toBe(true);
+    // The broader scope alone isn't what the app asked for (D-162).
+    expect(hasRequiredScope("openid https://www.googleapis.com/auth/calendar.events")).toBe(false);
     expect(hasRequiredScope("openid email")).toBe(false);
   });
 });

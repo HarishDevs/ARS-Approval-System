@@ -1,5 +1,12 @@
 # Release notes
 
+## v1.12.2 (17 Oct 2026): ready for Google OAuth verification
+- **Public home page** at https://approval.arssteels.net/ for people who aren't signed in: what ARS Approvals is, who runs it, why it asks for Google Calendar access, and links to the policies. Signed-in people still go straight to their space.
+- **Privacy policy** (`/privacy`) and **terms of use** (`/terms`), public. The privacy policy describes exactly what the calendar sync reads, stores and writes, and carries Google's "Limited Use" statement. The sign-in page links to both. **Owner: have them approved before filing.**
+- **Narrower Google permission:** the calendar sync now asks for `calendar.events.owned` (calendars the person owns) instead of `calendar.events` (every calendar they can see). Every Calendar method the sync uses accepts it, and the calendar picker lists owned calendars only.
+- **Logo for Google's Branding page:** `/brand/ars-logo-120.png` (120 × 120).
+- **The filing guide** (a shared doc) gives the exact Branding values, the scope justifications to paste, domain verification in Cloudflare, the demo-video script and common rejection reasons.
+
 ## v1.12.1 (17 Oct 2026): analytics dropdowns, forced sign-out page, Google Calendar for every domain (owner)
 - **Analytics:** the dashboard and "Whose numbers" are now two dropdowns instead of a scrolling row of tabs and chips. Choosing one opens it straight away; the period and comparison carry over.
 - **Sign-out after 30 minutes without activity applies to everyone, the Super Admin included** (D-158).

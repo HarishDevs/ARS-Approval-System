@@ -15,6 +15,7 @@ import {
   editPersonalItem,
   finishConnect,
   handleNotification,
+  myCalendars,
   resolveConflict,
   saveConfiguration,
   setIntegrationEnabled,
@@ -110,7 +111,7 @@ describe("OAuth connection", () => {
   it("refuses a wrong nonce, another person's state, a reused state, and a denial", async () => {
     const started = await startConnect({ id: person, email: "p@example.com" });
     const state = started.ok ? new URL(started.value.url).searchParams.get("state") : null;
-    expect(started.ok && new URL(started.value.url).searchParams.get("scope")).toContain("calendar.events");
+    expect(started.ok && new URL(started.value.url).searchParams.get("scope")).toContain("calendar.events.owned");
     expect(await finishConnect({ id: other }, { code: "good-code", state, error: null }, started.ok ? started.value.nonce : null)).toEqual({ ok: false, error: "STATE" });
     expect(await finishConnect({ id: person }, { code: "good-code", state, error: null }, "forged-nonce")).toEqual({ ok: false, error: "STATE" });
     const again = await startConnect({ id: person, email: "p@example.com" });
@@ -132,6 +133,9 @@ describe("OAuth connection", () => {
     const processed = await processDueJobs({ budgetMs: 20_000, maxJobs: 10, connectionId });
     expect(processed.done).toBe(2);
     expect((await connectionByUser(person))!.channelId).toBeTruthy();
+    // v1.12.2 (D-162): only calendars the person owns are offered (the scope covers no others).
+    const calendars = await myCalendars(person);
+    expect(calendars.ok && calendars.value.map((calendar) => calendar.id)).toEqual(["person@example.com"]);
   });
 });
 

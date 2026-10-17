@@ -125,7 +125,7 @@ export interface CalendarListEntry {
 }
 
 export async function listCalendars(token: string): Promise<CalendarListEntry[]> {
-  const body = await call<{ items?: CalendarListEntry[] }>(`${API}/users/me/calendarList?minAccessRole=writer&maxResults=100`, { headers: auth(token) });
+  const body = await call<{ items?: CalendarListEntry[] }>(`${API}/users/me/calendarList?minAccessRole=owner&maxResults=100`, { headers: auth(token) });
   return (body.items ?? []).map((item) => ({ id: item.id, summary: item.summary, primary: item.primary, accessRole: item.accessRole }));
 }
 
