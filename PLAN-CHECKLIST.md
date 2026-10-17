@@ -305,6 +305,9 @@ Found during S8-06:
 - [x] S8-01b Go-live on GoDaddy with the owner, following docs/DEPLOYMENT.md (the owner is at the wizard's "Add secrets" step) (done 9 Oct 2026: live since 8 Oct 2026)
 - [x] S8-04 Update the three living files; commit and push (done 8 Oct 2026)
 
+## Session log — v1.12.3: Google connect errors (17 Oct 2026), planned before starting
+- [x] V1123-01 Clear SCOPE / NO_REFRESH messages; accept broader calendar grants; audit granted scope names; test (done 17 Oct 2026)
+
 ## Session log — v1.12.2: Google OAuth verification readiness (17 Oct 2026), planned before starting
 - [x] V1122-01 Public home page, privacy policy (Limited Use) and terms; links from sign-in (done 17 Oct 2026)
 - [x] V1122-02 Narrow the calendar scope to calendar.events.owned; owner-only calendar list (done 17 Oct 2026)

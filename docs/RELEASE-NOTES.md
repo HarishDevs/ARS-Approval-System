@@ -1,5 +1,11 @@
 # Release notes
 
+## v1.12.3 (17 Oct 2026): clearer Google Calendar connect errors
+- **Calendar boxes not ticked:** Google now shows each permission as a checkbox. If the calendar boxes aren't ticked, ARS says exactly which two to tick, instead of a generic message.
+- **Broader grant accepted:** a broader calendar permission granted on an earlier attempt (`calendar.events`) is accepted; before, it was refused as "no calendar access".
+- **No lasting access from Google:** shown separately, with how to fix it.
+- **Diagnosis:** the audit log records which permissions Google granted (names only, never tokens) when a connection fails.
+
 ## v1.12.2 (17 Oct 2026): ready for Google OAuth verification
 - **Public home page** at https://approval.arssteels.net/ for people who aren't signed in: what ARS Approvals is, who runs it, why it asks for Google Calendar access, and links to the policies. Signed-in people still go straight to their space.
 - **Privacy policy** (`/privacy`) and **terms of use** (`/terms`), public. The privacy policy describes exactly what the calendar sync reads, stores and writes, and carries Google's "Limited Use" statement. The sign-in page links to both. **Owner: have them approved before filing.**

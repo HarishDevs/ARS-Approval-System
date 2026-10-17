@@ -116,8 +116,19 @@ export function redirectUri(baseUrl: string | undefined): string | null {
 export const SCOPES = ["openid", "email", "https://www.googleapis.com/auth/calendar.events.owned", "https://www.googleapis.com/auth/calendar.calendarlist.readonly"] as const;
 export const REQUIRED_SCOPE = "https://www.googleapis.com/auth/calendar.events.owned";
 
+// Google may return a broader calendar scope the person granted earlier
+// (incremental consent) instead of the narrow one asked for; any scope that
+// covers writing events on their own calendars is enough.
+const COVERING_SCOPES = [REQUIRED_SCOPE, "https://www.googleapis.com/auth/calendar.events", "https://www.googleapis.com/auth/calendar"];
+
 export function hasRequiredScope(granted: string): boolean {
-  return granted.split(/\s+/).includes(REQUIRED_SCOPE);
+  const scopes = granted.split(/\s+/);
+  return COVERING_SCOPES.some((scope) => scopes.includes(scope));
+}
+
+// For diagnosis (audit only): the short names of the scopes Google granted.
+export function scopeNames(granted: string): string[] {
+  return granted.split(/\s+/).filter(Boolean).map((scope) => scope.replace("https://www.googleapis.com/auth/", "")).slice(0, 10);
 }
 
 export function authUrl(input: { clientId: string; redirectUri: string; state: string; loginHint?: string | null }): string {

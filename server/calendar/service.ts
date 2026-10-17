@@ -35,7 +35,7 @@ import {
   updateLink,
   type ItemRow,
 } from "@/lib/db/repositories/gcal.repository";
-import { authUrl, calendarConfigSchema, CLIENT_ID, hasRequiredScope, isValidTimezone, redirectUri, type CalendarConfig } from "@/server/calendar/config";
+import { authUrl, calendarConfigSchema, CLIENT_ID, hasRequiredScope, scopeNames, isValidTimezone, redirectUri, type CalendarConfig } from "@/server/calendar/config";
 import { eventIdFor, itemEvent, type ItemFields } from "@/server/calendar/events";
 import { accessTokenFor, loadIntegration, stopConnectionChannel } from "@/server/calendar/sync";
 import { processDueJobs } from "@/server/calendar/jobs";
@@ -262,13 +262,13 @@ export async function startConnect(user: { id: number; email: string }): Promise
   return ok({ url: authUrl({ clientId: credentials.clientId, redirectUri: redirect, state, loginHint: user.email }), nonce });
 }
 
-export type CallbackError = "DENIED" | "STATE" | "UNAVAILABLE" | "SCOPE" | "GOOGLE";
+export type CallbackError = "DENIED" | "STATE" | "UNAVAILABLE" | "SCOPE" | "NO_REFRESH" | "GOOGLE";
 
 // The callback: the state must be this person's, unused, unexpired, and
 // match the nonce cookie set in this browser when they started.
 export async function finishConnect(user: { id: number; sessionId?: string | null }, params: { code: string | null; state: string | null; error: string | null }, nonce: string | null): Promise<{ ok: true } | { ok: false; error: CallbackError }> {
-  const failed = async (error: CallbackError) => {
-    await recordAudit({ actorUserId: user.id, action: "GCAL_CONNECT_FAILED", entityType: "USER", entityId: user.id, result: "FAILURE", sessionId: user.sessionId ?? null, metadata: { reason: error } });
+  const failed = async (error: CallbackError, detail: Record<string, unknown> = {}) => {
+    await recordAudit({ actorUserId: user.id, action: "GCAL_CONNECT_FAILED", entityType: "USER", entityId: user.id, result: "FAILURE", sessionId: user.sessionId ?? null, metadata: { reason: error, ...detail } });
     return { ok: false as const, error };
   };
   if (!params.state || !nonce) return failed("STATE");
@@ -283,10 +283,14 @@ export async function finishConnect(user: { id: number; sessionId?: string | nul
   if (!person?.active) return failed("UNAVAILABLE");
   try {
     const tokens = await exchangeCode({ ...credentials, code: params.code, redirectUri: redirect });
-    if (!tokens.refresh_token || !hasRequiredScope(tokens.scope ?? "")) {
+    // Scope names only are recorded (never tokens), to tell an unticked
+    // calendar box from a missing refresh token.
+    const granted = { granted: scopeNames(tokens.scope ?? ""), refreshToken: Boolean(tokens.refresh_token) };
+    if (!hasRequiredScope(tokens.scope ?? "")) {
       if (tokens.refresh_token) await revokeToken(tokens.refresh_token);
-      return failed("SCOPE");
+      return failed("SCOPE", granted);
     }
+    if (!tokens.refresh_token) return failed("NO_REFRESH", granted);
     const saved = await saveConnection({
       userId: user.id,
       googleEmail: emailFromIdToken(tokens.id_token),

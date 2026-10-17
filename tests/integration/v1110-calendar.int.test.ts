@@ -122,6 +122,22 @@ describe("OAuth connection", () => {
     expect(Number(failures[0]!.n)).toBeGreaterThanOrEqual(4);
   });
 
+  it("unticked calendar boxes on Google's screen: refused as SCOPE, with the granted scope names (not tokens) audited", async () => {
+    const before = google.grantScope;
+    google.grantScope = "openid email https://www.googleapis.com/auth/calendar.calendarlist.readonly";
+    try {
+      expect(await connect(person, "p@example.com")).toEqual({ ok: false, error: "SCOPE" });
+      const [row] = await sql("SELECT metadata_json FROM audit_logs WHERE action = 'GCAL_CONNECT_FAILED' AND actor_user_id = ? ORDER BY id DESC LIMIT 1", [person]);
+      const metadata = typeof row!.metadata_json === "string" ? JSON.parse(row!.metadata_json) : row!.metadata_json;
+      expect(metadata).toMatchObject({ reason: "SCOPE", granted: ["openid", "email", "calendar.calendarlist.readonly"], refreshToken: true });
+      expect(JSON.stringify(metadata)).not.toContain(FAKE_REFRESH);
+      expect(google.calls.some((call) => call.path === "/revoke")).toBe(true);
+      expect(await connectionByUser(person)).toBeNull();
+    } finally {
+      google.grantScope = before;
+    }
+  });
+
   it("connects: tokens stored encrypted, primary calendar, first sync and channel queued", async () => {
     expect(await connect(person, "p@example.com")).toEqual({ ok: true });
     const connection = (await connectionByUser(person))!;

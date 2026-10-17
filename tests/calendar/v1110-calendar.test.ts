@@ -30,8 +30,9 @@ describe("configuration", () => {
     expect(url.searchParams.get("state")).toBe("s1");
     expect(redirectUri("https://approval.arssteels.net")).toBe("https://approval.arssteels.net/api/integrations/google-calendar/callback");
     expect(hasRequiredScope("openid https://www.googleapis.com/auth/calendar.events.owned")).toBe(true);
-    // The broader scope alone isn't what the app asked for (D-162).
-    expect(hasRequiredScope("openid https://www.googleapis.com/auth/calendar.events")).toBe(false);
+    // A broader scope granted earlier also covers the sync (incremental consent).
+    expect(hasRequiredScope("openid https://www.googleapis.com/auth/calendar.events")).toBe(true);
+    expect(hasRequiredScope("openid email https://www.googleapis.com/auth/calendar.calendarlist.readonly")).toBe(false);
     expect(hasRequiredScope("openid email")).toBe(false);
   });
 });

@@ -547,6 +547,16 @@
 
 ## 5. Work log (newest first)
 
+### 17 Oct 2026 (v1.12.3: Google connect errors)
+- **Owner test:** the consent screen is now External (the "unverified app" warning appears, as expected). One connect attempt ended in `error=SCOPE`; the redirect then landed on a local server that was no longer running (localhost:20011).
+- **Fix:**
+  - the SCOPE message names the two calendar checkboxes;
+  - NO_REFRESH is a separate case;
+  - `calendar.events` and `calendar` are also accepted (incremental consent);
+  - granted scope names are audited;
+  - integration test added.
+- **Guide:** the demo-video step mentions the warning and the checkboxes.
+
 ### 17 Oct 2026 (v1.12.2: Google OAuth verification readiness)
 - **Owner:** asked for a verification-ready filing guide.
 - **App:**
