@@ -415,6 +415,10 @@
 - Applies to users and IT admins; the Super Admin is exempt (12-hour limit only).
 - The browser's session check no longer counts as activity (it used to keep an open tab signed in for ever). Activity in the page is reported at the next minute's check.
 - A warning with "Stay signed in" 2 minutes before. | Owner; Claude, 15 Oct 2026 |
+| D-163 | 20 Oct 2026 | **File storage failures are named, not hidden (v1.12.4):**
+- A failed write to `UPLOAD_DIR` is classified (NOT_SET, NO_PERMISSION, MISSING, READ_ONLY, FULL, OTHER), logged with its code, and sent once a day as a Super Admin alert (FILE_STORAGE_FAILED).
+- People get a plain storage message with their input kept.
+- Super Admin Overview shows a File storage panel; `/api/health` reports storage ok or failed. | Owner report; Claude, 20 Oct 2026 |
 | D-161 | 17 Oct 2026 | **Public home page, privacy policy and terms (owner, v1.12.2):**
 - `/`, `/privacy` and `/terms` are public, for Google OAuth verification. `/` sends signed-in people to `/users`.
 - The privacy policy must stay true to what the calendar sync does (scopes, stored fields, encryption, revocation) and keep the Limited Use statement. Change the two together.
@@ -546,6 +550,18 @@
 - Who approves the privacy policy and terms? | Before filing | Open, waiting on the owner (17 Oct 2026) |
 
 ## 5. Work log (newest first)
+
+### 20 Oct 2026 (v1.12.4: upload failures)
+- **Owner report (screenshots):** a task with an .xlsx said "Couldn't reach the server"; a custom approval was submitted but its files "couldn't be saved". Both point to `UPLOAD_DIR` not being writable on the host.
+- **Why the task form blamed the connection:** `stageFiles` threw outside the action's try, so the generic message showed.
+- **Fix (D-163):**
+  - `server/attachments/storage.ts` (`checkStorage`, `classify`, `reportStorageFailure`);
+  - `readFiles` catches storage errors;
+  - request upload paths report them;
+  - Super Admin File storage panel; health `storage`;
+  - DEPLOYMENT troubleshooting row.
+- **Test:** `tests/integration/v1124-storage.int.test.ts` reproduces an unwritable folder. Docker Desktop wouldn't start locally, so the integration and E2E suites ran in CI only.
+- **Owner:** check File storage after publishing; set `UPLOAD_DIR` (Part C).
 
 ### 17 Oct 2026 (v1.12.3: Google connect errors)
 - **Owner test:** the consent screen is now External (the "unverified app" warning appears, as expected). One connect attempt ended in `error=SCOPE`; the redirect then landed on a local server that was no longer running (localhost:20011).

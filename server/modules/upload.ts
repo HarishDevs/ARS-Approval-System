@@ -2,6 +2,7 @@ import "server-only";
 import { filesFrom, prepareFiles } from "@/server/attachments/service";
 import { MAX_FILES_PER_UPLOAD } from "@/server/attachments/files";
 import { discardStaged, stageFiles, type StagedFile } from "@/server/modules/files";
+import { reportStorageFailure, STORAGE_USER_MESSAGE } from "@/server/attachments/storage";
 
 // v1.9.0: reads, checks and stages the files of a task or information form.
 // Server-only (never a Server Action itself): callers check access first.
@@ -22,7 +23,14 @@ export async function readFiles(formData: FormData, fieldKeys: readonly string[]
       await discardStaged(staged);
       return { ok: false, message: prepared.message };
     }
-    staged.push(...(await stageFiles(prepared.files, group.key)));
+    try {
+      staged.push(...(await stageFiles(prepared.files, group.key)));
+    } catch (error) {
+      // v1.12.4 (D-163): a storage failure is said plainly, not as a lost connection.
+      await discardStaged(staged);
+      await reportStorageFailure(error);
+      return { ok: false, message: STORAGE_USER_MESSAGE };
+    }
   }
   return { ok: true, staged };
 }

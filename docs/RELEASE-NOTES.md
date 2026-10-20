@@ -1,5 +1,12 @@
 # Release notes
 
+## v1.12.4 (20 Oct 2026): file uploads that fail now say why (owner report)
+- **Owner report:** attaching a file to a task failed with "Couldn't reach the server", and a custom approval was submitted but its files "couldn't be saved". Both happen when the server can't write to its upload folder (`UPLOAD_DIR`).
+- **Super Admin → Overview → File storage:** shows whether uploads work, the folder in use, and the cause with its fix (folder not set, missing, no permission, read-only or disk full).
+- **Health check:** `/api/health` now also reports `storage` (`ok` or `failed`).
+- **When storage fails:** forms say "Your files couldn't be stored on the server", and what was typed is kept. The task form no longer blames the connection. The Super Admin is alerted (at most once a day), and the server log has the exact error code.
+- **Owner action:** open Super Admin → Overview after publishing. If File storage is red, set `UPLOAD_DIR` to the Private Storage path (DEPLOYMENT Part C) and restart.
+
 ## v1.12.3 (17 Oct 2026): clearer Google Calendar connect errors
 - **Calendar boxes not ticked:** Google now shows each permission as a checkbox. If the calendar boxes aren't ticked, ARS says exactly which two to tick, instead of a generic message.
 - **Broader grant accepted:** a broader calendar permission granted on an earlier attempt (`calendar.events`) is accepted; before, it was refused as "no calendar access".

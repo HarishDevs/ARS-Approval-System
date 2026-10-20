@@ -118,7 +118,7 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
       )}
       {submitted && query.files === "failed" && (
         <p role="alert" className="mb-4 rounded-md border border-danger-200 bg-danger-50 px-3 py-2 text-label text-danger-600">
-          The request was submitted, but the files couldn&apos;t be saved. Add them again under Attachments.
+          The request was submitted, but the files couldn&apos;t be stored on the server. If file storage is the cause, IT has been told; add the files again under Attachments once it&apos;s fixed.
         </p>
       )}
       {view.changesComment && (

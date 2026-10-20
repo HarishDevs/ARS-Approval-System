@@ -13,6 +13,7 @@ import { existingFieldCounts, prepareFieldFiles, reportedFieldCounts, saveFieldF
 import { addCollaborators, collaboratorIdsFrom } from "@/server/approvals/collaborators";
 import { findRequest, findWorkflowVersion } from "@/lib/db/repositories/approvals.repository";
 import { logError } from "@/lib/logging/logger";
+import { isStorageError, reportStorageFailure, STORAGE_USER_MESSAGE } from "@/server/attachments/storage";
 import { deleteDraft } from "@/lib/db/repositories/drafts.repository";
 import { hitRateLimit } from "@/lib/db/repositories/jobs.repository";
 import { bulkApprove, BULK_MAX } from "@/server/approvals/bulk";
@@ -105,6 +106,7 @@ export async function submitRequestAction(_previous: ActionResult | null, formDa
     filesSaved = saved.ok && (await saveFieldFiles(requestId, fieldFiles.byField, me));
   } catch (error) {
     logError("submitRequestAction: attachments failed", error, { requestId });
+    if (isStorageError(error)) await reportStorageFailure(error, { requestId });
     filesSaved = false;
   }
   revalidatePath("/users");
@@ -146,6 +148,7 @@ export async function submitAmendmentAction(_previous: ActionResult | null, form
     filesSaved = (await addAttachments(requestId, files.files, me, { requesterOnly: true })).ok;
   } catch (error) {
     logError("submitAmendmentAction: attachments failed", error, { requestId });
+    if (isStorageError(error)) await reportStorageFailure(error, { requestId });
     filesSaved = false;
   }
   revalidatePath("/users");
@@ -260,6 +263,7 @@ export async function resubmitAction(_previous: ActionResult | null, formData: F
     else if (!(await saveFieldFiles(requestId, fieldFiles.byField, me))) filesNote = " Some files weren't attached; add them again below.";
   } catch (error) {
     logError("resubmitAction: attachments failed", error, { requestId });
+    if (isStorageError(error)) await reportStorageFailure(error, { requestId });
     filesNote = " The files couldn't be saved; add them again below.";
   }
   revalidatePath(`/users/requests/${requestId}`);
@@ -320,6 +324,10 @@ export async function addFilesAction(_previous: ActionResult | null, formData: F
     duplicates = result.value.duplicates;
   } catch (error) {
     logError("addFilesAction failed", error);
+    if (isStorageError(error)) {
+      await reportStorageFailure(error, { requestId });
+      return { ok: false, message: STORAGE_USER_MESSAGE };
+    }
     return { ok: false, message: "Couldn't save the files. Please try again." };
   }
   revalidatePath(`/users/requests/${requestId}`);

@@ -11,6 +11,7 @@ import { builderSpecSchema } from "@/server/workflows/builder";
 import { addAttachments, filesFrom, prepareFiles } from "@/server/attachments/service";
 import { addCollaborators, collaboratorIdsFrom, removeCollaborator } from "@/server/approvals/collaborators";
 import { logError } from "@/lib/logging/logger";
+import { isStorageError, reportStorageFailure } from "@/server/attachments/storage";
 import { loadCustomConfig } from "@/server/approvals/custom-config";
 import { prepareFieldFiles, saveFieldFiles } from "@/server/attachments/field-files";
 import { deleteDraft } from "@/lib/db/repositories/drafts.repository";
@@ -89,6 +90,7 @@ export async function submitCustomAction(_previous: ActionResult | null, formDat
     filesSaved = (await addAttachments(requestId, files.files, me, { requesterOnly: true })).ok && (await saveFieldFiles(requestId, fieldFiles.byField, me));
   } catch (error) {
     logError("submitCustomAction: attachments failed", error, { requestId });
+    if (isStorageError(error)) await reportStorageFailure(error, { requestId });
     filesSaved = false;
   }
   revalidatePath("/users");

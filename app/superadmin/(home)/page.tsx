@@ -8,6 +8,7 @@ import { listRawSettings } from "@/lib/db/repositories/settings.repository";
 import { backupStatus } from "@/server/ops/backup";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 import { BackupNowButton } from "@/features/superadmin/BackupNowButton";
+import { checkStorage, STORAGE_PROBLEM_TEXT } from "@/server/attachments/storage";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
 export const metadata: Metadata = { title: "Super Admin" };
@@ -21,6 +22,7 @@ export default async function SuperAdminHome() {
     resolveSettingForDisplay(definition, byKey.get(definition.key) ?? null),
   );
   const backups = backupStatus();
+  const storage = await checkStorage();
   const backupAgeHours = backups.latest ? (Date.now() - backups.latest.at.getTime()) / 3_600_000 : null;
 
   return (
@@ -48,6 +50,19 @@ export default async function SuperAdminHome() {
           Providers &amp; security
         </Link>.
       </p>
+      {/* v1.12.4 (D-163): uploads need a folder the app can write to. */}
+      <section className="mt-6 rounded-lg border border-line bg-surface" data-testid="storage-status">
+        <h2 className="border-b border-line px-5 py-3 font-semibold">File storage</h2>
+        <div className="space-y-2 px-5 py-4 text-label">
+          <p role="status" className={`rounded-md px-3 py-2 ${storage.ok ? "bg-success-50 text-success-600" : "bg-danger-50 text-danger-600"}`}>
+            {storage.ok ? "Uploads work: the app can write to the upload folder." : `Uploads are failing. ${STORAGE_PROBLEM_TEXT[storage.problem ?? "OTHER"]}`}
+          </p>
+          <p className="text-ink-muted">
+            Folder in use: <code className="break-all">{storage.root}</code> ({storage.configured ? "from UPLOAD_DIR" : "UPLOAD_DIR not set: the app's own folder"})
+            {storage.code ? ` · error ${storage.code}` : ""}
+          </p>
+        </div>
+      </section>
       <section className="mt-6 rounded-lg border border-line bg-surface">
         <h2 className="border-b border-line px-5 py-3 font-semibold">Backups</h2>
         <div className="space-y-3 px-5 py-4">

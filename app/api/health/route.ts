@@ -4,11 +4,13 @@ import { logError } from "@/lib/logging/logger";
 import packageJson from "@/package.json";
 import { after } from "next/server";
 import { checkJobRunnerStopped } from "@/server/ops/alerts";
+import { checkStorage } from "@/server/attachments/storage";
 
 // Health check for an uptime monitor (audit X-09, D-103). Public and cheap:
 // 200 when the app and the database answer, 503 when the database doesn't.
 // Says nothing private: the version, whether the database answered, and
-// whether the job runner ran in the last 15 minutes.
+// whether the job runner ran in the last 15 minutes, and (v1.12.4) whether
+// uploaded files can be written (never the path).
 export const dynamic = "force-dynamic";
 
 export async function GET() {
@@ -25,8 +27,9 @@ export async function GET() {
   } catch (error) {
     logError("health: database check failed", error);
   }
+  const storage = (await checkStorage().catch(() => ({ ok: false }))).ok ? "ok" : "failed";
   return Response.json(
-    { status: database ? "ok" : "error", version: packageJson.version, database: database ? "ok" : "down", jobRunner, ms: Date.now() - started },
+    { status: database ? "ok" : "error", version: packageJson.version, database: database ? "ok" : "down", jobRunner, storage, ms: Date.now() - started },
     { status: database ? 200 : 503, headers: { "Cache-Control": "no-store" } },
   );
 }
