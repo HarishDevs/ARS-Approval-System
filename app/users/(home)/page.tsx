@@ -53,7 +53,7 @@ export default async function UsersHome() {
         </Link>
       </PageHeader>
       {!onboarded && <FirstUseChecklist />}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4" data-tour="overview-tiles">
         {tiles.map((tile) => (
           <Link key={tile.label} href={tile.href} className="card-link flex items-center justify-between px-4 py-3">
             <span className="text-label text-ink-muted">{tile.label}</span>

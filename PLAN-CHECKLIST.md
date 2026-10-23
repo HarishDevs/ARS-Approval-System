@@ -17,6 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (23 Oct 2026):** v1.14.0: onboarding tour for users (Approvals, Tasks, Calendar); Re-invite and Reset password back on the user page only (owner).
 - **Now (23 Oct 2026):** v1.13.0: invite user and reset password from User management, by email (owner). The WhatsApp code on set-password stays (owner choice).
 - **Now (23 Oct 2026):** v1.12.7: Next.js 15.5.28 security update (critical advisory). **Owner: publish v1.12.7** (it includes v1.12.5 and v1.12.6).
 - **Now (23 Oct 2026):** v1.12.6: after Google's consent screen, people were sent to `localhost:20011` (the connection itself had worked). Redirects are now relative. **Owner:** publish, then press Connect Google Account again (or just open Profile → Calendar: it may already show Connected).
@@ -309,6 +310,15 @@ Found during S8-06:
 - [x] S8-12 Google sign-in reached UNKNOWN_ACCOUNT: itadmin@ is an alias. The Super Admin now signs in as itsupport@arsenergy.co.in (D-082, migration + non-overwriting seed, v1.0.5) (done 8 Oct 2026)
 - [x] S8-01b Go-live on GoDaddy with the owner, following docs/DEPLOYMENT.md (the owner is at the wizard's "Add secrets" step) (done 9 Oct 2026: live since 8 Oct 2026)
 - [x] S8-04 Update the three living files; commit and push (done 8 Oct 2026)
+
+## Session log — v1.14.0: onboarding tour; invite buttons on the user page only (23 Oct 2026), planned before starting
+- [x] V1140-01 Owner: remove Re-invite / Reset password from the users list (keep them on the user page) (done 23 Oct 2026)
+- [x] V1140-02 Tour steps (pure list): welcome, Overview, New request, Custom approval, Waiting for me, My requests, My tasks, New task, Information, Calendar, Google Calendar, notifications, Go to, Out of office, finish (done 23 Oct 2026)
+- [x] V1140-03 Tour overlay: opens each step's page, highlights the part, Back / Next / Skip, step count and progress, keyboard (←, →, Esc), focus kept in the card, phone layout, steps for hidden pages skipped (done 23 Oct 2026)
+- [x] V1140-04 Opens once by itself on Overview; saved per person (TOUR_DONE flag) when finished or skipped; "Take the tour" in Help, the account menu and the first-use card (done 23 Oct 2026)
+- [x] V1140-05 Tests: unit (steps), E2E (auto-open once, walk through, restart from Help, phone); test users marked done so other tests aren't covered (done 23 Oct 2026)
+- [x] V1140-06 Living files; full local run; push; CI (done 23 Oct 2026)
+- [ ] V1140-07 Owner: after publishing, every user sees the tour once on Overview; try it yourself from the account menu → Take the tour
 
 ## Session log — v1.13.0: invite user and reset password by email (23 Oct 2026), planned before starting
 - [x] V1130-01 Owner decision recorded: the WhatsApp code on set-password/reset stays (D-025 unchanged); messages by email only (done 23 Oct 2026)

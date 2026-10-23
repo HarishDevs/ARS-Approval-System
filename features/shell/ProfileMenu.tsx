@@ -115,6 +115,10 @@ export function ProfileMenu({
             <Link href="/users/help" role="menuitem" className={item}>
               Help
             </Link>
+            {/* v1.14.0 (D-167): the onboarding tour, from any space. */}
+            <Link href="/users?tour=1" role="menuitem" className={item}>
+              Take the tour
+            </Link>
           </div>
           <div className="border-t border-line pt-2">
             <button type="button" role="menuitem" onClick={signOut} disabled={busy} className={`${item} text-danger-600`}>

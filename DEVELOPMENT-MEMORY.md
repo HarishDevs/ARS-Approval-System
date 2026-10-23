@@ -415,6 +415,11 @@
 - Applies to users and IT admins; the Super Admin is exempt (12-hour limit only).
 - The browser's session check no longer counts as activity (it used to keep an open tab signed in for ever). Activity in the page is reported at the next minute's check.
 - A warning with "Stay signed in" 2 minutes before. | Owner; Claude, 15 Oct 2026 |
+| D-167 | 23 Oct 2026 | **Onboarding tour for the user space (v1.14.0, owner):**
+- 15 steps: Welcome, Overview, New request, Custom approval, Waiting for me, My requests, My tasks, New task, Information, Calendar, Google Calendar, Notifications, Go to and search, Out of office, Finish (`features/help/tour-steps.ts`).
+- Each step opens its page and highlights one part (`data-tour` markers); the card docks at the bottom on phones; Back / Next / Skip, ← → and Esc; focus stays in the card. Steps for pages hidden by page access are left out.
+- Opens by itself once, on Overview, until finished or skipped (never by itself in a demo "Try as" session) (flag TOUR_DONE in `user_flags`, every device). "Take the tour" in the account menu, Help and the first-use card (`/users?tour=1`).
+- Same day (owner): Re-invite and Reset password are on the user page only, not the users list (supersedes that part of D-166). | Owner; Claude, 23 Oct 2026 |
 | D-166 | 23 Oct 2026 | **Invite user and reset password by email (v1.13.0, owner):**
 - **Add user** has "Email an invitation now" (ticked by default). **Re-invite** and **Reset password** are on the user's page and on each row of the users list.
 - Google users are told to sign in with Google as their email; password users get their User ID and a set-password link (72 h, older links stop working). Reset has its own wording; the current password works until a new one is set. Before a first password there is nothing to reset (the plain set-password link is used).
@@ -560,6 +565,11 @@
 - Who approves the privacy policy and terms? | Before filing | Open, waiting on the owner (17 Oct 2026) |
 
 ## 5. Work log (newest first)
+
+### 23 Oct 2026 (v1.14.0: onboarding tour; invite buttons on the user page only)
+- **Owner request:** Re-invite and Reset password inside the user page, not the users list; a complete onboarding tour for users (Approvals, Tasks, Calendar).
+- **Built (D-167):** `features/help/tour-steps.ts`, `features/help/OnboardingTour.tsx` (mounted in AppShell for the user space), `finishTourAction`, `data-tour` markers (page header, Overview tiles, bell, Go to), Take the tour in the account menu, Help and the first-use card. The users list is back to no actions.
+- **Tests:** `tests/help/tour-steps.test.ts`; `tests/e2e/v1140-tour.spec.ts` (opens once by itself and walks all 15 steps with a highlight on each target; Help and account menu; keys; Esc saves; phone). The e2e sign-in helper marks the tour done unless a test asks otherwise, so it never covers other tests. The full run caught the demo "Try as" session (not signed in through that helper): the tour no longer opens by itself for demo people.
 
 ### 23 Oct 2026 (v1.13.0: invite user and reset password by email)
 - **Owner request:** invite user and reset password in User management, with email messages; mid-task: both buttons on the users list too. The owner chose to keep the WhatsApp code on set-password.

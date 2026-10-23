@@ -4,6 +4,7 @@ import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { HelpTopics, type HelpTopic } from "@/features/help/HelpTopics";
 import { CopyForIt } from "@/features/help/CopyForIt";
+import Link from "next/link";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
 export const metadata: Metadata = { title: "Help" };
@@ -41,6 +42,16 @@ export default async function HelpPage() {
     <>
       <PageHeader title="Help" description="How things work, and what each word on the screen means." />
       <div className="max-w-4xl space-y-6">
+        {/* v1.14.0 (D-167): the guided tour of Approvals, Tasks and Calendar. */}
+        <section className="card flex flex-wrap items-center justify-between gap-3 px-5 py-4" data-testid="help-tour">
+          <div className="min-w-0">
+            <h2 className="font-semibold">New here? Take the tour</h2>
+            <p className="text-label text-ink-muted">About two minutes: raising and approving requests, tasks, the calendar, notifications and where to find things.</p>
+          </div>
+          <Link href="/users?tour=1" className="btn-primary btn-compact">
+            Take the tour
+          </Link>
+        </section>
         <HelpTopics topics={TOPICS} />
         <section className="card space-y-2 px-5 py-4">
           <h2 className="font-semibold">Need IT?</h2>

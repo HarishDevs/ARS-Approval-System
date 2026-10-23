@@ -7,6 +7,9 @@ import { countUnread } from "@/lib/db/repositories/collab.repository";
 import { getUserSetting } from "@/lib/db/repositories/user-settings.repository";
 import { ThemeSync } from "@/features/shell/ThemeControls";
 import { OfflineBanner, SessionWatch, UpdateNotice } from "@/features/shell/SessionWatch";
+import { OnboardingTour } from "@/features/help/OnboardingTour";
+import { tourStepsFor } from "@/features/help/tour-steps";
+import { hasFlag } from "@/lib/db/repositories/user-flags.repository";
 import { buildId } from "@/server/ops/build";
 import { BottomNav } from "@/features/shell/BottomNav";
 import { CommandPalette, type PaletteLink } from "@/features/shell/CommandPalette";
@@ -48,11 +51,13 @@ export async function AppShell({
   children: React.ReactNode;
 }) {
   const spaces = areasForUser(user);
-  const [unread, theme, waiting, access] = await Promise.all([
+  const [unread, theme, waiting, access, tourDone] = await Promise.all([
     countUnread(user.id).catch(() => 0),
     getUserSetting(user.id, THEME_SETTING).catch(() => null),
     countPendingTasksFor(user.id).catch(() => 0),
     navAccess(user),
+    // v1.14.0 (D-167): the tour opens by itself until it's finished or skipped.
+    area === "users" ? hasFlag(user.id, "TOUR_DONE").catch(() => true) : true,
   ]);
   // v1.8.0: pages hidden from this person (Super Admin's page access) are
   // left out of the sidebar and the quick search; the server refuses them anyway.
@@ -130,6 +135,8 @@ export async function AppShell({
         <OfflineBanner />
         <UpdateNotice />
         <SessionWatch build={buildId()} />
+        {/* Not by itself while IT tries the app as a demo person. */}
+        {area === "users" && <OnboardingTour steps={tourStepsFor(visible)} autoStart={!tourDone && !user.isDemo} />}
         <ViewOnlyNote patterns={access.viewOnly} />
         {user.isDemo && (
           <p role="status" className="border-b border-warning-600/30 bg-warning-50 px-4 py-2 text-label text-warning-600 sm:px-8">

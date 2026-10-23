@@ -135,12 +135,13 @@ export function CommandPalette({ pages }: { pages: PaletteLink[] }) {
         onClick={() => setOpen(true)}
         className="hidden h-9 items-center gap-2 rounded-md border border-line bg-surface-muted px-3 text-label text-ink-muted hover:text-ink sm:inline-flex"
         aria-keyshortcuts="Control+K"
+        data-tour="search"
       >
         <Search aria-hidden="true" className="h-4 w-4" />
         Go to…
         <kbd className="rounded border border-line bg-surface px-1.5 text-[11px]">Ctrl K</kbd>
       </button>
-      <button type="button" onClick={() => setOpen(true)} aria-label="Go to a page or request" className="flex h-9 w-9 items-center justify-center rounded-full text-ink-muted hover:bg-surface-muted hover:text-ink sm:hidden">
+      <button type="button" onClick={() => setOpen(true)} aria-label="Go to a page or request" data-tour="search" className="flex h-9 w-9 items-center justify-center rounded-full text-ink-muted hover:bg-surface-muted hover:text-ink sm:hidden">
         <Search aria-hidden="true" className="h-5 w-5" />
       </button>
       <dialog

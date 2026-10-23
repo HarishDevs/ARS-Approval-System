@@ -1046,6 +1046,19 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 5. Super Admin addresses refuse anyone who isn't a Super Admin.
 6. "Sign-in & devices" is never restricted.
 
+## F-133 Onboarding tour (v1.14.0, D-167, owner)
+```mermaid
+flowchart TD
+  A[First visit to Overview, tour not done] --> T[Tour opens]
+  H[Help / account menu / first-use card: Take the tour] --> Q[/users?tour=1] --> T
+  T --> S[Step: open its page, highlight the part, explain]
+  S --> N{Back / Next / Skip}
+  N -- Next or Back --> S
+  N -- Skip, Esc or Finish --> D[Saved for this person: TOUR_DONE, every device]
+  S -. page hidden by page access .-> S2[That step is left out]
+```
+Steps: Welcome → Overview → New request → Custom approval → Waiting for me → My requests → My tasks → New task → Information → Calendar → Google Calendar (optional) → Notifications → Go to and search → Out of office → Finish (where to find it again).
+
 ## F-127 User sidebar (v1.9.2, D-149)
 Overview → **My Approvals** ▾ / **Tasks** ▾ / **Information** ▾ (click to open the group's pages) → Search, Calendar, Analytics. The current page's group opens by itself; the open/closed choice is remembered.
 

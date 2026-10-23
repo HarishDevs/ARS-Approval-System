@@ -1,5 +1,15 @@
 # Release notes
 
+## v1.14.0 (23 Oct 2026): onboarding tour for users (owner request)
+- **A guided tour** of ARS Approvals opens by itself the first time each person visits Overview. In 15 short steps it opens each page and highlights what it's talking about:
+  - **Approvals:** raising a request, custom approval, approving from Waiting for me, following My requests.
+  - **Tasks:** My tasks, giving someone a task, Information notices.
+  - **Calendar:** the calendar views and kinds of dates, and connecting Google Calendar.
+  - **Everyday:** notifications, Go to and search, going on leave.
+- Back, Next and Skip (or ← → and Esc). Finishing or skipping is remembered on every device. Take it again any time: account menu → **Take the tour**, or Help.
+- Works on phones (the card sits at the bottom of the screen). Steps for pages someone can't open are left out.
+- **User management:** Re-invite and Reset password are now only on each user's page, not on the Users & roles list.
+
 ## v1.13.0 (23 Oct 2026): invite users and reset passwords by email (owner request)
 - **Add user** has a new tick box, "Email an invitation now" (on by default).
   - Google users are told they've been added and to sign in with Google as their email.

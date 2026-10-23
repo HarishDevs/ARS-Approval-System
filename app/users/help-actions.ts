@@ -19,3 +19,16 @@ export async function dismissOnboardingAction(): Promise<ActionResult> {
   revalidatePath("/users");
   return { ok: true, message: "Hidden. The help page has all of this whenever you need it." };
 }
+
+// v1.14.0 (D-167): the onboarding tour was finished or skipped. Stored for
+// this person, so it doesn't open by itself again on any device.
+export async function finishTourAction(): Promise<ActionResult> {
+  try {
+    const session = await requireApiArea("users");
+    await setFlag(session.user.id, "TOUR_DONE");
+    return { ok: true };
+  } catch (error) {
+    if ((error as Error)?.name !== "ForbiddenError") logError("finishTourAction failed", error);
+    return { ok: false, message: "Couldn't save that." };
+  }
+}

@@ -17,7 +17,6 @@ export interface AdminUserListItem {
   locked: boolean;
   isBreakGlass: boolean;
   lastLoginAt: Date | null;
-  hasPassword: boolean; // v1.13.0: Reset password only when there is one
 }
 
 export interface AdminUserDetail extends AdminUserListItem {
@@ -70,12 +69,10 @@ export async function listUsersForAdmin(
       locked: number;
       is_break_glass: number;
       last_login_at: Date | null;
-      has_password: number;
     })[]
   >(
     `SELECT u.id, u.login_id, u.name, u.email, d.name AS department_name, u.sign_in_method, ${ROLE_CODES_SQL} AS role_codes,
-            u.active, (u.locked_until IS NOT NULL AND u.locked_until > CURRENT_TIMESTAMP) AS locked, u.is_break_glass, u.last_login_at,
-            (u.password_hash IS NOT NULL) AS has_password
+            u.active, (u.locked_until IS NOT NULL AND u.locked_until > CURRENT_TIMESTAMP) AS locked, u.is_break_glass, u.last_login_at
      FROM users u LEFT JOIN departments d ON d.id = u.department_id
      ${whereSql}
      ORDER BY u.active DESC, u.name
@@ -96,7 +93,6 @@ export async function listUsersForAdmin(
       locked: Number(row.locked) === 1,
       isBreakGlass: row.is_break_glass === 1,
       lastLoginAt: row.last_login_at,
-      hasPassword: Number(row.has_password) === 1,
     })),
   };
 }

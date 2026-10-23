@@ -7,8 +7,6 @@ import { Badge } from "@/features/ui/Display";
 import { requireArea } from "@/server/authorization/guards";
 import { listUsersForAdmin } from "@/lib/db/repositories/admin-users.repository";
 import { ROLE_LABEL } from "@/features/ui/labels";
-import { UserRowActions } from "@/features/admin/UserRowActions";
-import { checkCanEdit, checkContactChange } from "@/server/admin/user-rules";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
 export const metadata: Metadata = { title: "Users & roles" };
@@ -17,7 +15,7 @@ const PAGE_SIZE = 50;
 
 // F-06 user list. Search and filter are plain GET parameters.
 export default async function UsersPage({ searchParams }: { searchParams: Promise<{ q?: string; status?: string; page?: string }> }) {
-  const { user: actor } = await requireArea("admin");
+  await requireArea("admin");
   const params = await searchParams;
   const search = (params.q ?? "").trim().slice(0, 100);
   const status = params.status === "inactive" || params.status === "all" ? params.status : "active";
@@ -71,14 +69,8 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
           { key: "signIn", header: "Sign-in", optional: true },
           { key: "roles", header: "Roles", optional: true },
           { key: "status", header: "Status", sortable: true },
-          { key: "actions", header: "Actions" },
         ]}
-        rows={items.map((user) => {
-          // v1.13.0 (D-166): Re-invite / Reset password where this admin may
-          // (the server checks again). Not for inactive, break-glass or self.
-          const target = { id: user.id, roles: user.roles, active: user.active, isBreakGlass: user.isBreakGlass };
-          const canAct = user.active && !user.isBreakGlass && user.id !== actor.id && checkCanEdit(actor, target).ok && checkContactChange(actor, target, { setPasswordLink: true }).ok;
-          return {
+        rows={items.map((user) => ({
           id: user.id,
           sort: { name: user.name, login: user.loginId, department: user.departmentName, status: user.active ? 0 : 1 },
           cells: {
@@ -103,10 +95,8 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
                 {user.isBreakGlass && <Badge tone="warning">Break-glass</Badge>}
               </span>
             ),
-            actions: canAct ? <UserRowActions id={user.id} name={user.name} email={user.email} signInMethod={user.signInMethod} hasPassword={user.hasPassword} /> : <span className="text-ink-faint">—</span>,
           },
-        };
-        })}
+        }))}
       />
 
       {pages > 1 && (

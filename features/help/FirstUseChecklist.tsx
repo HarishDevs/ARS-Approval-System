@@ -31,6 +31,10 @@ export function FirstUseChecklist() {
         ))}
       </ol>
       <form onSubmit={onSubmit} className="mt-3 flex flex-wrap items-center gap-3">
+        {/* v1.14.0 (D-167): the guided tour shows each of these on its page. */}
+        <Link href="/users?tour=1" className="btn-primary btn-compact">
+          Take the tour
+        </Link>
         <SubmitButton pending={pending} variant="secondary" className="btn-compact">
           Got it, hide this
         </SubmitButton>

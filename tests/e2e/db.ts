@@ -26,7 +26,10 @@ export async function userIdByLogin(loginId: string): Promise<number> {
 }
 
 // A real session row + the signed cookie value (as lib/session/token.ts).
-export async function sessionCookie(loginId: string): Promise<{ name: string; value: string; domain: string; path: string }> {
+// v1.14.0 (D-167): the onboarding tour opens by itself for anyone who hasn't
+// done it, which would cover every screen under test; people signed in here
+// have done it unless a test asks otherwise ({ tourDone: false }).
+export async function sessionCookie(loginId: string, options: { tourDone?: boolean } = {}): Promise<{ name: string; value: string; domain: string; path: string }> {
   const userId = await userIdByLogin(loginId);
   const sid = crypto.randomUUID();
   const conn = await db();
@@ -35,6 +38,8 @@ export async function sessionCookie(loginId: string): Promise<{ name: string; va
       "INSERT INTO user_sessions (id, user_id, auth_method, user_agent, expires_at) VALUES (?, ?, 'GOOGLE', 'e2e', DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 2 HOUR))",
       [sid, userId],
     );
+    if (options.tourDone === false) await conn.query("DELETE FROM user_flags WHERE user_id = ? AND flag = 'TOUR_DONE'", [userId]);
+    else await conn.query("INSERT IGNORE INTO user_flags (user_id, flag) VALUES (?, 'TOUR_DONE')", [userId]);
   } finally {
     await conn.end();
   }

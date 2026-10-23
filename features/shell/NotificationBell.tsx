@@ -128,6 +128,7 @@ export function NotificationBell({ initialUnread }: { initialUnread: number }) {
         onClick={() => setOpen((value) => !value)}
         className="relative flex h-9 w-9 items-center justify-center rounded-full text-ink-muted hover:bg-surface-muted hover:text-ink"
         data-testid="notification-bell"
+        data-tour="bell"
       >
         <Bell aria-hidden="true" className="h-5 w-5" />
         {total > 0 && (
