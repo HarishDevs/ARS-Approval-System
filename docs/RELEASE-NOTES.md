@@ -1,5 +1,9 @@
 # Release notes
 
+## v1.12.7 (23 Oct 2026): Next.js security update
+- **Next.js 15.5.27 → 15.5.28** for two advisories published today: a critical remote code execution in image optimisation with SVG files (GHSA-2464-fhr4-w9xw) and a denial of service through Server Actions (GHSA-p3m5-59mp-jv5r). CI's audit step caught it.
+- Nothing changes for users. **Owner: publish soon.**
+
 ## v1.12.6 (23 Oct 2026): Google Calendar no longer sends people to "localhost" (owner report)
 - **Owner report:** after pressing Allow on Google's screen, the browser opened `localhost:20011/…` and said "This site can't be reached".
 - **Cause:** the way back to ARS was built from the address the app sees behind the host's proxy, which is its internal one. The calendar was in fact connected.

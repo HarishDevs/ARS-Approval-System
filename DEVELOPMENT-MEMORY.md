@@ -556,6 +556,10 @@
 
 ## 5. Work log (newest first)
 
+### 23 Oct 2026 (v1.12.7: Next.js security update)
+- CI on aad9fb2 failed only at `npm audit --omit=dev`: two new Next.js advisories (critical RCE in image optimisation with SVG; DoS via Server Actions) affect up to 15.5.27. Upgraded `next` and `eslint-config-next` to 15.5.28 (exact pins kept). Audit: 0 vulnerabilities.
+- Lesson: the CI wait loop used `gh run list --commit <short sha>`, which matches nothing, so it waited forever. Use the full SHA (`git rev-parse HEAD`).
+
 ### 23 Oct 2026 (v1.12.6: Google Calendar sends people to localhost)
 - **Owner report (screenshots):** after Allow on Google's screen, the browser went to `localhost:20011/users/profile/calendar?connected=1` ("refused to connect"). `connected=1` shows the connection itself succeeded.
 - **Cause:** the connect and callback route handlers built the way back from `request.url`, which behind the host's proxy is the internal address.
