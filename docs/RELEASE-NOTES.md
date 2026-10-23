@@ -1,5 +1,18 @@
 # Release notes
 
+## v1.12.6 (23 Oct 2026): Google Calendar no longer sends people to "localhost" (owner report)
+- **Owner report:** after pressing Allow on Google's screen, the browser opened `localhost:20011/…` and said "This site can't be reached".
+- **Cause:** the way back to ARS was built from the address the app sees behind the host's proxy, which is its internal one. The calendar was in fact connected.
+- **Now:** the way back is relative, so it always stays on approval.arssteels.net.
+- **Owner action:** after publishing, open Profile → Calendar. If it doesn't say Connected, press Connect Google Account again.
+
+## v1.12.5 (20 Oct 2026): "Couldn't reach the server" on submit and delete explained (owner report)
+- **Owner report:** submitting or deleting a request said "Couldn't reach the server".
+- **Cause:** every publish gives the app's form actions new ids. A page that was already open when the new version went live still uses the old ones, so the server doesn't recognise them and every submit, delete or draft save on that page failed until it was reloaded. The message wrongly blamed the connection.
+- **Now:** such a page says "ARS was updated since this page opened… reload", and a **Reload page** banner appears. The banner also appears by itself within a minute of a new version going live.
+- **Server errors** now say "Something went wrong on the server" with a reference IT can find in the server log, instead of the connection message.
+- **Owner action:** after publishing, reload open ARS tabs once.
+
 ## v1.12.4 (20 Oct 2026): file uploads that fail now say why (owner report)
 - **Owner report:** attaching a file to a task failed with "Couldn't reach the server", and a custom approval was submitted but its files "couldn't be saved". Both happen when the server can't write to its upload folder (`UPLOAD_DIR`).
 - **Super Admin → Overview → File storage:** shows whether uploads work, the folder in use, and the cause with its fix (folder not set, missing, no permission, read-only or disk full).

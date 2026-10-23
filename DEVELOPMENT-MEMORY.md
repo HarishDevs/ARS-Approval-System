@@ -415,6 +415,11 @@
 - Applies to users and IT admins; the Super Admin is exempt (12-hour limit only).
 - The browser's session check no longer counts as activity (it used to keep an open tab signed in for ever). Activity in the page is reported at the next minute's check.
 - A warning with "Stay signed in" 2 minutes before. | Owner; Claude, 15 Oct 2026 |
+| D-165 | 23 Oct 2026 | **Route handlers redirect to own pages with a relative address (v1.12.6):** behind GoDaddy's proxy `request.url` is `http://localhost:<port>`, so `new URL(path, request.url)` leaked it (the calendar callback sent people to localhost:20011). `redirectToPage(path)` in `lib/http/redirect.ts` answers 303 with a relative Location and refuses other sites. The middleware's own redirects were already relative. | Owner report; Claude, 23 Oct 2026 |
+| D-164 | 20 Oct 2026 | **A page from an older build says to reload (v1.12.5):**
+- Every publish makes new Server Action ids (Next 15 salts them per build), so a page opened before a publish gets "Server action not found" for every submit, delete or draft save.
+- Forms map Next's `UnrecognizedActionError` to "ARS was updated since this page opened… reload", and raise a **Reload page** banner. `/api/auth/status` returns the build (`.next/BUILD_ID`); the minute session check compares it with the build that made the page.
+- A server error with a digest shows a reference for IT; other unexpected answers are named. The session-ended check still runs first. | Owner report; Claude, 20 Oct 2026 |
 | D-163 | 20 Oct 2026 | **File storage failures are named, not hidden (v1.12.4):**
 - A failed write to `UPLOAD_DIR` is classified (NOT_SET, NO_PERMISSION, MISSING, READ_ONLY, FULL, OTHER), logged with its code, and sent once a day as a Super Admin alert (FILE_STORAGE_FAILED).
 - People get a plain storage message with their input kept.
@@ -550,6 +555,20 @@
 - Who approves the privacy policy and terms? | Before filing | Open, waiting on the owner (17 Oct 2026) |
 
 ## 5. Work log (newest first)
+
+### 23 Oct 2026 (v1.12.6: Google Calendar sends people to localhost)
+- **Owner report (screenshots):** after Allow on Google's screen, the browser went to `localhost:20011/users/profile/calendar?connected=1` ("refused to connect"). `connected=1` shows the connection itself succeeded.
+- **Cause:** the connect and callback route handlers built the way back from `request.url`, which behind the host's proxy is the internal address.
+- **Fix (D-165):** `redirectToPage` (relative 303); both routes use it. Tests: `tests/security/redirect-to-page.test.ts`; an E2E check that both answers carry a relative Location.
+- The v1.12.5 test run was interrupted (session ended); everything ran again for this commit.
+
+### 20 Oct 2026 (v1.12.5: "Couldn't reach the server" on submit and delete)
+- **Owner report:** every submit and every delete said "unable to connect / couldn't reach the server".
+- **Live checks (read-only):** `/api/health` ok on v1.12.4 (database, job runner, storage ok); 12 requests all served by one build; a Server Action post with this site's Origin passes Next's origin check (multipart too). So the posts reach the app.
+- **Cause:** Next 15 salts Server Action ids per build. Pages opened before the v1.12.4 publish post old ids; the server answers "Server action not found", Next throws `UnrecognizedActionError`, and `guardAction` showed it as "Couldn't reach the server". Reloading the page fixes it.
+- **Fix (D-164):** `actionErrorMessage` in `features/ui/form.tsx`; `UpdateNotice` banner; `server/ops/build.ts`; build in `/api/auth/status`; discard draft, autosave and theme use the same messages.
+- **Tests:** `tests/ui/guard-action.test.ts`; `tests/e2e/v1125-stale-page.spec.ts` (a real build answering "not found" to the form; a changed build raising the banner).
+- **Earlier the same day (account recovery question):** switching an account to User ID + password blocks its Google sign-in; Forgot password only sends a code when the account has a WhatsApp number (the screen looks the same either way, on purpose). Recovery: another Super Admin switches it back, or the owner runs a one-row UPDATE in phpMyAdmin.
 
 ### 20 Oct 2026 (v1.12.4: upload failures)
 - **Owner report (screenshots):** a task with an .xlsx said "Couldn't reach the server"; a custom approval was submitted but its files "couldn't be saved". Both point to `UPLOAD_DIR` not being writable on the host.

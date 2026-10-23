@@ -31,6 +31,30 @@ const OFFLINE = "You're offline. Check your connection, then try again — what 
 const UNREACHABLE = "Couldn't reach the server. Check your connection and try again — what you typed is still here.";
 const TIMED_OUT = "This is taking longer than expected. It may still go through, so check before trying again.";
 
+// v1.12.5 (D-164): every publish builds new Server Action ids, so a page
+// opened before a publish can't reach the new server's actions: Next throws
+// UnrecognizedActionError. That, and an error the server itself hit, used to
+// show as "Couldn't reach the server" for every submit and delete until the
+// page was reloaded. Now each says what happened.
+export const APP_UPDATED_EVENT = "ars:app-updated";
+export const APP_UPDATED = "ARS was updated since this page opened, so this didn't go through. Reload the page and try again (copy anything you typed first).";
+export const UNEXPECTED = "The server sent back an unexpected answer, so this may not have gone through. Reload the page and check before trying again.";
+const serverError = (reference: string) => `Something went wrong on the server, so this wasn't saved. Try again; if it keeps happening, tell IT the reference ${reference}.`;
+
+// The plain message for an error thrown by a Server Action call, or null
+// when the request never got an answer (offline, cut connection).
+export function actionErrorMessage(error: unknown): string | null {
+  if (!error || typeof error !== "object") return null;
+  const { name, message, digest } = error as { name?: unknown; message?: unknown; digest?: unknown };
+  if (name === "UnrecognizedActionError") {
+    if (typeof window !== "undefined") window.dispatchEvent(new Event(APP_UPDATED_EVENT));
+    return APP_UPDATED;
+  }
+  if (typeof digest === "string" && /^[\w-]{1,40}$/.test(digest)) return serverError(digest);
+  if (name === "TypeError" || typeof message !== "string") return null; // fetch failed
+  return UNEXPECTED;
+}
+
 async function signedIn(): Promise<boolean | null> {
   try {
     const response = await fetch("/api/auth/status", { cache: "no-store" });
@@ -56,13 +80,16 @@ export function guardAction(action: Action, timeoutMs = ACTION_TIMEOUT_MS): Acti
         return { ok: false, message: SESSION_ENDED };
       }
       return result;
-    } catch {
+    } catch (error) {
+      const known = actionErrorMessage(error);
+      if (known && known !== UNEXPECTED) return { ok: false, message: known };
       if (typeof navigator !== "undefined" && navigator.onLine === false) return { ok: false, message: OFFLINE };
+      // An ended session answers with the sign-in page (unexpected too).
       if ((await signedIn()) === false) {
         announceSessionEnded();
         return { ok: false, message: SESSION_ENDED };
       }
-      return { ok: false, message: UNREACHABLE };
+      return { ok: false, message: known ?? UNREACHABLE };
     } finally {
       clearTimeout(timer);
     }

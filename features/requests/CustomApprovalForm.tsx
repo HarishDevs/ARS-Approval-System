@@ -7,7 +7,7 @@ import { submitCustomAction } from "@/app/users/collab-actions";
 import { LevelsEditor, newStepId, StepPolicyContext, type BuilderOptions } from "@/features/admin/WorkflowBuilder";
 import { DynamicFields } from "@/features/requests/DynamicFields";
 import { DEFAULT_STEP_POLICY, stepDefaults, type StepPolicy } from "@/server/workflows/step-policy";
-import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
+import { actionErrorMessage, FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import type { BuilderStage } from "@/server/workflows/builder";
 import { NO_LOOKUPS, type FieldLookups, type FormField } from "@/server/forms/fields";
 import { PeoplePicker, type PersonOption } from "@/features/ui/PeoplePicker";
@@ -142,7 +142,7 @@ export function CustomApprovalForm({
         onCancel={() => setConfirmDiscard(false)}
         onConfirm={async () => {
           setDiscarding(true);
-          const done = await autosave.discard().catch(() => ({ ok: false, message: "Couldn't reach the server. Try again." }));
+          const done = await autosave.discard().catch((error: unknown) => ({ ok: false, message: actionErrorMessage(error) ?? "Couldn't reach the server. Try again." }));
           setDiscarding(false);
           if (done.ok) window.location.reload();
           else {

@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { redirectToPage } from "@/lib/http/redirect";
 import { requireApiArea } from "@/server/authorization/guards";
 import { finishConnect, NONCE_COOKIE } from "@/server/calendar/service";
 import { logError } from "@/lib/logging/logger";
@@ -16,10 +17,9 @@ export async function GET(request: NextRequest) {
       { code: query.get("code"), state: query.get("state"), error: query.get("error") },
       request.cookies.get(NONCE_COOKIE)?.value ?? null,
     );
-    const target = new URL(result.ok ? "/users/profile/calendar?connected=1" : `/users/profile/calendar?error=${result.error}`, request.url);
-    const response = NextResponse.redirect(target, 303);
-    response.cookies.set(NONCE_COOKIE, "", { path: "/api/integrations/google-calendar", maxAge: 0 });
-    response.headers.set("Cache-Control", "no-store");
+    // Relative: behind the host's proxy request.url is localhost (D-165).
+    const response = redirectToPage(result.ok ? "/users/profile/calendar?connected=1" : `/users/profile/calendar?error=${result.error}`);
+    response.headers.append("Set-Cookie", `${NONCE_COOKIE}=; Path=/api/integrations/google-calendar; Max-Age=0; HttpOnly; SameSite=Lax${process.env.NODE_ENV === "production" ? "; Secure" : ""}`);
     response.headers.set("Referrer-Policy", "no-referrer"); // the one-time code never travels further
     return response;
   } catch (error) {

@@ -3,7 +3,7 @@
 import { checkReadinessAction, resubmitAction, submitAmendmentAction, submitRequestAction } from "@/app/users/actions";
 import { ReadinessPanel } from "@/features/requests/ReadinessPanel";
 import type { Readiness } from "@/server/approvals/readiness";
-import { guardAction } from "@/features/ui/form";
+import { actionErrorMessage, guardAction } from "@/features/ui/form";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DynamicFields } from "@/features/requests/DynamicFields";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
@@ -255,7 +255,7 @@ export function RequestForm({
                 type="button"
                 className="btn-primary btn-compact"
                 onClick={async () => {
-                  const done = await autosave.discard().catch(() => ({ ok: false, message: "Couldn't reach the server. Try again." }));
+                  const done = await autosave.discard().catch((error: unknown) => ({ ok: false, message: actionErrorMessage(error) ?? "Couldn't reach the server. Try again." }));
                   if (done.ok) window.location.reload();
                   else setDiscardError(done.message);
                 }}

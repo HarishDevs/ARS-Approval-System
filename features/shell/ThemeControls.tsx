@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { saveThemeAction } from "@/app/users/theme-actions";
 import { RadioGroup } from "@/features/ui/Field";
 import { useToast } from "@/features/ui/Toast";
+import { actionErrorMessage } from "@/features/ui/form";
 import { THEME_COOKIE, themeAttribute, type Theme } from "@/server/ui/theme";
 
 function apply(theme: Theme) {
@@ -23,7 +24,7 @@ export function ThemeChoice({ initial }: { initial: Theme }) {
     apply(next);
     const formData = new FormData();
     formData.set("theme", next);
-    const result = await saveThemeAction(null, formData).catch(() => ({ ok: false as const, message: "Couldn't reach the server." }));
+    const result = await saveThemeAction(null, formData).catch((error: unknown) => ({ ok: false as const, message: actionErrorMessage(error) ?? "Couldn't reach the server." }));
     if (!result.ok) {
       setTheme(previous);
       apply(previous);

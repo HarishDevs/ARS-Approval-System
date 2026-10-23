@@ -436,6 +436,7 @@ To rebuild a full import file for a brand-new environment: apply the migrations 
 | WhatsApp test: "CEOITBox refused the API key (401)" | Wrong or switched-off key | Paste the new key again; check it's on in CEOITBox |
 | WhatsApp: `CEOITBOX_BLOCKED` | Wallet balance low, or the number opted out | Top up in CEOITBox → Money → Credit Center |
 | WhatsApp messages skipped: `TEMPLATE_NOT_CONFIGURED` | That message's template isn't live yet | Part H |
+| Every submit or delete says "Couldn't reach the server" (before v1.12.5), or "ARS was updated since this page opened" | The page was opened before the last Publish; its form actions belong to the old build | Reload the page (the **Reload page** banner does it). If it still fails after a reload, the message now names the cause or gives a reference to look up in the app log |
 | Uploads fail ("Your files couldn't be stored on the server"; a request says its files couldn't be stored; a task form used to say "Couldn't reach the server") | The app can't write to the upload folder: `UPLOAD_DIR` unset, wrong path, or not writable | Super Admin → Overview → **File storage** names the cause and the folder in use. Set `UPLOAD_DIR` to the Private Storage path (Part C), Restart, check the panel turns green, try an upload. `/api/health` shows `"storage":"ok"`. |
 | Attachments vanish after a redeploy | `UPLOAD_DIR` points inside `/app` | Part C: `/private/uploads` |
 | "Your app is redirecting" warning | Root `/` redirects to `/login` | Settings → General → root path `/login` |

@@ -54,6 +54,17 @@ test("a person's Calendar tab says when the integration is off", async ({ page, 
   await expect(page.getByRole("link", { name: "Connect Google Account" })).toHaveCount(0);
 });
 
+// v1.12.6 (D-165): behind the host's proxy the server sees itself as
+// localhost, so the redirects back to the Calendar tab must be relative.
+test("connect and callback send people back with a relative address, never the server's own", async ({ page, context }) => {
+  await as(context, "E2E_REQ");
+  for (const path of ["/api/integrations/google-calendar/connect", "/api/integrations/google-calendar/callback?state=x&code=y"]) {
+    const response = await page.request.get(path, { maxRedirects: 0 });
+    expect(response.status()).toBe(303);
+    expect(response.headers()["location"]).toMatch(/^\/users\/profile\/calendar\?error=[A-Z_]+$/);
+  }
+});
+
 test("calendar: add a personal entry, see it by day, week and month, edit and delete it", async ({ page, context }) => {
   await as(context, "E2E_REQ");
   await page.goto("/users/calendar?view=day&date=2031-05-14");

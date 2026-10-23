@@ -1,10 +1,10 @@
 "use client";
 
-import { WifiOff } from "lucide-react";
+import { RefreshCw, WifiOff } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Dialog } from "@/features/ui/Dialog";
-import { SESSION_ENDED_EVENT } from "@/features/ui/form";
+import { APP_UPDATED_EVENT, SESSION_ENDED_EVENT } from "@/features/ui/form";
 
 // FB-04: when the session ends (idle limit, 12-hour limit, signed out on
 // another device), say so in a dialog instead of letting the next click
@@ -17,11 +17,14 @@ import { SESSION_ENDED_EVENT } from "@/features/ui/form";
 // signed in".
 // v1.12.1 (owner, D-158): when the session ends, the page goes to the
 // signed-out page, which says why and offers "Sign in again" (back here).
+// v1.12.5 (D-164): the same check tells when ARS was published again since
+// this page was made (`build`), so the page asks to be reloaded before a
+// submit fails.
 const CHECK_EVERY_MS = 60_000;
 const WARN_SECONDS = 120;
 const ACTIVITY_EVENTS = ["keydown", "pointerdown", "wheel", "touchstart", "input"] as const;
 
-export function SessionWatch() {
+export function SessionWatch({ build }: { build: string }) {
   const [ended, setEnded] = useState(false);
   const [left, setLeft] = useState<number | null>(null); // seconds, while warning
   const pathname = usePathname();
@@ -62,7 +65,8 @@ export function SessionWatch() {
       if (lastActivity.current > lastReported.current) await keepAlive();
       const response = await fetch("/api/auth/status", { cache: "no-store" });
       if (!response.ok) return;
-      const body = (await response.json()) as { signedIn?: boolean; idleSecondsLeft?: number | null };
+      const body = (await response.json()) as { signedIn?: boolean; idleSecondsLeft?: number | null; build?: string };
+      if (typeof body.build === "string" && body.build !== "unknown" && build !== "unknown" && body.build !== build) window.dispatchEvent(new Event(APP_UPDATED_EVENT));
       if (body.signedIn === false) {
         setLeft(null);
         setEnded(true);
@@ -73,7 +77,7 @@ export function SessionWatch() {
     } catch {
       // offline or a blip: the offline banner covers it
     }
-  }, [keepAlive]);
+  }, [keepAlive, build]);
   useEffect(() => {
     const onEnded = () => setEnded(true);
     const onActivity = () => {
@@ -147,5 +151,26 @@ export function OfflineBanner() {
       <WifiOff aria-hidden="true" className="h-4 w-4 shrink-0" />
       You&apos;re offline. Changes can&apos;t be sent until you&apos;re back online; what you type stays on this page.
     </p>
+  );
+}
+
+// v1.12.5 (D-164): ARS was published again while this page was open. Its
+// buttons would fail until it's reloaded, so say so plainly.
+export function UpdateNotice() {
+  const [updated, setUpdated] = useState(false);
+  useEffect(() => {
+    const onUpdated = () => setUpdated(true);
+    window.addEventListener(APP_UPDATED_EVENT, onUpdated);
+    return () => window.removeEventListener(APP_UPDATED_EVENT, onUpdated);
+  }, []);
+  if (!updated) return null;
+  return (
+    <div role="alert" data-testid="app-updated" className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-warning-600/30 bg-warning-50 px-4 py-2 text-label text-warning-600 sm:px-8">
+      <RefreshCw aria-hidden="true" className="h-4 w-4 shrink-0" />
+      <span className="min-w-0 flex-1">ARS has been updated. Reload this page before you submit or change anything (copy anything you typed first).</span>
+      <button type="button" className="btn-primary btn-compact" onClick={() => window.location.reload()}>
+        Reload page
+      </button>
+    </div>
   );
 }

@@ -1003,6 +1003,7 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 3. A person → Profile → Calendar → **Connect Google Account** → Google's consent screen → back to ARS (state and nonce checked) → Connected. The first full sync and a watch channel are queued.
 4. Optional: choose another calendar → a full resync. **Disconnect** (optionally removing ARS events) → tokens revoked and deleted.
 5. The Super Admin can **Revoke** anyone's connection, retry failed syncs, or run a full resync.
+- v1.12.6 (D-165): the way back to the Calendar tab (from connect and from Google's callback) is a relative address, because behind GoDaddy's proxy the server sees itself as `http://localhost:<port>`.
 
 ## F-130 Google Calendar: two-way sync (v1.11.0, D-153, D-154)
 1. **Trigger:** every 5 minutes, the job runner queues a sync for each connection not synced within the interval. A Google push notification, Sync now, or a change to a personal entry queues one sooner.
@@ -1088,13 +1089,18 @@ flowchart TD
   C -- answer is Not found --> E{Still signed in? /api/auth/status}
   E -- no --> S[Your session has ended. Sign in again]
   E -- yes --> D
-  C -- throws: 500, offline, cut, garbage, sign-in redirect --> F{Offline?}
+  C -- throws: action not found, page from an older build --> R[ARS was updated: reload the page; banner with Reload page]
+  C -- throws: server error with a digest --> X[Something went wrong on the server; reference for IT]
+  C -- throws: offline, cut, garbage, sign-in redirect --> F{Offline?}
   F -- yes --> O[You are offline; what you typed is still here]
   F -- no --> G{Still signed in?}
   G -- no --> S
-  G -- yes --> U[Could not reach the server; try again]
+  G -- yes, unexpected answer --> V[Unexpected answer; reload and check]
+  G -- yes, no answer --> U[Could not reach the server; try again]
   C -- no answer after 30 s --> T[Taking longer than expected; it may still go through]
+  W[Every minute: /api/auth/status build differs from the page's] --> R
 ```
+- v1.12.5 (D-164): every publish makes new Server Action ids. A page opened before the publish can't submit, delete, save a draft or discard one until it is reloaded; it now says so and shows a **Reload page** banner, also raised by the minute session check when the server's build changes.
 - Page-level failures show `app/error.tsx` (Try again / Go to my approvals); a broken root layout shows `app/global-error.tsx`.
 - Navigation feedback is a spinner on the clicked sidebar link. Period and paging links do a normal page load with a spinner, so the last click wins.
 

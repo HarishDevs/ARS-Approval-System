@@ -17,7 +17,9 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
-- **Now (20 Oct 2026):** v1.12.4: upload failures explained. **Owner:** check Super Admin → Overview → File storage after publishing; set UPLOAD_DIR if it is red.
+- **Now (23 Oct 2026):** v1.12.6: after Google's consent screen, people were sent to `localhost:20011` (the connection itself had worked). Redirects are now relative. **Owner:** publish, then press Connect Google Account again (or just open Profile → Calendar: it may already show Connected).
+- **Now (20 Oct 2026):** v1.12.5: submit and delete failing with "Couldn't reach the server" on pages opened before a publish now say "ARS was updated, reload", with a Reload page banner; server errors show a reference. **Owner:** after publishing, reload open tabs once.
+- **Earlier (20 Oct 2026):** v1.12.4: upload failures explained. **Owner:** check Super Admin → Overview → File storage after publishing; set UPLOAD_DIR if it is red.
 - **Earlier (17 Oct 2026):** v1.12.2: ready for Google OAuth verification. The public home, privacy and terms pages and the narrower calendar scope are built; the owner files using the filing guide (Q-025).
 - **Earlier (17 Oct 2026):** v1.12.1: analytics dropdowns; sign-out after 30 minutes for everyone with a signed-out page; Google consent screen must be External (owner: Google Auth Platform → Audience → Make external → Publish).
 - **Earlier (16 Oct 2026):** v1.12.0: the Analytics Center (nine boards on the Analytics page). Owner choices pending: acknowledgement deadlines for information, and task effort fields, which would make the "not available" metrics possible.
@@ -305,6 +307,18 @@ Found during S8-06:
 - [x] S8-12 Google sign-in reached UNKNOWN_ACCOUNT: itadmin@ is an alias. The Super Admin now signs in as itsupport@arsenergy.co.in (D-082, migration + non-overwriting seed, v1.0.5) (done 8 Oct 2026)
 - [x] S8-01b Go-live on GoDaddy with the owner, following docs/DEPLOYMENT.md (the owner is at the wizard's "Add secrets" step) (done 9 Oct 2026: live since 8 Oct 2026)
 - [x] S8-04 Update the three living files; commit and push (done 8 Oct 2026)
+
+## Session log — v1.12.6: Google Calendar sends people to localhost (23 Oct 2026), planned before starting
+- [x] V1126-01 Cause: connect and callback built their redirect from `request.url`, which is `http://localhost:20011` behind the host's proxy (done 23 Oct 2026)
+- [x] V1126-02 `lib/http/redirect.ts` `redirectToPage` (relative 303, own paths only); both routes use it; unit + E2E checks (done 23 Oct 2026)
+- [ ] V1126-03 Owner: publish; Profile → Calendar should show Connected (else press Connect again)
+
+## Session log — v1.12.5: "Couldn't reach the server" on submit and delete (20 Oct 2026), planned before starting
+- [x] V1125-01 Diagnose on live (read-only): health ok, one build, origin check passes; a page from an older build gets "Server action not found" and the form showed "Couldn't reach the server" (done 20 Oct 2026)
+- [x] V1125-02 `actionErrorMessage`: UnrecognizedActionError → "ARS was updated, reload"; digest → server error with reference; unexpected answer named; session check kept first (done 20 Oct 2026)
+- [x] V1125-03 Update banner with Reload page; `/api/auth/status` returns the build; the minute check compares it with the page's (done 20 Oct 2026)
+- [x] V1125-04 Discard draft, draft autosave and theme use the same messages; unit + E2E tests (`v1125-stale-page.spec.ts`) (done 20 Oct 2026)
+- [ ] V1125-05 Owner: publish v1.12.5, reload open tabs; if a submit still fails, send the message (it now names the cause or a reference)
 
 ## Session log — v1.12.4: upload failures (20 Oct 2026), planned before starting
 - [x] V1124-01 Find the cause: the upload folder isn't writable; the task form threw outside its try (done 20 Oct 2026)

@@ -1,4 +1,5 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+import { redirectToPage } from "@/lib/http/redirect";
 import { requireApiArea } from "@/server/authorization/guards";
 import { NONCE_COOKIE, startConnect } from "@/server/calendar/service";
 import { overLimit } from "@/server/security/limits";
@@ -7,8 +8,9 @@ import { logError } from "@/lib/logging/logger";
 // v1.11.0: "Connect Google Account". Starts Google's consent screen for the
 // signed-in person with a single-use state, bound to a nonce cookie in this
 // browser (CSRF protection for the callback).
-export async function GET(request: NextRequest) {
-  const back = (query: string) => NextResponse.redirect(new URL(`/users/profile/calendar?${query}`, request.url), 303);
+export async function GET() {
+  // Relative: behind the host's proxy request.url is localhost (D-165).
+  const back = (query: string) => redirectToPage(`/users/profile/calendar?${query}`);
   try {
     const session = await requireApiArea("users", { change: true, page: "users.profile" });
     if (await overLimit(`gcal-connect:${session.user.id}`, 10)) return back("error=LIMIT");

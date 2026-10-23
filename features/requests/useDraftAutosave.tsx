@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { discardDraftAction, saveDraftAction } from "@/app/users/draft-actions";
+import { actionErrorMessage } from "@/features/ui/form";
 
 // Autosave for a request form (#3, D-108). Watches the form's inputs, waits
 // 1.5 s after the last change (or saves at once when a field loses focus),
@@ -58,8 +59,9 @@ export function useDraftAutosave(options: { draftKey: string; initialVersion: nu
       } else {
         setState({ status: "error", message: result.message });
       }
-    } catch {
-      setState({ status: "error", message: "Couldn't save the draft (no connection?). Keep this tab open; it will try again when you type." });
+    } catch (error) {
+      // D-164: after a publish this page's actions are gone; say to reload.
+      setState({ status: "error", message: actionErrorMessage(error) ?? "Couldn't save the draft (no connection?). Keep this tab open; it will try again when you type." });
     } finally {
       inFlight.current = false;
     }
