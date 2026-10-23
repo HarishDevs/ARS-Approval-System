@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { formFields, getAdminActor, parseId } from "@/server/admin/actor";
 import { parseUserForm } from "@/server/admin/user-input";
 import { createUser, forceSignOut, setActive, unlock, updateUser } from "@/server/admin/users";
-import { sendSetPasswordLink } from "@/server/auth/set-password";
+import { sendInvitation, sendSetPasswordLink } from "@/server/auth/set-password";
 import { handOverPendingTasks } from "@/server/approvals/service";
 import { logError } from "@/lib/logging/logger";
 import type { ActionResult } from "@/lib/http/action-result";
@@ -28,9 +28,19 @@ export async function createUserAction(_previous: ActionResult | null, formData:
     logError("createUserAction failed", error);
     return { ok: false, message: "Couldn't create the user. Please try again." };
   }
+  // v1.13.0 (D-166): "Email an invitation now" (ticked by default). The
+  // user exists either way; the page says whether the email went.
+  let invite = "";
+  if (formData.get("invite") === "on") {
+    const sent = await sendInvitation(newId, actor).catch((error) => {
+      logError("createUserAction: invitation failed", error, { userId: newId });
+      return { ok: false as const, message: "" };
+    });
+    invite = sent.ok ? "&invite=sent" : "&invite=failed";
+  }
   revalidatePath("/admin/users");
   // redirect() throws on purpose, so it stays outside the try/catch.
-  redirect(`/admin/users/${newId}?created=1`);
+  redirect(`/admin/users/${newId}?created=1${invite}`);
 }
 
 export async function updateUserAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
@@ -52,7 +62,7 @@ export async function updateUserAction(_previous: ActionResult | null, formData:
   return { ok: true, message: "Saved." };
 }
 
-type Command = "deactivate" | "reactivate" | "unlock" | "signout" | "set-password-link";
+type Command = "deactivate" | "reactivate" | "unlock" | "signout" | "set-password-link" | "invite" | "reset-password";
 
 async function runCommand(command: Command, id: number, actor: NonNullable<Awaited<ReturnType<typeof getAdminActor>>>): Promise<ActionResult> {
   switch (command) {
@@ -75,6 +85,15 @@ async function runCommand(command: Command, id: number, actor: NonNullable<Await
     }
     case "set-password-link": {
       const result = await sendSetPasswordLink(id, actor);
+      return result.ok ? { ok: true, message: result.value } : { ok: false, message: result.message };
+    }
+    // v1.13.0 (D-166): by email, from the user page and the users list.
+    case "invite": {
+      const result = await sendInvitation(id, actor);
+      return result.ok ? { ok: true, message: result.value } : { ok: false, message: result.message };
+    }
+    case "reset-password": {
+      const result = await sendSetPasswordLink(id, actor, "RESET");
       return result.ok ? { ok: true, message: result.value } : { ok: false, message: result.message };
     }
     default:

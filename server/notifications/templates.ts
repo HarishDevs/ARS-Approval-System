@@ -371,6 +371,8 @@ export const EXISTING_OTP_TEMPLATE = { code: "WA_LOGIN_OTP_V1", eventType: "OTP_
 // Sent by email and in-app only, on purpose.
 export const EMAIL_ONLY_EVENTS: readonly { eventType: string; emailSubject: string; why: string }[] = [
   { eventType: "SET_PASSWORD_LINK", emailSubject: "Set your ARS Approvals password", why: "The set-password link goes to the email on record; the WhatsApp code then confirms the number." },
+  { eventType: "USER_INVITED", emailSubject: "You've been added to ARS Approvals", why: "Owner choice (D-166): invitations go by email, with the set-password link for password users." },
+  { eventType: "PASSWORD_RESET_LINK", emailSubject: "Reset your ARS Approvals password", why: "Owner choice (D-166): the reset link goes to the email on record; the WhatsApp code then confirms it." },
 ];
 
 export function findTemplateEntry(code: string): TemplateEntry | undefined {

@@ -18,7 +18,7 @@ export const EVENT_GROUPS: readonly EventGroup[] = [
     label: "Sign-in and account security",
     help: "New sign-ins, locks, password and number changes. Always sent, so you can act at once.",
     mandatory: true,
-    events: ["NEW_LOGIN", "ACCOUNT_LOCKED", "ACCOUNT_SECURED", "SECURITY_ALERT", "SUPER_ADMIN_SIGNIN", "BREAK_GLASS_USED", "PASSWORD_CHANGED", "WHATSAPP_CHANGED", "SIGN_IN_METHOD_CHANGED", "SET_PASSWORD_LINK", "OTP_LOGIN"],
+    events: ["NEW_LOGIN", "ACCOUNT_LOCKED", "ACCOUNT_SECURED", "SECURITY_ALERT", "SUPER_ADMIN_SIGNIN", "BREAK_GLASS_USED", "PASSWORD_CHANGED", "WHATSAPP_CHANGED", "SIGN_IN_METHOD_CHANGED", "SET_PASSWORD_LINK", "USER_INVITED", "PASSWORD_RESET_LINK", "OTP_LOGIN"],
   },
   {
     key: "ACTION_NEEDED",

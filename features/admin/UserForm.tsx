@@ -108,6 +108,17 @@ export function UserForm({
           <FieldError result={result} name="roles" />
         </div>
       </fieldset>
+      {mode === "create" && (
+        <label className="flex items-start gap-2 border-t border-line px-5 py-4 text-label">
+          <input type="checkbox" name="invite" defaultChecked className="mt-1" />
+          <span>
+            <span className="font-medium">Email an invitation now</span>
+            <span className="block text-ink-muted">
+              {method === "PASSWORD" ? "Sends their User ID and a link to set their password (confirmed by a WhatsApp code)." : "Tells them they've been added and to sign in with Google as this email."}
+            </span>
+          </span>
+        </label>
+      )}
       {!readOnly && (
         <div className="flex flex-wrap items-center gap-3 border-t border-line px-5 py-4">
           <SubmitButton pending={pending} className="btn-compact">{mode === "create" ? "Create user" : "Save changes"}</SubmitButton>

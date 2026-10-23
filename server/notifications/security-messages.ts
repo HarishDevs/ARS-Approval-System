@@ -158,6 +158,67 @@ export function setPasswordLinkMessage(userName: string, loginId: string, link: 
   };
 }
 
+// v1.13.0 (D-166): invitation emails. A Google user signs in with Google
+// as the email on record; a password user gets their User ID and a
+// set-password link (the WhatsApp code still confirms it, D-025).
+export function googleInvitationMessage(userName: string, email: string, signInUrl: string) {
+  const text = [
+    `Hi ${userName},`,
+    "",
+    "You've been added to ARS Approvals, where ARS raises and approves requests.",
+    `Sign in here: ${signInUrl}`,
+    `Choose "Sign in with Google" and use this Google account: ${email}`,
+    "",
+    "Questions? Contact IT (itadmin@arssteels.co.in).",
+  ].join("\n");
+  return {
+    title: "Welcome to ARS Approvals",
+    message: `Sign in with Google as ${email}.`,
+    email: { subject: "You've been added to ARS Approvals", text },
+    whatsappVariables: null,
+  };
+}
+
+export function passwordInvitationMessage(userName: string, loginId: string, link: string, validHours: number) {
+  const text = [
+    `Hi ${userName},`,
+    "",
+    "You've been added to ARS Approvals, where ARS raises and approves requests.",
+    `Your User ID: ${loginId}`,
+    `Set your password here (valid for ${validHours} hours): ${link}`,
+    "You'll confirm it with a code sent to your WhatsApp. After that you sign in with your User ID and password.",
+    "",
+    "Questions? Contact IT (itadmin@arssteels.co.in).",
+  ].join("\n");
+  return {
+    title: "Welcome to ARS Approvals",
+    message: "Use the link in your email to set your password.",
+    email: { subject: "You've been added to ARS Approvals", text },
+    whatsappVariables: null,
+  };
+}
+
+// v1.13.0 (D-166): IT reset the password. The old one keeps working until
+// a new one is set, so a reset by mistake locks nobody out.
+export function passwordResetLinkMessage(userName: string, loginId: string, link: string, validHours: number) {
+  const text = [
+    `Hi ${userName},`,
+    "",
+    "IT has sent you a link to reset your ARS Approvals password.",
+    `Your User ID: ${loginId}`,
+    `Choose a new password here (valid for ${validHours} hours): ${link}`,
+    "You'll confirm it with a code sent to your WhatsApp. Until then your current password still works.",
+    "",
+    IT_CONTACT,
+  ].join("\n");
+  return {
+    title: "Reset your password",
+    message: "Use the link in your email to choose a new password.",
+    email: { subject: "Reset your ARS Approvals password", text },
+    whatsappVariables: null,
+  };
+}
+
 export function passwordChangedMessage(userName: string, when: Date) {
   const text = [
     `Hi ${userName},`,

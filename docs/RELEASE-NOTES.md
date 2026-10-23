@@ -1,5 +1,16 @@
 # Release notes
 
+## v1.13.0 (23 Oct 2026): invite users and reset passwords by email (owner request)
+- **Add user** has a new tick box, "Email an invitation now" (on by default).
+  - Google users are told they've been added and to sign in with Google as their email.
+  - User ID + password users get their User ID and a link to set their password.
+  - If the email can't be sent, the page says so; the user is still created.
+- **Re-invite** and **Reset password** are on each user's page and on every row of **Users & roles**.
+  - Reset emails a link to choose a new password. The current password keeps working until a new one is set.
+  - Reset shows only for people who already have a password; before that, Re-invite sends the set-password link.
+- Choosing the password is still confirmed by a WhatsApp code, as before (owner's choice).
+- **Owner:** make sure email (Resend) is set up in Super Admin, or nothing can be sent.
+
 ## v1.12.7 (23 Oct 2026): Next.js security update
 - **Next.js 15.5.27 → 15.5.28** for two advisories published today: a critical remote code execution in image optimisation with SVG files (GHSA-2464-fhr4-w9xw) and a denial of service through Server Actions (GHSA-p3m5-59mp-jv5r). CI's audit step caught it.
 - Nothing changes for users. **Owner: publish soon.**

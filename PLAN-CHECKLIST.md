@@ -17,6 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (23 Oct 2026):** v1.13.0: invite user and reset password from User management, by email (owner). The WhatsApp code on set-password stays (owner choice).
 - **Now (23 Oct 2026):** v1.12.7: Next.js 15.5.28 security update (critical advisory). **Owner: publish v1.12.7** (it includes v1.12.5 and v1.12.6).
 - **Now (23 Oct 2026):** v1.12.6: after Google's consent screen, people were sent to `localhost:20011` (the connection itself had worked). Redirects are now relative. **Owner:** publish, then press Connect Google Account again (or just open Profile → Calendar: it may already show Connected).
 - **Now (20 Oct 2026):** v1.12.5: submit and delete failing with "Couldn't reach the server" on pages opened before a publish now say "ARS was updated, reload", with a Reload page banner; server errors show a reference. **Owner:** after publishing, reload open tabs once.
@@ -308,6 +309,16 @@ Found during S8-06:
 - [x] S8-12 Google sign-in reached UNKNOWN_ACCOUNT: itadmin@ is an alias. The Super Admin now signs in as itsupport@arsenergy.co.in (D-082, migration + non-overwriting seed, v1.0.5) (done 8 Oct 2026)
 - [x] S8-01b Go-live on GoDaddy with the owner, following docs/DEPLOYMENT.md (the owner is at the wizard's "Add secrets" step) (done 9 Oct 2026: live since 8 Oct 2026)
 - [x] S8-04 Update the three living files; commit and push (done 8 Oct 2026)
+
+## Session log — v1.13.0: invite user and reset password by email (23 Oct 2026), planned before starting
+- [x] V1130-01 Owner decision recorded: the WhatsApp code on set-password/reset stays (D-025 unchanged); messages by email only (done 23 Oct 2026)
+- [x] V1130-02 Invitation email: Google users (sign in with Google as …) and password users (User ID + set-password link); audit USER_INVITED (done 23 Oct 2026)
+- [x] V1130-03 Reset password email (separate wording, PASSWORD_RESET_LINK event and audit); button named by state (Reset password / Send set-password link) (done 23 Oct 2026)
+- [x] V1130-04 Add user: "Email an invitation now" (default on); the created banner says whether it went (done 23 Oct 2026)
+- [x] V1130-05 User page: Send invitation and Reset password buttons; same edit rules (done 23 Oct 2026)
+- [x] V1130-05b Owner (mid-task): Re-invite and Reset password also on each row of the users list; results as a notice so the row keeps its width (done 23 Oct 2026)
+- [x] V1130-06 Tests: unit (invite, reset, rules), E2E `v1130-invite.spec.ts` (Add user, user page, users list, phone width); living files; push; CI (done 23 Oct 2026)
+- [ ] V1130-07 Owner: check email (Resend) is set up in Super Admin; then try Re-invite on yourself or a test user
 
 ## Session log — v1.12.7: Next.js security update (23 Oct 2026), planned before starting
 - [x] V1127-01 CI audit failed on aad9fb2: next 15.5.27 critical (GHSA-2464-fhr4-w9xw, GHSA-p3m5-59mp-jv5r); upgrade next and eslint-config-next to 15.5.28; audit clean (done 23 Oct 2026)

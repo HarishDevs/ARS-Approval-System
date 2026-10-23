@@ -21,13 +21,14 @@ import { suggestHandover } from "@/server/workload/summary";
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
 export const metadata: Metadata = { title: "User" };
 
-export default async function UserDetailPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ created?: string }> }) {
+export default async function UserDetailPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ created?: string; invite?: string }> }) {
   const { user: actor } = await requireArea("admin");
   const { id } = await params;
   if (!/^\d+$/.test(id)) notFound();
   const user = await getUserForAdmin(Number(id));
   if (!user) notFound();
-  const created = (await searchParams).created === "1";
+  const query = await searchParams;
+  const created = query.created === "1";
   const canEdit = checkCanEdit(actor, { id: user.id, roles: user.roles, active: user.active, isBreakGlass: user.isBreakGlass }).ok;
   const [options, pending, delegations, today] = await Promise.all([loadUserFormOptions(user.id, user.reportingManagerId), countPendingTasks(user.id), listDelegationsInvolving(user.id), indiaToday()]);
 
@@ -41,7 +42,19 @@ export default async function UserDetailPage({ params, searchParams }: { params:
       </PageHeader>
       {created && (
         <p role="status" className="mb-4 rounded-md bg-success-50 px-3 py-2 text-label text-success-600">
-          User created.{user.signInMethod === "PASSWORD" ? " Send the set-password link so they can sign in." : " They can now sign in with Google."}
+          User created.
+          {query.invite === "sent"
+            ? ` Invitation emailed to ${user.email}.`
+            : query.invite === "failed"
+              ? null
+              : user.signInMethod === "PASSWORD"
+                ? " Use Re-invite to email their User ID and a set-password link."
+                : " They can now sign in with Google. Use Re-invite to email them."}
+        </p>
+      )}
+      {created && query.invite === "failed" && (
+        <p role="alert" className="mb-4 rounded-md border border-danger-200 bg-danger-50 px-3 py-2 text-label text-danger-600" data-testid="invite-failed">
+          The invitation email couldn&apos;t be sent{user.signInMethod === "PASSWORD" && !user.whatsappNumber ? " (add a WhatsApp number first: setting a password needs a code on WhatsApp)" : " (check the email settings in Super Admin)"}. Use Re-invite when it&apos;s fixed.
         </p>
       )}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
@@ -96,6 +109,7 @@ export default async function UserDetailPage({ params, searchParams }: { params:
             active={user.active}
             locked={user.locked}
             signInMethod={user.signInMethod}
+            hasPassword={user.hasPassword}
             openSessionCount={user.openSessionCount}
             canEdit={canEdit && user.id !== actor.id}
           />

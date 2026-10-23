@@ -8,6 +8,7 @@ import {
   completeForgotPasswordWithDeps,
   completeSetPasswordWithDeps,
   inspectSetPasswordLinkWithDeps,
+  sendInvitationWithDeps,
   sendSetPasswordLinkWithDeps,
   startForgotPasswordWithDeps,
   startSetPasswordWithDeps,
@@ -106,6 +107,61 @@ async function expectCode(promise: Promise<unknown>, code: string) {
   expect(error).toBeInstanceOf(AuthError);
   expect((error as AuthError).code).toBe(code);
 }
+
+// v1.13.0 (D-166, owner): invite and reset password, by email only.
+describe("invite and reset password (D-166)", () => {
+  const admin = () => ({ ...itAdmin, roles: [...itAdmin.roles] });
+  type Sent = { eventType: string; email: { subject: string; text: string }; whatsappVariables: unknown };
+  const sentOf = (deps: PasswordFlowDeps) => (deps.notify as unknown as { mock: { calls: [Sent][] } }).mock.calls.map((call) => call[0]);
+  const audits = (deps: PasswordFlowDeps) => (deps.recordAudit as unknown as { mock: { calls: [{ action: string }][] } }).mock.calls.map((call) => call[0].action);
+
+  it("a Google user is invited to sign in with Google as their email; no link is made", async () => {
+    const { deps, tokens } = build(userRecord({ signInMethod: "GOOGLE", passwordHash: null }));
+    const result = await sendInvitationWithDeps(5, admin(), deps);
+    expect(result).toEqual({ ok: true, value: expect.stringContaining("Invitation emailed to staff@example.com") });
+    expect(tokens).toHaveLength(0);
+    const [sent] = sentOf(deps);
+    expect(sent).toMatchObject({ eventType: "USER_INVITED", whatsappVariables: null, email: { subject: "You've been added to ARS Approvals" } });
+    expect(sent!.email.text).toContain("https://approval.arssteels.net/login");
+    expect(sent!.email.text).toContain("staff@example.com");
+    expect(audits(deps)).toContain("USER_INVITED");
+  });
+
+  it("a password user's invitation carries their User ID and a set-password link", async () => {
+    const { deps, tokens } = build(userRecord({ passwordHash: null }));
+    const result = await sendInvitationWithDeps(5, admin(), deps);
+    expect(result).toEqual({ ok: true, value: expect.stringContaining("Invitation with a set-password link emailed") });
+    expect(tokens).toHaveLength(1);
+    const [sent] = sentOf(deps);
+    expect(sent!.eventType).toBe("USER_INVITED");
+    expect(sent!.email.text).toContain("Your User ID: EMP005");
+    expect(sent!.email.text).toContain("/set-password?token=token-1");
+  });
+
+  it("reset uses its own wording and event; before a first password it is a plain set-password link", async () => {
+    const withPassword = build(userRecord({ passwordHash: "scrypt$x" }));
+    expect(await sendSetPasswordLinkWithDeps(5, admin(), withPassword.deps, "RESET")).toEqual({ ok: true, value: expect.stringContaining("Password reset link emailed") });
+    const [reset] = sentOf(withPassword.deps);
+    expect(reset).toMatchObject({ eventType: "PASSWORD_RESET_LINK", email: { subject: "Reset your ARS Approvals password" } });
+    expect(reset!.email.text).toContain("current password still works");
+    expect(audits(withPassword.deps)).toContain("PASSWORD_RESET_LINK_SENT");
+
+    const noPassword = build(userRecord({ passwordHash: null }));
+    await sendSetPasswordLinkWithDeps(5, admin(), noPassword.deps, "RESET");
+    expect(sentOf(noPassword.deps)[0]!.eventType).toBe("SET_PASSWORD_LINK");
+  });
+
+  it("the same rules: no invite for inactive or break-glass accounts, nor a password user without WhatsApp; a failed email says why", async () => {
+    expect((await sendInvitationWithDeps(5, admin(), build(userRecord({ signInMethod: "GOOGLE", active: false })).deps)).ok).toBe(false);
+    expect((await sendInvitationWithDeps(5, admin(), build(userRecord({ whatsappNumber: null })).deps)).ok).toBe(false);
+    const superAdmin = { id: 1, roles: ["USER", "IT_ADMIN", "SUPER_ADMIN"] as ("USER" | "IT_ADMIN" | "SUPER_ADMIN")[], sessionId: "s", ipAddress: null };
+    expect((await sendInvitationWithDeps(5, superAdmin, build(userRecord({ signInMethod: "GOOGLE", isBreakGlass: true })).deps)).ok).toBe(false);
+    // Another IT Admin's account: only the Super Admin.
+    expect((await sendInvitationWithDeps(5, admin(), build(userRecord({ signInMethod: "GOOGLE", roles: ["USER", "IT_ADMIN"] })).deps)).ok).toBe(false);
+    const failing = build(userRecord({ signInMethod: "GOOGLE" }), { notify: async () => ({ recorded: true, email: { status: "FAILED", code: "EMAIL_NOT_CONFIGURED" }, whatsapp: null }) });
+    expect(await sendInvitationWithDeps(5, admin(), failing.deps)).toEqual({ ok: false, message: expect.stringContaining("EMAIL_NOT_CONFIGURED") });
+  });
+});
 
 describe("set-password link (P1-13)", () => {
   it("an admin sends the link by email; it is never shown to the admin", async () => {

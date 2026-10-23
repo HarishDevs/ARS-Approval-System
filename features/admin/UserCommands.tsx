@@ -28,6 +28,7 @@ export function UserCommands({
   active,
   locked,
   signInMethod,
+  hasPassword,
   openSessionCount,
   canEdit,
 }: {
@@ -36,6 +37,7 @@ export function UserCommands({
   active: boolean;
   locked: boolean;
   signInMethod: "GOOGLE" | "PASSWORD";
+  hasPassword: boolean;
   openSessionCount: number;
   canEdit: boolean;
 }) {
@@ -47,9 +49,28 @@ export function UserCommands({
   return (
     <section className="card divide-y divide-line">
       <h2 className="px-5 py-4 font-semibold">Account actions</h2>
-      {active && signInMethod === "PASSWORD" && (
-        <Command id={id} command="set-password-link" label="Send set-password link" body="Emails a link (valid 72 hours) to set a new password, confirmed by a WhatsApp code. Older links stop working." />
+      {/* v1.13.0 (D-166): invitations and resets by email. */}
+      {active && (
+        <Command
+          id={id}
+          command="invite"
+          label="Re-invite"
+          body={signInMethod === "PASSWORD" ? "Emails a welcome with their User ID and a link (valid 72 hours) to set their password, confirmed by a WhatsApp code. Older links stop working." : "Emails a welcome telling them to sign in with Google as their email on record."}
+        />
       )}
+      {active && signInMethod === "PASSWORD" &&
+        (hasPassword ? (
+          <Command
+            id={id}
+            command="reset-password"
+            label="Reset password"
+            body="Emails a link (valid 72 hours) to choose a new password, confirmed by a WhatsApp code. Their current password keeps working until then. Older links stop working."
+            confirm={`Email ${name} a link to reset their password?`}
+            confirmLabel="Yes, send"
+          />
+        ) : (
+          <Command id={id} command="set-password-link" label="Send set-password link" body="Emails a link (valid 72 hours) to set a password, confirmed by a WhatsApp code. Older links stop working." />
+        ))}
       {locked && <Command id={id} command="unlock" label="Unlock account" body="Clears a lock from wrong passwords or from “This wasn't me”." />}
       {active && (
         <Command id={id} command="signout" label="Sign out everywhere" body={`Ends every open session (${openSessionCount} now).`} confirm={`Sign ${name} out on every device?`} confirmLabel="Yes, sign out" />

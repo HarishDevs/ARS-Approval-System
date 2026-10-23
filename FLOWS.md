@@ -233,6 +233,25 @@ flowchart LR
 ```
 - Users are never hard-deleted, so history and audit stay intact. *Updated 28 Sep 2026.*
 
+**Invite and reset password (v1.13.0, D-166, owner 23 Oct 2026). Every message goes by email only.**
+```mermaid
+flowchart TD
+  N[Admin: Add user, 'Email an invitation now' ticked by default] --> V{Sign-in method}
+  U[Admin: user page, Send invitation] --> V
+  V -- Google --> VG[Email: you've been added; sign in at /login with Google as your email]
+  V -- Password --> VP{WhatsApp number on file?}
+  VP -- no --> X[Refused: add the WhatsApp number first; codes go there]
+  VP -- yes --> VL[Email: your User ID + set-password link, 72 h; older links stop working]
+  VL --> SP[Set password page: password, then WhatsApp code D-025, then signed in]
+  R[Admin: user page, Reset password, password users] --> RL[Email: reset link, 72 h; the current password works until a new one is set]
+  RL --> SP
+  VG --> AU[Audit: USER_INVITED / PASSWORD_RESET_LINK_SENT]
+  VL --> AU
+  RL --> AU
+```
+- The link is never shown to the admin; if the email fails, the screen says why (e.g. email not set up) and nothing else changes.
+- The rules of who may act are the same as for editing the user (IT Admins can't invite or reset another IT Admin; only the Super Admin can).
+
 **Rules for S2-03 (D-047, 28 Sep 2026):**
 - IT Admin and Super Admin can manage users.
 - Only the Super Admin can grant or remove SUPER_ADMIN, or change a Super Admin or the break-glass account.

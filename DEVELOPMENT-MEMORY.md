@@ -415,6 +415,11 @@
 - Applies to users and IT admins; the Super Admin is exempt (12-hour limit only).
 - The browser's session check no longer counts as activity (it used to keep an open tab signed in for ever). Activity in the page is reported at the next minute's check.
 - A warning with "Stay signed in" 2 minutes before. | Owner; Claude, 15 Oct 2026 |
+| D-166 | 23 Oct 2026 | **Invite user and reset password by email (v1.13.0, owner):**
+- **Add user** has "Email an invitation now" (ticked by default). **Re-invite** and **Reset password** are on the user's page and on each row of the users list.
+- Google users are told to sign in with Google as their email; password users get their User ID and a set-password link (72 h, older links stop working). Reset has its own wording; the current password works until a new one is set. Before a first password there is nothing to reset (the plain set-password link is used).
+- **Owner choice:** the WhatsApp code on set-password stays (D-025 unchanged). Messages are email only (USER_INVITED, PASSWORD_RESET_LINK; audit USER_INVITED, PASSWORD_RESET_LINK_SENT).
+- Same rules as editing the user; never on your own row, inactive or break-glass accounts. The link is never shown to the admin. | Owner; Claude, 23 Oct 2026 |
 | D-165 | 23 Oct 2026 | **Route handlers redirect to own pages with a relative address (v1.12.6):** behind GoDaddy's proxy `request.url` is `http://localhost:<port>`, so `new URL(path, request.url)` leaked it (the calendar callback sent people to localhost:20011). `redirectToPage(path)` in `lib/http/redirect.ts` answers 303 with a relative Location and refuses other sites. The middleware's own redirects were already relative. | Owner report; Claude, 23 Oct 2026 |
 | D-164 | 20 Oct 2026 | **A page from an older build says to reload (v1.12.5):**
 - Every publish makes new Server Action ids (Next 15 salts them per build), so a page opened before a publish gets "Server action not found" for every submit, delete or draft save.
@@ -555,6 +560,12 @@
 - Who approves the privacy policy and terms? | Before filing | Open, waiting on the owner (17 Oct 2026) |
 
 ## 5. Work log (newest first)
+
+### 23 Oct 2026 (v1.13.0: invite user and reset password by email)
+- **Owner request:** invite user and reset password in User management, with email messages; mid-task: both buttons on the users list too. The owner chose to keep the WhatsApp code on set-password.
+- **Built (D-166):** `sendInvitationWithDeps` and `sendSetPasswordLinkWithDeps(purpose: SET | INVITE | RESET)` in `server/auth/set-password.ts`; three emails in `security-messages.ts`; commands `invite` and `reset-password`; Add user tick box and banner; `UserRowActions` on the list (results as a toast); `hasPassword` on list rows.
+- **Found while testing:** the row buttons' screen-reader status line (absolutely positioned) escaped the table's scroll area and made the page 430 px too wide on phones; each row form is now `relative`.
+- **Tests:** `tests/auth/set-password.test.ts` (invite, reset, rules); `tests/e2e/v1130-invite.spec.ts`.
 
 ### 23 Oct 2026 (v1.12.7: Next.js security update)
 - CI on aad9fb2 failed only at `npm audit --omit=dev`: two new Next.js advisories (critical RCE in image optimisation with SVG; DoS via Server Actions) affect up to 15.5.27. Upgraded `next` and `eslint-config-next` to 15.5.28 (exact pins kept). Audit: 0 vulnerabilities.

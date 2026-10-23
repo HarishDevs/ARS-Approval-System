@@ -1008,6 +1008,8 @@ If you didn't expect this, contact IT (itadmin@arssteels.co.in).
 | App event | Email subject | Why no WhatsApp |
 |---|---|---|
 | `SET_PASSWORD_LINK` | Set your ARS Approvals password | The set-password link goes to the email on record; the WhatsApp code then confirms the number. |
+| `USER_INVITED` | You've been added to ARS Approvals | Owner choice (D-166): invitations go by email, with the set-password link for password users. |
+| `PASSWORD_RESET_LINK` | Reset your ARS Approvals password | Owner choice (D-166): the reset link goes to the email on record; the WhatsApp code then confirms it. |
 
 ## Emails
 Every message above is also sent by email from itadmin@arssteels.co.in (through Resend), with the subject shown and the same details as plain text. Emails need no approval: they work as soon as the Resend key is entered in /superadmin/settings.

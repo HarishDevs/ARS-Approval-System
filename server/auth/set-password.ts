@@ -10,7 +10,7 @@ import { checkPasswordPolicy, hashPassword } from "@/lib/security/password";
 import { getEnv } from "@/config/environment";
 import { getAuthSecurityConfig, type AuthSecurityConfig } from "@/server/settings/values";
 import { notify, type NotifyInput, type NotifySummary } from "@/server/notifications/notify";
-import { passwordChangedMessage, setPasswordLinkMessage } from "@/server/notifications/security-messages";
+import { googleInvitationMessage, passwordChangedMessage, passwordInvitationMessage, passwordResetLinkMessage, setPasswordLinkMessage } from "@/server/notifications/security-messages";
 import { AuthError } from "@/server/auth/errors";
 import { consumeOtpCode, issueOtp, loadOpenChallenge, type OtpChallengeResult, type OtpDeps } from "@/server/auth/otp-flow";
 import { defaultOtpDeps } from "@/server/auth/password-sign-in";
@@ -79,13 +79,25 @@ function checkNewPassword(password: string, confirm: string, config: AuthSecurit
 }
 
 // ---- admin: send the link -------------------------------------------------
-export async function sendSetPasswordLinkWithDeps(
-  userId: number,
-  actor: Actor & { sessionId: string; ipAddress: string | null },
-  deps: PasswordFlowDeps,
-): Promise<{ ok: true; value: string } | { ok: false; message: string }> {
+// v1.13.0 (D-166): the same link, worded for its purpose. SET: the plain
+// set-password link (older button). INVITE: a welcome with the User ID and
+// the link. RESET: IT reset the password; the current one works until a new
+// one is set. Every one is email only and confirmed by the WhatsApp code.
+export type PasswordLinkPurpose = "SET" | "INVITE" | "RESET";
+const LINK_PURPOSE = {
+  SET: { eventType: "SET_PASSWORD_LINK", audit: "SET_PASSWORD_LINK_SENT", message: setPasswordLinkMessage, done: "Set-password link" },
+  INVITE: { eventType: "USER_INVITED", audit: "USER_INVITED", message: passwordInvitationMessage, done: "Invitation with a set-password link" },
+  RESET: { eventType: "PASSWORD_RESET_LINK", audit: "PASSWORD_RESET_LINK_SENT", message: passwordResetLinkMessage, done: "Password reset link" },
+} as const;
+
+type AdminActor = Actor & { sessionId: string; ipAddress: string | null };
+type AdminResult = { ok: true; value: string } | { ok: false; message: string };
+
+export async function sendSetPasswordLinkWithDeps(userId: number, actor: AdminActor, deps: PasswordFlowDeps, purpose: PasswordLinkPurpose = "SET"): Promise<AdminResult> {
   const user = await deps.findUserById(userId);
   if (!user) return { ok: false, message: "User not found." };
+  // Nothing to reset before a first password: send the plain set-password wording.
+  const kind = LINK_PURPOSE[purpose === "RESET" && !user.passwordHash ? "SET" : purpose];
   const target = { id: user.id, roles: user.roles, active: user.active, isBreakGlass: user.isBreakGlass };
   const edit = checkCanEdit(actor, target);
   if (!edit.ok) return edit;
@@ -98,13 +110,33 @@ export async function sendSetPasswordLinkWithDeps(
 
   const token = deps.randomToken();
   await deps.createPasswordToken({ userId, tokenHash: tokenHash(token), ttlHours: SET_PASSWORD_LINK_HOURS, createdBy: actor.id });
-  await deps.recordAudit({ actorUserId: actor.id, action: "SET_PASSWORD_LINK_SENT", entityType: "USER", entityId: userId, sessionId: actor.sessionId, ipAddress: actor.ipAddress });
+  await deps.recordAudit({ actorUserId: actor.id, action: kind.audit, entityType: "USER", entityId: userId, sessionId: actor.sessionId, ipAddress: actor.ipAddress });
   const link = `${deps.appBaseUrl()}/set-password?token=${encodeURIComponent(token)}`;
-  const summary = await deps.notify({ eventType: "SET_PASSWORD_LINK", userId, ...setPasswordLinkMessage(user.name, user.loginId, link, SET_PASSWORD_LINK_HOURS) });
-  if (summary.email?.status === "SENT") return { ok: true, value: `Set-password link emailed to ${user.email}. It works for ${SET_PASSWORD_LINK_HOURS} hours.` };
+  const summary = await deps.notify({ eventType: kind.eventType, userId, ...kind.message(user.name, user.loginId, link, SET_PASSWORD_LINK_HOURS) });
+  if (summary.email?.status === "SENT") return { ok: true, value: `${kind.done} emailed to ${user.email}. It works for ${SET_PASSWORD_LINK_HOURS} hours.` };
   // The link exists but the email didn't go out; never show the link here
   // (only the account owner should hold it).
   return { ok: false, message: `The link was created but the email couldn't be sent (${summary.email?.code ?? "not sent"}). Check the email settings, then send it again.` };
+}
+
+// v1.13.0 (D-166): invite a user by email. Password users get the
+// invitation link above; Google users are told to sign in with Google as
+// the email on record (no link: Google proves who they are).
+export async function sendInvitationWithDeps(userId: number, actor: AdminActor, deps: PasswordFlowDeps): Promise<AdminResult> {
+  const user = await deps.findUserById(userId);
+  if (!user) return { ok: false, message: "User not found." };
+  if (user.signInMethod === "PASSWORD") return sendSetPasswordLinkWithDeps(userId, actor, deps, "INVITE");
+  const target = { id: user.id, roles: user.roles, active: user.active, isBreakGlass: user.isBreakGlass };
+  const edit = checkCanEdit(actor, target);
+  if (!edit.ok) return edit;
+  const contact = checkContactChange(actor, target, { setPasswordLink: true });
+  if (!contact.ok) return contact;
+  if (user.isBreakGlass) return { ok: false, message: "The break-glass account isn't invited." };
+  if (!user.active) return { ok: false, message: "Reactivate the user first." };
+  await deps.recordAudit({ actorUserId: actor.id, action: "USER_INVITED", entityType: "USER", entityId: userId, sessionId: actor.sessionId, ipAddress: actor.ipAddress, metadata: { method: "GOOGLE" } });
+  const summary = await deps.notify({ eventType: "USER_INVITED", userId, ...googleInvitationMessage(user.name, user.email, `${deps.appBaseUrl()}/login`) });
+  if (summary.email?.status === "SENT") return { ok: true, value: `Invitation emailed to ${user.email}. They sign in with Google as that address.` };
+  return { ok: false, message: `The invitation email couldn't be sent (${summary.email?.code ?? "not sent"}). Check the email settings, then send it again.` };
 }
 
 // ---- set password via the link ------------------------------------------------
@@ -222,12 +254,13 @@ async function finish(
 }
 
 // ---- bound to the real dependencies ----------------------------------------
-export const sendSetPasswordLink = (userId: number, actor: Actor & { sessionId: string; ipAddress: string | null }) => sendSetPasswordLinkWithDeps(userId, actor, defaultDeps);
+export const sendSetPasswordLink = (userId: number, actor: AdminActor, purpose: PasswordLinkPurpose = "SET") => sendSetPasswordLinkWithDeps(userId, actor, defaultDeps, purpose);
 export const inspectSetPasswordLink = (token: string) => inspectSetPasswordLinkWithDeps(token, defaultDeps);
 export const startSetPassword = (token: string, password: string, confirm: string, context: RequestContext) =>
   startSetPasswordWithDeps(token, password, confirm, context, defaultDeps);
 export const completeSetPassword = (token: string, challengeToken: string, code: string, password: string, confirm: string, context: RequestContext) =>
   completeSetPasswordWithDeps(token, challengeToken, code, password, confirm, context, defaultDeps);
+export const sendInvitation = (userId: number, actor: AdminActor) => sendInvitationWithDeps(userId, actor, defaultDeps);
 export const startForgotPassword = (loginId: string, context: RequestContext) => startForgotPasswordWithDeps(loginId, context, defaultDeps);
 export const completeForgotPassword = (challengeToken: string, code: string, password: string, confirm: string, context: RequestContext) =>
   completeForgotPasswordWithDeps(challengeToken, code, password, confirm, context, defaultDeps);
