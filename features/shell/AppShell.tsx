@@ -11,8 +11,9 @@ import { OnboardingTour } from "@/features/help/OnboardingTour";
 import { tourStepsFor } from "@/features/help/tour-steps";
 import { hasFlag } from "@/lib/db/repositories/user-flags.repository";
 import { PicBot } from "@/features/ai/PicBot";
+import { listConversations } from "@/lib/db/repositories/ai.repository";
 import { chatAccess } from "@/server/ai/policy";
-import { MODE_LABEL } from "@/server/ai/chat-access";
+import { MODE_LABEL, offerOrder } from "@/server/ai/chat-access";
 import { getSettingValue } from "@/server/settings/values";
 import { buildId } from "@/server/ops/build";
 import { BottomNav } from "@/features/shell/BottomNav";
@@ -55,7 +56,7 @@ export async function AppShell({
   children: React.ReactNode;
 }) {
   const spaces = areasForUser(user);
-  const [unread, theme, waiting, access, tourDone, picbot] = await Promise.all([
+  const [unread, theme, waiting, access, tourDone, picbot, chats] = await Promise.all([
     countUnread(user.id).catch(() => 0),
     getUserSetting(user.id, THEME_SETTING).catch(() => null),
     countPendingTasksFor(user.id).catch(() => 0),
@@ -64,8 +65,10 @@ export async function AppShell({
     area === "users" ? hasFlag(user.id, "TOUR_DONE").catch(() => true) : true,
     // D-172: Pic bot's launcher, for people with at least one chat mode they may use now.
     Promise.all([chatAccess(user), getSettingValue("ai.launcher")])
-      .then(([chat, launcher]) => (launcher === "OFF" ? [] : chat.modes.map((mode) => ({ mode, label: MODE_LABEL[mode] }))))
+      .then(([chat, launcher]) => (launcher === "OFF" ? [] : offerOrder(chat.modes).map((mode) => ({ mode, label: MODE_LABEL[mode] }))))
       .catch(() => []),
+    // D-180: the person's AI chats for the sidebar's AI Assistant group.
+    nav.some((item) => item.chats) ? listConversations(user.id, 200).then((rows) => rows.map((row) => ({ id: row.id, title: row.title, pinned: row.pinned }))).catch(() => []) : Promise.resolve([]),
   ]);
   // v1.8.0: pages hidden from this person (Super Admin's page access) are
   // left out of the sidebar and the quick search; the server refuses them anyway.
@@ -120,13 +123,13 @@ export async function AppShell({
         </div>
         <p className="shrink-0 px-6 pt-4 text-caption font-semibold uppercase tracking-wider text-ink-faint">{SPACE_LABEL[area]}</p>
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain" data-testid="sidebar-scroll">
-          <SideNav items={items} collapsible={area === "users"} />
+          <SideNav items={items} collapsible={area !== "admin"} chats={chats} />
         </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-header flex h-topbar items-center justify-between gap-4 border-b border-line bg-surface px-4 sm:px-6">
-          <MobileNav items={items} spaceLabel={SPACE_LABEL[area]} home={`/${area}`} collapsible={area === "users"} />
+          <MobileNav items={items} spaceLabel={SPACE_LABEL[area]} home={`/${area}`} collapsible={area !== "admin"} chats={chats} />
           <div className="ml-auto flex items-center gap-2">
             <CommandPalette pages={palettePages} />
             <NotificationBell initialUnread={unread} />
@@ -144,9 +147,15 @@ export async function AppShell({
         <UpdateNotice />
         <SessionWatch build={buildId()} />
         {/* Not by itself while IT tries the app as a demo person. */}
-        {picbot.length > 0 && <PicBot initialModes={picbot} />}
-        {area === "users" && <OnboardingTour steps={tourStepsFor(visible)} autoStart={!tourDone && !user.isDemo} />}
+        {/* D-185: not in a view-only Try as window (it couldn't ask anyway). */}
+        {picbot.length > 0 && !user.triedBy && <PicBot initialModes={picbot} />}
+        {area === "users" && <OnboardingTour steps={tourStepsFor(visible)} autoStart={!tourDone && !user.isDemo && !user.triedBy} />}
         <ViewOnlyNote patterns={access.viewOnly} />
+        {user.triedBy && (
+          <p role="status" className="border-b border-warning-600/30 bg-warning-50 px-4 py-2 text-label text-warning-600 sm:px-8" data-testid="try-as-banner">
+            Viewing as {displayName(user.name)}, view-only (opened by {displayName(user.triedBy)}). Nothing can be changed here. Close this window when you&apos;re done.
+          </p>
+        )}
         {user.isDemo && (
           <p role="status" className="border-b border-warning-600/30 bg-warning-50 px-4 py-2 text-label text-warning-600 sm:px-8">
             You&apos;re trying the app as {user.name}, a demo person. Sign out and sign in again to return to your own account.

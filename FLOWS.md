@@ -1046,6 +1046,39 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 5. Super Admin addresses refuse anyone who isn't a Super Admin.
 6. "Sign-in & devices" is never restricted.
 
+## F-140 AI Assistant as a business analyst (v1.19.0, D-178, D-180, D-182)
+1. The person opens **AI Assistant** in the sidebar: a new chat opens and the chat list (pinned first, newest next, with a search) expands. About ten chats show; the rest scroll.
+2. The top strip shows **+ New chat**, the day's limit (used, remaining, total) and the connection status.
+3. They ask in plain words; the analyst answers with figures from the data, metric cards and charts for dashboards, tables, insights and next steps. Technical detail (sources, provider, calculated figures) is in a hover hint.
+4. Each chat's ⋯ menu: **Rename**, **Pin to top / Unpin**, **Delete** (confirmed). Owner only; audited.
+5. A failed answer shows one plain sentence; the technical reason is in Super Admin → AI Details → AI Reports.
+
+## F-141 AI Rules (v1.19.0, D-187)
+1. IT Admin or Super Admin opens **Admin → AI Rules**, chooses **All chats** or one chat (General, Approvals, Tasks, Information, Salesforce data, Combined).
+2. They write formatted rules (bold, italic, underline, strikethrough, headings, lists, quotes, links, tables) and press **Save rules**. Saved as Markdown; audited with fingerprints.
+3. Every question, with any provider, carries the rules for all chats and for that chat, after Pic bot's safety rules (which they can't override).
+
+## F-142 Try as (v1.19.0, D-185; supersedes the Super-Admin-only demo switch for non-demo people)
+```mermaid
+flowchart TD
+  A[IT Admin / Super Admin opens a person's page] --> B{May try this person?}
+  B -- no --> X[No Try as button]
+  B -- yes --> C[Try as: one-time link, 5 minutes]
+  C --> D[Admin opens it in a private window]
+  D --> E{Already signed in in that window?}
+  E -- yes --> F[Refused: open in a private window; own session untouched]
+  E -- no --> G{Link valid, unused, rules still allow?}
+  G -- no --> H[Expired / used / refused page]
+  G -- yes --> I[View-only session as the person, 1 hour, banner shows who opened it]
+  I --> J[Every change refused centrally; sign-out allowed]
+```
+- IT Admin: staff only. Super Admin: anyone except themselves and the break-glass account. Every link and use is audited.
+
+## F-143 Super Admin AI pages (v1.19.0, D-180, D-181, D-184)
+- **AI settings**: General (active and fallback provider, switches, module chats), one card per provider (key, model, business data, Test), Common settings (limits, retention, prices).
+- **Salesforce Settings**: connection (Connect, Test, Disconnect, callback URL), app key and secret, allowed objects (`*` = all), hourly copy.
+- **AI Details**: Data Sources, AI Reports (usage, failures, events), AI Activity History (everyone's conversations, titles only).
+
 ## F-134 Module access (AI module branch, D-168)
 ```mermaid
 flowchart TD

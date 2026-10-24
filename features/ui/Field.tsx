@@ -2,6 +2,7 @@
 
 import { Search } from "lucide-react";
 import { useEffect, useId, useRef } from "react";
+import { Hint } from "@/features/ui/Hint";
 
 // Form controls (UI-03). Field wires label, hint and error to the control
 // (aria-describedby, aria-invalid) so screen readers read them together.
@@ -23,15 +24,25 @@ export function Field({ label, hint, error, optional, children, className = "", 
   const describedBy = [hintId, errorId].filter(Boolean).join(" ") || undefined;
   return (
     <div className={className}>
-      <label htmlFor={id} className="field-label">
-        {label}
-        {optional && <span className="font-normal text-ink-faint"> (optional)</span>}
-      </label>
+      <div className="flex items-center gap-1">
+        <label htmlFor={id} className="field-label">
+          {label}
+          {optional && <span className="font-normal text-ink-faint"> (optional)</span>}
+        </label>
+        {/* D-179: a plain-text hint is a hover tip; the control still points at its text. */}
+        {typeof hint === "string" && <Hint text={hint} align="start" className="mb-1.5" />}
+      </div>
       {children({ id, "aria-describedby": describedBy, "aria-invalid": error ? true : undefined })}
-      {hint && (
-        <p id={hintId} className="mt-1 text-caption text-ink-muted">
+      {typeof hint === "string" ? (
+        <span id={hintId} hidden>
           {hint}
-        </p>
+        </span>
+      ) : (
+        hint && (
+          <p id={hintId} className="mt-1 text-caption text-ink-muted">
+            {hint}
+          </p>
+        )
       )}
       {error && (
         <p id={errorId} className="mt-1 text-caption text-danger-600">
@@ -71,8 +82,9 @@ export function Checkbox({ label, hint, ...props }: React.InputHTMLAttributes<HT
       <input type="checkbox" id={id} {...props} className={`mt-0.5 h-5 w-5 shrink-0 accent-[var(--color-primary-solid)] ${props.className ?? ""}`} />
       <label htmlFor={id} className="text-label">
         <span className="font-medium text-ink">{label}</span>
-        {hint && <span className="block text-caption text-ink-muted">{hint}</span>}
+        {typeof hint === "string" ? <span className="sr-only"> {hint}</span> : hint && <span className="block text-caption text-ink-muted">{hint}</span>}
       </label>
+      {typeof hint === "string" && <Hint text={hint} align="start" />}
     </div>
   );
 }

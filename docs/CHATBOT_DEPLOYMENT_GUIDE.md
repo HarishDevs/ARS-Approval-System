@@ -19,7 +19,7 @@ No new **required** variable.
 | `ENCRYPTION_KEY` | Already set | Encrypts provider keys and Salesforce tokens. **Don't change it**, or saved keys and tokens can't be read |
 | `AI_CLAUDE_BASE_URL` | Optional, normally **unset** | An approved gateway for Claude (https only). Tests point it at a local mock |
 
-Provider keys and Salesforce app credentials are **not** environment variables. They're entered in Super Admin → AI settings, stored encrypted, and never shown again.
+Provider keys and Salesforce app credentials are **not** environment variables. They're entered in Super Admin → AI settings (providers) and Super Admin → Salesforce Settings (v1.19.0), stored encrypted, and never shown again.
 
 ## 2. Release and migrations
 
@@ -49,12 +49,12 @@ Provider keys and Salesforce app credentials are **not** environment variables. 
 
 1. **Salesforce sandbox:** create a **Connected App** (or External Client App):
    - enable OAuth;
-   - **callback URL** = the one shown on AI settings (`https://approval.arssteels.net/api/integrations/salesforce/callback`);
+   - **callback URL** = the one shown on Salesforce Settings (`https://approval.arssteels.net/api/integrations/salesforce/callback`);
    - scopes `api` and `refresh_token`;
    - **Require PKCE**;
    - the refresh token policy as your org requires.
 2. Use a **dedicated integration user** with a read-only profile or permission set limited to the objects Pic bot may read.
-3. In AI settings, enter:
+3. In **Salesforce Settings** (v1.19.0; it was part of AI settings), enter:
    - the environment (SANDBOX first) and, optionally, the My Domain URL;
    - the consumer key and secret;
    - the allowed objects and fields (e.g. `Account:Name,Industry;Opportunity:Name,Amount,StageName,CloseDate`).
@@ -69,7 +69,7 @@ Provider keys and Salesforce app credentials are **not** environment variables. 
 
 | Salesforce shows | Cause | Fix |
 |---|---|---|
-| `redirect_uri_mismatch` | The app's Callback URL differs from the one on AI settings (http/https, port, trailing `/`), or the change has not propagated | Copy the callback URL from AI settings exactly; wait up to 10 minutes |
+| `redirect_uri_mismatch` | The app's Callback URL differs from the one on Salesforce Settings (http/https, port, trailing `/`), or the change has not propagated | Copy the callback URL from Salesforce Settings exactly; wait up to 10 minutes |
 | `OAUTH_APPROVAL_ERROR_GENERIC`, with `error=invalid_scope` in the address | The app lacks **Manage user data via APIs (api)**. An app made for Salesforce Hosted MCP has only `mcp_api`, which Pic bot does not use | Edit the app → OAuth Scopes → add `api` (keep `refresh_token, offline_access`) → Save → wait |
 | The browser can't open `…/api/integrations/salesforce/callback` | The ARS server at the callback address was not running (local testing) | Start it and reload the page within a few minutes (the code is single-use and short-lived), or press Connect again |
 | The My Domain field rejects an `api.salesforce.com/platform/mcp/…` address | That is an MCP server address, not a login domain | Enter the org's My Domain, e.g. `https://yourorg--uat.sandbox.my.salesforce.com` |

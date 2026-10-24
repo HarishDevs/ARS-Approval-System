@@ -22,11 +22,11 @@ export async function GET(request: NextRequest) {
   try {
     const result = await finishConnect(session.user.id, { code: query.get("code"), state: query.get("state"), error: query.get("error") });
     await recordAudit({ actorUserId: session.user.id, action: result.ok ? "AI_SALESFORCE_CONNECTED" : "AI_SALESFORCE_CONNECT_FAILED", entityType: "AI_SOURCE", entityId: "salesforce", result: result.ok ? "SUCCESS" : "FAILURE", sessionId: session.sessionId, metadata: result.ok ? {} : { reason: result.error } });
-    const response = redirectToPage(result.ok ? "/superadmin/ai?salesforce=CONNECTED" : `/superadmin/ai?salesforce=${result.error}`);
+    const response = redirectToPage(result.ok ? "/superadmin/salesforce?salesforce=CONNECTED" : `/superadmin/salesforce?salesforce=${result.error}`);
     response.headers.set("Referrer-Policy", "no-referrer");
     return response;
   } catch (error) {
     logError("salesforce callback failed", error);
-    return redirectToPage("/superadmin/ai?salesforce=ERROR");
+    return redirectToPage("/superadmin/salesforce?salesforce=ERROR");
   }
 }

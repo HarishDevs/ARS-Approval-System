@@ -4,12 +4,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Copy, History, Minus, Plus, RotateCcw, Square, Trash2, X } from "lucide-react";
 import { ConfirmDialog } from "@/features/ui/Dialog";
+import { Hint } from "@/features/ui/Hint";
+import { RichAnswer } from "@/features/ai/RichAnswer";
 
 // D-172 Pic bot - ai: the floating launcher (the supplied logo) and chat
 // panel, on every page for people who have at least one chat mode. It talks
 // only to /api/ai/* (the server checks the session, modules, modes and the
 // conversation's owner on every call; nothing here is trusted for access).
-// Answers are shown as plain text, never HTML. Theme tokens follow light/dark.
+// Answers are Markdown rendered to React elements (D-178), never raw HTML. Theme tokens follow light/dark.
 type ModeOption = { mode: string; label: string };
 type Conversation = { id: number; title: string; mode: string; updatedAt: string; usable: boolean };
 type Message = {
@@ -35,6 +37,16 @@ async function api<T>(path: string, init?: RequestInit): Promise<{ ok: boolean; 
     if ((error as Error)?.name === "AbortError") return { ok: false, status: 499, data: null, message: "Stopped." };
     return { ok: false, status: 0, data: null, message: "Couldn't reach the server. Check your connection and try again." };
   }
+}
+
+// D-178: the technical detail of an answer, for its hover hint.
+function aboutAnswer(message: Message): string {
+  const sources = [...new Set(message.evidence.map((item) => item.source))];
+  const read = message.evidence[0] ? new Date(message.evidence[0].asOf).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : null;
+  const parts = [sources.length ? `From ${sources.join(" and ")}${read ? `, read ${read}` : ""}.` : "Answered without company data."];
+  if (message.unverified.length) parts.push(`Calculated by Pic bot, not read directly: ${message.unverified.join(", ")}.`);
+  parts.push("Pic bot can't approve, send or change anything.");
+  return parts.join(" ");
 }
 
 export function PicBot({ initialModes }: { initialModes: ModeOption[] }) {
@@ -147,7 +159,8 @@ export function PicBot({ initialModes }: { initialModes: ModeOption[] }) {
       setMessages(result.data.messages);
     }
     if (!result.ok) {
-      setNotice(result.message);
+      // A failed answer is already in the conversation; only other refusals need a notice.
+      setNotice(result.data?.conversationId ? null : result.message);
       // A retry re-sends the same key: the server never stores or charges it twice.
       if (result.status !== 403 && result.status !== 413 && result.status !== 400) setRetry(pending);
     }
@@ -206,7 +219,7 @@ export function PicBot({ initialModes }: { initialModes: ModeOption[] }) {
               close();
             }
           }}
-          className="card fixed inset-x-2 bottom-2 z-50 flex max-h-[calc(100dvh-1rem)] flex-col overflow-hidden shadow-xl sm:inset-x-auto sm:bottom-6 sm:right-6 sm:h-[min(620px,calc(100dvh-3rem))] sm:w-[400px]"
+          className="card fixed inset-x-2 bottom-2 z-50 flex max-h-[calc(100dvh-1rem)] flex-col overflow-hidden shadow-xl sm:inset-x-auto sm:bottom-6 sm:right-6 sm:h-[min(680px,calc(100dvh-3rem))] sm:w-[440px]"
           style={{ marginBottom: "env(safe-area-inset-bottom)" }}
         >
           <header className="flex items-center gap-2 border-b border-line px-3 py-2">
@@ -261,8 +274,8 @@ export function PicBot({ initialModes }: { initialModes: ModeOption[] }) {
                 </ul>
               )}
               <p className="px-3 py-2 text-caption">
-                <Link href="/users/ai/history" className="link">
-                  All your AI activity
+                <Link href="/users/ai/assistant" className="link">
+                  Open the AI Assistant
                 </Link>
               </p>
             </div>
@@ -271,10 +284,10 @@ export function PicBot({ initialModes }: { initialModes: ModeOption[] }) {
               <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
                 {current.id === null && modes.length > 1 && (
                   <div className="mb-3">
-                    <label htmlFor="picbot-mode" className="field-label">
+                    <label htmlFor="picbot-mode" className="sr-only">
                       What should this chat use?
                     </label>
-                    <select id="picbot-mode" value={current.mode} onChange={(event) => setCurrent({ id: null, mode: event.target.value, usable: true })} className="field-input" data-testid="picbot-mode">
+                    <select id="picbot-mode" title="What this chat uses" value={current.mode} onChange={(event) => setCurrent({ id: null, mode: event.target.value, usable: true })} className="h-8 rounded-full border border-line bg-surface-muted px-3 text-label text-ink" data-testid="picbot-mode">
                       {modes.map((item) => (
                         <option key={item.mode} value={item.mode}>
                           {item.label}
@@ -285,56 +298,44 @@ export function PicBot({ initialModes }: { initialModes: ModeOption[] }) {
                 )}
                 {messages.length === 0 && !busy && (
                   <p className="text-label text-ink-muted">
-                    {stopped ? "Pic bot is switched off for now." : modes.length ? "Ask in plain words. Answers about ARS data show where each figure came from." : "No chat mode is available to you."}
+                    {stopped ? "Pic bot is switched off for now." : modes.length ? "What would you like to know?" : "No chat mode is available to you."}
                   </p>
                 )}
                 <ol ref={list} className="space-y-3" aria-live="polite" data-testid="picbot-messages">
                   {messages.map((message) =>
                     message.role === "user" ? (
-                      <li key={message.id} className="ml-auto max-w-[85%] whitespace-pre-wrap break-words rounded-lg bg-primary-50 px-3 py-2 text-label text-primary-700">
+                      <li key={message.id} className="ml-auto w-fit max-w-[85%] whitespace-pre-wrap break-words rounded-2xl bg-primary-50 px-3 py-2 text-label text-primary-700">
                         {message.content}
                       </li>
                     ) : message.error ? (
-                      <li key={message.id} role="alert" className="max-w-[90%] rounded-lg border border-danger-200 bg-danger-50 px-3 py-2 text-label text-danger-600">
+                      <li key={message.id} role="alert" className="text-label text-danger-600">
                         {message.error}
                       </li>
                     ) : (
-                      <li key={message.id} className="max-w-[95%] rounded-lg border border-line px-3 py-2 text-label" data-testid="picbot-answer">
-                        <p className="whitespace-pre-wrap break-words">{message.content}</p>
-                        {message.unverified.length > 0 && (
-                          <p className="mt-2 rounded-md bg-warning-50 px-2 py-1 text-caption text-warning-600">Check these figures: {message.unverified.join(", ")}. They weren&apos;t in the data read.</p>
-                        )}
-                        {message.evidence.length > 0 && (
-                          <details className="mt-2 text-caption">
-                            <summary className="cursor-pointer text-ink-muted">Based on {message.evidence.length} data source{message.evidence.length === 1 ? "" : "s"}</summary>
-                            <ul className="mt-1 space-y-1">
-                              {message.evidence.map((item, index) => (
-                                <li key={index}>
-                                  {item.label}: {item.source}, read {new Date(item.asOf).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
-                                  {item.links.map((link) => (
-                                    <Link key={link.href} href={link.href} className="link ml-2">
-                                      {link.label}
-                                    </Link>
-                                  ))}
-                                </li>
-                              ))}
-                            </ul>
-                          </details>
-                        )}
-                        <button type="button" onClick={() => void copy(message)} className="mt-1 inline-flex items-center gap-1 text-caption text-ink-muted hover:text-ink" aria-label="Copy this answer">
-                          <Copy aria-hidden="true" className="h-3 w-3" /> {copied === message.id ? "Copied" : "Copy"}
-                        </button>
+                      <li key={message.id} className="text-label" data-testid="picbot-answer">
+                        <RichAnswer text={message.content} compact />
+                        <div className="mt-1 flex items-center gap-1">
+                          <button type="button" onClick={() => void copy(message)} className="inline-flex h-7 w-7 items-center justify-center rounded-md text-ink-faint hover:bg-surface-muted hover:text-ink" aria-label="Copy this answer" title={copied === message.id ? "Copied" : "Copy"}>
+                            <Copy aria-hidden="true" className="h-3.5 w-3.5" />
+                          </button>
+                          <Hint text={aboutAnswer(message)} align="start" />
+                          {message.evidence.flatMap((item) => item.links).slice(0, 2).map((link) => (
+                            <Link key={link.href} href={link.href} className="link text-caption">
+                              {link.label}
+                            </Link>
+                          ))}
+                        </div>
                       </li>
                     ),
                   )}
                   {busy && (
                     <li className="text-label text-ink-muted" role="status">
-                      Pic bot is thinking…
+                      Analysing…
                     </li>
                   )}
                 </ol>
-                {notice && (
-                  <p role="alert" className="mt-3 rounded-md border border-danger-200 bg-danger-50 px-3 py-2 text-label text-danger-600" data-testid="picbot-notice">
+                {(notice || retry) && (
+                  <p role={notice ? "alert" : undefined} className={notice ? "mt-3 rounded-md border border-danger-200 bg-danger-50 px-3 py-2 text-label text-danger-600" : "mt-2 text-label text-ink-muted"} data-testid="picbot-notice">
                     {notice}
                     {retry && (
                       <button type="button" onClick={() => void send(retry)} className="ml-2 inline-flex items-center gap-1 font-semibold underline">
@@ -369,7 +370,7 @@ export function PicBot({ initialModes }: { initialModes: ModeOption[] }) {
                         submit();
                       }
                     }}
-                    placeholder={current.usable ? "Ask Pic bot…" : "Start a new chat to ask more."}
+                    placeholder={current.usable ? "Ask anything…" : "Start a new chat to ask more."}
                     className="field-input min-h-[2.75rem] flex-1 resize-none"
                   />
                   {busy ? (
@@ -382,7 +383,6 @@ export function PicBot({ initialModes }: { initialModes: ModeOption[] }) {
                     </button>
                   )}
                 </div>
-                <p className="mt-1 px-1 text-caption text-ink-muted">Pic bot can&apos;t approve, send or change anything. Check important answers.</p>
               </form>
             </>
           )}

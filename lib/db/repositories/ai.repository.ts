@@ -12,6 +12,7 @@ export interface AiConversation {
   createdAt: Date;
   updatedAt: Date;
   messageCount: number;
+  pinned?: boolean; // D-182
 }
 
 export interface AiEvidence {
@@ -97,11 +98,23 @@ export async function ownsConversation(ownerId: number, conversationId: number, 
 
 export async function listConversations(ownerId: number, limit = 50, db: Queryable = getDbPool()): Promise<AiConversation[]> {
   const [rows] = await db.query<RowDataPacket[]>(
-    `SELECT c.id, c.title, c.mode, c.created_at, c.updated_at, (SELECT COUNT(*) FROM ai_messages m WHERE m.conversation_id = c.id) AS message_count
-     FROM ai_conversations c WHERE c.owner_user_id = ? ORDER BY c.updated_at DESC, c.id DESC LIMIT ?`,
+    `SELECT c.id, c.title, c.mode, c.created_at, c.updated_at, c.pinned_at, (SELECT COUNT(*) FROM ai_messages m WHERE m.conversation_id = c.id) AS message_count
+     FROM ai_conversations c WHERE c.owner_user_id = ? ORDER BY c.pinned_at IS NULL, c.pinned_at DESC, c.updated_at DESC, c.id DESC LIMIT ?`,
     [ownerId, limit],
   );
-  return rows.map((row) => ({ id: row.id, title: row.title, mode: row.mode, createdAt: row.created_at, updatedAt: row.updated_at, messageCount: Number(row.message_count) }));
+  return rows.map((row) => ({ id: row.id, title: row.title, mode: row.mode, createdAt: row.created_at, updatedAt: row.updated_at, messageCount: Number(row.message_count), pinned: row.pinned_at !== null && row.pinned_at !== undefined }));
+}
+
+// D-182: the owner renames or pins one of their chats (another person's id
+// changes nothing). updated_at is kept, so the chat doesn't jump in the list.
+export async function renameConversation(ownerId: number, conversationId: number, title: string, db: Queryable = getDbPool()): Promise<boolean> {
+  const [result] = await db.query<ResultSetHeader>("UPDATE ai_conversations SET title = ?, updated_at = updated_at WHERE id = ? AND owner_user_id = ?", [title, conversationId, ownerId]);
+  return result.affectedRows === 1;
+}
+
+export async function pinConversation(ownerId: number, conversationId: number, pinned: boolean, db: Queryable = getDbPool()): Promise<boolean> {
+  const [result] = await db.query<ResultSetHeader>("UPDATE ai_conversations SET pinned_at = IF(?, CURRENT_TIMESTAMP, NULL), updated_at = updated_at WHERE id = ? AND owner_user_id = ?", [pinned, conversationId, ownerId]);
+  return result.affectedRows === 1;
 }
 
 // Only the owner's: another person's id gives an empty list.
@@ -372,4 +385,14 @@ export async function upsertSourceRecords(sourceKey: string, dataset: string, re
      ON DUPLICATE KEY UPDATE modified_at = VALUES(modified_at), data_json = VALUES(data_json)`,
     [values],
   );
+}
+
+// D-180: every person's conversations, for the Super Admin's AI Activity History.
+export async function listAllConversations(limit = 200, db: Queryable = getDbPool()): Promise<(AiConversation & { ownerName: string })[]> {
+  const [rows] = await db.query<RowDataPacket[]>(
+    `SELECT c.id, c.title, c.mode, c.created_at, c.updated_at, u.name AS owner_name, (SELECT COUNT(*) FROM ai_messages m WHERE m.conversation_id = c.id) AS message_count
+     FROM ai_conversations c JOIN users u ON u.id = c.owner_user_id ORDER BY c.updated_at DESC, c.id DESC LIMIT ?`,
+    [limit],
+  );
+  return rows.map((row) => ({ id: row.id, title: row.title, mode: row.mode, createdAt: row.created_at, updatedAt: row.updated_at, messageCount: Number(row.message_count), ownerName: String(row.owner_name) }));
 }

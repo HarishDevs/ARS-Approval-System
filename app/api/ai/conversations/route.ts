@@ -2,7 +2,7 @@ import { apiError, apiSuccess } from "@/lib/http/api-response";
 import { aiAccess } from "@/server/ai/api";
 import { requireApiArea } from "@/server/authorization/guards";
 import { listConversations } from "@/lib/db/repositories/ai.repository";
-import { MODE_LABEL, type ChatMode } from "@/server/ai/chat-access";
+import { MODE_LABEL, offerOrder, type ChatMode } from "@/server/ai/chat-access";
 
 // D-172: the person's own conversations and the chat modes they may use now.
 export const dynamic = "force-dynamic";
@@ -22,7 +22,7 @@ export async function GET() {
   const conversations = await listConversations(access.session.user.id, 30);
   return apiSuccess({
     stopped: access.stopped,
-    modes: access.modes.map((mode) => ({ mode, label: MODE_LABEL[mode] })),
+    modes: offerOrder(access.modes).map((mode) => ({ mode, label: MODE_LABEL[mode] })),
     conversations: conversations.map((item) => ({ id: item.id, title: item.title, mode: item.mode, updatedAt: item.updatedAt.toISOString(), usable: access.modes.includes(item.mode as ChatMode) })),
   });
 }

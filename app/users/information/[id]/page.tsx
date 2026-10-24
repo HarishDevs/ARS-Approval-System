@@ -55,7 +55,7 @@ export default async function InformationPage({ params, searchParams }: { params
   return (
     <>
       <Breadcrumbs items={[{ href: viewer.recipient ? "/users/information" : "/users/information/sent", label: "Information" }, { label: item.infoNo }]} />
-      <PageHeader title={item.title} description={`${item.infoNo} · ${item.typeName} (version ${versionNo}) · from ${item.createdByName}`}>
+      <PageHeader title={item.title} meta={`${item.infoNo} · ${item.typeName} (version ${versionNo}) · from ${item.createdByName}`}>
         <Badge tone={INFO_STATE_TONE[state]}>{INFO_STATE_LABEL[state]}</Badge>
         <Badge tone={INFO_PRIORITY_TONE[item.priority]}>{INFO_PRIORITY_LABEL[item.priority]}</Badge>
       </PageHeader>

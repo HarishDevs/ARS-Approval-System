@@ -53,7 +53,7 @@ export async function AnalyticsListScreen({ searchParams, base }: { searchParams
   return (
     <>
       <Breadcrumbs items={[{ href: base === "/admin/analytics" ? "/admin" : "/users", label: "Overview" }, { href: back, label: "Analytics" }, { label: DRILL_LABEL[kind] }]} />
-      <PageHeader title={DRILL_LABEL[kind]} description={`${scope.label}${periodBound ? ` · ${period.label} (${period.from} to ${period.to})` : " · right now"}${conditions.length ? ` · ${conditions.join(" · ")}` : ""}`}>
+      <PageHeader title={DRILL_LABEL[kind]} meta={`${scope.label}${periodBound ? ` · ${period.label} (${period.from} to ${period.to})` : " · right now"}${conditions.length ? ` · ${conditions.join(" · ")}` : ""}`}>
         <Link href={back} className="link text-label">
           ← Back to Analytics
         </Link>

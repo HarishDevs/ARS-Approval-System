@@ -4,8 +4,9 @@ import Link, { useLinkStatus } from "next/link";
 import { useEffect, useId, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { Spinner } from "@/features/ui/Spinner";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { NavIcon, SectionIcon } from "@/features/shell/nav-icons";
+import { ChatList, type ChatSummary } from "@/features/shell/ChatList";
 
 export interface NavItem {
   href: string;
@@ -13,6 +14,7 @@ export interface NavItem {
   also?: readonly string[]; // other pages this entry stays highlighted on (the Profile tabs)
   count?: number; // e.g. how many approvals are waiting (from the server)
   section?: string; // v1.9.0: the module group this entry belongs to (My Approvals, Tasks, Information…)
+  chats?: boolean; // D-180: the group shows the person's AI chats (with a search) instead of links
 }
 
 // v1.9.2 (owner): with `collapsible`, consecutive entries of one section
@@ -42,7 +44,7 @@ function readStored(): Record<string, boolean> {
   }
 }
 
-export function SideNav({ items, collapsible = false }: { items: NavItem[]; collapsible?: boolean }) {
+export function SideNav({ items, collapsible = false, chats = [] }: { items: NavItem[]; collapsible?: boolean; chats?: ChatSummary[] }) {
   const pathname = usePathname();
   // Only the most specific entry is highlighted (My tasks vs Assigned by me
   // under /users/tasks/assigned).
@@ -93,17 +95,45 @@ export function SideNav({ items, collapsible = false }: { items: NavItem[]; coll
         block.kind === "item" ? (
           <EntryLink key={block.item.href} item={block.item} active={isActive(block.item)} />
         ) : (
-          <NavGroup key={block.section} section={block.section} items={block.items} open={Boolean(open[block.section])} current={activeName === block.section} onToggle={() => toggle(block.section)} isActive={isActive} />
+          <NavGroup key={block.section} section={block.section} items={block.items} chats={block.items.some((item) => item.chats) ? chats : null} open={Boolean(open[block.section])} current={activeName === block.section} onToggle={() => toggle(block.section)} isActive={isActive} />
         ),
       )}
     </nav>
   );
 }
 
-function NavGroup({ section, items, open, current, onToggle, isActive }: { section: string; items: NavItem[]; open: boolean; current: boolean; onToggle: () => void; isActive: (item: NavItem) => boolean }) {
+function NavGroup({ section, items, chats, open, current, onToggle, isActive }: { section: string; items: NavItem[]; chats: ChatSummary[] | null; open: boolean; current: boolean; onToggle: () => void; isActive: (item: NavItem) => boolean }) {
   const id = useId();
   // A waiting count inside a closed group shows on its header.
   const waiting = items.reduce((sum, item) => sum + (item.count ?? 0), 0);
+  const router = useRouter();
+  // D-180 (owner): the AI Assistant header starts a new chat and opens the
+  // chat list at the same time; its arrow alone closes or opens the list.
+  if (chats) {
+    return (
+      <div data-testid={`nav-group-${section}`}>
+        <div className={`flex items-center rounded-md border-l-[3px] ${current && !open ? "border-primary-600 bg-primary-50 text-primary-700" : "border-transparent text-ink-muted hover:bg-surface-muted hover:text-ink"}`}>
+          <button
+            type="button"
+            onClick={() => {
+              if (!open) onToggle();
+              router.push(items[0]?.href ?? "/users/ai/assistant");
+            }}
+            className={`flex min-w-0 flex-1 items-center gap-2.5 px-3 py-2 text-left text-body ${current ? "font-semibold" : ""}`}
+          >
+            <SectionIcon section={section} />
+            <span className="flex-1">{section}</span>
+          </button>
+          <button type="button" aria-expanded={open} aria-controls={id} aria-label={open ? "Hide chats" : "Show chats"} title={open ? "Hide chats" : "Show chats"} onClick={onToggle} className="mr-1 rounded p-1.5 hover:text-ink">
+            <ChevronDown aria-hidden="true" className={`h-4 w-4 shrink-0 transition-transform motion-reduce:transition-none ${open ? "rotate-180" : ""}`} />
+          </button>
+        </div>
+        <div id={id} hidden={!open} className="ml-4 mt-0.5 border-l border-line pl-2">
+          <ChatList chats={chats} />
+        </div>
+      </div>
+    );
+  }
   return (
     <div data-testid={`nav-group-${section}`}>
       <button
@@ -123,13 +153,15 @@ function NavGroup({ section, items, open, current, onToggle, isActive }: { secti
         )}
         <ChevronDown aria-hidden="true" className={`h-4 w-4 shrink-0 transition-transform motion-reduce:transition-none ${open ? "rotate-180" : ""}`} />
       </button>
-      <ul id={id} hidden={!open} className="ml-4 mt-0.5 space-y-0.5 border-l border-line pl-2">
-        {items.map((item) => (
-          <li key={item.href}>
-            <EntryLink item={item} active={isActive(item)} />
-          </li>
-        ))}
-      </ul>
+      {(
+        <ul id={id} hidden={!open} className="ml-4 mt-0.5 space-y-0.5 border-l border-line pl-2">
+          {items.map((item) => (
+            <li key={item.href}>
+              <EntryLink item={item} active={isActive(item)} />
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

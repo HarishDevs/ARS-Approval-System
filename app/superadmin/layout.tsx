@@ -20,6 +20,12 @@ export default async function SuperAdminLayout({ children }: { children: React.R
         { href: "/superadmin/settings", label: "Providers & security" },
         { href: "/superadmin/integrations", label: "Integrations" },
         { href: "/superadmin/ai", label: "AI settings" },
+        // D-181 (owner): Salesforce has its own settings page.
+        { href: "/superadmin/salesforce", label: "Salesforce Settings" },
+        // D-180 (owner): the AI details moved here from the AI module.
+        { href: "/superadmin/ai/data-sources", label: "Data Sources", section: "AI Details" },
+        { href: "/superadmin/ai/reports", label: "AI Reports", section: "AI Details" },
+        { href: "/superadmin/ai/history", label: "AI Activity History", section: "AI Details" },
         { href: "/superadmin/pages", label: "Page access" },
         { href: "/superadmin/templates", label: "WhatsApp templates" },
         { href: "/superadmin/requests", label: "Requests" },

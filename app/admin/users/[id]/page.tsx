@@ -13,6 +13,8 @@ import { MODE_LABEL } from "@/server/ai/chat-access";
 import { getUserForAdmin } from "@/lib/db/repositories/admin-users.repository";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 import { HandoverForm } from "@/features/admin/HandoverForm";
+import { TryAsButton } from "@/features/admin/TryAsButton";
+import { canTryAs } from "@/server/auth/try-as";
 import { DelegationForm } from "@/features/requests/DelegationForms";
 import { DelegationList } from "@/features/requests/DelegationList";
 import { countPendingTasks } from "@/server/approvals/service";
@@ -41,7 +43,8 @@ export default async function UserDetailPage({ params, searchParams }: { params:
   return (
     <>
       <Breadcrumbs items={[{ href: "/admin", label: "Admin" }, { href: "/admin/users", label: "Users & roles" }, { label: user.name }]} />
-      <PageHeader title={user.name} description={`${user.loginId} · ${user.email}`}>
+      <PageHeader title={user.name} meta={`${user.loginId} · ${user.email}`}>
+        {canTryAs(actor, target).ok && <TryAsButton userId={user.id} />}
         <Link href="/admin/users" className="link text-label">
           ← All users
         </Link>

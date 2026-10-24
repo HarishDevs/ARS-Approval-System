@@ -3,7 +3,7 @@ import { z } from "zod";
 import { approvalsWaitingFor, myInformationSummary, myRequestsSummary, myTasksSummary, sourceDatasetCounts } from "@/lib/db/repositories/ai-data.repository";
 import { hasModule } from "@/server/modules/modules";
 import { createProposal } from "@/server/ai/proposals";
-import { countSalesforce, describeObject, listObjects, loadAllowlist, MAX_ROWS, querySalesforce, QueryRefused, readsAllObjects, SalesforceUnavailable } from "@/server/ai/connectors/salesforce-query";
+import { countSalesforce, describeObject, groupSalesforce, listObjects, loadAllowlist, MAX_ROWS, querySalesforce, QueryRefused, readsAllObjects, SalesforceUnavailable } from "@/server/ai/connectors/salesforce-query";
 import type { ToolSpec } from "@/server/ai/providers";
 import type { AiEvidence } from "@/lib/db/repositories/ai.repository";
 import { salesforceScopeOf, type ChatMode, type SalesforceScope } from "@/server/ai/chat-access";
@@ -187,6 +187,34 @@ const TOOLS: readonly AiTool[] = [
       const sf = salesforceContext(context);
       const result = await countSalesforce({ object: String(args.object), filters: args.filters as never }, sf);
       return { result: { object: args.object, filters: args.filters, ...result }, source: SF };
+    },
+  },
+  {
+    label: "Salesforce breakdown",
+    mode: "SALESFORCE",
+    businessData: true,
+    spec: {
+      name: "salesforce_group",
+      description: "Group Salesforce records of one object by a field (or by month/year of a date field) and count, sum, average, min or max a field per group, with simple filters. Salesforce does the maths; use it for breakdowns, rankings, trends and dashboards.",
+      parameters: {
+        type: "object",
+        properties: {
+          object: { type: "string" },
+          group_by: { type: "string", description: "The field to group by (a date or date-time field when bucket is set)." },
+          bucket: { type: "string", enum: ["MONTH", "YEAR"], description: "Group a date field by month or year (for trends)." },
+          aggregate: { type: "string", enum: ["COUNT", "SUM", "AVG", "MIN", "MAX"] },
+          field: { type: "string", description: "The numeric field to aggregate; not needed for COUNT." },
+          filters: filterSchema,
+        },
+        required: ["object", "group_by", "aggregate"],
+        additionalProperties: false,
+      },
+    },
+    args: z.object({ object: z.string().max(80), group_by: z.string().max(80), bucket: z.enum(["MONTH", "YEAR"]).optional(), aggregate: z.enum(["COUNT", "SUM", "AVG", "MIN", "MAX"]), field: z.string().max(80).optional(), filters: filterArgs.default([]) }).strict(),
+    run: async (context, args) => {
+      const sf = salesforceContext(context);
+      const result = await groupSalesforce({ object: String(args.object), groupBy: String(args.group_by), bucket: (args.bucket as "MONTH" | "YEAR" | undefined) ?? null, aggregate: args.aggregate as "COUNT", field: (args.field as string | undefined) ?? null, filters: args.filters as never }, sf);
+      return { result: { object: args.object, groupedBy: args.group_by, bucket: args.bucket ?? null, aggregate: args.aggregate, field: args.field ?? null, ...result }, source: SF };
     },
   },
   {

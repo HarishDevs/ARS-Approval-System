@@ -55,7 +55,7 @@ export async function AnalyticsScreen({ searchParams, base }: { searchParams: Re
   if (limited) {
     return (
       <>
-        <PageHeader title="Analytics" description={scope.label} />
+        <PageHeader title="Analytics" meta={scope.label} />
         <p role="alert" className="card px-4 py-3 text-label text-warning-600">
           Analytics was opened many times in the last minute. Wait a minute, then reload the page.
         </p>
@@ -100,7 +100,7 @@ export async function AnalyticsScreen({ searchParams, base }: { searchParams: Re
 
   return (
     <>
-      <PageHeader title="Analytics" description={`${scope.label} · ${period.label}: ${day(period.from)} – ${day(period.to)} (India time), compared with ${day(previous.from)} – ${day(previous.to)}`}>
+      <PageHeader title="Analytics" meta={`${scope.label} · ${period.label}: ${day(period.from)} – ${day(period.to)} (India time), compared with ${day(previous.from)} – ${day(previous.to)}`}>
         <Link href={`${base}/metrics`} className="link text-label">
           How these are worked out
         </Link>

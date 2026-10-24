@@ -149,7 +149,7 @@ export async function CenterScreen({ base, board, query, scope, scopes, viewer, 
 
   return (
     <>
-      <PageHeader title="Analytics" description={`${scope.label} · ${period.label}: ${day(period.from)} – ${day(period.to)}, compared with ${day(previous.from)} – ${day(previous.to)}. India time (UTC+5:30).`}>
+      <PageHeader title="Analytics" meta={`${scope.label} · ${period.label}: ${day(period.from)} – ${day(period.to)}, compared with ${day(previous.from)} – ${day(previous.to)}. India time (UTC+5:30).`}>
         <Link href={`${base}/metrics`} className="link text-label">
           How these are worked out
         </Link>

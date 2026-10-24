@@ -71,7 +71,7 @@ export default async function TaskPage({ params, searchParams }: { params: Promi
   return (
     <>
       <Breadcrumbs items={[{ href: "/users/tasks", label: "Tasks" }, { label: task.taskNo }]} />
-      <PageHeader title={task.title} description={`${task.taskNo} · ${task.typeName} (version ${versionNo})`}>
+      <PageHeader title={task.title} meta={`${task.taskNo} · ${task.typeName} (version ${versionNo})`}>
         <Badge tone={STATUS_TONE[task.status]}>{TASK_STATUS_LABEL[task.status]}</Badge>
         <Badge tone={PRIORITY_TONE[task.priority]}>{PRIORITY_LABEL[task.priority]}</Badge>
         {late && <Badge tone="danger">Overdue</Badge>}

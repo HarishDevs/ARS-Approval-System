@@ -13,8 +13,23 @@ const normalise = (figure: string) => {
   return Number.isFinite(value) ? String(value) : plain;
 };
 
+// Dates and times aren't figures (D-178: "24 Oct 2026" was flagged as "24").
+const MONTH = "(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*";
+const DATES = new RegExp(
+  [
+    String.raw`\b\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?\b`,
+    String.raw`\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b`,
+    String.raw`\b\d{1,2}(?:st|nd|rd|th)?\s+${MONTH}(?:,?\s+\d{4})?\b`,
+    String.raw`\b${MONTH}\s+\d{1,2}(?:st|nd|rd|th)?(?:,?\s+\d{4})?\b`,
+    String.raw`\b${MONTH}\s+\d{4}\b`,
+    String.raw`\b\d{1,2}:\d{2}(?::\d{2})?\s*(?:am|pm)?\b`,
+    String.raw`\b(?:19|20)\d{2}\b`,
+  ].join("|"),
+  "gi",
+);
+
 export function figuresIn(text: string): string[] {
-  return [...text.replace(LIST_MARKER, " ").matchAll(FIGURE)].map((match) => normalise(match[0]));
+  return [...text.replace(DATES, " ").replace(LIST_MARKER, " ").matchAll(FIGURE)].map((match) => normalise(match[0]));
 }
 
 export function unverifiedFigures(answer: string, sources: readonly string[]): string[] {

@@ -126,13 +126,13 @@ export const TOUR_STEPS: readonly TourStep[] = [
   {
     id: "ai",
     section: "Tasks",
-    title: "AI (if you have it)",
-    intro: "The AI module: a dashboard of your figures and an assistant you can ask in plain words.",
+    title: "AI Assistant (if you have it)",
+    intro: "Your business analyst: ask in plain words and get answers, dashboards and insights from your data.",
     points: [
-      "Answers show the data they used and when it was read; figures the AI couldn't find in the data are flagged.",
-      "It can suggest a follow-up, but a person always decides; nothing is done automatically.",
+      "Your chats are listed under AI Assistant in the sidebar, with a search.",
+      "It reads your data only; it can't approve, send or change anything.",
     ],
-    path: "/users/ai",
+    path: "/users/ai/assistant",
     target: HEADER,
   },
   {

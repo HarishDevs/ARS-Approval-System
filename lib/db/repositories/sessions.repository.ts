@@ -52,14 +52,21 @@ export async function createSession(
     ipAddress: string | null;
     userAgent: string | null;
     ttlSeconds: number;
+    triedBy?: number | null; // D-185
   },
   db: Queryable = getDbPool(),
 ): Promise<void> {
   await db.query<ResultSetHeader>(
-    `INSERT INTO user_sessions (id, user_id, device_id, auth_method, ip_address, user_agent, expires_at)
-     VALUES (?, ?, ?, ?, ?, ?, DATE_ADD(CURRENT_TIMESTAMP, INTERVAL ? SECOND))`,
-    [input.id, input.userId, input.deviceId, input.authMethod, input.ipAddress, input.userAgent, input.ttlSeconds],
+    `INSERT INTO user_sessions (id, user_id, device_id, auth_method, ip_address, user_agent, expires_at, tried_by)
+     VALUES (?, ?, ?, ?, ?, ?, DATE_ADD(CURRENT_TIMESTAMP, INTERVAL ? SECOND), ?)`,
+    [input.id, input.userId, input.deviceId, input.authMethod, input.ipAddress, input.userAgent, input.ttlSeconds, input.triedBy ?? null],
   );
+}
+
+// D-185: who opened this session with Try as (null for a normal session).
+export async function sessionTriedBy(sessionId: string, db: Queryable = getDbPool()): Promise<string | null> {
+  const [rows] = await db.query<(RowDataPacket & { name: string })[]>("SELECT u.name FROM user_sessions s JOIN users u ON u.id = s.tried_by WHERE s.id = ? LIMIT 1", [sessionId]);
+  return rows[0]?.name ?? null;
 }
 
 // v1.8.0: seconds since the session was last used, or null when it is

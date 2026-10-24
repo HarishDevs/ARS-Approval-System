@@ -86,7 +86,7 @@ test("the launcher shows the Pic bot logo; the panel answers with evidence, mini
   await panel.getByLabel("Message Pic bot").press("Enter");
   const answer = page.getByTestId("picbot-answer");
   await expect(answer).toContainText(`Answer for Person PB_A_${tag}: 0 waiting.`);
-  await expect(answer).toContainText("Based on 1 data source");
+  await expect(answer.locator('[data-tip^="From ARS Approvals"]')).toHaveCount(1); // D-178: the source is in the hover hint
   await expect(answer.getByRole("button", { name: "Copy this answer" })).toBeVisible();
   await page.screenshot({ path: "test-results/picbot-panel.png" });
 
@@ -172,13 +172,14 @@ test("10 signed-in clients ask at the same time over HTTP: every answer reaches 
 
 test("the Super Admin sees the Salesforce connection with its callback URL; Connect without an app explains what's missing", async ({ page, context }) => {
   await context.addCookies([await sessionCookie("E2E_SUPER")]);
-  await page.goto("/superadmin/ai");
+  await page.goto("/superadmin/salesforce");
   const card = page.getByTestId("sf-connection");
   await expect(card).toContainText("Not connected");
   await expect(card).toContainText(`${BASE}/api/integrations/salesforce/callback`);
   await card.getByRole("link", { name: "Connect Salesforce" }).click();
-  await expect(page).toHaveURL(/\/superadmin\/ai\?salesforce=CONFIG$/);
+  await expect(page).toHaveURL(/\/superadmin\/salesforce\?salesforce=CONFIG$/);
   await expect(page.getByText("Enter the Salesforce app's consumer key and secret")).toBeVisible();
+  await page.goto("/superadmin/ai");
   await expect(page.getByTestId("ai-live")).toContainText("being answered");
 });
 

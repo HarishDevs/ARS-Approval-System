@@ -35,6 +35,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         // v1.9.0 (D-144): Task and Information set-up.
         { href: "/admin/task-types", label: "Task types", section: "Task set-up" },
         { href: "/admin/information-types", label: "Information types", section: "Information set-up" },
+        // D-187 (owner): the AI training module.
+        { href: "/admin/ai-rules", label: "AI Rules", section: "AI set-up" },
         { href: "/admin/calendar", label: "Working calendar", section: "Organisation" },
         { href: "/admin/users", label: "Users & roles", section: "Organisation" },
         { href: "/admin/organisation", label: "Departments", section: "Organisation" },

@@ -49,8 +49,8 @@ export async function syncSalesforceAction(): Promise<ActionResult> {
   try {
     const summary = await syncSalesforce(session.user.id);
     await recordAudit({ actorUserId: session.user.id, action: "AI_SOURCE_SYNCED", entityType: "AI_SOURCE", entityId: "salesforce", result: summary.ok ? "SUCCESS" : "FAILURE", sessionId: session.sessionId, metadata: { datasets: summary.datasets.map((item) => ({ dataset: item.dataset, ok: item.ok, rows: item.rows })) } });
-    revalidatePath("/superadmin/ai");
-    revalidatePath("/users/ai/data-sources");
+    revalidatePath("/superadmin", "layout");
+    revalidatePath("/superadmin/ai/data-sources");
     return summary.ok ? { ok: true, message: summary.message } : { ok: false, message: summary.message };
   } catch (error) {
     logError("syncSalesforceAction failed", error);
@@ -68,7 +68,7 @@ export async function testSalesforceAction(): Promise<ActionResult> {
   }
   const result = await testConnection();
   await recordAudit({ actorUserId: session.user.id, action: "AI_SALESFORCE_TESTED", entityType: "AI_SOURCE", entityId: "salesforce", result: result.ok ? "SUCCESS" : "FAILURE", sessionId: session.sessionId });
-  revalidatePath("/superadmin/ai");
+  revalidatePath("/superadmin", "layout");
   return { ok: result.ok, message: result.message };
 }
 
@@ -83,7 +83,7 @@ export async function disconnectSalesforceAction(): Promise<ActionResult> {
   try {
     await disconnectSalesforce();
     await recordAudit({ actorUserId: session.user.id, action: "AI_SALESFORCE_DISCONNECTED", entityType: "AI_SOURCE", entityId: "salesforce", sessionId: session.sessionId });
-    revalidatePath("/superadmin/ai");
+    revalidatePath("/superadmin", "layout");
     return { ok: true, message: "Salesforce disconnected. Its token was revoked and deleted." };
   } catch (error) {
     logError("disconnectSalesforceAction failed", error);

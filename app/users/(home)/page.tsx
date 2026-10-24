@@ -172,7 +172,7 @@ function ModulesHome({ name, user }: { name: string; user: Parameters<typeof has
   const links = [
     hasModule(user, "TASK") && { href: "/users/tasks", label: "My tasks", body: "Tasks given to you, and tasks you give others." },
     hasModule(user, "INFORMATION") && { href: "/users/information", label: "Information inbox", body: "Notices and circulars for you." },
-    hasModule(user, "AI") && { href: "/users/ai", label: "AI", body: "The AI dashboard and assistant." },
+    hasModule(user, "AI") && { href: "/users/ai/assistant", label: "AI Assistant", body: "Ask your business analyst." },
     { href: "/users/calendar", label: "Calendar", body: "Your dates and personal entries." },
   ].filter(Boolean) as { href: string; label: string; body: string }[];
   return (

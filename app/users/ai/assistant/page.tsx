@@ -1,24 +1,36 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { PageHeader } from "@/features/shell/PageHeader";
-import { Badge } from "@/features/ui/Display";
+import { Plus } from "lucide-react";
 import { requireAiPage } from "@/features/ai/guard";
 import { ProviderNotice } from "@/features/ai/AiParts";
 import { AssistantForm } from "@/features/ai/AssistantForm";
+import { CopyAnswer } from "@/features/ai/CopyAnswer";
+import { RichAnswer } from "@/features/ai/RichAnswer";
+import { Hint } from "@/features/ui/Hint";
 import { listMessages, ownsConversation, questionsToday, type AiMessage } from "@/lib/db/repositories/ai.repository";
 import { loadAiSettings, routeFor } from "@/server/ai/config";
 import { chatAccess } from "@/server/ai/policy";
-import { MODE_LABEL } from "@/server/ai/chat-access";
+import { MODE_LABEL, offerOrder, type ChatMode } from "@/server/ai/chat-access";
 import { PROVIDER_LABEL, type ProviderCode } from "@/server/ai/providers";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
+import { friendlyError } from "@/server/ai/friendly";
 
 export const metadata: Metadata = { title: "AI Assistant" };
 export const dynamic = "force-dynamic";
 
-// D-169 (AI module branch): the assistant. Answers come from approved tools
-// only; each shows the data it used (evidence, source, time read) and flags
-// any figure that wasn't in that data. The conversation is the person's own:
-// another person's id simply shows nothing.
+// D-169, D-178, D-180: the assistant as a conversation, like a chat app (the
+// person's chats are in the sidebar's AI Assistant group).
+// Answers come from approved tools only. The technical detail (sources,
+// provider, time read, any figure Pic bot calculated) sits in a hover hint.
+// The conversation is the person's own: another person's id shows nothing.
+const SUGGESTIONS: Partial<Record<ChatMode, string[]>> = {
+  APPROVAL: ["What needs my attention today?", "Which approvals have waited longest?"],
+  TASK: ["Which of my tasks are overdue?", "Summarise my week's tasks"],
+  INFORMATION: ["What's unread in my inbox?"],
+  SALESFORCE: ["Give me a sales dashboard for this quarter", "How are our opportunities split by stage?"],
+  GENERAL: ["Draft a polite follow-up email"],
+};
+
 export default async function AiAssistantPage({ searchParams }: { searchParams: Promise<{ c?: string }> }) {
   const { user } = await requireAiPage();
   const raw = (await searchParams).c;
@@ -27,103 +39,110 @@ export default async function AiAssistantPage({ searchParams }: { searchParams: 
   const [settings, messages, used, chat] = await Promise.all([loadAiSettings(), conversationId ? listMessages(user.id, conversationId) : Promise.resolve([]), questionsToday(user.id), chatAccess(user)]);
   const route = routeFor(settings, false);
   const enabled = route.length > 0 && chat.modes.length > 0;
-  const modeOptions = chat.modes.map((mode) => ({ mode, label: MODE_LABEL[mode] }));
-  const dataRoute = routeFor(settings, true);
+  const modeOptions = offerOrder(chat.modes).map((mode) => ({ mode, label: MODE_LABEL[mode] }));
+  const suggestions = offerOrder(chat.modes).flatMap((mode) => SUGGESTIONS[mode] ?? []).slice(0, 4);
+  const firstName = user.name.split(" ")[0] ?? user.name;
+  const about = enabled
+    ? `Answered by ${PROVIDER_LABEL[route[0] as ProviderCode]}${route[1] ? ` (or ${PROVIDER_LABEL[route[1] as ProviderCode]})` : ""}. Figures come from your data; Pic bot can't approve, send or change anything.`
+    : "";
+
+  const remaining = Math.max(0, settings.dailyQuestions - used);
+  const providerName = route[0] ? PROVIDER_LABEL[route[0] as ProviderCode] : null;
+  const initials = firstName.slice(0, 1).toUpperCase() + (user.name.split(" ")[1]?.slice(0, 1).toUpperCase() ?? "");
 
   return (
-    <>
-      <PageHeader title="AI Assistant" description="Ask about your approvals, requests, tasks and information in plain words. Answers show the data they used.">
-        {conversationId !== null && (
-          <Link href="/users/ai/assistant" className="btn-secondary btn-compact">
-            New conversation
-          </Link>
+    <section className="mx-auto flex w-full max-w-4xl flex-col" aria-label="AI Assistant">
+      <h1 className="sr-only">AI Assistant</h1>
+      {/* D-180 (owner's sketch): new chat, the day's limit and the connection, in one strip. */}
+      <div className="mb-6 flex flex-wrap items-center gap-2 text-label" data-testid="ai-strip">
+        <Link href="/users/ai/assistant" className="btn-secondary btn-compact">
+          <Plus aria-hidden="true" className="h-4 w-4" /> New chat
+        </Link>
+        {enabled && (
+          <span className="inline-flex items-center gap-3 rounded-full border border-line px-3 py-1.5" title="Questions you can ask today; the limit resets at midnight" data-testid="ai-limit">
+            <span className="text-ink-muted">AI limit</span>
+            <span>
+              Used <strong className="tabular-nums">{used}</strong>
+            </span>
+            <span>
+              Remaining <strong className="tabular-nums">{remaining}</strong>
+            </span>
+            <span>
+              Total <strong className="tabular-nums">{settings.dailyQuestions}</strong>
+            </span>
+          </span>
         )}
-      </PageHeader>
-      <div className="max-w-3xl space-y-4">
-        {requested !== null && conversationId === null && (
-          <p role="alert" className="rounded-md border border-danger-200 bg-danger-50 px-3 py-2 text-label text-danger-600">
-            That conversation isn&apos;t available.
-          </p>
-        )}
-        {!enabled ? (
-          <ProviderNotice isSuperAdmin={user.roles.includes("SUPER_ADMIN")} />
-        ) : (
-          <p className="text-label text-ink-muted" data-testid="ai-route">
-            Answered by {PROVIDER_LABEL[route[0] as ProviderCode]}
-            {route[1] ? `, or ${PROVIDER_LABEL[route[1] as ProviderCode]} if it is unavailable` : ""}.{" "}
-            {dataRoute.length ? "It can read your own ARS data." : "No provider is approved for business data yet, so it can't read ARS data."} {used} of {settings.dailyQuestions} questions used today.
-          </p>
-        )}
-        <ol className="space-y-3" data-testid="ai-messages">
-          {messages.map((message) => (
-            <MessageItem key={message.id} message={message} />
-          ))}
-        </ol>
-        {route.length > 0 && chat.modes.length === 0 && <p className="text-label text-ink-muted">No Pic bot chat mode is available to you. Ask IT.</p>}
-        <AssistantForm conversationId={conversationId} enabled={enabled} maxChars={settings.maxQuestionChars} modes={modeOptions} />
-        <p className="text-caption text-ink-muted">
-          Numbers come from the data, never from the AI&apos;s guess; any figure it couldn&apos;t find in the data is flagged. It can&apos;t approve, send or change anything.
-        </p>
+        <span className="ml-auto inline-flex items-center gap-2 rounded-full border border-line px-3 py-1.5" data-testid="ai-connection">
+          <span aria-hidden="true" className={`h-2 w-2 rounded-full ${enabled ? "bg-success-solid" : "bg-ink-faint"}`} />
+          {enabled ? `Connected${providerName ? ` · ${providerName}` : ""}` : "Not connected"}
+          {chat.policy.salesforceConnected && chat.modes.includes("SALESFORCE") ? " · Salesforce" : ""}
+          {about && <Hint text={about} align="end" />}
+        </span>
       </div>
-    </>
+
+      {requested !== null && conversationId === null && (
+        <p role="alert" className="mb-4 rounded-md border border-danger-200 bg-danger-50 px-3 py-2 text-label text-danger-600">
+          That conversation isn&apos;t available.
+        </p>
+      )}
+      {!enabled && (route.length === 0 ? <ProviderNotice isSuperAdmin={user.roles.includes("SUPER_ADMIN")} /> : <p className="text-label text-ink-muted">No Pic bot chat is available to you. Ask IT.</p>)}
+
+      {enabled && messages.length === 0 && conversationId === null && (
+        <div className="py-10 text-center">
+          <p className="text-[1.5rem] font-semibold text-ink">Hi {firstName}, what would you like to know?</p>
+        </div>
+      )}
+
+      <ol className="mb-4 space-y-6" data-testid="ai-messages">
+        {messages.map((message) => (
+          <MessageItem key={message.id} message={message} initials={initials} />
+        ))}
+      </ol>
+      <AssistantForm conversationId={conversationId} enabled={enabled} maxChars={settings.maxQuestionChars} modes={modeOptions} suggestions={suggestions} />
+    </section>
   );
 }
 
-function MessageItem({ message }: { message: AiMessage }) {
+function aboutAnswer(message: AiMessage): string {
+  const sources = [...new Set(message.evidence.map((item) => item.source))];
+  const read = message.evidence[0] ? formatIndiaTime(new Date(message.evidence[0].asOf)) : formatIndiaTime(message.createdAt);
+  const parts = [sources.length ? `From ${sources.join(" and ")}, read ${read}.` : `Answered ${read}, without company data.`];
+  if (message.provider) parts.push(`Answered by ${PROVIDER_LABEL[message.provider as ProviderCode] ?? message.provider}.`);
+  if (message.unverified.length) parts.push(`Calculated by Pic bot, not read directly: ${message.unverified.join(", ")}.`);
+  return parts.join(" ");
+}
+
+function MessageItem({ message, initials }: { message: AiMessage; initials: string }) {
   if (message.role === "user") {
     return (
-      <li className="ml-auto max-w-[85%] rounded-lg bg-primary-50 px-4 py-3 text-primary-700">
-        <p className="whitespace-pre-wrap break-words">{message.content}</p>
-        <p className="mt-1 text-caption opacity-80">{formatIndiaTime(message.createdAt)}</p>
+      <li className="flex justify-end gap-3">
+        <p className="w-fit max-w-[80%] whitespace-pre-wrap break-words rounded-2xl bg-primary-50 px-4 py-2.5 text-primary-700" title={formatIndiaTime(message.createdAt)}>
+          {message.content}
+        </p>
+        <span aria-hidden="true" className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-solid text-caption font-semibold text-white">
+          {initials}
+        </span>
       </li>
     );
   }
   if (message.error) {
     return (
-      <li role="alert" className="max-w-[85%] rounded-lg border border-danger-200 bg-danger-50 px-4 py-3 text-label text-danger-600">
-        {message.error}
+      <li role="alert" className="text-label text-danger-600">
+        {friendlyError(message.error)}
       </li>
     );
   }
   return (
-    <li className="card max-w-[95%] px-4 py-3" data-testid="ai-answer">
-      <p className="whitespace-pre-wrap break-words">{message.content}</p>
-      {message.unverified.length > 0 && (
-        <p role="note" className="mt-2 rounded-md bg-warning-50 px-3 py-2 text-label text-warning-600" data-testid="ai-unverified">
-          Check these figures: {message.unverified.join(", ")}. They weren&apos;t in the data the assistant read.
-        </p>
-      )}
-      <div className="mt-2 flex flex-wrap items-center gap-2 text-caption text-ink-muted">
-        {message.evidence.length ? <Badge tone="success">Based on {message.evidence.length} data source{message.evidence.length === 1 ? "" : "s"}</Badge> : <Badge tone="neutral">No ARS data used</Badge>}
-        <span>
-          {message.provider ? PROVIDER_LABEL[message.provider as ProviderCode] ?? message.provider : ""} · {message.model} · {formatIndiaTime(message.createdAt)}
-        </span>
+    <li className="flex gap-3" data-testid="ai-answer">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/brand/pic-bot.jpg" alt="" className="mt-0.5 h-7 w-7 shrink-0 rounded-full object-cover" />
+      <div className="min-w-0 flex-1">
+        <RichAnswer text={message.content} />
+        <div className="mt-1.5 flex items-center gap-1">
+          <CopyAnswer text={message.content} />
+          <Hint text={aboutAnswer(message)} align="start" />
+        </div>
       </div>
-      {message.evidence.length > 0 && (
-        <details className="mt-2 text-label">
-          <summary className="cursor-pointer text-ink-muted">Evidence</summary>
-          <ul className="mt-2 space-y-2">
-            {message.evidence.map((item, index) => (
-              <li key={index} className="rounded-md border border-line px-3 py-2">
-                <p className="font-medium">{item.label}</p>
-                <p className="text-caption text-ink-muted">
-                  {item.source} · read {formatIndiaTime(new Date(item.asOf))}
-                </p>
-                <pre className="mt-1 max-h-48 overflow-auto whitespace-pre-wrap break-words text-caption">{JSON.stringify(item.result, null, 2)}</pre>
-                {item.links.length > 0 && (
-                  <p className="mt-1 flex flex-wrap gap-2">
-                    {item.links.map((link) => (
-                      <Link key={link.href} href={link.href} className="link text-caption">
-                        {link.label}
-                      </Link>
-                    ))}
-                  </p>
-                )}
-              </li>
-            ))}
-          </ul>
-        </details>
-      )}
     </li>
   );
 }

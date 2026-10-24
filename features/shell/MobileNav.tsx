@@ -4,13 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { SideNav, type NavItem } from "@/features/shell/SideNav";
+import type { ChatSummary } from "@/features/shell/ChatList";
 
 // Below 768 px the sidebar is hidden; this button opens it as a drawer
 // (S9-04). Closes on a page change, Escape or a tap outside.
 // WEB-03 (v1.10.0): focus moves into the drawer when it opens, Tab stays
 // inside it, and focus returns to the menu button when it closes. The logo
 // links to the space's first page (WEB-17); the list scrolls on short screens.
-export function MobileNav({ items, spaceLabel, home, collapsible = false }: { items: NavItem[]; spaceLabel: string; home: string; collapsible?: boolean }) {
+export function MobileNav({ items, spaceLabel, home, collapsible = false, chats = [] }: { items: NavItem[]; spaceLabel: string; home: string; collapsible?: boolean; chats?: ChatSummary[] }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const opener = useRef<HTMLButtonElement>(null);
@@ -67,7 +68,7 @@ export function MobileNav({ items, spaceLabel, home, collapsible = false }: { it
             </div>
             <p className="shrink-0 px-6 pt-3 text-caption font-semibold uppercase tracking-wider text-ink-faint">{spaceLabel}</p>
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-              <SideNav items={items} collapsible={collapsible} />
+              <SideNav items={items} collapsible={collapsible} chats={chats} />
             </div>
           </div>
           {/* The dimmed area: a tap closes the menu (the ✕ button is the keyboard way). */}

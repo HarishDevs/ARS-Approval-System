@@ -95,50 +95,52 @@ test("a Super Admin's page says every module instead of showing boxes that would
 
 const AI_PAGES = ["/users/ai", "/users/ai/assistant", "/users/ai/intelligence", "/users/ai/insights", "/users/ai/data-sources", "/users/ai/reports", "/users/ai/history"];
 
-test("with the AI module: an AI sidebar group of its own, and every AI page opens with honest 'not connected' states", async ({ page, context }) => {
+test("with the AI module: the AI Assistant group lists chats with a search; the old AI pages open the assistant (D-180)", async ({ page, context }) => {
   await addPerson(`MOD_D_${tag}`, "APPROVAL,AI");
   await context.addCookies([await sessionCookie(`MOD_D_${tag}`)]);
   await page.goto("/users");
-  const group = page.getByTestId("sidebar").getByTestId("nav-group-AI");
+  const group = page.getByTestId("sidebar").getByTestId("nav-group-AI Assistant");
   await expect(group).toBeVisible();
-  await group.getByRole("button", { name: /AI/ }).click();
-  await group.getByRole("link", { name: "AI Dashboard" }).click();
-  await expect(page.getByRole("heading", { level: 1, name: "AI Dashboard" })).toBeVisible();
-  await expect(page.getByTestId("ai-dashboard")).toContainText("No data yet");
+  await group.getByRole("button", { name: /AI Assistant/ }).click();
+  await expect(group.getByRole("searchbox", { name: "Search chats" })).toBeVisible();
+  await expect(group.getByText("No chats yet")).toBeVisible();
   for (const path of AI_PAGES) {
     const response = await page.goto(path);
     expect(response?.status(), path).toBe(200);
+    await expect(page, path).toHaveURL(/\/users\/ai\/assistant$/);
   }
-  await page.goto("/users/ai/reports");
-  await expect(page.getByTestId("ai-not-connected")).toBeVisible();
-  await page.goto("/users/ai/history");
-  await expect(page.getByText("No conversations yet")).toBeVisible();
-  await page.goto("/users/ai/assistant");
   await expect(page.getByText("No AI provider is set up yet")).toBeVisible();
   await expect(page.getByLabel("Your question")).toBeDisabled();
-  await page.goto("/users/ai/data-sources");
-  await expect(page.getByTestId("ai-sources")).toContainText("Salesforce");
-  await expect(page.getByTestId("ai-sources")).toContainText("Not connected");
 });
 
-test("without the AI module: no AI group, every AI address is a 404, and AI settings stay Super Admin only", async ({ page, context }) => {
+test("without the AI module: no AI group, every AI address is a 404, and the AI pages stay Super Admin only", async ({ page, context }) => {
   await context.addCookies([await sessionCookie("E2E_ADMIN")]); // IT Admin, default modules (no AI)
   await page.goto("/users");
-  await expect(page.getByTestId("sidebar").getByTestId("nav-group-AI")).toHaveCount(0);
-  for (const path of [...AI_PAGES, "/superadmin/ai"]) {
+  await expect(page.getByTestId("sidebar").getByTestId("nav-group-AI Assistant")).toHaveCount(0);
+  for (const path of [...AI_PAGES, "/superadmin/ai", "/superadmin/salesforce", "/superadmin/ai/reports", "/superadmin/ai/data-sources", "/superadmin/ai/history"]) {
     const response = await page.goto(path);
     expect(response?.status(), path).toBe(404);
   }
 });
 
-test("the Super Admin's AI settings: seven providers, encrypted key fields, usage and the Salesforce section", async ({ page, context }) => {
+test("the Super Admin's AI settings: seven providers, encrypted key fields; Salesforce and AI Details on their own pages", async ({ page, context }) => {
   await context.addCookies([await sessionCookie("E2E_SUPER")]);
   await page.goto("/superadmin/ai");
   const providers = page.getByTestId("ai-providers");
   for (const name of ["Claude (Anthropic)", "ChatGPT (OpenAI)", "Grok (xAI)", "DeepSeek", "Groq", "Gemini (Google AI Studio)", "NVIDIA (Nemotron)"]) await expect(providers).toContainText(name);
   await expect(providers.getByText("Not set up")).toHaveCount(7);
-  await expect(page.getByLabel("Claude (Anthropic) API key")).toHaveAttribute("type", "password");
+  await expect(page.getByTestId("ai-provider-CLAUDE").getByLabel("API key")).toHaveAttribute("type", "password");
+  await expect(page.getByTestId("ai-general").getByRole("switch", { name: "Emergency stop" })).not.toBeChecked();
   await expect(page.getByLabel("Active provider", { exact: true })).toBeVisible();
+  await expect(page.getByText("Salesforce sync")).toHaveCount(0);
+  await page.goto("/superadmin/salesforce");
   await expect(page.getByText("Salesforce sync")).toBeVisible();
+  await page.goto("/superadmin/ai/reports");
   await expect(page.getByText("No questions yet.").first()).toBeVisible();
+  await page.goto("/superadmin/ai/data-sources");
+  await expect(page.getByTestId("ai-sources")).toContainText("Salesforce");
+  await page.goto("/superadmin/ai/history");
+  await expect(page.getByRole("heading", { level: 1, name: "AI Activity History" })).toBeVisible();
+  const group = page.getByTestId("sidebar").getByTestId("nav-group-AI Details");
+  await expect(group).toBeVisible();
 });

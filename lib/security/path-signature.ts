@@ -25,3 +25,8 @@ export async function verifyPath(path: string | null, signature: string | null, 
   for (let index = 0; index < expected.length; index += 1) diff |= expected.charCodeAt(index) ^ signature.charCodeAt(index);
   return diff === 0;
 }
+
+// D-185: set by the middleware (any value a caller sent is replaced) on a
+// request that may change something: a POST/PUT/PATCH/DELETE or a Server
+// Action. A view-only Try as session is refused for those.
+export const WRITE_HEADER = "x-ars-write";

@@ -13,6 +13,7 @@ export interface SettingDefinition {
   encrypted: boolean;
   schema: z.ZodTypeAny;
   defaultValue?: string;
+  choices?: readonly string[]; // D-183: a comma-separated list chosen with checkboxes
 }
 
 export const SETTING_DEFINITIONS: readonly SettingDefinition[] = [
@@ -114,7 +115,7 @@ export const SETTING_DEFINITIONS: readonly SettingDefinition[] = [
   { key: "ai.launcher", group: "AI", label: "Floating Pic bot launcher on every page", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF"]), defaultValue: "ON" },
   { key: "ai.general_chat", group: "AI", label: "General AI chat (non-business questions) for people allowed it", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF"]), defaultValue: "OFF" },
   { key: "ai.combined_chat", group: "AI", label: "Combined chat (business data and general answers together) for people allowed it", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF"]), defaultValue: "OFF" },
-  { key: "ai.module_modes", group: "AI", label: "Module chats available: any of APPROVAL,TASK,INFORMATION,SALESFORCE (comma-separated; empty for none)", valueType: "STRING", encrypted: false, schema: z.string().trim().max(60).regex(/^$|^(APPROVAL|TASK|INFORMATION|SALESFORCE)(,(APPROVAL|TASK|INFORMATION|SALESFORCE))*$/, "Use APPROVAL, TASK, INFORMATION, SALESFORCE separated by commas."), defaultValue: "APPROVAL,TASK,INFORMATION,SALESFORCE" },
+  { key: "ai.module_modes", group: "AI", choices: ["APPROVAL", "TASK", "INFORMATION", "SALESFORCE"], label: "Module chats available: any of APPROVAL,TASK,INFORMATION,SALESFORCE (comma-separated; empty for none)", valueType: "STRING", encrypted: false, schema: z.string().trim().max(60).regex(/^$|^(APPROVAL|TASK|INFORMATION|SALESFORCE)(,(APPROVAL|TASK|INFORMATION|SALESFORCE))*$/, "Use APPROVAL, TASK, INFORMATION, SALESFORCE separated by commas."), defaultValue: "APPROVAL,TASK,INFORMATION,SALESFORCE" },
   { key: "ai.requests_per_minute", group: "AI", label: "Questions per person per minute", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(1).max(60), defaultValue: "6" },
   { key: "ai.concurrent_per_person", group: "AI", label: "Questions one person may have waiting at once", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(1).max(5), defaultValue: "2" },
   { key: "ai.concurrent_global", group: "AI", label: "Questions sent to providers at once, for everyone (this server)", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(1).max(50), defaultValue: "10" },

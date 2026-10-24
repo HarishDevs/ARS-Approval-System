@@ -32,6 +32,11 @@ export const MODE_HELP: Record<ChatMode, string> = {
   COMBINED: "Your permitted data together with general answers.",
 };
 export const DEFAULT_CHAT_MODES: readonly ChatMode[] = ["APPROVAL", "TASK", "INFORMATION"];
+
+// D-178: the order modes are offered in; the first is a new chat's default.
+// Data first (an analyst answers from data), general chat last.
+const OFFER_ORDER: readonly ChatMode[] = ["COMBINED", "SALESFORCE", "APPROVAL", "TASK", "INFORMATION", "GENERAL"];
+export const offerOrder = (modes: readonly ChatMode[]): ChatMode[] => OFFER_ORDER.filter((mode) => modes.includes(mode));
 const MODE_MODULE: Partial<Record<ChatMode, ModuleCode>> = { APPROVAL: "APPROVAL", TASK: "TASK", INFORMATION: "INFORMATION" };
 
 export interface ChatPolicy {

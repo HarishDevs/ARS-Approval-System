@@ -106,6 +106,9 @@ describe("numbers must come from the data", () => {
     expect(unverifiedFigures("You have 12 waiting, about 25% of the team's 48.", [data])).toEqual(["25", "48"]);
     expect(unverifiedFigures("Last 30 days", ["what about the last 30 days?"])).toEqual([]);
   });
+  it("dates and times aren't figures (D-178)", () => {
+    expect(figuresIn("Logins today (24 Oct 2026): 1. On 2026-10-24T11:51:00Z, at 11:51 pm, Oct 24, March 2025, 24/10/2026; 17 users")).toEqual(["1", "17"]);
+  });
 });
 
 describe("routing", () => {

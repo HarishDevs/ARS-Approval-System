@@ -1,7 +1,7 @@
 import { apiError, apiSuccess } from "@/lib/http/api-response";
 import { aiAccess, messageView } from "@/server/ai/api";
 import { requireApiArea } from "@/server/authorization/guards";
-import { conversationMode, deleteConversation, listMessages } from "@/lib/db/repositories/ai.repository";
+import { conversationMode, deleteConversation, listMessages, pinConversation, renameConversation } from "@/lib/db/repositories/ai.repository";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import type { ChatMode } from "@/server/ai/chat-access";
 
@@ -30,6 +30,22 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   if (mode === null) return apiError("NOT_FOUND", "Not found.", 404);
   const messages = await listMessages(access.session.user.id, id);
   return apiSuccess({ id, mode, usable: access.modes.includes(mode as ChatMode), messages: messages.map(messageView) });
+}
+
+// D-182: rename or pin one of the person's own chats.
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const access = await guard(true);
+  const id = await idOf(params);
+  if (!access || id === null) return apiError("NOT_FOUND", "Not found.", 404);
+  const body = (await request.json().catch(() => null)) as { title?: unknown; pinned?: unknown } | null;
+  const title = typeof body?.title === "string" ? body.title.replace(/\s+/g, " ").trim() : null;
+  const pinned = typeof body?.pinned === "boolean" ? body.pinned : null;
+  if ((title === null && pinned === null) || (title !== null && (title.length < 1 || title.length > 200))) return apiError("VALIDATION_ERROR", "Give the chat a name of 1 to 200 characters.", 400);
+  const userId = access.session.user.id;
+  const done = title !== null ? await renameConversation(userId, id, title) : await pinConversation(userId, id, pinned!);
+  if (!done) return apiError("NOT_FOUND", "Not found.", 404);
+  await recordAudit({ actorUserId: userId, action: title !== null ? "AI_CONVERSATION_RENAMED" : pinned ? "AI_CONVERSATION_PINNED" : "AI_CONVERSATION_UNPINNED", entityType: "AI_CONVERSATION", entityId: id, sessionId: access.session.sessionId });
+  return apiSuccess({ id, title, pinned });
 }
 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {

@@ -203,4 +203,48 @@ export async function countSalesforce(spec: Pick<QuerySpec, "object" | "filters"
   return { count: Number(result.totalSize ?? 0), scope: context.scope === "OWN" ? "records you own" : "all records you may see" };
 }
 
+// D-178: breakdowns for dashboards. Salesforce groups and aggregates; the
+// model only names the group field, an optional date bucket, the aggregate
+// and its field, all checked against the allowlist like any other query.
+export const AGGREGATES = ["COUNT", "SUM", "AVG", "MIN", "MAX"] as const;
+export type Aggregate = (typeof AGGREGATES)[number];
+export interface GroupSpec {
+  object: string;
+  groupBy: string;
+  bucket: "MONTH" | "YEAR" | null;
+  aggregate: Aggregate;
+  field: string | null;
+  filters: Filter[];
+}
+
+export function buildGroup(spec: GroupSpec, allowlist: Allowlist, ownerId: string | null): string {
+  const allowed = allowlist.get(spec.object);
+  if (!allowed) throw new QueryRefused(`The object ${spec.object} isn't available to Pic bot.`);
+  if (!allowed.has(spec.groupBy)) throw new QueryRefused(`The field ${spec.groupBy} isn't available.`);
+  if (!(AGGREGATES as readonly string[]).includes(spec.aggregate)) throw new QueryRefused("Unsupported aggregate.");
+  let measure = "COUNT(Id)";
+  if (spec.aggregate !== "COUNT") {
+    if (!spec.field || !allowed.has(spec.field)) throw new QueryRefused(`The field ${spec.field ?? "(none)"} isn't available.`);
+    measure = `${spec.aggregate}(${spec.field})`;
+  }
+  const keys = spec.bucket === "MONTH" ? [`CALENDAR_YEAR(${spec.groupBy})`, `CALENDAR_MONTH(${spec.groupBy})`] : spec.bucket === "YEAR" ? [`CALENDAR_YEAR(${spec.groupBy})`] : [spec.groupBy];
+  const select = spec.bucket ? keys.map((key, index) => `${key} k${index}`).join(", ") : spec.groupBy;
+  const order = spec.bucket ? keys.join(", ") : `${measure} DESC`;
+  return `SELECT ${select}, ${measure} v FROM ${spec.object}${where(spec, allowed, ownerId)} WITH USER_MODE GROUP BY ${keys.join(", ")} ORDER BY ${order} LIMIT ${MAX_ROWS}`;
+}
+
+export async function groupSalesforce(spec: GroupSpec, context: QueryContext): Promise<{ groups: { group: string; value: number }[]; scope: string }> {
+  const allowlist = await allowlistFor(spec.object, context);
+  const soql = buildGroup(spec, allowlist, await ownerFor(context));
+  const result = (await salesforceGet(queryPath(soql), context.fetchImpl, context.signal)) as { records?: Record<string, unknown>[] };
+  const label = (record: Record<string, unknown>) => {
+    if (spec.bucket === "MONTH") return `${String(record.k0)}-${String(record.k1).padStart(2, "0")}`;
+    if (spec.bucket === "YEAR") return String(record.k0);
+    const value = record[spec.groupBy];
+    return value === null || value === undefined || value === "" ? "(blank)" : String(value);
+  };
+  const groups = (result.records ?? []).slice(0, MAX_ROWS).map((record) => ({ group: label(record), value: Number(record.v ?? 0) }));
+  return { groups, scope: context.scope === "OWN" ? "records you own" : "all records you may see" };
+}
+
 export { SalesforceUnavailable };

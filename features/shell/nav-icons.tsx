@@ -1,4 +1,6 @@
 import {
+  BookOpenCheck,
+  Cloud,
   AlertTriangle,
   Plug,
   BadgeCheck,
@@ -44,8 +46,6 @@ import {
   Newspaper,
   Sparkles,
   MessagesSquare,
-  TrendingUp,
-  Lightbulb,
   Database,
   FileChartColumn,
   type LucideIcon,
@@ -76,12 +76,13 @@ const ICONS: Record<string, LucideIcon> = {
   // D-168: the AI module
   "/users/ai": Sparkles,
   "/users/ai/assistant": MessagesSquare,
-  "/users/ai/intelligence": TrendingUp,
-  "/users/ai/insights": Lightbulb,
-  "/users/ai/data-sources": Database,
-  "/users/ai/reports": FileChartColumn,
-  "/users/ai/history": History,
   "/superadmin/ai": Sparkles,
+  "/admin/ai-rules": BookOpenCheck,
+  "/superadmin/salesforce": Cloud,
+  // D-180: AI Details (Super Admin)
+  "/superadmin/ai/data-sources": Database,
+  "/superadmin/ai/reports": FileChartColumn,
+  "/superadmin/ai/history": History,
   "/admin/task-types": ClipboardList,
   "/admin/information-types": Megaphone,
   "/admin": LayoutDashboard,
@@ -120,7 +121,7 @@ const ICONS: Record<string, LucideIcon> = {
 };
 
 // v1.9.2: the collapsible groups of the user sidebar.
-const SECTION_ICONS: Record<string, LucideIcon> = { "My Approvals": ClipboardCheck, Tasks: ListTodo, Information: Newspaper, AI: Sparkles };
+const SECTION_ICONS: Record<string, LucideIcon> = { "My Approvals": ClipboardCheck, Tasks: ListTodo, Information: Newspaper, AI: Sparkles, "AI Assistant": MessagesSquare, "AI Details": Sparkles };
 
 export function SectionIcon({ section, className = "h-4 w-4" }: { section: string; className?: string }) {
   const Icon = SECTION_ICONS[section];

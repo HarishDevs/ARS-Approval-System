@@ -55,7 +55,7 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
   return (
     <>
       <Breadcrumbs items={[{ href: "/admin", label: "Overview" }, { href: "/admin/reports", label: "Reports" }, { label: report.name }]} />
-      <PageHeader title={report.name} description={`${report.description} ${scope.label}${report.usesPeriod ? ` · ${filter.period.label} (${filter.period.from} to ${filter.period.to})` : " · right now"}.`}>
+      <PageHeader title={report.name} description={report.description} meta={`${scope.label}${report.usesPeriod ? ` · ${filter.period.label} (${filter.period.from} to ${filter.period.to})` : " · right now"}`}>
         {!exporting ? (
           <p className="text-caption text-ink-muted">Downloads are limited to people with the Can export permission.</p>
         ) : (

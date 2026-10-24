@@ -18,11 +18,11 @@ export async function GET() {
   }
   try {
     const started = await startConnect(session.user.id);
-    if (!started.ok) return redirectToPage("/superadmin/ai?salesforce=CONFIG");
+    if (!started.ok) return redirectToPage("/superadmin/salesforce?salesforce=CONFIG");
     await recordAudit({ actorUserId: session.user.id, action: "AI_SALESFORCE_CONNECT_STARTED", entityType: "AI_SOURCE", entityId: "salesforce", sessionId: session.sessionId });
     return new Response(null, { status: 303, headers: { Location: started.url, "Cache-Control": "no-store", "Referrer-Policy": "no-referrer" } });
   } catch (error) {
     logError("salesforce connect failed", error);
-    return redirectToPage("/superadmin/ai?salesforce=ERROR");
+    return redirectToPage("/superadmin/salesforce?salesforce=ERROR");
   }
 }

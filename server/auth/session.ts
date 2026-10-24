@@ -1,9 +1,10 @@
 import "server-only";
 import { cache } from "react";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
+import { PATH_HEADER, WRITE_HEADER } from "@/lib/security/path-signature";
 import { SESSION_COOKIE_NAME } from "@/lib/session/constants";
 import { verifySessionToken, verifyPurposeToken } from "@/lib/session/token";
-import { sessionIdleSeconds, sessionState, revokeAllSessionsForUser, revokeSession, touchSession, claimSecurityLink } from "@/lib/db/repositories/sessions.repository";
+import { sessionIdleSeconds, sessionState, revokeAllSessionsForUser, revokeSession, touchSession, claimSecurityLink, sessionTriedBy } from "@/lib/db/repositories/sessions.repository";
 import { findUserById, securityLockUser, listUserIdsWithRole } from "@/lib/db/repositories/users.repository";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { notify } from "@/server/notifications/notify";
@@ -21,6 +22,9 @@ export interface CurrentSession {
 // The signed cookie alone is never trusted: the session row must be live
 // and the user is re-read (active flag and roles) on every request, so a
 // deactivation, role change or "sign out everywhere" applies immediately.
+// The only changes a view-only Try as session may make (D-185).
+const TRY_AS_WRITES = ["/api/auth/logout", "/api/auth/keep-alive"];
+
 // cache(): layouts and pages each call this; it runs once per request.
 export const getCurrentSession = cache(() => loadCurrentSession(true));
 
@@ -65,6 +69,15 @@ async function loadCurrentSession(touch: boolean): Promise<CurrentSession | { se
     await revokeSession(payload.sid, IDLE_REASON);
     return null;
   }
+  // D-185: a Try as session is view-only. Anything that may change data is
+  // refused here, centrally (the person appears signed out for it), except
+  // signing out and staying signed in.
+  const triedBy = await sessionTriedBy(payload.sid);
+  if (triedBy && touch) {
+    const list = await headers();
+    const path = list.get(PATH_HEADER) ?? "";
+    if (list.get(WRITE_HEADER) === "1" && !TRY_AS_WRITES.includes(path)) return null;
+  }
   if (touch) await touchSession(payload.sid);
   const session: CurrentSession = {
     sessionId: payload.sid,
@@ -82,6 +95,7 @@ async function loadCurrentSession(touch: boolean): Promise<CurrentSession | { se
       chatModes: user.chatModes,
       salesforceScope: user.salesforceScope,
       isDemo: user.isDemo,
+      triedBy,
     },
   };
   return touch ? session : { session, idleSecondsLeft: limitSeconds === null ? null : limitSeconds - idleSeconds };

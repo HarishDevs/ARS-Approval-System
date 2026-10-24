@@ -1,6 +1,7 @@
 import "server-only";
 import { chatAccess } from "@/server/ai/policy";
 import type { ChatMode } from "@/server/ai/chat-access";
+import { friendlyError } from "@/server/ai/friendly";
 import type { CurrentSession } from "@/server/auth/session";
 
 // D-172: after each Pic bot route's own requireApiArea (session, user area,
@@ -27,7 +28,7 @@ export function messageView(message: {
     id: message.id,
     role: message.role,
     content: message.content,
-    error: message.error,
+    error: message.error ? friendlyError(message.error) : null, // D-178: the technical reason stays for the Super Admin
     model: message.model,
     evidence: message.evidence.map((item) => ({ label: item.label, source: item.source, asOf: item.asOf, links: item.links.filter((link) => link.href.startsWith("/") && !link.href.startsWith("//")) })),
     unverified: message.unverified,

@@ -109,7 +109,7 @@ export async function ModuleTypeDetailScreen({ module, id, view }: { module: Mod
   return (
     <>
       <Breadcrumbs items={[{ href: "/admin", label: "Admin" }, { href: base, label: PLURAL[module] }, { label: type.name }]} />
-      <PageHeader title={type.name} description={`${MODULE_LABEL[module]} type ${type.code}. ${live ? `Version ${live.versionNo} is live.` : "Not published yet: nobody can create these until it is."}`}>
+      <PageHeader title={type.name} meta={`${MODULE_LABEL[module]} type ${type.code}. ${live ? `Version ${live.versionNo} is live.` : "Not published yet: nobody can create these until it is."}`}>
         {type.active ? <Badge tone="success">Active</Badge> : <Badge>Retired</Badge>}
       </PageHeader>
 

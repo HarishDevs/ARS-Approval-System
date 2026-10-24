@@ -15,8 +15,10 @@ export interface DisplaySetting {
   status: SettingStatus;
   value: string | null;
   updatedAt: Date | null;
-  // A fixed list of choices (an enum setting): shown as a dropdown.
+  // A fixed list of choices (an enum setting): shown as a dropdown, or a
+  // switch for ON/OFF. D-183: several of a list (checkboxes).
   options?: string[];
+  choices?: string[];
 }
 
 export function resolveSettingForDisplay(definition: SettingDefinition, raw: RawSetting | null): DisplaySetting {
@@ -27,6 +29,7 @@ export function resolveSettingForDisplay(definition: SettingDefinition, raw: Raw
     valueType: definition.valueType,
     encrypted: definition.encrypted,
     ...(definition.schema instanceof z.ZodEnum ? { options: definition.schema.options.map(String) } : {}),
+    ...(definition.choices ? { choices: [...definition.choices] } : {}),
   };
   if (definition.encrypted) {
     return { ...base, status: raw?.value ? "CONFIGURED" : "NOT_CONFIGURED", value: null, updatedAt: raw?.updatedAt ?? null };

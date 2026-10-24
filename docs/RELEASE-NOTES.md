@@ -1,5 +1,15 @@
 # Release notes
 
+## v1.19.0 (25 Oct 2026): analyst chat, cleaner screens, Try as, AI Rules (owner)
+- **Pic bot is a business analyst.** Answers start with the point in plain English, then figures, tables, metric cards and charts for dashboards, insights and next steps. Bold text, lists and tables show properly. No technical details on screen (sources and provider are in the ⓘ).
+- **AI Assistant screen** (from the owner's sketch): **+ New chat**, your AI limit (used, remaining, total) and connection status at the top; your chats in the sidebar under **AI Assistant** with a search, newest first. Each chat's **⋯** menu: **Rename**, **Pin to top**, **Delete**. Clicking **AI Assistant** opens a new chat and the list.
+- **Removed:** AI Dashboard, Business Intelligence, Insights & Recommendations (old links open the assistant).
+- **Super Admin:** **Salesforce Settings** (own page), **AI Details** (Data Sources, AI Reports, AI Activity History), and **AI settings** arranged as General, one card per provider, and Common settings.
+- **Try as**, for IT Admins and the Super Admin, on every person's page: a one-time link to open in a private window. Your own session is never replaced; the trial is **view-only** and shows who opened it.
+- **AI Rules** (Admin): write the company's rules for Pic bot, for all chats or one chat, in a formatted editor. Every AI provider follows them with every question.
+- **Cleaner screens:** page and field instructions are in ⓘ hover hints; on/off settings are switches, lists are checkboxes, choices are dropdowns; thin scrollbars in the theme's colours.
+- **Behind the scenes:** three additive database changes, applied automatically when the app starts.
+
 ## v1.18.0 (24 Oct 2026): Salesforce "all objects"; Super Admin unrestricted (owner)
 - **All Salesforce objects:** enter `*` in AI settings → "Objects and fields Pic bot may read" to let Pic bot read any object the connected Salesforce user can read. Pic bot finds the object, reads its field list from Salesforce, then queries, still read-only, at most 50 rows, and with Salesforce's own permissions (WITH USER_MODE). A fixed list still works as before. The hourly copy needs a fixed list.
 - **The Super Admin has no restrictions in Pic bot:** every chat (General, Approvals, Tasks, Information, Salesforce, Combined) and all Salesforce records, whatever their own settings or the global chat switches. Only the emergency stop applies (and Salesforce must be connected). Their user page says so instead of showing boxes.

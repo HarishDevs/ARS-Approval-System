@@ -98,7 +98,7 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
           { label: view.requestNo },
         ]}
       />
-      <PageHeader title={view.title} description={`${view.requestNo} · ${view.workflowName} · raised by ${view.requesterName}${view.round > 1 ? ` · round ${view.round}` : ""}`}>
+      <PageHeader title={view.title} meta={`${view.requestNo} · ${view.workflowName} · raised by ${view.requesterName}${view.round > 1 ? ` · round ${view.round}` : ""}`}>
         <div className="flex flex-wrap items-center gap-3">
           <RequestStatusPill status={view.status} />
           <ValidityBadge validUntil={view.validUntil} />

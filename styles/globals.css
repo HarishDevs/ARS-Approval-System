@@ -249,3 +249,44 @@ body {
     transform: none;
   }
 }
+
+/* D-186 (owner): thin scrollbars in the theme's own colours, barely there
+   until needed; no arrow buttons. Both light and dark use the tokens. */
+html,
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--color-border-strong) 75%, transparent) transparent;
+}
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--color-border-strong) 75%, transparent) padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-placeholder) padding-box;
+}
+::-webkit-scrollbar-button {
+  display: none;
+}
+
+/* D-187: the AI Rules editor shows real formatting (lists, headings, tables). */
+.rules-editor h2 { @apply mb-2 mt-4 text-[1.125rem] font-semibold; }
+.rules-editor h3 { @apply mb-1.5 mt-3 font-semibold; }
+.rules-editor p { @apply mb-2; }
+.rules-editor ul { @apply mb-2 list-disc pl-6; }
+.rules-editor ol { @apply mb-2 list-decimal pl-6; }
+.rules-editor blockquote { @apply mb-2 border-l-2 border-primary-100 pl-3 text-ink-muted; }
+.rules-editor a { @apply text-primary-600 underline; }
+.rules-editor table { @apply mb-2 w-full border-collapse text-label; }
+.rules-editor th,
+.rules-editor td { @apply border border-line px-2 py-1 text-left align-top; }
+.rules-editor th { @apply bg-surface-muted font-medium; }
+.rules-editor pre { @apply mb-2 rounded bg-surface-muted p-2 text-caption; }

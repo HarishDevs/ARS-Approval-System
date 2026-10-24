@@ -48,14 +48,10 @@ export const PAGES: readonly PageDef[] = [
   { key: "users.information", module: "INFORMATION", area: "users", label: "Information: lists", what: "The information inbox and information sent by the person.", paths: [exact("/users/information"), under("/users/information/sent")] },
   { key: "users.information_new", module: "INFORMATION", area: "users", label: "Information: new", what: "Writing and publishing information.", paths: [under("/users/information/new")] },
   { key: "users.information_item", module: "INFORMATION", area: "users", label: "Information: page", what: "Opening information: reading, acknowledging, withdrawing.", paths: [/^\/users\/information\/\d+(\/.*)?$/] },
-  // D-168 (AI module branch): the AI module's pages.
-  { key: "users.ai_dashboard", module: "AI", area: "users", label: "AI: dashboard", what: "The AI dashboard.", paths: [exact("/users/ai")] },
-  { key: "users.ai_assistant", module: "AI", area: "users", label: "AI: assistant", what: "Asking the AI questions about the business.", paths: [under("/users/ai/assistant")], apis: [/^\/api\/ai\//] },
-  { key: "users.ai_intelligence", module: "AI", area: "users", label: "AI: business intelligence", what: "Governed comparisons, trends and reconciliations.", paths: [under("/users/ai/intelligence")] },
-  { key: "users.ai_insights", module: "AI", area: "users", label: "AI: insights & recommendations", what: "Recommendations with evidence, and their approval.", paths: [under("/users/ai/insights")] },
-  { key: "users.ai_sources", module: "AI", area: "users", label: "AI: data sources", what: "The connected sources and how fresh their data is.", paths: [under("/users/ai/data-sources")] },
-  { key: "users.ai_reports", module: "AI", area: "users", label: "AI: reports", what: "AI reports.", paths: [under("/users/ai/reports")] },
-  { key: "users.ai_history", module: "AI", area: "users", label: "AI: activity history", what: "The person's own AI conversations.", paths: [under("/users/ai/history")] },
+  // D-168: the AI module. D-180 (owner): it is the assistant only; the old AI
+  // pages (dashboard, intelligence, insights, sources, reports, history)
+  // redirect to it, and sources, reports and history moved to Super Admin.
+  { key: "users.ai_assistant", module: "AI", area: "users", label: "AI: assistant", what: "Asking the AI questions about the business.", paths: [under("/users/ai")], apis: [/^\/api\/ai\//] },
   { key: "users.help", area: "users", label: "Help", what: "How-tos and status meanings.", paths: [under("/users/help")] },
   { key: "users.profile", area: "users", label: "Profile", what: "Personal details and theme.", paths: [under("/users/profile")] },
   { key: "users.notifications", area: "users", label: "Notifications", what: "The inbox and notification settings.", paths: [under("/users/notifications")] },
@@ -79,6 +75,7 @@ export const PAGES: readonly PageDef[] = [
   { key: "admin.doa", area: "admin", label: "Approval authority (DoA)", what: "Delegation of authority matrices.", paths: [under("/admin/doa")] },
   { key: "admin.budgets", area: "admin", label: "Budgets", what: "Department budgets.", paths: [under("/admin/budgets")] },
   { key: "admin.calendar", area: "admin", label: "Working calendar", what: "Working days and holidays.", paths: [under("/admin/calendar")] },
+  { key: "admin.ai_rules", area: "admin", label: "AI Rules", what: "The rules every AI provider follows (company terms, where data is kept).", paths: [under("/admin/ai-rules")] },
   { key: "admin.users", area: "admin", label: "Users & roles", what: "People, roles and hand-overs.", paths: [under("/admin/users")] },
   { key: "admin.organisation", area: "admin", label: "Departments", what: "Departments and designations.", paths: [under("/admin/organisation")] },
   { key: "admin.import", area: "admin", label: "Import data", what: "Bulk import of users and masters.", paths: [under("/admin/import")], apis: [/^\/api\/admin\/import\//] },

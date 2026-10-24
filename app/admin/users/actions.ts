@@ -1,6 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
+import { getEnv } from "@/config/environment";
+import { createTryAsLink } from "@/server/auth/try-as";
 import { redirect } from "next/navigation";
 import { formFields, getAdminActor, parseId } from "@/server/admin/actor";
 import { parseUserForm } from "@/server/admin/user-input";
@@ -145,6 +148,25 @@ export async function handoverAction(_previous: ActionResult | null, formData: F
     return { ok: skipped.length === 0, message: `Handed over ${moved} approval${moved === 1 ? "" : "s"}.${skippedText}` };
   } catch (error) {
     logError("handoverAction failed", error);
+    return { ok: false, message: "Something went wrong. Please try again." };
+  }
+}
+
+// D-185 (owner): a one-time link to try the app as this person, view-only,
+// in a private window. IT Admin and Super Admin; the rules are in try-as.ts.
+export async function tryAsLinkAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const actor = await getAdminActor("admin.users");
+  if (!actor) return NOT_FOUND;
+  const id = parseId(formData.get("id"));
+  if (id === null) return NOT_FOUND;
+  try {
+    const list = await headers();
+    const base = getEnv().APP_BASE_URL ?? `${list.get("x-forwarded-proto") ?? "https"}://${list.get("host") ?? "localhost"}`;
+    const result = await createTryAsLink(actor, id, base);
+    if (!result.ok) return { ok: false, message: result.message };
+    return { ok: true, data: { url: result.url, name: result.name } };
+  } catch (error) {
+    logError("tryAsLinkAction failed", error);
     return { ok: false, message: "Something went wrong. Please try again." };
   }
 }
