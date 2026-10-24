@@ -27,6 +27,8 @@ function describeIssue(issue: ZodIssue | undefined): string {
   if (issue.code === "too_small" && issue.origin === "number") return `Use ${String(issue.minimum)} or more.`;
   if (issue.code === "too_big" && issue.origin === "number") return `Use ${String(issue.maximum)} or less.`;
   if (issue.code === "invalid_type" && issue.expected === "number") return "Enter a whole number.";
+  if (issue.code === "too_small" && issue.origin === "string") return `Use at least ${String(issue.minimum)} characters.`;
+  if (issue.code === "too_big" && issue.origin === "string") return `Use at most ${String(issue.maximum)} characters.`;
   return issue.message;
 }
 
@@ -60,6 +62,9 @@ export function planSettingChanges(
     }
 
     if (raw === undefined) continue;
+    // An optional value left empty stays unset (e.g. the model of a provider
+    // that isn't used); it isn't validated as if it were entered.
+    if (raw.trim() === "" && (stored === null || stored === "") && definition.defaultValue === undefined) continue;
     const parsed = definition.schema.safeParse(raw.trim());
     if (!parsed.success) {
       errors[definition.key] = describeIssue(parsed.error.issues[0]);

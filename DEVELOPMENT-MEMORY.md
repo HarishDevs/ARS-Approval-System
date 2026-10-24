@@ -415,6 +415,7 @@
 - Applies to users and IT admins; the Super Admin is exempt (12-hour limit only).
 - The browser's session check no longer counts as activity (it used to keep an open tab signed in for ever). Activity in the page is reported at the next minute's check.
 - A warning with "Stay signed in" 2 minutes before. | Owner; Claude, 15 Oct 2026 |
+| D-173 | 24 Oct 2026 | **Settings form (v1.16.1, owner):** a setting whose schema is a fixed list of choices (z.enum) is shown as a dropdown with plain names; the stored values are unchanged. A plain (not secret) setting left empty, with nothing stored and no default, stays unset instead of being validated, so unused providers don't block a save. | Owner; Claude, 24 Oct 2026 |
 | D-172 | 24 Oct 2026 | **Pic bot - ai (v1.16.0), owner's master prompt; owner explicitly authorised building it into ARS Approvals:**
 - **Launcher:** a floating launcher with the supplied logo (`public/brand/pic-bot.jpg`) and a chat panel on every page for people with an effective chat mode.
 - **Chat modes:** per person (`users.chat_modes`: GENERAL, APPROVAL, TASK, INFORMATION, SALESFORCE, COMBINED; default the three module modes) and per module (`ai.module_modes`). General and Combined are off by default. Effective = global ∩ person ∩ modules (∩ Salesforce scope and connection), re-read per request. A conversation keeps its mode.
@@ -587,6 +588,11 @@
 - Who approves the privacy policy and terms? | Before filing | Open, waiting on the owner (17 Oct 2026) |
 
 ## 5. Work log (newest first)
+
+### 24 Oct 2026 (v1.16.1: settings fixes while testing Pic bot locally)
+- **Owner report:** saving AI settings failed on the empty ChatGPT and Grok model boxes ("Too small…"). Fixed (D-173); the owner also asked for dropdowns for the business-data choice, done for every fixed-choice setting.
+- **Local test:** the DeepSeek key works but the account returned HTTP 402 Insufficient Balance; Pic bot answers need a funded provider.
+- Lint, typecheck, unit 618 passed. E2E left to CI (the preview server was using the main checkout's .next).
 
 ### 24 Oct 2026 (Salesforce UAT connect; deployment check)
 - **Salesforce UAT sandbox:** the owner made a separate External Client App. Connect failed first with `redirect_uri_mismatch` (callback not yet in the app), then `invalid_scope` (the app had only `mcp_api` and `refresh_token`; Pic bot uses the REST API and needs `api`). After the owner added `api`, the sign-in returned to `localhost:3000`, which had been stopped; restarting it and reloading the callback finished the connect. **Test connection passed.** Connected as a person's account for the trial; a read-only integration user is still recommended (PB-15).

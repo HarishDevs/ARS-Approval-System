@@ -4,6 +4,26 @@ import { saveSettingsAction } from "@/app/superadmin/settings/actions";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import type { DisplaySetting } from "@/server/settings/resolve";
 
+// Plain names for the stored choice values of dropdown settings.
+const OPTION_LABEL: Record<string, string> = {
+  ON: "On",
+  OFF: "Off",
+  IT_ONLY: "IT team only",
+  ALLOWED: "Allowed",
+  NOT_ALLOWED: "Not allowed",
+  NONE: "None",
+  CLAUDE: "Claude (Anthropic)",
+  OPENAI: "ChatGPT (OpenAI)",
+  GROK: "Grok (xAI)",
+  DEEPSEEK: "DeepSeek",
+  SANDBOX: "Sandbox",
+  PRODUCTION: "Production",
+  EVERYONE: "Everyone",
+  ROLE: "By role",
+  WARN: "Warn",
+  BLOCK: "Block",
+};
+
 // One settings group (F-52). Secrets never reach the browser: the field
 // starts empty, shows only Configured / Not configured, and a blank value
 // keeps the stored key.
@@ -46,6 +66,16 @@ export function SettingsGroupForm({ group, title, description, settings }: { gro
                   </label>
                 )}
               </>
+            ) : setting.options ? (
+              // Keyed by the saved value: the form reset after a save would
+              // otherwise put the dropdown back on the previous choice.
+              <select key={`${setting.key}:${setting.value ?? ""}`} id={setting.key} name={setting.key} defaultValue={setting.value ?? setting.options[0]} className="field-input">
+                {setting.options.map((option) => (
+                  <option key={option} value={option}>
+                    {OPTION_LABEL[option] ?? option}
+                  </option>
+                ))}
+              </select>
             ) : (
               <input
                 id={setting.key}

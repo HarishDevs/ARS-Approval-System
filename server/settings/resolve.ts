@@ -1,3 +1,4 @@
+import { z } from "zod";
 import type { SettingDefinition } from "@/server/settings/definitions";
 import type { RawSetting } from "@/lib/db/repositories/settings.repository";
 
@@ -14,6 +15,8 @@ export interface DisplaySetting {
   status: SettingStatus;
   value: string | null;
   updatedAt: Date | null;
+  // A fixed list of choices (an enum setting): shown as a dropdown.
+  options?: string[];
 }
 
 export function resolveSettingForDisplay(definition: SettingDefinition, raw: RawSetting | null): DisplaySetting {
@@ -23,6 +26,7 @@ export function resolveSettingForDisplay(definition: SettingDefinition, raw: Raw
     group: definition.group,
     valueType: definition.valueType,
     encrypted: definition.encrypted,
+    ...(definition.schema instanceof z.ZodEnum ? { options: definition.schema.options.map(String) } : {}),
   };
   if (definition.encrypted) {
     return { ...base, status: raw?.value ? "CONFIGURED" : "NOT_CONFIGURED", value: null, updatedAt: raw?.updatedAt ?? null };

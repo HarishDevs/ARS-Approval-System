@@ -38,6 +38,14 @@ describe("settings save plan (F-52)", () => {
     expect(plan.changes).toEqual([]);
   });
 
+  it("an optional value left empty stays unset, so unused providers don't block a save", () => {
+    const ai = SETTING_DEFINITIONS.filter((definition) => definition.group === "AI");
+    const plan = planSettingChanges(ai, { "ai.openai.model": "", "ai.grok.model": " ", "ai.active_provider": "DEEPSEEK" }, new Set(), new Map());
+    expect(plan.errors).toEqual({});
+    expect(plan.changes.map((change) => change.definition.key)).toEqual(["ai.active_provider"]);
+    expect(planSettingChanges(ai, { "ai.openai.model": "x" }, new Set(), new Map()).errors["ai.openai.model"]).toBe("Use at least 2 characters.");
+  });
+
   it("rejects a bad email address", () => {
     expect(planSettingChanges(email, { "email.from_address": "not-an-email" }, new Set(), new Map()).errors).toHaveProperty("email.from_address");
   });

@@ -1,5 +1,11 @@
 # Release notes
 
+## v1.16.1 (24 Oct 2026): settings fixes (owner, while testing Pic bot)
+- **Saving AI settings no longer needs every provider filled in.** An empty box for a provider you don't use (for example the ChatGPT or Grok model) is simply left unset. Before, the save failed with "Too small: expected string to have >=2 characters".
+- **Choices are dropdowns.** Every setting with fixed choices is now a dropdown with plain names instead of a text box, on AI settings and Providers & security: who may see business data (Allowed / Not allowed), active and fallback provider, the on/off switches, feature switches (On / Off / IT team only), Salesforce environment, report downloads and the over-budget rule.
+- **Clearer messages** for text that is too short or too long ("Use at least 2 characters.").
+- **Docs:** Salesforce connect troubleshooting in CHATBOT_DEPLOYMENT_GUIDE (redirect_uri_mismatch, invalid_scope with an MCP-only app).
+
 ## v1.16.0 (24 Oct 2026): Pic bot - ai (owner request)
 - **Pic bot - ai** is now a floating assistant on every page:
   - **The logo** sits at the bottom right. Click it to chat without leaving the page.

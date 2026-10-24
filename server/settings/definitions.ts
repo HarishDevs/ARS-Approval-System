@@ -19,24 +19,24 @@ export const SETTING_DEFINITIONS: readonly SettingDefinition[] = [
   { key: "general.app_name", group: "GENERAL", label: "Application name", valueType: "STRING", encrypted: false, schema: z.string().trim().min(1).max(150), defaultValue: "ARS Approvals" },
   { key: "general.escalation_levels", group: "GENERAL", label: "Escalation levels for late approvals (1 = manager, 2 = + manager's manager, 3 = one more)", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(1).max(3), defaultValue: "2" },
   // Unified prompt (BD-3): over-budget requests warn by default; BLOCK is an owner decision.
-  { key: "general.budget_policy", group: "GENERAL", label: "Over-budget requests: WARN (warn, ask to confirm) or BLOCK (refuse)", valueType: "STRING", encrypted: false, schema: z.enum(["WARN", "BLOCK"]), defaultValue: "WARN" },
+  { key: "general.budget_policy", group: "GENERAL", label: "Over-budget requests (Warn asks to confirm; Block refuses)", valueType: "STRING", encrypted: false, schema: z.enum(["WARN", "BLOCK"]), defaultValue: "WARN" },
   // FN2: an open request with no activity for this many days is listed as possibly stuck.
   { key: "general.stuck_idle_days", group: "GENERAL", label: "Days without activity before a request is listed as possibly stuck", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(1).max(90), defaultValue: "7" },
   // Feature switches (Addendum B, D-124): ON, OFF, or IT_ONLY for a trial with
   // the IT team first. A switch only hides or shows a feature; who may see
   // what is still decided by the server-side access checks.
-  { key: "features.analytics", group: "FEATURES", label: "Analytics (ON, OFF or IT_ONLY)", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF", "IT_ONLY"]), defaultValue: "ON" },
-  { key: "features.reports", group: "FEATURES", label: "Reports and downloads (ON, OFF or IT_ONLY)", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF", "IT_ONLY"]), defaultValue: "ON" },
-  { key: "features.scheduled_reports", group: "FEATURES", label: "Scheduled reports and alerts (ON, OFF or IT_ONLY)", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF", "IT_ONLY"]), defaultValue: "ON" },
-  { key: "features.amendments", group: "FEATURES", label: "Amendments after approval (ON, OFF or IT_ONLY)", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF", "IT_ONLY"]), defaultValue: "ON" },
+  { key: "features.analytics", group: "FEATURES", label: "Analytics", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF", "IT_ONLY"]), defaultValue: "ON" },
+  { key: "features.reports", group: "FEATURES", label: "Reports and downloads", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF", "IT_ONLY"]), defaultValue: "ON" },
+  { key: "features.scheduled_reports", group: "FEATURES", label: "Scheduled reports and alerts", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF", "IT_ONLY"]), defaultValue: "ON" },
+  { key: "features.amendments", group: "FEATURES", label: "Amendments after approval", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF", "IT_ONLY"]), defaultValue: "ON" },
   // v1.7.0 (A9): downloads for everyone (default), or only people with the
   // "Can export" role (IT and the Super Admin always can).
-  { key: "features.exports", group: "FEATURES", label: "Report downloads: EVERYONE, or ROLE (only people with the Can export role, plus IT)", valueType: "STRING", encrypted: false, schema: z.enum(["EVERYONE", "ROLE"]), defaultValue: "EVERYONE" },
+  { key: "features.exports", group: "FEATURES", label: "Report downloads (By role = only people with the Can export role, plus IT)", valueType: "STRING", encrypted: false, schema: z.enum(["EVERYONE", "ROLE"]), defaultValue: "EVERYONE" },
   // v1.9.0 (owner): the Task and Information modules.
-  { key: "features.tasks", group: "FEATURES", label: "Task Management (ON, OFF or IT_ONLY)", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF", "IT_ONLY"]), defaultValue: "ON" },
-  { key: "features.information", group: "FEATURES", label: "Information Management (ON, OFF or IT_ONLY)", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF", "IT_ONLY"]), defaultValue: "ON" },
-  { key: "features.ai", group: "FEATURES", label: "AI module (ON, OFF or IT_ONLY); people also need the AI module ticked on their user page", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF", "IT_ONLY"]), defaultValue: "ON" },
-  { key: "features.templates", group: "FEATURES", label: "Request templates and raise again (ON, OFF or IT_ONLY)", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF", "IT_ONLY"]), defaultValue: "ON" },
+  { key: "features.tasks", group: "FEATURES", label: "Task Management", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF", "IT_ONLY"]), defaultValue: "ON" },
+  { key: "features.information", group: "FEATURES", label: "Information Management", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF", "IT_ONLY"]), defaultValue: "ON" },
+  { key: "features.ai", group: "FEATURES", label: "AI module; people also need the AI module ticked on their user page", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF", "IT_ONLY"]), defaultValue: "ON" },
+  { key: "features.templates", group: "FEATURES", label: "Request templates and raise again", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF", "IT_ONLY"]), defaultValue: "ON" },
   // Retention (FN10, D-126): 0 = not set, keep for ever. Setting a value only
   // changes the dry run; nothing is archived or deleted automatically.
   { key: "retention.requests_years", group: "RETENTION", label: "Keep finished requests for (years; 0 = keep for ever)", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(0).max(50), defaultValue: "0" },
@@ -78,8 +78,8 @@ export const SETTING_DEFINITIONS: readonly SettingDefinition[] = [
   // D-169 (AI module branch): AI providers. Keys are encrypted and never shown
   // back. A provider is usable once it has a key and a model; the active one
   // answers, the fallback answers only when the active one is unavailable.
-  { key: "ai.active_provider", group: "AI", label: "Active provider: NONE, CLAUDE, OPENAI (ChatGPT), GROK or DEEPSEEK", valueType: "STRING", encrypted: false, schema: z.enum(["NONE", "CLAUDE", "OPENAI", "GROK", "DEEPSEEK"]), defaultValue: "NONE" },
-  { key: "ai.fallback_provider", group: "AI", label: "Fallback provider when the active one is unavailable (NONE for no fallback)", valueType: "STRING", encrypted: false, schema: z.enum(["NONE", "CLAUDE", "OPENAI", "GROK", "DEEPSEEK"]), defaultValue: "NONE" },
+  { key: "ai.active_provider", group: "AI", label: "Active provider", valueType: "STRING", encrypted: false, schema: z.enum(["NONE", "CLAUDE", "OPENAI", "GROK", "DEEPSEEK"]), defaultValue: "NONE" },
+  { key: "ai.fallback_provider", group: "AI", label: "Fallback provider when the active one is unavailable", valueType: "STRING", encrypted: false, schema: z.enum(["NONE", "CLAUDE", "OPENAI", "GROK", "DEEPSEEK"]), defaultValue: "NONE" },
   { key: "ai.claude.api_key", group: "AI", label: "Claude (Anthropic) API key", valueType: "STRING", encrypted: true, schema: z.string().trim().min(10).max(500) },
   { key: "ai.claude.model", group: "AI", label: "Claude model", valueType: "STRING", encrypted: false, schema: z.string().trim().min(2).max(100).regex(/^[\w.:-]+$/, "Use the model name from the provider's documentation."), defaultValue: "claude-sonnet-5-5" },
   { key: "ai.openai.api_key", group: "AI", label: "ChatGPT (OpenAI) API key", valueType: "STRING", encrypted: true, schema: z.string().trim().min(10).max(500) },
@@ -90,20 +90,20 @@ export const SETTING_DEFINITIONS: readonly SettingDefinition[] = [
   { key: "ai.deepseek.model", group: "AI", label: "DeepSeek model", valueType: "STRING", encrypted: false, schema: z.string().trim().min(2).max(100).regex(/^[\w.:-]+$/, "Use the model name from the provider's documentation."), defaultValue: "deepseek-chat" },
   // Which providers may see ARS business data (tool results). Off by default:
   // the Super Admin approves each provider explicitly (D-169, R-06, R-18).
-  { key: "ai.claude.business_data", group: "AI", label: "Claude may see business data: ALLOWED or NOT_ALLOWED", valueType: "STRING", encrypted: false, schema: z.enum(["ALLOWED", "NOT_ALLOWED"]), defaultValue: "NOT_ALLOWED" },
-  { key: "ai.openai.business_data", group: "AI", label: "ChatGPT may see business data: ALLOWED or NOT_ALLOWED", valueType: "STRING", encrypted: false, schema: z.enum(["ALLOWED", "NOT_ALLOWED"]), defaultValue: "NOT_ALLOWED" },
-  { key: "ai.grok.business_data", group: "AI", label: "Grok may see business data: ALLOWED or NOT_ALLOWED", valueType: "STRING", encrypted: false, schema: z.enum(["ALLOWED", "NOT_ALLOWED"]), defaultValue: "NOT_ALLOWED" },
-  { key: "ai.deepseek.business_data", group: "AI", label: "DeepSeek may see business data: ALLOWED or NOT_ALLOWED", valueType: "STRING", encrypted: false, schema: z.enum(["ALLOWED", "NOT_ALLOWED"]), defaultValue: "NOT_ALLOWED" },
+  { key: "ai.claude.business_data", group: "AI", label: "Claude may see business data", valueType: "STRING", encrypted: false, schema: z.enum(["ALLOWED", "NOT_ALLOWED"]), defaultValue: "NOT_ALLOWED" },
+  { key: "ai.openai.business_data", group: "AI", label: "ChatGPT may see business data", valueType: "STRING", encrypted: false, schema: z.enum(["ALLOWED", "NOT_ALLOWED"]), defaultValue: "NOT_ALLOWED" },
+  { key: "ai.grok.business_data", group: "AI", label: "Grok may see business data", valueType: "STRING", encrypted: false, schema: z.enum(["ALLOWED", "NOT_ALLOWED"]), defaultValue: "NOT_ALLOWED" },
+  { key: "ai.deepseek.business_data", group: "AI", label: "DeepSeek may see business data", valueType: "STRING", encrypted: false, schema: z.enum(["ALLOWED", "NOT_ALLOWED"]), defaultValue: "NOT_ALLOWED" },
   { key: "ai.daily_questions_per_person", group: "AI", label: "Questions per person per day", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(1).max(1000), defaultValue: "50" },
   { key: "ai.max_question_chars", group: "AI", label: "Longest question (characters)", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(100).max(20000), defaultValue: "4000" },
   { key: "ai.timeout_seconds", group: "AI", label: "How long to wait for an answer (seconds)", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(5).max(180), defaultValue: "60" },
   { key: "ai.conversation_keep_days", group: "AI", label: "Keep AI conversations for (days; 0 keeps them)", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(0).max(3650), defaultValue: "365" },
   // Pic bot - ai (D-172): switches and limits. Defaults deny: general chat,
   // combined chat and the emergency stop must be turned on deliberately.
-  { key: "ai.emergency_stop", group: "AI", label: "Emergency stop: ON refuses every AI request at once (OFF for normal use)", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF"]), defaultValue: "OFF" },
-  { key: "ai.launcher", group: "AI", label: "Floating Pic bot launcher on every page: ON or OFF", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF"]), defaultValue: "ON" },
-  { key: "ai.general_chat", group: "AI", label: "General AI chat (non-business questions) for people allowed it: ON or OFF", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF"]), defaultValue: "OFF" },
-  { key: "ai.combined_chat", group: "AI", label: "Combined chat (business data and general answers together) for people allowed it: ON or OFF", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF"]), defaultValue: "OFF" },
+  { key: "ai.emergency_stop", group: "AI", label: "Emergency stop (On refuses every AI request at once; Off for normal use)", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF"]), defaultValue: "OFF" },
+  { key: "ai.launcher", group: "AI", label: "Floating Pic bot launcher on every page", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF"]), defaultValue: "ON" },
+  { key: "ai.general_chat", group: "AI", label: "General AI chat (non-business questions) for people allowed it", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF"]), defaultValue: "OFF" },
+  { key: "ai.combined_chat", group: "AI", label: "Combined chat (business data and general answers together) for people allowed it", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF"]), defaultValue: "OFF" },
   { key: "ai.module_modes", group: "AI", label: "Module chats available: any of APPROVAL,TASK,INFORMATION,SALESFORCE (comma-separated; empty for none)", valueType: "STRING", encrypted: false, schema: z.string().trim().max(60).regex(/^$|^(APPROVAL|TASK|INFORMATION|SALESFORCE)(,(APPROVAL|TASK|INFORMATION|SALESFORCE))*$/, "Use APPROVAL, TASK, INFORMATION, SALESFORCE separated by commas."), defaultValue: "APPROVAL,TASK,INFORMATION,SALESFORCE" },
   { key: "ai.requests_per_minute", group: "AI", label: "Questions per person per minute", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(1).max(60), defaultValue: "6" },
   { key: "ai.concurrent_per_person", group: "AI", label: "Questions one person may have waiting at once", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(1).max(5), defaultValue: "2" },
@@ -115,13 +115,13 @@ export const SETTING_DEFINITIONS: readonly SettingDefinition[] = [
   // Salesforce (D-172): OAuth 2.0 web server flow with PKCE, connected once by
   // the Super Admin (Connect Salesforce). Read-only queries, allowlisted
   // objects and fields, Salesforce's own sharing and field security (USER_MODE).
-  { key: "ai.salesforce.environment", group: "AI_DATA", label: "Salesforce environment: SANDBOX (test first) or PRODUCTION", valueType: "STRING", encrypted: false, schema: z.enum(["SANDBOX", "PRODUCTION"]), defaultValue: "SANDBOX" },
+  { key: "ai.salesforce.environment", group: "AI_DATA", label: "Salesforce environment (test in Sandbox first)", valueType: "STRING", encrypted: false, schema: z.enum(["SANDBOX", "PRODUCTION"]), defaultValue: "SANDBOX" },
   { key: "ai.salesforce.my_domain", group: "AI_DATA", label: "Salesforce My Domain login URL (optional, e.g. https://yourcompany--uat.sandbox.my.salesforce.com)", valueType: "STRING", encrypted: false, schema: z.string().trim().url().regex(/^https:\/\/[\w.-]+\.(salesforce|force)\.com\/?$/, "Use your https://….my.salesforce.com address.") },
   { key: "ai.salesforce.client_id", group: "AI_DATA", label: "Salesforce app consumer key", valueType: "STRING", encrypted: true, schema: z.string().trim().min(10).max(300) },
   { key: "ai.salesforce.client_secret", group: "AI_DATA", label: "Salesforce app consumer secret", valueType: "STRING", encrypted: true, schema: z.string().trim().min(10).max(300) },
   { key: "ai.salesforce.scopes", group: "AI_DATA", label: "OAuth scopes (least privilege)", valueType: "STRING", encrypted: false, schema: z.string().trim().regex(/^[a-z_]+( [a-z_]+)*$/, "Space-separated scope names."), defaultValue: "api refresh_token" },
   { key: "ai.salesforce.objects", group: "AI_DATA", label: "Objects and fields Pic bot may read, e.g. Account:Name,Industry;Opportunity:Name,Amount,StageName,CloseDate,AccountId (Id, OwnerId, SystemModstamp are added)", valueType: "STRING", encrypted: false, schema: z.string().trim().max(2000).regex(/^(\w+:\w+(,\w+)*)(;\w+:\w+(,\w+)*)*$/, "Use Object:Field,Field;Object:Field.") },
-  { key: "ai.salesforce.copy_hourly", group: "AI_DATA", label: "Also copy those objects hourly for the dashboard: ON or OFF", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF"]), defaultValue: "OFF" },
+  { key: "ai.salesforce.copy_hourly", group: "AI_DATA", label: "Also copy those objects hourly for the dashboard", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF"]), defaultValue: "OFF" },
 
 ];
 
