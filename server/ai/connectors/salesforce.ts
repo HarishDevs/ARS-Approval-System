@@ -3,16 +3,20 @@ import { finishSyncRun, lastGoodCheckpoint, startSyncRun, upsertSourceRecords } 
 import { getSettingValue } from "@/server/settings/values";
 import { redactSecrets } from "@/server/ai/providers";
 import { logError } from "@/lib/logging/logger";
+import { API_VERSION as SF_API, salesforceGet } from "@/server/ai/connectors/salesforce-auth";
+import { getConnection } from "@/lib/db/repositories/salesforce.repository";
 
-// D-169 Phase 6 (AI module branch): Salesforce, READ-ONLY. A dedicated
-// integration user's connected app signs in with the OAuth 2.0 client
-// credentials flow; objects and fields are the ones the Super Admin lists.
+// D-169 Phase 6, D-172: the optional hourly COPY of Salesforce objects (for
+// the dashboard), READ-ONLY, through the one OAuth connection
+// (salesforce-auth.ts). Objects and fields are the Super Admin's allowlist;
+// off unless "Also copy those objects hourly" is ON. Live questions don't use
+// the copy (salesforce-query.ts queries Salesforce directly).
 // Each object is copied page by page (nextRecordsUrl), incrementally from the
 // last SUCCESSFUL run's SystemModstamp, and stored by its Salesforce Id, so a
 // repeat never duplicates. A failed run keeps the last good copy and checkpoint.
 // Not yet tested against a real org: needs the owner's approved sandbox.
 export const SALESFORCE_KEY = "salesforce";
-const API_VERSION = "v61.0";
+const API_VERSION = SF_API;
 const MAX_PAGES = 200; // about 400,000 records per object per run
 const NAME = /^[A-Za-z][A-Za-z0-9_]{0,79}$/; // object and field API names (custom ones end in __c)
 
@@ -45,40 +49,21 @@ export function soqlFor(spec: ObjectSpec, checkpoint: string | null): string {
 }
 
 export interface SalesforceConfig {
-  instanceUrl: string;
-  clientId: string;
-  clientSecret: string;
   objects: ObjectSpec[];
 }
 
+// Set up = connected, an allowlist, and the hourly copy switched on.
 export async function loadSalesforceConfig(): Promise<SalesforceConfig | null> {
-  const [instanceUrl, clientId, clientSecret, objects] = await Promise.all([
-    getSettingValue("ai.salesforce.instance_url"),
-    getSettingValue("ai.salesforce.client_id"),
-    getSettingValue("ai.salesforce.client_secret"),
-    getSettingValue("ai.salesforce.objects"),
-  ]);
-  if (!instanceUrl || !clientId || !clientSecret || !objects) return null;
-  return { instanceUrl: instanceUrl.replace(/\/$/, ""), clientId, clientSecret, objects: parseObjects(objects) };
-}
-
-async function token(config: SalesforceConfig, fetchImpl: typeof fetch): Promise<{ accessToken: string; instanceUrl: string }> {
-  const response = await fetchImpl(`${config.instanceUrl}/services/oauth2/token`, {
-    method: "POST",
-    headers: { "content-type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ grant_type: "client_credentials", client_id: config.clientId, client_secret: config.clientSecret }).toString(),
-    signal: AbortSignal.timeout(20_000),
-  });
-  const body = (await response.json().catch(() => ({}))) as { access_token?: string; instance_url?: string; error_description?: string; error?: string };
-  if (!response.ok || !body.access_token) throw new Error(`Salesforce refused the sign-in (${redactSecrets(body.error_description ?? body.error ?? `HTTP ${response.status}`)}).`);
-  return { accessToken: body.access_token, instanceUrl: (body.instance_url ?? config.instanceUrl).replace(/\/$/, "") };
+  const [copy, objects, connection] = await Promise.all([getSettingValue("ai.salesforce.copy_hourly"), getSettingValue("ai.salesforce.objects"), getConnection()]);
+  if (copy !== "ON" || !objects || connection.status !== "CONNECTED") return null;
+  return { objects: parseObjects(objects) };
 }
 
 type Fetched = { records: { id: string; modifiedAt: string | null; data: Record<string, unknown> }[]; latest: string | null; pages: number };
 
 // Reads every page of one query. Throws (and saves nothing) if any page fails,
 // so a partial result is never mistaken for a complete one.
-export async function fetchAll(instanceUrl: string, accessToken: string, soql: string, fetchImpl: typeof fetch): Promise<Fetched> {
+export async function fetchAll(get: (path: string) => Promise<unknown>, soql: string): Promise<Fetched> {
   const records: Fetched["records"] = [];
   let latest: string | null = null;
   let next: string | null = `/services/data/${API_VERSION}/query?q=${encodeURIComponent(soql)}`;
@@ -86,12 +71,7 @@ export async function fetchAll(instanceUrl: string, accessToken: string, soql: s
   while (next) {
     if (++pages > MAX_PAGES) throw new Error(`Stopped after ${MAX_PAGES} pages; narrow the object list or fields.`);
     if (!next.startsWith("/services/data/")) throw new Error("Unexpected next-page address from Salesforce.");
-    const response = await fetchImpl(`${instanceUrl}${next}`, { headers: { authorization: `Bearer ${accessToken}`, accept: "application/json" }, signal: AbortSignal.timeout(60_000) });
-    if (!response.ok) {
-      const detail = (await response.json().catch(() => [])) as { message?: string }[];
-      throw new Error(`Salesforce query failed (HTTP ${response.status}${detail[0]?.message ? `: ${redactSecrets(detail[0].message)}` : ""}).`);
-    }
-    const page = (await response.json()) as { records?: Record<string, unknown>[]; nextRecordsUrl?: string; done?: boolean };
+    const page = (await get(next)) as { records?: Record<string, unknown>[]; nextRecordsUrl?: string; done?: boolean };
     for (const record of page.records ?? []) {
       const id = typeof record.Id === "string" ? record.Id : null;
       if (!id) continue;
@@ -122,19 +102,14 @@ export async function syncSalesforce(startedBy: number | null, fetchImpl: typeof
   } catch (error) {
     return { ok: false, message: (error as Error).message, datasets: [] };
   }
-  if (!config) return { ok: false, message: "Salesforce isn't set up: add the URL, the connected app's key and secret, and the objects in AI settings.", datasets: [] };
-  let session: { accessToken: string; instanceUrl: string };
-  try {
-    session = await token(config, fetchImpl);
-  } catch (error) {
-    return { ok: false, message: (error as Error).message, datasets: [] };
-  }
+  if (!config) return { ok: false, message: "The hourly copy isn't set up: connect Salesforce, list the objects, and switch the copy ON in AI settings.", datasets: [] };
+  const get = (path: string) => salesforceGet(path, fetchImpl);
   const datasets: SyncSummary["datasets"] = [];
   for (const spec of config.objects) {
     const checkpoint = await lastGoodCheckpoint(SALESFORCE_KEY, spec.object);
     const runId = await startSyncRun(SALESFORCE_KEY, spec.object, checkpoint, startedBy);
     try {
-      const fetched = await fetchAll(session.instanceUrl, session.accessToken, soqlFor(spec, checkpoint), fetchImpl);
+      const fetched = await fetchAll(get, soqlFor(spec, checkpoint));
       for (let index = 0; index < fetched.records.length; index += 500) await upsertSourceRecords(SALESFORCE_KEY, spec.object, fetched.records.slice(index, index + 500));
       await finishSyncRun(runId, { status: "SUCCEEDED", rowsFetched: fetched.records.length, checkpointOut: isoCheckpoint(fetched.latest) ?? checkpoint, error: null });
       datasets.push({ dataset: spec.object, ok: true, rows: fetched.records.length });

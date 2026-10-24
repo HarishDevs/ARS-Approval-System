@@ -20,10 +20,15 @@ function modulesFrom(formData: FormData): string[] | null {
   return formData.get("modulesShown") === "1" ? formData.getAll("modules").map(String) : null;
 }
 
+// D-172: Pic bot chat access, the same way (marked by "chatShown").
+function chatFrom(formData: FormData): { modes: string[]; salesforceScope: string } | null {
+  return formData.get("chatShown") === "1" ? { modes: formData.getAll("chatModes").map(String), salesforceScope: String(formData.get("salesforceScope") ?? "NONE") } : null;
+}
+
 export async function createUserAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
   const actor = await getAdminActor("admin.users");
   if (!actor) return NOT_FOUND;
-  const parsed = parseUserForm(formFields(formData, USER_FIELDS), formData.getAll("roles").map(String), modulesFrom(formData));
+  const parsed = parseUserForm(formFields(formData, USER_FIELDS), formData.getAll("roles").map(String), modulesFrom(formData), chatFrom(formData));
   if (!parsed.ok) return { ok: false, message: "Check the highlighted fields.", fieldErrors: parsed.fieldErrors };
   let newId: number;
   try {
@@ -54,7 +59,7 @@ export async function updateUserAction(_previous: ActionResult | null, formData:
   if (!actor) return NOT_FOUND;
   const id = parseId(formData.get("id"));
   if (id === null) return NOT_FOUND;
-  const parsed = parseUserForm(formFields(formData, USER_FIELDS), formData.getAll("roles").map(String), modulesFrom(formData));
+  const parsed = parseUserForm(formFields(formData, USER_FIELDS), formData.getAll("roles").map(String), modulesFrom(formData), chatFrom(formData));
   if (!parsed.ok) return { ok: false, message: "Check the highlighted fields.", fieldErrors: parsed.fieldErrors };
   try {
     const result = await updateUser(id, parsed.value, actor);

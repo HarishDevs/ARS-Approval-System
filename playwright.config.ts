@@ -18,6 +18,8 @@ export const E2E_ENV = {
   ENCRYPTION_KEY: Buffer.alloc(32, 9).toString("base64"),
   JOB_RUNNER_SECRET: "e2e-job-runner-secret-only-for-tests",
   UPLOAD_DIR: path.join(os.tmpdir(), "ars-approvals-e2e-uploads"),
+  // D-172: Pic bot talks to a local mock provider in tests (tests/e2e/mock-provider.ts).
+  AI_CLAUDE_BASE_URL: "http://127.0.0.1:4011",
 };
 
 export default defineConfig({

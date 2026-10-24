@@ -17,6 +17,8 @@ const authUser = (roles: RoleCode[], active = true): AuthenticatedUser => ({
   active,
   roles,
   modules: ["APPROVAL", "TASK", "INFORMATION"],
+  chatModes: ["APPROVAL", "TASK", "INFORMATION"],
+  salesforceScope: "NONE",
 });
 
 describe("sign-in rules", () => {

@@ -7,6 +7,7 @@ import {
   insertUser,
   replaceUserRoles,
   setUserModules,
+  setUserChatAccess,
   setUserActive,
   unlockUser,
   updateUserRecord,
@@ -77,6 +78,7 @@ export async function createUser(input: ParsedUserInput, actor: AdminActor): Pro
       await replaceUserRoles(newId, input.roles, actor.id, connection);
       // D-168: without a choice, the column default applies (Approval, Task, Information).
       if (input.modules) await setUserModules(newId, input.modules, actor.id, connection);
+      if (input.chatAccess) await setUserChatAccess(newId, input.chatAccess, actor.id, connection);
       await recordAudit(
         {
           actorUserId: actor.id,
@@ -85,7 +87,7 @@ export async function createUser(input: ParsedUserInput, actor: AdminActor): Pro
           entityId: newId,
           sessionId: actor.sessionId,
           ipAddress: actor.ipAddress,
-          metadata: { after: { ...record(input), roles: input.roles, ...(input.modules ? { modules: input.modules } : {}) } },
+          metadata: { after: { ...record(input), roles: input.roles, ...(input.modules ? { modules: input.modules } : {}), ...(input.chatAccess ? { chatAccess: input.chatAccess } : {}) } },
         },
         connection,
       );
@@ -136,7 +138,14 @@ export async function updateUser(id: number, input: ParsedUserInput, actor: Admi
     const moduleCheck = checkModuleChange(actor, target);
     if (!moduleCheck.ok) return { ok: false, message: moduleCheck.message, fieldErrors: { modules: moduleCheck.message } };
   }
-  if (!Object.keys(changes).length && !rolesChanged && !modulesChanged) return { ok: true, value: undefined };
+  // D-172: Pic bot chat access follows the same rule as modules.
+  const chatBefore = { chatModes: existing.chatModes, salesforceScope: existing.salesforceScope };
+  const chatChanged = Boolean(input.chatAccess) && JSON.stringify(chatBefore) !== JSON.stringify(input.chatAccess);
+  if (chatChanged && !modulesChanged) {
+    const chatCheck = checkModuleChange(actor, target);
+    if (!chatCheck.ok) return { ok: false, message: chatCheck.message, fieldErrors: { chatModes: chatCheck.message } };
+  }
+  if (!Object.keys(changes).length && !rolesChanged && !modulesChanged && !chatChanged) return { ok: true, value: undefined };
 
   const effects = {
     unlinkGoogle: existing.googleLinked && (before.email !== after.email || after.signInMethod !== "GOOGLE"),
@@ -150,6 +159,7 @@ export async function updateUser(id: number, input: ParsedUserInput, actor: Admi
       await updateUserRecord(id, after, effects, actor.id, connection);
       if (rolesChanged) await replaceUserRoles(id, input.roles, actor.id, connection);
       if (modulesChanged) await setUserModules(id, input.modules!, actor.id, connection);
+      if (chatChanged) await setUserChatAccess(id, input.chatAccess!, actor.id, connection);
       if (endSessions) await revokeAllSessionsForUser(id, "ACCOUNT_CHANGED_BY_ADMIN", connection);
       await recordAudit(
         {
@@ -163,6 +173,7 @@ export async function updateUser(id: number, input: ParsedUserInput, actor: Admi
             changes,
             ...(rolesChanged ? { roles: { before: existing.roles, after: input.roles } } : {}),
             ...(modulesChanged ? { modules: { before: existing.modules, after: input.modules } } : {}),
+            ...(chatChanged ? { chatAccess: { before: chatBefore, after: input.chatAccess } } : {}),
             ...(effects.unlinkGoogle ? { googleUnlinked: true } : {}),
             ...(effects.clearPassword ? { passwordRemoved: true } : {}),
             ...(endSessions ? { sessionsEnded: true } : {}),

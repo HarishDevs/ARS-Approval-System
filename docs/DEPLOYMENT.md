@@ -553,3 +553,13 @@ After publishing:
 - Providers & security → Feature switches → **AI module: OFF** hides AI at once.
 - Rollback: redeploy v1.14.0. The new tables and column are ignored by the old version.
 - Details: `docs/ai-module/release-and-rollback.md`.
+
+## Part S: Pic bot - ai (v1.16.0)
+
+The full guide is in `docs/CHATBOT_DEPLOYMENT_GUIDE.md`. In short:
+- Nothing new on GoDaddy; the migrations are additive.
+- After publishing:
+  - AI settings → provider key, then Test; decide business data;
+  - tick **AI** and the person's **Pic bot** chats on their user page;
+  - Salesforce: create a sandbox Connected App with the callback URL shown in AI settings and PKCE, then Connect and Test.
+- **Emergency:** AI settings → **Emergency stop: ON**.

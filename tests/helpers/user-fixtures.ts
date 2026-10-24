@@ -19,6 +19,8 @@ export function userRecord(overrides: Partial<UserRecord> = {}): UserRecord {
     hasLoggedInBefore: true,
     roles: ["USER"],
     modules: ["APPROVAL", "TASK", "INFORMATION"],
+    chatModes: ["APPROVAL", "TASK", "INFORMATION"],
+    salesforceScope: "NONE",
     ...overrides,
   };
 }

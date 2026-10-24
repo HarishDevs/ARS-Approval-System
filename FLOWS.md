@@ -1060,6 +1060,29 @@ flowchart TD
 ```
 - Existing users keep exactly what they had: Approval, Task and Information; nobody gets AI until it is ticked.
 
+## F-138 Pic bot - ai (D-172)
+```mermaid
+flowchart TD
+  L[Floating logo: shown only with at least one effective chat mode] --> P[Panel: choose a mode for a new chat]
+  P --> Q[Question with a fresh request key]
+  Q --> G{Server: session, AI module, page rule, emergency stop, effective modes now, conversation owner and mode}
+  G -- refused --> R[Plain reason: not available / mode revoked / switched off]
+  G -- ok --> K{Key seen before?}
+  K -- answered --> D[Return the stored answer, no new charge]
+  K -- failed --> A2[Ask again in the same chat, question not stored twice]
+  K -- new --> LIM{Per-minute, daily, per-person, global queue}
+  LIM -- over --> B[Busy or limit message]
+  LIM -- ok --> M[Mode's tools only: Approval, Task, Information, Salesforce (live, allowlisted, USER_MODE, own records by email) or none for General]
+  A2 --> M
+  M --> V[Figures checked, evidence saved; Stop aborts the provider call]
+```
+Effective modes = global switches ∩ the person's chat modes ∩ their modules (and Salesforce scope + connection); administrator restrictions always win.
+
+## F-139 Salesforce connection (D-172)
+1. Super Admin enters the Connected App's key and secret and the allowed objects and fields; presses **Connect Salesforce**.
+2. The app starts OAuth with PKCE (state hashed, tied to the Super Admin, 10 minutes, single use). Salesforce returns to the callback; the code is exchanged with the verifier; tokens are stored encrypted.
+3. **Test connection** reads the org's API limits. An expired access token is refreshed; a refused refresh shows **Needs reconnecting**. **Disconnect** revokes and deletes the token.
+
 ## F-135 AI assistant (AI module branch, D-169)
 ```mermaid
 flowchart TD

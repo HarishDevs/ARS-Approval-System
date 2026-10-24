@@ -140,5 +140,5 @@ test("the Super Admin's AI settings: four providers, encrypted key fields, usage
   await expect(page.getByLabel("Claude (Anthropic) API key")).toHaveAttribute("type", "password");
   await expect(page.getByLabel("Active provider: NONE, CLAUDE, OPENAI (ChatGPT), GROK or DEEPSEEK")).toBeVisible();
   await expect(page.getByText("Salesforce sync")).toBeVisible();
-  await expect(page.getByText("No questions yet.")).toBeVisible();
+  await expect(page.getByText("No questions yet.").first()).toBeVisible();
 });

@@ -1,5 +1,6 @@
 import recreateTestDatabase from "../integration/global-setup";
 import { db } from "./db";
+import { startMockProvider } from "./mock-provider";
 
 // Fresh test database with the real migrations and seeds, then the people
 // the scenarios need:
@@ -7,6 +8,8 @@ import { db } from "./db";
 //   E2E_HOD (HOD of the requester's department), E2E_STAFF (plain user).
 export default async function globalSetup(): Promise<void> {
   await recreateTestDatabase();
+  // D-172: the mock AI provider stays up for the whole run (closed with the runner).
+  await startMockProvider().catch(() => undefined);
   const conn = await db();
   try {
     // D-085: managers and above approve; the requester and staff don't.

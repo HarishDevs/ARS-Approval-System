@@ -10,6 +10,10 @@ import { OfflineBanner, SessionWatch, UpdateNotice } from "@/features/shell/Sess
 import { OnboardingTour } from "@/features/help/OnboardingTour";
 import { tourStepsFor } from "@/features/help/tour-steps";
 import { hasFlag } from "@/lib/db/repositories/user-flags.repository";
+import { PicBot } from "@/features/ai/PicBot";
+import { chatAccess } from "@/server/ai/policy";
+import { MODE_LABEL } from "@/server/ai/chat-access";
+import { getSettingValue } from "@/server/settings/values";
 import { buildId } from "@/server/ops/build";
 import { BottomNav } from "@/features/shell/BottomNav";
 import { CommandPalette, type PaletteLink } from "@/features/shell/CommandPalette";
@@ -51,13 +55,17 @@ export async function AppShell({
   children: React.ReactNode;
 }) {
   const spaces = areasForUser(user);
-  const [unread, theme, waiting, access, tourDone] = await Promise.all([
+  const [unread, theme, waiting, access, tourDone, picbot] = await Promise.all([
     countUnread(user.id).catch(() => 0),
     getUserSetting(user.id, THEME_SETTING).catch(() => null),
     countPendingTasksFor(user.id).catch(() => 0),
     navAccess(user),
     // v1.14.0 (D-167): the tour opens by itself until it's finished or skipped.
     area === "users" ? hasFlag(user.id, "TOUR_DONE").catch(() => true) : true,
+    // D-172: Pic bot's launcher, for people with at least one chat mode they may use now.
+    Promise.all([chatAccess(user), getSettingValue("ai.launcher")])
+      .then(([chat, launcher]) => (launcher === "OFF" ? [] : chat.modes.map((mode) => ({ mode, label: MODE_LABEL[mode] }))))
+      .catch(() => []),
   ]);
   // v1.8.0: pages hidden from this person (Super Admin's page access) are
   // left out of the sidebar and the quick search; the server refuses them anyway.
@@ -136,6 +144,7 @@ export async function AppShell({
         <UpdateNotice />
         <SessionWatch build={buildId()} />
         {/* Not by itself while IT tries the app as a demo person. */}
+        {picbot.length > 0 && <PicBot initialModes={picbot} />}
         {area === "users" && <OnboardingTour steps={tourStepsFor(visible)} autoStart={!tourDone && !user.isDemo} />}
         <ViewOnlyNote patterns={access.viewOnly} />
         {user.isDemo && (

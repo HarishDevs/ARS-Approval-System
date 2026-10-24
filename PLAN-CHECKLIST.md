@@ -17,6 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (24 Oct 2026):** v1.16.0 Pic bot - ai (owner's master prompt; owner authorised building it into ARS Approvals): floating launcher with the supplied logo and chat panel; chat modes (General / Approval / Task / Information / Salesforce / Combined) per person and per module; Salesforce OAuth with PKCE and live allowlisted read-only queries; limits and concurrency; 10-client tests; CHATBOT_* documents. **Owner:** publish; then CHATBOT_DEPLOYMENT_GUIDE §3; Salesforce sandbox Connected App when approved.
 - **Now (24 Oct 2026):** v1.15.0 = the AI module (all phases) and per-person module access, merged into `main` at the owner's request ("create this as a main production ready application… publish it in GoDaddy"). **Owner:** publish, then DEPLOYMENT Part R (provider key, Test, business-data decision, tick AI for a few people).
 - **Now (24 Oct 2026), branch `feature/ai-module` (worktree `D:\Omniroute\ars-ai-module`, not on `main`):** the AI module (owner brief "Independent AI Module Upgrade", re-scoped by the owner's answers: API-based models, one application, same repository, Claude / ChatGPT / Grok / DeepSeek switchable). Phase 3 first: per-user module access.
 - **Now (23 Oct 2026):** v1.14.0: onboarding tour for users (Approvals, Tasks, Calendar); Re-invite and Reset password back on the user page only (owner).
@@ -312,6 +313,22 @@ Found during S8-06:
 - [x] S8-12 Google sign-in reached UNKNOWN_ACCOUNT: itadmin@ is an alias. The Super Admin now signs in as itsupport@arsenergy.co.in (D-082, migration + non-overwriting seed, v1.0.5) (done 8 Oct 2026)
 - [x] S8-01b Go-live on GoDaddy with the owner, following docs/DEPLOYMENT.md (the owner is at the wizard's "Add secrets" step) (done 9 Oct 2026: live since 8 Oct 2026)
 - [x] S8-04 Update the three living files; commit and push (done 8 Oct 2026)
+
+## Session log — v1.16.0 Pic bot - ai (branch feature/pic-bot, 24 Oct 2026), planned before starting
+Plan: `docs/CHATBOT_IMPLEMENTATION_PLAN.md`; audit: `docs/CHATBOT_ARCHITECTURE_AUDIT.md`, `docs/CHATBOT_CURRENT_STATE_AUDIT.md`.
+- [x] PB-01 Audit and plan documents (done 24 Oct 2026)
+- [x] PB-02 Per-person chat modes and Salesforce scope (migration, user form, rules, audit) (done 24 Oct 2026)
+- [x] PB-03 Conversation mode, idempotency key (answered / failed / pending), owner delete (done 24 Oct 2026)
+- [x] PB-04 Mode enforcement: effective modes (administrator wins), tools per mode, instructions per mode, revocation per request, emergency stop (done 24 Oct 2026)
+- [x] PB-05 Limits: per minute (MySQL), per person and global concurrency (bounded queue), Retry-After retry with jitter, Stop (abort) (done 24 Oct 2026)
+- [x] PB-06 JSON API `/api/ai/chat`, `/api/ai/conversations[/id]` mapped to the AI page rule (done 24 Oct 2026)
+- [x] PB-07 Floating launcher (supplied logo) and chat panel (history, new chat, delete, copy, retry, stop, scope label, keyboard, phone) (done 24 Oct 2026)
+- [x] PB-08 Salesforce OAuth (web server + PKCE, encrypted tokens, refresh, reconnect, revoke, test) and live allowlisted queries (USER_MODE, OWN scope by email); hourly copy moved to the same connection (done 24 Oct 2026)
+- [x] PB-09 Super Admin: switches, limits, Salesforce card, usage by person, failures, events, live counts, cost estimate from entered prices (done 24 Oct 2026)
+- [x] PB-10 Tests: unit (`tests/ai/picbot.test.ts`), integration (`ai-assistant`, `ai-concurrency`), e2e (`picbot.spec.ts` incl. 10 HTTP clients with a mock provider) (done 24 Oct 2026)
+- [x] PB-11 Documents: deployment guide, security checklist, concurrency report, implementation report, feature verification; `.env.example` (done 24 Oct 2026)
+- [ ] PB-12 Owner: publish; provider key + Test; decide business data per provider; tick AI and chat modes for a trial group
+- [ ] PB-13 Owner: Salesforce sandbox Connected App (callback URL from AI settings, PKCE) + integration user; then Connect and Test (V-11 becomes verified only after this)
 
 ## Session log — AI module (branch feature/ai-module, 24 Oct 2026), planned before starting
 Design: `docs/ai-module/architecture.md` (decisions §1), `discovery-report.md`, `risk-register.md`.

@@ -415,6 +415,13 @@
 - Applies to users and IT admins; the Super Admin is exempt (12-hour limit only).
 - The browser's session check no longer counts as activity (it used to keep an open tab signed in for ever). Activity in the page is reported at the next minute's check.
 - A warning with "Stay signed in" 2 minutes before. | Owner; Claude, 15 Oct 2026 |
+| D-172 | 24 Oct 2026 | **Pic bot - ai (v1.16.0), owner's master prompt; owner explicitly authorised building it into ARS Approvals:**
+- **Launcher:** a floating launcher with the supplied logo (`public/brand/pic-bot.jpg`) and a chat panel on every page for people with an effective chat mode.
+- **Chat modes:** per person (`users.chat_modes`: GENERAL, APPROVAL, TASK, INFORMATION, SALESFORCE, COMBINED; default the three module modes) and per module (`ai.module_modes`). General and Combined are off by default. Effective = global ∩ person ∩ modules (∩ Salesforce scope and connection), re-read per request. A conversation keeps its mode.
+- **Salesforce:** one central OAuth connection (web server + PKCE), tokens encrypted, refresh and revoke. Live read-only queries are allowlisted with `WITH USER_MODE`; each person's scope (`users.salesforce_scope`) is NONE, OWN (`OwnerId` of their Salesforce user by email) or ALL. The hourly copy uses the same connection and is optional. Client-credentials settings removed.
+- **Limits:** per minute (MySQL), per person (2) and global (10) concurrency with a bounded queue; one retry honouring Retry-After; Stop aborts. Idempotency via `ai_messages.request_key`.
+- **Measured:** 10 clients in-process and over HTTP, mocked provider (`CHATBOT_CONCURRENCY_TEST_REPORT.md`).
+- **Not verified:** a real Salesforce org or a real provider. | Owner; Claude, 24 Oct 2026 |
 | D-171 | 24 Oct 2026 | **zod 3.24.1 → 4.6.7 (security):** CI's production audit failed on GHSA-mrhx-c7xc-m3w5 (high; every zod below 4.6.6; no 3.x fix). Upgraded to zod 4. Two code changes: issue `.type` → `.origin` (settings messages), and `.default({})` → `.prefault({})` for the calendar config's nested object. zod 4's own default messages differ in wording where a schema sets none. | Claude, 24 Oct 2026 |
 | D-170 | 24 Oct 2026 | **AI module released as v1.15.0 on `main` (owner):** "create this as a main production ready application and i can publish it in Godaddy". Branch `feature/ai-module` merged into `main` (fast-forward), tagged v1.15.0. Nothing new on GoDaddy except outbound HTTPS to the providers; steps in DEPLOYMENT Part R. | Owner; Claude, 24 Oct 2026 |
 | D-169 | 24 Oct 2026 | **AI module built, all phases (owner: "complete all the phases in one go"):**
@@ -580,6 +587,13 @@
 - Who approves the privacy policy and terms? | Before filing | Open, waiting on the owner (17 Oct 2026) |
 
 ## 5. Work log (newest first)
+
+### 24 Oct 2026 (v1.16.0: Pic bot - ai)
+- **Owner request:** the master prompt `Pic_bot_ai_Claude_Master_Prompt.md` (floating logo from a supplied image, chat modes, module and user permissions, Salesforce in Super Admin, concurrency, tests, docs). The prompt excluded approval.arssteels.net unless authorised; the owner authorised ARS Approvals when asked.
+- **Audit first** (`docs/CHATBOT_ARCHITECTURE_AUDIT.md`, `CHATBOT_CURRENT_STATE_AUDIT.md`), then the plan, then the build on branch `feature/pic-bot` (D-172).
+- **Measured:** 10 concurrent people in-process (10/10, avg 773 ms with a 300 ms mock provider, 2 calls) and 10 HTTP clients on the production build (10/10, avg 797 ms). A global limit of 4 queued and still served all 10.
+- **Fixed during testing:** focus didn't return to the launcher after Escape (the launcher is unmounted while the panel is open; now focused after it reappears); the audit query used `created_at` instead of `occurred_at`.
+- **Shell lesson:** long python-in-bash heredocs failed to parse several times; script files in the scratchpad worked.
 
 ### 24 Oct 2026 (AI module branch: phases 4 to 8)
 - **Phase 4:** an "AI" sidebar group (own icon), seven AI pages, AI settings under Super Admin, and the "ai" feature switch.

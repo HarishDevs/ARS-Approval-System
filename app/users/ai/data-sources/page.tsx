@@ -5,33 +5,34 @@ import { requireAiPage } from "@/features/ai/guard";
 import { PLANNED_SOURCES } from "@/features/ai/sources";
 import { lastSuccess, latestRuns } from "@/lib/db/repositories/ai.repository";
 import { sourceDatasetCounts } from "@/lib/db/repositories/ai-data.repository";
-import { loadSalesforceConfig, SALESFORCE_KEY } from "@/server/ai/connectors/salesforce";
+import { SALESFORCE_KEY } from "@/server/ai/connectors/salesforce";
+import { getConnection } from "@/lib/db/repositories/salesforce.repository";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 
 export const metadata: Metadata = { title: "Data Sources" };
 export const dynamic = "force-dynamic";
 
-const STALE_HOURS = 3; // Salesforce copies hourly; older than this is shown as stale
 
 // D-169 (AI module branch): where the AI's data comes from, its status and
 // how fresh it is. Credentials are never shown here.
 export default async function AiDataSourcesPage() {
   await requireAiPage();
-  const [sfConfigured, sfRuns, sfLast, sfCounts] = await Promise.all([
-    loadSalesforceConfig().then(Boolean).catch(() => false),
+  const [connection, sfRuns, sfLast, sfCounts] = await Promise.all([
+    getConnection(),
     latestRuns(SALESFORCE_KEY),
     lastSuccess(SALESFORCE_KEY),
     sourceDatasetCounts(SALESFORCE_KEY),
   ]);
   const sfFailed = sfRuns.some((run) => run.status === "FAILED");
-  const sfStale = sfLast ? Date.now() - new Date(sfLast).getTime() > STALE_HOURS * 3_600_000 : false;
   const status: Record<string, { tone: "success" | "warning" | "danger" | "neutral"; text: string; last: string }> = {
     ars: { tone: "success", text: "Connected (live)", last: "Read live at each question" },
-    salesforce: !sfConfigured
-      ? { tone: "neutral", text: "Not connected", last: "Never" }
-      : !sfLast
-        ? { tone: sfFailed ? "danger" : "warning", text: sfFailed ? "Failing" : "Set up, not synced yet", last: "Never" }
-        : { tone: sfFailed ? "danger" : sfStale ? "warning" : "success", text: sfFailed ? "Last run failed (older copy kept)" : sfStale ? "Stale" : "Connected", last: formatIndiaTime(new Date(sfLast)) },
+    // D-172: live queries through the OAuth connection; the hourly copy (optional) shows its own runs below.
+    salesforce:
+      connection.status === "CONNECTED"
+        ? { tone: sfFailed ? "warning" : "success", text: sfFailed ? "Connected (last copy failed; older copy kept)" : "Connected (live, read-only)", last: sfLast ? `Copy: ${formatIndiaTime(new Date(sfLast))}` : connection.lastTestAt ? `Tested: ${formatIndiaTime(connection.lastTestAt)}` : "Live at each question" }
+        : connection.status === "NEEDS_REAUTH"
+          ? { tone: "danger", text: "Needs reconnecting", last: sfLast ? formatIndiaTime(new Date(sfLast)) : "—" }
+          : { tone: "neutral", text: "Not connected", last: "Never" },
     oracle: { tone: "neutral", text: "Not connected", last: "Never" },
     powerbi: { tone: "neutral", text: "Not connected", last: "Never" },
   };

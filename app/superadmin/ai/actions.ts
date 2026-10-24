@@ -5,6 +5,7 @@ import { requireApiArea } from "@/server/authorization/guards";
 import { loadAiSettings } from "@/server/ai/config";
 import { chat, PROVIDER_LABEL, PROVIDERS, ProviderError, type ProviderCode } from "@/server/ai/providers";
 import { syncSalesforce } from "@/server/ai/connectors/salesforce";
+import { disconnect as disconnectSalesforce, testConnection } from "@/server/ai/connectors/salesforce-auth";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { logError } from "@/lib/logging/logger";
 import type { ActionResult } from "@/lib/http/action-result";
@@ -54,5 +55,38 @@ export async function syncSalesforceAction(): Promise<ActionResult> {
   } catch (error) {
     logError("syncSalesforceAction failed", error);
     return { ok: false, message: "The sync couldn't run. See the server log." };
+  }
+}
+
+// D-172: test the Salesforce connection (a read of the org's API limits).
+export async function testSalesforceAction(): Promise<ActionResult> {
+  let session;
+  try {
+    session = await requireApiArea("superadmin");
+  } catch {
+    return NOT_FOUND;
+  }
+  const result = await testConnection();
+  await recordAudit({ actorUserId: session.user.id, action: "AI_SALESFORCE_TESTED", entityType: "AI_SOURCE", entityId: "salesforce", result: result.ok ? "SUCCESS" : "FAILURE", sessionId: session.sessionId });
+  revalidatePath("/superadmin/ai");
+  return { ok: result.ok, message: result.message };
+}
+
+// D-172: disconnect: revoke the token at Salesforce and delete it here.
+export async function disconnectSalesforceAction(): Promise<ActionResult> {
+  let session;
+  try {
+    session = await requireApiArea("superadmin");
+  } catch {
+    return NOT_FOUND;
+  }
+  try {
+    await disconnectSalesforce();
+    await recordAudit({ actorUserId: session.user.id, action: "AI_SALESFORCE_DISCONNECTED", entityType: "AI_SOURCE", entityId: "salesforce", sessionId: session.sessionId });
+    revalidatePath("/superadmin/ai");
+    return { ok: true, message: "Salesforce disconnected. Its token was revoked and deleted." };
+  } catch (error) {
+    logError("disconnectSalesforceAction failed", error);
+    return { ok: false, message: "Couldn't disconnect. Please try again." };
   }
 }

@@ -7,6 +7,8 @@ import { ProviderNotice } from "@/features/ai/AiParts";
 import { AssistantForm } from "@/features/ai/AssistantForm";
 import { listMessages, ownsConversation, questionsToday, type AiMessage } from "@/lib/db/repositories/ai.repository";
 import { loadAiSettings, routeFor } from "@/server/ai/config";
+import { chatAccess } from "@/server/ai/policy";
+import { MODE_LABEL } from "@/server/ai/chat-access";
 import { PROVIDER_LABEL, type ProviderCode } from "@/server/ai/providers";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 
@@ -22,9 +24,10 @@ export default async function AiAssistantPage({ searchParams }: { searchParams: 
   const raw = (await searchParams).c;
   const requested = raw && /^\d+$/.test(raw) ? Number(raw) : null;
   const conversationId = requested !== null && (await ownsConversation(user.id, requested)) ? requested : null;
-  const [settings, messages, used] = await Promise.all([loadAiSettings(), conversationId ? listMessages(user.id, conversationId) : Promise.resolve([]), questionsToday(user.id)]);
+  const [settings, messages, used, chat] = await Promise.all([loadAiSettings(), conversationId ? listMessages(user.id, conversationId) : Promise.resolve([]), questionsToday(user.id), chatAccess(user)]);
   const route = routeFor(settings, false);
-  const enabled = route.length > 0;
+  const enabled = route.length > 0 && chat.modes.length > 0;
+  const modeOptions = chat.modes.map((mode) => ({ mode, label: MODE_LABEL[mode] }));
   const dataRoute = routeFor(settings, true);
 
   return (
@@ -56,7 +59,8 @@ export default async function AiAssistantPage({ searchParams }: { searchParams: 
             <MessageItem key={message.id} message={message} />
           ))}
         </ol>
-        <AssistantForm conversationId={conversationId} enabled={enabled} maxChars={settings.maxQuestionChars} />
+        {route.length > 0 && chat.modes.length === 0 && <p className="text-label text-ink-muted">No Pic bot chat mode is available to you. Ask IT.</p>}
+        <AssistantForm conversationId={conversationId} enabled={enabled} maxChars={settings.maxQuestionChars} modes={modeOptions} />
         <p className="text-caption text-ink-muted">
           Numbers come from the data, never from the AI&apos;s guess; any figure it couldn&apos;t find in the data is flagged. It can&apos;t approve, send or change anything.
         </p>

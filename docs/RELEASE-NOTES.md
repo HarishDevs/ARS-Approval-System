@@ -1,5 +1,26 @@
 # Release notes
 
+## v1.16.0 (24 Oct 2026): Pic bot - ai (owner request)
+- **Pic bot - ai** is now a floating assistant on every page:
+  - **The logo** sits at the bottom right. Click it to chat without leaving the page.
+  - **In the panel:** new chat, your chats (history), delete, copy an answer, retry, stop, and a label showing what the chat may use.
+  - **On phones** the panel fits the screen.
+- **Chat modes**, set per person by IT (user page → **Pic bot - ai**):
+  - **Approvals, Tasks, Information:** answers only from that module, for your own data.
+  - **Salesforce data:** live, read-only, only allowed objects and fields, and only your own records unless IT allows all.
+  - **General chat:** no company data.
+  - **Combined:** your data plus general answers.
+  - General and Combined are off until the Super Admin switches them on. Nobody gets anything their modules don't allow.
+- **Super Admin → AI settings:**
+  - **Switches:** an emergency stop, the launcher, general chat, combined chat and which module chats exist.
+  - **Limits:** questions per minute, questions at once per person and for everyone, context and answer length.
+  - **Salesforce:** Connect (OAuth with PKCE), Test and Disconnect, the allowed objects and fields, and the callback URL to give Salesforce.
+  - **Monitoring:** usage by person, failed answers, security events and live counts, plus a cost estimate if you enter your prices.
+- **Behaviour:** a question sent twice (double click or retry) is answered once and charged once. Stop cancels the request to the provider.
+- **Measured** with a simulated provider: 10 people asking at once were all answered (about 0.8 s each, plus the real provider's time).
+- **Not yet connected:** a real Salesforce org needs a sandbox Connected App from you. Oracle ERP is still not reachable from this hosting.
+- **After publishing:** `docs/CHATBOT_DEPLOYMENT_GUIDE.md` §3.
+
 ## v1.15.0 (24 Oct 2026): the AI module, and module access per person (owner request)
 - **Module access.** Each person now has **Approval, Task, Information and AI** check boxes (Admin → Users & roles → a person's page, or Add user).
   - Everyone keeps exactly what they had (Approval, Task, Information). Nobody has AI until it is ticked.

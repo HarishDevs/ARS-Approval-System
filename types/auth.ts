@@ -15,6 +15,9 @@ export interface AuthenticatedUser {
   active: boolean;
   roles: RoleCode[];
   modules: ModuleCode[]; // D-168; the Super Admin is exempt from module checks
+  // D-172 Pic bot - ai: chat modes and Salesforce record scope (see server/ai/chat-access.ts)
+  chatModes: ("GENERAL" | "APPROVAL" | "TASK" | "INFORMATION" | "SALESFORCE" | "COMBINED")[];
+  salesforceScope: "NONE" | "OWN" | "ALL";
   isDemo?: boolean; // D-071: a demo person the Super Admin is trying the app as
 }
 

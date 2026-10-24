@@ -50,7 +50,7 @@ export const PAGES: readonly PageDef[] = [
   { key: "users.information_item", module: "INFORMATION", area: "users", label: "Information: page", what: "Opening information: reading, acknowledging, withdrawing.", paths: [/^\/users\/information\/\d+(\/.*)?$/] },
   // D-168 (AI module branch): the AI module's pages.
   { key: "users.ai_dashboard", module: "AI", area: "users", label: "AI: dashboard", what: "The AI dashboard.", paths: [exact("/users/ai")] },
-  { key: "users.ai_assistant", module: "AI", area: "users", label: "AI: assistant", what: "Asking the AI questions about the business.", paths: [under("/users/ai/assistant")] },
+  { key: "users.ai_assistant", module: "AI", area: "users", label: "AI: assistant", what: "Asking the AI questions about the business.", paths: [under("/users/ai/assistant")], apis: [/^\/api\/ai\//] },
   { key: "users.ai_intelligence", module: "AI", area: "users", label: "AI: business intelligence", what: "Governed comparisons, trends and reconciliations.", paths: [under("/users/ai/intelligence")] },
   { key: "users.ai_insights", module: "AI", area: "users", label: "AI: insights & recommendations", what: "Recommendations with evidence, and their approval.", paths: [under("/users/ai/insights")] },
   { key: "users.ai_sources", module: "AI", area: "users", label: "AI: data sources", what: "The connected sources and how fresh their data is.", paths: [under("/users/ai/data-sources")] },

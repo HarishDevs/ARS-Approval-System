@@ -3,6 +3,7 @@ import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { getDbPool, type Queryable } from "@/lib/db/client";
 import type { RoleCode, SignInMethod, ModuleCode } from "@/types/auth";
 import { parseModuleSet } from "@/server/modules/modules";
+import { isSalesforceScope, parseChatModes, type ChatMode, type SalesforceScope } from "@/server/ai/chat-access";
 
 // Admin-side reads and writes for users (F-06, S2-03). The password hash is
 // never selected here.
@@ -22,6 +23,8 @@ export interface AdminUserListItem {
 }
 
 export interface AdminUserDetail extends AdminUserListItem {
+  chatModes: ChatMode[]; // D-172
+  salesforceScope: SalesforceScope; // D-172
   whatsappNumber: string | null;
   departmentId: number | null;
   designationId: number | null;
@@ -130,6 +133,8 @@ export async function getUserForAdmin(id: number, db: Queryable = getDbPool()): 
       open_sessions: number;
       created_at: Date;
       module_access: string | null;
+      chat_modes: string | null;
+      salesforce_scope: string | null;
     })[]
   >(
     `SELECT u.id, u.login_id, u.name, u.email, u.whatsapp_number, u.department_id, d.name AS department_name, u.designation_id,
@@ -138,7 +143,7 @@ export async function getUserForAdmin(id: number, db: Queryable = getDbPool()): 
             (u.firebase_uid IS NOT NULL) AS google_linked,
             GREATEST(COALESCE(TIMESTAMPDIFF(SECOND, CURRENT_TIMESTAMP, u.locked_until), 0), 0) AS locked_seconds_remaining,
             (SELECT COUNT(*) FROM user_sessions s WHERE s.user_id = u.id AND s.revoked_at IS NULL AND s.expires_at > CURRENT_TIMESTAMP) AS open_sessions,
-            u.created_at, u.module_access
+            u.created_at, u.module_access, u.chat_modes, u.salesforce_scope
      FROM users u
      LEFT JOIN departments d ON d.id = u.department_id
      LEFT JOIN users m ON m.id = u.reporting_manager_id
@@ -171,6 +176,8 @@ export async function getUserForAdmin(id: number, db: Queryable = getDbPool()): 
     openSessionCount: Number(row.open_sessions),
     createdAt: row.created_at,
     modules: parseModuleSet(row.module_access),
+    chatModes: parseChatModes(row.chat_modes),
+    salesforceScope: isSalesforceScope(row.salesforce_scope) ? row.salesforce_scope : "NONE",
   };
 }
 
@@ -218,6 +225,11 @@ export async function insertUser(input: UserWriteInput, createdBy: number, db: Q
 // D-168: a person's modules (the SET column), only through this function.
 export async function setUserModules(id: number, modules: readonly ModuleCode[], updatedBy: number, db: Queryable = getDbPool()): Promise<void> {
   await db.query<ResultSetHeader>("UPDATE users SET module_access = ?, updated_by = ? WHERE id = ?", [modules.join(","), updatedBy, id]);
+}
+
+// D-172: Pic bot chat modes and Salesforce scope, only through this function.
+export async function setUserChatAccess(id: number, access: { chatModes: readonly ChatMode[]; salesforceScope: SalesforceScope }, updatedBy: number, db: Queryable = getDbPool()): Promise<void> {
+  await db.query<ResultSetHeader>("UPDATE users SET chat_modes = ?, salesforce_scope = ?, updated_by = ? WHERE id = ?", [access.chatModes.join(","), access.salesforceScope, updatedBy, id]);
 }
 
 // Changing the email unlinks Google (so the new account links on its next

@@ -28,8 +28,8 @@ export async function askAction(_previous: ActionResult | null, formData: FormDa
   const conversationId = typeof raw === "string" && /^\d+$/.test(raw) ? Number(raw) : null;
   try {
     const result = await askAssistant(
-      { id: session.user.id, roles: session.user.roles, modules: session.user.modules, name: session.user.name, sessionId: session.sessionId },
-      { conversationId, question: String(formData.get("question") ?? "") },
+      { id: session.user.id, roles: session.user.roles, modules: session.user.modules, chatModes: session.user.chatModes, salesforceScope: session.user.salesforceScope, name: session.user.name, email: session.user.email, sessionId: session.sessionId },
+      { conversationId, mode: (String(formData.get("mode") ?? "") || null) as never, question: String(formData.get("question") ?? ""), requestKey: typeof formData.get("requestKey") === "string" ? String(formData.get("requestKey")) : null },
     );
     revalidatePath("/users/ai", "layout");
     if (!result.ok) return { ok: false, message: result.message, data: result.conversationId ? { conversationId: result.conversationId } : undefined };

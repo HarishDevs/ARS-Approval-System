@@ -5,6 +5,7 @@ import { createUserAction, updateUserAction } from "@/app/admin/users/actions";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import type { ModuleCode, RoleCode, SignInMethod } from "@/types/auth";
 import { MODULE_HELP, MODULE_LABEL, MODULES } from "@/server/modules/modules";
+import { CHAT_MODES, MODE_HELP, MODE_LABEL, type ChatMode, type SalesforceScope } from "@/server/ai/chat-access";
 
 export interface Option {
   id: number;
@@ -23,6 +24,8 @@ export interface UserFormValues {
   signInMethod: SignInMethod;
   roles: RoleCode[];
   modules: ModuleCode[];
+  chatModes: ChatMode[];
+  salesforceScope: SalesforceScope;
 }
 
 const ROLE_INFO: { role: RoleCode; label: string; body: string }[] = [
@@ -142,6 +145,37 @@ export function UserForm({
             <FieldError result={result} name="modules" />
           </fieldset>
         )}
+
+        {/* D-172: Pic bot - ai chat access. Only takes effect with the AI module, and
+            only for modes the Super Admin has switched on (AI settings). */}
+        <fieldset className="sm:col-span-2" data-testid="chat-access" disabled={Boolean(moduleLock)}>
+          <legend className="field-label">Pic bot - ai: what this person may ask about</legend>
+          {!moduleLock && <input type="hidden" name="chatShown" value="1" />}
+          <div className="grid gap-2 sm:grid-cols-2">
+            {CHAT_MODES.map((chatMode) => (
+              <label key={chatMode} className={`flex gap-3 rounded-md border border-line p-3 ${moduleLock ? "opacity-70" : "cursor-pointer"}`}>
+                <input type="checkbox" name="chatModes" value={chatMode} defaultChecked={values.chatModes.includes(chatMode)} className="mt-1" />
+                <span>
+                  <span className="block font-medium">{MODE_LABEL[chatMode]}</span>
+                  <span className="block text-label text-ink-muted">{MODE_HELP[chatMode]}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+          <label htmlFor="salesforceScope" className="field-label mt-3">
+            Salesforce records Pic bot may read for this person
+          </label>
+          <select id="salesforceScope" name="salesforceScope" defaultValue={values.salesforceScope} className="field-input sm:w-96">
+            <option value="NONE">None</option>
+            <option value="OWN">Records they own in Salesforce (matched by email)</option>
+            <option value="ALL">All records of the allowed objects</option>
+          </select>
+          <p className="mt-1.5 text-caption text-ink-muted">
+            {moduleLock ?? "Needs the AI module above. A module chat also needs that module. General, Salesforce and Combined chat must also be switched on in AI settings."}
+          </p>
+          <FieldError result={result} name="chatModes" />
+          <FieldError result={result} name="salesforceScope" />
+        </fieldset>
       </fieldset>
       {mode === "create" && (
         <label className="flex items-start gap-2 border-t border-line px-5 py-4 text-label">

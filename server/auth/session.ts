@@ -79,6 +79,8 @@ async function loadCurrentSession(touch: boolean): Promise<CurrentSession | { se
       // A demo person never acts with admin rights (D-071).
       roles: user.isDemo ? ["USER"] : user.roles,
       modules: user.modules,
+      chatModes: user.chatModes,
+      salesforceScope: user.salesforceScope,
       isDemo: user.isDemo,
     },
   };

@@ -98,14 +98,31 @@ export const SETTING_DEFINITIONS: readonly SettingDefinition[] = [
   { key: "ai.max_question_chars", group: "AI", label: "Longest question (characters)", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(100).max(20000), defaultValue: "4000" },
   { key: "ai.timeout_seconds", group: "AI", label: "How long to wait for an answer (seconds)", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(5).max(180), defaultValue: "60" },
   { key: "ai.conversation_keep_days", group: "AI", label: "Keep AI conversations for (days; 0 keeps them)", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(0).max(3650), defaultValue: "365" },
-  // Phase 6 (D-169): Salesforce, read-only, through a dedicated integration
-  // user (OAuth 2.0 client credentials). Nothing syncs until all are set and
-  // the Super Admin presses Sync now (or the hourly job runs).
-  { key: "ai.salesforce.instance_url", group: "AI_DATA", label: "Salesforce My Domain URL (https://yourcompany.my.salesforce.com; a sandbox first)", valueType: "STRING", encrypted: false, schema: z.string().trim().url().regex(/^https:\/\/[\w.-]+\.(salesforce|force)\.com\/?$/, "Use your https://….my.salesforce.com address.") },
-  { key: "ai.salesforce.client_id", group: "AI_DATA", label: "Salesforce connected app: consumer key", valueType: "STRING", encrypted: true, schema: z.string().trim().min(10).max(300) },
-  { key: "ai.salesforce.client_secret", group: "AI_DATA", label: "Salesforce connected app: consumer secret", valueType: "STRING", encrypted: true, schema: z.string().trim().min(10).max(300) },
-  { key: "ai.salesforce.objects", group: "AI_DATA", label: "Objects and fields to copy, e.g. Account:Name,Industry;Opportunity:Name,Amount,StageName,CloseDate (Id and SystemModstamp are added)", valueType: "STRING", encrypted: false, schema: z.string().trim().max(2000).regex(/^(\w+:\w+(,\w+)*)(;\w+:\w+(,\w+)*)*$/, "Use Object:Field,Field;Object:Field.") },
-  { key: "ai.salesforce.visible_to", group: "AI_DATA", label: "Who may ask about Salesforce data: IT_ONLY or AI_USERS", valueType: "STRING", encrypted: false, schema: z.enum(["IT_ONLY", "AI_USERS"]), defaultValue: "IT_ONLY" },
+  // Pic bot - ai (D-172): switches and limits. Defaults deny: general chat,
+  // combined chat and the emergency stop must be turned on deliberately.
+  { key: "ai.emergency_stop", group: "AI", label: "Emergency stop: ON refuses every AI request at once (OFF for normal use)", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF"]), defaultValue: "OFF" },
+  { key: "ai.launcher", group: "AI", label: "Floating Pic bot launcher on every page: ON or OFF", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF"]), defaultValue: "ON" },
+  { key: "ai.general_chat", group: "AI", label: "General AI chat (non-business questions) for people allowed it: ON or OFF", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF"]), defaultValue: "OFF" },
+  { key: "ai.combined_chat", group: "AI", label: "Combined chat (business data and general answers together) for people allowed it: ON or OFF", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF"]), defaultValue: "OFF" },
+  { key: "ai.module_modes", group: "AI", label: "Module chats available: any of APPROVAL,TASK,INFORMATION,SALESFORCE (comma-separated; empty for none)", valueType: "STRING", encrypted: false, schema: z.string().trim().max(60).regex(/^$|^(APPROVAL|TASK|INFORMATION|SALESFORCE)(,(APPROVAL|TASK|INFORMATION|SALESFORCE))*$/, "Use APPROVAL, TASK, INFORMATION, SALESFORCE separated by commas."), defaultValue: "APPROVAL,TASK,INFORMATION,SALESFORCE" },
+  { key: "ai.requests_per_minute", group: "AI", label: "Questions per person per minute", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(1).max(60), defaultValue: "6" },
+  { key: "ai.concurrent_per_person", group: "AI", label: "Questions one person may have waiting at once", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(1).max(5), defaultValue: "2" },
+  { key: "ai.concurrent_global", group: "AI", label: "Questions sent to providers at once, for everyone (this server)", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(1).max(50), defaultValue: "10" },
+  { key: "ai.history_turns", group: "AI", label: "Earlier messages sent with each question (context)", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(0).max(30), defaultValue: "10" },
+  { key: "ai.max_output_tokens", group: "AI", label: "Longest answer (output tokens)", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(100).max(8000), defaultValue: "1200" },
+  { key: "ai.price_in_per_million", group: "AI", label: "Your provider price per million input tokens, in ₹ (for the cost estimate; leave empty for none)", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().min(0).max(100000) },
+  { key: "ai.price_out_per_million", group: "AI", label: "Your provider price per million output tokens, in ₹ (for the cost estimate; leave empty for none)", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().min(0).max(100000) },
+  // Salesforce (D-172): OAuth 2.0 web server flow with PKCE, connected once by
+  // the Super Admin (Connect Salesforce). Read-only queries, allowlisted
+  // objects and fields, Salesforce's own sharing and field security (USER_MODE).
+  { key: "ai.salesforce.environment", group: "AI_DATA", label: "Salesforce environment: SANDBOX (test first) or PRODUCTION", valueType: "STRING", encrypted: false, schema: z.enum(["SANDBOX", "PRODUCTION"]), defaultValue: "SANDBOX" },
+  { key: "ai.salesforce.my_domain", group: "AI_DATA", label: "Salesforce My Domain login URL (optional, e.g. https://yourcompany--uat.sandbox.my.salesforce.com)", valueType: "STRING", encrypted: false, schema: z.string().trim().url().regex(/^https:\/\/[\w.-]+\.(salesforce|force)\.com\/?$/, "Use your https://….my.salesforce.com address.") },
+  { key: "ai.salesforce.client_id", group: "AI_DATA", label: "Salesforce app consumer key", valueType: "STRING", encrypted: true, schema: z.string().trim().min(10).max(300) },
+  { key: "ai.salesforce.client_secret", group: "AI_DATA", label: "Salesforce app consumer secret", valueType: "STRING", encrypted: true, schema: z.string().trim().min(10).max(300) },
+  { key: "ai.salesforce.scopes", group: "AI_DATA", label: "OAuth scopes (least privilege)", valueType: "STRING", encrypted: false, schema: z.string().trim().regex(/^[a-z_]+( [a-z_]+)*$/, "Space-separated scope names."), defaultValue: "api refresh_token" },
+  { key: "ai.salesforce.objects", group: "AI_DATA", label: "Objects and fields Pic bot may read, e.g. Account:Name,Industry;Opportunity:Name,Amount,StageName,CloseDate,AccountId (Id, OwnerId, SystemModstamp are added)", valueType: "STRING", encrypted: false, schema: z.string().trim().max(2000).regex(/^(\w+:\w+(,\w+)*)(;\w+:\w+(,\w+)*)*$/, "Use Object:Field,Field;Object:Field.") },
+  { key: "ai.salesforce.copy_hourly", group: "AI_DATA", label: "Also copy those objects hourly for the dashboard: ON or OFF", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF"]), defaultValue: "OFF" },
+
 ];
 
 export function findSettingDefinition(key: string): SettingDefinition | undefined {

@@ -8,6 +8,7 @@ import { getDbPool, type Queryable } from "@/lib/db/client";
 export interface AiConversation {
   id: number;
   title: string;
+  mode: string; // D-172: GENERAL, APPROVAL, TASK, INFORMATION, SALESFORCE, COMBINED or LEGACY
   createdAt: Date;
   updatedAt: Date;
   messageCount: number;
@@ -50,9 +51,43 @@ const json = <T>(value: unknown, fallback: T): T => {
   return value as T;
 };
 
-export async function createConversation(ownerId: number, title: string, db: Queryable = getDbPool()): Promise<number> {
-  const [result] = await db.query<ResultSetHeader>("INSERT INTO ai_conversations (owner_user_id, title) VALUES (?, ?)", [ownerId, title.slice(0, 200)]);
+export async function createConversation(ownerId: number, title: string, mode: string = "LEGACY", db: Queryable = getDbPool()): Promise<number> {
+  const [result] = await db.query<ResultSetHeader>("INSERT INTO ai_conversations (owner_user_id, title, mode) VALUES (?, ?, ?)", [ownerId, title.slice(0, 200), mode]);
   return result.insertId;
+}
+
+// D-172: the conversation's mode, only for its owner (null for anyone else).
+export async function conversationMode(ownerId: number, conversationId: number, db: Queryable = getDbPool()): Promise<string | null> {
+  const [rows] = await db.query<RowDataPacket[]>("SELECT mode FROM ai_conversations WHERE id = ? AND owner_user_id = ? LIMIT 1", [conversationId, ownerId]);
+  return rows[0]?.mode ?? null;
+}
+
+// D-172: a question already sent with this key (a retry), only among the
+// owner's conversations: ANSWERED (a good answer follows it), FAILED (only a
+// failed answer follows: it may be asked again without storing it twice) or
+// PENDING (nothing follows yet: still being answered).
+export async function findByRequestKey(ownerId: number, requestKey: string, db: Queryable = getDbPool()): Promise<{ conversationId: number; state: "ANSWERED" | "FAILED" | "PENDING" } | null> {
+  const [rows] = await db.query<RowDataPacket[]>(
+    `SELECT m.conversation_id,
+            EXISTS (SELECT 1 FROM ai_messages a WHERE a.conversation_id = m.conversation_id AND a.role = 'assistant' AND a.id > m.id AND a.error IS NULL) AS answered,
+            EXISTS (SELECT 1 FROM ai_messages a WHERE a.conversation_id = m.conversation_id AND a.role = 'assistant' AND a.id > m.id) AS replied
+     FROM ai_messages m JOIN ai_conversations c ON c.id = m.conversation_id AND c.owner_user_id = ?
+     WHERE m.request_key = ? AND m.role = 'user' LIMIT 1`,
+    [ownerId, requestKey],
+  );
+  const row = rows[0];
+  if (!row) return null;
+  return { conversationId: row.conversation_id, state: Number(row.answered) === 1 ? "ANSWERED" : Number(row.replied) === 1 ? "FAILED" : "PENDING" };
+}
+
+// D-172: the owner deletes one of their conversations (and its messages).
+// Proposals made from it stay as decision records, unlinked.
+export async function deleteConversation(ownerId: number, conversationId: number, db: Queryable = getDbPool()): Promise<boolean> {
+  if (!(await ownsConversation(ownerId, conversationId, db))) return false;
+  await db.query("UPDATE ai_proposals SET conversation_id = NULL WHERE conversation_id = ?", [conversationId]);
+  await db.query("DELETE FROM ai_messages WHERE conversation_id = ?", [conversationId]);
+  const [result] = await db.query<ResultSetHeader>("DELETE FROM ai_conversations WHERE id = ? AND owner_user_id = ?", [conversationId, ownerId]);
+  return result.affectedRows === 1;
 }
 
 export async function ownsConversation(ownerId: number, conversationId: number, db: Queryable = getDbPool()): Promise<boolean> {
@@ -62,11 +97,11 @@ export async function ownsConversation(ownerId: number, conversationId: number, 
 
 export async function listConversations(ownerId: number, limit = 50, db: Queryable = getDbPool()): Promise<AiConversation[]> {
   const [rows] = await db.query<RowDataPacket[]>(
-    `SELECT c.id, c.title, c.created_at, c.updated_at, (SELECT COUNT(*) FROM ai_messages m WHERE m.conversation_id = c.id) AS message_count
+    `SELECT c.id, c.title, c.mode, c.created_at, c.updated_at, (SELECT COUNT(*) FROM ai_messages m WHERE m.conversation_id = c.id) AS message_count
      FROM ai_conversations c WHERE c.owner_user_id = ? ORDER BY c.updated_at DESC, c.id DESC LIMIT ?`,
     [ownerId, limit],
   );
-  return rows.map((row) => ({ id: row.id, title: row.title, createdAt: row.created_at, updatedAt: row.updated_at, messageCount: Number(row.message_count) }));
+  return rows.map((row) => ({ id: row.id, title: row.title, mode: row.mode, createdAt: row.created_at, updatedAt: row.updated_at, messageCount: Number(row.message_count) }));
 }
 
 // Only the owner's: another person's id gives an empty list.
@@ -94,16 +129,17 @@ export async function listMessages(ownerId: number, conversationId: number, db: 
 
 export async function addMessage(
   conversationId: number,
-  message: { role: "user" | "assistant"; content: string; provider?: string | null; model?: string | null; inputTokens?: number | null; outputTokens?: number | null; latencyMs?: number | null; error?: string | null; evidence?: AiEvidence[]; unverified?: string[] },
+  message: { role: "user" | "assistant"; content: string; requestKey?: string | null; provider?: string | null; model?: string | null; inputTokens?: number | null; outputTokens?: number | null; latencyMs?: number | null; error?: string | null; evidence?: AiEvidence[]; unverified?: string[] },
   db: Queryable = getDbPool(),
 ): Promise<number> {
   const [result] = await db.query<ResultSetHeader>(
-    `INSERT INTO ai_messages (conversation_id, role, content, provider, model, input_tokens, output_tokens, latency_ms, error, evidence_json, unverified_json)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO ai_messages (conversation_id, role, content, request_key, provider, model, input_tokens, output_tokens, latency_ms, error, evidence_json, unverified_json)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       conversationId,
       message.role,
       message.content,
+      message.requestKey ?? null,
       message.provider ?? null,
       message.model ?? null,
       message.inputTokens ?? null,
@@ -139,6 +175,43 @@ export async function usageByProvider(days: number, db: Queryable = getDbPool())
     [days],
   );
   return rows.map((row) => ({ provider: row.provider, answers: Number(row.answers), failures: Number(row.failures), inputTokens: Number(row.input_tokens), outputTokens: Number(row.output_tokens), people: Number(row.people) }));
+}
+
+// D-172: usage per person over a period (questions, failures, tokens), for the Super Admin.
+export async function usageByPerson(days: number, limit = 25, db: Queryable = getDbPool()): Promise<{ userId: number; name: string; questions: number; failures: number; inputTokens: number; outputTokens: number; lastAt: Date | null }[]> {
+  const [rows] = await db.query<RowDataPacket[]>(
+    `SELECT u.id, u.name,
+            SUM(m.role = 'user') AS questions, SUM(m.role = 'assistant' AND m.error IS NOT NULL) AS failures,
+            COALESCE(SUM(m.input_tokens), 0) AS input_tokens, COALESCE(SUM(m.output_tokens), 0) AS output_tokens, MAX(m.created_at) AS last_at
+     FROM ai_messages m JOIN ai_conversations c ON c.id = m.conversation_id JOIN users u ON u.id = c.owner_user_id
+     WHERE m.created_at >= CURRENT_TIMESTAMP - INTERVAL ? DAY
+     GROUP BY u.id, u.name ORDER BY questions DESC LIMIT ?`,
+    [days, limit],
+  );
+  return rows.map((row) => ({ userId: row.id, name: row.name, questions: Number(row.questions), failures: Number(row.failures), inputTokens: Number(row.input_tokens), outputTokens: Number(row.output_tokens), lastAt: row.last_at }));
+}
+
+// D-172: recent failed answers (safe messages only, never question text).
+export async function recentFailures(limit = 20, db: Queryable = getDbPool()): Promise<{ at: Date; name: string; provider: string | null; error: string }[]> {
+  const [rows] = await db.query<RowDataPacket[]>(
+    `SELECT m.created_at, u.name, m.provider, m.error FROM ai_messages m JOIN ai_conversations c ON c.id = m.conversation_id JOIN users u ON u.id = c.owner_user_id
+     WHERE m.role = 'assistant' AND m.error IS NOT NULL ORDER BY m.id DESC LIMIT ?`,
+    [limit],
+  );
+  return rows.map((row) => ({ at: row.created_at, name: row.name, provider: row.provider, error: row.error }));
+}
+
+// D-172: recent AI security and configuration events from the audit log (no content).
+export async function recentAiEvents(limit = 25, db: Queryable = getDbPool()): Promise<{ at: Date; action: string; result: string; actor: string | null }[]> {
+  const [rows] = await db.query<RowDataPacket[]>(
+    `SELECT a.occurred_at, a.action, a.result, u.name FROM audit_logs a LEFT JOIN users u ON u.id = a.actor_user_id
+     WHERE a.action IN ('AI_PROVIDER_TESTED', 'AI_SALESFORCE_CONNECT_STARTED', 'AI_SALESFORCE_CONNECTED', 'AI_SALESFORCE_CONNECT_FAILED', 'AI_SALESFORCE_TESTED', 'AI_SALESFORCE_DISCONNECTED', 'AI_SOURCE_SYNCED', 'AI_QUESTION_FAILED', 'AI_CONVERSATION_DELETED', 'AI_PROPOSAL_APPROVED', 'AI_PROPOSAL_REJECTED', 'PAGE_ACCESS_DENIED', 'SETTING_CHANGED', 'SETTING_CLEARED')
+       AND (a.action <> 'PAGE_ACCESS_DENIED' OR a.entity_id LIKE 'users.ai%')
+       AND (a.action NOT LIKE 'SETTING%' OR a.entity_id LIKE 'ai.%')
+     ORDER BY a.id DESC LIMIT ?`,
+    [limit],
+  );
+  return rows.map((row) => ({ at: row.occurred_at, action: row.action, result: row.result, actor: row.name ?? null }));
 }
 
 // ---- Proposals (Phase 7) ----

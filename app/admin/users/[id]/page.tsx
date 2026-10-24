@@ -9,6 +9,7 @@ import { loadUserFormOptions } from "@/features/admin/user-options";
 import { requireArea } from "@/server/authorization/guards";
 import { checkCanEdit, checkModuleChange } from "@/server/admin/user-rules";
 import { MODULE_LABEL } from "@/server/modules/modules";
+import { MODE_LABEL } from "@/server/ai/chat-access";
 import { getUserForAdmin } from "@/lib/db/repositories/admin-users.repository";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 import { HandoverForm } from "@/features/admin/HandoverForm";
@@ -77,6 +78,8 @@ export default async function UserDetailPage({ params, searchParams }: { params:
             signInMethod: user.signInMethod,
             roles: user.roles,
             modules: user.modules,
+            chatModes: user.chatModes,
+            salesforceScope: user.salesforceScope,
           }}
           moduleLock={moduleLock}
           {...options}
@@ -104,6 +107,8 @@ export default async function UserDetailPage({ params, searchParams }: { params:
               </dd>
               <dt className="text-ink-muted">Modules</dt>
               <dd data-testid="user-modules">{user.roles.includes("SUPER_ADMIN") ? "All (Super Admin)" : user.modules.map((module) => MODULE_LABEL[module]).join(", ") || "None"}</dd>
+              <dt className="text-ink-muted">Pic bot</dt>
+              <dd data-testid="user-chat-modes">{user.chatModes.map((chatMode) => MODE_LABEL[chatMode]).join(", ") || "None"}{user.salesforceScope !== "NONE" ? ` · Salesforce: ${user.salesforceScope === "OWN" ? "own records" : "all allowed"}` : ""}</dd>
               <dt className="text-ink-muted">Last sign-in</dt>
               <dd>{user.lastLoginAt ? formatIndiaTime(user.lastLoginAt) : "Never"}</dd>
               <dt className="text-ink-muted">Open sessions</dt>

@@ -16,7 +16,16 @@ const OPENAI_STYLE_URL: Record<OpenAiStyle, string> = {
   GROK: "https://api.x.ai/v1/chat/completions",
   DEEPSEEK: "https://api.deepseek.com/chat/completions",
 };
-const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
+const ANTHROPIC_DEFAULT = "https://api.anthropic.com";
+
+// D-172: an optional base address for Claude (an approved company gateway or
+// proxy, or a local mock for load tests), from the server environment only.
+// Only https, or plain http to this machine itself, is accepted.
+export function anthropicUrl(base: string | undefined = process.env.AI_CLAUDE_BASE_URL): string {
+  const value = base?.trim().replace(/\/$/, "");
+  const allowed = value && (/^https:\/\/[\w.-]+(:\d+)?(\/[\w./-]*)?$/.test(value) || /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/.test(value));
+  return `${allowed ? value : ANTHROPIC_DEFAULT}/v1/messages`;
+}
 
 export interface ProviderConfig {
   provider: ProviderCode;
@@ -47,6 +56,7 @@ export interface ChatRequest {
   tools?: ToolSpec[];
   maxTokens: number;
   timeoutMs: number;
+  signal?: AbortSignal; // D-172: the person pressed Stop or closed the panel
 }
 
 export interface ChatAnswer {
@@ -61,9 +71,10 @@ export interface ChatAnswer {
 // provider may be tried (not for a refused key, a bad model or a bad request).
 export class ProviderError extends Error {
   constructor(
-    readonly kind: "KEY_REFUSED" | "MODEL_NOT_FOUND" | "RATE_LIMITED" | "UNAVAILABLE" | "TIMEOUT" | "BAD_REQUEST" | "BAD_ANSWER",
+    readonly kind: "KEY_REFUSED" | "MODEL_NOT_FOUND" | "RATE_LIMITED" | "UNAVAILABLE" | "TIMEOUT" | "BAD_REQUEST" | "BAD_ANSWER" | "CANCELLED",
     message: string,
     readonly retryable: boolean,
+    readonly retryAfterSeconds: number | null = null,
   ) {
     super(message);
     this.name = "ProviderError";
@@ -80,11 +91,12 @@ export function redactSecrets(text: string): string {
     .slice(0, 200);
 }
 
-function errorFor(status: number, detail: string): ProviderError {
+function errorFor(status: number, detail: string, retryAfter: string | null = null): ProviderError {
   const said = detail ? ` (${redactSecrets(detail)})` : "";
+  const after = retryAfter !== null && /^\d{1,4}$/.test(retryAfter.trim()) ? Number(retryAfter) : null;
   if (status === 401 || status === 403) return new ProviderError("KEY_REFUSED", `The provider refused the API key${said}.`, false);
   if (status === 404) return new ProviderError("MODEL_NOT_FOUND", `The provider doesn't know this model${said}.`, false);
-  if (status === 429) return new ProviderError("RATE_LIMITED", `The provider's rate limit or quota was reached${said}.`, true);
+  if (status === 429) return new ProviderError("RATE_LIMITED", `The provider's rate limit or quota was reached${said}.`, true, after);
   if (status >= 500) return new ProviderError("UNAVAILABLE", `The provider is unavailable right now (HTTP ${status}).`, true);
   return new ProviderError("BAD_REQUEST", `The provider refused the request (HTTP ${status})${said}.`, false);
 }
@@ -147,9 +159,58 @@ function parseArgs(value: unknown): Record<string, unknown> {
   }
 }
 
+// D-172: one bounded retry. A 429 is retried once only when the provider says
+// how long to wait (Retry-After, at most MAX_WAIT_SECONDS); a 5xx or a network
+// failure once after a short random backoff. Never more than two attempts, so
+// a busy provider can't cause a retry storm or double charges. Stop (the
+// person's signal) ends it at once.
+const MAX_WAIT_SECONDS = 10;
+const sleep = (ms: number, signal?: AbortSignal) =>
+  new Promise<void>((resolve, reject) => {
+    const timer = setTimeout(resolve, ms);
+    signal?.addEventListener("abort", () => {
+      clearTimeout(timer);
+      reject(new ProviderError("CANCELLED", "Stopped.", false));
+    }, { once: true });
+  });
+
+async function sendOnce(fetchImpl: typeof fetch, url: string, init: RequestInit, request: ChatRequest): Promise<Response> {
+  if (request.signal?.aborted) throw new ProviderError("CANCELLED", "Stopped.", false);
+  const signal = request.signal ? AbortSignal.any([AbortSignal.timeout(request.timeoutMs), request.signal]) : AbortSignal.timeout(request.timeoutMs);
+  let response: Response;
+  try {
+    response = await fetchImpl(url, { ...init, signal });
+  } catch (error) {
+    if (request.signal?.aborted) throw new ProviderError("CANCELLED", "Stopped.", false);
+    const name = (error as { name?: string })?.name;
+    if (name === "TimeoutError" || name === "AbortError") throw new ProviderError("TIMEOUT", `No answer within ${Math.round(request.timeoutMs / 1000)} seconds.`, true);
+    throw new ProviderError("UNAVAILABLE", "Couldn't reach the provider.", true);
+  }
+  if (!response.ok) throw errorFor(response.status, await providerMessage(response), response.headers.get("retry-after"));
+  return response;
+}
+
+async function sendWithRetry(fetchImpl: typeof fetch, url: string, init: RequestInit, request: ChatRequest): Promise<Response> {
+  try {
+    return await sendOnce(fetchImpl, url, init, request);
+  } catch (error) {
+    if (!(error instanceof ProviderError)) throw error;
+    const jitter = Math.floor(Math.random() * 500);
+    if (error.kind === "RATE_LIMITED" && error.retryAfterSeconds !== null && error.retryAfterSeconds <= MAX_WAIT_SECONDS) {
+      await sleep(error.retryAfterSeconds * 1000 + jitter, request.signal);
+      return sendOnce(fetchImpl, url, init, request);
+    }
+    if (error.kind === "UNAVAILABLE") {
+      await sleep(500 + jitter * 2, request.signal);
+      return sendOnce(fetchImpl, url, init, request);
+    }
+    throw error;
+  }
+}
+
 export async function chat(config: ProviderConfig, request: ChatRequest, fetchImpl: typeof fetch = fetch): Promise<ChatAnswer> {
   const claude = config.provider === "CLAUDE";
-  const url = claude ? ANTHROPIC_URL : OPENAI_STYLE_URL[config.provider as OpenAiStyle];
+  const url = claude ? anthropicUrl() : OPENAI_STYLE_URL[config.provider as OpenAiStyle];
   const headers: Record<string, string> = { "content-type": "application/json" };
   const tools = request.tools ?? [];
   let body: Record<string, unknown>;
@@ -166,15 +227,7 @@ export async function chat(config: ProviderConfig, request: ChatRequest, fetchIm
     if (tools.length) body.tools = tools.map((tool) => ({ type: "function", function: { name: tool.name, description: tool.description, parameters: tool.parameters } }));
   }
 
-  let response: Response;
-  try {
-    response = await fetchImpl(url, { method: "POST", headers, body: JSON.stringify(body), signal: AbortSignal.timeout(request.timeoutMs) });
-  } catch (error) {
-    const name = (error as { name?: string })?.name;
-    if (name === "TimeoutError" || name === "AbortError") throw new ProviderError("TIMEOUT", `No answer within ${Math.round(request.timeoutMs / 1000)} seconds.`, true);
-    throw new ProviderError("UNAVAILABLE", "Couldn't reach the provider.", true);
-  }
-  if (!response.ok) throw errorFor(response.status, await providerMessage(response));
+  const response = await sendWithRetry(fetchImpl, url, { method: "POST", headers, body: JSON.stringify(body) }, request);
 
   const data = (await response.json().catch(() => null)) as Record<string, unknown> | null;
   if (!data) throw new ProviderError("BAD_ANSWER", "The provider's answer couldn't be read.", true);

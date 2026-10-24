@@ -3,6 +3,7 @@ import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { getDbPool, type Queryable } from "@/lib/db/client";
 import type { RoleCode, SignInMethod, ModuleCode } from "@/types/auth";
 import { parseModuleSet } from "@/server/modules/modules";
+import { isSalesforceScope, parseChatModes, type ChatMode, type SalesforceScope } from "@/server/ai/chat-access";
 
 export interface UserRecord {
   id: number;
@@ -22,6 +23,8 @@ export interface UserRecord {
   hasLoggedInBefore: boolean;
   roles: RoleCode[];
   modules: ModuleCode[]; // D-168
+  chatModes: ChatMode[]; // D-172
+  salesforceScope: SalesforceScope; // D-172
 }
 
 interface UserRow extends RowDataPacket {
@@ -42,13 +45,15 @@ interface UserRow extends RowDataPacket {
   last_login_at: Date | null;
   role_codes: string | null;
   module_access: string | null;
+  chat_modes: string | null;
+  salesforce_scope: string | null;
 }
 
 // Lock/break-glass windows are computed by MySQL against its own clock
 // (never mix JS Dates with CURRENT_TIMESTAMP — Power BI site lesson).
 const SELECT_USER = `
   SELECT u.id, u.login_id, u.name, u.email, u.whatsapp_number, u.sign_in_method, u.firebase_uid,
-         u.password_hash, u.failed_login_count, u.active, u.is_break_glass, u.is_demo, u.last_login_at, u.module_access,
+         u.password_hash, u.failed_login_count, u.active, u.is_break_glass, u.is_demo, u.last_login_at, u.module_access, u.chat_modes, u.salesforce_scope,
          GREATEST(COALESCE(TIMESTAMPDIFF(SECOND, CURRENT_TIMESTAMP, u.locked_until), 0), 0) AS locked_seconds_remaining,
          GREATEST(COALESCE(TIMESTAMPDIFF(SECOND, CURRENT_TIMESTAMP, u.break_glass_until), 0), 0) AS break_glass_seconds_remaining,
          (SELECT GROUP_CONCAT(r.code) FROM user_roles ur JOIN roles r ON r.id = ur.role_id AND r.active = TRUE
@@ -76,6 +81,8 @@ function toUser(row: UserRow): UserRecord {
     hasLoggedInBefore: row.last_login_at !== null,
     roles,
     modules: parseModuleSet(row.module_access),
+    chatModes: parseChatModes(row.chat_modes),
+    salesforceScope: isSalesforceScope(row.salesforce_scope) ? row.salesforce_scope : "NONE",
   };
 }
 
