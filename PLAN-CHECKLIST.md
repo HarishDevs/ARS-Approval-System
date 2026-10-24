@@ -17,6 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (24 Oct 2026):** v1.15.0 = the AI module (all phases) and per-person module access, merged into `main` at the owner's request ("create this as a main production ready application… publish it in GoDaddy"). **Owner:** publish, then DEPLOYMENT Part R (provider key, Test, business-data decision, tick AI for a few people).
 - **Now (24 Oct 2026), branch `feature/ai-module` (worktree `D:\Omniroute\ars-ai-module`, not on `main`):** the AI module (owner brief "Independent AI Module Upgrade", re-scoped by the owner's answers: API-based models, one application, same repository, Claude / ChatGPT / Grok / DeepSeek switchable). Phase 3 first: per-user module access.
 - **Now (23 Oct 2026):** v1.14.0: onboarding tour for users (Approvals, Tasks, Calendar); Re-invite and Reset password back on the user page only (owner).
 - **Now (23 Oct 2026):** v1.13.0: invite user and reset password from User management, by email (owner). The WhatsApp code on set-password stays (owner choice).
@@ -322,12 +323,15 @@ Design: `docs/ai-module/architecture.md` (decisions §1), `discovery-report.md`,
 - [x] AI-05 Add user / Edit user "Module access" check boxes; saved only when sent and changed; rules (no self-change; another IT Admin's: Super Admin only); audited before/after (done 24 Oct 2026)
 - [x] AI-06 Users list shows modules and filters by module; user page shows them; import keeps the default (done 24 Oct 2026)
 - [x] AI-07 Tests: `tests/modules/module-access.test.ts`, `tests/integration/ai-modules.int.test.ts`, `tests/e2e/ai-modules.spec.ts` (done 24 Oct 2026)
-- [ ] AI-08 Phase 4 AI module shell: "AI" sidebar group (own icon, collapsible), pages with honest empty states, "AI module available" switch (off by default)
-- [ ] AI-09 Phase 5 providers: Claude, ChatGPT, Grok, DeepSeek adapters + fake; Super Admin AI settings (keys encrypted, data classes, active + fallback, test); routing; quotas; usage and cost
-- [ ] AI-10 Phase 5 assistant: tool registry (approved, parameterised, module-scoped), tool loop, validation (numbers from tools only), evidence, conversation ownership, history
-- [ ] AI-11 Phase 6 connectors framework (sync runs, checkpoints, freshness) + ARS data tools; Salesforce and Oracle after owner approvals (Q-AI-05)
-- [ ] AI-12 Phase 7 proposals: human approve / reject, versioned, expiring, never the requester, execution disabled
-- [ ] AI-13 Phase 8 docs (security, routing, testing, rollback, deployment), full test run, owner review; merge only when the owner approves
+- [x] AI-08 Phase 4 AI module shell: "AI" sidebar group (own icon, collapsible) under Information; seven AI pages (`/users/ai/...`) with honest "not connected" states; AI settings (`/superadmin/ai`); "ai" feature switch (on by default: the module grant is the gate, nobody has it until ticked) (done 24 Oct 2026)
+- [x] AI-09 Phase 5 providers: Claude, ChatGPT, Grok, DeepSeek adapters (`server/ai/providers.ts`, tool calling in both API shapes); Super Admin AI settings (keys encrypted, model, "may see business data" per provider, active + fallback, Test button); routing (`routeFor`); daily limit, size, timeout; usage per provider (done 24 Oct 2026)
+- [x] AI-10 Phase 5 assistant: tool registry (`server/ai/tools.ts`: approvals, requests, tasks, information, Salesforce datasets, propose_action; module-checked at run time), tool loop (4 rounds), figure check (`validate.ts`), evidence panel, conversations owned in SQL, Activity History, AI Dashboard with live figures by code (done 24 Oct 2026)
+- [x] AI-11 Phase 6 connector framework (`ai_sync_runs`, `ai_source_records`, checkpoints from the last good run, freshness, Data Sources page) + ARS data tools + Salesforce read-only client (client credentials, paging, incremental, no duplicates; hourly via the AI upkeep job; Sync now). Tested with a fake Salesforce only (done 24 Oct 2026)
+- [ ] AI-11b Owner: Salesforce sandbox integration user + connected app; Oracle reporting views, account and a relay host (GoDaddy can't reach Oracle); Power BI datasets (Q-AI-05)
+- [x] AI-12 Phase 7 proposals: `propose_action` → `ai_proposals`; approver = reporting manager (else IT Admin), never the requester or the AI; version + content hash; 7-day expiry (job + at decision); reason to reject; audited with `executed: false`; execution switched off (done 24 Oct 2026)
+- [x] AI-13 Phase 8 docs (`docs/ai-module/`: security-design, ai-model-routing, approval-workflow, integrations-and-data, release-and-rollback, README), tour step for AI, tests (done 24 Oct 2026)
+- [x] AI-13b Full local run on the branch (no dev server in the same folder); owner asked to make it the main production application: merged into `main` as v1.15.0 and pushed (done 24 Oct 2026)
+- [ ] AI-13c Owner: enter a provider key in AI settings, Test, try the assistant; decide "may see business data" per provider (DeepSeek and Grok after an information-security review)
 
 ## Session log — v1.14.0: onboarding tour; invite buttons on the user page only (23 Oct 2026), planned before starting
 - [x] V1140-01 Owner: remove Re-invite / Reset password from the users list (keep them on the user page) (done 23 Oct 2026)

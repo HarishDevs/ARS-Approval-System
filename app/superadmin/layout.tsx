@@ -19,6 +19,7 @@ export default async function SuperAdminLayout({ children }: { children: React.R
         { href: "/superadmin", label: "Overview" },
         { href: "/superadmin/settings", label: "Providers & security" },
         { href: "/superadmin/integrations", label: "Integrations" },
+        { href: "/superadmin/ai", label: "AI settings" },
         { href: "/superadmin/pages", label: "Page access" },
         { href: "/superadmin/templates", label: "WhatsApp templates" },
         { href: "/superadmin/requests", label: "Requests" },

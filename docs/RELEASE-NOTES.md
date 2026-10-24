@@ -1,5 +1,27 @@
 # Release notes
 
+## v1.15.0 (24 Oct 2026): the AI module, and module access per person (owner request)
+- **Module access.** Each person now has **Approval, Task, Information and AI** check boxes (Admin → Users & roles → a person's page, or Add user).
+  - Everyone keeps exactly what they had (Approval, Task, Information). Nobody has AI until it is ticked.
+  - Without a module, its pages are hidden from the sidebar and refused even if the address is typed.
+  - The Users list shows each person's modules and filters by them. Nobody can change their own; the Super Admin is never limited.
+- **The AI module** (for people with AI ticked), a new **AI** group in the sidebar:
+  - **AI Dashboard:** your own live figures from ARS (approvals waiting, requests, tasks, information, suggestions to decide), each showing where it came from. Business sections that need Salesforce or Oracle say so until those are connected.
+  - **AI Assistant:** ask in plain words.
+    - Answers use only approved data tools and your own data, and show their **evidence** (source and time read).
+    - Any figure the AI couldn't find in the data is **flagged**. It can't approve, send or change anything.
+  - **Insights & Recommendations:** suggestions the AI recorded for a person to decide. Your manager (or an IT Admin) approves or rejects them; they expire after 7 days; nothing is carried out automatically.
+  - **Data Sources:** what each source is, whether it is connected, and how fresh it is.
+  - **AI Activity History:** your own conversations only.
+- **Super Admin → AI settings:**
+  - providers **Claude, ChatGPT, Grok and DeepSeek**, with keys stored encrypted;
+  - an active provider and a fallback, switchable at any time, and a **Test** button;
+  - per provider, whether it **may see business data** (off by default);
+  - daily limits, retention and usage per provider;
+  - Salesforce (read-only, hourly).
+- **Not yet connected:** Salesforce (needs your sandbox integration user), Oracle ERP (needs a relay inside the ARS network; GoDaddy can't reach it), Power BI datasets.
+- **Owner steps after publishing:** DEPLOYMENT Part R.
+
 ## v1.14.0 (23 Oct 2026): onboarding tour for users (owner request)
 - **A guided tour** of ARS Approvals opens by itself the first time each person visits Overview. In 15 short steps it opens each page and highlights what it's talking about:
   - **Approvals:** raising a request, custom approval, approving from Waiting for me, following My requests.

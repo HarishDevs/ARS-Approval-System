@@ -15,6 +15,7 @@ import { runExpiryNotices } from "@/server/approvals/expiry";
 import { runExportJobs } from "@/server/reports/background";
 import { runModuleReminders } from "@/server/modules/jobs";
 import { runCalendarStep } from "@/server/calendar/jobs";
+import { runAiStep } from "@/server/ai/jobs";
 
 // Automation inventory (unified prompt FN11, Addendum B). Every background
 // job the platform runs, what it does, how it is retried and how IT
@@ -179,6 +180,18 @@ export const AUTOMATIONS: readonly Automation[] = [
     owner: "Super Admin",
   },
   {
+    key: "ai",
+    name: "AI module upkeep",
+    what: "Marks AI proposals past their 7 days as expired, removes AI conversations older than the retention setting, and copies Salesforce data (read-only) at most hourly once it is set up.",
+    trigger: "Every job run; the Salesforce copy only when the last one is an hour old.",
+    everyMinutes: 5,
+    retry: "The next run tries again. A failed Salesforce object keeps its last good copy and checkpoint.",
+    idempotency: "Expiry and retention are single statements; Salesforce records are stored by their own Id, so a repeat never duplicates.",
+    onFailure: "Recorded here; AI → Data Sources shows each object's last run and error.",
+    recovery: "Super Admin → AI settings → Sync now, after fixing the cause.",
+    owner: "Super Admin",
+  },
+  {
     key: "exports",
     name: "Background exports",
     what: "Makes large report exports people asked for, and removes export files after 7 days.",
@@ -220,6 +233,7 @@ const STEPS: Record<string, () => Promise<StepResult>> = {
   modules: async () => ({ ...(await runModuleReminders()) }),
   exports: async () => ({ ...(await runExportJobs()) }),
   calendar: async () => ({ ...(await runCalendarStep()) }),
+  ai: () => runAiStep(),
   stuck: async () => {
     const counts = countByReason(await findStuckRequests());
     return { ...counts };

@@ -26,7 +26,7 @@ describe("modules", () => {
     expect(hasModule(aiOnly, "AI")).toBe(true);
     for (const other of ["APPROVAL", "TASK", "INFORMATION"] as const) expect(hasModule(aiOnly, other)).toBe(false);
     expect(hasModule({ roles: ["USER", "IT_ADMIN"], modules: [] }, "APPROVAL")).toBe(false); // admin roles don't imply modules
-    for (const module of MODULES) expect(hasModule({ roles: ["USER", "SUPER_ADMIN"], modules: [] }, module)).toBe(true);
+    for (const code of MODULES) expect(hasModule({ roles: ["USER", "SUPER_ADMIN"], modules: [] }, code)).toBe(true);
     expect(sameModules(["AI", "TASK"], ["TASK", "AI"])).toBe(true);
     expect(sameModules(["AI"], ["AI", "TASK"])).toBe(false);
   });

@@ -37,6 +37,18 @@ export default async function UsersLayout({ children }: { children: React.ReactN
               { href: "/users/information/new", label: "New information", section: "Information" },
             ]
           : []),
+        // D-168 (AI module branch): the fourth module, its own group.
+        ...(features.ai
+          ? [
+              { href: "/users/ai", label: "AI Dashboard", section: "AI" },
+              { href: "/users/ai/assistant", label: "AI Assistant", section: "AI" },
+              { href: "/users/ai/intelligence", label: "Business Intelligence", section: "AI" },
+              { href: "/users/ai/insights", label: "Insights & Recommendations", section: "AI" },
+              { href: "/users/ai/data-sources", label: "Data Sources", section: "AI" },
+              { href: "/users/ai/reports", label: "AI Reports", section: "AI" },
+              { href: "/users/ai/history", label: "AI Activity History", section: "AI" },
+            ]
+          : []),
         { href: "/users/search", label: "Search" },
         { href: "/users/calendar", label: "Calendar" },
         ...(features.analytics ? [{ href: "/users/analytics", label: "Analytics" }] : []),

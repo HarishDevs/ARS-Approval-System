@@ -523,3 +523,33 @@ Optional. Nothing changes until the Super Admin enables it.
 - **`redirect_uri_mismatch` on Google's screen:** the URI in Google must match the one shown on the ARS page exactly.
 - **Everyone shows "Needs reauthorising" after a week:** the consent screen is still in "Testing". Publish the app.
 - **`ENCRYPTION_KEY` changed:** enter the client secret again; everyone reconnects.
+
+## Part R: AI module (v1.15.0)
+
+Nothing new is needed on GoDaddy: no new environment variables and no new services.
+- **Migrations** (additive) run on the first start after Publish:
+  - `users.module_access` (everyone keeps Approval, Task and Information; nobody gets AI);
+  - the AI tables.
+- **Provider keys** are entered in the app (encrypted), never in GoDaddy secrets.
+- **Outbound HTTPS:** the app calls the providers over HTTPS from the server: `api.anthropic.com`, `api.openai.com`, `api.x.ai` and `api.deepseek.com`. Later, if set up, it also calls your Salesforce My Domain.
+
+After publishing:
+
+1. Open `/api/health` and check it shows `"version":"1.15.0"`.
+2. **Super Admin → AI settings:**
+   - enter one provider's **API key** and **model**;
+   - set **Active provider** to it;
+   - optionally choose a **Fallback provider**;
+   - **Save**, then press **Test**. A green "answered in … s" means it works.
+3. Decide **"may see business data"** for each provider. The default is NOT_ALLOWED: the assistant then answers without ARS data. Set ALLOWED only for providers your information-security review approves. DeepSeek and Grok run under their own jurisdictions and terms.
+4. **Admin → Users & roles:** open a person and tick **AI** under Module access (start with a few people). The AI group appears in their sidebar.
+5. Optional: **Questions per person per day** (50), **Keep AI conversations** (365 days).
+6. **Salesforce** (when approved):
+   - create a read-only integration user and a connected app with client credentials, in a sandbox first;
+   - enter the four Salesforce settings, then press **Sync now**;
+   - check AI → Data Sources.
+
+**If anything goes wrong:**
+- Providers & security → Feature switches → **AI module: OFF** hides AI at once.
+- Rollback: redeploy v1.14.0. The new tables and column are ignored by the old version.
+- Details: `docs/ai-module/release-and-rollback.md`.

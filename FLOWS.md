@@ -1060,6 +1060,33 @@ flowchart TD
 ```
 - Existing users keep exactly what they had: Approval, Task and Information; nobody gets AI until it is ticked.
 
+## F-135 AI assistant (AI module branch, D-169)
+```mermaid
+flowchart TD
+  Q[Person with the AI module asks a question] --> L{Within length and today's limit? conversation theirs?}
+  L -- no --> X[Plain refusal]
+  L -- yes --> R{A provider approved for business data, and the person has data tools?}
+  R -- yes --> T[Active, then fallback, WITH data tools for the person's modules]
+  R -- no --> N[Set-up provider WITHOUT tools; told it has no ARS data]
+  T --> M[Model asks for a tool] --> S[Server runs it: re-checks module, validated args, own data only] --> M
+  M --> A[Answer] --> V[Every figure checked against the tool results; missing ones flagged]
+  N --> A
+  V --> E[Saved with evidence, provider, model, tokens; audited without the prompt text]
+  T -. retryable failure .-> F[Fallback provider, same rules]
+```
+
+## F-136 AI proposals (D-169)
+1. While answering, the AI may call `propose_action`: a PENDING proposal with evidence, a version and content hash, expiring in 7 days.
+2. The approver is the asker's reporting manager (any IT Admin if none). The asker and the AI never decide.
+3. The approver decides it on Insights & Recommendations: Approve, or Reject with a reason. The version and hash must match.
+4. Approved = a recorded decision; **nothing is carried out automatically**. Expired proposals are marked by the AI upkeep job.
+
+## F-137 Data sources (D-169)
+1. Super Admin → AI settings → Salesforce: URL, connected app key and secret (encrypted), objects and fields.
+2. The AI upkeep job copies each object at most hourly (or on **Sync now**), from the last good checkpoint, page by page, keyed by Salesforce Id.
+3. A failed object keeps its last good copy and checkpoint. Data Sources shows it as failing or stale.
+4. Oracle ERP and Power BI: not connected (owner approvals; Oracle needs a relay inside the ARS network).
+
 ## F-133 Onboarding tour (v1.14.0, D-167, owner)
 ```mermaid
 flowchart TD

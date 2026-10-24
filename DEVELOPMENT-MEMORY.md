@@ -415,6 +415,15 @@
 - Applies to users and IT admins; the Super Admin is exempt (12-hour limit only).
 - The browser's session check no longer counts as activity (it used to keep an open tab signed in for ever). Activity in the page is reported at the next minute's check.
 - A warning with "Stay signed in" 2 minutes before. | Owner; Claude, 15 Oct 2026 |
+| D-170 | 24 Oct 2026 | **AI module released as v1.15.0 on `main` (owner):** "create this as a main production ready application and i can publish it in Godaddy". Branch `feature/ai-module` merged into `main` (fast-forward), tagged v1.15.0. Nothing new on GoDaddy except outbound HTTPS to the providers; steps in DEPLOYMENT Part R. | Owner; Claude, 24 Oct 2026 |
+| D-169 | 24 Oct 2026 | **AI module built, all phases (owner: "complete all the phases in one go"):**
+- **Providers:** Claude, ChatGPT, Grok and DeepSeek behind one `chat()` interface (tool calling in both API shapes). Keys are encrypted settings, with Active + Fallback and a Test button.
+- **Data permission:** one per provider, "may see business data", NOT_ALLOWED by default. Without it the provider answers without tools.
+- **Tools:** fixed, parameterised and limited to the person (approvals, requests, tasks, information, Salesforce datasets), re-checking modules when they run. Numbers come from tools; any figure missing from the data is flagged.
+- **Proposals:** human approval only. The approver is the reporting manager (else an IT Admin), never the asker or the AI. Version and hash are checked, and proposals expire after 7 days. Execution is switched off.
+- **Connector framework:** sync runs, checkpoints and records, plus a read-only Salesforce client (client credentials), hourly via the "ai" automation.
+- **Not connected:** Oracle (needs a relay; GoDaddy can't reach it) and Power BI.
+- **Docs:** `docs/ai-module/`. | Owner; Claude, 24 Oct 2026 |
 | D-168 | 24 Oct 2026 | **AI module: one application, API-based models, same repository (owner):**
 - The owner's brief asked for an independent AI platform (FastAPI, Ollama, separate subdomain). The owner then answered: API-based models only; deploy as a single application; use the same repository; providers Claude, ChatGPT, Grok and DeepSeek, switchable.
 - So: AI is the fourth module inside ARS Approvals, written in TypeScript, on branch `feature/ai-module` in worktree `D:\Omniroute\ars-ai-module`. `main` and the live site are untouched until the owner merges and publishes.
@@ -570,6 +579,18 @@
 - Who approves the privacy policy and terms? | Before filing | Open, waiting on the owner (17 Oct 2026) |
 
 ## 5. Work log (newest first)
+
+### 24 Oct 2026 (AI module branch: phases 4 to 8)
+- **Phase 4:** an "AI" sidebar group (own icon), seven AI pages, AI settings under Super Admin, and the "ai" feature switch.
+- **Phase 5:**
+  - providers (`server/ai/providers.ts`), settings (`ai.*`, encrypted keys) and routing (`config.ts`);
+  - tools (`tools.ts`), the orchestrator (`assistant.ts`) and the figure check (`validate.ts`);
+  - the Assistant with evidence, plus History and a Dashboard of live figures.
+- **Phase 6:** `ai-data.repository.ts`; the connector framework; the Salesforce client; the AI upkeep job; Data Sources with real status.
+- **Phase 7:** proposals (`proposals.ts`) and Insights & Recommendations.
+- **Phase 8:** documents, a tour step, and tests: `tests/ai/ai-engine.test.ts` (12) and `tests/integration/ai-assistant.int.test.ts` (8, with fake fetch), plus additions to `tests/e2e/ai-modules.spec.ts`.
+- **Mid-way (owner):** a test API key is entered by the owner in AI settings. I don't enter keys.
+- **Lesson:** don't run the preview dev server and the full E2E suite in the same folder; they share `.next` (32 false failures earlier).
 
 ### 24 Oct 2026 (AI module branch: discovery, decisions, module access)
 - **Owner brief:** "ARS Approval Platform — Independent AI Module Upgrade" (a fourth module, AI; independent codebase; FastAPI; Ollama; Salesforce and Oracle; module access in user management).

@@ -1,7 +1,10 @@
 import { expect, test } from "@playwright/test";
 import type { RowDataPacket } from "mysql2/promise";
 import { db, sessionCookie, userIdByLogin } from "./db";
-import { TOUR_STEPS } from "../../features/help/tour-steps";
+import { TOUR_STEPS as ALL_STEPS } from "../../features/help/tour-steps";
+
+// D-168: the test people have no AI module, so the AI step is left out for them.
+const TOUR_STEPS = ALL_STEPS.filter((step) => step.id !== "ai");
 
 // v1.14.0 (D-167, owner): the onboarding tour through the real screens.
 test.describe.configure({ mode: "serial" });

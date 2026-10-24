@@ -124,6 +124,18 @@ export const TOUR_STEPS: readonly TourStep[] = [
     target: HEADER,
   },
   {
+    id: "ai",
+    section: "Tasks",
+    title: "AI (if you have it)",
+    intro: "The AI module: a dashboard of your figures and an assistant you can ask in plain words.",
+    points: [
+      "Answers show the data they used and when it was read; figures the AI couldn't find in the data are flagged.",
+      "It can suggest a follow-up, but a person always decides; nothing is done automatically.",
+    ],
+    path: "/users/ai",
+    target: HEADER,
+  },
+  {
     id: "calendar",
     section: "Calendar",
     title: "Your calendar",

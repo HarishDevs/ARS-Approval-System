@@ -5,7 +5,9 @@ import { getSettingValue } from "@/server/settings/values";
 // no one, IT_ONLY for the IT team and Super Admin (a trial). A switch is not
 // an access check: every page and action still checks access on the server.
 // v1.9.0: "tasks" and "information" switch the Task and Information modules.
-export type Feature = "analytics" | "reports" | "scheduled_reports" | "amendments" | "templates" | "tasks" | "information";
+// D-168 (AI module branch): "ai" is an off switch for the whole AI module; who
+// sees it is decided by the AI module grant (nobody has it until an admin ticks it).
+export type Feature = "analytics" | "reports" | "scheduled_reports" | "amendments" | "templates" | "tasks" | "information" | "ai";
 
 export async function featureMode(feature: Feature): Promise<"ON" | "OFF" | "IT_ONLY"> {
   const value = await getSettingValue(`features.${feature}`).catch(() => null);
@@ -20,7 +22,7 @@ export async function featureOn(feature: Feature, user: { roles: readonly string
 }
 
 export async function enabledFeatures(user: { roles: readonly string[] }): Promise<Record<Feature, boolean>> {
-  const features: Feature[] = ["analytics", "reports", "scheduled_reports", "amendments", "templates", "tasks", "information"];
+  const features: Feature[] = ["analytics", "reports", "scheduled_reports", "amendments", "templates", "tasks", "information", "ai"];
   const values = await Promise.all(features.map((feature) => featureOn(feature, user)));
   return Object.fromEntries(features.map((feature, index) => [feature, values[index]])) as Record<Feature, boolean>;
 }

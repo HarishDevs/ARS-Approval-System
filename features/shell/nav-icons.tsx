@@ -42,6 +42,12 @@ import {
   SquarePlus,
   Network,
   Newspaper,
+  Sparkles,
+  MessagesSquare,
+  TrendingUp,
+  Lightbulb,
+  Database,
+  FileChartColumn,
   type LucideIcon,
 } from "lucide-react";
 
@@ -67,6 +73,15 @@ const ICONS: Record<string, LucideIcon> = {
   "/users/information": Newspaper,
   "/users/information/sent": Megaphone,
   "/users/information/new": MailPlus,
+  // D-168: the AI module
+  "/users/ai": Sparkles,
+  "/users/ai/assistant": MessagesSquare,
+  "/users/ai/intelligence": TrendingUp,
+  "/users/ai/insights": Lightbulb,
+  "/users/ai/data-sources": Database,
+  "/users/ai/reports": FileChartColumn,
+  "/users/ai/history": History,
+  "/superadmin/ai": Sparkles,
   "/admin/task-types": ClipboardList,
   "/admin/information-types": Megaphone,
   "/admin": LayoutDashboard,
@@ -105,7 +120,7 @@ const ICONS: Record<string, LucideIcon> = {
 };
 
 // v1.9.2: the collapsible groups of the user sidebar.
-const SECTION_ICONS: Record<string, LucideIcon> = { "My Approvals": ClipboardCheck, Tasks: ListTodo, Information: Newspaper };
+const SECTION_ICONS: Record<string, LucideIcon> = { "My Approvals": ClipboardCheck, Tasks: ListTodo, Information: Newspaper, AI: Sparkles };
 
 export function SectionIcon({ section, className = "h-4 w-4" }: { section: string; className?: string }) {
   const Icon = SECTION_ICONS[section];

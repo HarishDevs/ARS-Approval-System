@@ -1,6 +1,6 @@
 # AI module: architecture
 
-**Status:** decided 24 Oct 2026 (owner answers, see §1). Built on branch `feature/ai-module` in a separate worktree; `main` and the live site are untouched until the owner merges and publishes.
+**Status:** built 24 Oct 2026 on the branch (all phases; Salesforce, Oracle and Power BI need the owner's approvals before connecting). Decisions: §1. Details: `security-design.md`, `ai-model-routing.md`, `approval-workflow.md`, `integrations-and-data.md`, `release-and-rollback.md`. Built on branch `feature/ai-module` in a separate worktree; `main` and the live site are untouched until the owner merges and publishes.
 
 ## 1. Owner decisions (24 Oct 2026)
 
@@ -58,12 +58,13 @@ database/migrations/      additive migrations (new tables only, plus a safe back
 
 1. The Assistant page posts a message (Server Action → `requireApiArea("users", { page: "users.ai_assistant", change: true })`), so the AI module, page access and session are all checked.
 2. **Limits:** request size, the per-user and global daily quota, and the conversation must belong to the person (checked in SQL).
-3. **Routing:**
-   - the tools this person may use set the **data classes** in play;
-   - the active provider is used if it is approved for those classes and is healthy; otherwise the fallback, under the same test;
-   - otherwise a clear "AI isn't available for this kind of data" message.
+3. **Routing (as built):**
+   - each provider has one data permission, "may see business data" (NOT_ALLOWED by default);
+   - if the person has data tools, only approved providers (active, then fallback) answer **with** tools;
+   - if none is approved, the configured providers answer **without** tools and are told they have no ARS data;
+   - the fallback is used only after a retryable failure.
 
-   No silent fallback to an unapproved provider.
+   No silent fallback to an unapproved provider. See `ai-model-routing.md`.
 4. **Tool loop:** the model may call only registered tools. Each tool:
    - validates its arguments (zod);
    - re-checks the person's modules and data scope;
@@ -107,5 +108,5 @@ There is one **active** provider and one **fallback**. A **Test** button sends a
 ## 7. Release and rollback
 
 - Everything is additive: new tables, new pages, new settings. The only change to existing behaviour is module access, which the backfill makes neutral for current users.
-- **Off switch:** Super Admin → AI Settings → "AI module available" (off by default after deploy) hides the AI module for everyone without a redeploy.
+- **Off switch:** the "AI module" feature switch (Providers & security → Features; ON, OFF or IT team only) hides the AI module for everyone without a redeploy. It is on by default because the module grant is the real gate: nobody has the AI module until an admin ticks it.
 - **Rollback:** switch it off; if needed, redeploy the previous tag. The new tables can stay; nothing in the old code reads them.
