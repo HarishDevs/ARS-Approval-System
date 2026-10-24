@@ -336,6 +336,7 @@ Plan: `docs/CHATBOT_IMPLEMENTATION_PLAN.md`; audit: `docs/CHATBOT_ARCHITECTURE_A
 - [x] PB-16 Settings save: an optional value left empty stays unset instead of failing validation (unused provider models); plain wording for string length errors; unit test (done 24 Oct 2026, v1.16.1)
 - [x] PB-17 Fixed-choice settings shown as dropdowns with plain names (options from the enum schema), labels without the raw values; dropdown keeps the saved choice after a save (done 24 Oct 2026, v1.16.1)
 - [x] PB-18 Providers Groq, Gemini (Google AI Studio) and NVIDIA Nemotron: OpenAI-style addresses, settings (key, model, business data), enum choices, model names with "/", tool calls without an id, reasoning-model room in Test and a clear "ran out of room" message; unit tests (done 24 Oct 2026, v1.17.0)
+- [x] PB-19 NVIDIA default model nvidia/nemotron-3.5-bolt-e4b (owner's NVIDIA reference); local Test passed with the owner's test key (done 24 Oct 2026, v1.17.1)
 - [ ] PB-15 Owner: allowed Salesforce objects and fields; then a Salesforce chat test (V-12); production Connected App with the production callback; rotate the UAT consumer secret (it was shared in chat)
 
 ## Session log — AI module (branch feature/ai-module, 24 Oct 2026), planned before starting

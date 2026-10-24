@@ -594,6 +594,7 @@
 - The owner's "Grok" test key started with gsk_ (Groq). Asked; the owner chose to add Groq, then Gemini and NVIDIA Nemotron (D-174).
 - **Local test:** Groq key entered on the local AI settings only (owner's test key, typed in chat for this app). The first Test returned "empty answer": gpt-oss is a reasoning model and the Test allowed 20 tokens. Raised to 1024 and added a "ran out of room" message; Test then passed (0.8 s). Pic bot refused an Approvals question because Groq is not approved for business data (correct).
 - Lint, typecheck, unit 619 passed; e2e left to CI.
+- **v1.17.1:** the owner sent NVIDIA's reference (nemotron-3.5-bolt-e4b) and a test key; entered locally only; Test passed (0.5 s). The guessed default model replaced by this one.
 
 ### 24 Oct 2026 (v1.16.1: settings fixes while testing Pic bot locally)
 - **Owner report:** saving AI settings failed on the empty ChatGPT and Grok model boxes ("Too small…"). Fixed (D-173); the owner also asked for dropdowns for the business-data choice, done for every fixed-choice setting.

@@ -94,7 +94,7 @@ export const SETTING_DEFINITIONS: readonly SettingDefinition[] = [
   { key: "ai.gemini.api_key", group: "AI", label: "Gemini API key (Google AI Studio)", valueType: "STRING", encrypted: true, schema: z.string().trim().min(10).max(500) },
   { key: "ai.gemini.model", group: "AI", label: "Gemini model (from Google AI Studio's model list)", valueType: "STRING", encrypted: false, schema: z.string().trim().min(2).max(100).regex(/^[\w.:/-]+$/, "Use the model name from the provider's documentation."), defaultValue: "gemini-2.5-flash" },
   { key: "ai.nvidia.api_key", group: "AI", label: "NVIDIA API key (build.nvidia.com, starts with nvapi-)", valueType: "STRING", encrypted: true, schema: z.string().trim().min(10).max(500) },
-  { key: "ai.nvidia.model", group: "AI", label: "NVIDIA model (a Nemotron model from build.nvidia.com)", valueType: "STRING", encrypted: false, schema: z.string().trim().min(2).max(100).regex(/^[\w.:/-]+$/, "Use the model name from the provider's documentation."), defaultValue: "nvidia/llama-3.3-nemotron-super-49b-v1.5" },
+  { key: "ai.nvidia.model", group: "AI", label: "NVIDIA model (a Nemotron model from build.nvidia.com)", valueType: "STRING", encrypted: false, schema: z.string().trim().min(2).max(100).regex(/^[\w.:/-]+$/, "Use the model name from the provider's documentation."), defaultValue: "nvidia/nemotron-3.5-bolt-e4b" },
   // Which providers may see ARS business data (tool results). Off by default:
   // the Super Admin approves each provider explicitly (D-169, R-06, R-18).
   { key: "ai.claude.business_data", group: "AI", label: "Claude may see business data", valueType: "STRING", encrypted: false, schema: z.enum(["ALLOWED", "NOT_ALLOWED"]), defaultValue: "NOT_ALLOWED" },

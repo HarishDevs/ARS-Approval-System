@@ -1,5 +1,8 @@
 # Release notes
 
+## v1.17.1 (24 Oct 2026): NVIDIA default model
+- The NVIDIA default model is now **nvidia/nemotron-3.5-bolt-e4b** (from NVIDIA's API reference, owner). Checked locally: Test passed in 0.5 s.
+
 ## v1.17.0 (24 Oct 2026): three more AI providers (owner)
 - **New providers in AI settings:** **Groq** (groq.com; keys start with gsk_; not xAI's Grok), **Gemini** (Google AI Studio) and **NVIDIA (Nemotron)** (build.nvidia.com; keys start with nvapi-). Each has its key, model, "may see business data" (off by default) and Test, and can be the active or fallback provider. There are now seven.
 - **Model names may contain "/"** (for example Groq's openai/gpt-oss-120b or NVIDIA's nvidia/… models).
