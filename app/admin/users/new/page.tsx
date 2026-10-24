@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { DEFAULT_MODULES } from "@/server/modules/modules";
 import Link from "next/link";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { UserForm } from "@/features/admin/UserForm";
@@ -21,7 +22,7 @@ export default async function NewUserPage() {
       <div className="max-w-3xl">
         <UserForm
           mode="create"
-          values={{ loginId: "", name: "", email: "", whatsappNumber: null, departmentId: null, designationId: null, reportingManagerId: null, signInMethod: "GOOGLE", roles: ["USER"] }}
+          values={{ loginId: "", name: "", email: "", whatsappNumber: null, departmentId: null, designationId: null, reportingManagerId: null, signInMethod: "GOOGLE", roles: ["USER"], modules: [...DEFAULT_MODULES] }}
           {...options}
           canGrantSuperAdmin={user.roles.includes("SUPER_ADMIN")}
           readOnly={false}

@@ -5,12 +5,17 @@ import { departmentOf, rulesForPerson } from "@/lib/db/repositories/page-access.
 import { PATH_HEADER, PATH_SIGNATURE_HEADER, verifyPath } from "@/lib/security/path-signature";
 import { effectiveLevel, pageForPath, PAGES, type PageDef, type PageLevel } from "@/server/authorization/pages";
 import { logError } from "@/lib/logging/logger";
+import { hasModule, MODULES } from "@/server/modules/modules";
+import type { ModuleCode } from "@/types/auth";
 
 // v1.8.0 (owner): page access set by the Super Admin, checked on the server
 // for every page view, Server Action and API call of My approvals and the
 // Admin space. Never applies to the Super Admin. A feature switch or a
 // hidden link is never the only protection: this is.
-type Person = { id: number; roles: readonly string[] };
+type Person = { id: number; roles: readonly string[]; modules: readonly ModuleCode[] };
+
+// D-168: a page of a module the person doesn't have is refused like a hidden one.
+const lacksModule = (person: Person, page: PageDef | null | undefined) => Boolean(page?.module && !hasModule(person, page.module));
 export const isPageExempt = (person: Pick<Person, "roles">) => person.roles.includes("SUPER_ADMIN");
 
 // Every page's level for this person (once per request).
@@ -28,14 +33,14 @@ export const requestPage = cache(async (): Promise<{ known: boolean; page: PageD
   return { known: valid, page: valid && path ? pageForPath(path) : null, isAction: list.has("next-action") };
 });
 
-export type PageCheck = { ok: true; level: PageLevel | null } | { ok: false; reason: "HIDDEN" | "VIEW_ONLY" | "UNKNOWN_PAGE"; pageKey: string | null };
+export type PageCheck = { ok: true; level: PageLevel | null } | { ok: false; reason: "HIDDEN" | "VIEW_ONLY" | "UNKNOWN_PAGE" | "MODULE"; pageKey: string | null };
 
 // change: the request changes something (a Server Action or a POST API).
 export async function checkPageAccess(person: Person, change: boolean): Promise<PageCheck> {
   if (isPageExempt(person)) return { ok: true, level: null };
   try {
     const access = await accessFor(person.id);
-    const restricted = [...access.values()].some((level) => level !== "FULL");
+    const restricted = [...access.values()].some((level) => level !== "FULL") || MODULES.some((module) => !hasModule(person, module));
     const { known, page } = await requestPage();
     // Without a trustworthy page address, someone with restrictions is
     // refused (fail closed); nobody else is affected.
@@ -44,6 +49,7 @@ export async function checkPageAccess(person: Person, change: boolean): Promise<
     // (an admin action posted to /superadmin/import skipped the rules).
     if (!page && (await requestPath())?.startsWith("/superadmin")) return { ok: false, reason: "UNKNOWN_PAGE", pageKey: null };
     if (!page) return { ok: true, level: null };
+    if (lacksModule(person, page)) return { ok: false, reason: "MODULE", pageKey: page.key };
     const level = access.get(page.key) ?? "FULL";
     if (level === "HIDDEN") return { ok: false, reason: "HIDDEN", pageKey: page.key };
     if (change && level === "VIEW") return { ok: false, reason: "VIEW_ONLY", pageKey: page.key };
@@ -63,6 +69,7 @@ async function requestPath(): Promise<string | null> {
 // action, or an address that is no configured page).
 export async function checkPageKey(person: Person, pageKey: string, change: boolean): Promise<PageCheck> {
   if (isPageExempt(person)) return { ok: true, level: null };
+  if (lacksModule(person, PAGES.find((page) => page.key === pageKey))) return { ok: false, reason: "MODULE", pageKey };
   try {
     const level = (await accessFor(person.id)).get(pageKey) ?? "FULL";
     if (level === "HIDDEN") return { ok: false, reason: "HIDDEN", pageKey };
@@ -80,7 +87,7 @@ export async function navAccess(person: Person): Promise<{ hidden: Set<string>; 
   if (isPageExempt(person)) return { hidden: new Set(), viewOnly: [] };
   try {
     const access = await accessFor(person.id);
-    const hidden = new Set(PAGES.filter((page) => access.get(page.key) === "HIDDEN").map((page) => page.key));
+    const hidden = new Set(PAGES.filter((page) => access.get(page.key) === "HIDDEN" || lacksModule(person, page)).map((page) => page.key));
     const viewOnly = PAGES.filter((page) => access.get(page.key) === "VIEW").flatMap((page) => page.paths.map((pattern) => pattern.source));
     return { hidden, viewOnly };
   } catch (error) {

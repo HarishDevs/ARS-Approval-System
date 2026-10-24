@@ -14,10 +14,16 @@ import type { ActionResult } from "@/lib/http/action-result";
 const NOT_FOUND: ActionResult = { ok: false, message: "Not found." };
 const USER_FIELDS = ["loginId", "name", "email", "whatsappNumber", "departmentId", "designationId", "reportingManagerId", "signInMethod"] as const;
 
+// D-168: module access is saved only when the form carried the module
+// check boxes (marked by "modulesShown"); otherwise it is left as it is.
+function modulesFrom(formData: FormData): string[] | null {
+  return formData.get("modulesShown") === "1" ? formData.getAll("modules").map(String) : null;
+}
+
 export async function createUserAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
   const actor = await getAdminActor("admin.users");
   if (!actor) return NOT_FOUND;
-  const parsed = parseUserForm(formFields(formData, USER_FIELDS), formData.getAll("roles").map(String));
+  const parsed = parseUserForm(formFields(formData, USER_FIELDS), formData.getAll("roles").map(String), modulesFrom(formData));
   if (!parsed.ok) return { ok: false, message: "Check the highlighted fields.", fieldErrors: parsed.fieldErrors };
   let newId: number;
   try {
@@ -48,7 +54,7 @@ export async function updateUserAction(_previous: ActionResult | null, formData:
   if (!actor) return NOT_FOUND;
   const id = parseId(formData.get("id"));
   if (id === null) return NOT_FOUND;
-  const parsed = parseUserForm(formFields(formData, USER_FIELDS), formData.getAll("roles").map(String));
+  const parsed = parseUserForm(formFields(formData, USER_FIELDS), formData.getAll("roles").map(String), modulesFrom(formData));
   if (!parsed.ok) return { ok: false, message: "Check the highlighted fields.", fieldErrors: parsed.fieldErrors };
   try {
     const result = await updateUser(id, parsed.value, actor);

@@ -52,6 +52,17 @@ export function checkContactChange(actor: Actor, target: TargetUser, changes: { 
   return deny("Only the Super Admin can change another IT Admin's email, WhatsApp number or sign-in method, or send them a set-password link.");
 }
 
+// D-168 (AI module branch): who may change module access. A person's modules
+// are a privilege, so nobody changes their own (not even the Super Admin,
+// who is exempt from module checks anyway), and another IT Admin's are
+// changed by the Super Admin only, like their contact details (P-04).
+export function checkModuleChange(actor: Actor, target: TargetUser): RuleResult {
+  if (!canManageUsers(actor)) return deny("You can't manage users.");
+  if (target.id === actor.id) return deny("You can't change your own module access. Ask another admin.");
+  if (isAdmin(target) && !isSuperAdmin(actor)) return deny("Only the Super Admin can change another IT Admin's module access.");
+  return OK;
+}
+
 // USER is always present; it is added, never removed.
 export function normaliseRoles(roles: readonly string[]): RoleCode[] {
   const set = new Set<RoleCode>(["USER"]);

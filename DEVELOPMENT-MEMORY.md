@@ -418,7 +418,7 @@
 | D-168 | 24 Oct 2026 | **AI module: one application, API-based models, same repository (owner):**
 - The owner's brief asked for an independent AI platform (FastAPI, Ollama, separate subdomain). The owner then answered: API-based models only; deploy as a single application; use the same repository; providers Claude, ChatGPT, Grok and DeepSeek, switchable.
 - So: AI is the fourth module inside ARS Approvals, written in TypeScript, on branch `feature/ai-module` in worktree `D:\Omniroute\ars-ai-module`. `main` and the live site are untouched until the owner merges and publishes.
-- **Module access:** Approval, Task, Information and AI are per-person grants (`user_modules`), enforced inside page access (pages, actions, APIs); Super Admin exempt; existing users backfilled to Approval + Task + Information (no change), AI to nobody.
+- **Module access:** Approval, Task, Information and AI are per-person grants (`users.module_access`, a SET column whose default is Approval + Task + Information, so no way of creating a person can leave them out), enforced inside page access (pages, actions, APIs); Super Admin exempt; existing users backfilled to Approval + Task + Information (no change), AI to nobody.
 - Design: `docs/ai-module/`. | Owner; Claude, 24 Oct 2026 |
 | D-167 | 23 Oct 2026 | **Onboarding tour for the user space (v1.14.0, owner):**
 - 15 steps: Welcome, Overview, New request, Custom approval, Waiting for me, My requests, My tasks, New task, Information, Calendar, Google Calendar, Notifications, Go to and search, Out of office, Finish (`features/help/tour-steps.ts`).
@@ -570,6 +570,13 @@
 - Who approves the privacy policy and terms? | Before filing | Open, waiting on the owner (17 Oct 2026) |
 
 ## 5. Work log (newest first)
+
+### 24 Oct 2026 (AI module branch: discovery, decisions, module access)
+- **Owner brief:** "ARS Approval Platform — Independent AI Module Upgrade" (a fourth module, AI; independent codebase; FastAPI; Ollama; Salesforce and Oracle; module access in user management).
+- **Phase 1 discovery** written to `docs/ai-module/` (existing architecture, user schema, roles, guards, page access, sidebar, hosting, risks).
+- **Owner answers** re-scoped it (D-168): API-based models only; one application; the same repository; Claude, ChatGPT, Grok and DeepSeek switchable. Work moved to branch `feature/ai-module` in worktree `D:\Omniroute\ars-ai-module`; `main` untouched.
+- **Phase 3 module access built:** migration `202610240900_ai_module_access.sql`; `server/modules/modules.ts`; pages name their module and `checkPageAccess` / `checkPageKey` / `navAccess` refuse or hide a missing one; user form check boxes, rules (`checkModuleChange`), save and audit; users list column and filter; Overview and Calendar follow modules.
+- **Tests:** unit, integration and E2E for module access. Analytics boards and Google Calendar sync are a follow-up (AI-04b).
 
 ### 23 Oct 2026 (v1.14.0: onboarding tour; invite buttons on the user page only)
 - **Owner request:** Re-invite and Reset password inside the user page, not the users list; a complete onboarding tour for users (Approvals, Tasks, Calendar).

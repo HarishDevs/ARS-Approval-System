@@ -5,6 +5,8 @@
 //
 // `paths` are matched against the address (longest match wins); `apis` are
 // the API routes that belong to the page, so its rule covers them too.
+import type { ModuleCode } from "@/types/auth";
+
 export type PageLevel = "HIDDEN" | "VIEW" | "FULL";
 export const PAGE_LEVELS: readonly PageLevel[] = ["FULL", "VIEW", "HIDDEN"];
 export const LEVEL_LABEL: Record<PageLevel, string> = { FULL: "Full: see and use", VIEW: "View only: no changes", HIDDEN: "Hidden" };
@@ -17,6 +19,10 @@ export interface PageDef {
   paths: RegExp[];
   apis?: RegExp[];
   neverHidden?: boolean; // the landing page of a space can be view-only, not hidden
+  // D-168 (AI module branch): the module the page belongs to. Without the
+  // module the page, its actions and its APIs are refused like a hidden page.
+  // No module: shared by every module (Overview, Calendar, Profile...).
+  module?: ModuleCode;
 }
 
 const exact = (path: string) => new RegExp(`^${path.replace(/[/]/g, "\\/")}\\/?$`);
@@ -24,24 +30,24 @@ const under = (path: string) => new RegExp(`^${path.replace(/[/]/g, "\\/")}(\\/.
 
 export const PAGES: readonly PageDef[] = [
   { key: "users.overview", area: "users", label: "Overview", what: "The first page: what needs you, your requests, drafts.", paths: [exact("/users")], neverHidden: true },
-  { key: "users.queue", area: "users", label: "Waiting for me", what: "Approvals and work waiting for the person; bulk approval.", paths: [under("/users/queue")] },
-  { key: "users.requests", area: "users", label: "My requests", what: "The requests the person raised.", paths: [exact("/users/requests")] },
-  { key: "users.request", area: "users", label: "Request page", what: "Opening a request: details, decisions, comments, files, PDF. View only = can read, not decide or comment.", paths: [/^\/users\/requests\/\d+(\/.*)?$/], apis: [/^\/api\/requests\/\d+\//, /^\/api\/attachments\//] },
-  { key: "users.collaborating", area: "users", label: "Collaborating", what: "Requests the person was added to follow.", paths: [under("/users/collaborating")] },
-  { key: "users.approved", area: "users", label: "My approved requests", what: "The person's requests that were approved.", paths: [under("/users/approved")] },
-  { key: "users.approved_by_me", area: "users", label: "Approved by me", what: "Requests the person approved.", paths: [under("/users/approved-by-me")] },
-  { key: "users.new", area: "users", label: "New request", what: "Raising a request of an approval type.", paths: [under("/users/new")] },
-  { key: "users.custom", area: "users", label: "Custom approval", what: "Raising a custom approval.", paths: [under("/users/custom")] },
-  { key: "users.search", area: "users", label: "Search", what: "Searching requests (and the Ctrl K quick search).", paths: [under("/users/search")], apis: [/^\/api\/me\/quick/] },
+  { key: "users.queue", module: "APPROVAL", area: "users", label: "Waiting for me", what: "Approvals and work waiting for the person; bulk approval.", paths: [under("/users/queue")] },
+  { key: "users.requests", module: "APPROVAL", area: "users", label: "My requests", what: "The requests the person raised.", paths: [exact("/users/requests")] },
+  { key: "users.request", module: "APPROVAL", area: "users", label: "Request page", what: "Opening a request: details, decisions, comments, files, PDF. View only = can read, not decide or comment.", paths: [/^\/users\/requests\/\d+(\/.*)?$/], apis: [/^\/api\/requests\/\d+\//, /^\/api\/attachments\//] },
+  { key: "users.collaborating", module: "APPROVAL", area: "users", label: "Collaborating", what: "Requests the person was added to follow.", paths: [under("/users/collaborating")] },
+  { key: "users.approved", module: "APPROVAL", area: "users", label: "My approved requests", what: "The person's requests that were approved.", paths: [under("/users/approved")] },
+  { key: "users.approved_by_me", module: "APPROVAL", area: "users", label: "Approved by me", what: "Requests the person approved.", paths: [under("/users/approved-by-me")] },
+  { key: "users.new", module: "APPROVAL", area: "users", label: "New request", what: "Raising a request of an approval type.", paths: [under("/users/new")] },
+  { key: "users.custom", module: "APPROVAL", area: "users", label: "Custom approval", what: "Raising a custom approval.", paths: [under("/users/custom")] },
+  { key: "users.search", module: "APPROVAL", area: "users", label: "Search", what: "Searching requests (and the Ctrl K quick search).", paths: [under("/users/search")], apis: [/^\/api\/me\/quick/] },
   { key: "users.calendar", area: "users", label: "Calendar", what: "The needed-by calendar.", paths: [under("/users/calendar")] },
   { key: "users.analytics", area: "users", label: "Analytics (My approvals)", what: "Analytics for the person's own scopes.", paths: [under("/users/analytics")], apis: [/^\/api\/analytics\//] },
   // v1.9.0 (D-143): Task and Information modules.
-  { key: "users.tasks", area: "users", label: "Tasks: lists", what: "My tasks, Assigned by me and Team tasks.", paths: [exact("/users/tasks"), under("/users/tasks/assigned"), under("/users/tasks/team")] },
-  { key: "users.task_new", area: "users", label: "Tasks: new task", what: "Creating a task.", paths: [under("/users/tasks/new")] },
-  { key: "users.task", area: "users", label: "Tasks: task page", what: "Opening a task: details, progress, comments, files. View only = can read, not act.", paths: [/^\/users\/tasks\/\d+(\/.*)?$/] },
-  { key: "users.information", area: "users", label: "Information: lists", what: "The information inbox and information sent by the person.", paths: [exact("/users/information"), under("/users/information/sent")] },
-  { key: "users.information_new", area: "users", label: "Information: new", what: "Writing and publishing information.", paths: [under("/users/information/new")] },
-  { key: "users.information_item", area: "users", label: "Information: page", what: "Opening information: reading, acknowledging, withdrawing.", paths: [/^\/users\/information\/\d+(\/.*)?$/] },
+  { key: "users.tasks", module: "TASK", area: "users", label: "Tasks: lists", what: "My tasks, Assigned by me and Team tasks.", paths: [exact("/users/tasks"), under("/users/tasks/assigned"), under("/users/tasks/team")] },
+  { key: "users.task_new", module: "TASK", area: "users", label: "Tasks: new task", what: "Creating a task.", paths: [under("/users/tasks/new")] },
+  { key: "users.task", module: "TASK", area: "users", label: "Tasks: task page", what: "Opening a task: details, progress, comments, files. View only = can read, not act.", paths: [/^\/users\/tasks\/\d+(\/.*)?$/] },
+  { key: "users.information", module: "INFORMATION", area: "users", label: "Information: lists", what: "The information inbox and information sent by the person.", paths: [exact("/users/information"), under("/users/information/sent")] },
+  { key: "users.information_new", module: "INFORMATION", area: "users", label: "Information: new", what: "Writing and publishing information.", paths: [under("/users/information/new")] },
+  { key: "users.information_item", module: "INFORMATION", area: "users", label: "Information: page", what: "Opening information: reading, acknowledging, withdrawing.", paths: [/^\/users\/information\/\d+(\/.*)?$/] },
   { key: "users.help", area: "users", label: "Help", what: "How-tos and status meanings.", paths: [under("/users/help")] },
   { key: "users.profile", area: "users", label: "Profile", what: "Personal details and theme.", paths: [under("/users/profile")] },
   { key: "users.notifications", area: "users", label: "Notifications", what: "The inbox and notification settings.", paths: [under("/users/notifications")] },

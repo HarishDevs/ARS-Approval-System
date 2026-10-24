@@ -16,6 +16,7 @@ const authUser = (roles: RoleCode[], active = true): AuthenticatedUser => ({
   signInMethod: "GOOGLE",
   active,
   roles,
+  modules: ["APPROVAL", "TASK", "INFORMATION"],
 });
 
 describe("sign-in rules", () => {

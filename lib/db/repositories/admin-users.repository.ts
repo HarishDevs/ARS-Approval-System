@@ -1,7 +1,8 @@
 import "server-only";
 import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { getDbPool, type Queryable } from "@/lib/db/client";
-import type { RoleCode, SignInMethod } from "@/types/auth";
+import type { RoleCode, SignInMethod, ModuleCode } from "@/types/auth";
+import { parseModuleSet } from "@/server/modules/modules";
 
 // Admin-side reads and writes for users (F-06, S2-03). The password hash is
 // never selected here.
@@ -17,6 +18,7 @@ export interface AdminUserListItem {
   locked: boolean;
   isBreakGlass: boolean;
   lastLoginAt: Date | null;
+  modules: ModuleCode[]; // D-168
 }
 
 export interface AdminUserDetail extends AdminUserListItem {
@@ -40,7 +42,7 @@ function roleList(value: string | null): RoleCode[] {
 }
 
 export async function listUsersForAdmin(
-  filter: { search?: string; status?: "active" | "inactive" | "all" },
+  filter: { search?: string; status?: "active" | "inactive" | "all"; module?: ModuleCode },
   page: { limit: number; offset: number },
   db: Queryable = getDbPool(),
 ): Promise<{ items: AdminUserListItem[]; total: number }> {
@@ -53,6 +55,11 @@ export async function listUsersForAdmin(
   }
   if (filter.status === "active") where.push("u.active = TRUE");
   if (filter.status === "inactive") where.push("u.active = FALSE");
+  // D-168: who has a module (FIND_IN_SET on the SET column).
+  if (filter.module) {
+    where.push("FIND_IN_SET(?, u.module_access) > 0");
+    params.push(filter.module);
+  }
   const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
 
   const [countRows] = await db.query<(RowDataPacket & { total: number })[]>(`SELECT COUNT(*) AS total FROM users u ${whereSql}`, params);
@@ -69,10 +76,11 @@ export async function listUsersForAdmin(
       locked: number;
       is_break_glass: number;
       last_login_at: Date | null;
+      module_access: string | null;
     })[]
   >(
     `SELECT u.id, u.login_id, u.name, u.email, d.name AS department_name, u.sign_in_method, ${ROLE_CODES_SQL} AS role_codes,
-            u.active, (u.locked_until IS NOT NULL AND u.locked_until > CURRENT_TIMESTAMP) AS locked, u.is_break_glass, u.last_login_at
+            u.active, (u.locked_until IS NOT NULL AND u.locked_until > CURRENT_TIMESTAMP) AS locked, u.is_break_glass, u.last_login_at, u.module_access
      FROM users u LEFT JOIN departments d ON d.id = u.department_id
      ${whereSql}
      ORDER BY u.active DESC, u.name
@@ -93,6 +101,7 @@ export async function listUsersForAdmin(
       locked: Number(row.locked) === 1,
       isBreakGlass: row.is_break_glass === 1,
       lastLoginAt: row.last_login_at,
+      modules: parseModuleSet(row.module_access),
     })),
   };
 }
@@ -120,6 +129,7 @@ export async function getUserForAdmin(id: number, db: Queryable = getDbPool()): 
       locked_seconds_remaining: number | null;
       open_sessions: number;
       created_at: Date;
+      module_access: string | null;
     })[]
   >(
     `SELECT u.id, u.login_id, u.name, u.email, u.whatsapp_number, u.department_id, d.name AS department_name, u.designation_id,
@@ -128,7 +138,7 @@ export async function getUserForAdmin(id: number, db: Queryable = getDbPool()): 
             (u.firebase_uid IS NOT NULL) AS google_linked,
             GREATEST(COALESCE(TIMESTAMPDIFF(SECOND, CURRENT_TIMESTAMP, u.locked_until), 0), 0) AS locked_seconds_remaining,
             (SELECT COUNT(*) FROM user_sessions s WHERE s.user_id = u.id AND s.revoked_at IS NULL AND s.expires_at > CURRENT_TIMESTAMP) AS open_sessions,
-            u.created_at
+            u.created_at, u.module_access
      FROM users u
      LEFT JOIN departments d ON d.id = u.department_id
      LEFT JOIN users m ON m.id = u.reporting_manager_id
@@ -160,6 +170,7 @@ export async function getUserForAdmin(id: number, db: Queryable = getDbPool()): 
     googleLinked: Number(row.google_linked) === 1,
     openSessionCount: Number(row.open_sessions),
     createdAt: row.created_at,
+    modules: parseModuleSet(row.module_access),
   };
 }
 
@@ -202,6 +213,11 @@ export async function insertUser(input: UserWriteInput, createdBy: number, db: Q
     [input.loginId, input.name, input.email, input.whatsappNumber, input.departmentId, input.designationId, input.reportingManagerId, input.signInMethod, createdBy, createdBy],
   );
   return result.insertId;
+}
+
+// D-168: a person's modules (the SET column), only through this function.
+export async function setUserModules(id: number, modules: readonly ModuleCode[], updatedBy: number, db: Queryable = getDbPool()): Promise<void> {
+  await db.query<ResultSetHeader>("UPDATE users SET module_access = ?, updated_by = ? WHERE id = ?", [modules.join(","), updatedBy, id]);
 }
 
 // Changing the email unlinks Google (so the new account links on its next

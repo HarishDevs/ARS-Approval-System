@@ -41,7 +41,7 @@ database/migrations/      additive migrations (new tables only, plus a safe back
 
 ## 3. Module access (Phase 3)
 
-- **Modules:** `APPROVAL`, `TASK`, `INFORMATION`, `AI`. Stored per person in `user_modules`.
+- **Modules:** `APPROVAL`, `TASK`, `INFORMATION`, `AI`. Stored per person in `users.module_access` (a MySQL SET column, default `APPROVAL,TASK,INFORMATION`). A default rather than a separate grants table means no way of creating a person (form, import, demo people, scripts) can leave them without today's access.
 - **Where they're set:** a "Module access" group of check boxes in Add user and Edit user. The users list shows a person's modules and can be filtered by them.
 - **What a module grants:** its pages, Server Actions, API routes and data. Each users-area page in `server/authorization/pages.ts` names its module. The existing page-access check (`checkPageAccess` / `checkPageKey`, called by `requireArea` and `requireApiArea` in every page, action and route) refuses a page whose module the person lacks. So typing the address or calling the API directly is refused too, with the same plain 404.
 - **Shared pages** (Overview, Calendar, Notifications, Profile, Help, Analytics) stay open to everyone. What they show follows the person's modules (e.g. no task tiles without Task).

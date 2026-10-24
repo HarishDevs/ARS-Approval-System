@@ -316,11 +316,12 @@ Found during S8-06:
 Design: `docs/ai-module/architecture.md` (decisions §1), `discovery-report.md`, `risk-register.md`.
 - [x] AI-01 Phase 1 discovery: existing architecture, user schema, roles, guards, page access, sidebar, hosting, risks (done 24 Oct 2026)
 - [x] AI-02 Owner decisions recorded: API-based models only, one application, same repository (branch + worktree), four switchable providers (done 24 Oct 2026)
-- [ ] AI-03 Phase 3 module access: `user_modules` table + safe backfill (Approval, Task, Information for everyone; AI for nobody)
-- [ ] AI-04 Pages name their module; page access refuses a missing module (pages, Server Actions, APIs); sidebar, palette and shared pages follow; Super Admin exempt
-- [ ] AI-05 Add user / Edit user "Module access" check boxes; saved only when sent; rules (no self-change; another IT Admin's: Super Admin only); audited before/after
-- [ ] AI-06 Users list shows modules and filters by module; import and export keep working
-- [ ] AI-07 Tests: unit (rules, page→module map complete), integration (backfill, save, audit), E2E (no module → 404 by URL and API; sidebar; AI doesn't imply others)
+- [x] AI-03 Phase 3 module access: `users.module_access` SET column, default Approval + Task + Information (existing people and every way of creating one keep today's access; AI for nobody). A column default instead of a grants table, so no creation path can be missed (done 24 Oct 2026)
+- [x] AI-04 Pages name their module; page access refuses a missing module (pages, Server Actions, APIs); sidebar, Ctrl K, bottom bar and tour follow; Overview and Calendar follow; Super Admin exempt (done 24 Oct 2026)
+- [ ] AI-04b Shared pages, the rest: Analytics boards (Tasks / Information / mixed) and Google Calendar sync should leave out modules the person lacks
+- [x] AI-05 Add user / Edit user "Module access" check boxes; saved only when sent and changed; rules (no self-change; another IT Admin's: Super Admin only); audited before/after (done 24 Oct 2026)
+- [x] AI-06 Users list shows modules and filters by module; user page shows them; import keeps the default (done 24 Oct 2026)
+- [x] AI-07 Tests: `tests/modules/module-access.test.ts`, `tests/integration/ai-modules.int.test.ts`, `tests/e2e/ai-modules.spec.ts` (done 24 Oct 2026)
 - [ ] AI-08 Phase 4 AI module shell: "AI" sidebar group (own icon, collapsible), pages with honest empty states, "AI module available" switch (off by default)
 - [ ] AI-09 Phase 5 providers: Claude, ChatGPT, Grok, DeepSeek adapters + fake; Super Admin AI settings (keys encrypted, data classes, active + fallback, test); routing; quotas; usage and cost
 - [ ] AI-10 Phase 5 assistant: tool registry (approved, parameterised, module-scoped), tool loop, validation (numbers from tools only), evidence, conversation ownership, history

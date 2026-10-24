@@ -11,6 +11,7 @@ import { formatIndiaTime } from "@/server/notifications/security-messages";
 import { SafeText } from "@/features/ui/SafeText";
 import { FirstUseChecklist } from "@/features/help/FirstUseChecklist";
 import { hasFlag } from "@/lib/db/repositories/user-flags.repository";
+import { hasModule } from "@/server/modules/modules";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
 export const metadata: Metadata = { title: "Overview" };
@@ -22,6 +23,9 @@ const RECENT_DAYS = 30;
 
 export default async function UsersHome() {
   const { user } = await requireArea("users");
+  // D-168: everything below is about approvals; without the Approval module
+  // the page offers the person's other modules instead.
+  if (!hasModule(user, "APPROVAL")) return <ModulesHome name={displayName(user.name)} user={user} />;
   const [queue, waiting, attention, mine, drafts, onboarded, recent] = await Promise.all([
     listPendingTasksFor(user.id, { limit: 5, offset: 0 }),
     countPendingTasksFor(user.id),
@@ -159,6 +163,31 @@ export default async function UsersHome() {
           <MyRequestsTable items={completed} />
         </section>
       )}
+    </>
+  );
+}
+
+// D-168: Overview for someone without the Approval module.
+function ModulesHome({ name, user }: { name: string; user: Parameters<typeof hasModule>[0] }) {
+  const links = [
+    hasModule(user, "TASK") && { href: "/users/tasks", label: "My tasks", body: "Tasks given to you, and tasks you give others." },
+    hasModule(user, "INFORMATION") && { href: "/users/information", label: "Information inbox", body: "Notices and circulars for you." },
+    hasModule(user, "AI") && { href: "/users/ai", label: "AI", body: "The AI dashboard and assistant." },
+    { href: "/users/calendar", label: "Calendar", body: "Your dates and personal entries." },
+  ].filter(Boolean) as { href: string; label: string; body: string }[];
+  return (
+    <>
+      <PageHeader title={`Welcome, ${name}`} description="Where to start." />
+      <ul className="grid gap-3 sm:grid-cols-2" data-testid="modules-home">
+        {links.map((link) => (
+          <li key={link.href}>
+            <Link href={link.href} className="card-link block px-5 py-4">
+              <span className="block font-semibold">{link.label}</span>
+              <span className="block text-label text-ink-muted">{link.body}</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
     </>
   );
 }

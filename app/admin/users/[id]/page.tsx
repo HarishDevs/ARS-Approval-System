@@ -7,7 +7,8 @@ import { UserForm } from "@/features/admin/UserForm";
 import { UserCommands } from "@/features/admin/UserCommands";
 import { loadUserFormOptions } from "@/features/admin/user-options";
 import { requireArea } from "@/server/authorization/guards";
-import { checkCanEdit } from "@/server/admin/user-rules";
+import { checkCanEdit, checkModuleChange } from "@/server/admin/user-rules";
+import { MODULE_LABEL } from "@/server/modules/modules";
 import { getUserForAdmin } from "@/lib/db/repositories/admin-users.repository";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 import { HandoverForm } from "@/features/admin/HandoverForm";
@@ -29,7 +30,11 @@ export default async function UserDetailPage({ params, searchParams }: { params:
   if (!user) notFound();
   const query = await searchParams;
   const created = query.created === "1";
-  const canEdit = checkCanEdit(actor, { id: user.id, roles: user.roles, active: user.active, isBreakGlass: user.isBreakGlass }).ok;
+  const target = { id: user.id, roles: user.roles, active: user.active, isBreakGlass: user.isBreakGlass };
+  const canEdit = checkCanEdit(actor, target).ok;
+  // D-168: modules have their own rule (not your own; another IT Admin's: Super Admin only).
+  const moduleRule = checkModuleChange(actor, target);
+  const moduleLock = moduleRule.ok ? null : moduleRule.message;
   const [options, pending, delegations, today] = await Promise.all([loadUserFormOptions(user.id, user.reportingManagerId), countPendingTasks(user.id), listDelegationsInvolving(user.id), indiaToday()]);
 
   return (
@@ -71,7 +76,9 @@ export default async function UserDetailPage({ params, searchParams }: { params:
             reportingManagerId: user.reportingManagerId,
             signInMethod: user.signInMethod,
             roles: user.roles,
+            modules: user.modules,
           }}
+          moduleLock={moduleLock}
           {...options}
           canGrantSuperAdmin={actor.roles.includes("SUPER_ADMIN")}
           readOnly={!canEdit}
@@ -95,6 +102,8 @@ export default async function UserDetailPage({ params, searchParams }: { params:
                     ? "Password set"
                     : "No password yet"}
               </dd>
+              <dt className="text-ink-muted">Modules</dt>
+              <dd data-testid="user-modules">{user.roles.includes("SUPER_ADMIN") ? "All (Super Admin)" : user.modules.map((module) => MODULE_LABEL[module]).join(", ") || "None"}</dd>
               <dt className="text-ink-muted">Last sign-in</dt>
               <dd>{user.lastLoginAt ? formatIndiaTime(user.lastLoginAt) : "Never"}</dd>
               <dt className="text-ink-muted">Open sessions</dt>

@@ -1,7 +1,8 @@
 import "server-only";
 import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { getDbPool, type Queryable } from "@/lib/db/client";
-import type { RoleCode, SignInMethod } from "@/types/auth";
+import type { RoleCode, SignInMethod, ModuleCode } from "@/types/auth";
+import { parseModuleSet } from "@/server/modules/modules";
 
 export interface UserRecord {
   id: number;
@@ -20,6 +21,7 @@ export interface UserRecord {
   breakGlassSecondsRemaining: number;
   hasLoggedInBefore: boolean;
   roles: RoleCode[];
+  modules: ModuleCode[]; // D-168
 }
 
 interface UserRow extends RowDataPacket {
@@ -39,13 +41,14 @@ interface UserRow extends RowDataPacket {
   break_glass_seconds_remaining: number | null;
   last_login_at: Date | null;
   role_codes: string | null;
+  module_access: string | null;
 }
 
 // Lock/break-glass windows are computed by MySQL against its own clock
 // (never mix JS Dates with CURRENT_TIMESTAMP — Power BI site lesson).
 const SELECT_USER = `
   SELECT u.id, u.login_id, u.name, u.email, u.whatsapp_number, u.sign_in_method, u.firebase_uid,
-         u.password_hash, u.failed_login_count, u.active, u.is_break_glass, u.is_demo, u.last_login_at,
+         u.password_hash, u.failed_login_count, u.active, u.is_break_glass, u.is_demo, u.last_login_at, u.module_access,
          GREATEST(COALESCE(TIMESTAMPDIFF(SECOND, CURRENT_TIMESTAMP, u.locked_until), 0), 0) AS locked_seconds_remaining,
          GREATEST(COALESCE(TIMESTAMPDIFF(SECOND, CURRENT_TIMESTAMP, u.break_glass_until), 0), 0) AS break_glass_seconds_remaining,
          (SELECT GROUP_CONCAT(r.code) FROM user_roles ur JOIN roles r ON r.id = ur.role_id AND r.active = TRUE
@@ -72,6 +75,7 @@ function toUser(row: UserRow): UserRecord {
     breakGlassSecondsRemaining: Number(row.break_glass_seconds_remaining ?? 0),
     hasLoggedInBefore: row.last_login_at !== null,
     roles,
+    modules: parseModuleSet(row.module_access),
   };
 }
 

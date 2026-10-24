@@ -52,14 +52,14 @@ afterAll(async () => {
 
 describe("G-3: an action's own page rule applies wherever it is posted from", () => {
   it("Hidden refuses; View-only allows reading but not changing; Super Admin is exempt", async () => {
-    const person = { id: it1, roles: ["USER", "IT_ADMIN"] };
+    const person = { id: it1, roles: ["USER", "IT_ADMIN"], modules: ["APPROVAL", "TASK", "INFORMATION"] as const };
     expect(await checkPageKey(person, "admin.import", true)).toEqual({ ok: true, level: "FULL" });
     await setAccessRule({ pageKey: "admin.import", scope: "USER", scopeId: it1, level: "HIDDEN", actorId: admin.id });
     expect(await checkPageKey(person, "admin.import", false)).toMatchObject({ ok: false, reason: "HIDDEN", pageKey: "admin.import" });
     await setAccessRule({ pageKey: "admin.import", scope: "USER", scopeId: it1, level: "VIEW", actorId: admin.id });
     expect(await checkPageKey(person, "admin.import", false)).toMatchObject({ ok: true, level: "VIEW" });
     expect(await checkPageKey(person, "admin.import", true)).toMatchObject({ ok: false, reason: "VIEW_ONLY" });
-    expect(await checkPageKey({ id: it1, roles: ["USER", "SUPER_ADMIN"] }, "admin.import", true)).toEqual({ ok: true, level: null });
+    expect(await checkPageKey({ id: it1, roles: ["USER", "SUPER_ADMIN"], modules: [] }, "admin.import", true)).toEqual({ ok: true, level: null });
   });
 });
 

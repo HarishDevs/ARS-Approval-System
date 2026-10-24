@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { calendarKindAllowed } from "@/server/modules/modules";
 import Link from "next/link";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
@@ -30,7 +31,10 @@ const SYNC_TEXT = { synced: "Synced with Google", pending: "Waiting to sync", er
 // whether it is synced, and entries from Google are marked.
 export default async function CalendarPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const { user } = await requireArea("users");
-  const state = parseView(await searchParams);
+  const parsed = parseView(await searchParams);
+  // D-168: only the kinds of entry the person's modules cover.
+  const allowedKinds = KINDS.filter((kind) => calendarKindAllowed(user, kind));
+  const state = { ...parsed, kinds: parsed.kinds.filter((kind) => allowedKinds.includes(kind)) };
   const [{ active }, connection] = await Promise.all([availability(), connectionByUser(user.id)]);
   const connected = active && connection?.status === "ACTIVE";
   const entries = await loadEntries({ id: user.id, roles: user.roles }, state, connected);
@@ -71,7 +75,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
 
       <div className="mb-4 flex flex-wrap items-center gap-2 text-label">
         <span className="text-ink-muted">Show:</span>
-        {KINDS.map((kind) => (
+        {allowedKinds.map((kind) => (
           <Link key={kind} href={href({ kinds: toggle(kind) })} className={`rounded-full border px-3 py-1 ${state.kinds.includes(kind) ? `border-transparent ${KIND_STYLE[kind]} font-semibold` : "border-line text-ink-muted line-through"}`}>
             {KIND_LABEL[kind]}
             <span className="sr-only">{state.kinds.includes(kind) ? " (shown; select to hide)" : " (hidden; select to show)"}</span>

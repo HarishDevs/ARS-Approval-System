@@ -1052,7 +1052,7 @@ flowchart TD
   A[IT Admin: Add or Edit user] --> M[Module access: Approval, Task, Information, AI]
   M --> R{Allowed? not own account; another IT Admin's only by the Super Admin}
   R -- no --> X[Refused with a reason]
-  R -- yes --> S[Saved in user_modules; audit before/after]
+  R -- yes --> S[Saved in users.module_access; audit before/after]
   P[Any page, Server Action or API of a module] --> C{Person has the module? Super Admin exempt}
   C -- no --> N[Plain 404 / not found; audited]
   C -- yes --> PA[Page access rules as before]

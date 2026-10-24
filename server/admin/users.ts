@@ -6,6 +6,7 @@ import {
   getUserForAdmin,
   insertUser,
   replaceUserRoles,
+  setUserModules,
   setUserActive,
   unlockUser,
   updateUserRecord,
@@ -15,7 +16,8 @@ import { revokeAllSessionsForUser } from "@/lib/db/repositories/sessions.reposit
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { notify } from "@/server/notifications/notify";
 import { signInMethodChangedMessage, whatsappChangedMessage } from "@/server/notifications/security-messages";
-import { checkCanEdit, checkContactChange, checkDeactivate, checkManager, checkRoleChange, type Actor, type TargetUser } from "@/server/admin/user-rules";
+import { checkCanEdit, checkContactChange, checkDeactivate, checkManager, checkModuleChange, checkRoleChange, type Actor, type TargetUser } from "@/server/admin/user-rules";
+import { sameModules } from "@/server/modules/modules";
 import { diffFields, type ParsedUserInput } from "@/server/admin/user-input";
 import { logError } from "@/lib/logging/logger";
 import { countPendingTasks } from "@/server/approvals/service";
@@ -73,6 +75,8 @@ export async function createUser(input: ParsedUserInput, actor: AdminActor): Pro
     const id = await withTransaction(async (connection) => {
       const newId = await insertUser(record(input), actor.id, connection);
       await replaceUserRoles(newId, input.roles, actor.id, connection);
+      // D-168: without a choice, the column default applies (Approval, Task, Information).
+      if (input.modules) await setUserModules(newId, input.modules, actor.id, connection);
       await recordAudit(
         {
           actorUserId: actor.id,
@@ -81,7 +85,7 @@ export async function createUser(input: ParsedUserInput, actor: AdminActor): Pro
           entityId: newId,
           sessionId: actor.sessionId,
           ipAddress: actor.ipAddress,
-          metadata: { after: { ...record(input), roles: input.roles } },
+          metadata: { after: { ...record(input), roles: input.roles, ...(input.modules ? { modules: input.modules } : {}) } },
         },
         connection,
       );
@@ -125,7 +129,14 @@ export async function updateUser(id: number, input: ParsedUserInput, actor: Admi
   const contact = checkContactChange(actor, target, { email: before.email !== after.email, whatsappNumber: before.whatsappNumber !== after.whatsappNumber, signInMethod: before.signInMethod !== after.signInMethod });
   if (!contact.ok) return { ok: false, message: contact.message };
   const rolesChanged = existing.roles.join(",") !== input.roles.join(",");
-  if (!Object.keys(changes).length && !rolesChanged) return { ok: true, value: undefined };
+  // D-168: modules change only when the form sent them and they differ, so
+  // saving other details never touches them; changing them has its own rule.
+  const modulesChanged = Boolean(input.modules) && !sameModules(existing.modules, input.modules!);
+  if (modulesChanged) {
+    const moduleCheck = checkModuleChange(actor, target);
+    if (!moduleCheck.ok) return { ok: false, message: moduleCheck.message, fieldErrors: { modules: moduleCheck.message } };
+  }
+  if (!Object.keys(changes).length && !rolesChanged && !modulesChanged) return { ok: true, value: undefined };
 
   const effects = {
     unlinkGoogle: existing.googleLinked && (before.email !== after.email || after.signInMethod !== "GOOGLE"),
@@ -138,6 +149,7 @@ export async function updateUser(id: number, input: ParsedUserInput, actor: Admi
     await withTransaction(async (connection) => {
       await updateUserRecord(id, after, effects, actor.id, connection);
       if (rolesChanged) await replaceUserRoles(id, input.roles, actor.id, connection);
+      if (modulesChanged) await setUserModules(id, input.modules!, actor.id, connection);
       if (endSessions) await revokeAllSessionsForUser(id, "ACCOUNT_CHANGED_BY_ADMIN", connection);
       await recordAudit(
         {
@@ -150,6 +162,7 @@ export async function updateUser(id: number, input: ParsedUserInput, actor: Admi
           metadata: {
             changes,
             ...(rolesChanged ? { roles: { before: existing.roles, after: input.roles } } : {}),
+            ...(modulesChanged ? { modules: { before: existing.modules, after: input.modules } } : {}),
             ...(effects.unlinkGoogle ? { googleUnlinked: true } : {}),
             ...(effects.clearPassword ? { passwordRemoved: true } : {}),
             ...(endSessions ? { sessionsEnded: true } : {}),

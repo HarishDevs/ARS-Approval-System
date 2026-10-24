@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { isValidWhatsAppNumber, normaliseRoles, normaliseWhatsAppNumber } from "@/server/admin/user-rules";
-import type { RoleCode, SignInMethod } from "@/types/auth";
+import type { ModuleCode, RoleCode, SignInMethod } from "@/types/auth";
+import { normaliseModules } from "@/server/modules/modules";
 
 // Parses the user form (F-06). Pure and unit-tested.
 export interface ParsedUserInput {
@@ -13,6 +14,9 @@ export interface ParsedUserInput {
   reportingManagerId: number | null;
   signInMethod: SignInMethod;
   roles: RoleCode[];
+  // D-168: null when the form didn't send module access (then it is left as
+  // it is, so editing other details can never change a person's modules).
+  modules?: ModuleCode[] | null;
 }
 
 const optionalId = z
@@ -38,7 +42,7 @@ const schema = z.object({
 
 export type ParseResult = { ok: true; value: ParsedUserInput } | { ok: false; fieldErrors: Record<string, string> };
 
-export function parseUserForm(fields: Record<string, string | undefined>, roles: readonly string[]): ParseResult {
+export function parseUserForm(fields: Record<string, string | undefined>, roles: readonly string[], modules: readonly string[] | null = null): ParseResult {
   const parsed = schema.safeParse(fields);
   const fieldErrors: Record<string, string> = {};
   if (!parsed.success) {
@@ -56,6 +60,8 @@ export function parseUserForm(fields: Record<string, string | undefined>, roles:
   if (parsed.data.signInMethod === "PASSWORD" && whatsappNumber === null) {
     fieldErrors.whatsappNumber = "Password sign-in needs a WhatsApp number for the sign-in code.";
   }
+  const chosenModules = modules === null ? null : normaliseModules(modules);
+  if (chosenModules && !chosenModules.ok) fieldErrors.modules = "Choose modules from the list.";
   if (Object.keys(fieldErrors).length) return { ok: false, fieldErrors };
   return {
     ok: true,
@@ -69,6 +75,7 @@ export function parseUserForm(fields: Record<string, string | undefined>, roles:
       reportingManagerId: parsed.data.reportingManagerId,
       signInMethod: parsed.data.signInMethod,
       roles: normaliseRoles(roles),
+      modules: chosenModules && chosenModules.ok ? chosenModules.value : null,
     },
   };
 }

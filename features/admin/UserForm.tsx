@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { createUserAction, updateUserAction } from "@/app/admin/users/actions";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
-import type { RoleCode, SignInMethod } from "@/types/auth";
+import type { ModuleCode, RoleCode, SignInMethod } from "@/types/auth";
+import { MODULE_HELP, MODULE_LABEL, MODULES } from "@/server/modules/modules";
 
 export interface Option {
   id: number;
@@ -21,6 +22,7 @@ export interface UserFormValues {
   reportingManagerId: number | null;
   signInMethod: SignInMethod;
   roles: RoleCode[];
+  modules: ModuleCode[];
 }
 
 const ROLE_INFO: { role: RoleCode; label: string; body: string }[] = [
@@ -40,6 +42,7 @@ export function UserForm({
   managers,
   canGrantSuperAdmin,
   readOnly,
+  moduleLock,
 }: {
   mode: "create" | "edit";
   values: UserFormValues;
@@ -48,6 +51,9 @@ export function UserForm({
   managers: Option[];
   canGrantSuperAdmin: boolean;
   readOnly: boolean;
+  // D-168: why this admin can't change these modules (own account, another
+  // IT Admin's without being Super Admin); null when they can.
+  moduleLock?: string | null;
 }) {
   const { result, pending, onSubmit } = useActionForm(mode === "create" ? createUserAction : updateUserAction);
   const [method, setMethod] = useState<SignInMethod>(values.signInMethod);
@@ -107,6 +113,35 @@ export function UserForm({
           </div>
           <FieldError result={result} name="roles" />
         </div>
+
+        {/* D-168: which modules this person may use, sent only when they can be
+            changed. A Super Admin uses every module, so boxes would only mislead. */}
+        {values.roles.includes("SUPER_ADMIN") ? (
+          <div className="sm:col-span-2" data-testid="module-access">
+            <p className="field-label">Module access</p>
+            <p className="rounded-md border border-line p-3 text-label text-ink-muted">
+              Every module: {MODULES.map((module) => MODULE_LABEL[module]).join(", ")}. The Super Admin isn&apos;t limited by module access.
+            </p>
+          </div>
+        ) : (
+          <fieldset className="sm:col-span-2" data-testid="module-access" disabled={Boolean(moduleLock)}>
+            <legend className="field-label">Module access</legend>
+            {!moduleLock && <input type="hidden" name="modulesShown" value="1" />}
+            <div className="grid gap-2 sm:grid-cols-2">
+              {MODULES.map((module) => (
+                <label key={module} className={`flex gap-3 rounded-md border border-line p-3 ${moduleLock ? "opacity-70" : "cursor-pointer"}`}>
+                  <input type="checkbox" name="modules" value={module} defaultChecked={values.modules.includes(module)} className="mt-1" />
+                  <span>
+                    <span className="block font-medium">{MODULE_LABEL[module]}</span>
+                    <span className="block text-label text-ink-muted">{MODULE_HELP[module]}</span>
+                  </span>
+                </label>
+              ))}
+            </div>
+            <p className="mt-1.5 text-caption text-ink-muted">{moduleLock ?? "Each module is separate: AI doesn't include the others. The Super Admin can use every module."}</p>
+            <FieldError result={result} name="modules" />
+          </fieldset>
+        )}
       </fieldset>
       {mode === "create" && (
         <label className="flex items-start gap-2 border-t border-line px-5 py-4 text-label">
