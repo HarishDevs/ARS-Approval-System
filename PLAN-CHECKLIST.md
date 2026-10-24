@@ -17,6 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (24 Oct 2026), branch `feature/ai-module` (worktree `D:\Omniroute\ars-ai-module`, not on `main`):** the AI module (owner brief "Independent AI Module Upgrade", re-scoped by the owner's answers: API-based models, one application, same repository, Claude / ChatGPT / Grok / DeepSeek switchable). Phase 3 first: per-user module access.
 - **Now (23 Oct 2026):** v1.14.0: onboarding tour for users (Approvals, Tasks, Calendar); Re-invite and Reset password back on the user page only (owner).
 - **Now (23 Oct 2026):** v1.13.0: invite user and reset password from User management, by email (owner). The WhatsApp code on set-password stays (owner choice).
 - **Now (23 Oct 2026):** v1.12.7: Next.js 15.5.28 security update (critical advisory). **Owner: publish v1.12.7** (it includes v1.12.5 and v1.12.6).
@@ -310,6 +311,22 @@ Found during S8-06:
 - [x] S8-12 Google sign-in reached UNKNOWN_ACCOUNT: itadmin@ is an alias. The Super Admin now signs in as itsupport@arsenergy.co.in (D-082, migration + non-overwriting seed, v1.0.5) (done 8 Oct 2026)
 - [x] S8-01b Go-live on GoDaddy with the owner, following docs/DEPLOYMENT.md (the owner is at the wizard's "Add secrets" step) (done 9 Oct 2026: live since 8 Oct 2026)
 - [x] S8-04 Update the three living files; commit and push (done 8 Oct 2026)
+
+## Session log — AI module (branch feature/ai-module, 24 Oct 2026), planned before starting
+Design: `docs/ai-module/architecture.md` (decisions §1), `discovery-report.md`, `risk-register.md`.
+- [x] AI-01 Phase 1 discovery: existing architecture, user schema, roles, guards, page access, sidebar, hosting, risks (done 24 Oct 2026)
+- [x] AI-02 Owner decisions recorded: API-based models only, one application, same repository (branch + worktree), four switchable providers (done 24 Oct 2026)
+- [ ] AI-03 Phase 3 module access: `user_modules` table + safe backfill (Approval, Task, Information for everyone; AI for nobody)
+- [ ] AI-04 Pages name their module; page access refuses a missing module (pages, Server Actions, APIs); sidebar, palette and shared pages follow; Super Admin exempt
+- [ ] AI-05 Add user / Edit user "Module access" check boxes; saved only when sent; rules (no self-change; another IT Admin's: Super Admin only); audited before/after
+- [ ] AI-06 Users list shows modules and filters by module; import and export keep working
+- [ ] AI-07 Tests: unit (rules, page→module map complete), integration (backfill, save, audit), E2E (no module → 404 by URL and API; sidebar; AI doesn't imply others)
+- [ ] AI-08 Phase 4 AI module shell: "AI" sidebar group (own icon, collapsible), pages with honest empty states, "AI module available" switch (off by default)
+- [ ] AI-09 Phase 5 providers: Claude, ChatGPT, Grok, DeepSeek adapters + fake; Super Admin AI settings (keys encrypted, data classes, active + fallback, test); routing; quotas; usage and cost
+- [ ] AI-10 Phase 5 assistant: tool registry (approved, parameterised, module-scoped), tool loop, validation (numbers from tools only), evidence, conversation ownership, history
+- [ ] AI-11 Phase 6 connectors framework (sync runs, checkpoints, freshness) + ARS data tools; Salesforce and Oracle after owner approvals (Q-AI-05)
+- [ ] AI-12 Phase 7 proposals: human approve / reject, versioned, expiring, never the requester, execution disabled
+- [ ] AI-13 Phase 8 docs (security, routing, testing, rollback, deployment), full test run, owner review; merge only when the owner approves
 
 ## Session log — v1.14.0: onboarding tour; invite buttons on the user page only (23 Oct 2026), planned before starting
 - [x] V1140-01 Owner: remove Re-invite / Reset password from the users list (keep them on the user page) (done 23 Oct 2026)

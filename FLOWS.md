@@ -1046,6 +1046,20 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 5. Super Admin addresses refuse anyone who isn't a Super Admin.
 6. "Sign-in & devices" is never restricted.
 
+## F-134 Module access (AI module branch, D-168)
+```mermaid
+flowchart TD
+  A[IT Admin: Add or Edit user] --> M[Module access: Approval, Task, Information, AI]
+  M --> R{Allowed? not own account; another IT Admin's only by the Super Admin}
+  R -- no --> X[Refused with a reason]
+  R -- yes --> S[Saved in user_modules; audit before/after]
+  P[Any page, Server Action or API of a module] --> C{Person has the module? Super Admin exempt}
+  C -- no --> N[Plain 404 / not found; audited]
+  C -- yes --> PA[Page access rules as before]
+  S -. sidebar, Ctrl K and shared pages follow .-> P
+```
+- Existing users keep exactly what they had: Approval, Task and Information; nobody gets AI until it is ticked.
+
 ## F-133 Onboarding tour (v1.14.0, D-167, owner)
 ```mermaid
 flowchart TD
