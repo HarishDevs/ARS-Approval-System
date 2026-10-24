@@ -541,7 +541,7 @@ After publishing:
    - set **Active provider** to it;
    - optionally choose a **Fallback provider**;
    - **Save**, then press **Test**. A green "answered in … s" means it works.
-3. Decide **"may see business data"** for each provider. The default is NOT_ALLOWED: the assistant then answers without ARS data. Set ALLOWED only for providers your information-security review approves. DeepSeek and Grok run under their own jurisdictions and terms.
+3. Decide **"may see business data"** for each provider. The default is NOT_ALLOWED: the assistant then answers without ARS data. Set ALLOWED only for providers your information-security review approves. DeepSeek, Grok, Groq, Gemini and NVIDIA run under their own jurisdictions and terms (v1.17.0 added Groq, Gemini and NVIDIA). Reasoning models (e.g. gpt-oss, Nemotron) need a larger "Longest answer" if answers are cut off.
 4. **Admin → Users & roles:** open a person and tick **AI** under Module access (start with a few people). The AI group appears in their sidebar.
 5. Optional: **Questions per person per day** (50), **Keep AI conversations** (365 days).
 6. **Salesforce** (when approved):

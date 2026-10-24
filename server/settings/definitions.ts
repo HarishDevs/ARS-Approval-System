@@ -78,22 +78,32 @@ export const SETTING_DEFINITIONS: readonly SettingDefinition[] = [
   // D-169 (AI module branch): AI providers. Keys are encrypted and never shown
   // back. A provider is usable once it has a key and a model; the active one
   // answers, the fallback answers only when the active one is unavailable.
-  { key: "ai.active_provider", group: "AI", label: "Active provider", valueType: "STRING", encrypted: false, schema: z.enum(["NONE", "CLAUDE", "OPENAI", "GROK", "DEEPSEEK"]), defaultValue: "NONE" },
-  { key: "ai.fallback_provider", group: "AI", label: "Fallback provider when the active one is unavailable", valueType: "STRING", encrypted: false, schema: z.enum(["NONE", "CLAUDE", "OPENAI", "GROK", "DEEPSEEK"]), defaultValue: "NONE" },
+  { key: "ai.active_provider", group: "AI", label: "Active provider", valueType: "STRING", encrypted: false, schema: z.enum(["NONE", "CLAUDE", "OPENAI", "GROK", "DEEPSEEK", "GROQ", "GEMINI", "NVIDIA"]), defaultValue: "NONE" },
+  { key: "ai.fallback_provider", group: "AI", label: "Fallback provider when the active one is unavailable", valueType: "STRING", encrypted: false, schema: z.enum(["NONE", "CLAUDE", "OPENAI", "GROK", "DEEPSEEK", "GROQ", "GEMINI", "NVIDIA"]), defaultValue: "NONE" },
   { key: "ai.claude.api_key", group: "AI", label: "Claude (Anthropic) API key", valueType: "STRING", encrypted: true, schema: z.string().trim().min(10).max(500) },
-  { key: "ai.claude.model", group: "AI", label: "Claude model", valueType: "STRING", encrypted: false, schema: z.string().trim().min(2).max(100).regex(/^[\w.:-]+$/, "Use the model name from the provider's documentation."), defaultValue: "claude-sonnet-5-5" },
+  { key: "ai.claude.model", group: "AI", label: "Claude model", valueType: "STRING", encrypted: false, schema: z.string().trim().min(2).max(100).regex(/^[\w.:/-]+$/, "Use the model name from the provider's documentation."), defaultValue: "claude-sonnet-5-5" },
   { key: "ai.openai.api_key", group: "AI", label: "ChatGPT (OpenAI) API key", valueType: "STRING", encrypted: true, schema: z.string().trim().min(10).max(500) },
-  { key: "ai.openai.model", group: "AI", label: "ChatGPT model (from OpenAI's model list)", valueType: "STRING", encrypted: false, schema: z.string().trim().min(2).max(100).regex(/^[\w.:-]+$/, "Use the model name from the provider's documentation.") },
+  { key: "ai.openai.model", group: "AI", label: "ChatGPT model (from OpenAI's model list)", valueType: "STRING", encrypted: false, schema: z.string().trim().min(2).max(100).regex(/^[\w.:/-]+$/, "Use the model name from the provider's documentation.") },
   { key: "ai.grok.api_key", group: "AI", label: "Grok (xAI) API key", valueType: "STRING", encrypted: true, schema: z.string().trim().min(10).max(500) },
-  { key: "ai.grok.model", group: "AI", label: "Grok model (from xAI's model list)", valueType: "STRING", encrypted: false, schema: z.string().trim().min(2).max(100).regex(/^[\w.:-]+$/, "Use the model name from the provider's documentation.") },
+  { key: "ai.grok.model", group: "AI", label: "Grok model (from xAI's model list)", valueType: "STRING", encrypted: false, schema: z.string().trim().min(2).max(100).regex(/^[\w.:/-]+$/, "Use the model name from the provider's documentation.") },
   { key: "ai.deepseek.api_key", group: "AI", label: "DeepSeek API key", valueType: "STRING", encrypted: true, schema: z.string().trim().min(10).max(500) },
-  { key: "ai.deepseek.model", group: "AI", label: "DeepSeek model", valueType: "STRING", encrypted: false, schema: z.string().trim().min(2).max(100).regex(/^[\w.:-]+$/, "Use the model name from the provider's documentation."), defaultValue: "deepseek-chat" },
+  { key: "ai.deepseek.model", group: "AI", label: "DeepSeek model", valueType: "STRING", encrypted: false, schema: z.string().trim().min(2).max(100).regex(/^[\w.:/-]+$/, "Use the model name from the provider's documentation."), defaultValue: "deepseek-chat" },
+  // D-174: Groq, Gemini and NVIDIA (Nemotron), all OpenAI-style.
+  { key: "ai.groq.api_key", group: "AI", label: "Groq API key (groq.com, starts with gsk_; not xAI's Grok)", valueType: "STRING", encrypted: true, schema: z.string().trim().min(10).max(500) },
+  { key: "ai.groq.model", group: "AI", label: "Groq model (from Groq's model list)", valueType: "STRING", encrypted: false, schema: z.string().trim().min(2).max(100).regex(/^[\w.:/-]+$/, "Use the model name from the provider's documentation."), defaultValue: "openai/gpt-oss-120b" },
+  { key: "ai.gemini.api_key", group: "AI", label: "Gemini API key (Google AI Studio)", valueType: "STRING", encrypted: true, schema: z.string().trim().min(10).max(500) },
+  { key: "ai.gemini.model", group: "AI", label: "Gemini model (from Google AI Studio's model list)", valueType: "STRING", encrypted: false, schema: z.string().trim().min(2).max(100).regex(/^[\w.:/-]+$/, "Use the model name from the provider's documentation."), defaultValue: "gemini-2.5-flash" },
+  { key: "ai.nvidia.api_key", group: "AI", label: "NVIDIA API key (build.nvidia.com, starts with nvapi-)", valueType: "STRING", encrypted: true, schema: z.string().trim().min(10).max(500) },
+  { key: "ai.nvidia.model", group: "AI", label: "NVIDIA model (a Nemotron model from build.nvidia.com)", valueType: "STRING", encrypted: false, schema: z.string().trim().min(2).max(100).regex(/^[\w.:/-]+$/, "Use the model name from the provider's documentation."), defaultValue: "nvidia/llama-3.3-nemotron-super-49b-v1.5" },
   // Which providers may see ARS business data (tool results). Off by default:
   // the Super Admin approves each provider explicitly (D-169, R-06, R-18).
   { key: "ai.claude.business_data", group: "AI", label: "Claude may see business data", valueType: "STRING", encrypted: false, schema: z.enum(["ALLOWED", "NOT_ALLOWED"]), defaultValue: "NOT_ALLOWED" },
   { key: "ai.openai.business_data", group: "AI", label: "ChatGPT may see business data", valueType: "STRING", encrypted: false, schema: z.enum(["ALLOWED", "NOT_ALLOWED"]), defaultValue: "NOT_ALLOWED" },
   { key: "ai.grok.business_data", group: "AI", label: "Grok may see business data", valueType: "STRING", encrypted: false, schema: z.enum(["ALLOWED", "NOT_ALLOWED"]), defaultValue: "NOT_ALLOWED" },
   { key: "ai.deepseek.business_data", group: "AI", label: "DeepSeek may see business data", valueType: "STRING", encrypted: false, schema: z.enum(["ALLOWED", "NOT_ALLOWED"]), defaultValue: "NOT_ALLOWED" },
+  { key: "ai.groq.business_data", group: "AI", label: "Groq may see business data", valueType: "STRING", encrypted: false, schema: z.enum(["ALLOWED", "NOT_ALLOWED"]), defaultValue: "NOT_ALLOWED" },
+  { key: "ai.gemini.business_data", group: "AI", label: "Gemini may see business data", valueType: "STRING", encrypted: false, schema: z.enum(["ALLOWED", "NOT_ALLOWED"]), defaultValue: "NOT_ALLOWED" },
+  { key: "ai.nvidia.business_data", group: "AI", label: "NVIDIA may see business data", valueType: "STRING", encrypted: false, schema: z.enum(["ALLOWED", "NOT_ALLOWED"]), defaultValue: "NOT_ALLOWED" },
   { key: "ai.daily_questions_per_person", group: "AI", label: "Questions per person per day", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(1).max(1000), defaultValue: "50" },
   { key: "ai.max_question_chars", group: "AI", label: "Longest question (characters)", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(100).max(20000), defaultValue: "4000" },
   { key: "ai.timeout_seconds", group: "AI", label: "How long to wait for an answer (seconds)", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(5).max(180), defaultValue: "60" },

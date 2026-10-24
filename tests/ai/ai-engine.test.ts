@@ -38,12 +38,15 @@ describe("providers", () => {
     expect(body.tools[0]).toMatchObject({ name: "my_tasks_summary", input_schema: { type: "object" } });
   });
 
-  it("ChatGPT, Grok and DeepSeek: OpenAI shape at each provider's own address", async () => {
+  it("ChatGPT, Grok, DeepSeek, Groq, Gemini and NVIDIA: OpenAI shape at each provider's own address", async () => {
     const reply = { model: "m", choices: [{ message: { content: null, tool_calls: [{ id: "c1", type: "function", function: { name: "f", arguments: '{"period_days":30}' } }] } }], usage: { prompt_tokens: 5, completion_tokens: 2 } };
     const cases = [
       ["OPENAI", "https://api.openai.com/v1/chat/completions"],
       ["GROK", "https://api.x.ai/v1/chat/completions"],
       ["DEEPSEEK", "https://api.deepseek.com/chat/completions"],
+      ["GROQ", "https://api.groq.com/openai/v1/chat/completions"],
+      ["GEMINI", "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"],
+      ["NVIDIA", "https://integrate.api.nvidia.com/v1/chat/completions"],
     ] as const;
     for (const [provider, url] of cases) {
       const fetchImpl = vi.fn(async () => json(reply));
@@ -55,6 +58,12 @@ describe("providers", () => {
       expect(body.messages[0]).toEqual({ role: "system", content: "S" });
       expect(body[provider === "OPENAI" ? "max_completion_tokens" : "max_tokens"]).toBe(50);
     }
+  });
+
+  it("a tool call without an id (Gemini) still runs, with a generated id", async () => {
+    const reply = { model: "m", choices: [{ message: { content: null, tool_calls: [{ type: "function", function: { name: "f", arguments: "{}" } }] } }] };
+    const answer = await chat({ ...openai, provider: "GEMINI" }, { system: "S", turns: [{ role: "user", content: "Q" }], maxTokens: 50, timeoutMs: 1000 }, vi.fn(async () => json(reply)));
+    expect(answer.toolCalls).toEqual([{ id: "call_0", name: "f", args: {} }]);
   });
 
   it("errors say what happened, never the key; a refused key isn't retried elsewhere", async () => {
@@ -90,6 +99,9 @@ describe("routing", () => {
     OPENAI: { provider: "OPENAI" as const, configured: true, businessData: true, model: "m" },
     GROK: { provider: "GROK" as const, configured: false, businessData: true, model: null },
     DEEPSEEK: { provider: "DEEPSEEK" as const, configured: true, businessData: false, model: "m" },
+    GROQ: { provider: "GROQ" as const, configured: false, businessData: false, model: null },
+    GEMINI: { provider: "GEMINI" as const, configured: false, businessData: false, model: null },
+    NVIDIA: { provider: "NVIDIA" as const, configured: false, businessData: false, model: null },
   };
   it("active then fallback, only set-up providers", () => {
     expect(routeFor({ active: "CLAUDE", fallback: "OPENAI", providers }, false)).toEqual(["CLAUDE", "OPENAI"]);

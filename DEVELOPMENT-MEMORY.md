@@ -415,6 +415,7 @@
 - Applies to users and IT admins; the Super Admin is exempt (12-hour limit only).
 - The browser's session check no longer counts as activity (it used to keep an open tab signed in for ever). Activity in the page is reported at the next minute's check.
 - A warning with "Stay signed in" 2 minutes before. | Owner; Claude, 15 Oct 2026 |
+| D-174 | 24 Oct 2026 | **More AI providers (v1.17.0, owner):** the owner's test key was for Groq (groq.com), not xAI's Grok, so Groq was added; the owner also asked for Gemini (Google AI Studio) and NVIDIA Nemotron. All three use the OpenAI-style adapter at their own address (api.groq.com/openai/v1, generativelanguage.googleapis.com/v1beta/openai, integrate.api.nvidia.com/v1); same rules as the others (encrypted key, business data off until approved, active/fallback). Model names may contain "/". | Owner; Claude, 24 Oct 2026 |
 | D-173 | 24 Oct 2026 | **Settings form (v1.16.1, owner):** a setting whose schema is a fixed list of choices (z.enum) is shown as a dropdown with plain names; the stored values are unchanged. A plain (not secret) setting left empty, with nothing stored and no default, stays unset instead of being validated, so unused providers don't block a save. | Owner; Claude, 24 Oct 2026 |
 | D-172 | 24 Oct 2026 | **Pic bot - ai (v1.16.0), owner's master prompt; owner explicitly authorised building it into ARS Approvals:**
 - **Launcher:** a floating launcher with the supplied logo (`public/brand/pic-bot.jpg`) and a chat panel on every page for people with an effective chat mode.
@@ -588,6 +589,11 @@
 - Who approves the privacy policy and terms? | Before filing | Open, waiting on the owner (17 Oct 2026) |
 
 ## 5. Work log (newest first)
+
+### 24 Oct 2026 (v1.17.0: Groq, Gemini, NVIDIA)
+- The owner's "Grok" test key started with gsk_ (Groq). Asked; the owner chose to add Groq, then Gemini and NVIDIA Nemotron (D-174).
+- **Local test:** Groq key entered on the local AI settings only (owner's test key, typed in chat for this app). The first Test returned "empty answer": gpt-oss is a reasoning model and the Test allowed 20 tokens. Raised to 1024 and added a "ran out of room" message; Test then passed (0.8 s). Pic bot refused an Approvals question because Groq is not approved for business data (correct).
+- Lint, typecheck, unit 619 passed; e2e left to CI.
 
 ### 24 Oct 2026 (v1.16.1: settings fixes while testing Pic bot locally)
 - **Owner report:** saving AI settings failed on the empty ChatGPT and Grok model boxes ("Too small…"). Fixed (D-173); the owner also asked for dropdowns for the business-data choice, done for every fixed-choice setting.

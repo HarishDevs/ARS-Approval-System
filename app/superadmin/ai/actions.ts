@@ -28,7 +28,7 @@ export async function testProviderAction(_previous: ActionResult | null, formDat
   if (!config) return { ok: false, message: `${PROVIDER_LABEL[provider]} needs an API key and a model first.` };
   const started = Date.now();
   try {
-    const answer = await chat(config, { system: "You are a connection test. Reply with the single word OK.", turns: [{ role: "user", content: "Connection test: reply OK." }], maxTokens: 20, timeoutMs: 30_000 });
+    const answer = await chat(config, { system: "You are a connection test. Reply with the single word OK.", turns: [{ role: "user", content: "Connection test: reply OK." }], maxTokens: 1024, timeoutMs: 30_000 }); // room for reasoning models, which think before answering
     await recordAudit({ actorUserId: session.user.id, action: "AI_PROVIDER_TESTED", entityType: "AI_PROVIDER", entityId: provider, sessionId: session.sessionId, metadata: { ok: true, model: answer.model } });
     return { ok: true, message: `${PROVIDER_LABEL[provider]} answered in ${((Date.now() - started) / 1000).toFixed(1)} s with model ${answer.model}: "${answer.text.slice(0, 40)}".` };
   } catch (error) {

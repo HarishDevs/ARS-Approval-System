@@ -1,20 +1,24 @@
 // D-169 (AI module branch): one way to talk to every AI provider. Claude uses
-// Anthropic's Messages API; ChatGPT, Grok and DeepSeek use the OpenAI-style
+// Anthropic's Messages API; ChatGPT, Grok, DeepSeek, Groq, Gemini and NVIDIA use the OpenAI-style
 // chat completions API at their own addresses. Calls are made from the
 // server only; keys never reach the browser, the log or an error message.
 // The conversation is kept in one neutral shape (with tool calls and tool
 // results) and converted per provider. `fetchImpl` is replaceable so tests
 // never call a real provider.
-export type ProviderCode = "CLAUDE" | "OPENAI" | "GROK" | "DEEPSEEK";
-export const PROVIDERS: readonly ProviderCode[] = ["CLAUDE", "OPENAI", "GROK", "DEEPSEEK"];
-export const PROVIDER_LABEL: Record<ProviderCode, string> = { CLAUDE: "Claude (Anthropic)", OPENAI: "ChatGPT (OpenAI)", GROK: "Grok (xAI)", DEEPSEEK: "DeepSeek" };
-export const PROVIDER_SETTING: Record<ProviderCode, string> = { CLAUDE: "claude", OPENAI: "openai", GROK: "grok", DEEPSEEK: "deepseek" };
+// D-174: Groq (groq.com, not xAI's Grok), Gemini (Google AI Studio) and NVIDIA (Nemotron, build.nvidia.com) added.
+export type ProviderCode = "CLAUDE" | "OPENAI" | "GROK" | "DEEPSEEK" | "GROQ" | "GEMINI" | "NVIDIA";
+export const PROVIDERS: readonly ProviderCode[] = ["CLAUDE", "OPENAI", "GROK", "DEEPSEEK", "GROQ", "GEMINI", "NVIDIA"];
+export const PROVIDER_LABEL: Record<ProviderCode, string> = { CLAUDE: "Claude (Anthropic)", OPENAI: "ChatGPT (OpenAI)", GROK: "Grok (xAI)", DEEPSEEK: "DeepSeek", GROQ: "Groq", GEMINI: "Gemini (Google AI Studio)", NVIDIA: "NVIDIA (Nemotron)" };
+export const PROVIDER_SETTING: Record<ProviderCode, string> = { CLAUDE: "claude", OPENAI: "openai", GROK: "grok", DEEPSEEK: "deepseek", GROQ: "groq", GEMINI: "gemini", NVIDIA: "nvidia" };
 
 type OpenAiStyle = Exclude<ProviderCode, "CLAUDE">;
 const OPENAI_STYLE_URL: Record<OpenAiStyle, string> = {
   OPENAI: "https://api.openai.com/v1/chat/completions",
   GROK: "https://api.x.ai/v1/chat/completions",
   DEEPSEEK: "https://api.deepseek.com/chat/completions",
+  GROQ: "https://api.groq.com/openai/v1/chat/completions",
+  GEMINI: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+  NVIDIA: "https://integrate.api.nvidia.com/v1/chat/completions",
 };
 const ANTHROPIC_DEFAULT = "https://api.anthropic.com";
 
@@ -222,7 +226,7 @@ export async function chat(config: ProviderConfig, request: ChatRequest, fetchIm
   } else {
     headers.authorization = `Bearer ${config.apiKey}`;
     body = { model: config.model, messages: openAiMessages(request.system, request.turns) };
-    // OpenAI's newer models take max_completion_tokens; xAI and DeepSeek take max_tokens.
+    // OpenAI's newer models take max_completion_tokens; the others take max_tokens.
     body[config.provider === "OPENAI" ? "max_completion_tokens" : "max_tokens"] = request.maxTokens;
     if (tools.length) body.tools = tools.map((tool) => ({ type: "function", function: { name: tool.name, description: tool.description, parameters: tool.parameters } }));
   }
@@ -239,11 +243,13 @@ export async function chat(config: ProviderConfig, request: ChatRequest, fetchIm
     if (!text && !toolCalls.length) throw new ProviderError("BAD_ANSWER", "The provider sent an empty answer.", true);
     return { text, toolCalls, model: String(data.model ?? config.model), inputTokens: usage.input_tokens ?? null, outputTokens: usage.output_tokens ?? null };
   }
-  const choices = Array.isArray(data.choices) ? (data.choices as { message?: { content?: unknown; tool_calls?: { id?: string; function?: { name?: string; arguments?: unknown } }[] } }[]) : [];
+  const choices = Array.isArray(data.choices) ? (data.choices as { finish_reason?: string; message?: { content?: unknown; tool_calls?: { id?: string; function?: { name?: string; arguments?: unknown } }[] } }[]) : [];
   const message = choices[0]?.message;
   const text = typeof message?.content === "string" ? message.content.trim() : "";
-  const toolCalls = (message?.tool_calls ?? []).filter((call) => call.id && call.function?.name).map((call) => ({ id: call.id!, name: call.function!.name!, args: parseArgs(call.function!.arguments) }));
+  const toolCalls = (message?.tool_calls ?? []).filter((call) => call.function?.name).map((call, index) => ({ id: call.id || `call_${index}`, name: call.function!.name!, args: parseArgs(call.function!.arguments) })); // some providers (Gemini) may omit the id
   const usage = (data.usage ?? {}) as { prompt_tokens?: number; completion_tokens?: number };
+  // A reasoning model can spend the whole allowance thinking and return no text.
+  if (!text && !toolCalls.length && choices[0]?.finish_reason === "length") throw new ProviderError("BAD_ANSWER", "The answer ran out of room (this model thinks first). Raise \"Longest answer (output tokens)\" or choose a non-reasoning model.", true);
   if (!text && !toolCalls.length) throw new ProviderError("BAD_ANSWER", "The provider sent an empty answer.", true);
   return { text, toolCalls, model: String(data.model ?? config.model), inputTokens: usage.prompt_tokens ?? null, outputTokens: usage.completion_tokens ?? null };
 }

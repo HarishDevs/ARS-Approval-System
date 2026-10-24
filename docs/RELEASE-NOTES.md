@@ -1,5 +1,11 @@
 # Release notes
 
+## v1.17.0 (24 Oct 2026): three more AI providers (owner)
+- **New providers in AI settings:** **Groq** (groq.com; keys start with gsk_; not xAI's Grok), **Gemini** (Google AI Studio) and **NVIDIA (Nemotron)** (build.nvidia.com; keys start with nvapi-). Each has its key, model, "may see business data" (off by default) and Test, and can be the active or fallback provider. There are now seven.
+- **Model names may contain "/"** (for example Groq's openai/gpt-oss-120b or NVIDIA's nvidia/… models).
+- **Reasoning models:** the provider Test now leaves room for models that think before answering; when an answer runs out of room, Pic bot says so instead of "empty answer".
+- **Checked locally:** Groq test passed (0.8 s, openai/gpt-oss-120b); Pic bot refused data chats while Groq was not approved for business data, as designed.
+
 ## v1.16.1 (24 Oct 2026): settings fixes (owner, while testing Pic bot)
 - **Saving AI settings no longer needs every provider filled in.** An empty box for a provider you don't use (for example the ChatGPT or Grok model) is simply left unset. Before, the save failed with "Too small: expected string to have >=2 characters".
 - **Choices are dropdowns.** Every setting with fixed choices is now a dropdown with plain names instead of a text box, on AI settings and Providers & security: who may see business data (Allowed / Not allowed), active and fallback provider, the on/off switches, feature switches (On / Off / IT team only), Salesforce environment, report downloads and the over-budget rule.
