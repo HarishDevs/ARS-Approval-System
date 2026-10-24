@@ -20,6 +20,7 @@
   - daily limits, retention and usage per provider;
   - Salesforce (read-only, hourly).
 - **Not yet connected:** Salesforce (needs your sandbox integration user), Oracle ERP (needs a relay inside the ARS network; GoDaddy can't reach it), Power BI datasets.
+- **Security update:** zod (the validation library used by every form) 3.24 → 4.6.7, for a high-severity advisory published today (GHSA-mrhx-c7xc-m3w5: oversized inputs could exhaust memory). Two small code changes; every test suite passed again on the new version.
 - **Owner steps after publishing:** DEPLOYMENT Part R.
 
 ## v1.14.0 (23 Oct 2026): onboarding tour for users (owner request)

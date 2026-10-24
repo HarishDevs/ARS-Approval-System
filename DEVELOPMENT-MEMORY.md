@@ -415,6 +415,7 @@
 - Applies to users and IT admins; the Super Admin is exempt (12-hour limit only).
 - The browser's session check no longer counts as activity (it used to keep an open tab signed in for ever). Activity in the page is reported at the next minute's check.
 - A warning with "Stay signed in" 2 minutes before. | Owner; Claude, 15 Oct 2026 |
+| D-171 | 24 Oct 2026 | **zod 3.24.1 → 4.6.7 (security):** CI's production audit failed on GHSA-mrhx-c7xc-m3w5 (high; every zod below 4.6.6; no 3.x fix). Upgraded to zod 4. Two code changes: issue `.type` → `.origin` (settings messages), and `.default({})` → `.prefault({})` for the calendar config's nested object. zod 4's own default messages differ in wording where a schema sets none. | Claude, 24 Oct 2026 |
 | D-170 | 24 Oct 2026 | **AI module released as v1.15.0 on `main` (owner):** "create this as a main production ready application and i can publish it in Godaddy". Branch `feature/ai-module` merged into `main` (fast-forward), tagged v1.15.0. Nothing new on GoDaddy except outbound HTTPS to the providers; steps in DEPLOYMENT Part R. | Owner; Claude, 24 Oct 2026 |
 | D-169 | 24 Oct 2026 | **AI module built, all phases (owner: "complete all the phases in one go"):**
 - **Providers:** Claude, ChatGPT, Grok and DeepSeek behind one `chat()` interface (tool calling in both API shapes). Keys are encrypted settings, with Active + Fallback and a Test button.

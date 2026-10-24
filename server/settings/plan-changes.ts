@@ -23,8 +23,9 @@ export interface SettingsPlan {
 
 function describeIssue(issue: ZodIssue | undefined): string {
   if (!issue) return "This value isn't valid.";
-  if (issue.code === "too_small" && issue.type === "number") return `Use ${String(issue.minimum)} or more.`;
-  if (issue.code === "too_big" && issue.type === "number") return `Use ${String(issue.maximum)} or less.`;
+  // zod 4 (v1.15.0): the kind of value is "origin" (it was "type" in zod 3).
+  if (issue.code === "too_small" && issue.origin === "number") return `Use ${String(issue.minimum)} or more.`;
+  if (issue.code === "too_big" && issue.origin === "number") return `Use ${String(issue.maximum)} or less.`;
   if (issue.code === "invalid_type" && issue.expected === "number") return "Enter a whole number.";
   return issue.message;
 }

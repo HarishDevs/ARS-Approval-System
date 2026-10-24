@@ -34,7 +34,8 @@ export const calendarConfigSchema = z.object({
       infoEvents: z.boolean().default(true), // information of calendar-eligible types, by its effective date
       personal: z.boolean().default(true), // the person's own calendar entries, both ways
     })
-    .default({}),
+    // zod 4: prefault parses {} so the field defaults apply (default would skip parsing).
+    .prefault({}),
   privacy: z.enum(PRIVACY).default("PRIVATE"),
   titleTemplate: template(120).default("{kind}: {ref}"),
   descriptionTemplate: template(500).default("Open in ARS Approvals: {link}"),
