@@ -42,7 +42,7 @@ The first full run failed 3 unit checks: the route inventory requires `requireAp
 
 ## Remaining work and approvals
 
-1. **Salesforce:** connect a sandbox Connected App (PKCE, the callback URL from AI settings) and a read-only integration user. Until then, V-11 and V-12 stay "Partially implemented".
+1. **Salesforce:** the UAT sandbox connected and passed Test connection on 24 Oct 2026 (V-11). Still to do: fill the allowed objects and fields, try a Salesforce chat (V-12), use a read-only integration user instead of a person's account, and connect production with the production callback URL.
 2. **Provider approval:** for business data per provider, plus checks of their retention and training settings.
 3. **Real-provider load:** concurrency was measured with a mocked provider only.
 4. **Per-person Salesforce sharing** would need per-user OAuth. A future change, if wanted.

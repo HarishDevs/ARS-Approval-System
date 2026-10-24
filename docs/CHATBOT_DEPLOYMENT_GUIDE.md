@@ -65,6 +65,17 @@ Provider keys and Salesforce app credentials are **not** environment variables. 
    - Tick **Salesforce data** in their chats.
 6. Repeat in production after the sandbox trial. Switch **Also copy those objects hourly** ON only if you want the dashboard copy; live questions don't need it.
 
+**Connect errors seen in the UAT sandbox trial (24 Oct 2026):**
+
+| Salesforce shows | Cause | Fix |
+|---|---|---|
+| `redirect_uri_mismatch` | The app's Callback URL differs from the one on AI settings (http/https, port, trailing `/`), or the change has not propagated | Copy the callback URL from AI settings exactly; wait up to 10 minutes |
+| `OAUTH_APPROVAL_ERROR_GENERIC`, with `error=invalid_scope` in the address | The app lacks **Manage user data via APIs (api)**. An app made for Salesforce Hosted MCP has only `mcp_api`, which Pic bot does not use | Edit the app → OAuth Scopes → add `api` (keep `refresh_token, offline_access`) → Save → wait |
+| The browser can't open `…/api/integrations/salesforce/callback` | The ARS server at the callback address was not running (local testing) | Start it and reload the page within a few minutes (the code is single-use and short-lived), or press Connect again |
+| The My Domain field rejects an `api.salesforce.com/platform/mcp/…` address | That is an MCP server address, not a login domain | Enter the org's My Domain, e.g. `https://yourorg--uat.sandbox.my.salesforce.com` |
+
+The production app needs the production callback `https://approval.arssteels.net/api/integrations/salesforce/callback`; a sandbox app with only `http://localhost:3000/…` will not work from the live site.
+
 ## 5. Logs and monitoring
 
 - **GoDaddy runtime log:** JSON lines. Search for `"Pic bot chat failed"`, `"AI answer failed"`, `"salesforce"`. Lines carry `requestId` (Cloudflare CF-Ray), never prompt text or tokens.

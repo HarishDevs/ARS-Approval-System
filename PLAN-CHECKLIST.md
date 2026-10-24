@@ -17,6 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (24 Oct 2026):** `main` = v1.16.0 (CI green), deployment ready. Salesforce UAT sandbox connected and Test connection passed (PB-13). **Owner:** publish v1.16.0; then PB-15 (allowed objects, integration user, production app, rotate the UAT secret).
 - **Now (24 Oct 2026):** v1.16.0 Pic bot - ai (owner's master prompt; owner authorised building it into ARS Approvals): floating launcher with the supplied logo and chat panel; chat modes (General / Approval / Task / Information / Salesforce / Combined) per person and per module; Salesforce OAuth with PKCE and live allowlisted read-only queries; limits and concurrency; 10-client tests; CHATBOT_* documents. **Owner:** publish; then CHATBOT_DEPLOYMENT_GUIDE §3; Salesforce sandbox Connected App when approved.
 - **Now (24 Oct 2026):** v1.15.0 = the AI module (all phases) and per-person module access, merged into `main` at the owner's request ("create this as a main production ready application… publish it in GoDaddy"). **Owner:** publish, then DEPLOYMENT Part R (provider key, Test, business-data decision, tick AI for a few people).
 - **Now (24 Oct 2026), branch `feature/ai-module` (worktree `D:\Omniroute\ars-ai-module`, not on `main`):** the AI module (owner brief "Independent AI Module Upgrade", re-scoped by the owner's answers: API-based models, one application, same repository, Claude / ChatGPT / Grok / DeepSeek switchable). Phase 3 first: per-user module access.
@@ -328,7 +329,9 @@ Plan: `docs/CHATBOT_IMPLEMENTATION_PLAN.md`; audit: `docs/CHATBOT_ARCHITECTURE_A
 - [x] PB-10 Tests: unit (`tests/ai/picbot.test.ts`), integration (`ai-assistant`, `ai-concurrency`), e2e (`picbot.spec.ts` incl. 10 HTTP clients with a mock provider) (done 24 Oct 2026)
 - [x] PB-11 Documents: deployment guide, security checklist, concurrency report, implementation report, feature verification; `.env.example` (done 24 Oct 2026)
 - [ ] PB-12 Owner: publish; provider key + Test; decide business data per provider; tick AI and chat modes for a trial group
-- [ ] PB-13 Owner: Salesforce sandbox Connected App (callback URL from AI settings, PKCE) + integration user; then Connect and Test (V-11 becomes verified only after this)
+- [~] PB-13 Owner: Salesforce sandbox Connected App (callback URL from AI settings, PKCE) + integration user; then Connect and Test (24 Oct 2026: UAT sandbox External Client App connected, Test connection passed; still open: a read-only integration user instead of a person's account, see PB-15)
+- [x] PB-14 Deployment guide: troubleshooting for the connect errors met in the UAT trial (redirect_uri_mismatch, invalid_scope with an MCP-only app, callback server not running, MCP URL in My Domain) (done 24 Oct 2026)
+- [ ] PB-15 Owner: allowed Salesforce objects and fields; then a Salesforce chat test (V-12); production Connected App with the production callback; rotate the UAT consumer secret (it was shared in chat)
 
 ## Session log — AI module (branch feature/ai-module, 24 Oct 2026), planned before starting
 Design: `docs/ai-module/architecture.md` (decisions §1), `discovery-report.md`, `risk-register.md`.

@@ -588,6 +588,11 @@
 
 ## 5. Work log (newest first)
 
+### 24 Oct 2026 (Salesforce UAT connect; deployment check)
+- **Salesforce UAT sandbox:** the owner made a separate External Client App. Connect failed first with `redirect_uri_mismatch` (callback not yet in the app), then `invalid_scope` (the app had only `mcp_api` and `refresh_token`; Pic bot uses the REST API and needs `api`). After the owner added `api`, the sign-in returned to `localhost:3000`, which had been stopped; restarting it and reloading the callback finished the connect. **Test connection passed.** Connected as a person's account for the trial; a read-only integration user is still recommended (PB-15).
+- **Not MCP:** Salesforce Hosted MCP (`api.salesforce.com/platform/mcp/…`, scope `mcp_api`) is for MCP clients such as Claude's connector; Pic bot calls Salesforce directly with allowlisted SOQL. The My Domain setting takes the org's login domain, not an MCP address.
+- **Release state:** `main`, `feature/pic-bot` and `origin/main` are the same commit (v1.16.0, CI green). Docs only this session: deployment-guide troubleshooting (PB-14), V-11 verified in UAT.
+
 ### 24 Oct 2026 (v1.16.0: Pic bot - ai)
 - **Owner request:** the master prompt `Pic_bot_ai_Claude_Master_Prompt.md` (floating logo from a supplied image, chat modes, module and user permissions, Salesforce in Super Admin, concurrency, tests, docs). The prompt excluded approval.arssteels.net unless authorised; the owner authorised ARS Approvals when asked.
 - **Audit first** (`docs/CHATBOT_ARCHITECTURE_AUDIT.md`, `CHATBOT_CURRENT_STATE_AUDIT.md`), then the plan, then the build on branch `feature/pic-bot` (D-172).
