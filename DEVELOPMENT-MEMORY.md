@@ -415,6 +415,9 @@
 - Applies to users and IT admins; the Super Admin is exempt (12-hour limit only).
 - The browser's session check no longer counts as activity (it used to keep an open tab signed in for ever). Activity in the page is reported at the next minute's check.
 - A warning with "Stay signed in" 2 minutes before. | Owner; Claude, 15 Oct 2026 |
+| D-177 | 24 Oct 2026 | **Pic bot reliability (v1.18.0):** 6 tool rounds (was 4); a provider 400 for a malformed tool call (tool_use_failed) is retried up to twice; the last round tells the model to answer (Groq refuses a tool call when no tools are offered); Salesforce object and field lists are compact (Groq free tier 8,000 TPM). | Claude, 24 Oct 2026 |
+| D-176 | 24 Oct 2026 | **Super Admin unrestricted in Pic bot (owner: "By default give all access to Superadmin. They should not have any restriction"):** every chat mode and Salesforce scope ALL regardless of their own settings and the general/combined/module-chat switches. Kept: the emergency stop (the Super Admin's own kill switch) and a live Salesforce connection; provider "may see business data" still applies (it is about the provider, not the person). | Owner; Claude, 24 Oct 2026 |
+| D-175 | 24 Oct 2026 | **Salesforce "all objects" (owner: "allow all objects"):** the allowlist value `*` lets Pic bot read any object the connected Salesforce user can query. Object and field names come from Salesforce describe (cached 10 min), never from the model alone; still read-only, WITH USER_MODE, 50 rows, OWN/ALL scope. The hourly copy ignores `*`. | Owner; Claude, 24 Oct 2026 |
 | D-174 | 24 Oct 2026 | **More AI providers (v1.17.0, owner):** the owner's test key was for Groq (groq.com), not xAI's Grok, so Groq was added; the owner also asked for Gemini (Google AI Studio) and NVIDIA Nemotron. All three use the OpenAI-style adapter at their own address (api.groq.com/openai/v1, generativelanguage.googleapis.com/v1beta/openai, integrate.api.nvidia.com/v1); same rules as the others (encrypted key, business data off until approved, active/fallback). Model names may contain "/". | Owner; Claude, 24 Oct 2026 |
 | D-173 | 24 Oct 2026 | **Settings form (v1.16.1, owner):** a setting whose schema is a fixed list of choices (z.enum) is shown as a dropdown with plain names; the stored values are unchanged. A plain (not secret) setting left empty, with nothing stored and no default, stays unset instead of being validated, so unused providers don't block a save. | Owner; Claude, 24 Oct 2026 |
 | D-172 | 24 Oct 2026 | **Pic bot - ai (v1.16.0), owner's master prompt; owner explicitly authorised building it into ARS Approvals:**
@@ -589,6 +592,11 @@
 - Who approves the privacy policy and terms? | Before filing | Open, waiting on the owner (17 Oct 2026) |
 
 ## 5. Work log (newest first)
+
+### 24 Oct 2026 (v1.18.0: Salesforce all objects; Super Admin unrestricted)
+- Owner: Salesforce chat not visible for a demo person. Cause: the person needs the Salesforce chat ticked and a scope; the allowlist held the literal placeholder "Object:Field". Owner asked to allow all objects (D-175) and to give the Super Admin everything (D-176).
+- Groq trial: "tool_use_failed", then "tool choice is none", then the free-tier 8,000 TPM limit; fixed by D-177. Then "How many Account records are there?" answered 90 from the UAT sandbox (demo person, scope ALL).
+- CI on v1.17.1 failed one e2e (expected four providers); fixed. Lint, typecheck, unit 621, integration (AI) 19 passed.
 
 ### 24 Oct 2026 (v1.17.0: Groq, Gemini, NVIDIA)
 - The owner's "Grok" test key started with gsk_ (Groq). Asked; the owner chose to add Groq, then Gemini and NVIDIA Nemotron (D-174).

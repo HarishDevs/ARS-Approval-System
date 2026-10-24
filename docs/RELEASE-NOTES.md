@@ -1,5 +1,13 @@
 # Release notes
 
+## v1.18.0 (24 Oct 2026): Salesforce "all objects"; Super Admin unrestricted (owner)
+- **All Salesforce objects:** enter `*` in AI settings → "Objects and fields Pic bot may read" to let Pic bot read any object the connected Salesforce user can read. Pic bot finds the object, reads its field list from Salesforce, then queries, still read-only, at most 50 rows, and with Salesforce's own permissions (WITH USER_MODE). A fixed list still works as before. The hourly copy needs a fixed list.
+- **The Super Admin has no restrictions in Pic bot:** every chat (General, Approvals, Tasks, Information, Salesforce, Combined) and all Salesforce records, whatever their own settings or the global chat switches. Only the emergency stop applies (and Salesforce must be connected). Their user page says so instead of showing boxes.
+- **More reliable answers:** up to 6 lookup rounds per question (was 4); a provider refusing a malformed lookup (Groq "tool_use_failed") is retried up to twice; on the last round the model is told to answer from what it has.
+- **Smaller Salesforce lists** for providers with low token limits (Groq free tier: 8,000 tokens a minute).
+- **Checked locally (UAT sandbox, Groq):** "How many Account records are there?" → 90, from Salesforce.
+- **Tests:** the AI-settings e2e now expects seven providers (it failed in CI on v1.17.1 because it still expected four).
+
 ## v1.17.1 (24 Oct 2026): NVIDIA default model
 - The NVIDIA default model is now **nvidia/nemotron-3.5-bolt-e4b** (from NVIDIA's API reference, owner). Checked locally: Test passed in 0.5 s.
 

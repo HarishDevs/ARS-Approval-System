@@ -6,7 +6,9 @@ import type { SalesforceScope } from "@/server/ai/chat-access";
 // D-172: live, read-only Salesforce questions for Pic bot. The model never
 // writes SOQL. It names an allowed object, allowed fields and simple
 // filters; this file validates each one and builds the query:
-//   - objects and fields: only the Super Admin's allowlist (ai.salesforce.objects);
+//   - objects and fields: only the Super Admin's allowlist (ai.salesforce.objects),
+//     or, when it is "*" (D-175), any object and field the connected
+//     Salesforce user can query, with names taken from Salesforce's describe;
 //   - filters: allowlisted field, a fixed operator, a typed value (strings
 //     escaped; numbers, dates and booleans checked by pattern);
 //   - scope: OWN adds OwnerId = the person's Salesforce user (matched by email,
@@ -34,7 +36,61 @@ export function parseAllowlist(value: string | null): Allowlist {
 }
 
 export async function loadAllowlist(): Promise<Allowlist> {
-  return parseAllowlist(await getSettingValue("ai.salesforce.objects"));
+  const value = await getSettingValue("ai.salesforce.objects");
+  return value?.trim() === ALL_OBJECTS ? new Map() : parseAllowlist(value);
+}
+
+// D-175: "*" = every object the connected Salesforce user can query.
+export const ALL_OBJECTS = "*";
+export async function readsAllObjects(): Promise<boolean> {
+  return (await getSettingValue("ai.salesforce.objects"))?.trim() === ALL_OBJECTS;
+}
+
+export interface FieldInfo {
+  name: string;
+  label: string;
+  type: string;
+}
+
+// Describes are cached for 10 minutes per object (they rarely change).
+const DESCRIBE_MS = 10 * 60 * 1000;
+const describeCache = new Map<string, { at: number; fields: FieldInfo[] }>();
+
+// The queryable fields of one object, from Salesforce's describe. Unknown or
+// non-queryable objects are refused.
+export async function describeObject(object: string, fetchImpl?: typeof fetch, signal?: AbortSignal): Promise<FieldInfo[]> {
+  if (!NAME.test(object)) throw new QueryRefused(`The object ${object.slice(0, 80)} isn't available.`);
+  const cached = describeCache.get(object);
+  if (cached && Date.now() - cached.at < DESCRIBE_MS) return cached.fields;
+  let result: { queryable?: boolean; fields?: { name?: string; label?: string; type?: string }[] };
+  try {
+    result = (await salesforceGet(`/services/data/${API_VERSION}/sobjects/${object}/describe`, fetchImpl, signal)) as typeof result;
+  } catch (error) {
+    if (error instanceof SalesforceUnavailable && /NOT_FOUND|HTTP 404/.test(error.message)) throw new QueryRefused(`The object ${object} doesn't exist in Salesforce or isn't visible.`);
+    throw error;
+  }
+  if (!result.queryable) throw new QueryRefused(`The object ${object} can't be read.`);
+  const fields = (result.fields ?? []).filter((field) => field.name && NAME.test(field.name)).map((field) => ({ name: field.name!, label: String(field.label ?? field.name), type: String(field.type ?? "") }));
+  describeCache.set(object, { at: Date.now(), fields });
+  return fields;
+}
+
+// The objects the connected user can query (no share, history, feed or
+// change-event tables), optionally filtered by name or label.
+export async function listObjects(search: string, fetchImpl?: typeof fetch, signal?: AbortSignal): Promise<{ name: string; label: string }[]> {
+  const result = (await salesforceGet(`/services/data/${API_VERSION}/sobjects`, fetchImpl, signal)) as { sobjects?: { name?: string; label?: string; queryable?: boolean; deprecatedAndHidden?: boolean; customSetting?: boolean }[] };
+  const term = search.trim().toLowerCase();
+  return (result.sobjects ?? [])
+    .filter((item) => item.queryable && !item.deprecatedAndHidden && !item.customSetting && item.name && NAME.test(item.name) && !/(Share|History|Feed|ChangeEvent|__mdt)$/.test(item.name))
+    .map((item) => ({ name: item.name!, label: String(item.label ?? item.name) }))
+    .filter((item) => !term || item.name.toLowerCase().includes(term) || item.label.toLowerCase().includes(term));
+}
+
+// The allowlist for one query: the configured list, or (with "*") the object's described fields.
+async function allowlistFor(object: string, context: QueryContext): Promise<Allowlist> {
+  if (!(await readsAllObjects())) return loadAllowlist();
+  const fields = await describeObject(object, context.fetchImpl, context.signal);
+  return new Map([[object, new Set(fields.map((field) => field.name))]]);
 }
 
 export interface Filter {
@@ -132,7 +188,7 @@ async function ownerFor(context: QueryContext): Promise<string | null> {
 }
 
 export async function querySalesforce(spec: QuerySpec, context: QueryContext): Promise<{ soqlShape: string; records: Record<string, unknown>[]; totalSize: number; truncated: boolean }> {
-  const allowlist = await loadAllowlist();
+  const allowlist = await allowlistFor(spec.object, context);
   const soql = buildSelect(spec, allowlist, await ownerFor(context));
   const result = (await salesforceGet(queryPath(soql), context.fetchImpl, context.signal)) as { totalSize?: number; done?: boolean; records?: Record<string, unknown>[] };
   const records = (result.records ?? []).slice(0, MAX_ROWS).map((record) => Object.fromEntries(Object.entries(record).filter(([key]) => key !== "attributes")));
@@ -141,7 +197,7 @@ export async function querySalesforce(spec: QuerySpec, context: QueryContext): P
 }
 
 export async function countSalesforce(spec: Pick<QuerySpec, "object" | "filters">, context: QueryContext): Promise<{ count: number; scope: string }> {
-  const allowlist = await loadAllowlist();
+  const allowlist = await allowlistFor(spec.object, context);
   const soql = buildCount(spec, allowlist, await ownerFor(context));
   const result = (await salesforceGet(queryPath(soql), context.fetchImpl, context.signal)) as { totalSize?: number };
   return { count: Number(result.totalSize ?? 0), scope: context.scope === "OWN" ? "records you own" : "all records you may see" };

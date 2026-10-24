@@ -25,7 +25,9 @@ import { logError } from "@/lib/logging/logger";
 //      GENERAL uses any configured provider without tools.
 //   5. Tool loop with the mode's tools only; every figure checked; evidence
 //      and usage saved; prompt text never logged.
-const MAX_ROUNDS = 4;
+// D-177: six rounds, as reading any Salesforce object can take objects ->
+// fields -> query before the answer.
+const MAX_ROUNDS = 6;
 
 export type AskResult = { ok: true; conversationId: number; duplicate?: boolean } | { ok: false; message: string; code?: string; conversationId?: number };
 
@@ -179,6 +181,8 @@ async function converse(
   const system = systemPrompt({ name: context.person.name, mode: options.mode, dataModes: context.dataModes, withTools: tools.some((tool) => tool.businessData), today: today() });
   for (let round = 0; round < MAX_ROUNDS; round += 1) {
     const lastRound = round === MAX_ROUNDS - 1;
+    // Without tools some providers refuse a model that still tries one, so say it plainly.
+    if (lastRound) turns.push({ role: "user", content: "No more lookups are possible. Answer now from the data above, and say what you could not find." });
     const answer = await chat(config, { system, turns, tools: lastRound ? [] : tools.map((tool) => tool.spec), maxTokens: options.maxTokens, timeoutMs: options.timeoutMs, signal: context.signal }, context.fetchImpl);
     inputTokens += answer.inputTokens ?? 0;
     outputTokens += answer.outputTokens ?? 0;

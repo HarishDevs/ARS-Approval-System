@@ -50,8 +50,19 @@ export interface ChatPerson {
   salesforceScope: SalesforceScope;
 }
 
+// D-176 (owner): the Super Admin has no restrictions: every chat mode and all
+// Salesforce records, whatever their own settings and the global switches.
+// Only the emergency stop and a live Salesforce connection still apply.
+export const isUnrestricted = (person: { roles: readonly string[] }): boolean => person.roles.includes("SUPER_ADMIN");
+
+export function salesforceScopeOf(person: { roles: readonly string[]; salesforceScope?: SalesforceScope }): SalesforceScope {
+  return isUnrestricted(person) ? "ALL" : (person.salesforceScope ?? "NONE");
+}
+
 export function effectiveModes(person: ChatPerson, policy: ChatPolicy): ChatMode[] {
-  if (policy.emergencyStop || !policy.aiFeatureOn || !hasModule(person, "AI")) return [];
+  if (policy.emergencyStop) return [];
+  if (isUnrestricted(person)) return CHAT_MODES.filter((mode) => mode !== "SALESFORCE" || policy.salesforceConnected);
+  if (!policy.aiFeatureOn || !hasModule(person, "AI")) return [];
   const wants = (mode: ChatMode) => person.chatModes.includes(mode);
   const out = new Set<ChatMode>();
   if (policy.generalChat && wants("GENERAL")) out.add("GENERAL");

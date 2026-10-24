@@ -194,6 +194,8 @@ async function sendOnce(fetchImpl: typeof fetch, url: string, init: RequestInit,
   return response;
 }
 
+const isBadToolCall = (error: ProviderError) => error.kind === "BAD_REQUEST" && /tool call|tool_use_failed/i.test(error.message);
+
 async function sendWithRetry(fetchImpl: typeof fetch, url: string, init: RequestInit, request: ChatRequest): Promise<Response> {
   try {
     return await sendOnce(fetchImpl, url, init, request);
@@ -207,6 +209,17 @@ async function sendWithRetry(fetchImpl: typeof fetch, url: string, init: Request
     if (error.kind === "UNAVAILABLE") {
       await sleep(500 + jitter * 2, request.signal);
       return sendOnce(fetchImpl, url, init, request);
+    }
+    // D-177: some models (gpt-oss on Groq) now and then write a malformed tool
+    // call, which the provider refuses; a fresh attempt usually succeeds.
+    if (isBadToolCall(error)) {
+      for (let attempt = 1; ; attempt += 1) {
+        try {
+          return await sendOnce(fetchImpl, url, init, request);
+        } catch (again) {
+          if (attempt >= 2 || !(again instanceof ProviderError) || !isBadToolCall(again)) throw again;
+        }
+      }
     }
     throw error;
   }
@@ -248,8 +261,8 @@ export async function chat(config: ProviderConfig, request: ChatRequest, fetchIm
   const text = typeof message?.content === "string" ? message.content.trim() : "";
   const toolCalls = (message?.tool_calls ?? []).filter((call) => call.function?.name).map((call, index) => ({ id: call.id || `call_${index}`, name: call.function!.name!, args: parseArgs(call.function!.arguments) })); // some providers (Gemini) may omit the id
   const usage = (data.usage ?? {}) as { prompt_tokens?: number; completion_tokens?: number };
-  // A reasoning model can spend the whole allowance thinking and return no text.
-  if (!text && !toolCalls.length && choices[0]?.finish_reason === "length") throw new ProviderError("BAD_ANSWER", "The answer ran out of room (this model thinks first). Raise \"Longest answer (output tokens)\" or choose a non-reasoning model.", true);
+  // A reasoning model can spend the whole allowance thinking and return no text.
+  if (!text && !toolCalls.length && choices[0]?.finish_reason === "length") throw new ProviderError("BAD_ANSWER", "The answer ran out of room (this model thinks first). Raise \"Longest answer (output tokens)\" or choose a non-reasoning model.", true);
   if (!text && !toolCalls.length) throw new ProviderError("BAD_ANSWER", "The provider sent an empty answer.", true);
   return { text, toolCalls, model: String(data.model ?? config.model), inputTokens: usage.prompt_tokens ?? null, outputTokens: usage.completion_tokens ?? null };
 }

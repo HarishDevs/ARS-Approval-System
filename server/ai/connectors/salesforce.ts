@@ -55,7 +55,8 @@ export interface SalesforceConfig {
 // Set up = connected, an allowlist, and the hourly copy switched on.
 export async function loadSalesforceConfig(): Promise<SalesforceConfig | null> {
   const [copy, objects, connection] = await Promise.all([getSettingValue("ai.salesforce.copy_hourly"), getSettingValue("ai.salesforce.objects"), getConnection()]);
-  if (copy !== "ON" || !objects || connection.status !== "CONNECTED") return null;
+  // "*" (D-175) is for live questions only; the hourly copy needs a fixed list.
+  if (copy !== "ON" || !objects || objects.trim() === "*" || connection.status !== "CONNECTED") return null;
   return { objects: parseObjects(objects) };
 }
 

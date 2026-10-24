@@ -130,7 +130,7 @@ export const SETTING_DEFINITIONS: readonly SettingDefinition[] = [
   { key: "ai.salesforce.client_id", group: "AI_DATA", label: "Salesforce app consumer key", valueType: "STRING", encrypted: true, schema: z.string().trim().min(10).max(300) },
   { key: "ai.salesforce.client_secret", group: "AI_DATA", label: "Salesforce app consumer secret", valueType: "STRING", encrypted: true, schema: z.string().trim().min(10).max(300) },
   { key: "ai.salesforce.scopes", group: "AI_DATA", label: "OAuth scopes (least privilege)", valueType: "STRING", encrypted: false, schema: z.string().trim().regex(/^[a-z_]+( [a-z_]+)*$/, "Space-separated scope names."), defaultValue: "api refresh_token" },
-  { key: "ai.salesforce.objects", group: "AI_DATA", label: "Objects and fields Pic bot may read, e.g. Account:Name,Industry;Opportunity:Name,Amount,StageName,CloseDate,AccountId (Id, OwnerId, SystemModstamp are added)", valueType: "STRING", encrypted: false, schema: z.string().trim().max(2000).regex(/^(\w+:\w+(,\w+)*)(;\w+:\w+(,\w+)*)*$/, "Use Object:Field,Field;Object:Field.") },
+  { key: "ai.salesforce.objects", group: "AI_DATA", label: "Objects and fields Pic bot may read: * for every object the connected Salesforce user can read, or a list such as Account:Name,Industry;Opportunity:Name,Amount,StageName,CloseDate,AccountId (Id, OwnerId, SystemModstamp are added)", valueType: "STRING", encrypted: false, schema: z.string().trim().max(2000).regex(/^(\*|(\w+:\w+(,\w+)*)(;\w+:\w+(,\w+)*)*)$/, "Use * for every object, or Object:Field,Field;Object:Field.") },
   { key: "ai.salesforce.copy_hourly", group: "AI_DATA", label: "Also copy those objects hourly for the dashboard", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF"]), defaultValue: "OFF" },
 
 ];

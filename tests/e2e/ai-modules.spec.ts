@@ -131,12 +131,12 @@ test("without the AI module: no AI group, every AI address is a 404, and AI sett
   }
 });
 
-test("the Super Admin's AI settings: four providers, encrypted key fields, usage and the Salesforce section", async ({ page, context }) => {
+test("the Super Admin's AI settings: seven providers, encrypted key fields, usage and the Salesforce section", async ({ page, context }) => {
   await context.addCookies([await sessionCookie("E2E_SUPER")]);
   await page.goto("/superadmin/ai");
   const providers = page.getByTestId("ai-providers");
-  for (const name of ["Claude (Anthropic)", "ChatGPT (OpenAI)", "Grok (xAI)", "DeepSeek"]) await expect(providers).toContainText(name);
-  await expect(providers.getByText("Not set up")).toHaveCount(4);
+  for (const name of ["Claude (Anthropic)", "ChatGPT (OpenAI)", "Grok (xAI)", "DeepSeek", "Groq", "Gemini (Google AI Studio)", "NVIDIA (Nemotron)"]) await expect(providers).toContainText(name);
+  await expect(providers.getByText("Not set up")).toHaveCount(7);
   await expect(page.getByLabel("Claude (Anthropic) API key")).toHaveAttribute("type", "password");
   await expect(page.getByLabel("Active provider", { exact: true })).toBeVisible();
   await expect(page.getByText("Salesforce sync")).toBeVisible();

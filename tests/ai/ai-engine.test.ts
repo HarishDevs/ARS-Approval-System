@@ -60,6 +60,21 @@ describe("providers", () => {
     }
   });
 
+  it("a provider refusing a malformed tool call (Groq tool_use_failed) is retried up to twice; other 400s are not (D-177)", async () => {
+    const bad = () => json({ error: { message: "Failed to parse tool call arguments as JSON", code: "tool_use_failed" } }, 400);
+    const ok = { model: "m", choices: [{ message: { content: "Fine" } }] };
+    const flaky = vi.fn().mockResolvedValueOnce(bad()).mockResolvedValueOnce(bad()).mockResolvedValueOnce(json(ok));
+    const request = { system: "S", turns: [{ role: "user" as const, content: "Q" }], maxTokens: 50, timeoutMs: 1000 };
+    expect((await chat({ ...openai, provider: "GROQ" }, request, flaky)).text).toBe("Fine");
+    expect(flaky).toHaveBeenCalledTimes(3);
+    const always = vi.fn(async () => bad());
+    await expect(chat({ ...openai, provider: "GROQ" }, request, always)).rejects.toThrow(/tool call/);
+    expect(always).toHaveBeenCalledTimes(3);
+    const other = vi.fn(async () => json({ error: { message: "bad parameter" } }, 400));
+    await expect(chat({ ...openai, provider: "GROQ" }, request, other)).rejects.toThrow(/refused the request/);
+    expect(other).toHaveBeenCalledTimes(1);
+  });
+
   it("a tool call without an id (Gemini) still runs, with a generated id", async () => {
     const reply = { model: "m", choices: [{ message: { content: null, tool_calls: [{ type: "function", function: { name: "f", arguments: "{}" } }] } }] };
     const answer = await chat({ ...openai, provider: "GEMINI" }, { system: "S", turns: [{ role: "user", content: "Q" }], maxTokens: 50, timeoutMs: 1000 }, vi.fn(async () => json(reply)));

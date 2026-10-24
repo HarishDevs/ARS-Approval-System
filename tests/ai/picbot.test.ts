@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
-import { dataModesFor, effectiveModes, normaliseChatModes, parseChatModes, type ChatPerson, type ChatPolicy } from "@/server/ai/chat-access";
+import { dataModesFor, effectiveModes, normaliseChatModes, parseChatModes, salesforceScopeOf, type ChatPerson, type ChatPolicy } from "@/server/ai/chat-access";
 import { buildCount, buildSelect, literal, parseAllowlist, QueryRefused } from "@/server/ai/connectors/salesforce-query";
 import { authorizeUrl, loginBaseFor, pkcePair } from "@/server/ai/connectors/salesforce-auth";
 import { ConcurrencyGate, LimitError } from "@/server/ai/limits";
@@ -46,11 +46,19 @@ describe("effective chat modes (deny by default; administrators win)", () => {
     expect(effectiveModes(person({ chatModes: ["COMBINED", "GENERAL", "APPROVAL"] }), policy({ combinedChat: false }))).toEqual(["GENERAL", "APPROVAL"]);
     expect(effectiveModes(person({ chatModes: ["COMBINED", "GENERAL", "APPROVAL"] }), policy())).toEqual(["GENERAL", "APPROVAL", "COMBINED"]);
   });
-  it("nothing at all with the emergency stop, the AI switch off, or no AI module; the Super Admin still needs chat modes", () => {
+  it("nothing at all with the emergency stop, the AI switch off, or no AI module", () => {
     expect(effectiveModes(person(), policy({ emergencyStop: true }))).toEqual([]);
     expect(effectiveModes(person(), policy({ aiFeatureOn: false }))).toEqual([]);
     expect(effectiveModes(person({ modules: ["APPROVAL", "TASK", "INFORMATION"] }), policy())).toEqual([]);
-    expect(effectiveModes(person({ roles: ["USER", "SUPER_ADMIN"], modules: [], chatModes: ["APPROVAL"] }), policy())).toEqual(["APPROVAL"]);
+  });
+  it("the Super Admin has every mode and all Salesforce records, whatever their settings (D-176); only the emergency stop and the connection apply", () => {
+    const superAdmin = person({ roles: ["USER", "SUPER_ADMIN"], modules: [], chatModes: [], salesforceScope: "NONE" });
+    const closed = policy({ aiFeatureOn: false, generalChat: false, combinedChat: false, moduleModes: [] });
+    expect(effectiveModes(superAdmin, closed)).toEqual(["GENERAL", "APPROVAL", "TASK", "INFORMATION", "SALESFORCE", "COMBINED"]);
+    expect(effectiveModes(superAdmin, policy({ salesforceConnected: false }))).not.toContain("SALESFORCE");
+    expect(effectiveModes(superAdmin, policy({ emergencyStop: true }))).toEqual([]);
+    expect(salesforceScopeOf(superAdmin)).toBe("ALL");
+    expect(salesforceScopeOf(person({ salesforceScope: "OWN" }))).toBe("OWN");
   });
   it("a conversation's data: its own mode, or all effective data modes for Combined", () => {
     expect(dataModesFor("APPROVAL", ["APPROVAL", "TASK"])).toEqual(["APPROVAL"]);

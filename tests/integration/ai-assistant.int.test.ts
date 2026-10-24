@@ -267,6 +267,31 @@ describe("Salesforce: OAuth, tokens and live queries", () => {
     expect(JSON.stringify(provider.mock.calls)).not.toContain("00D-new-token");
     await access(personId, "APPROVAL,TASK,INFORMATION,AI", "APPROVAL,TASK,INFORMATION", "NONE");
   });
+
+  it("with '*' (D-175) any queryable object can be read, but only fields Salesforce's describe lists", async () => {
+    await setSetting("ai.salesforce.objects", "*");
+    await access(personId, "APPROVAL,TASK,INFORMATION,AI", "SALESFORCE", "ALL");
+    const soql: string[] = [];
+    const salesforce = vi.fn(async (url: string) => {
+      if (url.endsWith("/sobjects/Opportunity/describe")) return json({ queryable: true, fields: [{ name: "Id" }, { name: "Name" }, { name: "StageName" }] });
+      soql.push(decodeURIComponent(url.split("q=")[1] ?? ""));
+      return json({ totalSize: 1, done: true, records: [{ attributes: { type: "Opportunity" }, Id: "006A", Name: "Big deal", StageName: "Closed Won" }] });
+    });
+    const run = async (args: Record<string, unknown>) => {
+      const provider = toolThenAnswer("salesforce_query", args);
+      const fetchImpl = vi.fn(async (url: string | URL | Request, init?: RequestInit) => (String(url).includes("salesforce.com") ? salesforce(String(url)) : provider(url, init)));
+      const result = await askAssistant(await asked(personId), { conversationId: null, mode: "SALESFORCE", question: "deals?", requestKey: key(), fetchImpl });
+      if (!result.ok) throw new Error(result.message);
+      return JSON.stringify(provider.mock.calls);
+    };
+    await run({ object: "Opportunity", fields: ["Name", "StageName"], filters: [{ field: "StageName", op: "=", value: "Closed Won" }], limit: 5 });
+    expect(soql.at(-1)).toBe("SELECT Id, Name, StageName FROM Opportunity WHERE StageName = 'Closed Won' WITH USER_MODE LIMIT 5");
+    const refused = await run({ object: "Opportunity", fields: ["Secret__c"], limit: 5 });
+    expect(refused).toContain("The field Secret__c isn't available.");
+    expect(soql).toHaveLength(1);
+    await setSetting("ai.salesforce.objects", "Account:Name");
+    await access(personId, "APPROVAL,TASK,INFORMATION,AI", "APPROVAL,TASK,INFORMATION", "NONE");
+  });
 });
 
 describe("proposals", () => {

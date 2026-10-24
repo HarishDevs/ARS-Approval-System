@@ -17,6 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (24 Oct 2026):** v1.18.0: Salesforce "*" (all objects) and an unrestricted Super Admin in Pic bot (owner); Salesforce chat verified on the UAT sandbox (90 accounts). **Owner:** publish; for production consider a paid Groq tier or another provider (free tier is 8,000 tokens a minute); remove the test keys afterwards.
 - **Now (24 Oct 2026):** v1.17.0: Groq, Gemini and NVIDIA (Nemotron) providers (owner). Groq test key works locally (active, Test passed). **Owner:** decide "may see business data" for the provider you trial (local test data), then test Pic bot chats; remove the Groq test key afterwards (it was pasted in chat); publish.
 - **Now (24 Oct 2026):** v1.16.1: AI settings save no longer blocked by unused providers' empty model boxes; fixed-choice settings are dropdowns (owner). DeepSeek key saved locally; its account returned HTTP 402 (no balance). **Owner:** top up the provider (or add another key), then test Pic bot; publish v1.16.1.
 - **Now (24 Oct 2026):** `main` = v1.16.0 (CI green), deployment ready. Salesforce UAT sandbox connected and Test connection passed (PB-13). **Owner:** publish v1.16.0; then PB-15 (allowed objects, integration user, production app, rotate the UAT secret).
@@ -337,6 +338,9 @@ Plan: `docs/CHATBOT_IMPLEMENTATION_PLAN.md`; audit: `docs/CHATBOT_ARCHITECTURE_A
 - [x] PB-17 Fixed-choice settings shown as dropdowns with plain names (options from the enum schema), labels without the raw values; dropdown keeps the saved choice after a save (done 24 Oct 2026, v1.16.1)
 - [x] PB-18 Providers Groq, Gemini (Google AI Studio) and NVIDIA Nemotron: OpenAI-style addresses, settings (key, model, business data), enum choices, model names with "/", tool calls without an id, reasoning-model room in Test and a clear "ran out of room" message; unit tests (done 24 Oct 2026, v1.17.0)
 - [x] PB-19 NVIDIA default model nvidia/nemotron-3.5-bolt-e4b (owner's NVIDIA reference); local Test passed with the owner's test key (done 24 Oct 2026, v1.17.1)
+- [x] PB-20 Salesforce "*" = every object the connected user can query (describe-validated names, USER_MODE, 50 rows); salesforce_fields tool; hourly copy needs a list; tests (done 24 Oct 2026, v1.18.0)
+- [x] PB-21 Super Admin unrestricted in Pic bot: every mode, Salesforce scope ALL; emergency stop still applies; user page explains; tests (done 24 Oct 2026, v1.18.0)
+- [x] PB-22 Reliability: 6 rounds, retry malformed tool calls (Groq), final-round instruction, compact Salesforce lists; e2e fixed for seven providers (done 24 Oct 2026, v1.18.0)
 - [ ] PB-15 Owner: allowed Salesforce objects and fields; then a Salesforce chat test (V-12); production Connected App with the production callback; rotate the UAT consumer secret (it was shared in chat)
 
 ## Session log — AI module (branch feature/ai-module, 24 Oct 2026), planned before starting

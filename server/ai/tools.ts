@@ -3,10 +3,10 @@ import { z } from "zod";
 import { approvalsWaitingFor, myInformationSummary, myRequestsSummary, myTasksSummary, sourceDatasetCounts } from "@/lib/db/repositories/ai-data.repository";
 import { hasModule } from "@/server/modules/modules";
 import { createProposal } from "@/server/ai/proposals";
-import { countSalesforce, loadAllowlist, MAX_ROWS, querySalesforce, QueryRefused, SalesforceUnavailable } from "@/server/ai/connectors/salesforce-query";
+import { countSalesforce, describeObject, listObjects, loadAllowlist, MAX_ROWS, querySalesforce, QueryRefused, readsAllObjects, SalesforceUnavailable } from "@/server/ai/connectors/salesforce-query";
 import type { ToolSpec } from "@/server/ai/providers";
 import type { AiEvidence } from "@/lib/db/repositories/ai.repository";
-import type { ChatMode, SalesforceScope } from "@/server/ai/chat-access";
+import { salesforceScopeOf, type ChatMode, type SalesforceScope } from "@/server/ai/chat-access";
 import type { ModuleCode } from "@/types/auth";
 
 // D-169, D-172: the only things Pic bot can do. Each tool belongs to one chat
@@ -62,7 +62,7 @@ const filterSchema = {
 const filterArgs = z.array(z.object({ field: z.string().max(80), op: z.enum(["=", "!=", ">", "<", ">=", "<=", "LIKE"]), value: z.union([z.string().max(200), z.number(), z.boolean(), z.null()]) }).strict()).max(5);
 
 function salesforceContext(context: ToolContext) {
-  const scope = context.person.salesforceScope ?? "NONE";
+  const scope = salesforceScopeOf(context.person);
   if (scope === "NONE" || !context.person.email) throw new QueryRefused("Salesforce data isn't available to you.");
   return { email: context.person.email, scope, signal: context.signal, fetchImpl: context.fetchImpl };
 }
@@ -115,12 +115,35 @@ const TOOLS: readonly AiTool[] = [
     label: "Salesforce objects available",
     mode: "SALESFORCE",
     businessData: true,
-    spec: { name: "salesforce_objects", description: "The Salesforce objects and fields Pic bot may read for this person, and whether only their own records are visible. Call it first to choose objects and fields.", parameters: empty },
-    args: z.object({}).strict(),
-    run: async (context) => {
-      const scope = salesforceContext(context).scope;
+    spec: {
+      name: "salesforce_objects",
+      description: "The Salesforce objects (and, for a fixed list, fields) Pic bot may read for this person, and whether only their own records are visible. Call it first. If it says all objects are readable, pass search (e.g. 'opportunit') to find an object, then call salesforce_fields.",
+      parameters: { type: "object", properties: { search: { type: "string", maxLength: 60 } }, additionalProperties: false },
+    },
+    args: z.object({ search: z.string().max(60).optional() }).strict(),
+    run: async (context, args) => {
+      const sf = salesforceContext(context);
+      const scope = sf.scope;
+      if (await readsAllObjects()) {
+        const objects = await listObjects(String(args.search ?? ""), sf.fetchImpl, sf.signal);
+        return { result: { scope: scope === "OWN" ? "only records this person owns" : "all records they may see", objects: objects.slice(0, 120).map((item) => item.name), more: objects.length > 120 ? `${objects.length - 120} more; pass search to narrow` : null, fields: "call salesforce_fields with the object name", maxRows: MAX_ROWS }, source: SF };
+      }
       const allowlist = await loadAllowlist();
       return { result: { scope: scope === "OWN" ? "only records this person owns" : "all records of these objects they may see", objects: Object.fromEntries([...allowlist].map(([object, fields]) => [object, [...fields]])), maxRows: MAX_ROWS, copies: await sourceDatasetCounts("salesforce") }, source: SF };
+    },
+  },
+  {
+    label: "Salesforce fields",
+    mode: "SALESFORCE",
+    businessData: true,
+    spec: { name: "salesforce_fields", description: "The fields (name, label, type) of one Salesforce object, when all objects are readable. Use the names exactly in salesforce_query and salesforce_count.", parameters: { type: "object", properties: { object: { type: "string" } }, required: ["object"], additionalProperties: false } },
+    args: z.object({ object: z.string().max(80) }).strict(),
+    run: async (context, args) => {
+      const sf = salesforceContext(context);
+      if (!(await readsAllObjects())) throw new QueryRefused("Use salesforce_objects: only the listed objects and fields are available.");
+      const fields = await describeObject(String(args.object), sf.fetchImpl, sf.signal);
+      // Compact (name:type) to keep the answer small for providers with low token limits.
+      return { result: { object: args.object, fields: fields.slice(0, 200).map((field) => `${field.name}:${field.type}`), more: fields.length > 200 }, source: SF };
     },
   },
   {
@@ -192,7 +215,7 @@ function allowedNow(tool: AiTool, context: Pick<ToolContext, "person" | "dataMod
   if (tool.mode === null) return context.dataModes.length > 0; // propose_action: data conversations only
   if (!context.dataModes.includes(tool.mode)) return false;
   if (tool.module && !hasModule(context.person, tool.module)) return false;
-  if (tool.mode === "SALESFORCE" && (context.person.salesforceScope ?? "NONE") === "NONE") return false;
+  if (tool.mode === "SALESFORCE" && salesforceScopeOf(context.person) === "NONE") return false;
   return true;
 }
 
