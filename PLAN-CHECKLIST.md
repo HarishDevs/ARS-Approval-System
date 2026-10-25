@@ -17,6 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (25 Oct 2026):** v1.21.0: Admin → Records (approval requests, tasks, information) with filters, sorting and CSV (owner). **Owner:** publish; check the Records pages with real data.
 - **Now (25 Oct 2026):** v1.20.0: app-wide clean-up (instructions as hover hints in Admin, Super Admin, requests, modules, user pages, analytics) and the new public landing page "ARS Internal Workspace" (owner). **Owner:** publish; in Google Cloud, update the OAuth consent screen's app name and home page details to match "ARS Internal Workspace" (see D-188).
 - **Now (25 Oct 2026):** v1.19.0: Pic bot as a business analyst (ChatGPT-style, Markdown, metric cards, charts), AI Assistant chat list in the sidebar (search, pin, rename, delete), AI Rules (Admin), Try as for every person (private window, view-only), Salesforce Settings and AI Details for the Super Admin, provider-wise AI settings, hover hints and dropdowns/switches, themed scrollbars (owner). **Owner:** publish (migrations run on start); write the AI Rules; remove the test provider keys; rotate the Salesforce UAT secret.
 - **Now (24 Oct 2026):** v1.18.0: Salesforce "*" (all objects) and an unrestricted Super Admin in Pic bot (owner); Salesforce chat verified on the UAT sandbox (90 accounts). **Owner:** publish; for production consider a paid Groq tier or another provider (free tier is 8,000 tokens a minute); remove the test keys afterwards.
@@ -352,6 +353,8 @@ Plan: `docs/CHATBOT_IMPLEMENTATION_PLAN.md`; audit: `docs/CHATBOT_ARCHITECTURE_A
 - [x] PB-29 Declutter sweep: instructions as hover hints across Admin (forms, workflow builder, user form, module types, imports, dashboards), Super Admin, requests, modules, user pages, analytics and shared components; status, data, warnings and confirm text kept visible; 6 e2e tests moved to the hints (done 25 Oct 2026, v1.20.0)
 - [x] PB-30 Public landing page "ARS Internal Workspace" per the owner's spec: header, hero, footer; /login reused; title, description, manifest and title template renamed (done 25 Oct 2026, v1.20.0)
 - [x] PB-32 Home page on the sign-in split layout with a smooth welcome → sign-in transition; AuthLayout full height (done 25 Oct 2026, v1.20.1)
+- [x] PB-33 Admin → Records: three registers, filters, sorting, paging, CSV download; page access, nav; unit, integration and e2e tests (done 25 Oct 2026, v1.21.0)
+- [ ] PB-34 Owner choice: show the request amount in Records (needs a rule for confidential amount fields)
 - [ ] PB-31 Owner: Google OAuth consent screen app name and home page to match "ARS Internal Workspace"; re-check verification status (Q-025)
 - [ ] PB-15 Owner: allowed Salesforce objects and fields; then a Salesforce chat test (V-12); production Connected App with the production callback; rotate the UAT consumer secret (it was shared in chat)
 

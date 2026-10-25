@@ -1046,6 +1046,11 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 5. Super Admin addresses refuse anyone who isn't a Super Admin.
 6. "Sign-in & devices" is never restricted.
 
+## F-145 Admin records (v1.21.0, D-191)
+1. IT Admin or Super Admin opens **Admin → Records → Approval requests / Tasks / Information**.
+2. They filter (search, status, type, department, person, waiting on, priority, overdue, dates) and sort by a column title; 50 rows a page.
+3. **Download CSV** gives every matching row (up to 10,000) for Excel; audited. A row number opens the record.
+
 ## F-144 Public landing page (v1.20.0, D-188; supersedes the D-161 home page content)
 1. A signed-out visitor opens the home page: the sign-in split layout (brand panel left) with the welcome on the right ("Welcome to ARS Internal Workspace", "One workspace. Everything you need to work.", **Sign in to continue →**), IT Support, Privacy policy and Terms of use (v1.20.1, D-190; was a header/hero/footer page in v1.20.0).
 1a. **Sign in to continue** fades the welcome out and the sign-in form in; the brand panel stays.

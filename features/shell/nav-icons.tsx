@@ -1,5 +1,6 @@
 import {
   BookOpenCheck,
+  Sheet,
   Cloud,
   AlertTriangle,
   Plug,
@@ -78,6 +79,9 @@ const ICONS: Record<string, LucideIcon> = {
   "/users/ai/assistant": MessagesSquare,
   "/superadmin/ai": Sparkles,
   "/admin/ai-rules": BookOpenCheck,
+  "/admin/records/requests": Sheet,
+  "/admin/records/tasks": ListTodo,
+  "/admin/records/information": Newspaper,
   "/superadmin/salesforce": Cloud,
   // D-180: AI Details (Super Admin)
   "/superadmin/ai/data-sources": Database,

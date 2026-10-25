@@ -1,5 +1,14 @@
 # Release notes
 
+## v1.21.0 (25 Oct 2026): Admin → Records (owner)
+- **New in Admin: Records → Approval requests, Tasks, Information.** Every record in the app, whoever raised it, in one spreadsheet-style table each: numbered rows, a fixed header, scroll sideways for more columns.
+- **Approval requests:** number, title, type, raised by, department, status, current step, waiting on, approvals given, round, submitted, closed, days open.
+- **Tasks:** number, title, type, priority, status, overdue, assignee, department, assigned by, created, due, completed, related request.
+- **Information:** number, title, type, priority, status, created by, department, created, published, effective, expires, recipients, read, acknowledged.
+- **Filters:** search, status, type, department, person (raised by / assignee / created by), waiting on (requests), priority, overdue only (tasks), and a date range. Click a column title to sort.
+- **Download CSV** (opens in Excel) with the same filters, up to 10,000 rows; follows the "Can export" setting and is recorded in the audit log.
+- IT Admins and the Super Admin only; read-only; deleted requests are never shown.
+
 ## v1.20.1 (25 Oct 2026): home page on the sign-in layout (owner)
 - The home page now uses the same blue brand panel as the sign-in page, with the welcome on the white side.
 - **Sign in to continue** turns the welcome smoothly into the sign-in form; the brand panel stays in place. With reduced motion it simply opens.

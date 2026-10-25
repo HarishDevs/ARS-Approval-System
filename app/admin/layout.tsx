@@ -27,6 +27,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         { href: "/admin/insights", label: "Insights" },
         { href: "/admin/dashboards", label: "Dashboards" },
         { href: "/admin/workload", label: "Workload" },
+        // D-191 (owner): every record, whoever raised it.
+        { href: "/admin/records/requests", label: "Approval requests", section: "Records" },
+        { href: "/admin/records/tasks", label: "Tasks", section: "Records" },
+        { href: "/admin/records/information", label: "Information", section: "Records" },
         { href: "/admin/workflows", label: "Approval types & workflows", section: "Approval set-up" },
         { href: "/admin/custom-approval", label: "Custom approval", section: "Approval set-up" },
         { href: "/admin/groups", label: "Approver groups", section: "Approval set-up" },
