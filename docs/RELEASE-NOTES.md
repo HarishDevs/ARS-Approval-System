@@ -1,5 +1,14 @@
 # Release notes
 
+## v1.22.0 (25 Oct 2026): ARS-CMS, ready for arssteels.net, Pico Bot, AI Analytics, New chat fix, full site audit (owner)
+- **New name: ARS-CMS (Central Management System)** on the home page, sign-in, browser tabs, the installed app, emails, the privacy policy and terms, and in Pico Bot. WhatsApp wording keeps the Meta-approved text until the templates are resubmitted.
+- **Ready to move to arssteels.net:** every link comes from one setting (`APP_BASE_URL`); the old address can redirect page by page (`LEGACY_HOSTS`) while webhooks, the job runner and sign-in callbacks keep working. Step-by-step guide: docs/DOMAIN-MIGRATION.md.
+- **Fixed: six pages scrolled sideways on phones** (AI Analytics, Super Admin Requests, Automation, WhatsApp templates, AI Reports, Budgets): a hidden screen-reader label in wide tables, and wide charts in page grids, widened the page.
+- **Pico Bot** (Progress Insight Companion Bot) is the AI assistant's new name everywhere: the floating button, the chat panel, the assistant page, settings and messages.
+- **Fixed: New chat** after an answer took you back to the old chat. It now opens an empty chat and stays there (also from the sidebar).
+- **Admin → AI → AI Analytics:** adoption, questions, answered %, answer time, conversations, tokens and estimated cost, with the change from the previous period; questions and failures over time; by chat, department and data lookup; providers and models; top users; when people ask (weekday × hour); why answers failed; the daily limit. IT Admins and the Super Admin.
+- **Site audit:** an automated check now crawls every page each role can reach (desktop and a touch phone) for broken links, broken downloads, page and console errors, broken images and sideways scrolling, and runs with every release.
+
 ## v1.21.0 (25 Oct 2026): Admin → Records (owner)
 - **New in Admin: Records → Approval requests, Tasks, Information.** Every record in the app, whoever raised it, in one spreadsheet-style table each: numbered rows, a fixed header, scroll sideways for more columns.
 - **Approval requests:** number, title, type, raised by, department, status, current step, waiting on, approvals given, round, submitted, closed, days open.

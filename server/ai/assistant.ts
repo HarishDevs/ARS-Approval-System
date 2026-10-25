@@ -36,7 +36,7 @@ export type AskResult = { ok: true; conversationId: number; duplicate?: boolean 
 
 export function systemPrompt(input: { name: string; mode: ChatMode; dataModes: readonly ChatMode[]; withTools: boolean; today: string; rules?: string }): string {
   const scope = input.dataModes.map((mode) => MODE_LABEL[mode]).join(", ");
-  const lines = [`You are Pic bot - ai, the assistant inside ARS Approvals, the internal workplace app of ARS Steels. You are helping ${input.name}. Today is ${input.today}.`];
+  const lines = [`You are Pico Bot (Progress Insight Companion Bot), the assistant inside ARS-CMS (Central Management System), the internal workplace app of ARS Steels. You are helping ${input.name}. Today is ${input.today}.`];
   if (input.mode === "GENERAL") {
     lines.push(
       "This is a GENERAL chat: help with general knowledge, writing and reasoning.",
@@ -93,8 +93,8 @@ export async function askAssistant(
   input: { conversationId: number | null; mode?: ChatMode | null; question: string; requestKey?: string | null; signal?: AbortSignal; fetchImpl?: typeof fetch },
 ): Promise<AskResult> {
   const { policy, modes } = await chatAccess(person);
-  if (policy.emergencyStop) return { ok: false, code: "STOPPED", message: "Pic bot is switched off for now." };
-  if (!modes.length) return { ok: false, code: "NO_ACCESS", message: "Pic bot isn't available to you." };
+  if (policy.emergencyStop) return { ok: false, code: "STOPPED", message: "Pico Bot is switched off for now." };
+  if (!modes.length) return { ok: false, code: "NO_ACCESS", message: "Pico Bot isn't available to you." };
 
   // A retry of a question already sent: never asked twice. A failed one is
   // asked again in its own conversation, without storing the question again.
@@ -216,5 +216,5 @@ async function converse(
       turns.push({ role: "tool", toolCallId: call.id, name: call.name, content: result.content });
     }
   }
-  throw new ProviderError("BAD_ANSWER", "Pic bot kept asking for data without answering.", true);
+  throw new ProviderError("BAD_ANSWER", "Pico Bot kept asking for data without answering.", true);
 }

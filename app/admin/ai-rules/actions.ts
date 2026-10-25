@@ -25,7 +25,7 @@ export async function saveAiRuleAction(_previous: ActionResult | null, formData:
     const before = await saveAiRule(scope as RuleScope, content, actor.id);
     await recordAudit({ actorUserId: actor.id, action: "AI_RULES_CHANGED", entityType: "AI_RULES", entityId: scope, sessionId: actor.sessionId, ipAddress: actor.ipAddress, metadata: { before: fingerprint(before), after: fingerprint(content), length: content.length } });
     revalidatePath("/admin/ai-rules");
-    return { ok: true, message: "Saved. Pic bot follows these rules from the next question." };
+    return { ok: true, message: "Saved. Pico Bot follows these rules from the next question." };
   } catch (error) {
     logError("saveAiRuleAction failed", error);
     return { ok: false, message: "Couldn't save. Please try again." };

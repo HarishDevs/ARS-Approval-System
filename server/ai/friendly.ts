@@ -11,7 +11,7 @@ const RULES: readonly [RegExp, string][] = [
   [/unavailable|couldn't reach/i, "I can't reach the AI service right now. Please try again in a moment."],
   [/empty answer|ran out of room|kept asking|couldn't be read|tool call|tool choice/i, "I couldn't put that answer together. Try asking it a little differently."],
   [/approved for business data/i, "I can't use company data yet. IT needs to approve an AI provider for it."],
-  [/switched off|emergency/i, "Pic bot is switched off for now."],
+  [/switched off|emergency/i, "Pico Bot is switched off for now."],
 ];
 
 export function friendlyError(error: string | null | undefined): string {

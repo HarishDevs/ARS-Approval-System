@@ -17,6 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (25 Oct 2026):** v1.22.0: ARS-CMS name, ready for arssteels.net (docs/DOMAIN-MIGRATION.md), Pico Bot, AI Analytics, New chat fix (Bug 1), automated site audit, phone layout fix (owner). **Owner:** publish v1.22.0 first (on the current address), then follow docs/DOMAIN-MIGRATION.md.
 - **Now (25 Oct 2026):** v1.21.0: Admin → Records (approval requests, tasks, information) with filters, sorting and CSV (owner). **Owner:** publish; check the Records pages with real data.
 - **Now (25 Oct 2026):** v1.20.0: app-wide clean-up (instructions as hover hints in Admin, Super Admin, requests, modules, user pages, analytics) and the new public landing page "ARS Internal Workspace" (owner). **Owner:** publish; in Google Cloud, update the OAuth consent screen's app name and home page details to match "ARS Internal Workspace" (see D-188).
 - **Now (25 Oct 2026):** v1.19.0: Pic bot as a business analyst (ChatGPT-style, Markdown, metric cards, charts), AI Assistant chat list in the sidebar (search, pin, rename, delete), AI Rules (Admin), Try as for every person (private window, view-only), Salesforce Settings and AI Details for the Super Admin, provider-wise AI settings, hover hints and dropdowns/switches, themed scrollbars (owner). **Owner:** publish (migrations run on start); write the AI Rules; remove the test provider keys; rotate the Salesforce UAT secret.
@@ -354,6 +355,15 @@ Plan: `docs/CHATBOT_IMPLEMENTATION_PLAN.md`; audit: `docs/CHATBOT_ARCHITECTURE_A
 - [x] PB-30 Public landing page "ARS Internal Workspace" per the owner's spec: header, hero, footer; /login reused; title, description, manifest and title template renamed (done 25 Oct 2026, v1.20.0)
 - [x] PB-32 Home page on the sign-in split layout with a smooth welcome → sign-in transition; AuthLayout full height (done 25 Oct 2026, v1.20.1)
 - [x] PB-33 Admin → Records: three registers, filters, sorting, paging, CSV download; page access, nav; unit, integration and e2e tests (done 25 Oct 2026, v1.21.0)
+- [x] PB-35 Bug 1: New chat after an answer returned to the old chat; fixed and covered by e2e (done 25 Oct 2026, v1.22.0)
+- [x] PB-36 Rename the assistant to Pico Bot (Progress Insight Companion Bot) (done 25 Oct 2026, v1.22.0)
+- [x] PB-37 Admin → AI Analytics with unit, integration and e2e tests (done 25 Oct 2026, v1.22.0)
+- [x] PB-38 Automated site audit (all roles, desktop and touch phone) in the e2e suite; static internal-link check; npm audit 0 (done 25 Oct 2026, v1.22.0)
+- [x] PB-39 Rename to ARS-CMS (Central Management System) without touching Meta-approved WhatsApp wording (done 25 Oct 2026, v1.22.0)
+- [x] PB-40 Domain move prepared in code: single base-URL helper, LEGACY_HOSTS redirect (machine callers and OAuth callbacks exempt), unit tests, docs/DOMAIN-MIGRATION.md (done 25 Oct 2026, v1.22.0)
+- [x] PB-41 Phone layout: six pages scrolled sideways (sr-only label in wide tables); fixed globally (done 25 Oct 2026, v1.22.0)
+- [ ] PB-42 Owner: move to arssteels.net following docs/DOMAIN-MIGRATION.md (Steps 1–7)
+- [ ] PB-43 Owner, optional: resubmit WhatsApp templates with "ARS-CMS"; verify arssteels.net in Resend and switch the From address
 - [ ] PB-34 Owner choice: show the request amount in Records (needs a rule for confidential amount fields)
 - [ ] PB-31 Owner: Google OAuth consent screen app name and home page to match "ARS Internal Workspace"; re-check verification status (Q-025)
 - [ ] PB-15 Owner: allowed Salesforce objects and fields; then a Salesforce chat test (V-12); production Connected App with the production callback; rotate the UAT consumer secret (it was shared in chat)

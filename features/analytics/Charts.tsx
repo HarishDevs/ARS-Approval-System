@@ -483,7 +483,7 @@ export function StackedBar({
 // Every cell prints its number, so the shade is never the only cue.
 const HEAT_MIX = [0, 12, 28, 46, 66, 86];
 
-export function Heatmap({ title, help, rows, columns, cells, cellHref }: { title: string; help?: string; rows: string[]; columns: string[]; cells: Record<string, Record<string, number>>; cellHref?: (row: string, column: string) => string }) {
+export function Heatmap({ title, help, rows, columns, cells, cellHref, empty = "Nothing is waiting right now." }: { title: string; help?: string; rows: string[]; columns: string[]; cells: Record<string, Record<string, number>>; cellHref?: (row: string, column: string) => string; empty?: string }) {
   const max = Math.max(0, ...rows.flatMap((row) => columns.map((column) => cells[row]?.[column] ?? 0)));
   return (
     <section aria-label={title} className="card px-4 py-3">
@@ -492,7 +492,7 @@ export function Heatmap({ title, help, rows, columns, cells, cellHref }: { title
         <Hint text={help} align="start" />
       </h2>
       {rows.length === 0 || columns.length === 0 ? (
-        <p className="mt-2 text-label text-ink-muted">Nothing is waiting right now.</p>
+        <p className="mt-2 text-label text-ink-muted">{empty}</p>
       ) : (
         <div className="mt-3 overflow-x-auto">
           <table className="w-full border-separate text-caption" style={{ borderSpacing: 2 }}>

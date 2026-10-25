@@ -17,7 +17,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
           <svg viewBox="0 0 120 30" className="mb-6 h-8 w-auto" aria-hidden="true">
             <path d="M0 12 C30 30 80 28 118 0 C104 22 92 30 64 30 C36 30 14 22 0 12Z" fill="#ED1C25" />
           </svg>
-          <p className="text-label font-semibold uppercase tracking-[0.18em] text-white/80">ARS Steels · Internal Workspace</p>
+          <p className="text-label font-semibold uppercase tracking-[0.18em] text-white/80">ARS Steels · Central Management System</p>
           <h2 className="mt-4 text-[52px] font-bold leading-[1.05]">
             Every approval,
             <br />

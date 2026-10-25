@@ -52,7 +52,7 @@ function PasswordStep({ onChallenge, onDone }: { onChallenge: (c: Challenge) => 
   return (
     <>
       <h1 className="text-display font-bold">Welcome back</h1>
-      <p className="mt-2 text-[15px] text-ink-muted">Sign in to ARS Internal Workspace</p>
+      <p className="mt-2 text-[15px] text-ink-muted">Sign in to ARS-CMS</p>
 
       <form onSubmit={submit} className="mt-8 space-y-5" noValidate>
         <div>

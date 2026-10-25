@@ -4,9 +4,9 @@ import { getDbPool } from "@/lib/db/client";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { listUserIdsWithRole } from "@/lib/db/repositories/users.repository";
 import { notify } from "@/server/notifications/notify";
-import { getEnv } from "@/config/environment";
 import { logError } from "@/lib/logging/logger";
 import { getRunnerHeartbeat } from "@/lib/db/repositories/jobs.repository";
+import { appBaseUrl } from "@/lib/http/app-url";
 
 // #14: the Super Admin hears when the job runner or the daily backup fails,
 // at most once a day per kind (the audit log is the "already sent" record).
@@ -30,7 +30,7 @@ export async function alertSuperAdmin(kind: OpsAlertKind, reference: string | nu
     );
     if (sent.length > 0) return false;
     await recordAudit({ actorUserId: null, action: "OPS_ALERT_SENT", entityType: "SYSTEM", entityId: kind, metadata: { reference } });
-    const base = getEnv().APP_BASE_URL ?? "https://approval.arssteels.net";
+    const base = appBaseUrl();
     const text = TEXT[kind];
     const ref = reference ? ` Reference: ${reference}.` : "";
     for (const userId of await listUserIdsWithRole("SUPER_ADMIN")) {
@@ -40,7 +40,7 @@ export async function alertSuperAdmin(kind: OpsAlertKind, reference: string | nu
         title: text.title,
         message: `${text.body}${ref}`,
         deepLink: `${base}/superadmin`,
-        email: { subject: `ARS Approvals: ${text.title.toLowerCase()}`, text: `${text.body}${ref}\n\nCheck System health in the Super Admin area and the server log.\n${base}/superadmin\n\nYou get this at most once a day.` },
+        email: { subject: `ARS-CMS: ${text.title.toLowerCase()}`, text: `${text.body}${ref}\n\nCheck System health in the Super Admin area and the server log.\n${base}/superadmin\n\nYou get this at most once a day.` },
         whatsappVariables: null,
       });
     }

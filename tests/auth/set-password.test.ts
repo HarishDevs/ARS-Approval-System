@@ -121,7 +121,7 @@ describe("invite and reset password (D-166)", () => {
     expect(result).toEqual({ ok: true, value: expect.stringContaining("Invitation emailed to staff@example.com") });
     expect(tokens).toHaveLength(0);
     const [sent] = sentOf(deps);
-    expect(sent).toMatchObject({ eventType: "USER_INVITED", whatsappVariables: null, email: { subject: "You've been added to ARS Approvals" } });
+    expect(sent).toMatchObject({ eventType: "USER_INVITED", whatsappVariables: null, email: { subject: "You've been added to ARS-CMS" } });
     expect(sent!.email.text).toContain("https://approval.arssteels.net/login");
     expect(sent!.email.text).toContain("staff@example.com");
     expect(audits(deps)).toContain("USER_INVITED");
@@ -142,7 +142,7 @@ describe("invite and reset password (D-166)", () => {
     const withPassword = build(userRecord({ passwordHash: "scrypt$x" }));
     expect(await sendSetPasswordLinkWithDeps(5, admin(), withPassword.deps, "RESET")).toEqual({ ok: true, value: expect.stringContaining("Password reset link emailed") });
     const [reset] = sentOf(withPassword.deps);
-    expect(reset).toMatchObject({ eventType: "PASSWORD_RESET_LINK", email: { subject: "Reset your ARS Approvals password" } });
+    expect(reset).toMatchObject({ eventType: "PASSWORD_RESET_LINK", email: { subject: "Reset your ARS-CMS password" } });
     expect(reset!.email.text).toContain("current password still works");
     expect(audits(withPassword.deps)).toContain("PASSWORD_RESET_LINK_SENT");
 

@@ -7,7 +7,7 @@ import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { insertOutbox } from "@/lib/db/repositories/outbox.repository";
 import { deliverOutbox, type Actor } from "@/server/approvals/service";
 import { requestLink } from "@/server/approvals/messages";
-import { getEnv } from "@/config/environment";
+import { appBaseUrl } from "@/lib/http/app-url";
 
 // Request collaborators (v1.6.1, D-127). The requester (or IT) adds anyone
 // active in the organisation to follow a request: they can see it, comment
@@ -81,7 +81,7 @@ export async function addCollaborators(requestId: number, userIds: readonly numb
     await appendEvents(requestId, [{ type: "COLLABORATORS_ADDED", actorId: actor.id, userIds: fresh }], actor.id, connection);
     await recordAudit({ actorUserId: actor.id, action: "REQUEST_COLLABORATORS_ADDED", entityType: "REQUEST", entityId: requestId, metadata: { userIds: fresh } }, connection);
     const [names] = await connection.query<(RowDataPacket & { name: string })[]>("SELECT name FROM users WHERE id = ?", [actor.id]);
-    const link = requestLink(getEnv().APP_BASE_URL ?? "https://approval.arssteels.net", requestId);
+    const link = requestLink(appBaseUrl(), requestId);
     const ref = `${request.requestNo} · ${request.title}`;
     const outboxIds =
       options.notify === false

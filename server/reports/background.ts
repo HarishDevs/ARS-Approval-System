@@ -12,6 +12,7 @@ import { canExport, canUseReports } from "@/server/settings/features";
 import { notify } from "@/server/notifications/notify";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { logError } from "@/lib/logging/logger";
+import { appBaseUrl } from "@/lib/http/app-url";
 
 // v1.7.0 (C02): large exports made in the background. Requested from a
 // report page; the job runner (or the request itself, right after it is
@@ -109,7 +110,7 @@ export async function runExportJob(id: number): Promise<"DONE" | "FAILED" | "SKI
       [stored, ran.result.rows.length, bytes.byteLength, ran.result.truncated ? `First ${cap.toLocaleString("en-IN")} rows only.` : null, EXPORT_KEEP_DAYS, id],
     );
     await recordAudit({ actorUserId: job.user_id, action: "REPORT_EXPORTED", entityType: "REPORT", entityId: job.report_key, metadata: { format: job.format, scope: ran.scope.kind, rows: ran.result.rows.length, truncated: ran.result.truncated, background: true, exportId: id } });
-    const base = getEnv().APP_BASE_URL ?? "https://approval.arssteels.net";
+    const base = appBaseUrl();
     await notify({
       eventType: "EXPORT_READY",
       userId: job.user_id,

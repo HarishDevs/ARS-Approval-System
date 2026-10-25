@@ -9,12 +9,12 @@ import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { appendEvents } from "@/lib/db/repositories/approvals.repository";
 import { notify } from "@/server/notifications/notify";
 import { requestLink } from "@/server/approvals/messages";
-import { getEnv } from "@/config/environment";
 import { logError } from "@/lib/logging/logger";
 import type { Actor, Result } from "@/server/approvals/service";
+import { appBaseUrl } from "@/lib/http/app-url";
 
 const isAdmin = (actor: Actor) => actor.roles.includes("IT_ADMIN") || actor.roles.includes("SUPER_ADMIN");
-const baseUrl = () => getEnv().APP_BASE_URL ?? "https://approval.arssteels.net";
+const baseUrl = () => appBaseUrl();
 const canSee = async (requestId: number, requesterId: number, actor: Actor) => requesterId === actor.id || isAdmin(actor) || (await isParticipant(requestId, actor.id));
 
 // Who may ask for advice: someone this request is waiting on right now (or

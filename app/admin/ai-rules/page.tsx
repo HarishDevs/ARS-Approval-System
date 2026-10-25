@@ -17,7 +17,7 @@ export default async function AiRulesPage() {
     <>
       <PageHeader
         title="AI Rules"
-        description="Teach Pic bot your company's terms and where things are kept, e.g. 'Dealers are Salesforce Accounts with Type = Dealer; customers are Accounts with Type = Customer'. Every AI provider follows these rules with every question. They can't override Pic bot's safety rules (read-only, people's permissions, no invented figures)."
+        description="Teach Pico Bot your company's terms and where things are kept, e.g. 'Dealers are Salesforce Accounts with Type = Dealer; customers are Accounts with Type = Customer'. Every AI provider follows these rules with every question. They can't override Pico Bot's safety rules (read-only, people's permissions, no invented figures)."
       />
       <RulesEditor rules={rules.map((rule) => ({ scope: rule.scope, content: rule.content, updatedBy: rule.updatedBy, updatedAt: rule.updatedAt ? rule.updatedAt.toISOString() : null }))} maxChars={MAX_RULES_CHARS} />
     </>

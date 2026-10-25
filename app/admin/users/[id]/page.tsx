@@ -110,7 +110,7 @@ export default async function UserDetailPage({ params, searchParams }: { params:
               </dd>
               <dt className="text-ink-muted">Modules</dt>
               <dd data-testid="user-modules">{user.roles.includes("SUPER_ADMIN") ? "All (Super Admin)" : user.modules.map((module) => MODULE_LABEL[module]).join(", ") || "None"}</dd>
-              <dt className="text-ink-muted">Pic bot</dt>
+              <dt className="text-ink-muted">Pico Bot</dt>
               <dd data-testid="user-chat-modes">{user.chatModes.map((chatMode) => MODE_LABEL[chatMode]).join(", ") || "None"}{user.salesforceScope !== "NONE" ? ` · Salesforce: ${user.salesforceScope === "OWN" ? "own records" : "all allowed"}` : ""}</dd>
               <dt className="text-ink-muted">Last sign-in</dt>
               <dd>{user.lastLoginAt ? formatIndiaTime(user.lastLoginAt) : "Never"}</dd>

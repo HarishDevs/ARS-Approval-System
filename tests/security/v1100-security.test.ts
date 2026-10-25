@@ -81,3 +81,27 @@ describe("SEC-06: list sorting and search can't change the SQL", () => {
     expect(sql.where.join(" ")).not.toContain("OR 1=1");
   });
 });
+
+describe("moving domains (D-196)", () => {
+  it("with LEGACY_HOSTS, a visit to the old address goes to the same page on the new one", async () => {
+    vi.stubEnv("LEGACY_HOSTS", "approval.arssteels.net");
+    vi.stubEnv("APP_BASE_URL", "https://arssteels.net");
+    const response = await middleware(req("/users/requests/7?tab=history", { headers: { host: "approval.arssteels.net" } }));
+    expect(response.status).toBe(308);
+    expect(response.headers.get("location")).toBe("https://arssteels.net/users/requests/7?tab=history");
+  });
+
+  it("machine calls and OAuth callbacks on the old address are still served, and the new address isn't redirected", async () => {
+    vi.stubEnv("LEGACY_HOSTS", "approval.arssteels.net");
+    vi.stubEnv("APP_BASE_URL", "https://arssteels.net");
+    for (const path of ["/api/jobs/run", "/api/webhooks/ceoitbox", "/api/integrations/google-calendar/callback?code=x"]) {
+      expect((await middleware(req(path, { headers: { host: "approval.arssteels.net" } }))).status, path).not.toBe(308);
+    }
+    expect((await middleware(new NextRequest(new URL("/login", "https://arssteels.net"), { headers: { host: "arssteels.net" } }))).status).not.toBe(308);
+  });
+
+  it("without LEGACY_HOSTS nothing is redirected", async () => {
+    vi.stubEnv("APP_BASE_URL", "https://arssteels.net");
+    expect((await middleware(req("/login", { headers: { host: "approval.arssteels.net" } }))).status).not.toBe(308);
+  });
+});

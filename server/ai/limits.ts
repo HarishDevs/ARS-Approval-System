@@ -72,14 +72,14 @@ export class ConcurrencyGate {
       this.running += 1;
       return Promise.resolve();
     }
-    if (this.queue.length >= limit * QUEUE_FACTOR) return Promise.reject(new LimitError("SERVER_BUSY", "Pic bot is busy right now. Try again in a minute."));
+    if (this.queue.length >= limit * QUEUE_FACTOR) return Promise.reject(new LimitError("SERVER_BUSY", "Pico Bot is busy right now. Try again in a minute."));
     return new Promise<void>((resolve, reject) => {
       const waiter: Waiter = {
         resolve: () => resolve(),
         reject,
         timer: setTimeout(() => {
           this.drop(waiter);
-          reject(new LimitError("SERVER_BUSY", "Pic bot is busy right now. Try again in a minute."));
+          reject(new LimitError("SERVER_BUSY", "Pico Bot is busy right now. Try again in a minute."));
         }, MAX_WAIT_MS),
       };
       this.queue.push(waiter);

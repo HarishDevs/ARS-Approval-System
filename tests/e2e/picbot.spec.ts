@@ -60,7 +60,7 @@ test.afterAll(async () => {
   for (const key of ["ai.active_provider", "ai.claude.api_key", "ai.claude.model", "ai.claude.business_data", "ai.requests_per_minute"]) await setting(key, null);
 });
 
-test("no AI module: no launcher, and every Pic bot API is a 404", async ({ page, context }) => {
+test("no AI module: no launcher, and every Pico Bot API is a 404", async ({ page, context }) => {
   await context.addCookies([await sessionCookie("E2E_REQ")]);
   await page.goto("/users");
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
@@ -69,33 +69,33 @@ test("no AI module: no launcher, and every Pic bot API is a 404", async ({ page,
   expect((await page.request.post("/api/ai/chat", { data: { conversationId: null, mode: "APPROVAL", question: "hi", requestKey: crypto.randomUUID() } })).status()).toBe(404);
 });
 
-test("the launcher shows the Pic bot logo; the panel answers with evidence, minimises, closes with Escape and keeps history", async ({ page, context }) => {
+test("the launcher shows the Pico Bot logo; the panel answers with evidence, minimises, closes with Escape and keeps history", async ({ page, context }) => {
   await person(`PB_A_${tag}`, "APPROVAL,AI", "APPROVAL");
   await context.addCookies([await sessionCookie(`PB_A_${tag}`)]);
   await page.goto("/users");
   const launcher = page.getByTestId("picbot-launcher");
-  await expect(launcher).toHaveAccessibleName("Open Pic bot - ai");
+  await expect(launcher).toHaveAccessibleName("Open Pico Bot");
   await expect(launcher.locator("img")).toHaveAttribute("src", "/brand/pic-bot.jpg");
   await launcher.click();
-  const panel = page.getByRole("dialog", { name: "Pic bot - ai" });
+  const panel = page.getByRole("dialog", { name: "Pico Bot" });
   await expect(panel).toBeVisible();
-  await expect(panel.getByRole("heading", { name: "Pic bot - ai" })).toBeVisible();
+  await expect(panel.getByRole("heading", { name: "Pico Bot" })).toBeVisible();
   await expect(page.getByTestId("picbot-scope")).toHaveText("Using: Approvals");
-  await expect(panel.getByLabel("Message Pic bot")).toBeFocused();
-  await panel.getByLabel("Message Pic bot").fill("What is waiting for me?");
-  await panel.getByLabel("Message Pic bot").press("Enter");
+  await expect(panel.getByLabel("Message Pico Bot")).toBeFocused();
+  await panel.getByLabel("Message Pico Bot").fill("What is waiting for me?");
+  await panel.getByLabel("Message Pico Bot").press("Enter");
   const answer = page.getByTestId("picbot-answer");
   await expect(answer).toContainText(`Answer for Person PB_A_${tag}: 0 waiting.`);
-  await expect(answer.locator('[data-tip^="From ARS Approvals"]')).toHaveCount(1); // D-178: the source is in the hover hint
+  await expect(answer.locator('[data-tip^="From ARS-CMS"]')).toHaveCount(1); // D-178: the source is in the hover hint
   await expect(answer.getByRole("button", { name: "Copy this answer" })).toBeVisible();
   await page.screenshot({ path: "test-results/picbot-panel.png" });
 
-  await panel.getByRole("button", { name: "Minimise Pic bot" }).click();
+  await panel.getByRole("button", { name: "Minimise Pico Bot" }).click();
   await expect(panel).toHaveCount(0);
   await page.getByTestId("picbot-launcher").click();
   await expect(page.getByTestId("picbot-answer")).toBeVisible(); // the same chat
   await page.keyboard.press("Escape");
-  await expect(page.getByRole("dialog", { name: "Pic bot - ai" })).toHaveCount(0);
+  await expect(page.getByRole("dialog", { name: "Pico Bot" })).toHaveCount(0);
   await expect(page.getByTestId("picbot-launcher")).toBeFocused();
 
   await page.getByTestId("picbot-launcher").click();
@@ -183,15 +183,38 @@ test("the Super Admin sees the Salesforce connection with its callback URL; Conn
   await expect(page.getByTestId("ai-live")).toContainText("being answered");
 });
 
-test("an admin sets a person's Pic bot chat modes and Salesforce scope; they persist", async ({ page, context }) => {
+test("an admin sets a person's Pico Bot chat modes and Salesforce scope; they persist", async ({ page, context }) => {
   const id = await person(`PB_D_${tag}`, "APPROVAL,AI", "APPROVAL");
   await context.addCookies([await sessionCookie("E2E_ADMIN")]);
   await page.goto(`/admin/users/${id}`);
   const chat = page.getByTestId("chat-access");
   await chat.getByRole("checkbox", { name: /^Salesforce data/ }).check();
-  await chat.getByLabel("Salesforce records Pic bot may read for this person").selectOption("OWN");
+  await chat.getByLabel("Salesforce records Pico Bot may read for this person").selectOption("OWN");
   await page.getByRole("button", { name: "Save changes" }).click();
   await expect(page.getByText("Saved.")).toBeVisible();
   await page.reload();
   await expect(page.getByTestId("user-chat-modes")).toHaveText("Approvals, Salesforce data · Salesforce: own records");
+});
+
+test("Bug 1: after an answer, New chat opens an empty chat and stays there (sidebar too)", async ({ page, context }) => {
+  await person(`PB_N_${tag}`, "APPROVAL,AI", "APPROVAL");
+  await context.addCookies([await sessionCookie(`PB_N_${tag}`)]);
+  await page.goto("/users/ai/assistant");
+  await page.getByLabel("Your question").fill("What is waiting for me?");
+  await page.getByLabel("Your question").press("Enter");
+  await expect(page).toHaveURL(/\/users\/ai\/assistant\?c=\d+$/);
+  await expect(page.getByTestId("ai-answer")).toContainText(`Answer for Person PB_N_${tag}`);
+  await page.getByTestId("ai-strip").getByRole("link", { name: "New chat" }).click();
+  await expect(page).toHaveURL(/\/users\/ai\/assistant$/);
+  await page.waitForTimeout(1000); // the old answer must not pull the page back
+  await expect(page).toHaveURL(/\/users\/ai\/assistant$/);
+  await expect(page.getByTestId("ai-answer")).toHaveCount(0);
+  await expect(page.getByLabel("Your question")).toHaveValue("");
+  // The same from the sidebar's AI Assistant header, starting from the chat.
+  await page.getByTestId("sidebar").getByTestId("nav-chats").getByRole("link").first().click();
+  await expect(page).toHaveURL(/\?c=\d+$/);
+  await page.getByTestId("sidebar").getByRole("button", { name: "AI Assistant" }).click();
+  await expect(page).toHaveURL(/\/users\/ai\/assistant$/);
+  await page.waitForTimeout(1000);
+  await expect(page).toHaveURL(/\/users\/ai\/assistant$/);
 });

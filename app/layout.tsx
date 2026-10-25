@@ -14,8 +14,8 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "sw
 
 export const metadata: Metadata = {
   // D-188 (owner): the visible name is ARS Internal Workspace.
-  title: { default: "ARS Internal Workspace", template: "%s · ARS Internal Workspace" },
-  description: "ARS Internal Workspace — the internal digital workspace for ARS Steels & Alloy International Pvt. Ltd.",
+  title: { default: "ARS-CMS", template: "%s · ARS-CMS" },
+  description: "ARS-CMS — the Central Management System of ARS Steels & Alloy International Pvt. Ltd.",
   robots: { index: false, follow: false },
   // WEB-04 (v1.10.0): the ARS mark as SVG, with PNG and ICO fallbacks made
   // from the same brand icon for browsers that don't take SVG.
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     shortcut: "/favicon.ico",
     apple: "/icons/apple-touch-icon.png",
   },
-  appleWebApp: { capable: true, title: "ARS Workspace", statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: "ARS-CMS", statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {

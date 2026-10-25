@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
       header = ["Month", "Requests raised", "Requests completed", "Tasks created", "Tasks completed", "Information published", "Acknowledgements"];
       rows = result.map((row) => [row.month, row.requestsRaised, row.requestsClosed, row.tasksCreated, row.tasksCompleted, row.infoPublished, row.acknowledgements]);
     }
-    const intro = toCsv(["ARS Approvals analytics export"], [
+    const intro = toCsv(["ARS-CMS analytics export"], [
       [`Board: ${kind}`],
       [`Scope: ${scope.label}`],
       [kind === "monthly" ? "Period: last 24 months (India time)" : `Period: ${period.from} to ${period.to} (India time)`],

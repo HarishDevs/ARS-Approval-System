@@ -147,7 +147,7 @@ function where(spec: Pick<QuerySpec, "object" | "filters">, allowed: Set<string>
 // Pure: the SOQL for a validated spec (throws QueryRefused otherwise).
 export function buildSelect(spec: QuerySpec, allowlist: Allowlist, ownerId: string | null): string {
   const allowed = allowlist.get(spec.object);
-  if (!allowed) throw new QueryRefused(`The object ${spec.object} isn't available to Pic bot.`);
+  if (!allowed) throw new QueryRefused(`The object ${spec.object} isn't available to Pico Bot.`);
   const fields = [...new Set(["Id", ...spec.fields])];
   for (const field of fields) if (!allowed.has(field)) throw new QueryRefused(`The field ${field} isn't available.`);
   let soql = `SELECT ${fields.join(", ")} FROM ${spec.object}${where(spec, allowed, ownerId)} WITH USER_MODE`;
@@ -160,7 +160,7 @@ export function buildSelect(spec: QuerySpec, allowlist: Allowlist, ownerId: stri
 
 export function buildCount(spec: Pick<QuerySpec, "object" | "filters">, allowlist: Allowlist, ownerId: string | null): string {
   const allowed = allowlist.get(spec.object);
-  if (!allowed) throw new QueryRefused(`The object ${spec.object} isn't available to Pic bot.`);
+  if (!allowed) throw new QueryRefused(`The object ${spec.object} isn't available to Pico Bot.`);
   return `SELECT COUNT() FROM ${spec.object}${where(spec, allowed, ownerId)} WITH USER_MODE`;
 }
 
@@ -219,7 +219,7 @@ export interface GroupSpec {
 
 export function buildGroup(spec: GroupSpec, allowlist: Allowlist, ownerId: string | null): string {
   const allowed = allowlist.get(spec.object);
-  if (!allowed) throw new QueryRefused(`The object ${spec.object} isn't available to Pic bot.`);
+  if (!allowed) throw new QueryRefused(`The object ${spec.object} isn't available to Pico Bot.`);
   if (!allowed.has(spec.groupBy)) throw new QueryRefused(`The field ${spec.groupBy} isn't available.`);
   if (!(AGGREGATES as readonly string[]).includes(spec.aggregate)) throw new QueryRefused("Unsupported aggregate.");
   let measure = "COUNT(Id)";

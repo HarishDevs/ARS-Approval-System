@@ -13,9 +13,9 @@ import { financialYear } from "@/server/workflows/type-settings";
 import { sendEmail } from "@/server/integrations/resend/client";
 import { getEmailConfig } from "@/server/settings/values";
 import { notify } from "@/server/notifications/notify";
-import { getEnv } from "@/config/environment";
 import { logError } from "@/lib/logging/logger";
 import { canExport, canUseReports, featureMode } from "@/server/settings/features";
+import { appBaseUrl } from "@/lib/http/app-url";
 
 // D-124: OFF stops both jobs; IT_ONLY runs only for IT team owners.
 async function allowedFor(person: Owner): Promise<boolean> {
@@ -27,7 +27,7 @@ async function allowedFor(person: Owner): Promise<boolean> {
 // run inside the job runner and always use the owner's permissions at the
 // time they run; an inactive owner's schedules and alerts are paused.
 export const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
-const base = () => getEnv().APP_BASE_URL ?? "https://approval.arssteels.net";
+const base = () => appBaseUrl();
 
 interface Owner {
   id: number;
@@ -230,7 +230,7 @@ export async function runDueSchedules(limit = 20): Promise<{ reportsSent: number
           await getEmailConfig(),
           {
             to: entry.person.email,
-            subject: `ARS Approvals: ${entry.ran.report.name} (${describeSchedule(row).toLowerCase()})`,
+            subject: `ARS-CMS: ${entry.ran.report.name} (${describeSchedule(row).toLowerCase()})`,
             text: `${entry.ran.report.name}\n${meta.scopeLabel}${meta.periodLabel ? ` · ${meta.periodLabel}` : ""}\n${entry.ran.result.rows.length} row${entry.ran.result.rows.length === 1 ? "" : "s"}${entry.ran.result.truncated ? " (first rows only)" : ""}.\n\n${attach ? "The report is attached." : "The report is too large to attach."} Open it in the app:\n${link}\n\n${why} Manage schedules: ${base()}/admin/reports`,
             attachments: attach ? [{ filename: fileName(row.reportKey, row.format, now), content: file }] : undefined,
           },
@@ -410,7 +410,7 @@ export async function evaluateAlerts(limit = 200): Promise<{ alertsChecked: numb
           title: `${level}: a number crossed your line`,
           message,
           deepLink: `${base()}/admin/analytics?scope=${rule.scopeKind}`,
-          email: rule.channels === "INBOX" ? null : { subject: `ARS Approvals ${level.toLowerCase()}: ${label}`, text: `${message}\n\nOpen Analytics: ${base()}/admin/analytics?scope=${rule.scopeKind}\n\nYou get this at most once every ${rule.cooldownHours} hours while it stays over the line. Manage your alerts: ${base()}/admin/reports#alerts` },
+          email: rule.channels === "INBOX" ? null : { subject: `ARS-CMS ${level.toLowerCase()}: ${label}`, text: `${message}\n\nOpen Analytics: ${base()}/admin/analytics?scope=${rule.scopeKind}\n\nYou get this at most once every ${rule.cooldownHours} hours while it stays over the line. Manage your alerts: ${base()}/admin/reports#alerts` },
           whatsappVariables: null,
         }).catch((error) => logError("alert notify failed", error, { ruleId: rule.id }));
         out.alertsFired += 1;

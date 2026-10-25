@@ -7,7 +7,6 @@ import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { withTransaction } from "@/lib/db/transaction";
 import { keyedHash } from "@/lib/security/hashing";
 import { checkPasswordPolicy, hashPassword } from "@/lib/security/password";
-import { getEnv } from "@/config/environment";
 import { getAuthSecurityConfig, type AuthSecurityConfig } from "@/server/settings/values";
 import { notify, type NotifyInput, type NotifySummary } from "@/server/notifications/notify";
 import { googleInvitationMessage, passwordChangedMessage, passwordInvitationMessage, passwordResetLinkMessage, setPasswordLinkMessage } from "@/server/notifications/security-messages";
@@ -18,6 +17,7 @@ import { completeSignIn, defaultCompleteSignInDeps, type CompleteSignInDeps, typ
 import { checkCanEdit, checkContactChange, type Actor } from "@/server/admin/user-rules";
 import { logError } from "@/lib/logging/logger";
 import type { RequestContext } from "@/types/auth";
+import { appBaseUrl } from "@/lib/http/app-url";
 
 // F-04: set password (first sign-in, P1-13) and forgot password (P1-14).
 // Both end with a WhatsApp code to the number on file (D-025), then set the
@@ -61,7 +61,7 @@ const defaultDeps: PasswordFlowDeps = {
   // Runs after the response is sent, so a real account and an unknown one
   // answer in the same time (forgot password, anti-enumeration).
   defer: (work) => after(() => work().catch((error) => logError("deferred password-flow work failed", error))),
-  appBaseUrl: () => getEnv().APP_BASE_URL ?? "https://approval.arssteels.net",
+  appBaseUrl: () => appBaseUrl(),
   complete: defaultCompleteSignInDeps,
 };
 

@@ -5,7 +5,7 @@ import { MailLink } from "@/features/ui/MailLink";
 
 export const metadata: Metadata = {
   title: "Terms of use",
-  description: "Terms for using ARS Approvals, the internal approval, task and information platform of ARS.",
+  description: "Terms for using ARS-CMS, the internal approval, task and information platform of ARS.",
   robots: { index: true, follow: true },
 };
 
@@ -18,7 +18,7 @@ export default function TermsPage() {
         <h1>Terms of use</h1>
         <p className="text-label text-ink-muted">Effective 17 October 2026</p>
         <p>
-          ARS Approvals (approval.arssteels.net) is provided by {COMPANY} (&ldquo;ARS&rdquo;) for its employees to carry out company work. By signing in you agree to these terms and to ARS&apos;s
+          ARS-CMS (arssteels.net) is provided by {COMPANY} (&ldquo;ARS&rdquo;) for its employees to carry out company work. By signing in you agree to these terms and to ARS&apos;s
           policies that apply to company systems.
         </p>
         <h2>Who may use it</h2>
@@ -31,7 +31,7 @@ export default function TermsPage() {
         </ul>
         <h2>Google Calendar</h2>
         <p>
-          Connecting your Google Calendar is optional. You can disconnect it at any time from Profile → Calendar. A calendar event never approves, completes or acknowledges anything in ARS Approvals:
+          Connecting your Google Calendar is optional. You can disconnect it at any time from Profile → Calendar. A calendar event never approves, completes or acknowledges anything in ARS-CMS:
           those actions are taken only in the app. How Google data is handled is described in the <Link href="/privacy" className="link">privacy policy</Link>.
         </p>
         <h2>Records and monitoring</h2>

@@ -41,7 +41,6 @@ import { approverStatuses } from "@/lib/db/repositories/approvers.repository";
 import { loadFieldLookups } from "@/lib/db/repositories/lookups.repository";
 import { listUserIdsWithRole } from "@/lib/db/repositories/users.repository";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
-import { getEnv } from "@/config/environment";
 import { notify } from "@/server/notifications/notify";
 import { messagesForEvents } from "@/server/approvals/messages";
 import { answerInformation, askForInformation, decide, putOnHold, reassignTask, recall, reopen, resolveBlocked, resubmit, resume, simulate, startInstance, validateWorkflow, withdraw, EngineError } from "@/server/engine";
@@ -56,6 +55,7 @@ import { logError } from "@/lib/logging/logger";
 import { DEFAULT_CUSTOM_FORM, loadCustomConfig } from "@/server/approvals/custom-config";
 import { applyStepPolicy } from "@/server/workflows/step-policy";
 import type { RoleCode } from "@/types/auth";
+import { appBaseUrl } from "@/lib/http/app-url";
 
 // The multi-level approval service (north star, S2-06, F-11 to F-13). The
 // engine decides; this layer loads, locks, saves and tells people.
@@ -352,7 +352,7 @@ async function prepareMessages(
   return messagesForEvents(
     change.events,
     { id: change.request.id, requestNo: change.request.requestNo, title: change.request.title, requesterId: change.request.requesterId, requesterName: change.requesterName },
-    { baseUrl: getEnv().APP_BASE_URL ?? "https://approval.arssteels.net", adminIds, labelOf, isWorkStep, collaboratorIds: followers.map((row) => row.user_id) },
+    { baseUrl: appBaseUrl(), adminIds, labelOf, isWorkStep, collaboratorIds: followers.map((row) => row.user_id) },
   );
 }
 

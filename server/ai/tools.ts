@@ -42,7 +42,7 @@ interface AiTool {
   run: (context: ToolContext, args: Record<string, unknown>) => Promise<{ result: unknown; source: string; links?: { label: string; href: string }[] }>;
 }
 
-const ARS = "ARS Approvals (live)";
+const ARS = "ARS-CMS (live)";
 const SF = "Salesforce (live, read-only)";
 const empty = { type: "object", properties: {}, additionalProperties: false };
 const filterSchema = {
@@ -117,7 +117,7 @@ const TOOLS: readonly AiTool[] = [
     businessData: true,
     spec: {
       name: "salesforce_objects",
-      description: "The Salesforce objects (and, for a fixed list, fields) Pic bot may read for this person, and whether only their own records are visible. Call it first. If it says all objects are readable, pass search (e.g. 'opportunit') to find an object, then call salesforce_fields.",
+      description: "The Salesforce objects (and, for a fixed list, fields) Pico Bot may read for this person, and whether only their own records are visible. Call it first. If it says all objects are readable, pass search (e.g. 'opportunit') to find an object, then call salesforce_fields.",
       parameters: { type: "object", properties: { search: { type: "string", maxLength: 60 } }, additionalProperties: false },
     },
     args: z.object({ search: z.string().max(60).optional() }).strict(),
@@ -234,7 +234,7 @@ const TOOLS: readonly AiTool[] = [
     args: z.object({ kind: z.enum(["REMINDER", "FOLLOW_UP", "REVIEW", "OTHER"]), title: z.string().trim().min(3).max(200), details: z.string().trim().min(10).max(2000) }).strict(),
     run: async (context, args) => {
       const proposal = await createProposal(context.person, { conversationId: context.conversationId, kind: args.kind as "REMINDER", title: String(args.title), details: String(args.details), evidence: context.evidence });
-      return { result: { proposalId: proposal.id, status: "PENDING", approver: proposal.approverLabel, note: "Recorded for a person to approve or reject. Nothing has been carried out." }, source: "ARS Approvals", links: [{ label: "Insights & Recommendations", href: "/users/ai/insights" }] };
+      return { result: { proposalId: proposal.id, status: "PENDING", approver: proposal.approverLabel, note: "Recorded for a person to approve or reject. Nothing has been carried out." }, source: "ARS-CMS", links: [{ label: "Insights & Recommendations", href: "/users/ai/insights" }] };
     },
   },
 ];

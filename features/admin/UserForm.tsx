@@ -149,12 +149,12 @@ export function UserForm({
           </fieldset>
         )}
 
-        {/* D-172: Pic bot - ai chat access. Only takes effect with the AI module, and
+        {/* D-172: Pico Bot chat access. Only takes effect with the AI module, and
             only for modes the Super Admin has switched on (AI settings).
             D-176: the Super Admin has every chat and all Salesforce records. */}
         {values.roles.includes("SUPER_ADMIN") ? (
           <div className="sm:col-span-2" data-testid="chat-access">
-            <p className="field-label">Pic bot - ai: what this person may ask about</p>
+            <p className="field-label">Pico Bot: what this person may ask about</p>
             <p className="rounded-md border border-line p-3 text-label text-ink-muted">
               Every chat: {CHAT_MODES.map((chatMode) => MODE_LABEL[chatMode]).join(", ")}, with all Salesforce records. The Super Admin isn&apos;t limited here; only the emergency stop applies.
             </p>
@@ -162,7 +162,7 @@ export function UserForm({
         ) : (
         <fieldset className="sm:col-span-2" data-testid="chat-access" disabled={Boolean(moduleLock)}>
           <legend className="field-label">
-            Pic bot - ai: what this person may ask about{" "}
+            Pico Bot: what this person may ask about{" "}
             <Hint text="Needs the AI module above. A module chat also needs that module. General, Salesforce and Combined chat must also be switched on in AI settings." align="start" />
           </legend>
           {!moduleLock && <input type="hidden" name="chatShown" value="1" />}
@@ -178,7 +178,7 @@ export function UserForm({
             ))}
           </div>
           <label htmlFor="salesforceScope" className="field-label mt-3">
-            Salesforce records Pic bot may read for this person
+            Salesforce records Pico Bot may read for this person
           </label>
           <select id="salesforceScope" name="salesforceScope" defaultValue={values.salesforceScope} className="field-input sm:w-96">
             <option value="NONE">None</option>

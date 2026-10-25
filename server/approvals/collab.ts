@@ -16,14 +16,14 @@ import { findUserById, findUserByLoginId } from "@/lib/db/repositories/users.rep
 import { parseMentions } from "@/server/approvals/mentions";
 import { withTransaction } from "@/lib/db/transaction";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
-import { getEnv } from "@/config/environment";
 import { notify } from "@/server/notifications/notify";
 import { requestLink } from "@/server/approvals/messages";
 import { logError } from "@/lib/logging/logger";
 import type { Actor, Result } from "@/server/approvals/service";
+import { appBaseUrl } from "@/lib/http/app-url";
 
 const isAdmin = (actor: Actor) => actor.roles.includes("IT_ADMIN") || actor.roles.includes("SUPER_ADMIN");
-const baseUrl = () => getEnv().APP_BASE_URL ?? "https://approval.arssteels.net";
+const baseUrl = () => appBaseUrl();
 
 // ---- comments (F-15, D-061) -------------------------------------------------------
 // #9: who a comment mentions and who of them may see the request. Someone

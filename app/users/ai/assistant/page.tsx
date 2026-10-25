@@ -43,7 +43,7 @@ export default async function AiAssistantPage({ searchParams }: { searchParams: 
   const suggestions = offerOrder(chat.modes).flatMap((mode) => SUGGESTIONS[mode] ?? []).slice(0, 4);
   const firstName = user.name.split(" ")[0] ?? user.name;
   const about = enabled
-    ? `Answered by ${PROVIDER_LABEL[route[0] as ProviderCode]}${route[1] ? ` (or ${PROVIDER_LABEL[route[1] as ProviderCode]})` : ""}. Figures come from your data; Pic bot can't approve, send or change anything.`
+    ? `Answered by ${PROVIDER_LABEL[route[0] as ProviderCode]}${route[1] ? ` (or ${PROVIDER_LABEL[route[1] as ProviderCode]})` : ""}. Figures come from your data; Pico Bot can't approve, send or change anything.`
     : "";
 
   const remaining = Math.max(0, settings.dailyQuestions - used);
@@ -85,7 +85,7 @@ export default async function AiAssistantPage({ searchParams }: { searchParams: 
           That conversation isn&apos;t available.
         </p>
       )}
-      {!enabled && (route.length === 0 ? <ProviderNotice isSuperAdmin={user.roles.includes("SUPER_ADMIN")} /> : <p className="text-label text-ink-muted">No Pic bot chat is available to you. Ask IT.</p>)}
+      {!enabled && (route.length === 0 ? <ProviderNotice isSuperAdmin={user.roles.includes("SUPER_ADMIN")} /> : <p className="text-label text-ink-muted">No Pico Bot chat is available to you. Ask IT.</p>)}
 
       {enabled && messages.length === 0 && conversationId === null && (
         <div className="py-10 text-center">
@@ -98,7 +98,9 @@ export default async function AiAssistantPage({ searchParams }: { searchParams: 
           <MessageItem key={message.id} message={message} initials={initials} />
         ))}
       </ol>
-      <AssistantForm conversationId={conversationId} enabled={enabled} maxChars={settings.maxQuestionChars} modes={modeOptions} suggestions={suggestions} />
+      {/* Keyed by the conversation: a new chat starts a fresh form, so an earlier
+          answer can't send the person back to the chat they left (Bug 1). */}
+      <AssistantForm key={conversationId ?? "new"} conversationId={conversationId} enabled={enabled} maxChars={settings.maxQuestionChars} modes={modeOptions} suggestions={suggestions} />
     </section>
   );
 }
@@ -108,7 +110,7 @@ function aboutAnswer(message: AiMessage): string {
   const read = message.evidence[0] ? formatIndiaTime(new Date(message.evidence[0].asOf)) : formatIndiaTime(message.createdAt);
   const parts = [sources.length ? `From ${sources.join(" and ")}, read ${read}.` : `Answered ${read}, without company data.`];
   if (message.provider) parts.push(`Answered by ${PROVIDER_LABEL[message.provider as ProviderCode] ?? message.provider}.`);
-  if (message.unverified.length) parts.push(`Calculated by Pic bot, not read directly: ${message.unverified.join(", ")}.`);
+  if (message.unverified.length) parts.push(`Calculated by Pico Bot, not read directly: ${message.unverified.join(", ")}.`);
   return parts.join(" ");
 }
 

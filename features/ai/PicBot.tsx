@@ -44,8 +44,8 @@ function aboutAnswer(message: Message): string {
   const sources = [...new Set(message.evidence.map((item) => item.source))];
   const read = message.evidence[0] ? new Date(message.evidence[0].asOf).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : null;
   const parts = [sources.length ? `From ${sources.join(" and ")}${read ? `, read ${read}` : ""}.` : "Answered without company data."];
-  if (message.unverified.length) parts.push(`Calculated by Pic bot, not read directly: ${message.unverified.join(", ")}.`);
-  parts.push("Pic bot can't approve, send or change anything.");
+  if (message.unverified.length) parts.push(`Calculated by Pico Bot, not read directly: ${message.unverified.join(", ")}.`);
+  parts.push("Pico Bot can't approve, send or change anything.");
   return parts.join(" ");
 }
 
@@ -196,7 +196,7 @@ export function PicBot({ initialModes }: { initialModes: ModeOption[] }) {
             setOpen(true);
             setMinimised(false);
           }}
-          aria-label={minimised ? "Open Pic bot - ai (minimised)" : "Open Pic bot - ai"}
+          aria-label={minimised ? "Open Pico Bot (minimised)" : "Open Pico Bot"}
           data-testid="picbot-launcher"
           className="fixed bottom-20 right-4 z-40 h-14 w-14 overflow-hidden rounded-full border border-line bg-white shadow-lg transition-transform hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 motion-reduce:transition-none md:bottom-6 md:right-6"
           style={{ marginBottom: "env(safe-area-inset-bottom)" }}
@@ -211,7 +211,7 @@ export function PicBot({ initialModes }: { initialModes: ModeOption[] }) {
         <section
           role="dialog"
           aria-modal="false"
-          aria-label="Pic bot - ai"
+          aria-label="Pico Bot"
           data-testid="picbot-panel"
           onKeyDown={(event) => {
             if (event.key === "Escape") {
@@ -226,7 +226,7 @@ export function PicBot({ initialModes }: { initialModes: ModeOption[] }) {
             {/* eslint-disable-next-line @next/next/no-img-element -- small static logo */}
             <img src={LOGO} alt="" width={32} height={32} className="h-8 w-8 rounded-full border border-line bg-white object-cover" />
             <div className="min-w-0 flex-1">
-              <h2 className="truncate text-body font-semibold">Pic bot - ai</h2>
+              <h2 className="truncate text-body font-semibold" title="Pico Bot: Progress Insight Companion Bot">Pico Bot</h2>
               <p className="truncate text-caption text-ink-muted" data-testid="picbot-scope">
                 {view === "history" ? "Your chats" : current.mode ? `Using: ${modeLabel(current.mode)}` : "No chat mode available"}
               </p>
@@ -243,11 +243,11 @@ export function PicBot({ initialModes }: { initialModes: ModeOption[] }) {
                 returnFocus.current = true;
                 setMinimised(true);
               }}
-              aria-label="Minimise Pic bot"
+              aria-label="Minimise Pico Bot"
               className="rounded-md p-1.5 text-ink-muted hover:bg-surface-muted hover:text-ink">
               <Minus aria-hidden="true" className="h-4 w-4" />
             </button>
-            <button type="button" onClick={close} aria-label="Close Pic bot" className="rounded-md p-1.5 text-ink-muted hover:bg-surface-muted hover:text-ink">
+            <button type="button" onClick={close} aria-label="Close Pico Bot" className="rounded-md p-1.5 text-ink-muted hover:bg-surface-muted hover:text-ink">
               <X aria-hidden="true" className="h-4 w-4" />
             </button>
           </header>
@@ -298,7 +298,7 @@ export function PicBot({ initialModes }: { initialModes: ModeOption[] }) {
                 )}
                 {messages.length === 0 && !busy && (
                   <p className="text-label text-ink-muted">
-                    {stopped ? "Pic bot is switched off for now." : modes.length ? "What would you like to know?" : "No chat mode is available to you."}
+                    {stopped ? "Pico Bot is switched off for now." : modes.length ? "What would you like to know?" : "No chat mode is available to you."}
                   </p>
                 )}
                 <ol ref={list} className="space-y-3" aria-live="polite" data-testid="picbot-messages">
@@ -353,7 +353,7 @@ export function PicBot({ initialModes }: { initialModes: ModeOption[] }) {
                 }}
               >
                 <label htmlFor="picbot-input" className="sr-only">
-                  Message Pic bot
+                  Message Pico Bot
                 </label>
                 <div className="flex items-end gap-2">
                   <textarea

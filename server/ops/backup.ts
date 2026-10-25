@@ -79,7 +79,7 @@ async function* dumpStatements(stats: { tables: number; rows: number }): AsyncGe
 async function* dumpWith(db: Awaited<ReturnType<ReturnType<typeof getDbPool>["getConnection"]>>, stats: { tables: number; rows: number }): AsyncGenerator<string> {
   const [tables] = await db.query<RowDataPacket[]>("SHOW FULL TABLES WHERE Table_type = 'BASE TABLE'");
   const names = tables.map((row) => String(Object.values(row)[0])).sort();
-  yield `-- ARS Approvals database backup, ${new Date().toISOString()}\n-- Restore: node scripts/database/restore.js <this file> (see DEPLOYMENT Part P)\n`;
+  yield `-- ARS-CMS database backup, ${new Date().toISOString()}\n-- Restore: node scripts/database/restore.js <this file> (see DEPLOYMENT Part P)\n`;
   yield "SET NAMES utf8mb4;\nSET time_zone = '+00:00';\nSET FOREIGN_KEY_CHECKS = 0;\nSET UNIQUE_CHECKS = 0;\n\n";
   for (const name of names) {
     stats.tables += 1;

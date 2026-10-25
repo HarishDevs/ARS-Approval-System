@@ -19,7 +19,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
   {
     id: "welcome",
     section: "Start",
-    title: "Welcome to ARS Approvals",
+    title: "Welcome to ARS-CMS",
     intro: "This is where ARS raises requests, approves them, hands out tasks and keeps dates in one calendar. The tour takes about two minutes.",
     points: ["Next and Back move through the steps; each one opens the page it talks about.", "Skip ends the tour at any time. You can take it again from Help or your account menu."],
   },

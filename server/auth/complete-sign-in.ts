@@ -1,6 +1,5 @@
 import "server-only";
 import crypto from "node:crypto";
-import { getEnv } from "@/config/environment";
 import { createDevice, createSession, findDevice, touchDevice } from "@/lib/db/repositories/sessions.repository";
 import { listUserIdsWithRole, markLoginSuccess, type UserRecord } from "@/lib/db/repositories/users.repository";
 import { recordAudit, recordLogin } from "@/lib/db/repositories/audit.repository";
@@ -12,6 +11,7 @@ import { newSignInMessage, superAdminSignInMessage } from "@/server/notification
 import { getAuthSecurityConfig } from "@/server/settings/values";
 import { logError } from "@/lib/logging/logger";
 import type { AuthMethod, RequestContext } from "@/types/auth";
+import { appBaseUrl } from "@/lib/http/app-url";
 
 export const NOT_ME_PURPOSE = "not-me";
 const NOT_ME_TTL_SECONDS = 7 * 24 * 60 * 60;
@@ -61,7 +61,7 @@ export const defaultCompleteSignInDeps: CompleteSignInDeps = {
   getTrustedDeviceDays: async () => (await getAuthSecurityConfig()).trustedDeviceDays,
   randomUUID: () => crypto.randomUUID(),
   now: () => new Date(),
-  appBaseUrl: () => getEnv().APP_BASE_URL ?? "https://approval.arssteels.net",
+  appBaseUrl: () => appBaseUrl(),
 };
 
 export async function completeSignIn(

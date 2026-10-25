@@ -14,7 +14,7 @@ test("AI Rules: a formatted rule for one chat is saved as Markdown", async ({ pa
   await editor.click();
   await page.keyboard.type(`Dealers ${tag}`);
   await page.getByRole("button", { name: "Save rules" }).click();
-  await expect(page.getByText("Saved. Pic bot follows these rules from the next question.")).toBeVisible();
+  await expect(page.getByText("Saved. Pico Bot follows these rules from the next question.")).toBeVisible();
   const conn = await db();
   try {
     const [rows] = await conn.query<(ResultSetHeader & { content: string })[]>("SELECT content FROM ai_rules WHERE chat_mode = 'COMBINED'");

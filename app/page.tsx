@@ -5,8 +5,8 @@ import { AuthLayout } from "@/features/auth/components/AuthLayout";
 import { LandingWelcome } from "@/features/public/LandingWelcome";
 
 export const metadata: Metadata = {
-  title: { absolute: "ARS Internal Workspace | ARS Steels" },
-  description: "ARS Internal Workspace — the internal digital workspace for ARS Steels & Alloy International Pvt. Ltd.",
+  title: { absolute: "ARS-CMS | ARS Steels" },
+  description: "ARS-CMS — the Central Management System of ARS Steels & Alloy International Pvt. Ltd.",
   robots: { index: true, follow: true },
 };
 

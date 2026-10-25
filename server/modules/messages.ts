@@ -1,12 +1,12 @@
 import "server-only";
-import { getEnv } from "@/config/environment";
 import type { NotifyInput } from "@/server/notifications/notify";
 import { indiaDateTimeText } from "@/server/modules/settings";
+import { appBaseUrl } from "@/lib/http/app-url";
 
 // v1.9.0: the messages of the Task and Information modules. In-app always;
 // email too (plain text, D-091); WhatsApp only when IT has switched on a
 // template for the event (same rule as every other message).
-const base = () => getEnv().APP_BASE_URL ?? "https://approval.arssteels.net";
+const base = () => appBaseUrl();
 
 function message(eventType: string, userId: number, title: string, text: string, path: string, entity: NonNullable<NotifyInput["entity"]>): NotifyInput {
   const link = `${base()}${path}`;

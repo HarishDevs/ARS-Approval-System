@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
     }
     return apiSuccess({ conversationId, duplicate: Boolean(result.duplicate), messages });
   } catch (error) {
-    logError("Pic bot chat failed", error);
+    logError("Pico Bot chat failed", error);
     return apiError("FAILED", "Something went wrong. Please try again.", 500);
   }
 }

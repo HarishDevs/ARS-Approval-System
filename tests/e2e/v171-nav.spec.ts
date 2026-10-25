@@ -16,7 +16,7 @@ const sidebar = (page: import("@playwright/test").Page) => page.locator("aside n
 test("Analytics from the Admin space keeps the Admin space; Reports are there too", async ({ page, context }) => {
   await as(context, "E2E_ADMIN");
   await page.goto("/admin");
-  await sidebar(page).getByRole("link", { name: "Analytics" }).click();
+  await sidebar(page).getByRole("link", { name: "Analytics", exact: true }).click();
   await expect(page).toHaveURL(/\/admin\/analytics/);
   await expect(page.getByRole("button", { name: /Account menu/ })).toContainText("Admin");
   await expect(page.getByLabel("Whose numbers")).toHaveValue("ORGANISATION");

@@ -52,7 +52,7 @@ export default async function AiSettingsPage() {
         <div className="space-y-6">
           {emergency === "ON" && (
             <p role="alert" className="rounded-md border border-danger-200 bg-danger-50 px-3 py-2 text-label text-danger-600" data-testid="ai-emergency">
-              Emergency stop is ON: every Pic bot request is refused. Turn it OFF below when it is safe.
+              Emergency stop is ON: every Pico Bot request is refused. Turn it OFF below when it is safe.
             </p>
           )}
           {/* D-184 (owner): General, then each provider on its own, then the common settings. */}

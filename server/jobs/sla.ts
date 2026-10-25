@@ -3,11 +3,11 @@ import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { getDbPool } from "@/lib/db/client";
 import { INDIA_TODAY_SQL } from "@/lib/db/repositories/directory.repository";
 import { listUserIdsWithRole } from "@/lib/db/repositories/users.repository";
-import { getEnv } from "@/config/environment";
 import { notify } from "@/server/notifications/notify";
 import { requestLink } from "@/server/approvals/messages";
 import { getNumberSetting } from "@/server/settings/values";
 import { logError } from "@/lib/logging/logger";
+import { appBaseUrl } from "@/lib/http/app-url";
 
 // SLA reminders and escalation (F-31, D-063, D-100), run by the job runner.
 // With a response time T on the step:
@@ -63,7 +63,7 @@ export async function runDueSoon(): Promise<number> {
      ORDER BY t.due_at LIMIT 200`,
     [DUE_SOON_SHARE],
   );
-  const base = getEnv().APP_BASE_URL ?? "https://approval.arssteels.net";
+  const base = appBaseUrl();
   let sent = 0;
   for (const row of rows) {
     const [claim] = await getDbPool().query<ResultSetHeader>("INSERT IGNORE INTO task_reminders (task_id, kind) VALUES (?, 'DUE_SOON')", [row.id]);
@@ -138,7 +138,7 @@ export async function runSlaChecks(): Promise<{ reminders: number; escalations: 
      ORDER BY t.due_at LIMIT 200`,
     [1 + levelsAllowed],
   );
-  const base = getEnv().APP_BASE_URL ?? "https://approval.arssteels.net";
+  const base = appBaseUrl();
   let adminIds: number[] | null = null;
   const result = { reminders: 0, escalations: 0, dueSoon: await runDueSoon() };
 

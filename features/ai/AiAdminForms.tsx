@@ -44,7 +44,7 @@ export function SalesforceTestButton() {
 
 export function SalesforceDisconnectButton() {
   const { result, pending, onSubmit, confirmBar } = useActionForm(async () => disconnectSalesforceAction(), {
-    confirm: "Pic bot stops reading Salesforce at once. The token is revoked at Salesforce and deleted here.",
+    confirm: "Pico Bot stops reading Salesforce at once. The token is revoked at Salesforce and deleted here.",
     confirmTitle: "Disconnect Salesforce?",
     confirmLabel: "Yes, disconnect",
     confirmTone: "danger",

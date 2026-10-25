@@ -14,9 +14,9 @@ export default async function AiActivityHistoryPage() {
   const conversations = await listAllConversations(200);
   return (
     <>
-      <PageHeader title="AI Activity History" description="Everyone's Pic bot conversations, newest first: who, what about, when. The messages themselves stay private to each person." />
+      <PageHeader title="AI Activity History" description="Everyone's Pico Bot conversations, newest first: who, what about, when. The messages themselves stay private to each person." />
       {conversations.length === 0 ? (
-        <EmptyState title="No conversations yet" body="Conversations appear here once people use Pic bot." />
+        <EmptyState title="No conversations yet" body="Conversations appear here once people use Pico Bot." />
       ) : (
         <div className="card overflow-x-auto">
           <table className="data-table" data-testid="ai-history">

@@ -17,7 +17,7 @@ export interface SettingDefinition {
 }
 
 export const SETTING_DEFINITIONS: readonly SettingDefinition[] = [
-  { key: "general.app_name", group: "GENERAL", label: "Application name", valueType: "STRING", encrypted: false, schema: z.string().trim().min(1).max(150), defaultValue: "ARS Approvals" },
+  { key: "general.app_name", group: "GENERAL", label: "Application name", valueType: "STRING", encrypted: false, schema: z.string().trim().min(1).max(150), defaultValue: "ARS-CMS" },
   { key: "general.escalation_levels", group: "GENERAL", label: "Escalation levels for late approvals (1 = manager, 2 = + manager's manager, 3 = one more)", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(1).max(3), defaultValue: "2" },
   // Unified prompt (BD-3): over-budget requests warn by default; BLOCK is an owner decision.
   { key: "general.budget_policy", group: "GENERAL", label: "Over-budget requests (Warn asks to confirm; Block refuses)", valueType: "STRING", encrypted: false, schema: z.enum(["WARN", "BLOCK"]), defaultValue: "WARN" },
@@ -65,7 +65,7 @@ export const SETTING_DEFINITIONS: readonly SettingDefinition[] = [
   { key: "email.from_address", group: "EMAIL", label: "From address", valueType: "STRING", encrypted: false, schema: z.string().trim().email(), defaultValue: "no_reply@approval.arssteels.net" },
   // D-080: replies to a notification reach IT, not the no-reply sender.
   { key: "email.reply_to", group: "EMAIL", label: "Reply-to address", valueType: "STRING", encrypted: false, schema: z.string().trim().email(), defaultValue: "itadmin@arssteels.co.in" },
-  { key: "email.from_name", group: "EMAIL", label: "From name", valueType: "STRING", encrypted: false, schema: z.string().trim().min(1).max(100), defaultValue: "ARS Approvals" },
+  { key: "email.from_name", group: "EMAIL", label: "From name", valueType: "STRING", encrypted: false, schema: z.string().trim().min(1).max(100), defaultValue: "ARS-CMS" },
 
   // WhatsApp via CEOITBox, the same number and API as the Power BI site (D-036).
   { key: "whatsapp.ceoitbox_base_url", group: "WHATSAPP", label: "CEOITBox base URL", valueType: "STRING", encrypted: false, schema: z.string().trim().url().refine((value) => value.startsWith("https://"), "Use an https:// address: the API key is sent with every call."), defaultValue: "https://official.ceoitbox.com" },
@@ -112,7 +112,7 @@ export const SETTING_DEFINITIONS: readonly SettingDefinition[] = [
   // Pic bot - ai (D-172): switches and limits. Defaults deny: general chat,
   // combined chat and the emergency stop must be turned on deliberately.
   { key: "ai.emergency_stop", group: "AI", label: "Emergency stop (On refuses every AI request at once; Off for normal use)", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF"]), defaultValue: "OFF" },
-  { key: "ai.launcher", group: "AI", label: "Floating Pic bot launcher on every page", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF"]), defaultValue: "ON" },
+  { key: "ai.launcher", group: "AI", label: "Floating Pico Bot launcher on every page", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF"]), defaultValue: "ON" },
   { key: "ai.general_chat", group: "AI", label: "General AI chat (non-business questions) for people allowed it", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF"]), defaultValue: "OFF" },
   { key: "ai.combined_chat", group: "AI", label: "Combined chat (business data and general answers together) for people allowed it", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF"]), defaultValue: "OFF" },
   { key: "ai.module_modes", group: "AI", choices: ["APPROVAL", "TASK", "INFORMATION", "SALESFORCE"], label: "Module chats available: any of APPROVAL,TASK,INFORMATION,SALESFORCE (comma-separated; empty for none)", valueType: "STRING", encrypted: false, schema: z.string().trim().max(60).regex(/^$|^(APPROVAL|TASK|INFORMATION|SALESFORCE)(,(APPROVAL|TASK|INFORMATION|SALESFORCE))*$/, "Use APPROVAL, TASK, INFORMATION, SALESFORCE separated by commas."), defaultValue: "APPROVAL,TASK,INFORMATION,SALESFORCE" },
@@ -131,7 +131,7 @@ export const SETTING_DEFINITIONS: readonly SettingDefinition[] = [
   { key: "ai.salesforce.client_id", group: "AI_DATA", label: "Salesforce app consumer key", valueType: "STRING", encrypted: true, schema: z.string().trim().min(10).max(300) },
   { key: "ai.salesforce.client_secret", group: "AI_DATA", label: "Salesforce app consumer secret", valueType: "STRING", encrypted: true, schema: z.string().trim().min(10).max(300) },
   { key: "ai.salesforce.scopes", group: "AI_DATA", label: "OAuth scopes (least privilege)", valueType: "STRING", encrypted: false, schema: z.string().trim().regex(/^[a-z_]+( [a-z_]+)*$/, "Space-separated scope names."), defaultValue: "api refresh_token" },
-  { key: "ai.salesforce.objects", group: "AI_DATA", label: "Objects and fields Pic bot may read: * for every object the connected Salesforce user can read, or a list such as Account:Name,Industry;Opportunity:Name,Amount,StageName,CloseDate,AccountId (Id, OwnerId, SystemModstamp are added)", valueType: "STRING", encrypted: false, schema: z.string().trim().max(2000).regex(/^(\*|(\w+:\w+(,\w+)*)(;\w+:\w+(,\w+)*)*)$/, "Use * for every object, or Object:Field,Field;Object:Field.") },
+  { key: "ai.salesforce.objects", group: "AI_DATA", label: "Objects and fields Pico Bot may read: * for every object the connected Salesforce user can read, or a list such as Account:Name,Industry;Opportunity:Name,Amount,StageName,CloseDate,AccountId (Id, OwnerId, SystemModstamp are added)", valueType: "STRING", encrypted: false, schema: z.string().trim().max(2000).regex(/^(\*|(\w+:\w+(,\w+)*)(;\w+:\w+(,\w+)*)*)$/, "Use * for every object, or Object:Field,Field;Object:Field.") },
   { key: "ai.salesforce.copy_hourly", group: "AI_DATA", label: "Also copy those objects hourly for the dashboard", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF"]), defaultValue: "OFF" },
 
 ];

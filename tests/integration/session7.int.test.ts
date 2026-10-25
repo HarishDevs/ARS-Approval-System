@@ -122,7 +122,7 @@ describe("WhatsApp template creator (D-076)", () => {
       language: "en",
       category: "UTILITY",
       components: [
-        { type: "BODY", text: "Hi, {{1}} needs your approval for {{2}}: {{3}}. Open: {{4}} — ARS", example: { body_text: [["Ravi Kumar", "PUR-2026-000123", "Laptop for the new engineer", "https://approval.arssteels.net/users/requests/123"]] } },
+        { type: "BODY", text: "Hi, {{1}} needs your approval for {{2}}: {{3}}. Open: {{4}} — ARS", example: { body_text: [["Ravi Kumar", "PUR-2026-000123", "Laptop for the new engineer", "https://arssteels.net/users/requests/123"]] } },
         { type: "FOOTER", text: "ARS Steels" },
       ],
     });
@@ -160,6 +160,6 @@ describe("WhatsApp template creator (D-076)", () => {
     expect(await sendTemplateTest("WA_APPROVAL_NEEDED_V1", { ...superAdmin(), whatsappNumber: null })).toMatchObject({ ok: false });
     expect(await sendTemplateTest("WA_APPROVAL_NEEDED_V1", { ...superAdmin(), whatsappNumber: "919000000007" })).toMatchObject({ ok: true });
     const send = calls.filter((call) => call.path === "/api/v1/whatsapp/sendMessage").at(-1)!;
-    expect(send.body).toMatchObject({ to: "919000000007", templateName: "ars_s7_needed_v2", templateVariables: ["Laptop for the new engineer", "PUR-2026-000123", "https://approval.arssteels.net/users/requests/123"], userMessageId: "ars-test-wa_approval_needed_v1" });
+    expect(send.body).toMatchObject({ to: "919000000007", templateName: "ars_s7_needed_v2", templateVariables: ["Laptop for the new engineer", "PUR-2026-000123", "https://arssteels.net/users/requests/123"], userMessageId: "ars-test-wa_approval_needed_v1" });
   });
 });

@@ -19,8 +19,8 @@ const ERRORS: Record<string, string> = {
   STATE: "That connection attempt expired or didn't start here. Please try again.",
   UNAVAILABLE: "Google Calendar isn't available right now.",
   SCOPE:
-    "Google didn't give ARS access to your calendar. Press Connect Google Account again and, on Google's \"ARS Approvals wants access\" screen, tick both calendar boxes (\"See, create, change and delete events on Google calendars you own\" and \"See the list of Google calendars you're subscribed to\") before pressing Continue.",
-  NO_REFRESH: "Google didn't allow ARS to stay connected. Remove ARS Approvals at myaccount.google.com → Security → Third-party apps with account access, then press Connect Google Account again.",
+    "Google didn't give ARS access to your calendar. Press Connect Google Account again and, on Google's \"ARS-CMS wants access\" screen, tick both calendar boxes (\"See, create, change and delete events on Google calendars you own\" and \"See the list of Google calendars you're subscribed to\") before pressing Continue.",
+  NO_REFRESH: "Google didn't allow ARS to stay connected. Remove ARS-CMS at myaccount.google.com → Security → Third-party apps with account access, then press Connect Google Account again.",
   GOOGLE: "Google didn't complete the connection. Please try again.",
   LIMIT: "Too many attempts. Wait a minute and try again.",
 };

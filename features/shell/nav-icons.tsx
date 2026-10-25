@@ -1,5 +1,6 @@
 import {
   BookOpenCheck,
+  ChartNoAxesCombined,
   Sheet,
   Cloud,
   AlertTriangle,
@@ -79,6 +80,7 @@ const ICONS: Record<string, LucideIcon> = {
   "/users/ai/assistant": MessagesSquare,
   "/superadmin/ai": Sparkles,
   "/admin/ai-rules": BookOpenCheck,
+  "/admin/ai-analytics": ChartNoAxesCombined,
   "/admin/records/requests": Sheet,
   "/admin/records/tasks": ListTodo,
   "/admin/records/information": Newspaper,

@@ -1046,6 +1046,10 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 5. Super Admin addresses refuse anyone who isn't a Super Admin.
 6. "Sign-in & devices" is never restricted.
 
+## F-146 AI Analytics (v1.22.0, D-193)
+1. IT Admin or Super Admin opens **Admin → AI → AI Analytics** and picks a period.
+2. They read the headline figures (with the change from the previous period), the trend, the breakdowns, providers, top users, the weekday × hour pattern, failure reasons and the daily limit.
+
 ## F-145 Admin records (v1.21.0, D-191)
 1. IT Admin or Super Admin opens **Admin → Records → Approval requests / Tasks / Information**.
 2. They filter (search, status, type, department, person, waiting on, priority, overdue, dates) and sort by a column title; 50 rows a page.

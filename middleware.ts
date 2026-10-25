@@ -61,6 +61,19 @@ export async function middleware(request: NextRequest) {
     return new NextResponse("Direct access is not allowed.", { status: 403 });
   }
 
+  // D-196 (owner): the app moved from approval.arssteels.net to arssteels.net.
+  // With LEGACY_HOSTS set (e.g. "approval.arssteels.net"), a visit to a former
+  // address goes to the same page on APP_BASE_URL, so old links in emails,
+  // WhatsApp and bookmarks keep working. Machine calls (the job runner,
+  // provider webhooks) and OAuth callbacks are still served there, so nothing
+  // breaks while their settings are moved. Unset = off.
+  const legacy = (process.env.LEGACY_HOSTS ?? "").split(",").map((host) => host.trim().toLowerCase()).filter(Boolean);
+  const host = (request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? "").split(":")[0]!.toLowerCase();
+  if (legacy.includes(host) && process.env.APP_BASE_URL && !MACHINE_APIS.some((prefix) => pathname.startsWith(prefix)) && !pathname.startsWith("/api/integrations/")) {
+    const target = new URL(`${pathname}${request.nextUrl.search}`, process.env.APP_BASE_URL);
+    if (target.host.toLowerCase() !== host) return NextResponse.redirect(target, 308);
+  }
+
   // Audit P-07: a state-changing API call must come from this site's own
   // pages. Browsers say where a request comes from (Sec-Fetch-Site); another
   // site, even a sibling *.arssteels.net, is refused. Server Actions have

@@ -75,6 +75,7 @@ export const PAGES: readonly PageDef[] = [
   { key: "admin.doa", area: "admin", label: "Approval authority (DoA)", what: "Delegation of authority matrices.", paths: [under("/admin/doa")] },
   { key: "admin.budgets", area: "admin", label: "Budgets", what: "Department budgets.", paths: [under("/admin/budgets")] },
   { key: "admin.calendar", area: "admin", label: "Working calendar", what: "Working days and holidays.", paths: [under("/admin/calendar")] },
+  { key: "admin.ai_analytics", area: "admin", label: "AI Analytics", what: "How Pico Bot is used: adoption, questions, speed, tokens and cost, by chat, provider, department and person.", paths: [under("/admin/ai-analytics")] },
   { key: "admin.ai_rules", area: "admin", label: "AI Rules", what: "The rules every AI provider follows (company terms, where data is kept).", paths: [under("/admin/ai-rules")] },
   { key: "admin.records", area: "admin", label: "Records", what: "Every approval request, task and information item, with filters and a CSV download.", paths: [under("/admin/records")], apis: [/^\/api\/admin\/records\//] },
   { key: "admin.users", area: "admin", label: "Users & roles", what: "People, roles and hand-overs.", paths: [under("/admin/users")] },

@@ -53,7 +53,7 @@ export function newSignInMessage(details: SignInDetails, notMeLink: string) {
   const text = [
     `Hi ${details.userName},`,
     "",
-    "There was a new sign-in to your ARS Approvals account.",
+    "There was a new sign-in to your ARS-CMS account.",
     `When: ${when}`,
     `Device: ${device}`,
     `IP address: ${ip}`,
@@ -64,7 +64,7 @@ export function newSignInMessage(details: SignInDetails, notMeLink: string) {
   return {
     title: "New sign-in to your account",
     message: `New sign-in on ${device} at ${when}.`,
-    email: { subject: "New sign-in to your ARS Approvals account", text },
+    email: { subject: "New sign-in to your ARS-CMS account", text },
     whatsappVariables: { user_name: details.userName, time: when, device, ip_address: ip, link: notMeLink },
   };
 }
@@ -73,13 +73,13 @@ export function accountLockedMessage(userName: string, minutes: number) {
   const text = [
     `Hi ${userName},`,
     "",
-    `Your ARS Approvals account was locked for ${minutes} minutes after too many wrong passwords.`,
+    `Your ARS-CMS account was locked for ${minutes} minutes after too many wrong passwords.`,
     "If this wasn't you, contact IT (itadmin@arssteels.co.in).",
   ].join("\n");
   return {
     title: "Account locked",
     message: `Locked for ${minutes} minutes after too many wrong passwords.`,
-    email: { subject: "Your ARS Approvals account was locked", text },
+    email: { subject: "Your ARS-CMS account was locked", text },
     whatsappVariables: { user_name: userName, minutes: String(minutes) },
   };
 }
@@ -111,7 +111,7 @@ export function accountSecuredMessage(userName: string) {
   return {
     title: "Account secured",
     message: "Signed out everywhere and locked after your report.",
-    email: { subject: "Your ARS Approvals account was secured", text },
+    email: { subject: "Your ARS-CMS account was secured", text },
     whatsappVariables: { user_name: userName },
   };
 }
@@ -119,7 +119,7 @@ export function accountSecuredMessage(userName: string) {
 const IT_CONTACT = "If you didn't expect this, contact IT (itadmin@arssteels.co.in).";
 
 export function whatsappChangedMessage(userName: string) {
-  const text = [`Hi ${userName},`, "", "The WhatsApp number on your ARS Approvals account was changed by IT.", IT_CONTACT].join("\n");
+  const text = [`Hi ${userName},`, "", "The WhatsApp number on your ARS-CMS account was changed by IT.", IT_CONTACT].join("\n");
   return {
     title: "WhatsApp number changed",
     message: "The WhatsApp number on your account was changed.",
@@ -130,11 +130,11 @@ export function whatsappChangedMessage(userName: string) {
 
 export function signInMethodChangedMessage(userName: string, method: "GOOGLE" | "PASSWORD") {
   const how = method === "GOOGLE" ? "your Google account" : "your User ID and password, with a code on WhatsApp";
-  const text = [`Hi ${userName},`, "", `IT changed how you sign in to ARS Approvals. You now sign in with ${how}.`, IT_CONTACT].join("\n");
+  const text = [`Hi ${userName},`, "", `IT changed how you sign in to ARS-CMS. You now sign in with ${how}.`, IT_CONTACT].join("\n");
   return {
     title: "Sign-in method changed",
     message: `You now sign in with ${method === "GOOGLE" ? "Google" : "User ID and password"}.`,
-    email: { subject: "How you sign in to ARS Approvals has changed", text },
+    email: { subject: "How you sign in to ARS-CMS has changed", text },
     whatsappVariables: { user_name: userName, method: method === "GOOGLE" ? "Google" : "User ID and password" },
   };
 }
@@ -143,7 +143,7 @@ export function setPasswordLinkMessage(userName: string, loginId: string, link: 
   const text = [
     `Hi ${userName},`,
     "",
-    "An ARS Approvals account is ready for you.",
+    "An ARS-CMS account is ready for you.",
     `Your User ID: ${loginId}`,
     `Set your password here (valid for ${validHours} hours): ${link}`,
     "You'll confirm it with a code sent to your WhatsApp.",
@@ -153,7 +153,7 @@ export function setPasswordLinkMessage(userName: string, loginId: string, link: 
   return {
     title: "Set your password",
     message: "Use the link in your email to set your password.",
-    email: { subject: "Set your ARS Approvals password", text },
+    email: { subject: "Set your ARS-CMS password", text },
     whatsappVariables: null,
   };
 }
@@ -165,16 +165,16 @@ export function googleInvitationMessage(userName: string, email: string, signInU
   const text = [
     `Hi ${userName},`,
     "",
-    "You've been added to ARS Approvals, where ARS raises and approves requests.",
+    "You've been added to ARS-CMS, where ARS raises and approves requests.",
     `Sign in here: ${signInUrl}`,
     `Choose "Sign in with Google" and use this Google account: ${email}`,
     "",
     "Questions? Contact IT (itadmin@arssteels.co.in).",
   ].join("\n");
   return {
-    title: "Welcome to ARS Approvals",
+    title: "Welcome to ARS-CMS",
     message: `Sign in with Google as ${email}.`,
-    email: { subject: "You've been added to ARS Approvals", text },
+    email: { subject: "You've been added to ARS-CMS", text },
     whatsappVariables: null,
   };
 }
@@ -183,7 +183,7 @@ export function passwordInvitationMessage(userName: string, loginId: string, lin
   const text = [
     `Hi ${userName},`,
     "",
-    "You've been added to ARS Approvals, where ARS raises and approves requests.",
+    "You've been added to ARS-CMS, where ARS raises and approves requests.",
     `Your User ID: ${loginId}`,
     `Set your password here (valid for ${validHours} hours): ${link}`,
     "You'll confirm it with a code sent to your WhatsApp. After that you sign in with your User ID and password.",
@@ -191,9 +191,9 @@ export function passwordInvitationMessage(userName: string, loginId: string, lin
     "Questions? Contact IT (itadmin@arssteels.co.in).",
   ].join("\n");
   return {
-    title: "Welcome to ARS Approvals",
+    title: "Welcome to ARS-CMS",
     message: "Use the link in your email to set your password.",
-    email: { subject: "You've been added to ARS Approvals", text },
+    email: { subject: "You've been added to ARS-CMS", text },
     whatsappVariables: null,
   };
 }
@@ -204,7 +204,7 @@ export function passwordResetLinkMessage(userName: string, loginId: string, link
   const text = [
     `Hi ${userName},`,
     "",
-    "IT has sent you a link to reset your ARS Approvals password.",
+    "IT has sent you a link to reset your ARS-CMS password.",
     `Your User ID: ${loginId}`,
     `Choose a new password here (valid for ${validHours} hours): ${link}`,
     "You'll confirm it with a code sent to your WhatsApp. Until then your current password still works.",
@@ -214,7 +214,7 @@ export function passwordResetLinkMessage(userName: string, loginId: string, link
   return {
     title: "Reset your password",
     message: "Use the link in your email to choose a new password.",
-    email: { subject: "Reset your ARS Approvals password", text },
+    email: { subject: "Reset your ARS-CMS password", text },
     whatsappVariables: null,
   };
 }
@@ -223,13 +223,13 @@ export function passwordChangedMessage(userName: string, when: Date) {
   const text = [
     `Hi ${userName},`,
     "",
-    `Your ARS Approvals password was set on ${formatIndiaTime(when)}. You were signed out on every device.`,
+    `Your ARS-CMS password was set on ${formatIndiaTime(when)}. You were signed out on every device.`,
     IT_CONTACT,
   ].join("\n");
   return {
     title: "Password changed",
     message: "Your password was changed and every device was signed out.",
-    email: { subject: "Your ARS Approvals password was changed", text },
+    email: { subject: "Your ARS-CMS password was changed", text },
     whatsappVariables: { user_name: userName, time: formatIndiaTime(when) },
   };
 }

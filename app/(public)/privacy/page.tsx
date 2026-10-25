@@ -5,7 +5,7 @@ import { MailLink } from "@/features/ui/MailLink";
 
 export const metadata: Metadata = {
   title: "Privacy policy",
-  description: "How ARS Approvals collects, uses, stores and protects information, including data received from Google APIs.",
+  description: "How ARS-CMS collects, uses, stores and protects information, including data received from Google APIs.",
   robots: { index: true, follow: true },
 };
 
@@ -22,7 +22,7 @@ export default function PrivacyPage() {
         <h1>Privacy policy</h1>
         <p className="text-label text-ink-muted">Effective {PRIVACY_EFFECTIVE}</p>
         <p>
-          This policy explains how ARS Approvals (the &ldquo;app&rdquo;, at approval.arssteels.net), operated by {COMPANY} (&ldquo;ARS&rdquo;, &ldquo;we&rdquo;), handles information. The app is an
+          This policy explains how ARS-CMS (the &ldquo;app&rdquo;, at arssteels.net), operated by {COMPANY} (&ldquo;ARS&rdquo;, &ldquo;we&rdquo;), handles information. The app is an
           internal workplace tool for ARS employees. Accounts are created by ARS&apos;s IT team; there is no public sign-up.
         </p>
 
@@ -71,7 +71,7 @@ export default function PrivacyPage() {
 
         <h2>Limited Use disclosure</h2>
         <p>
-          ARS Approvals&apos; use and transfer to any other app of information received from Google APIs will adhere to the{" "}
+          ARS-CMS&apos; use and transfer to any other app of information received from Google APIs will adhere to the{" "}
           <a href="https://developers.google.com/terms/api-services-user-data-policy" className="link" rel="noopener noreferrer">
             Google API Services User Data Policy
           </a>

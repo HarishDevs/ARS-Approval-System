@@ -305,3 +305,23 @@ html,
   .auth-enter,
   .auth-leave { animation: none; }
 }
+
+/* v1.22.0 (site audit): a screen-reader-only label (Tailwind .sr-only is
+   position: absolute) inside a scrolling table had no positioned ancestor, so
+   it sat at its static place far to the right, outside the card's scroll area,
+   and phones widened the whole page to fit it (6 pages scrolled sideways).
+   Pinning it to its containing block's corner keeps it invisible and readable
+   by screen readers without widening anything. */
+.sr-only {
+  left: 0;
+  top: 0;
+}
+
+/* v1.22.0 (site audit): a grid item is min-width:auto by default, so on a
+   phone (no column template yet) a wide table or heatmap inside a scrolling
+   card widened its grid column, and the whole page scrolled sideways (AI
+   Analytics, AI Reports). Grid items may shrink; their own scroll areas then
+   do the scrolling. Explicit Tailwind columns (minmax(0, 1fr)) already did. */
+.grid > * {
+  min-width: 0;
+}

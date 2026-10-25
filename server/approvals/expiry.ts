@@ -6,8 +6,8 @@ import { insertOutbox } from "@/lib/db/repositories/outbox.repository";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { deliverOutbox } from "@/server/approvals/service";
 import { requestLink } from "@/server/approvals/messages";
-import { getEnv } from "@/config/environment";
 import { expiryState, EXPIRY_NOTICE_DAYS } from "@/server/approvals/expiry-rules";
+import { appBaseUrl } from "@/lib/http/app-url";
 
 export { expiryState, EXPIRY_NOTICE_DAYS };
 
@@ -25,7 +25,7 @@ export async function runExpiryNotices(limit = 200): Promise<{ expiryNotices: nu
      ORDER BY valid_until LIMIT ?`,
     [EXPIRY_NOTICE_DAYS, limit],
   );
-  const base = getEnv().APP_BASE_URL ?? "https://approval.arssteels.net";
+  const base = appBaseUrl();
   let sent = 0;
   for (const row of rows) {
     const ids = await withTransaction(async (connection) => {

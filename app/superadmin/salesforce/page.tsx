@@ -41,7 +41,7 @@ export default async function SalesforceSettingsPage({ searchParams }: { searchP
 
   return (
     <>
-      <PageHeader title="Salesforce Settings" description="Connect Salesforce (OAuth with PKCE, read-only), the app's key and secret, which objects Pic bot may read, and the optional hourly copy." />
+      <PageHeader title="Salesforce Settings" description="Connect Salesforce (OAuth with PKCE, read-only), the app's key and secret, which objects Pico Bot may read, and the optional hourly copy." />
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="space-y-6">
           {sfResult && (
