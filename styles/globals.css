@@ -290,3 +290,18 @@ html,
 .rules-editor td { @apply border border-line px-2 py-1 text-left align-top; }
 .rules-editor th { @apply bg-surface-muted font-medium; }
 .rules-editor pre { @apply mb-2 rounded bg-surface-muted p-2 text-caption; }
+
+/* D-190: the landing welcome turns into the sign-in form. */
+@keyframes auth-enter {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes auth-leave {
+  to { opacity: 0; transform: translateY(-10px); }
+}
+.auth-enter { animation: auth-enter 320ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.auth-leave { animation: auth-leave 200ms ease-in forwards; }
+@media (prefers-reduced-motion: reduce) {
+  .auth-enter,
+  .auth-leave { animation: none; }
+}

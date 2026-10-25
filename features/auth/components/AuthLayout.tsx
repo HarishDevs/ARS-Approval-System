@@ -1,10 +1,12 @@
 import { MailLink } from "@/features/ui/MailLink";
 
-// Split layout for sign-in, set-password and forgot-password (asset pack
-// 00-login-split-layout-alt).
+// Split layout for the landing page, sign-in, set-password and forgot-password
+// (asset pack 00-login-split-layout-alt). D-190: the content fades in
+// (.auth-enter), so the welcome turns smoothly into the sign-in form while
+// the brand panel and logo stay still.
 export function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <main className="grid min-h-full lg:grid-cols-2">
+    <main className="grid min-h-dvh lg:grid-cols-2">
       <section
         aria-hidden="true"
         className="relative hidden overflow-hidden bg-gradient-to-br from-primary-solid to-[#003B6E] px-16 py-14 text-white lg:flex lg:flex-col lg:justify-end"
@@ -15,7 +17,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
           <svg viewBox="0 0 120 30" className="mb-6 h-8 w-auto" aria-hidden="true">
             <path d="M0 12 C30 30 80 28 118 0 C104 22 92 30 64 30 C36 30 14 22 0 12Z" fill="#ED1C25" />
           </svg>
-          <p className="text-label font-semibold uppercase tracking-[0.18em] text-white/80">ARS Steels · Approvals</p>
+          <p className="text-label font-semibold uppercase tracking-[0.18em] text-white/80">ARS Steels · Internal Workspace</p>
           <h2 className="mt-4 text-[52px] font-bold leading-[1.05]">
             Every approval,
             <br />
@@ -47,7 +49,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
         <div className="w-full max-w-[440px]">
           {/* eslint-disable-next-line @next/next/no-img-element -- static SVG logo */}
           <img src="/brand/ars-green-steel.svg" alt="ARS Green Steel" className="h-16 w-auto" />
-          {children}
+          <div className="auth-enter">{children}</div>
           <p className="mt-8 text-center text-body text-ink-muted">
             Need access? Contact IT Support: <span className="select-all font-medium text-ink"><MailLink address="itadmin@arssteels.co.in" /></span>
           </p>

@@ -1047,7 +1047,8 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 6. "Sign-in & devices" is never restricted.
 
 ## F-144 Public landing page (v1.20.0, D-188; supersedes the D-161 home page content)
-1. A signed-out visitor opens the home page: compact header (logo, "ARS Internal Workspace", Sign in), one centred hero ("Welcome to ARS Internal Workspace", "One workspace. Everything you need to work.", **Sign in to continue →**), and a footer (Privacy Policy, Terms of Use, IT Support, copyright).
+1. A signed-out visitor opens the home page: the sign-in split layout (brand panel left) with the welcome on the right ("Welcome to ARS Internal Workspace", "One workspace. Everything you need to work.", **Sign in to continue →**), IT Support, Privacy policy and Terms of use (v1.20.1, D-190; was a header/hero/footer page in v1.20.0).
+1a. **Sign in to continue** fades the welcome out and the sign-in form in; the brand panel stays.
 2. Both Sign in buttons open the existing /login; sign-in redirects as before. A signed-in visitor goes straight to /users.
 3. The Google data-use explanation is in the privacy policy (linked from the footer), no longer on the home page.
 

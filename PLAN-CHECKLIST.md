@@ -351,6 +351,7 @@ Plan: `docs/CHATBOT_IMPLEMENTATION_PLAN.md`; audit: `docs/CHATBOT_ARCHITECTURE_A
 - [x] PB-28 AI Rules page (Admin): per chat or all chats, formatted editor saved as Markdown, sent to every provider after the safety rules, audited (migration 202610251400) (done 25 Oct 2026, v1.19.0)
 - [x] PB-29 Declutter sweep: instructions as hover hints across Admin (forms, workflow builder, user form, module types, imports, dashboards), Super Admin, requests, modules, user pages, analytics and shared components; status, data, warnings and confirm text kept visible; 6 e2e tests moved to the hints (done 25 Oct 2026, v1.20.0)
 - [x] PB-30 Public landing page "ARS Internal Workspace" per the owner's spec: header, hero, footer; /login reused; title, description, manifest and title template renamed (done 25 Oct 2026, v1.20.0)
+- [x] PB-32 Home page on the sign-in split layout with a smooth welcome → sign-in transition; AuthLayout full height (done 25 Oct 2026, v1.20.1)
 - [ ] PB-31 Owner: Google OAuth consent screen app name and home page to match "ARS Internal Workspace"; re-check verification status (Q-025)
 - [ ] PB-15 Owner: allowed Salesforce objects and fields; then a Salesforce chat test (V-12); production Connected App with the production callback; rotate the UAT consumer secret (it was shared in chat)
 

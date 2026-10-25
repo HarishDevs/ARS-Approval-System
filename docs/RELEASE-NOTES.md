@@ -1,5 +1,10 @@
 # Release notes
 
+## v1.20.1 (25 Oct 2026): home page on the sign-in layout (owner)
+- The home page now uses the same blue brand panel as the sign-in page, with the welcome on the white side.
+- **Sign in to continue** turns the welcome smoothly into the sign-in form; the brand panel stays in place. With reduced motion it simply opens.
+- The brand panel reads "ARS Steels · Internal Workspace". The sign-in pages now always fill the window height.
+
 ## v1.20.0 (25 Oct 2026): ARS Internal Workspace, cleaner screens everywhere (owner)
 - **New home page:** "Welcome to ARS Internal Workspace", one Sign in button, and Privacy Policy, Terms of Use and IT Support at the bottom. Signed-in people still go straight to their space.
 - **New name** in the browser tab, the sign-in page and the installed app: ARS Internal Workspace.
