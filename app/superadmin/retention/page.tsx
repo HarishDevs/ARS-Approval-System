@@ -3,6 +3,7 @@ import Link from "next/link";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { Badge } from "@/features/ui/Display";
+import { Hint } from "@/features/ui/Hint";
 import { CreateHoldForm, ReleaseHoldForm } from "@/features/superadmin/HoldForms";
 import { listHolds, retentionDryRun } from "@/server/ops/governance";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
@@ -24,10 +25,12 @@ export default async function RetentionPage() {
       <PageHeader title="Retention & legal holds" description="Holds keep records from being deleted while a matter is open. Retention shows what a policy would affect; nothing is deleted automatically." />
 
       <section aria-labelledby="holds-title" className="card mb-6 px-5 py-4">
-        <h2 id="holds-title" className="mb-1 font-semibold">
-          Legal holds ({active.length} active)
-        </h2>
-        <p className="mb-3 text-label text-ink-muted">A held request can&apos;t be deleted (not even by the Super Admin), and housekeeping keeps its related records. Release a hold when the matter closes.</p>
+        <div className="mb-3 flex items-center gap-1.5">
+          <h2 id="holds-title" className="font-semibold">
+            Legal holds ({active.length} active)
+          </h2>
+          <Hint text="A held request can't be deleted (not even by the Super Admin), and housekeeping keeps its related records. Release a hold when the matter closes." align="start" />
+        </div>
         {holds.length > 0 && (
           <div className="mb-4 overflow-x-auto">
             <table className="data-table">
@@ -84,16 +87,17 @@ export default async function RetentionPage() {
       </section>
 
       <section aria-labelledby="retention-title" className="card px-5 py-4">
-        <h2 id="retention-title" className="mb-1 font-semibold">
-          Retention (dry run)
-        </h2>
-        <p className="mb-3 text-label text-ink-muted">
-          What the current retention settings would affect today. Nothing is archived or deleted: a clean-up run needs an approved policy and a separate decision. Set the durations in{" "}
-          <Link href="/superadmin/settings" className="link">
-            Providers &amp; security → Retention
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5">
+            <h2 id="retention-title" className="font-semibold">
+              Retention (dry run)
+            </h2>
+            <Hint text="What the current retention settings would affect today. Nothing is archived or deleted: a clean-up run needs an approved policy and a separate decision." align="start" />
+          </div>
+          <Link href="/superadmin/settings" className="link text-label">
+            Set durations
           </Link>
-          .
-        </p>
+        </div>
         <div className="overflow-x-auto">
           <table className="data-table">
             <caption className="sr-only">Retention dry run</caption>

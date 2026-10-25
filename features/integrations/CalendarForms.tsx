@@ -2,6 +2,7 @@
 
 import { saveCalendarConfigAction } from "@/app/superadmin/integrations/google-calendar/actions";
 import { ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
+import { Hint } from "@/features/ui/Hint";
 import type { ActionResult } from "@/lib/http/action-result";
 import type { CalendarConfig } from "@/server/calendar/config";
 
@@ -62,10 +63,8 @@ export function CalendarConfigForm({ clientId, hasSecret, config }: { clientId: 
   const box = (name: string, label: string, checked: boolean, help?: string) => (
     <label className="flex items-start gap-2 text-label">
       <input type="checkbox" name={name} defaultChecked={checked} className="mt-0.5 h-4 w-4" />
-      <span>
-        {label}
-        {help && <span className="block text-caption text-ink-muted">{help}</span>}
-      </span>
+      <span>{label}</span>
+      {help && <Hint text={help} align="start" />}
     </label>
   );
   return (
@@ -99,6 +98,7 @@ export function CalendarConfigForm({ clientId, hasSecret, config }: { clientId: 
         {SELECTS.map((select) => (
           <label key={select.name} className="text-label">
             {select.label}
+            {select.help && <Hint text={select.help} align="start" className="ml-1" />}
             <select name={select.name} defaultValue={String(config[select.name])} className="field-input mt-1 w-full">
               {select.options.map(([value, text]) => (
                 <option key={value} value={value}>
@@ -106,13 +106,15 @@ export function CalendarConfigForm({ clientId, hasSecret, config }: { clientId: 
                 </option>
               ))}
             </select>
-            {select.help && <span className="mt-1 block text-caption text-ink-muted">{select.help}</span>}
           </label>
         ))}
       </fieldset>
 
       <fieldset className="grid gap-4 sm:grid-cols-2">
-        <legend className="mb-2 text-body font-semibold">Event text</legend>
+        <legend className="mb-2 flex items-center gap-1.5 text-body font-semibold">
+          Event text
+          <Hint text="Use {kind} (e.g. Approval due), {ref} (the request, task or information number) and {link}. {title} adds the record's title: leave it out to keep confidential subjects out of Google." align="start" />
+        </legend>
         <label className="text-label">
           Title template
           <input name="titleTemplate" defaultValue={config.titleTemplate} maxLength={120} className="field-input mt-1 w-full" />
@@ -121,10 +123,6 @@ export function CalendarConfigForm({ clientId, hasSecret, config }: { clientId: 
           Description template
           <input name="descriptionTemplate" defaultValue={config.descriptionTemplate} maxLength={500} className="field-input mt-1 w-full" />
         </label>
-        <p className="text-caption text-ink-muted sm:col-span-2">
-          Use {"{kind}"} (e.g. Approval due), {"{ref}"} (the request, task or information number) and {"{link}"}. {"{title}"} adds the record&apos;s title: leave it out to keep
-          confidential subjects out of Google.
-        </p>
       </fieldset>
 
       <fieldset className="grid gap-4 sm:grid-cols-3">

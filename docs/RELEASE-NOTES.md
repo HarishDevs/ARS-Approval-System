@@ -1,5 +1,11 @@
 # Release notes
 
+## v1.20.0 (25 Oct 2026): ARS Internal Workspace, cleaner screens everywhere (owner)
+- **New home page:** "Welcome to ARS Internal Workspace", one Sign in button, and Privacy Policy, Terms of Use and IT Support at the bottom. Signed-in people still go straight to their space.
+- **New name** in the browser tab, the sign-in page and the installed app: ARS Internal Workspace.
+- **Cleaner screens across the app:** instructions on Admin, Super Admin, request, task, information, analytics and profile pages are now in ⓘ hover hints. Statuses, figures, warnings and confirmations stay on screen.
+- Nothing changed in how approvals, tasks, information, sign-in or permissions work.
+
 ## v1.19.0 (25 Oct 2026): analyst chat, cleaner screens, Try as, AI Rules (owner)
 - **Pic bot is a business analyst.** Answers start with the point in plain English, then figures, tables, metric cards and charts for dashboards, insights and next steps. Bold text, lists and tables show properly. No technical details on screen (sources and provider are in the ⓘ).
 - **AI Assistant screen** (from the owner's sketch): **+ New chat**, your AI limit (used, remaining, total) and connection status at the top; your chats in the sidebar under **AI Assistant** with a search, newest first. Each chat's **⋯** menu: **Rename**, **Pin to top**, **Delete**. Clicking **AI Assistant** opens a new chat and the list.

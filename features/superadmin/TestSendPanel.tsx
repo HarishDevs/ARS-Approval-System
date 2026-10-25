@@ -3,6 +3,7 @@
 import { testSendAction } from "@/app/superadmin/settings/actions";
 import { ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import { SafeText } from "@/features/ui/SafeText";
+import { Hint } from "@/features/ui/Hint";
 
 // F-52 test send: to the Super Admin's own email and number only.
 function TestButton({ channel, label, target }: { channel: "EMAIL" | "WHATSAPP"; label: string; target: string }) {
@@ -24,9 +25,9 @@ function TestButton({ channel, label, target }: { channel: "EMAIL" | "WHATSAPP";
 export function TestSendPanel({ email, whatsapp }: { email: string; whatsapp: string | null }) {
   return (
     <section className="card">
-      <div className="border-b border-line px-5 py-4">
+      <div className="flex items-center gap-1.5 border-b border-line px-5 py-4">
         <h2 className="font-semibold">Test the providers</h2>
-        <p className="mt-0.5 text-label text-ink-muted">Sends a test to your own email and WhatsApp number. Save any new keys first.</p>
+        <Hint text="Sends a test to your own email and WhatsApp number. Save any new keys first." align="start" />
       </div>
       <div className="space-y-4 px-5 py-5">
         <TestButton channel="EMAIL" label="Send test email" target={email} />

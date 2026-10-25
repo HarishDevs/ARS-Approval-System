@@ -38,8 +38,7 @@ export default async function NewRequestPage({ searchParams }: { searchParams: P
           {types.map((type) => (
             <Link key={type.id} href={`/users/new/${type.id}${suffix}`} className="card block p-5 hover:border-primary-600">
               <p className="font-semibold">{type.name}</p>
-              <p className="mt-1 text-label text-ink-muted">{type.description ?? "No description."}</p>
-              <p className="mt-3 text-caption text-ink-faint">Numbers look like {type.requestPrefix}-2026-000001</p>
+              {type.description && <p className="mt-1 text-label text-ink-muted">{type.description}</p>}
             </Link>
           ))}
         </div>

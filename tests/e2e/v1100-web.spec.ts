@@ -124,7 +124,7 @@ test("WEB-04/05: favicon files answer; each page has its own title", async ({ pa
     await page.goto(path);
     titles.push(await page.title());
   }
-  expect(titles.every((title) => title.endsWith("· ARS Approvals"))).toBe(true);
+  expect(titles.every((title) => title.endsWith("· ARS Internal Workspace"))).toBe(true);
   expect(new Set(titles).size).toBe(titles.length);
   await expect(page.locator('link[rel="icon"][href="/favicon.ico"]')).toHaveCount(1);
 });

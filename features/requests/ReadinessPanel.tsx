@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { AlertTriangle, CheckCircle2, Info, RotateCcw, ShieldCheck, XCircle } from "lucide-react";
 import type { Readiness, ReadinessItem } from "@/server/approvals/readiness";
+import { Hint } from "@/features/ui/Hint";
 
 // FN1 readiness summary: ready / ready with warnings / blocking problems,
 // each linked to its field. The server checks everything again on submit,
@@ -34,6 +35,7 @@ export function ReadinessPanel({
         <h3 id="readiness" className="flex items-center gap-2 font-semibold">
           <ShieldCheck aria-hidden="true" className="h-4 w-4 text-primary-600" />
           Ready to submit?
+          <Hint text="Checks the form, documents, who would approve, possible duplicates and the budget, without submitting." align="start" />
         </h3>
         <button type="button" onClick={onCheck} disabled={checking} className="btn-secondary btn-compact">
           <RotateCcw aria-hidden="true" className="h-4 w-4" />
@@ -42,7 +44,6 @@ export function ReadinessPanel({
       </div>
       <div role="status" aria-live="polite">
         {failed && <p className="mt-2 text-label text-danger-600">{failed}</p>}
-        {!readiness && !failed && <p className="mt-1 text-label text-ink-muted">Checks the form, documents, who would approve, possible duplicates and the budget, without submitting.</p>}
         {readiness && stale && <p className="mt-2 rounded bg-warning-50 px-2 py-1 text-label text-warning-600">You changed something since this check. Check again for an up-to-date result.</p>}
         {readiness && (
           <p className={`mt-2 flex items-center gap-2 text-label font-medium ${readiness.status === "READY" ? "text-success-600" : readiness.status === "WARNINGS" ? "text-warning-600" : "text-danger-600"}`}>

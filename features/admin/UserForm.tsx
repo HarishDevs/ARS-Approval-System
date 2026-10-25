@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createUserAction, updateUserAction } from "@/app/admin/users/actions";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
+import { Hint } from "@/features/ui/Hint";
 import type { ModuleCode, RoleCode, SignInMethod } from "@/types/auth";
 import { MODULE_HELP, MODULE_LABEL, MODULES } from "@/server/modules/modules";
 import { CHAT_MODES, MODE_HELP, MODE_LABEL, type ChatMode, type SalesforceScope } from "@/server/ai/chat-access";
@@ -80,13 +81,13 @@ export function UserForm({
           <p className="field-label">How they sign in</p>
           <div className="grid gap-3 sm:grid-cols-2">
             {(["GOOGLE", "PASSWORD"] as const).map((option) => (
-              <label key={option} className={`flex cursor-pointer gap-3 rounded-md border p-3 ${method === option ? "border-primary-600 bg-primary-50" : "border-line"}`}>
-                <input type="radio" name="signInMethod" value={option} checked={method === option} onChange={() => setMethod(option)} className="mt-1" />
-                <span>
-                  <span className="block font-medium">{option === "GOOGLE" ? "Google account" : "User ID + password"}</span>
-                  <span className="block text-label text-ink-muted">{option === "GOOGLE" ? "No code needed." : "Then a code on WhatsApp every time."}</span>
-                </span>
-              </label>
+              <div key={option} className="relative">
+                <label className={`flex cursor-pointer gap-3 rounded-md border p-3 pr-9 ${method === option ? "border-primary-600 bg-primary-50" : "border-line"}`}>
+                  <input type="radio" name="signInMethod" value={option} checked={method === option} onChange={() => setMethod(option)} className="mt-1" />
+                  <span className="font-medium">{option === "GOOGLE" ? "Google account" : "User ID + password"}</span>
+                </label>
+                <CardHint text={option === "GOOGLE" ? "No code needed." : "Then a code on WhatsApp every time."} />
+              </div>
             ))}
           </div>
           <FieldError result={result} name="signInMethod" />
@@ -102,15 +103,15 @@ export function UserForm({
             {ROLE_INFO.map(({ role, label, body }) => {
               const locked = role === "USER" || (role === "SUPER_ADMIN" && !canGrantSuperAdmin);
               return (
-                <label key={role} className={`flex gap-3 rounded-md border border-line p-3 ${locked ? "opacity-70" : "cursor-pointer"}`}>
-                  <input type="checkbox" name="roles" value={role} defaultChecked={values.roles.includes(role)} disabled={locked} className="mt-1" />
-                  {/* A disabled checkbox isn't submitted, so keep its value. */}
-                  {locked && values.roles.includes(role) && <input type="hidden" name="roles" value={role} />}
-                  <span>
-                    <span className="block font-medium">{label}</span>
-                    <span className="block text-label text-ink-muted">{body}</span>
-                  </span>
-                </label>
+                <div key={role} className="relative">
+                  <label className={`flex gap-3 rounded-md border border-line p-3 pr-9 ${locked ? "opacity-70" : "cursor-pointer"}`}>
+                    <input type="checkbox" name="roles" value={role} defaultChecked={values.roles.includes(role)} disabled={locked} className="mt-1" />
+                    {/* A disabled checkbox isn't submitted, so keep its value. */}
+                    {locked && values.roles.includes(role) && <input type="hidden" name="roles" value={role} />}
+                    <span className="font-medium">{label}</span>
+                  </label>
+                  <CardHint text={body} />
+                </div>
               );
             })}
           </div>
@@ -128,20 +129,22 @@ export function UserForm({
           </div>
         ) : (
           <fieldset className="sm:col-span-2" data-testid="module-access" disabled={Boolean(moduleLock)}>
-            <legend className="field-label">Module access</legend>
+            <legend className="field-label">
+              Module access <Hint text="Each module is separate: AI doesn't include the others. The Super Admin can use every module." align="start" />
+            </legend>
             {!moduleLock && <input type="hidden" name="modulesShown" value="1" />}
             <div className="grid gap-2 sm:grid-cols-2">
               {MODULES.map((module) => (
-                <label key={module} className={`flex gap-3 rounded-md border border-line p-3 ${moduleLock ? "opacity-70" : "cursor-pointer"}`}>
-                  <input type="checkbox" name="modules" value={module} defaultChecked={values.modules.includes(module)} className="mt-1" />
-                  <span>
-                    <span className="block font-medium">{MODULE_LABEL[module]}</span>
-                    <span className="block text-label text-ink-muted">{MODULE_HELP[module]}</span>
-                  </span>
-                </label>
+                <div key={module} className="relative">
+                  <label className={`flex gap-3 rounded-md border border-line p-3 pr-9 ${moduleLock ? "opacity-70" : "cursor-pointer"}`}>
+                    <input type="checkbox" name="modules" value={module} defaultChecked={values.modules.includes(module)} className="mt-1" />
+                    <span className="font-medium">{MODULE_LABEL[module]}</span>
+                  </label>
+                  <CardHint text={MODULE_HELP[module]} />
+                </div>
               ))}
             </div>
-            <p className="mt-1.5 text-caption text-ink-muted">{moduleLock ?? "Each module is separate: AI doesn't include the others. The Super Admin can use every module."}</p>
+            {moduleLock && <p className="mt-1.5 text-caption text-ink-muted">{moduleLock}</p>}
             <FieldError result={result} name="modules" />
           </fieldset>
         )}
@@ -158,17 +161,20 @@ export function UserForm({
           </div>
         ) : (
         <fieldset className="sm:col-span-2" data-testid="chat-access" disabled={Boolean(moduleLock)}>
-          <legend className="field-label">Pic bot - ai: what this person may ask about</legend>
+          <legend className="field-label">
+            Pic bot - ai: what this person may ask about{" "}
+            <Hint text="Needs the AI module above. A module chat also needs that module. General, Salesforce and Combined chat must also be switched on in AI settings." align="start" />
+          </legend>
           {!moduleLock && <input type="hidden" name="chatShown" value="1" />}
           <div className="grid gap-2 sm:grid-cols-2">
             {CHAT_MODES.map((chatMode) => (
-              <label key={chatMode} className={`flex gap-3 rounded-md border border-line p-3 ${moduleLock ? "opacity-70" : "cursor-pointer"}`}>
-                <input type="checkbox" name="chatModes" value={chatMode} defaultChecked={values.chatModes.includes(chatMode)} className="mt-1" />
-                <span>
-                  <span className="block font-medium">{MODE_LABEL[chatMode]}</span>
-                  <span className="block text-label text-ink-muted">{MODE_HELP[chatMode]}</span>
-                </span>
-              </label>
+              <div key={chatMode} className="relative">
+                <label className={`flex gap-3 rounded-md border border-line p-3 pr-9 ${moduleLock ? "opacity-70" : "cursor-pointer"}`}>
+                  <input type="checkbox" name="chatModes" value={chatMode} defaultChecked={values.chatModes.includes(chatMode)} className="mt-1" />
+                  <span className="font-medium">{MODE_LABEL[chatMode]}</span>
+                </label>
+                <CardHint text={MODE_HELP[chatMode]} />
+              </div>
             ))}
           </div>
           <label htmlFor="salesforceScope" className="field-label mt-3">
@@ -179,24 +185,23 @@ export function UserForm({
             <option value="OWN">Records they own in Salesforce (matched by email)</option>
             <option value="ALL">All records of the allowed objects</option>
           </select>
-          <p className="mt-1.5 text-caption text-ink-muted">
-            {moduleLock ?? "Needs the AI module above. A module chat also needs that module. General, Salesforce and Combined chat must also be switched on in AI settings."}
-          </p>
+          {moduleLock && <p className="mt-1.5 text-caption text-ink-muted">{moduleLock}</p>}
           <FieldError result={result} name="chatModes" />
           <FieldError result={result} name="salesforceScope" />
         </fieldset>
         )}
       </fieldset>
       {mode === "create" && (
-        <label className="flex items-start gap-2 border-t border-line px-5 py-4 text-label">
-          <input type="checkbox" name="invite" defaultChecked className="mt-1" />
-          <span>
+        <div className="flex items-center gap-1.5 border-t border-line px-5 py-4">
+          <label className="flex items-center gap-2 text-label">
+            <input type="checkbox" name="invite" defaultChecked />
             <span className="font-medium">Email an invitation now</span>
-            <span className="block text-ink-muted">
-              {method === "PASSWORD" ? "Sends their User ID and a link to set their password (confirmed by a WhatsApp code)." : "Tells them they've been added and to sign in with Google as this email."}
-            </span>
-          </span>
-        </label>
+          </label>
+          <Hint
+            text={method === "PASSWORD" ? "Sends their User ID and a link to set their password (confirmed by a WhatsApp code)." : "Tells them they've been added and to sign in with Google as this email."}
+            align="start"
+          />
+        </div>
       )}
       {!readOnly && (
         <div className="flex flex-wrap items-center gap-3 border-t border-line px-5 py-4">
@@ -230,13 +235,25 @@ function Field({
 }) {
   return (
     <div>
-      <label htmlFor={name} className="field-label">
-        {label}
-      </label>
+      <div className="flex items-center gap-1">
+        <label htmlFor={name} className="field-label">
+          {label}
+        </label>
+        <Hint text={hint} align="start" className="mb-1.5" />
+      </div>
       <input id={name} name={name} type={type} defaultValue={defaultValue} autoComplete={autoComplete} className="field-input" />
-      {hint && <p className="mt-1 text-caption text-ink-muted">{hint}</p>}
       <FieldError result={result} name={name} />
     </div>
+  );
+}
+
+// D-179: an option card's explanation, as a hover hint in its top corner
+// (outside the label, so hovering or clicking it never ticks the box).
+function CardHint({ text }: { text: string }) {
+  return (
+    <span className="absolute right-2 top-3">
+      <Hint text={text} align="end" />
+    </span>
   );
 }
 

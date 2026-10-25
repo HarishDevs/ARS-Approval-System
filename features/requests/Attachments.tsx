@@ -2,6 +2,7 @@
 
 import { addFilesAction } from "@/app/users/actions";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
+import { Hint } from "@/features/ui/Hint";
 import { ACCEPT_ATTRIBUTE } from "@/server/attachments/files";
 
 // F-18: anyone who can see an open request can add files; files are never
@@ -17,9 +18,9 @@ export function AddFilesForm({ requestId }: { requestId: number }) {
         <SubmitButton pending={pending} variant="secondary" className="btn-compact">
           Attach
         </SubmitButton>
+        <Hint text="Up to 5 files of 10 MB at a time. Attached files can't be removed." align="start" />
         {result && (result.ok || !result.fieldErrors) && <ResultMessage result={result} />}
       </div>
-      <p className="text-caption text-ink-muted">Up to 5 files of 10 MB at a time. Attached files can&apos;t be removed.</p>
     </form>
   );
 }

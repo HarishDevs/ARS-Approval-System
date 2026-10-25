@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
+import { Hint } from "@/features/ui/Hint";
 import { PageRuleForm } from "@/features/superadmin/PageRuleForm";
 import { listAccessRules, rulesForPerson } from "@/lib/db/repositories/page-access.repository";
 import { listActiveUserOptions } from "@/lib/db/repositories/admin-users.repository";
@@ -107,8 +108,10 @@ export default async function PageAccessPage({ searchParams }: { searchParams: P
               {PAGES.filter((page) => page.area === area).map((page) => (
                 <tr key={page.key}>
                   <td className="max-w-80">
-                    <span className="font-medium">{page.label}</span>
-                    <span className="block text-caption text-ink-muted">{page.what}</span>
+                    <span className="flex items-center gap-1.5 font-medium">
+                      {page.label}
+                      <Hint text={page.what} align="start" />
+                    </span>
                   </td>
                   <td>
                     <PageRuleForm pageKey={page.key} scope="EVERYONE" level={everyone(page.key)} neverHidden={page.neverHidden} label={`${page.label}: for everyone`} />

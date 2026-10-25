@@ -20,7 +20,8 @@ export default async function CustomApprovalSetupPage() {
     <>
       <PageHeader
         title="Custom approval"
-        description={`What people fill in when they raise a custom approval, and which step options they may change.${config.updatedAt ? ` Last changed ${formatIndiaTime(config.updatedAt)}${config.updatedByName ? ` by ${config.updatedByName}` : ""}.` : " Using the standard set-up."}`}
+        description="What people fill in when they raise a custom approval, and which step options they may change."
+        meta={config.updatedAt ? `Last changed ${formatIndiaTime(config.updatedAt)}${config.updatedByName ? ` by ${config.updatedByName}` : ""}.` : "Using the standard set-up."}
       />
       <CustomApprovalSetup initialForm={config.form} initialPolicy={config.policy} lookups={lookups} people={people.map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` }))} />
     </>

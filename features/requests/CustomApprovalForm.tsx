@@ -8,6 +8,7 @@ import { LevelsEditor, newStepId, StepPolicyContext, type BuilderOptions } from 
 import { DynamicFields } from "@/features/requests/DynamicFields";
 import { DEFAULT_STEP_POLICY, stepDefaults, type StepPolicy } from "@/server/workflows/step-policy";
 import { actionErrorMessage, FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
+import { Hint } from "@/features/ui/Hint";
 import type { BuilderStage } from "@/server/workflows/builder";
 import { NO_LOOKUPS, type FieldLookups, type FormField } from "@/server/forms/fields";
 import { PeoplePicker, type PersonOption } from "@/features/ui/PeoplePicker";
@@ -89,11 +90,13 @@ export function CustomApprovalForm({
         </div>
         <DynamicFields fields={fields} mode="submit" people={people} lookups={lookups} initial={initial?.fields} result={result} onLinesChange={nudge} />
         <div>
-          <label htmlFor="c-attachments" className="field-label">
-            Attachments <span className="font-normal text-ink-faint">(optional)</span>
-          </label>
+          <div className="flex items-center gap-1">
+            <label htmlFor="c-attachments" className="field-label">
+              Attachments <span className="font-normal text-ink-faint">(optional)</span>
+            </label>
+            <Hint text="Quotes, invoices, photos: PDF, images, Word, Excel, PowerPoint, CSV or text. Up to 5 files of 10 MB each." align="start" className="mb-1.5" />
+          </div>
           <input id="c-attachments" name="attachments" type="file" multiple accept={ACCEPT_ATTRIBUTE} className="block w-full text-label file:mr-3 file:rounded-md file:border-0 file:bg-surface-muted file:px-3 file:py-2" />
-          <p className="mt-1 text-caption text-ink-muted">Quotes, invoices, photos: PDF, images, Word, Excel, PowerPoint, CSV or text. Up to 5 files of 10 MB each.</p>
           <FieldError result={result} name="attachments" />
         </div>
         <div>

@@ -7,6 +7,7 @@ import { requireArea } from "@/server/authorization/guards";
 import { canUseReports } from "@/server/settings/features";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { Badge } from "@/features/ui/Display";
+import { Hint } from "@/features/ui/Hint";
 import { AlertForm, ScheduleForm, ToggleForm } from "@/features/analytics/ReportForms";
 import { listActiveUserOptions } from "@/lib/db/repositories/admin-users.repository";
 import { canExport } from "@/server/settings/features";
@@ -134,10 +135,12 @@ export default async function ReportsPage() {
       </section>
 
       <section aria-labelledby="alerts-title" id="alerts" className="card px-5 py-4">
-        <h2 id="alerts-title" className="mb-1 font-semibold">
-          My alerts
-        </h2>
-        <p className="mb-3 text-label text-ink-muted">Checked every few minutes. You&apos;re told in the app (and by email if you choose) when a number reaches your line, at most once a day while it stays there. Quiet hours hold a warning until they end; a critical alert is sent at once.</p>
+        <div className="mb-3 flex items-center gap-1.5">
+          <h2 id="alerts-title" className="font-semibold">
+            My alerts
+          </h2>
+          <Hint text="Checked every few minutes. You're told in the app (and by email if you choose) when a number reaches your line, at most once a day while it stays there. Quiet hours hold a warning until they end; a critical alert is sent at once." align="start" />
+        </div>
         {alerts.length > 0 && (
           <ul className="mb-4 divide-y divide-line">
             {alerts.map((rule) => {

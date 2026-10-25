@@ -3,6 +3,7 @@ import Link from "next/link";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { Badge } from "@/features/ui/Display";
+import { Hint } from "@/features/ui/Hint";
 import { loadSettingsRow } from "@/lib/db/repositories/gcal.repository";
 import { integrationStatus, STATUS_LABEL } from "@/server/calendar/config";
 
@@ -21,22 +22,22 @@ export default async function IntegrationsPage() {
       <ul className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <li className="card p-4">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-body font-semibold">
+            <h2 className="flex items-center gap-1.5 text-body font-semibold">
               <Link href="/superadmin/integrations/google-calendar" className="link">
                 Google Calendar
               </Link>
+              <Hint text="Two-way sync of approvals, tasks, information dates and personal entries with each person's own Google Calendar." align="start" />
             </h2>
             <Badge tone={status === "ENABLED" ? "success" : status === "DISABLED" ? "neutral" : "warning"}>{STATUS_LABEL[status]}</Badge>
           </div>
-          <p className="mt-2 text-label text-ink-muted">Two-way sync of approvals, tasks, information dates and personal entries with each person&apos;s own Google Calendar.</p>
         </li>
         <li className="card p-4">
-          <h2 className="text-body font-semibold">
+          <h2 className="flex items-center gap-1.5 text-body font-semibold">
             <Link href="/superadmin/settings" className="link">
               Email and WhatsApp
             </Link>
+            <Hint text="Resend (email) and CEOITBox (WhatsApp) keys and tests are under Providers & security." align="start" />
           </h2>
-          <p className="mt-2 text-label text-ink-muted">Resend (email) and CEOITBox (WhatsApp) keys and tests are under Providers &amp; security.</p>
         </li>
       </ul>
     </>

@@ -6,6 +6,7 @@ import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/featur
 import { compileNamedBody, MAX_BODY, previewNamed } from "@/server/notifications/template-authoring";
 import type { TemplateVariable } from "@/server/notifications/templates";
 import { SafeText } from "@/features/ui/SafeText";
+import { Hint } from "@/features/ui/Hint";
 
 // WhatsApp template creator (S7, D-076, F-42b). The wording uses named
 // placeholders; the server turns them into Meta's {{1}}, {{2}} on save.
@@ -44,12 +45,17 @@ export function TemplateEditor({
     <form onSubmit={onSubmit} className="card">
       <input type="hidden" name="code" value={code} />
       <div className="border-b border-line px-5 py-4">
-        <h2 className="font-semibold">{locked ? "Write a new version" : "Write the message"}</h2>
-        <p className="text-label text-ink-muted">
-          {locked
-            ? "The last version was already sent to Meta, so saving makes a new version with its own name. The live version keeps sending until the new one is approved."
-            : "Save a draft, check the preview, then submit it to Meta through CEOITBox."}
-        </p>
+        <h2 className="flex items-center gap-1.5 font-semibold">
+          {locked ? "Write a new version" : "Write the message"}
+          <Hint
+            text={
+              locked
+                ? "The last version was already sent to Meta, so saving makes a new version with its own name. The live version keeps sending until the new one is approved."
+                : "Save a draft, check the preview, then submit it to Meta through CEOITBox."
+            }
+            align="start"
+          />
+        </h2>
       </div>
       <div className="grid gap-5 px-5 py-5 lg:grid-cols-2">
         <div className="space-y-4">
@@ -90,7 +96,7 @@ export function TemplateEditor({
           </div>
           <div>
             <label htmlFor="t-footer" className="field-label">
-              Footer <span className="font-normal text-ink-faint">(optional, no placeholders)</span>
+              Footer <span className="font-normal text-ink-faint">(optional)</span> <Hint text="No placeholders in the footer." align="start" />
             </label>
             <input id="t-footer" name="footer" value={footer} onChange={(event) => setFooter(event.target.value)} maxLength={60} placeholder="e.g. ARS Steels · IT" className="field-input" />
             <FieldError result={result} name="footer" />

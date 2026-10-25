@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/features/shell/PageHeader";
+import { Hint } from "@/features/ui/Hint";
 import { requireArea } from "@/server/authorization/guards";
 import { listDemoPeople } from "@/server/demo/service";
 import { DEMO_GROUPS, PURCHASE_DOA_BANDS } from "@/server/demo/demo-data";
@@ -25,40 +26,39 @@ export default async function DemoPage() {
       />
       <div className="mb-6 grid gap-4 lg:grid-cols-2">
         <section className="card space-y-3 px-5 py-4">
-          <h2 className="font-semibold">1. Load</h2>
-          <p className="text-label text-ink-muted">
-            Creates 7 departments, 20 demo people (with managers and HODs), {DEMO_GROUPS.length} approver groups, and 12 published approval types: MD, ED,
-            Finance (controller and head), Purchase &amp; SCM, Director, HR / Admin, Recruitment, Finance Internal, IT Internal, Price Realisation, and Department
-            (Manager → HOD). Safe to press twice: anything that already exists is left alone.
-          </p>
-          <p className="text-label text-ink-muted">
-            Purchase &amp; SCM shows the DoA example: up to {lakh(PURCHASE_DOA_BANDS.finance)} the SCM head only; above that the Finance head too; above{" "}
-            {lakh(PURCHASE_DOA_BANDS.ed)} the ED as well; above {lakh(PURCHASE_DOA_BANDS.md)} the MD as well. See it in{" "}
+          <h2 className="flex items-center gap-1.5 font-semibold">
+            1. Load
+            <Hint
+              text={`Creates 7 departments, 20 demo people (with managers and HODs), ${DEMO_GROUPS.length} approver groups, and 12 published approval types: MD, ED, Finance (controller and head), Purchase & SCM, Director, HR / Admin, Recruitment, Finance Internal, IT Internal, Price Realisation, and Department (Manager → HOD). Safe to press twice: anything that already exists is left alone.`}
+              align="start"
+            />
+          </h2>
+          <p className="flex items-center gap-1.5 text-label">
             <Link href="/admin/doa" className="link">
-              the DoA view
+              DoA example
             </Link>
-            .
+            <Hint
+              text={`Purchase & SCM: up to ${lakh(PURCHASE_DOA_BANDS.finance)} the SCM head only; above that the Finance head too; above ${lakh(PURCHASE_DOA_BANDS.ed)} the ED as well; above ${lakh(PURCHASE_DOA_BANDS.md)} the MD as well.`}
+              align="start"
+            />
           </p>
           <LoadDemoForm />
         </section>
         <section className="card space-y-3 px-5 py-4">
-          <h2 className="font-semibold">2. When the real staff arrive</h2>
-          <ol className="list-decimal space-y-1 pl-5 text-label text-ink-muted">
-            <li>Add the real people in Admin → Users.</li>
-            <li>In Admin → Groups, swap the demo members for the real ones (MD office, ED office, Finance desks…).</li>
-            <li>In Admin → Organisation, set the real HOD on each department.</li>
-            <li>Then retire the demo staff. The approval types keep working, because they pick approvers by group and HOD, not by name.</li>
-          </ol>
+          <h2 className="flex items-center gap-1.5 font-semibold">
+            2. When the real staff arrive
+            <Hint
+              text="1. Add the real people in Admin → Users. 2. In Admin → Groups, swap the demo members for the real ones (MD office, ED office, Finance desks…). 3. In Admin → Organisation, set the real HOD on each department. 4. Then retire the demo staff. The approval types keep working, because they pick approvers by group and HOD, not by name."
+              align="start"
+            />
+          </h2>
           <RetireDemoForm />
         </section>
       </div>
       <section className="card overflow-x-auto">
-        <div className="border-b border-line px-5 py-4">
+        <div className="flex items-center gap-1.5 border-b border-line px-5 py-4">
           <h2 className="font-semibold">Demo people ({active.length} active)</h2>
-          <p className="text-label text-ink-muted">
-            &quot;Try as&quot; continues as that person, to raise or approve requests. It ends your Super Admin session; sign in again to come back. Every switch is in
-            the audit log.
-          </p>
+          <Hint text="“Try as” continues as that person, to raise or approve requests. It ends your Super Admin session; sign in again to come back. Every switch is in the audit log." align="start" />
         </div>
         {people.length === 0 ? (
           <p className="px-5 py-4 text-label text-ink-muted">Nothing loaded yet.</p>

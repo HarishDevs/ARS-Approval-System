@@ -563,3 +563,20 @@ The full guide is in `docs/CHATBOT_DEPLOYMENT_GUIDE.md`. In short:
   - tick **AI** and the person's **Pic bot** chats on their user page;
   - Salesforce: create a sandbox Connected App with the callback URL shown in AI settings and PKCE, then Connect and Test.
 - **Emergency:** AI settings → **Emergency stop: ON**.
+
+## Part T: v1.19.0 to v1.20.0 (analyst chat, Try as, AI Rules, clean screens)
+
+Nothing new on GoDaddy (no new environment variables). Publish as usual; on start the app applies three additive migrations:
+- `202610251200_ai_chat_pins.sql` (chat pinning),
+- `202610251300_try_as.sql` (Try as sessions),
+- `202610251400_ai_rules.sql` (AI Rules).
+
+After publishing:
+1. `/api/health` shows the new version.
+2. **Super Admin → Salesforce Settings** (moved out of AI settings): for production, add `https://approval.arssteels.net/api/integrations/salesforce/callback` to the production Salesforce app, then Connect and Test.
+3. **Super Admin → AI settings**: one card per provider; set the active (and fallback) provider and its "May see business data".
+4. **Admin → AI Rules**: write the company rules (all chats, then per chat).
+5. Try **Try as** on a staff member's page: copy the link into a private window; the session is view-only.
+6. Remove test provider keys; rotate any key or secret that was shared in a chat.
+
+Rollback: redeploy v1.18.0. The new column, enum value and table are ignored by it.

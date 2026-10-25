@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { Breadcrumbs } from "@/features/ui/Display";
+import { Hint } from "@/features/ui/Hint";
 import { PageRuleForm } from "@/features/superadmin/PageRuleForm";
 import { listAccessRules } from "@/lib/db/repositories/page-access.repository";
 import { listActiveUserOptions } from "@/lib/db/repositories/admin-users.repository";
@@ -35,15 +36,16 @@ export default async function PageRulesPage({ params }: { params: Promise<{ key:
         </Link>
       </PageHeader>
       <section className="card mb-6 px-5 py-4" aria-labelledby="everyone">
-        <h2 id="everyone" className="mb-2 font-semibold">
+        <h2 id="everyone" className="mb-2 flex items-center gap-1.5 font-semibold">
           For everyone
+          {page.neverHidden && <Hint text="The first page of a space can be view-only but not hidden, so nobody lands on an error after signing in." align="start" />}
         </h2>
         <PageRuleForm pageKey={page.key} scope="EVERYONE" level={everyone} neverHidden={page.neverHidden} label="For everyone" removable={everyone !== null} />
-        {page.neverHidden && <p className="mt-2 text-caption text-ink-muted">The first page of a space can be view-only but not hidden, so nobody lands on an error after signing in.</p>}
       </section>
       <section className="card mb-6 space-y-3 px-5 py-4" aria-labelledby="departments">
-        <h2 id="departments" className="font-semibold">
-          By department <span className="font-normal text-ink-muted">(the raiser&apos;s own department in their profile)</span>
+        <h2 id="departments" className="flex items-center gap-1.5 font-semibold">
+          By department
+          <Hint text="The raiser's own department in their profile." align="start" />
         </h2>
         {byDepartment.length === 0 && <p className="text-label text-ink-muted">No department rules.</p>}
         {byDepartment.map((rule) => (

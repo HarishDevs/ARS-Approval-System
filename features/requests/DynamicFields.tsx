@@ -5,6 +5,7 @@ import { MultiChoiceInput, parseMulti } from "@/features/requests/MultiChoiceInp
 import { LineItemsEditor } from "@/features/requests/LineItemsEditor";
 import { describeRule, evaluateFormula, parseFormula, ruleHolds, visibleFields } from "@/server/forms/dynamic";
 import { FieldError } from "@/features/ui/form";
+import { Hint } from "@/features/ui/Hint";
 import { ACCEPT_ATTRIBUTE } from "@/server/attachments/files";
 import type { FieldLookups, FormField } from "@/server/forms/fields";
 import type { ActionResult } from "@/lib/http/action-result";
@@ -17,6 +18,9 @@ import type { ActionResult } from "@/lib/http/action-result";
 const NO_FILES: Record<string, number> = {};
 const NO_SOURCES: Record<string, string> = {};
 const NOT_LOCKED = () => false;
+// D-179: field help is a hover tip, unless it has an email address (those
+// stay visible page text).
+const tipOf = (help: string | null | undefined) => (help && !help.includes("@") ? help : null);
 
 export function DynamicFields({
   fields,
@@ -101,8 +105,11 @@ export function DynamicFields({
         if (field.type === "SECTION") {
           return visible ? (
             <div key={field.key} className="border-t border-line pt-4">
-              <h3 className="font-semibold">{field.label}</h3>
-              {field.help && <p className="text-label text-ink-muted">{field.help}</p>}
+              <h3 className="flex items-center gap-1 font-semibold">
+                {field.label}
+                <Hint text={tipOf(field.help)} align="start" />
+              </h3>
+              {field.help && !tipOf(field.help) && <p className="text-label text-ink-muted">{field.help}</p>}
             </div>
           ) : null;
         }
@@ -110,10 +117,14 @@ export function DynamicFields({
         return (
           // A field hidden by its rule is disabled, so it isn't sent (the server clears it anyway).
           <fieldset key={field.key} hidden={!visible} disabled={!visible || locked(field.key)} className="min-w-0">
-            <label id={`f-${field.key}-label`} htmlFor={`f-${field.key}`} className="field-label">
-              {field.label}
-              {!required && field.type !== "CALC" && <span className="font-normal text-ink-faint"> (optional)</span>}
-            </label>
+            <div className="flex items-center gap-1">
+              <label id={`f-${field.key}-label`} htmlFor={`f-${field.key}`} className="field-label">
+                {field.label}
+                {!required && field.type !== "CALC" && <span className="font-normal text-ink-faint"> (optional)</span>}
+              </label>
+              <Hint text={tipOf(field.help)} align="start" className="mb-1.5" />
+              {field.type === "CALC" && field.formula && <Hint text={`Worked out automatically: ${field.formula}`} align="start" className="mb-1.5" />}
+            </div>
             {field.type === "CALC" ? (
               <output id={`f-${field.key}`} aria-live="polite" className="field-input flex items-center bg-surface tabular-nums">
                 {calculated[field.key] === null || calculated[field.key] === undefined ? <span className="text-ink-faint">Fill in the fields it uses</span> : calculated[field.key]!.toLocaleString("en-IN", { maximumFractionDigits: field.decimals ?? 2 })}
@@ -125,10 +136,10 @@ export function DynamicFields({
             )}
             {sources[field.key] && <p className="mt-1 text-caption text-primary-700">{sources[field.key]}. You can change it.</p>}
             {locked(field.key) && <p className="mt-1 text-caption text-ink-muted">Can&apos;t be changed by an amendment.</p>}
-            {field.type === "CALC" && field.formula && <p className="mt-1 text-caption text-ink-muted">Worked out automatically: {field.formula}</p>}
             {field.requiredIf && <p className="mt-1 text-caption text-ink-muted">Required when {describeRule(field.requiredIf, labelOf)}.</p>}
+            {/* The control still points at its help (aria-describedby). */}
             {field.help && (
-              <p id={`f-${field.key}-hint`} className="mt-1 text-caption text-ink-muted">
+              <p id={`f-${field.key}-hint`} className={tipOf(field.help) ? "sr-only" : "mt-1 text-caption text-ink-muted"}>
                 {field.help}
               </p>
             )}
@@ -215,10 +226,11 @@ export function FieldInput({ field, people, lookups, defaultValue, error, existi
       const most = field.maxFiles ?? 5;
       return (
         <>
-          <input id={id} name={`file:${field.key}`} type="file" multiple={most > 1} accept={ACCEPT_ATTRIBUTE} {...a11y} className="block w-full text-label file:mr-3 file:rounded-md file:border-0 file:bg-surface-muted file:px-3 file:py-2" />
-          <p className="mt-1 text-caption text-ink-muted">
-            Up to {most} file{most === 1 ? "" : "s"}, 10 MB each.{existing ? ` ${existing} already attached; new files are added to them.` : ""}
-          </p>
+          <div className="flex items-center gap-2">
+            <input id={id} name={`file:${field.key}`} type="file" multiple={most > 1} accept={ACCEPT_ATTRIBUTE} {...a11y} className="block w-full min-w-0 flex-1 text-label file:mr-3 file:rounded-md file:border-0 file:bg-surface-muted file:px-3 file:py-2" />
+            <Hint text={`Up to ${most} file${most === 1 ? "" : "s"}, 10 MB each.`} align="end" />
+          </div>
+          {existing > 0 && <p className="mt-1 text-caption text-ink-muted">{existing} already attached; new files are added to them.</p>}
         </>
       );
     }

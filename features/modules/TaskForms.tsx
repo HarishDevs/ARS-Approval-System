@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { createTaskAction, taskAction } from "@/app/users/tasks/actions";
 import { DynamicFields } from "@/features/requests/DynamicFields";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
+import { Hint } from "@/features/ui/Hint";
 import { ACCEPT_ATTRIBUTE } from "@/server/attachments/files";
 import { PRIORITY_LABEL, TASK_PRIORITIES, type TaskPriority } from "@/server/modules/settings";
 import type { FieldLookups, FormField } from "@/server/forms/fields";
@@ -101,20 +102,25 @@ export function CreateTaskForm({
         </div>
         {allowRelated && (
           <div className="md:col-span-2">
-            <label htmlFor="task-related" className="field-label">
-              Related approval request <span className="font-normal text-ink-faint">(optional, its number)</span>
-            </label>
+            <div className="flex items-center gap-1">
+              <label htmlFor="task-related" className="field-label">
+                Related approval request <span className="font-normal text-ink-faint">(optional)</span>
+              </label>
+              <Hint text="Its request number. The task stays separate: completing it doesn't approve the request." align="start" className="mb-1.5" />
+            </div>
             <input id="task-related" name="related" defaultValue={relatedDefault} maxLength={40} placeholder="e.g. PUR-2026-000012" className="field-input font-mono" />
-            <p className="mt-1 text-caption text-ink-muted">The task stays separate: completing it doesn&apos;t approve the request.</p>
             <FieldError result={result} name="related" />
           </div>
         )}
       </div>
       {form.length > 0 && <DynamicFields fields={form} mode="submit" people={people} lookups={lookups} result={result} />}
       <div>
-        <label htmlFor="task-files" className="field-label">
-          Files <span className="font-normal text-ink-faint">(optional, up to 5, 10 MB each)</span>
-        </label>
+        <div className="flex items-center gap-1">
+          <label htmlFor="task-files" className="field-label">
+            Files <span className="font-normal text-ink-faint">(optional)</span>
+          </label>
+          <Hint text="Up to 5 files, 10 MB each." align="start" className="mb-1.5" />
+        </div>
         <input id="task-files" name="attachments" type="file" multiple accept={ACCEPT_ATTRIBUTE} className="block w-full text-label file:mr-3 file:rounded-md file:border-0 file:bg-surface-muted file:px-3 file:py-2" />
       </div>
       <div className="flex flex-wrap items-center gap-3">

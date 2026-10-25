@@ -14,13 +14,15 @@ export function mailtoHref(address: string): string | null {
   return VALID.test(clean) ? `mailto:${clean}` : null;
 }
 
-export function MailLink({ address }: { address: string }) {
+// D-188: with `label`, the link shows that text (e.g. "IT Support") instead of
+// the address; the address is still only added after the page loads.
+export function MailLink({ address, label }: { address: string; label?: string }) {
   const [href, setHref] = useState<string | null>(null);
   useEffect(() => setHref(mailtoHref(address)), [address]);
-  if (!href) return <Email address={address} />;
+  if (!href) return label ? <span>{label}</span> : <Email address={address} />;
   return (
     <a href={href} className="text-primary-700 underline-offset-2 hover:underline">
-      <Email address={address} />
+      {label ?? <Email address={address} />}
     </a>
   );
 }

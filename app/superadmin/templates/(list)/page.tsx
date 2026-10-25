@@ -28,7 +28,11 @@ export default async function TemplatesPage() {
     <>
       <PageHeader
         title="WhatsApp templates"
-        description="Open a message to write its template and submit it to Meta through CEOITBox. It goes live by itself once Meta approves it. Until then, email and in-app messages still go out."
+        description={[
+          "Open a message to write its template and submit it to Meta through CEOITBox. It goes live by itself once Meta approves it. Until then, email and in-app messages still go out.",
+          `The sign-in code uses the Power BI website's approved ${EXISTING_OTP_TEMPLATE.name}, so it needs nothing here.`,
+          ...EMAIL_ONLY_EVENTS.map((item) => `${templateLabel(item.eventType)} is email only.`),
+        ].join(" ")}
       />
       <section className="card mb-6 flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0 flex-1">
@@ -90,10 +94,6 @@ export default async function TemplatesPage() {
           </tbody>
         </table>
       </section>
-      <p className="mt-4 text-caption text-ink-muted">
-        The sign-in code uses the Power BI website&apos;s approved <span className="font-mono">{EXISTING_OTP_TEMPLATE.name}</span>, so it needs nothing here.{" "}
-        {EMAIL_ONLY_EVENTS.map((item) => `${templateLabel(item.eventType)} is email only.`).join(" ")}
-      </p>
     </>
   );
 }

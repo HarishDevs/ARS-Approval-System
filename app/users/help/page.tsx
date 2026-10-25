@@ -4,6 +4,7 @@ import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { HelpTopics, type HelpTopic } from "@/features/help/HelpTopics";
 import { CopyForIt } from "@/features/help/CopyForIt";
+import { Hint } from "@/features/ui/Hint";
 import Link from "next/link";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
@@ -45,8 +46,10 @@ export default async function HelpPage() {
         {/* v1.14.0 (D-167): the guided tour of Approvals, Tasks and Calendar. */}
         <section className="card flex flex-wrap items-center justify-between gap-3 px-5 py-4" data-testid="help-tour">
           <div className="min-w-0">
-            <h2 className="font-semibold">New here? Take the tour</h2>
-            <p className="text-label text-ink-muted">About two minutes: raising and approving requests, tasks, the calendar, notifications and where to find things.</p>
+            <h2 className="flex items-center gap-1.5 font-semibold">
+              New here? Take the tour
+              <Hint text="About two minutes: raising and approving requests, tasks, the calendar, notifications and where to find things." align="start" />
+            </h2>
           </div>
           <Link href="/users?tour=1" className="btn-primary btn-compact">
             Take the tour
@@ -54,8 +57,10 @@ export default async function HelpPage() {
         </section>
         <HelpTopics topics={TOPICS} />
         <section className="card space-y-2 px-5 py-4">
-          <h2 className="font-semibold">Need IT?</h2>
-          <p className="text-label text-ink-muted">Copy these details and paste them in your message, with what you were doing and the request number if there is one.</p>
+          <h2 className="flex items-center gap-1.5 font-semibold">
+            Need IT?
+            <Hint text="Copy these details and paste them in your message, with what you were doing and the request number if there is one." align="start" />
+          </h2>
           <CopyForIt version={packageJson.version} />
         </section>
       </div>

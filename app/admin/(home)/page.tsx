@@ -34,13 +34,12 @@ export default async function AdminHome() {
       <PageHeader title="Admin" description="Where the IT team sets up the approval, task and information types, people and rules." />
       <div className="grid auto-rows-fr gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {modules.map((module) => (
-          <Link key={module.href} href={module.href} className="card-link flex flex-col p-5">
+          <Link key={module.href} href={module.href} title={module.body} className="card-link flex flex-col p-5">
             <div className="flex items-start justify-between gap-3">
               <h2 className="font-semibold">{module.title}</h2>
               <span aria-hidden="true" className="text-ink-faint">→</span>
             </div>
-            <p className="mt-2 flex-1 text-label text-ink-muted">{module.body}</p>
-            <p className="mt-4 flex flex-wrap items-center gap-2 text-caption">
+            <p className="mt-4 flex flex-1 flex-wrap items-end gap-2 text-caption">
               <span className="rounded-full bg-primary-50 px-2.5 py-0.5 font-semibold text-primary-700">{module.stat}</span>
               {module.extra && <span className="rounded-full bg-surface-muted px-2.5 py-0.5 text-ink-muted">{module.extra}</span>}
             </p>

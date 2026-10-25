@@ -8,6 +8,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { DynamicFields } from "@/features/requests/DynamicFields";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import { ErrorSummary } from "@/features/ui/Field";
+import { Hint } from "@/features/ui/Hint";
 import { PeoplePicker, type PersonOption } from "@/features/ui/PeoplePicker";
 import { NO_LOOKUPS, type FieldLookups, type FormField } from "@/server/forms/fields";
 import { ACCEPT_ATTRIBUTE } from "@/server/attachments/files";
@@ -151,11 +152,9 @@ export function RequestForm({
         <ErrorSummary errors={summaryErrors} labels={summaryLabels} />
         {amendment && (
           <div id="f-amendment" tabIndex={-1} className="space-y-3">
-            <p className="text-label">
+            <p className="flex items-center gap-1 text-label">
               <span className="font-semibold">Amendment: {amendment.title}</span>
-              <span className="block text-ink-muted">
-                Changes {amendment.originalNo} once approved. Its approvals and history stay as they are; this goes through the approval steps again.
-              </span>
+              <Hint text={`Changes ${amendment.originalNo} once approved. Its approvals and history stay as they are; this goes through the approval steps again.`} align="start" />
             </p>
             <div>
               <label htmlFor="f-amendReason" className="field-label">
@@ -172,7 +171,7 @@ export function RequestForm({
             <label htmlFor="title" className="field-label">
               Title
             </label>
-            <input id="title" name="title" defaultValue={initialTitle ?? ""} placeholder="A short description, e.g. New motor for crane 3" className="field-input" />
+            <input id="title" name="title" defaultValue={initialTitle ?? ""} placeholder="e.g. New motor for crane 3" className="field-input" />
             <FieldError result={result} name="title" />
           </div>
         )}
@@ -191,11 +190,13 @@ export function RequestForm({
           onLinesChange={nudge}
         />
         <div>
-          <label htmlFor="f-attachments" className="field-label">
-            {mode === "submit" ? "Attachments" : "Add files"} <span className="font-normal text-ink-faint">(optional)</span>
-          </label>
+          <div className="flex items-center gap-1">
+            <label htmlFor="f-attachments" className="field-label">
+              {mode === "submit" ? "Attachments" : "Add files"} <span className="font-normal text-ink-faint">(optional)</span>
+            </label>
+            <Hint text="Quotes, invoices, photos: PDF, images, Word, Excel, PowerPoint, CSV or text. Up to 5 files of 10 MB each." align="start" className="mb-1.5" />
+          </div>
           <input id="f-attachments" name="attachments" type="file" multiple accept={ACCEPT_ATTRIBUTE} className="block w-full text-label file:mr-3 file:rounded-md file:border-0 file:bg-surface-muted file:px-3 file:py-2" />
-          <p className="mt-1 text-caption text-ink-muted">Quotes, invoices, photos: PDF, images, Word, Excel, PowerPoint, CSV or text. Up to 5 files of 10 MB each.</p>
           <FieldError result={result} name="attachments" />
         </div>
         {mode === "submit" && !amendment && collaboratorOptions && (

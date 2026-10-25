@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { Badge } from "@/features/ui/Display";
+import { Hint } from "@/features/ui/Hint";
 import { SettingsGroupForm } from "@/features/superadmin/SettingsGroupForm";
 import { ProviderTestButton } from "@/features/ai/AiAdminForms";
 import { requireArea } from "@/server/authorization/guards";
@@ -84,22 +85,25 @@ export default async function AiSettingsPage() {
         </div>
         <div className="space-y-6">
           <section className="card space-y-2 px-5 py-4">
-            <h2 className="font-semibold">AI module</h2>
+            <h2 className="flex items-center gap-1.5 font-semibold">
+              AI module
+              <Hint text="People also need the AI module ticked on their user page." align="start" />
+            </h2>
             <p className="text-label">
-              Switch: <strong>{mode === "ON" ? "On" : mode === "OFF" ? "Off" : "IT team only"}</strong>. People also need the <strong>AI</strong> module ticked on their user page.
+              Switch: <strong>{mode === "ON" ? "On" : mode === "OFF" ? "Off" : "IT team only"}</strong>
             </p>
             <Link href="/superadmin/settings" className="link text-label">
-              Change the switch in Providers &amp; security → Feature switches
+              Change in Feature switches
             </Link>
           </section>
           <section className="card space-y-1 px-5 py-4" aria-labelledby="ai-live" data-testid="ai-live">
-            <h2 id="ai-live" className="font-semibold">
+            <h2 id="ai-live" className="flex items-center gap-1.5 font-semibold">
               Right now (this server)
+              <Hint text="Measured live in this server process." align="start" />
             </h2>
             <p className="text-label">
               {gate.running} question{gate.running === 1 ? "" : "s"} being answered · {gate.queued} waiting · {gate.people} {gate.people === 1 ? "person" : "people"}
             </p>
-            <p className="text-caption text-ink-muted">Measured live in this server process.</p>
           </section>
         </div>
       </div>

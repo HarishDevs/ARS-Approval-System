@@ -2,17 +2,22 @@
 
 import { userCommandAction } from "@/app/admin/users/actions";
 import { ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
+import { Hint } from "@/features/ui/Hint";
 
 // Account actions on the user page (F-06). Each is a tiny form so it works
 // without client-side routing and is checked again on the server.
-function Command({ id, command, label, body, danger, confirm, confirmLabel }: { id: number; command: string; label: string; body: string; danger?: boolean; confirm?: string; confirmLabel?: string }) {
+// D-179: `body` (what it does) is a hover hint; `meta` (a fact) stays visible.
+function Command({ id, command, label, body, meta, danger, confirm, confirmLabel }: { id: number; command: string; label: string; body: string; meta?: string; danger?: boolean; confirm?: string; confirmLabel?: string }) {
   const { result, pending, onSubmit, confirmBar } = useActionForm(userCommandAction, { confirm, confirmTitle: `${label}?`, confirmLabel, confirmTone: danger ? "danger" : "primary" });
   return (
     <form onSubmit={onSubmit} className="space-y-2 px-5 py-4">
       <input type="hidden" name="id" value={id} />
       <input type="hidden" name="command" value={command} />
-      <p className="font-medium">{label}</p>
-      <p className="text-label text-ink-muted">{body}</p>
+      <div className="flex items-center gap-1.5">
+        <p className="font-medium">{label}</p>
+        <Hint text={body} align="start" />
+      </div>
+      {meta && <p className="text-label text-ink-muted">{meta}</p>}
       <SubmitButton pending={pending} variant="secondary" className={`btn-compact ${danger ? "text-danger-600" : ""}`}>
         {label}
       </SubmitButton>
@@ -73,7 +78,7 @@ export function UserCommands({
         ))}
       {locked && <Command id={id} command="unlock" label="Unlock account" body="Clears a lock from wrong passwords or from “This wasn't me”." />}
       {active && (
-        <Command id={id} command="signout" label="Sign out everywhere" body={`Ends every open session (${openSessionCount} now).`} confirm={`Sign ${name} out on every device?`} confirmLabel="Yes, sign out" />
+        <Command id={id} command="signout" label="Sign out everywhere" body="Ends every open session." meta={`${openSessionCount} open session${openSessionCount === 1 ? "" : "s"} now.`} confirm={`Sign ${name} out on every device?`} confirmLabel="Yes, sign out" />
       )}
       {active ? (
         <Command

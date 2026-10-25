@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { requireArea } from "@/server/authorization/guards";
 import { EmptyState, PageHeader } from "@/features/shell/PageHeader";
 import { Badge, Breadcrumbs } from "@/features/ui/Display";
+import { Hint } from "@/features/ui/Hint";
 import { ModuleTypeCommand, ModuleTypeEditor, NewModuleTypeForm } from "@/features/admin/ModuleTypeEditor";
 import { DynamicFields } from "@/features/requests/DynamicFields";
 import { findModuleType, listModuleTypes, listTypeVersions } from "@/lib/db/repositories/module-types.repository";
@@ -125,7 +126,12 @@ export async function ModuleTypeDetailScreen({ module, id, view }: { module: Mod
             confirm="New records will use this version. Records already made keep the version they were made with."
           />
         )}
-        {!draft && <ModuleTypeCommand module={module} typeId={type.id} command="new-draft" label="Edit as a new draft" />}
+        {!draft && (
+          <div className="flex items-start gap-1.5">
+            <ModuleTypeCommand module={module} typeId={type.id} command="new-draft" label="Edit as a new draft" />
+            <Hint text="The live version can't be changed in place. Edit it as a new draft, then publish the draft." align="start" className="mt-2" />
+          </div>
+        )}
         {draft && live && <ModuleTypeCommand module={module} typeId={type.id} command="discard" label="Discard draft" tone="danger" confirmTitle="Discard the draft?" confirm="Your unpublished changes are removed. The live version stays as it is." />}
         {type.active ? (
           <ModuleTypeCommand module={module} typeId={type.id} command="retire" label="Retire type" tone="danger" confirmTitle={`Retire ${type.name}?`} confirm="Nobody can create new records of this type. Existing records stay open and can be finished." />
@@ -134,7 +140,7 @@ export async function ModuleTypeDetailScreen({ module, id, view }: { module: Mod
         )}
       </div>
 
-      {draft ? (
+      {draft && (
         <section aria-labelledby="draft-heading" className="mb-10">
           <h2 id="draft-heading" className="mb-3 text-heading font-semibold">
             Draft version {draft.versionNo}
@@ -152,8 +158,6 @@ export async function ModuleTypeDetailScreen({ module, id, view }: { module: Mod
             groups={groups.filter((group) => group.active).map((group) => ({ id: group.id, label: group.name }))}
           />
         </section>
-      ) : (
-        <p className="mb-8 text-label text-ink-muted">The live version can&apos;t be changed in place. Use &quot;Edit as a new draft&quot;, then publish the draft.</p>
       )}
 
       <section aria-labelledby="versions-heading" className="mb-10">

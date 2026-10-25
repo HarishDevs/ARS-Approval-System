@@ -30,7 +30,7 @@ test("IT adds an Attachments field with a file limit", async ({ page, context })
   await addField(page, "Vendor quotes", "ATTACHMENT");
   await page.getByLabel("Required: Vendor quotes").check();
   await page.getByLabel("Most files for Vendor quotes").selectOption("2");
-  await expect(page.getByText(/The requester attaches files here/)).toBeVisible();
+  await expect(page.locator('[data-tip*="The requester attaches files here"]')).toHaveCount(1); // D-189: now a hover hint
   await page.getByRole("button", { name: "Create workflow (as draft)" }).click();
   await expect(page).toHaveURL(/\/admin\/workflows\/\d+\?created=1/);
   await page.getByRole("button", { name: "Publish version 1" }).click();

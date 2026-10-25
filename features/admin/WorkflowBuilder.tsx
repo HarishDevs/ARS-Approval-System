@@ -7,6 +7,7 @@ import { createWorkflowAction, saveDraftAction } from "@/app/admin/workflows/act
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import { NUMERIC_TYPES, type FieldLookups, type FormField } from "@/server/forms/fields";
 import { RequestForm } from "@/features/requests/RequestForm";
+import { Hint } from "@/features/ui/Hint";
 import { ConditionValueInput, FormFieldsEditor, freshCondition, needsValue, operatorsFor } from "@/features/admin/FormFieldsEditor";
 import { doaBandLabels, isConditionGroup, MAX_CHOICE_DEPTH, type ApproverPick, type BuilderCondition, type BuilderDoa, type BuilderInnerStage, type BuilderStage, type BuilderStep } from "@/server/workflows/builder";
 
@@ -150,9 +151,12 @@ export function WorkflowBuilder({
             </div>
           </div>
           <div className="sm:col-span-2">
-            <label htmlFor="wf-description" className="field-label">
-              Description <span className="font-normal text-ink-faint">(shown to people raising a request)</span>
-            </label>
+            <div className="flex items-center gap-1.5">
+              <label htmlFor="wf-description" className="field-label">
+                Description
+              </label>
+              <Hint text="Shown to people raising a request." align="start" className="mb-1.5" />
+            </div>
             <input id="wf-description" name="description" className="field-input" />
           </div>
         </section>
@@ -163,7 +167,7 @@ export function WorkflowBuilder({
         <button type="button" className="btn-secondary btn-compact" aria-expanded={previewing} aria-controls="form-preview" onClick={() => setPreviewing((open) => !open)}>
           {previewing ? "Hide form preview" : "Preview the form"}
         </button>
-        <span className="text-caption text-ink-muted">See the form as requesters will, with its rules and formulas working. Nothing is saved or sent.</span>
+        <Hint text="See the form as requesters will, with its rules and formulas working. Nothing is saved or sent." align="start" />
       </div>
 
       <LevelsEditor stages={stages} setStages={setStages} options={options} form={form} newId={newId} />
@@ -195,7 +199,7 @@ export function WorkflowBuilder({
     {previewing && (
       <section id="form-preview" aria-labelledby="form-preview-title" className="mt-6 rounded-lg border-2 border-dashed border-primary-200 p-3">
         <h2 id="form-preview-title" className="mb-3 px-2 font-semibold">
-          Form preview <span className="font-normal text-ink-muted">(unsaved changes included)</span>
+          Form preview <Hint text="Unsaved changes included." align="start" />
         </h2>
         <RequestForm key={JSON.stringify(form)} preview mode="submit" fields={form} people={options.people} lookups={options.lookups} />
       </section>
@@ -233,8 +237,10 @@ export function LevelsEditor({
   return (
     <section className="card">
       <div className="border-b border-line px-5 py-4">
-        <h2 className="font-semibold">{title}</h2>
-        <p className="text-label text-ink-muted">{hint}</p>
+        <div className="flex items-center gap-1.5">
+          <h2 className="font-semibold">{title}</h2>
+          <Hint text={hint} align="start" />
+        </div>
       </div>
       <StageList stages={stages} onChange={(next) => setStages(next)} options={options} form={form} newId={newId} allowChoice={allowChoice} depth={0} />
     </section>
@@ -761,9 +767,10 @@ function StepEditor({
       </div>
       {type === "NOTIFY" && (
         <div className="md:col-span-2">
-          <label className="field-label">
-            Message <span className="font-normal text-ink-faint">(optional, added to the FYI)</span>
-          </label>
+          <div className="flex items-center gap-1.5">
+            <label className="field-label">Message</label>
+            <Hint text="Optional, added to the FYI." align="start" className="mb-1.5" />
+          </div>
           <input aria-label="FYI message" value={step.note ?? ""} maxLength={300} onChange={(event) => onChange({ ...step, note: event.target.value || undefined })} className="field-input" />
         </div>
       )}

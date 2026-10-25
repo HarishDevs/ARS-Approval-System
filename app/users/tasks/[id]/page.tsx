@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
+import { Hint } from "@/features/ui/Hint";
 import { Badge, Breadcrumbs } from "@/features/ui/Display";
 import { CommentForm, EditTaskForm, ReassignForm, TaskActionButton } from "@/features/modules/TaskForms";
 import { FieldValues, FileLinks, HistoryList, type HistoryEntry } from "@/features/modules/RecordParts";
@@ -105,8 +106,8 @@ export default async function TaskPage({ params, searchParams }: { params: Promi
                       </Link>
                     ) : (
                       <span className="font-mono">{task.relatedRequestNo}</span>
-                    )}
-                    <span className="block text-caption text-ink-muted">Separate from this task: completing it doesn&apos;t approve the request.</span>
+                    )}{" "}
+                    <Hint text="Separate from this task: completing it doesn't approve the request." align="start" />
                   </dd>
                 </div>
               )}

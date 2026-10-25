@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { Badge, Breadcrumbs, Card, EmptyState } from "@/features/ui/Display";
+import { Hint } from "@/features/ui/Hint";
 import { CalendarConfigForm, CommandButton } from "@/features/integrations/CalendarForms";
 import { calendarCommandAction } from "@/app/superadmin/integrations/google-calendar/actions";
 import { calendarStats, listConflicts, listConnections, listJobs, loadSettingsRow } from "@/lib/db/repositories/gcal.repository";
@@ -89,20 +90,26 @@ export default async function GoogleCalendarAdminPage() {
         )}
       </Card>
 
-      <Card title="Google Cloud set-up" className="mb-6">
-        <ol className="list-decimal space-y-1 pl-5 text-label">
-          <li>Google Cloud Console → APIs &amp; Services → Library → enable <strong>Google Calendar API</strong>.</li>
-          <li>
-            OAuth consent screen (Google Auth Platform → Audience): set <strong>User type: External</strong>. ARS people use more than one domain; with &ldquo;Internal&rdquo; everyone outside the project&apos;s own
-            Workspace gets &ldquo;Error 403: org_internal&rdquo;. Add the scopes below. In &ldquo;Testing&rdquo; only listed test users can connect (access lapses after 7 days): <strong>Publish app</strong> to
-            open it to everyone.
-          </li>
-          <li>Credentials → Create OAuth client ID → Web application. Authorised redirect URI, exactly:</li>
-        </ol>
-        <p className="mt-2 break-all rounded bg-surface-muted px-3 py-2 font-mono text-caption" data-testid="gcal-redirect">
+      <Card
+        title={
+          <span className="inline-flex items-center gap-1.5">
+            Google Cloud set-up
+            <Hint
+              text="1. Google Cloud Console → APIs & Services → Library → enable Google Calendar API. 2. OAuth consent screen (Google Auth Platform → Audience): set User type: External. ARS people use more than one domain; with “Internal” everyone outside the project's own Workspace gets “Error 403: org_internal”. Add the scopes below. In “Testing” only listed test users can connect (access lapses after 7 days): Publish app to open it to everyone. 3. Credentials → Create OAuth client ID → Web application, with the redirect URI below, exactly."
+              align="start"
+            />
+          </span>
+        }
+        className="mb-6"
+      >
+        <p className="text-label">Authorised redirect URI</p>
+        <p className="mt-1 break-all rounded bg-surface-muted px-3 py-2 font-mono text-caption" data-testid="gcal-redirect">
           {redirect ?? "Set APP_BASE_URL on the server first."}
         </p>
-        <p className="mt-3 text-label">Scopes requested from each person (the least needed):</p>
+        <p className="mt-3 flex items-center gap-1.5 text-label">
+          Scopes
+          <Hint text="Requested from each person: the least needed." align="start" />
+        </p>
         <ul className="mt-1 list-disc pl-5 font-mono text-caption">
           {SCOPES.map((scope) => (
             <li key={scope} className="break-all">
@@ -111,8 +118,8 @@ export default async function GoogleCalendarAdminPage() {
           ))}
         </ul>
         <p className="mt-3 text-label">
-          Change notifications arrive at <span className="break-all font-mono text-caption">{webhook ?? "(APP_BASE_URL not set)"}</span>. They need the public https address; the scheduled reconciliation
-          covers anything missed.
+          Change notifications: <span className="break-all font-mono text-caption">{webhook ?? "(APP_BASE_URL not set)"}</span>{" "}
+          <Hint text="They need the public https address; the scheduled reconciliation covers anything missed." align="end" />
         </p>
       </Card>
 
@@ -224,9 +231,17 @@ export default async function GoogleCalendarAdminPage() {
         )}
       </Card>
 
-      <Card title="Conflicts awaiting review" className="mb-6">
+      <Card
+        title={
+          <span className="inline-flex items-center gap-1.5">
+            Conflicts awaiting review
+            <Hint text="People usually resolve their own from Profile → Calendar." align="start" />
+          </span>
+        }
+        className="mb-6"
+      >
         {conflicts.length === 0 ? (
-          <p className="text-label text-ink-muted">None. People usually resolve their own from Profile → Calendar.</p>
+          <p className="text-label text-ink-muted">None.</p>
         ) : (
           <ul className="divide-y divide-line text-label">
             {conflicts.map((conflict) => (

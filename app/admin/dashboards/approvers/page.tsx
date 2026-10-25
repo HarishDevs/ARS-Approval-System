@@ -43,11 +43,11 @@ export default async function ApproversDashboardPage({ searchParams }: { searchP
           { label: "Approved", numeric: true },
           { label: "Rejected", numeric: true },
           { label: "Changes asked", numeric: true },
-          { label: "Not needed", numeric: true },
+          { label: "Not needed", numeric: true, hint: "An any-one or any-N step that someone else in the step completed first." },
           { label: "Waiting now", numeric: true },
           { label: "Overdue now", numeric: true },
           { label: "Avg to decide", numeric: true },
-          { label: "On time", numeric: true },
+          { label: "On time", numeric: true, hint: "Decided within the step's response time." },
         ]}
         rows={rows.map((row) => [
           <span key="name">
@@ -71,9 +71,6 @@ export default async function ApproversDashboardPage({ searchParams }: { searchP
           row.onTimePercent === null ? "—" : `${row.onTimePercent}%`,
         ])}
       />
-      <p className="mt-3 text-caption text-ink-muted">
-        Not needed = an any-one or any-N step that someone else in the step completed first. On time = decided within the step&apos;s response time.
-      </p>
     </DashboardFrame>
   );
 }

@@ -3,6 +3,7 @@ import { ArrowDownRight, ArrowUpRight, Info, Minus } from "lucide-react";
 import { percentChange } from "@/server/analytics/semantics";
 import { METRIC } from "@/server/analytics/metrics";
 import { heatStep } from "@/server/analytics/derived";
+import { Hint } from "@/features/ui/Hint";
 
 // Analytics building blocks (Addendum A, D-122). Server components, plain
 // SVG/HTML, theme tokens only. Identity is never colour alone: lines differ
@@ -193,7 +194,10 @@ export function LineChart({
   return (
     <figure className="card px-4 py-3">
       <figcaption className="mb-2 flex flex-wrap items-center justify-between gap-2">
-        <span className="font-semibold">{title}</span>
+        <span className="flex items-center gap-1.5 font-semibold">
+          {title}
+          <Hint text={help} align="start" />
+        </span>
         <span
           className="flex flex-wrap gap-3 text-caption text-ink-muted"
           aria-hidden="true"
@@ -216,7 +220,6 @@ export function LineChart({
           ))}
         </span>
       </figcaption>
-      {help && <p className="-mt-1 mb-2 text-caption text-ink-muted">{help}</p>}
       {series.every((item) =>
         (values[item.key] ?? []).every((value) => value === 0),
       ) ? (
@@ -409,8 +412,10 @@ export function StackedBar({
   const total = parts.reduce((sum, part) => sum + part.value, 0);
   return (
     <section aria-label={title} className="card px-4 py-3">
-      <h2 className="font-semibold">{title}</h2>
-      {help && <p className="text-caption text-ink-muted">{help}</p>}
+      <h2 className="flex items-center gap-1.5 font-semibold">
+        {title}
+        <Hint text={help} align="start" />
+      </h2>
       {total === 0 ? (
         <p className="mt-2 text-label text-ink-muted">None right now.</p>
       ) : (
@@ -482,8 +487,10 @@ export function Heatmap({ title, help, rows, columns, cells, cellHref }: { title
   const max = Math.max(0, ...rows.flatMap((row) => columns.map((column) => cells[row]?.[column] ?? 0)));
   return (
     <section aria-label={title} className="card px-4 py-3">
-      <h2 className="font-semibold">{title}</h2>
-      {help && <p className="text-caption text-ink-muted">{help}</p>}
+      <h2 className="flex items-center gap-1.5 font-semibold">
+        {title}
+        <Hint text={help} align="start" />
+      </h2>
       {rows.length === 0 || columns.length === 0 ? (
         <p className="mt-2 text-label text-ink-muted">Nothing is waiting right now.</p>
       ) : (

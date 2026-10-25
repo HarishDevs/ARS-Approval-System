@@ -7,6 +7,7 @@ import { toCsv } from "@/server/import/csv";
 import type { PlannedRow, RowAction } from "@/server/import/plan";
 import { Spinner } from "@/features/ui/Spinner";
 import { SafeText } from "@/features/ui/SafeText";
+import { Hint } from "@/features/ui/Hint";
 
 // Bulk import screen (S10-05/06, F-59): choose what, download the template
 // or the current data, upload a CSV, check it (nothing saved), then import
@@ -144,8 +145,7 @@ export function ImportPanel({ initialKind }: { initialKind: ImportKind }) {
             </button>
           ))}
         </div>
-        <p className="mt-4 max-w-3xl text-label text-ink-muted">{spec.note}</p>
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-4 flex flex-wrap items-center gap-2">
           <button type="button" onClick={() => download("template")} disabled={locked} className="btn-secondary btn-compact">
             {busy === "template" ? <Spinner /> : <DownloadIcon />}
             Download template
@@ -154,6 +154,7 @@ export function ImportPanel({ initialKind }: { initialKind: ImportKind }) {
             {busy === "data" ? <Spinner /> : <DownloadIcon />}
             Download current {spec.label.toLowerCase()}
           </button>
+          <Hint text={spec.note} align="start" />
         </div>
         {downloadError && (
           <p role="alert" className="mt-2 text-label text-danger-600">
@@ -196,8 +197,10 @@ export function ImportPanel({ initialKind }: { initialKind: ImportKind }) {
 
       {/* 2. Upload and check */}
       <section className="card p-5">
-        <h2 className="font-semibold">2. Upload and check</h2>
-        <p className="mt-1 text-label text-ink-muted">Checking saves nothing. It shows what would be created or changed, and every problem by row.</p>
+        <div className="flex items-center gap-1.5">
+          <h2 className="font-semibold">2. Upload and check</h2>
+          <Hint text="Checking saves nothing. It shows what would be created or changed, and every problem by row." align="start" />
+        </div>
         <label
           className={`mt-4 flex cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed px-4 py-6 text-center transition-colors ${
             locked ? "cursor-not-allowed border-line opacity-60" : "border-line hover:border-primary-600 hover:bg-primary-50"

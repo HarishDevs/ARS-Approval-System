@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { answerConsultAction, consultAction, linkAction } from "@/app/users/collab-actions";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
+import { Hint } from "@/features/ui/Hint";
 import { SafeText } from "@/features/ui/SafeText";
 
 // EN-06 advice and EN-08 links on the request page.
@@ -21,10 +22,10 @@ export function Advice({ requestId, rows, canAsk, people }: { requestId: number;
   if (rows.length === 0 && !canAsk) return null;
   return (
     <section className="card px-5 py-4" aria-labelledby="advice">
-      <h2 id="advice" className="mb-1 font-semibold">
+      <h2 id="advice" className="mb-3 flex items-center gap-1 font-semibold">
         Advice
+        <Hint text="People asked for their view. They can read the request and answer; the decision stays with the approver." align="start" />
       </h2>
-      <p className="mb-3 text-label text-ink-muted">People asked for their view. They can read the request and answer; the decision stays with the approver.</p>
       {rows.length > 0 && (
         <ul className="mb-4 space-y-3">
           {rows.map((row) => (

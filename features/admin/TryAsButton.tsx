@@ -25,8 +25,10 @@ export function TryAsButton({ userId }: { userId: number }) {
       {result && !result.ok && <ResultMessage result={result} />}
       {url && (
         <div className="absolute right-0 z-drawer mt-2 w-[min(26rem,90vw)] space-y-2 rounded-lg border border-line bg-raised p-3 text-label shadow-overlay" role="dialog" aria-label="Try as link">
-          <p className="font-medium">Open this link in a private window</p>
-          <p className="text-ink-muted">Ctrl + Shift + N (Chrome, Edge) or Ctrl + Shift + P (Firefox), then paste. It works once, within 5 minutes.</p>
+          <div className="flex items-center gap-1.5">
+            <p className="font-medium">Open this link in a private window</p>
+            <Hint text="Ctrl + Shift + N (Chrome, Edge) or Ctrl + Shift + P (Firefox), then paste. It works once, within 5 minutes." align="end" />
+          </div>
           <div className="flex gap-2">
             <input readOnly value={url} aria-label="Try as link" className="field-input h-9 flex-1 text-caption" onFocus={(event) => event.currentTarget.select()} />
             <button

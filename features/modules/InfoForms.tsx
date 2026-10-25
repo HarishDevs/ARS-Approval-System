@@ -5,6 +5,7 @@ import { informationAction, saveInformationAction } from "@/app/users/informatio
 import { DynamicFields } from "@/features/requests/DynamicFields";
 import { PeoplePicker } from "@/features/ui/PeoplePicker";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
+import { Hint } from "@/features/ui/Hint";
 import { ACCEPT_ATTRIBUTE } from "@/server/attachments/files";
 import { INFO_PRIORITIES, INFO_PRIORITY_LABEL, type AckRule, type InfoPriority } from "@/server/modules/settings";
 import type { FieldLookups, FormField } from "@/server/forms/fields";
@@ -87,16 +88,26 @@ export function InfoForm({
         </div>
       </div>
       {ack === "SENDER_CHOOSES" && (
-        <label className="flex items-center gap-2 text-label">
-          <input type="checkbox" name="ack" value="yes" defaultChecked={defaults.askAck} />
-          Ask recipients to acknowledge (a separate button; opening it only marks it read)
-        </label>
+        <div className="flex items-center gap-1">
+          <label className="flex items-center gap-2 text-label">
+            <input type="checkbox" name="ack" value="yes" defaultChecked={defaults.askAck} />
+            Ask recipients to acknowledge
+          </label>
+          <Hint text="A separate button; opening it only marks it read." align="start" />
+        </div>
       )}
-      {ack === "ALWAYS" && <p className="text-label text-ink-muted">Recipients are asked to acknowledge (set by IT for this type).</p>}
+      {ack === "ALWAYS" && (
+        <p className="flex items-center gap-1 text-label text-ink-muted">
+          Recipients are asked to acknowledge.
+          <Hint text="Set by IT for this type." align="start" />
+        </p>
+      )}
 
       <fieldset className="space-y-3 rounded-md border border-line p-4">
-        <legend className="px-1 font-semibold">Recipients</legend>
-        <p className="text-caption text-ink-muted">The list is fixed when you publish: people who join a department later won&apos;t receive it. You are never a recipient of your own information.</p>
+        <legend className="flex items-center gap-1 px-1 font-semibold">
+          Recipients
+          <Hint text="The list is fixed when you publish: people who join a department later won't receive it. You are never a recipient of your own information." align="start" />
+        </legend>
         {allow.everyone && (
           <label className="flex items-center gap-2 text-label">
             <input type="checkbox" name="everyone" value="yes" checked={everyone} onChange={(event) => setEveryone(event.target.checked)} />
@@ -115,9 +126,12 @@ export function InfoForm({
 
       {form.length > 0 && <DynamicFields fields={form} mode={infoId ? "resubmit" : "submit"} initial={infoId ? defaults.values : undefined} people={people} lookups={lookups} result={result} />}
       <div>
-        <label htmlFor="info-files" className="field-label">
-          Files <span className="font-normal text-ink-faint">(optional, up to 5, 10 MB each)</span>
-        </label>
+        <div className="flex items-center gap-1">
+          <label htmlFor="info-files" className="field-label">
+            Files <span className="font-normal text-ink-faint">(optional)</span>
+          </label>
+          <Hint text="Up to 5 files, 10 MB each." align="start" className="mb-1.5" />
+        </div>
         <input id="info-files" name="attachments" type="file" multiple accept={ACCEPT_ATTRIBUTE} className="block w-full text-label file:mr-3 file:rounded-md file:border-0 file:bg-surface-muted file:px-3 file:py-2" />
       </div>
       <div className="flex flex-wrap items-center gap-3">

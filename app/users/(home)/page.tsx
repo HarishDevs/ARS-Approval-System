@@ -177,13 +177,13 @@ function ModulesHome({ name, user }: { name: string; user: Parameters<typeof has
   ].filter(Boolean) as { href: string; label: string; body: string }[];
   return (
     <>
-      <PageHeader title={`Welcome, ${name}`} description="Where to start." />
+      <PageHeader title={`Welcome, ${name}`} />
       <ul className="grid gap-3 sm:grid-cols-2" data-testid="modules-home">
         {links.map((link) => (
           <li key={link.href}>
-            <Link href={link.href} className="card-link block px-5 py-4">
+            {/* D-179: what each link opens is its hover text. */}
+            <Link href={link.href} title={link.body} className="card-link block px-5 py-4">
               <span className="block font-semibold">{link.label}</span>
-              <span className="block text-label text-ink-muted">{link.body}</span>
             </Link>
           </li>
         ))}

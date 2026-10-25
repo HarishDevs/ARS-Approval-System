@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { LOOKUP_SOURCES, NUMERIC_TYPES, OPTION_TYPES, type FieldLookups, type FieldType, type FormField, type LookupSource } from "@/server/forms/fields";
 import { RULE_OPERATORS, RULE_WORDS, formulaFields, parseFormula, type FieldRule } from "@/server/forms/dynamic";
 import type { Comparison } from "@/server/engine/types";
+import { Hint } from "@/features/ui/Hint";
 
 type ConditionValue = string | number;
 
@@ -38,6 +39,20 @@ const TYPE_CHOICES: { value: string; label: string }[] = [
   { value: "ATTACHMENT", label: "Attachments (files)" },
 ];
 export const SOURCE_LABEL: Record<LookupSource, string> = { DEPARTMENT: "Departments", DESIGNATION: "Designations" };
+// D-179: what each field type does, as a hover hint beside the type.
+const TYPE_HELP: Partial<Record<FieldType, string>> = {
+  DATE: "The requester picks a date from a calendar.",
+  DATETIME: "A date and a time of day, in India time.",
+  CHECKBOX: 'One tick box. Required means it must be ticked (e.g. "I confirm the details are correct").',
+  URL: "A web link starting with https:// or http://. Shown as a link that opens in a new tab.",
+  LINE_ITEMS: "The requester adds rows of description, quantity, rate (₹) and GST %. The total (worked out in paise on the server) is this field's value, so it can be the DoA amount or used in a formula.",
+  SECTION: "A heading that groups the fields below it. It holds no value.",
+  ATTACHMENT: "The requester attaches files here (PDF, images, Word, Excel, PowerPoint, CSV or text; 10 MB each). Required means at least one file. The files are listed under this field on the request.",
+};
+function typeHelp(field: FormField): string | undefined {
+  if (field.type === "LOOKUP" && field.source) return `The requester picks from the active ${SOURCE_LABEL[field.source].toLowerCase()} kept in Admin → Departments. New ones appear by themselves.`;
+  return TYPE_HELP[field.type];
+}
 
 export function slugKey(label: string): string {
   const slug = label
@@ -238,14 +253,15 @@ export function ChoiceListEditor({ options, onChange, label }: { options: string
               add(text);
             }
           }}
-          placeholder="Type an option, then Enter"
+          placeholder="New option"
           className="field-input min-w-0 flex-1"
         />
         <button type="button" onClick={() => add(draft)} className="btn-secondary btn-compact h-11">
           Add option
         </button>
+        <Hint text="Press Enter to add. Paste a list separated by commas or new lines to add many at once." align="end" className="self-center" />
       </div>
-      <p className="text-caption text-ink-faint">{note ?? "Tip: paste a list separated by commas or new lines to add many at once."}</p>
+      {note && <p className="text-caption text-ink-faint">{note}</p>}
     </div>
   );
 }
@@ -274,8 +290,10 @@ export function FormFieldsEditor({
   return (
     <section className="card">
       <div className="border-b border-line px-5 py-4">
-        <h2 className="font-semibold">Form fields</h2>
-        <p className="text-label text-ink-muted">{intro ?? "What the requester fills in. Steps can skip on these values, e.g. amount, a date or a department."}</p>
+        <div className="flex items-center gap-1.5">
+          <h2 className="font-semibold">Form fields</h2>
+          <Hint text={intro ?? "What the requester fills in. Steps can skip on these values, e.g. amount, a date or a department."} align="start" />
+        </div>
       </div>
       <div className="divide-y divide-line">
         {form.map((field, index) => {
@@ -307,13 +325,16 @@ export function FormFieldsEditor({
                 placeholder="key"
                 className="field-input font-mono read-only:bg-surface read-only:text-ink-muted"
               />
-              <select aria-label="Field type" value={typeValue(field)} onChange={(event) => update(index, (item) => withType(item, event.target.value))} className="field-input">
-                {TYPE_CHOICES.map((type) => (
-                  <option key={type.value} value={type.value}>
-                    {type.label}
-                  </option>
-                ))}
-              </select>
+              <div className="flex items-center gap-1">
+                <select aria-label="Field type" value={typeValue(field)} onChange={(event) => update(index, (item) => withType(item, event.target.value))} className="field-input min-w-0 flex-1">
+                  {TYPE_CHOICES.map((type) => (
+                    <option key={type.value} value={type.value}>
+                      {type.label}
+                    </option>
+                  ))}
+                </select>
+                <Hint text={typeHelp(field)} align="end" />
+              </div>
               <label className="flex h-11 items-center gap-2 text-label">
                 <input type="checkbox" aria-label={`Required: ${name}`} checked={field.required} disabled={field.type === "CALC" || field.type === "SECTION"} onChange={(event) => update(index, (item) => ({ ...item, required: event.target.checked }))} />
                 Required
@@ -334,42 +355,47 @@ export function FormFieldsEditor({
                   aria-label={`Help text for ${name}`}
                   value={field.help ?? ""}
                   onChange={(event) => update(index, (item) => ({ ...item, help: event.target.value ? event.target.value.slice(0, 200) : undefined }))}
-                  placeholder="Help text shown under the field (optional)"
+                  placeholder="Help text (optional)"
                   className="field-input"
                 />
                 {(field.type === "NUMBER" || field.type === "CURRENCY") && (
                   <div className="flex flex-wrap items-center gap-2 text-label">
                     Smallest value allowed
                     <NumberDraftInput label={`Smallest value for ${name}`} value={field.min} onChange={(min) => update(index, (item) => ({ ...item, min }))} placeholder="none" />
-                    <span className="text-caption text-ink-faint">Use 0 for amounts. A DoA amount can never be negative.</span>
+                    <Hint text="Use 0 for amounts. A DoA amount can never be negative." />
                   </div>
                 )}
                 {OPTION_TYPES.includes(field.type) && <ChoiceListEditor label={name} options={field.options ?? []} onChange={(options) => update(index, (item) => ({ ...item, options }))} />}
-                {field.type === "LOOKUP" && field.source && (
-                  <p className="text-caption text-ink-muted">
-                    The requester picks from the active {SOURCE_LABEL[field.source].toLowerCase()} kept in Admin → Departments. New ones appear by themselves.
-                  </p>
-                )}
                 {field.type !== "SECTION" && (
-                  <label className="flex items-center gap-2 text-label">
-                    <input type="checkbox" checked={Boolean(field.confidential)} onChange={(event) => update(index, (item) => ({ ...item, confidential: event.target.checked || undefined }))} />
-                    Confidential: only the requester, the approvers and IT see the value (hidden from collaborators, advisers and in exports)
-                  </label>
+                  <div className="flex items-center gap-1.5">
+                    <label className="flex items-center gap-2 text-label">
+                      <input type="checkbox" checked={Boolean(field.confidential)} onChange={(event) => update(index, (item) => ({ ...item, confidential: event.target.checked || undefined }))} />
+                      Confidential
+                    </label>
+                    <Hint text="Only the requester, the approvers and IT see the value (hidden from collaborators, advisers and in exports)." align="start" />
+                  </div>
                 )}
                 {field.type === "DATE" && (
-                  <div className="space-y-1">
-                    <p className="text-caption text-ink-muted">The requester picks a date from a calendar.</p>
+                  <div className="flex items-center gap-1.5">
                     <label className="flex items-center gap-2 text-label">
                       <input type="checkbox" checked={Boolean(field.neededBy)} onChange={(event) => update(index, (item) => ({ ...item, neededBy: event.target.checked || undefined }))} />
-                      This is the &quot;needed by&quot; date (shown in the calendar and reports)
+                      This is the &quot;needed by&quot; date
                     </label>
+                    <Hint text="Shown in the calendar and reports." align="start" />
                   </div>
                 )}
                 {field.type === "CALC" && (
                   <div className="space-y-1">
-                    <label className="field-label" htmlFor={`formula-${index}`}>
-                      Formula
-                    </label>
+                    <div className="flex items-center gap-1.5">
+                      <label className="field-label" htmlFor={`formula-${index}`}>
+                        Formula
+                      </label>
+                      <Hint
+                        text={`Uses + − × ÷, brackets and round(x, 2). Number fields you can use: ${form.filter((other) => NUMERIC_TYPES.includes(other.type) && other.key !== field.key).map((other) => other.key).join(", ") || "none yet"}.`}
+                        align="start"
+                        className="mb-1.5"
+                      />
+                    </div>
                     <input
                       id={`formula-${index}`}
                       value={field.formula ?? ""}
@@ -377,10 +403,7 @@ export function FormFieldsEditor({
                       placeholder="e.g. quantity * rate * (1 + gst / 100)"
                       className="field-input font-mono"
                     />
-                    <p className={`text-caption ${formulaProblem(field.formula ?? "", form, field.key) ? "text-danger-600" : "text-ink-muted"}`}>
-                      {formulaProblem(field.formula ?? "", form, field.key) ??
-                        `Uses + − × ÷, brackets and round(x, 2). Number fields you can use: ${form.filter((other) => NUMERIC_TYPES.includes(other.type) && other.key !== field.key).map((other) => other.key).join(", ") || "none yet"}.`}
-                    </p>
+                    {formulaProblem(field.formula ?? "", form, field.key) && <p className="text-caption text-danger-600">{formulaProblem(field.formula ?? "", form, field.key)}</p>}
                     <label className="flex items-center gap-2 text-label">
                       Decimal places
                       <select value={field.decimals ?? 2} onChange={(event) => update(index, (item) => ({ ...item, decimals: Number(event.target.value) }))} className="field-input w-20">
@@ -391,8 +414,6 @@ export function FormFieldsEditor({
                     </label>
                   </div>
                 )}
-                {field.type === "LINE_ITEMS" && <p className="text-caption text-ink-muted">The requester adds rows of description, quantity, rate (₹) and GST %. The total (worked out in paise on the server) is this field&apos;s value, so it can be the DoA amount or used in a formula.</p>}
-                {field.type === "SECTION" && <p className="text-caption text-ink-muted">A heading that groups the fields below it. It holds no value.</p>}
                 {field.type === "ATTACHMENT" && (
                   <div className="space-y-1">
                     <label className="flex flex-wrap items-center gap-2 text-label">
@@ -404,19 +425,15 @@ export function FormFieldsEditor({
                       </select>
                       file(s)
                     </label>
-                    <p className="text-caption text-ink-muted">The requester attaches files here (PDF, images, Word, Excel, PowerPoint, CSV or text; 10 MB each). Required means at least one file. The files are listed under this field on the request.</p>
                   </div>
                 )}
-                {field.type === "DATETIME" && <p className="text-caption text-ink-muted">A date and a time of day, in India time.</p>}
-                {field.type === "CHECKBOX" && <p className="text-caption text-ink-muted">One tick box. Required means it must be ticked (e.g. &quot;I confirm the details are correct&quot;).</p>}
-                {field.type === "URL" && <p className="text-caption text-ink-muted">A web link starting with https:// or http://. Shown as a link that opens in a new tab.</p>}
                 {["TEXT", "NUMBER", "CURRENCY", "DATE", "URL"].includes(field.type) && (
                   <input
                     aria-label={`Default value for ${name}`}
                     type={field.type === "DATE" ? "date" : "text"}
                     value={field.defaultValue ?? ""}
                     onChange={(event) => update(index, (item) => ({ ...item, defaultValue: event.target.value ? event.target.value.slice(0, 200) : undefined }))}
-                    placeholder="Default value on a new request (optional)"
+                    placeholder="Default value (optional)"
                     className="field-input"
                   />
                 )}

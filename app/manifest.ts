@@ -5,9 +5,9 @@ import type { MetadataRoute } from "next";
 // server, and nothing private is cached on the device.
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "ARS Approvals",
-    short_name: "Approvals",
-    description: "ARS Steels approvals: raise, approve and follow requests.",
+    name: "ARS Internal Workspace",
+    short_name: "ARS Workspace",
+    description: "The internal digital workspace for ARS Steels & Alloy International Pvt. Ltd.",
     start_url: "/users",
     scope: "/",
     display: "standalone",

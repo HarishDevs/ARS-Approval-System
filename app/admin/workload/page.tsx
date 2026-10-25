@@ -21,7 +21,7 @@ export default async function WorkloadPage() {
   ];
   return (
     <>
-      <PageHeader title="Workload" description="Approvals and work tasks waiting on each person right now, how long they have waited, and what is overdue. Ages count calendar time.">
+      <PageHeader title="Workload" description="Approvals and work tasks waiting on each person right now, how long they have waited, and what is overdue. Ages count calendar time. To move someone's approvals, open their name and use Hand over pending approvals; it suggests the people with the fewest waiting.">
         <Link href="/admin/workload/reassign" className="btn-secondary btn-compact">
           Move pending tasks
         </Link>
@@ -78,7 +78,6 @@ export default async function WorkloadPage() {
           </table>
         )}
       </section>
-      <p className="mt-3 text-label text-ink-muted">To move someone&apos;s approvals, open their name and use &quot;Hand over pending approvals&quot;; it suggests the people with the fewest waiting.</p>
     </>
   );
 }

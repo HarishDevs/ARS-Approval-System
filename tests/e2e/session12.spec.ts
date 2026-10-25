@@ -51,7 +51,7 @@ test("IT builds a form with every field type; the dropdown creator and keys work
   await page.getByLabel("Required: Needed by").check();
   await addField(page, "Department", "LOOKUP:DEPARTMENT");
   await page.getByLabel("Required: Department").check();
-  await expect(page.getByText("The requester picks from the active departments")).toBeVisible();
+  await expect(page.locator('[data-tip*="The requester picks from the active departments"]')).toHaveCount(1);
   await addField(page, "Notes", "LONG_TEXT");
   await page.getByLabel("Help text for Notes").fill("Anything the approvers should know");
   await addField(page, "Designation", "LOOKUP:DESIGNATION");
@@ -126,7 +126,8 @@ test("a requester fills every field type; values are checked, stored and shown b
   await expect(page.getByLabel("Needed by")).toHaveAttribute("type", "date");
   await expect(page.getByLabel("Purchase type").locator("option")).toHaveText(["Choose…", "Capex", "Opex"]);
   await expect(page.getByLabel("Department").locator("option", { hasText: "E2E Department" })).toHaveCount(1);
-  await expect(page.getByText("Anything the approvers should know")).toBeVisible();
+  // D-179: field help is a hover tip next to the label.
+  await expect(page.locator('[data-tip="Anything the approvers should know"]')).toHaveCount(1);
 
   await page.getByLabel("Title").fill("Spare motors for line 2");
   await page.getByLabel(/Amount/).fill("75,000");

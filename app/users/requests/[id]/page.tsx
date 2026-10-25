@@ -5,6 +5,7 @@ import { formatPaise } from "@/server/forms/dynamic";
 import { notFound } from "next/navigation";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
+import { Hint } from "@/features/ui/Hint";
 import { RequestStatusPill } from "@/features/requests/StatusPill";
 import { StepMap, TrackerBanner } from "@/features/requests/StepMap";
 import { AnswerQuestionForm, BlockedStepForm, DecisionForm, DecisionShortcuts, DelegateTaskForm, MobileDecisionBar, RecallForm, ReopenForm, ResumeForm, WithdrawForm } from "@/features/requests/ActionPanel";
@@ -251,8 +252,10 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
           </section>
           {view.fields.length > 0 && (
             <section className="card px-5 py-4">
-              <h2 className="mb-3 font-semibold">Details</h2>
-              {view.confidentialHidden && <p className="-mt-2 mb-3 text-caption text-ink-muted">Some values are confidential: only the requester, the approvers and IT see them.</p>}
+              <h2 className="mb-3 flex items-center gap-1.5 font-semibold">
+                Details
+                {view.confidentialHidden && <Hint text="Some values are confidential: only the requester, the approvers and IT see them." align="start" />}
+              </h2>
               <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
                 {view.fields.map((field) => (
                   <div key={field.key} className={field.lines?.length || field.files?.length ? "sm:col-span-2" : undefined}>
@@ -399,15 +402,19 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
         </SectionBoundary>
         {view.isCustom && (user.roles.includes("IT_ADMIN") || user.roles.includes("SUPER_ADMIN")) && (
           <section className="card h-fit px-5 py-4">
-            <h2 className="mb-1 font-semibold">Reuse these levels</h2>
-            <p className="mb-3 text-label text-ink-muted">Make this custom approval a predefined approval type. Its levels and form are copied into a draft you can change, test and publish.</p>
+            <h2 className="mb-3 flex items-center gap-1.5 font-semibold">
+              Reuse these levels
+              <Hint text="Make this custom approval a predefined approval type. Its levels and form are copied into a draft you can change, test and publish." align="start" />
+            </h2>
             <PromoteCustomForm requestId={view.id} title={view.title} />
           </section>
         )}
         {user.roles.includes("SUPER_ADMIN") && (
           <section className="card h-fit px-5 py-4">
-            <h2 className="mb-1 font-semibold">Super Admin</h2>
-            <p className="mb-3 text-label text-ink-muted">Remove this request from every screen, for example a test or a mistake.</p>
+            <h2 className="mb-3 flex items-center gap-1.5 font-semibold">
+              Super Admin
+              <Hint text="Remove this request from every screen, for example a test or a mistake." align="start" />
+            </h2>
             <DeleteRequestButton requestId={view.id} requestNo={view.requestNo} redirectTo="/superadmin/requests?tab=deleted" />
           </section>
         )}

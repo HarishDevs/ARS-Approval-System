@@ -2,76 +2,65 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentSession } from "@/server/auth/session";
-import { PublicPage, COMPANY } from "@/features/public/PublicPage";
+import { COMPANY, CONTACT_EMAIL, indiaYear } from "@/features/public/PublicPage";
+import { MailLink } from "@/features/ui/MailLink";
 
 export const metadata: Metadata = {
-  title: "ARS Approvals",
-  description: "ARS Approvals is the internal approval, task and information platform of ARS Steels & Alloy International Pvt. Ltd., used by its employees.",
+  title: { absolute: "ARS Internal Workspace | ARS Steels" },
+  description: "ARS Internal Workspace — the internal digital workspace for ARS Steels & Alloy International Pvt. Ltd.",
   robots: { index: true, follow: true },
 };
 
-// v1.12.2 (D-161): signed-in people go to their space. Everyone else (and
-// Google's OAuth reviewers) sees what the app is, who runs it, what it does
-// with Google data, and the privacy policy and terms.
+// D-188 (owner): the public landing page of ARS Internal Workspace. A compact
+// header, one centred hero and a small footer; both Sign in buttons use the
+// existing /login route. Signed-in people go straight to their space
+// (v1.12.2, D-161). The Google data-use explanation lives in the privacy
+// policy, linked from the footer.
+const SIGN_IN = "/login";
+
 export default async function HomePage() {
   if (await getCurrentSession().catch(() => null)) redirect("/users");
   return (
-    <PublicPage>
-      <section className="space-y-4">
-        <h1 className="text-title font-semibold">ARS Approvals</h1>
-        <p className="text-body text-ink-muted">
-          ARS Approvals is the internal workplace application of {COMPANY} (&ldquo;ARS&rdquo;). Employees use it to raise and approve requests through multi-level approval workflows, to
-          assign and track tasks, and to publish information that colleagues read and acknowledge. Accounts are created by ARS&apos;s IT team for ARS employees only; there is no public
-          sign-up.
-        </p>
-        <Link href="/login" className="btn-primary inline-flex">
-          Sign in
-        </Link>
-      </section>
+    <div className="flex min-h-dvh flex-col bg-page">
+      <header className="border-b border-line bg-surface">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
+          <Link href="/" aria-label="ARS Internal Workspace home" className="flex min-w-0 items-center gap-3 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600">
+            {/* eslint-disable-next-line @next/next/no-img-element -- static SVG logo */}
+            <img src="/brand/ars-green-steel.svg" alt="" width={77} height={36} className="h-8 w-auto shrink-0 sm:h-9" />
+            <span className="truncate text-body font-semibold text-ink">ARS Internal Workspace</span>
+          </Link>
+          <Link href={SIGN_IN} className="btn-primary btn-compact w-auto shrink-0 motion-reduce:transition-none">
+            Sign in
+          </Link>
+        </div>
+      </header>
 
-      <section className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="card p-4">
-          <h2 className="text-body font-semibold">Approvals</h2>
-          <p className="mt-1 text-label text-ink-muted">Requests move through the approval steps set by the company, with a full history of every decision.</p>
+      <main id="main" className="flex flex-1 items-center justify-center px-4 py-16 sm:px-6">
+        <div className="mx-auto max-w-2xl text-center">
+          <h1 className="text-[clamp(1.75rem,4.5vw,2.75rem)] font-semibold leading-tight tracking-tight text-ink">Welcome to ARS Internal Workspace</h1>
+          <p className="mt-4 text-[clamp(0.9375rem,1.6vw,1.125rem)] text-ink-muted">One workspace. Everything you need to work.</p>
+          <Link href={SIGN_IN} className="btn-primary mt-8 inline-flex h-12 w-auto items-center gap-2 px-7 text-[1rem] motion-reduce:transition-none">
+            Sign in to continue <span aria-hidden="true">→</span>
+          </Link>
         </div>
-        <div className="card p-4">
-          <h2 className="text-body font-semibold">Tasks</h2>
-          <p className="mt-1 text-label text-ink-muted">Work assigned to employees, with due dates, progress and reminders.</p>
-        </div>
-        <div className="card p-4">
-          <h2 className="text-body font-semibold">Information</h2>
-          <p className="mt-1 text-label text-ink-muted">Circulars and notices sent to the right people, with acknowledgements where needed.</p>
-        </div>
-      </section>
+      </main>
 
-      <section className="mt-10 space-y-3" aria-labelledby="google-calendar">
-        <h2 id="google-calendar" className="text-card-title font-semibold">
-          Google Calendar (optional)
-        </h2>
-        <p className="text-body text-ink-muted">
-          An employee can choose to connect their own Google Calendar from their profile. ARS Approvals then asks Google for permission to:
-        </p>
-        <ul className="ml-5 list-disc space-y-1 text-body text-ink-muted">
-          <li>
-            <strong>See and edit events on calendars they own</strong> (calendar.events.owned), in the one calendar they choose, so their approval due times, task due dates, information dates and personal entries appear in Google
-            Calendar, and their own Google events appear in their ARS calendar, kept in step both ways.
-          </li>
-          <li>
-            <strong>See the list of their calendars</strong> (calendar.calendarlist.readonly), only so they can pick which calendar to use.
-          </li>
-          <li>
-            <strong>Know their email address</strong>, to show which Google account is connected.
-          </li>
-        </ul>
-        <p className="text-body text-ink-muted">
-          The connection is used only for this calendar feature, only for the person who connected it, and can be removed at any time from Profile → Calendar. Data received from Google is never sold,
-          shared with others, used for advertising, or used to train AI models. See the{" "}
-          <Link href="/privacy" className="link">
-            privacy policy
-          </Link>{" "}
-          for details.
-        </p>
-      </section>
-    </PublicPage>
+      <footer className="border-t border-line bg-surface">
+        <div className="mx-auto flex max-w-6xl flex-col-reverse items-center gap-2 px-4 py-4 text-[0.8125rem] text-ink-muted sm:flex-row sm:justify-between sm:px-6">
+          <p>
+            © {indiaYear()} {COMPANY}
+          </p>
+          <nav aria-label="Legal" className="flex flex-wrap justify-center gap-x-5 gap-y-1">
+            <Link href="/privacy" className="link">
+              Privacy Policy
+            </Link>
+            <Link href="/terms" className="link">
+              Terms of Use
+            </Link>
+            <MailLink address={CONTACT_EMAIL} label="IT Support" />
+          </nav>
+        </div>
+      </footer>
+    </div>
   );
 }

@@ -415,6 +415,8 @@
 - Applies to users and IT admins; the Super Admin is exempt (12-hour limit only).
 - The browser's session check no longer counts as activity (it used to keep an open tab signed in for ever). Activity in the page is reported at the next minute's check.
 - A warning with "Stay signed in" 2 minutes before. | Owner; Claude, 15 Oct 2026 |
+| D-189 | 25 Oct 2026 | **App-wide clean-up (owner: "complete Admin forms clean-up and all the application cleanup"):** done in four parallel parts (Admin, Super Admin, requests/modules, user pages/analytics/shell). Rule: instructions → hover hints; status, data, errors, empty states, warnings, confirm-dialog text and anything with an email address stay visible. Hints inside links became the link's title (an ⓘ can't sit inside a link). No server, data or business logic changed. | Owner; Claude, 25 Oct 2026 |
+| D-188 | 25 Oct 2026 | **Landing page "ARS Internal Workspace" (owner's spec):** minimal public home (header, hero, footer), both Sign in buttons use the existing /login, Privacy / Terms / IT Support use the existing destinations (IT Support = the existing Cloudflare-safe mail link with a label). Visible name changed in the page title template, manifest and sign-in subtitle only; no routes, identifiers, OAuth, sessions or email sender names changed. **Risk flagged to the owner:** the home page was the D-161 page for Google OAuth verification; the Google data-use text now lives only in the privacy policy, and the consent screen's app name must be updated to match. | Owner; Claude, 25 Oct 2026 |
 | D-187 | 25 Oct 2026 | **AI Rules (owner: an "AI training module"):** Admin page; one Markdown document per scope (ALL, GENERAL, APPROVAL, TASK, INFORMATION, SALESFORCE, COMBINED) in table `ai_rules`; the editor is a formatted (email-like) document converted to Markdown in the browser and back; each question carries ALL + its chat's rules inside `<company_rules>`, after the safety rules, capped at 20,000 characters. IT Admin and Super Admin; audited with fingerprints. | Owner; Claude, 25 Oct 2026 |
 | D-186 | 25 Oct 2026 | **Scrollbars (owner):** thin, theme-coloured, no arrows, in light and dark. | Owner; Claude, 25 Oct 2026 |
 | D-185 | 25 Oct 2026 | **Try as for every person (owner):** on the user page, for IT Admin (staff only) and Super Admin (anyone but themselves and break-glass). A browser can't be made to open a private window, so: a signed one-time link (5 minutes) is refused wherever someone is already signed in (never replaces a session); the session (auth_method TRY_AS, `tried_by`) lasts an hour and is **view-only**: the middleware marks every unsafe request (POST/PUT/PATCH/DELETE or a Server Action) and the central session check treats it as signed out, except sign-out and keep-alive. Banner shows who opened it. Audited. | Owner; Claude, 25 Oct 2026 |
@@ -602,6 +604,10 @@
 - Who approves the privacy policy and terms? | Before filing | Open, waiting on the owner (17 Oct 2026) |
 
 ## 5. Work log (newest first)
+
+### 25 Oct 2026 (v1.20.0: clean-up and landing page)
+- Clean-up by four parallel agents (D-189); one paused on a usage limit and was resumed; a mid-edit syntax error briefly showed in the dev server and was fixed.
+- Landing page (D-188) checked in the browser: desktop, 375 px (light theme) and 320 px; no horizontal scroll; Sign in → /login; /users still redirects when signed out.
 
 ### 25 Oct 2026 (v1.19.0: analyst chat, clean UI, Try as, AI Rules)
 - Owner requests through the session: ChatGPT-like analyst with dashboards and insights; no technical parts; clean UI with hover instructions; AI pages restructured from a hand sketch; Salesforce Settings; dropdowns/checkboxes; AI settings by provider; chat pin/rename/delete; Try as for everyone in a private window; themed scrollbars; AI Rules.

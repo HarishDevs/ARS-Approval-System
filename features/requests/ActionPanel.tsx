@@ -7,6 +7,7 @@ import { Check, MessageSquareWarning, PauseCircle, XCircle } from "lucide-react"
 import { Dialog } from "@/features/ui/Dialog";
 import { answerInfoAction, decideAction, delegateTaskAction, recallAction, reopenAction, resolveBlockedAction, resumeAction, withdrawAction } from "@/app/users/actions";
 import { FieldError, ResultMessage, useActionForm } from "@/features/ui/form";
+import { Hint } from "@/features/ui/Hint";
 
 // What the signed-in person can do on this request right now (F-14). The
 // server decides again on every press (F-12).
@@ -25,10 +26,12 @@ export function DecisionForm({ requestId, taskKey, label, work = false, only, id
         {work ? "Your task" : "Your decision"}: {label}
       </p>
       <div>
-        <label htmlFor={`${idPrefix}-${taskKey}`} className="field-label">
-          {only === "INFO" ? "Your question for the requester" : "Comment"}{" "}
-          {only !== "INFO" && <span className="font-normal text-ink-faint">{work ? "(say what you did; required to ask for changes or a question)" : "(required to reject, ask for changes or ask a question)"}</span>}
-        </label>
+        <div className="flex items-center gap-1">
+          <label htmlFor={`${idPrefix}-${taskKey}`} className="field-label">
+            {only === "INFO" ? "Your question for the requester" : "Comment"}
+          </label>
+          {only !== "INFO" && <Hint text={work ? "Say what you did. Required to ask for changes or a question." : "Required to reject, ask for changes or ask a question."} align="start" className="mb-1.5" />}
+        </div>
         <textarea id={`${idPrefix}-${taskKey}`} name="comment" rows={3} maxLength={2000} data-autofocus={only ? true : undefined} className="field-input h-auto py-2.5" />
         <FieldError result={result} name="comment" />
       </div>
@@ -126,9 +129,12 @@ export function BlockedStepForm({ requestId, step, people }: { requestId: number
         </select>
       )}
       <div>
-        <label htmlFor={`unblock-reason-${step.nodeId}`} className="field-label">
-          Reason <span className="font-normal text-ink-faint">(shown on the timeline and to the requester)</span>
-        </label>
+        <div className="flex items-center gap-1">
+          <label htmlFor={`unblock-reason-${step.nodeId}`} className="field-label">
+            Reason
+          </label>
+          <Hint text="Shown on the timeline and to the requester." align="start" className="mb-1.5" />
+        </div>
         <input id={`unblock-reason-${step.nodeId}`} name="reason" maxLength={500} className="field-input" />
         <FieldError result={result} name="reason" />
       </div>
@@ -145,7 +151,7 @@ export function ResumeForm({ requestId }: { requestId: number }) {
   return (
     <form onSubmit={onSubmit} className="space-y-2 px-5 py-4">
       <input type="hidden" name="requestId" value={requestId} />
-      <p className="text-label text-ink-muted">This request is on hold. Resume it when you&apos;re ready to decide.</p>
+      <p className="text-label text-ink-muted">This request is on hold.</p>
       <button type="submit" disabled={pending} className="btn-secondary btn-compact">
         {pending ? "Working…" : "Resume"}
       </button>
@@ -159,8 +165,10 @@ export function WithdrawForm({ requestId }: { requestId: number }) {
   return (
     <form onSubmit={onSubmit} className="space-y-2 px-5 py-4">
       <input type="hidden" name="requestId" value={requestId} />
-      <p className="font-medium">Withdraw this request</p>
-      <p className="text-label text-ink-muted">Closes it now. Anyone still to approve is told it&apos;s no longer needed.</p>
+      <p className="flex items-center gap-1 font-medium">
+        Withdraw this request
+        <Hint text="Closes it now. Anyone still to approve is told it's no longer needed." align="start" />
+      </p>
       <input name="reason" maxLength={500} placeholder="Reason (optional)" aria-label="Reason for withdrawing" className="field-input" />
       <button type="submit" disabled={pending} className="btn-secondary btn-compact text-danger-600">
         {pending ? "Working…" : "Withdraw"}
@@ -176,8 +184,10 @@ export function ReopenForm({ requestId }: { requestId: number }) {
   return (
     <form onSubmit={onSubmit} className="space-y-2 px-5 py-4">
       <input type="hidden" name="requestId" value={requestId} />
-      <p className="font-medium">Reopen (Super Admin)</p>
-      <p className="text-label text-ink-muted">Starts approval again from the first level, on the same number. The earlier approvals stay in the history.</p>
+      <p className="flex items-center gap-1 font-medium">
+        Reopen (Super Admin)
+        <Hint text="Starts approval again from the first level, on the same number. The earlier approvals stay in the history." align="start" />
+      </p>
       <input name="reason" maxLength={500} placeholder="Reason (required)" aria-label="Reason for reopening" className="field-input" />
       <FieldError result={result} name="reason" />
       <button type="submit" disabled={pending} className="btn-secondary btn-compact">

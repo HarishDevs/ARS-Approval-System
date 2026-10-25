@@ -52,7 +52,7 @@ test("IT builds a smart form: a rule, line items and a calculated amount", async
   await formula.fill("items + freigt");
   await expect(page.getByText('"freigt" isn\'t a field on this form.')).toBeVisible();
   await formula.fill("items + freight");
-  await expect(page.getByText(/Number fields you can use: .*items/)).toBeVisible();
+  await expect(page.locator('[data-tip*="Number fields you can use: "][data-tip*="items"]')).toHaveCount(1);
 
   await page.getByRole("button", { name: "Create workflow (as draft)" }).click();
   await expect(page).toHaveURL(/\/admin\/workflows\/\d+\?created=1/);

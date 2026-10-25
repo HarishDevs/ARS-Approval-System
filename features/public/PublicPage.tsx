@@ -7,14 +7,14 @@ import { MailLink } from "@/features/ui/MailLink";
 export const CONTACT_EMAIL = "itadmin@arssteels.co.in";
 export const COMPANY = "ARS Steels & Alloy International Pvt. Ltd.";
 
-const indiaYear = () => Number(new Intl.DateTimeFormat("en-IN", { timeZone: "Asia/Kolkata", year: "numeric" }).format(new Date()));
+export const indiaYear = () => Number(new Intl.DateTimeFormat("en-IN", { timeZone: "Asia/Kolkata", year: "numeric" }).format(new Date()));
 
 export function PublicPage({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-full flex-col bg-page">
       <header className="border-b border-line bg-surface">
         <div className="mx-auto flex max-w-4xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-          <Link href="/" aria-label="ARS Approvals home" className="rounded-md">
+          <Link href="/" aria-label="ARS Internal Workspace home" className="rounded-md">
             {/* eslint-disable-next-line @next/next/no-img-element -- static SVG logo */}
             <img src="/brand/ars-green-steel.svg" alt="" width={77} height={36} className="h-9 w-auto" />
           </Link>

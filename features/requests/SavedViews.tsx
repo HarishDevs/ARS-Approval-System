@@ -119,7 +119,7 @@ function ViewRow({ view }: { view: ViewItem }) {
 }
 
 export function SavedViewList({ views }: { views: ViewItem[] }) {
-  if (views.length === 0) return <p className="text-label text-ink-muted">No saved views yet. Search, then save it with a name.</p>;
+  if (views.length === 0) return <p className="text-label text-ink-muted">No saved views yet.</p>;
   return (
     <ul className="divide-y divide-line">
       {views.map((view) => (

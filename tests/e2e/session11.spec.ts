@@ -13,7 +13,7 @@ async function as(context: BrowserContext, loginId: string) {
 test("only approver designations can be picked: the manager picker offers the manager, not the requester", async ({ page, context }) => {
   await as(context, "E2E_ADMIN");
   await page.goto("/admin/organisation");
-  await expect(page.getByText(/Tick Approver for Manager and above/)).toBeVisible();
+  await expect(page.locator('[data-tip*="Tick Approver for Manager and above"]')).toHaveCount(1);
   // The new designation starts unticked.
   const addRow = page.getByRole("button", { name: "Add" }).last().locator("xpath=ancestor::form");
   await addRow.getByLabel("Code").fill("E2E_TRAINEE");

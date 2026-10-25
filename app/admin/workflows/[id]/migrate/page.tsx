@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { Breadcrumbs } from "@/features/ui/Display";
+import { Hint } from "@/features/ui/Hint";
 import { MigrationForm } from "@/features/admin/VersionTools";
 import { listMigrationItems, listMigrationRuns, planMigration } from "@/server/workflows/migration";
 import { VERDICT_LABEL } from "@/server/workflows/migration-plan";
@@ -54,8 +55,10 @@ export default async function MigratePage({ params, searchParams }: { params: Pr
       {unmapped.size > 0 && (
         <form method="get" className="card mb-6 space-y-3 px-5 py-4" aria-label="Step mapping">
           <input type="hidden" name="from" value={plan.source.id} />
-          <h2 className="font-semibold">Steps that are no longer in version {plan.target.versionNo}</h2>
-          <p className="text-label text-ink-muted">Some requests have reached these steps. Choose which live step each one becomes (same kind of step only), then check again.</p>
+          <div className="flex items-center gap-1.5">
+            <h2 className="font-semibold">Steps that are no longer in version {plan.target.versionNo}</h2>
+            <Hint text="Some requests have reached these steps. Choose which live step each one becomes (same kind of step only), then check again." align="start" />
+          </div>
           {[...unmapped.values()].map((step) => (
             <div key={step.id} className="flex flex-wrap items-center gap-2 text-label">
               <label htmlFor={`map-${step.id}`} className="min-w-48 font-medium">
@@ -97,7 +100,10 @@ export default async function MigratePage({ params, searchParams }: { params: Pr
       )}
 
       <section aria-label="Earlier moves" className="card px-5 py-4">
-        <h2 className="font-semibold">Earlier moves</h2>
+        <div className="flex items-center gap-1.5">
+          <h2 className="font-semibold">Earlier moves</h2>
+          <Hint text="To undo a move: restore the earlier version as a draft (it keeps the same steps), publish it, and move the same requests to it. Each one is checked the same way." align="start" />
+        </div>
         {runItems.length === 0 ? (
           <p className="mt-1 text-label text-ink-muted">None yet.</p>
         ) : (
@@ -124,7 +130,6 @@ export default async function MigratePage({ params, searchParams }: { params: Pr
             ))}
           </ol>
         )}
-        <p className="mt-3 text-caption text-ink-muted">To undo a move: restore the earlier version as a draft (it keeps the same steps), publish it, and move the same requests to it. Each one is checked the same way.</p>
       </section>
     </>
   );

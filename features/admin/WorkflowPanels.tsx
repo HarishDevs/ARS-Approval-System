@@ -5,6 +5,7 @@ import { publishAction, simulateAction, updateDetailsAction, deleteWorkflowActio
 import type { TypeSettings } from "@/server/workflows/type-settings";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import { PeoplePicker } from "@/features/ui/PeoplePicker";
+import { Hint } from "@/features/ui/Hint";
 import { NO_LOOKUPS, NUMERIC_TYPES, type FieldLookups, type FormField } from "@/server/forms/fields";
 import type { SimulationView } from "@/server/approvals/service";
 
@@ -15,9 +16,9 @@ export function TestModePanel({ versionId, form, people, lookups = NO_LOOKUPS }:
   return (
     <form onSubmit={onSubmit} className="card space-y-4 px-5 py-4">
       <input type="hidden" name="versionId" value={versionId} />
-      <div>
+      <div className="flex items-center gap-1.5">
         <h2 className="font-semibold">Test mode</h2>
-        <p className="text-label text-ink-muted">Enter sample values and see who would approve, in order. Nothing is saved or sent.</p>
+        <Hint text="Enter sample values and see who would approve, in order. Nothing is saved or sent." align="start" />
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
@@ -204,9 +205,12 @@ export function DetailsForm({
           <option value="BEGINNING">from the first level (everyone approves again)</option>
         </select>
       </div>
-      <label className="flex items-center gap-2 text-label">
-        <input type="checkbox" name="active" defaultChecked={active} /> Open for new requests <span className="text-ink-faint">(untick to archive)</span>
-      </label>
+      <div className="flex items-center gap-1.5">
+        <label className="flex items-center gap-2 text-label">
+          <input type="checkbox" name="active" defaultChecked={active} /> Open for new requests
+        </label>
+        <Hint text="Untick to archive." align="start" />
+      </div>
       <SubmitButton pending={pending} variant="secondary" className="btn-compact">
         Save details
       </SubmitButton>
@@ -221,8 +225,10 @@ export function DeleteWorkflowForm({ workflowId, name }: { workflowId: number; n
   return (
     <form onSubmit={onSubmit} className="card space-y-2 px-5 py-4">
       <input type="hidden" name="workflowId" value={workflowId} />
-      <h2 className="font-semibold">Remove this approval type</h2>
-      <p className="text-label text-ink-muted">Only if no request was ever raised on it. Otherwise archive it above.</p>
+      <div className="flex items-center gap-1.5">
+        <h2 className="font-semibold">Remove this approval type</h2>
+        <Hint text="Only if no request was ever raised on it. Otherwise archive it above." align="start" />
+      </div>
       <SubmitButton pending={pending} variant="secondary" className="btn-compact text-danger-600">
         Remove approval type
       </SubmitButton>
@@ -256,12 +262,14 @@ export function TypeSettingsForm({
   return (
     <form onSubmit={onSubmit} className="card space-y-4 px-5 py-4">
       <input type="hidden" name="workflowId" value={workflowId} />
-      <div>
+      <div className="flex items-center gap-1.5">
         <h2 className="font-semibold">Submission checks</h2>
-        <p className="text-label text-ink-muted">Checked before a request is submitted (people can also check first). Off unless you switch them on.</p>
+        <Hint text="Checked before a request is submitted (people can also check first). Off unless you switch them on." align="start" />
       </div>
       <fieldset className="space-y-2" data-testid="raisers">
-        <legend className="field-label">Who may raise this type</legend>
+        <legend className="field-label">
+          Who may raise this type <Hint text="Others don't see the type under New request, and the server refuses it. IT can always raise it." align="start" />
+        </legend>
         <select aria-label="Who may raise this type" name="raiserMode" value={raiserMode} onChange={(event) => setRaiserMode(event.target.value as TypeSettings["raisers"]["mode"])} className="field-input w-auto">
           <option value="EVERYONE">Everyone</option>
           <option value="DEPARTMENTS">People in chosen departments</option>
@@ -278,7 +286,6 @@ export function TypeSettingsForm({
           </div>
         )}
         {raiserMode === "PEOPLE" && <PeoplePicker name="raiserPerson" label="People who may raise it" options={people} initial={settings.raisers.userIds} max={200} />}
-        <p className="text-caption text-ink-muted">Others don&apos;t see the type under New request, and the server refuses it. IT can always raise it.</p>
         <FieldError result={result} name="raiserMode" />
       </fieldset>
       <fieldset className="space-y-2">
@@ -316,7 +323,10 @@ export function TypeSettingsForm({
         </div>
       </fieldset>
       <fieldset className="space-y-2">
-        <legend className="field-label">Must be unique (never repeated on an open or approved request of this type)</legend>
+        <legend className="field-label">
+          Must be unique{" "}
+          <Hint text="Never repeated on an open or approved request of this type. For identifiers such as an invoice or PO number. A repeat is refused for everyone, at any date; a rejected or withdrawn request frees the value." align="start" />
+        </legend>
         <div className="flex flex-wrap gap-3">
           {fields
             .filter((field) => ["TEXT", "NUMBER", "DATE", "CHOICE", "LOOKUP"].includes(field.type))
@@ -327,7 +337,6 @@ export function TypeSettingsForm({
               </label>
             ))}
         </div>
-        <p className="text-caption text-ink-muted">For identifiers such as an invoice or PO number. A repeat is refused for everyone, at any date; a rejected or withdrawn request frees the value.</p>
       </fieldset>
       <div className="flex flex-wrap items-end gap-3">
         <div>
@@ -337,9 +346,12 @@ export function TypeSettingsForm({
           <input id="minFiles" name="minFiles" type="number" min={0} max={20} defaultValue={settings.attachments.minimum} className="field-input w-24" />
         </div>
         <div className="min-w-60 flex-1">
-          <label htmlFor="filesNote" className="field-label">
-            Which files <span className="font-normal text-ink-faint">(shown to the requester)</span>
-          </label>
+          <div className="flex items-center gap-1.5">
+            <label htmlFor="filesNote" className="field-label">
+              Which files
+            </label>
+            <Hint text="Shown to the requester." align="start" className="mb-1.5" />
+          </div>
           <input id="filesNote" name="filesNote" maxLength={200} defaultValue={settings.attachments.note ?? ""} placeholder="e.g. two quotes and the vendor form" className="field-input" />
         </div>
       </div>
@@ -364,7 +376,7 @@ export function TypeSettingsForm({
         </div>
         <div>
           <label htmlFor="validityDays" className="field-label">
-            Approval valid for <span className="font-normal text-ink-faint">(days, optional)</span>
+            Approval valid for <span className="font-normal text-ink-faint">(days)</span>
           </label>
           <input id="validityDays" name="validityDays" type="number" min={1} max={3650} defaultValue={settings.validityDays ?? ""} className="field-input w-28" />
         </div>

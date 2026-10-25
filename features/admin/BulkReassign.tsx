@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { bulkReassignAction } from "@/app/admin/workload/actions";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
+import { Hint } from "@/features/ui/Hint";
 
 // v1.7.0 (A3): tick pending tasks, choose one person, give a reason. The
 // server checks each task again and moves them one by one; every task gets
@@ -80,9 +81,12 @@ export function BulkReassign({ rows, people }: { rows: ReassignRow[]; people: { 
       </section>
       <section className="card grid gap-4 px-5 py-4 sm:grid-cols-2">
         <div>
-          <label htmlFor="toUserId" className="field-label">
-            Move them to
-          </label>
+          <div className="flex items-center gap-1">
+            <label htmlFor="toUserId" className="field-label">
+              Move them to
+            </label>
+            <Hint text="Approval steps need someone who can approve; work steps can go to anyone active." align="start" className="mb-1.5" />
+          </div>
           <select id="toUserId" name="toUserId" required defaultValue="" className="field-input">
             <option value="" disabled>
               Choose a person
@@ -93,13 +97,15 @@ export function BulkReassign({ rows, people }: { rows: ReassignRow[]; people: { 
               </option>
             ))}
           </select>
-          <p className="mt-1 text-caption text-ink-muted">Approval steps need someone who can approve; work steps can go to anyone active.</p>
           <FieldError result={result} name="toUserId" />
         </div>
         <div>
-          <label htmlFor="reason" className="field-label">
-            Reason (shown on each request&apos;s timeline)
-          </label>
+          <div className="flex items-center gap-1">
+            <label htmlFor="reason" className="field-label">
+              Reason
+            </label>
+            <Hint text="Shown on each request's timeline." align="start" className="mb-1.5" />
+          </div>
           <input id="reason" name="reason" required minLength={3} maxLength={500} className="field-input" />
           <FieldError result={result} name="reason" />
         </div>

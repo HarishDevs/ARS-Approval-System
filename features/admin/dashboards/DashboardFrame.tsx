@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { PendingLink } from "@/features/ui/PendingLink";
 import { PageHeader } from "@/features/shell/PageHeader";
+import { Hint } from "@/features/ui/Hint";
 import { CUSTOM_TYPE, filterQuery, presets, type DashboardFilter } from "@/server/dashboards/filters";
 
 // Shared frame of the four admin dashboards (S11-12, F-74): tabs, one filter
@@ -104,8 +105,7 @@ export function DashboardFrame({
             {preset.label}
           </PendingLink>
         ))}
-        <span aria-hidden="true">·</span>
-        <span>{departmentNote} Deleted requests are never counted.</span>
+        <Hint text={`${departmentNote} Deleted requests are never counted.`} align="end" />
       </p>
       {children}
     </>
@@ -178,7 +178,8 @@ export function MeasureBar({ value, max }: { value: number; max: number }) {
   );
 }
 
-export function DashboardTable({ title, empty, head, rows, legend }: { title?: string; empty: string; head: { label: string; numeric?: boolean }[]; rows: React.ReactNode[][]; legend?: boolean }) {
+// A column's `hint` explains it on hover (D-179).
+export function DashboardTable({ title, empty, head, rows, legend }: { title?: string; empty: string; head: { label: string; numeric?: boolean; hint?: string }[]; rows: React.ReactNode[][]; legend?: boolean }) {
   return (
     <section className="card overflow-x-auto">
       {title && <h2 className="border-b border-line px-5 py-4 font-semibold">{title}</h2>}
@@ -192,6 +193,7 @@ export function DashboardTable({ title, empty, head, rows, legend }: { title?: s
               {head.map((cell) => (
                 <th key={cell.label} className={cell.numeric ? "text-right" : undefined}>
                   {cell.label}
+                  {cell.hint && <Hint text={cell.hint} align={cell.numeric ? "end" : "start"} className="ml-0.5" />}
                 </th>
               ))}
             </tr>

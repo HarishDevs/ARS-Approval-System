@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/features/shell/PageHeader";
+import { Hint } from "@/features/ui/Hint";
 import { DepartmentForm, DesignationForm } from "@/features/admin/OrganisationForms";
 import { requireArea } from "@/server/authorization/guards";
 import { listDepartments, listDesignations } from "@/lib/db/repositories/organisation.repository";
@@ -27,9 +28,9 @@ export default async function OrganisationPage() {
       </PageHeader>
       <div className="space-y-6">
         <section className="card divide-y divide-line">
-          <div className="px-5 py-4">
+          <div className="flex items-center gap-1.5 px-5 py-4">
             <h2 className="font-semibold">Departments</h2>
-            <p className="text-label text-ink-muted">Codes are short and unique, e.g. FIN, HR, SCM. Inactive departments can&apos;t be picked for new users.</p>
+            <Hint text="Codes are short and unique, e.g. FIN, HR, SCM. Inactive departments can't be picked for new users." align="start" />
           </div>
           {departments.map((department) => (
             <DepartmentForm key={department.id} department={department} people={options} />
@@ -38,12 +39,12 @@ export default async function OrganisationPage() {
         </section>
 
         <section className="card divide-y divide-line">
-          <div className="px-5 py-4">
+          <div className="flex items-center gap-1.5 px-5 py-4">
             <h2 className="font-semibold">Designations</h2>
-            <p className="text-label text-ink-muted">
-              Tick <strong>Approver</strong> for Manager and above. Only people whose designation is ticked can be chosen as approvers, group members, HODs,
-              reporting managers or out-of-office delegates. Choices already saved stay valid until changed.
-            </p>
+            <Hint
+              text="Tick Approver for Manager and above. Only people whose designation is ticked can be chosen as approvers, group members, HODs, reporting managers or out-of-office delegates. Choices already saved stay valid until changed."
+              align="start"
+            />
           </div>
           {designations.map((designation) => (
             <DesignationForm key={designation.id} designation={designation} />

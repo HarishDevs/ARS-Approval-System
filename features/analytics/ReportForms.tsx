@@ -5,6 +5,7 @@ import { useState } from "react";
 import { createAlertAction, createScheduleAction, defaultViewAction, deleteViewAction, requestExportAction, saveViewAction, shareViewAction, toggleAlertAction, toggleScheduleAction, updateScheduleAction } from "@/app/users/report-actions";
 import { PeoplePicker, type PersonOption } from "@/features/ui/PeoplePicker";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
+import { Hint } from "@/features/ui/Hint";
 
 // Saved views, schedules and alerts (Addendum A, D-123).
 const hidden = (query: Record<string, string>) => Object.entries(query).map(([key, value]) => <input key={key} type="hidden" name={`q_${key}`} value={value} />);
@@ -313,13 +314,13 @@ export function BackgroundExportForm({ reportKey, query, truncated }: { reportKe
   const { result, pending, onSubmit } = useActionForm(requestExportAction);
   return (
     <details className="text-label" open={truncated}>
-      <summary className="cursor-pointer font-semibold text-primary-600">Large export in the background</summary>
+      <summary className="cursor-pointer font-semibold text-primary-600">
+        Large export in the background <Hint text="Up to 50,000 rows for Excel and CSV. You're told in the app when it's ready; download it from Reports within 7 days." align="start" />
+      </summary>
       <form onSubmit={onSubmit} className="mt-2 flex flex-wrap items-end gap-3">
         <input type="hidden" name="reportKey" value={reportKey} />
         {hidden(query)}
-        <p className="w-full text-caption text-ink-muted">
-          {truncated ? "This report has more rows than the screen and direct downloads show (5,000). " : ""}Up to 50,000 rows for Excel and CSV. You&apos;re told in the app when it&apos;s ready; download it from Reports within 7 days.
-        </p>
+        {truncated && <p className="w-full text-caption text-ink-muted">This report has more rows than the screen and direct downloads show (5,000).</p>}
         <div>
           <label htmlFor="bg-format" className="field-label">
             Format

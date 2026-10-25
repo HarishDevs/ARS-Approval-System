@@ -2,6 +2,7 @@
 
 import { savePreferencesAction } from "@/app/users/preferences-actions";
 import { ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
+import { Hint } from "@/features/ui/Hint";
 
 export interface PreferenceRow {
   key: string;
@@ -21,11 +22,11 @@ export function PreferencesForm({ rows }: { rows: PreferenceRow[] }) {
         {rows.map((row) => (
           <li key={row.key} className="grid gap-2 px-5 py-4 sm:grid-cols-[1fr_auto]">
             <div>
-              <p className="font-medium">
+              <p className="flex flex-wrap items-center gap-1.5 font-medium">
                 {row.label}
-                {row.mandatory && <span className="ml-2 badge bg-surface-muted text-ink-muted">Always on</span>}
+                <Hint text={row.help} align="start" />
+                {row.mandatory && <span className="ml-0.5 badge bg-surface-muted text-ink-muted">Always on</span>}
               </p>
-              <p className="text-label text-ink-muted">{row.help}</p>
             </div>
             <div className="flex items-center gap-5">
               {(["EMAIL", "WHATSAPP"] as const).map((channel) => (

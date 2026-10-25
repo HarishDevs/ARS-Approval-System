@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { Badge } from "@/features/ui/Display";
+import { Hint } from "@/features/ui/Hint";
 import { SettingsGroupForm } from "@/features/superadmin/SettingsGroupForm";
 import { SalesforceDisconnectButton, SalesforceTestButton, SyncNowButton } from "@/features/ai/AiAdminForms";
 import { SETTING_DEFINITIONS } from "@/server/settings/definitions";
@@ -53,6 +54,7 @@ export default async function SalesforceSettingsPage({ searchParams }: { searchP
               <h2 id="sf-connection" className="font-semibold">
                 Salesforce connection
               </h2>
+              <Hint text="OAuth 2.0 with PKCE, read-only. Tokens are encrypted on the server and never shown. Each person reads only what their Salesforce scope allows (their own records, or all allowed), and Salesforce applies its own sharing and field security." align="start" />
               <Badge tone={connection.status === "CONNECTED" ? "success" : connection.status === "NEEDS_REAUTH" ? "warning" : "neutral"}>
                 {connection.status === "CONNECTED" ? "Connected" : connection.status === "NEEDS_REAUTH" ? "Needs reconnecting" : "Not connected"}
               </Badge>
@@ -71,7 +73,10 @@ export default async function SalesforceSettingsPage({ searchParams }: { searchP
                 <dd>{connection.lastTestAt ? `${connection.lastTestOk ? "Passed" : "Failed"} · ${formatIndiaTime(connection.lastTestAt)}` : "Never"}</dd>
               </div>
               <div>
-                <dt className="text-ink-muted">Callback URL (enter it in the Salesforce app)</dt>
+                <dt className="flex items-center gap-1 text-ink-muted">
+                  Callback URL
+                  <Hint text="Enter it in the Salesforce app." align="start" />
+                </dt>
                 <dd className="break-all font-mono text-caption">{callbackUrl}</dd>
               </div>
             </dl>
@@ -83,19 +88,19 @@ export default async function SalesforceSettingsPage({ searchParams }: { searchP
               {connection.status !== "DISCONNECTED" && <SalesforceTestButton />}
               {connection.status !== "DISCONNECTED" && <SalesforceDisconnectButton />}
             </div>
-            <p className="text-caption text-ink-muted">
-              OAuth 2.0 with PKCE, read-only. Tokens are encrypted on the server and never shown. Each person reads only what their Salesforce scope allows (their own records, or all allowed), and Salesforce applies its own sharing and field security.
-            </p>
           </section>
           <SettingsGroupForm group="AI_DATA" title="Salesforce app and allowed data" description="Create a Connected App (or External Client App) in Salesforce with the callback URL above, OAuth scopes api and refresh_token, PKCE required. Test in a sandbox first. Only the objects and fields listed here can be read (* = all)." settings={settings} />
         </div>
         <div className="space-y-6">
           <section className="card space-y-3 px-5 py-4" aria-labelledby="ai-sf">
-            <h2 id="ai-sf" className="font-semibold">
-              Salesforce sync
-            </h2>
+            <div className="flex items-center gap-1.5">
+              <h2 id="ai-sf" className="font-semibold">
+                Salesforce sync
+              </h2>
+              <Hint text="Fill in the Salesforce fields to copy data hourly (read-only). Oracle ERP isn't connected: the hosting can't reach an internal Oracle server. See the AI module design notes for the relay option." align="start" />
+            </div>
             {!sfConfigured ? (
-              <p className="text-label text-ink-muted">Not set up. Fill in the Salesforce fields to copy data hourly (read-only).</p>
+              <p className="text-label text-ink-muted">Not set up.</p>
             ) : (
               <>
                 <SyncNowButton />
@@ -108,7 +113,6 @@ export default async function SalesforceSettingsPage({ searchParams }: { searchP
                 </ul>
               </>
             )}
-            <p className="text-caption text-ink-muted">Oracle ERP isn&apos;t connected: the hosting can&apos;t reach an internal Oracle server. See the AI module design notes for the relay option.</p>
           </section>
           <p className="text-label">
             <Link href="/superadmin/ai" className="link">

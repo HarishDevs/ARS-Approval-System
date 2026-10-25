@@ -2,6 +2,7 @@
 
 import { createHoldAction, releaseHoldAction } from "@/app/superadmin/retention/actions";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
+import { Hint } from "@/features/ui/Hint";
 
 // FN10 legal hold forms (Super Admin).
 export function CreateHoldForm() {
@@ -16,10 +17,13 @@ export function CreateHoldForm() {
         <FieldError result={result} name="reference" />
       </div>
       <div>
-        <label htmlFor="f-ownerLogin" className="field-label">
-          Hold owner (user id)
-        </label>
-        <input id="f-ownerLogin" name="ownerLogin" maxLength={60} className="field-input" placeholder="Who answers for this hold" />
+        <div className="flex items-center gap-1">
+          <label htmlFor="f-ownerLogin" className="field-label">
+            Hold owner (user id)
+          </label>
+          <Hint text="Who answers for this hold." align="start" />
+        </div>
+        <input id="f-ownerLogin" name="ownerLogin" maxLength={60} className="field-input" />
         <FieldError result={result} name="ownerLogin" />
       </div>
       <div>

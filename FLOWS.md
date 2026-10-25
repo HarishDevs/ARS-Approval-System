@@ -1046,6 +1046,11 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 5. Super Admin addresses refuse anyone who isn't a Super Admin.
 6. "Sign-in & devices" is never restricted.
 
+## F-144 Public landing page (v1.20.0, D-188; supersedes the D-161 home page content)
+1. A signed-out visitor opens the home page: compact header (logo, "ARS Internal Workspace", Sign in), one centred hero ("Welcome to ARS Internal Workspace", "One workspace. Everything you need to work.", **Sign in to continue →**), and a footer (Privacy Policy, Terms of Use, IT Support, copyright).
+2. Both Sign in buttons open the existing /login; sign-in redirects as before. A signed-in visitor goes straight to /users.
+3. The Google data-use explanation is in the privacy policy (linked from the footer), no longer on the home page.
+
 ## F-140 AI Assistant as a business analyst (v1.19.0, D-178, D-180, D-182)
 1. The person opens **AI Assistant** in the sidebar: a new chat opens and the chat list (pinned first, newest next, with a search) expands. About ten chats show; the rest scroll.
 2. The top strip shows **+ New chat**, the day's limit (used, remaining, total) and the connection status.

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Breadcrumbs } from "@/features/ui/Display";
+import { Hint } from "@/features/ui/Hint";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { requireArea } from "@/server/authorization/guards";
@@ -63,14 +64,14 @@ export default async function TemplatePage({ params }: { params: Promise<{ code:
               {canSubmit && <SubmitTemplateButton code={entry.code} name={latest.providerName ?? ""} />}
             </>
           ) : (
-            <p className="text-label text-ink-muted">Not created yet. The suggested wording is filled in below.</p>
+            <p className="text-label text-ink-muted">Not created yet.</p>
           )}
         </section>
         <section className="card space-y-2 px-5 py-4">
-          <h2 className="font-semibold">Meta&apos;s decision</h2>
-          <p className="text-label text-ink-muted">
-            After submitting, Meta usually decides within minutes to a day. Sync to pull the result: approved versions go live by themselves. A template made directly in the CEOITBox dashboard also works: save a draft here with its exact name, then sync.
-          </p>
+          <h2 className="flex items-center gap-1.5 font-semibold">
+            Meta&apos;s decision
+            <Hint text="After submitting, Meta usually decides within minutes to a day. Sync to pull the result: approved versions go live by themselves. A template made directly in the CEOITBox dashboard also works: save a draft here with its exact name, then sync." align="start" />
+          </h2>
           <SyncTemplatesButton />
         </section>
       </div>

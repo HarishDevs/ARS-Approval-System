@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { departmentOfUser, mayRaise } from "@/server/approvals/raisers";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
+import { Hint } from "@/features/ui/Hint";
 import { RequestForm } from "@/features/requests/RequestForm";
 import { findPublishedVersion, findWorkflow } from "@/lib/db/repositories/approvals.repository";
 import { listActiveUserOptions } from "@/lib/db/repositories/admin-users.repository";
@@ -88,11 +89,11 @@ export default async function RaiseRequestPage({ params, searchParams }: { param
         </p>
       )}
       {profileFields && (
-        <p className="mb-3 max-w-2xl text-label text-ink-muted">
-          Department or designation changed?{" "}
+        <p className="mb-3 flex max-w-2xl flex-wrap items-center gap-1.5 text-label text-ink-muted">
           <Link href={refreshHref} className="link" data-testid="refresh-profile">
             Refresh from profile
           </Link>
+          <Hint text="Use this if your department or designation changed." align="start" />
           {refresh ? " · refreshed from your current profile." : ""}
         </p>
       )}

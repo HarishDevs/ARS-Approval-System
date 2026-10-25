@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { ProfileTabs } from "@/features/shell/ProfileTabs";
+import { Hint } from "@/features/ui/Hint";
 import { Email, SafeText } from "@/features/ui/SafeText";
 import { getOwnProfile } from "@/lib/db/repositories/users.repository";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
@@ -33,7 +34,10 @@ export default async function ProfilePage() {
       <PageHeader title="Profile" description="Your details, notifications, out of office and sign-in settings." />
       <ProfileTabs />
       <section className="card max-w-2xl">
-        <h2 className="border-b border-line px-5 py-4 font-semibold">Your details</h2>
+        <h2 className="flex items-center gap-1.5 border-b border-line px-5 py-4 font-semibold">
+          Your details
+          <Hint text="Only IT can change these details. If something is wrong, ask IT to update it." align="start" />
+        </h2>
         <dl className="divide-y divide-line">
           {rows.map((row) => (
             <div key={row.label} className="grid gap-1 px-5 py-3 sm:grid-cols-3 sm:gap-4">
@@ -42,7 +46,6 @@ export default async function ProfilePage() {
             </div>
           ))}
         </dl>
-        <p className="border-t border-line px-5 py-3 text-label text-ink-muted">Something wrong? Only IT can change these details, so ask IT to update them.</p>
       </section>
       <section className="card mt-6 max-w-2xl px-5 py-4" aria-label="Appearance">
         <ThemeChoice initial={parseTheme(theme)} />

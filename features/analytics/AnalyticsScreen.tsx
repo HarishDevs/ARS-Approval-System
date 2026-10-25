@@ -5,6 +5,7 @@ import { BoardPicker, CenterScreen } from "@/features/analytics/CenterScreen";
 import { parseBoard } from "@/server/analytics/center";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
+import { Hint } from "@/features/ui/Hint";
 import { BarList, Heatmap, KpiCard, LineChart, StackedBar, hoursText } from "@/features/analytics/Charts";
 import { resolveScope } from "@/server/analytics/scope";
 import { bucketLabel, comparisonPeriod, indiaToday, PERIOD_LABEL, resolvePeriod, type PeriodKey } from "@/server/analytics/periods";
@@ -315,10 +316,10 @@ export async function AnalyticsScreen({ searchParams, base }: { searchParams: Re
 
       {orgKpis && orgQuality && (
         <section aria-labelledby="benchmark" className="card mb-6 overflow-x-auto px-4 py-3">
-          <h2 id="benchmark" className="font-semibold">
+          <h2 id="benchmark" className="flex items-center gap-1.5 font-semibold">
             {scope.label} compared with the whole organisation
+            <Hint text="Rates and times only, for the same period and approval type." align="start" />
           </h2>
-          <p className="text-caption text-ink-muted">Rates and times only, for the same period and approval type.</p>
           <table className="data-table mt-2">
             <thead>
               <tr>
@@ -457,11 +458,12 @@ export async function AnalyticsScreen({ searchParams, base }: { searchParams: Re
         </div>
       )}
 
-      <p className="text-caption text-ink-muted">
-        As of {formatIndiaTime(now)}. Live figures; deleted requests are never counted.{" "}
+      <p className="flex flex-wrap items-center gap-1.5 text-caption text-ink-muted">
+        As of {formatIndiaTime(now)}.
         <Link href={here({})} className="link">
           Refresh
         </Link>
+        <Hint text="Live figures; deleted requests are never counted." align="start" />
       </p>
     </>
   );

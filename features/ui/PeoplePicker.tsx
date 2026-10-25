@@ -2,6 +2,7 @@
 
 import { useId, useMemo, useRef, useState } from "react";
 import { X } from "lucide-react";
+import { Hint } from "@/features/ui/Hint";
 
 // Pick several people (v1.6.1 collaborators). Type to search by name or
 // user id, choose with the mouse or the arrow keys and Enter; each chosen
@@ -146,8 +147,12 @@ export function PeoplePicker({
           </ul>
         )}
       </div>
-      <p id={`${id}-help`} className="mt-1 text-caption text-ink-muted">
-        {help ?? `Up to ${max} people.`} {chosen.length > 0 && `${chosen.length} chosen.`}
+      {/* D-179: the caller's explanation is a hover hint; the limit and the count stay visible. */}
+      <p className="mt-1 flex items-center gap-1.5 text-caption text-ink-muted">
+        <span id={`${id}-help`}>
+          Up to {max} {max === 1 ? "person" : "people"}.{chosen.length > 0 && ` ${chosen.length} chosen.`}
+        </span>
+        <Hint text={help} align="start" />
       </p>
     </div>
   );

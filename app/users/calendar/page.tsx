@@ -3,6 +3,7 @@ import { calendarKindAllowed } from "@/server/modules/modules";
 import Link from "next/link";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
+import { Hint } from "@/features/ui/Hint";
 import { EntryForm } from "@/features/calendar/EntryForm";
 import { loadEntries, type CalendarEntry } from "@/server/calendar/entries";
 import { indiaToday, KIND_LABEL, KINDS, parseView, periodTitle, viewHref, type CalendarView, type Kind } from "@/server/calendar/views";
@@ -203,9 +204,12 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
       )}
 
       <details className="card max-w-2xl p-4">
-        <summary className="cursor-pointer text-body font-semibold">Add a personal entry</summary>
-        <p className="mt-2 mb-3 text-caption text-ink-muted">Only you see your entries{connected ? "; they also appear in your Google Calendar" : ""}.</p>
-        <EntryForm values={{ title: "", notes: "", allDay: false, date: state.view === "day" ? state.anchor : today, endDate: "", start: "09:00", end: "09:30" }} submitLabel="Add entry" />
+        <summary className="cursor-pointer text-body font-semibold">
+          Add a personal entry <Hint text={`Only you see your entries${connected ? "; they also appear in your Google Calendar" : ""}.`} align="start" />
+        </summary>
+        <div className="mt-3">
+          <EntryForm values={{ title: "", notes: "", allDay: false, date: state.view === "day" ? state.anchor : today, endDate: "", start: "09:00", end: "09:30" }} submitLabel="Add entry" />
+        </div>
       </details>
     </>
   );

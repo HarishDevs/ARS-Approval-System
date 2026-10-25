@@ -3,6 +3,7 @@
 import { UserPlus, Users } from "lucide-react";
 import { addCollaboratorsAction, removeCollaboratorAction } from "@/app/users/collab-actions";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
+import { Hint } from "@/features/ui/Hint";
 import { PeoplePicker, type PersonOption } from "@/features/ui/PeoplePicker";
 
 // v1.6.1 collaborators on the request page: who follows it; the requester
@@ -40,11 +41,11 @@ export function CollaboratorsCard({ requestId, rows, canManage, viewerId, option
   const chosen = new Set(rows.map((row) => row.userId));
   return (
     <section aria-labelledby="collaborators-title" className="card px-5 py-4">
-      <h2 id="collaborators-title" className="mb-1 flex items-center gap-2 font-semibold">
+      <h2 id="collaborators-title" className="mb-3 flex items-center gap-2 font-semibold">
         <Users aria-hidden="true" className="h-4 w-4 text-ink-muted" />
         Collaborators
+        <Hint text="People following this request: they can see it, comment and add files, and are told how it goes. They don't approve." align="start" />
       </h2>
-      <p className="mb-3 text-caption text-ink-muted">People following this request: they can see it, comment and add files, and are told how it goes. They don&apos;t approve.</p>
       {rows.length === 0 ? (
         <p className="mb-3 text-label text-ink-muted">Nobody yet.</p>
       ) : (

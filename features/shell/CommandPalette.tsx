@@ -4,6 +4,7 @@ import { ArrowRight, FileText, History, Keyboard, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { SHORTCUTS, isTyping } from "@/features/shell/shortcuts";
+import { Hint } from "@/features/ui/Hint";
 
 // WS-03 command palette (Ctrl+K / ⌘K): go to a page, or to a request by
 // number or title. Requests come from the access-checked quick search; an
@@ -215,10 +216,10 @@ export function CommandPalette({ pages }: { pages: PaletteLink[] }) {
       <dialog ref={helpDialog} aria-labelledby={`${listId}-help`} onClose={() => setHelp(false)} onClick={(event) => event.target === helpDialog.current && setHelp(false)} className="z-palette w-[calc(100%-2rem)] max-w-md rounded-xl border border-line bg-raised p-0 text-ink shadow-overlay backdrop:bg-overlay">
         {help && (
           <div className="p-5">
-            <h2 id={`${listId}-help`} className="font-semibold">
+            <h2 id={`${listId}-help`} className="flex items-center gap-1.5 font-semibold">
               Keyboard shortcuts
+              <Hint text="They never fire while you type in a field." align="start" />
             </h2>
-            <p className="mt-1 text-label text-ink-muted">They never fire while you type in a field.</p>
             <dl className="mt-3 divide-y divide-line text-label">
               {SHORTCUTS.map((item) => (
                 <div key={item.keys} className="flex items-center justify-between gap-4 py-2">

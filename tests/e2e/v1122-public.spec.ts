@@ -7,8 +7,13 @@ test("home, privacy policy and terms are public, link to each other, and describ
   const home = await page.goto("/");
   expect(home?.status()).toBe(200);
   await expect(page).toHaveURL(/\/$/);
-  await expect(page.getByRole("heading", { level: 1, name: "ARS Approvals" })).toBeVisible();
-  await expect(page.getByText(/calendar\.events/)).toBeVisible();
+  // D-188: the landing page of ARS Internal Workspace; the Google data use is in the privacy policy.
+  await expect(page).toHaveTitle("ARS Internal Workspace | ARS Steels");
+  await expect(page.getByRole("heading", { level: 1, name: "Welcome to ARS Internal Workspace" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Sign in", exact: true })).toHaveAttribute("href", "/login");
+  await expect(page.getByRole("link", { name: "Sign in to continue" })).toHaveAttribute("href", "/login");
+  await expect(page.getByRole("navigation", { name: "Legal" }).getByRole("link", { name: "IT Support" })).toHaveAttribute("href", /^mailto:/);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
   await page.getByRole("navigation", { name: "Legal" }).getByRole("link", { name: "Privacy policy" }).click();
   await expect(page).toHaveURL(/\/privacy$/);
   await expect(page.getByRole("heading", { name: "Limited Use disclosure" })).toBeVisible();

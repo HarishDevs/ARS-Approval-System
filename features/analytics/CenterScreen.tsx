@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { PageHeader } from "@/features/shell/PageHeader";
+import { Hint } from "@/features/ui/Hint";
 import { AnalyticsPicker } from "@/features/analytics/AnalyticsPicker";
 import { BarList, KpiCard, LineChart, hoursText } from "@/features/analytics/Charts";
 import { BOARDS, departmentAlerts, forecastNext, moduleAlerts, monthLabel, agingBuckets, type Alert, type BoardKey } from "@/server/analytics/center";
@@ -58,8 +59,11 @@ const day = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString("en
 function Section({ title, children, note }: { title: string; children: React.ReactNode; note?: string }) {
   return (
     <section aria-label={title} className="mb-8">
-      <h2 className="mb-1 text-body font-semibold">{title}</h2>
-      {note && <p className="mb-3 text-caption text-ink-muted">{note}</p>}
+      {/* D-179: how a section is worked out is a hover hint on its title. */}
+      <h2 className="mb-3 flex items-center gap-1.5 text-body font-semibold">
+        {title}
+        <Hint text={note} align="start" />
+      </h2>
       {children}
     </section>
   );
@@ -149,13 +153,12 @@ export async function CenterScreen({ base, board, query, scope, scopes, viewer, 
 
   return (
     <>
-      <PageHeader title="Analytics" meta={`${scope.label} · ${period.label}: ${day(period.from)} – ${day(period.to)}, compared with ${day(previous.from)} – ${day(previous.to)}. India time (UTC+5:30).`}>
+      <PageHeader title="Analytics" description={meta.what} meta={`${scope.label} · ${period.label}: ${day(period.from)} – ${day(period.to)}, compared with ${day(previous.from)} – ${day(previous.to)}. India time (UTC+5:30).`}>
         <Link href={`${base}/metrics`} className="link text-label">
           How these are worked out
         </Link>
       </PageHeader>
       <BoardPicker base={base} board={board} query={query} scopes={scopes} scope={scope} />
-      <p className="mb-3 text-label text-ink-muted">{meta.what}</p>
 
       <form method="get" className="card mb-6 flex flex-wrap items-end gap-3 px-4 py-3" aria-label="Filters">
         <input type="hidden" name="board" value={board} />
@@ -233,8 +236,9 @@ export async function CenterScreen({ base, board, query, scope, scopes, viewer, 
       {board === "trends" && <Trends scope={scope} viewer={viewer} period={period} previous={previous} compareLabel={compareLabel} today={today} exportHref={canExport ? exportHref("monthly") : null} />}
       {board === "quality" && <Quality base={base} carry={carry} scope={scope} viewer={viewer} today={today} />}
 
-      <p className="mt-8 text-caption text-ink-muted" data-testid="center-refreshed">
-        As of {formatIndiaTime(now)}. Figures are worked out when the page opens. Period figures use each record&apos;s own date (raised, created, completed, decided, published or acknowledged); &ldquo;now&rdquo; figures ignore the period.
+      <p className="mt-8 flex items-center gap-1.5 text-caption text-ink-muted" data-testid="center-refreshed">
+        As of {formatIndiaTime(now)}.
+        <Hint text="Figures are worked out when the page opens. Period figures use each record's own date (raised, created, completed, decided, published or acknowledged); “now” figures ignore the period." align="start" />
       </p>
     </>
   );
@@ -338,7 +342,7 @@ async function Tasks({ scope, viewer, period, previous, compareLabel, buckets }:
   const [data, before, trend] = await Promise.all([taskBoard(scope, viewer, period, buckets), taskBoard(scope, viewer, previous, buckets), taskTrend(scope, viewer, period)]);
   return (
     <>
-      <Section title="Volume and status">
+      <Section title="Volume and status" note="Every task has an assignee (it can't be saved without one), so “tasks without an assignee” is always 0. Tasks don't repeat and have no subtasks.">
         <Grid>
           <KpiCard metric="x_tasks_created" value={data.createdInPeriod} previous={before.createdInPeriod} compareLabel={compareLabel} />
           <KpiCard metric="x_tasks_completed" value={data.completedInPeriod} previous={before.completedInPeriod} compareLabel={compareLabel} />
@@ -353,7 +357,6 @@ async function Tasks({ scope, viewer, period, previous, compareLabel, buckets }:
           <KpiCard metric="t_reassigned" value={data.reassigned} previous={before.reassigned} compareLabel={compareLabel} />
           <KpiCard metric="t_blocked" value={data.blocked.count} note={data.blocked.avgHours === null ? undefined : `Blocked for ${hoursText(data.blocked.avgHours)} on average`} lowerIsBetter />
         </Grid>
-        <p className="mt-2 text-caption text-ink-muted">Every task has an assignee (it can&apos;t be saved without one), so &ldquo;tasks without an assignee&rdquo; is always 0. Tasks don&apos;t repeat and have no subtasks.</p>
       </Section>
       <Section title="Delivery against due dates" note="Only tasks with a due date count; the due date is the one the task has now.">
         <Grid>

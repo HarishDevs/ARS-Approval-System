@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/features/shell/PageHeader";
+import { Hint } from "@/features/ui/Hint";
 import { requireArea } from "@/server/authorization/guards";
 import { SETTING_DEFINITIONS } from "@/server/settings/definitions";
 import { resolveSettingForDisplay } from "@/server/settings/resolve";
@@ -29,7 +30,12 @@ export default async function SuperAdminHome() {
     <>
       <PageHeader title="Super Admin" description="Provider connections, security settings and platform health. Only visible to the Super Admin." />
       <section className="rounded-lg border border-line bg-surface">
-        <h2 className="border-b border-line px-5 py-3 font-semibold">Provider keys</h2>
+        <div className="flex items-center justify-between gap-2 border-b border-line px-5 py-3">
+          <h2 className="font-semibold">Provider keys</h2>
+          <Link className="link text-label" href="/superadmin/settings">
+            Edit keys
+          </Link>
+        </div>
         <ul className="divide-y divide-line">
           {secrets.map((setting) => (
             <li key={setting.key} className="flex items-center justify-between px-5 py-3">
@@ -45,11 +51,6 @@ export default async function SuperAdminHome() {
           ))}
         </ul>
       </section>
-      <p className="mt-4 text-label text-ink-muted">
-        Enter or replace keys in <Link className="link" href="/superadmin/settings">
-          Providers &amp; security
-        </Link>.
-      </p>
       {/* v1.12.4 (D-163): uploads need a folder the app can write to. */}
       <section className="mt-6 rounded-lg border border-line bg-surface" data-testid="storage-status">
         <h2 className="border-b border-line px-5 py-3 font-semibold">File storage</h2>
@@ -64,14 +65,16 @@ export default async function SuperAdminHome() {
         </div>
       </section>
       <section className="mt-6 rounded-lg border border-line bg-surface">
-        <h2 className="border-b border-line px-5 py-3 font-semibold">Backups</h2>
+        <h2 className="flex items-center gap-1.5 border-b border-line px-5 py-3 font-semibold">
+          Backups
+          <Hint text="Database and attachments are copied to the backup folder on the server (BACKUP_DIR). Download a copy now and then; how to restore is in the deployment guide, Part P." align="start" />
+        </h2>
         <div className="space-y-3 px-5 py-4">
           <p role="status" className={`rounded-md px-3 py-2 text-label ${backupAgeHours !== null && backupAgeHours <= 26 ? "bg-success-50 text-success-600" : "bg-warning-50 text-warning-600"}`}>
             {backups.latest
               ? `Last backup ${formatIndiaTime(backups.latest.at)} (${(backups.latest.bytes / 1024).toLocaleString("en-IN", { maximumFractionDigits: 0 })} KB); ${backups.count} kept.`
               : "No backup yet. The job runner makes one a day once the cron job is set up, or press Back up now."}
           </p>
-          <p className="text-label text-ink-muted">Database and attachments are copied to the backup folder on the server (BACKUP_DIR). Download a copy now and then; how to restore is in the deployment guide, Part P.</p>
           <BackupNowButton />
         </div>
       </section>

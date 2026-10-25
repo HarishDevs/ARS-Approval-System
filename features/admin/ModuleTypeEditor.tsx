@@ -5,6 +5,7 @@ import { createModuleTypeAction, moduleTypeCommandAction, saveModuleTypeDraftAct
 import { FormFieldsEditor } from "@/features/admin/FormFieldsEditor";
 import { DynamicFields } from "@/features/requests/DynamicFields";
 import { PeoplePicker } from "@/features/ui/PeoplePicker";
+import { Hint } from "@/features/ui/Hint";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import { NO_LOOKUPS, type FieldLookups, type FormField } from "@/server/forms/fields";
 import {
@@ -91,34 +92,38 @@ function CheckList({ label, options, value, onChange }: { label: string; options
   );
 }
 
-function NumberOrBlank({ label, value, onChange, min, max, suffix }: { label: string; value: number | null; onChange: (value: number | null) => void; min: number; max: number; suffix: string }) {
+// `blank`: what an empty box means, as a hover hint (D-179).
+function NumberOrBlank({ label, value, onChange, min, max, suffix, blank }: { label: string; value: number | null; onChange: (value: number | null) => void; min: number; max: number; suffix: string; blank: string }) {
   return (
-    <label className="flex flex-wrap items-center gap-2 text-label">
-      {label}
-      <input
-        aria-label={label}
-        type="number"
-        min={min}
-        max={max}
-        value={value ?? ""}
-        onChange={(event) => onChange(event.target.value === "" ? null : Math.min(max, Math.max(min, Math.round(Number(event.target.value)))))}
-        placeholder="—"
-        className="field-input w-24"
-      />
-      <span className="text-ink-faint">{suffix}</span>
-    </label>
+    <div className="flex flex-wrap items-center gap-1.5">
+      <label className="flex flex-wrap items-center gap-2 text-label">
+        {label}
+        <input
+          aria-label={label}
+          type="number"
+          min={min}
+          max={max}
+          value={value ?? ""}
+          onChange={(event) => onChange(event.target.value === "" ? null : Math.min(max, Math.max(min, Math.round(Number(event.target.value)))))}
+          placeholder="—"
+          className="field-input w-24"
+        />
+        <span className="text-ink-faint">{suffix}</span>
+      </label>
+      <Hint text={`Leave empty for ${blank}.`} align="start" />
+    </div>
   );
 }
 
 function Toggle({ label, checked, onChange, help }: { label: string; checked: boolean; onChange: (checked: boolean) => void; help?: string }) {
   return (
-    <label className="flex items-start gap-2 text-label">
-      <input type="checkbox" className="mt-1" checked={checked} onChange={(event) => onChange(event.target.checked)} />
-      <span>
-        {label}
-        {help && <span className="block text-caption text-ink-muted">{help}</span>}
-      </span>
-    </label>
+    <div className="flex items-start gap-1.5">
+      <label className="flex items-start gap-2 text-label">
+        <input type="checkbox" className="mt-1" checked={checked} onChange={(event) => onChange(event.target.checked)} />
+        <span>{label}</span>
+      </label>
+      <Hint text={help} align="start" />
+    </div>
   );
 }
 
@@ -127,7 +132,9 @@ function TaskSettingsEditor({ settings, set, departments, groups, people }: { se
     <div className="grid gap-6 lg:grid-cols-2">
       <AccessEditor verb="create these tasks" access={settings.access} onChange={(access) => set({ access })} departments={departments} people={people} />
       <fieldset className="space-y-2">
-        <legend className="field-label">Who can be assigned</legend>
+        <legend className="field-label">
+          Who can be assigned <Hint text="The creator can always assign to themselves; IT can assign to anyone active." align="start" />
+        </legend>
         <select aria-label="Who can be assigned" value={settings.assignScope} onChange={(event) => set({ assignScope: event.target.value as TaskSettings["assignScope"] })} className="field-input w-auto">
           {ASSIGN_SCOPES.map((scope) => (
             <option key={scope} value={scope}>
@@ -135,7 +142,6 @@ function TaskSettingsEditor({ settings, set, departments, groups, people }: { se
             </option>
           ))}
         </select>
-        <p className="text-caption text-ink-muted">The creator can always assign to themselves; IT can assign to anyone active.</p>
         {settings.assignScope === "GROUPS" && <CheckList label="Groups whose members can be assigned" options={groups} value={settings.assignGroupIds} onChange={(assignGroupIds) => set({ assignGroupIds })} />}
         {settings.assignScope === "PEOPLE" && <PeoplePicker label="People who can be assigned" options={people} value={settings.assignUserIds} onChange={(assignUserIds) => set({ assignUserIds })} max={200} />}
       </fieldset>
@@ -170,8 +176,8 @@ function TaskSettingsEditor({ settings, set, departments, groups, people }: { se
           </select>
         </label>
         <Toggle label="A due date is required" checked={settings.requireDueDate} onChange={(requireDueDate) => set({ requireDueDate })} />
-        <NumberOrBlank label="Default due in" value={settings.defaultDueDays} onChange={(defaultDueDays) => set({ defaultDueDays })} min={0} max={365} suffix="days (empty = none)" />
-        <NumberOrBlank label="Remind the assignee" value={settings.reminderHoursBefore} onChange={(reminderHoursBefore) => set({ reminderHoursBefore })} min={1} max={168} suffix="hours before it's due (empty = no reminder)" />
+        <NumberOrBlank label="Default due in" value={settings.defaultDueDays} onChange={(defaultDueDays) => set({ defaultDueDays })} min={0} max={365} suffix="days" blank="none" />
+        <NumberOrBlank label="Remind the assignee" value={settings.reminderHoursBefore} onChange={(reminderHoursBefore) => set({ reminderHoursBefore })} min={1} max={168} suffix="hours before it's due" blank="no reminder" />
         <Toggle label="Tell the assignee and creator once when it's overdue" checked={settings.overdueReminder} onChange={(overdueReminder) => set({ overdueReminder })} />
       </fieldset>
     </div>
@@ -183,15 +189,18 @@ function InfoSettingsEditor({ settings, set, departments, people }: { settings: 
     <div className="grid gap-6 lg:grid-cols-2">
       <AccessEditor verb="send these" access={settings.access} onChange={(access) => set({ access })} departments={departments} people={people} />
       <fieldset className="space-y-2">
-        <legend className="field-label">Who it can be sent to</legend>
+        <legend className="field-label">
+          Who it can be sent to <Hint text="Recipients are fixed when it is published: people who join a department later don't receive it." align="start" />
+        </legend>
         <Toggle label="Chosen people" checked={settings.allowPeople} onChange={(allowPeople) => set({ allowPeople })} />
         <Toggle label="Whole departments" checked={settings.allowDepartments} onChange={(allowDepartments) => set({ allowDepartments })} />
         <Toggle label="Groups" checked={settings.allowGroups} onChange={(allowGroups) => set({ allowGroups })} />
         <Toggle label="Everyone in the organisation" checked={settings.allowEveryone} onChange={(allowEveryone) => set({ allowEveryone })} />
-        <p className="text-caption text-ink-muted">Recipients are fixed when it is published: people who join a department later don&apos;t receive it.</p>
       </fieldset>
       <fieldset className="space-y-2">
-        <legend className="field-label">Acknowledgement</legend>
+        <legend className="field-label">
+          Acknowledgement <Hint text="Acknowledging is a separate button; opening it only marks it read." align="start" />
+        </legend>
         <select aria-label="Acknowledgement" value={settings.ack} onChange={(event) => set({ ack: event.target.value as InfoSettings["ack"] })} className="field-input w-auto">
           {ACK_RULES.map((rule) => (
             <option key={rule} value={rule}>
@@ -199,8 +208,7 @@ function InfoSettingsEditor({ settings, set, departments, people }: { settings: 
             </option>
           ))}
         </select>
-        <p className="text-caption text-ink-muted">Acknowledging is a separate button; opening it only marks it read.</p>
-        <NumberOrBlank label="Remind people who haven't acknowledged after" value={settings.ackReminderDays} onChange={(ackReminderDays) => set({ ackReminderDays })} min={1} max={60} suffix="days (empty = no reminder)" />
+        <NumberOrBlank label="Remind people who haven't acknowledged after" value={settings.ackReminderDays} onChange={(ackReminderDays) => set({ ackReminderDays })} min={1} max={60} suffix="days" blank="no reminder" />
       </fieldset>
       <fieldset className="space-y-2">
         <legend className="field-label">Priority, expiry and editing</legend>
@@ -214,7 +222,7 @@ function InfoSettingsEditor({ settings, set, departments, people }: { settings: 
             ))}
           </select>
         </label>
-        <NumberOrBlank label="Expires after" value={settings.expiryDays} onChange={(expiryDays) => set({ expiryDays })} min={1} max={3650} suffix="days by default (empty = no expiry)" />
+        <NumberOrBlank label="Expires after" value={settings.expiryDays} onChange={(expiryDays) => set({ expiryDays })} min={1} max={3650} suffix="days by default" blank="no expiry" />
         <Toggle label="Fields marked 'can be changed' can be edited after publishing" help="Recipients are told it was updated; the history keeps what changed." checked={settings.editableAfterPublish} onChange={(editableAfterPublish) => set({ editableAfterPublish })} />
         <Toggle label="Show on calendars" help="Information of this type with an effective date appears on recipients' ARS calendars (and in Google Calendar for people who connected it). Acknowledging is still done in ARS." checked={settings.calendar} onChange={(calendar) => set({ calendar })} />
       </fieldset>
@@ -270,9 +278,12 @@ export function ModuleTypeEditor({
           <FieldError result={result} name="name" />
         </div>
         <div>
-          <label htmlFor="draft-description" className="field-label">
-            Description <span className="font-normal text-ink-faint">(shown when people choose a type)</span>
-          </label>
+          <div className="flex items-center gap-1.5">
+            <label htmlFor="draft-description" className="field-label">
+              Description
+            </label>
+            <Hint text="Shown when people choose a type." align="start" className="mb-1.5" />
+          </div>
           <input id="draft-description" name="description" defaultValue={initialDescription} maxLength={500} className="field-input" />
         </div>
       </section>
@@ -290,11 +301,11 @@ export function ModuleTypeEditor({
       />
 
       <section className="card space-y-4 px-5 py-4" aria-labelledby="behaviour-heading">
-        <div>
+        <div className="flex items-center gap-1.5">
           <h2 id="behaviour-heading" className="font-semibold">
             How it works
           </h2>
-          <p className="text-label text-ink-muted">These apply to new {noun} records once this version is published; earlier ones keep their own version.</p>
+          <Hint text={`These apply to new ${noun} records once this version is published; earlier ones keep their own version.`} align="start" />
         </div>
         {module === "TASK" ? (
           <TaskSettingsEditor settings={settings as TaskSettings} set={set} departments={departments} groups={groups} people={people} />
@@ -317,7 +328,7 @@ export function ModuleTypeEditor({
       {previewing && (
         <section aria-label="Preview of the form" className="rounded-lg border-2 border-dashed border-primary-200 p-4">
           <h2 className="mb-3 font-semibold">
-            Preview <span className="font-normal text-ink-muted">(unsaved changes included; nothing is sent)</span>
+            Preview <Hint text="Unsaved changes included; nothing is sent." align="start" />
           </h2>
           <div className="card px-5 py-5">
             {form.length === 0 ? <p className="text-label text-ink-muted">No extra fields: people fill in only the standard ones.</p> : <DynamicFields key={JSON.stringify(form)} fields={form} mode="submit" people={people} lookups={lookups} result={null} />}

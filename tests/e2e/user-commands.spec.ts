@@ -19,7 +19,7 @@ test("IT can sign a person out everywhere and deactivate them, after confirming"
     await context.addCookies([await sessionCookie("E2E_ADMIN")]);
     await page.goto(`/admin/users/${userId}`);
 
-    const signOut = page.locator("form").filter({ hasText: "Ends every open session" });
+    const signOut = page.locator("form").filter({ has: page.locator('[data-tip="Ends every open session."]') });
     await signOut.getByRole("button", { name: "Sign out everywhere" }).click();
     await expect(signOut.getByRole("alertdialog")).toContainText("Sign Lee Leaver out on every device?");
     await signOut.getByRole("button", { name: "Yes, sign out" }).click();
@@ -31,7 +31,7 @@ test("IT can sign a person out everywhere and deactivate them, after confirming"
       })
       .toBe(0);
 
-    const deactivate = page.locator("form").filter({ hasText: "Blocks sign-in" });
+    const deactivate = page.locator("form").filter({ has: page.locator('[data-tip*="Blocks sign-in"]') });
     await deactivate.getByRole("button", { name: "Deactivate user" }).click();
     await deactivate.getByRole("button", { name: "Cancel" }).click();
     await expect(deactivate.getByRole("alertdialog")).toHaveCount(0);

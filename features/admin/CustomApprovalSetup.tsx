@@ -5,6 +5,7 @@ import { saveCustomApprovalAction } from "@/app/admin/custom-approval/actions";
 import { FormFieldsEditor } from "@/features/admin/FormFieldsEditor";
 import { DynamicFields } from "@/features/requests/DynamicFields";
 import { ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
+import { Hint } from "@/features/ui/Hint";
 import { NO_LOOKUPS, type FieldLookups, type FormField } from "@/server/forms/fields";
 import { NOBODY, NOBODY_TEXT, RULES, RULE_TEXT, type StepPolicy } from "@/server/workflows/step-policy";
 
@@ -26,15 +27,14 @@ export function CustomApprovalSetup({ initialForm, initialPolicy, lookups = NO_L
     <form onSubmit={onSubmit} className="space-y-6">
       <input type="hidden" name="form" value={JSON.stringify(form)} />
       <input type="hidden" name="policy" value={JSON.stringify(policy)} />
-      <p className="text-label text-ink-muted">Everyone fills in a title, the fields below, any files and the levels of approvers. Collaborators can always be added.</p>
-      <FormFieldsEditor form={form} setForm={setForm} lockedKeys={[]} />
+      <FormFieldsEditor form={form} setForm={setForm} lockedKeys={[]} intro="Everyone fills in a title, the fields below, any files and the levels of approvers. Collaborators can always be added." />
 
       <section className="card space-y-4 px-5 py-4" aria-labelledby="step-options">
-        <div>
+        <div className="flex items-center gap-1.5">
           <h2 id="step-options" className="font-semibold">
             Step options
           </h2>
-          <p className="text-label text-ink-muted">The default for every new step, and whether people may change it. A fixed option is shown to people but can&apos;t be changed, and the server applies it.</p>
+          <Hint text="The default for every new step, and whether people may change it. A fixed option is shown to people but can't be changed, and the server applies it." align="start" />
         </div>
         <div className="grid gap-4 md:grid-cols-3">
           <fieldset className="space-y-2">
@@ -58,7 +58,9 @@ export function CustomApprovalSetup({ initialForm, initialPolicy, lookups = NO_L
             </label>
           </fieldset>
           <fieldset className="space-y-2">
-            <legend className="field-label">Respond within</legend>
+            <legend className="field-label">
+              Respond within <Hint text="Leave empty for no response time." align="start" />
+            </legend>
             <label className="flex items-center gap-2 text-label">
               <input
                 aria-label="Default: respond within hours"
@@ -70,7 +72,7 @@ export function CustomApprovalSetup({ initialForm, initialPolicy, lookups = NO_L
                 placeholder="—"
                 className="field-input w-24"
               />
-              hours <span className="text-ink-faint">(empty = no response time)</span>
+              hours
             </label>
             <label className="flex items-center gap-2 text-label">
               <input type="checkbox" checked={policy.slaHours.editable} onChange={(event) => set("slaHours", { editable: event.target.checked })} />
@@ -109,7 +111,7 @@ export function CustomApprovalSetup({ initialForm, initialPolicy, lookups = NO_L
       {previewing && (
         <section aria-label="Preview of the custom approval fields" className="rounded-lg border-2 border-dashed border-primary-200 p-4">
           <h2 className="mb-3 font-semibold">
-            Preview <span className="font-normal text-ink-muted">(unsaved changes included; nothing is sent)</span>
+            Preview <Hint text="Unsaved changes included; nothing is sent." align="start" />
           </h2>
           <div className="card px-5 py-5">
             <DynamicFields key={JSON.stringify(form)} fields={form} mode="submit" people={people} lookups={lookups} result={null} />

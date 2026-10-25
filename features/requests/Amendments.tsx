@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { FilePenLine } from "lucide-react";
 import { RequestStatusPill } from "@/features/requests/StatusPill";
+import { Hint } from "@/features/ui/Hint";
 import { SafeText } from "@/features/ui/SafeText";
 import { CONFIDENTIAL_TEXT, displayValue, isConfidential, type FormField } from "@/server/forms/fields";
 import { findAmendment, listAmendments, type AmendmentRecord } from "@/server/approvals/amendments";
@@ -45,12 +46,12 @@ export async function AmendmentsCard({ requestId, form, canAmend, hideConfidenti
           <Link href={`/users/requests/${asAmendment.originalId}`} className="link">
             {asAmendment.originalNo}
           </Link>
+          <Hint text={`If this is approved, the new values replace the old ones on ${asAmendment.originalNo}. If it is rejected or withdrawn, nothing changes there.`} align="start" />
         </h2>
         <p className="mt-1 text-label">
           Why: <SafeText text={asAmendment.reason} />
         </p>
         <Changes hideConfidential={hideConfidential} amendment={asAmendment} form={form} />
-        <p className="mt-2 text-caption text-ink-muted">If this is approved, the new values replace the old ones on {asAmendment.originalNo}. If it is rejected or withdrawn, nothing changes there.</p>
       </section>
     );
   }
@@ -63,6 +64,7 @@ export async function AmendmentsCard({ requestId, form, canAmend, hideConfidenti
         <h2 className="flex items-center gap-2 font-semibold">
           <FilePenLine aria-hidden="true" className="h-4 w-4 text-ink-muted" />
           Amendments
+          <Hint text="Need to change something after approval? Raise an amendment; it goes through the approval steps again." align="start" />
         </h2>
         {canAmend && (
           <Link href={`/users/requests/${requestId}/amend`} className="btn-secondary btn-compact">
@@ -74,9 +76,7 @@ export async function AmendmentsCard({ requestId, form, canAmend, hideConfidenti
         <p role="status" className="mt-2 rounded-md bg-primary-50 px-3 py-2 text-label text-primary-700">
           Amended: the values in force are from {inForce.requestNo}. The details on this page are as first approved.
         </p>
-      ) : (
-        !amendments.length && <p className="mt-1 text-label text-ink-muted">Need to change something after approval? Raise an amendment; it goes through the approval steps again.</p>
-      )}
+      ) : null}
       {amendments.length > 0 && (
         <ol className="mt-3 space-y-3">
           {amendments.map((amendment) => (

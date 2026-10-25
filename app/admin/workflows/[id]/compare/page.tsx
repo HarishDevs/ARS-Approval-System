@@ -54,7 +54,7 @@ export default async function CompareVersionsPage({ params, searchParams }: { pa
   return (
     <>
       <Breadcrumbs items={[{ href: "/admin/workflows", label: "Approval types" }, { href: `/admin/workflows/${workflow.id}`, label: workflow.name }, { label: "Compare versions" }]} />
-      <PageHeader title="Compare versions" description={`${workflow.name}: what changed from one version to another.`}>
+      <PageHeader title="Compare versions" description="What changed from one version to another." meta={workflow.name}>
         <Link href={`/admin/workflows/${workflow.id}`} className="link text-label">
           ← Back
         </Link>
