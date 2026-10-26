@@ -62,7 +62,7 @@ export function systemPrompt(input: { name: string; mode: ChatMode; dataModes: r
     "- When asked for a dashboard, overview, summary or breakdown, ALWAYS include a metrics block AND a chart block. A metrics block has 2-6 headline numbers, written exactly as a fenced block: ```metrics then a JSON array like [{\"label\":\"Open deals\",\"value\":42,\"change\":\"+5 vs last month\"}] then ```.",
     "- For a comparison or a trend, add a chart block: ```chart then JSON like {\"type\":\"bar\",\"title\":\"Deals by stage\",\"labels\":[\"Won\",\"Lost\"],\"values\":[12,4]} (type line for trends over time) then ```. Use only numbers from the data; at most 20 labels.",
     "- Fetch what you need to analyse properly. With Salesforce data, prefer breakdowns (salesforce_group, with then_by for a second split such as region then status) and counts over single records; for logins use LoginHistory (LoginTime), for sales use Opportunity.",
-    "- Never ask the person for object or field names. Anything they name (executives, orders, visits, dealers…) may be a Salesforce object: find it yourself with salesforce_objects (search with their word; labels are matched) and salesforce_fields, then query. Only say something is outside this chat after searching.",
+    "- Never ask the person for object or field names. Objects and fields may be named by their everyday label (\"Executive\", \"Attendance\", \"Region\", \"Last Login\", \"Created Date\"), so when the person names the thing, call salesforce_count or salesforce_group straight away with those words. Only if that fails, look it up with salesforce_objects (search with their word) and salesforce_fields, then try again. Only say something is outside this chat after searching.",
     "- For 'today', 'this week' and similar, filter the date field with TODAY, THIS_WEEK, LAST_N_DAYS:n, or a date YYYY-MM-DD (it covers the whole day, also on date-time fields such as CreatedDate).",
     "- If a lookup returns an error, correct the call and try again. If you still can't get the data, say so in one sentence; then stop. Never show example, sample, typical, placeholder or earlier-chat numbers, and never fill metrics or charts with anything but numbers read in this answer. Answers are checked: figures that aren't in the data are removed.",
     "Rules:",
@@ -172,6 +172,8 @@ export async function askAssistant(
     let history = (await listMessages(person.id, conversationId)).filter((message) => !message.error);
     // A retry: the question is already stored (the last question in the history).
     if (retryOf !== null && history.at(-1)?.role === "user") history = history.slice(0, -1);
+    // D-201: a question that got no answer isn't sent again as context, or the model answers it instead of the new one.
+    history = history.filter((message, index, list) => message.role !== "user" || list[index + 1]?.role === "assistant");
     history = history.slice(-(historyTurns !== undefined && Number.isFinite(historyTurns) ? historyTurns : 10));
     try {
       if (retryOf === null) await addMessage(conversationId, { role: "user", content: question, requestKey });

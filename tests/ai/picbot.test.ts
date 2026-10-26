@@ -1,11 +1,12 @@
 import { createHash } from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
 import { dataModesFor, effectiveModes, normaliseChatModes, parseChatModes, salesforceScopeOf, type ChatPerson, type ChatPolicy } from "@/server/ai/chat-access";
-import { buildCount, buildGroup, buildSelect, istDayRange, literal, parseAllowlist, QueryRefused, SECRET_FIELD } from "@/server/ai/connectors/salesforce-query";
+import { buildCount, buildGroup, buildSelect, istDayRange, literal, matchField, parseAllowlist, QueryRefused, SECRET_FIELD } from "@/server/ai/connectors/salesforce-query";
 import { authorizeUrl, loginBaseFor, pkcePair } from "@/server/ai/connectors/salesforce-auth";
 import { ConcurrencyGate, LimitError } from "@/server/ai/limits";
-import { chat, ProviderError, type ProviderConfig } from "@/server/ai/providers";
+import { chat, ProviderError, retryAfterSeconds, type ProviderConfig } from "@/server/ai/providers";
 import { guarded, NO_DATA_ANSWER, systemPrompt } from "@/server/ai/assistant";
+import { normaliseFilter } from "@/server/ai/tools";
 
 // D-172 Pic bot - ai: the rules, without a database, Salesforce or a provider.
 const policy = (overrides: Partial<ChatPolicy> = {}): ChatPolicy => ({
@@ -258,5 +259,41 @@ describe("Salesforce secrets are never readable (D-201)", () => {
   it("password, session, token and key fields are matched by name or label", () => {
     for (const name of ["Password__c", "Session_ID__c", "Access_Token__c", "Client_Secret__c", "OTP__c", "API_Key__c", "Session ID"]) expect(SECRET_FIELD.test(name), name).toBe(true);
     for (const name of ["Last_Login__c", "Employee_Name__c", "Pin_Code__c", "Region__c", "Status__c", "Shipping_Address__c"]) expect(SECRET_FIELD.test(name), name).toBe(false);
+  });
+});
+
+describe("everyday names find Salesforce fields (D-201)", () => {
+  const fields = [
+    { name: "Last_Login__c", label: "Last Login", type: "datetime" },
+    { name: "Region_Master__c", label: "Region", type: "reference" },
+    { name: "Status__c", label: "Status", type: "picklist" },
+    { name: "Name", label: "Employee Code", type: "string" },
+  ];
+  it("matches by API name or label, ignoring case, spaces, underscores, __c and a plural s", () => {
+    expect(matchField("Last_Login__c", fields)).toBe("Last_Login__c");
+    expect(matchField("last login", fields)).toBe("Last_Login__c");
+    expect(matchField("Region", fields)).toBe("Region_Master__c");
+    expect(matchField("status", fields)).toBe("Status__c");
+    expect(matchField("Employee Code", fields)).toBe("Name");
+    expect(matchField("Secret", fields)).toBe("Secret"); // unknown names stay as they are, so the allowlist refuses them
+  });
+});
+
+describe("rate-limit waits (D-201)", () => {
+  it("reads the header (decimals too) or Groq's 'try again in' message", () => {
+    expect(retryAfterSeconds("7", "")).toBe(7);
+    expect(retryAfterSeconds("2.5", "")).toBe(3);
+    expect(retryAfterSeconds(null, "Rate limit reached ... Please try again in 11.535s. Need more tokens?")).toBe(12);
+    expect(retryAfterSeconds(null, "Please try again in 502.5ms.")).toBe(1);
+    expect(retryAfterSeconds(null, "quota exceeded")).toBeNull();
+  });
+});
+
+describe("filters in the shapes models write (D-201)", () => {
+  it("[field, op, value], operator for op, and words for operators become {field, op, value}", () => {
+    expect(normaliseFilter(["CreatedDate", "=", "TODAY"])).toEqual({ field: "CreatedDate", op: "=", value: "TODAY" });
+    expect(normaliseFilter({ field: "Status__c", operator: "eq", value: "Draft" })).toEqual({ field: "Status__c", op: "=", value: "Draft" });
+    expect(normaliseFilter({ field: "Name", op: "like", value: "A%" })).toEqual({ field: "Name", op: "LIKE", value: "A%" });
+    expect(normaliseFilter({ field: "Region__c", op: "=" })).toEqual({ field: "Region__c", op: "=", value: null });
   });
 });

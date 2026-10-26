@@ -1,5 +1,12 @@
 # Release notes
 
+## v1.23.1 (26 Oct 2026): Pico Bot finds and fetches more reliably (owner)
+- **Ask with everyday names:** "executives", "attendance", "region", "last login" are understood directly, so answers need fewer steps.
+- **No more page-size totals:** a list that was cut off is never reported as the total.
+- **A failed question no longer derails the next one** in the same chat.
+- **Fewer "try again" failures:** busy providers are waited out and malformed lookups are retried.
+- **Long answers aren't cut short:** the assistant page waits up to 5 minutes instead of 30 seconds.
+
 ## v1.23.0 (26 Oct 2026): Pico Bot gives real numbers or none (owner)
 - **No more invented figures.** Every number in an answer is checked against the data Pico Bot actually read. If a number isn't there, Pico Bot must fetch it or leave it out; if nothing could be read, it says so instead of showing a made-up dashboard.
 - **"Today", "this week" and dates work in Salesforce** (for example orders created today), in India time.

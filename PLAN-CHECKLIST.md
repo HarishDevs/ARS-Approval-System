@@ -17,6 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (26 Oct 2026):** v1.23.1: Pico Bot reliability (D-202): everyday names in lookups, cut-off lists flagged, unanswered questions dropped from context, looser tool-call shapes, smarter retries, 5-minute wait on the assistant page. **Owner:** publish v1.23.1; keep Claude (or a larger NVIDIA model) for Salesforce chats; Pico Bot reads the UAT sandbox: reconnect to production when ready (PB-15).
 - **Now (26 Oct 2026):** v1.23.0: Pico Bot accuracy (D-201): Salesforce dates, lookup names, labels, two-level breakdowns, invented figures blocked, secret fields never readable. **Owner:** publish v1.23.0; start a **new chat** (old chats still hold the invented answers); consider Claude or ChatGPT for Salesforce chats (NVIDIA Nemotron follows tool rules poorly).
 - **Now (26 Oct 2026):** v1.22.4: split-screen home page back, with the content Google's review needs (D-200). Rollback to approval.arssteels.net verified live. **Owner:** publish v1.22.4; Google Branding links on approval; resubmit verification.
 - **Now (26 Oct 2026):** v1.22.3: rolled back to approval.arssteels.net (owner, D-199). **Owner:** docs/DOMAIN-MIGRATION.md → Rollback: DNS A record `approval`, GoDaddy domain, APP_BASE_URL, LEGACY_HOSTS=arssteels.net,www.arssteels.net, publish v1.22.3, cron and CEOITBox URLs, Google Branding links, resubmit verification.
@@ -368,6 +369,8 @@ Plan: `docs/CHATBOT_IMPLEMENTATION_PLAN.md`; audit: `docs/CHATBOT_ARCHITECTURE_A
 - [x] PB-40 Domain move prepared in code: single base-URL helper, LEGACY_HOSTS redirect (machine callers and OAuth callbacks exempt), unit tests, docs/DOMAIN-MIGRATION.md (done 25 Oct 2026, v1.22.0)
 - [x] PB-41 Phone layout: six pages scrolled sideways (sr-only label in wide tables); fixed globally (done 25 Oct 2026, v1.22.0)
 - [x] PB-48 Rollback to approval.arssteels.net in the app (default address, policies, samples, runbook) (26 Oct 2026, D-199)
+- [x] PB-53 Pico Bot reliability: everyday names, cut-off lists, unanswered questions, tool-call shapes, retries, longer wait (26 Oct 2026, D-202)
+- [ ] PB-54 Owner: decide the provider for Salesforce chats (Claude worked; NVIDIA bolt-e4b too small); reconnect Salesforce to production for real figures
 - [x] PB-51 Pico Bot accuracy: Salesforce date-times, lookup names, object labels, two-level breakdowns, invented figures blocked, secret fields hidden (26 Oct 2026, D-201)
 - [ ] PB-52 Owner: publish v1.23.0; retest the secondary-order and executive-login questions in a new Salesforce chat
 - [x] PB-50 Split-screen home page back, Google-safe (26 Oct 2026, D-200)

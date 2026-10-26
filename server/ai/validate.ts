@@ -32,8 +32,12 @@ const DATES = new RegExp(
   "gi",
 );
 
+// D-201: 12 or more digits in a row is an id, a timestamp or a phone number,
+// not a figure people read ("1278786832310" was shown as an unchecked figure).
+const LONG_NUMBER = /^\d{12,}$/;
+
 export function figuresIn(text: string): string[] {
-  return [...text.replace(DATES, " ").replace(LIST_MARKER, " ").replace(LABEL, " ").matchAll(FIGURE)].map((match) => normalise(match[0]));
+  return [...text.replace(DATES, " ").replace(LIST_MARKER, " ").replace(LABEL, " ").matchAll(FIGURE)].filter((match) => !LONG_NUMBER.test(match[0])).map((match) => normalise(match[0]));
 }
 
 const key = (value: number) => String(Number(value.toFixed(6)));

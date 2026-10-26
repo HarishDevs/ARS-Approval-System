@@ -3,7 +3,7 @@ import { z } from "zod";
 import { approvalsWaitingFor, myInformationSummary, myRequestsSummary, myTasksSummary, sourceDatasetCounts } from "@/lib/db/repositories/ai-data.repository";
 import { hasModule } from "@/server/modules/modules";
 import { createProposal } from "@/server/ai/proposals";
-import { countSalesforce, describeObject, groupSalesforce, listObjects, loadAllowlist, MAX_ROWS, querySalesforce, QueryRefused, readsAllObjects, SalesforceUnavailable } from "@/server/ai/connectors/salesforce-query";
+import { countSalesforce, describeObject, groupSalesforce, listObjects, loadAllowlist, matchObject, MAX_ROWS, querySalesforce, QueryRefused, readsAllObjects, SalesforceUnavailable } from "@/server/ai/connectors/salesforce-query";
 import type { ToolSpec } from "@/server/ai/providers";
 import type { AiEvidence } from "@/lib/db/repositories/ai.repository";
 import { salesforceScopeOf, type ChatMode, type SalesforceScope } from "@/server/ai/chat-access";
@@ -45,21 +45,39 @@ interface AiTool {
 const ARS = "ARS-CMS (live)";
 const SF = "Salesforce (live, read-only)";
 const empty = { type: "object", properties: {}, additionalProperties: false };
+// D-201: models write filters in a few shapes ({field, op, value},
+// {field, operator, value}, or [field, op, value]); a provider that checks
+// tool calls against this schema (Groq) refuses a strict one before we see
+// it. So the schema is loose, and filterArgs turns every shape into
+// {field, op, value} and then checks it strictly.
 const filterSchema = {
-  type: "array",
+  type: ["array", "null"],
   maxItems: 5,
+  description: "Up to 5 filters, each {\"field\": name, \"op\": one of = != > < >= <= LIKE, \"value\": ...}.",
   items: {
-    type: "object",
+    type: ["object", "array"],
     properties: {
       field: { type: "string" },
       op: { type: "string", enum: ["=", "!=", ">", "<", ">=", "<=", "LIKE"] },
       value: { type: ["string", "number", "boolean", "null"], description: "Text, number, true/false, a date YYYY-MM-DD (works on date and date-time fields, e.g. CreatedDate = 2026-10-26 means that whole day), or a Salesforce date literal such as TODAY, YESTERDAY, THIS_WEEK, THIS_MONTH or LAST_N_DAYS:30. LIKE uses % as the wildcard." },
     },
-    required: ["field", "op", "value"],
-    additionalProperties: false,
   },
 };
-const filterArgs = z.array(z.object({ field: z.string().max(80), op: z.enum(["=", "!=", ">", "<", ">=", "<=", "LIKE"]), value: z.union([z.string().max(200), z.number(), z.boolean(), z.null()]) }).strict()).max(5);
+const OPERATOR_WORDS: Record<string, string> = { eq: "=", equals: "=", "==": "=", ne: "!=", "<>": "!=", gt: ">", lt: "<", gte: ">=", lte: "<=", like: "LIKE" };
+export function normaliseFilter(item: unknown): unknown {
+  const raw = Array.isArray(item) ? { field: item[0], op: item[1], value: item[2] } : item && typeof item === "object" ? { ...(item as Record<string, unknown>) } : item;
+  if (!raw || typeof raw !== "object") return raw;
+  const out = raw as Record<string, unknown>;
+  if (out.op === undefined && out.operator !== undefined) out.op = out.operator;
+  delete out.operator;
+  if (typeof out.op === "string") out.op = OPERATOR_WORDS[out.op.trim().toLowerCase()] ?? out.op.trim().toUpperCase();
+  if (out.value === undefined) out.value = null;
+  return out;
+}
+const filterArgs = z.preprocess(
+  (value) => (Array.isArray(value) ? value.map(normaliseFilter) : value),
+  z.array(z.object({ field: z.string().max(80), op: z.enum(["=", "!=", ">", "<", ">=", "<=", "LIKE"]), value: z.union([z.string().max(200), z.number(), z.boolean(), z.null()]) }).strict()).max(5),
+);
 
 function salesforceContext(context: ToolContext) {
   const scope = salesforceScopeOf(context.person);
@@ -117,7 +135,7 @@ const TOOLS: readonly AiTool[] = [
     businessData: true,
     spec: {
       name: "salesforce_objects",
-      description: "The Salesforce objects (and, for a fixed list, fields) Pico Bot may read for this person, and whether only their own records are visible. Call it first. If all objects are readable, pass search with the person's own word (e.g. 'executive', 'secondary order'): it matches the object's name or label, shown as Name (Label). Use the Name in the other tools. Then call salesforce_fields.",
+      description: "The Salesforce objects (and, for a fixed list, fields) Pico Bot may read for this person, and whether only their own records are visible. Use it when you don't know which object holds the data. If all objects are readable, pass search with the person's own word (e.g. 'executive', 'secondary order'): it matches the object's name or label, shown as Name (Label). Use the Name in the other tools. Then call salesforce_fields.",
       parameters: { type: "object", properties: { search: { type: "string", maxLength: 60 } }, additionalProperties: false },
     },
     args: z.object({ search: z.string().max(60).optional() }).strict(),
@@ -142,9 +160,10 @@ const TOOLS: readonly AiTool[] = [
     run: async (context, args) => {
       const sf = salesforceContext(context);
       if (!(await readsAllObjects())) throw new QueryRefused("Use salesforce_objects: only the listed objects and fields are available.");
-      const fields = await describeObject(String(args.object), sf.fetchImpl, sf.signal);
+      const object = await matchObject(String(args.object), sf);
+      const fields = await describeObject(object, sf.fetchImpl, sf.signal);
       // Compact (name:type, plus the label when it differs) to keep the answer small for providers with low token limits.
-      return { result: { object: args.object, fields: fields.slice(0, 200).map((field) => `${field.name}:${field.type}${field.label && field.label.replace(/\s+/g, "_") !== field.name.replace(/__c$/, "") ? ` (${field.label})` : ""}`), more: fields.length > 200 }, source: SF };
+      return { result: { object, fields: fields.slice(0, 200).map((field) => `${field.name}:${field.type}${field.label && field.label.replace(/\s+/g, "_") !== field.name.replace(/__c$/, "") ? ` (${field.label})` : ""}`), more: fields.length > 200 }, source: SF };
     },
   },
   {
@@ -160,18 +179,20 @@ const TOOLS: readonly AiTool[] = [
           object: { type: "string" },
           fields: { type: "array", items: { type: "string" }, minItems: 1, maxItems: 12 },
           filters: filterSchema,
-          order_by: { type: "object", properties: { field: { type: "string" }, direction: { type: "string", enum: ["ASC", "DESC"] } }, required: ["field", "direction"], additionalProperties: false },
+          order_by: { type: ["object", "null"], properties: { field: { type: "string" }, direction: { type: "string", enum: ["ASC", "DESC"] } }, required: ["field", "direction"], additionalProperties: false },
           limit: { type: "integer", minimum: 1, maximum: MAX_ROWS },
         },
         required: ["object", "fields", "limit"],
         additionalProperties: false,
       },
     },
-    args: z.object({ object: z.string().max(80), fields: z.array(z.string().max(80)).min(1).max(12), filters: filterArgs.default([]), order_by: z.object({ field: z.string().max(80), direction: z.enum(["ASC", "DESC"]) }).strict().optional(), limit: z.number().int().min(1).max(MAX_ROWS) }).strict(),
+    args: z.object({ object: z.string().max(80), fields: z.array(z.string().max(80)).min(1).max(12), filters: filterArgs.nullish().transform((value) => value ?? []), order_by: z.object({ field: z.string().max(80), direction: z.enum(["ASC", "DESC"]) }).strict().nullish(), limit: z.number().int().min(1).max(MAX_ROWS) }).strict(),
     run: async (context, args) => {
       const sf = salesforceContext(context);
       const result = await querySalesforce({ object: String(args.object), fields: args.fields as string[], filters: args.filters as never, orderBy: (args.order_by as never) ?? null, limit: Number(args.limit) }, sf);
-      return { result: { query: result.soqlShape, records: result.records, returned: result.records.length, totalMatching: result.totalSize, truncated: result.truncated }, source: SF };
+      // D-201: a full page is not a total ("50 logins today" was the page size).
+      if (result.truncated) return { result: { query: result.soqlShape, records: result.records, returned: result.records.length, note: `Only the first ${result.records.length} records are shown; there may be more. For how many there are, use salesforce_count or salesforce_group, never this list's length.` }, source: SF };
+      return { result: { query: result.soqlShape, records: result.records, returned: result.records.length, totalMatching: result.totalSize }, source: SF };
     },
   },
   {
@@ -180,10 +201,10 @@ const TOOLS: readonly AiTool[] = [
     businessData: true,
     spec: {
       name: "salesforce_count",
-      description: "Count Salesforce records of one allowed object matching simple filters (Salesforce does the counting).",
+      description: "Count Salesforce records of one allowed object matching simple filters (Salesforce does the counting). The object and fields may be given by API name or by label (e.g. object 'Executive', filter field 'Last Login').",
       parameters: { type: "object", properties: { object: { type: "string" }, filters: filterSchema }, required: ["object"], additionalProperties: false },
     },
-    args: z.object({ object: z.string().max(80), filters: filterArgs.default([]) }).strict(),
+    args: z.object({ object: z.string().max(80), filters: filterArgs.nullish().transform((value) => value ?? []) }).strict(),
     run: async (context, args) => {
       const sf = salesforceContext(context);
       const result = await countSalesforce({ object: String(args.object), filters: args.filters as never }, sf);
@@ -196,23 +217,23 @@ const TOOLS: readonly AiTool[] = [
     businessData: true,
     spec: {
       name: "salesforce_group",
-      description: "Group Salesforce records of one object by a field (or by month/year of a date field), optionally then by a second field, and count, sum, average, min or max a field per group, with simple filters. A sum or average also returns the record count per group, and the result has the overall total. Salesforce does the maths; use it for breakdowns, rankings, trends and dashboards.",
+      description: "Group Salesforce records of one object by a field (or by month/year of a date field), optionally then by a second field, and count, sum, average, min or max a field per group, with simple filters. A sum or average also returns the record count per group, and the result has the overall total. Salesforce does the maths; use it for breakdowns, rankings, trends and dashboards. The object and fields may be given by API name or by label (e.g. object 'Attendance', group_by 'Region').",
       parameters: {
         type: "object",
         properties: {
           object: { type: "string" },
           group_by: { type: "string", description: "The field to group by (a date or date-time field when bucket is set)." },
-          then_by: { type: "string", description: "Optional second field to group by within each group (e.g. group_by Region__c, then_by Status__c)." },
-          bucket: { type: "string", enum: ["MONTH", "YEAR"], description: "Group a date field by month or year (for trends)." },
+          then_by: { type: ["string", "null"], description: "Optional second field to group by within each group (e.g. group_by Region__c, then_by Status__c)." },
+          bucket: { type: ["string", "null"], enum: ["MONTH", "YEAR", null], description: "Group a date field by month or year (for trends)." },
           aggregate: { type: "string", enum: ["COUNT", "SUM", "AVG", "MIN", "MAX"] },
-          field: { type: "string", description: "The numeric field to aggregate; not needed for COUNT." },
+          field: { type: ["string", "null"], description: "The numeric field to aggregate; not needed for COUNT." },
           filters: filterSchema,
         },
         required: ["object", "group_by", "aggregate"],
         additionalProperties: false,
       },
     },
-    args: z.object({ object: z.string().max(80), group_by: z.string().max(80), then_by: z.string().max(80).optional(), bucket: z.enum(["MONTH", "YEAR"]).optional(), aggregate: z.enum(["COUNT", "SUM", "AVG", "MIN", "MAX"]), field: z.string().max(80).optional(), filters: filterArgs.default([]) }).strict(),
+    args: z.object({ object: z.string().max(80), group_by: z.string().max(80), then_by: z.string().max(80).nullish(), bucket: z.enum(["MONTH", "YEAR"]).nullish(), aggregate: z.enum(["COUNT", "SUM", "AVG", "MIN", "MAX"]), field: z.string().max(80).nullish(), filters: filterArgs.nullish().transform((value) => value ?? []) }).strict(),
     run: async (context, args) => {
       const sf = salesforceContext(context);
       const result = await groupSalesforce({ object: String(args.object), groupBy: String(args.group_by), thenBy: (args.then_by as string | undefined) ?? null, bucket: (args.bucket as "MONTH" | "YEAR" | undefined) ?? null, aggregate: args.aggregate as "COUNT", field: (args.field as string | undefined) ?? null, filters: args.filters as never }, sf);

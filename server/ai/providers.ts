@@ -95,9 +95,19 @@ export function redactSecrets(text: string): string {
     .slice(0, 200);
 }
 
+// How long a rate-limited provider asks us to wait: the retry-after header
+// (seconds, decimals allowed), else D-201 the message's "try again in
+// 11.53s" / "in 502.5ms" (Groq), rounded up to whole seconds.
+export function retryAfterSeconds(header: string | null, message: string): number | null {
+  if (header !== null && /^\d{1,4}(\.\d+)?$/.test(header.trim())) return Math.ceil(Number(header));
+  const said = message.match(/try again in\s+(\d{1,4}(?:\.\d+)?)\s*(ms|s)\b/i);
+  if (!said) return null;
+  return Math.max(1, Math.ceil(said[2]!.toLowerCase() === "ms" ? Number(said[1]) / 1000 : Number(said[1])));
+}
+
 function errorFor(status: number, detail: string, retryAfter: string | null = null): ProviderError {
   const said = detail ? ` (${redactSecrets(detail)})` : "";
-  const after = retryAfter !== null && /^\d{1,4}$/.test(retryAfter.trim()) ? Number(retryAfter) : null;
+  const after = retryAfterSeconds(retryAfter, detail);
   if (status === 401 || status === 403) return new ProviderError("KEY_REFUSED", `The provider refused the API key${said}.`, false);
   if (status === 404) return new ProviderError("MODEL_NOT_FOUND", `The provider doesn't know this model${said}.`, false);
   if (status === 429) return new ProviderError("RATE_LIMITED", `The provider's rate limit or quota was reached${said}.`, true, after);
@@ -168,7 +178,7 @@ function parseArgs(value: unknown): Record<string, unknown> {
 // failure once after a short random backoff. Never more than two attempts, so
 // a busy provider can't cause a retry storm or double charges. Stop (the
 // person's signal) ends it at once.
-const MAX_WAIT_SECONDS = 10;
+const MAX_WAIT_SECONDS = 20; // D-201: free tiers (Groq) ask for up to ~20 s
 const sleep = (ms: number, signal?: AbortSignal) =>
   new Promise<void>((resolve, reject) => {
     const timer = setTimeout(resolve, ms);
@@ -196,32 +206,22 @@ async function sendOnce(fetchImpl: typeof fetch, url: string, init: RequestInit,
 
 const isBadToolCall = (error: ProviderError) => error.kind === "BAD_REQUEST" && /tool call|tool_use_failed/i.test(error.message);
 
+// Up to three attempts. A rate limit with a short requested wait is waited
+// out; an unavailable provider gets a short pause; a malformed tool call
+// (D-177: gpt-oss on Groq now and then writes one, which the provider
+// refuses) is simply asked again. D-201: these can follow one another (a
+// retried tool call hitting the rate limit), so each attempt is judged anew.
 async function sendWithRetry(fetchImpl: typeof fetch, url: string, init: RequestInit, request: ChatRequest): Promise<Response> {
-  try {
-    return await sendOnce(fetchImpl, url, init, request);
-  } catch (error) {
-    if (!(error instanceof ProviderError)) throw error;
-    const jitter = Math.floor(Math.random() * 500);
-    if (error.kind === "RATE_LIMITED" && error.retryAfterSeconds !== null && error.retryAfterSeconds <= MAX_WAIT_SECONDS) {
-      await sleep(error.retryAfterSeconds * 1000 + jitter, request.signal);
-      return sendOnce(fetchImpl, url, init, request);
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      return await sendOnce(fetchImpl, url, init, request);
+    } catch (error) {
+      if (!(error instanceof ProviderError) || attempt >= 3) throw error;
+      const jitter = Math.floor(Math.random() * 500);
+      if (error.kind === "RATE_LIMITED" && error.retryAfterSeconds !== null && error.retryAfterSeconds <= MAX_WAIT_SECONDS) await sleep(error.retryAfterSeconds * 1000 + jitter, request.signal);
+      else if (error.kind === "UNAVAILABLE") await sleep(500 + jitter * 2, request.signal);
+      else if (!isBadToolCall(error)) throw error;
     }
-    if (error.kind === "UNAVAILABLE") {
-      await sleep(500 + jitter * 2, request.signal);
-      return sendOnce(fetchImpl, url, init, request);
-    }
-    // D-177: some models (gpt-oss on Groq) now and then write a malformed tool
-    // call, which the provider refuses; a fresh attempt usually succeeds.
-    if (isBadToolCall(error)) {
-      for (let attempt = 1; ; attempt += 1) {
-        try {
-          return await sendOnce(fetchImpl, url, init, request);
-        } catch (again) {
-          if (attempt >= 2 || !(again instanceof ProviderError) || !isBadToolCall(again)) throw again;
-        }
-      }
-    }
-    throw error;
   }
 }
 

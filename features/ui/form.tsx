@@ -105,10 +105,11 @@ export interface ConfirmOptions {
   confirmTitle?: string; // e.g. "Deactivate Lee Leaver?"
   confirmLabel?: string; // the action, named (default "Yes, continue")
   confirmTone?: "primary" | "danger";
+  timeoutMs?: number; // D-201: Pico Bot answers take longer than a save
 }
 
 export function useActionForm(action: Action, options: ConfirmOptions = {}) {
-  const guarded = useMemo(() => guardAction(action), [action]);
+  const guarded = useMemo(() => guardAction(action, options.timeoutMs), [action, options.timeoutMs]);
   // Busy state is the form's own (QA session 14): React's useActionState
   // stays "pending" until the Server Action's own request settles, so a
   // time limit could not end the spinner. One submit at a time.

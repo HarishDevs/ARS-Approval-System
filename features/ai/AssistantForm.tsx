@@ -10,8 +10,12 @@ import { ResultMessage, useActionForm } from "@/features/ui/form";
 // Enter sends, Shift + Enter adds a line. While the answer is being prepared
 // the question shows with a "thinking" line. A new conversation's address is
 // opened once it exists.
+// D-201: a Salesforce answer can take several lookups (up to six provider calls
+// with rate-limit waits), so the page waits up to 5 minutes, not the usual 30 s.
+const ANSWER_TIMEOUT_MS = 5 * 60_000;
+
 export function AssistantForm({ conversationId, enabled, maxChars, modes, suggestions = [] }: { conversationId: number | null; enabled: boolean; maxChars: number; modes: { mode: string; label: string }[]; suggestions?: string[] }) {
-  const { result, pending, onSubmit, formRef } = useActionForm(askAction, { resetOnSuccess: true });
+  const { result, pending, onSubmit, formRef } = useActionForm(askAction, { resetOnSuccess: true, timeoutMs: ANSWER_TIMEOUT_MS });
   const router = useRouter();
   const box = useRef<HTMLTextAreaElement>(null);
   const [requestKey, setRequestKey] = useState(() => crypto.randomUUID());

@@ -80,11 +80,15 @@ export async function describeObject(object: string, fetchImpl?: typeof fetch, s
 }
 
 // The objects the connected user can query (no share, history, feed or
-// change-event tables), optionally filtered by name or label.
+// change-event tables), optionally filtered by name or label. Cached for 10 minutes.
+let objectCache: { at: number; sobjects: { name?: string; label?: string; queryable?: boolean; deprecatedAndHidden?: boolean; customSetting?: boolean }[] } | null = null;
 export async function listObjects(search: string, fetchImpl?: typeof fetch, signal?: AbortSignal): Promise<{ name: string; label: string }[]> {
-  const result = (await salesforceGet(`/services/data/${API_VERSION}/sobjects`, fetchImpl, signal)) as { sobjects?: { name?: string; label?: string; queryable?: boolean; deprecatedAndHidden?: boolean; customSetting?: boolean }[] };
+  if (!objectCache || Date.now() - objectCache.at >= DESCRIBE_MS) {
+    const result = (await salesforceGet(`/services/data/${API_VERSION}/sobjects`, fetchImpl, signal)) as { sobjects?: NonNullable<typeof objectCache>["sobjects"] };
+    objectCache = { at: Date.now(), sobjects: result.sobjects ?? [] };
+  }
   const term = search.trim().toLowerCase();
-  return (result.sobjects ?? [])
+  return objectCache.sobjects
     .filter((item) => item.queryable && !item.deprecatedAndHidden && !item.customSetting && item.name && NAME.test(item.name) && !/(Share|History|Feed|ChangeEvent|__mdt)$/.test(item.name))
     .map((item) => ({ name: item.name!, label: String(item.label ?? item.name) }))
     .filter((item) => !term || item.name.toLowerCase().includes(term) || item.label.toLowerCase().includes(term));
@@ -111,6 +115,56 @@ export function istDayRange(day: string): { start: string; end: string } {
   if (!Number.isFinite(startMs)) throw new QueryRefused("Not a valid date.");
   const iso = (ms: number) => new Date(ms).toISOString().replace(/\.\d{3}Z$/, "Z");
   return { start: iso(startMs), end: iso(startMs + 24 * 60 * 60 * 1000) };
+}
+
+// D-201: people (and smaller models) use everyday names: "Executive" for
+// Employee__c, "Region" for Region_Master__c, "last login" for Last_Login__c.
+// A name that isn't an exact API name is matched to an object or field by
+// its API name or label, ignoring case, spaces, underscores, "__c" and a
+// plural "s". Only names are translated; every allowlist check still runs.
+const simple = (value: string) => value.toLowerCase().replace(/__c$/, "").replace(/[^a-z0-9]/g, "").replace(/s$/, "");
+
+export function matchField(field: string, fields: readonly FieldInfo[]): string {
+  if (fields.some((item) => item.name === field)) return field;
+  const wanted = simple(field);
+  return fields.find((item) => simple(item.name) === wanted)?.name ?? fields.find((item) => simple(item.label) === wanted)?.name ?? field;
+}
+
+export async function matchObject(object: string, context: QueryContext): Promise<string> {
+  if (NAME.test(object)) {
+    try {
+      await describeObject(object, context.fetchImpl, context.signal);
+      return object;
+    } catch (error) {
+      if (!(error instanceof QueryRefused)) throw error;
+    }
+  }
+  const wanted = simple(object);
+  const objects = await listObjects("", context.fetchImpl, context.signal);
+  return objects.find((item) => simple(item.name) === wanted)?.name ?? objects.find((item) => simple(item.label) === wanted)?.name ?? object;
+}
+
+async function fieldsOf(object: string, context: QueryContext): Promise<FieldInfo[]> {
+  try {
+    return await describeObject(object, context.fetchImpl, context.signal);
+  } catch (error) {
+    if (error instanceof QueryRefused) return [];
+    throw error;
+  }
+}
+
+// The spec with everyday names translated to API names.
+async function resolveNames<T extends { object: string; filters: Filter[] }>(spec: T, context: QueryContext, fieldKeys: readonly (keyof T)[]): Promise<T> {
+  const object = await matchObject(spec.object, context);
+  const fields = await fieldsOf(object, context);
+  if (!fields.length) return { ...spec, object };
+  const out = { ...spec, object, filters: spec.filters.map((filter) => ({ ...filter, field: matchField(filter.field, fields) })) } as T;
+  for (const key of fieldKeys) {
+    const value = out[key] as unknown;
+    if (typeof value === "string") (out as Record<string, unknown>)[key as string] = matchField(value, fields);
+    else if (Array.isArray(value)) (out as Record<string, unknown>)[key as string] = value.map((item) => (typeof item === "string" ? matchField(item, fields) : item));
+  }
+  return out;
 }
 
 // The allowlist for one query: the configured list, or (with "*") the object's described fields.
@@ -256,7 +310,10 @@ async function ownerFor(context: QueryContext): Promise<string | null> {
   return context.scope === "OWN" ? salesforceUserIdFor(context.email, context.fetchImpl, context.signal) : null;
 }
 
-export async function querySalesforce(spec: QuerySpec, context: QueryContext): Promise<{ soqlShape: string; records: Record<string, unknown>[]; totalSize: number; truncated: boolean }> {
+export async function querySalesforce(input: QuerySpec, context: QueryContext): Promise<{ soqlShape: string; records: Record<string, unknown>[]; totalSize: number; truncated: boolean }> {
+  const resolved = await resolveNames(input, context, ["fields"]);
+  const orderField = input.orderBy ? (await resolveNames({ object: resolved.object, filters: [{ field: input.orderBy.field, op: "=", value: null }] }, context, [])).filters[0]!.field : null;
+  const spec: QuerySpec = { ...resolved, orderBy: input.orderBy && orderField ? { ...input.orderBy, field: orderField } : null };
   const allowlist = await allowlistFor(spec.object, context);
   const soql = buildSelect(spec, allowlist, await ownerFor(context), await typesFor(spec.object, context));
   const result = (await salesforceGet(queryPath(soql), context.fetchImpl, context.signal)) as { totalSize?: number; done?: boolean; records?: Record<string, unknown>[] };
@@ -269,10 +326,11 @@ export async function querySalesforce(spec: QuerySpec, context: QueryContext): P
     ),
   );
   // The query shape (no values) for the evidence panel.
-  return { soqlShape: `${spec.object}: ${spec.fields.join(", ")}${spec.filters.length ? ` where ${spec.filters.map((filter) => `${filter.field} ${filter.op} …`).join(" and ")}` : ""}${context.scope === "OWN" ? " (your records)" : ""}`, records, totalSize: Number(result.totalSize ?? records.length), truncated: result.done === false };
+  return { soqlShape: `${spec.object}: ${spec.fields.join(", ")}${spec.filters.length ? ` where ${spec.filters.map((filter) => `${filter.field} ${filter.op} …`).join(" and ")}` : ""}${context.scope === "OWN" ? " (your records)" : ""}`, records, totalSize: Number(result.totalSize ?? records.length), truncated: result.done === false || records.length >= Math.min(MAX_ROWS, Math.floor(spec.limit)) };
 }
 
-export async function countSalesforce(spec: Pick<QuerySpec, "object" | "filters">, context: QueryContext): Promise<{ count: number; scope: string }> {
+export async function countSalesforce(input: Pick<QuerySpec, "object" | "filters">, context: QueryContext): Promise<{ count: number; scope: string }> {
+  const spec = await resolveNames(input, context, []);
   const allowlist = await allowlistFor(spec.object, context);
   const soql = buildCount(spec, allowlist, await ownerFor(context), await typesFor(spec.object, context));
   const result = (await salesforceGet(queryPath(soql), context.fetchImpl, context.signal)) as { totalSize?: number };
@@ -316,7 +374,8 @@ export function buildGroup(spec: GroupSpec, allowlist: Allowlist, ownerId: strin
   return `SELECT ${select}, ${measure} v${count} FROM ${spec.object}${where(spec, allowed, ownerId, types)} WITH USER_MODE GROUP BY ${groupKeys.join(", ")} ORDER BY ${order} LIMIT ${MAX_ROWS}`;
 }
 
-export async function groupSalesforce(spec: GroupSpec, context: QueryContext): Promise<{ groups: { group: string; then?: string; value: number; count?: number }[]; total: number; scope: string }> {
+export async function groupSalesforce(input: GroupSpec, context: QueryContext): Promise<{ groups: { group: string; then?: string; value: number; count?: number }[]; total: number; scope: string }> {
+  const spec = await resolveNames(input, context, ["groupBy", "thenBy", "field"]);
   const allowlist = await allowlistFor(spec.object, context);
   const soql = buildGroup(spec, allowlist, await ownerFor(context), await typesFor(spec.object, context));
   const result = (await salesforceGet(queryPath(soql), context.fetchImpl, context.signal)) as { records?: Record<string, unknown>[] };

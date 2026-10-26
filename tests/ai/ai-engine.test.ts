@@ -113,8 +113,9 @@ describe("numbers must come from the data", () => {
     expect(unverifiedFigures("**5** orders, **1,250** MT across 2 regions; the North has 56% and 150 more.", sources, [result])).toEqual([]);
     // The made-up dashboard from the owner's chat (D-201).
     expect(unverifiedFigures("Total Secondary Orders 150, -2 vs last week. Submitted 80, In Progress 50, Completed 20", [JSON.stringify({ error: "x" })])).toEqual(["150", "2", "80", "50", "20"]);
-    // Labels aren't figures.
+    // Labels, ids and timestamps aren't figures.
     expect(figuresIn("Insight 1: check. Next Step 2: ask. Top 5 dealers. #3")).toEqual([]);
+    expect(figuresIn("ref 1278786832310 and 919876543210, total 422")).toEqual(["422"]);
   });
   it("D-201: metric cards and charts showing an unchecked figure are removed", () => {
     const text = 'Here it is.\n\n```metrics\n[{"label":"Orders","value":150}]\n```\n\n```chart\n{"type":"bar","labels":["A"],"values":[5]}\n```\nDone.';
