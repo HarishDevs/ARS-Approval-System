@@ -52,6 +52,10 @@ export interface FieldInfo {
   type: string;
 }
 
+// D-201: secrets are never readable, even with "*" (the Executive object has
+// Password__c and Session_ID__c). Matched on the field's name or label.
+export const SECRET_FIELD = /pass(?:word|wd|code)|session[\s_]*id|token|secret|(?<![a-z])otp(?![a-z])|api[\s_]*key|private[\s_]*key/i;
+
 // Describes are cached for 10 minutes per object (they rarely change).
 const DESCRIBE_MS = 10 * 60 * 1000;
 const describeCache = new Map<string, { at: number; fields: FieldInfo[] }>();
@@ -70,7 +74,7 @@ export async function describeObject(object: string, fetchImpl?: typeof fetch, s
     throw error;
   }
   if (!result.queryable) throw new QueryRefused(`The object ${object} can't be read.`);
-  const fields = (result.fields ?? []).filter((field) => field.name && NAME.test(field.name)).map((field) => ({ name: field.name!, label: String(field.label ?? field.name), type: String(field.type ?? "") }));
+  const fields = (result.fields ?? []).filter((field) => field.name && NAME.test(field.name) && !SECRET_FIELD.test(field.name) && !SECRET_FIELD.test(String(field.label ?? "")) && field.type !== "encryptedstring").map((field) => ({ name: field.name!, label: String(field.label ?? field.name), type: String(field.type ?? "") }));
   describeCache.set(object, { at: Date.now(), fields });
   return fields;
 }
@@ -84,6 +88,29 @@ export async function listObjects(search: string, fetchImpl?: typeof fetch, sign
     .filter((item) => item.queryable && !item.deprecatedAndHidden && !item.customSetting && item.name && NAME.test(item.name) && !/(Share|History|Feed|ChangeEvent|__mdt)$/.test(item.name))
     .map((item) => ({ name: item.name!, label: String(item.label ?? item.name) }))
     .filter((item) => !term || item.name.toLowerCase().includes(term) || item.label.toLowerCase().includes(term));
+}
+
+// D-201: field types for one object (name -> Salesforce type), so a plain
+// date on a date-time field becomes a day range instead of a Salesforce
+// error. Empty when the object can't be described (the allowlist still rules).
+export type FieldTypes = Map<string, string>;
+async function typesFor(object: string, context: QueryContext): Promise<FieldTypes> {
+  try {
+    return new Map((await describeObject(object, context.fetchImpl, context.signal)).map((field) => [field.name, field.type.toLowerCase()]));
+  } catch (error) {
+    if (error instanceof QueryRefused) return new Map();
+    throw error;
+  }
+}
+
+// D-201: a calendar day in India time as a UTC range, for date-time fields
+// ("created on 2026-10-26" = from 00:00 to 24:00 IST).
+const IST_OFFSET_MS = 330 * 60 * 1000;
+export function istDayRange(day: string): { start: string; end: string } {
+  const startMs = Date.parse(`${day}T00:00:00Z`) - IST_OFFSET_MS;
+  if (!Number.isFinite(startMs)) throw new QueryRefused("Not a valid date.");
+  const iso = (ms: number) => new Date(ms).toISOString().replace(/\.\d{3}Z$/, "Z");
+  return { start: iso(startMs), end: iso(startMs + 24 * 60 * 60 * 1000) };
 }
 
 // The allowlist for one query: the configured list, or (with "*") the object's described fields.
@@ -129,7 +156,48 @@ export function literal(value: Filter["value"]): string {
   return `'${value.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}'`;
 }
 
-function where(spec: Pick<QuerySpec, "object" | "filters">, allowed: Set<string>, ownerId: string | null): string {
+// D-201: a lookup field (Region__c, AccountId) holds a record id. Its
+// relationship (Region__r, Account) gives the linked record's Name, so
+// breakdowns, lists and filters work with names people know, not ids.
+const SF_ID = /^[A-Za-z0-9]{15}(?:[A-Za-z0-9]{3})?$/;
+export function relationshipOf(field: string, types: FieldTypes): string | null {
+  if (types.get(field) !== "reference") return null;
+  if (field.endsWith("__c")) return `${field.slice(0, -3)}__r`;
+  if (field.endsWith("Id") && field.length > 2) return field.slice(0, -2);
+  return null;
+}
+const nameOf = (field: string, types: FieldTypes) => {
+  const relationship = relationshipOf(field, types);
+  return relationship ? `${relationship}.Name` : field;
+};
+
+function condition(filter: Filter, types: FieldTypes): string {
+  const relationship = relationshipOf(filter.field, types);
+  if (relationship && typeof filter.value === "string" && !SF_ID.test(filter.value)) return `${relationship}.Name ${filter.op} ${literal(filter.value)}`;
+  if (types.get(filter.field) === "datetime" && typeof filter.value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(filter.value)) {
+    const { start, end } = istDayRange(filter.value);
+    const f = filter.field;
+    switch (filter.op) {
+      case "=":
+        return `(${f} >= ${start} AND ${f} < ${end})`;
+      case "!=":
+        return `(${f} < ${start} OR ${f} >= ${end})`;
+      case ">":
+        return `${f} >= ${end}`;
+      case ">=":
+        return `${f} >= ${start}`;
+      case "<":
+        return `${f} < ${start}`;
+      case "<=":
+        return `${f} < ${end}`;
+      default:
+        throw new QueryRefused("LIKE can't be used with a date.");
+    }
+  }
+  return `${filter.field} ${filter.op} ${literal(filter.value)}`;
+}
+
+function where(spec: Pick<QuerySpec, "object" | "filters">, allowed: Set<string>, ownerId: string | null, types: FieldTypes = new Map()): string {
   const parts: string[] = [];
   if (ownerId !== null) {
     if (!/^005[A-Za-z0-9]{12}([A-Za-z0-9]{3})?$/.test(ownerId)) throw new QueryRefused("Unexpected Salesforce user id.");
@@ -139,18 +207,19 @@ function where(spec: Pick<QuerySpec, "object" | "filters">, allowed: Set<string>
     if (!allowed.has(filter.field)) throw new QueryRefused(`The field ${filter.field} isn't available.`);
     if (!(OPERATORS as readonly string[]).includes(filter.op)) throw new QueryRefused("Unsupported filter operator.");
     if (filter.op === "LIKE" && typeof filter.value !== "string") throw new QueryRefused("LIKE needs text.");
-    parts.push(`${filter.field} ${filter.op} ${literal(filter.value)}`);
+    parts.push(condition(filter, types));
   }
   return parts.length ? ` WHERE ${parts.join(" AND ")}` : "";
 }
 
 // Pure: the SOQL for a validated spec (throws QueryRefused otherwise).
-export function buildSelect(spec: QuerySpec, allowlist: Allowlist, ownerId: string | null): string {
+export function buildSelect(spec: QuerySpec, allowlist: Allowlist, ownerId: string | null, types: FieldTypes = new Map()): string {
   const allowed = allowlist.get(spec.object);
   if (!allowed) throw new QueryRefused(`The object ${spec.object} isn't available to Pico Bot.`);
   const fields = [...new Set(["Id", ...spec.fields])];
   for (const field of fields) if (!allowed.has(field)) throw new QueryRefused(`The field ${field} isn't available.`);
-  let soql = `SELECT ${fields.join(", ")} FROM ${spec.object}${where(spec, allowed, ownerId)} WITH USER_MODE`;
+  const names = fields.map((field) => nameOf(field, types)).filter((name) => name.includes("."));
+  let soql = `SELECT ${[...fields, ...names].join(", ")} FROM ${spec.object}${where(spec, allowed, ownerId, types)} WITH USER_MODE`;
   if (spec.orderBy) {
     if (!allowed.has(spec.orderBy.field)) throw new QueryRefused(`The field ${spec.orderBy.field} isn't available.`);
     soql += ` ORDER BY ${spec.orderBy.field} ${spec.orderBy.direction === "ASC" ? "ASC" : "DESC"}`;
@@ -158,10 +227,10 @@ export function buildSelect(spec: QuerySpec, allowlist: Allowlist, ownerId: stri
   return `${soql} LIMIT ${Math.max(1, Math.min(MAX_ROWS, Math.floor(spec.limit)))}`;
 }
 
-export function buildCount(spec: Pick<QuerySpec, "object" | "filters">, allowlist: Allowlist, ownerId: string | null): string {
+export function buildCount(spec: Pick<QuerySpec, "object" | "filters">, allowlist: Allowlist, ownerId: string | null, types: FieldTypes = new Map()): string {
   const allowed = allowlist.get(spec.object);
   if (!allowed) throw new QueryRefused(`The object ${spec.object} isn't available to Pico Bot.`);
-  return `SELECT COUNT() FROM ${spec.object}${where(spec, allowed, ownerId)} WITH USER_MODE`;
+  return `SELECT COUNT() FROM ${spec.object}${where(spec, allowed, ownerId, types)} WITH USER_MODE`;
 }
 
 const queryPath = (soql: string) => `/services/data/${API_VERSION}/query?q=${encodeURIComponent(soql)}`;
@@ -189,16 +258,23 @@ async function ownerFor(context: QueryContext): Promise<string | null> {
 
 export async function querySalesforce(spec: QuerySpec, context: QueryContext): Promise<{ soqlShape: string; records: Record<string, unknown>[]; totalSize: number; truncated: boolean }> {
   const allowlist = await allowlistFor(spec.object, context);
-  const soql = buildSelect(spec, allowlist, await ownerFor(context));
+  const soql = buildSelect(spec, allowlist, await ownerFor(context), await typesFor(spec.object, context));
   const result = (await salesforceGet(queryPath(soql), context.fetchImpl, context.signal)) as { totalSize?: number; done?: boolean; records?: Record<string, unknown>[] };
-  const records = (result.records ?? []).slice(0, MAX_ROWS).map((record) => Object.fromEntries(Object.entries(record).filter(([key]) => key !== "attributes")));
+  // A linked record comes back nested ({ Region__r: { Name } }); flatten it to "Region__r.Name".
+  const records = (result.records ?? []).slice(0, MAX_ROWS).map((record) =>
+    Object.fromEntries(
+      Object.entries(record)
+        .filter(([key]) => key !== "attributes")
+        .map(([key, value]) => (value && typeof value === "object" && !Array.isArray(value) ? [`${key}.Name`, (value as { Name?: unknown }).Name ?? null] : [key, value])),
+    ),
+  );
   // The query shape (no values) for the evidence panel.
   return { soqlShape: `${spec.object}: ${spec.fields.join(", ")}${spec.filters.length ? ` where ${spec.filters.map((filter) => `${filter.field} ${filter.op} …`).join(" and ")}` : ""}${context.scope === "OWN" ? " (your records)" : ""}`, records, totalSize: Number(result.totalSize ?? records.length), truncated: result.done === false };
 }
 
 export async function countSalesforce(spec: Pick<QuerySpec, "object" | "filters">, context: QueryContext): Promise<{ count: number; scope: string }> {
   const allowlist = await allowlistFor(spec.object, context);
-  const soql = buildCount(spec, allowlist, await ownerFor(context));
+  const soql = buildCount(spec, allowlist, await ownerFor(context), await typesFor(spec.object, context));
   const result = (await salesforceGet(queryPath(soql), context.fetchImpl, context.signal)) as { totalSize?: number };
   return { count: Number(result.totalSize ?? 0), scope: context.scope === "OWN" ? "records you own" : "all records you may see" };
 }
@@ -211,13 +287,14 @@ export type Aggregate = (typeof AGGREGATES)[number];
 export interface GroupSpec {
   object: string;
   groupBy: string;
+  thenBy?: string | null; // D-201: a second grouping (e.g. region, then status)
   bucket: "MONTH" | "YEAR" | null;
   aggregate: Aggregate;
   field: string | null;
   filters: Filter[];
 }
 
-export function buildGroup(spec: GroupSpec, allowlist: Allowlist, ownerId: string | null): string {
+export function buildGroup(spec: GroupSpec, allowlist: Allowlist, ownerId: string | null, types: FieldTypes = new Map()): string {
   const allowed = allowlist.get(spec.object);
   if (!allowed) throw new QueryRefused(`The object ${spec.object} isn't available to Pico Bot.`);
   if (!allowed.has(spec.groupBy)) throw new QueryRefused(`The field ${spec.groupBy} isn't available.`);
@@ -227,24 +304,37 @@ export function buildGroup(spec: GroupSpec, allowlist: Allowlist, ownerId: strin
     if (!spec.field || !allowed.has(spec.field)) throw new QueryRefused(`The field ${spec.field ?? "(none)"} isn't available.`);
     measure = `${spec.aggregate}(${spec.field})`;
   }
-  const keys = spec.bucket === "MONTH" ? [`CALENDAR_YEAR(${spec.groupBy})`, `CALENDAR_MONTH(${spec.groupBy})`] : spec.bucket === "YEAR" ? [`CALENDAR_YEAR(${spec.groupBy})`] : [spec.groupBy];
-  const select = spec.bucket ? keys.map((key, index) => `${key} k${index}`).join(", ") : spec.groupBy;
-  const order = spec.bucket ? keys.join(", ") : `${measure} DESC`;
-  return `SELECT ${select}, ${measure} v FROM ${spec.object}${where(spec, allowed, ownerId)} WITH USER_MODE GROUP BY ${keys.join(", ")} ORDER BY ${order} LIMIT ${MAX_ROWS}`;
+  if (spec.thenBy && (!allowed.has(spec.thenBy) || spec.thenBy === spec.groupBy)) throw new QueryRefused(`The field ${spec.thenBy} isn't available.`);
+  // Date buckets are k0/k1; the group and the second group are g0/g1 (a lookup groups by the linked record's Name).
+  const keys = spec.bucket === "MONTH" ? [`CALENDAR_YEAR(${spec.groupBy})`, `CALENDAR_MONTH(${spec.groupBy})`] : spec.bucket === "YEAR" ? [`CALENDAR_YEAR(${spec.groupBy})`] : [nameOf(spec.groupBy, types)];
+  const then = spec.thenBy ? nameOf(spec.thenBy, types) : null;
+  const groupKeys = [...keys, ...(then ? [then] : [])];
+  const select = [...keys.map((key, index) => (spec.bucket ? `${key} k${index}` : `${key} g0`)), ...(then ? [`${then} g1`] : [])].join(", ");
+  const order = spec.bucket ? groupKeys.join(", ") : `${measure} DESC`;
+  // D-201: a sum or average also carries the record count per group.
+  const count = spec.aggregate === "COUNT" ? "" : ", COUNT(Id) n";
+  return `SELECT ${select}, ${measure} v${count} FROM ${spec.object}${where(spec, allowed, ownerId, types)} WITH USER_MODE GROUP BY ${groupKeys.join(", ")} ORDER BY ${order} LIMIT ${MAX_ROWS}`;
 }
 
-export async function groupSalesforce(spec: GroupSpec, context: QueryContext): Promise<{ groups: { group: string; value: number }[]; scope: string }> {
+export async function groupSalesforce(spec: GroupSpec, context: QueryContext): Promise<{ groups: { group: string; then?: string; value: number; count?: number }[]; total: number; scope: string }> {
   const allowlist = await allowlistFor(spec.object, context);
-  const soql = buildGroup(spec, allowlist, await ownerFor(context));
+  const soql = buildGroup(spec, allowlist, await ownerFor(context), await typesFor(spec.object, context));
   const result = (await salesforceGet(queryPath(soql), context.fetchImpl, context.signal)) as { records?: Record<string, unknown>[] };
+  const text = (value: unknown) => (value === null || value === undefined || value === "" ? "(blank)" : String(value));
   const label = (record: Record<string, unknown>) => {
     if (spec.bucket === "MONTH") return `${String(record.k0)}-${String(record.k1).padStart(2, "0")}`;
     if (spec.bucket === "YEAR") return String(record.k0);
-    const value = record[spec.groupBy];
-    return value === null || value === undefined || value === "" ? "(blank)" : String(value);
+    return text(record.g0);
   };
-  const groups = (result.records ?? []).slice(0, MAX_ROWS).map((record) => ({ group: label(record), value: Number(record.v ?? 0) }));
-  return { groups, scope: context.scope === "OWN" ? "records you own" : "all records you may see" };
+  const groups = (result.records ?? []).slice(0, MAX_ROWS).map((record) => ({
+    group: label(record),
+    ...(spec.thenBy ? { then: text(record.g1) } : {}),
+    value: Number(record.v ?? 0),
+    ...(spec.aggregate === "COUNT" ? {} : { count: Number(record.n ?? 0) }),
+  }));
+  // The overall total, so the model doesn't have to add the groups up itself.
+  const total = Math.round(groups.reduce((sum, item) => sum + item.value, 0) * 1000) / 1000;
+  return { groups, total, scope: context.scope === "OWN" ? "records you own" : "all records you may see" };
 }
 
 export { SalesforceUnavailable };

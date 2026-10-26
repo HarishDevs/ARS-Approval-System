@@ -1065,6 +1065,7 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 4. (v1.22.1, D-197) Under the welcome, one visible paragraph says what ARS-CMS is for (requests and multi-level approvals, information, tasks, optional Google Calendar) and that IT creates the accounts, for visitors and Google's OAuth review, on desktop and phone.
 
 ## F-140 AI Assistant as a business analyst (v1.19.0, D-178, D-180, D-182)
+**v1.23.0 (D-201):** before an answer is shown, every figure is checked against the data read for it (totals, differences, percentages and rounding of that data count). If some aren't there, Pico Bot is asked once to fetch them or drop them. Still unchecked: with no data read, the answer is "I couldn't read this from the data"; otherwise cards and charts showing them are removed and a note above the answer names them.
 1. The person opens **AI Assistant** in the sidebar: a new chat opens and the chat list (pinned first, newest next, with a search) expands. About ten chats show; the rest scroll.
 2. The top strip shows **+ New chat**, the day's limit (used, remaining, total) and the connection status.
 3. They ask in plain words; the analyst answers with figures from the data, metric cards and charts for dashboards, tables, insights and next steps. Technical detail (sources, provider, calculated figures) is in a hover hint.

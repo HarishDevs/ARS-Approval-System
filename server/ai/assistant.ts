@@ -6,7 +6,7 @@ import { overLimit } from "@/server/security/limits";
 import { loadAiSettings, routeFor } from "@/server/ai/config";
 import { chat, PROVIDER_LABEL, ProviderError, type ChatAnswer, type ProviderCode, type Turn } from "@/server/ai/providers";
 import { runTool, toolsFor, type ToolPerson } from "@/server/ai/tools";
-import { unverifiedFigures } from "@/server/ai/validate";
+import { unverifiedFigures, withoutBlocksShowing } from "@/server/ai/validate";
 import { friendlyError } from "@/server/ai/friendly";
 import { rulesFor, type RuleScope } from "@/lib/db/repositories/ai-rules.repository";
 import { aiGate, LimitError } from "@/server/ai/limits";
@@ -61,7 +61,10 @@ export function systemPrompt(input: { name: string; mode: ChatMode; dataModes: r
     "- Analyse: compare, rank, spot trends, outliers and risks, and finish with 2-4 short, practical insights or next steps when they help. Use **bold** for the key numbers and short bullet lists or a table for detail.",
     "- When asked for a dashboard, overview, summary or breakdown, ALWAYS include a metrics block AND a chart block. A metrics block has 2-6 headline numbers, written exactly as a fenced block: ```metrics then a JSON array like [{\"label\":\"Open deals\",\"value\":42,\"change\":\"+5 vs last month\"}] then ```.",
     "- For a comparison or a trend, add a chart block: ```chart then JSON like {\"type\":\"bar\",\"title\":\"Deals by stage\",\"labels\":[\"Won\",\"Lost\"],\"values\":[12,4]} (type line for trends over time) then ```. Use only numbers from the data; at most 20 labels.",
-    "- Fetch what you need to analyse properly. With Salesforce data, prefer breakdowns (salesforce_group) and counts over single records; for logins use LoginHistory (LoginTime), for sales use Opportunity.",
+    "- Fetch what you need to analyse properly. With Salesforce data, prefer breakdowns (salesforce_group, with then_by for a second split such as region then status) and counts over single records; for logins use LoginHistory (LoginTime), for sales use Opportunity.",
+    "- Never ask the person for object or field names. Anything they name (executives, orders, visits, dealers…) may be a Salesforce object: find it yourself with salesforce_objects (search with their word; labels are matched) and salesforce_fields, then query. Only say something is outside this chat after searching.",
+    "- For 'today', 'this week' and similar, filter the date field with TODAY, THIS_WEEK, LAST_N_DAYS:n, or a date YYYY-MM-DD (it covers the whole day, also on date-time fields such as CreatedDate).",
+    "- If a lookup returns an error, correct the call and try again. If you still can't get the data, say so in one sentence; then stop. Never show example, sample, typical, placeholder or earlier-chat numbers, and never fill metrics or charts with anything but numbers read in this answer. Answers are checked: figures that aren't in the data are removed.",
     "Rules:",
     "- Never invent figures, names, records or dates. Base numbers must come from tool results in this conversation. You may calculate totals, differences, averages and percentages from them; round sensibly.",
     "- Keep facts and interpretation apart: say what the data shows, then what it might mean ('this may be because…'), never presenting a guess as fact.",
@@ -81,6 +84,26 @@ export function systemPrompt(input: { name: string; mode: ChatMode; dataModes: r
     );
   }
   return lines.join("\n");
+}
+
+// D-201: figures not found in this answer's data (or worked out from it).
+function checkFigures(text: string, question: string, evidence: readonly AiEvidence[], name = ""): string[] {
+  return unverifiedFigures(text, [question, name, ...evidence.map((item) => JSON.stringify(item.result) + JSON.stringify(item.args) + item.asOf)], evidence.map((item) => item.result));
+}
+
+export const NO_DATA_ANSWER =
+  "I couldn't read this from the data, so I won't guess any numbers. Try asking it another way, for example with a period (\"created today\", \"this week\") or the exact name of what you're looking for. If it keeps failing, ask IT to check Pico Bot's Salesforce access.";
+
+// D-201 (owner: "not able to get any accurate details"): an answer is never
+// shown with invented figures. With no data read at all, a figure-bearing
+// answer is replaced by a plain "couldn't read it". With data, the metric
+// cards and charts that show an unchecked figure are removed and a visible
+// note names the figures to treat with care.
+export function guarded(text: string, unverified: readonly string[], evidence: readonly AiEvidence[]): string {
+  if (!unverified.length) return text;
+  if (!evidence.length) return NO_DATA_ANSWER;
+  const kept = withoutBlocksShowing(text, unverified);
+  return `> Some figures couldn't be checked against the data, so charts and cards showing them were left out. Treat these with care: ${unverified.join(", ")}.\n\n${kept}`;
 }
 
 const today = () => new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Kolkata" });
@@ -167,8 +190,9 @@ export async function askAssistant(
       const started = Date.now();
       try {
         const outcome = await converse(provider, settings.configs[provider]!, { person, conversationId, dataModes, signal: input.signal, fetchImpl: input.fetchImpl }, tools, history, question, { mode, timeoutMs: settings.timeoutMs, maxTokens: maxOutput || 1200, rules });
-        const unverified = unverifiedFigures(outcome.answer.text, [question, ...outcome.evidence.map((item) => JSON.stringify(item.result) + item.asOf)]);
-        await addMessage(conversationId, { role: "assistant", content: outcome.answer.text, provider, model: outcome.answer.model, inputTokens: outcome.inputTokens, outputTokens: outcome.outputTokens, latencyMs: Date.now() - started, evidence: outcome.evidence, unverified });
+        const unverified = checkFigures(outcome.answer.text, question, outcome.evidence, person.name);
+        const content = guarded(outcome.answer.text, unverified, outcome.evidence);
+        await addMessage(conversationId, { role: "assistant", content, provider, model: outcome.answer.model, inputTokens: outcome.inputTokens, outputTokens: outcome.outputTokens, latencyMs: Date.now() - started, evidence: outcome.evidence, unverified });
         await recordAudit({ actorUserId: person.id, action: "AI_QUESTION_ANSWERED", entityType: "AI_CONVERSATION", entityId: conversationId, sessionId: person.sessionId, metadata: { mode, provider, model: outcome.answer.model, tools: outcome.evidence.map((item) => item.tool), unverified: unverified.length } });
         return { ok: true, conversationId };
       } catch (error) {
@@ -196,10 +220,15 @@ async function converse(
   question: string,
   options: { mode: ChatMode; timeoutMs: number; maxTokens: number; rules: string },
 ): Promise<{ answer: ChatAnswer; evidence: AiEvidence[]; inputTokens: number; outputTokens: number }> {
-  const turns: Turn[] = [...history.map((message) => ({ role: message.role, content: message.content }) as Turn), { role: "user", content: question }];
+  // D-201: an earlier answer with unchecked figures isn't fed back as fact.
+  const turns: Turn[] = [
+    ...history.map((message) => ({ role: message.role, content: message.role === "assistant" && message.unverified.length ? "(An earlier answer here had figures that couldn't be checked against the data. Don't reuse any of its numbers.)" : message.content }) as Turn),
+    { role: "user", content: question },
+  ];
   const evidence: AiEvidence[] = [];
   let inputTokens = 0;
   let outputTokens = 0;
+  let challenged = false;
   const system = systemPrompt({ name: context.person.name, mode: options.mode, dataModes: context.dataModes, withTools: tools.some((tool) => tool.businessData), today: today(), rules: options.rules });
   for (let round = 0; round < MAX_ROUNDS; round += 1) {
     const lastRound = round === MAX_ROUNDS - 1;
@@ -208,7 +237,20 @@ async function converse(
     const answer = await chat(config, { system, turns, tools: lastRound ? [] : tools.map((tool) => tool.spec), maxTokens: options.maxTokens, timeoutMs: options.timeoutMs, signal: context.signal }, context.fetchImpl);
     inputTokens += answer.inputTokens ?? 0;
     outputTokens += answer.outputTokens ?? 0;
-    if (!answer.toolCalls.length) return { answer, evidence, inputTokens, outputTokens };
+    if (!answer.toolCalls.length) {
+      // D-201: one chance to back up figures that aren't in the data.
+      const unchecked = checkFigures(answer.text, question, evidence, context.person.name);
+      if (unchecked.length && !challenged && round < MAX_ROUNDS - 2) {
+        challenged = true;
+        turns.push({ role: "assistant", content: answer.text });
+        turns.push({
+          role: "user",
+          content: `Before this answer is shown: these numbers are not in the data you fetched in this answer: ${unchecked.join(", ")}. Fetch them now with the tools, or answer without them and say plainly what you couldn't get. Never use example, typical, estimated or earlier-chat numbers.`,
+        });
+        continue;
+      }
+      return { answer, evidence, inputTokens, outputTokens };
+    }
     turns.push({ role: "assistant", content: answer.text, toolCalls: answer.toolCalls });
     for (const call of answer.toolCalls.slice(0, 5)) {
       const result = await runTool({ person: context.person, conversationId: context.conversationId, dataModes: context.dataModes, evidence, signal: context.signal, fetchImpl: context.fetchImpl }, tools, call.name, call.args);

@@ -1,5 +1,13 @@
 # Release notes
 
+## v1.23.0 (26 Oct 2026): Pico Bot gives real numbers or none (owner)
+- **No more invented figures.** Every number in an answer is checked against the data Pico Bot actually read. If a number isn't there, Pico Bot must fetch it or leave it out; if nothing could be read, it says so instead of showing a made-up dashboard.
+- **"Today", "this week" and dates work in Salesforce** (for example orders created today), in India time.
+- **Regions, dealers, owners and other linked records show their names**, not Salesforce ids, in lists and breakdowns, and you can filter by name ("orders in Chennai North").
+- **Breakdowns by two things at once** (region and status) with count and quantity together.
+- **Pico Bot finds things by the names you use** ("executives" finds the Executive records).
+- **Security:** password, session, token and key fields in Salesforce are never readable by Pico Bot.
+
 ## v1.22.4 (26 Oct 2026): the split-screen home page is back (owner)
 - **The home page is the split screen again** (blue panel left, welcome right), now with what Google's review needs on the page itself: the name ARS-CMS, what it is for, what you can do, who can use it and how Google data is used, with the privacy policy link. **Sign in** turns smoothly into the sign-in form.
 

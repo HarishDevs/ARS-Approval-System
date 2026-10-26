@@ -53,7 +53,7 @@ const filterSchema = {
     properties: {
       field: { type: "string" },
       op: { type: "string", enum: ["=", "!=", ">", "<", ">=", "<=", "LIKE"] },
-      value: { type: ["string", "number", "boolean", "null"], description: "Text, number, true/false, a date YYYY-MM-DD, or a Salesforce date literal such as THIS_MONTH or LAST_N_DAYS:30. LIKE uses % as the wildcard." },
+      value: { type: ["string", "number", "boolean", "null"], description: "Text, number, true/false, a date YYYY-MM-DD (works on date and date-time fields, e.g. CreatedDate = 2026-10-26 means that whole day), or a Salesforce date literal such as TODAY, YESTERDAY, THIS_WEEK, THIS_MONTH or LAST_N_DAYS:30. LIKE uses % as the wildcard." },
     },
     required: ["field", "op", "value"],
     additionalProperties: false,
@@ -117,7 +117,7 @@ const TOOLS: readonly AiTool[] = [
     businessData: true,
     spec: {
       name: "salesforce_objects",
-      description: "The Salesforce objects (and, for a fixed list, fields) Pico Bot may read for this person, and whether only their own records are visible. Call it first. If it says all objects are readable, pass search (e.g. 'opportunit') to find an object, then call salesforce_fields.",
+      description: "The Salesforce objects (and, for a fixed list, fields) Pico Bot may read for this person, and whether only their own records are visible. Call it first. If all objects are readable, pass search with the person's own word (e.g. 'executive', 'secondary order'): it matches the object's name or label, shown as Name (Label). Use the Name in the other tools. Then call salesforce_fields.",
       parameters: { type: "object", properties: { search: { type: "string", maxLength: 60 } }, additionalProperties: false },
     },
     args: z.object({ search: z.string().max(60).optional() }).strict(),
@@ -126,7 +126,8 @@ const TOOLS: readonly AiTool[] = [
       const scope = sf.scope;
       if (await readsAllObjects()) {
         const objects = await listObjects(String(args.search ?? ""), sf.fetchImpl, sf.signal);
-        return { result: { scope: scope === "OWN" ? "only records this person owns" : "all records they may see", objects: objects.slice(0, 120).map((item) => item.name), more: objects.length > 120 ? `${objects.length - 120} more; pass search to narrow` : null, fields: "call salesforce_fields with the object name", maxRows: MAX_ROWS }, source: SF };
+        // D-201: "Name (Label)" when they differ, so the person's word ("Executive") finds the object (Employee__c).
+        return { result: { scope: scope === "OWN" ? "only records this person owns" : "all records they may see", objects: objects.slice(0, 120).map((item) => (item.label && item.label !== item.name ? `${item.name} (${item.label})` : item.name)), more: objects.length > 120 ? `${objects.length - 120} more; pass search to narrow` : null, fields: "call salesforce_fields with the object name", maxRows: MAX_ROWS }, source: SF };
       }
       const allowlist = await loadAllowlist();
       return { result: { scope: scope === "OWN" ? "only records this person owns" : "all records of these objects they may see", objects: Object.fromEntries([...allowlist].map(([object, fields]) => [object, [...fields]])), maxRows: MAX_ROWS, copies: await sourceDatasetCounts("salesforce") }, source: SF };
@@ -142,8 +143,8 @@ const TOOLS: readonly AiTool[] = [
       const sf = salesforceContext(context);
       if (!(await readsAllObjects())) throw new QueryRefused("Use salesforce_objects: only the listed objects and fields are available.");
       const fields = await describeObject(String(args.object), sf.fetchImpl, sf.signal);
-      // Compact (name:type) to keep the answer small for providers with low token limits.
-      return { result: { object: args.object, fields: fields.slice(0, 200).map((field) => `${field.name}:${field.type}`), more: fields.length > 200 }, source: SF };
+      // Compact (name:type, plus the label when it differs) to keep the answer small for providers with low token limits.
+      return { result: { object: args.object, fields: fields.slice(0, 200).map((field) => `${field.name}:${field.type}${field.label && field.label.replace(/\s+/g, "_") !== field.name.replace(/__c$/, "") ? ` (${field.label})` : ""}`), more: fields.length > 200 }, source: SF };
     },
   },
   {
@@ -195,12 +196,13 @@ const TOOLS: readonly AiTool[] = [
     businessData: true,
     spec: {
       name: "salesforce_group",
-      description: "Group Salesforce records of one object by a field (or by month/year of a date field) and count, sum, average, min or max a field per group, with simple filters. Salesforce does the maths; use it for breakdowns, rankings, trends and dashboards.",
+      description: "Group Salesforce records of one object by a field (or by month/year of a date field), optionally then by a second field, and count, sum, average, min or max a field per group, with simple filters. A sum or average also returns the record count per group, and the result has the overall total. Salesforce does the maths; use it for breakdowns, rankings, trends and dashboards.",
       parameters: {
         type: "object",
         properties: {
           object: { type: "string" },
           group_by: { type: "string", description: "The field to group by (a date or date-time field when bucket is set)." },
+          then_by: { type: "string", description: "Optional second field to group by within each group (e.g. group_by Region__c, then_by Status__c)." },
           bucket: { type: "string", enum: ["MONTH", "YEAR"], description: "Group a date field by month or year (for trends)." },
           aggregate: { type: "string", enum: ["COUNT", "SUM", "AVG", "MIN", "MAX"] },
           field: { type: "string", description: "The numeric field to aggregate; not needed for COUNT." },
@@ -210,11 +212,11 @@ const TOOLS: readonly AiTool[] = [
         additionalProperties: false,
       },
     },
-    args: z.object({ object: z.string().max(80), group_by: z.string().max(80), bucket: z.enum(["MONTH", "YEAR"]).optional(), aggregate: z.enum(["COUNT", "SUM", "AVG", "MIN", "MAX"]), field: z.string().max(80).optional(), filters: filterArgs.default([]) }).strict(),
+    args: z.object({ object: z.string().max(80), group_by: z.string().max(80), then_by: z.string().max(80).optional(), bucket: z.enum(["MONTH", "YEAR"]).optional(), aggregate: z.enum(["COUNT", "SUM", "AVG", "MIN", "MAX"]), field: z.string().max(80).optional(), filters: filterArgs.default([]) }).strict(),
     run: async (context, args) => {
       const sf = salesforceContext(context);
-      const result = await groupSalesforce({ object: String(args.object), groupBy: String(args.group_by), bucket: (args.bucket as "MONTH" | "YEAR" | undefined) ?? null, aggregate: args.aggregate as "COUNT", field: (args.field as string | undefined) ?? null, filters: args.filters as never }, sf);
-      return { result: { object: args.object, groupedBy: args.group_by, bucket: args.bucket ?? null, aggregate: args.aggregate, field: args.field ?? null, ...result }, source: SF };
+      const result = await groupSalesforce({ object: String(args.object), groupBy: String(args.group_by), thenBy: (args.then_by as string | undefined) ?? null, bucket: (args.bucket as "MONTH" | "YEAR" | undefined) ?? null, aggregate: args.aggregate as "COUNT", field: (args.field as string | undefined) ?? null, filters: args.filters as never }, sf);
+      return { result: { object: args.object, groupedBy: args.group_by, thenBy: args.then_by ?? null, bucket: args.bucket ?? null, aggregate: args.aggregate, field: args.field ?? null, ...result }, source: SF };
     },
   },
   {
@@ -258,7 +260,7 @@ export const TOOL_NAMES = TOOLS.map((tool) => tool.spec.name);
 // Runs one tool call from the model. Unknown tools, tools not allowed now and
 // bad arguments are refused with a message the model can read; refusals and
 // source failures never invent data.
-export async function runTool(context: ToolContext, allowed: readonly AiTool[], name: string, rawArgs: Record<string, unknown>): Promise<{ content: string; evidence: AiEvidence | null }> {
+export async function runTool(context: ToolContext, allowed: readonly AiTool[], name: string, rawArgs: Record<string, unknown>): Promise<{ content: string; evidence: AiEvidence | null; error?: string }> {
   const tool = allowed.find((item) => item.spec.name === name);
   if (!tool || !allowedNow(tool, context)) return { content: JSON.stringify({ error: `The tool "${name.slice(0, 60)}" isn't available in this chat. Say the information is outside this chat's access.` }), evidence: null };
   const parsed = tool.args.safeParse(rawArgs);
@@ -269,7 +271,7 @@ export async function runTool(context: ToolContext, allowed: readonly AiTool[], 
     const evidence: AiEvidence = { tool: tool.spec.name, label: tool.label, args: parsed.data as Record<string, unknown>, source: output.source, asOf, result: output.result, links: output.links ?? [] };
     return { content: JSON.stringify({ source: output.source, as_of: asOf, data: output.result }), evidence };
   } catch (error) {
-    if (error instanceof QueryRefused || error instanceof SalesforceUnavailable) return { content: JSON.stringify({ error: error.message, note: "Tell the person this plainly; do not guess the data." }), evidence: null };
+    if (error instanceof QueryRefused || error instanceof SalesforceUnavailable) return { content: JSON.stringify({ error: error.message, note: "Fix the call and try again (check names with salesforce_objects and salesforce_fields). If it still fails, tell the person plainly what couldn't be read. Never fill the gap with example, typical or estimated numbers." }), evidence: null, error: error.message };
     throw error;
   }
 }

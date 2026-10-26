@@ -17,6 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (26 Oct 2026):** v1.23.0: Pico Bot accuracy (D-201): Salesforce dates, lookup names, labels, two-level breakdowns, invented figures blocked, secret fields never readable. **Owner:** publish v1.23.0; start a **new chat** (old chats still hold the invented answers); consider Claude or ChatGPT for Salesforce chats (NVIDIA Nemotron follows tool rules poorly).
 - **Now (26 Oct 2026):** v1.22.4: split-screen home page back, with the content Google's review needs (D-200). Rollback to approval.arssteels.net verified live. **Owner:** publish v1.22.4; Google Branding links on approval; resubmit verification.
 - **Now (26 Oct 2026):** v1.22.3: rolled back to approval.arssteels.net (owner, D-199). **Owner:** docs/DOMAIN-MIGRATION.md → Rollback: DNS A record `approval`, GoDaddy domain, APP_BASE_URL, LEGACY_HOSTS=arssteels.net,www.arssteels.net, publish v1.22.3, cron and CEOITBox URLs, Google Branding links, resubmit verification.
 - **Now (26 Oct 2026):** v1.22.2: the home page is a public page about ARS-CMS (D-198) for Google's review. **Owner, urgent:** the cron job and CEOITBox webhook must call https://arssteels.net (job runner LATE; the old address returns 404); reconnect approval.arssteels.net to the GoDaddy app as an extra domain so old links redirect. Then publish v1.22.2 and resubmit Google verification.
@@ -367,6 +368,8 @@ Plan: `docs/CHATBOT_IMPLEMENTATION_PLAN.md`; audit: `docs/CHATBOT_ARCHITECTURE_A
 - [x] PB-40 Domain move prepared in code: single base-URL helper, LEGACY_HOSTS redirect (machine callers and OAuth callbacks exempt), unit tests, docs/DOMAIN-MIGRATION.md (done 25 Oct 2026, v1.22.0)
 - [x] PB-41 Phone layout: six pages scrolled sideways (sr-only label in wide tables); fixed globally (done 25 Oct 2026, v1.22.0)
 - [x] PB-48 Rollback to approval.arssteels.net in the app (default address, policies, samples, runbook) (26 Oct 2026, D-199)
+- [x] PB-51 Pico Bot accuracy: Salesforce date-times, lookup names, object labels, two-level breakdowns, invented figures blocked, secret fields hidden (26 Oct 2026, D-201)
+- [ ] PB-52 Owner: publish v1.23.0; retest the secondary-order and executive-login questions in a new Salesforce chat
 - [x] PB-50 Split-screen home page back, Google-safe (26 Oct 2026, D-200)
 - [x] PB-49 (26 Oct 2026: done by the owner, checked live) Owner: rollback steps in docs/DOMAIN-MIGRATION.md → Rollback
 - [~] PB-42 (26 Oct 2026: superseded by the rollback, D-199) Owner: move to arssteels.net following docs/DOMAIN-MIGRATION.md (Steps 1–7)

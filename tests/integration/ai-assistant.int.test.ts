@@ -47,6 +47,8 @@ function toolThenAnswer(tool: string, input: Record<string, unknown> = {}) {
   return vi.fn(async (_url: string | URL | Request, init?: RequestInit) => {
     const body = JSON.parse(String(init?.body));
     const last = body.messages[body.messages.length - 1];
+    // D-201: challenged about the invented figure, it answers again without a new lookup (and keeps it).
+    if (typeof last.content === "string" && last.content.startsWith("Before this answer is shown")) return json({ model: "claude-fake", content: [{ type: "text", text: "Still roughly 77 people agree." }], usage: { input_tokens: 20, output_tokens: 10 } });
     if (Array.isArray(last.content) && last.content[0]?.type === "tool_result") {
       return json({ model: "claude-fake", content: [{ type: "text", text: `Verified: ${last.content[0].content.slice(0, 300)} Roughly 77 people agree.` }], usage: { input_tokens: 20, output_tokens: 10 } });
     }
@@ -134,6 +136,9 @@ describe("chat modes are enforced on the server", () => {
     const real = await approvalsWaitingFor(personId);
     expect(answer.evidence).toEqual([expect.objectContaining({ tool: "approvals_waiting_for_me", result: expect.objectContaining({ pending: real.pending }) })]);
     expect(answer.unverified).toContain("77");
+    // D-201: the model was challenged once, and the figure is called out on screen.
+    expect(answer.content.startsWith("> Some figures couldn't be checked")).toBe(true);
+    expect(answer.content).toContain("Treat these with care: 77.");
   });
 });
 
@@ -251,6 +256,7 @@ describe("Salesforce: OAuth, tokens and live queries", () => {
     const soql: string[] = [];
     const salesforce = vi.fn(async (url: string) => {
       const query = decodeURIComponent(url.split("q=")[1] ?? "");
+      if (url.endsWith("/sobjects/Account/describe")) return json({ queryable: true, fields: [{ name: "Id" }, { name: "Name", type: "string" }, { name: "Industry", type: "picklist" }] });
       soql.push(query);
       if (query.startsWith("SELECT Id FROM User")) return json({ totalSize: 1, done: true, records: [{ Id: "0055g00000ABCDEAAA" }] });
       return json({ totalSize: 1, done: true, records: [{ attributes: { type: "Account" }, Id: "001A", Name: "Dealer One" }] });
@@ -263,7 +269,7 @@ describe("Salesforce: OAuth, tokens and live queries", () => {
     expect(soql[0]).toBe(`SELECT Id FROM User WHERE Email = '${user.email}' AND IsActive = true LIMIT 2`);
     expect(soql[1]).toBe("SELECT Id, Name FROM Account WHERE OwnerId = '0055g00000ABCDEAAA' WITH USER_MODE LIMIT 10");
     const answer = (await listMessages(personId, result.conversationId)).at(-1)!;
-    expect(answer.content).toContain("Dealer One");
+    expect(JSON.stringify(answer.evidence)).toContain("Dealer One");
     expect(JSON.stringify(provider.mock.calls)).not.toContain("00D-new-token");
     await access(personId, "APPROVAL,TASK,INFORMATION,AI", "APPROVAL,TASK,INFORMATION", "NONE");
   });
