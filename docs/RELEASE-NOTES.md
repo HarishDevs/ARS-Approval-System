@@ -1,5 +1,8 @@
 # Release notes
 
+## v1.22.4 (26 Oct 2026): the split-screen home page is back (owner)
+- **The home page is the split screen again** (blue panel left, welcome right), now with what Google's review needs on the page itself: the name ARS-CMS, what it is for, what you can do, who can use it and how Google data is used, with the privacy policy link. **Sign in** turns smoothly into the sign-in form.
+
 ## v1.22.3 (26 Oct 2026): back on approval.arssteels.net (owner)
 - **ARS-CMS lives at https://approval.arssteels.net again.** The app's fallback address, the privacy policy, the terms and the sample links in message templates use it. The name ARS-CMS and the new home page stay.
 - Links already sent on arssteels.net can open the same page on approval (`LEGACY_HOSTS=arssteels.net,www.arssteels.net`). Steps: docs/DOMAIN-MIGRATION.md → Rollback.

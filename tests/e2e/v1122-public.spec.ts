@@ -7,19 +7,19 @@ test("home, privacy policy and terms are public, link to each other, and describ
   const home = await page.goto("/");
   expect(home?.status()).toBe(200);
   await expect(page).toHaveURL(/\/$/);
-  // D-198: a public page about the app (Google OAuth review): its name, purpose, Google data use, sign-in one click away.
+  // D-200: the split screen, Google-safe: the name, purpose, features and Google data use on the page itself.
   await expect(page).toHaveTitle("ARS-CMS | ARS Steels");
   await expect(page.getByRole("heading", { level: 1, name: "ARS-CMS" })).toBeVisible();
-  await expect(page.getByRole("banner").getByText("ARS-CMS", { exact: true })).toBeVisible();
   await expect(page.getByTestId("landing-purpose")).toContainText("raise and approve requests");
-  await expect(page.getByRole("heading", { name: "What you can do in ARS-CMS" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "How ARS-CMS uses Google data" })).toBeVisible();
+  await expect(page.getByRole("main").getByText(/Multi-level approvals/)).toBeVisible();
+  await expect(page.getByRole("main").getByText(/Google data is never sold/)).toBeVisible();
+  await expect(page.getByRole("region", { name: "About ARS-CMS" })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
   await page.getByRole("main").getByRole("link", { name: "Sign in" }).click();
   await expect(page).toHaveURL(/\/login$/);
   await expect(page.getByRole("heading", { level: 1, name: "Welcome back" })).toBeVisible();
   await page.goto("/");
-  await page.getByRole("navigation", { name: "Legal" }).getByRole("link", { name: "Privacy policy" }).click();
+  await page.getByRole("link", { name: "Privacy policy", exact: true }).click();
   await expect(page).toHaveURL(/\/privacy$/);
   await expect(page.getByRole("heading", { name: "Limited Use disclosure" })).toBeVisible();
   await expect(page.getByText("https://www.googleapis.com/auth/calendar.calendarlist.readonly")).toBeVisible();

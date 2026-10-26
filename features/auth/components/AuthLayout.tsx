@@ -3,12 +3,15 @@ import { MailLink } from "@/features/ui/MailLink";
 // Split layout for the landing page, sign-in, set-password and forgot-password
 // (asset pack 00-login-split-layout-alt). D-190: the content fades in
 // (.auth-enter), so the welcome turns smoothly into the sign-in form while
-// the brand panel and logo stay still.
-export function AuthLayout({ children }: { children: React.ReactNode }) {
+// the brand panel and logo stay still. D-200: on the home page (landing) the
+// brand panel is real content (not aria-hidden), so Google's OAuth review and
+// screen readers read it, and the "Need access?" line moves into the welcome.
+export function AuthLayout({ children, landing = false }: { children: React.ReactNode; landing?: boolean }) {
   return (
     <main className="grid min-h-dvh lg:grid-cols-2">
       <section
-        aria-hidden="true"
+        aria-hidden={landing ? undefined : true}
+        aria-label={landing ? "About ARS-CMS" : undefined}
         className="relative hidden overflow-hidden bg-gradient-to-br from-primary-solid to-[#003B6E] px-16 py-14 text-white lg:flex lg:flex-col lg:justify-end"
       >
         <div className="pointer-events-none absolute -right-40 -top-40 h-[560px] w-[560px] rounded-full border-[56px] border-white/10" />
@@ -48,13 +51,15 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
       <section className="flex items-center justify-center px-4 py-12 sm:px-8">
         <div className="w-full max-w-[440px]">
           {/* eslint-disable-next-line @next/next/no-img-element -- static SVG logo */}
-          <img src="/brand/ars-green-steel.svg" alt="ARS Green Steel" className="h-16 w-auto" />
+          <img src="/brand/ars-green-steel.svg" alt="ARS Steels" className="h-16 w-auto" />
           <div className="auth-enter">{children}</div>
-          <p className="mt-8 text-center text-body text-ink-muted">
-            Need access? Contact IT Support: <span className="select-all font-medium text-ink"><MailLink address="itadmin@arssteels.co.in" /></span>
-          </p>
+          {!landing && (
+            <p className="mt-8 text-center text-body text-ink-muted">
+              Need access? Contact IT Support: <span className="select-all font-medium text-ink"><MailLink address="itadmin@arssteels.co.in" /></span>
+            </p>
+          )}
           {/* v1.12.2 (D-161): the policies, reachable before signing in. */}
-          <p className="mt-3 flex gap-4 text-caption">
+          <p className={`${landing ? "mt-8" : "mt-3"} flex gap-4 text-caption`}>
             <a href="/privacy" className="link">
               Privacy policy
             </a>
