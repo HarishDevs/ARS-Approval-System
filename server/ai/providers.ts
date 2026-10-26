@@ -58,6 +58,8 @@ export interface ChatRequest {
   system: string;
   turns: Turn[];
   tools?: ToolSpec[];
+  // D-204: "none" keeps the tools described (earlier tool calls stay valid) but asks for a written answer now.
+  toolChoice?: "none";
   maxTokens: number;
   timeoutMs: number;
   signal?: AbortSignal; // D-172: the person pressed Stop or closed the panel
@@ -69,6 +71,7 @@ export interface ChatAnswer {
   model: string;
   inputTokens: number | null;
   outputTokens: number | null;
+  truncated?: boolean; // D-204: the answer hit the output-token limit
 }
 
 // What went wrong, in words safe to show. `retryable` says whether another
@@ -236,12 +239,14 @@ export async function chat(config: ProviderConfig, request: ChatRequest, fetchIm
     headers["anthropic-version"] = "2023-06-01";
     body = { model: config.model, max_tokens: request.maxTokens, system: request.system, messages: anthropicMessages(request.turns) };
     if (tools.length) body.tools = tools.map((tool) => ({ name: tool.name, description: tool.description, input_schema: tool.parameters }));
+    if (tools.length && request.toolChoice === "none") body.tool_choice = { type: "none" };
   } else {
     headers.authorization = `Bearer ${config.apiKey}`;
     body = { model: config.model, messages: openAiMessages(request.system, request.turns) };
     // OpenAI's newer models take max_completion_tokens; the others take max_tokens.
     body[config.provider === "OPENAI" ? "max_completion_tokens" : "max_tokens"] = request.maxTokens;
     if (tools.length) body.tools = tools.map((tool) => ({ type: "function", function: { name: tool.name, description: tool.description, parameters: tool.parameters } }));
+    if (tools.length && request.toolChoice === "none") body.tool_choice = "none";
   }
 
   const response = await sendWithRetry(fetchImpl, url, { method: "POST", headers, body: JSON.stringify(body) }, request);
@@ -254,7 +259,7 @@ export async function chat(config: ProviderConfig, request: ChatRequest, fetchIm
     const toolCalls = content.filter((part) => part.type === "tool_use" && part.id && part.name).map((part) => ({ id: part.id!, name: part.name!, args: parseArgs(part.input) }));
     const usage = (data.usage ?? {}) as { input_tokens?: number; output_tokens?: number };
     if (!text && !toolCalls.length) throw new ProviderError("BAD_ANSWER", "The provider sent an empty answer.", true);
-    return { text, toolCalls, model: String(data.model ?? config.model), inputTokens: usage.input_tokens ?? null, outputTokens: usage.output_tokens ?? null };
+    return { text, toolCalls, model: String(data.model ?? config.model), inputTokens: usage.input_tokens ?? null, outputTokens: usage.output_tokens ?? null, truncated: data.stop_reason === "max_tokens" };
   }
   const choices = Array.isArray(data.choices) ? (data.choices as { finish_reason?: string; message?: { content?: unknown; tool_calls?: { id?: string; function?: { name?: string; arguments?: unknown } }[] } }[]) : [];
   const message = choices[0]?.message;
@@ -264,5 +269,5 @@ export async function chat(config: ProviderConfig, request: ChatRequest, fetchIm
   // A reasoning model can spend the whole allowance thinking and return no text.
   if (!text && !toolCalls.length && choices[0]?.finish_reason === "length") throw new ProviderError("BAD_ANSWER", "The answer ran out of room (this model thinks first). Raise \"Longest answer (output tokens)\" or choose a non-reasoning model.", true);
   if (!text && !toolCalls.length) throw new ProviderError("BAD_ANSWER", "The provider sent an empty answer.", true);
-  return { text, toolCalls, model: String(data.model ?? config.model), inputTokens: usage.prompt_tokens ?? null, outputTokens: usage.completion_tokens ?? null };
+  return { text, toolCalls, model: String(data.model ?? config.model), inputTokens: usage.prompt_tokens ?? null, outputTokens: usage.completion_tokens ?? null, truncated: choices[0]?.finish_reason === "length" };
 }

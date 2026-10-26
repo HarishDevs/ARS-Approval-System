@@ -28,8 +28,10 @@ import { logError } from "@/lib/logging/logger";
 //   5. Tool loop with the mode's tools only; every figure checked; evidence
 //      and usage saved; prompt text never logged.
 // D-177: six rounds, as reading any Salesforce object can take objects ->
-// fields -> query before the answer.
-const MAX_ROUNDS = 6;
+// fields -> query before the answer. D-204: eight, for 360-degree requests
+// (sales, orders, invoices, stock, targets… each its own lookup).
+const MAX_ROUNDS = 8;
+const MAX_OUTPUT_TOKENS = 8000;
 export const MAX_RULES_CHARS = 20000; // D-187: about 5,000 tokens at most
 
 export type AskResult = { ok: true; conversationId: number; duplicate?: boolean } | { ok: false; message: string; code?: string; conversationId?: number };
@@ -50,7 +52,9 @@ export function systemPrompt(input: { name: string; mode: ChatMode; dataModes: r
   } else {
     lines.push(
       `This chat is limited to ${scope}. Answer only questions about ${scope}, using the tools.`,
-      "If the question is about anything else (other modules, Salesforce, general knowledge, writing help), say briefly that this chat is limited to " + scope + " and can't help with that here. Don't answer it anyway, and don't look for data outside your tools.",
+      // D-204: the out-of-scope examples never name this chat's own data (a Salesforce chat was told "Salesforce" was out of scope).
+      `If the question is about anything else (${[input.dataModes.includes("SALESFORCE") ? null : "Salesforce", "other ARS modules", "general knowledge", "writing help"].filter(Boolean).join(", ")}), say briefly that this chat is limited to ${scope} and can't help with that here. Don't answer it anyway, and don't look for data outside your tools.`,
+      `If only part of a request can be answered from ${scope} (for example it also asks for ERP or other systems' data), answer that part fully and say in one line which part isn't available here. Never refuse the whole request because of one part.`,
     );
   }
   if (input.mode !== "GENERAL" && !input.withTools) lines.push("Your data tools are not available right now; say so plainly and do not guess.");
@@ -191,7 +195,7 @@ export async function askAssistant(
       const tools = toolsFor({ person, dataModes }, settings.providers[provider].businessData);
       const started = Date.now();
       try {
-        const outcome = await converse(provider, settings.configs[provider]!, { person, conversationId, dataModes, signal: input.signal, fetchImpl: input.fetchImpl }, tools, history, question, { mode, timeoutMs: settings.timeoutMs, maxTokens: maxOutput || 1200, rules });
+        const outcome = await converse(provider, settings.configs[provider]!, { person, conversationId, dataModes, signal: input.signal, fetchImpl: input.fetchImpl }, tools, history, question, { mode, timeoutMs: settings.timeoutMs, maxTokens: maxOutput || 4000, rules });
         const unverified = checkFigures(outcome.answer.text, question, outcome.evidence, person.name);
         const content = guarded(outcome.answer.text, unverified, outcome.evidence);
         await addMessage(conversationId, { role: "assistant", content, provider, model: outcome.answer.model, inputTokens: outcome.inputTokens, outputTokens: outcome.outputTokens, latencyMs: Date.now() - started, evidence: outcome.evidence, unverified });
@@ -236,9 +240,19 @@ async function converse(
     const lastRound = round === MAX_ROUNDS - 1;
     // Without tools some providers refuse a model that still tries one, so say it plainly.
     if (lastRound) turns.push({ role: "user", content: "No more lookups are possible. Answer now from the data above, and say what you could not find." });
-    const answer = await chat(config, { system, turns, tools: lastRound ? [] : tools.map((tool) => tool.spec), maxTokens: options.maxTokens, timeoutMs: options.timeoutMs, signal: context.signal }, context.fetchImpl);
+    // D-204: the last round keeps the tools described but asks for the written answer (Claude refuses
+    // a request that has earlier tool calls but no tools); with no lookups so far, tools are left out.
+    const lookedUp = turns.some((turn) => turn.role === "tool");
+    const request = { system, turns, tools: lastRound && !lookedUp ? [] : tools.map((tool) => tool.spec), toolChoice: lastRound && lookedUp ? ("none" as const) : undefined, maxTokens: options.maxTokens, timeoutMs: options.timeoutMs, signal: context.signal };
+    let answer = await chat(config, request, context.fetchImpl);
     inputTokens += answer.inputTokens ?? 0;
     outputTokens += answer.outputTokens ?? 0;
+    // D-204: an answer cut off at the output limit (a big dashboard) is asked again once with more room.
+    if (answer.truncated && !answer.toolCalls.length && options.maxTokens < MAX_OUTPUT_TOKENS) {
+      answer = await chat(config, { ...request, maxTokens: Math.min(MAX_OUTPUT_TOKENS, options.maxTokens * 2) }, context.fetchImpl);
+      inputTokens += answer.inputTokens ?? 0;
+      outputTokens += answer.outputTokens ?? 0;
+    }
     if (!answer.toolCalls.length) {
       // D-201: one chance to back up figures that aren't in the data.
       const unchecked = checkFigures(answer.text, question, evidence, context.person.name);

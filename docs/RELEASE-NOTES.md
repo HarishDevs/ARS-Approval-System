@@ -1,5 +1,11 @@
 # Release notes
 
+## v1.23.3 (26 Oct 2026): 360-degree dashboards (owner)
+- **Big requests work:** a dealer 360 view (sales, orders, payments, targets…) gets more lookups and room for a long answer; an answer that runs out of room is retried with more.
+- **Fixed: a Salesforce chat could refuse Salesforce questions** ("This chat is limited to Salesforce data").
+- **Partly answerable requests** (for example ERP data, which Pico Bot can't see) are answered for the Salesforce part, with a note on the rest.
+- **Privacy:** Aadhaar, PAN and bank details in Salesforce are never read by Pico Bot.
+
 ## v1.23.2 (26 Oct 2026): your question leaves the box when you send it (owner)
 - In the AI Assistant, pressing Enter now empties the box at once; your question shows in the chat while Pico Bot is analysing. If asking fails, the question comes back to the box so you can edit or resend it. The floating Pico Bot panel does the same.
 

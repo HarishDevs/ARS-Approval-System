@@ -53,8 +53,11 @@ export interface FieldInfo {
 }
 
 // D-201: secrets are never readable, even with "*" (the Executive object has
-// Password__c and Session_ID__c). Matched on the field's name or label.
-export const SECRET_FIELD = /pass(?:word|wd|code)|session[\s_]*id|token|secret|(?<![a-z])otp(?![a-z])|api[\s_]*key|private[\s_]*key/i;
+// Password__c and Session_ID__c). D-204: nor are identity and bank details
+// (Account has Aadhar_Number__c, PAN_Number__c, Party_Bank_Account_Number__c,
+// Bank_IFSC_Code__c), which shouldn't reach an outside AI service.
+// Matched on the field's name or label.
+export const SECRET_FIELD = /pass(?:word|wd|code)|session[\s_]*id|token|secret|(?<![a-z])otp(?![a-z])|api[\s_]*key|private[\s_]*key|aadh?aa?r|(?<![a-z])pan[\s_]*(?:number|no)(?![a-z])|bank[\s_]*(?:account|a\/c)|account[\s_]*number|ifsc|micr/i;
 
 // Describes are cached for 10 minutes per object (they rarely change).
 const DESCRIBE_MS = 10 * 60 * 1000;

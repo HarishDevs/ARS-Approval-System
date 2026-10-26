@@ -120,7 +120,7 @@ export const SETTING_DEFINITIONS: readonly SettingDefinition[] = [
   { key: "ai.concurrent_per_person", group: "AI", label: "Questions one person may have waiting at once", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(1).max(5), defaultValue: "2" },
   { key: "ai.concurrent_global", group: "AI", label: "Questions sent to providers at once, for everyone (this server)", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(1).max(50), defaultValue: "10" },
   { key: "ai.history_turns", group: "AI", label: "Earlier messages sent with each question (context)", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(0).max(30), defaultValue: "10" },
-  { key: "ai.max_output_tokens", group: "AI", label: "Longest answer (output tokens)", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(100).max(8000), defaultValue: "1200" },
+  { key: "ai.max_output_tokens", group: "AI", label: "Longest answer (output tokens)", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(100).max(8000), defaultValue: "4000" },
   { key: "ai.price_in_per_million", group: "AI", label: "Your provider price per million input tokens, in ₹ (for the cost estimate; leave empty for none)", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().min(0).max(100000) },
   { key: "ai.price_out_per_million", group: "AI", label: "Your provider price per million output tokens, in ₹ (for the cost estimate; leave empty for none)", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().min(0).max(100000) },
   // Salesforce (D-172): OAuth 2.0 web server flow with PKCE, connected once by
