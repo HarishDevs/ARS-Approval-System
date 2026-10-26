@@ -20,6 +20,12 @@ export function LandingWelcome() {
       <p className="mt-10 text-label font-semibold uppercase tracking-[0.14em] text-primary-600">Central Management System</p>
       <h1 className="mt-2 text-[clamp(1.75rem,4vw,2.75rem)] font-bold leading-tight tracking-tight text-ink">Welcome to ARS-CMS</h1>
       <p className="mt-3 text-[clamp(0.9375rem,1.4vw,1.0625rem)] text-ink-muted">One workspace. Everything you need to work.</p>
+      {/* D-197: Google's OAuth review needs the home page itself (on a phone
+          too, where the brand panel is hidden) to say what the app is for. */}
+      <p data-testid="landing-purpose" className="mt-4 text-body leading-relaxed text-ink-muted">
+        ARS-CMS is the internal app of ARS Steels &amp; Alloy International Pvt. Ltd. Employees use it to raise and approve requests through any number of approval levels, share
+        information, track tasks and, if they choose, keep their due dates in their Google Calendar. Accounts are created by the ARS IT team.
+      </p>
       <a
         href={SIGN_IN}
         className="btn-primary mt-8"

@@ -1,5 +1,9 @@
 # Release notes
 
+## v1.22.1 (26 Oct 2026): home page ready for Google's review (owner)
+- **The home page now says what ARS-CMS is for**, in plain view on desktop and phones, including the optional Google Calendar link. Google's OAuth review needs this.
+- **docs/DOMAIN-MIGRATION.md:** DNS steps are in GoDaddy (arssteels.net uses GoDaddy's name servers), and a new "Google verification" section explains each finding from Google's review and the order to resubmit.
+
 ## v1.22.0 (25 Oct 2026): ARS-CMS, ready for arssteels.net, Pico Bot, AI Analytics, New chat fix, full site audit (owner)
 - **New name: ARS-CMS (Central Management System)** on the home page, sign-in, browser tabs, the installed app, emails, the privacy policy and terms, and in Pico Bot. WhatsApp wording keeps the Meta-approved text until the templates are resubmitted.
 - **Ready to move to arssteels.net:** every link comes from one setting (`APP_BASE_URL`); the old address can redirect page by page (`LEGACY_HOSTS`) while webhooks, the job runner and sign-in callbacks keep working. Step-by-step guide: docs/DOMAIN-MIGRATION.md.

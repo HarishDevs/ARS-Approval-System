@@ -10,6 +10,9 @@ test("home, privacy policy and terms are public, link to each other, and describ
   // D-188: the landing page of ARS Internal Workspace; the Google data use is in the privacy policy.
   await expect(page).toHaveTitle("ARS-CMS | ARS Steels");
   await expect(page.getByRole("heading", { level: 1, name: "Welcome to ARS-CMS" })).toBeVisible();
+  // D-197: the purpose is visible on the home page itself (Google OAuth review).
+  await expect(page.getByTestId("landing-purpose")).toContainText("raise and approve requests");
+  await expect(page.getByTestId("landing-purpose")).toContainText("Google Calendar");
   await expect(page.getByRole("link", { name: "Sign in to continue" })).toHaveAttribute("href", "/login");
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
   // D-190: the welcome turns into the sign-in form on the same split layout.

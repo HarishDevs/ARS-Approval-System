@@ -1060,6 +1060,7 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 1a. **Sign in to continue** fades the welcome out and the sign-in form in; the brand panel stays.
 2. Both Sign in buttons open the existing /login; sign-in redirects as before. A signed-in visitor goes straight to /users.
 3. The Google data-use explanation is in the privacy policy (linked from the footer), no longer on the home page.
+4. (v1.22.1, D-197) Under the welcome, one visible paragraph says what ARS-CMS is for (requests and multi-level approvals, information, tasks, optional Google Calendar) and that IT creates the accounts, for visitors and Google's OAuth review, on desktop and phone.
 
 ## F-140 AI Assistant as a business analyst (v1.19.0, D-178, D-180, D-182)
 1. The person opens **AI Assistant** in the sidebar: a new chat opens and the chat list (pinned first, newest next, with a search) expands. About ten chats show; the rest scroll.
