@@ -163,6 +163,8 @@ export function PicBot({ initialModes }: { initialModes: ModeOption[] }) {
       setNotice(result.data?.conversationId ? null : result.message);
       // A retry re-sends the same key: the server never stores or charges it twice.
       if (result.status !== 403 && result.status !== 413 && result.status !== 400) setRetry(pending);
+      // D-203: the question comes back to the box (unless something new was typed meanwhile).
+      setDraft((value) => value || pending.question);
     }
     void refresh();
   }

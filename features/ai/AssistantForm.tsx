@@ -28,6 +28,11 @@ export function AssistantForm({ conversationId, enabled, maxChars, modes, sugges
   useEffect(() => {
     box.current?.scrollIntoView({ block: "end" });
   }, [pending, result]);
+  // D-203 (owner): the question leaves the box as soon as it's sent (it shows
+  // in the conversation); it comes back only if asking failed, to edit or resend.
+  useEffect(() => {
+    if (result && !result.ok && box.current && !box.current.value && asked) box.current.value = asked;
+  }, [result, asked]);
 
   return (
     <div className="space-y-3">
@@ -65,8 +70,10 @@ export function AssistantForm({ conversationId, enabled, maxChars, modes, sugges
       <form
         ref={formRef}
         onSubmit={(event) => {
-          setAsked(box.current?.value.trim() ?? "");
-          onSubmit(event);
+          const question = box.current?.value.trim() ?? "";
+          setAsked(question);
+          onSubmit(event); // reads the form first
+          if (question && box.current) box.current.value = "";
         }}
         className="sticky bottom-3 rounded-2xl border border-line bg-surface px-3 py-2 shadow-lg focus-within:border-primary-600"
         data-testid="ai-ask"

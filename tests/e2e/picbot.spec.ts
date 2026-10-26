@@ -202,6 +202,8 @@ test("Bug 1: after an answer, New chat opens an empty chat and stays there (side
   await page.goto("/users/ai/assistant");
   await page.getByLabel("Your question").fill("What is waiting for me?");
   await page.getByLabel("Your question").press("Enter");
+  // D-203: the question leaves the box at once (it shows in the conversation).
+  await expect(page.getByLabel("Your question")).toHaveValue("", { timeout: 200 });
   await expect(page).toHaveURL(/\/users\/ai\/assistant\?c=\d+$/);
   await expect(page.getByTestId("ai-answer")).toContainText(`Answer for Person PB_N_${tag}`);
   await page.getByTestId("ai-strip").getByRole("link", { name: "New chat" }).click();

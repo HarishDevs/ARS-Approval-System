@@ -1068,7 +1068,7 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 **v1.23.0 (D-201):** before an answer is shown, every figure is checked against the data read for it (totals, differences, percentages and rounding of that data count). If some aren't there, Pico Bot is asked once to fetch them or drop them. Still unchecked: with no data read, the answer is "I couldn't read this from the data"; otherwise cards and charts showing them are removed and a note above the answer names them.
 1. The person opens **AI Assistant** in the sidebar: a new chat opens and the chat list (pinned first, newest next, with a search) expands. About ten chats show; the rest scroll.
 2. The top strip shows **+ New chat**, the day's limit (used, remaining, total) and the connection status.
-3. They ask in plain words; the analyst answers with figures from the data, metric cards and charts for dashboards, tables, insights and next steps. Technical detail (sources, provider, calculated figures) is in a hover hint.
+3. They ask in plain words (v1.23.2, D-203: the box empties as soon as they press Enter; the question shows in the chat with "Analysing…" and comes back to the box only if asking fails); the analyst answers with figures from the data, metric cards and charts for dashboards, tables, insights and next steps. Technical detail (sources, provider, calculated figures) is in a hover hint.
 4. Each chat's ⋯ menu: **Rename**, **Pin to top / Unpin**, **Delete** (confirmed). Owner only; audited.
 5. A failed answer shows one plain sentence; the technical reason is in Super Admin → AI Details → AI Reports.
 

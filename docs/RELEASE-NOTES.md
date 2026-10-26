@@ -1,5 +1,8 @@
 # Release notes
 
+## v1.23.2 (26 Oct 2026): your question leaves the box when you send it (owner)
+- In the AI Assistant, pressing Enter now empties the box at once; your question shows in the chat while Pico Bot is analysing. If asking fails, the question comes back to the box so you can edit or resend it. The floating Pico Bot panel does the same.
+
 ## v1.23.1 (26 Oct 2026): Pico Bot finds and fetches more reliably (owner)
 - **Ask with everyday names:** "executives", "attendance", "region", "last login" are understood directly, so answers need fewer steps.
 - **No more page-size totals:** a list that was cut off is never reported as the total.
