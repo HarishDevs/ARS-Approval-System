@@ -22,7 +22,7 @@ export default function PrivacyPage() {
         <h1>Privacy policy</h1>
         <p className="text-label text-ink-muted">Effective {PRIVACY_EFFECTIVE}</p>
         <p>
-          This policy explains how ARS-CMS (the &ldquo;app&rdquo;, at arssteels.net), operated by {COMPANY} (&ldquo;ARS&rdquo;, &ldquo;we&rdquo;), handles information. The app is an
+          This policy explains how ARS-CMS (the &ldquo;app&rdquo;, at approval.arssteels.net), operated by {COMPANY} (&ldquo;ARS&rdquo;, &ldquo;we&rdquo;), handles information. The app is an
           internal workplace tool for ARS employees. Accounts are created by ARS&apos;s IT team; there is no public sign-up.
         </p>
 

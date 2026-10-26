@@ -1,5 +1,26 @@
 # Moving ARS-CMS from approval.arssteels.net to arssteels.net
 
+> **Rolled back (26 Oct 2026, D-199).** The owner moved ARS-CMS back to **https://approval.arssteels.net**. The steps below the line are kept for a future move. Do the **Rollback** section now.
+
+## Rollback to approval.arssteels.net (do this now)
+State on 26 Oct 2026: the app answers on arssteels.net (v1.22.2); the `approval` DNS record was deleted, so approval.arssteels.net doesn't resolve.
+
+1. **DNS (GoDaddy → arssteels.net → DNS):** **Add** an `A` record, name `approval`, value `160.153.0.150` (the address `www` uses now), TTL 1 hour. If the app's Domains page (next step) shows a different value for approval.arssteels.net, use that instead.
+2. **GoDaddy → your Node.js app → Domains:** add `approval.arssteels.net` and make it the **primary** domain. Wait for **Connected** and **SSL active**. Keep `arssteels.net` connected for now (step 3 sends it back to approval). If the app takes only one domain, replace `arssteels.net` with `approval.arssteels.net`.
+3. **Environment variables:**
+   - `APP_BASE_URL` = `https://approval.arssteels.net` (no trailing slash);
+   - `LEGACY_HOSTS` = `arssteels.net,www.arssteels.net` while arssteels.net is still connected, so the links sent out today on arssteels.net open the same page on approval. If you disconnected arssteels.net, leave `LEGACY_HOSTS` empty.
+   - Leave everything else as it is. **Publish v1.22.3** (its built-in fallback address is approval.arssteels.net again).
+4. **Cron job (cPanel → Cron Jobs):** URL back to `https://approval.arssteels.net/api/jobs/run`, same secret header. Super Admin → **Message deliveries** shows the job runner green within 10 minutes.
+5. **CEOITBox:** delivery webhook back to `https://approval.arssteels.net/api/webhooks/ceoitbox`, same secret.
+6. **Google Cloud → Google Auth Platform → Branding:** App name `ARS-CMS`; home page `https://approval.arssteels.net`; privacy `https://approval.arssteels.net/privacy`; terms `https://approval.arssteels.net/terms`; authorised domain `arssteels.net` (it covers approval). The Search Console **Domain** property for arssteels.net covers the subdomain. Then resubmit verification.
+7. **Nothing to change** at Firebase, the Google Calendar OAuth client or Salesforce if you kept the approval entries (Step 3 below only added). If you removed them, add back: Firebase authorised domain `approval.arssteels.net`; OAuth origin `https://approval.arssteels.net` and redirect `https://approval.arssteels.net/api/integrations/google-calendar/callback`; Salesforce callback `https://approval.arssteels.net/api/integrations/salesforce/callback`.
+8. **People sign in once more** on approval.arssteels.net (sign-ins belong to a domain).
+9. **Check:** https://approval.arssteels.net shows the ARS-CMS home page; `/api/health` shows `"status":"ok"`, version 1.22.3 and `"jobRunner":"OK"`; Super Admin → **Salesforce Settings** shows the callback on approval.arssteels.net; https://arssteels.net/users/requests/123 lands on the same page at approval (if you set `LEGACY_HOSTS`); sign in with Google and with User ID + WhatsApp code.
+10. **Later (optional):** once nothing uses arssteels.net, remove it from the app, clear `LEGACY_HOSTS`, and set the root `@` record back to what you want there (it showed GoDaddy's "Coming Soon" page, `68.178.145.238`).
+
+---
+
 **Goal:** the app (now called **ARS-CMS, Central Management System**) answers on **https://arssteels.net**. The old address keeps working: every old link redirects to the same page on the new one.
 
 **Order:** first add everything the new domain needs **while the old one keeps working** (Steps 1–3). Then switch with one setting (Step 4). Then move the machine callers (Step 5), check (Step 6) and tidy up later (Step 7). At no point is the app off.

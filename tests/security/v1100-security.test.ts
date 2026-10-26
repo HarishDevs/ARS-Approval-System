@@ -100,6 +100,17 @@ describe("moving domains (D-196)", () => {
     expect((await middleware(new NextRequest(new URL("/login", "https://arssteels.net"), { headers: { host: "arssteels.net" } }))).status).not.toBe(308);
   });
 
+  it("rollback (D-199): links issued on arssteels.net and www go back to approval", async () => {
+    vi.stubEnv("LEGACY_HOSTS", "arssteels.net, www.arssteels.net");
+    vi.stubEnv("APP_BASE_URL", "https://approval.arssteels.net");
+    for (const host of ["arssteels.net", "www.arssteels.net"]) {
+      const response = await middleware(req("/users/requests/7", { headers: { host } }));
+      expect(response.status, host).toBe(308);
+      expect(response.headers.get("location")).toBe("https://approval.arssteels.net/users/requests/7");
+    }
+    expect((await middleware(req("/login", { headers: { host: "approval.arssteels.net" } }))).status).not.toBe(308);
+  });
+
   it("without LEGACY_HOSTS nothing is redirected", async () => {
     vi.stubEnv("APP_BASE_URL", "https://arssteels.net");
     expect((await middleware(req("/login", { headers: { host: "approval.arssteels.net" } }))).status).not.toBe(308);

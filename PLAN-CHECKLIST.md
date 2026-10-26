@@ -17,6 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (26 Oct 2026):** v1.22.3: rolled back to approval.arssteels.net (owner, D-199). **Owner:** docs/DOMAIN-MIGRATION.md → Rollback: DNS A record `approval`, GoDaddy domain, APP_BASE_URL, LEGACY_HOSTS=arssteels.net,www.arssteels.net, publish v1.22.3, cron and CEOITBox URLs, Google Branding links, resubmit verification.
 - **Now (26 Oct 2026):** v1.22.2: the home page is a public page about ARS-CMS (D-198) for Google's review. **Owner, urgent:** the cron job and CEOITBox webhook must call https://arssteels.net (job runner LATE; the old address returns 404); reconnect approval.arssteels.net to the GoDaddy app as an extra domain so old links redirect. Then publish v1.22.2 and resubmit Google verification.
 - **Now (26 Oct 2026):** v1.22.1: Google's OAuth review failed because arssteels.net still shows GoDaddy "Coming Soon"; home page now states its purpose (D-197); DOMAIN-MIGRATION.md corrected for GoDaddy DNS and has a Google verification section. **Owner:** publish v1.22.1, do the move (Steps 1 and 4), verify arssteels.net in Search Console, set Branding name ARS-CMS and the ARS logo, wait 24 h, resubmit.
 - **Now (25 Oct 2026):** v1.22.0: ARS-CMS name, ready for arssteels.net (docs/DOMAIN-MIGRATION.md), Pico Bot, AI Analytics, New chat fix (Bug 1), automated site audit, phone layout fix (owner). **Owner:** publish v1.22.0 first (on the current address), then follow docs/DOMAIN-MIGRATION.md.
@@ -364,7 +365,9 @@ Plan: `docs/CHATBOT_IMPLEMENTATION_PLAN.md`; audit: `docs/CHATBOT_ARCHITECTURE_A
 - [x] PB-39 Rename to ARS-CMS (Central Management System) without touching Meta-approved WhatsApp wording (done 25 Oct 2026, v1.22.0)
 - [x] PB-40 Domain move prepared in code: single base-URL helper, LEGACY_HOSTS redirect (machine callers and OAuth callbacks exempt), unit tests, docs/DOMAIN-MIGRATION.md (done 25 Oct 2026, v1.22.0)
 - [x] PB-41 Phone layout: six pages scrolled sideways (sr-only label in wide tables); fixed globally (done 25 Oct 2026, v1.22.0)
-- [ ] PB-42 Owner: move to arssteels.net following docs/DOMAIN-MIGRATION.md (Steps 1–7)
+- [x] PB-48 Rollback to approval.arssteels.net in the app (default address, policies, samples, runbook) (26 Oct 2026, D-199)
+- [ ] PB-49 Owner: rollback steps in docs/DOMAIN-MIGRATION.md → Rollback
+- [~] PB-42 (26 Oct 2026: superseded by the rollback, D-199) Owner: move to arssteels.net following docs/DOMAIN-MIGRATION.md (Steps 1–7)
 - [x] PB-44 Home page states its purpose in visible text; migration guide uses GoDaddy DNS; Google verification findings mapped to fixes (26 Oct 2026, D-197)
 - [x] PB-46 Home page rebuilt as a public page about the app: name, purpose, features, Google data use, policy links (26 Oct 2026, D-198)
 - [ ] PB-47 Owner: cron URL and CEOITBox webhook to arssteels.net; reconnect approval.arssteels.net to the app (LEGACY_HOSTS redirect)

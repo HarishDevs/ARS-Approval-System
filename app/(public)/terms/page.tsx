@@ -18,7 +18,7 @@ export default function TermsPage() {
         <h1>Terms of use</h1>
         <p className="text-label text-ink-muted">Effective 17 October 2026</p>
         <p>
-          ARS-CMS (arssteels.net) is provided by {COMPANY} (&ldquo;ARS&rdquo;) for its employees to carry out company work. By signing in you agree to these terms and to ARS&apos;s
+          ARS-CMS (approval.arssteels.net) is provided by {COMPANY} (&ldquo;ARS&rdquo;) for its employees to carry out company work. By signing in you agree to these terms and to ARS&apos;s
           policies that apply to company systems.
         </p>
         <h2>Who may use it</h2>

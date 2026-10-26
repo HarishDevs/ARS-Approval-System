@@ -1,5 +1,9 @@
 # Release notes
 
+## v1.22.3 (26 Oct 2026): back on approval.arssteels.net (owner)
+- **ARS-CMS lives at https://approval.arssteels.net again.** The app's fallback address, the privacy policy, the terms and the sample links in message templates use it. The name ARS-CMS and the new home page stay.
+- Links already sent on arssteels.net can open the same page on approval (`LEGACY_HOSTS=arssteels.net,www.arssteels.net`). Steps: docs/DOMAIN-MIGRATION.md → Rollback.
+
 ## v1.22.2 (26 Oct 2026): a real home page for ARS-CMS (owner)
 - **The home page is now a public page about ARS-CMS**, not the sign-in screen: the name ARS-CMS at the top, what it is for, what you can do (approvals, information, tasks, Google Calendar), who can use it and how Google data is used, with links to the privacy policy and terms. **Sign in** is one click away. Google's verification needs this.
 
