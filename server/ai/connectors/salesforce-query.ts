@@ -57,7 +57,7 @@ export interface FieldInfo {
 // (Account has Aadhar_Number__c, PAN_Number__c, Party_Bank_Account_Number__c,
 // Bank_IFSC_Code__c), which shouldn't reach an outside AI service.
 // Matched on the field's name or label.
-export const SECRET_FIELD = /pass(?:word|wd|code)|session[\s_]*id|token|secret|(?<![a-z])otp(?![a-z])|api[\s_]*key|private[\s_]*key|aadh?aa?r|(?<![a-z])pan[\s_]*(?:number|no)(?![a-z])|bank[\s_]*(?:account|a\/c)|account[\s_]*number|ifsc|micr/i;
+export const SECRET_FIELD = /pass(?:word|wd|code)|session[\s_]*id|token|secret|(?<![a-z])otp(?![a-z])|api[\s_]*key|private[\s_]*key|aadh?aa?r|(?<![a-z])pan[\s_]*(?:number|no)(?![a-z])|bank[\s_]*(?:account|a\/c)|account[\s_]*number|ifsc|micr|date[\s_]*of[\s_]*birth|(?<![a-z])dob(?![a-z])|(?<![a-z])kyc[\s_]*(?:id|no|number|ref|data|details?)(?![a-z])/i;
 
 // Describes are cached for 10 minutes per object (they rarely change).
 const DESCRIBE_MS = 10 * 60 * 1000;

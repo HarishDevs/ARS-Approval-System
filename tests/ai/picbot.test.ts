@@ -5,7 +5,7 @@ import { buildCount, buildGroup, buildSelect, istDayRange, literal, matchField, 
 import { authorizeUrl, loginBaseFor, pkcePair } from "@/server/ai/connectors/salesforce-auth";
 import { ConcurrencyGate, LimitError } from "@/server/ai/limits";
 import { chat, ProviderError, retryAfterSeconds, type ProviderConfig } from "@/server/ai/providers";
-import { guarded, NO_DATA_ANSWER, systemPrompt } from "@/server/ai/assistant";
+import { guarded, NO_DATA_ANSWER, ruleScopesFor, systemPrompt } from "@/server/ai/assistant";
 import { normaliseFilter } from "@/server/ai/tools";
 
 // D-172 Pic bot - ai: the rules, without a database, Salesforce or a provider.
@@ -263,8 +263,8 @@ describe("AI Rules reach every provider (D-187)", () => {
 
 describe("Salesforce secrets are never readable (D-201)", () => {
   it("password, session, token and key fields are matched by name or label", () => {
-    for (const name of ["Password__c", "Session_ID__c", "Access_Token__c", "Client_Secret__c", "OTP__c", "API_Key__c", "Session ID", "Aadhar_Number__c", "PAN_Number__c", "Party_Bank_Account_Number__c", "Bank_IFSC_Code__c", "Bank_MICR_Number__c", "Account Number"]) expect(SECRET_FIELD.test(name), name).toBe(true);
-    for (const name of ["Last_Login__c", "Employee_Name__c", "Pin_Code__c", "Region__c", "Status__c", "Shipping_Address__c", "Customer_Code__c", "Company_Code__c", "Pending_Order_Amount__c", "Account_Type__c", "Panel_Type__c"]) expect(SECRET_FIELD.test(name), name).toBe(false);
+    for (const name of ["Password__c", "Session_ID__c", "Access_Token__c", "Client_Secret__c", "OTP__c", "API_Key__c", "Session ID", "Aadhar_Number__c", "PAN_Number__c", "Party_Bank_Account_Number__c", "Bank_IFSC_Code__c", "Bank_MICR_Number__c", "Account Number", "Date_Of_Birth__c", "DOB__c", "Cashfree_KYC_Id__c", "KYC Details"]) expect(SECRET_FIELD.test(name), name).toBe(true);
+    for (const name of ["Last_Login__c", "Employee_Name__c", "Pin_Code__c", "Region__c", "Status__c", "Shipping_Address__c", "Customer_Code__c", "Company_Code__c", "Pending_Order_Amount__c", "Account_Type__c", "Panel_Type__c", "EKYC_Approval_Status__c", "Date_Of_Joining__c"]) expect(SECRET_FIELD.test(name), name).toBe(false);
   });
 });
 
@@ -318,5 +318,13 @@ describe("final round and cut-off answers (D-204)", () => {
     const done = await chat({ provider: "OPENAI", apiKey: "k", model: "o" }, { system: "s", turns, tools: [spec], toolChoice: "none", maxTokens: 100, timeoutMs: 5000 }, openai as unknown as typeof fetch);
     expect(JSON.parse(String((openai.mock.calls[0] as unknown as [string, RequestInit])[1].body)).tool_choice).toBe("none");
     expect(done.truncated).toBe(false);
+  });
+});
+
+describe("AI Rules per chat (D-205)", () => {
+  it("a Combined chat gets the rules of each data source it reads", () => {
+    expect(ruleScopesFor("SALESFORCE", ["SALESFORCE"])).toEqual(["ALL", "SALESFORCE"]);
+    expect(ruleScopesFor("COMBINED", ["APPROVAL", "SALESFORCE"])).toEqual(["ALL", "APPROVAL", "SALESFORCE", "COMBINED"]);
+    expect(ruleScopesFor("GENERAL", [])).toEqual(["ALL", "GENERAL"]);
   });
 });

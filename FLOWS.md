@@ -1073,6 +1073,7 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 5. A failed answer shows one plain sentence; the technical reason is in Super Admin → AI Details → AI Reports.
 
 ## F-141 AI Rules (v1.19.0, D-187)
+**v1.24.0 (D-205):** the Salesforce chat's rules start with the ARS Salesforce guide (docs/AI-RULES-SALESFORCE.md), loaded on publish when that page is empty; IT can edit it like any rules. A Combined chat receives the rules for all chats, for each data source it reads, then its own.
 1. IT Admin or Super Admin opens **Admin → AI Rules**, chooses **All chats** or one chat (General, Approvals, Tasks, Information, Salesforce data, Combined).
 2. They write formatted rules (bold, italic, underline, strikethrough, headings, lists, quotes, links, tables) and press **Save rules**. Saved as Markdown; audited with fingerprints.
 3. Every question, with any provider, carries the rules for all chats and for that chat, after Pic bot's safety rules (which they can't override).

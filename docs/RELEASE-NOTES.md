@@ -1,5 +1,10 @@
 # Release notes
 
+## v1.24.0 (26 Oct 2026): Pico Bot knows the ARS Salesforce (owner)
+- **A Salesforce guide for Pico Bot** is added to Admin → AI Rules → Salesforce chats (only if that page is empty): which object holds what, the words people use (dealer code, executive, CO/DO, secondary order, regions), the status values in use, data traps to avoid and ready recipes for common questions (executives logged in by region, attendance, secondary orders, dealer 360, targets, collections, stock). Pico Bot now goes straight to the right data.
+- **Combined chats** also follow the Salesforce (and other) rules.
+- **Privacy:** date of birth and KYC ids in Salesforce are never read by Pico Bot.
+
 ## v1.23.3 (26 Oct 2026): 360-degree dashboards (owner)
 - **Big requests work:** a dealer 360 view (sales, orders, payments, targets…) gets more lookups and room for a long answer; an answer that runs out of room is retried with more.
 - **Fixed: a Salesforce chat could refuse Salesforce questions** ("This chat is limited to Salesforce data").

@@ -110,6 +110,13 @@ export function guarded(text: string, unverified: readonly string[], evidence: r
   return `> Some figures couldn't be checked against the data, so charts and cards showing them were left out. Treat these with care: ${unverified.join(", ")}.\n\n${kept}`;
 }
 
+// D-205: the AI Rules documents for a chat, in order: all chats, then each
+// data source a Combined chat reads, then the chat's own.
+export function ruleScopesFor(mode: ChatMode, dataModes: readonly ChatMode[]): RuleScope[] {
+  const sources = mode === "COMBINED" ? dataModes.filter((item) => item !== "COMBINED") : [];
+  return [...new Set(["ALL", ...sources, mode] as RuleScope[])];
+}
+
 const today = () => new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Kolkata" });
 const REQUEST_KEY = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -188,8 +195,11 @@ export async function askAssistant(
     }
 
     // D-187: the AI Rules for every chat and for this one, read fresh.
-    const ruleTexts = await rulesFor(["ALL", mode as RuleScope]).catch(() => ({}) as Partial<Record<RuleScope, string>>);
-    const rules = [ruleTexts.ALL, ruleTexts[mode as RuleScope]].filter((text) => text?.trim()).join("\n\n");
+    // D-205: a Combined chat also gets the rules of each data source it uses
+    // (the Salesforce guide applies wherever Salesforce data is read).
+    const ruleScopes = ruleScopesFor(mode, dataModes);
+    const ruleTexts = await rulesFor(ruleScopes).catch(() => ({}) as Partial<Record<RuleScope, string>>);
+    const rules = ruleScopes.map((scope) => ruleTexts[scope]).filter((text) => text?.trim()).join("\n\n");
     let lastError: ProviderError | null = null;
     for (const provider of route) {
       const tools = toolsFor({ person, dataModes }, settings.providers[provider].businessData);

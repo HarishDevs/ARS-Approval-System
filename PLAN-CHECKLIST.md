@@ -17,6 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (26 Oct 2026):** v1.24.0: Pico Bot's Salesforce guide (D-205) loads into Admin → AI Rules → Salesforce on publish (only if that page is empty). **Owner:** publish v1.24.0; open AI Rules → Salesforce chats to review or adjust it; refresh it when Salesforce changes (edit docs/AI-RULES-SALESFORCE.md or the page).
 - **Now (26 Oct 2026):** v1.23.3: big requests (360 dashboards) work: Salesforce chat no longer refuses itself, longer answers, 8 lookup rounds, final-round fix for Claude, identity and bank fields hidden (D-204). **Owner:** publish v1.23.3; if "Longest answer" was saved as 1200 in AI settings, raise it to 4000; tell people the dealer code is the Customer Code; don't rely on Groq's free tier as the fallback for Salesforce dashboards.
 - **Now (26 Oct 2026):** v1.23.2: the question leaves the box when sent and returns only on failure (D-203). **Owner:** publish v1.23.2 (includes v1.23.1).
 - **Now (26 Oct 2026):** v1.23.1: Pico Bot reliability (D-202): everyday names in lookups, cut-off lists flagged, unanswered questions dropped from context, looser tool-call shapes, smarter retries, 5-minute wait on the assistant page. **Owner:** publish v1.23.1; keep Claude (or a larger NVIDIA model) for Salesforce chats; Pico Bot reads the UAT sandbox: reconnect to production when ready (PB-15).
@@ -371,6 +372,7 @@ Plan: `docs/CHATBOT_IMPLEMENTATION_PLAN.md`; audit: `docs/CHATBOT_ARCHITECTURE_A
 - [x] PB-40 Domain move prepared in code: single base-URL helper, LEGACY_HOSTS redirect (machine callers and OAuth callbacks exempt), unit tests, docs/DOMAIN-MIGRATION.md (done 25 Oct 2026, v1.22.0)
 - [x] PB-41 Phone layout: six pages scrolled sideways (sr-only label in wide tables); fixed globally (done 25 Oct 2026, v1.22.0)
 - [x] PB-48 Rollback to approval.arssteels.net in the app (default address, policies, samples, runbook) (26 Oct 2026, D-199)
+- [x] PB-57 Salesforce guide for Pico Bot in AI Rules (survey of 47 objects, recipes, data traps), loaded by migration if empty; Combined chats get each source's rules; DOB/KYC hidden (26 Oct 2026, D-205)
 - [x] PB-56 360-degree requests: scope list fix, partial answers, longer answers with one retry, 8 rounds, tool_choice none on the last round, identity/bank fields hidden (26 Oct 2026, D-204)
 - [x] PB-55 Question leaves the box when sent; back only on failure (26 Oct 2026, D-203)
 - [x] PB-53 Pico Bot reliability: everyday names, cut-off lists, unanswered questions, tool-call shapes, retries, longer wait (26 Oct 2026, D-202)
