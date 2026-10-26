@@ -66,14 +66,16 @@ Google checks the **live** home page and privacy policy. **Submit only after Ste
 | Home page URL not registered to you | **Google Search Console** (https://search.google.com/search-console, signed in as the **same Google account that owns the Cloud project**) → **Add property → Domain** → `arssteels.net` → copy the **TXT** record → GoDaddy DNS → **Add → TXT**, name `@`, value as shown → **Verify**. A Domain property covers `approval.` and `www.` too. Then wait 24 hours before resubmitting. If another account owns the property, add the project owner as an **Owner** in Search Console → Settings → Users and permissions. |
 | Home page has no privacy policy link | Done in the app (bottom of the home page). Needs Step 1 + 4 so arssteels.net shows the app. |
 | Privacy policy unresponsive / not enough content | The full policy (data collected, Google Calendar scopes, storage, Limited Use, deletion, contact) is at `/privacy`. It was a 404 only because arssteels.net is still Coming Soon. |
-| Home page behind a login | The home page is public; only "Sign in to continue" leads to sign-in. Same cause: Coming Soon. |
+| Home page behind a login | v1.22.2 (D-198): the home page is no longer the sign-in layout; it is a public page about ARS-CMS with a Sign in link. **Publish v1.22.2.** |
 | Home page doesn't explain the purpose | v1.22.1 (D-197): the home page now says in plain view, on desktop and phone, what ARS-CMS is for and that it can use Google Calendar. **Publish v1.22.1.** |
-| App name "project-408485424707" doesn't match | Google Auth Platform → **Branding → App name** = `ARS-CMS` (exactly as the home page heading "Welcome to ARS-CMS"). Save. |
+| App name doesn't match ("project-408485424707", then "ARS-CMS") | Branding → **App name** = `ARS-CMS`. v1.22.2 shows exactly `ARS-CMS` in the header and as the main heading (before, the most visible brand was the "ARS Green Steel" logo). |
 | Logo doesn't identify your brand | Branding → **App logo** → upload `public/brand/ars-logo-120.png` from the repo (120 × 120 PNG, the ARS logo). Or remove the logo: without one, the review is faster and the consent screen shows the name only. |
 
 **Order:** publish v1.22.1 → Steps 1 and 4 (arssteels.net shows ARS-CMS) → Search Console TXT verified → Branding: name, logo, home page `https://arssteels.net`, privacy `https://arssteels.net/privacy`, terms `https://arssteels.net/terms`, authorised domain `arssteels.net` → wait 24 hours → **Verification centre → Prepare for verification / Resubmit**. Check first in a private window that https://arssteels.net and https://arssteels.net/privacy open without signing in.
 
 **If you want to resubmit before moving:** put the Branding links back to `https://approval.arssteels.net`, `…/privacy` and `…/terms` (after publishing v1.22.1, so the site there says ARS-CMS). The Search Console Domain property `arssteels.net` covers that subdomain. Change the links to arssteels.net after the move; Google may re-review.
+
+**Keep the old address connected.** In GoDaddy, `arssteels.net` must be **added** to the app next to `approval.arssteels.net`, not swapped in for it. If GoDaddy's app takes only one domain, ask GoDaddy support to add `approval.arssteels.net` as an extra (alias) domain; until then old links show 404 and anything still calling the old address (cron, CEOITBox) stops working.
 
 ## Step 4: Switch (one setting; the old address starts redirecting)
 1. GoDaddy → the app → **environment variables / secrets**:

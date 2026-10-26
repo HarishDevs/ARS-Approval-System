@@ -14,9 +14,12 @@ export function PublicPage({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-full flex-col bg-page">
       <header className="border-b border-line bg-surface">
         <div className="mx-auto flex max-w-4xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-          <Link href="/" aria-label="ARS-CMS home" className="rounded-md">
+          {/* D-198: the app's name next to the company logo, so Google's review
+              matches it to the consent screen's "ARS-CMS". */}
+          <Link href="/" className="flex min-w-0 items-center gap-3 rounded-md">
             {/* eslint-disable-next-line @next/next/no-img-element -- static SVG logo */}
-            <img src="/brand/ars-green-steel.svg" alt="" width={77} height={36} className="h-9 w-auto" />
+            <img src="/brand/ars-green-steel.svg" alt="ARS Steels" width={77} height={36} className="h-9 w-auto shrink-0" />
+            <span className="truncate text-body font-bold text-ink">ARS-CMS</span>
           </Link>
           <Link href="/login" className="btn-primary btn-compact">
             Sign in

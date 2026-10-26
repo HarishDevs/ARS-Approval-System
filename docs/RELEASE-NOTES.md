@@ -1,5 +1,8 @@
 # Release notes
 
+## v1.22.2 (26 Oct 2026): a real home page for ARS-CMS (owner)
+- **The home page is now a public page about ARS-CMS**, not the sign-in screen: the name ARS-CMS at the top, what it is for, what you can do (approvals, information, tasks, Google Calendar), who can use it and how Google data is used, with links to the privacy policy and terms. **Sign in** is one click away. Google's verification needs this.
+
 ## v1.22.1 (26 Oct 2026): home page ready for Google's review (owner)
 - **The home page now says what ARS-CMS is for**, in plain view on desktop and phones, including the optional Google Calendar link. Google's OAuth review needs this.
 - **docs/DOMAIN-MIGRATION.md:** DNS steps are in GoDaddy (arssteels.net uses GoDaddy's name servers), and a new "Google verification" section explains each finding from Google's review and the order to resubmit.
