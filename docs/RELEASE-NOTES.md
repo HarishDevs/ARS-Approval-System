@@ -1,5 +1,12 @@
 # Release notes
 
+## v1.25.0 (27 Oct 2026): simpler approvals and analytics for each person (owner)
+- **New names:** "New request" is now **Request templates** (the approval types IT set up), and "Custom approval" is now **New request** (choose your own approvers).
+- **New request is simpler:** everyone can add levels and parallel steps. The DoA matrix, choices (if / otherwise) and "Skip this step when…" appear only if IT switches them on in Admin → Custom approval.
+- **Tasks menu order:** New task, My tasks, Assigned by me, Team tasks.
+- **Analytics shows what you need:** only the dashboards for your modules and role, and the overview shows only your modules.
+- **Fixed:** "Opening…" stayed on the Analytics page after a dashboard had opened.
+
 ## v1.24.0 (26 Oct 2026): Pico Bot knows the ARS Salesforce (owner)
 - **A Salesforce guide for Pico Bot** is added to Admin → AI Rules → Salesforce chats (only if that page is empty): which object holds what, the words people use (dealer code, executive, CO/DO, secondary order, regions), the status values in use, data traps to avoid and ready recipes for common questions (executives logged in by region, attendance, secondary orders, dealer 360, targets, collections, stock). Pico Bot now goes straight to the right data.
 - **Combined chats** also follow the Salesforce (and other) rules.

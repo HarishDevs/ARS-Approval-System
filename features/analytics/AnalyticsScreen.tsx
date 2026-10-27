@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { canExport, featureOn } from "@/server/settings/features";
 import { BoardPicker, CenterScreen } from "@/features/analytics/CenterScreen";
-import { parseBoard } from "@/server/analytics/center";
+import { boardsFor, parseBoard } from "@/server/analytics/center";
+import { hasModule } from "@/server/modules/modules";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { Hint } from "@/features/ui/Hint";
@@ -44,8 +45,13 @@ export async function AnalyticsScreen({ searchParams, base }: { searchParams: Re
   // v1.12.0 (D-156): the Analytics Center. Dashboards are tabs of this page.
   // An older link or saved view with approval filters opens Approval analytics.
   const APPROVAL_FILTERS = ["type", "department", "status", "approver", "step", "sla", "aging"];
-  const board = query.board ? parseBoard(query.board) : APPROVAL_FILTERS.some((key) => query[key]) ? "approvals" : "overview";
-  if (board !== "approvals" && !limited) return <CenterScreen base={base} board={board} query={query} scope={scope} scopes={scopes} viewer={viewer} canExport={await canExport(user)} />;
+  const requested = query.board ? parseBoard(query.board) : APPROVAL_FILTERS.some((key) => query[key]) ? "approvals" : "overview";
+  // D-206 (owner): only the dashboards this person needs, by module and role; a
+  // dashboard they can't use (an old link or saved view) opens the overview.
+  const modules = { approval: hasModule(user, "APPROVAL"), task: hasModule(user, "TASK"), information: hasModule(user, "INFORMATION") };
+  const boards = boardsFor({ modules, scopes: scopes.map((item) => item.kind) });
+  const board = boards.includes(requested) ? requested : "overview";
+  if (board !== "approvals" && !limited) return <CenterScreen base={base} board={board} boards={boards} modules={modules} query={query} scope={scope} scopes={scopes} viewer={viewer} canExport={await canExport(user)} />;
   const now = new Date();
   const period = resolvePeriod({ key: query.period, from: query.from, to: query.to }, indiaToday(now));
   const choices = await dashboardChoices();
@@ -106,7 +112,7 @@ export async function AnalyticsScreen({ searchParams, base }: { searchParams: Re
           How these are worked out
         </Link>
       </PageHeader>
-      <BoardPicker base={base} board="approvals" query={{ ...query, period: period.key }} scopes={scopes} scope={scope} />
+      <BoardPicker base={base} board="approvals" boards={boards} query={{ ...query, period: period.key }} scopes={scopes} scope={scope} />
 
       <form method="get" className="card mb-6 space-y-3 px-4 py-3" aria-label="Filters">
         <input type="hidden" name="scope" value={scope.kind} />

@@ -41,7 +41,20 @@ test("IT opens every dashboard from the one Analytics page; the period carries o
     await expect(page).toHaveURL(/period=last_quarter/);
     await expect(page.getByLabel("Dashboard", { exact: true }).locator("option:checked")).toHaveText(tab);
     await expect(page.getByText(check).first()).toBeVisible();
+    // D-206: "Opening…" ends once the dashboard has arrived.
+    await expect(page.getByText("Opening…")).toHaveCount(0);
   }
+});
+
+test("D-206: a plain user sees only the dashboards they need; others open the overview", async ({ page, context }) => {
+  await as(context, "E2E_REQ");
+  await page.goto("/users/analytics");
+  const options = await page.getByLabel("Dashboard", { exact: true }).locator("option").allTextContents();
+  expect(options).toContain("Executive overview");
+  for (const hidden of ["Data quality", "Department analytics"]) expect(options).not.toContain(hidden);
+  await page.goto("/users/analytics?board=quality");
+  await expect(page.getByLabel("Dashboard", { exact: true })).toHaveValue("overview");
+  await expect(page.getByText("Where to fix")).toHaveCount(0);
 });
 
 test("employees: search, sort and a CSV with the same scope and period", async ({ page, context }) => {
@@ -63,13 +76,15 @@ test("employees: search, sort and a CSV with the same scope and period", async (
   expect(csv.headers()["cache-control"]).toContain("no-store");
 });
 
-test("a requester sees only their own row; department analytics and other scopes are refused", async ({ page, context }) => {
+test("a requester gets no people or department dashboards, and other scopes are refused", async ({ page, context }) => {
   await as(context, "E2E_REQ");
+  // D-206: Employee and Department analytics are for managers, HODs and IT; a link opens the overview.
   await page.goto("/users/analytics?board=employees&scope=ORGANISATION");
   await expect(page.getByLabel("Whose numbers").locator("option", { hasText: "Whole organisation" })).toHaveCount(0);
-  await expect(page.getByTestId("employee-table").locator("tbody tr")).toHaveCount(1);
+  await expect(page.getByLabel("Dashboard", { exact: true })).toHaveValue("overview");
+  await expect(page.getByTestId("employee-table")).toHaveCount(0);
   await page.goto("/users/analytics?board=departments");
-  await expect(page.getByText(/Department analytics are for heads of department/)).toBeVisible();
+  await expect(page.getByLabel("Dashboard", { exact: true })).toHaveValue("overview");
   // A hand-made export link can't widen the scope.
   const csv = await page.request.get("/api/analytics/export?kind=departments&scope=ORGANISATION");
   expect(csv.status()).toBe(404);

@@ -269,6 +269,10 @@ function StageList({
   depth: number; // choices this list is inside (D-099: up to MAX_CHOICE_DEPTH)
 }) {
   const defaults = useNewStepDefaults();
+  // D-206: on the custom approval page IT decides whether the DoA matrix and the choice are offered.
+  const features = useContext(StepPolicyContext)?.features;
+  const allowDoa = allowChoice && (features?.doa ?? true);
+  const allowBranch = allowChoice && (features?.choice ?? true);
   const newStep = (label: string): BuilderStep => ({ id: newId(), label, approvers: { kind: "REQUESTER_MANAGER" }, rule: "ALL" as const, ...defaults });
   const setStage = (index: number, stage: BuilderStage) => onChange(stages.map((item, i) => (i === index ? stage : item)));
   const move = (index: number, delta: number) => {
@@ -386,7 +390,7 @@ function StageList({
         >
           Add parallel steps
         </button>
-        {allowChoice && !nested && !hasDoa && (
+        {allowDoa && !nested && !hasDoa && (
           <button
             type="button"
             disabled={numberFields.length === 0}
@@ -413,7 +417,7 @@ function StageList({
             Add a DoA matrix
           </button>
         )}
-        {allowChoice && (
+        {allowBranch && (
           <button
             type="button"
             disabled={form.length === 0}
@@ -889,7 +893,7 @@ function StepEditor({
         )}
       </div>
       )}
-      {!hideSkip && type !== "NOTIFY" && (
+      {!hideSkip && (policy?.features.skip ?? true) && type !== "NOTIFY" && (
         <div className="md:col-span-2">
           <label className="flex items-center gap-2 text-label">
             <input

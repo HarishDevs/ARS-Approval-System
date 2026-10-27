@@ -53,7 +53,7 @@ import { claimOutbox, dropOutboxForDeletedRequests, insertOutbox, listStaleOutbo
 import type { NotifyInput } from "@/server/notifications/notify";
 import { logError } from "@/lib/logging/logger";
 import { DEFAULT_CUSTOM_FORM, loadCustomConfig } from "@/server/approvals/custom-config";
-import { applyStepPolicy } from "@/server/workflows/step-policy";
+import { applyStepPolicy, unavailableFeatures } from "@/server/workflows/step-policy";
 import type { RoleCode } from "@/types/auth";
 import { appBaseUrl } from "@/lib/http/app-url";
 
@@ -805,6 +805,8 @@ export async function submitCustomRequest(
   // fixed option overrides whatever the browser sent.
   const config = await loadCustomConfig();
   const builder = applyStepPolicy(input.builder, config.policy);
+  const unavailable = unavailableFeatures(builder, config.policy);
+  if (unavailable.length) return { ok: false, code: "INVALID_WORKFLOW", message: unavailable.join(" ") };
   const own = checkCustomSpec(builder, actor.id);
   if (own.length) return { ok: false, code: "SELF_APPROVAL", message: own.join(" ") };
   const resolved = await resolveContent({ builder, form: config.form });

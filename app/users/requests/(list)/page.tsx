@@ -35,7 +35,8 @@ export default async function MyRequestsPage({ searchParams }: { searchParams: P
   return (
     <>
       <PageHeader title="My requests" description="Everything you've raised, with where it is now.">
-        <Link href="/users/new" className="btn-primary btn-compact">
+        {/* D-206 (owner): New request opens the page where people choose their own approvers. */}
+        <Link href="/users/custom" className="btn-primary btn-compact">
           New request
         </Link>
       </PageHeader>

@@ -13,8 +13,8 @@ export const metadata: Metadata = { title: "Help" };
 // #13 help page: how-tos, the status words used everywhere (D-017), and
 // "Copy details for IT".
 const TOPICS: HelpTopic[] = [
-  { id: "raise", group: "How to", title: "Raise a request", body: "Choose New request, pick the type, fill in the form and add files. Your typing is saved as a draft as you go; you can come back to it from Overview.", link: { href: "/users/new", label: "New request" } },
-  { id: "custom", group: "How to", title: "Ask anyone for approval (custom approval)", body: "Custom approval lets you set your own levels and pick the approvers (Manager and above). Nobody approves their own request.", link: { href: "/users/custom", label: "Custom approval" } },
+  { id: "raise", group: "How to", title: "Raise a request", body: "Choose Request templates, pick the type, fill in the form and add files. Your typing is saved as a draft as you go; you can come back to it from Overview.", link: { href: "/users/new", label: "Request templates" } },
+  { id: "custom", group: "How to", title: "Ask anyone for approval (New request)", body: "New request lets you set your own levels and pick the approvers (Manager and above). Nobody approves their own request.", link: { href: "/users/custom", label: "New request" } },
   { id: "decide", group: "How to", title: "Approve, reject, ask for changes or put on hold", body: "Open the request from Waiting for me. Approve or Reject; Ask for changes sends it back to the requester; Put on hold pauses it (the response time stops) until it is resumed.", link: { href: "/users/queue", label: "Waiting for me" } },
   { id: "bulk", group: "How to", title: "Approve several at once", body: "On Waiting for me, tick straightforward approvals and review them before approving. Work tasks and requests on hold are done one by one.", link: { href: "/users/queue", label: "Waiting for me" } },
   { id: "todo", group: "How to", title: "To do (work tasks)", body: "Some steps are tasks to do rather than decisions, for example raising a PO. They show a To do badge in Waiting for me; open the request and choose Mark as done." },

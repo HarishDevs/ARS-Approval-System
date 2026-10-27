@@ -6,7 +6,7 @@ import { ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 
 // First-use checklist (#13) on My Work until the person hides it.
 const STEPS: { text: string; href: string; link: string }[] = [
-  { text: "Raise a request: pick a type, fill in the form, add files. Your typing is saved as a draft as you go.", href: "/users/new", link: "New request" },
+  { text: "Raise a request: pick a type, fill in the form, add files. Your typing is saved as a draft as you go.", href: "/users/new", link: "Request templates" },
   { text: "Approve from Waiting for me: open a request and choose Approve, Ask for changes, Put on hold or Reject.", href: "/users/queue", link: "Waiting for me" },
   { text: "Going on leave? Name someone to approve for you.", href: "/users/delegation", link: "Out of office" },
   { text: "Choose which messages also come by email or WhatsApp.", href: "/users/notifications/settings", link: "Notification settings" },

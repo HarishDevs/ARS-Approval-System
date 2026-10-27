@@ -96,6 +96,31 @@ export function CustomApprovalSetup({ initialForm, initialPolicy, lookups = NO_L
         </div>
       </section>
 
+      {/* D-206 (owner): levels and parallel steps are always offered; these three only when switched on. */}
+      <section className="card space-y-3 px-5 py-4" aria-labelledby="builder-options">
+        <div className="flex items-center gap-1.5">
+          <h2 id="builder-options" className="font-semibold">
+            What people may add
+          </h2>
+          <Hint text="Levels and parallel steps are always available. Switch on the advanced options people may use on a custom approval; IT's approval types are not affected." align="start" />
+        </div>
+        <div className="flex flex-wrap gap-x-6 gap-y-2">
+          {(
+            [
+              ["doa", "DoA matrix", "Approval authority by amount band. Needs a number field such as Amount."],
+              ["choice", "Choice (if / otherwise)", "Different approvers depending on a field's value."],
+              ["skip", "“Skip this step when…”", "Skip a level when a field matches a condition."],
+            ] as const
+          ).map(([key, label, hint]) => (
+            <label key={key} className="flex items-center gap-2 text-label">
+              <input type="checkbox" checked={policy.features[key]} onChange={(event) => setPolicy((current) => ({ ...current, features: { ...current.features, [key]: event.target.checked } }))} />
+              {label}
+              <Hint text={hint} align="start" />
+            </label>
+          ))}
+        </div>
+      </section>
+
       <div className="flex flex-wrap items-center gap-3">
         <button type="button" className="btn-secondary btn-compact" aria-expanded={previewing} onClick={() => setPreviewing((open) => !open)}>
           {previewing ? "Hide preview" : "Preview the fields"}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 // v1.12.1 (owner): the dashboard and "whose numbers" are dropdowns, not a
 // scrolling row of tabs and chips. Choosing one opens it straight away.
@@ -24,6 +24,9 @@ export function AnalyticsPicker({
 }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
+  // D-206: this picker stays mounted while the page changes, so "Opening…"
+  // ends when the chosen dashboard or scope has arrived.
+  useEffect(() => setPending(false), [board, scope]);
   const go = (options: PickerOption[], value: string) => {
     const target = options.find((option) => option.value === value);
     if (!target) return;
@@ -41,6 +44,7 @@ export function AnalyticsPicker({
         </label>
         <select
           id="analytics-board"
+          key={board}
           defaultValue={board}
           onChange={(event) => go(boards, event.target.value)}
           className="field-input h-9 w-64 max-w-full"
@@ -59,6 +63,7 @@ export function AnalyticsPicker({
         </label>
         <select
           id="analytics-scope"
+          key={scope}
           defaultValue={scope}
           onChange={(event) => go(scopes, event.target.value)}
           className="field-input h-9 w-56 max-w-full"

@@ -13,6 +13,10 @@ export const stepPolicySchema = z.object({
   rule: z.object({ value: z.enum(RULES).default("ALL"), n: z.number().int().min(1).max(50).default(1), editable: z.boolean().default(true) }).default({ value: "ALL", n: 1, editable: true }),
   slaHours: z.object({ value: z.number().int().min(1).max(720).nullable().default(null), editable: z.boolean().default(true) }).default({ value: null, editable: true }),
   onNoApprover: z.object({ value: z.enum(NOBODY).default("BLOCK"), editable: z.boolean().default(true) }).default({ value: "BLOCK", editable: true }),
+  // D-206 (owner): levels and parallel steps are for everyone; the DoA
+  // matrix, the if / otherwise choice and "Skip this step when…" appear on
+  // the custom approval page only when IT switches them on (off by default).
+  features: z.object({ doa: z.boolean().default(false), choice: z.boolean().default(false), skip: z.boolean().default(false) }).default({ doa: false, choice: false, skip: false }),
 });
 export type StepPolicy = z.infer<typeof stepPolicySchema>;
 export const DEFAULT_STEP_POLICY: StepPolicy = stepPolicySchema.parse({});
@@ -62,6 +66,28 @@ export function applyStepPolicy(spec: BuilderSpec, policy: StepPolicy): BuilderS
     return { ...item, then: item.then.map(stage), otherwise: item.otherwise.map(stage) } as T;
   };
   return { ...spec, stages: spec.stages.map(stage) };
+}
+
+// D-206: what a custom approval uses that IT hasn't switched on (empty when
+// it may be submitted). The page hides these; this refuses a crafted request.
+export function unavailableFeatures(spec: BuilderSpec, policy: StepPolicy): string[] {
+  const found = new Set<string>();
+  const step = (item: BuilderStep) => {
+    if (item.skipWhen && !policy.features.skip) found.add("“Skip this step when…” isn't available on custom approvals.");
+  };
+  const stage = (item: BuilderStage | BuilderInnerStage): void => {
+    if (item.kind === "STEP") step(item.step);
+    else if (item.kind === "PARALLEL") item.steps.forEach(step);
+    else if (item.kind === "DOA") {
+      if (!policy.features.doa) found.add("A DoA matrix isn't available on custom approvals.");
+      item.levels.forEach((level) => step(level.step));
+    } else {
+      if (!policy.features.choice) found.add("A choice (if / otherwise) isn't available on custom approvals.");
+      [...item.then, ...item.otherwise].forEach(stage);
+    }
+  };
+  spec.stages.forEach(stage);
+  return [...found];
 }
 
 export const RULE_TEXT: Record<(typeof RULES)[number], string> = { ALL: "All of them must approve", ANY_ONE: "Any one of them", ANY_N: "Any N of them" };

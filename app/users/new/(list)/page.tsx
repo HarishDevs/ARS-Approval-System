@@ -7,7 +7,7 @@ import { followUpSource } from "@/server/approvals/follow-up";
 import { departmentOfUser, mayRaise } from "@/server/approvals/raisers";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
-export const metadata: Metadata = { title: "New request" };
+export const metadata: Metadata = { title: "Request templates" };
 
 // Pick an approval type: active, published predefined types (custom
 // approvals made by users come in a later session, P5).
@@ -21,9 +21,9 @@ export default async function NewRequestPage({ searchParams }: { searchParams: P
   const types = (await listWorkflows({ kind: "PREDEFINED" })).filter((item) => item.active && item.publishedVersionNo !== null && mayRaise(item.settings, { id: user.id, roles: user.roles, departmentId }));
   return (
     <>
-      <PageHeader title="New request" description="Choose the kind of approval you need.">
+      <PageHeader title="Request templates" description="Choose the kind of approval you need.">
         <Link href="/users/custom" className="btn-secondary btn-compact">
-          Something else? Custom approval
+          Something else? New request
         </Link>
       </PageHeader>
       {source && (

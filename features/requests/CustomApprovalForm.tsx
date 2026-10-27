@@ -123,7 +123,7 @@ export function CustomApprovalForm({
       )}
       <div className="flex flex-wrap items-center gap-3">
         <SubmitButton pending={pending} className="btn-compact">
-          Submit custom approval
+          Submit request
         </SubmitButton>
         <div className="min-w-0 flex-1">
           <ResultMessage result={result} />

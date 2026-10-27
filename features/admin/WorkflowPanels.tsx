@@ -268,7 +268,7 @@ export function TypeSettingsForm({
       </div>
       <fieldset className="space-y-2" data-testid="raisers">
         <legend className="field-label">
-          Who may raise this type <Hint text="Others don't see the type under New request, and the server refuses it. IT can always raise it." align="start" />
+          Who may raise this type <Hint text="Others don't see the type under Request templates, and the server refuses it. IT can always raise it." align="start" />
         </legend>
         <select aria-label="Who may raise this type" name="raiserMode" value={raiserMode} onChange={(event) => setRaiserMode(event.target.value as TypeSettings["raisers"]["mode"])} className="field-input w-auto">
           <option value="EVERYONE">Everyone</option>

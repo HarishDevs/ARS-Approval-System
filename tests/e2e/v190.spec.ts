@@ -192,7 +192,7 @@ test("the user sidebar: Overview, collapsible My Approvals / Tasks / Information
   await approvals.click();
   await expect(approvals).toHaveAttribute("aria-expanded", "true");
   const links = await page.getByTestId("nav-group-My Approvals").getByRole("link").allTextContents();
-  expect(links.map((text) => text.replace(/\d+ waiting$/, "").trim())).toEqual(["New request", "Custom approval", "Waiting for me", "My requests", "My approved requests", "Approved by me", "Collaborating"]);
+  expect(links.map((text) => text.replace(/\d+ waiting$/, "").trim())).toEqual(["Request templates", "New request", "Waiting for me", "My requests", "My approved requests", "Approved by me", "Collaborating"]);
   // The choice is remembered on the next page.
   await nav.getByRole("link", { name: "Search" }).click();
   await expect(page).toHaveURL(/\/users\/search/);

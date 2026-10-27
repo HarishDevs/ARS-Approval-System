@@ -78,6 +78,31 @@ test("IT sets up custom approvals; the custom approval page follows it", async (
   await expect(page.getByRole("option", { name: /Sita Staff/ })).toHaveCount(0);
 });
 
+test("D-206: DoA, choice and skip appear on New request only when IT switches them on", async ({ page, context }) => {
+  await as(context, "E2E_REQ");
+  // The Overview button "New request" opens the page where people choose their own approvers.
+  await page.goto("/users");
+  await page.getByRole("main").getByRole("link", { name: "New request", exact: true }).click();
+  await expect(page).toHaveURL(/\/users\/custom$/);
+  await expect(page.getByRole("heading", { level: 1, name: "New request" })).toBeVisible();
+  for (const name of ["Add a level", "Add parallel steps"]) await expect(page.getByRole("button", { name })).toBeVisible();
+  for (const name of ["Add a DoA matrix", "Add a choice (if / otherwise)"]) await expect(page.getByRole("button", { name })).toHaveCount(0);
+  await expect(page.getByText("Skip this step when…")).toHaveCount(0);
+
+  await as(context, "E2E_ADMIN");
+  await page.goto("/admin/custom-approval");
+  const options = page.getByRole("region", { name: "What people may add" });
+  for (const label of ["DoA matrix", "Choice (if / otherwise)", "“Skip this step when…”"]) await options.getByLabel(label).check();
+  await page.getByRole("button", { name: "Save set-up" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Yes, save" }).click();
+  await expect(page.getByText(/Saved. New custom approvals use this set-up/)).toBeVisible();
+
+  await as(context, "E2E_REQ");
+  await page.goto("/users/custom");
+  for (const name of ["Add a DoA matrix", "Add a choice (if / otherwise)"]) await expect(page.getByRole("button", { name })).toBeVisible();
+  await expect(page.getByText("Skip this step when…").first()).toBeVisible();
+});
+
 test("the Super Admin hides a page and makes another view-only", async ({ page, context }) => {
   await as(context, "E2E_SUPER");
   await page.goto("/superadmin/pages");

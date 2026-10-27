@@ -47,7 +47,7 @@ export async function saveTemplateFromRequestAction(_previous: ActionResult | nu
     return { ok: false, message: "Couldn't save. Please try again." };
   }
   revalidatePath(`/users/new/${workflow.id}`);
-  return { ok: true, message: `Saved as "${name}". Use it from New request → ${workflow.name}.` };
+  return { ok: true, message: `Saved as "${name}". Use it from Request templates → ${workflow.name}.` };
 }
 
 export async function deleteTemplateAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {

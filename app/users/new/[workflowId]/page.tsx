@@ -20,7 +20,7 @@ import { TemplatePicker } from "@/features/requests/Templates";
 import { featureOn } from "@/server/settings/features";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
-export const metadata: Metadata = { title: "New request" };
+export const metadata: Metadata = { title: "Request templates" };
 
 export default async function RaiseRequestPage({ params, searchParams }: { params: Promise<{ workflowId: string }>; searchParams: Promise<{ followUp?: string; template?: string; from?: string; refresh?: string }> }) {
   const { user } = await requireArea("users");
@@ -71,7 +71,7 @@ export default async function RaiseRequestPage({ params, searchParams }: { param
 
   return (
     <>
-      <Breadcrumbs items={[{ href: "/users", label: "Overview" }, { href: "/users/new", label: "New request" }, { label: workflow.name }]} />
+      <Breadcrumbs items={[{ href: "/users", label: "Overview" }, { href: "/users/new", label: "Request templates" }, { label: workflow.name }]} />
       <PageHeader title={workflow.name} description="Fill in the details. Approvers are chosen automatically from the rules IT has set.">
         <Link href="/users/new" className="link text-label">
           ← All types

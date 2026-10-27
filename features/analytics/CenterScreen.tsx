@@ -3,7 +3,7 @@ import { PageHeader } from "@/features/shell/PageHeader";
 import { Hint } from "@/features/ui/Hint";
 import { AnalyticsPicker } from "@/features/analytics/AnalyticsPicker";
 import { BarList, KpiCard, LineChart, hoursText } from "@/features/analytics/Charts";
-import { BOARDS, departmentAlerts, forecastNext, moduleAlerts, monthLabel, agingBuckets, type Alert, type BoardKey } from "@/server/analytics/center";
+import { BOARDS, departmentAlerts, type BoardAccess, forecastNext, moduleAlerts, monthLabel, agingBuckets, type Alert, type BoardKey } from "@/server/analytics/center";
 import { comparisonPeriod, indiaToday, PERIOD_LABEL, resolvePeriod, type CompareMode, type PeriodKey } from "@/server/analytics/periods";
 import type { Scope, Viewer } from "@/server/analytics/scope";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
@@ -41,11 +41,11 @@ export function boardHref(base: Base, query: Query, changes: Query): string {
 
 // v1.12.1 (owner): the dashboard and whose numbers are chosen from
 // dropdowns. Scope, period and comparison carry over between dashboards.
-export function BoardPicker({ base, board, query, scopes, scope }: { base: Base; board: BoardKey; query: Query; scopes: Scope[]; scope: Scope }) {
+export function BoardPicker({ base, board, boards, query, scopes, scope }: { base: Base; board: BoardKey; boards: readonly BoardKey[]; query: Query; scopes: Scope[]; scope: Scope }) {
   const carry = { scope: scope.kind, period: query.period, from: query.from, to: query.to, compare: query.compare };
   return (
     <AnalyticsPicker
-      boards={BOARDS.map((item) => ({ value: item.key, label: item.label, href: boardHref(base, carry, { board: item.key }) }))}
+      boards={BOARDS.filter((item) => boards.includes(item.key)).map((item) => ({ value: item.key, label: item.label, href: boardHref(base, carry, { board: item.key }) }))}
       board={board}
       scopes={scopes.map((item) => ({ value: item.kind, label: item.label, href: boardHref(base, { ...carry, board }, { scope: item.kind }) }))}
       scope={scope.kind}
@@ -139,7 +139,7 @@ function Table({ caption, head, rows, testid }: { caption: string; head: string[
   );
 }
 
-export async function CenterScreen({ base, board, query, scope, scopes, viewer, canExport }: { base: Base; board: Exclude<BoardKey, "approvals">; query: Query; scope: Scope; scopes: Scope[]; viewer: Viewer; canExport: boolean }) {
+export async function CenterScreen({ base, board, boards, modules, query, scope, scopes, viewer, canExport }: { base: Base; board: Exclude<BoardKey, "approvals">; boards: readonly BoardKey[]; modules: BoardAccess["modules"]; query: Query; scope: Scope; scopes: Scope[]; viewer: Viewer; canExport: boolean }) {
   const now = new Date();
   const today = indiaToday(now);
   const period = resolvePeriod({ key: query.period, from: query.from, to: query.to }, today);
@@ -158,7 +158,7 @@ export async function CenterScreen({ base, board, query, scope, scopes, viewer, 
           How these are worked out
         </Link>
       </PageHeader>
-      <BoardPicker base={base} board={board} query={query} scopes={scopes} scope={scope} />
+      <BoardPicker base={base} board={board} boards={boards} query={query} scopes={scopes} scope={scope} />
 
       <form method="get" className="card mb-6 flex flex-wrap items-end gap-3 px-4 py-3" aria-label="Filters">
         <input type="hidden" name="board" value={board} />
@@ -227,7 +227,7 @@ export async function CenterScreen({ base, board, query, scope, scopes, viewer, 
         </Link>
       </form>
 
-      {board === "overview" && <Overview scope={scope} viewer={viewer} period={period} previous={previous} compareLabel={compareLabel} today={today} />}
+      {board === "overview" && <Overview scope={scope} viewer={viewer} period={period} previous={previous} compareLabel={compareLabel} today={today} modules={modules} />}
       {board === "tasks" && <Tasks scope={scope} viewer={viewer} period={period} previous={previous} compareLabel={compareLabel} buckets={buckets} />}
       {board === "information" && <Information scope={scope} viewer={viewer} period={period} previous={previous} compareLabel={compareLabel} buckets={buckets} today={today} />}
       {board === "employees" && <Employees base={base} carry={carry} query={query} scope={scope} viewer={viewer} period={period} exportHref={canExport ? exportHref("employees") : null} />}
@@ -246,7 +246,8 @@ export async function CenterScreen({ base, board, query, scope, scopes, viewer, 
 
 type Common = { scope: Scope; viewer: Viewer; period: ReturnType<typeof resolvePeriod>; previous: ReturnType<typeof resolvePeriod>; compareLabel: string };
 
-async function Overview({ scope, viewer, period, previous, compareLabel, today }: Common & { today: string }) {
+// D-206: only the modules this person has are shown.
+async function Overview({ scope, viewer, period, previous, compareLabel, today, modules }: Common & { today: string; modules: BoardAccess["modules"] }) {
   const [approvals, approvalsBefore, tasks, tasksBefore, info, infoBefore, active, activeBefore, monthly, departments] = await Promise.all([
     approvalSummary(scope, viewer, period),
     approvalSummary(scope, viewer, previous),
@@ -260,14 +261,15 @@ async function Overview({ scope, viewer, period, previous, compareLabel, today }
     departmentRows(scope, period),
   ]);
   const alerts = [
-    ...moduleAlerts({ module: "Approvals", completionRate: approvals.completionRate, previousCompletionRate: approvalsBefore.completionRate, lateCount: approvals.late, previousLateCount: approvalsBefore.late }),
-    ...moduleAlerts({ module: "Tasks", completionRate: tasks.completionRate, previousCompletionRate: tasksBefore.completionRate, lateCount: tasks.late, previousLateCount: tasksBefore.late }),
+    ...(!modules.approval ? [] : moduleAlerts({ module: "Approvals", completionRate: approvals.completionRate, previousCompletionRate: approvalsBefore.completionRate, lateCount: approvals.late, previousLateCount: approvalsBefore.late })),
+    ...(!modules.task ? [] : moduleAlerts({ module: "Tasks", completionRate: tasks.completionRate, previousCompletionRate: tasksBefore.completionRate, lateCount: tasks.late, previousLateCount: tasksBefore.late })),
     ...(departments ? departmentAlerts(departments.map((row) => ({ name: row.name, open: row.requestsOpen + row.tasksOpen }))) : []),
-    ...(info.ackRate !== null && info.ackRate < 50 && info.recipients >= 10 ? [{ key: "ack-low", tone: "warning" as const, text: `Information: only ${info.ackRate}% of recipients acknowledged what was published in this period.`, rule: "Under 50%, with 10 or more recipients." }] : []),
+    ...(modules.information && info.ackRate !== null && info.ackRate < 50 && info.recipients >= 10 ? [{ key: "ack-low", tone: "warning" as const, text: `Information: only ${info.ackRate}% of recipients acknowledged what was published in this period.`, rule: "Under 50%, with 10 or more recipients." }] : []),
   ];
   return (
     <>
-      <Section title="Approvals">
+      {modules.approval && (
+        <Section title="Approvals">
         <Grid>
           <KpiCard metric="raised" value={approvals.created} previous={approvalsBefore.created} compareLabel={compareLabel} />
           <KpiCard metric="open_requests" value={approvals.open} />
@@ -276,8 +278,10 @@ async function Overview({ scope, viewer, period, previous, compareLabel, today }
           <KpiCard metric="x_approval_turnaround" value={approvals.avgHours} previous={approvalsBefore.avgHours} lowerIsBetter compareLabel={compareLabel} />
           <KpiCard metric="overdue_requests" value={approvals.overdue} lowerIsBetter />
         </Grid>
-      </Section>
-      <Section title="Tasks">
+        </Section>
+      )}
+      {modules.task && (
+        <Section title="Tasks">
         <Grid>
           <KpiCard metric="x_tasks_created" value={tasks.created} previous={tasksBefore.created} compareLabel={compareLabel} />
           <KpiCard metric="x_tasks_open" value={tasks.open} />
@@ -285,8 +289,10 @@ async function Overview({ scope, viewer, period, previous, compareLabel, today }
           <KpiCard metric="x_task_completion" value={tasks.completionRate} previous={tasksBefore.completionRate} compareLabel={compareLabel} />
           <KpiCard metric="x_tasks_overdue" value={tasks.overdue} lowerIsBetter />
         </Grid>
-      </Section>
-      <Section title="Information">
+        </Section>
+      )}
+      {modules.information && (
+        <Section title="Information">
         <Grid>
           <KpiCard metric="x_info_published" value={info.published} previous={infoBefore.published} compareLabel={compareLabel} />
           <KpiCard metric="x_info_awaiting" value={info.awaitingAck} lowerIsBetter />
@@ -296,7 +302,8 @@ async function Overview({ scope, viewer, period, previous, compareLabel, today }
         <div className="mt-3">
           <Unavailable title="Overdue acknowledgements" why="Information has no acknowledgement deadline field (only reminder days). Pending acknowledgements by age are on the Information board." />
         </div>
-      </Section>
+        </Section>
+      )}
       <Section title="People">
         <Grid>
           <KpiCard metric="x_active_users" value={active} previous={activeBefore} compareLabel={compareLabel} />
@@ -310,17 +317,17 @@ async function Overview({ scope, viewer, period, previous, compareLabel, today }
           title="Monthly activity by module"
           labels={monthly.map((row) => monthLabel(row.month))}
           series={[
-            { key: "raised", label: "Requests raised", colorVar: "--color-primary-600", marker: "circle" },
-            { key: "tasks", label: "Tasks created", colorVar: "--color-warning-600", marker: "square", dash: "6 3" },
-            { key: "info", label: "Information published", colorVar: "--color-success-600", marker: "diamond", dash: "2 3" },
+            ...(modules.approval ? [{ key: "raised", label: "Requests raised", colorVar: "--color-primary-600", marker: "circle" as const }] : []),
+            ...(modules.task ? [{ key: "tasks", label: "Tasks created", colorVar: "--color-warning-600", marker: "square" as const, dash: "6 3" }] : []),
+            ...(modules.information ? [{ key: "info", label: "Information published", colorVar: "--color-success-600", marker: "diamond" as const, dash: "2 3" }] : []),
           ]}
           values={{ raised: monthly.map((row) => row.requestsRaised), tasks: monthly.map((row) => row.tasksCreated), info: monthly.map((row) => row.infoPublished) }}
           empty="No activity in the last 12 months."
         />
       </Section>
       <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <BarList title="Open work now, by module" rows={[{ label: "Requests open", value: approvals.open }, { label: "Tasks open", value: tasks.open }, { label: "Information awaiting acknowledgement", value: info.awaitingAck }]} />
-        <BarList title="Overdue now, by module" rows={[{ label: "Requests with an overdue approval", value: approvals.overdue }, { label: "Overdue tasks", value: tasks.overdue }]} empty="Nothing overdue." />
+        <BarList title="Open work now, by module" rows={[...(modules.approval ? [{ label: "Requests open", value: approvals.open }] : []), ...(modules.task ? [{ label: "Tasks open", value: tasks.open }] : []), ...(modules.information ? [{ label: "Information awaiting acknowledgement", value: info.awaitingAck }] : [])]} />
+        <BarList title="Overdue now, by module" rows={[...(modules.approval ? [{ label: "Requests with an overdue approval", value: approvals.overdue }] : []), ...(modules.task ? [{ label: "Overdue tasks", value: tasks.overdue }] : [])]} empty="Nothing overdue." />
       </div>
       {departments && (
         <Section title="Departments: open work" note="Requests by raiser's department; tasks by assignee's department. Kept in separate columns, never added together.">

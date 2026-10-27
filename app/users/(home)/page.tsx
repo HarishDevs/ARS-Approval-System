@@ -52,7 +52,8 @@ export default async function UsersHome() {
   return (
     <>
       <PageHeader title={`Welcome back, ${greetingName}`} description="What needs you first, then where your requests are.">
-        <Link href="/users/new" className="btn-primary btn-compact">
+        {/* D-206 (owner): New request opens the page where people choose their own approvers. */}
+        <Link href="/users/custom" className="btn-primary btn-compact">
           New request
         </Link>
       </PageHeader>

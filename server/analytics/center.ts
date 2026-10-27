@@ -14,6 +14,30 @@ export const BOARDS = [
 ] as const;
 export type BoardKey = (typeof BOARDS)[number]["key"];
 
+// D-206 (owner): each person sees only the dashboards they need: module
+// boards need the module; people and department boards need a team,
+// department or whole-organisation view; data quality is for the IT team.
+export interface BoardAccess {
+  modules: { approval: boolean; task: boolean; information: boolean };
+  scopes: readonly string[]; // the ScopeKinds this person has
+}
+export function boardsFor(access: BoardAccess): BoardKey[] {
+  const { modules, scopes } = access;
+  const manages = scopes.some((kind) => kind === "TEAM" || kind === "DEPARTMENT" || kind === "ORGANISATION");
+  const allowed: Record<BoardKey, boolean> = {
+    overview: true,
+    approvals: modules.approval,
+    tasks: modules.task,
+    information: modules.information,
+    employees: manages,
+    departments: scopes.includes("DEPARTMENT") || scopes.includes("ORGANISATION"),
+    sla: modules.approval || modules.task,
+    trends: true,
+    quality: scopes.includes("ORGANISATION"),
+  };
+  return BOARDS.map((board) => board.key).filter((key) => allowed[key]);
+}
+
 export function parseBoard(value: string | undefined): BoardKey {
   return (BOARDS.find((board) => board.key === value)?.key ?? "overview") as BoardKey;
 }

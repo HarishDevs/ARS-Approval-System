@@ -1055,6 +1055,16 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 2. They filter (search, status, type, department, person, waiting on, priority, overdue, dates) and sort by a column title; 50 rows a page.
 3. **Download CSV** gives every matching row (up to 10,000) for Excel; audited. A row number opens the record.
 
+## F-147 New request (custom approval) options (v1.25.0, D-206)
+1. IT opens Admin → Custom approval → "What people may add" and ticks any of: DoA matrix, Choice (if / otherwise), "Skip this step when…" (all off at first), then Save set-up.
+2. On New request (formerly Custom approval) everyone can add levels and parallel steps; the ticked options appear too.
+3. On submit the server refuses an option IT hasn't switched on.
+
+## F-148 Analytics per person (v1.25.0, D-206)
+1. Analytics lists only the dashboards the person needs: overview and trends for all; Approval/Task/Information analytics with the module; SLA with Approvals or Tasks; Employee analytics with a team, department or organisation view; Department analytics for HODs and IT; Data quality for IT.
+2. The overview shows only the person's modules. Choosing a dashboard shows "Opening…" until it has loaded.
+3. A link to a dashboard they can't use opens the overview.
+
 ## F-144 Public landing page (v1.20.0, D-188; supersedes the D-161 home page content)
 **v1.22.4 (D-200) supersedes the v1.22.2 note below:** the split screen is back. Left: the brand panel (readable, desktop). Right: logo, "Central Management System", heading ARS-CMS, purpose, four features, **Sign in →** (fades into the sign-in form), a short note on who can use it and how Google data is used with the privacy link, then Privacy policy and Terms of use.
 **v1.22.2 (D-198) supersedes steps 1, 1a, 3 and 4:** the home page is a public page about the app: header (logo, the name ARS-CMS, Sign in), a hero with the heading ARS-CMS, its purpose and Sign in, "What you can do" (multi-level approvals, information notices, tasks, optional Google Calendar), "Who can use it", "How ARS-CMS uses Google data" (links to privacy and terms), footer links. Sign in opens /login (split layout).

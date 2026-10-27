@@ -10,7 +10,7 @@ import { loadCustomConfig } from "@/server/approvals/custom-config";
 import { loadFieldLookups } from "@/lib/db/repositories/lookups.repository";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
-export const metadata: Metadata = { title: "Custom approval" };
+export const metadata: Metadata = { title: "New request" };
 
 // F-33: any user, whenever needed (D-026, D-040).
 export default async function CustomApprovalPage() {
@@ -24,9 +24,9 @@ export default async function CustomApprovalPage() {
   const lookups = config.form.some((field) => field.type === "LOOKUP") ? await loadFieldLookups() : undefined;
   return (
     <>
-      <PageHeader title="Custom approval" description="For anything that doesn't fit a standard approval type. You choose who approves and in what order.">
+      <PageHeader title="New request" description="You choose who approves and in what order. For a standard approval type, use Request templates.">
         <Link href="/users/new" className="link text-label">
-          ← Standard types
+          Request templates
         </Link>
       </PageHeader>
       <CustomApprovalForm

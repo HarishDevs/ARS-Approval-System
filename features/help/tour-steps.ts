@@ -39,7 +39,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
     id: "new-request",
     section: "Approvals",
     title: "Raise a request",
-    intro: "New request lists the approval types IT has set up, such as purchases or payments.",
+    intro: "Request templates lists the approval types IT has set up, such as purchases or payments.",
     points: [
       "Pick a type, give it a title, fill in the form and attach files (quotes, bills, photos).",
       "What you type is saved as a draft as you go.",
@@ -51,7 +51,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
   {
     id: "custom",
     section: "Approvals",
-    title: "Custom approval: your own approvers",
+    title: "New request: your own approvers",
     intro: "For anything that has no ready-made type.",
     points: [
       "Add as many levels as you need, one after another.",
