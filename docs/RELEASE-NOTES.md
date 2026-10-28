@@ -1,5 +1,8 @@
 # Release notes
 
+## v1.25.1 (28 Oct 2026): My Approvals menu (owner)
+- The My Approvals menu now reads: New request, My pending requests, My approved requests, Waiting for me, Approved by me, Collaborating, Request templates.
+
 ## v1.25.0 (27 Oct 2026): simpler approvals and analytics for each person (owner)
 - **New names:** "New request" is now **Request templates** (the approval types IT set up), and "Custom approval" is now **New request** (choose your own approvers).
 - **New request is simpler:** everyone can add levels and parallel steps. The DoA matrix, choices (if / otherwise) and "Skip this step when…" appear only if IT switches them on in Admin → Custom approval.

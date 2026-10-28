@@ -17,6 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (28 Oct 2026):** v1.25.1: My Approvals menu order and "My pending requests" (D-207). **Owner:** publish v1.25.1.
 - **Now (27 Oct 2026):** v1.25.0 (D-206): DoA / choice / skip on New request only when IT switches them on (Admin → Custom approval → What people may add; off by default); "Request templates" and "New request" names; Tasks order; Analytics per person; "Opening…" fix. **Owner:** publish v1.25.0; switch on any of the three options you want people to have.
 - **Now (26 Oct 2026):** v1.24.0: Pico Bot's Salesforce guide (D-205) loads into Admin → AI Rules → Salesforce on publish (only if that page is empty). **Owner:** publish v1.24.0; open AI Rules → Salesforce chats to review or adjust it; refresh it when Salesforce changes (edit docs/AI-RULES-SALESFORCE.md or the page).
 - **Now (26 Oct 2026):** v1.23.3: big requests (360 dashboards) work: Salesforce chat no longer refuses itself, longer answers, 8 lookup rounds, final-round fix for Claude, identity and bank fields hidden (D-204). **Owner:** publish v1.23.3; if "Longest answer" was saved as 1200 in AI settings, raise it to 4000; tell people the dealer code is the Customer Code; don't rely on Groq's free tier as the fallback for Salesforce dashboards.
@@ -373,6 +374,7 @@ Plan: `docs/CHATBOT_IMPLEMENTATION_PLAN.md`; audit: `docs/CHATBOT_ARCHITECTURE_A
 - [x] PB-40 Domain move prepared in code: single base-URL helper, LEGACY_HOSTS redirect (machine callers and OAuth callbacks exempt), unit tests, docs/DOMAIN-MIGRATION.md (done 25 Oct 2026, v1.22.0)
 - [x] PB-41 Phone layout: six pages scrolled sideways (sr-only label in wide tables); fixed globally (done 25 Oct 2026, v1.22.0)
 - [x] PB-48 Rollback to approval.arssteels.net in the app (default address, policies, samples, runbook) (26 Oct 2026, D-199)
+- [x] PB-62 My Approvals menu: new order, "My pending requests" (28 Oct 2026, D-207)
 - [x] PB-58 Custom approval options configurable (DoA, choice, skip; off by default; server-enforced) (27 Oct 2026, D-206)
 - [x] PB-59 Renames: Request templates / New request (27 Oct 2026, D-206)
 - [x] PB-60 Tasks order: New task, My tasks, Assigned by me, Team tasks (27 Oct 2026, D-206)

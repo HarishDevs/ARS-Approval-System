@@ -15,13 +15,14 @@ export default async function UsersLayout({ children }: { children: React.ReactN
       // collapsible groups; then Search, Calendar and Analytics.
       nav={[
         { href: "/users", label: "Overview" },
-        { href: "/users/new", label: "Request templates", section: "My Approvals" },
+        // D-207 (owner): this order; "My requests" is "My pending requests" here.
         { href: "/users/custom", label: "New request", section: "My Approvals" },
-        { href: "/users/queue", label: "Waiting for me", section: "My Approvals" },
-        { href: "/users/requests", label: "My requests", section: "My Approvals" },
+        { href: "/users/requests", label: "My pending requests", section: "My Approvals" },
         { href: "/users/approved", label: "My approved requests", section: "My Approvals" },
+        { href: "/users/queue", label: "Waiting for me", section: "My Approvals" },
         { href: "/users/approved-by-me", label: "Approved by me", section: "My Approvals" },
         { href: "/users/collaborating", label: "Collaborating", section: "My Approvals" },
+        { href: "/users/new", label: "Request templates", section: "My Approvals" },
         ...(features.tasks
           ? [
               // D-206 (owner): New task first.
