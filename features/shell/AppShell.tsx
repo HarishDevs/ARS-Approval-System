@@ -20,7 +20,8 @@ import { BottomNav } from "@/features/shell/BottomNav";
 import { CommandPalette, type PaletteLink } from "@/features/shell/CommandPalette";
 import { countPendingTasksFor } from "@/lib/db/repositories/approvals.repository";
 import { THEME_SETTING, parseTheme } from "@/server/ui/theme";
-import { parseWorkspaceView, WORKSPACE_VIEW_SETTING } from "@/server/ui/workspace-view";
+import { parseTextSize, parseWorkspaceView, TEXT_SCALE, TEXT_SIZE_SETTING, WORKSPACE_VIEW_SETTING } from "@/server/ui/workspace-view";
+import { TextScale } from "@/features/shell/TextScale";
 import { ClassicBar } from "@/features/shell/Classic";
 import { classicModules } from "@/features/shell/classic-modules";
 import { NotificationBell } from "@/features/shell/NotificationBell";
@@ -59,7 +60,7 @@ export async function AppShell({
   children: React.ReactNode;
 }) {
   const spaces = areasForUser(user);
-  const [unread, theme, waiting, access, tourDone, picbot, chats, savedView] = await Promise.all([
+  const [unread, theme, waiting, access, tourDone, picbot, chats, savedView, savedText] = await Promise.all([
     countUnread(user.id).catch(() => 0),
     getUserSetting(user.id, THEME_SETTING).catch(() => null),
     countPendingTasksFor(user.id).catch(() => 0),
@@ -74,8 +75,12 @@ export async function AppShell({
     nav.some((item) => item.chats) ? listConversations(user.id, 200).then((rows) => rows.map((row) => ({ id: row.id, title: row.title, pinned: row.pinned }))).catch(() => []) : Promise.resolve([]),
     // D-210: the person's workspace view (My approvals space only).
     area === "users" ? getUserSetting(user.id, WORKSPACE_VIEW_SETTING).catch(() => null) : Promise.resolve(null),
+    // D-211: the Classic view's text size.
+    area === "users" ? getUserSetting(user.id, TEXT_SIZE_SETTING).catch(() => null) : Promise.resolve(null),
   ]);
   const classic = area === "users" && parseWorkspaceView(savedView) === "CLASSIC";
+  const textSize = parseTextSize(savedText);
+  const textScale = classic ? TEXT_SCALE[textSize] : null;
   // v1.8.0: pages hidden from this person (Super Admin's page access) are
   // left out of the sidebar and the quick search; the server refuses them anyway.
   const visible = (href: string) => !isHiddenHref(href, access.hidden);
@@ -114,7 +119,8 @@ export async function AppShell({
   const items = nav.filter((item) => visible(item.href)).map((item) => (item.href === "/users/queue" ? { ...item, count: waiting } : item));
 
   return (
-    <div className="flex min-h-full">
+    <div className="flex min-h-full" style={textScale && textScale !== 1 ? ({ "--text-scale": String(textScale) } as React.CSSProperties) : undefined}>
+      <TextScale scale={textScale} />
       <a href="#main" className="skip-link">
         Skip to content
       </a>
@@ -140,10 +146,10 @@ export async function AppShell({
           <MobileNav items={items} spaceLabel={SPACE_LABEL[area]} home={`/${area}`} collapsible={area !== "admin"} chats={chats} />
           {/* D-210: Classic has no sidebar, so the logo leads back to the Gateway from the top bar. */}
           {classic && (
-            <Link href="/users" aria-label="ARS-CMS: Gateway" className="hidden items-center gap-3 rounded-md md:flex" data-testid="classic-home">
+            <Link href="/users" aria-label="ARS-CMS: Central Management System" className="hidden items-center gap-3 rounded-md md:flex" data-testid="classic-home">
               {/* eslint-disable-next-line @next/next/no-img-element -- static SVG logo */}
               <img src="/brand/ars-green-steel.svg" alt="" width={77} height={36} className="h-8 w-auto" />
-              <span className="text-label font-semibold uppercase tracking-wider text-ink-muted">Gateway</span>
+              <span className="text-label font-semibold uppercase tracking-wider text-ink-muted">Central Management System</span>
             </Link>
           )}
           <div className="ml-auto flex items-center gap-2">
@@ -157,6 +163,7 @@ export async function AppShell({
               otherSpaces={spaces.filter((other) => other !== area).map((other) => ({ href: `/${other}`, label: SPACE_LABEL[other] }))}
               unread={unread}
               view={area === "users" ? (classic ? "CLASSIC" : "COMPACT") : null}
+              textSize={textSize}
             />
           </div>
         </header>

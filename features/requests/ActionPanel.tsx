@@ -216,7 +216,7 @@ export function MobileDecisionBar({ requestId, taskKey, label, work = false }: {
       <div role="region" aria-label="Your decision" className="fixed inset-x-0 bottom-[calc(56px+env(safe-area-inset-bottom))] z-sticky border-t border-line bg-surface px-3 py-2 shadow-overlay md:hidden">
         <div className={`grid gap-2 ${actions.length === 4 ? "grid-cols-4" : "grid-cols-3"}`}>
           {actions.map((action) => (
-            <button key={action.kind} type="button" onClick={() => setOpen(action.kind)} className={`${action.style} btn-compact flex-col !gap-0.5 !px-1 !text-[12px]`}>
+            <button key={action.kind} type="button" onClick={() => setOpen(action.kind)} className={`${action.style} btn-compact flex-col !gap-0.5 !px-1 !text-[length:calc(12px*var(--text-scale,1))]`}>
               {action.icon}
               {action.label}
             </button>

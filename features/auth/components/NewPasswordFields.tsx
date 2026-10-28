@@ -89,7 +89,7 @@ export function CodeField({ code, onCode }: { code: string; onCode: (value: stri
         autoFocus
         value={code}
         onChange={(event) => onCode(event.target.value.replace(/\D/g, ""))}
-        className="field-input text-center text-[20px] tracking-[0.5em]"
+        className="field-input text-center text-[length:calc(20px*var(--text-scale,1))] tracking-[0.5em]"
       />
     </div>
   );

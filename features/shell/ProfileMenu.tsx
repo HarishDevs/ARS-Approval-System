@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Email } from "@/features/ui/SafeText";
 import { ViewSwitch } from "@/features/shell/ViewSwitch";
-import type { WorkspaceView } from "@/server/ui/workspace-view";
+import type { TextSize, WorkspaceView } from "@/server/ui/workspace-view";
 
 // One user menu at the top right (S9-01..03): who you are, which space
 // you're in, switching space, Profile, Notifications, Sign-in and Help
@@ -24,6 +24,7 @@ export function ProfileMenu({
   otherSpaces,
   unread,
   view = null,
+  textSize = "M",
 }: {
   name: string;
   email: string;
@@ -32,6 +33,7 @@ export function ProfileMenu({
   otherSpaces: SpaceLink[];
   unread: number;
   view?: WorkspaceView | null; // D-210: Compact or Classic (My approvals space)
+  textSize?: TextSize; // D-211: the Classic view's text size
 }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -74,7 +76,7 @@ export function ProfileMenu({
       >
         <span className="hidden text-right sm:block">
           <span className="block text-label font-semibold leading-tight text-ink">{name}</span>
-          <span className="mt-0.5 inline-block rounded-full bg-primary-50 px-2 py-px text-[11px] font-semibold leading-4 text-primary-700">{spaceLabel}</span>
+          <span className="mt-0.5 inline-block rounded-full bg-primary-50 px-2 py-px text-[length:calc(11px*var(--text-scale,1))] font-semibold leading-4 text-primary-700">{spaceLabel}</span>
         </span>
         <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-solid text-caption font-semibold text-on-solid">
           {initials}
@@ -107,7 +109,7 @@ export function ProfileMenu({
           )}
           {view && (
             <div className="border-b border-line py-2">
-              <ViewSwitch initial={view} compact />
+              <ViewSwitch initial={view} initialText={textSize} compact />
             </div>
           )}
           <div className="py-2">
@@ -116,7 +118,7 @@ export function ProfileMenu({
             </Link>
             <Link href="/users/notifications" role="menuitem" className={item}>
               Notifications
-              {unread > 0 && <span className="rounded-full bg-danger-solid px-1.5 text-[11px] font-semibold leading-[18px] text-on-solid">{unread > 99 ? "99+" : unread}</span>}
+              {unread > 0 && <span className="rounded-full bg-danger-solid px-1.5 text-[length:calc(11px*var(--text-scale,1))] font-semibold leading-[18px] text-on-solid">{unread > 99 ? "99+" : unread}</span>}
             </Link>
             <Link href="/users/security" role="menuitem" className={item}>
               Sign-in &amp; devices

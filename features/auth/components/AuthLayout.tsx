@@ -21,12 +21,12 @@ export function AuthLayout({ children, landing = false }: { children: React.Reac
             <path d="M0 12 C30 30 80 28 118 0 C104 22 92 30 64 30 C36 30 14 22 0 12Z" fill="#ED1C25" />
           </svg>
           <p className="text-label font-semibold uppercase tracking-[0.18em] text-white/80">ARS Steels · Central Management System</p>
-          <h2 className="mt-4 text-[52px] font-bold leading-[1.05]">
+          <h2 className="mt-4 text-[length:calc(52px*var(--text-scale,1))] font-bold leading-[1.05]">
             Every approval,
             <br />
             one clear path.
           </h2>
-          <p className="mt-6 max-w-md text-[17px] leading-relaxed text-white/85">
+          <p className="mt-6 max-w-md text-[length:calc(17px*var(--text-scale,1))] leading-relaxed text-white/85">
             Raise a request, route it through as many levels as it needs, and see exactly who has approved and who is next.
           </p>
           <dl className="mt-12 grid grid-cols-3 gap-6">

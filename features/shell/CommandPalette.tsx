@@ -140,7 +140,7 @@ export function CommandPalette({ pages }: { pages: PaletteLink[] }) {
       >
         <Search aria-hidden="true" className="h-4 w-4" />
         Go to…
-        <kbd className="rounded border border-line bg-surface px-1.5 text-[11px]">Ctrl K</kbd>
+        <kbd className="rounded border border-line bg-surface px-1.5 text-[length:calc(11px*var(--text-scale,1))]">Ctrl K</kbd>
       </button>
       <button type="button" onClick={() => setOpen(true)} aria-label="Go to a page or request" data-tour="search" className="flex h-9 w-9 items-center justify-center rounded-full text-ink-muted hover:bg-surface-muted hover:text-ink sm:hidden">
         <Search aria-hidden="true" className="h-5 w-5" />
@@ -168,7 +168,7 @@ export function CommandPalette({ pages }: { pages: PaletteLink[] }) {
                 onChange={(event) => setQuery(event.target.value)}
                 className="h-12 w-full bg-transparent text-body focus:outline-none"
               />
-              <kbd className="rounded border border-line px-1.5 text-[11px] text-ink-muted">Esc</kbd>
+              <kbd className="rounded border border-line px-1.5 text-[length:calc(11px*var(--text-scale,1))] text-ink-muted">Esc</kbd>
             </div>
             <ul id={listId} role="listbox" aria-label="Results" className="max-h-[50vh] overflow-y-auto p-2">
               {options.map((option, index) => {

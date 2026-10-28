@@ -40,12 +40,12 @@ const config: Config = {
         sans: ["var(--font-inter)", "Inter", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
       },
       fontSize: {
-        caption: ["12px", "16px"],
-        label: ["13px", "18px"],
-        body: ["14px", "20px"],
-        title: ["20px", "28px"],
-        "card-title": ["22px", "30px"],
-        display: ["32px", "40px"],
+        caption: ["calc(12px * var(--text-scale, 1))", "calc(16px * var(--text-scale, 1))"],
+        label: ["calc(13px * var(--text-scale, 1))", "calc(18px * var(--text-scale, 1))"],
+        body: ["calc(14px * var(--text-scale, 1))", "calc(20px * var(--text-scale, 1))"],
+        title: ["calc(20px * var(--text-scale, 1))", "calc(28px * var(--text-scale, 1))"],
+        "card-title": ["calc(22px * var(--text-scale, 1))", "calc(30px * var(--text-scale, 1))"],
+        display: ["calc(32px * var(--text-scale, 1))", "calc(40px * var(--text-scale, 1))"],
       },
       borderRadius: { sm: "4px", md: "8px", lg: "12px", xl: "16px" },
       boxShadow: {

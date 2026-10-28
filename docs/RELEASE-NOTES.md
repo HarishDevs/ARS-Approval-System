@@ -1,5 +1,9 @@
 # Release notes
 
+## v1.28.0 (28 Oct 2026): text size in the Classic view (owner)
+- The Classic view now follows the sketch exactly: sign-in, then the **Central Management System** box listing the modules, then each **module page** with its pages as tabs and its boxes.
+- In the Classic view, choose a **text size** (Small, Normal, Large, Larger, Largest) under View in the profile menu or on Profile. All text in the app changes at once; the layout keeps its shape. Saved on your account.
+
 ## v1.27.0 (28 Oct 2026): Classic view; reminders and escalations your way (owner)
 - **Classic view** (Tally-style), chosen per person in the profile menu → View: after sign-in a Gateway menu (Approval, Tasks and Information Management, Pico Bot, Overview, Search, Calendar, Analytics) with highlighted letters; each module has its own menu and summary boxes; pages show their module's pages as tabs; Esc goes back. **Compact** is today's layout.
 - **Reminders & escalations** (Admin → Automation): rules for pending approvals and open tasks on any field and value, including form fields; escalation levels to managers, the requester, HOD, IT or named people; repeats; your own wording; email or inbox only; a Test button that sends nothing. Escalation emails always go out.

@@ -2,17 +2,13 @@ import "server-only";
 import Link from "next/link";
 import type { AuthenticatedUser } from "@/types/auth";
 import { ClassicMenu } from "@/features/shell/Classic";
-import { classicModules, pageHotkeys, type ClassicModule } from "@/features/shell/classic-modules";
+import { classicModules, type ClassicModule } from "@/features/shell/classic-modules";
 import { usersNav } from "@/features/shell/users-nav";
 import { classicCounts, type ClassicCounts } from "@/lib/db/repositories/classic.repository";
-import { countUnread } from "@/lib/db/repositories/collab.repository";
 import { isHiddenHref, navAccess } from "@/server/authorization/page-access";
-import { displayName } from "@/features/shell/AppShell";
 
 // D-210 (owner sketch, Tally as reference): the Classic view's Gateway (the
 // first screen after sign-in) and each module's menu with its summary boxes.
-const today = () => new Intl.DateTimeFormat("en-IN", { timeZone: "Asia/Kolkata", weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(new Date());
-
 interface Box {
   label: string;
   value: number;
@@ -49,7 +45,7 @@ function Boxes({ boxes }: { boxes: Box[] }) {
         <li key={box.label}>
           <Link href={box.href} className="block rounded-md border border-line bg-surface px-4 py-3 hover:border-primary-600">
             <span className="block text-label text-ink-muted">{box.label}</span>
-            <span className={`mt-1 block text-[28px] font-bold leading-tight ${box.alert ? "text-danger-600" : "text-ink"}`}>{box.value}</span>
+            <span className={`mt-1 block text-[length:calc(28px*var(--text-scale,1))] font-bold leading-tight ${box.alert ? "text-danger-600" : "text-ink"}`}>{box.value}</span>
           </Link>
         </li>
       ))}
@@ -67,54 +63,30 @@ async function load(user: AuthenticatedUser): Promise<{ modules: ClassicModule[]
 const noteFor = (entry: ClassicModule, counts: ClassicCounts) =>
   entry.key === "approvals" && counts.waiting ? `${counts.waiting} waiting` : entry.key === "tasks" && counts.myOpenTasks ? `${counts.myOpenTasks} open` : entry.key === "information" && counts.infoUnread ? `${counts.infoUnread} unread` : undefined;
 
+// Page 2 of the owner's sketch: one box, the Central Management System,
+// listing the modules.
 export async function ClassicGateway({ user }: { user: AuthenticatedUser }) {
-  const [{ modules, counts }, unread] = await Promise.all([load(user), countUnread(user.id).catch(() => 0)]);
+  const { modules, counts } = await load(user);
   return (
-    <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[1fr_minmax(340px,440px)_1fr]" data-testid="classic-gateway">
-      <section aria-label="Company" className="space-y-3 rounded-md border border-line bg-surface px-5 py-4 text-label">
-        <p className="text-caption font-semibold uppercase tracking-wider text-ink-faint">Current company</p>
-        <p className="text-body font-semibold">ARS Steels &amp; Alloy International Pvt. Ltd.</p>
-        <p className="text-caption font-semibold uppercase tracking-wider text-ink-faint">Signed in as</p>
-        <p className="text-body">{displayName(user.name)}</p>
-        <p className="text-caption font-semibold uppercase tracking-wider text-ink-faint">Today</p>
-        <p className="text-body">{today()}</p>
-      </section>
-      <div className="space-y-2">
-        <h1 className="sr-only">Gateway of ARS-CMS</h1>
-        <ClassicMenu title="Gateway of ARS-CMS" testId="gateway-menu" entries={modules.map((entry) => ({ href: entry.href, label: entry.label, hotkey: entry.hotkey, note: noteFor(entry, counts) }))} />
-        <p className="text-center text-caption text-ink-faint">↑ ↓ to move, Enter to open, or press the highlighted letter. Esc goes back.</p>
-      </div>
-      <section aria-label="At a glance" className="space-y-2 rounded-md border border-line bg-surface px-5 py-4 text-label">
-        <p className="text-caption font-semibold uppercase tracking-wider text-ink-faint">At a glance</p>
-        {[
-          { label: "Waiting for me", value: counts.waiting, href: "/users/queue" },
-          { label: "My pending requests", value: counts.myOpenRequests, href: "/users/requests" },
-          { label: "My open tasks", value: counts.myOpenTasks, href: "/users/tasks" },
-          { label: "Unread information", value: counts.infoUnread, href: "/users/information" },
-          { label: "Unread notifications", value: unread, href: "/users/notifications" },
-        ].map((item) => (
-          <Link key={item.label} href={item.href} className="flex items-center justify-between rounded px-2 py-1 hover:bg-surface-muted">
-            <span>{item.label}</span>
-            <span className={`font-semibold ${item.value ? "text-ink" : "text-ink-faint"}`}>{item.value}</span>
-          </Link>
-        ))}
-      </section>
+    <div className="mx-auto max-w-md space-y-2 pt-4 sm:pt-10" data-testid="classic-gateway">
+      <h1 className="sr-only">Central Management System</h1>
+      <ClassicMenu title="Central Management System" testId="gateway-menu" entries={modules.map((entry) => ({ href: entry.href, label: entry.label, hotkey: entry.hotkey, note: noteFor(entry, counts) }))} />
+      <p className="text-center text-caption text-ink-faint">↑ ↓ to move, Enter to open, or press the highlighted letter. Esc goes back.</p>
     </div>
   );
 }
 
+// Page 3 of the sketch: the module (its pages are the tabs above, from
+// ClassicBar) and its boxes.
 export async function ClassicModuleMenu({ user, moduleKey }: { user: AuthenticatedUser; moduleKey: string }) {
   const { modules, counts } = await load(user);
   const entry = modules.find((item) => item.key === moduleKey && item.pages.length > 1);
   if (!entry) return null;
-  const keys = pageHotkeys(entry.pages);
   return (
-    <div className="mx-auto max-w-5xl space-y-6" data-testid="classic-module">
-      <h1 className="sr-only">{entry.label}</h1>
-      <div className="grid gap-6 md:grid-cols-[minmax(300px,380px)_1fr]">
-        <ClassicMenu title={entry.label} testId="module-menu" entries={entry.pages.map((page, index) => ({ href: page.href, label: page.label, hotkey: keys[index] ?? "", note: page.count ? `${page.count}` : undefined }))} />
-        <Boxes boxes={boxesFor(entry.key, counts)} />
-      </div>
+    <div className="space-y-6" data-testid="classic-module">
+      <h1 className="text-title font-semibold">{entry.label}</h1>
+      <Boxes boxes={boxesFor(entry.key, counts)} />
+      <p className="text-caption text-ink-faint">Choose a page above, or press its highlighted letter. Esc goes back.</p>
     </div>
   );
 }

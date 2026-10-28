@@ -132,7 +132,7 @@ export function NotificationBell({ initialUnread }: { initialUnread: number }) {
       >
         <Bell aria-hidden="true" className="h-5 w-5" />
         {total > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 min-w-[18px] rounded-full bg-danger-solid px-1 text-center text-[11px] font-semibold leading-[18px] text-on-solid">{total > 99 ? "99+" : total}</span>
+          <span className="absolute -right-0.5 -top-0.5 min-w-[18px] rounded-full bg-danger-solid px-1 text-center text-[length:calc(11px*var(--text-scale,1))] font-semibold leading-[18px] text-on-solid">{total > 99 ? "99+" : total}</span>
         )}
       </button>
       {open && (
@@ -189,7 +189,7 @@ export function NotificationBell({ initialUnread }: { initialUnread: number }) {
                   <li key={item.id}>
                     <button type="button" onClick={() => void openItem(item)} className={`block w-full px-4 py-3 text-left hover:bg-surface-muted ${item.read ? "" : "bg-primary-50/40"}`}>
                       <span className="flex items-center gap-2">
-                        <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold ${TYPE_CLASS[item.category]}`}>{TYPE_LABEL[item.category]}</span>
+                        <span className={`rounded px-1.5 py-0.5 text-[length:calc(11px*var(--text-scale,1))] font-semibold ${TYPE_CLASS[item.category]}`}>{TYPE_LABEL[item.category]}</span>
                         {!item.read && <span className="h-2 w-2 rounded-full bg-primary-600" aria-label="Unread" />}
                         <span className="ml-auto text-caption text-ink-faint">{when(item.createdAt)}</span>
                       </span>

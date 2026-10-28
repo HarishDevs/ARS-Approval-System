@@ -68,7 +68,7 @@ export default async function TemplatesPage() {
                     {templateLabel(entry.eventType)}
                     <span
                       title={entry.purpose}
-                      className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-line text-[10px] font-semibold text-ink-faint"
+                      className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-line text-[length:calc(10px*var(--text-scale,1))] font-semibold text-ink-faint"
                     >
                       <span aria-hidden="true">?</span>
                       <span className="sr-only">{entry.purpose}</span>

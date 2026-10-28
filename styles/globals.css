@@ -149,6 +149,8 @@ body {
 body {
   background: var(--color-surface-page);
   color: var(--color-text-primary);
+  /* D-211: the Classic view text size (1 = normal), set on <html>. */
+  font-size: calc(16px * var(--text-scale, 1));
 }
 
 :focus-visible {

@@ -30,12 +30,12 @@ export function BottomNav({ waiting, hidden = [] }: { waiting: number; hidden?: 
               <Link
                 href={item.href}
                 aria-current={active ? "page" : undefined}
-                className={`relative flex min-h-[56px] flex-col items-center justify-center gap-0.5 text-[11px] font-medium ${active ? "text-primary-700" : "text-ink-muted"}`}
+                className={`relative flex min-h-[56px] flex-col items-center justify-center gap-0.5 text-[length:calc(11px*var(--text-scale,1))] font-medium ${active ? "text-primary-700" : "text-ink-muted"}`}
               >
                 <Icon aria-hidden="true" className="h-5 w-5" />
                 {item.label}
                 {count > 0 && (
-                  <span className="absolute right-[calc(50%-1.4rem)] top-1.5 min-w-[18px] rounded-full bg-danger-solid px-1 text-center text-[10px] font-semibold leading-[18px] text-on-solid">
+                  <span className="absolute right-[calc(50%-1.4rem)] top-1.5 min-w-[18px] rounded-full bg-danger-solid px-1 text-center text-[length:calc(10px*var(--text-scale,1))] font-semibold leading-[18px] text-on-solid">
                     {count > 99 ? "99+" : count}
                     <span className="sr-only"> waiting</span>
                   </span>

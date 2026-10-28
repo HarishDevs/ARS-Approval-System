@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { ChevronRight } from "lucide-react";
-import { GATEWAY, locate, type ClassicModule } from "@/features/shell/classic-modules";
+import { GATEWAY, locate, MENU_BASE, pageHotkeys, type ClassicModule } from "@/features/shell/classic-modules";
 
 // D-210 (owner): the Classic (Tally-style) view.
 const typing = (target: EventTarget | null) => {
@@ -89,28 +89,41 @@ export function ClassicMenu({ title, entries, testId }: { title: string; entries
   );
 }
 
-// Under the top bar: where you are (Gateway › module › page) and the
-// module's pages as tabs. Esc goes one level up, as in Tally.
+// Under the top bar: where you are (Central Management System › module ›
+// page) and the module's pages as tabs. On the module page (page 3 of the
+// sketch) each tab has a highlighted letter that opens it. Esc goes one
+// level up, as in Tally.
 export function ClassicBar({ modules }: { modules: ClassicModule[] }) {
   const pathname = usePathname();
   const router = useRouter();
   const { entry, page } = locate(modules, pathname);
   const up = !entry ? null : page && entry.pages.length > 1 ? entry.href : GATEWAY;
+  // Letters only on the module page: other pages keep their own shortcuts.
+  const onModulePage = pathname.startsWith(`${MENU_BASE}/`);
+  const keys = useMemo(() => (entry && onModulePage ? pageHotkeys(entry.pages) : []), [entry, onModulePage]);
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key !== "Escape" || event.defaultPrevented || typing(event.target) || dialogOpen() || pathname === GATEWAY) return;
-      event.preventDefault();
-      router.push(up ?? GATEWAY);
+      if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || typing(event.target) || dialogOpen() || pathname === GATEWAY) return;
+      if (event.key === "Escape") {
+        event.preventDefault();
+        router.push(up ?? GATEWAY);
+        return;
+      }
+      const match = keys.findIndex((key) => key && key === event.key.toLowerCase());
+      if (match !== -1 && entry) {
+        event.preventDefault();
+        router.push(entry.pages[match]!.href);
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [pathname, router, up]);
+  }, [pathname, router, up, keys, entry]);
   if (pathname === GATEWAY) return null;
   return (
     <div className="border-b border-line bg-surface" data-testid="classic-bar">
       <nav aria-label="You are here" className="flex flex-wrap items-center gap-1 px-4 pt-2 text-label text-ink-muted sm:px-8">
         <Link href={GATEWAY} className="link font-semibold">
-          Gateway
+          Central Management System
         </Link>
         {entry && (
           <>
@@ -134,17 +147,27 @@ export function ClassicBar({ modules }: { modules: ClassicModule[] }) {
       </nav>
       {entry && entry.pages.length > 1 && (
         <nav aria-label={`${entry.label} pages`} className="flex gap-1 overflow-x-auto px-4 pt-2 sm:px-8" data-testid="classic-tabs">
-          {entry.pages.map((item) => {
+          {entry.pages.map((item, index) => {
             const current = item.href === page?.href;
+            const at = keys[index] ? item.label.toLowerCase().indexOf(keys[index]!) : -1;
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 aria-current={current ? "page" : undefined}
+                aria-keyshortcuts={at !== -1 ? keys[index]!.toUpperCase() : undefined}
                 className={`shrink-0 rounded-t-md border border-b-0 px-3 py-1.5 text-label ${current ? "border-primary-600 bg-primary-solid font-semibold text-white" : "border-line bg-surface-muted text-ink hover:bg-primary-50"}`}
               >
-                {item.label}
-                {item.count ? <span className="ml-1.5 rounded-full bg-danger-solid px-1.5 text-[11px] font-semibold text-on-solid">{item.count}</span> : null}
+                {at === -1 ? (
+                  item.label
+                ) : (
+                  <>
+                    {item.label.slice(0, at)}
+                    <span className="font-bold text-danger-600 underline underline-offset-2">{item.label[at]}</span>
+                    {item.label.slice(at + 1)}
+                  </>
+                )}
+                {item.count ? <span className="ml-1.5 rounded-full bg-danger-solid px-1.5 text-[length:calc(11px*var(--text-scale,1))] font-semibold text-on-solid">{item.count}</span> : null}
               </Link>
             );
           })}

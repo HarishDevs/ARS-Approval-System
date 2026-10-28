@@ -40,7 +40,7 @@ export function initials(name: string): string {
 // Decorative by default: the name is always written next to it.
 export function Avatar({ name, size = "md" }: { name: string; size?: "sm" | "md" }) {
   return (
-    <span aria-hidden="true" className={`inline-flex shrink-0 items-center justify-center rounded-full bg-primary-50 font-semibold text-primary-700 ${size === "sm" ? "h-6 w-6 text-[10px]" : "h-8 w-8 text-caption"}`}>
+    <span aria-hidden="true" className={`inline-flex shrink-0 items-center justify-center rounded-full bg-primary-50 font-semibold text-primary-700 ${size === "sm" ? "h-6 w-6 text-[length:calc(10px*var(--text-scale,1))]" : "h-8 w-8 text-caption"}`}>
       {initials(name)}
     </span>
   );

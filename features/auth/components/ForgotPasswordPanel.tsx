@@ -50,7 +50,7 @@ export function ForgotPasswordPanel({ minLength }: { minLength: number }) {
     return (
       <div className="mt-8">
         <h1 className="text-display font-bold">Check WhatsApp</h1>
-        <p className="mt-2 text-[15px] text-ink-muted">
+        <p className="mt-2 text-[length:calc(15px*var(--text-scale,1))] text-ink-muted">
           If <span className="font-semibold text-ink">{loginId}</span> is a password account, we sent a code to its WhatsApp number. It works for{" "}
           {Math.round(started.expiresInSeconds / 60)} minutes.
         </p>
@@ -77,7 +77,7 @@ export function ForgotPasswordPanel({ minLength }: { minLength: number }) {
   return (
     <div className="mt-8">
       <h1 className="text-display font-bold">Forgot password</h1>
-      <p className="mt-2 text-[15px] text-ink-muted">Enter your User ID. We&apos;ll send a code to the WhatsApp number IT has on file.</p>
+      <p className="mt-2 text-[length:calc(15px*var(--text-scale,1))] text-ink-muted">Enter your User ID. We&apos;ll send a code to the WhatsApp number IT has on file.</p>
       <form onSubmit={start} className="mt-8 space-y-5" noValidate>
         <div>
           <label htmlFor="loginId" className="field-label">

@@ -1064,9 +1064,10 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 
 ## F-151 Classic view (v1.27.0, D-210)
 1. A person chooses View → Classic in the profile menu (or Profile → Appearance); saved on the account.
-2. After sign-in /users shows the Gateway of ARS-CMS: modules with highlighted letters; ↑↓ Enter or the letter opens one.
-3. A module opens its menu and summary boxes; a page shows Gateway › module › page and the module's pages as tabs; Esc goes back a level.
+2. After sign-in /users shows the Central Management System (one box): modules with highlighted letters; ↑↓ Enter or the letter opens one (v1.28.0, D-212).
+3. A module page shows its name, its pages as tabs (letters open them) and its boxes; every page shows Central Management System › module › page with the tabs; Esc goes back a level.
 4. Overview dashboard is a Gateway entry. Choosing Compact brings the sidebar back.
+5. (v1.28.0, D-211) Text size (Small to Largest) appears under View while Classic is chosen; every text on every page changes at once and the choice is saved.
 
 ## F-149 Sign in with Google or password (v1.26.0, D-208)
 1. IT sets a person's "How they sign in" to Google account, User ID + password, or Both (Both and password need a WhatsApp number).

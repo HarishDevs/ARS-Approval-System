@@ -13,7 +13,7 @@ async function as(context: BrowserContext, loginId: string) {
 test.afterAll(async () => {
   const conn = await db();
   try {
-    await conn.query("DELETE FROM user_settings WHERE setting_key = 'ui.workspace_view' AND user_id = ?", [await userIdByLogin("E2E_REQ")]);
+    await conn.query("DELETE FROM user_settings WHERE setting_key IN ('ui.workspace_view', 'ui.text_size') AND user_id = ?", [await userIdByLogin("E2E_REQ")]);
   } finally {
     await conn.end();
   }
@@ -27,6 +27,9 @@ test("D-210: switch to Classic; Gateway, module menu, page tabs, letters and Esc
   await page.getByTestId("view-switch").getByRole("radio", { name: "Classic" }).click();
   await expect(page.getByTestId("classic-gateway")).toBeVisible();
   await expect(page.getByTestId("sidebar")).toHaveCount(0);
+  // Page 2 of the sketch: one box, the Central Management System.
+  await expect(page.getByRole("navigation", { name: "Central Management System" })).toBeVisible();
+  await expect(page.getByLabel("At a glance")).toHaveCount(0);
   const gateway = page.getByTestId("gateway-menu");
   await expect(gateway.getByRole("link", { name: /Approval Management/ })).toBeFocused();
   await expect(gateway.getByRole("link").first()).toContainText("Approval Management");
@@ -39,7 +42,10 @@ test("D-210: switch to Classic; Gateway, module menu, page tabs, letters and Esc
   await expect(gateway.getByRole("link", { name: /Approval Management/ })).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(page).toHaveURL(/\/users\/menu\/approvals$/);
-  await expect(page.getByTestId("module-menu").getByRole("link")).toHaveText([/New request/, /My pending requests/, /My approved requests/, /Waiting for me/, /Approved by me/, /Collaborating/, /Request templates/]);
+  // Page 3 of the sketch: the module name, its pages as tabs, its boxes.
+  await expect(page.getByRole("heading", { level: 1, name: "Approval Management" })).toBeVisible();
+  await expect(page.getByTestId("classic-tabs").getByRole("link")).toHaveText([/New request/, /My pending requests/, /My approved requests/, /Waiting for me/, /Approved by me/, /Collaborating/, /Request templates/]);
+  await expect(page.getByTestId("module-menu")).toHaveCount(0);
   await expect(page.getByTestId("classic-boxes")).toContainText("Waiting for me");
   await page.screenshot({ path: "test-results/classic-module.png", fullPage: true });
 
@@ -64,12 +70,25 @@ test("D-210: switch to Classic; Gateway, module menu, page tabs, letters and Esc
   await page.goto("/users?view=overview");
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Welcome back");
 
-  // Back to Compact.
+  // D-211: in Classic, all text can be resized; it applies at once and is saved.
+  await page.goto("/users");
+  const bodyText = () => page.getByTestId("gateway-menu").getByRole("link", { name: /Approval Management/ }).evaluate((element) => getComputedStyle(element).fontSize);
+  expect(await bodyText()).toBe("14px");
+  await page.getByRole("button", { name: /open your menu|profile menu|account/i }).first().click();
+  await page.getByTestId("text-size").getByRole("radio", { name: "Largest" }).click();
+  await expect.poll(bodyText).toBe("21px");
+  await page.screenshot({ path: "test-results/classic-largest.png", fullPage: true });
+  await page.reload();
+  await expect.poll(bodyText).toBe("21px");
+
+  // Back to Compact: normal text, no Classic text size.
   await page.getByRole("button", { name: /open your menu|profile menu|account/i }).first().click();
   await page.getByTestId("view-switch").getByRole("radio", { name: "Compact" }).click();
   await expect(page.getByTestId("sidebar")).toBeVisible();
   await page.goto("/users");
   await expect(page.getByTestId("classic-gateway")).toHaveCount(0);
+  expect(await page.getByRole("heading", { level: 1 }).evaluate((element) => getComputedStyle(element.ownerDocument.documentElement).getPropertyValue("--text-scale"))).toBe("");
+  expect(await page.getByTestId("sidebar").getByRole("link").first().evaluate((element) => getComputedStyle(element).fontSize)).toBe("14px");
 });
 
 test("D-209: IT builds, tests, saves, turns off and deletes an escalation rule", async ({ page, context }) => {

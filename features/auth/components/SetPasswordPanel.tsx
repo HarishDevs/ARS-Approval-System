@@ -53,7 +53,7 @@ export function SetPasswordPanel({ token, name, loginId, minLength }: { token: s
     return (
       <div className="mt-8">
         <h1 className="text-display font-bold">Check WhatsApp</h1>
-        <p className="mt-2 text-[15px] text-ink-muted">
+        <p className="mt-2 text-[length:calc(15px*var(--text-scale,1))] text-ink-muted">
           We sent a code to <span className="font-semibold text-ink">+{challenge.maskedNumber}</span> to confirm this number is yours.
         </p>
         <form onSubmit={finish} className="mt-8 space-y-5" noValidate>
@@ -73,7 +73,7 @@ export function SetPasswordPanel({ token, name, loginId, minLength }: { token: s
   return (
     <div className="mt-8">
       <h1 className="text-display font-bold">Set your password</h1>
-      <p className="mt-2 text-[15px] text-ink-muted">
+      <p className="mt-2 text-[length:calc(15px*var(--text-scale,1))] text-ink-muted">
         Hi {name}. Your User ID is <span className="font-semibold text-ink">{loginId}</span>.
       </p>
       <form onSubmit={sendCode} className="mt-8 space-y-5" noValidate>
