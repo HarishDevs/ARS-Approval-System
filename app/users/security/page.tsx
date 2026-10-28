@@ -28,7 +28,9 @@ export default async function SecurityPage() {
           <p className="mt-1 text-ink-muted">
             {user.signInMethod === "GOOGLE"
               ? <SafeText text={`Google account (${user.email}). No code is needed.`} />
-              : `User ID and password, then a code on WhatsApp${user.whatsappNumber ? ` (${maskWhatsApp(user.whatsappNumber)})` : ""}.`}
+              : user.signInMethod === "BOTH"
+                ? <SafeText text={`Either your Google account (${user.email}), or your User ID and password then a code on WhatsApp${user.whatsappNumber ? ` (${maskWhatsApp(user.whatsappNumber)})` : ""}.`} />
+                : `User ID and password, then a code on WhatsApp${user.whatsappNumber ? ` (${maskWhatsApp(user.whatsappNumber)})` : ""}.`}
           </p>
         </section>
         <section className="rounded-lg border border-line bg-surface p-5">

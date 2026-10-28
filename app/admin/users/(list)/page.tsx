@@ -8,6 +8,7 @@ import { requireArea } from "@/server/authorization/guards";
 import { listUsersForAdmin } from "@/lib/db/repositories/admin-users.repository";
 import { ROLE_LABEL } from "@/features/ui/labels";
 import { MODULE_LABEL, MODULES, type ModuleCode } from "@/server/modules/modules";
+import { SIGN_IN_LABEL } from "@/types/auth";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
 export const metadata: Metadata = { title: "Users & roles" };
@@ -103,7 +104,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
             ),
             login: user.loginId,
             department: user.departmentName ?? <span className="text-ink-faint">—</span>,
-            signIn: user.signInMethod === "GOOGLE" ? "Google" : "Password + WhatsApp",
+            signIn: SIGN_IN_LABEL[user.signInMethod],
             roles: user.roles.filter((role) => role !== "USER").map((role) => ROLE_LABEL[role]).join(", ") || "User",
             modules: user.roles.includes("SUPER_ADMIN") ? "All" : user.modules.map((module) => MODULE_LABEL[module]).join(", ") || <span className="text-ink-faint">None</span>,
             status: (

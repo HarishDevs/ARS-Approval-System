@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { userRecord } from "../helpers/user-fixtures";
 import { checkSignInAllowed, maskWhatsAppNumber } from "@/server/auth/sign-in-rules";
+import { parseUserForm } from "@/server/admin/user-input";
 import { areasForUser, evaluateAreaAccess } from "@/server/authorization/policy";
 import { resolveSettingForDisplay } from "@/server/settings/resolve";
 import type { SettingDefinition } from "@/server/settings/definitions";
-import type { AuthenticatedUser, RoleCode } from "@/types/auth";
+import { allowsGoogle, allowsPassword, type AuthenticatedUser, type RoleCode } from "@/types/auth";
 import { z } from "zod";
 
 const authUser = (roles: RoleCode[], active = true): AuthenticatedUser => ({
@@ -32,6 +33,25 @@ describe("sign-in rules", () => {
     expect(checkSignInAllowed(userRecord({ lockedSecondsRemaining: 90 }), "PASSWORD")).toEqual({ allowed: false, reason: "LOCKED", retryAfterSeconds: 90 });
     expect(checkSignInAllowed(userRecord({ isBreakGlass: true }), "PASSWORD")).toMatchObject({ reason: "BREAK_GLASS_DISABLED" });
     expect(checkSignInAllowed(userRecord({ isBreakGlass: true, breakGlassSecondsRemaining: 600 }), "PASSWORD")).toEqual({ allowed: true });
+  });
+
+  it("D-208: BOTH allows Google and password sign-in; the other rules still apply", () => {
+    expect(checkSignInAllowed(userRecord({ signInMethod: "BOTH" }), "GOOGLE")).toEqual({ allowed: true });
+    expect(checkSignInAllowed(userRecord({ signInMethod: "BOTH" }), "PASSWORD")).toEqual({ allowed: true });
+    expect(checkSignInAllowed(userRecord({ signInMethod: "GOOGLE" }), "PASSWORD")).toMatchObject({ reason: "WRONG_METHOD" });
+    expect(checkSignInAllowed(userRecord({ signInMethod: "BOTH", active: false }), "GOOGLE")).toMatchObject({ reason: "INACTIVE" });
+    expect(checkSignInAllowed(userRecord({ signInMethod: "BOTH", lockedSecondsRemaining: 60 }), "GOOGLE")).toMatchObject({ reason: "LOCKED" });
+    expect(allowsGoogle("BOTH") && allowsPassword("BOTH")).toBe(true);
+    expect(allowsGoogle("PASSWORD") || allowsPassword("GOOGLE")).toBe(false);
+  });
+
+  it("D-208: the user form accepts BOTH and then needs a WhatsApp number", () => {
+    const base = { loginId: "both.user", name: "Both User", email: "both@example.com", signInMethod: "BOTH" };
+    const missing = parseUserForm(base, ["USER"]);
+    expect(missing.ok).toBe(false);
+    if (!missing.ok) expect(missing.fieldErrors.whatsappNumber).toMatch(/WhatsApp number/);
+    const ok = parseUserForm({ ...base, whatsappNumber: "9876543210" }, ["USER"]);
+    expect(ok.ok && ok.value.signInMethod).toBe("BOTH");
   });
 
   it("masks WhatsApp numbers", () => {

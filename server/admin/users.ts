@@ -23,6 +23,7 @@ import { diffFields, type ParsedUserInput } from "@/server/admin/user-input";
 import { logError } from "@/lib/logging/logger";
 import { countPendingTasks } from "@/server/approvals/service";
 import { checkChosenApprover } from "@/server/approvals/approver-check";
+import { allowsGoogle, allowsPassword } from "@/types/auth";
 
 // User management services (F-06, D-047). Every write re-checks the rules,
 // runs in one transaction with its audit entry, and sends alerts only after
@@ -148,8 +149,8 @@ export async function updateUser(id: number, input: ParsedUserInput, actor: Admi
   if (!Object.keys(changes).length && !rolesChanged && !modulesChanged && !chatChanged) return { ok: true, value: undefined };
 
   const effects = {
-    unlinkGoogle: existing.googleLinked && (before.email !== after.email || after.signInMethod !== "GOOGLE"),
-    clearPassword: after.signInMethod === "GOOGLE" && existing.hasPassword,
+    unlinkGoogle: existing.googleLinked && (before.email !== after.email || !allowsGoogle(after.signInMethod)),
+    clearPassword: !allowsPassword(after.signInMethod) && existing.hasPassword,
   };
   // A different way in, or a different account, ends the open sessions.
   const endSessions = before.signInMethod !== after.signInMethod || before.email !== after.email || before.loginId !== after.loginId;

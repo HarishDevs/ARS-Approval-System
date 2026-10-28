@@ -63,3 +63,25 @@ test("a password user with a password gets Reset password on their page", async 
   await page.getByRole("alertdialog").getByRole("button", { name: "Yes, send" }).click();
   await expect(page.getByText(NOT_SENT)).toBeVisible();
 });
+
+test("D-208: a person can be set to sign in with Google or password (Both)", async ({ page, context }) => {
+  await context.addCookies([await sessionCookie("E2E_ADMIN")]);
+  const loginId = unique("E2E_BOTH");
+  await page.goto("/admin/users/new");
+  await page.getByLabel("Full name", { exact: true }).fill(`Invitee ${loginId}`);
+  await page.getByLabel("User ID", { exact: true }).fill(loginId);
+  await page.getByLabel("Email", { exact: true }).fill(`${loginId.toLowerCase()}@example.com`);
+  await page.getByRole("radio", { name: /^Both/ }).check();
+  // Both includes password sign-in, so the WhatsApp number is required.
+  await page.getByRole("checkbox", { name: /Email an invitation now/ }).uncheck();
+  await page.getByRole("button", { name: "Create user" }).click();
+  await expect(page.getByText("Password sign-in needs a WhatsApp number for the sign-in code.")).toBeVisible();
+  await page.getByLabel("WhatsApp number", { exact: true }).fill(`98${String(Date.now()).slice(-8)}`);
+  await page.getByRole("button", { name: "Create user" }).click();
+  await expect(page).toHaveURL(/\/admin\/users\/\d+\?created=1/);
+  await expect(page.getByText("Google (links on first sign-in) · No password yet")).toBeVisible();
+  // Like a password user, they get a set-password link (Google needs no set-up).
+  await expect(page.getByRole("button", { name: "Re-invite" })).toBeVisible();
+  await page.goto(`/admin/users?q=${loginId}`);
+  await expect(page.getByRole("row").filter({ hasText: loginId })).toContainText("Google or password + WhatsApp");
+});

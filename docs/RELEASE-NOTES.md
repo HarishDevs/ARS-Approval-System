@@ -1,5 +1,9 @@
 # Release notes
 
+## v1.26.0 (28 Oct 2026): sign in either way (owner)
+- **New sign-in choice "Both"** in Admin → Users → How they sign in: the person can sign in with Google or with their User ID and password plus a WhatsApp code, whichever they prefer. Both needs a WhatsApp number; Re-invite sends them a link to set their password.
+- CSV user import accepts BOTH in the sign_in_method column.
+
 ## v1.25.1 (28 Oct 2026): My Approvals menu (owner)
 - The My Approvals menu now reads: New request, My pending requests, My approved requests, Waiting for me, Approved by me, Collaborating, Request templates.
 

@@ -16,7 +16,7 @@ import { defaultOtpDeps } from "@/server/auth/password-sign-in";
 import { completeSignIn, defaultCompleteSignInDeps, type CompleteSignInDeps, type CompleteSignInResult } from "@/server/auth/complete-sign-in";
 import { checkCanEdit, checkContactChange, type Actor } from "@/server/admin/user-rules";
 import { logError } from "@/lib/logging/logger";
-import type { RequestContext } from "@/types/auth";
+import { allowsPassword, type RequestContext } from "@/types/auth";
 import { appBaseUrl } from "@/lib/http/app-url";
 
 // F-04: set password (first sign-in, P1-13) and forgot password (P1-14).
@@ -69,7 +69,7 @@ const tokenHash = (token: string) => keyedHash(`pwtoken:${token}`);
 const isSecurityLocked = (user: UserRecord) => user.lockedSecondsRemaining > SECURITY_LOCK_SECONDS;
 
 function canUsePassword(user: UserRecord | null): user is UserRecord & { whatsappNumber: string } {
-  return !!user && user.active && user.signInMethod === "PASSWORD" && !user.isBreakGlass && !!user.whatsappNumber && !isSecurityLocked(user);
+  return !!user && user.active && allowsPassword(user.signInMethod) && !user.isBreakGlass && !!user.whatsappNumber && !isSecurityLocked(user);
 }
 
 function checkNewPassword(password: string, confirm: string, config: AuthSecurityConfig): void {
@@ -105,7 +105,7 @@ export async function sendSetPasswordLinkWithDeps(userId: number, actor: AdminAc
   if (!contact.ok) return contact;
   if (user.isBreakGlass) return { ok: false, message: "The break-glass password is set only from the hosting console." };
   if (!user.active) return { ok: false, message: "Reactivate the user first." };
-  if (user.signInMethod !== "PASSWORD") return { ok: false, message: "This user signs in with Google, so no password is needed." };
+  if (!allowsPassword(user.signInMethod)) return { ok: false, message: "This user signs in with Google, so no password is needed." };
   if (!user.whatsappNumber) return { ok: false, message: "Add a WhatsApp number first: setting a password needs a code on WhatsApp." };
 
   const token = deps.randomToken();
@@ -125,7 +125,8 @@ export async function sendSetPasswordLinkWithDeps(userId: number, actor: AdminAc
 export async function sendInvitationWithDeps(userId: number, actor: AdminActor, deps: PasswordFlowDeps): Promise<AdminResult> {
   const user = await deps.findUserById(userId);
   if (!user) return { ok: false, message: "User not found." };
-  if (user.signInMethod === "PASSWORD") return sendSetPasswordLinkWithDeps(userId, actor, deps, "INVITE");
+  // D-208: someone who may use both gets the password link (Google needs no set-up).
+  if (allowsPassword(user.signInMethod)) return sendSetPasswordLinkWithDeps(userId, actor, deps, "INVITE");
   const target = { id: user.id, roles: user.roles, active: user.active, isBreakGlass: user.isBreakGlass };
   const edit = checkCanEdit(actor, target);
   if (!edit.ok) return edit;

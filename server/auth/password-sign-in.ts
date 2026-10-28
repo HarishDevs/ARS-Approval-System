@@ -20,7 +20,7 @@ import { AuthError, GENERIC_SIGN_IN_FAILED } from "@/server/auth/errors";
 import { checkSignInAllowed } from "@/server/auth/sign-in-rules";
 import { consumeOtpCode, issueOtp, loadOpenChallenge, type OtpChallengeResult, type OtpDeps } from "@/server/auth/otp-flow";
 import { completeSignIn, defaultCompleteSignInDeps, type CompleteSignInDeps, type CompleteSignInResult } from "@/server/auth/complete-sign-in";
-import type { RequestContext } from "@/types/auth";
+import { allowsPassword, type RequestContext } from "@/types/auth";
 
 export type { OtpChallengeResult } from "@/server/auth/otp-flow";
 
@@ -104,7 +104,7 @@ export async function startPasswordSignInWithDeps(
   const passwordOk = await deps.verifyPassword(password, user.passwordHash);
   if (!passwordOk) {
     await logFailure(user.id, "WRONG_PASSWORD");
-    if (user.active && user.signInMethod === "PASSWORD") {
+    if (user.active && allowsPassword(user.signInMethod)) {
       const { locked } = await deps.recordFailedPassword(user.id, config.lockoutThreshold, config.lockoutMinutes);
       if (locked) {
         await deps.recordAudit({ actorUserId: user.id, action: "ACCOUNT_LOCKED", entityType: "USER", entityId: user.id, result: "FAILURE", ipAddress: context.ipAddress });

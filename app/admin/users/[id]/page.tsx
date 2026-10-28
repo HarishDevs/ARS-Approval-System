@@ -56,14 +56,14 @@ export default async function UserDetailPage({ params, searchParams }: { params:
             ? ` Invitation emailed to ${user.email}.`
             : query.invite === "failed"
               ? null
-              : user.signInMethod === "PASSWORD"
+              : user.signInMethod !== "GOOGLE"
                 ? " Use Re-invite to email their User ID and a set-password link."
                 : " They can now sign in with Google. Use Re-invite to email them."}
         </p>
       )}
       {created && query.invite === "failed" && (
         <p role="alert" className="mb-4 rounded-md border border-danger-200 bg-danger-50 px-3 py-2 text-label text-danger-600" data-testid="invite-failed">
-          The invitation email couldn&apos;t be sent{user.signInMethod === "PASSWORD" && !user.whatsappNumber ? " (add a WhatsApp number first: setting a password needs a code on WhatsApp)" : " (check the email settings in Super Admin)"}. Use Re-invite when it&apos;s fixed.
+          The invitation email couldn&apos;t be sent{user.signInMethod !== "GOOGLE" && !user.whatsappNumber ? " (add a WhatsApp number first: setting a password needs a code on WhatsApp)" : " (check the email settings in Super Admin)"}. Use Re-invite when it&apos;s fixed.
         </p>
       )}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
@@ -100,13 +100,12 @@ export default async function UserDetailPage({ params, searchParams }: { params:
               </dd>
               <dt className="text-ink-muted">Sign-in</dt>
               <dd>
-                {user.signInMethod === "GOOGLE"
-                  ? user.googleLinked
-                    ? "Google (linked)"
-                    : "Google (links on first sign-in)"
-                  : user.hasPassword
-                    ? "Password set"
-                    : "No password yet"}
+                {[
+                  user.signInMethod !== "PASSWORD" ? (user.googleLinked ? "Google (linked)" : "Google (links on first sign-in)") : null,
+                  user.signInMethod !== "GOOGLE" ? (user.hasPassword ? "Password set" : "No password yet") : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
               </dd>
               <dt className="text-ink-muted">Modules</dt>
               <dd data-testid="user-modules">{user.roles.includes("SUPER_ADMIN") ? "All (Super Admin)" : user.modules.map((module) => MODULE_LABEL[module]).join(", ") || "None"}</dd>

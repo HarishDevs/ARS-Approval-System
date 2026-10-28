@@ -74,19 +74,19 @@ export function UserForm({
           name="whatsappNumber"
           defaultValue={values.whatsappNumber ? `+${values.whatsappNumber}` : ""}
           result={result}
-          hint={method === "PASSWORD" ? "Required: sign-in codes go here. 10-digit Indian numbers get +91." : "Used for notifications. 10-digit Indian numbers get +91."}
+          hint={method !== "GOOGLE" ? "Required: sign-in codes go here. 10-digit Indian numbers get +91." : "Used for notifications. 10-digit Indian numbers get +91."}
         />
 
         <div className="sm:col-span-2">
           <p className="field-label">How they sign in</p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {(["GOOGLE", "PASSWORD"] as const).map((option) => (
+          <div className="grid gap-3 sm:grid-cols-3">
+            {(["GOOGLE", "PASSWORD", "BOTH"] as const).map((option) => (
               <div key={option} className="relative">
                 <label className={`flex cursor-pointer gap-3 rounded-md border p-3 pr-9 ${method === option ? "border-primary-600 bg-primary-50" : "border-line"}`}>
                   <input type="radio" name="signInMethod" value={option} checked={method === option} onChange={() => setMethod(option)} className="mt-1" />
-                  <span className="font-medium">{option === "GOOGLE" ? "Google account" : "User ID + password"}</span>
+                  <span className="font-medium">{option === "GOOGLE" ? "Google account" : option === "PASSWORD" ? "User ID + password" : "Both"}</span>
                 </label>
-                <CardHint text={option === "GOOGLE" ? "No code needed." : "Then a code on WhatsApp every time."} />
+                <CardHint text={option === "GOOGLE" ? "No code needed." : option === "PASSWORD" ? "Then a code on WhatsApp every time." : "Google, or User ID + password with a WhatsApp code, whichever they choose."} />
               </div>
             ))}
           </div>
@@ -198,7 +198,7 @@ export function UserForm({
             <span className="font-medium">Email an invitation now</span>
           </label>
           <Hint
-            text={method === "PASSWORD" ? "Sends their User ID and a link to set their password (confirmed by a WhatsApp code)." : "Tells them they've been added and to sign in with Google as this email."}
+            text={method === "GOOGLE" ? "Tells them they've been added and to sign in with Google as this email." : method === "BOTH" ? "Sends their User ID and a link to set their password (confirmed by a WhatsApp code); they can also sign in with Google as this email." : "Sends their User ID and a link to set their password (confirmed by a WhatsApp code)."}
             align="start"
           />
         </div>

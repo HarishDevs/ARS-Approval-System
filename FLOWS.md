@@ -1055,6 +1055,11 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 2. They filter (search, status, type, department, person, waiting on, priority, overdue, dates) and sort by a column title; 50 rows a page.
 3. **Download CSV** gives every matching row (up to 10,000) for Excel; audited. A row number opens the record.
 
+## F-149 Sign in with Google or password (v1.26.0, D-208)
+1. IT sets a person's "How they sign in" to Google account, User ID + password, or Both (Both and password need a WhatsApp number).
+2. A Both person may press Continue with Google (their email on record) or enter User ID + password and then the WhatsApp code.
+3. Invitations for Both send the set-password link; removing password sign-in clears the password; removing Google unlinks the Google account.
+
 ## F-147 New request (custom approval) options (v1.25.0, D-206)
 1. IT opens Admin → Custom approval → "What people may add" and ticks any of: DoA matrix, Choice (if / otherwise), "Skip this step when…" (all off at first), then Save set-up.
 2. On New request (formerly Custom approval) everyone can add levels and parallel steps; the ticked options appear too.

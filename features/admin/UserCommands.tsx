@@ -41,7 +41,7 @@ export function UserCommands({
   name: string;
   active: boolean;
   locked: boolean;
-  signInMethod: "GOOGLE" | "PASSWORD";
+  signInMethod: "GOOGLE" | "PASSWORD" | "BOTH";
   hasPassword: boolean;
   openSessionCount: number;
   canEdit: boolean;
@@ -60,10 +60,10 @@ export function UserCommands({
           id={id}
           command="invite"
           label="Re-invite"
-          body={signInMethod === "PASSWORD" ? "Emails a welcome with their User ID and a link (valid 72 hours) to set their password, confirmed by a WhatsApp code. Older links stop working." : "Emails a welcome telling them to sign in with Google as their email on record."}
+          body={signInMethod !== "GOOGLE" ? "Emails a welcome with their User ID and a link (valid 72 hours) to set their password, confirmed by a WhatsApp code. Older links stop working." : "Emails a welcome telling them to sign in with Google as their email on record."}
         />
       )}
-      {active && signInMethod === "PASSWORD" &&
+      {active && signInMethod !== "GOOGLE" &&
         (hasPassword ? (
           <Command
             id={id}

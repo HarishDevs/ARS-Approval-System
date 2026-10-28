@@ -2,7 +2,7 @@ import { z } from "zod";
 import { parseCsv, unguardCell } from "@/server/import/csv";
 import { IMPORT_LIMITS, IMPORT_SPECS, type ImportKind } from "@/server/import/kinds";
 import { checkCanEdit, checkContactChange, checkRoleChange, isValidWhatsAppNumber, normaliseRoles, normaliseWhatsAppNumber, ASSIGNABLE_ROLES } from "@/server/admin/user-rules";
-import type { RoleCode, SignInMethod } from "@/types/auth";
+import { allowsGoogle, allowsPassword, type RoleCode, type SignInMethod } from "@/types/auth";
 
 // Bulk import planner (S10-03, F-59). Pure: given the file and a snapshot
 // of what is in the database, it decides for every row whether it creates,
@@ -138,6 +138,7 @@ function parseSignIn(raw: string): SignInMethod | null {
   const value = lower(raw);
   if (value === "" || value === "google") return "GOOGLE";
   if (value === "password") return "PASSWORD";
+  if (value === "both") return "BOTH";
   return null;
 }
 
@@ -322,8 +323,8 @@ function planUsers(rows: Row[], snapshot: Snapshot): { planned: PlannedRow[]; op
     }
 
     const signInMethod = parseSignIn(row.get("sign_in_method"));
-    if (!signInMethod) check.add("sign_in_method", "Write GOOGLE or PASSWORD.");
-    if (signInMethod === "PASSWORD" && whatsappNumber === null) check.add("whatsapp_number", "Password sign-in needs a WhatsApp number for the sign-in code.");
+    if (!signInMethod) check.add("sign_in_method", "Write GOOGLE, PASSWORD or BOTH.");
+    if (signInMethod && allowsPassword(signInMethod) && whatsappNumber === null) check.add("whatsapp_number", "Password sign-in needs a WhatsApp number for the sign-in code.");
     const { roles, unknown } = parseRoles(row.get("roles"));
     if (unknown.length) check.add("roles", `Unknown role${unknown.length === 1 ? "" : "s"}: ${unknown.join(", ")}. Use USER, IT_ADMIN or SUPER_ADMIN.`);
 
@@ -389,8 +390,8 @@ function planUsers(rows: Row[], snapshot: Snapshot): { planned: PlannedRow[]; op
         rolesChanged,
         changes,
         effects: {
-          unlinkGoogle: existing.googleLinked && (emailChanged || value.signInMethod !== "GOOGLE"),
-          clearPassword: value.signInMethod === "GOOGLE" && existing.hasPassword,
+          unlinkGoogle: existing.googleLinked && (emailChanged || !allowsGoogle(value.signInMethod)),
+          clearPassword: !allowsPassword(value.signInMethod) && existing.hasPassword,
         },
         endSessions: emailChanged || methodChanged,
       });

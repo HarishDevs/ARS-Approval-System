@@ -128,14 +128,15 @@ export function whatsappChangedMessage(userName: string) {
   };
 }
 
-export function signInMethodChangedMessage(userName: string, method: "GOOGLE" | "PASSWORD") {
-  const how = method === "GOOGLE" ? "your Google account" : "your User ID and password, with a code on WhatsApp";
+export function signInMethodChangedMessage(userName: string, method: "GOOGLE" | "PASSWORD" | "BOTH") {
+  const how = method === "GOOGLE" ? "your Google account" : method === "BOTH" ? "your Google account, or your User ID and password with a code on WhatsApp" : "your User ID and password, with a code on WhatsApp";
+  const short = method === "GOOGLE" ? "Google" : method === "BOTH" ? "Google, or User ID and password" : "User ID and password";
   const text = [`Hi ${userName},`, "", `IT changed how you sign in to ARS-CMS. You now sign in with ${how}.`, IT_CONTACT].join("\n");
   return {
     title: "Sign-in method changed",
-    message: `You now sign in with ${method === "GOOGLE" ? "Google" : "User ID and password"}.`,
+    message: `You now sign in with ${short}.`,
     email: { subject: "How you sign in to ARS-CMS has changed", text },
-    whatsappVariables: { user_name: userName, method: method === "GOOGLE" ? "Google" : "User ID and password" },
+    whatsappVariables: { user_name: userName, method: short },
   };
 }
 

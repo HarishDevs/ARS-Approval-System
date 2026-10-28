@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { isValidWhatsAppNumber, normaliseRoles, normaliseWhatsAppNumber } from "@/server/admin/user-rules";
-import type { ModuleCode, RoleCode, SignInMethod } from "@/types/auth";
+import { allowsPassword, type ModuleCode, type RoleCode, type SignInMethod } from "@/types/auth";
 import { normaliseModules } from "@/server/modules/modules";
 import { isSalesforceScope, normaliseChatModes, type ChatMode, type SalesforceScope } from "@/server/ai/chat-access";
 
@@ -40,7 +40,7 @@ const schema = z.object({
   departmentId: optionalId,
   designationId: optionalId,
   reportingManagerId: optionalId,
-  signInMethod: z.enum(["GOOGLE", "PASSWORD"], { message: "Choose how this person signs in." }),
+  signInMethod: z.enum(["GOOGLE", "PASSWORD", "BOTH"], { message: "Choose how this person signs in." }),
 });
 
 export type ParseResult = { ok: true; value: ParsedUserInput } | { ok: false; fieldErrors: Record<string, string> };
@@ -65,7 +65,7 @@ export function parseUserForm(
     fieldErrors.whatsappNumber = "Enter a mobile number with country code, e.g. 91 98765 43210.";
   }
   // D-025: password users get their sign-in code on WhatsApp only.
-  if (parsed.data.signInMethod === "PASSWORD" && whatsappNumber === null) {
+  if (allowsPassword(parsed.data.signInMethod) && whatsappNumber === null) {
     fieldErrors.whatsappNumber = "Password sign-in needs a WhatsApp number for the sign-in code.";
   }
   const chosenModules = modules === null ? null : normaliseModules(modules);
