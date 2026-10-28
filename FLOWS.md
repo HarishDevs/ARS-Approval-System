@@ -1055,6 +1055,19 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 2. They filter (search, status, type, department, person, waiting on, priority, overdue, dates) and sort by a column title; 50 rows a page.
 3. **Download CSV** gives every matching row (up to 10,000) for Excel; audited. A row number opens the record.
 
+## F-150 Reminder and escalation rules (v1.27.0, D-209)
+1. IT opens Admin → Reminders & escalations → New rule: name, Reminder or Escalation, Approvals or Tasks, on/off, email or inbox only.
+2. Adds conditions on any field (standard or form field) and chooses all or any.
+3. Adds stages (escalation levels): hours after/before (reached the person, raised, due), repeat, recipients and named people; edits the message or keeps the standard wording.
+4. Test shows how many records match and how many would get a message now; Save; the job runner sends due messages every run, each once.
+5. Turn off or Delete from the list.
+
+## F-151 Classic view (v1.27.0, D-210)
+1. A person chooses View → Classic in the profile menu (or Profile → Appearance); saved on the account.
+2. After sign-in /users shows the Gateway of ARS-CMS: modules with highlighted letters; ↑↓ Enter or the letter opens one.
+3. A module opens its menu and summary boxes; a page shows Gateway › module › page and the module's pages as tabs; Esc goes back a level.
+4. Overview dashboard is a Gateway entry. Choosing Compact brings the sidebar back.
+
 ## F-149 Sign in with Google or password (v1.26.0, D-208)
 1. IT sets a person's "How they sign in" to Google account, User ID + password, or Both (Both and password need a WhatsApp number).
 2. A Both person may press Continue with Google (their email on record) or enter User ID + password and then the WhatsApp code.

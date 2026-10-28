@@ -17,6 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (28 Oct 2026):** v1.27.0: Classic (Tally-style) view per person (D-210) and Admin reminder/escalation rules on any field (D-209). **Owner:** publish v1.27.0 (migration runs on start); build rules in Admin → Reminders & escalations (Test first; records already past a stage get it on the next run); try Classic from the profile menu → View.
 - **Now (28 Oct 2026):** v1.26.0: sign-in method "Both" (Google or User ID + password + WhatsApp code) per person (D-208). **Owner:** publish v1.26.0 (migration runs on start); set people to Both in Admin → Users → the person → How they sign in (they need a WhatsApp number), then Re-invite so they can set a password.
 - **Now (28 Oct 2026):** v1.25.1: My Approvals menu order and "My pending requests" (D-207). **Owner:** publish v1.25.1.
 - **Now (27 Oct 2026):** v1.25.0 (D-206): DoA / choice / skip on New request only when IT switches them on (Admin → Custom approval → What people may add; off by default); "Request templates" and "New request" names; Tasks order; Analytics per person; "Opening…" fix. **Owner:** publish v1.25.0; switch on any of the three options you want people to have.
@@ -375,6 +376,8 @@ Plan: `docs/CHATBOT_IMPLEMENTATION_PLAN.md`; audit: `docs/CHATBOT_ARCHITECTURE_A
 - [x] PB-40 Domain move prepared in code: single base-URL helper, LEGACY_HOSTS redirect (machine callers and OAuth callbacks exempt), unit tests, docs/DOMAIN-MIGRATION.md (done 25 Oct 2026, v1.22.0)
 - [x] PB-41 Phone layout: six pages scrolled sideways (sr-only label in wide tables); fixed globally (done 25 Oct 2026, v1.22.0)
 - [x] PB-48 Rollback to approval.arssteels.net in the app (default address, policies, samples, runbook) (26 Oct 2026, D-199)
+- [x] PB-64 Reminder and escalation rules, Admin-configurable on any field (28 Oct 2026, D-209)
+- [x] PB-65 Classic (Tally-style) and Compact views, switch and save per person (28 Oct 2026, D-210)
 - [x] PB-63 Sign-in method Both (28 Oct 2026, D-208)
 - [x] PB-62 My Approvals menu: new order, "My pending requests" (28 Oct 2026, D-207)
 - [x] PB-58 Custom approval options configurable (DoA, choice, skip; off by default; server-enforced) (27 Oct 2026, D-206)

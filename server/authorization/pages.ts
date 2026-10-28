@@ -30,6 +30,7 @@ const under = (path: string) => new RegExp(`^${path.replace(/[/]/g, "\\/")}(\\/.
 
 export const PAGES: readonly PageDef[] = [
   { key: "users.overview", area: "users", label: "Overview", what: "The first page: what needs you, your requests, drafts.", paths: [exact("/users")], neverHidden: true },
+  { key: "users.menu", area: "users", label: "Classic view menus", what: "The module menus of the Classic view (D-210).", paths: [under("/users/menu")], neverHidden: true },
   { key: "users.queue", module: "APPROVAL", area: "users", label: "Waiting for me", what: "Approvals and work waiting for the person; bulk approval.", paths: [under("/users/queue")] },
   { key: "users.requests", module: "APPROVAL", area: "users", label: "My requests", what: "The requests the person raised.", paths: [exact("/users/requests")] },
   { key: "users.request", module: "APPROVAL", area: "users", label: "Request page", what: "Opening a request: details, decisions, comments, files, PDF. View only = can read, not decide or comment.", paths: [/^\/users\/requests\/\d+(\/.*)?$/], apis: [/^\/api\/requests\/\d+\//, /^\/api\/attachments\//] },
@@ -76,6 +77,7 @@ export const PAGES: readonly PageDef[] = [
   { key: "admin.budgets", area: "admin", label: "Budgets", what: "Department budgets.", paths: [under("/admin/budgets")] },
   { key: "admin.calendar", area: "admin", label: "Working calendar", what: "Working days and holidays.", paths: [under("/admin/calendar")] },
   { key: "admin.ai_analytics", area: "admin", label: "AI Analytics", what: "How Pico Bot is used: adoption, questions, speed, tokens and cost, by chat, provider, department and person.", paths: [under("/admin/ai-analytics")] },
+  { key: "admin.reminders", area: "admin", label: "Reminders & escalations", what: "Rules that remind people and escalate late approvals and tasks.", paths: [under("/admin/reminders")] },
   { key: "admin.ai_rules", area: "admin", label: "AI Rules", what: "The rules every AI provider follows (company terms, where data is kept).", paths: [under("/admin/ai-rules")] },
   { key: "admin.records", area: "admin", label: "Records", what: "Every approval request, task and information item, with filters and a CSV download.", paths: [under("/admin/records")], apis: [/^\/api\/admin\/records\//] },
   { key: "admin.users", area: "admin", label: "Users & roles", what: "People, roles and hand-overs.", paths: [under("/admin/users")] },

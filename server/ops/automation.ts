@@ -14,6 +14,7 @@ import { logError } from "@/lib/logging/logger";
 import { runExpiryNotices } from "@/server/approvals/expiry";
 import { runExportJobs } from "@/server/reports/background";
 import { runModuleReminders } from "@/server/modules/jobs";
+import { runNotificationRules } from "@/server/notifications/rule-runner";
 import { runCalendarStep } from "@/server/calendar/jobs";
 import { runAiStep } from "@/server/ai/jobs";
 
@@ -156,6 +157,18 @@ export const AUTOMATIONS: readonly Automation[] = [
     owner: "IT team",
   },
   {
+    key: "rules",
+    name: "Reminder and escalation rules",
+    what: "Sends the reminders and escalations IT set up in Admin → Reminders & escalations, for pending approval steps and open tasks.",
+    trigger: "Every job run.",
+    everyMinutes: 5,
+    retry: "A send that failed is logged; the next run carries on with the rest.",
+    idempotency: "Each send is claimed first (one per rule, record, stage and repeat), so it is sent once.",
+    onFailure: "Recorded here; other steps still run.",
+    recovery: "Fix the rule or the recipient; due sends go out on the next run.",
+    owner: "IT team",
+  },
+  {
     key: "modules",
     name: "Task and information reminders",
     what: "Reminds assignees before a task is due, tells the assignee and creator once when it is overdue, and reminds people who haven't acknowledged information (as each type is set up).",
@@ -231,6 +244,7 @@ const STEPS: Record<string, () => Promise<StepResult>> = {
   alerts: async () => ({ ...(await evaluateAlerts()) }),
   expiry: async () => ({ ...(await runExpiryNotices()) }),
   modules: async () => ({ ...(await runModuleReminders()) }),
+  rules: async () => ({ ...(await runNotificationRules()) }),
   exports: async () => ({ ...(await runExportJobs()) }),
   calendar: async () => ({ ...(await runCalendarStep()) }),
   ai: () => runAiStep(),

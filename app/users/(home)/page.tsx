@@ -12,6 +12,9 @@ import { SafeText } from "@/features/ui/SafeText";
 import { FirstUseChecklist } from "@/features/help/FirstUseChecklist";
 import { hasFlag } from "@/lib/db/repositories/user-flags.repository";
 import { hasModule } from "@/server/modules/modules";
+import { getUserSetting } from "@/lib/db/repositories/user-settings.repository";
+import { parseWorkspaceView, WORKSPACE_VIEW_SETTING } from "@/server/ui/workspace-view";
+import { ClassicGateway } from "@/features/shell/ClassicScreens";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
 export const metadata: Metadata = { title: "Overview" };
@@ -21,8 +24,12 @@ export const metadata: Metadata = { title: "Overview" };
 // bounded; each section links to that page.
 const RECENT_DAYS = 30;
 
-export default async function UsersHome() {
+export default async function UsersHome({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const { user } = await requireArea("users");
+  // D-210: in the Classic view the first screen is the Gateway; the Overview
+  // dashboard is one of its entries (?view=overview).
+  const query = await searchParams;
+  if (query.view !== "overview" && !query.tour && parseWorkspaceView(await getUserSetting(user.id, WORKSPACE_VIEW_SETTING).catch(() => null)) === "CLASSIC") return <ClassicGateway user={user} />;
   // D-168: everything below is about approvals; without the Approval module
   // the page offers the person's other modules instead.
   if (!hasModule(user, "APPROVAL")) return <ModulesHome name={displayName(user.name)} user={user} />;

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Email } from "@/features/ui/SafeText";
+import { ViewSwitch } from "@/features/shell/ViewSwitch";
+import type { WorkspaceView } from "@/server/ui/workspace-view";
 
 // One user menu at the top right (S9-01..03): who you are, which space
 // you're in, switching space, Profile, Notifications, Sign-in and Help
@@ -21,6 +23,7 @@ export function ProfileMenu({
   spaceLabel,
   otherSpaces,
   unread,
+  view = null,
 }: {
   name: string;
   email: string;
@@ -28,6 +31,7 @@ export function ProfileMenu({
   spaceLabel: string;
   otherSpaces: SpaceLink[];
   unread: number;
+  view?: WorkspaceView | null; // D-210: Compact or Classic (My approvals space)
 }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -99,6 +103,11 @@ export function ProfileMenu({
                   <span aria-hidden="true" className="text-ink-faint">→</span>
                 </Link>
               ))}
+            </div>
+          )}
+          {view && (
+            <div className="border-b border-line py-2">
+              <ViewSwitch initial={view} compact />
             </div>
           )}
           <div className="py-2">

@@ -10,6 +10,8 @@ import { accessLabel, maskWhatsApp } from "@/features/ui/labels";
 import { ThemeChoice } from "@/features/shell/ThemeControls";
 import { getUserSetting } from "@/lib/db/repositories/user-settings.repository";
 import { THEME_SETTING, parseTheme } from "@/server/ui/theme";
+import { parseWorkspaceView, WORKSPACE_VIEW_SETTING } from "@/server/ui/workspace-view";
+import { ViewSwitch } from "@/features/shell/ViewSwitch";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
 export const metadata: Metadata = { title: "Profile" };
@@ -17,7 +19,7 @@ export const metadata: Metadata = { title: "Profile" };
 // The signed-in person's details, read-only: IT keeps them in Admin → Users.
 export default async function ProfilePage() {
   const { user } = await requireArea("users");
-  const [profile, theme] = await Promise.all([getOwnProfile(user.id), getUserSetting(user.id, THEME_SETTING).catch(() => null)]);
+  const [profile, theme, view] = await Promise.all([getOwnProfile(user.id), getUserSetting(user.id, THEME_SETTING).catch(() => null), getUserSetting(user.id, WORKSPACE_VIEW_SETTING).catch(() => null)]);
   const rows: { label: string; value: React.ReactNode }[] = [
     { label: "Name", value: <SafeText text={user.name} /> },
     { label: "User ID", value: user.loginId },
@@ -49,6 +51,10 @@ export default async function ProfilePage() {
       </section>
       <section className="card mt-6 max-w-2xl px-5 py-4" aria-label="Appearance">
         <ThemeChoice initial={parseTheme(theme)} />
+        {/* D-210: Compact (sidebar) or Classic (Tally-style Gateway and menus). */}
+        <div className="mt-4 border-t border-line pt-4">
+          <ViewSwitch initial={parseWorkspaceView(view)} />
+        </div>
       </section>
     </>
   );

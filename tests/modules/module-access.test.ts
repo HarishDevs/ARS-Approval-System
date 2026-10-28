@@ -74,7 +74,8 @@ describe("the user form", () => {
 
 describe("every page of the user space has a module decision", () => {
   // Shared by every module on purpose; anything else must name its module.
-  const SHARED = ["users.overview", "users.calendar", "users.analytics", "users.help", "users.profile", "users.notifications", "users.delegation"];
+  // D-210: users.menu (Classic view menus) lists only pages the person may already open.
+  const SHARED = ["users.overview", "users.menu", "users.calendar", "users.analytics", "users.help", "users.profile", "users.notifications", "users.delegation"];
   it("approval, task and information pages name their module; nothing is left undecided", () => {
     for (const page of PAGES.filter((item) => item.area === "users")) {
       if (SHARED.includes(page.key)) expect(page.module, page.key).toBeUndefined();

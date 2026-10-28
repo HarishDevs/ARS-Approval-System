@@ -1,5 +1,9 @@
 # Release notes
 
+## v1.27.0 (28 Oct 2026): Classic view; reminders and escalations your way (owner)
+- **Classic view** (Tally-style), chosen per person in the profile menu → View: after sign-in a Gateway menu (Approval, Tasks and Information Management, Pico Bot, Overview, Search, Calendar, Analytics) with highlighted letters; each module has its own menu and summary boxes; pages show their module's pages as tabs; Esc goes back. **Compact** is today's layout.
+- **Reminders & escalations** (Admin → Automation): rules for pending approvals and open tasks on any field and value, including form fields; escalation levels to managers, the requester, HOD, IT or named people; repeats; your own wording; email or inbox only; a Test button that sends nothing. Escalation emails always go out.
+
 ## v1.26.0 (28 Oct 2026): sign in either way (owner)
 - **New sign-in choice "Both"** in Admin → Users → How they sign in: the person can sign in with Google or with their User ID and password plus a WhatsApp code, whichever they prefer. Both needs a WhatsApp number; Re-invite sends them a link to set their password.
 - CSV user import accepts BOTH in the sign_in_method column.

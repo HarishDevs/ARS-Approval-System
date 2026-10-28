@@ -25,7 +25,7 @@ export const EVENT_GROUPS: readonly EventGroup[] = [
     label: "Work waiting for you",
     help: "An approval or a task is waiting for you, or a request is stuck and needs IT. Always sent, so nothing waits unnoticed.",
     mandatory: true,
-    events: ["APPROVAL_NEEDED", "TASK_ASSIGNED", "REQUEST_BLOCKED", "WORK_TASK_ASSIGNED"],
+    events: ["APPROVAL_NEEDED", "TASK_ASSIGNED", "REQUEST_BLOCKED", "WORK_TASK_ASSIGNED", "RULE_ESCALATION"],
   },
   {
     key: "MY_REQUESTS",
@@ -39,7 +39,7 @@ export const EVENT_GROUPS: readonly EventGroup[] = [
     label: "Reminders and escalations",
     help: "Due soon, overdue reminders, and escalations to managers.",
     mandatory: false,
-    events: ["APPROVAL_DUE_SOON", "APPROVAL_REMINDER", "APPROVAL_ESCALATED"],
+    events: ["APPROVAL_DUE_SOON", "APPROVAL_REMINDER", "APPROVAL_ESCALATED", "RULE_REMINDER"],
   },
   {
     key: "CONVERSATION",

@@ -1,4 +1,5 @@
 import {
+  AlarmClock,
   BookOpenCheck,
   ChartNoAxesCombined,
   Sheet,
@@ -80,6 +81,7 @@ const ICONS: Record<string, LucideIcon> = {
   "/users/ai/assistant": MessagesSquare,
   "/superadmin/ai": Sparkles,
   "/admin/ai-rules": BookOpenCheck,
+  "/admin/reminders": AlarmClock,
   "/admin/ai-analytics": ChartNoAxesCombined,
   "/admin/records/requests": Sheet,
   "/admin/records/tasks": ListTodo,

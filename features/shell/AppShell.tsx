@@ -20,6 +20,9 @@ import { BottomNav } from "@/features/shell/BottomNav";
 import { CommandPalette, type PaletteLink } from "@/features/shell/CommandPalette";
 import { countPendingTasksFor } from "@/lib/db/repositories/approvals.repository";
 import { THEME_SETTING, parseTheme } from "@/server/ui/theme";
+import { parseWorkspaceView, WORKSPACE_VIEW_SETTING } from "@/server/ui/workspace-view";
+import { ClassicBar } from "@/features/shell/Classic";
+import { classicModules } from "@/features/shell/classic-modules";
 import { NotificationBell } from "@/features/shell/NotificationBell";
 import { isHiddenHref, navAccess } from "@/server/authorization/page-access";
 import { ViewOnlyNote } from "@/features/shell/ViewOnlyNote";
@@ -56,7 +59,7 @@ export async function AppShell({
   children: React.ReactNode;
 }) {
   const spaces = areasForUser(user);
-  const [unread, theme, waiting, access, tourDone, picbot, chats] = await Promise.all([
+  const [unread, theme, waiting, access, tourDone, picbot, chats, savedView] = await Promise.all([
     countUnread(user.id).catch(() => 0),
     getUserSetting(user.id, THEME_SETTING).catch(() => null),
     countPendingTasksFor(user.id).catch(() => 0),
@@ -69,7 +72,10 @@ export async function AppShell({
       .catch(() => []),
     // D-180: the person's AI chats for the sidebar's AI Assistant group.
     nav.some((item) => item.chats) ? listConversations(user.id, 200).then((rows) => rows.map((row) => ({ id: row.id, title: row.title, pinned: row.pinned }))).catch(() => []) : Promise.resolve([]),
+    // D-210: the person's workspace view (My approvals space only).
+    area === "users" ? getUserSetting(user.id, WORKSPACE_VIEW_SETTING).catch(() => null) : Promise.resolve(null),
   ]);
+  const classic = area === "users" && parseWorkspaceView(savedView) === "CLASSIC";
   // v1.8.0: pages hidden from this person (Super Admin's page access) are
   // left out of the sidebar and the quick search; the server refuses them anyway.
   const visible = (href: string) => !isHiddenHref(href, access.hidden);
@@ -113,6 +119,7 @@ export async function AppShell({
         Skip to content
       </a>
       {theme && <ThemeSync theme={parseTheme(theme)} />}
+      {!classic && (
       <aside className="hidden w-sidebar shrink-0 flex-col border-r border-line bg-surface md:sticky md:top-0 md:flex md:h-dvh md:self-start" data-testid="sidebar">
         <div className="flex h-topbar shrink-0 items-center border-b border-line px-5">
           {/* WEB-17 (v1.10.0): the logo goes to this space's first page. */}
@@ -126,10 +133,19 @@ export async function AppShell({
           <SideNav items={items} collapsible={area !== "admin"} chats={chats} />
         </div>
       </aside>
+      )}
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-header flex h-topbar items-center justify-between gap-4 border-b border-line bg-surface px-4 sm:px-6">
           <MobileNav items={items} spaceLabel={SPACE_LABEL[area]} home={`/${area}`} collapsible={area !== "admin"} chats={chats} />
+          {/* D-210: Classic has no sidebar, so the logo leads back to the Gateway from the top bar. */}
+          {classic && (
+            <Link href="/users" aria-label="ARS-CMS: Gateway" className="hidden items-center gap-3 rounded-md md:flex" data-testid="classic-home">
+              {/* eslint-disable-next-line @next/next/no-img-element -- static SVG logo */}
+              <img src="/brand/ars-green-steel.svg" alt="" width={77} height={36} className="h-8 w-auto" />
+              <span className="text-label font-semibold uppercase tracking-wider text-ink-muted">Gateway</span>
+            </Link>
+          )}
           <div className="ml-auto flex items-center gap-2">
             <CommandPalette pages={palettePages} />
             <NotificationBell initialUnread={unread} />
@@ -140,9 +156,11 @@ export async function AppShell({
               spaceLabel={SPACE_LABEL[area]}
               otherSpaces={spaces.filter((other) => other !== area).map((other) => ({ href: `/${other}`, label: SPACE_LABEL[other] }))}
               unread={unread}
+              view={area === "users" ? (classic ? "CLASSIC" : "COMPACT") : null}
             />
           </div>
         </header>
+        {classic && <ClassicBar modules={classicModules(items)} />}
         <OfflineBanner />
         <UpdateNotice />
         <SessionWatch build={buildId()} />
