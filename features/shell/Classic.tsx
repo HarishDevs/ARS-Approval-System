@@ -11,7 +11,13 @@ const typing = (target: EventTarget | null) => {
   const element = target as HTMLElement | null;
   return !!element && (element.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(element.tagName));
 };
-const dialogOpen = () => !!document.querySelector('[role="dialog"]:not([hidden]), [role="alertdialog"]:not([hidden]), dialog[open]');
+// Only a dialog that is really open counts: a closed <dialog> (confirmations
+// wait on the page closed, some with role="alertdialog") must not switch the
+// keyboard off (owner: "keyboard controls not working in the Classic view").
+const dialogOpen = () =>
+  [...document.querySelectorAll('dialog, [role="dialog"], [role="alertdialog"]')].some((element) =>
+    element instanceof HTMLDialogElement ? element.open : !(element as HTMLElement).hidden && !element.closest("dialog:not([open])") && element.getClientRects().length > 0,
+  );
 
 export interface MenuEntry {
   href: string;

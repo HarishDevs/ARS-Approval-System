@@ -91,6 +91,39 @@ test("D-210: switch to Classic; Gateway, module menu, page tabs, letters and Esc
   expect(await page.getByTestId("sidebar").getByRole("link").first().evaluate((element) => getComputedStyle(element).fontSize)).toBe("14px");
 });
 
+test("D-212: the keyboard works for a Super Admin too (closed confirmations on the page don't block it)", async ({ page, context }) => {
+  const conn = await db();
+  const id = await userIdByLogin("E2E_SUPER");
+  try {
+    await conn.query("INSERT INTO user_settings (user_id, setting_key, value) VALUES (?, 'ui.workspace_view', 'CLASSIC') ON DUPLICATE KEY UPDATE value = 'CLASSIC'", [id]);
+  } finally {
+    await conn.end();
+  }
+  try {
+    await as(context, "E2E_SUPER");
+    await page.goto("/users");
+    const gateway = page.getByTestId("gateway-menu");
+    await expect(gateway.getByRole("link").first()).toBeFocused();
+    await page.keyboard.press("ArrowDown");
+    await expect(gateway.getByRole("link").nth(1)).toBeFocused();
+    await page.keyboard.press("t");
+    await expect(page).toHaveURL(/\/users\/menu\/tasks$/);
+    await page.keyboard.press("m");
+    await expect(page).toHaveURL(/\/users\/tasks$/);
+    await page.keyboard.press("Escape");
+    await expect(page).toHaveURL(/\/users\/menu\/tasks$/);
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("classic-gateway")).toBeVisible();
+  } finally {
+    const again = await db();
+    try {
+      await again.query("DELETE FROM user_settings WHERE user_id = ? AND setting_key = 'ui.workspace_view'", [id]);
+    } finally {
+      await again.end();
+    }
+  }
+});
+
 test("D-209: IT builds, tests, saves, turns off and deletes an escalation rule", async ({ page, context }) => {
   await as(context, "E2E_ADMIN");
   await page.goto("/admin");

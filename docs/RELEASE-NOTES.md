@@ -1,5 +1,8 @@
 # Release notes
 
+## v1.28.1 (29 Oct 2026): Classic view keyboard fixed (owner)
+- **Fixed:** in the Classic view the arrow keys, Enter, the highlighted letters and Esc did nothing for some people (for example the Super Admin). They now work for everyone.
+
 ## v1.28.0 (28 Oct 2026): text size in the Classic view (owner)
 - The Classic view now follows the sketch exactly: sign-in, then the **Central Management System** box listing the modules, then each **module page** with its pages as tabs and its boxes.
 - In the Classic view, choose a **text size** (Small, Normal, Large, Larger, Largest) under View in the profile menu or on Profile. All text in the app changes at once; the layout keeps its shape. Saved on your account.
