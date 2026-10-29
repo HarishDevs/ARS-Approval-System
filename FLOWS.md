@@ -1067,6 +1067,7 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 2. After sign-in /users shows the Central Management System (one box): modules with highlighted letters; ↑↓ Enter or the letter opens one (v1.28.0, D-212).
 3. A module page shows its name, its pages as tabs (letters open them) and its boxes; every page shows Central Management System › module › page with the tabs; Esc goes back a level.
 4. Overview dashboard is a Gateway entry. Choosing Compact brings the sidebar back.
+6. (v1.29.0, D-214) The Central Management System also lists the person's other spaces and Quit (sign out). Every page change shows the Classic loader box when it takes a moment; the Overview dashboard and pages outside the modules have their breadcrumb and Esc back; in a text box the first Esc leaves the box.
 5. (v1.28.0, D-211) Text size (Small to Largest) appears under View while Classic is chosen; every text on every page changes at once and the choice is saved.
 
 ## F-149 Sign in with Google or password (v1.26.0, D-208)

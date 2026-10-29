@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { postJson } from "@/features/auth/components/auth-client";
 import { CodeField, ErrorBox, NewPasswordFields } from "@/features/auth/components/NewPasswordFields";
+import { BrandLoader } from "@/features/ui/BrandLoader";
 
 type Challenge = { challengeToken: string; maskedNumber: string; expiresInSeconds: number };
 
@@ -18,6 +19,7 @@ export function SetPasswordPanel({ token, name, loginId, minLength }: { token: s
   const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [entering, setEntering] = useState(false);
 
   async function sendCode(event: React.FormEvent) {
     event.preventDefault();
@@ -44,10 +46,14 @@ export function SetPasswordPanel({ token, name, loginId, minLength }: { token: s
     });
     setBusy(false);
     if (body.success) {
+      setEntering(true);
       router.replace(body.data.redirectTo);
       router.refresh();
     } else setError(body.error.message);
   }
+
+  // D-214: from a successful finish until the first page arrives.
+  if (entering) return <BrandLoader variant="screen" title="Signing you in…" detail="Preparing your workspace" />;
 
   if (challenge) {
     return (

@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { BrandLoader } from "@/features/ui/BrandLoader";
 import { ChevronRight } from "lucide-react";
 import { GATEWAY, locate, MENU_BASE, pageHotkeys, type ClassicModule } from "@/features/shell/classic-modules";
 
@@ -19,11 +20,27 @@ const dialogOpen = () =>
     element instanceof HTMLDialogElement ? element.open : !(element as HTMLElement).hidden && !element.closest("dialog:not([open])") && element.getClientRects().length > 0,
   );
 
+// D-214: the Classic loader. Anything that starts a page change in Classic
+// (a click, a letter, Enter, Esc) says what is opening; ClassicBar shows the
+// Tally-style box until the new page has arrived.
+export const CLASSIC_LOADING_EVENT = "ars:classic-loading";
+export function announceLoading(label: string) {
+  window.dispatchEvent(new CustomEvent(CLASSIC_LOADING_EVENT, { detail: label }));
+}
+
 export interface MenuEntry {
   href: string;
   label: string;
   hotkey: string;
   note?: string;
+  action?: "signout"; // D-214: Tally's Quit
+}
+
+async function signOut(router: ReturnType<typeof useRouter>) {
+  announceLoading("Signing out…");
+  await fetch("/api/auth/logout", { method: "POST" }).catch(() => null);
+  router.replace("/login");
+  router.refresh();
 }
 
 // A keyboard menu: arrows move, Enter opens, the highlighted letter opens
@@ -50,7 +67,10 @@ export function ClassicMenu({ title, entries, testId }: { title: string; entries
       const match = entries.findIndex((entry) => entry.hotkey && entry.hotkey === event.key.toLowerCase());
       if (match !== -1) {
         event.preventDefault();
-        router.push(entries[match]!.href);
+        const chosen = entries[match]!;
+        if (chosen.action === "signout") return void signOut(router);
+        announceLoading(`Opening ${chosen.label}…`);
+        router.push(chosen.href);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -71,6 +91,14 @@ export function ClassicMenu({ title, entries, testId }: { title: string; entries
                 }}
                 href={entry.href}
                 onFocus={() => setActive(index)}
+                onClick={
+                  entry.action === "signout"
+                    ? (event) => {
+                        event.preventDefault();
+                        void signOut(router);
+                      }
+                    : undefined
+                }
                 aria-keyshortcuts={entry.hotkey ? entry.hotkey.toUpperCase() : undefined}
                 className={`flex items-center justify-between gap-3 px-6 py-1.5 text-body outline-none ${active === index ? "bg-warning-50 font-semibold text-ink" : "text-ink hover:bg-surface-muted"}`}
               >
@@ -101,32 +129,94 @@ export function ClassicMenu({ title, entries, testId }: { title: string; entries
 // level up, as in Tally.
 export function ClassicBar({ modules }: { modules: ClassicModule[] }) {
   const pathname = usePathname();
+  const search = useSearchParams();
   const router = useRouter();
-  const { entry, page } = locate(modules, pathname);
+  // D-214: the Overview dashboard (/users?view=overview) is a page of its own, with a way back.
+  const overview = pathname === GATEWAY && search.get("view") === "overview";
+  const atGateway = pathname === GATEWAY && !overview;
+  const located = locate(modules, pathname);
+  const entry = overview ? (modules.find((item) => item.key === "overview") ?? null) : located.entry;
+  const page = overview ? null : located.page;
   const up = !entry ? null : page && entry.pages.length > 1 ? entry.href : GATEWAY;
+  // Pages outside the modules (Profile, Notifications, Help…) name themselves from their title.
+  const [title, setTitle] = useState("");
+  useEffect(() => {
+    const timer = window.setTimeout(() => setTitle(document.title.replace(/\s*·\s*ARS-CMS$/, "").trim()), 50);
+    return () => window.clearTimeout(timer);
+  }, [pathname, search]);
+  // D-214: the loader, shown after a short moment (fast pages don't flash) until the page changes.
+  const [loading, setLoading] = useState<string | null>(null);
+  const [showLoader, setShowLoader] = useState(false);
+  const routeKey = `${pathname}?${search.toString()}`;
+  useEffect(() => {
+    setLoading(null);
+    setShowLoader(false);
+  }, [routeKey]);
+  useEffect(() => {
+    if (!loading) return;
+    const show = window.setTimeout(() => setShowLoader(true), 150);
+    // A click that turned out not to change the page doesn't leave the box up.
+    const giveUp = window.setTimeout(() => setLoading(null), 12_000);
+    return () => {
+      window.clearTimeout(show);
+      window.clearTimeout(giveUp);
+    };
+  }, [loading]);
+  useEffect(() => {
+    const onAnnounce = (event: Event) => setLoading(String((event as CustomEvent).detail || "Opening…"));
+    // Seen on the way down (capture), before Next's Link takes the click over
+    // (it cancels the browser's own navigation to do its own).
+    const onClick = (event: MouseEvent) => {
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const link = (event.target as HTMLElement | null)?.closest?.("a[href]") as HTMLAnchorElement | null;
+      if (!link || link.target === "_blank" || link.hasAttribute("download") || link.getAttribute("role") === "button" || link.getAttribute("href")?.startsWith("#")) return;
+      const url = new URL(link.href, window.location.href);
+      if (url.origin !== window.location.origin || url.pathname.startsWith("/api/")) return;
+      if (url.pathname === window.location.pathname && url.search === window.location.search) return;
+      const label = (link.getAttribute("aria-label") || link.textContent || "").replace(/\s+/g, " ").trim().slice(0, 60);
+      setLoading(label ? `Opening ${label}…` : "Opening…");
+    };
+    window.addEventListener(CLASSIC_LOADING_EVENT, onAnnounce);
+    document.addEventListener("click", onClick, true);
+    return () => {
+      window.removeEventListener(CLASSIC_LOADING_EVENT, onAnnounce);
+      document.removeEventListener("click", onClick, true);
+    };
+  }, []);
   // Letters only on the module page: other pages keep their own shortcuts.
   const onModulePage = pathname.startsWith(`${MENU_BASE}/`);
   const keys = useMemo(() => (entry && onModulePage ? pageHotkeys(entry.pages) : []), [entry, onModulePage]);
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || typing(event.target) || dialogOpen() || pathname === GATEWAY) return;
+      // Esc in a text box first leaves the box (a second Esc goes back), so
+      // a page that starts in a search box still has a way out.
+      if (event.key === "Escape" && !event.defaultPrevented && typing(event.target) && !dialogOpen()) {
+        (event.target as HTMLElement).blur();
+        return;
+      }
+      if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || typing(event.target) || dialogOpen() || atGateway) return;
       if (event.key === "Escape") {
         event.preventDefault();
-        router.push(up ?? GATEWAY);
+        const target = up ?? GATEWAY;
+        announceLoading(target === GATEWAY ? "Opening Central Management System…" : `Opening ${entry?.label ?? ""}…`);
+        router.push(target);
         return;
       }
       const match = keys.findIndex((key) => key && key === event.key.toLowerCase());
       if (match !== -1 && entry) {
         event.preventDefault();
+        announceLoading(`Opening ${entry.pages[match]!.label}…`);
         router.push(entry.pages[match]!.href);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [pathname, router, up, keys, entry]);
-  if (pathname === GATEWAY) return null;
+  }, [atGateway, router, up, keys, entry]);
+  const loader = loading && showLoader ? <BrandLoader variant="classic" title={loading} /> : null;
+  if (atGateway) return loader;
   return (
     <div className="border-b border-line bg-surface" data-testid="classic-bar">
+      {loader}
       <nav aria-label="You are here" className="flex flex-wrap items-center gap-1 px-4 pt-2 text-label text-ink-muted sm:px-8">
         <Link href={GATEWAY} className="link font-semibold">
           Central Management System
@@ -147,6 +237,14 @@ export function ClassicBar({ modules }: { modules: ClassicModule[] }) {
           <>
             <ChevronRight aria-hidden="true" className="h-3.5 w-3.5" />
             <span className="text-ink">{page.label}</span>
+          </>
+        )}
+        {!entry && title && (
+          <>
+            <ChevronRight aria-hidden="true" className="h-3.5 w-3.5" />
+            <span className="text-ink" data-testid="classic-page-title">
+              {title}
+            </span>
           </>
         )}
         <span className="ml-auto hidden text-caption text-ink-faint sm:inline">Esc: back</span>

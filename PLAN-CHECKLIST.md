@@ -17,6 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (29 Oct 2026):** v1.29.0: custom loaders (sign-in, Classic) and complete Classic navigation (D-214). **Owner:** publish v1.29.0.
 - **Now (29 Oct 2026):** v1.28.1: Classic view keyboard fixed (D-213). **Owner:** publish v1.28.1.
 - **Now (28 Oct 2026):** v1.28.0: text size in the Classic view (D-211). **Owner:** publish v1.28.0; profile menu → View: Classic → Text size.
 - **Now (28 Oct 2026):** v1.27.0: Classic (Tally-style) view per person (D-210) and Admin reminder/escalation rules on any field (D-209). **Owner:** publish v1.27.0 (migration runs on start); build rules in Admin → Reminders & escalations (Test first; records already past a stage get it on the next run); try Classic from the profile menu → View.
@@ -378,6 +379,8 @@ Plan: `docs/CHATBOT_IMPLEMENTATION_PLAN.md`; audit: `docs/CHATBOT_ARCHITECTURE_A
 - [x] PB-40 Domain move prepared in code: single base-URL helper, LEGACY_HOSTS redirect (machine callers and OAuth callbacks exempt), unit tests, docs/DOMAIN-MIGRATION.md (done 25 Oct 2026, v1.22.0)
 - [x] PB-41 Phone layout: six pages scrolled sideways (sr-only label in wide tables); fixed globally (done 25 Oct 2026, v1.22.0)
 - [x] PB-48 Rollback to approval.arssteels.net in the app (default address, policies, samples, runbook) (26 Oct 2026, D-199)
+- [x] PB-69 Custom loaders: sign-in to main page, every Classic page change (29 Oct 2026, D-214)
+- [x] PB-70 Classic navigation in and out for every role: Overview back, page titles, Esc out of text boxes, spaces and Quit (29 Oct 2026, D-214)
 - [x] PB-68 Classic keyboard works with closed confirmations on the page (29 Oct 2026, D-213)
 - [x] PB-67 Classic view as the sketch's three separate screens (28 Oct 2026, D-212)
 - [x] PB-66 Classic view text size, five steps, saved per person (28 Oct 2026, D-211)

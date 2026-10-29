@@ -327,3 +327,13 @@ html,
 .grid > * {
   min-width: 0;
 }
+
+/* D-214: the custom loaders' sliding bar (features/ui/BrandLoader.tsx). */
+@keyframes loader-slide {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(250%); }
+}
+.loader-bar { animation: loader-slide 1.1s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .loader-bar { animation: none; transform: none; width: 100%; opacity: 0.6; }
+}

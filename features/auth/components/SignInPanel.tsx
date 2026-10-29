@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { GoogleButton } from "@/features/auth/components/GoogleButton";
 import { safeNextPath } from "@/lib/http/safe-next";
 import { postJson } from "@/features/auth/components/auth-client";
+import { BrandLoader } from "@/features/ui/BrandLoader";
 
 type Challenge = { challengeToken: string; maskedNumber: string; expiresInSeconds: number; resendAfterSeconds: number };
 // The shared helper: a dropped connection becomes a message, never a stuck button.
@@ -14,8 +15,11 @@ const post = postJson;
 export function SignInPanel({ nextPath }: { nextPath: string }) {
   const router = useRouter();
   const [challenge, setChallenge] = useState<Challenge | null>(null);
+  // D-214: from a successful sign-in until the first page arrives.
+  const [entering, setEntering] = useState(false);
 
   function finish(redirectTo: string) {
+    setEntering(true);
     const safe = safeNextPath(nextPath);
     router.replace(safe !== "/users" ? safe : redirectTo);
     router.refresh();
@@ -23,6 +27,7 @@ export function SignInPanel({ nextPath }: { nextPath: string }) {
 
   return (
     <div className="mt-8">
+      {entering && <BrandLoader variant="screen" title="Signing you in…" detail="Preparing your workspace" />}
       {challenge ? (
         <OtpStep challenge={challenge} onChallenge={setChallenge} onBack={() => setChallenge(null)} onDone={finish} />
       ) : (

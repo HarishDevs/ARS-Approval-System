@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { areasForUser } from "@/server/authorization/policy";
 import { SideNav, type NavItem } from "@/features/shell/SideNav";
 import { MobileNav } from "@/features/shell/MobileNav";
@@ -167,7 +168,11 @@ export async function AppShell({
             />
           </div>
         </header>
-        {classic && <ClassicBar modules={classicModules(items)} />}
+        {classic && (
+          <Suspense fallback={null}>
+            <ClassicBar modules={classicModules(items)} />
+          </Suspense>
+        )}
         <OfflineBanner />
         <UpdateNotice />
         <SessionWatch build={buildId()} />

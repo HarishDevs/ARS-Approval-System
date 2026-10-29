@@ -94,6 +94,12 @@ export function locate(modules: readonly ClassicModule[], pathname: string): { e
   return best ? { entry: best.entry, page: best.page } : { entry: null, page: null };
 }
 
+// Letters for extra Gateway entries (other spaces, Quit), avoiding those in use.
+export function extraHotkeys(labels: readonly string[], taken: readonly string[]): string[] {
+  const used = new Set(taken.filter(Boolean));
+  return labels.map((label) => pickHotkey(label, used));
+}
+
 // Letters for a module's own menu (its pages).
 export function pageHotkeys(pages: readonly ClassicPage[]): string[] {
   const used = new Set<string>();

@@ -1,5 +1,10 @@
 # Release notes
 
+## v1.29.0 (29 Oct 2026): loaders and the full Classic way around (owner)
+- **After signing in** (also after setting or resetting a password) an ARS loading screen shows until your workspace is ready.
+- **Classic view:** every page change shows a Central Management System box ("Opening Waiting for me…") while it loads.
+- **Classic navigation, in and out:** Overview dashboard and pages like Profile or Help now show where you are and go back with Esc; Esc in a search or text box first leaves the box, then goes back; the Central Management System lists your other spaces (Admin, Super Admin) and **Quit (sign out)**.
+
 ## v1.28.1 (29 Oct 2026): Classic view keyboard fixed (owner)
 - **Fixed:** in the Classic view the arrow keys, Enter, the highlighted letters and Esc did nothing for some people (for example the Super Admin). They now work for everyone.
 

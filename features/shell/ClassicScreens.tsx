@@ -2,7 +2,9 @@ import "server-only";
 import Link from "next/link";
 import type { AuthenticatedUser } from "@/types/auth";
 import { ClassicMenu } from "@/features/shell/Classic";
-import { classicModules, type ClassicModule } from "@/features/shell/classic-modules";
+import { classicModules, extraHotkeys, type ClassicModule } from "@/features/shell/classic-modules";
+import { areasForUser } from "@/server/authorization/policy";
+import type { MenuEntry } from "@/features/shell/Classic";
 import { usersNav } from "@/features/shell/users-nav";
 import { classicCounts, type ClassicCounts } from "@/lib/db/repositories/classic.repository";
 import { isHiddenHref, navAccess } from "@/server/authorization/page-access";
@@ -67,10 +69,20 @@ const noteFor = (entry: ClassicModule, counts: ClassicCounts) =>
 // listing the modules.
 export async function ClassicGateway({ user }: { user: AuthenticatedUser }) {
   const { modules, counts } = await load(user);
+  // D-214: ways out, as in Tally: the person's other spaces, then Quit (sign out).
+  const SPACE_NAME = { admin: "Admin space", superadmin: "Super Admin space" } as const;
+  const others = areasForUser(user).filter((area): area is "admin" | "superadmin" => area !== "users");
+  const extraLabels = [...others.map((area) => SPACE_NAME[area]), "Quit (sign out)"];
+  const extraKeys = extraHotkeys(extraLabels, modules.map((entry) => entry.hotkey));
+  const entries: MenuEntry[] = [
+    ...modules.map((entry) => ({ href: entry.href, label: entry.label, hotkey: entry.hotkey, note: noteFor(entry, counts) })),
+    ...others.map((area, index) => ({ href: `/${area}`, label: SPACE_NAME[area], hotkey: extraKeys[index] ?? "" })),
+    { href: "/login", label: "Quit (sign out)", hotkey: extraKeys.at(-1) ?? "", action: "signout" as const },
+  ];
   return (
     <div className="mx-auto max-w-md space-y-2 pt-4 sm:pt-10" data-testid="classic-gateway">
       <h1 className="sr-only">Central Management System</h1>
-      <ClassicMenu title="Central Management System" testId="gateway-menu" entries={modules.map((entry) => ({ href: entry.href, label: entry.label, hotkey: entry.hotkey, note: noteFor(entry, counts) }))} />
+      <ClassicMenu title="Central Management System" testId="gateway-menu" entries={entries} />
       <p className="text-center text-caption text-ink-faint">↑ ↓ to move, Enter to open, or press the highlighted letter. Esc goes back.</p>
     </div>
   );
