@@ -19,14 +19,16 @@ import type { RoleCode } from "@/types/auth";
 import { addFollower, clearPlacements } from "@/lib/db/repositories/work.repository";
 import { taskViewerFor, teamOf } from "@/server/work/task-access";
 import { checkHoliday, holidayMessage } from "@/server/work/holidays";
-import { holidayContext } from "@/server/work/holiday-store";
+import { departmentOf, holidayContext } from "@/server/work/holiday-store";
+import { afterTaskCompleted } from "@/server/work/on-complete";
 import { indiaDate } from "@/server/workflows/calendar";
 
 const utcToIndiaLocalDay = (value: Date | null) => (value ? indiaDate(value) : null);
 
 // D-217: the holiday rule of Admin → Task holidays, as form errors.
-async function holidayErrors(day: string, keep: boolean, errors: Record<string, string>): Promise<void> {
-  const { settings, calendar } = await holidayContext();
+// The assignee's department holidays count too (D-218).
+async function holidayErrors(day: string, keep: boolean, errors: Record<string, string>, assigneeId: number | null): Promise<void> {
+  const { settings, calendar } = await holidayContext(undefined, assigneeId ? await departmentOf(assigneeId) : null);
   const hit = checkHoliday(day, "due", calendar, settings, keep);
   if (!hit) return;
   errors.due = holidayMessage(hit);
@@ -115,7 +117,7 @@ export async function createTask(input: CreateTaskInput, actor: TaskActor): Prom
       dueAt = indiaLocalToUtc(input.due);
       if (!dueAt) errors.due = "Choose a valid due date and time.";
     } else if (settings.requireDueDate) errors.due = "This type needs a due date.";
-    if (dueAt) await holidayErrors(input.due.slice(0, 10), Boolean(input.holidayOk), errors);
+    if (dueAt) await holidayErrors(input.due.slice(0, 10), Boolean(input.holidayOk), errors, input.assigneeId);
     const startsOn = /^\d{4}-\d{2}-\d{2}$/.test(input.startsOn) ? input.startsOn : null;
     // Assignee: within the type's scope.
     const assignee = input.assigneeId ? await personFacts(input.assigneeId) : null;
@@ -222,7 +224,7 @@ export async function actOnTask(input: TaskActionInput, actor: TaskActor): Promi
     if (input.action === "EDIT" && input.edit?.due) {
       const errors: Record<string, string> = {};
       const current = await findTask(input.taskId);
-      if (current && utcToIndiaLocalDay(current.dueAt) !== input.edit.due.slice(0, 10)) await holidayErrors(input.edit.due.slice(0, 10), Boolean(input.edit.holidayOk), errors);
+      if (current && utcToIndiaLocalDay(current.dueAt) !== input.edit.due.slice(0, 10)) await holidayErrors(input.edit.due.slice(0, 10), Boolean(input.edit.holidayOk), errors, current.assigneeId);
       if (errors.due) return fail(errors.due, errors);
     }
 
@@ -331,6 +333,8 @@ export async function actOnTask(input: TaskActionInput, actor: TaskActor): Promi
       return fail(outcome.error!, "fields" in outcome ? outcome.fields : field ? { [field]: outcome.error! } : undefined);
     }
     await send(outcome.outbox);
+    // D-218: waiting tasks hear about it; a repeating task makes its next one.
+    if (input.action === "COMPLETE") await afterTaskCompleted(input.taskId, actor);
     return { ok: true, value: { message: `Done: ${ACTION_WORD[input.action]}.` } };
   } catch (error) {
     await discardStaged(input.files);

@@ -31,7 +31,7 @@ import { dependencyLoop, MAX_DEPENDENCIES, MAX_PROJECTS_PER_TASK, mentionedIds, 
 import { isAdminRoles, rightsOn, teamOf, workViewer } from "@/server/work/task-access";
 import type { NotifyInput } from "@/server/notifications/notify";
 import { checkHoliday, holidayMessage, nearestWorkingDay, type HolidayHit } from "@/server/work/holidays";
-import { holidayContext, openTasksDueOn } from "@/server/work/holiday-store";
+import { departmentOf, holidayContext, openTasksDueOn } from "@/server/work/holiday-store";
 
 // D-215: Task & Project Management. Each operation checks the person's
 // rights on the server (access.ts through task-access.ts), runs in one
@@ -307,7 +307,7 @@ export async function quickAddTask(input: QuickTaskInput, actor: TaskActor): Pro
   const dueAt = input.dueDay ? dueFromDay(input.dueDay) : null;
   if (input.dueDay && !dueAt) return fail("Choose a valid due date.");
   if (input.dueDay) {
-    const { settings: holidays, calendar } = await holidayContext();
+    const { settings: holidays, calendar } = await holidayContext(undefined, assignee.departmentId);
     const hit = checkHoliday(input.dueDay, "due", calendar, holidays, Boolean(input.holidayOk));
     if (hit) return holidayFail(hit);
   }
@@ -427,23 +427,7 @@ export async function toggleComplete(taskId: number, actor: TaskActor): Promise<
   if (action === "UNBLOCK") return fail("This task is blocked. Open it to unblock it first.");
   const result = await actOnTask({ taskId, action, rowVersion: null, reason: reopening ? "Reopened from the list" : "", assigneeId: null, files: [] }, actor);
   if (!result.ok) return fail(result.message);
-  if (!reopening) await afterCompleted(loaded.task);
   return { ok: true, value: undefined, message: reopening ? "Reopened." : "Completed." };
-}
-
-// When a task completes, tell the people whose tasks it was the last blocker of.
-export async function afterCompleted(task: Pick<TaskRecord, "id">): Promise<void> {
-  const deps = await repo.listDependencies(task.id);
-  const messages: NotifyInput[] = [];
-  for (const blocked of deps.blocking) {
-    if (!OPEN_STATUSES.includes(blocked.status)) continue;
-    const others = await repo.listDependencies(blocked.id);
-    if (others.blockedBy.every((item) => !OPEN_STATUSES.includes(item.status))) {
-      const full = await findTask(blocked.id);
-      if (full) messages.push(taskMessages.unblocked(info(full), full.assigneeId));
-    }
-  }
-  if (messages.length) await send(await insertOutbox(null, messages, getDbPool()));
 }
 
 // Quick field changes from lists, boards and the calendar.
@@ -494,7 +478,7 @@ export async function setTaskFields(taskId: number, change: { dueDay?: string; s
     notes.push(change.milestone ? "Marked as a milestone" : "No longer a milestone");
   }
   if (change.dueDay || change.startDay) {
-    const { settings: holidays, calendar } = await holidayContext();
+    const { settings: holidays, calendar } = await holidayContext(undefined, await departmentOf(task.assigneeId));
     const hit = checkHoliday(change.dueDay || null, "due", calendar, holidays, Boolean(change.holidayOk)) ?? checkHoliday(change.startDay || null, "start", calendar, holidays, Boolean(change.holidayOk));
     if (hit) return holidayFail(hit);
   }

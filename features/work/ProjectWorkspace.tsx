@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { addSectionAction, moveTaskAction, quickAddAction, quickAddManyAction, sectionAction, taskFieldsAction } from "@/app/users/work/actions";
 import { TaskCheck, useWorkCall } from "@/features/work/client";
 import { dueLabel, indiaDayOf, TONE_TEXT } from "@/features/work/format";
+import { BulkBar, FieldInput, type FieldView } from "@/features/work/MoreParts";
 
 // D-215: a project's List and Board. Sections hold tasks in the order the
 // team set (drag, or Alt+↑/↓ on a row); a sort other than "Manual" only
@@ -50,6 +51,8 @@ export function ProjectWorkspace({
   meId,
   people,
   nowIso,
+  fields = [],
+  values = {},
 }: {
   projectId: number;
   layout: "LIST" | "BOARD";
@@ -59,6 +62,8 @@ export function ProjectWorkspace({
   meId: number;
   people: { id: number; label: string }[];
   nowIso: string;
+  fields?: FieldView[]; // D-218: the project's own columns
+  values?: Record<number, Record<number, string>>;
 }) {
   const { call } = useWorkCall();
   const now = useMemo(() => new Date(nowIso), [nowIso]);
@@ -69,7 +74,10 @@ export function ProjectWorkspace({
   const [collapsed, setCollapsed] = useState<Set<number>>(new Set());
   const [dragging, setDragging] = useState<number | null>(null);
   const [live, setLive] = useState("");
+  const [selected, setSelected] = useState<number[]>([]);
   useAutoRefresh();
+  // D-218: column widths: select, task, assignee, due, priority, then the project's fields.
+  const columns = { gridTemplateColumns: `${canEdit ? "28px " : ""}minmax(220px,1fr) 170px 130px 110px${fields.map(() => " 150px").join("")}` };
 
   const visible = useMemo(() => {
     const words = filter.toLowerCase().split(/\s+/).filter(Boolean);
@@ -210,11 +218,26 @@ export function ProjectWorkspace({
       {toolbar}
       <div className="card overflow-x-auto" data-testid="project-list">
         <div role="table" aria-label="Tasks" className="min-w-[760px]">
-          <div role="row" className="grid grid-cols-[minmax(0,1fr)_170px_130px_110px] border-b border-line bg-surface-muted px-3 py-2 text-caption font-semibold uppercase tracking-wide text-ink-faint">
+          <div role="row" style={columns} className="grid border-b border-line bg-surface-muted px-3 py-2 text-caption font-semibold uppercase tracking-wide text-ink-faint">
+            {canEdit && (
+              <span role="columnheader">
+                <input
+                  type="checkbox"
+                  aria-label="Select all shown tasks"
+                  checked={visible.length > 0 && visible.every((task) => selected.includes(task.id))}
+                  onChange={(event) => setSelected(event.target.checked ? visible.map((task) => task.id) : [])}
+                />
+              </span>
+            )}
             <span role="columnheader">Task</span>
             <span role="columnheader">Assignee</span>
             <span role="columnheader">Due date</span>
             <span role="columnheader">Priority</span>
+            {fields.map((field) => (
+              <span key={field.id} role="columnheader" className="truncate">
+                {field.name}
+              </span>
+            ))}
           </div>
           {sections.map((section) => {
             const rows = inSection(section.id);
@@ -262,8 +285,19 @@ export function ProjectWorkspace({
                       onKeyDown={(event) => keyMove(event, task)}
                       data-testid="task-row"
                       data-task-id={task.id}
-                      className={`work-row group grid grid-cols-[minmax(0,1fr)_170px_130px_110px] items-center border-b border-line px-1 py-1.5 hover:bg-surface-muted ${dragging === task.id ? "opacity-50" : ""}`}
+                      style={columns}
+                      className={`work-row group grid items-center border-b border-line px-1 py-1.5 hover:bg-surface-muted ${dragging === task.id ? "opacity-50" : ""} ${selected.includes(task.id) ? "bg-primary-50/50" : ""}`}
                     >
+                      {canEdit && (
+                        <div role="cell" className="pl-2">
+                          <input
+                            type="checkbox"
+                            aria-label={`Select ${task.title}`}
+                            checked={selected.includes(task.id)}
+                            onChange={(event) => setSelected((value) => (event.target.checked ? [...value, task.id] : value.filter((one) => one !== task.id)))}
+                          />
+                        </div>
+                      )}
                       <div role="cell" className="flex min-w-0 items-center gap-2">
                         <span aria-hidden="true" className={`text-ink-faint ${canDrag ? "cursor-grab opacity-0 group-hover:opacity-100" : "invisible"}`} title="Drag to move (or Alt+↑/↓)">
                           <GripVertical className="h-4 w-4" />
@@ -340,6 +374,11 @@ export function ProjectWorkspace({
                           <span className="text-label">{task.priority.charAt(0) + task.priority.slice(1).toLowerCase()}</span>
                         )}
                       </div>
+                      {fields.map((field) => (
+                        <div key={field.id} role="cell" className="pr-2">
+                          <FieldInput taskId={task.id} field={{ ...field, name: `${field.name} of ${task.title}` }} value={values[task.id]?.[field.id] ?? ""} canChange={canEdit || task.assigneeId === meId} compact />
+                        </div>
+                      ))}
                     </div>
                   ))}
                 {!closed && canEdit && <AddTask projectId={projectId} sectionId={section.id} />}
@@ -349,6 +388,7 @@ export function ProjectWorkspace({
           {canEdit && <AddSection projectId={projectId} afterId={sections.at(-1)?.id ?? null} />}
         </div>
       </div>
+      <BulkBar ids={selected.filter((one) => tasks.some((task) => task.id === one))} clear={() => setSelected([])} people={people} sections={sections} projectId={projectId} />
     </div>
   );
 }

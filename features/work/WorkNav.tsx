@@ -7,16 +7,17 @@ import { isTyping } from "@/features/shell/shortcuts";
 
 // D-215: the Task & Project Management tabs, and its keyboard: Q adds a task,
 // G then H/M/P/S goes to a tab, J/K move through task rows, X completes the
-// selected one, Enter opens it. Handled before the Classic view's own
+// selected one, Enter opens it. G then I opens the Inbox (D-218). Handled before the Classic view's own
 // letters (capture phase) only when one of these keys is used here.
 const TABS = [
   { href: "/users/work", label: "Home", key: "h" },
   { href: "/users/work/my-tasks", label: "My Tasks", key: "m" },
+  { href: "/users/work/inbox", label: "Inbox", key: "i" },
   { href: "/users/work/projects", label: "Projects", key: "p" },
   { href: "/users/work/search", label: "Search", key: "s" },
 ];
 
-export function WorkNav() {
+export function WorkNav({ unread = 0 }: { unread?: number }) {
   const pathname = usePathname();
   const router = useRouter();
   const awaitingG = useRef(0);
@@ -80,6 +81,11 @@ export function WorkNav() {
           className={`-mb-px border-b-2 px-3 py-2 text-label font-medium ${active(tab.href) ? "border-primary-600 text-primary-700" : "border-transparent text-ink-muted hover:text-ink"}`}
         >
           {tab.label}
+          {tab.key === "i" && unread > 0 && (
+            <span className="ml-1 rounded-full bg-primary-solid px-1.5 text-caption text-white" aria-label={`${unread} unread`}>
+              {unread}
+            </span>
+          )}
         </Link>
       ))}
       <Link href="/users/tasks/new" className="-mb-px ml-auto border-b-2 border-transparent px-3 py-2 text-label text-ink-muted hover:text-ink">

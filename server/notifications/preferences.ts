@@ -62,7 +62,7 @@ export const EVENT_GROUPS: readonly EventGroup[] = [
     label: "Task updates",
     help: "Changes, comments, mentions, completion, due-soon and overdue reminders on tasks you're part of; projects you're added to and their status updates.",
     mandatory: false,
-    events: ["WORK_TASK_UPDATED", "WORK_TASK_COMMENT", "WORK_TASK_COMPLETED", "WORK_TASK_REOPENED", "WORK_TASK_CANCELLED", "WORK_TASK_DUE_SOON", "WORK_TASK_OVERDUE", "WORK_TASK_MENTION", "WORK_PROJECT_MEMBER", "WORK_PROJECT_STATUS"],
+    events: ["WORK_TASK_UPDATED", "WORK_TASK_COMMENT", "WORK_TASK_COMPLETED", "WORK_TASK_REOPENED", "WORK_TASK_CANCELLED", "WORK_TASK_DUE_SOON", "WORK_TASK_OVERDUE", "WORK_TASK_MENTION", "WORK_PROJECT_MEMBER", "WORK_PROJECT_STATUS", "WORK_TASK_DIGEST"],
   },
   {
     key: "INFORMATION",

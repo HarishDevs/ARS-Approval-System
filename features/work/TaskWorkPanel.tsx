@@ -8,6 +8,8 @@ import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/featur
 import { ProjectDot, TaskCheck, useWorkCall } from "@/features/work/client";
 import { dueLabel, TONE_TEXT } from "@/features/work/format";
 import { AddTask } from "@/features/work/ProjectWorkspace";
+import { FieldInput, RepeatEditor, type FieldView } from "@/features/work/MoreParts";
+import type { Recurrence } from "@/server/work/more-rules";
 
 // D-215: what Task & Project Management adds to the task page: its projects
 // (and section in each), subtasks, what it waits for, tags, followers,
@@ -36,6 +38,10 @@ export interface PanelData {
   people: { id: number; label: string }[];
   likes: { id: number; name: string }[];
   nowIso: string;
+  // D-218
+  recurrence: Recurrence | null;
+  recurrenceOn: boolean;
+  fields: { projectId: number; fields: FieldView[]; values: Record<number, string> }[];
 }
 
 const OPEN = ["OPEN", "IN_PROGRESS", "BLOCKED"];
@@ -97,6 +103,16 @@ export function TaskWorkPanel({ data }: { data: PanelData }) {
                   </option>
                 ))}
               </select>
+              {data.fields
+                .find((item) => item.projectId === link.projectId)
+                ?.fields.map((field) => (
+                  <span key={field.id} className="flex w-full items-center gap-2 pl-5 text-caption">
+                    <span className="w-28 shrink-0 truncate text-ink-muted">{field.name}</span>
+                    <span className="w-56">
+                      <FieldInput taskId={data.taskId} field={field} value={data.fields.find((item) => item.projectId === link.projectId)?.values[field.id] ?? ""} canChange={data.canEdit || data.canProgress} compact />
+                    </span>
+                  </span>
+                ))}
               {data.canEdit && (
                 <button type="button" aria-label={`Remove from ${link.projectName}`} onClick={() => void call(() => taskProjectAction(data.taskId, link.projectId, false))} className="rounded p-1 text-ink-faint hover:text-danger-600">
                   <X aria-hidden="true" className="h-4 w-4" />
@@ -275,6 +291,7 @@ export function TaskWorkSide({ data }: { data: PanelData }) {
   if (data.deleted) return null;
   return (
     <section className="card space-y-4 px-5 py-4" aria-label="Planning and people">
+      {(data.recurrenceOn || data.recurrence) && <RepeatEditor taskId={data.taskId} current={data.recurrence} canChange={(data.canEdit || data.canProgress) && data.open} />}
       {data.canEdit && (
         <label className="flex items-center gap-2 text-label">
           <input type="checkbox" checked={data.isMilestone} onChange={(event) => void call(() => taskFieldsAction(data.taskId, { milestone: event.target.checked }))} />

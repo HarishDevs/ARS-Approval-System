@@ -47,7 +47,7 @@ export const PAGES: readonly PageDef[] = [
   { key: "users.task_new", module: "TASK", area: "users", label: "Tasks: new task", what: "Creating a task.", paths: [under("/users/tasks/new")] },
   { key: "users.task", module: "TASK", area: "users", label: "Tasks: task page", what: "Opening a task: details, progress, comments, files. View only = can read, not act.", paths: [/^\/users\/tasks\/\d+(\/.*)?$/] },
   // D-215: Task & Project Management.
-  { key: "users.work", module: "TASK", area: "users", label: "Tasks: home, My Tasks, search", what: "Task home, My Tasks with its sections and board, task search and saved searches, deleted tasks.", paths: [exact("/users/work"), under("/users/work/my-tasks"), under("/users/work/search"), under("/users/work/deleted")] },
+  { key: "users.work", module: "TASK", area: "users", label: "Tasks: home, My Tasks, search", what: "Task home, My Tasks with its sections and board, task search and saved searches, deleted tasks.", paths: [exact("/users/work"), under("/users/work/my-tasks"), under("/users/work/search"), under("/users/work/deleted"), under("/users/work/inbox")] },
   { key: "users.projects", module: "TASK", area: "users", label: "Tasks: projects", what: "Projects: list, board, calendar, timeline, overview and status updates, members and settings.", paths: [under("/users/work/projects")] },
   { key: "users.information", module: "INFORMATION", area: "users", label: "Information: lists", what: "The information inbox and information sent by the person.", paths: [exact("/users/information"), under("/users/information/sent")] },
   { key: "users.information_new", module: "INFORMATION", area: "users", label: "Information: new", what: "Writing and publishing information.", paths: [under("/users/information/new")] },
@@ -74,7 +74,7 @@ export const PAGES: readonly PageDef[] = [
   { key: "admin.workflows", area: "admin", label: "Approval types & workflows", what: "Building and publishing approval types.", paths: [under("/admin/workflows")], apis: [/^\/api\/admin\/workflows\//] },
   { key: "admin.custom_approval", area: "admin", label: "Custom approval set-up", what: "The fields and step options of custom approvals.", paths: [under("/admin/custom-approval")] },
   { key: "admin.task_types", area: "admin", label: "Task types", what: "Setting up the kinds of task (forms, assignment, completion rules).", paths: [under("/admin/task-types")] },
-  { key: "admin.task_holidays", area: "admin", label: "Task holidays", what: "What tasks do when a date falls on a holiday; moving or telling about tasks due on a holiday.", paths: [under("/admin/task-holidays")] },
+  { key: "admin.task_holidays", area: "admin", label: "Task settings", what: "Task holidays (organisation and department), moving or telling about tasks due on a holiday, the morning summary, repeating tasks.", paths: [under("/admin/task-holidays")] },
   { key: "admin.information_types", area: "admin", label: "Information types", what: "Setting up the kinds of information (forms, recipients, acknowledgement).", paths: [under("/admin/information-types")] },
   { key: "admin.groups", area: "admin", label: "Approver groups", what: "Groups of approvers.", paths: [under("/admin/groups")] },
   { key: "admin.doa", area: "admin", label: "Approval authority (DoA)", what: "Delegation of authority matrices.", paths: [under("/admin/doa")] },

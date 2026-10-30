@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { Breadcrumbs } from "@/features/ui/Display";
 import { MembersPanel, ProjectCommandButton, ProjectForm } from "@/features/work/ProjectForms";
-import { listProjectEvents, projectFor } from "@/lib/db/repositories/work.repository";
+import { FieldsManager, FromTemplateForm, SaveTemplateForm } from "@/features/work/MoreParts";
+import { listProjectEvents, listProjectFields, projectFor } from "@/lib/db/repositories/work.repository";
 import { listDepartments } from "@/lib/db/repositories/organisation.repository";
 import { indiaDateTimeText } from "@/server/modules/settings";
 import { projectAbilities } from "@/server/work/access";
@@ -28,6 +29,11 @@ const EVENT_WORD: Record<string, string> = {
   UNARCHIVE: "Brought it back from the archive",
   DELETE: "Deleted it",
   RESTORE: "Restored it",
+  FIELD_ADDED: "Added a field",
+  FIELD_REMOVED: "Removed a field",
+  TEMPLATE_SAVED: "Made this template",
+  FROM_TEMPLATE: "Made it from a template",
+  COPIED: "Made it as a copy",
 };
 
 // D-215: members and roles, details and privacy, archive and delete, history.
@@ -39,7 +45,7 @@ export default async function ProjectSettingsPage({ params }: { params: Promise<
   if (!found) notFound();
   const { project, members, role } = found;
   const can = projectAbilities(role);
-  const [people, departments, events] = await Promise.all([can.share ? peopleOptions() : Promise.resolve([]), listDepartments(), listProjectEvents(project.id)]);
+  const [people, departments, events, fields] = await Promise.all([can.share ? peopleOptions() : Promise.resolve([]), listDepartments(), listProjectEvents(project.id), listProjectFields(project.id)]);
   const activeDepartments = departments.filter((department) => department.active).map((department) => ({ id: department.id, name: department.name }));
   const isMember = members.some((member) => member.type === "USER" && member.id === user.id);
   return (
@@ -75,6 +81,27 @@ export default async function ProjectSettingsPage({ params }: { params: Promise<
                 departments={activeDepartments}
                 myDepartmentId={viewer.departmentId}
               />
+            </section>
+          )}
+          {can.edit && (
+            <section className="card px-5 py-4" aria-labelledby="fields">
+              <h2 id="fields" className="mb-1 font-semibold">
+                Fields
+              </h2>
+              <p className="mb-3 text-caption text-ink-muted">Your own columns for the tasks of this project (text, number, choice or date), shown in the List and on each task.</p>
+              <FieldsManager projectId={project.id} fields={fields.map((field) => ({ id: field.id, name: field.name, kind: field.kind, options: field.options }))} />
+            </section>
+          )}
+          {can.edit && (
+            <section className="card space-y-4 px-5 py-4" aria-labelledby="reuse">
+              <h2 id="reuse" className="font-semibold">
+                Reuse this project
+              </h2>
+              <SaveTemplateForm projectId={project.id} name={project.name} />
+              <div className="border-t border-line pt-4">
+                <h3 className="mb-2 text-label font-semibold">Copy it as a new project</h3>
+                <FromTemplateForm copyFrom={project.id} departments={activeDepartments} defaultName={`${project.name} (copy)`} />
+              </div>
             </section>
           )}
           <section className="card space-y-3 px-5 py-4" aria-labelledby="lifecycle">

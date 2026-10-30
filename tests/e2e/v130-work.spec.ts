@@ -130,12 +130,12 @@ test("a due date on a holiday: the warning offers to keep it or move it", async 
 test("Admin → Task holidays: rules are saved; the sidebar lists the new task pages", async ({ page, context }) => {
   await as(context, "E2E_ADMIN");
   await page.goto("/admin/task-holidays");
-  await expect(page.getByRole("heading", { level: 1, name: "Task holidays" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Task settings" })).toBeVisible();
   await page.getByLabel("Don't allow: people must choose a working day").check();
-  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await page.getByRole("form", { name: "Task holiday settings" }).getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.getByText(/Saved. Task dates are checked/)).toBeVisible();
   await page.getByLabel("Warn, and let people keep the date or move it").check();
-  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await page.getByRole("form", { name: "Task holiday settings" }).getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.getByText(/Saved. Task dates are checked/)).toBeVisible();
 
   await page.waitForLoadState("networkidle");

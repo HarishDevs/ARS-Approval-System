@@ -39,7 +39,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         // v1.9.0 (D-144): Task and Information set-up.
         { href: "/admin/task-types", label: "Task types", section: "Task set-up" },
         // D-217: what tasks do on holidays.
-        { href: "/admin/task-holidays", label: "Task holidays", section: "Task set-up" },
+        { href: "/admin/task-holidays", label: "Task settings", section: "Task set-up" },
         { href: "/admin/information-types", label: "Information types", section: "Information set-up" },
         // D-187, D-193 (owner): AI usage and the AI training module.
         // D-209: reminders and escalations for approvals and tasks.

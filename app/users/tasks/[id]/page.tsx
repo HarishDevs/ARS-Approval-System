@@ -17,7 +17,10 @@ import { COMPLETION_LABEL, indiaDateTimeText, PRIORITY_LABEL, utcToIndiaLocal } 
 import { isOverdue, mayAssignTo, OPEN_STATUSES, TASK_STATUS_LABEL } from "@/server/modules/task-rules";
 import { TaskWorkPanel, TaskWorkSide, type PanelData } from "@/features/work/TaskWorkPanel";
 import { CommentThread } from "@/features/work/CommentThread";
-import { ancestors, likesOf, listComments, listDependencies, listFollowers, listSections, listSubtasks, listTaskItems, listTaskProjects, listVisibleProjects } from "@/lib/db/repositories/work.repository";
+import { recurrenceOf } from "@/server/work/service-more";
+import { loadSetting } from "@/server/work/holiday-store";
+import { parseRecurrenceSettings, RECURRENCE_SETTINGS_KEY } from "@/server/work/more-rules";
+import { ancestors, fieldValues, listProjectFields, likesOf, listComments, listDependencies, listFollowers, listSections, listSubtasks, listTaskItems, listTaskProjects, listVisibleProjects } from "@/lib/db/repositories/work.repository";
 import { rightsOn, workViewer } from "@/server/work/task-access";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
@@ -51,6 +54,10 @@ const EVENT_TEXT: Record<string, string> = {
   TAG_REMOVED: "Removed a tag",
   DELETED: "Deleted",
   RESTORED: "Restored",
+  // D-218
+  REPEAT_SET: "Repeat changed",
+  RECURRED: "Repeated",
+  FIELD_SET: "Field changed",
 };
 
 // v1.9.0 (D-143): one task. Only its creator, assigner, assignee, the
@@ -89,6 +96,13 @@ export default async function TaskPage({ params, searchParams }: { params: Promi
     listTaskItems(["t.id = ?"], [task.id], "t.id", 1),
   ]);
   const linkSections = await Promise.all(links.map((link) => listSections(link.projectId)));
+  // D-218: repeating, and each project's own fields.
+  const [recurrence, recurrenceSettings, linkFields, ownValues] = await Promise.all([
+    recurrenceOf(task.id),
+    loadSetting(RECURRENCE_SETTINGS_KEY).then(parseRecurrenceSettings),
+    Promise.all(links.map((link) => listProjectFields(link.projectId))),
+    fieldValues([task.id]),
+  ]);
   const fromProject = links.find((link) => String(link.projectId) === query.project) ?? null;
   const panel: PanelData = {
     taskId: task.id,
@@ -113,6 +127,9 @@ export default async function TaskPage({ params, searchParams }: { params: Promi
     people: people.map((person) => ({ id: person.id, label: person.name })),
     likes,
     nowIso: new Date().toISOString(),
+    recurrence,
+    recurrenceOn: recurrenceSettings.enabled,
+    fields: links.map((link, index) => ({ projectId: link.projectId, fields: linkFields[index]!.map((field) => ({ id: field.id, name: field.name, kind: field.kind, options: field.options })), values: ownValues.get(task.id) ?? {} })),
   };
   const names = new Map(people.map((person) => [person.id, person.name]));
   const now = new Date();

@@ -1055,6 +1055,23 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 2. They filter (search, status, type, department, person, waiting on, priority, overdue, dates) and sort by a column title; 50 rows a page.
 3. **Download CSV** gives every matching row (up to 10,000) for Excel; audited. A row number opens the record.
 
+## F-158 Repeating tasks (v1.31.0, D-218)
+1. On the task page → Repeats → Make it repeat: every N days, weeks (choose weekdays), months, years, or N days after it is completed; Save. Stop repeating removes the rule.
+2. When the task is completed (anywhere), the next one appears with the same people, projects, tags, fields and subtasks, due on the next date (moved off holidays if IT keeps that on); its assignee is told.
+
+## F-159 Project fields, templates and copies (v1.31.0, D-218)
+1. Members & settings → Fields: add Text, Number, Choice (one per line) or Date; the List shows a column per field; values change in the row or on the task page.
+2. Members & settings → Reuse: Save as template (becomes a template page; Projects → Templates), or Copy it as a new project (name, start, who can see it, members too).
+3. Projects → "Or start from a template" (or the template's page → Use this template): name, start, privacy → a new project with the template's sections, fields and tasks, dates moved to the start.
+
+## F-160 Bulk changes, inbox, morning summary (v1.31.0, D-218)
+1. Tick tasks in a project List or My Tasks → the bar: Complete, Assign to, Set due date, Set priority, Move to section, Add tag, Delete → Apply.
+2. Tasks → Inbox: Activity, Bookmarks, Archive; mark read/unread, bookmark, archive one or all; Only unread.
+3. Each working morning (from 9:00) people with overdue, due-today or new tasks get one summary; My Tasks → Morning summary email turns it off or on.
+
+## F-161 Task settings (Admin, v1.31.0, D-218)
+1. Admin → Task set-up → Task settings: holiday rules (F-157), upcoming holidays with move/tell, department holidays (add with department, date, name; remove), morning summary (on, hour, working days only), repeating tasks (on, skip holidays).
+
 ## F-152 Projects (v1.30.0, D-215)
 1. Tasks → Projects: create one (name, who can see it: private / my department / everyone, department, dates, colour, opening view); the creator is owner; it starts with To do, In progress, Done.
 2. Members & settings: add people or a whole department as Owner, Editor, Commenter or Viewer; owners change details and privacy, archive, delete (restorable for 30 days from Projects → Deleted); the last owner can't leave.

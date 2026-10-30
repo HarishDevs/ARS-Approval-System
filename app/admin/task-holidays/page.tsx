@@ -2,12 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { AddHolidayForm } from "@/features/admin/CalendarForms";
-import { HolidayTasksButtons, TaskHolidaySettingsForm } from "@/features/admin/TaskHolidayForms";
+import { DepartmentHolidayForm, HolidayTasksButtons, RemoveDepartmentHolidayButton, TaskExtrasForm, TaskHolidaySettingsForm } from "@/features/admin/TaskHolidayForms";
+import { listDepartments } from "@/lib/db/repositories/organisation.repository";
+import { DIGEST_SETTINGS_KEY, parseDigestSettings, parseRecurrenceSettings, RECURRENCE_SETTINGS_KEY } from "@/server/work/more-rules";
 import { requireArea } from "@/server/authorization/guards";
 import { getWorkingDays } from "@/lib/db/repositories/calendar.repository";
-import { loadHolidaySettings, upcomingHolidayLoad } from "@/server/work/holiday-store";
+import { listDepartmentHolidays, loadHolidaySettings, loadSetting, upcomingHolidayLoad } from "@/server/work/holiday-store";
 
-export const metadata: Metadata = { title: "Task holidays" };
+export const metadata: Metadata = { title: "Task settings" };
 export const dynamic = "force-dynamic";
 
 // D-217: what Tasks do with holidays. The holidays are the organisation's
@@ -15,10 +17,18 @@ export const dynamic = "force-dynamic";
 // Working calendar.
 export default async function TaskHolidaysPage() {
   await requireArea("admin");
-  const [settings, holidays, workingDays] = await Promise.all([loadHolidaySettings(), upcomingHolidayLoad(), getWorkingDays()]);
+  const [settings, holidays, workingDays, departments, departmentHolidays, digest, recurrence] = await Promise.all([
+    loadHolidaySettings(),
+    upcomingHolidayLoad(),
+    getWorkingDays(),
+    listDepartments(),
+    listDepartmentHolidays(),
+    loadSetting(DIGEST_SETTINGS_KEY).then(parseDigestSettings),
+    loadSetting(RECURRENCE_SETTINGS_KEY).then(parseRecurrenceSettings),
+  ]);
   return (
     <>
-      <PageHeader title="Task holidays" description="When a task's due or start date falls on a holiday, people are warned and can keep the date or move it to a working day. The holidays are the same list as the Working calendar.">
+      <PageHeader title="Task settings" description="Holidays for tasks (the same list as the Working calendar, plus department holidays), the morning summary and repeating tasks.">
         <Link href="/admin/calendar" className="btn-secondary btn-compact">
           Working calendar
         </Link>
@@ -42,6 +52,24 @@ export default async function TaskHolidaysPage() {
             </div>
           ))}
           <AddHolidayForm />
+        </section>
+        <section className="card divide-y divide-line">
+          <h2 className="px-5 py-4 font-semibold">Department holidays</h2>
+          <p className="px-5 py-3 text-caption text-ink-muted">Days off for one department only, for example a plant shutdown. They count for tasks assigned to people in that department, on top of the holidays for everyone.</p>
+          {departmentHolidays.length === 0 && <p className="px-5 py-4 text-label text-ink-muted">No upcoming department holidays.</p>}
+          {departmentHolidays.map((holiday) => (
+            <div key={`${holiday.departmentId}:${holiday.day}`} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 text-label" data-testid="department-holiday">
+              <span>
+                <span className="font-medium">{holiday.name}</span> <span className="text-ink-muted">· {holiday.departmentName} · {holiday.day}</span>
+              </span>
+              <RemoveDepartmentHolidayButton departmentId={holiday.departmentId} date={holiday.day} />
+            </div>
+          ))}
+          <DepartmentHolidayForm departments={departments.filter((department) => department.active).map((department) => ({ id: department.id, name: department.name }))} />
+        </section>
+        <section className="card">
+          <h2 className="border-b border-line px-5 py-4 font-semibold">Morning summary and repeating tasks</h2>
+          <TaskExtrasForm digest={digest} recurrence={recurrence} />
         </section>
       </div>
     </>

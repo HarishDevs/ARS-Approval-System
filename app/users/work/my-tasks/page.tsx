@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { MyTasks } from "@/features/work/MyTasks";
+import { DigestToggle } from "@/features/work/MoreParts";
+import { getDbPool } from "@/lib/db/client";
+import type { RowDataPacket } from "mysql2/promise";
 import { TaskCalendar } from "@/features/work/TaskCalendar";
 import { indiaDayOf } from "@/features/work/format";
 import { ensureMySections, listTaskItems, myPlacements } from "@/lib/db/repositories/work.repository";
@@ -21,17 +24,20 @@ const VIEWS = [
 // D-215: everything assigned to me, from every project and none, in my own
 // sections. Completed tasks of the last 7 days show when asked.
 export default async function MyTasksPage({ searchParams }: { searchParams: Promise<{ view?: string; done?: string; month?: string }> }) {
-  const { user } = await workPage();
+  const { user, viewer } = await workPage();
   const params = await searchParams;
   const view = params.view === "board" || params.view === "calendar" ? params.view : "list";
   const showDone = params.done === "1";
   const now = new Date();
   const today = indiaDayOf(now);
   const where = ["t.assignee_id = ?", "t.deleted_at IS NULL", showDone ? "(t.status IN ('OPEN', 'IN_PROGRESS', 'BLOCKED') OR (t.status = 'COMPLETED' AND t.completed_at >= ?))" : "t.status IN ('OPEN', 'IN_PROGRESS', 'BLOCKED')"];
-  const [sections, placements, list] = await Promise.all([
+  const [sections, placements, list, digestOff] = await Promise.all([
     ensureMySections(user.id),
     myPlacements(user.id),
     listTaskItems(where, showDone ? [user.id, new Date(now.getTime() - 7 * 86_400_000)] : [user.id], "t.due_at IS NULL, t.due_at, t.id", 1000),
+    getDbPool()
+      .query<RowDataPacket[]>("SELECT 1 FROM user_settings WHERE user_id = ? AND setting_key = 'work.digest' AND value = 'OFF'", [user.id])
+      .then(([rows]) => rows.length > 0),
   ]);
   const bySystem = new Map(sections.filter((section) => section.system).map((section) => [section.system as MySystemSection, section]));
   const rows = list.items.map((task) => {
@@ -81,7 +87,10 @@ export default async function MyTasksPage({ searchParams }: { searchParams: Prom
             </Link>
           ))}
         </nav>
-        <Link href={link({ done: showDone ? null : "1" })} className="ml-auto text-label link">
+        <span className="ml-auto">
+          <DigestToggle on={!digestOff} />
+        </span>
+        <Link href={link({ done: showDone ? null : "1" })} className="text-label link">
           {showDone ? "Hide completed" : "Show completed (last 7 days)"}
         </Link>
         <Link href="/users/tasks" className="text-label link">
@@ -96,7 +105,7 @@ export default async function MyTasksPage({ searchParams }: { searchParams: Prom
           canEdit
           meId={user.id}
           monthHref={`${link({ view: "calendar" })}&month=`}
-          holidays={await calendarHolidays()}
+          holidays={await calendarHolidays(undefined, viewer.departmentId)}
         />
       ) : (
         <MyTasks sections={sections.map((section) => ({ id: section.id, name: section.name, system: section.system }))} tasks={rows} layout={view === "board" ? "BOARD" : "LIST"} nowIso={now.toISOString()} />

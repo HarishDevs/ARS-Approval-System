@@ -4,7 +4,9 @@ import { PageHeader } from "@/features/shell/PageHeader";
 import { Badge, EmptyState } from "@/features/ui/Display";
 import { ProjectDot } from "@/features/work/client";
 import { ProjectCommandButton, ProjectForm, StarButton } from "@/features/work/ProjectForms";
-import { listDeletedProjects, listVisibleProjects } from "@/lib/db/repositories/work.repository";
+import { FromTemplateForm } from "@/features/work/MoreParts";
+import { countTemplateTasks, parseTemplate } from "@/server/work/more-rules";
+import { listDeletedProjects, listTemplates, listVisibleProjects } from "@/lib/db/repositories/work.repository";
 import { listDepartments } from "@/lib/db/repositories/organisation.repository";
 import { PRIVACY_LABEL, STATUS_KIND_LABEL, STATUS_KIND_TONE } from "@/server/work/access";
 import { workPage } from "@/server/work/page-context";
@@ -17,12 +19,13 @@ export const dynamic = "force-dynamic";
 export default async function ProjectsPage({ searchParams }: { searchParams: Promise<{ q?: string; show?: string; new?: string }> }) {
   const { viewer } = await workPage();
   const params = await searchParams;
-  const show = params.show === "archived" || params.show === "mine" || params.show === "deleted" ? params.show : "all";
+  const show = params.show === "archived" || params.show === "mine" || params.show === "deleted" || params.show === "templates" ? params.show : "all";
   const q = (params.q ?? "").trim().slice(0, 100);
-  const [projects, departments, deleted] = await Promise.all([
-    show === "deleted" ? Promise.resolve([]) : listVisibleProjects(viewer, { archived: show === "archived", q, onlyMine: show === "mine" }),
+  const [projects, departments, deleted, templates] = await Promise.all([
+    show === "deleted" || show === "templates" ? Promise.resolve([]) : listVisibleProjects(viewer, { archived: show === "archived", q, onlyMine: show === "mine" }),
     listDepartments(),
     show === "deleted" ? listDeletedProjects(viewer) : Promise.resolve([]),
+    listTemplates(viewer),
   ]);
   const active = departments.filter((department) => department.active).map((department) => ({ id: department.id, name: department.name }));
   const tab = (key: string, label: string) => (
@@ -39,6 +42,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
             {tab("all", "All I can see")}
             {tab("mine", "I'm a member")}
             {tab("archived", "Archived")}
+            {tab("templates", `Templates (${templates.length})`)}
             {tab("deleted", "Deleted")}
             <form className="ml-auto" action="/users/work/projects">
               {show !== "all" && <input type="hidden" name="show" value={show} />}
@@ -48,7 +52,24 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
               <input id="project-q" name="q" defaultValue={q} placeholder="Find a project…" className="field-input h-8 w-56 text-label" />
             </form>
           </div>
-          {show === "deleted" ? (
+          {show === "templates" ? (
+            templates.length === 0 ? (
+              <EmptyState title="No templates yet" body="Open a project → Members & settings → Save as template. Its sections, fields and tasks (with their dates) become reusable." />
+            ) : (
+              <ul className="card divide-y divide-line" data-testid="template-list">
+                {templates.map((template) => (
+                  <li key={template.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
+                    <Link href={`/users/work/projects/${template.id}`} className="flex-1 font-medium hover:underline">
+                      {template.name}
+                    </Link>
+                    <span className="text-caption text-ink-muted">
+                      {countTemplateTasks(parseTemplate(template.body)?.tasks ?? [])} tasks · {template.ownerName}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )
+          ) : show === "deleted" ? (
             deleted.length === 0 ? (
               <EmptyState title="No deleted projects" body="Projects you delete stay here for 30 days." />
             ) : (
@@ -94,6 +115,12 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
             New project
           </h2>
           <ProjectForm departments={active} myDepartmentId={viewer.departmentId} />
+          {templates.length > 0 && (
+            <div className="mt-6 border-t border-line pt-4">
+              <h2 className="mb-3 font-semibold">Or start from a template</h2>
+              <FromTemplateForm templates={templates.map((template) => ({ id: template.id, name: template.name }))} departments={active} />
+            </div>
+          )}
         </section>
       </div>
     </>

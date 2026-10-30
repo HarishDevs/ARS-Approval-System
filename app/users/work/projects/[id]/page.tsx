@@ -10,8 +10,11 @@ import { ProjectWorkspace } from "@/features/work/ProjectWorkspace";
 import { TaskCalendar } from "@/features/work/TaskCalendar";
 import { Timeline } from "@/features/work/Timeline";
 import { ProjectCommandButton, RemoveStatusButton, StarButton, StatusForm } from "@/features/work/ProjectForms";
+import { FromTemplateForm } from "@/features/work/MoreParts";
+import { listDepartments } from "@/lib/db/repositories/organisation.repository";
+import { countTemplateTasks, parseTemplate, type TemplateTask } from "@/server/work/more-rules";
 import { indiaDayOf } from "@/features/work/format";
-import { listProjectTasks, listSections, listStatusUpdates, projectCounts, projectFor, touchRecentProject } from "@/lib/db/repositories/work.repository";
+import { fieldValues, listProjectFields, listProjectTasks, listSections, listStatusUpdates, projectCounts, projectFor, templateBody, touchRecentProject } from "@/lib/db/repositories/work.repository";
 import { getDbPool } from "@/lib/db/client";
 import { indiaDateTimeText } from "@/server/modules/settings";
 import { PRIVACY_LABEL, PROJECT_ROLE_LABEL, projectAbilities, STATUS_KIND_LABEL, STATUS_KIND_TONE } from "@/server/work/access";
@@ -41,11 +44,50 @@ export default async function ProjectPage({ params, searchParams }: { params: Pr
   if (!found) notFound();
   const { project, members, role } = found;
   const can = projectAbilities(role);
+  // D-218: a template shows what it holds and makes projects.
+  if (project.isTemplate) {
+    const template = parseTemplate(await templateBody(project.id));
+    const departments = (await listDepartments()).filter((department) => department.active).map((department) => ({ id: department.id, name: department.name }));
+    const lines = (tasks: TemplateTask[], level = 0): React.ReactNode[] =>
+      tasks.flatMap((task, index) => [
+        <li key={`${level}-${index}-${task.title}`} style={{ paddingLeft: level * 20 }} className="text-label">
+          {task.isMilestone ? "◆ " : "• "}
+          {task.title}
+          <span className="text-caption text-ink-muted">
+            {" "}
+            · {template?.sections[task.section] ?? ""}
+            {task.dueOffset !== null ? ` · due day ${task.dueOffset >= 0 ? "+" : ""}${task.dueOffset}` : ""}
+          </span>
+        </li>,
+        ...lines(task.subtasks, level + 1),
+      ]);
+    return (
+      <>
+        <PageHeader title={project.name} meta={`Template · ${countTemplateTasks(template?.tasks ?? [])} tasks · ${template?.sections.length ?? 0} sections · Owner ${project.ownerName}`}>
+          <Badge tone="info">Template</Badge>
+          {can.manage && <ProjectCommandButton projectId={project.id} command="DELETE" label="Delete template" danger confirmText="Projects made from it stay." />}
+        </PageHeader>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <section className="card px-5 py-4" aria-label="What it holds">
+            <h2 className="mb-2 font-semibold">Sections and tasks</h2>
+            {template?.fields.length ? <p className="mb-2 text-caption text-ink-muted">Fields: {template.fields.map((field) => field.name).join(", ")}</p> : null}
+            <ul className="space-y-1" data-testid="template-tasks">
+              {lines(template?.tasks ?? [])}
+            </ul>
+          </section>
+          <section className="card px-5 py-4" aria-label="Use this template">
+            <h2 className="mb-3 font-semibold">Use this template</h2>
+            <FromTemplateForm templates={[{ id: project.id, name: project.name }]} departments={departments} />
+          </section>
+        </div>
+      </>
+    );
+  }
   const query = await searchParams;
   const view: ViewKey = VIEWS.some((item) => item.key === query.view) ? (query.view as ViewKey) : (project.defaultView.toLowerCase() as ViewKey);
   const now = new Date();
   const todayDay = indiaDayOf(now);
-  const [sections, tasks, people, statuses, counts, starred] = await Promise.all([
+  const [sections, tasks, people, statuses, counts, starred, fields] = await Promise.all([
     listSections(project.id),
     listProjectTasks(project.id),
     can.edit ? peopleOptions() : Promise.resolve([]),
@@ -54,7 +96,9 @@ export default async function ProjectPage({ params, searchParams }: { params: Pr
     getDbPool()
       .query<RowDataPacket[]>("SELECT 1 FROM work_favourites WHERE user_id = ? AND object_type = 'PROJECT' AND object_id = ?", [user.id, project.id])
       .then(([rows]) => rows.length > 0),
+    listProjectFields(project.id),
   ]);
+  const values = await fieldValues(tasks.map((task) => task.id));
   await touchRecentProject(user.id, project.id).catch(() => undefined);
   const isMember = members.some((member) => member.type === "USER" && member.id === user.id);
   const sectionName = new Map(sections.map((section) => [section.id, section.name]));
@@ -118,6 +162,8 @@ export default async function ProjectPage({ params, searchParams }: { params: Pr
           meId={user.id}
           people={people}
           nowIso={now.toISOString()}
+          fields={fields.map((field) => ({ id: field.id, name: field.name, kind: field.kind, options: field.options }))}
+          values={Object.fromEntries([...values].map(([taskId, own]) => [taskId, own]))}
         />
       )}
       {view === "calendar" && (
@@ -129,7 +175,7 @@ export default async function ProjectPage({ params, searchParams }: { params: Pr
           meId={user.id}
           projectId={project.id}
           monthHref={`${base}?view=calendar&month=`}
-          holidays={await calendarHolidays()}
+          holidays={await calendarHolidays(undefined, viewer.departmentId)}
         />
       )}
       {view === "timeline" && (

@@ -17,6 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (30 Oct 2026):** v1.31.0: repeating tasks, project fields, templates and copies, bulk actions, task inbox, morning summary, department holidays (D-218). **Owner:** publish v1.31.0 (migration runs on start); check Admin → Task set-up → Task settings (summary at 9:00 on working days, repeating tasks on); add department holidays there; email needs the Resend key already in Super Admin settings.
 - **Now (30 Oct 2026):** v1.30.0: Task & Project Management (D-215: projects, sections, list/board/calendar/timeline, subtasks, dependencies, comments with mentions, followers, likes, My Tasks, Task home, task search), multi-level reporting hierarchy (D-216) and holidays for tasks (D-217). **Owner:** publish v1.30.0 (migration runs on start and adds the General task type); check Admin → Task set-up → Task holidays (default: warn); keep reporting managers correct in Admin → Users (the hierarchy follows them); add holidays in Working calendar or Task holidays.
 - **Now (29 Oct 2026):** v1.29.0: custom loaders (sign-in, Classic) and complete Classic navigation (D-214). **Owner:** publish v1.29.0.
 - **Now (29 Oct 2026):** v1.28.1: Classic view keyboard fixed (D-213). **Owner:** publish v1.28.1.
@@ -386,7 +387,8 @@ Plan: `docs/CHATBOT_IMPLEMENTATION_PLAN.md`; audit: `docs/CHATBOT_ARCHITECTURE_A
 - [x] PB-74 My Tasks and Task home; task search, saved searches, Ctrl+K tasks and projects, keyboard, deleted tasks (30 Oct 2026, D-215)
 - [x] PB-75 Multi-level reporting hierarchy for task and project visibility, Team tasks, My team (30 Oct 2026, D-216)
 - [x] PB-76 Holidays for tasks: warn/block/off, prompt, calendars, reminders held, Admin → Task holidays with move/tell (30 Oct 2026, D-217)
-- [ ] PB-77 Later phases from the Asana spec, if the owner wants them: recurring tasks, project templates/duplicate, custom fields, inbox tabs with digest emails, saved view tabs, bulk actions, department-specific holidays
+- [x] PB-77 Repeating tasks, project templates and copies, project fields, task inbox with morning summary, bulk actions, department holidays (30 Oct 2026, D-218)
+- [ ] PB-78 Not planned unless asked (Asana spec §5): portfolios, goals, workload, rules builder, forms, guests, integrations, saved view tabs
 - [x] PB-69 Custom loaders: sign-in to main page, every Classic page change (29 Oct 2026, D-214)
 - [x] PB-70 Classic navigation in and out for every role: Overview back, page titles, Esc out of text boxes, spaces and Quit (29 Oct 2026, D-214)
 - [x] PB-68 Classic keyboard works with closed confirmations on the page (29 Oct 2026, D-213)

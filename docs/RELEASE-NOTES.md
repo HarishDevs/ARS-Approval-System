@@ -1,5 +1,14 @@
 # Release notes
 
+## v1.31.0 (30 Oct 2026): the rest of Task & Project Management (owner)
+- **Repeating tasks:** daily, weekly on chosen days, monthly, yearly, or some days after completion; the next one is made when a task is completed, with its people, projects, tags and subtasks, never on a holiday.
+- **Project fields:** your own columns (text, number, choice, date) in a project's List and on its tasks.
+- **Templates and copies:** save a project as a template, start projects from templates, or copy a project; dates move to the new start.
+- **Change many tasks at once:** tick tasks in a project List or My Tasks to complete, assign, date, prioritise, move, tag or delete them together.
+- **Task inbox:** everything about your tasks in one place, with bookmarks and archive.
+- **Morning summary:** each working morning, your overdue, due-today and new tasks by email and in the app (switch it off in My Tasks).
+- **Department holidays:** a department's own days off count for its people's tasks. Set up in Admin → Task set-up → **Task settings** (formerly Task holidays), with the summary and repeating-task options.
+
 ## v1.30.0 (30 Oct 2026): Task & Project Management (owner)
 - **Projects** under Tasks: private, department or everyone; members (people or departments) as owner, editor, commenter or viewer; sections; **List, Board, Calendar, Timeline** and **Overview** with status updates; star, join, archive, delete and restore.
 - **Tasks and subtasks:** subtasks up to five levels, "waiting for" other tasks, milestones, start dates, tags, a task in several projects, delete and restore within 30 days.

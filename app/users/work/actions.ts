@@ -12,6 +12,7 @@ import * as work from "@/server/work/service";
 import * as repo from "@/lib/db/repositories/work.repository";
 import { parseWorkSearch, workSearchQuery } from "@/server/work/rules";
 import { workViewer } from "@/server/work/task-access";
+import * as more from "@/server/work/service-more";
 import { getDbPool } from "@/lib/db/client";
 import type { RowDataPacket } from "mysql2/promise";
 import type { HolidayHit } from "@/server/work/holidays";
@@ -335,4 +336,101 @@ export async function savedSearchCommand(searchId: number, command: "DELETE" | "
   else await repo.toggleFavourite(me.id, "SEARCH", search);
   revalidatePath("/users/work", "layout");
   return { ok: true, message: command === "DELETE" ? "Deleted." : "Saved." };
+}
+
+// ---- D-218: recurring tasks, fields, templates, bulk, inbox, digest --------------------
+export async function recurrenceAction(taskId: number, rule: { kind: string; every: number; weekdays?: number[] } | null): Promise<ActionResult> {
+  const task = id(taskId);
+  return task ? run("recurrence", await actor(), (me) => more.setRecurrence(task, rule, me)) : NOT_FOUND;
+}
+
+export async function addFieldAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const projectId = id(text(formData, "projectId"));
+  if (!projectId) return NOT_FOUND;
+  return run("addField", await actor(), (me) => more.addField(projectId, { name: text(formData, "name"), kind: text(formData, "kind"), options: text(formData, "options") }, me));
+}
+
+export async function removeFieldAction(fieldId: number): Promise<ActionResult> {
+  const field = id(fieldId);
+  return field ? run("removeField", await actor(), (me) => more.removeField(field, me)) : NOT_FOUND;
+}
+
+export async function fieldValueAction(taskId: number, fieldId: number, value: string): Promise<ActionResult> {
+  const task = id(taskId);
+  const field = id(fieldId);
+  return task && field ? run("fieldValue", await actor(), (me) => more.setTaskField(task, field, String(value ?? ""), me)) : NOT_FOUND;
+}
+
+export async function saveTemplateAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const projectId = id(text(formData, "projectId"));
+  if (!projectId) return NOT_FOUND;
+  const result = await run("saveTemplate", await actor(), (me) => more.saveAsTemplate(projectId, text(formData, "name"), me));
+  if (!result.ok || !result.value) return result;
+  redirect(`/users/work/projects/${(result.value as { id: number }).id}`);
+}
+
+export async function fromTemplateAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const templateId = id(text(formData, "templateId"));
+  const copyFrom = id(text(formData, "copyFrom"));
+  if (!templateId && !copyFrom) return { ok: false, message: "Choose a template.", fieldErrors: { templateId: "Choose a template." } };
+  const result = await run("fromTemplate", await actor(), (me) =>
+    more.createFromTemplate(
+      { templateId: templateId ?? undefined, copyFrom: copyFrom ?? undefined, copyMembers: text(formData, "copyMembers") === "on" },
+      { name: text(formData, "name"), startOn: text(formData, "start_on"), privacy: text(formData, "privacy"), departmentId: id(text(formData, "department")) },
+      me,
+    ),
+  );
+  if (!result.ok || !result.value) return result;
+  redirect(`/users/work/projects/${(result.value as { id: number }).id}?created=1`);
+}
+
+export async function bulkAction(ids: number[], op: string, value: { assigneeId?: number; dueDay?: string; priority?: string; projectId?: number; sectionId?: number; tag?: string; holidayOk?: boolean } = {}): Promise<ActionResult & { holiday?: HolidayHit }> {
+  const me = await actor();
+  if (!me) return NOT_FOUND;
+  if (!(more.BULK_OPS as readonly string[]).includes(op)) return NOT_FOUND;
+  const clean = (Array.isArray(ids) ? ids : []).map((item) => id(item)).filter((item): item is number => item !== null);
+  return run("bulk", me, (who) =>
+    more.bulkTasks(
+      clean,
+      op as more.BulkOp,
+      {
+        assigneeId: id(value.assigneeId) ?? undefined,
+        dueDay: typeof value.dueDay === "string" ? value.dueDay : undefined,
+        priority: typeof value.priority === "string" ? value.priority : undefined,
+        projectId: id(value.projectId) ?? undefined,
+        sectionId: id(value.sectionId) ?? undefined,
+        tag: typeof value.tag === "string" ? value.tag : undefined,
+        holidayOk: value.holidayOk === true,
+      },
+      who,
+    ),
+  );
+}
+
+export async function inboxAction(ids: number[] | null, command: string): Promise<ActionResult> {
+  const me = await actor();
+  if (!me || !repo.INBOX_COMMANDS.includes(command)) return NOT_FOUND;
+  const clean = ids === null ? null : (Array.isArray(ids) ? ids : []).map((item) => id(item)).filter((item): item is number => item !== null).slice(0, 500);
+  try {
+    const changed = await repo.setInbox(me.id, clean, command);
+    revalidatePath("/users/work/inbox");
+    return { ok: true, message: changed ? "Done." : "Nothing to change." };
+  } catch (error) {
+    logError("inboxAction failed", error);
+    return { ok: false, message: "Couldn't do that. Please try again." };
+  }
+}
+
+export async function digestChoiceAction(on: boolean): Promise<ActionResult> {
+  const me = await actor();
+  if (!me) return NOT_FOUND;
+  try {
+    if (on) await getDbPool().query("DELETE FROM user_settings WHERE user_id = ? AND setting_key = 'work.digest'", [me.id]);
+    else await getDbPool().query("INSERT INTO user_settings (user_id, setting_key, value) VALUES (?, 'work.digest', 'OFF') ON DUPLICATE KEY UPDATE value = 'OFF'", [me.id]);
+    revalidatePath("/users/work/my-tasks");
+    return { ok: true, message: on ? "You'll get the morning summary." : "Morning summary switched off." };
+  } catch (error) {
+    logError("digestChoiceAction failed", error);
+    return { ok: false, message: "Couldn't save. Please try again." };
+  }
 }

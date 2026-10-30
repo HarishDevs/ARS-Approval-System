@@ -23,6 +23,7 @@ export const TASK_EVENTS: readonly string[] = [
   "WORK_TASK_MENTION",
   "WORK_PROJECT_MEMBER",
   "WORK_PROJECT_STATUS",
+  "WORK_TASK_DIGEST", // D-218
 ];
 export const INFO_EVENTS: readonly string[] = ["INFO_PUBLISHED", "INFO_UPDATED", "INFO_WITHDRAWN", "INFO_ACK_REMINDER"];
 export const SYSTEM_EVENTS: readonly string[] = [

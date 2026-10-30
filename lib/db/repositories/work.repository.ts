@@ -71,6 +71,7 @@ export interface ProjectRecord {
   rowVersion: number;
   createdBy: number;
   createdAt: Date;
+  isTemplate: boolean; // D-218
 }
 export interface ProjectMember {
   type: "USER" | "DEPARTMENT";
@@ -102,6 +103,7 @@ const toProject = (row: Row): ProjectRecord => ({
   rowVersion: num(row.row_version),
   createdBy: num(row.created_by),
   createdAt: row.created_at as Date,
+  isTemplate: Boolean(row.is_template),
 });
 
 export async function findProject(id: number, db: Queryable = getDbPool(), lock = false): Promise<ProjectRecord | null> {
@@ -147,7 +149,7 @@ export interface ProjectListItem {
 }
 export async function listVisibleProjects(viewer: WorkViewer, options: { archived?: boolean; q?: string; onlyMine?: boolean } = {}, db: Queryable = getDbPool()): Promise<ProjectListItem[]> {
   const visible = visibleProjectClause(viewer);
-  const where = [visible.sql, options.archived ? "p.archived_at IS NOT NULL" : "p.archived_at IS NULL"];
+  const where = [visible.sql, "p.is_template = FALSE", options.archived ? "p.archived_at IS NOT NULL" : "p.archived_at IS NULL"];
   const params: unknown[] = [...visible.params];
   if (options.q) {
     where.push("p.name LIKE ?");
@@ -670,7 +672,7 @@ export async function homeProjects(viewer: WorkViewer, limit: number, db: Querya
        (SELECT COUNT(*) FROM task_projects tp JOIN tasks tt ON tt.id = tp.task_id AND tt.deleted_at IS NULL WHERE tp.project_id = p.id AND tt.status = 'COMPLETED') AS done_tasks
      FROM projects p LEFT JOIN departments d ON d.id = p.department_id JOIN users o ON o.id = p.owner_id
      LEFT JOIN work_recent_projects r ON r.project_id = p.id AND r.user_id = ?
-     WHERE p.archived_at IS NULL AND ${visible.sql}
+     WHERE p.archived_at IS NULL AND p.is_template = FALSE AND ${visible.sql}
        AND (r.opened_at IS NOT NULL OR EXISTS (SELECT 1 FROM work_favourites f WHERE f.user_id = ? AND f.object_type = 'PROJECT' AND f.object_id = p.id)
          OR EXISTS (SELECT 1 FROM project_members mm WHERE mm.project_id = p.id AND mm.member_type = 'USER' AND mm.member_id = ?))
      ORDER BY starred DESC, r.opened_at IS NULL, r.opened_at DESC, p.name LIMIT ?`,
@@ -891,4 +893,130 @@ export async function teamWorkload(teamIds: readonly number[], managerId: number
     [[...teamIds], managerId],
   );
   return rows.map((row) => ({ id: num(row.id), name: String(row.name), managerName: str(row.manager_name), direct: num(row.reporting_manager_id) === managerId, open: num(row.open_n), overdue: num(row.late_n), doneWeek: num(row.done_n) }));
+}
+
+// ---- custom fields (D-218) -------------------------------------------------------------
+export interface ProjectField {
+  id: number;
+  projectId: number;
+  name: string;
+  kind: "TEXT" | "NUMBER" | "SELECT" | "DATE";
+  options: string[];
+}
+export async function listProjectFields(projectId: number, db: Queryable = getDbPool()): Promise<ProjectField[]> {
+  const [rows] = await db.query<Row[]>("SELECT id, project_id, name, kind, options_json FROM project_fields WHERE project_id = ? AND deleted_at IS NULL ORDER BY position, id", [projectId]);
+  return rows.map((row) => ({
+    id: num(row.id),
+    projectId: num(row.project_id),
+    name: String(row.name),
+    kind: row.kind as ProjectField["kind"],
+    options: (typeof row.options_json === "string" ? JSON.parse(row.options_json) : row.options_json) as string[],
+  }));
+}
+export async function findProjectField(id: number, db: Queryable = getDbPool()): Promise<ProjectField | null> {
+  const [rows] = await db.query<Row[]>("SELECT project_id FROM project_fields WHERE id = ? AND deleted_at IS NULL", [id]);
+  if (!rows[0]) return null;
+  return (await listProjectFields(num(rows[0].project_id), db)).find((field) => field.id === id) ?? null;
+}
+export async function insertProjectField(projectId: number, name: string, kind: ProjectField["kind"], options: string[], by: number, db: Queryable = getDbPool()): Promise<number> {
+  const [top] = await db.query<Row[]>("SELECT COALESCE(MAX(position), 0) AS top FROM project_fields WHERE project_id = ?", [projectId]);
+  const [result] = await db.query<ResultSetHeader>("INSERT INTO project_fields (project_id, name, kind, options_json, position, created_by) VALUES (?, ?, ?, ?, ?, ?)", [
+    projectId,
+    name,
+    kind,
+    JSON.stringify(options),
+    Number(top[0]?.top ?? 0) + 1024,
+    by,
+  ]);
+  return result.insertId;
+}
+export async function removeProjectField(id: number, db: Queryable = getDbPool()): Promise<void> {
+  await db.query<ResultSetHeader>("UPDATE project_fields SET deleted_at = UTC_TIMESTAMP() WHERE id = ?", [id]);
+}
+// Values of the given tasks: task id → field id → value.
+export async function fieldValues(taskIds: readonly number[], db: Queryable = getDbPool()): Promise<Map<number, Record<number, string>>> {
+  const out = new Map<number, Record<number, string>>();
+  if (!taskIds.length) return out;
+  const [rows] = await db.query<Row[]>("SELECT task_id, field_id, value FROM task_field_values WHERE task_id IN (?)", [[...taskIds]]);
+  for (const row of rows) out.set(num(row.task_id), { ...(out.get(num(row.task_id)) ?? {}), [num(row.field_id)]: String(row.value) });
+  return out;
+}
+export async function setFieldValue(taskId: number, fieldId: number, value: string | null, by: number, db: Queryable = getDbPool()): Promise<void> {
+  if (value === null) await db.query<ResultSetHeader>("DELETE FROM task_field_values WHERE task_id = ? AND field_id = ?", [taskId, fieldId]);
+  else
+    await db.query<ResultSetHeader>("INSERT INTO task_field_values (task_id, field_id, value, updated_by) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE value = VALUES(value), updated_by = VALUES(updated_by)", [taskId, fieldId, value, by]);
+}
+
+// ---- templates (D-218) ----------------------------------------------------------------
+export async function listTemplates(viewer: WorkViewer, db: Queryable = getDbPool()): Promise<{ id: number; name: string; description: string | null; ownerName: string; body: unknown }[]> {
+  const visible = visibleProjectClause(viewer);
+  const [rows] = await db.query<Row[]>(
+    `SELECT p.id, p.name, p.description, o.name AS owner_name, p.template_json FROM projects p JOIN users o ON o.id = p.owner_id WHERE p.is_template = TRUE AND ${visible.sql} ORDER BY p.name LIMIT 200`,
+    visible.params,
+  );
+  return rows.map((row) => ({ id: num(row.id), name: String(row.name), description: str(row.description), ownerName: String(row.owner_name), body: row.template_json }));
+}
+export async function setTemplateBody(projectId: number, body: unknown, db: Queryable): Promise<void> {
+  await db.query<ResultSetHeader>("UPDATE projects SET is_template = TRUE, template_json = ? WHERE id = ?", [JSON.stringify(body), projectId]);
+}
+export async function templateBody(projectId: number, db: Queryable = getDbPool()): Promise<unknown> {
+  const [rows] = await db.query<Row[]>("SELECT template_json FROM projects WHERE id = ? AND is_template = TRUE AND deleted_at IS NULL", [projectId]);
+  return rows[0]?.template_json ?? null;
+}
+
+// ---- task inbox (D-218) ---------------------------------------------------------------
+export type InboxTab = "activity" | "bookmarks" | "archive";
+export interface InboxItem {
+  id: number;
+  title: string;
+  message: string;
+  link: string | null;
+  createdAt: Date;
+  readAt: Date | null;
+  archivedAt: Date | null;
+  bookmarkedAt: Date | null;
+  eventType: string;
+}
+const TASK_NOTICE = "(n.category = 'TASK' OR n.event_type LIKE 'WORK|_%' ESCAPE '|')";
+export async function listInbox(userId: number, tab: InboxTab, unreadOnly: boolean, limit = 100, db: Queryable = getDbPool()): Promise<InboxItem[]> {
+  const where = ["n.user_id = ?", TASK_NOTICE, tab === "archive" ? "n.archived_at IS NOT NULL" : tab === "bookmarks" ? "n.bookmarked_at IS NOT NULL" : "n.archived_at IS NULL"];
+  if (unreadOnly) where.push("n.read_at IS NULL");
+  const [rows] = await db.query<Row[]>(
+    `SELECT n.id, n.title, n.message, n.deep_link, n.created_at, n.read_at, n.archived_at, n.bookmarked_at, n.event_type FROM notifications n WHERE ${where.join(" AND ")} ORDER BY n.id DESC LIMIT ?`,
+    [userId, limit],
+  );
+  return rows.map((row) => ({
+    id: num(row.id),
+    title: String(row.title),
+    message: String(row.message),
+    link: str(row.deep_link),
+    createdAt: row.created_at as Date,
+    readAt: (row.read_at as Date | null) ?? null,
+    archivedAt: (row.archived_at as Date | null) ?? null,
+    bookmarkedAt: (row.bookmarked_at as Date | null) ?? null,
+    eventType: String(row.event_type),
+  }));
+}
+export async function inboxUnread(userId: number, db: Queryable = getDbPool()): Promise<number> {
+  const [rows] = await db.query<Row[]>(`SELECT COUNT(*) AS n FROM notifications n WHERE n.user_id = ? AND ${TASK_NOTICE} AND n.archived_at IS NULL AND n.read_at IS NULL`, [userId]);
+  return num(rows[0]?.n ?? 0);
+}
+const INBOX_SET: Record<string, string> = {
+  READ: "read_at = COALESCE(read_at, UTC_TIMESTAMP())",
+  UNREAD: "read_at = NULL",
+  ARCHIVE: "archived_at = UTC_TIMESTAMP(), read_at = COALESCE(read_at, UTC_TIMESTAMP())",
+  UNARCHIVE: "archived_at = NULL",
+  BOOKMARK: "bookmarked_at = UTC_TIMESTAMP()",
+  UNBOOKMARK: "bookmarked_at = NULL",
+};
+export const INBOX_COMMANDS = Object.keys(INBOX_SET);
+// Only the person's own task notices change; `ids` null = all of them (not archived).
+export async function setInbox(userId: number, ids: readonly number[] | null, command: string, db: Queryable = getDbPool()): Promise<number> {
+  const set = INBOX_SET[command];
+  if (!set) return 0;
+  const [result] = await db.query<ResultSetHeader>(
+    `UPDATE notifications n SET ${set} WHERE n.user_id = ? AND ${TASK_NOTICE} ${ids === null ? "AND n.archived_at IS NULL" : "AND n.id IN (?)"}`,
+    ids === null ? [userId] : [userId, ids.length ? [...ids] : [0]],
+  );
+  return result.affectedRows;
 }

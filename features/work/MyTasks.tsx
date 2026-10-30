@@ -7,6 +7,7 @@ import { myPlaceAction, mySectionAction } from "@/app/users/work/actions";
 import { ProjectDot, TaskCheck, useWorkCall } from "@/features/work/client";
 import { dueLabel, TONE_TEXT } from "@/features/work/format";
 import { AddTask, useAutoRefresh } from "@/features/work/ProjectWorkspace";
+import { BulkBar } from "@/features/work/MoreParts";
 
 // D-215: My Tasks. The person's own sections: Recently assigned, Today,
 // Upcoming, Later (built in) and any they add. Drag a task between sections
@@ -38,6 +39,7 @@ export function MyTasks({ sections, tasks, layout, nowIso }: { sections: MySecti
   const [dragging, setDragging] = useState<number | null>(null);
   const [newSection, setNewSection] = useState("");
   const [live, setLive] = useState("");
+  const [selected, setSelected] = useState<number[]>([]);
   useAutoRefresh();
   const inSection = (id: number) => tasks.filter((task) => task.sectionId === id).sort((a, b) => a.position - b.position || a.id - b.id);
 
@@ -88,6 +90,12 @@ export function MyTasks({ sections, tasks, layout, nowIso }: { sections: MySecti
         className={`work-row ${card ? "rounded-md border border-line bg-surface p-2.5 shadow-sm" : "flex items-center gap-2 border-b border-line px-3 py-1.5 hover:bg-surface-muted"} ${dragging === task.id ? "opacity-50" : ""}`}
       >
         <div className="flex min-w-0 flex-1 items-center gap-2">
+          <input
+            type="checkbox"
+            aria-label={`Select ${task.title}`}
+            checked={selected.includes(task.id)}
+            onChange={(event) => setSelected((value) => (event.target.checked ? [...value, task.id] : value.filter((one) => one !== task.id)))}
+          />
           <TaskCheck taskId={task.id} done={task.status === "COMPLETED"} disabled={task.status === "CANCELLED"} label={task.title} />
           <Link href={`/users/tasks/${task.id}`} className={`min-w-0 flex-1 truncate text-label hover:underline ${task.status === "COMPLETED" ? "text-ink-muted line-through" : ""}`}>
             {task.title}
@@ -178,6 +186,7 @@ export function MyTasks({ sections, tasks, layout, nowIso }: { sections: MySecti
           {addSection}
         </div>
       )}
+      <BulkBar ids={selected.filter((one) => tasks.some((task) => task.id === one))} clear={() => setSelected([])} />
       {recent && <p className="mt-2 text-caption text-ink-muted">New tasks given to you land in {recent.name}. Tasks in Upcoming and Later move to Today on their due date.</p>}
     </div>
   );
