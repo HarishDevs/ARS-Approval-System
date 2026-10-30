@@ -19,6 +19,10 @@ export const TASK_EVENTS: readonly string[] = [
   "WORK_TASK_CANCELLED",
   "WORK_TASK_DUE_SOON",
   "WORK_TASK_OVERDUE",
+  // D-215: Task & Project Management.
+  "WORK_TASK_MENTION",
+  "WORK_PROJECT_MEMBER",
+  "WORK_PROJECT_STATUS",
 ];
 export const INFO_EVENTS: readonly string[] = ["INFO_PUBLISHED", "INFO_UPDATED", "INFO_WITHDRAWN", "INFO_ACK_REMINDER"];
 export const SYSTEM_EVENTS: readonly string[] = [

@@ -153,13 +153,16 @@ describe("list filters (tasks and information)", () => {
     expect(f).toMatchObject({ tab: "overdue", typeId: 3, priorities: ["HIGH"], dueFrom: "2026-10-01", dueTo: "2026-10-10", sort: "priority", size: 50 });
     const now = new Date("2026-10-20T00:00:00Z");
     const sql = taskListSql(f, "MINE", { id: 7, isAdmin: false }, ["serial"], now);
-    expect(sql.where[0]).toBe("t.assignee_id = ?");
+    expect(sql.where[0]).toBe("t.deleted_at IS NULL"); // D-215: deleted tasks are in no list
+    expect(sql.where[1]).toBe("t.assignee_id = ?");
     expect(sql.params).toContain(7);
     expect(sql.params).toContain("$.serial");
     expect(sql.where.join(" ")).not.toContain("pump");
     expect(taskQuery(f, { page: 2 })).toContain("page=2");
     expect(taskListSql(f, "TEAM", { id: 7, isAdmin: true }, [], now).where.join(" ")).not.toContain("reporting_manager_id");
-    expect(taskListSql(f, "TEAM", { id: 7, isAdmin: false }, [], now).where[0]).toBe("a.reporting_manager_id = ?");
+    expect(taskListSql(f, "TEAM", { id: 7, isAdmin: false }, [], now).where[1]).toBe("a.reporting_manager_id = ?");
+    // D-216: with the reporting line known, Team tasks is everyone below, every level.
+    expect(taskListSql(f, "TEAM", { id: 7, isAdmin: false, teamIds: [8, 9] }, [], now).where[1]).toBe("t.assignee_id IN (?)");
   });
   it("information filters: inbox only shows published items sent to me", () => {
     const f = parseInfoFilters({ tab: "to_ack" }, "INBOX");

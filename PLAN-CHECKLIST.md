@@ -17,6 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (30 Oct 2026):** v1.30.0: Task & Project Management (D-215: projects, sections, list/board/calendar/timeline, subtasks, dependencies, comments with mentions, followers, likes, My Tasks, Task home, task search), multi-level reporting hierarchy (D-216) and holidays for tasks (D-217). **Owner:** publish v1.30.0 (migration runs on start and adds the General task type); check Admin → Task set-up → Task holidays (default: warn); keep reporting managers correct in Admin → Users (the hierarchy follows them); add holidays in Working calendar or Task holidays.
 - **Now (29 Oct 2026):** v1.29.0: custom loaders (sign-in, Classic) and complete Classic navigation (D-214). **Owner:** publish v1.29.0.
 - **Now (29 Oct 2026):** v1.28.1: Classic view keyboard fixed (D-213). **Owner:** publish v1.28.1.
 - **Now (28 Oct 2026):** v1.28.0: text size in the Classic view (D-211). **Owner:** publish v1.28.0; profile menu → View: Classic → Text size.
@@ -379,6 +380,13 @@ Plan: `docs/CHATBOT_IMPLEMENTATION_PLAN.md`; audit: `docs/CHATBOT_ARCHITECTURE_A
 - [x] PB-40 Domain move prepared in code: single base-URL helper, LEGACY_HOSTS redirect (machine callers and OAuth callbacks exempt), unit tests, docs/DOMAIN-MIGRATION.md (done 25 Oct 2026, v1.22.0)
 - [x] PB-41 Phone layout: six pages scrolled sideways (sr-only label in wide tables); fixed globally (done 25 Oct 2026, v1.22.0)
 - [x] PB-48 Rollback to approval.arssteels.net in the app (default address, policies, samples, runbook) (26 Oct 2026, D-199)
+- [x] PB-71 Task & Project Management data model, General task type, one visibility rule (30 Oct 2026, D-215)
+- [x] PB-72 Projects: privacy, members and roles, sections, List, Board, Calendar, Timeline, Overview and status updates, archive/delete/restore (30 Oct 2026, D-215)
+- [x] PB-73 Tasks and subtasks, dependencies, milestones, tags; collaboration: comments, replies, mentions, followers, likes (30 Oct 2026, D-215)
+- [x] PB-74 My Tasks and Task home; task search, saved searches, Ctrl+K tasks and projects, keyboard, deleted tasks (30 Oct 2026, D-215)
+- [x] PB-75 Multi-level reporting hierarchy for task and project visibility, Team tasks, My team (30 Oct 2026, D-216)
+- [x] PB-76 Holidays for tasks: warn/block/off, prompt, calendars, reminders held, Admin → Task holidays with move/tell (30 Oct 2026, D-217)
+- [ ] PB-77 Later phases from the Asana spec, if the owner wants them: recurring tasks, project templates/duplicate, custom fields, inbox tabs with digest emails, saved view tabs, bulk actions, department-specific holidays
 - [x] PB-69 Custom loaders: sign-in to main page, every Classic page change (29 Oct 2026, D-214)
 - [x] PB-70 Classic navigation in and out for every role: Overview back, page titles, Esc out of text boxes, spaces and Quit (29 Oct 2026, D-214)
 - [x] PB-68 Classic keyboard works with closed confirmations on the page (29 Oct 2026, D-213)

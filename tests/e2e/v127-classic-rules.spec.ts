@@ -109,7 +109,8 @@ test("D-212: the keyboard works for a Super Admin too (closed confirmations on t
     await page.keyboard.press("t");
     await expect(page).toHaveURL(/\/users\/menu\/tasks$/);
     await page.keyboard.press("m");
-    await expect(page).toHaveURL(/\/users\/tasks$/);
+    // D-215: My tasks opens My Tasks.
+    await expect(page).toHaveURL(/\/users\/work\/my-tasks$/);
     await page.keyboard.press("Escape");
     await expect(page).toHaveURL(/\/users\/menu\/tasks$/);
     await page.keyboard.press("Escape");

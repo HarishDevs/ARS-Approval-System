@@ -34,6 +34,14 @@ export interface TaskRecord {
   rowVersion: number;
   createdAt: Date;
   updatedAt: Date;
+  // D-215: subtasks, milestones, My Tasks and soft delete.
+  parentTaskId: number | null;
+  rootTaskId: number | null;
+  depth: number;
+  isMilestone: boolean;
+  assignedAt: Date | null;
+  deletedAt: Date | null;
+  deletedBy: number | null;
 }
 
 type TaskRow = RowDataPacket & {
@@ -65,6 +73,13 @@ type TaskRow = RowDataPacket & {
   row_version: number;
   created_at: Date;
   updated_at: Date;
+  parent_task_id?: number | null;
+  root_task_id?: number | null;
+  depth?: number;
+  is_milestone?: number | boolean;
+  assigned_at?: Date | null;
+  deleted_at?: Date | null;
+  deleted_by?: number | null;
 };
 
 const dateOnly = (value: string | Date | null) => (value === null ? null : typeof value === "string" ? value.slice(0, 10) : value.toISOString().slice(0, 10));
@@ -98,6 +113,13 @@ const toTask = (row: TaskRow): TaskRecord => ({
   rowVersion: row.row_version,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
+  parentTaskId: row.parent_task_id ?? null,
+  rootTaskId: row.root_task_id ?? null,
+  depth: Number(row.depth ?? 0),
+  isMilestone: Boolean(row.is_milestone),
+  assignedAt: row.assigned_at ?? null,
+  deletedAt: row.deleted_at ?? null,
+  deletedBy: row.deleted_by ?? null,
 });
 
 export const TASK_SELECT = `SELECT t.*, v.type_id, mt.name AS type_name, c.name AS created_by_name, a.name AS assignee_name, a.reporting_manager_id AS assignee_manager_id,
@@ -139,8 +161,8 @@ export interface NewTask {
 
 export async function insertTask(task: NewTask, db: Queryable): Promise<number> {
   const [result] = await db.query<ResultSetHeader>(
-    `INSERT INTO tasks (task_no, type_version_id, title, description, priority, status, created_by, assignee_id, assigned_by, due_at, starts_on, form_data_json, related_request_id, submission_key, created_at)
-     VALUES (?, ?, ?, ?, ?, 'OPEN', ?, ?, ?, ?, ?, ?, ?, ?, UTC_TIMESTAMP())`,
+    `INSERT INTO tasks (task_no, type_version_id, title, description, priority, status, created_by, assignee_id, assigned_by, due_at, starts_on, form_data_json, related_request_id, submission_key, created_at, assigned_at)
+     VALUES (?, ?, ?, ?, ?, 'OPEN', ?, ?, ?, ?, ?, ?, ?, ?, UTC_TIMESTAMP(), UTC_TIMESTAMP())`,
     [task.taskNo, task.typeVersionId, task.title, task.description, task.priority, task.createdBy, task.assigneeId, task.createdBy, task.dueAt, task.startsOn, JSON.stringify(task.formData), task.relatedRequestId, task.submissionKey],
   );
   return result.insertId;
@@ -148,7 +170,7 @@ export async function insertTask(task: NewTask, db: Queryable): Promise<number> 
 
 // Every change goes through here, guarded by the row version read under the lock.
 export async function updateTask(id: number, expectedVersion: number, changes: Record<string, unknown>, db: Queryable): Promise<boolean> {
-  const allowed = ["title", "description", "priority", "status", "assignee_id", "assigned_by", "due_at", "starts_on", "form_data_json", "completed_by", "completed_at", "completion_note", "cancelled_by", "cancelled_at"];
+  const allowed = ["title", "description", "priority", "status", "assignee_id", "assigned_by", "due_at", "starts_on", "form_data_json", "completed_by", "completed_at", "completion_note", "cancelled_by", "cancelled_at", "assigned_at"];
   const keys = Object.keys(changes).filter((key) => allowed.includes(key));
   if (keys.length === 0) return true;
   const [result] = await db.query<ResultSetHeader>(

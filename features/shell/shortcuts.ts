@@ -19,4 +19,10 @@ export const SHORTCUTS: { keys: string; what: string }[] = [
   { keys: "A", what: "Approve (opens the request and asks first)" },
   { keys: "C", what: "Ask for changes (opens the request and asks first)" },
   { keys: "Esc", what: "Close a dialog or menu" },
+  // D-215: Task & Project Management pages.
+  { keys: "Q", what: "Tasks: add a task (the first \"Add a task\" box)" },
+  { keys: "G then H / M / P / S", what: "Tasks: go to Task home / My Tasks / Projects / Task search" },
+  { keys: "J / K", what: "Task lists: next / previous task" },
+  { keys: "X", what: "Task lists: complete or reopen the selected task" },
+  { keys: "Alt + ↑ / ↓", what: "Task lists: move the task up / down (Alt + Shift: to the next section)" },
 ];

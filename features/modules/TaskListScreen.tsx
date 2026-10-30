@@ -12,6 +12,7 @@ import { isOverdue, TASK_STATUS_LABEL, TASK_STATUSES, type TaskStatus } from "@/
 import { indiaDateTimeText, PRIORITY_LABEL, TASK_PRIORITIES, type TaskPriority } from "@/server/modules/settings";
 import { displayValue, type FormField } from "@/server/forms/fields";
 import { isAdminActor } from "@/server/modules/tasks";
+import { teamOf } from "@/server/work/task-access";
 
 // v1.9.0 (D-143): My tasks / Assigned by me / Team tasks. Filters live in
 // the address (GET form), so a list can be bookmarked and shared.
@@ -20,7 +21,7 @@ const PATH: Record<TaskBase, string> = { MINE: "/users/tasks", CREATED: "/users/
 const DESCRIPTION: Record<TaskBase, string> = {
   MINE: "Tasks assigned to you.",
   CREATED: "Tasks you created or assigned to someone.",
-  TEAM: "Tasks of the people who report to you (IT sees everyone's).",
+  TEAM: "Tasks of everyone below you in the reporting line, at every level (IT sees everyone's).",
 };
 export const STATUS_TONE: Record<TaskStatus, Tone> = { OPEN: "info", IN_PROGRESS: "primary", BLOCKED: "warning", COMPLETED: "success", CANCELLED: "neutral" };
 export const PRIORITY_TONE: Record<TaskPriority, Tone> = { LOW: "neutral", NORMAL: "neutral", HIGH: "warning", URGENT: "danger" };
@@ -29,7 +30,8 @@ export async function TaskListScreen({ base, query }: { base: TaskBase; query: R
   const { user } = await requireArea("users");
   if (!(await featureOn("tasks", user))) notFound();
   const filters = parseTaskFilters(query);
-  const viewer = { id: user.id, isAdmin: isAdminActor(user) };
+  // D-216: Team tasks covers the whole reporting line below the person.
+  const viewer = { id: user.id, isAdmin: isAdminActor(user), teamIds: base === "TEAM" && !isAdminActor(user) ? await teamOf(user.id) : undefined };
   const now = new Date();
   const [types, people, manages] = await Promise.all([listModuleTypes("TASK"), listActiveUserOptions(), base === "TEAM" && !viewer.isAdmin ? hasDirectReports(user.id) : Promise.resolve(true)]);
   // Fields marked "searchable" in any version, and the chosen type's listed columns.

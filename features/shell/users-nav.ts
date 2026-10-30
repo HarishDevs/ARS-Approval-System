@@ -20,11 +20,16 @@ export async function usersNav(user: { roles: readonly string[] }): Promise<NavI
     { href: "/users/new", label: "Request templates", section: "My Approvals" },
     ...(features.tasks
       ? [
-          // D-206 (owner): New task first.
+          // D-206 (owner): New task first. D-215: My tasks opens My Tasks (its
+          // sections, board and calendar; the filtered table is one click
+          // away), then the owner's order, then projects, home and search.
           { href: "/users/tasks/new", label: "New task", section: "Tasks" },
-          { href: "/users/tasks", label: "My tasks", section: "Tasks" },
+          { href: "/users/work/my-tasks", label: "My tasks", section: "Tasks" },
           { href: "/users/tasks/assigned", label: "Assigned by me", section: "Tasks" },
           { href: "/users/tasks/team", label: "Team tasks", section: "Tasks" },
+          { href: "/users/work/projects", label: "Projects", section: "Tasks" },
+          { href: "/users/work", label: "Task home", section: "Tasks" },
+          { href: "/users/work/search", label: "Task search", section: "Tasks" },
         ]
       : []),
     ...(features.information

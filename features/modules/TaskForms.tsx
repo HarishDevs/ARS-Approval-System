@@ -93,6 +93,7 @@ export function CreateTaskForm({
           </label>
           <input id="task-due" name="due" type="datetime-local" defaultValue={defaultDue} required={requireDue} className="field-input" />
           <FieldError result={result} name="due" />
+          <HolidayKeep result={result} />
         </div>
         <div>
           <label htmlFor="task-start" className="field-label">
@@ -240,7 +241,7 @@ export function CommentForm({ taskId }: { taskId: number }) {
       <input type="hidden" name="taskId" value={taskId} />
       <input type="hidden" name="action" value="COMMENT" />
       <label htmlFor="task-comment" className="field-label">
-        Add a comment or files
+        Add files to the history, with a note (optional)
       </label>
       <textarea id="task-comment" name="reason" rows={3} maxLength={2000} className="field-input h-auto py-2" />
       <input aria-label="Files to add" name="attachments" type="file" multiple accept={ACCEPT_ATTRIBUTE} className="block w-full text-label" />
@@ -336,6 +337,7 @@ export function EditTaskForm({
           </label>
           <input id="edit-due" name="due" type="datetime-local" defaultValue={due} className="field-input" />
           <FieldError result={result} name="due" />
+          <HolidayKeep result={result} />
         </div>
       </div>
       {renamed.length > 0 && <DynamicFields fields={renamed} mode="resubmit" initial={values} people={people} lookups={lookups} result={result} />}
@@ -349,5 +351,15 @@ export function EditTaskForm({
       </div>
       <ResultMessage result={result} />
     </form>
+  );
+}
+
+// D-217: a due date on a holiday (warn mode) can be kept on purpose.
+function HolidayKeep({ result }: { result: { ok: boolean; fieldErrors?: Record<string, string> } | null }) {
+  if (!result || result.ok || !result.fieldErrors?.holiday_ok) return null;
+  return (
+    <label className="mt-1 flex items-center gap-2 text-label">
+      <input type="checkbox" name="holiday_ok" value="1" /> Keep this date even though it is a holiday
+    </label>
   );
 }

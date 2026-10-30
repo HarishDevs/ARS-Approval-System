@@ -159,7 +159,7 @@ describe("ARS → Google", () => {
   it("a task due date becomes a private event with the reference only; the task is untouched; a second run writes nothing", async () => {
     const due = new Date(Date.now() + 3 * 86_400_000 + 330 * 60_000).toISOString().slice(0, 16);
     const created = await createTask(
-      { typeId: taskTypeId, title: "Confidential pump repair", description: "Secret", priority: "NORMAL", assigneeId: person, due, startsOn: "", related: "", fields: {}, submissionKey: crypto.randomUUID(), files: [] },
+      { typeId: taskTypeId, title: "Confidential pump repair", description: "Secret", priority: "NORMAL", assigneeId: person, due, startsOn: "", related: "", fields: {}, submissionKey: crypto.randomUUID(), files: [], holidayOk: true },
       { id: creator, name: "V111 Creator", roles: ["USER"] } as never,
     );
     if (!created.ok) throw new Error(created.message);
@@ -192,7 +192,7 @@ describe("ARS → Google", () => {
 
   it("other people's work never reaches this calendar (isolation)", async () => {
     const due = new Date(Date.now() + 2 * 86_400_000).toISOString().slice(0, 16);
-    await createTask({ typeId: taskTypeId, title: "Other's task", description: "", priority: "NORMAL", assigneeId: other, due, startsOn: "", related: "", fields: {}, submissionKey: crypto.randomUUID(), files: [] }, { id: creator, name: "V111 Creator", roles: ["USER"] } as never);
+    await createTask({ typeId: taskTypeId, title: "Other's task", description: "", priority: "NORMAL", assigneeId: other, due, startsOn: "", related: "", fields: {}, submissionKey: crypto.randomUUID(), files: [], holidayOk: true }, { id: creator, name: "V111 Creator", roles: ["USER"] } as never);
     await sync();
     expect(JSON.stringify(google.live(CAL))).not.toContain("Other's task");
     const links = await sql("SELECT COUNT(*) AS n FROM gcal_links l JOIN tasks t ON t.id = l.entity_id AND l.entity_type = 'TASK' WHERE l.connection_id = ? AND t.assignee_id = ?", [connectionId, other]);
@@ -256,7 +256,7 @@ describe("Google → ARS", () => {
 
   it("a Google edit to an ARS-managed event is put back (ARS is the source for business dates)", async () => {
     const due = new Date(Date.now() + 4 * 86_400_000).toISOString().slice(0, 16);
-    const created = await createTask({ typeId: taskTypeId, title: "Second", description: "", priority: "NORMAL", assigneeId: person, due, startsOn: "", related: "", fields: {}, submissionKey: crypto.randomUUID(), files: [] }, { id: creator, name: "V111 Creator", roles: ["USER"] } as never);
+    const created = await createTask({ typeId: taskTypeId, title: "Second", description: "", priority: "NORMAL", assigneeId: person, due, startsOn: "", related: "", fields: {}, submissionKey: crypto.randomUUID(), files: [], holidayOk: true }, { id: creator, name: "V111 Creator", roles: ["USER"] } as never);
     const id = created.ok ? created.value.id : 0;
     await sync();
     const event = google.live(CAL).find((item) => item.extendedProperties?.private?.arsId === String(id) && item.extendedProperties.private.arsType === "TASK")!;

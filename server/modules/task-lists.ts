@@ -95,12 +95,13 @@ const OPEN_SQL = "t.status IN ('OPEN', 'IN_PROGRESS', 'BLOCKED')";
 export function taskListSql(
   f: TaskFilters,
   base: TaskBase,
-  viewer: { id: number; isAdmin: boolean },
+  viewer: { id: number; isAdmin: boolean; teamIds?: readonly number[] },
   searchableKeys: readonly string[],
   now: Date,
   tabOverride?: TaskTab,
 ): { where: string[]; params: unknown[]; orderBy: string } {
-  const where: string[] = [];
+  // D-215: deleted tasks (kept 30 days for Restore) are in no list.
+  const where: string[] = ["t.deleted_at IS NULL"];
   const params: unknown[] = [];
   if (base === "MINE") {
     where.push("t.assignee_id = ?");
@@ -109,8 +110,14 @@ export function taskListSql(
     where.push("(t.created_by = ? OR t.assigned_by = ?)");
     params.push(viewer.id, viewer.id);
   } else if (!viewer.isAdmin) {
-    where.push("a.reporting_manager_id = ?");
-    params.push(viewer.id);
+    // D-216: the whole reporting line below the viewer (every level), when known.
+    if (viewer.teamIds) {
+      where.push("t.assignee_id IN (?)");
+      params.push(viewer.teamIds.length ? [...viewer.teamIds] : [0]);
+    } else {
+      where.push("a.reporting_manager_id = ?");
+      params.push(viewer.id);
+    }
   }
   const tab = tabOverride ?? f.tab;
   if (tab === "open") where.push(OPEN_SQL);

@@ -16,6 +16,22 @@ import { canSeeRequest } from "@/server/attachments/service";
 import { deliverOutbox } from "@/server/approvals/service";
 import type { NotifyInput } from "@/server/notifications/notify";
 import type { RoleCode } from "@/types/auth";
+import { addFollower, clearPlacements } from "@/lib/db/repositories/work.repository";
+import { taskViewerFor, teamOf } from "@/server/work/task-access";
+import { checkHoliday, holidayMessage } from "@/server/work/holidays";
+import { holidayContext } from "@/server/work/holiday-store";
+import { indiaDate } from "@/server/workflows/calendar";
+
+const utcToIndiaLocalDay = (value: Date | null) => (value ? indiaDate(value) : null);
+
+// D-217: the holiday rule of Admin → Task holidays, as form errors.
+async function holidayErrors(day: string, keep: boolean, errors: Record<string, string>): Promise<void> {
+  const { settings, calendar } = await holidayContext();
+  const hit = checkHoliday(day, "due", calendar, settings, keep);
+  if (!hit) return;
+  errors.due = holidayMessage(hit);
+  if (hit.mode === "WARN") errors.holiday_ok = "1";
+}
 
 // v1.9.0 (D-143): Task Management. Every change runs in one transaction:
 // lock the task, check the rules for this person (task-rules.ts), write the
@@ -37,16 +53,19 @@ export function viewerFor(task: Pick<TaskRecord, "assigneeManagerId">, actor: { 
 }
 
 // The task and its settings, if this person may see it (else null: a 404).
+// D-215: projects, followers and the top task count too (taskViewerFor); a
+// deleted task is shown only to its creator, its deleter and IT (to restore).
 export async function loadTaskFor(id: number, actor: { id: number; roles: readonly string[] }) {
   const task = await findTask(id);
   if (!task) return null;
-  const viewer = viewerFor(task, actor);
+  if (task.deletedAt && !(task.createdBy === actor.id || task.deletedBy === actor.id || isAdminActor(actor))) return null;
+  const viewer = await taskViewerFor(task, actor);
   const ctx = await versionWithType(task.typeVersionId);
   if (!ctx) return null;
   const settings = parseTaskSettings(ctx.version.settings);
   if (!canSeeTask(task, viewer)) return null;
-  const actions = allowedTaskActions(task, viewer, settings);
-  return { task, settings, form: ctx.version.form, versionNo: ctx.version.versionNo, actions };
+  const actions = task.deletedAt ? new Set<TaskAction>() : allowedTaskActions(task, viewer, settings);
+  return { task, settings, form: ctx.version.form, versionNo: ctx.version.versionNo, actions, viewer };
 }
 
 async function send(ids: number[]) {
@@ -66,6 +85,7 @@ export interface CreateTaskInput {
   fields: Record<string, string | undefined>;
   submissionKey: string | null;
   files: StagedFile[];
+  holidayOk?: boolean; // D-217: keep a due date on a holiday
 }
 
 export async function createTask(input: CreateTaskInput, actor: TaskActor): Promise<TaskResult<{ id: number; taskNo: string }>> {
@@ -95,11 +115,12 @@ export async function createTask(input: CreateTaskInput, actor: TaskActor): Prom
       dueAt = indiaLocalToUtc(input.due);
       if (!dueAt) errors.due = "Choose a valid due date and time.";
     } else if (settings.requireDueDate) errors.due = "This type needs a due date.";
+    if (dueAt) await holidayErrors(input.due.slice(0, 10), Boolean(input.holidayOk), errors);
     const startsOn = /^\d{4}-\d{2}-\d{2}$/.test(input.startsOn) ? input.startsOn : null;
     // Assignee: within the type's scope.
     const assignee = input.assigneeId ? await personFacts(input.assigneeId) : null;
     if (!assignee) errors.assignee = "Choose who should do it.";
-    else if (!mayAssignTo(settings, { creatorId: actor.id, creatorDepartmentId: me.departmentId, candidate: assignee }, isAdminActor(actor))) errors.assignee = "This type can't be assigned to that person.";
+    else if (!mayAssignTo(settings, { creatorId: actor.id, creatorDepartmentId: me.departmentId, creatorTeamIds: await teamOf(actor.id), candidate: assignee }, isAdminActor(actor))) errors.assignee = "This type can't be assigned to that person.";
     // Related approval request: must exist and be visible to the creator.
     let relatedRequestId: number | null = null;
     if (input.related.trim()) {
@@ -126,6 +147,9 @@ export async function createTask(input: CreateTaskInput, actor: TaskActor): Prom
         connection,
       );
       await appendTaskEvent(id, { actorId: actor.id, type: "CREATED", to: "OPEN", payload: { assigneeId: assignee!.id, dueAt: dueAt?.toISOString() ?? null, priority } }, connection);
+      // D-215: the creator and the assignee follow the task.
+      await addFollower(id, actor.id, "CREATOR", actor.id, connection);
+      if (assignee!.id !== actor.id) await addFollower(id, assignee!.id, "ASSIGNEE", actor.id, connection);
       await insertRecordFiles("TASK", id, input.files, actor.id, "GENERAL", connection);
       await recordAudit({ actorUserId: actor.id, action: "TASK_CREATED", entityType: "TASK", entityId: id, sessionId: actor.sessionId, ipAddress: actor.ipAddress ?? null, metadata: { taskNo, typeVersionId: type.versionId, assigneeId: assignee!.id, relatedRequestId, files: input.files.length } }, connection);
       const messages = assignee!.id === actor.id ? [] : [taskMessages.assigned({ id, taskNo, title, dueAt }, assignee!.id, actor.name)];
@@ -159,7 +183,7 @@ export interface TaskActionInput {
   rowVersion: number | null; // what the person saw; a stale page is refused
   reason: string;
   assigneeId: number | null; // REASSIGN
-  edit?: { title: string; description: string; priority: string; due: string; fields: Record<string, string | undefined> };
+  edit?: { title: string; description: string; priority: string; due: string; fields: Record<string, string | undefined>; holidayOk?: boolean };
   files: StagedFile[];
 }
 
@@ -191,16 +215,24 @@ export async function actOnTask(input: TaskActionInput, actor: TaskActor): Promi
     // Facts needed before the lock (people, lookups).
     const newAssignee = input.action === "REASSIGN" && input.assigneeId ? await personFacts(input.assigneeId) : null;
     const actorFacts = await personFacts(actor.id);
+    const team = input.action === "REASSIGN" ? await teamOf(actor.id) : [];
     const active = input.action === "EDIT" ? new Set((await listActiveUserOptions()).map((person) => person.id)) : new Set<number>();
     const lookups = input.action === "EDIT" ? await loadFieldLookups() : undefined;
+    // D-217: a new due date on a holiday is checked before anything changes.
+    if (input.action === "EDIT" && input.edit?.due) {
+      const errors: Record<string, string> = {};
+      const current = await findTask(input.taskId);
+      if (current && utcToIndiaLocalDay(current.dueAt) !== input.edit.due.slice(0, 10)) await holidayErrors(input.edit.due.slice(0, 10), Boolean(input.edit.holidayOk), errors);
+      if (errors.due) return fail(errors.due, errors);
+    }
 
     const outcome = await withTransaction(async (connection) => {
       const task = await findTask(input.taskId, connection, true);
-      if (!task) return { error: "Not found." } as const;
+      if (!task || task.deletedAt) return { error: "Not found." } as const;
       const ctx = await versionWithType(task.typeVersionId, connection);
       if (!ctx) return { error: "Not found." } as const;
       const settings = parseTaskSettings(ctx.version.settings);
-      const allowed = allowedTaskActions(task, viewerFor(task, actor), settings);
+      const allowed = allowedTaskActions(task, await taskViewerFor(task, actor, connection), settings);
       if (!allowed.has(input.action)) return { error: allowed.size ? "That can't be done to this task now. Reload to see its latest state." : "Not found." } as const;
       if (input.rowVersion !== null && input.rowVersion !== task.rowVersion && input.action !== "COMMENT") return { error: "Someone changed this task while you were looking. Reload and try again." } as const;
 
@@ -229,8 +261,11 @@ export async function actOnTask(input: TaskActionInput, actor: TaskActor): Promi
         case "REASSIGN": {
           if (!newAssignee) return { error: "Choose who should do it.", field: "assignee" } as const;
           if (newAssignee.id === task.assigneeId) return { error: "It's already assigned to that person.", field: "assignee" } as const;
-          if (!mayAssignTo(settings, { creatorId: actor.id, creatorDepartmentId: actorFacts?.departmentId ?? null, candidate: newAssignee }, isAdminActor(actor))) return { error: "This type can't be assigned to that person.", field: "assignee" } as const;
-          Object.assign(changes, { assignee_id: newAssignee.id, assigned_by: actor.id, status: task.status === "BLOCKED" ? "BLOCKED" : task.status });
+          if (!mayAssignTo(settings, { creatorId: actor.id, creatorDepartmentId: actorFacts?.departmentId ?? null, creatorTeamIds: team, candidate: newAssignee }, isAdminActor(actor))) return { error: "This type can't be assigned to that person.", field: "assignee" } as const;
+          Object.assign(changes, { assignee_id: newAssignee.id, assigned_by: actor.id, assigned_at: new Date(), status: task.status === "BLOCKED" ? "BLOCKED" : task.status });
+          // D-215: the new assignee follows it and finds it in "Recently assigned".
+          await addFollower(task.id, newAssignee.id, "ASSIGNEE", actor.id, connection);
+          await clearPlacements(task.id, connection);
           payload = { from: task.assigneeId, to: newAssignee.id };
           notifyTo.add(newAssignee.id);
           break;

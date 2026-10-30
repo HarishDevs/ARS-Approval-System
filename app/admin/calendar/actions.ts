@@ -7,6 +7,8 @@ import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { WEEKDAYS, type Weekday } from "@/server/workflows/calendar";
 import { logError } from "@/lib/logging/logger";
 import type { ActionResult } from "@/lib/http/action-result";
+import { loadHolidaySettings } from "@/server/work/holiday-store";
+import { tellHolidayTasks } from "@/server/work/service";
 
 // Working calendar (F-31, D-067). Applies to approvals that start after the
 // change; existing due times stay as they were.
@@ -44,6 +46,14 @@ export async function holidayAction(_previous: ActionResult | null, formData: Fo
       if (name.length < 2 || name.length > 100) return { ok: false, message: "Give the holiday a name.", fieldErrors: { name: "Enter a name." } };
       await addHoliday(date, name, actor.id);
       await recordAudit({ actorUserId: actor.id, action: "HOLIDAY_ADDED", entityType: "CALENDAR", entityId: date, sessionId: actor.sessionId, ipAddress: actor.ipAddress, metadata: { name } });
+      // D-217: people with open tasks due that day hear about it (Admin → Task holidays).
+      if ((await loadHolidaySettings()).notifyNewHoliday) {
+        const told = await tellHolidayTasks(date, null);
+        if (told.ok && told.value.told) {
+          revalidatePath("/admin/calendar");
+          return { ok: true, message: `Added. ${told.value.told} open task${told.value.told === 1 ? " is" : "s are"} due that day; their assignees were told.` };
+        }
+      }
     }
   } catch (error) {
     if ((error as { code?: string })?.code === "ER_DUP_ENTRY") return { ok: false, message: "That date is already a holiday.", fieldErrors: { date: "Already a holiday." } };

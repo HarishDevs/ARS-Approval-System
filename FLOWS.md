@@ -1055,6 +1055,35 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 2. They filter (search, status, type, department, person, waiting on, priority, overdue, dates) and sort by a column title; 50 rows a page.
 3. **Download CSV** gives every matching row (up to 10,000) for Excel; audited. A row number opens the record.
 
+## F-152 Projects (v1.30.0, D-215)
+1. Tasks → Projects: create one (name, who can see it: private / my department / everyone, department, dates, colour, opening view); the creator is owner; it starts with To do, In progress, Done.
+2. Members & settings: add people or a whole department as Owner, Editor, Commenter or Viewer; owners change details and privacy, archive, delete (restorable for 30 days from Projects → Deleted); the last owner can't leave.
+3. List: add tasks at a section's end (Enter; paste lines for many), change assignee, due date and priority in the row, drag or Alt+↑/↓ to reorder, Alt+Shift+↑/↓ to the next section; filter, only mine, show completed, sort (sorting stops dragging).
+4. Board: sections as columns, drag cards between them; Calendar: drag a task to a day, + to add on a day; Timeline: bars from start to due, milestones as diamonds.
+5. Overview: description, milestones, members; owners and editors post status updates (On track … Dropped); members are told.
+
+## F-153 A task in Task & Project Management (v1.30.0, D-215)
+1. The task page shows its projects (and section in each; add to another project; remove), subtasks (add, reorder, open), "Waiting for" tasks (by number; no loops), tags, followers (Follow / add / remove), Like, milestone, start date, Delete (with subtasks; Restore from Task search → Deleted tasks).
+2. Comments: write, @mention people (they are told; people who can't see it become followers unless unticked), reply once, like, pin, edit or delete your own.
+3. The tick completes or reopens from any list (types that need a note or file open the task instead); when the last task a task waits for completes, its assignee is told.
+
+## F-154 My Tasks and Task home (v1.30.0, D-215)
+1. My tasks opens My Tasks: Recently assigned, Today, Upcoming, Later and your own sections; drag to place or reorder (only you see it); tasks move to Today and Upcoming as their due date comes; list, board, calendar; "Table with filters" opens the old list.
+2. Task home: greeting; my tasks upcoming / overdue / completed with ticks; assigned by me; my team (D-216); projects (starred and recent); latest status updates.
+
+## F-155 Task search and navigation (v1.30.0, D-215)
+1. Task search: words, number or comment text with status, assignee, assigned by, project, priority, tag, due range, my team, I follow, overdue; quick searches; save a search and star it.
+2. Ctrl+K also finds tasks (by number or title) and projects. On task pages: Q adds a task, G then H/M/P/S goes to Home/My Tasks/Projects/Search, J/K moves through rows, X ticks, Enter opens.
+
+## F-156 Reporting line (v1.30.0, D-216)
+1. A manager sees (reads and comments, doesn't change) every task of everyone below them at every level, in Team tasks, Task search (My team) and on the task page, and can look into projects those people are in.
+2. Task home lists the team with open, overdue and done counts; "My team" task types' assignment scope covers every level.
+
+## F-157 Holidays for tasks (v1.30.0, D-217)
+1. IT sets Admin → Task set-up → Task holidays: warn, block or ignore; weekly offs count or not; next or previous working day offered; start dates; reminders on holidays; calendars; telling people about new holidays.
+2. Someone sets a due (or start) date on a holiday: a prompt says which holiday and offers Move to <working day>, Keep it (warn mode) or Cancel; forms show the same message with "Keep this date even though it is a holiday".
+3. IT adds a holiday (Working calendar or Task holidays): assignees of open tasks due that day are told; Task holidays lists upcoming holidays with the open tasks due on each and moves them all to the next working day or the day before, or tells their assignees.
+
 ## F-150 Reminder and escalation rules (v1.27.0, D-209)
 1. IT opens Admin → Reminders & escalations → New rule: name, Reminder or Escalation, Approvals or Tasks, on/off, email or inbox only.
 2. Adds conditions on any field (standard or form field) and chooses all or any.

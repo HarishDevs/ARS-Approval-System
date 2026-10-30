@@ -25,6 +25,12 @@ export interface TaskViewer {
   id: number;
   isAdmin: boolean; // IT Admin or Super Admin
   managesAssignee: boolean; // the assignee reports to this person
+  // D-215 (Task & Project Management): what projects, followers and the top
+  // task add (server/work/access.ts taskRights). Absent = nothing extra.
+  workSee?: boolean;
+  workEdit?: boolean; // project editor or owner
+  workComment?: boolean;
+  teamIds?: readonly number[]; // D-216: everyone below the viewer, every level
 }
 
 export const isParty = (task: TaskFacts, viewer: TaskViewer) => viewer.id === task.createdBy || viewer.id === task.assigneeId || viewer.id === task.assignedBy;
@@ -32,7 +38,7 @@ export const isParty = (task: TaskFacts, viewer: TaskViewer) => viewer.id === ta
 // Who may see a task at all: its creator, assigner and assignee, the
 // assignee's manager (team tasks) and IT.
 export function canSeeTask(task: TaskFacts, viewer: TaskViewer): boolean {
-  return isParty(task, viewer) || viewer.isAdmin || viewer.managesAssignee;
+  return isParty(task, viewer) || viewer.isAdmin || viewer.managesAssignee || Boolean(viewer.workSee);
 }
 
 // The actions this person may take now. Every one is checked again on the server.
@@ -40,17 +46,18 @@ export function allowedTaskActions(task: TaskFacts, viewer: TaskViewer, settings
   const actions = new Set<TaskAction>();
   if (!canSeeTask(task, viewer)) return actions;
   const assignee = viewer.id === task.assigneeId;
-  const owner = viewer.id === task.createdBy || viewer.id === task.assignedBy || viewer.isAdmin;
+  const owner = viewer.id === task.createdBy || viewer.id === task.assignedBy || viewer.isAdmin || Boolean(viewer.workEdit);
+  const doer = assignee || Boolean(viewer.workEdit);
   const open = OPEN_STATUSES.includes(task.status);
-  if (assignee && task.status === "OPEN") actions.add("START");
+  if (doer && task.status === "OPEN") actions.add("START");
   if (assignee && settings.allowBlocked && (task.status === "OPEN" || task.status === "IN_PROGRESS")) actions.add("BLOCK");
   if (assignee && task.status === "BLOCKED") actions.add("UNBLOCK");
-  if (assignee && (task.status === "OPEN" || task.status === "IN_PROGRESS")) actions.add("COMPLETE");
+  if (doer && (task.status === "OPEN" || task.status === "IN_PROGRESS")) actions.add("COMPLETE");
   if (owner && settings.allowReopen && task.status === "COMPLETED") actions.add("REOPEN");
   if (open && (owner || (assignee && settings.assigneeMayCancel))) actions.add("CANCEL");
   if (open && owner && settings.allowReassign) actions.add("REASSIGN");
   if (open && owner) actions.add("EDIT");
-  if (isParty(task, viewer) || viewer.isAdmin) actions.add("COMMENT");
+  if (isParty(task, viewer) || viewer.isAdmin || viewer.workComment) actions.add("COMMENT");
   return actions;
 }
 
@@ -78,6 +85,7 @@ export function isOverdue(task: { status: TaskStatus; dueAt: Date | null }, now:
 export interface AssignContext {
   creatorId: number;
   creatorDepartmentId: number | null;
+  creatorTeamIds?: readonly number[]; // D-216: everyone below the creator, every level
   candidate: { id: number; active: boolean; departmentId: number | null; managerId: number | null; groupIds: readonly number[] };
 }
 export function mayAssignTo(settings: Pick<TaskSettings, "assignScope" | "assignGroupIds" | "assignUserIds">, context: AssignContext, creatorIsAdmin: boolean): boolean {
@@ -91,7 +99,7 @@ export function mayAssignTo(settings: Pick<TaskSettings, "assignScope" | "assign
     case "SAME_DEPARTMENT":
       return context.creatorDepartmentId !== null && candidate.departmentId === context.creatorDepartmentId;
     case "MY_TEAM":
-      return candidate.managerId === context.creatorId;
+      return candidate.managerId === context.creatorId || Boolean(context.creatorTeamIds?.includes(candidate.id));
     case "GROUPS":
       return candidate.groupIds.some((id) => settings.assignGroupIds.includes(id));
     case "PEOPLE":

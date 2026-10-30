@@ -8,7 +8,7 @@ import { appBaseUrl } from "@/lib/http/app-url";
 // template for the event (same rule as every other message).
 const base = () => appBaseUrl();
 
-function message(eventType: string, userId: number, title: string, text: string, path: string, entity: NonNullable<NotifyInput["entity"]>): NotifyInput {
+function message(eventType: string, userId: number, title: string, text: string, path: string, entity: NotifyInput["entity"]): NotifyInput {
   const link = `${base()}${path}`;
   return {
     eventType,
@@ -41,6 +41,21 @@ export const taskMessages = {
   cancelled: (task: TaskInfo, to: number, by: string) => message("WORK_TASK_CANCELLED", to, `Task cancelled: ${task.taskNo}`, `${by} cancelled "${task.title}" (${task.taskNo}).`, taskPath(task), { type: "TASK", id: task.id }),
   dueSoon: (task: TaskInfo, to: number) => message("WORK_TASK_DUE_SOON", to, `Task due soon: ${task.taskNo}`, `"${task.title}" (${task.taskNo}) is due soon.${due(task)}`, taskPath(task), { type: "TASK", id: task.id }),
   overdue: (task: TaskInfo, to: number) => message("WORK_TASK_OVERDUE", to, `Task overdue: ${task.taskNo}`, `"${task.title}" (${task.taskNo}) is overdue.${due(task)}`, taskPath(task), { type: "TASK", id: task.id }),
+  // D-215: Task & Project Management.
+  mentioned: (task: TaskInfo, to: number, by: string) => message("WORK_TASK_MENTION", to, `${by} mentioned you on ${task.taskNo}`, `${by} mentioned you in a comment on "${task.title}" (${task.taskNo}).`, taskPath(task), { type: "TASK", id: task.id }),
+  followed: (task: TaskInfo, to: number, by: string) => message("WORK_TASK_UPDATED", to, `You now follow task ${task.taskNo}`, `${by} added you as a follower of "${task.title}" (${task.taskNo}).`, taskPath(task), { type: "TASK", id: task.id }),
+  unblocked: (task: TaskInfo, to: number) => message("WORK_TASK_UPDATED", to, `Ready to start: ${task.taskNo}`, `Everything blocking "${task.title}" (${task.taskNo}) is now complete.`, taskPath(task), { type: "TASK", id: task.id }),
+};
+
+export interface ProjectInfo {
+  id: number;
+  name: string;
+}
+const projectPath = (project: ProjectInfo) => `/users/work/projects/${project.id}`;
+export const projectMessages = {
+  added: (project: ProjectInfo, to: number, by: string, role: string) => message("WORK_PROJECT_MEMBER", to, `Added to project: ${project.name}`, `${by} added you to the project "${project.name}" as ${role.toLowerCase()}.`, projectPath(project), null),
+  status: (project: ProjectInfo, to: number, by: string, status: string, title: string) =>
+    message("WORK_PROJECT_STATUS", to, `${project.name}: ${status}`, `${by} posted a status update on "${project.name}": ${status}. ${title}`, `${projectPath(project)}?view=overview`, null),
 };
 
 export interface InfoSummary {

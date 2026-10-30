@@ -6,6 +6,10 @@ import { parseSearchFilters } from "@/server/search/filters";
 import { STATUS_WORD } from "@/features/ui/labels";
 import { LIMITS, overLimit, tooManyResponse } from "@/server/security/limits";
 import { apiError } from "@/lib/http/api-response";
+import { quickWork } from "@/lib/db/repositories/work.repository";
+import { hasModule } from "@/server/modules/modules";
+import { featureOn } from "@/server/settings/features";
+import { workViewer } from "@/server/work/task-access";
 import { logError } from "@/lib/logging/logger";
 
 // WS-03/04 command palette data: requests matching the typed text (two or
@@ -21,7 +25,9 @@ export async function GET(request: NextRequest) {
       q.length >= 2
         ? (await searchRequests(viewer, { ...parseSearchFilters({ q }), page: 1 })).items.slice(0, 8).map((item) => ({ id: item.id, requestNo: item.requestNo, title: item.title, status: STATUS_WORD[item.status] ?? item.status }))
         : (await listRecent(viewer, 8)).map((item) => ({ id: item.id, requestNo: item.requestNo, title: item.title, status: STATUS_WORD[item.status] ?? item.status }));
-    return Response.json({ kind: q.length >= 2 ? "search" : "recent", items }, { headers: { "Cache-Control": "no-store" } });
+    // D-215: tasks and projects the person can see (same rule as everywhere).
+    const work = q.length >= 2 && hasModule(session.user, "TASK") && (await featureOn("tasks", session.user)) ? await quickWork(await workViewer(session.user), q) : { tasks: [], projects: [] };
+    return Response.json({ kind: q.length >= 2 ? "search" : "recent", items, tasks: work.tasks, projects: work.projects }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     if ((error as Error)?.name !== "ForbiddenError") logError("quick search failed", error);
     return apiError("NOT_FOUND", "Not found.", 404);

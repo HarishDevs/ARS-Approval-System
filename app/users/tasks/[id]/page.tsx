@@ -14,7 +14,11 @@ import { loadFieldLookups, loadLookupNames } from "@/lib/db/repositories/lookups
 import { listRecordFiles } from "@/server/modules/files";
 import { isAdminActor, loadTaskFor, relatedRequestVisible } from "@/server/modules/tasks";
 import { COMPLETION_LABEL, indiaDateTimeText, PRIORITY_LABEL, utcToIndiaLocal } from "@/server/modules/settings";
-import { isOverdue, mayAssignTo, TASK_STATUS_LABEL } from "@/server/modules/task-rules";
+import { isOverdue, mayAssignTo, OPEN_STATUSES, TASK_STATUS_LABEL } from "@/server/modules/task-rules";
+import { TaskWorkPanel, TaskWorkSide, type PanelData } from "@/features/work/TaskWorkPanel";
+import { CommentThread } from "@/features/work/CommentThread";
+import { ancestors, likesOf, listComments, listDependencies, listFollowers, listSections, listSubtasks, listTaskItems, listTaskProjects, listVisibleProjects } from "@/lib/db/repositories/work.repository";
+import { rightsOn, workViewer } from "@/server/work/task-access";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
 export const metadata: Metadata = { title: "Task" };
@@ -32,11 +36,26 @@ const EVENT_TEXT: Record<string, string> = {
   REASSIGN: "Reassigned",
   EDIT: "Details changed",
   COMMENT: "Comment",
+  // D-215: Task & Project Management.
+  COMMENTED: "Commented",
+  SUBTASK_ADDED: "Added a subtask",
+  PARENT_CHANGED: "Moved in the task tree",
+  MOVED_SECTION: "Moved to another section",
+  ADDED_TO_PROJECT: "Added to a project",
+  REMOVED_FROM_PROJECT: "Removed from a project",
+  FOLLOWER_ADDED: "Added a follower",
+  FOLLOWER_REMOVED: "Removed a follower",
+  DEPENDENCY_ADDED: "Now waits for another task",
+  DEPENDENCY_REMOVED: "No longer waits for a task",
+  TAG_ADDED: "Added a tag",
+  TAG_REMOVED: "Removed a tag",
+  DELETED: "Deleted",
+  RESTORED: "Restored",
 };
 
 // v1.9.0 (D-143): one task. Only its creator, assigner, assignee, the
 // assignee's manager and IT can open it; anyone else gets "not found".
-export default async function TaskPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ created?: string }> }) {
+export default async function TaskPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ created?: string; project?: string }> }) {
   const { user } = await requireArea("users");
   if (!(await featureOn("tasks", user))) notFound();
   const { id } = await params;
@@ -53,12 +72,53 @@ export default async function TaskPage({ params, searchParams }: { params: Promi
     personFacts(user.id),
     task.relatedRequestId ? relatedRequestVisible(task.relatedRequestId, user) : Promise.resolve(false),
   ]);
-  const created = (await searchParams).created === "1";
+  const query = await searchParams;
+  const created = query.created === "1";
+  // D-215: projects, subtasks, dependencies, tags, followers, likes, comments.
+  const viewer = await workViewer(user);
+  const [rights, chain, links, subtasks, deps, followers, likes, comments, choices, workItem] = await Promise.all([
+    rightsOn(task, viewer),
+    ancestors(task.id),
+    listTaskProjects(task.id),
+    listSubtasks(task.id),
+    listDependencies(task.id),
+    listFollowers(task.id),
+    likesOf("TASK", task.id),
+    listComments(task.id, user.id),
+    listVisibleProjects(viewer),
+    listTaskItems(["t.id = ?"], [task.id], "t.id", 1),
+  ]);
+  const linkSections = await Promise.all(links.map((link) => listSections(link.projectId)));
+  const fromProject = links.find((link) => String(link.projectId) === query.project) ?? null;
+  const panel: PanelData = {
+    taskId: task.id,
+    taskNo: task.taskNo,
+    title: task.title,
+    open: OPEN_STATUSES.includes(task.status),
+    isMilestone: task.isMilestone,
+    startsOn: task.startsOn ?? "",
+    meId: user.id,
+    canEdit: rights.edit,
+    canProgress: task.assigneeId === user.id,
+    canComment: rights.comment,
+    deleted: Boolean(task.deletedAt),
+    parent: chain.at(-1) ?? null,
+    links: links.map((link, index) => ({ projectId: link.projectId, projectName: link.projectName, color: link.color, sectionId: link.sectionId, sections: linkSections[index]!.map((section) => ({ id: section.id, name: section.name })) })),
+    projectChoices: choices.map((project) => ({ id: project.id, name: project.name })),
+    subtasks: subtasks.map((item) => ({ id: item.id, title: item.title, status: item.status, assigneeName: item.assigneeName, dueAt: item.dueAt?.toISOString() ?? null, subtasks: item.subtasks })),
+    blockedBy: deps.blockedBy,
+    blocking: deps.blocking,
+    tags: workItem.items[0]?.tags.map((tag) => ({ id: tag.id, name: tag.name })) ?? [],
+    followers,
+    people: people.map((person) => ({ id: person.id, label: person.name })),
+    likes,
+    nowIso: new Date().toISOString(),
+  };
   const names = new Map(people.map((person) => [person.id, person.name]));
   const now = new Date();
   const late = isOverdue(task, now);
   const options = people.map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` }));
-  const assignable = people.filter((person) => person.id !== task.assigneeId && mayAssignTo(settings, { creatorId: user.id, creatorDepartmentId: me?.departmentId ?? null, candidate: person }, isAdminActor(user)));
+  const assignable = people.filter((person) => person.id !== task.assigneeId && mayAssignTo(settings, { creatorId: user.id, creatorDepartmentId: me?.departmentId ?? null, creatorTeamIds: loaded.viewer.teamIds ?? [], candidate: person }, isAdminActor(user)));
   const editable = form.filter((field) => field.editable && field.type !== "ATTACHMENT" && field.type !== "CALC");
   const values = Object.fromEntries(editable.map((field) => [field.key, Array.isArray(task.formData[field.key]) ? JSON.stringify(task.formData[field.key]) : task.formData[field.key] === undefined ? "" : String(task.formData[field.key])]));
   const history: HistoryEntry[] = events.map((event) => ({
@@ -66,16 +126,25 @@ export default async function TaskPage({ params, searchParams }: { params: Promi
     when: event.createdAt,
     who: event.actorName,
     what: event.eventType === "REASSIGN" && event.payload ? `Reassigned from ${names.get(Number(event.payload.from)) ?? "someone"} to ${names.get(Number(event.payload.to)) ?? "someone"}` : (EVENT_TEXT[event.eventType] ?? event.eventType),
-    detail: event.body,
+    // D-215: mentions read as @Name.
+    detail: event.body?.replace(/@\[([^\]\n]{1,80})\]\(user:\d{1,10}\)/g, "@$1") ?? null,
   }));
 
   return (
     <>
-      <Breadcrumbs items={[{ href: "/users/tasks", label: "Tasks" }, { label: task.taskNo }]} />
+      <Breadcrumbs
+        items={[
+          fromProject ? { href: `/users/work/projects/${fromProject.projectId}`, label: fromProject.projectName } : { href: "/users/tasks", label: "Tasks" },
+          ...chain.map((item) => ({ href: `/users/tasks/${item.id}`, label: item.title })),
+          { label: task.taskNo },
+        ]}
+      />
       <PageHeader title={task.title} meta={`${task.taskNo} · ${task.typeName} (version ${versionNo})`}>
         <Badge tone={STATUS_TONE[task.status]}>{TASK_STATUS_LABEL[task.status]}</Badge>
         <Badge tone={PRIORITY_TONE[task.priority]}>{PRIORITY_LABEL[task.priority]}</Badge>
         {late && <Badge tone="danger">Overdue</Badge>}
+        {task.isMilestone && <Badge tone="primary">Milestone</Badge>}
+        {task.deletedAt && <Badge tone="danger">Deleted</Badge>}
       </PageHeader>
       {created && (
         <p role="status" className="mb-4 rounded-md bg-success-50 px-3 py-2 text-label text-success-600">
@@ -121,6 +190,28 @@ export default async function TaskPage({ params, searchParams }: { params: Promi
             )}
             <FileLinks files={files} />
           </section>
+          <TaskWorkPanel data={panel} />
+          <CommentThread
+            taskId={task.id}
+            meId={user.id}
+            canComment={rights.comment && !task.deletedAt}
+            canPin={rights.edit}
+            isAdmin={viewer.isAdmin}
+            people={panel.people}
+            comments={comments.map((comment) => ({
+              id: comment.id,
+              parentCommentId: comment.parentCommentId,
+              authorId: comment.authorId,
+              authorName: comment.authorName,
+              body: comment.body,
+              isPinned: comment.isPinned,
+              edited: comment.editedAt !== null,
+              deleted: comment.deletedAt !== null,
+              when: indiaDateTimeText(comment.createdAt),
+              likes: comment.likes,
+              likedByMe: comment.likedByMe,
+            }))}
+          />
           <section className="card space-y-4 px-5 py-4" aria-labelledby="history">
             <h2 id="history" className="font-semibold">
               History
@@ -167,6 +258,7 @@ export default async function TaskPage({ params, searchParams }: { params: Promi
               />
             )}
           </section>
+          <TaskWorkSide data={panel} />
         </aside>
       </div>
     </>

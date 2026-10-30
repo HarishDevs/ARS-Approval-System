@@ -8,6 +8,7 @@ import { Breadcrumbs } from "@/features/ui/Display";
 import { CreateTaskForm } from "@/features/modules/TaskForms";
 import { listLiveTypes } from "@/lib/db/repositories/module-types.repository";
 import { listPeopleFacts, personFacts } from "@/lib/db/repositories/tasks.repository";
+import { teamOf } from "@/server/work/task-access";
 import { loadFieldLookups } from "@/lib/db/repositories/lookups.repository";
 import { mayCreate, parseTaskSettings, utcToIndiaLocal } from "@/server/modules/settings";
 import { mayAssignTo } from "@/server/modules/task-rules";
@@ -24,7 +25,7 @@ export default async function NewTaskPage({ searchParams }: { searchParams: Prom
   const { user } = await requireArea("users");
   if (!(await featureOn("tasks", user))) notFound();
   const query = await searchParams;
-  const [types, me] = await Promise.all([listLiveTypes("TASK"), personFacts(user.id)]);
+  const [types, me, team] = await Promise.all([listLiveTypes("TASK"), personFacts(user.id), teamOf(user.id)]);
   const allowed = types.filter((type) => mayCreate(parseTaskSettings(type.settings).access, { id: user.id, departmentId: me?.departmentId ?? null }));
   const chosen = query.type && /^\d+$/.test(query.type) ? allowed.find((type) => type.typeId === Number(query.type)) : allowed.length === 1 ? allowed[0] : undefined;
   const related = typeof query.related === "string" && /^[A-Za-z0-9-]{3,40}$/.test(query.related) ? query.related : "";
@@ -54,7 +55,7 @@ export default async function NewTaskPage({ searchParams }: { searchParams: Prom
   const settings = parseTaskSettings(chosen.settings);
   const [everyone, lookups] = await Promise.all([listPeopleFacts(), loadFieldLookups()]);
   const admin = isAdminActor(user);
-  const assignable = everyone.filter((person) => mayAssignTo(settings, { creatorId: user.id, creatorDepartmentId: me?.departmentId ?? null, candidate: person }, admin));
+  const assignable = everyone.filter((person) => mayAssignTo(settings, { creatorId: user.id, creatorDepartmentId: me?.departmentId ?? null, creatorTeamIds: team, candidate: person }, admin));
   const defaultDue = settings.defaultDueDays !== null ? utcToIndiaLocal(new Date(Date.now() + settings.defaultDueDays * 86_400_000)).slice(0, 11) + "18:00" : "";
   return (
     <>

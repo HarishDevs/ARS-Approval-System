@@ -15,14 +15,19 @@ export interface PaletteLink {
   label: string;
   group: string;
 }
-type Option = { key: string; href: string; label: string; detail?: string; group: string; kind: "page" | "request" };
+type Option = { key: string; href: string; label: string; detail?: string; group: string; kind: "page" | "request" | "task" | "project" };
 
 export function CommandPalette({ pages }: { pages: PaletteLink[] }) {
   const [open, setOpen] = useState(false);
   const [help, setHelp] = useState(false);
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
-  const [requests, setRequests] = useState<{ kind: string; items: { id: number; requestNo: string; title: string; status: string }[] }>({ kind: "recent", items: [] });
+  const [requests, setRequests] = useState<{
+    kind: string;
+    items: { id: number; requestNo: string; title: string; status: string }[];
+    tasks?: { id: number; taskNo: string; title: string; status: string }[];
+    projects?: { id: number; name: string }[];
+  }>({ kind: "recent", items: [] });
   const [state, setState] = useState<"idle" | "loading" | "error">("idle");
   const dialog = useRef<HTMLDialogElement>(null);
   const helpDialog = useRef<HTMLDialogElement>(null);
@@ -103,7 +108,10 @@ export function CommandPalette({ pages }: { pages: PaletteLink[] }) {
       group: requests.kind === "search" ? "Requests" : "Recently viewed",
       kind: "request" as const,
     }));
-    return [...requestOptions, ...pageOptions];
+    // D-215: tasks and projects too.
+    const taskOptions = (requests.tasks ?? []).map((item) => ({ key: `t:${item.id}`, href: `/users/tasks/${item.id}`, label: `${item.taskNo}: ${item.title}`, detail: item.status === "COMPLETED" ? "Completed" : undefined, group: "Tasks", kind: "task" as const }));
+    const projectOptions = (requests.projects ?? []).map((item) => ({ key: `j:${item.id}`, href: `/users/work/projects/${item.id}`, label: item.name, group: "Projects", kind: "project" as const }));
+    return [...requestOptions, ...taskOptions, ...projectOptions, ...pageOptions];
   }, [pages, query, requests]);
 
   useEffect(() => setActive(0), [query]);
@@ -162,8 +170,8 @@ export function CommandPalette({ pages }: { pages: PaletteLink[] }) {
                 aria-expanded="true"
                 aria-controls={listId}
                 aria-activedescendant={options[active] ? `${listId}-${active}` : undefined}
-                aria-label="Type a page, a request number or a title"
-                placeholder="Type a page, a request number or a title…"
+                aria-label="Type a page, a request or task number, a title or a project"
+                placeholder="Type a page, a request or task number, a title or a project…"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 className="h-12 w-full bg-transparent text-body focus:outline-none"
@@ -185,7 +193,7 @@ export function CommandPalette({ pages }: { pages: PaletteLink[] }) {
                       onClick={() => go(option)}
                       className={`flex cursor-pointer items-center gap-3 rounded-md px-2 py-2 text-label ${index === active ? "bg-primary-50 text-primary-700" : "text-ink"}`}
                     >
-                      {option.kind === "request" ? (
+                      {option.kind === "request" || option.kind === "task" || option.kind === "project" ? (
                         option.group === "Recently viewed" ? <History aria-hidden="true" className="h-4 w-4 shrink-0" /> : <FileText aria-hidden="true" className="h-4 w-4 shrink-0" />
                       ) : (
                         <ArrowRight aria-hidden="true" className="h-4 w-4 shrink-0" />

@@ -6,6 +6,9 @@ import { getDbPool } from "@/lib/db/client";
 import { deliverOutbox } from "@/server/approvals/service";
 import { infoMessages, taskMessages } from "@/server/modules/messages";
 import { parseInfoSettings, parseTaskSettings } from "@/server/modules/settings";
+import { holidayContext } from "@/server/work/holiday-store";
+import { holidayName } from "@/server/work/holidays";
+import { indiaDate } from "@/server/workflows/calendar";
 
 // v1.9.0: reminders of the Task and Information modules (job runner step
 // "modules"). Each reminder is claimed first (a unique key per task, kind
@@ -18,7 +21,10 @@ export async function runModuleReminders(now = new Date()): Promise<{ taskDueSoo
   const queued: number[] = [];
   const db = getDbPool();
 
-  for (const task of await listTasksForReminders(500)) {
+  // D-217: on a holiday, task reminders wait for the next working day (Admin → Task holidays).
+  const { settings: holidays, calendar } = await holidayContext();
+  const holidayToday = holidays.holdReminders && holidays.mode !== "OFF" && holidayName(indiaDate(now), calendar, holidays) !== null;
+  for (const task of holidayToday ? [] : await listTasksForReminders(500)) {
     const settings = parseTaskSettings(task.settings);
     const stamp = Math.floor(task.dueAt.getTime() / 60_000).toString(36);
     const info = { id: task.id, taskNo: task.taskNo, title: task.title, dueAt: task.dueAt };

@@ -42,7 +42,7 @@ beforeAll(async () => {
   await publishTypeDraft("TASK", typeId, admin);
   const make = async (name: string, dueInDays: number | null) => {
     const due = dueInDays === null ? "" : new Date(Date.now() + dueInDays * 86_400_000 + 330 * 60_000).toISOString().slice(0, 16);
-    const created = await createTask({ typeId, title: name, description: "", priority: "NORMAL", assigneeId: worker, due, startsOn: "", related: "", fields: {}, submissionKey: crypto.randomUUID(), files: [] }, { id: manager, name: "V112 Manager", roles: ["USER"] } as never);
+    const created = await createTask({ typeId, title: name, description: "", priority: "NORMAL", assigneeId: worker, due, startsOn: "", related: "", fields: {}, submissionKey: crypto.randomUUID(), files: [], holidayOk: true }, { id: manager, name: "V112 Manager", roles: ["USER"] } as never);
     if (!created.ok) throw new Error(created.message);
     ids[name] = created.value.id;
   };

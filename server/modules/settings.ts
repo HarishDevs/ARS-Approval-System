@@ -28,7 +28,7 @@ export type AssignScope = (typeof ASSIGN_SCOPES)[number];
 export const ASSIGN_SCOPE_LABEL: Record<AssignScope, string> = {
   ANYONE: "Anyone active",
   SAME_DEPARTMENT: "People in the creator's department",
-  MY_TEAM: "The creator's team (people who report to them)",
+  MY_TEAM: "The creator's team (everyone below them in the reporting line, every level)",
   GROUPS: "Members of chosen groups",
   PEOPLE: "Chosen people",
 };

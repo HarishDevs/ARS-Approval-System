@@ -1,5 +1,14 @@
 # Release notes
 
+## v1.30.0 (30 Oct 2026): Task & Project Management (owner)
+- **Projects** under Tasks: private, department or everyone; members (people or departments) as owner, editor, commenter or viewer; sections; **List, Board, Calendar, Timeline** and **Overview** with status updates; star, join, archive, delete and restore.
+- **Tasks and subtasks:** subtasks up to five levels, "waiting for" other tasks, milestones, start dates, tags, a task in several projects, delete and restore within 30 days.
+- **Working together:** comments with replies, @mentions, likes and pins; followers who see the task and hear about it.
+- **My Tasks** (Recently assigned, Today, Upcoming, Later and your own sections; list, board, calendar) and **Task home** (your tasks, what you assigned, your team, your projects, latest status updates).
+- **Task search** with filters, quick and saved searches; Ctrl+K finds tasks and projects; keyboard: Q, G then H/M/P/S, J/K, X.
+- **Reporting line:** managers see the tasks of everyone below them at every level (read and comment), Team tasks covers every level, and Task home shows your team.
+- **Holidays:** a task date on a holiday asks to keep it or move it to a working day (or is refused, as IT chooses); holidays show on task calendars; no task reminders on holidays; IT can move or tell about all tasks due on a holiday. Set up in Admin → Task set-up → **Task holidays**.
+
 ## v1.29.0 (29 Oct 2026): loaders and the full Classic way around (owner)
 - **After signing in** (also after setting or resetting a password) an ARS loading screen shows until your workspace is ready.
 - **Classic view:** every page change shows a Central Management System box ("Opening Waiting for me…") while it loads.
