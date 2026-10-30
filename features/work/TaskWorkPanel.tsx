@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { deleteTaskAction, dependencyAction, followAction, likeAction, moveTaskAction, parentAction, subtaskOrderAction, tagAction, taskFieldsAction, taskProjectAction } from "@/app/users/work/actions";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
-import { ProjectDot, TaskCheck, useWorkCall } from "@/features/work/client";
+import { ProjectDot, TaskCheck, usePaneLink, useWorkCall } from "@/features/work/client";
 import { dueLabel, TONE_TEXT } from "@/features/work/format";
 import { AddTask } from "@/features/work/ProjectWorkspace";
 import { FieldInput, RepeatEditor, type FieldView } from "@/features/work/MoreParts";
@@ -24,7 +24,9 @@ export interface PanelData {
   startsOn: string;
   meId: number;
   canEdit: boolean;
-  canProgress: boolean; // edit dates, tags, dependencies (also the assignee)
+  canProgress: boolean; // dates, tags, waiting for, fields, repeat (D-222: ad hoc → its creator only)
+  canDetails: boolean; // milestone and other details (D-222)
+  adhoc: boolean; // D-222: ad hoc (one time) or periodic
   canComment: boolean;
   deleted: boolean;
   parent: { id: number; taskNo: string; title: string } | null;
@@ -50,6 +52,7 @@ export function TaskWorkPanel({ data }: { data: PanelData }) {
   const { call } = useWorkCall();
   const now = new Date(data.nowIso);
   const [addProject, setAddProject] = useState<number | "">("");
+  const paneLink = usePaneLink();
   const [parentRef, setParentRef] = useState("");
   const liked = data.likes.some((person) => person.id === data.meId);
 
@@ -109,7 +112,7 @@ export function TaskWorkPanel({ data }: { data: PanelData }) {
                   <span key={field.id} className="flex w-full items-center gap-2 pl-5 text-caption">
                     <span className="w-28 shrink-0 truncate text-ink-muted">{field.name}</span>
                     <span className="w-56">
-                      <FieldInput taskId={data.taskId} field={field} value={data.fields.find((item) => item.projectId === link.projectId)?.values[field.id] ?? ""} canChange={data.canEdit || data.canProgress} compact />
+                      <FieldInput taskId={data.taskId} field={field} value={data.fields.find((item) => item.projectId === link.projectId)?.values[field.id] ?? ""} canChange={data.canProgress} compact />
                     </span>
                   </span>
                 ))}
@@ -121,7 +124,7 @@ export function TaskWorkPanel({ data }: { data: PanelData }) {
             </li>
           ))}
         </ul>
-        {(data.canEdit || data.canProgress) && data.projectChoices.length > 0 && (
+        {data.canProgress && data.projectChoices.length > 0 && (
           <div className="flex flex-wrap items-end gap-2">
             <div>
               <label htmlFor="add-to-project" className="field-label">
@@ -155,7 +158,7 @@ export function TaskWorkPanel({ data }: { data: PanelData }) {
             return (
               <li key={task.id} className="work-row flex items-center gap-2 py-1.5" tabIndex={-1}>
                 <TaskCheck taskId={task.id} done={task.status === "COMPLETED"} disabled={task.status === "CANCELLED"} label={task.title} />
-                <Link href={`/users/tasks/${task.id}`} className={`min-w-0 flex-1 truncate text-label hover:underline ${task.status === "COMPLETED" ? "text-ink-muted line-through" : ""}`}>
+                <Link href={paneLink(task.id)} className={`min-w-0 flex-1 truncate text-label hover:underline ${task.status === "COMPLETED" ? "text-ink-muted line-through" : ""}`}>
                   {task.title}
                   {task.subtasks > 0 && <span className="ml-1 text-caption text-ink-muted">({task.subtasks} subtasks)</span>}
                 </Link>
@@ -175,7 +178,7 @@ export function TaskWorkPanel({ data }: { data: PanelData }) {
             );
           })}
         </ul>
-        {(data.canEdit || data.canProgress) && data.open && <AddTask parentId={data.taskId} placeholder="Add a subtask… (Enter to add; paste several lines for several)" />}
+        {data.canProgress && data.open && <AddTask parentId={data.taskId} placeholder="Add a subtask… (Enter to add; paste several lines for several)" />}
         {data.canEdit && (
           <div className="flex flex-wrap items-end gap-2 border-t border-line pt-3">
             {data.parent ? (
@@ -204,15 +207,15 @@ export function TaskWorkPanel({ data }: { data: PanelData }) {
           Waiting for
         </h2>
         {data.blockedBy.length === 0 && <p className="text-label text-ink-muted">Nothing: it can start any time.</p>}
-        <DependencyList items={data.blockedBy} taskId={data.taskId} canChange={data.canEdit || data.canProgress} />
-        {(data.canEdit || data.canProgress) && <DependencyForm taskId={data.taskId} />}
+        <DependencyList items={data.blockedBy} taskId={data.taskId} canChange={data.canProgress} />
+        {data.canProgress && <DependencyForm taskId={data.taskId} />}
         {data.blocking.length > 0 && (
           <div>
             <h3 className="text-label font-semibold">Tasks waiting for this one</h3>
             <ul className="mt-1 space-y-1 text-label">
               {data.blocking.map((item) => (
                 <li key={item.id}>
-                  <Link href={`/users/tasks/${item.id}`} className="link">
+                  <Link href={paneLink(item.id)} className="link">
                     {item.taskNo}
                   </Link>{" "}
                   {item.title}
@@ -228,12 +231,13 @@ export function TaskWorkPanel({ data }: { data: PanelData }) {
 
 function DependencyList({ items, taskId, canChange }: { items: PanelData["blockedBy"]; taskId: number; canChange: boolean }) {
   const { call } = useWorkCall();
+  const paneLink = usePaneLink();
   return (
     <ul className="space-y-1 text-label">
       {items.map((item) => (
         <li key={item.id} className="flex items-center gap-2">
           {OPEN.includes(item.status) ? <Lock aria-label="Not done yet" className="h-3.5 w-3.5 text-warning-600" /> : <span aria-label="Done">✓</span>}
-          <Link href={`/users/tasks/${item.id}`} className="link font-mono text-caption">
+          <Link href={paneLink(item.id)} className="link font-mono text-caption">
             {item.taskNo}
           </Link>
           <span className={`min-w-0 flex-1 truncate ${OPEN.includes(item.status) ? "" : "text-ink-muted line-through"}`}>{item.title}</span>
@@ -291,14 +295,15 @@ export function TaskWorkSide({ data }: { data: PanelData }) {
   if (data.deleted) return null;
   return (
     <section className="card space-y-4 px-5 py-4" aria-label="Planning and people">
-      {(data.recurrenceOn || data.recurrence) && <RepeatEditor taskId={data.taskId} current={data.recurrence} canChange={(data.canEdit || data.canProgress) && data.open} />}
-      {data.canEdit && (
+      {(data.recurrenceOn || data.recurrence) && <RepeatEditor taskId={data.taskId} current={data.recurrence} canChange={data.canProgress && data.open} />}
+      {data.adhoc && !data.canDetails && <p className="rounded-md bg-surface-muted px-3 py-2 text-caption text-ink-muted">Ad hoc task: only its creator changes the details. You can start it, complete it and comment.</p>}
+      {data.canDetails && (
         <label className="flex items-center gap-2 text-label">
           <input type="checkbox" checked={data.isMilestone} onChange={(event) => void call(() => taskFieldsAction(data.taskId, { milestone: event.target.checked }))} />
           <Diamond aria-hidden="true" className="h-3.5 w-3.5 text-primary-600" /> Milestone (a point to reach, no start date)
         </label>
       )}
-      {!data.isMilestone && (data.canEdit || data.canProgress) && data.open && (
+      {!data.isMilestone && data.canProgress && data.open && (
         <div>
           <label htmlFor="start-on" className="field-label">
             Start date <span className="font-normal text-ink-faint">(shows the task as a range on the Timeline)</span>
@@ -316,7 +321,7 @@ export function TaskWorkSide({ data }: { data: PanelData }) {
           {data.tags.map((item) => (
             <li key={item.id} className="inline-flex items-center gap-1 rounded-full bg-surface-muted px-2 py-0.5 text-caption">
               #{item.name}
-              {(data.canEdit || data.canProgress) && (
+              {data.canProgress && (
                 <button type="button" aria-label={`Remove tag ${item.name}`} onClick={() => void call(() => tagAction(data.taskId, item.name, false), { success: false })} className="text-ink-faint hover:text-danger-600">
                   <X aria-hidden="true" className="h-3 w-3" />
                 </button>
@@ -324,7 +329,7 @@ export function TaskWorkSide({ data }: { data: PanelData }) {
             </li>
           ))}
         </ul>
-        {(data.canEdit || data.canProgress) && (
+        {data.canProgress && (
           <form
             className="mt-2 flex gap-2"
             onSubmit={(event) => {

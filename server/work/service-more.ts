@@ -53,7 +53,8 @@ export async function setRecurrence(taskId: number, raw: unknown, actor: TaskAct
   if (!task || task.deletedAt) return fail(NOT_FOUND);
   const rights = await rightsOn(task, await workViewer(actor));
   if (!rights.view) return fail(NOT_FOUND);
-  if (!rights.edit && task.assigneeId !== actor.id) return fail("You can't change how this task repeats.");
+  // D-222: making a task periodic or ad hoc is a detail: an ad hoc task's creator decides.
+  if (!rights.planning) return fail(rights.adhoc ? "Only its creator can change an ad hoc task's details." : "You can't change how this task repeats.");
   const settings = parseRecurrenceSettings(await loadSetting(RECURRENCE_SETTINGS_KEY));
   if (!settings.enabled && raw !== null) return fail("Repeating tasks are switched off (Admin → Task settings).");
   if (!OPEN_STATUSES.includes(task.status) && raw !== null) return fail("Reopen the task first.");
@@ -61,6 +62,8 @@ export async function setRecurrence(taskId: number, raw: unknown, actor: TaskAct
   if (raw !== null && !rule) return fail("Choose how often it repeats.");
   await withTransaction(async (connection) => {
     await connection.query("UPDATE tasks SET recurrence_json = ?, series_id = COALESCE(series_id, id) WHERE id = ?", [rule ? JSON.stringify(rule) : null, taskId]);
+    // D-219: a task that never repeated becomes ad hoc again when the rule is removed.
+    if (!rule) await connection.query("UPDATE tasks t SET t.series_id = NULL WHERE t.id = ? AND t.series_id = t.id AND NOT EXISTS (SELECT 1 FROM (SELECT id FROM tasks WHERE series_id = ? AND id <> ?) other)", [taskId, taskId, taskId]);
     await appendTaskEvent(taskId, { actorId: actor.id, type: "REPEAT_SET", body: rule ? recurrenceLabel(rule) : "No longer repeats" }, connection);
   });
   return { ok: true, value: undefined, message: rule ? `Repeats: ${recurrenceLabel(rule)}. The next one is made when this one is completed.` : "It no longer repeats." };
@@ -111,7 +114,10 @@ export async function setTaskField(taskId: number, fieldId: number, raw: string,
   if (!links.some((link) => link.projectId === field.projectId)) return fail(NOT_FOUND);
   const rights = await rightsOn(task, await workViewer(actor));
   if (!rights.view) return fail(NOT_FOUND);
-  if (!rights.edit && task.assigneeId !== actor.id) return fail("You can't change this task.");
+  if (!rights.planning) return fail(rights.adhoc ? "Only its creator can change an ad hoc task's details." : "You can't change this task.");
+  const viewer = await workViewer(actor);
+  const blocked = await work.fieldBlockedBy(taskId, `field:${fieldId}`, viewer);
+  if (blocked) return fail(`In ${blocked}, only some people may change ${field.name} (Project permissions).`);
   const checked = checkFieldValue(field.kind, field.options, String(raw ?? ""));
   if (!checked.ok) return fail(`${field.name}: ${checked.message}`);
   await withTransaction(async (connection) => {

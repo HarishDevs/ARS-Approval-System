@@ -123,6 +123,7 @@ export interface WorkSearch {
   followed: boolean;
   overdue: boolean;
   team: boolean; // D-216: assigned to anyone below me in the reporting line
+  kind: "periodic" | "adhoc" | null; // D-219
   page: number;
 }
 const id = (value: unknown) => (typeof value === "string" && /^\d{1,10}$/.test(value) ? Number(value) : null);
@@ -134,7 +135,7 @@ export function parseWorkSearch(raw: Record<string, unknown>): WorkSearch {
   const createdBy = raw.created_by === "me" ? "me" : id(raw.created_by);
   const priority = ["LOW", "NORMAL", "HIGH", "URGENT"].includes(String(raw.priority)) ? (raw.priority as WorkSearch["priority"]) : null;
   const page = Math.min(500, Math.max(1, id(raw.page) ?? 1));
-  return { q: text, status, assignee, createdBy, project: id(raw.project), priority, tag: id(raw.tag), dueFrom: day(raw.due_from), dueTo: day(raw.due_to), followed: raw.followed === "1", overdue: raw.overdue === "1", team: raw.team === "1", page };
+  return { q: text, status, assignee, createdBy, project: id(raw.project), priority, tag: id(raw.tag), dueFrom: day(raw.due_from), dueTo: day(raw.due_to), followed: raw.followed === "1", overdue: raw.overdue === "1", team: raw.team === "1", kind: raw.kind === "periodic" || raw.kind === "adhoc" ? raw.kind : null, page };
 }
 export function workSearchQuery(search: WorkSearch): Record<string, string> {
   const out: Record<string, string> = {};
@@ -150,6 +151,7 @@ export function workSearchQuery(search: WorkSearch): Record<string, string> {
   if (search.followed) out.followed = "1";
   if (search.overdue) out.overdue = "1";
   if (search.team) out.team = "1";
+  if (search.kind) out.kind = search.kind;
   if (search.page > 1) out.page = String(search.page);
   return out;
 }
@@ -159,6 +161,8 @@ export const SEARCH_PRESETS: readonly { key: string; label: string; query: Recor
   { key: "overdue", label: "Overdue", query: { overdue: "1" } },
   { key: "following", label: "Tasks I follow", query: { followed: "1" } },
   { key: "team", label: "My team (all levels)", query: { team: "1" } },
+  { key: "periodic", label: "Periodic tasks", query: { kind: "periodic" } },
+  { key: "adhoc", label: "Ad hoc tasks", query: { kind: "adhoc" } },
   { key: "team-overdue", label: "My team: overdue", query: { team: "1", overdue: "1" } },
   { key: "completed", label: "Completed", query: { status: "completed" } },
 ];

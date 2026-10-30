@@ -1,5 +1,16 @@
 # Release notes
 
+## v1.32.0 (30 Oct 2026): Tasks like Asana (owner)
+- **The Tasks area looks and works like Asana** in the ARS colours: a left bar with Create task, Home, Inbox, My Tasks, all your projects (by department, with Starred), Periodic tasks and Search; tasks open in a panel beside the list.
+- **Compact table** for projects, My Tasks and search: numbered rows, ticks, Filters (quick filters and field filters), Sort, Groups, Options and **saved tabs**.
+- **Tick to complete** on every task list, and **Mark complete** on every task.
+- **Periodic and ad hoc tasks:** choose when creating; periodic tasks are marked ↻ and have their own list.
+- **Share** any project (invite people or a department with a role, who can see it, copy link) or task (collaborators, copy link).
+- **+ Create** at the top of the sidebar: Approval request, Task, Project (and Information); the sidebar has the new look and one **Tasks & projects** entry.
+- **Ad hoc tasks** can go to several people at once (each gets their own copy); only the creator changes an ad hoc task's details. **Periodic tasks** repeat.
+- **Project permissions:** choose who can update a field (for example the due date) and who can share the project's tasks with other projects.
+- **Draft task** panel to create a task in seconds; **New project** step by step, blank or from a template; **Save as template** from the project menu.
+
 ## v1.31.0 (30 Oct 2026): the rest of Task & Project Management (owner)
 - **Repeating tasks:** daily, weekly on chosen days, monthly, yearly, or some days after completion; the next one is made when a task is completed, with its people, projects, tags and subtasks, never on a holiday.
 - **Project fields:** your own columns (text, number, choice, date) in a project's List and on its tasks.

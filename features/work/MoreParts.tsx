@@ -380,6 +380,7 @@ export interface InboxRow {
   message: string;
   link: string | null;
   when: string;
+  day: string; // Today, Yesterday, a weekday or a date (catalog S-03 dividers)
   read: boolean;
   archived: boolean;
   bookmarked: boolean;
@@ -410,9 +411,11 @@ export function InboxList({ items, tab }: { items: InboxRow[]; tab: string }) {
           )
         )}
       </div>
-      <ul className="card divide-y divide-line" data-testid="inbox">
-        {items.map((item) => (
-          <li key={item.id} className={`flex items-start gap-3 px-4 py-3 ${item.read ? "" : "bg-primary-50/40"}`}>
+      <ul className="space-y-1" data-testid="inbox">
+        {items.map((item, index) => (
+          <li key={item.id}>
+            {(index === 0 || items[index - 1]!.day !== item.day) && <p className="mb-1 mt-4 border-b border-line pb-1 text-caption font-semibold uppercase tracking-wide text-ink-faint">{item.day}</p>}
+            <div className={`flex items-start gap-3 rounded-lg border border-line px-4 py-3 ${item.read ? "bg-surface" : "bg-primary-50/40"}`}>
             <input type="checkbox" aria-label={`Select: ${item.title}`} checked={selected.includes(item.id)} onChange={(event) => setSelected((value) => (event.target.checked ? [...value, item.id] : value.filter((one) => one !== item.id)))} className="mt-1" />
             <div className="min-w-0 flex-1">
               <p className={`text-label ${item.read ? "" : "font-semibold"}`}>
@@ -438,6 +441,7 @@ export function InboxList({ items, tab }: { items: InboxRow[]; tab: string }) {
                 {item.archived ? <ArchiveRestore className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
               </IconButton>
             </span>
+            </div>
           </li>
         ))}
       </ul>
@@ -471,5 +475,14 @@ export function DigestToggle({ on }: { on: boolean }) {
       />{" "}
       Morning summary email
     </label>
+  );
+}
+
+export function StopRepeatButton({ taskId }: { taskId: number }) {
+  const { call, pending } = useWorkCall();
+  return (
+    <button type="button" disabled={pending} className="btn-secondary btn-compact" onClick={() => void call(() => recurrenceAction(taskId, null))}>
+      Stop repeating
+    </button>
   );
 }

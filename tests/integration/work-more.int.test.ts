@@ -114,8 +114,10 @@ describe("project fields (D-218)", () => {
     expect((await more.addField(projectId, { name: "plant", kind: "TEXT", options: "" }, who(helper))).ok).toBe(false); // same name
     const task = await work.quickAddTask({ title: `Field task ${tag}`, projectId, sectionId: null, parentId: null, assigneeId: null, dueDay: "", mySectionId: null }, who(owner));
     const taskId = task.ok ? task.value.id : 0;
-    expect((await more.setTaskField(taskId, fieldId, "Raipur", who(helper))).ok).toBe(true);
-    expect((await more.setTaskField(taskId, fieldId, "Delhi", who(helper))).ok).toBe(false);
+    // D-222: an ad hoc task's details are its creator's: the editor can't, the creator can.
+    expect((await more.setTaskField(taskId, fieldId, "Raipur", who(helper))).ok).toBe(false);
+    expect((await more.setTaskField(taskId, fieldId, "Raipur", who(owner))).ok).toBe(true);
+    expect((await more.setTaskField(taskId, fieldId, "Delhi", who(owner))).ok).toBe(false);
     expect((await more.setTaskField(taskId, fieldId, "Bilaspur", who(viewerOnly))).ok).toBe(false);
     expect((await repo.fieldValues([taskId])).get(taskId)).toEqual({ [fieldId]: "Raipur" });
   });
@@ -215,3 +217,93 @@ describe("task inbox and morning summary (D-218)", () => {
     expect((await more.runWorkDigest(new Date(`${sunday}T10:30:00+05:30`))).digests).toBe(0);
   });
 });
+
+describe("projects step by step, saved tabs, periodic and ad hoc (D-219, D-220)", () => {
+  it("a new project starts with the sections chosen in the steps", async () => {
+    const made = await work.createProject({ name: `Steps ${tag}`, description: "", color: "blue", privacy: "PRIVATE", departmentId: null, defaultAccessRole: "COMMENTER", defaultView: "BOARD", startOn: "", dueOn: "", sections: ["Backlog", "This week", "", "  Done  "].join(String.fromCharCode(10)) }, who(owner));
+    expect(made.ok).toBe(true);
+    const id = made.ok ? made.value.id : 0;
+    expect((await repo.listSections(id)).map((section) => section.name)).toEqual(["Backlog", "This week", "Done"]);
+  });
+
+  it("saved tabs: unique names per place; at most 30", async () => {
+    const first = await repo.insertWorkView("MY_TASKS", owner, `Overdue ${tag}`, { group: "assignee" }, owner);
+    expect(typeof first).toBe("number");
+    expect(await repo.insertWorkView("MY_TASKS", owner, `Overdue ${tag}`, {}, owner)).toBe("DUPLICATE");
+    expect((await repo.listWorkViews("MY_TASKS", owner)).map((view) => view.name)).toContain(`Overdue ${tag}`);
+    await repo.updateWorkView(first as number, { config: { group: "due" } });
+    expect((await repo.listWorkViews("MY_TASKS", owner)).find((view) => view.id === first)?.config).toEqual({ group: "due" });
+    await repo.deleteWorkView(first as number);
+    expect((await repo.listWorkViews("MY_TASKS", owner)).some((view) => view.id === first)).toBe(false);
+  });
+
+  it("periodic and ad hoc tasks are told apart in search and the periodic list", async () => {
+    const periodic = await work.quickAddTask({ title: `Periodic ${tag}`, projectId: null, sectionId: null, parentId: null, assigneeId: null, dueDay: "", mySectionId: null }, who(owner));
+    const adhoc = await work.quickAddTask({ title: `Adhoc ${tag}`, projectId: null, sectionId: null, parentId: null, assigneeId: null, dueDay: "", mySectionId: null }, who(owner));
+    const periodicId = periodic.ok ? periodic.value.id : 0;
+    const adhocId = adhoc.ok ? adhoc.value.id : 0;
+    await more.setRecurrence(periodicId, { kind: "DAILY", every: 1 }, who(owner));
+    const viewer = await workViewer(who(owner));
+    const find = async (kind: string) => {
+      const sql = repo.workSearchSql(viewer, (await import("@/server/work/rules")).parseWorkSearch({ q: tag, status: "all", kind }), new Date());
+      return (await repo.listTaskItems(sql.where, sql.params, "t.id", 200)).items.map((item) => item.id);
+    };
+    expect(await find("periodic")).toContain(periodicId);
+    expect(await find("periodic")).not.toContain(adhocId);
+    expect(await find("adhoc")).toContain(adhocId);
+    expect(await find("adhoc")).not.toContain(periodicId);
+    expect((await repo.listPeriodic(viewer)).map((item) => item.id)).toContain(periodicId);
+    // Stopping the repeat makes a task that never repeated ad hoc again.
+    await more.setRecurrence(periodicId, null, who(owner));
+    expect(await find("adhoc")).toContain(periodicId);
+    expect((await repo.listTaskItems(["t.id = ?"], [periodicId], "t.id", 1)).items[0]!.followers.map((person) => person.id)).toContain(owner);
+  });
+});
+
+describe("ad hoc tasks and project permissions (D-222)", () => {
+  it("an ad hoc task for several people: one linked copy each", async () => {
+    const made = await work.quickAddForMany({ title: `Stock audit ${tag}`, projectId, sectionId: null, parentId: null, assigneeId: null, dueDay: "", mySectionId: null }, [helper, viewerOnly], who(owner));
+    expect(made.ok && made.value.ids.length).toBe(2);
+    const ids = made.ok ? made.value.ids : [];
+    const tasks = await Promise.all(ids.map((id) => findTask(id)));
+    expect(tasks.map((task) => task!.assigneeId).sort()).toEqual([helper, viewerOnly].sort());
+    expect((await repo.assignGroup(ids[0]!)).map((item) => item.id)).toEqual([ids[1]]);
+  });
+
+  it("the assignee of an ad hoc task can't change its details, only progress it", async () => {
+    const made = await work.quickAddTask({ title: `Adhoc rules ${tag}`, projectId, sectionId: null, parentId: null, assigneeId: helper, dueDay: "", mySectionId: null }, who(owner));
+    const id = made.ok ? made.value.id : 0;
+    expect((await work.setTaskFields(id, { dueDay: "2027-02-03" }, who(helper))).ok).toBe(false);
+    expect((await work.setTaskFields(id, { title: "Renamed" }, who(helper))).ok).toBe(false);
+    expect((await work.setTag(id, "x", true, who(helper))).ok).toBe(false);
+    expect((await work.setTaskFields(id, { title: `Adhoc rules renamed ${tag}` }, who(owner))).ok).toBe(true);
+    expect((await work.toggleComplete(id, who(helper))).ok).toBe(true); // progress is still theirs
+  });
+
+  it("a periodic task's assignee may still plan its dates", async () => {
+    const made = await work.quickAddTask({ title: `Periodic rules ${tag}`, projectId, sectionId: null, parentId: null, assigneeId: helper, dueDay: "", mySectionId: null }, who(owner));
+    const id = made.ok ? made.value.id : 0;
+    await more.setRecurrence(id, { kind: "MONTHLY", every: 1 }, who(owner));
+    expect((await work.setTag(id, `monthly-${tag}`, true, who(helper))).ok).toBe(true);
+  });
+
+  it("project permissions: a restricted field and who may share tasks", async () => {
+    expect((await work.setPermissions(projectId, { fields: [{ field: "priority", role: "OWNER" }], shareTasks: "OWNER" }, who(helper))).ok).toBe(false); // owners only
+    expect((await work.setPermissions(projectId, { fields: [{ field: "priority", role: "OWNER" }], shareTasks: "OWNER" }, who(owner))).ok).toBe(true);
+    const made = await work.quickAddTask({ title: `Restricted ${tag}`, projectId, sectionId: null, parentId: null, assigneeId: null, dueDay: "", mySectionId: null }, who(helper));
+    const id = made.ok ? made.value.id : 0;
+    // The helper created it (so may change its details) but priority is for project admins here.
+    const refused = await work.setTaskFields(id, { priority: "HIGH" }, who(helper));
+    expect(refused.ok).toBe(false);
+    expect(!refused.ok && refused.message).toMatch(/Project permissions/);
+    expect((await work.setTaskFields(id, { priority: "HIGH" }, who(owner))).ok).toBe(false); // owner isn't the ad hoc task's creator
+    // Sharing into another project: only this project's admins.
+    const other = await work.createProject({ name: `Other ${tag}`, description: "", color: "red", privacy: "ORGANISATION", departmentId: null, defaultAccessRole: "EDITOR", defaultView: "LIST", startOn: "", dueOn: "" }, who(helper));
+    const otherId = other.ok ? other.value.id : 0;
+    const shared = await work.addToProject(id, otherId, null, who(helper));
+    expect(shared.ok).toBe(false);
+    expect((await work.addToProject(id, otherId, null, who(owner))).ok).toBe(true);
+    await work.setPermissions(projectId, { fields: [], shareTasks: "EDITOR" }, who(owner));
+  });
+});
+

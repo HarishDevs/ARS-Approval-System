@@ -14,14 +14,13 @@ import { loadFieldLookups, loadLookupNames } from "@/lib/db/repositories/lookups
 import { listRecordFiles } from "@/server/modules/files";
 import { isAdminActor, loadTaskFor, relatedRequestVisible } from "@/server/modules/tasks";
 import { COMPLETION_LABEL, indiaDateTimeText, PRIORITY_LABEL, utcToIndiaLocal } from "@/server/modules/settings";
-import { isOverdue, mayAssignTo, OPEN_STATUSES, TASK_STATUS_LABEL } from "@/server/modules/task-rules";
-import { TaskWorkPanel, TaskWorkSide, type PanelData } from "@/features/work/TaskWorkPanel";
+import { isOverdue, mayAssignTo, TASK_STATUS_LABEL } from "@/server/modules/task-rules";
+import { TaskWorkPanel, TaskWorkSide } from "@/features/work/TaskWorkPanel";
 import { CommentThread } from "@/features/work/CommentThread";
-import { recurrenceOf } from "@/server/work/service-more";
-import { loadSetting } from "@/server/work/holiday-store";
-import { parseRecurrenceSettings, RECURRENCE_SETTINGS_KEY } from "@/server/work/more-rules";
-import { ancestors, fieldValues, listProjectFields, likesOf, listComments, listDependencies, listFollowers, listSections, listSubtasks, listTaskItems, listTaskProjects, listVisibleProjects } from "@/lib/db/repositories/work.repository";
-import { rightsOn, workViewer } from "@/server/work/task-access";
+import { taskWorkView } from "@/server/work/task-view";
+import { TaskCompleteButton } from "@/features/work/client";
+import { TaskShareButton } from "@/features/work/ShareDialogs";
+import { visibilityText } from "@/features/work/TaskPane";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
 export const metadata: Metadata = { title: "Task" };
@@ -81,56 +80,10 @@ export default async function TaskPage({ params, searchParams }: { params: Promi
   ]);
   const query = await searchParams;
   const created = query.created === "1";
-  // D-215: projects, subtasks, dependencies, tags, followers, likes, comments.
-  const viewer = await workViewer(user);
-  const [rights, chain, links, subtasks, deps, followers, likes, comments, choices, workItem] = await Promise.all([
-    rightsOn(task, viewer),
-    ancestors(task.id),
-    listTaskProjects(task.id),
-    listSubtasks(task.id),
-    listDependencies(task.id),
-    listFollowers(task.id),
-    likesOf("TASK", task.id),
-    listComments(task.id, user.id),
-    listVisibleProjects(viewer),
-    listTaskItems(["t.id = ?"], [task.id], "t.id", 1),
-  ]);
-  const linkSections = await Promise.all(links.map((link) => listSections(link.projectId)));
-  // D-218: repeating, and each project's own fields.
-  const [recurrence, recurrenceSettings, linkFields, ownValues] = await Promise.all([
-    recurrenceOf(task.id),
-    loadSetting(RECURRENCE_SETTINGS_KEY).then(parseRecurrenceSettings),
-    Promise.all(links.map((link) => listProjectFields(link.projectId))),
-    fieldValues([task.id]),
-  ]);
+  // D-215: projects, subtasks, dependencies, tags, followers, likes, comments (shared with the task panel, D-219).
+  const view = await taskWorkView(task, user);
+  const { panel, rights, chain, links, viewer, group } = view;
   const fromProject = links.find((link) => String(link.projectId) === query.project) ?? null;
-  const panel: PanelData = {
-    taskId: task.id,
-    taskNo: task.taskNo,
-    title: task.title,
-    open: OPEN_STATUSES.includes(task.status),
-    isMilestone: task.isMilestone,
-    startsOn: task.startsOn ?? "",
-    meId: user.id,
-    canEdit: rights.edit,
-    canProgress: task.assigneeId === user.id,
-    canComment: rights.comment,
-    deleted: Boolean(task.deletedAt),
-    parent: chain.at(-1) ?? null,
-    links: links.map((link, index) => ({ projectId: link.projectId, projectName: link.projectName, color: link.color, sectionId: link.sectionId, sections: linkSections[index]!.map((section) => ({ id: section.id, name: section.name })) })),
-    projectChoices: choices.map((project) => ({ id: project.id, name: project.name })),
-    subtasks: subtasks.map((item) => ({ id: item.id, title: item.title, status: item.status, assigneeName: item.assigneeName, dueAt: item.dueAt?.toISOString() ?? null, subtasks: item.subtasks })),
-    blockedBy: deps.blockedBy,
-    blocking: deps.blocking,
-    tags: workItem.items[0]?.tags.map((tag) => ({ id: tag.id, name: tag.name })) ?? [],
-    followers,
-    people: people.map((person) => ({ id: person.id, label: person.name })),
-    likes,
-    nowIso: new Date().toISOString(),
-    recurrence,
-    recurrenceOn: recurrenceSettings.enabled,
-    fields: links.map((link, index) => ({ projectId: link.projectId, fields: linkFields[index]!.map((field) => ({ id: field.id, name: field.name, kind: field.kind, options: field.options })), values: ownValues.get(task.id) ?? {} })),
-  };
   const names = new Map(people.map((person) => [person.id, person.name]));
   const now = new Date();
   const late = isOverdue(task, now);
@@ -157,10 +110,15 @@ export default async function TaskPage({ params, searchParams }: { params: Promi
         ]}
       />
       <PageHeader title={task.title} meta={`${task.taskNo} · ${task.typeName} (version ${versionNo})`}>
+        <TaskShareButton taskId={task.id} title={task.title} followers={panel.followers} people={panel.people} visibility={visibilityText(links)} canAdd={rights.comment} />
+        {/* D-219: complete or reopen in one click, as in Asana (types that need a note or file say so). */}
+        {((actions.has("COMPLETE") && settings.completion === "NONE") || actions.has("REOPEN") || task.status === "COMPLETED") && <TaskCompleteButton taskId={task.id} done={task.status === "COMPLETED"} disabled={!(actions.has("COMPLETE") || actions.has("REOPEN"))} title={task.title} />}
         <Badge tone={STATUS_TONE[task.status]}>{TASK_STATUS_LABEL[task.status]}</Badge>
         <Badge tone={PRIORITY_TONE[task.priority]}>{PRIORITY_LABEL[task.priority]}</Badge>
         {late && <Badge tone="danger">Overdue</Badge>}
         {task.isMilestone && <Badge tone="primary">Milestone</Badge>}
+        {/* D-222: the two kinds of task. */}
+        <Badge tone={panel.adhoc ? "neutral" : "info"}>{panel.adhoc ? "Ad hoc" : "Periodic"}</Badge>
         {task.deletedAt && <Badge tone="danger">Deleted</Badge>}
       </PageHeader>
       {created && (
@@ -207,6 +165,20 @@ export default async function TaskPage({ params, searchParams }: { params: Promi
             )}
             <FileLinks files={files} />
           </section>
+          {group.length > 0 && (
+            <p className="card px-5 py-3 text-label" data-testid="assign-group">
+              <span className="text-ink-muted">Also given to (each has their own copy): </span>
+              {group.map((item, index) => (
+                <span key={item.id}>
+                  {index > 0 && ", "}
+                  <Link href={`/users/tasks/${item.id}`} className="link">
+                    {item.assigneeName}
+                  </Link>
+                  {item.status === "COMPLETED" && " ✓"}
+                </span>
+              ))}
+            </p>
+          )}
           <TaskWorkPanel data={panel} />
           <CommentThread
             taskId={task.id}
@@ -215,19 +187,7 @@ export default async function TaskPage({ params, searchParams }: { params: Promi
             canPin={rights.edit}
             isAdmin={viewer.isAdmin}
             people={panel.people}
-            comments={comments.map((comment) => ({
-              id: comment.id,
-              parentCommentId: comment.parentCommentId,
-              authorId: comment.authorId,
-              authorName: comment.authorName,
-              body: comment.body,
-              isPinned: comment.isPinned,
-              edited: comment.editedAt !== null,
-              deleted: comment.deletedAt !== null,
-              when: indiaDateTimeText(comment.createdAt),
-              likes: comment.likes,
-              likedByMe: comment.likedByMe,
-            }))}
+            comments={view.comments}
           />
           <section className="card space-y-4 px-5 py-4" aria-labelledby="history">
             <h2 id="history" className="font-semibold">

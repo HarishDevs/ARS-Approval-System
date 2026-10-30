@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { indiaDayOf } from "@/features/work/format";
+import { TaskCheck } from "@/features/work/client";
 
 // D-215: the project's Timeline. Each dated task is a bar from its start date
 // (or its due date alone) to its due date, by section; milestones are
@@ -20,7 +21,7 @@ export interface TimelineTask {
 const DAY = 86_400_000;
 const toDate = (day: string) => new Date(`${day}T00:00:00Z`);
 
-export function Timeline({ tasks, todayDay }: { tasks: TimelineTask[]; todayDay: string }) {
+export function Timeline({ tasks, todayDay, hrefFor }: { tasks: TimelineTask[]; todayDay: string; hrefFor: (id: number) => string }) {
   const dated = tasks
     .map((task) => {
       const due = task.dueAt ? indiaDayOf(new Date(task.dueAt)) : null;
@@ -61,8 +62,9 @@ export function Timeline({ tasks, todayDay }: { tasks: TimelineTask[]; todayDay:
                 const done = task.status === "COMPLETED";
                 return (
                   <div key={task.id} className="flex items-center border-b border-line">
-                    <div className="w-[220px] shrink-0 truncate px-3 py-1.5 text-label">
-                      <Link href={`/users/tasks/${task.id}`} className="hover:underline">
+                    <div className="flex w-[220px] shrink-0 items-center gap-2 truncate px-3 py-1.5 text-label">
+                      <TaskCheck taskId={task.id} done={task.status === "COMPLETED"} disabled={task.status === "CANCELLED"} label={task.title} size="sm" />
+                      <Link href={hrefFor(task.id)} scroll={false} className="truncate hover:underline">
                         {task.blockedBy > 0 && <span title="Waiting for other tasks">🔒 </span>}
                         {task.title}
                       </Link>

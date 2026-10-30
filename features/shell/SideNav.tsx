@@ -17,6 +17,8 @@ export interface NavItem {
   chats?: boolean; // D-180: the group shows the person's AI chats (with a search) instead of links
 }
 
+// D-221 (owner): the look of the Tasks bar (Asana): 32px rows, a soft highlight, small
+// uppercase group headers with a caret.
 // v1.9.2 (owner): with `collapsible`, consecutive entries of one section
 // form a group with a header button that opens and closes it like a
 // dropdown (My Approvals, Tasks, Information). The group holding the current
@@ -75,7 +77,7 @@ export function SideNav({ items, collapsible = false, chats = [] }: { items: Nav
 
   if (!collapsible) {
     return (
-      <nav className="space-y-0.5 p-3" aria-label="Main">
+      <nav className="space-y-0.5 p-2" aria-label="Main">
         {items.map((item, index) => {
           const heading = item.section && item.section !== items[index - 1]?.section ? item.section : null;
           return (
@@ -90,7 +92,7 @@ export function SideNav({ items, collapsible = false, chats = [] }: { items: Nav
   }
 
   return (
-    <nav className="space-y-0.5 p-3" aria-label="Main">
+    <nav className="space-y-0.5 p-2" aria-label="Main">
       {list.map((block) =>
         block.kind === "item" ? (
           <EntryLink key={block.item.href} item={block.item} active={isActive(block.item)} />
@@ -112,23 +114,23 @@ function NavGroup({ section, items, chats, open, current, onToggle, isActive }: 
   if (chats) {
     return (
       <div data-testid={`nav-group-${section}`}>
-        <div className={`flex items-center rounded-md border-l-[3px] ${current && !open ? "border-primary-600 bg-primary-50 text-primary-700" : "border-transparent text-ink-muted hover:bg-surface-muted hover:text-ink"}`}>
+        <div className={`mt-2 flex items-center rounded-md ${current && !open ? "bg-primary-50 text-primary-700" : "text-ink-faint hover:text-ink"}`}>
           <button
             type="button"
             onClick={() => {
               if (!open) onToggle();
               router.push(items[0]?.href ?? "/users/ai/assistant");
             }}
-            className={`flex min-w-0 flex-1 items-center gap-2.5 px-3 py-2 text-left text-body ${current ? "font-semibold" : ""}`}
+            className="flex min-w-0 flex-1 items-center gap-2 px-2 py-1 text-left text-caption font-semibold uppercase tracking-wide"
           >
             <SectionIcon section={section} />
-            <span className="flex-1">{section}</span>
+            <span className="flex-1 truncate">{section}</span>
           </button>
           <button type="button" aria-expanded={open} aria-controls={id} aria-label={open ? "Hide chats" : "Show chats"} title={open ? "Hide chats" : "Show chats"} onClick={onToggle} className="mr-1 rounded p-1.5 hover:text-ink">
             <ChevronDown aria-hidden="true" className={`h-4 w-4 shrink-0 transition-transform motion-reduce:transition-none ${open ? "rotate-180" : ""}`} />
           </button>
         </div>
-        <div id={id} hidden={!open} className="ml-4 mt-0.5 border-l border-line pl-2">
+        <div id={id} hidden={!open} className="mt-0.5 pl-2">
           <ChatList chats={chats} />
         </div>
       </div>
@@ -141,20 +143,19 @@ function NavGroup({ section, items, chats, open, current, onToggle, isActive }: 
         aria-expanded={open}
         aria-controls={id}
         onClick={onToggle}
-        className={`flex w-full items-center gap-2.5 rounded-md border-l-[3px] px-3 py-2 text-left text-body transition-colors ${current && !open ? "border-primary-600 bg-primary-50 text-primary-700" : "border-transparent text-ink-muted hover:bg-surface-muted hover:text-ink"} ${current ? "font-semibold" : ""}`}
+        className={`mt-2 flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-caption font-semibold uppercase tracking-wide transition-colors ${current && !open ? "bg-primary-50 text-primary-700" : "text-ink-faint hover:text-ink"}`}
       >
-        <SectionIcon section={section} />
-        <span className="flex-1">{section}</span>
+        <ChevronDown aria-hidden="true" className={`h-3 w-3 shrink-0 transition-transform motion-reduce:transition-none ${open ? "" : "-rotate-90"}`} />
+        <span className="flex-1 truncate">{section}</span>
         {!open && waiting > 0 && (
           <span className="rounded-full bg-primary-50 px-1.5 text-caption font-semibold text-primary-700">
             {waiting > 99 ? "99+" : waiting}
             <span className="sr-only"> waiting</span>
           </span>
         )}
-        <ChevronDown aria-hidden="true" className={`h-4 w-4 shrink-0 transition-transform motion-reduce:transition-none ${open ? "rotate-180" : ""}`} />
       </button>
       {(
-        <ul id={id} hidden={!open} className="ml-4 mt-0.5 space-y-0.5 border-l border-line pl-2">
+        <ul id={id} hidden={!open} className="mt-0.5 space-y-0.5">
           {items.map((item) => (
             <li key={item.href}>
               <EntryLink item={item} active={isActive(item)} />
@@ -171,9 +172,9 @@ function EntryLink({ item, active }: { item: NavItem; active: boolean }) {
     <Link
       href={item.href}
       aria-current={active ? "page" : undefined}
-      className={`block rounded-md border-l-[3px] px-3 py-2 text-body transition-colors ${active ? "border-primary-600 bg-primary-50 font-semibold text-primary-700" : "border-transparent text-ink-muted hover:bg-surface-muted hover:text-ink"}`}
+      className={`flex h-8 items-center rounded-md px-2 text-label transition-colors ${active ? "bg-primary-50 font-semibold text-primary-700" : "text-ink hover:bg-surface-muted"}`}
     >
-      <span className="flex items-center gap-2.5">
+      <span className="flex min-w-0 flex-1 items-center gap-2">
         <NavIcon href={item.href} />
         <span className="flex-1">{item.label}</span>
         {item.count ? (

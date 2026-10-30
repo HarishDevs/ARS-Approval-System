@@ -1,5 +1,6 @@
 import { expect, test, type BrowserContext } from "@playwright/test";
 import { db, sessionCookie } from "./db";
+import { createProject } from "./work-helpers";
 
 // D-218 through the real screens: project fields in the List, bulk changes,
 // a repeating task, save as template and a project from it, the task inbox,
@@ -18,10 +19,7 @@ async function as(context: BrowserContext, loginId: string) {
 test("a project field shows as a List column and takes a value; two tasks change at once", async ({ page, context }) => {
   await as(context, "E2E_REQ");
   await page.goto("/users/work/projects");
-  await page.getByLabel("Project name").fill(projectName);
-  await page.getByRole("button", { name: "Create project" }).click();
-  await expect(page).toHaveURL(/\/users\/work\/projects\/\d+\?created=1/);
-  projectUrl = page.url().split("?")[0]!;
+  projectUrl = await createProject(page, projectName);
   const add = page.getByRole("rowgroup", { name: "To do" }).getByLabel("Add a task");
   for (const title of [`Reconcile bank ${stamp}`, `Close ledgers ${stamp}`]) {
     await add.fill(title);
@@ -59,8 +57,8 @@ test("a repeating task makes its next one when completed", async ({ page, contex
   await as(context, "E2E_REQ");
   await page.goto(projectUrl);
   await page.getByTestId("task-row").filter({ hasText: `Close ledgers ${stamp}` }).getByRole("link").first().click();
-  await expect(page).toHaveURL(/\/users\/tasks\/\d+/);
-  const repeat = page.getByTestId("repeat");
+  // D-219: the task pane has the Repeats box too.
+  const repeat = page.getByTestId("task-pane").getByTestId("repeat");
   await repeat.getByRole("button", { name: "Make it repeat" }).click();
   await repeat.getByLabel("Repeat unit").selectOption("MONTHLY");
   await repeat.getByRole("button", { name: "Save" }).click();
@@ -90,11 +88,12 @@ test("save as template, then a new project from it", async ({ page, context }) =
 
   await page.goto("/users/work/projects?show=templates");
   await expect(page.getByTestId("template-list")).toContainText(`E2E close template ${stamp}`);
-  await page.goto("/users/work/projects");
-  const form = page.getByRole("form", { name: "New project from a template" });
-  await form.getByLabel("Template").selectOption({ label: `E2E close template ${stamp}` });
-  await form.getByLabel("New project name").fill(`E2E December close ${stamp}`);
-  await form.getByRole("button", { name: "Create from template" }).click();
+  // D-220: New project → Use a template (step by step).
+  await page.goto("/users/work/projects/new");
+  await page.getByRole("button", { name: /Use a template/ }).click();
+  await page.getByText(`E2E close template ${stamp}`).click();
+  await page.getByLabel("Project name", { exact: true }).fill(`E2E December close ${stamp}`);
+  await page.getByRole("button", { name: "Create from template" }).click();
   await expect(page.getByRole("heading", { level: 1, name: `E2E December close ${stamp}` })).toBeVisible();
   await expect(page.getByTestId("task-row").filter({ hasText: `Reconcile bank ${stamp}` })).toBeVisible();
   await expect(page.getByRole("columnheader", { name: "Plant" })).toBeVisible();

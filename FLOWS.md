@@ -1055,6 +1055,37 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 2. They filter (search, status, type, department, person, waiting on, priority, overdue, dates) and sort by a column title; 50 rows a page.
 3. **Download CSV** gives every matching row (up to 10,000) for Excel; audited. A row number opens the record.
 
+## F-166 + Create (v1.32.0, D-221)
+1. Sidebar → + Create → Approval request (New request), Task (Draft task panel, any page), Project (new-project steps) or Information.
+
+## F-167 Ad hoc and periodic tasks (v1.32.0, D-222)
+1. Draft task: Ad hoc (one time) may be given to several people (+ Person): each gets their own copy, and each copy lists the others ("Also given to").
+2. An ad hoc task's details (name, description, priority, dates, fields, tags, waiting for, repeat, assignee) change only by its creator (and IT); the assignee starts, completes and comments.
+3. Periodic tasks repeat (F-158); their creator, project editors and the assignee (dates) plan them.
+
+## F-168 Project permissions (v1.32.0, D-222)
+1. Project → Members & settings → Project permissions (or Share → Project permissions): Add restriction → a field (Due date, Start date, Assignee, Priority, a project field) → Project admins only / admins and editors.
+2. Sharing tasks with other projects → Project admins only / admins and editors / everyone in the project. Save permissions (owners).
+
+## F-162 The task table (v1.32.0, D-220)
+1. A project's List, My Tasks (List) and Task search show numbered rows with a tick, the name and the chosen columns.
+2. Filters: quick filters (incomplete, completed with a range, due this week, due next week) and field filters (Add filter); the button shows "Filters: N" with × to clear.
+3. Sort and Groups (sections, assignee, created by, project, due date, priority, periodic or ad hoc); Options hides columns; Search filters the rows.
+4. Options → Save as a new tab names the current view; it appears in the tab strip (My Tasks: yours; a project: everyone's, made by owners/editors); a changed tab shows Save view; Options → Delete tab removes it.
+
+## F-163 Share (v1.32.0, D-220)
+1. Project header → Share: invite a person or department with a role; change who can see it (owners); change or remove roles; Copy project link.
+2. Task page or pane → Share: add or remove collaborators, see who can see it, Copy task link.
+
+## F-164 Create a task and a project like Asana (v1.32.0, D-219, D-220)
+1. "+ Add task", Create task or Q opens the Draft task panel: name, For <assignee> in <project>, description, due date, Repeat (ad hoc or periodic); Create task opens it in the pane.
+2. Projects → + Create project: Blank project or Use a template → details (name, department, privacy, default view, colour, description) → sections → Create; or template, name, start date, privacy → Create from template.
+3. A project's actions menu → Save as template: name → the template page; Projects → Templates → Use template.
+
+## F-165 Periodic and ad hoc tasks, ticks everywhere (v1.32.0, D-219)
+1. Every task row has a tick (complete / reopen); the task page and pane have Mark complete.
+2. Periodic tasks (↻) repeat; ad hoc tasks are one time. Tasks → Periodic tasks lists every repeating task; Search filters Periodic or Ad hoc.
+
 ## F-158 Repeating tasks (v1.31.0, D-218)
 1. On the task page → Repeats → Make it repeat: every N days, weeks (choose weekdays), months, years, or N days after it is completed; Save. Stop repeating removes the rule.
 2. When the task is completed (anywhere), the next one appears with the same people, projects, tags, fields and subtasks, due on the next date (moved off holidays if IT keeps that on); its assignee is told.

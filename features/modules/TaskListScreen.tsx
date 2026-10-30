@@ -12,6 +12,7 @@ import { isOverdue, TASK_STATUS_LABEL, TASK_STATUSES, type TaskStatus } from "@/
 import { indiaDateTimeText, PRIORITY_LABEL, TASK_PRIORITIES, type TaskPriority } from "@/server/modules/settings";
 import { displayValue, type FormField } from "@/server/forms/fields";
 import { isAdminActor } from "@/server/modules/tasks";
+import { TaskCheck } from "@/features/work/client";
 import { teamOf } from "@/server/work/task-access";
 
 // v1.9.0 (D-143): My tasks / Assigned by me / Team tasks. Filters live in
@@ -176,6 +177,9 @@ export async function TaskListScreen({ base, query }: { base: TaskBase; query: R
                 <caption className="sr-only">{TITLE[base]}</caption>
                 <thead>
                   <tr>
+                    <th scope="col">
+                      <span className="sr-only">Done</span>
+                    </th>
                     <th scope="col">Task</th>
                     <th scope="col">Type</th>
                     <th scope="col">{base === "MINE" ? "From" : "Assignee"}</th>
@@ -194,6 +198,10 @@ export async function TaskListScreen({ base, query }: { base: TaskBase; query: R
                     const late = isOverdue(task, now);
                     return (
                       <tr key={task.id}>
+                        <td className="w-8">
+                          {/* D-219: tick to complete, as everywhere (only the assignee here). */}
+                          <TaskCheck taskId={task.id} done={task.status === "COMPLETED"} disabled={task.assigneeId !== user.id || task.status === "CANCELLED"} label={task.title} />
+                        </td>
                         <td>
                           <Link href={`/users/tasks/${task.id}`} className="link font-medium">
                             {task.title}

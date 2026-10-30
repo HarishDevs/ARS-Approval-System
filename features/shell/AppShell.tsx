@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { areasForUser } from "@/server/authorization/policy";
 import { SideNav, type NavItem } from "@/features/shell/SideNav";
+import { CreateMenu } from "@/features/shell/CreateMenu";
 import { MobileNav } from "@/features/shell/MobileNav";
 import { ProfileMenu } from "@/features/shell/ProfileMenu";
 import { countUnread } from "@/lib/db/repositories/collab.repository";
@@ -122,6 +123,16 @@ export async function AppShell({
   ];
   // The "Waiting for me" entry shows the real count (RA-01).
   const items = nav.filter((item) => visible(item.href)).map((item) => (item.href === "/users/queue" ? { ...item, count: waiting } : item));
+  // D-221 (owner): the Compact sidebar keeps one "Tasks & projects" entry (the
+  // Tasks area has its own Asana-style bar); the Classic view keeps the
+  // Tasks module's pages. + Create offers what the person can create.
+  const tasksOn = items.some((item) => item.section === "Tasks");
+  const sideItems: NavItem[] =
+    area === "users"
+      ? items.flatMap((item, index) =>
+          item.section !== "Tasks" ? [item] : items.findIndex((other) => other.section === "Tasks") === index ? [{ href: "/users/work", label: "Tasks & projects", also: ["/users/tasks"] }] : [],
+        )
+      : items;
 
   return (
     <div className="flex min-h-full" style={textScale && textScale !== 1 ? ({ "--text-scale": String(textScale) } as React.CSSProperties) : undefined}>
@@ -139,9 +150,10 @@ export async function AppShell({
             <img src="/brand/ars-green-steel.svg" alt="" width={77} height={36} className="h-9 w-auto" />
           </Link>
         </div>
+        {area === "users" && <CreateMenu approval={items.some((item) => item.href === "/users/custom")} task={tasksOn} information={items.some((item) => item.href === "/users/information/new")} />}
         <p className="shrink-0 px-6 pt-4 text-caption font-semibold uppercase tracking-wider text-ink-faint">{SPACE_LABEL[area]}</p>
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain" data-testid="sidebar-scroll">
-          <SideNav items={items} collapsible={area !== "admin"} chats={chats} />
+          <SideNav items={sideItems} collapsible={area !== "admin"} chats={chats} />
         </div>
       </aside>
       )}

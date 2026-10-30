@@ -13,6 +13,8 @@ import * as repo from "@/lib/db/repositories/work.repository";
 import { parseWorkSearch, workSearchQuery } from "@/server/work/rules";
 import { workViewer } from "@/server/work/task-access";
 import * as more from "@/server/work/service-more";
+import { parseGridConfig } from "@/server/work/grid";
+import { projectAbilities } from "@/server/work/access";
 import { getDbPool } from "@/lib/db/client";
 import type { RowDataPacket } from "mysql2/promise";
 import type { HolidayHit } from "@/server/work/holidays";
@@ -70,6 +72,7 @@ function projectInput(formData: FormData): work.ProjectInput {
     defaultView: text(formData, "default_view"),
     startOn: text(formData, "start_on"),
     dueOn: text(formData, "due_on"),
+    sections: text(formData, "sections"),
   };
 }
 
@@ -145,7 +148,17 @@ export async function sectionAction(sectionId: number, change: { name?: string; 
 }
 
 // ---- tasks -----------------------------------------------------------------------------
-export async function quickAddAction(input: { title: string; projectId?: number | null; sectionId?: number | null; parentId?: number | null; assigneeId?: number | null; dueDay?: string; mySectionId?: number | null; holidayOk?: boolean }): Promise<ActionResult & { value?: { id: number; taskNo: string }; holiday?: HolidayHit }> {
+export async function quickAddAction(input: { title: string; projectId?: number | null; sectionId?: number | null; parentId?: number | null; assigneeId?: number | null; assigneeIds?: number[]; dueDay?: string; mySectionId?: number | null; holidayOk?: boolean; description?: string }): Promise<ActionResult & { value?: { id: number; taskNo: string }; holiday?: HolidayHit }> {
+  // D-222: an ad hoc task for several people (one copy each).
+  const many = (Array.isArray(input.assigneeIds) ? input.assigneeIds : []).map((item) => id(item)).filter((item): item is number => item !== null);
+  if (many.length > 1)
+    return run("quickAddMany", await actor(), (me) =>
+      work.quickAddForMany(
+        { title: String(input.title ?? ""), projectId: id(input.projectId), sectionId: id(input.sectionId), parentId: null, assigneeId: null, dueDay: typeof input.dueDay === "string" ? input.dueDay : "", mySectionId: null, holidayOk: input.holidayOk === true, description: typeof input.description === "string" ? input.description : undefined },
+        many,
+        me,
+      ),
+    );
   return run("quickAdd", await actor(), (me) =>
     work.quickAddTask(
       {
@@ -157,6 +170,7 @@ export async function quickAddAction(input: { title: string; projectId?: number 
         dueDay: typeof input.dueDay === "string" ? input.dueDay : "",
         mySectionId: id(input.mySectionId),
         holidayOk: input.holidayOk === true,
+        description: typeof input.description === "string" ? input.description : undefined,
       },
       me,
     ),
@@ -433,4 +447,81 @@ export async function digestChoiceAction(on: boolean): Promise<ActionResult> {
     logError("digestChoiceAction failed", error);
     return { ok: false, message: "Couldn't save. Please try again." };
   }
+}
+
+// ---- D-220: saved view tabs ------------------------------------------------------------
+// My Tasks tabs are the person's own; a project's tabs are made by its owners
+// and editors and seen by everyone in it.
+async function mayChangeViews(me: TaskActor, scope: "MY_TASKS" | "PROJECT", scopeId: number): Promise<boolean> {
+  if (scope === "MY_TASKS") return scopeId === me.id;
+  const found = await repo.projectFor(scopeId, await workViewer(me));
+  return Boolean(found && projectAbilities(found.role).edit);
+}
+
+export async function saveViewAction(scope: "MY_TASKS" | "PROJECT", scopeId: number, name: string, config: unknown): Promise<ActionResult & { value?: number }> {
+  const me = await actor();
+  const target = id(scopeId);
+  if (!me || !target || (scope !== "MY_TASKS" && scope !== "PROJECT")) return NOT_FOUND;
+  const title = String(name ?? "").replace(/\s+/g, " ").trim().slice(0, 60);
+  if (title.length < 1) return { ok: false, message: "Give the tab a name." };
+  if (!(await mayChangeViews(me, scope, target))) return { ok: false, message: "Only the project's owners and editors can add tabs." };
+  try {
+    const result = await repo.insertWorkView(scope, target, title, parseGridConfig(config), me.id);
+    if (result === "DUPLICATE") return { ok: false, message: "There is a tab with that name." };
+    if (result === "TOO_MANY") return { ok: false, message: "At most 30 tabs." };
+    refresh();
+    return { ok: true, message: `Tab "${title}" saved.`, value: result };
+  } catch (error) {
+    logError("saveViewAction failed", error);
+    return { ok: false, message: "Couldn't save. Please try again." };
+  }
+}
+
+export async function updateViewAction(viewId: number, config: unknown): Promise<ActionResult> {
+  const me = await actor();
+  const view = id(viewId) ? await repo.findWorkView(id(viewId)!) : null;
+  if (!me || !view || !(await mayChangeViews(me, view.scope, view.scopeId))) return NOT_FOUND;
+  await repo.updateWorkView(view.id, { config: parseGridConfig(config) });
+  refresh();
+  return { ok: true, message: "View saved." };
+}
+
+export async function deleteViewAction(viewId: number): Promise<ActionResult> {
+  const me = await actor();
+  const view = id(viewId) ? await repo.findWorkView(id(viewId)!) : null;
+  if (!me || !view || !(await mayChangeViews(me, view.scope, view.scopeId))) return NOT_FOUND;
+  await repo.deleteWorkView(view.id);
+  refresh();
+  return { ok: true, message: "Tab deleted." };
+}
+
+// D-220: the Share dialog's "Access settings" (owners only; the rest of the
+// project's details stay as they are).
+export async function privacyAction(projectId: number, privacy: string, departmentId: number | null): Promise<ActionResult> {
+  const me = await actor();
+  const project = id(projectId) ? await repo.findProject(id(projectId)!) : null;
+  if (!me || !project) return NOT_FOUND;
+  return run("privacy", me, (who) =>
+    work.updateProjectDetails(
+      project.id,
+      {
+        name: project.name,
+        description: project.description ?? "",
+        color: project.color,
+        privacy,
+        departmentId: privacy === "DEPARTMENT" ? (id(departmentId) ?? project.departmentId) : project.departmentId,
+        defaultAccessRole: project.defaultAccessRole,
+        defaultView: project.defaultView,
+        startOn: project.startOn ?? "",
+        dueOn: project.dueOn ?? "",
+      },
+      who,
+    ),
+  );
+}
+
+// D-222: Project permissions (owners only, checked in the service).
+export async function permissionsAction(projectId: number, permissions: unknown): Promise<ActionResult> {
+  const project = id(projectId);
+  return project ? run("permissions", await actor(), (me) => work.setPermissions(project, permissions, me)) : NOT_FOUND;
 }

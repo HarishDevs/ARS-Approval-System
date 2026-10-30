@@ -4,6 +4,7 @@ import { PageHeader } from "@/features/shell/PageHeader";
 import { Breadcrumbs } from "@/features/ui/Display";
 import { MembersPanel, ProjectCommandButton, ProjectForm } from "@/features/work/ProjectForms";
 import { FieldsManager, FromTemplateForm, SaveTemplateForm } from "@/features/work/MoreParts";
+import { PermissionsPanel } from "@/features/work/PermissionsPanel";
 import { listProjectEvents, listProjectFields, projectFor } from "@/lib/db/repositories/work.repository";
 import { listDepartments } from "@/lib/db/repositories/organisation.repository";
 import { indiaDateTimeText } from "@/server/modules/settings";
@@ -30,6 +31,7 @@ const EVENT_WORD: Record<string, string> = {
   DELETE: "Deleted it",
   RESTORE: "Restored it",
   FIELD_ADDED: "Added a field",
+  PERMISSIONS: "Changed the project permissions",
   FIELD_REMOVED: "Removed a field",
   TEMPLATE_SAVED: "Made this template",
   FROM_TEMPLATE: "Made it from a template",
@@ -83,6 +85,12 @@ export default async function ProjectSettingsPage({ params }: { params: Promise<
               />
             </section>
           )}
+          <section className="card px-5 py-4" aria-labelledby="permissions">
+            <h2 id="permissions" className="mb-3 font-semibold">
+              Project permissions
+            </h2>
+            <PermissionsPanel projectId={project.id} projectName={project.name} initial={project.permissions} fields={fields.map((field) => ({ id: field.id, name: field.name }))} canManage={can.manage} />
+          </section>
           {can.edit && (
             <section className="card px-5 py-4" aria-labelledby="fields">
               <h2 id="fields" className="mb-1 font-semibold">

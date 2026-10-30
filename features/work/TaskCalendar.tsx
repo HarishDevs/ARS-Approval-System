@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { quickAddAction, taskFieldsAction } from "@/app/users/work/actions";
-import { TaskCheck, useWorkCall } from "@/features/work/client";
+import { TaskCheck, usePaneLink, useWorkCall } from "@/features/work/client";
 import { indiaDayOf } from "@/features/work/format";
 
 // D-215: tasks on a month grid by due date (India time). Drag a task to
@@ -24,6 +24,7 @@ const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "Ju
 export function TaskCalendar({ tasks, month, todayDay, canEdit, meId, projectId, monthHref, holidays = {} }: { tasks: CalendarTask[]; month: string; todayDay: string; canEdit: boolean; meId: number; projectId?: number; monthHref: string; holidays?: Record<string, string> }) {
   const hrefFor = (value: string) => `${monthHref}${value}`;
   const { call } = useWorkCall();
+  const paneLink = usePaneLink();
   const [dragging, setDragging] = useState<number | null>(null);
   const [adding, setAdding] = useState<string | null>(null);
   const [title, setTitle] = useState("");
@@ -89,7 +90,7 @@ export function TaskCalendar({ tasks, month, todayDay, canEdit, meId, projectId,
                 className={`group min-h-24 border-b border-r border-line p-1 ${day === todayDay ? "bg-primary-50" : holidays[day] ? "bg-warning-50" : "bg-surface"}`}
               >
                 <div className="flex items-center justify-between gap-1">
-                  <span className={`text-caption ${day === todayDay ? "font-bold text-primary-700" : "text-ink-muted"}`}>{date}</span>
+                  <span className={`inline-flex h-6 min-w-6 items-center justify-center rounded-full px-1 text-caption ${day === todayDay ? "bg-primary-solid font-bold text-white" : "text-ink-muted"}`}>{date}</span>
                   {holidays[day] && (
                     <span className="min-w-0 flex-1 truncate text-caption text-warning-600" title={`Holiday: ${holidays[day]}`} data-testid="calendar-holiday">
                       {holidays[day]}
@@ -105,7 +106,7 @@ export function TaskCalendar({ tasks, month, todayDay, canEdit, meId, projectId,
                   {list.map((task) => (
                     <li key={task.id} draggable={may(task)} onDragStart={() => setDragging(task.id)} className="flex items-center gap-1 rounded bg-surface-muted px-1 py-0.5 text-caption">
                       <TaskCheck taskId={task.id} done={task.status === "COMPLETED"} disabled={!may(task)} label={task.title} size="sm" />
-                      <Link href={`/users/tasks/${task.id}${projectId ? `?project=${projectId}` : ""}`} className={`min-w-0 truncate hover:underline ${task.status === "COMPLETED" ? "text-ink-muted line-through" : ""}`}>
+                      <Link href={paneLink(task.id)} scroll={false} className={`min-w-0 truncate hover:underline ${task.status === "COMPLETED" ? "text-ink-muted line-through" : ""}`}>
                         {task.isMilestone ? "◆ " : ""}
                         {task.title}
                       </Link>
@@ -134,12 +135,12 @@ export function TaskCalendar({ tasks, month, todayDay, canEdit, meId, projectId,
         </div>
       </div>
       <aside aria-label="No due date" className="card h-fit px-3 py-2" onDragOver={(event) => event.preventDefault()}>
-        <h3 className="mb-1 text-label font-semibold">No due date ({undated.length})</h3>
+        <h3 className="mb-1 text-label font-semibold">No date ({undated.length})</h3>
         <p className="mb-2 text-caption text-ink-muted">Drag one onto a day to give it a due date.</p>
         <ul className="space-y-1">
           {undated.slice(0, 50).map((task) => (
             <li key={task.id} draggable={may(task)} onDragStart={() => setDragging(task.id)} className="truncate rounded bg-surface-muted px-2 py-1 text-caption">
-              <Link href={`/users/tasks/${task.id}${projectId ? `?project=${projectId}` : ""}`} className="hover:underline">
+              <Link href={paneLink(task.id)} scroll={false} className="hover:underline">
                 {task.title}
               </Link>
             </li>

@@ -14,6 +14,10 @@ import { actOnTask, type TaskActor } from "@/server/modules/tasks";
 import { indiaLocalToUtc, mayCreate, parseTaskSettings, TASK_PRIORITIES, type TaskPriority } from "@/server/modules/settings";
 import { mayAssignTo, OPEN_STATUSES } from "@/server/modules/task-rules";
 import {
+  mayShareTasks,
+  mayUpdateField,
+  parseProjectPermissions,
+  PERMISSION_ROLE_LABEL,
   effectiveProjectRole,
   leavesAnOwner,
   PRIVACY,
@@ -70,6 +74,7 @@ export interface ProjectInput {
   defaultView: string;
   startOn: string;
   dueOn: string;
+  sections?: string; // D-220: the new-project steps' sections, one per line
 }
 function checkProjectInput(input: ProjectInput): { errors: Record<string, string>; value: Omit<repo.NewProject, "ownerId"> } {
   const errors: Record<string, string> = {};
@@ -106,7 +111,12 @@ export async function createProject(input: ProjectInput, actor: TaskActor): Prom
   const id = await withTransaction(async (connection) => {
     const projectId = await repo.insertProject({ ...value, ownerId: actor.id }, connection);
     await repo.setProjectMember(projectId, "USER", actor.id, "OWNER", actor.id, connection);
-    for (const [index, name] of STARTER_SECTIONS.entries()) await repo.insertSection(projectId, name, (index + 1) * 1024, actor.id, connection);
+    const chosen = (input.sections ?? "")
+      .split("\n")
+      .map((name) => name.replace(/\s+/g, " ").trim().slice(0, 150))
+      .filter(Boolean)
+      .slice(0, 20);
+    for (const [index, name] of (chosen.length ? chosen : STARTER_SECTIONS).entries()) await repo.insertSection(projectId, name, (index + 1) * 1024, actor.id, connection);
     await repo.appendProjectEvent(projectId, actor.id, "CREATED", value.name, connection);
     await recordAudit({ actorUserId: actor.id, action: "PROJECT_CREATED", entityType: "PROJECT", entityId: projectId, sessionId: actor.sessionId, ipAddress: actor.ipAddress ?? null, metadata: { privacy: value.privacy } }, connection);
     return projectId;
@@ -297,7 +307,8 @@ export async function quickAddTask(input: QuickTaskInput, actor: TaskActor): Pro
     parent = await findTask(input.parentId);
     if (!parent || parent.deletedAt) return fail(NOT_FOUND);
     const rights = await rightsOn(parent, viewer);
-    if (!rights.edit && parent.assigneeId !== actor.id) return fail("You can't add subtasks to this task.");
+    // D-222: subtasks of an ad hoc task are its creator's to add.
+    if (!(rights.adhoc ? rights.details : rights.edit || parent.assigneeId === actor.id)) return fail("You can't add subtasks to this task.");
     if (parent.depth + 1 > 5) return fail("Subtasks go at most 5 levels deep.");
   }
   const assigneeId = input.assigneeId ?? actor.id;
@@ -387,6 +398,12 @@ export async function addToProject(taskId: number, projectId: number, sectionId:
   const loaded = await taskFor(taskId, actor);
   if (!loaded) return fail(NOT_FOUND);
   if (!loaded.rights.edit && loaded.task.assigneeId !== actor.id) return fail("You can't change this task's projects.");
+  // D-222: each project the task is in says who may share its tasks with other projects.
+  for (const link of await repo.listTaskProjects(taskId)) {
+    if (link.projectId === projectId) continue;
+    const source = await repo.projectFor(link.projectId, loaded.viewer);
+    if (source && !mayShareTasks(source.project.permissions, source.role, loaded.viewer.isAdmin)) return fail(`${source.project.name} allows only ${PERMISSION_ROLE_LABEL[source.project.permissions.shareTasks].toLowerCase()} to share its tasks with other projects.`);
+  }
   const found = await repo.projectFor(projectId, loaded.viewer);
   if (!found || !projectAbilities(found.role).edit) return fail("You need to be an owner or editor of that project to add tasks to it.");
   const sections = await repo.listSections(projectId);
@@ -438,11 +455,20 @@ export async function setTaskFields(taskId: number, change: { dueDay?: string; s
   if (!OPEN_STATUSES.includes(task.status) && change.title === undefined) return fail("Reopen the task to change it.");
   if (change.assigneeId !== undefined) {
     if (change.assigneeId === task.assigneeId) return { ok: true, value: undefined };
+    const blocked = await fieldBlockedBy(task.id, "assignee", loaded.viewer);
+    if (blocked) return fail(`In ${blocked}, only some people may change the assignee (Project permissions).`);
     const result = await actOnTask({ taskId, action: "REASSIGN", rowVersion: null, reason: "Assigned from the task list", assigneeId: change.assigneeId, files: [] }, actor);
     return result.ok ? { ok: true, value: undefined, message: "Assigned." } : fail(result.message);
   }
-  const mayDate = rights.edit || task.assigneeId === actor.id;
-  if (!mayDate) return fail("You can't change this task.");
+  // D-222: ad hoc tasks: only their creator (and IT) change details; and a
+  // project may restrict who updates a field (Project permissions).
+  if (!rights.planning) return fail(rights.adhoc ? "Only its creator can change an ad hoc task's details." : "You can't change this task.");
+  for (const field of ["due", "start", "priority"] as const) {
+    const given = field === "due" ? change.dueDay : field === "start" ? change.startDay : change.priority;
+    if (given === undefined) continue;
+    const blocked = await fieldBlockedBy(task.id, field, loaded.viewer);
+    if (blocked) return fail(`In ${blocked}, only some people may change this field (Project permissions).`);
+  }
   const changes: Record<string, unknown> = {};
   const work: Parameters<typeof repo.setTaskWorkFields>[1] = {};
   const notes: string[] = [];
@@ -459,20 +485,20 @@ export async function setTaskFields(taskId: number, change: { dueDay?: string; s
     notes.push(start ? `Start date set to ${start}` : "Start date removed");
   }
   if (change.priority !== undefined) {
-    if (!rights.edit) return fail("Only the task's owners and project editors can change its priority.");
+    if (!rights.details) return fail(rights.adhoc ? "Only its creator can change an ad hoc task's details." : "Only the task's owners and project editors can change its priority.");
     if (!(TASK_PRIORITIES as readonly string[]).includes(change.priority)) return fail("Choose a priority.");
     changes.priority = change.priority;
     notes.push(`Priority set to ${change.priority.toLowerCase()}`);
   }
   if (change.title !== undefined) {
-    if (!rights.edit) return fail("You can't rename this task.");
+    if (!rights.details) return fail(rights.adhoc ? "Only its creator can change an ad hoc task's details." : "You can't rename this task.");
     const title = clean(change.title, 200);
     if (!title) return fail("A task needs a name.");
     changes.title = title;
     notes.push("Renamed");
   }
   if (change.milestone !== undefined) {
-    if (!rights.edit) return fail("You can't change this task.");
+    if (!rights.details) return fail(rights.adhoc ? "Only its creator can change an ad hoc task's details." : "You can't change this task.");
     work.is_milestone = change.milestone;
     if (change.milestone) work.starts_on = null;
     notes.push(change.milestone ? "Marked as a milestone" : "No longer a milestone");
@@ -692,7 +718,7 @@ export async function likeComment(commentId: number, actor: TaskActor): Promise<
 export async function setDependency(blockedId: number, blockerRef: string, on: boolean, actor: TaskActor): Promise<WorkResult> {
   const loaded = await taskFor(blockedId, actor);
   if (!loaded) return fail(NOT_FOUND);
-  if (!loaded.rights.edit && loaded.task.assigneeId !== actor.id) return fail("You can't change what blocks this task.");
+  if (!loaded.rights.planning) return fail(loaded.rights.adhoc ? "Only its creator can change an ad hoc task's details." : "You can't change what blocks this task.");
   const ref = blockerRef.trim().toUpperCase();
   const [rows] = await getDbPool().query<RowDataPacket[]>("SELECT id FROM tasks WHERE task_no = ? OR id = ? LIMIT 1", [ref, /^\d{1,10}$/.test(ref) ? Number(ref) : 0]);
   const blockerId = rows[0] ? Number(rows[0].id) : null;
@@ -721,7 +747,7 @@ export async function setDependency(blockedId: number, blockerRef: string, on: b
 export async function setTag(taskId: number, name: string, on: boolean, actor: TaskActor): Promise<WorkResult> {
   const loaded = await taskFor(taskId, actor);
   if (!loaded) return fail(NOT_FOUND);
-  if (!loaded.rights.edit && loaded.task.assigneeId !== actor.id) return fail("You can't tag this task.");
+  if (!loaded.rights.planning) return fail(loaded.rights.adhoc ? "Only its creator can change an ad hoc task's details." : "You can't tag this task.");
   const tag = clean(name, 60).replace(/^#/, "");
   if (!tag) return fail("Write a tag.", { tag: "Write a tag." });
   await withTransaction(async (connection) => {
@@ -815,4 +841,50 @@ export async function tellHolidayTasks(day: string, actor: TaskActor | null): Pr
   const messages = tasks.map((task) => taskMessages.updated({ id: task.id, taskNo: task.taskNo, title: task.title, dueAt: task.dueAt }, task.assigneeId, `it is due on ${day}, a holiday (${name}); keep the date or change it`));
   if (messages.length) await send(await insertOutbox(null, messages, getDbPool()));
   return { ok: true, value: { told: messages.length }, message: `Told the assignees of ${messages.length} task${messages.length === 1 ? "" : "s"}.` };
+}
+
+// D-222: the first project (by name) whose permissions keep this person from
+// updating `field` ("due", "assignee", "field:<id>"…) on the task, or null.
+export async function fieldBlockedBy(taskId: number, field: string, viewer: WorkViewer): Promise<string | null> {
+  for (const link of await repo.listTaskProjects(taskId)) {
+    const found = await repo.projectFor(link.projectId, viewer);
+    if (found && !mayUpdateField(found.project.permissions, field, found.role, viewer.isAdmin)) return found.project.name;
+  }
+  return null;
+}
+
+// D-222: Project permissions (owners): field restrictions and sharing tasks.
+export async function setPermissions(projectId: number, raw: unknown, actor: TaskActor): Promise<WorkResult> {
+  const found = await projectWithRole(projectId, actor);
+  if (!found) return fail(NOT_FOUND);
+  if (!found.can.manage) return fail("Only the project's admins (owners) change its permissions.");
+  const permissions = parseProjectPermissions(raw);
+  await withTransaction(async (connection) => {
+    await repo.setProjectPermissions(projectId, permissions, connection);
+    await repo.appendProjectEvent(projectId, actor.id, "PERMISSIONS", `${permissions.fields.length} field rule(s); sharing: ${permissions.shareTasks}`, connection);
+    await recordAudit({ actorUserId: actor.id, action: "PROJECT_PERMISSIONS", entityType: "PROJECT", entityId: projectId, sessionId: actor.sessionId, ipAddress: actor.ipAddress ?? null, metadata: { ...permissions } }, connection);
+  });
+  return { ok: true, value: undefined, message: "Permissions saved." };
+}
+
+// D-222: an ad hoc task for several people: one copy each, linked as a group.
+export async function quickAddForMany(input: QuickTaskInput, assigneeIds: readonly number[], actor: TaskActor): Promise<WorkResult<{ id: number; taskNo: string; ids: number[] }>> {
+  const people = [...new Set(assigneeIds)].slice(0, 50);
+  if (people.length < 2) {
+    const one = await quickAddTask({ ...input, assigneeId: people[0] ?? input.assigneeId }, actor);
+    return one.ok ? { ok: true, value: { ...one.value, ids: [one.value.id] } } : one;
+  }
+  const ids: number[] = [];
+  let first: { id: number; taskNo: string } | null = null;
+  for (const person of people) {
+    const made = await quickAddTask({ ...input, assigneeId: person }, actor);
+    if (!made.ok) {
+      if (!ids.length) return made;
+      break;
+    }
+    ids.push(made.value.id);
+    first ??= made.value;
+  }
+  await getDbPool().query("UPDATE tasks SET assign_group_id = ? WHERE id IN (?)", [ids[0], ids]);
+  return { ok: true, value: { ...first!, ids }, message: `Created for ${ids.length} people: each has their own copy.` };
 }

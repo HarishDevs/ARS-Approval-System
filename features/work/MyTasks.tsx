@@ -4,10 +4,13 @@ import { Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { myPlaceAction, mySectionAction } from "@/app/users/work/actions";
-import { ProjectDot, TaskCheck, useWorkCall } from "@/features/work/client";
+import { ProjectDot, TaskCheck, usePaneLink, useWorkCall } from "@/features/work/client";
+import { Repeat } from "lucide-react";
 import { dueLabel, TONE_TEXT } from "@/features/work/format";
 import { AddTask, useAutoRefresh } from "@/features/work/ProjectWorkspace";
 import { BulkBar } from "@/features/work/MoreParts";
+import { TaskGrid, type GridView } from "@/features/work/TaskGrid";
+import type { GridConfig, GridTask } from "@/server/work/grid";
 
 // D-215: My Tasks. The person's own sections: Recently assigned, Today,
 // Upcoming, Later (built in) and any they add. Drag a task between sections
@@ -26,6 +29,7 @@ export interface MyTaskRow {
   subtasks: number;
   subtasksOpen: number;
   comments: number;
+  isPeriodic: boolean; // D-219
 }
 export interface MySectionRow {
   id: number;
@@ -40,6 +44,7 @@ export function MyTasks({ sections, tasks, layout, nowIso }: { sections: MySecti
   const [newSection, setNewSection] = useState("");
   const [live, setLive] = useState("");
   const [selected, setSelected] = useState<number[]>([]);
+  const paneLink = usePaneLink();
   useAutoRefresh();
   const inSection = (id: number) => tasks.filter((task) => task.sectionId === id).sort((a, b) => a.position - b.position || a.id - b.id);
 
@@ -97,7 +102,8 @@ export function MyTasks({ sections, tasks, layout, nowIso }: { sections: MySecti
             onChange={(event) => setSelected((value) => (event.target.checked ? [...value, task.id] : value.filter((one) => one !== task.id)))}
           />
           <TaskCheck taskId={task.id} done={task.status === "COMPLETED"} disabled={task.status === "CANCELLED"} label={task.title} />
-          <Link href={`/users/tasks/${task.id}`} className={`min-w-0 flex-1 truncate text-label hover:underline ${task.status === "COMPLETED" ? "text-ink-muted line-through" : ""}`}>
+          <Link href={paneLink(task.id)} scroll={false} className={`min-w-0 flex-1 truncate text-label hover:underline ${task.status === "COMPLETED" ? "text-ink-muted line-through" : ""}`}>
+            {task.isPeriodic && <Repeat aria-label="Periodic" className="mr-1 inline h-3.5 w-3.5 text-info-600" />}
             {task.title}
           </Link>
         </div>
@@ -224,5 +230,38 @@ function SectionTitle({ section, count }: { section: MySectionRow; count: number
         </button>
       )}
     </div>
+  );
+}
+
+// D-220: My Tasks as the shared table (owner's screenshot): your sections as
+// groups by default, or any grouping; drag to place (your order only).
+export function MyTasksGrid({ rows, sections, initial, view, people, projects, meId, nowIso }: { rows: GridTask[]; sections: MySectionRow[]; initial: GridConfig; view: GridView; people: { id: number; label: string }[]; projects: { id: number; name: string }[]; meId: number; nowIso: string }) {
+  const { call } = useWorkCall();
+  const place = (taskId: number, sectionId: number, beforeId: number | null) => {
+    const list = rows.filter((task) => task.sectionId === sectionId && task.id !== taskId).sort((a, b) => a.position - b.position);
+    const index = beforeId === null ? list.length : Math.max(0, list.findIndex((task) => task.id === beforeId));
+    const before = list[index - 1]?.position ?? null;
+    const after = list[index]?.position ?? null;
+    const position = before !== null && after !== null ? (before + after) / 2 : before !== null ? before + 1024 : after !== null ? after - 1024 : 1024;
+    void call(() => myPlaceAction(taskId, sectionId, position), { success: false });
+  };
+  return (
+    <TaskGrid
+      rows={rows}
+      initial={initial}
+      columns={["due", "collaborators", "createdBy", "projects", "visibility", "priority"]}
+      groupsAllowed={["section", "assignee", "createdBy", "project", "due", "priority", "kind"]}
+      sections={sections.map((section) => ({ id: section.id, name: section.name }))}
+      sectionHeader={(section, count) => <SectionTitle section={sections.find((item) => item.id === section.id)!} count={count} />}
+      onMove={place}
+      addTo={{ mySections: true }}
+      people={people}
+      projects={projects}
+      meId={meId}
+      nowIso={nowIso}
+      view={view}
+      testId="my-grid"
+      emptyText="Nothing here. Clear the filters, or add a task."
+    />
   );
 }

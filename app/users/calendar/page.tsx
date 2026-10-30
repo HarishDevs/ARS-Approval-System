@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { TaskCheck } from "@/features/work/client";
 import { calendarKindAllowed } from "@/server/modules/modules";
 import Link from "next/link";
 import { requireArea } from "@/server/authorization/guards";
@@ -193,6 +194,8 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
                 {state.view !== "day" && entry.time && <span className="block text-caption font-normal text-ink-muted">{entry.time}</span>}
               </span>
               <span className={`rounded px-1.5 py-0.5 text-caption font-semibold ${KIND_STYLE[entry.kind]}`}>{KIND_LABEL[entry.kind]}</span>
+              {/* D-219: your tasks tick off here too. */}
+              {entry.kind === "task" && /^TASK:\d+$/.test(entry.key) && <TaskCheck taskId={Number(entry.key.slice(5))} done={false} label={entry.title} />}
               <Link href={entry.href} className="link min-w-0 flex-1 truncate text-label">
                 {entry.ref ? `${entry.ref} · ` : ""}
                 {entry.title}

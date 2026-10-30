@@ -3,11 +3,9 @@ import Link from "next/link";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { Badge, EmptyState } from "@/features/ui/Display";
 import { ProjectDot } from "@/features/work/client";
-import { ProjectCommandButton, ProjectForm, StarButton } from "@/features/work/ProjectForms";
-import { FromTemplateForm } from "@/features/work/MoreParts";
+import { ProjectCommandButton, StarButton } from "@/features/work/ProjectForms";
 import { countTemplateTasks, parseTemplate } from "@/server/work/more-rules";
 import { listDeletedProjects, listTemplates, listVisibleProjects } from "@/lib/db/repositories/work.repository";
-import { listDepartments } from "@/lib/db/repositories/organisation.repository";
 import { PRIVACY_LABEL, STATUS_KIND_LABEL, STATUS_KIND_TONE } from "@/server/work/access";
 import { workPage } from "@/server/work/page-context";
 
@@ -21,13 +19,11 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
   const params = await searchParams;
   const show = params.show === "archived" || params.show === "mine" || params.show === "deleted" || params.show === "templates" ? params.show : "all";
   const q = (params.q ?? "").trim().slice(0, 100);
-  const [projects, departments, deleted, templates] = await Promise.all([
+  const [projects, deleted, templates] = await Promise.all([
     show === "deleted" || show === "templates" ? Promise.resolve([]) : listVisibleProjects(viewer, { archived: show === "archived", q, onlyMine: show === "mine" }),
-    listDepartments(),
     show === "deleted" ? listDeletedProjects(viewer) : Promise.resolve([]),
     listTemplates(viewer),
   ]);
-  const active = departments.filter((department) => department.active).map((department) => ({ id: department.id, name: department.name }));
   const tab = (key: string, label: string) => (
     <Link key={key} href={key === "all" ? "/users/work/projects" : `/users/work/projects?show=${key}`} aria-current={show === key ? "page" : undefined} className={`rounded-full px-3 py-1 text-label ${show === key ? "bg-primary-50 text-primary-700" : "text-ink-muted hover:text-ink"}`}>
       {label}
@@ -35,8 +31,12 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
   );
   return (
     <>
-      <PageHeader title="Projects" description="Projects group tasks in sections, with list, board, calendar and timeline views, members and status updates." />
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
+      <PageHeader title="Projects" description="Projects group tasks in sections, with list, board, calendar and timeline views, members and status updates." >
+        <Link href="/users/work/projects/new" className="btn-primary btn-compact inline-flex items-center gap-1" data-testid="create-project">
+          + Create project
+        </Link>
+      </PageHeader>
+      <div>
         <section aria-label="Project list" className="space-y-3">
           <div className="flex flex-wrap items-center gap-2">
             {tab("all", "All I can see")}
@@ -65,6 +65,9 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
                     <span className="text-caption text-ink-muted">
                       {countTemplateTasks(parseTemplate(template.body)?.tasks ?? [])} tasks · {template.ownerName}
                     </span>
+                    <Link href={`/users/work/projects/new?template=${template.id}`} className="btn-secondary btn-compact">
+                      Use template
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -83,7 +86,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
               </ul>
             )
           ) : projects.length === 0 ? (
-            <EmptyState title={q ? "No project matches" : "No projects yet"} body="Create one on the right: you'll be its owner and can add people or a whole department." />
+            <EmptyState title={q ? "No project matches" : "No projects yet"} body="Use Create project: you'll be its owner and can add people or a whole department." />
           ) : (
             <ul className="card divide-y divide-line" data-testid="project-list-items">
               {projects.map((project) => {
@@ -108,18 +111,6 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
                 );
               })}
             </ul>
-          )}
-        </section>
-        <section aria-labelledby="new-project" className="card h-fit px-5 py-4">
-          <h2 id="new-project" className="mb-3 font-semibold">
-            New project
-          </h2>
-          <ProjectForm departments={active} myDepartmentId={viewer.departmentId} />
-          {templates.length > 0 && (
-            <div className="mt-6 border-t border-line pt-4">
-              <h2 className="mb-3 font-semibold">Or start from a template</h2>
-              <FromTemplateForm templates={templates.map((template) => ({ id: template.id, name: template.name }))} departments={active} />
-            </div>
           )}
         </section>
       </div>

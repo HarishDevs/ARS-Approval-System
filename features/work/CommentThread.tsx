@@ -187,6 +187,7 @@ function Composer({ taskId, people }: { taskId: number; people: { id: number; la
         name="body"
         rows={3}
         maxLength={4000}
+        placeholder="Add a comment or @mention a teammate"
         className="field-input h-auto py-2"
         onKeyDown={(event) => {
           if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {

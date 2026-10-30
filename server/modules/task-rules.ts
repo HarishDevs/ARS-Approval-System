@@ -31,6 +31,7 @@ export interface TaskViewer {
   workEdit?: boolean; // project editor or owner
   workComment?: boolean;
   teamIds?: readonly number[]; // D-216: everyone below the viewer, every level
+  creatorOnly?: boolean; // D-222: ad hoc task: only its creator (and IT) change it
 }
 
 export const isParty = (task: TaskFacts, viewer: TaskViewer) => viewer.id === task.createdBy || viewer.id === task.assigneeId || viewer.id === task.assignedBy;
@@ -46,7 +47,7 @@ export function allowedTaskActions(task: TaskFacts, viewer: TaskViewer, settings
   const actions = new Set<TaskAction>();
   if (!canSeeTask(task, viewer)) return actions;
   const assignee = viewer.id === task.assigneeId;
-  const owner = viewer.id === task.createdBy || viewer.id === task.assignedBy || viewer.isAdmin || Boolean(viewer.workEdit);
+  const owner = viewer.creatorOnly ? viewer.id === task.createdBy || viewer.isAdmin : viewer.id === task.createdBy || viewer.id === task.assignedBy || viewer.isAdmin || Boolean(viewer.workEdit);
   const doer = assignee || Boolean(viewer.workEdit);
   const open = OPEN_STATUSES.includes(task.status);
   if (doer && task.status === "OPEN") actions.add("START");

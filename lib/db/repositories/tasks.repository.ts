@@ -234,6 +234,7 @@ export interface TaskListItem {
   typeId: number;
   priority: TaskPriority;
   status: TaskStatus;
+  assigneeId: number;
   assigneeName: string;
   createdByName: string;
   dueAt: Date | null;
@@ -258,6 +259,7 @@ export async function listTasks(where: string[], params: unknown[], orderBy: str
       typeId: task.typeId,
       priority: task.priority,
       status: task.status,
+      assigneeId: task.assigneeId,
       assigneeName: task.assigneeName,
       createdByName: task.createdByName,
       dueAt: task.dueAt,

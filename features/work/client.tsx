@@ -1,7 +1,7 @@
 "use client";
 
-import { Check } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Check, Link2, Plus } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { completeAction } from "@/app/users/work/actions";
 import { actionErrorMessage, UNEXPECTED } from "@/features/ui/form";
@@ -166,5 +166,81 @@ export function HolidayPrompt() {
         </div>
       )}
     </dialog>
+  );
+}
+
+// D-219: Asana's "Mark complete" button for a task's page and panel header.
+export function TaskCompleteButton({ taskId, done, disabled, title }: { taskId: number; done: boolean; disabled?: boolean; title: string }) {
+  const { call, pending } = useWorkCall();
+  const [shown, setShown] = useState(done);
+  useEffect(() => setShown(done), [done]);
+  return (
+    <button
+      type="button"
+      aria-pressed={shown}
+      disabled={disabled || pending}
+      title={disabled ? "You can't complete this task" : undefined}
+      onClick={() => {
+        const next = !shown;
+        setShown(next);
+        void call(() => completeAction(taskId), { success: next ? `Completed: ${title}` : "Reopened." }).then((result) => {
+          if (!result?.ok) setShown(!next);
+        });
+      }}
+      data-testid="mark-complete"
+      className={`inline-flex h-8 items-center gap-1.5 rounded-md border px-3 text-label font-medium transition disabled:cursor-not-allowed disabled:opacity-60 ${
+        shown ? "border-success-600 bg-success-50 text-success-600" : "border-line-strong text-ink hover:border-success-600 hover:text-success-600"
+      }`}
+    >
+      <Check aria-hidden="true" className="h-4 w-4" strokeWidth={3} />
+      {shown ? "Completed" : "Mark complete"}
+    </button>
+  );
+}
+
+// D-219: in Task & Project Management a task opens in the pane beside the
+// list (?task=<id>, the rest of the address kept); elsewhere, its own page.
+export function usePaneLink() {
+  const pathname = usePathname();
+  const params = useSearchParams();
+  return useCallback(
+    (id: number) => {
+      if (!pathname.startsWith("/users/work")) return `/users/tasks/${id}`;
+      const query = new URLSearchParams(params.toString());
+      query.set("task", String(id));
+      return `${pathname}?${query}`;
+    },
+    [pathname, params],
+  );
+}
+
+// D-219 (catalog S-17): copy a task's link.
+export function CopyLinkButton({ path, label = "Copy task link" }: { path: string; label?: string }) {
+  const toast = useToast();
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      onClick={() =>
+        void navigator.clipboard
+          ?.writeText(`${window.location.origin}${path}`)
+          .then(() => toast({ tone: "success", title: "Link copied." }))
+          .catch(() => toast({ tone: "error", title: "Couldn't copy the link." }))
+      }
+      className="rounded p-1 text-ink-muted hover:bg-surface-muted hover:text-ink"
+    >
+      <Link2 aria-hidden="true" className="h-4 w-4" />
+    </button>
+  );
+}
+
+// D-219: "+ Create task" anywhere in the Tasks area opens the left bar's dialog.
+export const CREATE_TASK_EVENT = "ars:create-task";
+export function CreateTaskButton({ label = "Create task" }: { label?: string }) {
+  return (
+    <button type="button" onClick={() => window.dispatchEvent(new Event(CREATE_TASK_EVENT))} className="btn-secondary btn-compact inline-flex items-center gap-1">
+      <Plus aria-hidden="true" className="h-4 w-4" /> {label}
+    </button>
   );
 }

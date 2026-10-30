@@ -2,7 +2,7 @@ import "server-only";
 import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { getDbPool, type Queryable } from "@/lib/db/client";
 import type { ProjectColor, ProjectFacts, ProjectPrivacy, ProjectRole, ProjectStatusKind, ProjectView, WorkViewer } from "@/server/work/access";
-import { effectiveProjectRole } from "@/server/work/access";
+import { effectiveProjectRole, parseProjectPermissions, type ProjectPermissions } from "@/server/work/access";
 import type { MySystemSection, WorkSearch } from "@/server/work/rules";
 import { MY_SECTION_NAMES, MY_SECTION_ORDER } from "@/server/work/rules";
 import type { TaskPriority } from "@/server/modules/settings";
@@ -72,6 +72,7 @@ export interface ProjectRecord {
   createdBy: number;
   createdAt: Date;
   isTemplate: boolean; // D-218
+  permissions: ProjectPermissions; // D-222
 }
 export interface ProjectMember {
   type: "USER" | "DEPARTMENT";
@@ -104,6 +105,7 @@ const toProject = (row: Row): ProjectRecord => ({
   createdBy: num(row.created_by),
   createdAt: row.created_at as Date,
   isTemplate: Boolean(row.is_template),
+  permissions: parseProjectPermissions(row.permissions_json ?? null),
 });
 
 export async function findProject(id: number, db: Queryable = getDbPool(), lock = false): Promise<ProjectRecord | null> {
@@ -286,12 +288,15 @@ export interface WorkTaskItem {
   comments: number;
   likes: number;
   blockedBy: number; // open blockers
+  isPeriodic: boolean; // D-219: repeats (or belongs to a repeating series)
+  createdAt: Date; // D-220
+  followers: { id: number; name: string }[]; // D-220: collaborators
   tags: { id: number; name: string; color: string }[];
   projects: { id: number; name: string; color: string }[];
 }
 
 const ITEM_SELECT = `SELECT t.id, t.task_no, t.title, t.status, t.priority, t.assignee_id, a.name AS assignee_name, t.created_by, c.name AS created_by_name, t.due_at, t.starts_on,
-    t.completed_at, t.is_milestone, t.parent_task_id, t.assigned_at,
+    t.completed_at, t.created_at, t.is_milestone, t.parent_task_id, t.assigned_at, (t.recurrence_json IS NOT NULL OR t.series_id IS NOT NULL) AS is_periodic,
     (SELECT COUNT(*) FROM tasks s WHERE s.parent_task_id = t.id AND s.deleted_at IS NULL) AS subtasks,
     (SELECT COUNT(*) FROM tasks s WHERE s.parent_task_id = t.id AND s.deleted_at IS NULL AND s.status IN ('OPEN', 'IN_PROGRESS', 'BLOCKED')) AS subtasks_open,
     (SELECT COUNT(*) FROM task_comments cm WHERE cm.task_id = t.id AND cm.deleted_at IS NULL) AS comments,
@@ -302,7 +307,10 @@ async function decorate(rows: Row[], db: Queryable): Promise<WorkTaskItem[]> {
   const ids = rows.map((row) => num(row.id));
   const tags = new Map<number, WorkTaskItem["tags"]>();
   const projects = new Map<number, WorkTaskItem["projects"]>();
+  const followers = new Map<number, WorkTaskItem["followers"]>();
   if (ids.length) {
+    const [followerRows] = await db.query<Row[]>("SELECT f.task_id, u.id, u.name FROM task_followers f JOIN users u ON u.id = f.user_id WHERE f.task_id IN (?) ORDER BY f.created_at", [ids]);
+    for (const row of followerRows) followers.set(num(row.task_id), [...(followers.get(num(row.task_id)) ?? []), { id: num(row.id), name: String(row.name) }]);
     const [tagRows] = await db.query<Row[]>("SELECT tt.task_id, g.id, g.name, g.color FROM task_tags tt JOIN work_tags g ON g.id = tt.tag_id WHERE tt.task_id IN (?) ORDER BY g.name", [ids]);
     for (const row of tagRows) tags.set(num(row.task_id), [...(tags.get(num(row.task_id)) ?? []), { id: num(row.id), name: String(row.name), color: String(row.color) }]);
     const [projectRows] = await db.query<Row[]>("SELECT tp.task_id, p.id, p.name, p.color FROM task_projects tp JOIN projects p ON p.id = tp.project_id AND p.deleted_at IS NULL WHERE tp.task_id IN (?) ORDER BY p.name", [ids]);
@@ -331,6 +339,9 @@ async function decorate(rows: Row[], db: Queryable): Promise<WorkTaskItem[]> {
     comments: num(row.comments),
     likes: num(row.likes),
     blockedBy: num(row.blocked_by),
+    isPeriodic: Boolean(row.is_periodic),
+    createdAt: row.created_at as Date,
+    followers: followers.get(num(row.id)) ?? [],
     tags: tags.get(num(row.id)) ?? [],
     projects: projects.get(num(row.id)) ?? [],
   }));
@@ -828,6 +839,9 @@ export function workSearchSql(viewer: WorkViewer, search: WorkSearch, now: Date)
     where.push("EXISTS (SELECT 1 FROM task_followers sf WHERE sf.task_id = t.id AND sf.user_id = ?)");
     params.push(viewer.id);
   }
+  // D-219: periodic (repeating) or ad hoc (one-time) tasks.
+  if (search.kind === "periodic") where.push("(t.recurrence_json IS NOT NULL OR t.series_id IS NOT NULL)");
+  if (search.kind === "adhoc") where.push("t.recurrence_json IS NULL AND t.series_id IS NULL");
   if (search.team) {
     where.push("t.assignee_id IN (?)");
     params.push(viewer.teamIds.length ? [...viewer.teamIds] : [0]);
@@ -1019,4 +1033,66 @@ export async function setInbox(userId: number, ids: readonly number[] | null, co
     ids === null ? [userId] : [userId, ids.length ? [...ids] : [0]],
   );
   return result.affectedRows;
+}
+
+// D-219: the live task of every repeating series the person can see.
+export async function listPeriodic(viewer: WorkViewer, db: Queryable = getDbPool()): Promise<(WorkTaskItem & { rule: unknown; doneInSeries: number })[]> {
+  const visible = visibleTaskClause(viewer);
+  const { items } = await listTaskItems([visible.sql, "t.recurrence_json IS NOT NULL"], visible.params, "t.due_at IS NULL, t.due_at, t.id", 500, 0, db);
+  if (!items.length) return [];
+  const [rows] = await db.query<Row[]>(
+    `SELECT t.id, t.recurrence_json, (SELECT COUNT(*) FROM tasks s WHERE s.series_id = COALESCE(t.series_id, t.id) AND s.status = 'COMPLETED' AND s.deleted_at IS NULL) AS done_n
+     FROM tasks t WHERE t.id IN (?)`,
+    [items.map((item) => item.id)],
+  );
+  const extra = new Map(rows.map((row) => [num(row.id), { rule: row.recurrence_json, done: num(row.done_n) }]));
+  return items.map((item) => ({ ...item, rule: extra.get(item.id)?.rule ?? null, doneInSeries: extra.get(item.id)?.done ?? 0 }));
+}
+
+// ---- saved view tabs (D-220) -----------------------------------------------------------
+export interface WorkView {
+  id: number;
+  name: string;
+  config: unknown;
+}
+export async function listWorkViews(scope: "MY_TASKS" | "PROJECT", scopeId: number, db: Queryable = getDbPool()): Promise<WorkView[]> {
+  const [rows] = await db.query<Row[]>("SELECT id, name, config_json FROM work_views WHERE scope = ? AND scope_id = ? ORDER BY position, id", [scope, scopeId]);
+  return rows.map((row) => ({ id: num(row.id), name: String(row.name), config: typeof row.config_json === "string" ? JSON.parse(row.config_json) : row.config_json }));
+}
+export async function findWorkView(id: number, db: Queryable = getDbPool()): Promise<{ id: number; scope: "MY_TASKS" | "PROJECT"; scopeId: number; name: string } | null> {
+  const [rows] = await db.query<Row[]>("SELECT id, scope, scope_id, name FROM work_views WHERE id = ?", [id]);
+  return rows[0] ? { id: num(rows[0].id), scope: rows[0].scope as "MY_TASKS" | "PROJECT", scopeId: num(rows[0].scope_id), name: String(rows[0].name) } : null;
+}
+export async function insertWorkView(scope: "MY_TASKS" | "PROJECT", scopeId: number, name: string, config: unknown, by: number, db: Queryable = getDbPool()): Promise<"DUPLICATE" | "TOO_MANY" | number> {
+  const [count] = await db.query<Row[]>("SELECT COUNT(*) AS n, COALESCE(MAX(position), 0) AS top FROM work_views WHERE scope = ? AND scope_id = ?", [scope, scopeId]);
+  if (num(count[0]?.n ?? 0) >= 30) return "TOO_MANY";
+  try {
+    const [result] = await db.query<ResultSetHeader>("INSERT INTO work_views (scope, scope_id, name, config_json, position, created_by) VALUES (?, ?, ?, ?, ?, ?)", [scope, scopeId, name, JSON.stringify(config), Number(count[0]?.top ?? 0) + 1024, by]);
+    return result.insertId;
+  } catch (error) {
+    if ((error as { code?: string }).code === "ER_DUP_ENTRY") return "DUPLICATE";
+    throw error;
+  }
+}
+export async function updateWorkView(id: number, changes: { name?: string; config?: unknown }, db: Queryable = getDbPool()): Promise<void> {
+  if (changes.name !== undefined) await db.query<ResultSetHeader>("UPDATE work_views SET name = ? WHERE id = ?", [changes.name, id]);
+  if (changes.config !== undefined) await db.query<ResultSetHeader>("UPDATE work_views SET config_json = ? WHERE id = ?", [JSON.stringify(changes.config), id]);
+}
+export async function deleteWorkView(id: number, db: Queryable = getDbPool()): Promise<void> {
+  await db.query<ResultSetHeader>("DELETE FROM work_views WHERE id = ?", [id]);
+}
+
+// D-222: the project's permissions (fields and sharing tasks).
+export async function setProjectPermissions(projectId: number, permissions: ProjectPermissions, db: Queryable = getDbPool()): Promise<void> {
+  await db.query<ResultSetHeader>("UPDATE projects SET permissions_json = ? WHERE id = ?", [JSON.stringify(permissions), projectId]);
+}
+
+// D-222: the other copies of an ad hoc task given to several people.
+export async function assignGroup(taskId: number, db: Queryable = getDbPool()): Promise<{ id: number; taskNo: string; assigneeName: string; status: string }[]> {
+  const [rows] = await db.query<Row[]>(
+    `SELECT t.id, t.task_no, u.name, t.status FROM tasks t JOIN users u ON u.id = t.assignee_id
+     WHERE t.assign_group_id = (SELECT assign_group_id FROM tasks WHERE id = ?) AND t.id <> ? AND t.deleted_at IS NULL ORDER BY u.name`,
+    [taskId, taskId],
+  );
+  return rows.map((row) => ({ id: num(row.id), taskNo: String(row.task_no), assigneeName: String(row.name), status: String(row.status) }));
 }

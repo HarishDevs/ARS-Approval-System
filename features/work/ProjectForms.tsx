@@ -301,17 +301,17 @@ export function MembersPanel({
   );
 }
 
-export function StatusForm({ projectId }: { projectId: number }) {
+export function StatusForm({ projectId, initial }: { projectId: number; initial?: string }) {
   const { result, pending, onSubmit, formRef } = useActionForm(statusAction, { resetOnSuccess: true });
   return (
-    <form ref={formRef} onSubmit={onSubmit} className="space-y-3" aria-label="Post a status update">
+    <form ref={formRef} onSubmit={onSubmit} className="space-y-3" aria-label="Post a status update" id="post-status">
       <input type="hidden" name="projectId" value={projectId} />
       <fieldset>
         <legend className="field-label">How is it going?</legend>
         <div className="flex flex-wrap gap-3">
           {STATUS_KINDS.map((kind) => (
             <label key={kind} className="flex items-center gap-1.5 text-label">
-              <input type="radio" name="status" value={kind} required /> {STATUS_KIND_LABEL[kind]}
+              <input type="radio" name="status" value={kind} required defaultChecked={initial === kind} /> {STATUS_KIND_LABEL[kind]}
             </label>
           ))}
         </div>

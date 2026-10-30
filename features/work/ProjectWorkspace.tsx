@@ -1,13 +1,16 @@
 "use client";
 
-import { ChevronDown, ChevronRight, GitBranch, GripVertical, Heart, Lock, MessageSquare, Plus, Trash2, Diamond } from "lucide-react";
+import { ChevronDown, ChevronRight, GitBranch, GripVertical, Heart, Lock, MessageSquare, Plus, Repeat, Trash2, Diamond } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { addSectionAction, moveTaskAction, quickAddAction, quickAddManyAction, sectionAction, taskFieldsAction } from "@/app/users/work/actions";
-import { TaskCheck, useWorkCall } from "@/features/work/client";
+import { TaskCheck, usePaneLink, useWorkCall } from "@/features/work/client";
 import { dueLabel, indiaDayOf, TONE_TEXT } from "@/features/work/format";
 import { BulkBar, FieldInput, type FieldView } from "@/features/work/MoreParts";
+import { TaskGrid, type GridView } from "@/features/work/TaskGrid";
+import type { GridConfig, GridTask } from "@/server/work/grid";
 
 // D-215: a project's List and Board. Sections hold tasks in the order the
 // team set (drag, or Alt+↑/↓ on a row); a sort other than "Manual" only
@@ -31,6 +34,7 @@ export interface BoardTask {
   likes: number;
   blockedBy: number;
   isMilestone: boolean;
+  isPeriodic?: boolean; // D-219
   tags: { id: number; name: string }[];
 }
 export interface BoardSection {
@@ -38,6 +42,13 @@ export interface BoardSection {
   name: string;
 }
 type Sort = "manual" | "due" | "priority" | "title" | "assignee";
+type GroupBy = "section" | "assignee" | "due" | "priority";
+const PRIORITY_NAME = { URGENT: "Urgent", HIGH: "High", NORMAL: "Normal", LOW: "Low" } as const;
+const shiftDay = (day: string, days: number) => {
+  const date = new Date(`${day}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+};
 const OPEN = new Set(["OPEN", "IN_PROGRESS", "BLOCKED"]);
 const PRIORITY_RANK = { URGENT: 0, HIGH: 1, NORMAL: 2, LOW: 3 } as const;
 const PRIORITY_CLASS = { URGENT: "bg-danger-50 text-danger-600", HIGH: "bg-warning-50 text-warning-600", NORMAL: "", LOW: "" } as const;
@@ -53,6 +64,7 @@ export function ProjectWorkspace({
   nowIso,
   fields = [],
   values = {},
+  grid,
 }: {
   projectId: number;
   layout: "LIST" | "BOARD";
@@ -64,27 +76,42 @@ export function ProjectWorkspace({
   nowIso: string;
   fields?: FieldView[]; // D-218: the project's own columns
   values?: Record<number, Record<number, string>>;
+  grid?: { rows: GridTask[]; initial: GridConfig; view: GridView }; // D-220: the List as the shared table
 }) {
   const { call } = useWorkCall();
   const now = useMemo(() => new Date(nowIso), [nowIso]);
+  // D-219 (screen catalog O-06/O-05/O-07): Filter (quick filters), Sort, Group, Search this view.
+  const [incomplete, setIncomplete] = useState(true);
   const [showDone, setShowDone] = useState(false);
   const [filter, setFilter] = useState("");
   const [mine, setMine] = useState(false);
+  const [dueWithin, setDueWithin] = useState<"" | "this" | "next">("");
   const [sort, setSort] = useState<Sort>("manual");
-  const [collapsed, setCollapsed] = useState<Set<number>>(new Set());
+  const [group, setGroup] = useState<GroupBy>("section");
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const openTask = useSearchParams().get("task");
   const [dragging, setDragging] = useState<number | null>(null);
   const [live, setLive] = useState("");
   const [selected, setSelected] = useState<number[]>([]);
+  const paneLink = usePaneLink();
   useAutoRefresh();
   // D-218: column widths: select, task, assignee, due, priority, then the project's fields.
   const columns = { gridTemplateColumns: `${canEdit ? "28px " : ""}minmax(220px,1fr) 170px 130px 110px${fields.map(() => " 150px").join("")}` };
 
   const visible = useMemo(() => {
     const words = filter.toLowerCase().split(/\s+/).filter(Boolean);
+    const today = indiaDayOf(now);
+    const weekStart = shiftDay(today, -((new Date(`${today}T00:00:00Z`).getUTCDay() + 6) % 7));
+    const inWeek = (task: BoardTask, offset: number) => {
+      if (!task.dueAt) return false;
+      const day = indiaDayOf(new Date(task.dueAt));
+      return day >= shiftDay(weekStart, offset * 7) && day < shiftDay(weekStart, offset * 7 + 7);
+    };
     const list = tasks.filter(
       (task) =>
-        (showDone || OPEN.has(task.status)) &&
+        ((incomplete && OPEN.has(task.status)) || (showDone && task.status === "COMPLETED")) &&
         (!mine || task.assigneeId === meId) &&
+        (!dueWithin || inWeek(task, dueWithin === "this" ? 0 : 1)) &&
         words.every((word) => `${task.title} ${task.taskNo} ${task.assigneeName} ${task.tags.map((tag) => tag.name).join(" ")}`.toLowerCase().includes(word)),
     );
     const by: Record<Sort, (a: BoardTask, b: BoardTask) => number> = {
@@ -95,11 +122,35 @@ export function ProjectWorkspace({
       assignee: (a, b) => a.assigneeName.localeCompare(b.assigneeName),
     };
     return [...list].sort(by[sort]);
-  }, [tasks, showDone, mine, meId, filter, sort]);
-  const manual = sort === "manual" && !filter && !mine;
+  }, [tasks, incomplete, showDone, mine, dueWithin, meId, filter, sort, now]);
+  const filterCount = Number(!incomplete) + Number(showDone) + Number(mine) + Number(Boolean(dueWithin));
+  const manual = sort === "manual" && !filter && !mine && !dueWithin && group === "section";
   const canDrag = canEdit && manual;
 
   const inSection = (sectionId: number) => visible.filter((task) => task.sectionId === sectionId);
+  // The list's groups: sections (with adding and dragging), or a field.
+  const groups = useMemo((): { key: string; name: string; section: BoardSection | null; rows: BoardTask[] }[] => {
+    if (group === "section") return sections.map((section) => ({ key: `s${section.id}`, name: section.name, section, rows: visible.filter((task) => task.sectionId === section.id) }));
+    const today = indiaDayOf(now);
+    const bucket = (task: BoardTask): [string, number] => {
+      if (group === "assignee") return [task.assigneeName, 0];
+      if (group === "priority") return [PRIORITY_NAME[task.priority], PRIORITY_RANK[task.priority]];
+      if (!task.dueAt) return ["No due date", 6];
+      const day = indiaDayOf(new Date(task.dueAt));
+      if (day < today) return ["Overdue", 0];
+      if (day === today) return ["Today", 1];
+      if (day <= shiftDay(today, 7)) return ["Next 7 days", 2];
+      if (day <= shiftDay(today, 30)) return ["Next 30 days", 3];
+      return ["Later", 4];
+    };
+    const map = new Map<string, { order: number; rows: BoardTask[] }>();
+    for (const task of visible) {
+      const [name, order] = bucket(task);
+      map.set(name, { order, rows: [...(map.get(name)?.rows ?? []), task] });
+    }
+    return [...map.entries()].sort((a, b) => a[1].order - b[1].order || a[0].localeCompare(b[0])).map(([name, value]) => ({ key: `g${name}`, name, section: null, rows: value.rows }));
+  }, [group, sections, visible, now]);
+  const focusAdd = () => document.querySelector<HTMLInputElement>("[data-work-add]")?.focus();
 
   // A move: into `sectionId`, before `beforeId` (null: at the end).
   const move = async (taskId: number, sectionId: number, beforeId: number | null) => {
@@ -129,28 +180,75 @@ export function ProjectWorkspace({
   };
 
   const toolbar = (
-    <div className="mb-3 flex flex-wrap items-center gap-2" role="toolbar" aria-label="View options">
-      <label className="sr-only" htmlFor="project-filter">
-        Filter tasks
-      </label>
-      <input id="project-filter" value={filter} onChange={(event) => setFilter(event.target.value)} placeholder="Filter tasks…" className="field-input h-8 w-48 text-label" />
+    <div className="mb-3 flex flex-wrap items-center gap-2 border-b border-line pb-3" role="toolbar" aria-label="View options">
+      {canEdit && (
+        <button type="button" onClick={focusAdd} className="btn-primary btn-compact inline-flex items-center gap-1">
+          <Plus aria-hidden="true" className="h-4 w-4" /> Add task
+        </button>
+      )}
+      <span className="ml-auto" />
+      <Popover label={filterCount ? `Filters: ${filterCount}` : "Filter"} active={filterCount > 0} testId="filter-menu">
+        <p className="mb-2 flex items-center justify-between text-label font-semibold">
+          Filters
+          {filterCount > 0 && (
+            <button
+              type="button"
+              className="link text-caption font-normal"
+              onClick={() => {
+                setIncomplete(true);
+                setShowDone(false);
+                setMine(false);
+                setDueWithin("");
+              }}
+            >
+              Clear
+            </button>
+          )}
+        </p>
+        <div className="space-y-1.5 text-label">
+          <label className="flex items-center gap-2">
+            <input type="checkbox" checked={incomplete} onChange={(event) => setIncomplete(event.target.checked)} /> Incomplete tasks
+          </label>
+          <label className="flex items-center gap-2">
+            <input type="checkbox" checked={showDone} onChange={(event) => setShowDone(event.target.checked)} data-testid="show-completed" /> Completed tasks
+          </label>
+          <label className="flex items-center gap-2">
+            <input type="checkbox" checked={mine} onChange={(event) => setMine(event.target.checked)} /> Just my tasks
+          </label>
+          <label className="flex items-center gap-2">
+            <input type="checkbox" checked={dueWithin === "this"} onChange={(event) => setDueWithin(event.target.checked ? "this" : "")} /> Due this week
+          </label>
+          <label className="flex items-center gap-2">
+            <input type="checkbox" checked={dueWithin === "next"} onChange={(event) => setDueWithin(event.target.checked ? "next" : "")} /> Due next week
+          </label>
+        </div>
+      </Popover>
       <label className="flex items-center gap-1.5 text-label">
-        <input type="checkbox" checked={mine} onChange={(event) => setMine(event.target.checked)} /> Only mine
-      </label>
-      <label className="flex items-center gap-1.5 text-label">
-        <input type="checkbox" checked={showDone} onChange={(event) => setShowDone(event.target.checked)} data-testid="show-completed" /> Show completed
-      </label>
-      <label className="flex items-center gap-1.5 text-label">
-        Sort
-        <select value={sort} onChange={(event) => setSort(event.target.value as Sort)} className="field-input h-8 w-auto py-0 text-label">
-          <option value="manual">Manual</option>
+        <span className="text-ink-muted">Sort</span>
+        <select aria-label="Sort" value={sort} onChange={(event) => setSort(event.target.value as Sort)} className="field-input h-8 w-auto py-0 text-label">
+          <option value="manual">None (manual order)</option>
           <option value="due">Due date</option>
           <option value="priority">Priority</option>
           <option value="assignee">Assignee</option>
-          <option value="title">Name</option>
+          <option value="title">Alphabetical</option>
         </select>
       </label>
-      {canEdit && !manual && <span className="text-caption text-ink-muted">Clear the sort and filters to drag tasks.</span>}
+      {layout === "LIST" && (
+        <label className="flex items-center gap-1.5 text-label">
+          <span className="text-ink-muted">Group</span>
+          <select aria-label="Group" value={group} onChange={(event) => setGroup(event.target.value as GroupBy)} className="field-input h-8 w-auto py-0 text-label">
+            <option value="section">Sections</option>
+            <option value="assignee">Assignee</option>
+            <option value="due">Due date</option>
+            <option value="priority">Priority</option>
+          </select>
+        </label>
+      )}
+      <label className="ml-auto flex items-center" htmlFor="project-filter">
+        <span className="sr-only">Search this view</span>
+        <input id="project-filter" type="search" value={filter} onChange={(event) => setFilter(event.target.value)} placeholder="Search this view" className="field-input h-8 w-52 text-label" />
+      </label>
+      {canEdit && !manual && <span className="w-full text-caption text-ink-muted">Dragging is off while a sort, filter or grouping is on.</span>}
       <span role="status" aria-live="polite" className="sr-only">
         {live}
       </span>
@@ -166,7 +264,7 @@ export function ProjectWorkspace({
             <section
               key={section.id}
               aria-label={section.name}
-              className="flex w-72 shrink-0 flex-col rounded-lg border border-line bg-surface-muted"
+              className="flex w-[304px] shrink-0 flex-col rounded-lg bg-surface-muted"
               onDragOver={(event) => canDrag && event.preventDefault()}
               onDrop={(event) => {
                 event.preventDefault();
@@ -190,12 +288,12 @@ export function ProjectWorkspace({
                       setDragging(null);
                     }}
                     onKeyDown={(event) => keyMove(event, task)}
-                    className={`rounded-md border border-line bg-surface p-3 shadow-sm ${dragging === task.id ? "opacity-50" : ""}`}
+                    className={`rounded-lg border border-line bg-surface p-4 shadow-sm hover:border-line-strong ${dragging === task.id ? "opacity-50" : ""} ${openTask === String(task.id) ? "outline outline-2 outline-primary-600" : ""}`}
                     data-testid="board-card"
                   >
                     <div className="flex items-start gap-2">
                       <TaskCheck taskId={task.id} done={task.status === "COMPLETED"} disabled={!(canEdit || task.assigneeId === meId) || task.status === "CANCELLED"} label={task.title} size="sm" />
-                      <Link href={`/users/tasks/${task.id}?project=${projectId}`} className="min-w-0 flex-1 text-label font-medium text-ink hover:underline">
+                      <Link href={paneLink(task.id)} scroll={false} className="line-clamp-2 min-w-0 flex-1 text-label font-medium text-ink hover:underline">
                         {task.isMilestone && <Diamond aria-label="Milestone" className="mr-1 inline h-3.5 w-3.5 text-primary-600" />}
                         <span className={task.status === "COMPLETED" ? "text-ink-muted line-through" : ""}>{task.title}</span>
                       </Link>
@@ -213,12 +311,41 @@ export function ProjectWorkspace({
     );
   }
 
+  // D-220: the List is the shared task table (Filters, Sort, Groups, Options, saved tabs).
+  if (grid)
+    return (
+      <div data-testid="project-list">
+        <TaskGrid
+          rows={grid.rows}
+          initial={grid.initial}
+          columns={["assignee", "due", "priority", "collaborators", "createdBy", "tags"]}
+          groupsAllowed={["section", "assignee", "createdBy", "due", "priority", "kind"]}
+          sections={sections}
+          sectionHeader={(section, count) => <SectionHeader section={section} sections={sections} count={count} canEdit={canEdit} plain />}
+          onMove={canEdit ? (taskId, sectionId, beforeId) => void move(taskId, sectionId, beforeId) : undefined}
+          addTo={canEdit ? { projectId } : undefined}
+          people={people}
+          fields={fields}
+          values={values}
+          meId={meId}
+          nowIso={nowIso}
+          view={grid.view}
+          bulk={canEdit}
+          editAssignee={canEdit}
+          editPriority={canEdit}
+          testId="project-grid"
+          emptyText="No tasks match. Clear the filters, or add a task."
+        />
+        {canEdit && <AddSection projectId={projectId} afterId={sections.at(-1)?.id ?? null} />}
+      </div>
+    );
+
   return (
     <div>
       {toolbar}
       <div className="card overflow-x-auto" data-testid="project-list">
         <div role="table" aria-label="Tasks" className="min-w-[760px]">
-          <div role="row" style={columns} className="grid border-b border-line bg-surface-muted px-3 py-2 text-caption font-semibold uppercase tracking-wide text-ink-faint">
+          <div role="row" style={columns} className="relative grid border-b border-line bg-surface-muted px-3 py-2 text-caption font-semibold uppercase tracking-wide text-ink-faint">
             {canEdit && (
               <span role="columnheader">
                 <input
@@ -238,19 +365,25 @@ export function ProjectWorkspace({
                 {field.name}
               </span>
             ))}
+            {canEdit && (
+              <Link href={`/users/work/projects/${projectId}/settings#fields`} aria-label="Add a field" title="Add a field" className="absolute right-3 rounded px-1 text-ink-faint hover:bg-surface hover:text-ink">
+                +
+              </Link>
+            )}
           </div>
-          {sections.map((section) => {
-            const rows = inSection(section.id);
-            const closed = collapsed.has(section.id);
+          {groups.map((entry) => {
+            const section = entry.section;
+            const rows = entry.rows;
+            const closed = collapsed.has(entry.key);
             return (
               <div
-                key={section.id}
+                key={entry.key}
                 role="rowgroup"
-                aria-label={section.name}
+                aria-label={entry.name}
                 onDragOver={(event) => canDrag && event.preventDefault()}
                 onDrop={(event) => {
                   event.preventDefault();
-                  if (dragging !== null) void move(dragging, section.id, null);
+                  if (dragging !== null && section) void move(dragging, section.id, null);
                   setDragging(null);
                 }}
               >
@@ -258,13 +391,19 @@ export function ProjectWorkspace({
                   <button
                     type="button"
                     aria-expanded={!closed}
-                    aria-label={`${closed ? "Show" : "Hide"} ${section.name}`}
-                    onClick={() => setCollapsed((current) => new Set(current.has(section.id) ? [...current].filter((item) => item !== section.id) : [...current, section.id]))}
+                    aria-label={`${closed ? "Show" : "Hide"} ${entry.name}`}
+                    onClick={() => setCollapsed((current) => new Set(current.has(entry.key) ? [...current].filter((item) => item !== entry.key) : [...current, entry.key]))}
                     className="rounded p-1 text-ink-muted hover:bg-surface-muted"
                   >
                     {closed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                   </button>
-                  <SectionHeader section={section} sections={sections} count={rows.length} canEdit={canEdit} plain />
+                  {section ? (
+                    <SectionHeader section={section} sections={sections} count={rows.length} canEdit={canEdit} plain />
+                  ) : (
+                    <h3 className="flex items-center gap-2 pb-1 font-semibold">
+                      {entry.name} <span className="text-caption font-normal text-ink-muted">{rows.length}</span>
+                    </h3>
+                  )}
                 </div>
                 {!closed &&
                   rows.map((task) => (
@@ -279,14 +418,14 @@ export function ProjectWorkspace({
                       onDrop={(event) => {
                         event.preventDefault();
                         event.stopPropagation();
-                        if (dragging !== null && dragging !== task.id) void move(dragging, section.id, task.id);
+                        if (dragging !== null && dragging !== task.id && section) void move(dragging, section.id, task.id);
                         setDragging(null);
                       }}
                       onKeyDown={(event) => keyMove(event, task)}
                       data-testid="task-row"
                       data-task-id={task.id}
                       style={columns}
-                      className={`work-row group grid items-center border-b border-line px-1 py-1.5 hover:bg-surface-muted ${dragging === task.id ? "opacity-50" : ""} ${selected.includes(task.id) ? "bg-primary-50/50" : ""}`}
+                      className={`work-row group grid items-center border-b border-line px-1 py-1.5 hover:bg-surface-muted ${dragging === task.id ? "opacity-50" : ""} ${selected.includes(task.id) ? "bg-primary-50/50" : ""} ${openTask === String(task.id) ? "bg-primary-50 outline outline-1 -outline-offset-1 outline-primary-600" : ""}`}
                     >
                       {canEdit && (
                         <div role="cell" className="pl-2">
@@ -304,7 +443,7 @@ export function ProjectWorkspace({
                         </span>
                         <TaskCheck taskId={task.id} done={task.status === "COMPLETED"} disabled={!(canEdit || task.assigneeId === meId) || task.status === "CANCELLED"} label={task.title} />
                         <Link
-                          href={`/users/tasks/${task.id}?project=${projectId}`}
+                          href={paneLink(task.id)} scroll={false}
                           className="min-w-0 truncate text-label text-ink hover:underline"
                           aria-keyshortcuts={canDrag ? "Alt+ArrowUp Alt+ArrowDown" : undefined}
                         >
@@ -381,7 +520,7 @@ export function ProjectWorkspace({
                       ))}
                     </div>
                   ))}
-                {!closed && canEdit && <AddTask projectId={projectId} sectionId={section.id} />}
+                {!closed && canEdit && section && <AddTask projectId={projectId} sectionId={section.id} />}
               </div>
             );
           })}
@@ -396,6 +535,11 @@ export function ProjectWorkspace({
 function RowBadges({ task }: { task: BoardTask }) {
   return (
     <span className="ml-1 flex shrink-0 items-center gap-2 text-caption text-ink-muted">
+      {task.isPeriodic && (
+        <span role="img" aria-label="Periodic" title="Periodic: repeats" className="inline-flex items-center text-info-600">
+          <Repeat aria-hidden="true" className="h-3 w-3" />
+        </span>
+      )}
       {task.blockedBy > 0 && (
         <span title={`Waiting for ${task.blockedBy} task${task.blockedBy === 1 ? "" : "s"}`} className="inline-flex items-center gap-0.5 text-warning-600">
           <Lock aria-hidden="true" className="h-3 w-3" />
@@ -572,4 +716,22 @@ export function useAutoRefresh(ms = 30_000) {
       document.removeEventListener("visibilitychange", tick);
     };
   }, [router, ms]);
+}
+
+// A small toolbar popover (the catalog's Filter): a button that opens a panel.
+function Popover({ label, active, testId, children }: { label: string; active?: boolean; testId?: string; children: React.ReactNode }) {
+  const box = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    const close = (event: MouseEvent) => {
+      if (box.current?.open && !box.current.contains(event.target as Node)) box.current.open = false;
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, []);
+  return (
+    <details ref={box} className="relative" data-testid={testId}>
+      <summary className={`btn-secondary btn-compact cursor-pointer list-none ${active ? "border-primary-600 text-primary-700" : ""}`}>{label}</summary>
+      <div className="absolute left-0 z-30 mt-1 w-60 rounded-lg border border-line bg-raised p-3 shadow-overlay">{children}</div>
+    </details>
+  );
 }

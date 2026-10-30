@@ -32,7 +32,7 @@ interface TaskShape {
   assigneeManagerId: number | null;
 }
 
-export async function rightsOn(task: TaskShape, viewer: WorkViewer, db: Queryable = getDbPool()): Promise<TaskRights & { bestRole: ProjectRole | null }> {
+export async function rightsOn(task: TaskShape, viewer: WorkViewer, db: Queryable = getDbPool()): Promise<TaskRights & { bestRole: ProjectRole | null; adhoc: boolean }> {
   let best: ProjectRole | null = null;
   for (const { project, members } of await projectsGoverning(task.id, task.rootTaskId, db)) best = higher(best, effectiveProjectRole(projectFacts(project, members), viewer));
   // The top task's people see its subtasks too.
@@ -42,6 +42,9 @@ export async function rightsOn(task: TaskShape, viewer: WorkViewer, db: Queryabl
     rootParty = rows.length > 0;
   }
   const follower = await isFollowing([task.id, task.rootTaskId ?? task.id], viewer.id, db);
+  // D-222: ad hoc = not repeating and not part of a repeating series.
+  const [kind] = await db.query<RowDataPacket[]>("SELECT recurrence_json IS NULL AND series_id IS NULL AS adhoc FROM tasks WHERE id = ?", [task.id]);
+  const adhoc = Boolean(kind[0]?.adhoc);
   const rights = taskRights({
     isAssignee: task.assigneeId === viewer.id,
     isCreator: task.createdBy === viewer.id || task.assignedBy === viewer.id,
@@ -49,8 +52,10 @@ export async function rightsOn(task: TaskShape, viewer: WorkViewer, db: Queryabl
     managesAssignee: task.assigneeManagerId === viewer.id || viewer.teamIds.includes(task.assigneeId),
     isAdmin: viewer.isAdmin,
     bestProjectRole: best,
+    adhoc,
+    isOriginalCreator: task.createdBy === viewer.id,
   });
-  return { ...rights, bestRole: best };
+  return { ...rights, bestRole: best, adhoc };
 }
 
 // The task rules' viewer, with what projects and followers add.
@@ -64,6 +69,8 @@ export async function taskViewerFor(task: TaskShape, actor: { id: number; roles:
     workSee: rights.view,
     workEdit: rights.bestRole === "OWNER" || rights.bestRole === "EDITOR",
     workComment: rights.comment,
+    // D-222: an ad hoc task is edited, reassigned, cancelled and reopened by its creator (and IT) only.
+    creatorOnly: rights.adhoc,
     teamIds: viewer.teamIds,
   };
 }
