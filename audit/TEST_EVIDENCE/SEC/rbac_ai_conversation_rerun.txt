@@ -1,0 +1,12 @@
+# Re-run after the lead's e2e global setup recreated E2E_* users. Conversation 2 is owned by user 13 (PB_B_*). 2026-10-31T23:06:56+05:30
+[baseline status E2E_SUPER] => 200 | {"signedIn":true,"idleSecondsLeft":1799,"reason":null,"build":"O6uJvlEnEP9PlkY-_JB_Q"}
+[baseline own list GET /api/ai/conversations] => 200 | {"success":true,"data":{"stopped":false,"modes":[{"mode":"COMBINED","label":"Combined"},{"mode":"APPROVAL","label":"Approvals"},{"mode":"TASK","label":"Tasks"},
+[GET other's conversation 2] => 404 | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-543550"}}
+[PATCH other's conversation 2 (pinned:true)] => 404 | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-35B199"}}
+[DELETE other's conversation 2] => 404 | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-A359C0"}}
+[baseline status after] => 200 | {"signedIn":true,"idleSecondsLeft":1799,"reason":null,"build":"O6uJvlEnEP9PlkY-_JB_Q"}
+┌─────────┬────┬───────────────┬───────────┬───────────┐
+│ (index) │ id │ owner_user_id │ title     │ pinned_at │
+├─────────┼────┼───────────────┼───────────┼───────────┤
+│ 0       │ 2  │ 13            │ 'Private' │ null      │
+└─────────┴────┴───────────────┴───────────┴───────────┘

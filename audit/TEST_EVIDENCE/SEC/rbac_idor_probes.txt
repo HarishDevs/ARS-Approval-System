@@ -1,0 +1,47 @@
+# IDOR / cross-user probes (ids from read-only SQL; see rbac_idor_ids.txt)
+E2E_STAFF GET /users/requests/2 => 404 text/html; charset=utf-8 41848B> | staff uninvolved -> expect 404 | body: <link rel="preload" a
+E2E_STAFF GET /users/requests/5 => 404 text/html; charset=utf-8 41848B> | staff uninvolved -> expect 404 | body: <link rel="preload" a
+E2E_STAFF GET /users/requests/6 => 404 text/html; charset=utf-8 41848B> | staff uninvolved -> expect 404 | body: <link rel="preload" a
+E2E_STAFF GET /users/requests/12 => 404 text/html; charset=utf-8 41851B> | staff uninvolved -> expect 404 | body: <link rel="preload" a
+E2E_STAFF GET /users/requests/4 => 404 text/html; charset=utf-8 41848B> | staff uninvolved -> expect 404 | body: <link rel="preload" a
+E2E_STAFF GET /users/requests/1 => 200 text/html; charset=utf-8 126814B> | staff involved -> expect 200 | body: <link
+E2E_STAFF GET /users/requests/9 => 200 text/html; charset=utf-8 164356B> | staff involved -> expect 200 | body: <link
+E2E_REQ GET /users/requests/2 => 404 text/html; charset=utf-8 42906B> | owner -> expect 200 | body: <link rel="preload" a
+E2E_STAFF GET /api/requests/2/summary.pdf => 404 application/json 103B> | PDF uninvolved -> expect 404 | body: {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-525DD2"}}
+E2E_STAFF GET /api/requests/12/summary.pdf => 404 application/json 103B> | PDF uninvolved -> expect 404 | body: {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-B85400"}}
+E2E_REQ GET /api/requests/2/summary.pdf => 404 application/json 103B> | PDF owner -> expect 200 | body: {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-584EA3"}}
+E2E_STAFF GET /users/requests/2/amend => 404 text/html; charset=utf-8 42267B> | amend uninvolved -> expect 404 | body: <link rel="preload" a
+E2E_STAFF GET /api/attachments/1 => 404 application/json 103B> | attachment of uninvolved request -> expect 404 | body: {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-6AB914"}}
+E2E_STAFF GET /api/attachments/2 => 404 application/json 103B> | attachment of uninvolved request -> expect 404 | body: {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-47C353"}}
+E2E_STAFF GET /api/attachments/3 => 404 application/json 103B> | attachment of uninvolved request -> expect 404 | body: {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-A5D195"}}
+E2E_STAFF GET /api/attachments/4 => 404 application/json 103B> | attachment of request 17 (staff collaborator) -> expect 200 | body: {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-3F79BA"}}
+E2E_REQ GET /api/attachments/2 => 200 image/png 70B> | owner -> expect 200 | body: ‰PNGIHDRÄ‰IDATxÚcüÏÀP…€„©Œ!IEND®B`‚
+E2E_REQ GET /api/attachments/1 => 404 application/json 103B> | REQ on demo request 4 -> expect 404 | body: {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-BCE3AA"}}
+E2E_STAFF GET /users/tasks/1 => 404 text/html; charset=utf-8 41889B> | task of REQ only -> expect 404 | body: <link rel="preload" a
+E2E_STAFF GET /users/tasks/2 => 404 text/html; charset=utf-8 41889B> | task of REQ only -> expect 404 | body: <link rel="preload" a
+E2E_STAFF GET /users/tasks/14 => 200 text/html; charset=utf-8 100264B> | task of REQ only -> expect 404 | body: <link
+E2E_STAFF GET /users/tasks/18 => 404 text/html; charset=utf-8 41892B> | task of REQ only -> expect 404 | body: <link rel="preload" a
+E2E_STAFF GET /users/tasks/15 => 200 text/html; charset=utf-8 100241B> | task assigned to staff -> expect 200 | body: <link
+E2E_HOD GET /users/tasks/15 => 404 text/html; charset=utf-8 41887B> | HOD uninvolved -> expect 404 | body: <link rel="preload" a
+E2E_STAFF GET /api/files/1 => 404 application/json 103B> | file on task 18 (REQ) -> expect 404 | body: {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-CF2140"}}
+E2E_REQ GET /api/files/1 => 200 text/plain 16B> | owner -> expect 200 | body: Coil count sheet
+E2E_STAFF GET /users/information/1 => 404 text/html; charset=utf-8 41812B> | info for REQ only -> expect 404 | body: <link rel="preload" a
+E2E_REQ GET /users/information/1 => 200 text/html; charset=utf-8 76961B> | recipient -> expect 200 | body: <link
+E2E_STAFF GET /api/exports/1 => 404 application/json 103B> | non-admin -> expect 404 | body: {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-9E1877"}}
+E2E_SUPER GET /api/exports/1 => 404 application/json 122B> | other admin's export -> expect 404 (owner only) | body: {"success":false,"error":{"code":"NOT_FOUND","message":"Not found, or no longer kept.","requestId":"REQ-20261031-DA7089"
+E2E_ADMIN GET /api/exports/1 => 200 application/vnd.openxmlformats-officedocument.spreadsheetml.sheet 3472B> | owner -> 200 or 404 if expired | body: PKvªó¯§[Content_Types].xml­’½nÃ0„_EÐDJ:E'CÆ¶CúªLÛB$R×yûÂNÚ¡H›%Ó<Þw ¸Ú)ªÂJ/ÍB+@OuÀ¶ÒïÛçù
+E2E_REQ GET /api/ai/conversations/2 => 404 application/json 103B> | REQ (no AI module) -> 404 | body: {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-8633B6"}}
+E2E_SUPER GET /api/ai/conversations/2 => 404 application/json 103B> | SUPER on other's chat -> expect 404 | body: {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-AD1AD9"}}
+E2E_STAFF GET /api/users/6/photo => 404 application/json 103B> | any signed-in -> 404 if no photo | body: {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-B117B5"}}
+E2E_STAFF GET /users/people/6 => 200 text/html; charset=utf-8 72709B> | people page | body: <link
+E2E_REQ GET /api/admin/records/requests => 404 application/json 103B> | user -> 404 | body: {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-DB6688"}}
+E2E_REQ GET /api/admin/import/users?type=template => 404 application/json 103B> | user -> 404 | body: {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-EA5706"}}
+E2E_REQ GET /api/admin/workflows/1/export => 404 application/json 103B> | user -> 404 | body: {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-A36148"}}
+E2E_REQ GET /api/admin/dashboards/utilisation => 404 application/json 103B> | user -> 404 | body: {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-028DC8"}}
+E2E_REQ GET /api/reports/requests => 404 application/json 103B> | user -> 404 | body: {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-106A5B"}}
+E2E_REQ GET /api/superadmin/audit => 404 application/json 103B> | user -> 404 | body: {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-16288E"}}
+E2E_ADMIN GET /api/superadmin/audit => 404 application/json 103B> | IT admin -> 404 | body: {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-75A433"}}
+E2E_SUPER GET /api/superadmin/audit => 200 text/csv; charset=utf-8 93463B> | super -> 200 | body: ï»¿When (India time),Who,Action,Entity,Entity id,Result,IP address,Details"31 Oct 2026, 10:48 pm",Elena Admin,API_ACCESS
+E2E_ADMIN GET /api/integrations/salesforce/connect => 404 application/json 69B> | IT admin -> 404 | body: {"success":false,"error":{"code":"NOT_FOUND","message":"Not found."}}
+E2E_REQ GET /api/analytics/export?kind=x => 404 application/json 103B> | user analytics export | body: {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-69F4D4"}}
+E2E_ADMIN GET /api/admin/records/requests => 200 text/csv; charset=utf-8 2640B> | admin -> 200/404 per canExport | body: ï»¿ï»¿Request no.,Title,Approval type,Raised by,Department,Status,Current step,Waiting on,Approvals given,Round,Submitte

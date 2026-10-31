@@ -1,0 +1,33 @@
+== migrations
+48
+202610301400_work_views.sql
+202610301600_task_kinds_permissions.sql
+202610311000_my_tasks_overdue.sql
+202610311200_profile_notifications.sql
+202610311400_workflow_draft_revision.sql
+migrations
+optional
+seeds
+== destructive statements in migrations
+database/migrations/202610071201_demo_people.sql:9:  MODIFY COLUMN auth_method ENUM('GOOGLE', 'PASSWORD_OTP', 'DEMO') NOT NULL;
+database/migrations/202610081500_approver_designations.sql:9:UPDATE designations SET is_approver = TRUE;
+database/migrations/202610091000_v140_engine_and_ops.sql:13:  MODIFY COLUMN kind ENUM('REMINDER', 'ESCALATION', 'ESCALATION_2', 'ESCALATION_3') NOT NULL;
+database/migrations/202610100900_v150_user_comfort.sql:58:  MODIFY COLUMN kind ENUM('REMINDER', 'ESCALATION', 'ESCALATION_2', 'ESCALATION_3', 'DUE_SOON') NOT NULL;
+database/migrations/202610100900_v150_user_comfort.sql:67:UPDATE delegations SET activation_logged_at = created_at WHERE starts_on <= CURRENT_DATE;
+database/migrations/202610100900_v150_user_comfort.sql:68:UPDATE delegations SET expiry_logged_at = created_at WHERE ends_on < CURRENT_DATE;
+database/migrations/202610251300_try_as.sql:6:  MODIFY COLUMN auth_method ENUM('GOOGLE', 'PASSWORD_OTP', 'DEMO', 'TRY_AS') NOT NULL,
+database/migrations/202610301000_work_management.sql:23:UPDATE tasks SET assigned_at = created_at WHERE assigned_at IS NULL;
+database/migrations/202610311000_my_tasks_overdue.sql:5:  MODIFY COLUMN system_key ENUM('OVERDUE', 'RECENT', 'TODAY', 'UPCOMING', 'LATER') NULL;
+database/migrations/202610311200_profile_notifications.sql:16:  MODIFY COLUMN channel ENUM('EMAIL', 'WHATSAPP', 'INAPP') NOT NULL;
+database/migrations/202610311400_workflow_draft_revision.sql:7:-- Rollback: ALTER TABLE workflow_versions DROP COLUMN draft_revision;
+== down/rollback files
+database/migrations/202610100900_v150_user_comfort.sql
+database/migrations/202610110900_v160.sql
+database/migrations/202610140900_v170.sql
+database/migrations/202610150900_v180.sql
+database/migrations/202610160900_v190.sql
+database/migrations/202610250900_pic_bot.sql
+database/migrations/202610251200_ai_chat_pins.sql
+database/migrations/202610251300_try_as.sql
+database/migrations/202610301000_work_management.sql
+database/migrations/202610311400_workflow_draft_revision.sql

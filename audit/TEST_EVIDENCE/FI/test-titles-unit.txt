@@ -1,0 +1,925 @@
+tests/admin/user-rules.test.ts:20 describe("who can change whom (D-047)
+tests/admin/user-rules.test.ts:21 it("IT Admins manage ordinary users; staff can
+tests/admin/user-rules.test.ts:26 it("only the Super Admin changes a Super Admin or the break-glass account
+tests/admin/user-rules.test.ts:33 describe("role changes
+tests/admin/user-rules.test.ts:34 it("USER is always kept and unknown roles are dropped
+tests/admin/user-rules.test.ts:39 it("an IT Admin can grant IT_ADMIN but not SUPER_ADMIN
+tests/admin/user-rules.test.ts:46 it("nobody removes their own admin role
+tests/admin/user-rules.test.ts:51 it("the last active Super Admin can
+tests/admin/user-rules.test.ts:58 describe("deactivation
+tests/admin/user-rules.test.ts:59 it("nobody deactivates themselves
+tests/admin/user-rules.test.ts:63 it("the last active Super Admin is protected
+tests/admin/user-rules.test.ts:68 it("an IT Admin can deactivate staff
+tests/admin/user-rules.test.ts:73 describe("reporting line
+tests/admin/user-rules.test.ts:77 it("rejects self-reporting and loops
+tests/admin/user-rules.test.ts:85 describe("WhatsApp numbers
+tests/admin/user-rules.test.ts:86 it("adds 91 to a 10-digit Indian mobile and keeps full numbers
+tests/admin/user-rules.test.ts:96 describe("contact details of another IT Admin (audit P-04)
+tests/admin/user-rules.test.ts:102 it("an IT Admin can
+tests/admin/user-rules.test.ts:108 it("their own, staff
+tests/ai/ai-analytics.test.ts:5 describe("AI analytics
+tests/ai/ai-analytics.test.ts:6 it("percent, change and cost
+tests/ai/ai-analytics.test.ts:17 it("durations, compact numbers and tool names read plainly
+tests/ai/ai-analytics.test.ts:26 it("technical failures are grouped into plain reasons
+tests/ai/ai-engine.test.ts:13 describe("providers
+tests/ai/ai-engine.test.ts:14 it("Claude: key in its header, system apart, tool calls and results in Anthropic
+tests/ai/ai-engine.test.ts:41 it("ChatGPT, Grok, DeepSeek, Groq, Gemini and NVIDIA: OpenAI shape at each provider
+tests/ai/ai-engine.test.ts:63 it("a provider refusing a malformed tool call (Groq tool_use_failed) is retried up to twice; other 400s are not (D-177)
+tests/ai/ai-engine.test.ts:78 it("a tool call without an id (Gemini) still runs, with a generated id
+tests/ai/ai-engine.test.ts:84 it("errors say what happened, never the key; a refused key isn
+tests/ai/ai-engine.test.ts:99 describe("numbers must come from the data
+tests/ai/ai-engine.test.ts:100 it("finds figures, ignoring list markers
+tests/ai/ai-engine.test.ts:103 it("flags figures that aren
+tests/ai/ai-engine.test.ts:109 it("D-201: totals, differences, percentages, rounding and counts worked out from the data are known; invented ones aren
+tests/ai/ai-engine.test.ts:120 it("D-201: metric cards and charts showing an unchecked figure are removed
+tests/ai/ai-engine.test.ts:124 it("dates and times aren
+tests/ai/ai-engine.test.ts:129 describe("routing
+tests/ai/ai-engine.test.ts:139 it("active then fallback, only set-up providers
+tests/ai/ai-engine.test.ts:144 it("business data never goes to a provider not approved for it, not even as a fallback
+tests/ai/ai-engine.test.ts:150 describe("proposals
+tests/ai/ai-engine.test.ts:152 it("only the named approver decides; never the person who asked; IT Admins when nobody is named
+tests/ai/ai-engine.test.ts:160 it("the hash changes with any change to what the approver reads
+tests/ai/ai-engine.test.ts:167 describe("Salesforce (read-only)
+tests/ai/ai-engine.test.ts:168 it("objects and fields are checked by name; Id and SystemModstamp are always read
+tests/ai/ai-engine.test.ts:177 it("reads every page and keeps the latest change time; a failed page fails the whole run
+tests/ai/picbot.test.ts:29 describe("effective chat modes (deny by default; administrators win)
+tests/ai/picbot.test.ts:30 it("an Approval-only person gets Approval chat only
+tests/ai/picbot.test.ts:33 it("a mode needs the person
+tests/ai/picbot.test.ts:37 it("general chat only when switched on globally AND for the person
+tests/ai/picbot.test.ts:42 it("Salesforce needs a scope and a live connection; Combined needs general plus a data mode and the global switch
+tests/ai/picbot.test.ts:50 it("nothing at all with the emergency stop, the AI switch off, or no AI module
+tests/ai/picbot.test.ts:55 it("the Super Admin has every mode and all Salesforce records, whatever their settings (D-176); only the emergency stop and the connection apply
+tests/ai/picbot.test.ts:64 it("a conversation
+tests/ai/picbot.test.ts:70 it("chat modes from the form and the database: unknown values refused, order fixed
+tests/ai/picbot.test.ts:77 describe("Salesforce queries (allowlisted, read-only, no injection)
+tests/ai/picbot.test.ts:79 it("builds SELECT with WITH USER_MODE, the owner filter for OWN, and a capped LIMIT
+tests/ai/picbot.test.ts:85 it("refuses objects and fields outside the allowlist, including in filters and ordering
+tests/ai/picbot.test.ts:92 it("escapes text values; quotes can
+tests/ai/picbot.test.ts:102 it("an unexpected owner id or allowlist entry is refused
+tests/ai/picbot.test.ts:108 describe("Salesforce OAuth pieces
+tests/ai/picbot.test.ts:109 it("PKCE: S256 challenge of a long random verifier
+tests/ai/picbot.test.ts:115 it("the authorization address carries state, PKCE and least-privilege scopes; sandbox by default
+tests/ai/picbot.test.ts:126 describe("concurrency gate
+tests/ai/picbot.test.ts:127 it("refuses a person
+tests/ai/picbot.test.ts:146 it("a full queue is refused as busy instead of growing
+tests/ai/picbot.test.ts:155 describe("provider retry and Stop
+tests/ai/picbot.test.ts:159 it("a 429 with a short Retry-After is retried once; without one it isn
+tests/ai/picbot.test.ts:171 it("Stop cancels at once and isn
+tests/ai/picbot.test.ts:181 describe("instructions per mode
+tests/ai/picbot.test.ts:182 it("module chats are limited to their scope; general chat has no data; combined separates them
+tests/ai/picbot.test.ts:188 it("D-204: a Salesforce chat never lists Salesforce as out of scope, and answers the part it can
+tests/ai/picbot.test.ts:196 describe("Salesforce breakdowns (D-178)
+tests/ai/picbot.test.ts:198 it("group, aggregate and date buckets are built only from allowed names
+tests/ai/picbot.test.ts:209 describe("Salesforce dates and two-level breakdowns (D-201)
+tests/ai/picbot.test.ts:212 it("a plain date on a date-time field is that whole day in India time
+tests/ai/picbot.test.ts:226 it("a lookup shows, groups and filters by the linked record name, not its id
+tests/ai/picbot.test.ts:232 it("groups by region then status, with the count beside the sum
+tests/ai/picbot.test.ts:241 describe("answers never show invented figures (D-201)
+tests/ai/picbot.test.ts:243 it("with no data read, a figure-bearing answer becomes a plain 
+tests/ai/picbot.test.ts:246 it("with data, unchecked cards are removed and the figures named
+tests/ai/picbot.test.ts:254 describe("AI Rules reach every provider (D-187)
+tests/ai/picbot.test.ts:255 it("are added after the safety rules, marked as company rules, and capped
+tests/ai/picbot.test.ts:264 describe("Salesforce secrets are never readable (D-201)
+tests/ai/picbot.test.ts:265 it("password, session, token and key fields are matched by name or label
+tests/ai/picbot.test.ts:271 describe("everyday names find Salesforce fields (D-201)
+tests/ai/picbot.test.ts:278 it("matches by API name or label, ignoring case, spaces, underscores, __c and a plural s
+tests/ai/picbot.test.ts:288 describe("rate-limit waits (D-201)
+tests/ai/picbot.test.ts:289 it("reads the header (decimals too) or Groq
+tests/ai/picbot.test.ts:298 describe("filters in the shapes models write (D-201)
+tests/ai/picbot.test.ts:299 it("[field, op, value], operator for op, and words for operators become {field, op, value}
+tests/ai/picbot.test.ts:307 describe("final round and cut-off answers (D-204)
+tests/ai/picbot.test.ts:310 it("asks for a written answer while keeping the tools described, and reports a cut-off answer
+tests/ai/picbot.test.ts:324 describe("AI Rules per chat (D-205)
+tests/ai/picbot.test.ts:325 it("a Combined chat gets the rules of each data source it reads
+tests/ai/rich-answer.test.ts:5 describe("analyst answers render from Markdown (D-178)
+tests/ai/rich-answer.test.ts:6 it("headings, lists, tables and the metrics/chart blocks
+tests/ai/rich-answer.test.ts:14 describe("underscores in names (D-178)
+tests/ai/rich-answer.test.ts:15 it("stay as written
+tests/ai/rich-answer.test.ts:23 describe("failed answers in plain words (D-178)
+tests/ai/rich-answer.test.ts:24 it("hides provider detail from people
+tests/analytics/export.test.ts:40 describe("exports
+tests/analytics/export.test.ts:41 it("CRC-32 matches the standard check value
+tests/analytics/export.test.ts:45 it("CSV neutralises formulas and shows times in India time
+tests/analytics/export.test.ts:51 it("XLSX is a valid zip; text is never a formula; numbers stay numbers; XML is escaped
+tests/analytics/export.test.ts:62 it("PDF pages a long report with a header on each page
+tests/analytics/schedule.test.ts:7 describe("nextRunAt
+tests/analytics/schedule.test.ts:8 it("daily: later today if the hour hasn
+tests/analytics/schedule.test.ts:12 it("crosses midnight in India time correctly
+tests/analytics/schedule.test.ts:16 it("weekly on the chosen day
+tests/analytics/schedule.test.ts:22 it("monthly on day 1–28, rolling over the year
+tests/analytics/schedule.test.ts:26 it("describes itself
+tests/analytics/schedule.test.ts:31 describe("alertDecision
+tests/analytics/schedule.test.ts:33 it("fires on crossing, not again within the cool-down, again after it; resets below the line
+tests/analytics/semantics.test.ts:10 describe("SLA status
+tests/analytics/semantics.test.ts:13 it("no response time is never overdue
+tests/analytics/semantics.test.ts:16 it("within, approaching at 75 %, and passed
+tests/analytics/semantics.test.ts:21 it("paused while on hold; decided in time or late
+tests/analytics/semantics.test.ts:28 describe("aging and statistics
+tests/analytics/semantics.test.ts:29 it("buckets by calendar hours at the edges
+tests/analytics/semantics.test.ts:33 it("median, percentile, change and share
+tests/analytics/semantics.test.ts:45 describe("periods (India time)
+tests/analytics/semantics.test.ts:46 it("today is the India date
+tests/analytics/semantics.test.ts:49 it("presets, financial year and quarter
+tests/analytics/semantics.test.ts:57 it("custom ranges are checked and capped at two years
+tests/analytics/semantics.test.ts:61 it("the previous period is equally long and just before
+tests/analytics/semantics.test.ts:64 it("chart grain and buckets
+tests/analytics/semantics.test.ts:74 describe("metric dictionary
+tests/analytics/semantics.test.ts:75 it("every metric is complete, unique, and in the document
+tests/analytics/v1120-center.test.ts:7 describe("boards
+tests/analytics/v1120-center.test.ts:8 it("are tabs of one page, in the brief
+tests/analytics/v1120-center.test.ts:15 describe("age buckets are a setting
+tests/analytics/v1120-center.test.ts:16 it("default 1,3,7,14 → under 1 day, 2–3, 4–7, 8–14, over 14
+tests/analytics/v1120-center.test.ts:19 it("custom edges are sorted and de-duplicated; junk falls back
+tests/analytics/v1120-center.test.ts:23 it("counts into buckets at the edges
+tests/analytics/v1120-center.test.ts:29 describe("safe arithmetic
+tests/analytics/v1120-center.test.ts:30 it("a rate with no denominator is unavailable, never 0% or NaN
+tests/analytics/v1120-center.test.ts:37 it("the 90th percentile needs 10 values
+tests/analytics/v1120-center.test.ts:43 describe("alerts are explainable rules
+tests/analytics/v1120-center.test.ts:44 it("falling completion and rising lateness
+tests/analytics/v1120-center.test.ts:51 it("a department with unusually high open work
+tests/analytics/v1120-center.test.ts:57 describe("trends and forecasts
+tests/analytics/v1120-center.test.ts:58 it("lists the last months, oldest first, across a year end
+tests/analytics/v1120-center.test.ts:61 it("no forecast without 12 months of steady history
+tests/analytics/v1120-center.test.ts:69 describe("periods (brief §2.1 presets)
+tests/analytics/v1120-center.test.ts:70 it("today, yesterday, previous quarter (financial quarters)
+tests/analytics/v1120-center.test.ts:78 describe("metric dictionary
+tests/analytics/v1120-center.test.ts:79 it("every Analytics Center metric has a board and a reliability; unavailable ones explain why
+tests/analytics/v1120-center.test.ts:88 it("names are unique, so approval tasks and Task Management tasks are never confused
+tests/analytics/v170-derived.test.ts:8 describe("B04 comparisonPeriod
+tests/analytics/v170-derived.test.ts:9 it("this month against the same days of last month, shortened in a short month
+tests/analytics/v170-derived.test.ts:14 it("last month against the whole month before; January wraps to December
+tests/analytics/v170-derived.test.ts:18 it("other periods: equally long just before; last year: same dates, 29 Feb → 28 Feb
+tests/analytics/v170-derived.test.ts:24 describe("B03 qualityFrom
+tests/analytics/v170-derived.test.ts:25 it("first pass, rework, withdrawal and the median
+tests/analytics/v170-derived.test.ts:34 it("nothing closed: no rates, never a made-up zero
+tests/analytics/v170-derived.test.ts:39 describe("B05 historyFrom
+tests/analytics/v170-derived.test.ts:42 it("backlog and overdue at each day
+tests/analytics/v170-derived.test.ts:63 it("heat steps
+tests/analytics/v170-derived.test.ts:69 describe("B08 inQuietHours
+tests/analytics/v170-derived.test.ts:71 it("same-day and overnight windows; none when unset or equal
+tests/analytics/v170-derived.test.ts:82 describe("B01/B02 readFilter
+tests/analytics/v170-derived.test.ts:84 it("keeps only valid filters and carries them as address parameters
+tests/analytics/v170-derived.test.ts:93 it("drops unknown values; the department only counts in the organisation scope
+tests/approvals/approver-rules.test.ts:9 describe("approver eligibility (D-085)
+tests/approvals/approver-rules.test.ts:10 it("active, not break-glass, designation ticked as Approver
+tests/approvals/approver-rules.test.ts:17 it("says why someone can
+tests/approvals/approver-rules.test.ts:23 it("only new choices are checked; what was saved before stays valid
+tests/approvals/approver-rules.test.ts:32 it("finds named approvers and approver person fields in a workflow
+tests/approvals/approver-rules.test.ts:46 describe("dashboard filters (D-087)
+tests/approvals/approver-rules.test.ts:47 it("defaults to the Indian financial year to date
+tests/approvals/approver-rules.test.ts:53 it("swaps reversed dates, ignores bad ones, and knows custom approvals
+tests/approvals/approver-rules.test.ts:63 it("presets and maths
+tests/approvals/directory-messages.test.ts:22 describe("directory snapshot → engine directory
+tests/approvals/directory-messages.test.ts:25 it("resolves managers, HODs, roles and groups
+tests/approvals/directory-messages.test.ts:34 it("inactive people and the break-glass account are never approvers
+tests/approvals/directory-messages.test.ts:41 it("a delegate acts only for who named them, only while active, never in a chain
+tests/approvals/directory-messages.test.ts:48 it("a delegate who is no longer approver-eligible can
+tests/approvals/directory-messages.test.ts:54 describe("who hears about what
+tests/approvals/directory-messages.test.ts:58 it("each new task tells its approver, with a sign-in deep link
+tests/approvals/directory-messages.test.ts:64 it("outcomes go to the requester; the rejection reason is included
+tests/approvals/directory-messages.test.ts:82 it("a blocked step alerts every IT admin
+tests/approvals/directory-messages.test.ts:87 it("internal events send nothing
+tests/approvals/mentions.test.ts:4 describe("@mentions (#9)
+tests/approvals/mentions.test.ts:5 it("finds User IDs after @, once each, case-insensitively
+tests/approvals/mentions.test.ts:10 it("an email address or a lone @ is not a mention
+tests/approvals/mentions.test.ts:14 it("stops at the limit
+tests/approvals/request-detail.test.ts:7 describe("timeline (RD-01)
+tests/approvals/request-detail.test.ts:8 it("gives each event a kind for its icon
+tests/approvals/request-detail.test.ts:15 it("says how long ago, and groups by the India day
+tests/approvals/request-detail.test.ts:26 describe("what changed between rounds (RD-03)
+tests/approvals/request-detail.test.ts:34 it("lists changed, added and removed fields, and a new title
+tests/approvals/request-detail.test.ts:44 it("no changes when only the stored form differs but the shown value is the same
+tests/approvals/request-detail.test.ts:49 describe("file preview (RD-02)
+tests/approvals/request-detail.test.ts:50 it("only images and PDFs can be shown inline; never SVG, HTML or office files
+tests/approvals/request-detail.test.ts:60 it("inline answers are sandboxed and never sniffed
+tests/approvals/route-compare.test.ts:10 describe("test mode: compare with the live version (#11)
+tests/approvals/route-compare.test.ts:11 it("the same route says so
+tests/approvals/route-compare.test.ts:15 it("names changed, new and removed stages, skips and the outcome
+tests/approvals/search-filters.test.ts:4 describe("search filters (#4)
+tests/approvals/search-filters.test.ts:5 it("keeps only known values; bad input falls back safely
+tests/approvals/search-filters.test.ts:13 it("round-trips to the address bar without defaults
+tests/approvals/search-filters.test.ts:17 it("LIKE wildcards in what people type match themselves
+tests/approvals/session4.test.ts:13 describe("handover: reassignTask (F-16)
+tests/approvals/session4.test.ts:16 it("moves a pending task to the new person, who can then decide it
+tests/approvals/session4.test.ts:26 it("refuses the requester, inactive people, same person and decided tasks
+tests/approvals/session4.test.ts:36 it("won
+tests/approvals/session4.test.ts:42 it("a delegate acts on behalf, recorded as actor + on-behalf-of (D-062)
+tests/approvals/session4.test.ts:49 describe("custom approvals (D-060)
+tests/approvals/session4.test.ts:50 it("refuses a step made only of the requester
+tests/approvals/session4.test.ts:58 describe("delegation dates (D-062)
+tests/approvals/session4.test.ts:60 it("accepts a normal range and refuses bad ones
+tests/approvals/session4.test.ts:69 describe("SLA (D-063)
+tests/approvals/session4.test.ts:70 it("reminds once when due and escalates once at twice the time
+tests/approvals/session4.test.ts:77 it("the builder carries respond-within hours onto the step
+tests/approvals/session4.test.ts:84 describe("DoA view (D-065)
+tests/approvals/session4.test.ts:85 it("turns amount skip conditions into bands
+tests/approvals/session4.test.ts:103 it("a workflow without amount rules is one band
+tests/approvals/session4.test.ts:108 describe("multi-level escalation (D-100)
+tests/approvals/session4.test.ts:109 it("adds one level per extra response time, up to the levels allowed, each once
+tests/approvals/session5.test.ts:9 describe("working calendar (D-067)
+tests/approvals/session5.test.ts:14 it("uses India dates
+tests/approvals/session5.test.ts:21 it("counts within a working day
+tests/approvals/session5.test.ts:25 it("skips Sunday and a holiday
+tests/approvals/session5.test.ts:30 it("a start on a non-working day begins at the next working midnight
+tests/approvals/session5.test.ts:34 it("no working days set means plain hours
+tests/approvals/session5.test.ts:38 it("reads the stored setting safely
+tests/approvals/session5.test.ts:45 describe("withdraw and reopen (D-066)
+tests/approvals/session5.test.ts:48 it("withdraw closes pending approvals and names who had them
+tests/approvals/session5.test.ts:57 it("reopen restarts an approved request from the first level in a new round
+tests/approvals/session5.test.ts:72 it("only an approved request can be reopened
+tests/approvals/tracker.test.ts:17 describe("tracker summary
+tests/approvals/tracker.test.ts:18 it("in progress: who it waits for, where, and what comes next
+tests/approvals/tracker.test.ts:27 it("finished, held, sent back and withdrawn
+tests/approvals/tracker.test.ts:38 it("a stuck step says IT has been told
+tests/approvals/v1250-custom-features.test.ts:13 describe("custom approval options (D-206)
+tests/approvals/v1250-custom-features.test.ts:14 it("are off unless IT switches them on, also for set-ups saved before
+tests/approvals/v1250-custom-features.test.ts:20 it("levels and parallel steps are always allowed
+tests/approvals/v1250-custom-features.test.ts:23 it("a DoA matrix, a choice or a skip condition is refused when off, accepted when on
+tests/approvals/v1250-custom-features.test.ts:37 describe("analytics dashboards per person (D-206)
+tests/approvals/v1250-custom-features.test.ts:39 it("a plain user with only Approvals sees the overview, approvals, SLA and trends
+tests/approvals/v1250-custom-features.test.ts:42 it("a manager also sees employees; an HOD also departments; IT also data quality
+tests/approvals/v1250-custom-features.test.ts:47 it("someone with no task or approval module gets no SLA board
+tests/approvals/v170-rules.test.ts:11 describe("A1 expiryState
+tests/approvals/v170-rules.test.ts:13 it("NONE without a date, then VALID, EXPIRING (last 7 days), EXPIRED
+tests/approvals/v170-rules.test.ts:22 describe("A2 calendar rules
+tests/approvals/v170-rules.test.ts:27 it("reads the needed-by date only from the marked date field
+tests/approvals/v170-rules.test.ts:32 it("months: parse, shift across years, Monday-first grid
+tests/approvals/v170-rules.test.ts:44 describe("A6 diagnoseState
+tests/approvals/v170-rules.test.ts:53 it("OK when rows match
+tests/approvals/v170-rules.test.ts:56 it("finds missing, mismatched and orphan rows
+tests/approvals/v170-rules.test.ts:61 it("no open step can
+tests/approvals/v170-rules.test.ts:66 describe("A8 / A10 / A11 settings and keys
+tests/approvals/v170-rules.test.ts:67 it("a heading can
+tests/approvals/v170-rules.test.ts:71 it("old type settings still parse, with scope ANY and no unique fields
+tests/approvals/v170-rules.test.ts:76 it("amendment draft keys
+tests/approvals/v172-list-filters.test.ts:6 describe("parseListFilters
+tests/approvals/v172-list-filters.test.ts:7 it("reads every filter, several statuses, and keeps only valid values
+tests/approvals/v172-list-filters.test.ts:38 it("collaboration-only filters are ignored on My requests; junk falls back to defaults
+tests/approvals/v172-list-filters.test.ts:44 it("round-trips through the address bar
+tests/approvals/v172-list-filters.test.ts:52 describe("listFilterSql
+tests/approvals/v172-list-filters.test.ts:53 it("binds every value; collaboration conditions only on Collaborating
+tests/approvals/v172-list-filters.test.ts:64 describe("Waiting for me filters (v1.7.2)
+tests/approvals/v172-list-filters.test.ts:65 it("parse, filter flag, SQL with the person
+tests/approvals/v180-rules.test.ts:11 describe("pageForPath
+tests/approvals/v180-rules.test.ts:12 it("finds the page by the longest match, including its API routes
+tests/approvals/v180-rules.test.ts:26 it("every page has a unique key and at least one address
+tests/approvals/v180-rules.test.ts:32 describe("effectiveLevel
+tests/approvals/v180-rules.test.ts:39 it("person over department over everyone; no rule = Full
+tests/approvals/v180-rules.test.ts:45 it("a space
+tests/approvals/v180-rules.test.ts:50 describe("signed page address
+tests/approvals/v180-rules.test.ts:51 it("verifies only the same address with the same secret
+tests/approvals/v180-rules.test.ts:63 describe("custom approval step options
+tests/approvals/v180-rules.test.ts:71 it("defaults leave everything as sent
+tests/approvals/v180-rules.test.ts:75 it("fixed options overwrite every step (not FYIs)
+tests/approvals/v180-rules.test.ts:83 it("bad stored values fall back to the defaults
+tests/approvals/v180-rules.test.ts:87 it("the set-up rejects reserved keys and broken forms
+tests/approvals/v180-rules.test.ts:94 describe("approved lists (v1.8.0)
+tests/approvals/v180-rules.test.ts:95 it("My approved requests: validity tabs, approved by, amended; no status or waiting filters
+tests/approvals/v180-rules.test.ts:104 it("Approved by me: my step, for someone else, my decision dates; bound to my id
+tests/approvals/workload.test.ts:4 describe("workload (#12)
+tests/approvals/workload.test.ts:5 it("medians, age bands and text
+tests/approvals/workload.test.ts:13 it("groups by person, most overdue first
+tests/approvals/workload.test.ts:25 it("suggests the people with the fewest waiting, never the person themselves
+tests/attachments/files.test.ts:11 describe("checkFile
+tests/attachments/files.test.ts:12 it("accepts real PDFs, images, Office files and text
+tests/attachments/files.test.ts:20 it("refuses types that aren
+tests/attachments/files.test.ts:27 it("refuses a file whose bytes don
+tests/attachments/files.test.ts:34 describe("names, counts and downloads
+tests/attachments/files.test.ts:35 it("strips folders and odd characters, and keeps the extension when shortening
+tests/attachments/files.test.ts:44 it("limits files per upload and per request
+tests/attachments/files.test.ts:50 it("always downloads, never runs in the browser
+tests/attachments/files.test.ts:57 it("formats sizes
+tests/attachments/files.test.ts:64 describe("filesFrom
+tests/attachments/files.test.ts:65 it("ignores an empty file box but keeps real files
+tests/auth/google-provider.test.ts:21 describe("Google sign-in provider check (P-03)
+tests/auth/google-provider.test.ts:22 it("refuses an email/password or other provider identity before looking anyone up
+tests/auth/google-provider.test.ts:33 it("a google.com identity goes on to the account lookup
+tests/auth/password-sign-in.test.ts:110 describe("password + WhatsApp OTP sign-in (F-02)
+tests/auth/password-sign-in.test.ts:116 it("happy path: password → OTP on WhatsApp → session
+tests/auth/password-sign-in.test.ts:129 it("unknown user ID and wrong password give the same generic error
+tests/auth/password-sign-in.test.ts:140 it("locks after too many wrong passwords and alerts the user, without telling the guesser (S-06)
+tests/auth/password-sign-in.test.ts:146 it("a locked account can
+tests/auth/password-sign-in.test.ts:153 it("inactive or Google-only users get the generic error, not a code
+tests/auth/password-sign-in.test.ts:161 it("no WhatsApp number → tells the user to contact IT
+tests/auth/password-sign-in.test.ts:166 it("OTP template not active → delivery failed (no code created)
+tests/auth/password-sign-in.test.ts:172 it("enforces cooldown and hourly cap
+tests/auth/password-sign-in.test.ts:179 it("wrong codes count attempts, then lock the challenge
+tests/auth/password-sign-in.test.ts:189 it("a code can be used only once, and expired codes are refused
+tests/auth/password-sign-in.test.ts:202 it("re-checks the account after the OTP (deactivated meanwhile)
+tests/auth/password-sign-in.test.ts:210 it("resend issues a new code and closes the old challenge
+tests/auth/password-sign-in.test.ts:223 describe("complete sign-in: new-login alerts (F-03, N-02, N-04)
+tests/auth/password-sign-in.test.ts:224 it("alerts on a new device for a returning user, with a 
+tests/auth/password-sign-in.test.ts:235 it("no alert on a known device or on the very first sign-in
+tests/auth/password-sign-in.test.ts:245 it("every Super Admin and break-glass sign-in alerts the Super Admins
+tests/auth/password-sign-in.test.ts:257 it("an alert failure never blocks sign-in
+tests/auth/rules-policy.test.ts:25 describe("sign-in rules
+tests/auth/rules-policy.test.ts:26 it("allows an active user with the right method
+tests/auth/rules-policy.test.ts:30 it("denies inactive, wrong method, locked and disabled break-glass
+tests/auth/rules-policy.test.ts:38 it("D-208: BOTH allows Google and password sign-in; the other rules still apply
+tests/auth/rules-policy.test.ts:48 it("D-208: the user form accepts BOTH and then needs a WhatsApp number
+tests/auth/rules-policy.test.ts:57 it("masks WhatsApp numbers
+tests/auth/rules-policy.test.ts:63 describe("area policy (D-034)
+tests/auth/rules-policy.test.ts:64 it("users area for everyone; admin for IT; superadmin only for Super Admin
+tests/auth/rules-policy.test.ts:70 it("IT admin can
+tests/auth/rules-policy.test.ts:74 it("no session or inactive is denied everywhere
+tests/auth/rules-policy.test.ts:80 describe("settings display (D-016)
+tests/auth/rules-policy.test.ts:84 it("never reveals an encrypted value
+tests/auth/rules-policy.test.ts:91 it("shows plain values or the default
+tests/auth/set-password.test.ts:112 describe("invite and reset password (D-166)
+tests/auth/set-password.test.ts:118 it("a Google user is invited to sign in with Google as their email; no link is made
+tests/auth/set-password.test.ts:130 it("a password user
+tests/auth/set-password.test.ts:141 it("reset uses its own wording and event; before a first password it is a plain set-password link
+tests/auth/set-password.test.ts:154 it("the same rules: no invite for inactive or break-glass accounts, nor a password user without WhatsApp; a failed email says why
+tests/auth/set-password.test.ts:166 describe("set-password link (P1-13)
+tests/auth/set-password.test.ts:167 it("an admin sends the link by email; it is never shown to the admin
+tests/auth/set-password.test.ts:178 it("refuses Google users, users without WhatsApp, and the break-glass account
+tests/auth/set-password.test.ts:186 it("reports when the email couldn
+tests/auth/set-password.test.ts:192 it("full flow: link → password → WhatsApp code → password set, link used up, signed in
+tests/auth/set-password.test.ts:205 it("checks the password rules and the confirmation before sending a code
+tests/auth/set-password.test.ts:213 it("an unknown, expired or used link is refused
+tests/auth/set-password.test.ts:221 it("a link stops working if the user was deactivated
+tests/auth/set-password.test.ts:229 it("the wrong code doesn
+tests/auth/set-password.test.ts:238 describe("forgot password (P1-14)
+tests/auth/set-password.test.ts:239 it("unknown User ID looks exactly like a real one and sends nothing
+tests/auth/set-password.test.ts:250 it("the code is sent after the response, then code + new password resets and signs in
+tests/auth/set-password.test.ts:261 it("a wrong code and an unknown challenge give the same message
+tests/auth/set-password.test.ts:273 it("an account locked by 
+tests/auth/set-password.test.ts:280 it("a wrong-password lock doesn
+tests/auth/set-password.test.ts:287 it("Google users and inactive users can
+tests/auth/try-as.test.ts:7 describe("Try as rules (D-185)
+tests/auth/try-as.test.ts:11 it("the IT team may try staff; plain users may not try anyone
+tests/auth/try-as.test.ts:16 it("another IT Admin or a Super Admin: the Super Admin only
+tests/auth/try-as.test.ts:21 it("never yourself, an inactive person or the break-glass account
+tests/calendar/v1110-calendar.test.ts:8 describe("configuration
+tests/calendar/v1110-calendar.test.ts:9 it("defaults to two-way, private events, manual conflicts, reference-only titles
+tests/calendar/v1110-calendar.test.ts:14 it("templates accept only known variables
+tests/calendar/v1110-calendar.test.ts:18 it("is Enabled only when switched on, complete and tested
+tests/calendar/v1110-calendar.test.ts:26 it("builds the consent URL with least-privilege scopes, offline access and the state
+tests/calendar/v1110-calendar.test.ts:40 describe("events written to Google
+tests/calendar/v1110-calendar.test.ts:43 it("carry the reference and a link, never the title or amounts by default; private
+tests/calendar/v1110-calendar.test.ts:51 it("{title} is the Super Admin
+tests/calendar/v1110-calendar.test.ts:54 it("all-day dates use Google
+tests/calendar/v1110-calendar.test.ts:61 it("event ids are fixed per record and valid for Google (base32hex)
+tests/calendar/v1110-calendar.test.ts:68 it("personal entries keep their own text; entries from Google aren
+tests/calendar/v1110-calendar.test.ts:78 describe("events read from Google
+tests/calendar/v1110-calendar.test.ts:79 it("timed events keep the instant (time zones and DST carried by the offset)
+tests/calendar/v1110-calendar.test.ts:84 it("all-day ends become inclusive; repeating events are marked; empty titles get a placeholder
+tests/calendar/v1110-calendar.test.ts:90 describe("retries and conflicts
+tests/calendar/v1110-calendar.test.ts:91 it("backs off exponentially with jitter, capped at 6 hours
+tests/calendar/v1110-calendar.test.ts:97 it("decides by policy; latest needs Google
+tests/calendar/v1110-calendar.test.ts:107 describe("calendar views
+tests/calendar/v1110-calendar.test.ts:109 it("month (and older ?month= links), week from Monday, day
+tests/calendar/v1110-calendar.test.ts:115 it("filters by kind and keeps them in links
+tests/calendar/v1110-calendar.test.ts:121 it("information types are off the calendar unless marked (old settings still read)
+tests/config/environment.test.ts:4 describe("environment
+tests/config/environment.test.ts:11 it("treats blank optional values as not set
+tests/config/environment.test.ts:21 it("fails clearly when a required value is missing
+tests/demo/demo-data.test.ts:14 describe("demo staff
+tests/demo/demo-data.test.ts:15 it("every manager, HOD and group member is a demo person listed earlier
+tests/demo/demo-data.test.ts:26 it("User IDs and emails are unique and clearly demo
+tests/demo/demo-data.test.ts:33 describe("first approval types (F-60 to F-71)
+tests/demo/demo-data.test.ts:34 it("there are 12, with unique codes and prefixes
+tests/demo/demo-data.test.ts:44 it("every one compiles and passes the validator with its form
+tests/demo/demo-data.test.ts:61 it("Purchase & SCM is the DoA example (Q-004): more levels as the amount grows
+tests/demo/demo-data.test.ts:71 it("the DoA view shows a parallel review as one level, done together
+tests/demo/demo-data.test.ts:78 it("no approval type names a person directly, so real staff can be swapped in
+tests/drafts/rules.test.ts:4 describe("draft rules (#3)
+tests/drafts/rules.test.ts:5 it("accepts only WF:<id> and CUSTOM keys
+tests/drafts/rules.test.ts:11 it("keeps text values, drops form machinery and odd keys, refuses oversized content
+tests/drafts/rules.test.ts:19 it("an untouched form isn
+tests/engine/engine.test.ts:19 describe("sequential levels
+tests/engine/engine.test.ts:28 it("activates only the first level, then each next level in order
+tests/engine/engine.test.ts:50 it("supports any number of levels (12 in a row)
+tests/engine/engine.test.ts:61 describe("parallel levels
+tests/engine/engine.test.ts:69 it("ALL: waits for every branch, then continues
+tests/engine/engine.test.ts:82 it("ANY_ONE join: first finished branch continues and the others are closed
+tests/engine/engine.test.ts:91 it("ANY_N join: 2 of 3 branches
+tests/engine/engine.test.ts:102 describe("any-N-of-M on one level
+tests/engine/engine.test.ts:105 it("needs 3 approvals out of 4
+tests/engine/engine.test.ts:117 it("one rejection doesn
+tests/engine/engine.test.ts:128 describe("conditions and amount routing
+tests/engine/engine.test.ts:152 it("₹75,000 → HOD only
+tests/engine/engine.test.ts:159 it("₹12,50,000 → HOD, Finance, ED
+tests/engine/engine.test.ts:168 it("skipIf skips a level
+tests/engine/engine.test.ts:177 describe("approver resolution and safety
+tests/engine/engine.test.ts:178 it("never makes the requester their own approver, drops inactive users, and removes duplicates
+tests/engine/engine.test.ts:183 it("blocks a level with no eligible approver (never silently approves)
+tests/engine/engine.test.ts:191 it("can skip a level with no approver when configured
+tests/engine/engine.test.ts:198 it("only the task
+tests/engine/engine.test.ts:212 it("a decided task can
+tests/engine/engine.test.ts:220 it("reject and request changes need a reason
+tests/engine/engine.test.ts:228 it("decisions don
+tests/engine/engine.test.ts:237 describe("reject, changes, hold, resubmit
+tests/engine/engine.test.ts:240 it("reject at any level ends the request and closes open tasks (never shows as approved, G-02)
+tests/engine/engine.test.ts:251 it("changes required keeps the request open, then resubmits from the requesting level with earlier approvals kept
+tests/engine/engine.test.ts:272 it("resubmit from the beginning restarts every level
+tests/engine/engine.test.ts:282 it("previous-round approvals don
+tests/engine/engine.test.ts:295 it("restart at the requesting level also restarts open parallel branches and keeps finished ones
+tests/engine/engine.test.ts:313 it("on hold pauses decisions and stays open; the approver resumes
+tests/engine/engine.test.ts:327 describe("hybrid workflow from the plan (HOD → parallel → any-one of ED/CFO → MD)
+tests/engine/engine.test.ts:356 it("runs end to end
+tests/engine/engine.test.ts:366 it("refuses to start an invalid workflow
+tests/engine/v140-engine.test.ts:11 describe("designation and requester sources (D-097)
+tests/engine/v140-engine.test.ts:12 it("DESIGNATION finds everyone active with it, optionally only in the requester
+tests/engine/v140-engine.test.ts:18 it("REQUESTER is never an approver, but can be given work or an FYI
+tests/engine/v140-engine.test.ts:23 it("the validator refuses the requester on an approval step but allows it on a work step
+tests/engine/v140-engine.test.ts:30 it("a workflow of only work steps isn
+tests/engine/v140-engine.test.ts:36 describe("work steps (hand-off after approval, F-32)
+tests/engine/v140-engine.test.ts:39 it("after approval the work goes to the requester (or the buyer); one marking it done finishes the request
+tests/engine/v140-engine.test.ts:48 it("a work task can
+tests/engine/v140-engine.test.ts:57 it("the requester still can
+tests/engine/v140-engine.test.ts:65 describe("FYI steps
+tests/engine/v140-engine.test.ts:66 it("tells the people and moves straight on
+tests/engine/v140-engine.test.ts:74 it("the validator wants someone to tell
+tests/engine/v140-engine.test.ts:80 describe("blocked step recovery by IT (D-098)
+tests/engine/v140-engine.test.ts:85 it("starts blocked when nobody resolves
+tests/engine/v140-engine.test.ts:89 it("ASSIGN: chosen people decide the step
+tests/engine/v140-engine.test.ts:96 it("ASSIGN refuses the requester, inactive people and too few people
+tests/engine/v140-engine.test.ts:104 it("SKIP moves on to the next level
+tests/engine/v140-engine.test.ts:110 it("RETRY resolves again (after IT fixed the masters)
+tests/engine/v140-engine.test.ts:116 it("TAKE_PATH on a choice that found no path (only possible in data from before the validator)
+tests/engine/v140-engine.test.ts:141 it("needs a reason, and only works on a step that is blocked
+tests/engine/v140-engine.test.ts:147 describe("event details used for messages and due times
+tests/engine/v140-engine.test.ts:148 it("RESUMED says since when and who is still waiting; RESUBMITTED says who asked
+tests/engine/v160-engine.test.ts:20 describe("recall (EN-04)
+tests/engine/v160-engine.test.ts:23 it("closes the pending approvals, keeps earlier decisions, and resubmitting restarts where it was
+tests/engine/v160-engine.test.ts:38 it("with parallel branches, every open branch restarts
+tests/engine/v160-engine.test.ts:51 it("needs a reason, and only an open request can be recalled
+tests/engine/v160-engine.test.ts:58 it("a decision on the old state after a recall is refused (no double outcome)
+tests/engine/v160-engine.test.ts:66 describe("ask for information (EN-05)
+tests/engine/v160-engine.test.ts:69 it("holds the request with the question; only the requester
+tests/engine/v160-engine.test.ts:87 it("the approver can also simply resume; a plain hold can
+tests/engine/v160-engine.test.ts:97 describe("hand-on history (EN-07)
+tests/engine/v160-engine.test.ts:98 it("records who held the task before
+tests/engine/validate-simulate.test.ts:10 describe("conditions
+tests/engine/validate-simulate.test.ts:11 it("compares text case-insensitively, numbers from strings, and lists
+tests/engine/validate-simulate.test.ts:21 it("combines AND / OR groups
+tests/engine/validate-simulate.test.ts:35 describe("validator
+tests/engine/validate-simulate.test.ts:36 it("accepts a well-formed hybrid workflow
+tests/engine/validate-simulate.test.ts:46 it("needs one start, an end and an approval step
+tests/engine/validate-simulate.test.ts:51 it("finds dead ends and cycles
+tests/engine/validate-simulate.test.ts:62 it("requires exactly one 
+tests/engine/validate-simulate.test.ts:70 it("G-08: rejects conditions that can never be true
+tests/engine/validate-simulate.test.ts:84 it("G-09: rejects unknown roles, users, groups and form fields when the context is given
+tests/engine/validate-simulate.test.ts:96 it("checks any-N and join counts
+tests/engine/validate-simulate.test.ts:105 it("an approval step needs an approver
+tests/engine/validate-simulate.test.ts:110 describe("simulator (test mode)
+tests/engine/validate-simulate.test.ts:127 it("shows stages in order, with parallel steps together
+tests/engine/validate-simulate.test.ts:134 it("follows the default path for small amounts
+tests/engine/validate-simulate.test.ts:140 it("reports a blocked step
+tests/help/help.test.ts:6 describe("help and details for IT (#13, #14)
+tests/help/help.test.ts:12 it("search matches every word, in title or text
+tests/help/help.test.ts:18 it("details for IT have the reference and nothing from the address query
+tests/help/help.test.ts:27 it("request ids: keeps a well-formed CF-Ray, otherwise makes a new one
+tests/help/tour-steps.test.ts:5 describe("onboarding tour steps
+tests/help/tour-steps.test.ts:6 it("covers approvals, tasks and the calendar, from welcome to finish
+tests/help/tour-steps.test.ts:15 it("every step says something, and every page it opens is in the user space
+tests/help/tour-steps.test.ts:24 it("leaves out steps whose page is hidden from the person
+tests/import/import-plan.test.ts:7 describe("CSV
+tests/import/import-plan.test.ts:8 it("reads what Excel writes: BOM, CRLF, quotes, embedded commas and line breaks, blank lines
+tests/import/import-plan.test.ts:18 it("reads semicolon files (some regional Excel settings)
+tests/import/import-plan.test.ts:22 it("writes a BOM and quotes, and guards formula-looking cells both ways
+tests/import/import-plan.test.ts:35 describe("value parsing
+tests/import/import-plan.test.ts:36 it("dates: ISO and Indian day-first; impossible dates refused
+tests/import/import-plan.test.ts:44 it("yes/no with empty meaning yes
+tests/import/import-plan.test.ts:97 describe("planImport: file checks
+tests/import/import-plan.test.ts:98 it("every kind
+tests/import/import-plan.test.ts:106 it("missing or unknown columns stop the whole file
+tests/import/import-plan.test.ts:114 describe("planImport: users
+tests/import/import-plan.test.ts:115 it("creates new people, leaves identical ones alone, and links a manager from the same file
+tests/import/import-plan.test.ts:130 it("an existing inactive manager is fine when unchanged, but can
+tests/import/import-plan.test.ts:135 it("lists every problem by column, and writes nothing when any row is wrong
+tests/import/import-plan.test.ts:152 it("refuses repeated keys, reporting loops and self-reporting
+tests/import/import-plan.test.ts:164 it("follows the same role rules as the form: only a Super Admin grants Super Admin
+tests/import/import-plan.test.ts:172 it("AUD-01: an IT Admin can
+tests/import/import-plan.test.ts:186 it("never touches break-glass, and password sign-in needs WhatsApp
+tests/import/import-plan.test.ts:192 it("an email change ends sessions and unlinks Google, like the form
+tests/import/import-plan.test.ts:201 describe("planImport: approver designations (D-085)
+tests/import/import-plan.test.ts:202 it("a newly chosen manager, HOD or group member must be an approver; what is already saved stays valid
+tests/import/import-plan.test.ts:219 it("designations carry the approver flag (empty means No)
+tests/import/import-plan.test.ts:226 describe("planImport: masters
+tests/import/import-plan.test.ts:227 it("departments: create, update by code (any case), HOD by User ID, Yes/No
+tests/import/import-plan.test.ts:234 it("groups: the members cell is the full list
+tests/import/import-plan.test.ts:240 it("holidays: day-first dates, rename by date, repeated dates refused
+tests/jobs/retry-rate-limit.test.ts:8 describe("retry backoff (D-058)
+tests/jobs/retry-rate-limit.test.ts:9 it("waits 2, 4, 8 minutes and stops after the retry limit
+tests/jobs/retry-rate-limit.test.ts:38 describe("retry runner
+tests/jobs/retry-rate-limit.test.ts:39 it("resends email and WhatsApp from the stored payload
+tests/jobs/retry-rate-limit.test.ts:46 it("reschedules retryable failures and gives up on the rest
+tests/jobs/retry-rate-limit.test.ts:63 describe("rate limits (D-059)
+tests/jobs/retry-rate-limit.test.ts:64 it("uses IP and User ID buckets, case-insensitive
+tests/jobs/retry-rate-limit.test.ts:70 it("refuses once a bucket is over its limit
+tests/modules/module-access.test.ts:8 describe("modules
+tests/modules/module-access.test.ts:9 it("reads the database SET value in a fixed order and drops unknown parts
+tests/modules/module-access.test.ts:15 it("refuses anything that isn
+tests/modules/module-access.test.ts:20 it("defaults to what everyone could use before: Approval, Task, Information; never AI
+tests/modules/module-access.test.ts:24 it("each module is separate; only the Super Admin is exempt
+tests/modules/module-access.test.ts:33 it("the calendar shows only the kinds the person
+tests/modules/module-access.test.ts:43 describe("who may change module access
+tests/modules/module-access.test.ts:48 it("an IT Admin changes a staff member
+tests/modules/module-access.test.ts:53 it("another IT Admin
+tests/modules/module-access.test.ts:60 describe("the user form
+tests/modules/module-access.test.ts:62 it("module access is left alone unless the form sent it
+tests/modules/module-access.test.ts:70 it("an unknown module is an error on the form, not silently dropped
+tests/modules/module-access.test.ts:75 describe("every page of the user space has a module decision
+tests/modules/module-access.test.ts:79 it("approval, task and information pages name their module; nothing is left undecided
+tests/modules/v190-rules.test.ts:18 describe("new field types
+tests/modules/v190-rules.test.ts:27 it("the form definition is valid, and option fields need two choices
+tests/modules/v190-rules.test.ts:32 it("parses typed values and refuses bad ones
+tests/modules/v190-rules.test.ts:39 it("shows values and evaluates rules on a multi-select
+tests/modules/v190-rules.test.ts:49 describe("module type set-up
+tests/modules/v190-rules.test.ts:50 it("checks reserved keys, line items, access and assignment lists
+tests/modules/v190-rules.test.ts:59 it("who may create: everyone, departments or people
+tests/modules/v190-rules.test.ts:65 it("bad stored settings fall back to the defaults; India time round trip
+tests/modules/v190-rules.test.ts:74 describe("task rules
+tests/modules/v190-rules.test.ts:78 it("who may see a task
+tests/modules/v190-rules.test.ts:85 it("the assignee works it; the creator reassigns, cancels and reopens
+tests/modules/v190-rules.test.ts:97 it("completion evidence and overdue
+tests/modules/v190-rules.test.ts:105 it("assignment scope
+tests/modules/v190-rules.test.ts:119 describe("information rules
+tests/modules/v190-rules.test.ts:121 it("expiry, visibility and actions
+tests/modules/v190-rules.test.ts:131 it("acknowledgement and targets
+tests/modules/v190-rules.test.ts:138 it("recipients are resolved once, the sender excluded, direct choice wins
+tests/modules/v190-rules.test.ts:150 describe("list filters (tasks and information)
+tests/modules/v190-rules.test.ts:151 it("task filters parse from the address and give bound SQL
+tests/modules/v190-rules.test.ts:167 it("information filters: inbox only shows published items sent to me
+tests/modules/v190-rules.test.ts:178 describe("notification categories
+tests/modules/v190-rules.test.ts:179 it("maps events to modules and links to records
+tests/modules/v190-rules.test.ts:196 describe("approval integrity (v1.9.0)
+tests/modules/v190-rules.test.ts:199 it("one person, one vote per step (AUD-05)
+tests/modules/v190-rules.test.ts:212 it("a resubmit whose values change the route is detected (AUD-02)
+tests/notifications/control-center.test.ts:26 describe("choices per kind of message
+tests/notifications/control-center.test.ts:27 it("one kind can be off while the rest of its group stays on
+tests/notifications/control-center.test.ts:34 it("only optional groups and kinds can be stored
+tests/notifications/control-center.test.ts:41 it("the app alert switched off keeps the message, already read
+tests/notifications/control-center.test.ts:50 describe("Do not disturb
+tests/notifications/control-center.test.ts:54 it("quiet hours may cross midnight; days off; a pause
+tests/notifications/control-center.test.ts:63 it("is read safely
+tests/notifications/control-center.test.ts:67 it("holds email and WhatsApp, not the app, and never security messages
+tests/notifications/control-center.test.ts:83 describe("profile photos
+tests/notifications/control-center.test.ts:85 it("JPEG, PNG and WebP by their first bytes, at most 3 MB
+tests/notifications/control-center.test.ts:93 it("the address changes with the photo
+tests/notifications/notify.test.ts:30 describe("notification hub
+tests/notifications/notify.test.ts:31 it("records in-app, sends email and WhatsApp with variables in template order
+tests/notifications/notify.test.ts:42 it("skips WhatsApp when the template isn
+tests/notifications/notify.test.ts:49 it("skips WhatsApp when the user has no number
+tests/notifications/notify.test.ts:55 it("never throws: provider failures become FAILED deliveries
+tests/notifications/notify.test.ts:68 it("never throws even if the database is down
+tests/notifications/notify.test.ts:78 it("a send that worked is never marked FAILED when recording it fails (no double send on retry)
+tests/notifications/notify.test.ts:90 it("sends nothing to an inactive user
+tests/notifications/notify.test.ts:97 describe("notification preferences (#6, D-110)
+tests/notifications/notify.test.ts:100 it("a channel switched off is skipped (recorded as USER_PREFERENCE); the inbox still gets it
+tests/notifications/notify.test.ts:113 it("security and approval-needed messages ignore opt-outs
+tests/notifications/notify.test.ts:123 it("if the choices can
+tests/notifications/receipts.test.ts:5 describe("WhatsApp delivery receipts
+tests/notifications/receipts.test.ts:6 it("reads Meta
+tests/notifications/receipts.test.ts:14 it("reads a flat receipt or a list of them
+tests/notifications/receipts.test.ts:19 it("ignores anything without an id or a known status
+tests/notifications/rule-model.test.ts:9 describe("conditions on any field
+tests/notifications/rule-model.test.ts:11 it("text ignores capitals; numbers compare as numbers (Indian commas too)
+tests/notifications/rule-model.test.ts:22 it("all or any; no conditions means every record
+tests/notifications/rule-model.test.ts:33 describe("stages: when a send is due
+tests/notifications/rule-model.test.ts:36 it("once, after the anchor
+tests/notifications/rule-model.test.ts:41 it("repeats up to the limit; missed repeats count as the latest only
+tests/notifications/rule-model.test.ts:47 it("before the due time; no due time means never
+tests/notifications/rule-model.test.ts:54 describe("rules are checked before saving
+tests/notifications/rule-model.test.ts:56 it("a valid escalation is accepted with defaults
+tests/notifications/rule-model.test.ts:61 it("needs recipients, a value for each condition, 
+tests/notifications/rule-model.test.ts:71 describe("message and description
+tests/notifications/rule-model.test.ts:72 it("fills placeholders and leaves unknown ones
+tests/notifications/rule-model.test.ts:75 it("describes a stage in words
+tests/notifications/template-authoring.test.ts:10 describe("named placeholders → Meta
+tests/notifications/template-authoring.test.ts:11 it("numbers placeholders in order of first use, reusing a repeated one
+tests/notifications/template-authoring.test.ts:23 it("refuses what Meta refuses
+tests/notifications/template-authoring.test.ts:36 it("round-trips the suggested wording, and every suggestion compiles
+tests/notifications/template-authoring.test.ts:47 it("names, footers, versions and Meta statuses
+tests/notifications/template-authoring.test.ts:60 describe("CEOITBox calls (Master Documentation)
+tests/notifications/template-authoring.test.ts:61 it("builds the CreateTemplate body with BODY example values and an optional FOOTER
+tests/notifications/template-authoring.test.ts:74 it("reads Meta
+tests/notifications/template-authoring.test.ts:93 it("sends with the key in the header and our userMessageId; a 200 with an error object is a failure
+tests/notifications/template-authoring.test.ts:107 it("maps 401 and 400 to errors that are not retried
+tests/notifications/templates.test.ts:22 describe("WhatsApp template catalogue
+tests/notifications/templates.test.ts:23 it("every entry follows Meta
+tests/notifications/templates.test.ts:27 it("codes, names and events are unique
+tests/notifications/templates.test.ts:33 it("the preview fills every variable
+tests/notifications/templates.test.ts:37 it("request messages send exactly the variables their template uses
+tests/notifications/templates.test.ts:58 it("security messages send exactly the variables their template uses
+tests/notifications/templates.test.ts:73 it("messages sent from other files use the same keys (source check)
+tests/notifications/templates.test.ts:94 it("docs/NOTIFICATION-TEMPLATES.md is up to date
+tests/notifications/templates.test.ts:99 it("values go to Meta on one line, never empty, never too long
+tests/notifications/templates.test.ts:106 describe("short labels (S9-15)
+tests/notifications/templates.test.ts:107 it("every message has its own short screen name, not the raw event code
+tests/ops/backup-error.test.ts:6 describe("explainBackupError
+tests/ops/backup-error.test.ts:7 it("points at Private Storage for permission and missing-path problems
+tests/ops/backup-error.test.ts:13 it("names a database refusal, and anything else with its code
+tests/pdf/request-summary.test.ts:5 describe("request summary PDF (#10)
+tests/pdf/request-summary.test.ts:6 it("replaces characters the built-in font can
+tests/pdf/request-summary.test.ts:11 it("wraps long text, cutting a word too long for a line
+tests/pdf/request-summary.test.ts:18 it("builds a valid PDF across pages
+tests/perf/analytics.perf.test.ts:116 describe(`Analytics p95 (organisation scope, about ${BASE * (COPIES + 1)} requests)
+tests/perf/analytics.perf.test.ts:119 it(`each query, ${label}
+tests/perf/analytics.perf.test.ts:143 it("the whole dashboard (every query at once, as the page runs them)
+tests/qa/qa-fixes.test.ts:24 describe("D-QA-04: amounts can
+tests/qa/qa-fixes.test.ts:25 it("a number field
+tests/qa/qa-fixes.test.ts:31 it("a minimum only makes sense on a number field
+tests/qa/qa-fixes.test.ts:35 it("the DoA amount is refused below ₹0 even when the form has no minimum
+tests/qa/qa-fixes.test.ts:43 describe("D-QA-15: email subjects stay on one line
+tests/qa/qa-fixes.test.ts:44 it("strips line breaks before sending
+tests/qa/qa-fixes.test.ts:56 describe("audit S-04: a hung email call gives up
+tests/qa/qa-fixes.test.ts:57 it("aborts after the time limit with a retryable failure
+tests/records/filters.test.ts:7 describe("records filters
+tests/records/filters.test.ts:8 it("keeps only known values; everything else is ignored
+tests/records/filters.test.ts:15 it("a 
+tests/records/filters.test.ts:18 it("links keep the filters and drop the defaults
+tests/records/filters.test.ts:23 it("India dates start at 18:30 UTC the day before
+tests/records/filters.test.ts:26 it("every sortable column has a sort expression
+tests/security/client-ip.test.ts:6 describe("client IP (Q-018, D-092)
+tests/security/client-ip.test.ts:7 it("uses Cloudflare
+tests/security/client-ip.test.ts:12 it("without Cloudflare, trusts only the right-most X-Forwarded-For entry (the nearest proxy
+tests/security/client-ip.test.ts:17 it("drops values that aren
+tests/security/csp.test.ts:13 describe("Content-Security-Policy (P1-34a)
+tests/security/csp.test.ts:14 it("allows scripts only with this request
+tests/security/csp.test.ts:22 it("allows the Firebase Google sign-in popup and nothing else to frame
+tests/security/csp.test.ts:31 it("dev adds only what hot reload needs
+tests/security/csp.test.ts:38 it("nonces are random and base64
+tests/security/log-redaction.test.ts:5 describe("provider bodies in the log
+tests/security/log-redaction.test.ts:6 it("keep the reason, mask emails and phone numbers, and stay short
+tests/security/redirect-to-page.test.ts:6 describe("redirectToPage
+tests/security/redirect-to-page.test.ts:7 it("answers 303 with a relative Location and no caching
+tests/security/redirect-to-page.test.ts:13 it("refuses absolute and protocol-relative addresses
+tests/security/route-inventory.test.ts:38 describe("API route inventory (SEC-02)
+tests/security/route-inventory.test.ts:41 it("finds the routes
+tests/security/route-inventory.test.ts:55 it("every public route on the list still exists
+tests/security/route-inventory.test.ts:59 it("machine routes check their secret in constant time
+tests/security/route-inventory.test.ts:68 describe("Server Action inventory (SEC-02, SEC-14)
+tests/security/route-inventory.test.ts:80 it("finds the action files
+tests/security/safe-next.test.ts:4 describe("after sign-in, only go to a page in this app (audit S-02)
+tests/security/safe-next.test.ts:5 it("keeps normal paths with their query
+tests/security/safe-next.test.ts:11 it("refuses anything that a browser would send to another site
+tests/security/security.test.ts:15 describe("encryption (AES-256-GCM)
+tests/security/security.test.ts:16 it("round-trips and uses a fresh IV each time
+tests/security/security.test.ts:24 it("rejects tampered ciphertext
+tests/security/security.test.ts:31 describe("hashing
+tests/security/security.test.ts:32 it("keyed hash is stable, compares safely, tokens are random
+tests/security/security.test.ts:41 describe("OTP
+tests/security/security.test.ts:42 it("generates numeric codes of the requested length
+tests/security/security.test.ts:47 it("stores only a hash and verifies it
+tests/security/security.test.ts:55 describe("passwords (scrypt)
+tests/security/security.test.ts:56 it("hashes with salt and verifies
+tests/security/security.test.ts:66 it("enforces the policy
+tests/security/security.test.ts:73 describe("session and purpose tokens
+tests/security/security.test.ts:76 it("verifies a valid session token and rejects tampering and expiry
+tests/security/security.test.ts:87 it("purpose tokens can
+tests/security/security.test.ts:94 it("device cookie signature is checked
+tests/security/v1100-security.test.ts:14 describe("middleware headers (SEC-07, SEC-08, SEC-18)
+tests/security/v1100-security.test.ts:15 it("SEC-07: a cross-origin preflight to the API gets no Access-Control-Allow-* headers
+tests/security/v1100-security.test.ts:21 it("SEC-07: a cross-site POST to the API is refused before any route runs
+tests/security/v1100-security.test.ts:26 it("SEC-08: a plain-HTTP visit (Cloudflare
+tests/security/v1100-security.test.ts:37 it("SEC-18: pages and API answers are private and not stored; CSP and a request id are set
+tests/security/v1100-security.test.ts:46 it("SEC-02: without a session, protected pages go to sign-in and the API answers a plain 404
+tests/security/v1100-security.test.ts:55 describe("page access (G-3, SEC-17)
+tests/security/v1100-security.test.ts:56 it("Super Admin addresses are no configured page (refused for others by checkPageAccess)
+tests/security/v1100-security.test.ts:60 it("SEC-17: Sign-in & devices can
+tests/security/v1100-security.test.ts:67 describe("SEC-06: list sorting and search can
+tests/security/v1100-security.test.ts:69 it("task lists: an unknown sort falls back; search text only ever goes in as a parameter
+tests/security/v1100-security.test.ts:77 it("information lists: the same
+tests/security/v1100-security.test.ts:85 describe("moving domains (D-196)
+tests/security/v1100-security.test.ts:86 it("with LEGACY_HOSTS, a visit to the old address goes to the same page on the new one
+tests/security/v1100-security.test.ts:94 it("machine calls and OAuth callbacks on the old address are still served, and the new address isn
+tests/security/v1100-security.test.ts:103 it("rollback (D-199): links issued on arssteels.net and www go back to approval
+tests/security/v1100-security.test.ts:114 it("without LEGACY_HOSTS nothing is redirected
+tests/settings/plan-changes.test.ts:8 describe("settings save plan (F-52)
+tests/settings/plan-changes.test.ts:9 it("a blank secret keeps the stored key; a new one replaces it
+tests/settings/plan-changes.test.ts:17 it("remove clears only a configured secret
+tests/settings/plan-changes.test.ts:23 it("plain values change only when they differ from the value in force (default included)
+tests/settings/plan-changes.test.ts:30 it("rejects values outside the safe limits, so security can
+tests/settings/plan-changes.test.ts:36 it("normalises numbers before comparing
+tests/settings/plan-changes.test.ts:41 it("an optional value left empty stays unset, so unused providers don
+tests/settings/plan-changes.test.ts:49 it("rejects a bad email address
+tests/settings/plan-changes.test.ts:54 describe("settings error wording
+tests/settings/plan-changes.test.ts:55 it("explains limits in plain words
+tests/settings/split-label.test.ts:5 describe("setting labels: name plus hover hint (D-179)
+tests/settings/split-label.test.ts:6 it("splits a trailing bracket or a long 
+tests/settings/split-label.test.ts:13 it("handles every real label quickly (a regex here once hung the server)
+tests/ui/classic-modules.test.ts:17 describe("Classic modules
+tests/ui/classic-modules.test.ts:19 it("modules first (as in the sketch), then the single pages; each with its own letter
+tests/ui/classic-modules.test.ts:24 it("a module with several pages opens its menu; one page opens directly; Overview keeps its dashboard
+tests/ui/classic-modules.test.ts:30 it("finds the module and page from the address (the most specific page wins)
+tests/ui/classic-modules.test.ts:36 it("page letters don
+tests/ui/confirm-bar.test.ts:16 describe("forms that ask for confirmation
+tests/ui/confirm-bar.test.ts:17 it("render the confirmation bar
+tests/ui/guard-action.test.ts:10 describe("guardAction
+tests/ui/guard-action.test.ts:11 it("passes normal answers straight through
+tests/ui/guard-action.test.ts:16 it("turns a thrown failure into a message (still signed in → connection message)
+tests/ui/guard-action.test.ts:26 it("says ARS was updated when the page
+tests/ui/guard-action.test.ts:34 it("gives the reference of an error the server hit
+tests/ui/guard-action.test.ts:40 it("an unexpected answer while signed in says so; while signed out, the session ended
+tests/ui/guard-action.test.ts:50 it("says the session ended when the failure is because of that
+tests/ui/guard-action.test.ts:60 it("keeps an ordinary 
+tests/ui/guard-action.test.ts:65 it("stops waiting after the time limit
+tests/ui/guard-call.test.ts:13 describe("guardCall
+tests/ui/guard-call.test.ts:14 it("passes a normal answer through
+tests/ui/guard-call.test.ts:17 it("stops waiting at the time limit and says it may still go through
+tests/ui/guard-call.test.ts:25 it("a cut connection while offline says offline, not an error
+tests/ui/guard-call.test.ts:32 it("an ended session is named (the status check says signed out)
+tests/ui/guard-call.test.ts:38 it("a server error shows its reference for IT
+tests/ui/loading-guard.test.ts:42 describe("loading skeletons
+tests/ui/loading-guard.test.ts:43 it("exist only on the reviewed read-only pages
+tests/ui/queue-and-shortcuts.test.ts:6 describe("Waiting for me filters (WS-01)
+tests/ui/queue-and-shortcuts.test.ts:7 it("reads only known values, with safe defaults
+tests/ui/queue-and-shortcuts.test.ts:15 it("builds conditions with parameters only, and the order
+tests/ui/queue-and-shortcuts.test.ts:24 it("links leave defaults out
+tests/ui/queue-and-shortcuts.test.ts:30 describe("shortcuts never fire while typing (WS-02)
+tests/ui/queue-and-shortcuts.test.ts:31 it("text fields, text areas, selects and editable areas count as typing; buttons and checkboxes don
+tests/ui/ux-laws.test.ts:8 describe("Postel: input read the way people type it
+tests/ui/ux-laws.test.ts:9 it("request numbers without dashes, with spaces or without leading zeros
+tests/ui/ux-laws.test.ts:14 it("a WhatsApp number with the trunk 0
+tests/ui/ux-laws.test.ts:21 describe("Goal gradient: a level
+tests/ui/ux-laws.test.ts:23 it("done, now, to come, stopped
+tests/work/adhoc-permissions.test.ts:9 describe("ad hoc and periodic task rights
+tests/work/adhoc-permissions.test.ts:10 it("ad hoc: only the creator (and IT) change details and plans
+tests/work/adhoc-permissions.test.ts:17 it("periodic: editors change details; the assignee plans dates
+tests/work/adhoc-permissions.test.ts:21 it("ad hoc: the assignee may start and complete but not edit, reassign or cancel
+tests/work/adhoc-permissions.test.ts:35 describe("project permissions
+tests/work/adhoc-permissions.test.ts:36 it("are read safely
+tests/work/adhoc-permissions.test.ts:46 it("field restrictions and sharing follow the role
+tests/work/grid.test.ts:43 describe("task table (D-220)
+tests/work/grid.test.ts:44 it("by default: incomplete tasks, in manual order, in one group
+tests/work/grid.test.ts:50 it("quick filters: completed, due this week / next week
+tests/work/grid.test.ts:57 it("field filters: assignee (me), project, periodic, due, tag
+tests/work/grid.test.ts:67 it("search, sort and groups
+tests/work/grid.test.ts:85 it("saved settings are read safely
+tests/work/holidays.test.ts:14 describe("task holidays
+tests/work/holidays.test.ts:15 it("named holidays and (by default) weekly offs are holidays
+tests/work/holidays.test.ts:21 it("offers the nearest working day either way
+tests/work/holidays.test.ts:26 it("warn: keep on purpose; block: never; off: no check
+tests/work/holidays.test.ts:38 it("settings: safe defaults for missing or broken values
+tests/work/more-rules.test.ts:6 describe("repeating tasks
+tests/work/more-rules.test.ts:7 it("reads only well-formed rules
+tests/work/more-rules.test.ts:14 it("labels
+tests/work/more-rules.test.ts:19 it("the next due day
+tests/work/more-rules.test.ts:33 it("settings default to on and holiday-aware
+tests/work/more-rules.test.ts:39 describe("custom fields
+tests/work/more-rules.test.ts:40 it("choices come one per line or comma, without repeats
+tests/work/more-rules.test.ts:44 it("values are checked by kind; empty clears
+tests/work/more-rules.test.ts:56 describe("templates
+tests/work/more-rules.test.ts:57 it("are checked and counted with their subtasks
+tests/work/more-rules.test.ts:70 describe("morning summary
+tests/work/more-rules.test.ts:71 it("says nothing when there is nothing
+tests/work/more-rules.test.ts:74 it("lists overdue, today and new, at most 15 each
+tests/work/more-rules.test.ts:82 it("settings: on at 9 on working days by default
+tests/work/more-rules.test.ts:88 describe("department holidays merge with the organisation
+tests/work/more-rules.test.ts:89 it("a department
+tests/work/rich-text.test.ts:5 describe("task description formatting
+tests/work/rich-text.test.ts:6 it("reads bold, italic, struck and mentions; anything else stays text
+tests/work/rich-text.test.ts:21 it("groups bullet and numbered lines into lists
+tests/work/rich-text.test.ts:27 it("turns picked @Names into mentions, longest name first, and lists who is mentioned
+tests/work/rich-text.test.ts:36 it("wraps the selection and marks lines for the Formatting bar
+tests/work/work-rules.test.ts:10 describe("project roles
+tests/work/work-rules.test.ts:11 it("a private project is seen by its members only
+tests/work/work-rules.test.ts:15 it("a department grant counts for the department
+tests/work/work-rules.test.ts:20 it("shared projects give their default role; the highest grant wins
+tests/work/work-rules.test.ts:26 it("D-216: a manager can look into projects their reporting line is in (view only)
+tests/work/work-rules.test.ts:32 it("IT acts as owner everywhere
+tests/work/work-rules.test.ts:35 it("what each role may do
+tests/work/work-rules.test.ts:41 it("a project keeps at least one person as owner
+tests/work/work-rules.test.ts:50 describe("task rights
+tests/work/work-rules.test.ts:52 it("strangers see nothing
+tests/work/work-rules.test.ts:55 it("followers and managers (any level) read and comment, not edit
+tests/work/work-rules.test.ts:59 it("project roles carry over to the project
+tests/work/work-rules.test.ts:64 it("the assignee progresses their task; the creator edits it
+tests/work/work-rules.test.ts:70 describe("reporting hierarchy (D-216)
+tests/work/work-rules.test.ts:82 it("everyone below, at every level
+tests/work/work-rules.test.ts:88 it("a loop in the data is cut
+tests/work/work-rules.test.ts:92 it("the chain above a person
+tests/work/work-rules.test.ts:98 describe("order, subtasks and dependencies
+tests/work/work-rules.test.ts:99 it("a move takes the midpoint of its neighbours
+tests/work/work-rules.test.ts:107 it("subtasks: no loops, at most five levels
+tests/work/work-rules.test.ts:113 it("dependencies never wait in a loop
+tests/work/work-rules.test.ts:124 describe("My Tasks sections
+tests/work/work-rules.test.ts:128 it("newly assigned by someone else: Recently assigned
+tests/work/work-rules.test.ts:132 it("otherwise by due date
+tests/work/work-rules.test.ts:139 it("placed tasks stay put, but move forward as their date nears
+tests/work/work-rules.test.ts:149 it("India
+tests/work/work-rules.test.ts:155 describe("mentions and search
+tests/work/work-rules.test.ts:156 it("mentions keep only the person
+tests/work/work-rules.test.ts:166 it("search filters parse from the address and round-trip
+tests/workflows/attachment-field.test.ts:13 describe("attachment field
+tests/workflows/attachment-field.test.ts:14 it("is a valid field type with a file limit of 1–5
+tests/workflows/attachment-field.test.ts:20 it("the builder refuses a file limit on another type, a default, and value rules on it
+tests/workflows/attachment-field.test.ts:31 it("required means at least one file; the count is the value; the limit applies
+tests/workflows/attachment-field.test.ts:38 it("required-when works on attachment fields
+tests/workflows/attachment-field.test.ts:43 it("shows as a file count
+tests/workflows/attachment-field.test.ts:49 describe("collaborator updates
+tests/workflows/attachment-field.test.ts:51 it("collaborators get an FYI when the request is approved, rejected, sent back or withdrawn; never the requester twice
+tests/workflows/attachment-field.test.ts:63 it("no update for steps that don
+tests/workflows/branch.test.ts:35 describe("choices in the builder (D-068)
+tests/workflows/branch.test.ts:36 it("compiles to a CONDITION node with one condition edge and one otherwise edge, and validates
+tests/workflows/branch.test.ts:50 it("takes the right path on the engine
+tests/workflows/branch.test.ts:59 it("an empty path goes straight on
+tests/workflows/branch.test.ts:71 it("refuses a choice with no levels on either path
+tests/workflows/branch.test.ts:75 it("the level map shows the path taken and marks the other not taken
+tests/workflows/branch.test.ts:89 it("the DoA view follows amount choices
+tests/workflows/builder.test.ts:36 describe("builder → graph (D-056)
+tests/workflows/builder.test.ts:37 it("produces a graph the validator accepts
+tests/workflows/builder.test.ts:41 it("parallel stages become SPLIT → steps → JOIN with the join rule
+tests/workflows/builder.test.ts:59 it("runs on the engine: ₹12.5L includes the ED, ₹75k skips it
+tests/workflows/builder.test.ts:68 it("maps every approver source
+tests/workflows/builder.test.ts:76 it("any-N steps and joins carry N
+tests/workflows/builder.test.ts:88 it("rejects duplicate ids and bad specs
+tests/workflows/builder.test.ts:96 describe("step map (S3-05b)
+tests/workflows/builder.test.ts:107 it("shows every stage, parallel branches together, with people and statuses
+tests/workflows/builder.test.ts:123 it("falls back to graph order without a builder spec, and explains skipped/blocked steps
+tests/workflows/builder.test.ts:132 it("describes rules in plain words
+tests/workflows/builder.test.ts:139 describe("form fields (D-055)
+tests/workflows/builder.test.ts:148 it("parses Indian number grouping, dates, choices and people
+tests/workflows/builder.test.ts:153 it("reports every problem at once
+tests/workflows/builder.test.ts:160 it("checks the form definition
+tests/workflows/builder.test.ts:166 it("displays stored values
+tests/workflows/builder.test.ts:173 describe("timeline wording and resubmitted maps
+tests/workflows/builder.test.ts:174 it("keeps the approver of a step finished in an earlier round
+tests/workflows/builder.test.ts:188 it("describes events in plain sentences and hides bookkeeping
+tests/workflows/doa-matrix.test.ts:46 describe("DoA bands
+tests/workflows/doa-matrix.test.ts:47 it("labels and finds bands; the upper limit is inclusive
+tests/workflows/doa-matrix.test.ts:52 it("builds the smallest skip condition for each level
+tests/workflows/doa-matrix.test.ts:74 describe("a DoA matrix on the engine
+tests/workflows/doa-matrix.test.ts:75 it("compiles to one approval step per level and validates
+tests/workflows/doa-matrix.test.ts:81 it("routes by band, at every edge
+tests/workflows/doa-matrix.test.ts:88 it("the DoA view reads the matrix
+tests/workflows/doa-matrix.test.ts:96 it("the request map says a level isn
+tests/workflows/doa-matrix.test.ts:105 describe("DoA checks
+tests/workflows/doa-matrix.test.ts:108 it("refuses falling limits, an empty band, a level with no band, and a second matrix
+tests/workflows/doa-matrix.test.ts:117 it("the amount field must be on the form, a number, and required
+tests/workflows/doa-matrix.test.ts:128 it("a fresh matrix is valid as it comes
+tests/workflows/form-designer.test.ts:11 describe("Form Designer
+tests/workflows/form-designer.test.ts:12 it("moves a field without losing or duplicating any
+tests/workflows/form-designer.test.ts:17 it("a duplicate gets its own key, and the needed-by date stays on the original
+tests/workflows/form-designer.test.ts:25 it("a type change keeps what still applies and names what it would drop
+tests/workflows/form-designer.test.ts:34 it("knows which fields use a field before it is removed
+tests/workflows/form-designer.test.ts:39 it("flags what still needs fixing on a card
+tests/workflows/form-designer.test.ts:46 it("a new section from the library has a label and a key
+tests/workflows/form-fields.test.ts:29 describe("form definitions (what IT saves)
+tests/workflows/form-fields.test.ts:30 it("a form with every type is valid and passes the schema
+tests/workflows/form-fields.test.ts:35 it("refuses a dropdown with fewer than two or repeated options, a list field without a list, and options or lists on other types
+tests/workflows/form-fields.test.ts:44 describe("what the requester sends
+tests/workflows/form-fields.test.ts:56 it("every type is stored as its own kind of value
+tests/workflows/form-fields.test.ts:63 it("refuses bad values field by field, and keeps the good ones for test mode
+tests/workflows/form-fields.test.ts:83 it("required fields must be filled; a date must be a real calendar date
+tests/workflows/form-fields.test.ts:92 it("shows stored values back readably
+tests/workflows/form-fields.test.ts:103 describe("conditions on dates and lists
+tests/workflows/form-fields.test.ts:104 it("dates compare by calendar order
+tests/workflows/form-fields.test.ts:113 it("the validator accepts a date for before/after and still refuses words
+tests/workflows/form-fields.test.ts:131 describe("builder helpers
+tests/workflows/form-fields.test.ts:132 it("the key follows the label, always a valid key
+tests/workflows/form-fields.test.ts:139 it("offers operators that suit the field type
+tests/workflows/form-fields.test.ts:146 describe("the request page
+tests/workflows/form-fields.test.ts:147 it("a level not reached yet shows as skipped when its condition already holds, in plain words
+tests/workflows/smart-forms.test.ts:6 describe("rules
+tests/workflows/smart-forms.test.ts:7 it("compare numbers as numbers and text case-insensitively
+tests/workflows/smart-forms.test.ts:19 describe("formulas
+tests/workflows/smart-forms.test.ts:20 it("parse with precedence and brackets; never eval
+tests/workflows/smart-forms.test.ts:30 it("missing inputs and division by zero give no value (never 0)
+tests/workflows/smart-forms.test.ts:35 it("rounds half away from zero, without binary-fraction surprises
+tests/workflows/smart-forms.test.ts:42 describe("line items in paise
+tests/workflows/smart-forms.test.ts:43 it("quantity × rate + GST, rounded per line to the paisa
+tests/workflows/smart-forms.test.ts:55 it("refuses bad rows with a plain reason
+tests/workflows/smart-forms.test.ts:63 describe("dependencies
+tests/workflows/smart-forms.test.ts:64 it("orders fields after what they depend on, and finds cycles
+tests/workflows/smart-forms.test.ts:77 it("a field hidden by its rule hides the fields that depend on it
+tests/workflows/smart-forms.test.ts:99 describe("the server decides (parseFormSubmission)
+tests/workflows/smart-forms.test.ts:105 it("works out totals and calculated fields itself, ignoring what the browser sent
+tests/workflows/smart-forms.test.ts:114 it("clears hidden fields and enforces 
+tests/workflows/smart-forms.test.ts:121 it("required line items need at least one row; bad JSON is refused
+tests/workflows/smart-forms.test.ts:127 describe("form check (builder side)
+tests/workflows/smart-forms.test.ts:128 it("accepts the smart form above
+tests/workflows/smart-forms.test.ts:132 it("refuses unknown references, non-number maths, cycles and self rules
+tests/workflows/v140-builder.test.ts:19 describe("step types in the builder (D-097)
+tests/workflows/v140-builder.test.ts:29 it("compiles work as an approval step in WORK mode and FYI as a NOTIFY node
+tests/workflows/v140-builder.test.ts:37 it("runs end to end: approval, the requester
+tests/workflows/v140-builder.test.ts:60 it("work tasks are announced as tasks, not approvals; the timeline says 
+tests/workflows/v140-builder.test.ts:69 it("a custom approval may give work to yourself, but not an approval
+tests/workflows/v140-builder.test.ts:75 describe("and/or conditions (D-099)
+tests/workflows/v140-builder.test.ts:78 it("compile to OR / AND groups, and a single row stays a plain comparison
+tests/workflows/v140-builder.test.ts:84 it("a choice with 
+tests/workflows/v140-builder.test.ts:100 it("the validator still catches impossible 
+tests/workflows/v140-builder.test.ts:112 describe("choices inside choices (D-099)
+tests/workflows/v140-builder.test.ts:116 it("route through two levels of choices
+tests/workflows/v140-builder.test.ts:127 it("refuses more than three levels of choices
+tests/workflows/version-migration.test.ts:41 describe("diffVersions
+tests/workflows/version-migration.test.ts:42 it("names added, removed and changed steps, routes and fields
+tests/workflows/version-migration.test.ts:59 it("two identical versions are the same
+tests/workflows/version-migration.test.ts:65 describe("checkMigration
+tests/workflows/version-migration.test.ts:69 it("compatible when every reached step is still there
+tests/workflows/version-migration.test.ts:74 it("warns when a new step comes before where the request is
+tests/workflows/version-migration.test.ts:80 it("warns when the waiting step
+tests/workflows/version-migration.test.ts:88 it("needs manual review when a reached step was removed; a mapping onto the same kind fixes it
+tests/workflows/version-migration.test.ts:102 it("blocks finished requests, same version, a changed step kind, and a part-way parallel join
+tests/workflows/version-migration.test.ts:113 describe("remapState
+tests/workflows/version-migration.test.ts:114 it("renames the step everywhere and keeps decisions
+tests/workflows/version-migration.test.ts:125 it("lines the step list up with the target: new steps WAITING, unreached old ones dropped
+tests/workflows/workflow-designer.test.ts:16 describe("workflow designer
+tests/workflows/workflow-designer.test.ts:17 it("names each level
+tests/workflows/workflow-designer.test.ts:27 it("checks parallel steps, choices (with their paths) and the DoA matrix
+tests/workflows/workflow-designer.test.ts:36 it("summarises a level in one line
+tests/workflows/workflow-designer.test.ts:41 it("duplicates with fresh ids everywhere, leaving the original alone
+tests/workflows/workflow-designer.test.ts:50 it("offers a kept browser copy only for the same version

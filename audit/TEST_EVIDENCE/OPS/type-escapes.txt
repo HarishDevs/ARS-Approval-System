@@ -1,0 +1,47 @@
+== ': any' / '<any>' / 'as any' (non-test source)
+3
+app/users/custom/page.tsx:18:// F-33: any user, whenever needed (D-026, D-040).
+server/ai/tools.ts:38:  mode: ChatMode | null; // null: any data mode (propose_action)
+server/settings/definitions.ts:121:  { key: "ai.module_modes", group: "AI", choices: ["APPROVAL", "TASK", "INFORMATION", "SALESFORCE"], label: "Module chats available: any of APPROVAL,TASK,INFORMATION,SALESFORCE (comma-separated; empty for none)", valueType: "STRING", encrypted: false, schema: z.string().trim().max(60).regex(/^$|^(APPROVAL|TASK|INFORMATION|SALESFORCE)(,(APPROVAL|TASK|INFORMATION|SALESFORCE))*$/, "Use APPROVAL, TASK, INFORMATION, SALESFORCE separated by commas."), defaultValue: "APPROVAL,TASK,INFORMATION,SALESFORCE" },
+== eslint-disable
+19
+      1 eslint-disable-next-line @next/next/no-img-element */}
+      1 eslint-disable-next-line @next/next/no-img-element -- a private file streamed by our own access-checked route
+      1 eslint-disable-next-line @next/next/no-img-element -- a small private photo served by the app
+      2 eslint-disable-next-line @next/next/no-img-element -- small static logo */}
+      7 eslint-disable-next-line @next/next/no-img-element -- static SVG logo */}
+      1 eslint-disable-next-line @next/next/no-img-element -- the person's own small photo
+      6 eslint-disable-next-line react-hooks/exhaustive-deps
+== as never
+19
+      6 app/superadmin/integrations/google-calendar/actions.ts
+      3 server/ai/tools.ts
+      1 server/ops/alerts.ts
+      1 server/calendar/sources.ts
+      1 server/calendar/entries.ts
+      1 server/auth/google-sign-in.ts
+      1 features/admin/WorkflowPanels.tsx
+      1 app/users/draft-actions.ts
+      1 app/users/ai/actions.ts
+      1 app/try/page.tsx
+== as unknown as
+8
+      2 server/workflows/version-diff.ts
+      1 server/modules/settings.ts
+      1 server/approvals/view.ts
+      1 lib/logging/logger.ts
+      1 lib/db/repositories/request-lists.repository.ts
+      1 lib/db/repositories/analytics-center.repository.ts
+      1 lib/db/client.ts
+== @ts-ignore / @ts-expect-error / @ts-nocheck
+0
+== tests: as never / as unknown as / any
+26
+71
+0
+== TODO/FIXME/HACK/XXX (source)
+0
+== TODO/FIXME in tests+scripts
+0
+== console.* in source (non-logging)
+1

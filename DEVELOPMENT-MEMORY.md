@@ -659,6 +659,14 @@
 
 ## 5. Work log (newest first)
 
+### 31 Oct 2026 (independent application audit of v1.39.0; no code changed)
+- The owner's "MASTER PROMPT: Independent end-to-end application audit" was run on v1.39.0 (`0473f25`). Results are in `audit/` (00–20, MASTER_DEFECT_REGISTER, FINAL_APPLICATION_AUDIT_REPORT, TEST_EVIDENCE).
+- **How:** hand tests in the in-app browser against the production build on :3100 with the throw-away database, as the seeded test users (journeys verified in SQL; 8 screen sizes; light/dark; states; 55 admin/superadmin pages per role). Four read-only reviewer agents covered security/RBAC/API, database/workflows/integrations, code quality/DevOps/DR/docs, and the feature inventory (189 features).
+- **Suites re-run:** unit 767/767, integration 312/312, e2e 201/201, QA 27/27, origin 1/1, load 50 users p95 1.71 s with 0 errors, `npm audit --omit=dev` 0.
+- **Result:** 45 defects (0 Critical, 1 High, 9 Medium, 35 Low). Readiness: NOT READY until **SEC-02** is fixed (High, P0: four Super Admin pages without their own `requireArea` return their data to any `RSC: 1` request, even unauthenticated; no secrets exposed). Then CONDITIONALLY READY once a backup restore is tested (OPS-07).
+- **Fix only after the owner's approval** (audit rule).
+- **Process note:** the lead auditor's integration run recreated the test database mid-audit; the affected checks were re-run.
+
 ### 31 Oct 2026 (v1.39.0: working draft on the server; one condition builder)
 - D-241 (Q-026 answered), D-242. Migration 202610311400_workflow_draft_revision.sql. New: saveWorkingDraft (service), updateDraftVersion (repository), features/admin/conditions/ConditionRow.tsx. Tests: integration workflow-draft (3: make then save in place, stale revision and stale draft refused with nothing changed, after publish a held editor is told and a fresh one starts version 3); e2e v1391 autosave (saved into draft 1, kept after reload, no version 2; after publish the next change makes draft 2 while 1 stays live); v160-smart-zversions uses "Save draft".
 

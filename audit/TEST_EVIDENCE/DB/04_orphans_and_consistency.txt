@@ -1,0 +1,250 @@
+
+-- SELECT 'notification_outbox.request_id' chk, COUNT(*) n FROM notification_outbox o WHERE o.request_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM approval_requests r WHERE r.id=o.request_id)
+chk	n
+notification_outbox.request_id	0
+(1 rows)
+
+-- SELECT 'ai_proposals.conversation_id' chk, COUNT(*) n FROM ai_proposals p WHERE p.conversation_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM ai_conversations c WHERE c.id=p.conversation_id)
+chk	n
+ai_proposals.conversation_id	0
+(1 rows)
+
+-- SELECT 'tasks.root_task_id' chk, COUNT(*) n FROM tasks t WHERE t.root_task_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM tasks r WHERE r.id=t.root_task_id)
+chk	n
+tasks.root_task_id	0
+(1 rows)
+
+-- SELECT 'tasks.parent_task_id' chk, COUNT(*) n FROM tasks t WHERE t.parent_task_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM tasks r WHERE r.id=t.parent_task_id)
+chk	n
+tasks.parent_task_id	0
+(1 rows)
+
+-- SELECT 'tasks.assign_group_id' chk, COUNT(*) n FROM tasks t WHERE t.assign_group_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM approver_groups g WHERE g.id=t.assign_group_id)
+chk	n
+tasks.assign_group_id	2
+(1 rows)
+
+-- SELECT 'project_members USER' chk, COUNT(*) n FROM project_members m WHERE m.member_type='USER' AND NOT EXISTS (SELECT 1 FROM users u WHERE u.id=m.member_id)
+chk	n
+project_members USER	0
+(1 rows)
+
+-- SELECT 'project_members DEPARTMENT' chk, COUNT(*) n FROM project_members m WHERE m.member_type='DEPARTMENT' AND NOT EXISTS (SELECT 1 FROM departments d WHERE d.id=m.member_id)
+chk	n
+project_members DEPARTMENT	0
+(1 rows)
+
+-- SELECT 'info_targets USER' chk, COUNT(*) n FROM info_targets t WHERE t.target_type='USER' AND NOT EXISTS (SELECT 1 FROM users u WHERE u.id=t.target_id)
+chk	n
+info_targets USER	0
+(1 rows)
+
+-- SELECT 'info_targets GROUP' chk, COUNT(*) n FROM info_targets t WHERE t.target_type='GROUP' AND NOT EXISTS (SELECT 1 FROM approver_groups g WHERE g.id=t.target_id)
+chk	n
+info_targets GROUP	0
+(1 rows)
+
+-- SELECT 'record_files TASK' chk, COUNT(*) n FROM record_files f WHERE f.entity_type='TASK' AND NOT EXISTS (SELECT 1 FROM tasks t WHERE t.id=f.entity_id)
+chk	n
+record_files TASK	0
+(1 rows)
+
+-- SELECT 'record_files INFO' chk, COUNT(*) n FROM record_files f WHERE f.entity_type='INFO' AND NOT EXISTS (SELECT 1 FROM info_items t WHERE t.id=f.entity_id)
+chk	n
+record_files INFO	0
+(1 rows)
+
+-- SELECT 'task_followers.added_by' chk, COUNT(*) n FROM task_followers f WHERE f.added_by IS NOT NULL AND NOT EXISTS (SELECT 1 FROM users u WHERE u.id=f.added_by)
+chk	n
+task_followers.added_by	0
+(1 rows)
+
+-- SELECT 'login_logs.session_id' chk, COUNT(*) n FROM login_logs l WHERE l.session_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM user_sessions s WHERE s.id=l.session_id)
+chk	n
+login_logs.session_id	0
+(1 rows)
+
+-- SELECT 'workflow_versions.published_workflow_id' chk, COUNT(*) n FROM workflow_versions v WHERE v.published_workflow_id IS NOT NULL AND v.published_workflow_id<>v.workflow_id
+chk	n
+workflow_versions.published_workflow_id	0
+(1 rows)
+
+-- SELECT 'work_views PROJECT' chk, COUNT(*) n FROM work_views w WHERE w.scope='PROJECT' AND NOT EXISTS (SELECT 1 FROM projects p WHERE p.id=w.scope_id)
+chk	n
+work_views PROJECT	0
+(1 rows)
+
+-- SELECT 'legal_holds REQUEST' chk, COUNT(*) n FROM legal_holds h WHERE h.scope_type='REQUEST' AND NOT EXISTS (SELECT 1 FROM approval_requests r WHERE r.id=h.scope_id)
+chk	n
+legal_holds REQUEST	0
+(1 rows)
+
+-- SELECT 'audit_logs.session_id' chk, COUNT(*) n FROM audit_logs a WHERE a.session_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM user_sessions s WHERE s.id=a.session_id)
+chk	n
+audit_logs.session_id	0
+(1 rows)
+
+-- SELECT 'open request without pending task' chk, r.id, r.request_no, r.status FROM approval_requests r WHERE r.status='IN_PROGRESS' AND r.deleted_at IS NULL AND NOT EXISTS (SELECT 1 FROM approval_tasks t WHERE t.request_id=r.id AND t.status='PENDING')
+(0 rows)
+
+-- SELECT 'pending task on closed/held request' chk, t.id, r.request_no, r.status, t.status FROM approval_tasks t JOIN approval_requests r ON r.id=t.request_id WHERE t.status='PENDING' AND r.status NOT IN ('IN_PROGRESS','ON_HOLD')
+(0 rows)
+
+-- SELECT 'self-approval task (approver=requester)' chk, t.id, r.request_no, t.status, t.decided_by FROM approval_tasks t JOIN approval_requests r ON r.id=t.request_id WHERE t.approver_id=r.requester_id OR t.decided_by=r.requester_id
+chk	id	request_no	status	decided_by
+self-approval task (approver=requester)	23	EHO-2026-000001	APPROVED	6
+self-approval task (approver=requester)	31	EHO-2026-000002	PENDING	NULL
+(2 rows)
+
+-- SELECT 'pending task for inactive approver' chk, t.id, r.request_no, u.login_id FROM approval_tasks t JOIN approval_requests r ON r.id=t.request_id JOIN users u ON u.id=t.approver_id WHERE t.status='PENDING' AND u.active=0
+(0 rows)
+
+-- SELECT 'group members of inactive groups' chk, COUNT(*) n FROM approver_group_members m JOIN approver_groups g ON g.id=m.group_id WHERE g.active=0
+chk	n
+group members of inactive groups	0
+(1 rows)
+
+-- SELECT 'users reporting to inactive manager' chk, COUNT(*) n FROM users u JOIN users m ON m.id=u.reporting_manager_id WHERE u.active=1 AND m.active=0
+chk	n
+users reporting to inactive manager	0
+(1 rows)
+
+-- SELECT 'closed request with closed_at null' chk, COUNT(*) n FROM approval_requests WHERE status IN ('APPROVED','REJECTED','CANCELLED') AND closed_at IS NULL
+chk	n
+closed request with closed_at null	0
+(1 rows)
+
+-- SELECT 'open request with closed_at set' chk, COUNT(*) n FROM approval_requests WHERE status IN ('IN_PROGRESS','ON_HOLD','CHANGES_REQUIRED') AND closed_at IS NOT NULL
+chk	n
+open request with closed_at set	0
+(1 rows)
+
+-- SELECT 'decided task without decided_at' chk, COUNT(*) n FROM approval_tasks WHERE status IN ('APPROVED','REJECTED','CHANGES_REQUESTED') AND decided_at IS NULL
+chk	n
+decided task without decided_at	0
+(1 rows)
+
+-- SELECT 'duplicate pending tasks same approver/node/round' chk, request_id, node_id, round, approver_id, COUNT(*) n FROM approval_tasks WHERE status='PENDING' GROUP BY request_id,node_id,round,approver_id HAVING COUNT(*)>1
+(0 rows)
+
+-- SELECT 'deleted users (gaps)' chk, (SELECT MAX(id) FROM users) maxid, (SELECT COUNT(*) FROM users) cnt
+chk	maxid	cnt
+deleted users (gaps)	52	52
+(1 rows)
+
+-- SELECT 'inactive users' chk, COUNT(*) n FROM users WHERE active=0
+chk	n
+inactive users	1
+(1 rows)
+
+-- SELECT 'outbox unsent' chk, COUNT(*) n, MIN(created_at) oldest, MAX(attempts) max_attempts FROM notification_outbox WHERE sent_at IS NULL
+chk	n	oldest	max_attempts
+outbox unsent	0	NULL	NULL
+(1 rows)
+
+-- SELECT 'outbox claimed not sent' chk, COUNT(*) n FROM notification_outbox WHERE sent_at IS NULL AND claimed_at IS NOT NULL
+chk	n
+outbox claimed not sent	0
+(1 rows)
+
+-- SELECT status, channel, COUNT(*) n, MAX(attempt_count) max_attempts FROM notification_deliveries GROUP BY status, channel
+status	channel	n	max_attempts
+FAILED	EMAIL	65	1
+SKIPPED	WHATSAPP	60	0
+READ	WHATSAPP	1	1
+(3 rows)
+
+-- SELECT failure_code, COUNT(*) n FROM notification_deliveries WHERE failure_code IS NOT NULL GROUP BY failure_code
+failure_code	n
+EMAIL_NOT_CONFIGURED	65
+NO_WHATSAPP_NUMBER	60
+(2 rows)
+
+-- SELECT job_key, status, COUNT(*) n, MAX(started_at) last FROM job_runs GROUP BY job_key, status
+job_key	status	n	last
+stuck	OK	1	Sat Oct 31 2026 17:01:39 GMT+0530 (India Standard Time)
+(1 rows)
+
+-- SELECT status, COUNT(*) n FROM jobs GROUP BY status
+(0 rows)
+
+-- SELECT COUNT(*) total, SUM(revoked_at IS NULL AND expires_at>NOW()) live, SUM(expires_at<=NOW()) expired FROM user_sessions
+total	live	expired
+270	265	0
+(1 rows)
+
+-- SELECT filename, applied_at FROM schema_migrations ORDER BY filename
+filename	applied_at
+202609281200_create_organisation.sql	Sat Oct 31 2026 16:56:10 GMT+0530 (India Standard Time)
+202609281201_create_users_and_roles.sql	Sat Oct 31 2026 16:56:10 GMT+0530 (India Standard Time)
+202609281202_create_auth_tables.sql	Sat Oct 31 2026 16:56:10 GMT+0530 (India Standard Time)
+202609281203_create_audit_logs.sql	Sat Oct 31 2026 16:56:10 GMT+0530 (India Standard Time)
+202609281204_create_settings.sql	Sat Oct 31 2026 16:56:10 GMT+0530 (India Standard Time)
+202609281205_create_notifications.sql	Sat Oct 31 2026 16:56:10 GMT+0530 (India Standard Time)
+202609291200_create_password_tokens.sql	Sat Oct 31 2026 16:56:11 GMT+0530 (India Standard Time)
+202609291201_create_approvals.sql	Sat Oct 31 2026 16:56:11 GMT+0530 (India Standard Time)
+202609301200_forms_builder_rate_limits.sql	Sat Oct 31 2026 16:56:11 GMT+0530 (India Standard Time)
+202610011200_comments_delegation_sla.sql	Sat Oct 31 2026 16:56:11 GMT+0530 (India Standard Time)
+202610011300_working_calendar.sql	Sat Oct 31 2026 16:56:11 GMT+0530 (India Standard Time)
+202610071200_request_attachments.sql	Sat Oct 31 2026 16:56:11 GMT+0530 (India Standard Time)
+202610071201_demo_people.sql	Sat Oct 31 2026 16:56:12 GMT+0530 (India Standard Time)
+202610081200_template_creator.sql	Sat Oct 31 2026 16:56:12 GMT+0530 (India Standard Time)
+202610081300_qa_fixes.sql	Sat Oct 31 2026 16:56:12 GMT+0530 (India Standard Time)
+202610081400_super_admin_google_email.sql	Sat Oct 31 2026 16:56:12 GMT+0530 (India Standard Time)
+202610081500_approver_designations.sql	Sat Oct 31 2026 16:56:12 GMT+0530 (India Standard Time)
+202610081501_request_soft_delete.sql	Sat Oct 31 2026 16:56:12 GMT+0530 (India Standard Time)
+202610091000_v140_engine_and_ops.sql	Sat Oct 31 2026 16:56:12 GMT+0530 (India Standard Time)
+202610100900_v150_user_comfort.sql	Sat Oct 31 2026 16:56:12 GMT+0530 (India Standard Time)
+202610110900_v160.sql	Sat Oct 31 2026 16:56:13 GMT+0530 (India Standard Time)
+202610121000_v160_reliability.sql	Sat Oct 31 2026 16:56:13 GMT+0530 (India Standard Time)
+202610121100_v160_amendments.sql	Sat Oct 31 2026 16:56:13 GMT+0530 (India Standard Time)
+202610121200_v160_version_migration.sql	Sat Oct 31 2026 16:56:13 GMT+0530 (India Standard Time)
+202610121300_v160_reports.sql	Sat Oct 31 2026 16:56:13 GMT+0530 (India Standard Time)
+202610121400_v160_governance.sql	Sat Oct 31 2026 16:56:13 GMT+0530 (India Standard Time)
+202610130900_attachment_fields_collaborators.sql	Sat Oct 31 2026 16:56:13 GMT+0530 (India Standard Time)
+202610131000_job_runs_error_text.sql	Sat Oct 31 2026 16:56:13 GMT+0530 (India Standard Time)
+202610140900_v170.sql	Sat Oct 31 2026 16:56:14 GMT+0530 (India Standard Time)
+202610150900_v180.sql	Sat Oct 31 2026 16:56:14 GMT+0530 (India Standard Time)
+202610160900_v190.sql	Sat Oct 31 2026 16:56:14 GMT+0530 (India Standard Time)
+202610170900_v1110_google_calendar.sql	Sat Oct 31 2026 16:56:14 GMT+0530 (India Standard Time)
+202610240900_ai_module_access.sql	Sat Oct 31 2026 16:56:15 GMT+0530 (India Standard Time)
+202610241200_ai_assistant.sql	Sat Oct 31 2026 16:56:15 GMT+0530 (India Standard Time)
+202610250900_pic_bot.sql	Sat Oct 31 2026 16:56:15 GMT+0530 (India Standard Time)
+202610251200_ai_chat_pins.sql	Sat Oct 31 2026 16:56:15 GMT+0530 (India Standard Time)
+202610251300_try_as.sql	Sat Oct 31 2026 16:56:15 GMT+0530 (India Standard Time)
+202610251400_ai_rules.sql	Sat Oct 31 2026 16:56:15 GMT+0530 (India Standard Time)
+202610261500_ai_rules_salesforce.sql	Sat Oct 31 2026 16:56:15 GMT+0530 (India Standard Time)
+202610281000_sign_in_both.sql	Sat Oct 31 2026 16:56:16 GMT+0530 (India Standard Time)
+202610281200_notification_rules.sql	Sat Oct 31 2026 16:56:16 GMT+0530 (India Standard Time)
+202610301000_work_management.sql	Sat Oct 31 2026 16:56:16 GMT+0530 (India Standard Time)
+202610301200_work_more.sql	Sat Oct 31 2026 16:56:17 GMT+0530 (India Standard Time)
+202610301400_work_views.sql	Sat Oct 31 2026 16:56:17 GMT+0530 (India Standard Time)
+202610301600_task_kinds_permissions.sql	Sat Oct 31 2026 16:56:17 GMT+0530 (India Standard Time)
+202610311000_my_tasks_overdue.sql	Sat Oct 31 2026 16:56:17 GMT+0530 (India Standard Time)
+202610311200_profile_notifications.sql	Sat Oct 31 2026 16:56:17 GMT+0530 (India Standard Time)
+202610311400_workflow_draft_revision.sql	Sat Oct 31 2026 16:56:17 GMT+0530 (India Standard Time)
+(48 rows)
+
+-- SELECT * FROM schema_migration_progress
+(0 rows)
+
+-- SELECT request_no, status, state_version, round FROM approval_requests ORDER BY id
+request_no	status	state_version	round
+EPR-2026-000001	APPROVED	5	2
+EDL-2026-000001	CANCELLED	2	1
+EAF-2026-000001	IN_PROGRESS	1	1
+SCM-2026-000001	IN_PROGRESS	1	1
+ECX-2026-000001	IN_PROGRESS	1	1
+ECX-2026-000002	IN_PROGRESS	1	1
+CUS-2026-000001	REJECTED	2	1
+EHO-2026-000001	APPROVED	4	1
+EHO-2026-000002	IN_PROGRESS	4	1
+CUS-2026-000002	IN_PROGRESS	1	1
+EPR-2026-000002	APPROVED	3	1
+EPR-2026-000003	IN_PROGRESS	2	1
+ESM-2026-000001	IN_PROGRESS	2	1
+ESM-2026-000002	IN_PROGRESS	2	1
+ESM-2026-000003	APPROVED	3	1
+ESM-2026-000004	APPROVED	3	1
+EFL-2026-000001	IN_PROGRESS	1	1
+(17 rows)

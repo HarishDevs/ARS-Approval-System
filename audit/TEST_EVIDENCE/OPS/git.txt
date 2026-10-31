@@ -1,0 +1,41 @@
+== branch
+  feature/ai-module
++ feature/pic-bot
+* main
+  remotes/origin/HEAD -> origin/main
+  remotes/origin/feature/ai-module
+  remotes/origin/feature/pic-bot
+  remotes/origin/main
+== remote
+origin	https://github.com/HarishDevs/ARS-Approval-System.git (fetch)
+origin	https://github.com/HarishDevs/ARS-Approval-System.git (push)
+== tags count
+76
+v1.39.0
+v1.38.0
+v1.37.0
+v1.36.0
+v1.35.0
+v1.33.0
+v1.32.0
+v1.31.0
+v1.30.0
+v1.29.0
+== HEAD tag
+v1.39.0
+== commits
+140
+0473f25 v1.39.0: workflow working draft on the server; one condition builder
+29b9364 v1.38.0: Workflow Designer and settings console (Configuration Studio)
+8497499 v1.37.0: Home, one Inbox, Draft task toolbar, simpler sidebar
+7a8f451 Form Designer (reorder, duplicate, confirmed removal, undo), DoA dropped from custom approvals, decision banner (D-235)
+54645a0 docs: redesign brief for the workflow builder, form fields editor and Super Admin settings
+363d5cc test: v131 repeating task waits for the completion itself, not an open count (CI race)
+25dd024 v1.36.0: the 24 UX laws audited and applied (D-234)
+b764c41 v1.35.0: Classic like Tally, Asana toolbar, collapsible sidebar, profile+photo, notification centre, universal search, UI states (D-227 to D-233)
+== ahead/behind origin
+0	0
+== tags vs package.json version (latest tag)
+v1.39.0
+== missing tags check v1.0.0..v1.39.0
+missing v1.34.0

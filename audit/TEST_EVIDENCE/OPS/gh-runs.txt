@@ -1,0 +1,45 @@
+in_progress		v1.39.0: workflow working draft on the server; one condition builder	CI	main	push	41223507740	6m45s	2026-10-31T17:13:52Z
+completed	success	v1.38.0: Workflow Designer and settings console (Configuration Studio)	CI	main	push	41199998724	30m2s	2026-10-31T12:11:35Z
+completed	success	Form Designer (reorder, duplicate, confirmed removal, undo), DoA drop…	CI	main	push	41191163742	27m56s	2026-10-31T10:03:17Z
+completed	failure	docs: redesign brief for the workflow builder, form fields editor and…	CI	main	push	41188584683	25m35s	2026-10-31T09:24:39Z
+completed	cancelled	test: v131 repeating task waits for the completion itself, not an ope…	CI	main	push	41187784385	11m48s	2026-10-31T09:13:10Z
+completed	failure	v1.36.0: the 24 UX laws audited and applied (D-234)	CI	main	push	41185787171	26m14s	2026-10-31T08:43:56Z
+completed	success	v1.35.0: Classic like Tally, Asana toolbar, collapsible sidebar, prof…	CI	main	push	41180845726	29m27s	2026-10-31T07:30:12Z
+completed	success	deps: override glob 14.0.3 under google-gax/rimraf (npm audit: glob, …	CI	main	push	41172522530	28m19s	2026-10-31T05:25:13Z
+completed	cancelled	v1.33.0: Tasks & projects sidebar group, Myself/Others, My Tasks Over…	CI	main	push	41171584986	14m11s	2026-10-31T05:11:21Z
+completed	success	v1.32.0: Asana skeleton, compact tables, + Create, periodic/ad hoc ta…	CI	main	push	41052736370	23m44s	2026-10-30T12:05:19Z
+
+latest run 41223507740
+
+* main CI · 41223507740
+Triggered via push about 6 minutes ago
+
+JOBS
+✓ Lint, typecheck, unit tests, build in 4m4s (ID 124602762451)
+* End-to-end tests (Playwright) (ID 124602762649)
+✓ Integration tests (MySQL 8) in 2m11s (ID 124602762788)
+
+ANNOTATIONS
+! Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+Lint, typecheck, unit tests, build: .github#2
+
+- "The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748"
+Lint, typecheck, unit tests, build: .github#1
+
+! Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+Integration tests (MySQL 8): .github#2
+
+- "The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748"
+Integration tests (MySQL 8): .github#1
+
+
+For more information about a job, try: gh run view --job=<job-id>
+View this run on GitHub: https://github.com/HarishDevs/ARS-Approval-System/actions/runs/41223507740
+Lint, typecheck, unit tests, build	completed	success	2026-10-31T17:13:55Z	2026-10-31T17:17:59Z
+End-to-end tests (Playwright)	in_progress		2026-10-31T17:14:06Z	0001-01-01T00:00:00Z
+Integration tests (MySQL 8)	completed	success	2026-10-31T17:14:03Z	2026-10-31T17:16:14Z
+{"conclusion":"","createdAt":"2026-10-31T17:13:52Z","event":"push","headBranch":"main","headSha":"0473f2560398844f875a3bec49206e13078d06d7"}
+in_progress 
+Lint, typecheck, unit tests, build | completed | success | 2026-10-31T17:13:55Z | 2026-10-31T17:17:59Z
+End-to-end tests (Playwright) | in_progress |  | 2026-10-31T17:14:06Z | 0001-01-01T00:00:00Z
+Integration tests (MySQL 8) | completed | success | 2026-10-31T17:14:03Z | 2026-10-31T17:16:14Z

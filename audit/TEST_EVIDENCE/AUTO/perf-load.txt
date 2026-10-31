@@ -1,0 +1,56 @@
+
+Running 1 test using 1 worker
+
+{
+  "at": "2026-10-31T17:29:00.671Z",
+  "users": 50,
+  "rounds": 8,
+  "requests": 2800,
+  "seconds": 67.524,
+  "requestsPerSecond": 41,
+  "p50": 1254,
+  "p95": 1708,
+  "p99": 1862,
+  "max": 1965,
+  "errors": 0,
+  "byPage": {
+    "/users": {
+      "p50": 1484,
+      "p95": 1862,
+      "max": 1965
+    },
+    "/users/queue": {
+      "p50": 1287,
+      "p95": 1564,
+      "max": 1765
+    },
+    "/users/requests": {
+      "p50": 1519,
+      "p95": 1812,
+      "max": 1896
+    },
+    "/users/notifications": {
+      "p50": 1188,
+      "p95": 1589,
+      "max": 1619
+    },
+    "/users/profile": {
+      "p50": 1239,
+      "p95": 1454,
+      "max": 1525
+    },
+    "/api/health": {
+      "p50": 174,
+      "p95": 314,
+      "max": 360
+    },
+    "/users/requests/:id": {
+      "p50": 1170,
+      "p95": 1482,
+      "max": 1700
+    }
+  }
+}
+  ok 1 tests\perf\load.spec.ts:20:5 › 50 people at once: no errors, 95% of pages in under 2 s (1.1m)
+
+  1 passed (1.1m)

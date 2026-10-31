@@ -1,0 +1,56 @@
+page | as IT admin | as Super admin | as requester | title (super) | error text
+/admin | 200 | 200 | 404 | Admin overview · ARS-CMS | 0
+/admin/ai-analytics | 200 | 200 | 404 | AI Analytics · ARS-CMS | 0
+/admin/ai-rules | 200 | 200 | 404 | AI Rules · ARS-CMS | 0
+/admin/analytics | 200 | 200 | 404 | Analytics (Admin) · ARS-CMS | 0
+/admin/analytics/list | 404 | 404 | 404 | ARS-CMS | 0
+/admin/analytics/metrics | 200 | 200 | 404 | Metric dictionary (Admin) · ARS-CMS | 0
+/admin/attention | 200 | 200 | 404 | Needs attention · ARS-CMS | 0
+/admin/budgets | 200 | 200 | 404 | Budgets · ARS-CMS | 0
+/admin/calendar | 200 | 200 | 404 | Working calendar · ARS-CMS | 0
+/admin/custom-approval | 200 | 200 | 404 | Custom approval set-up · ARS-CMS | 0
+/admin/dashboards | 200 | 200 | 404 | Dashboards · ARS-CMS | 0
+/admin/dashboards/approvers | 200 | 200 | 404 | Approvers dashboard · ARS-CMS | 0
+/admin/dashboards/departments | 200 | 200 | 404 | Departments dashboard · ARS-CMS | 0
+/admin/dashboards/raisers | 200 | 200 | 404 | Raisers dashboard · ARS-CMS | 0
+/admin/dashboards/utilisation | 200 | 200 | 404 | Utilisation dashboard · ARS-CMS | 0
+/admin/doa | 200 | 200 | 404 | Approval authority (DoA) · ARS-CMS | 0
+/admin/groups | 200 | 200 | 404 | Approver groups · ARS-CMS | 0
+/admin/import | 200 | 200 | 404 | Import data · ARS-CMS | 0
+/admin/information-types | 200 | 200 | 404 | Information types · ARS-CMS | 0
+/admin/insights | 200 | 200 | 404 | Insights · ARS-CMS | 0
+/admin/organisation | 200 | 200 | 404 | Departments &amp; designations · ARS-CMS | 0
+/admin/records | 307 | 307 | 404 | ARS-CMS | 0
+/admin/records/information | 200 | 200 | 404 | Records: Information · ARS-CMS | 0
+/admin/records/requests | 200 | 200 | 404 | Records: Approval requests · ARS-CMS | 0
+/admin/records/tasks | 200 | 200 | 404 | Records: Tasks · ARS-CMS | 0
+/admin/reminders | 200 | 200 | 404 | Reminders &amp; escalations · ARS-CMS | 0
+/admin/reports | 200 | 200 | 404 | Reports · ARS-CMS | 0
+/admin/task-holidays | 200 | 200 | 404 | Task settings · ARS-CMS | 0
+/admin/task-types | 200 | 200 | 404 | Task types · ARS-CMS | 0
+/admin/users | 200 | 200 | 404 | Users &amp; roles · ARS-CMS | 0
+/admin/users/new | 200 | 200 | 404 | New user · ARS-CMS | 0
+/admin/workflows | 200 | 200 | 404 | Approval types · ARS-CMS | 0
+/admin/workflows/import | 200 | 200 | 404 | Import an approval type · ARS-CMS | 0
+/admin/workflows/new | 200 | 200 | 404 | New approval type · ARS-CMS | 0
+/admin/workload | 200 | 200 | 404 | Workload · ARS-CMS | 0
+/admin/workload/reassign | 200 | 200 | 404 | Move pending approvals · ARS-CMS | 0
+/superadmin | 404 | 200 | 404 | Super Admin · ARS-CMS | 0
+/superadmin/ai | 404 | 200 | 404 | AI settings · ARS-CMS | 0
+/superadmin/ai/data-sources | 404 | 200 | 404 | Data Sources · ARS-CMS | 0
+/superadmin/ai/history | 404 | 200 | 404 | AI Activity History · ARS-CMS | 0
+/superadmin/ai/reports | 404 | 200 | 404 | AI Reports · ARS-CMS | 0
+/superadmin/audit | 404 | 200 | 404 | Audit log · ARS-CMS | 0
+/superadmin/automation | 404 | 200 | 404 | Automation &amp; jobs · ARS-CMS | 0
+/superadmin/deliveries | 404 | 200 | 404 | Message deliveries · ARS-CMS | 0
+/superadmin/demo | 404 | 200 | 404 | Demo data · ARS-CMS | 0
+/superadmin/import | 404 | 200 | 404 | Import data (Super Admin) · ARS-CMS | 0
+/superadmin/integrations | 404 | 200 | 404 | Integrations · ARS-CMS | 0
+/superadmin/integrations/google-calendar | 404 | 200 | 404 | Google Calendar (Super Admin) · ARS-CMS | 0
+/superadmin/logins | 404 | 200 | 404 | Sign-in history · ARS-CMS | 0
+/superadmin/pages | 404 | 200 | 404 | Page access · ARS-CMS | 0
+/superadmin/requests | 404 | 200 | 404 | Requests (Super Admin) · ARS-CMS | 0
+/superadmin/retention | 404 | 200 | 404 | Data retention · ARS-CMS | 0
+/superadmin/salesforce | 404 | 200 | 404 | Salesforce Settings · ARS-CMS | 0
+/superadmin/settings | 404 | 200 | 404 | Settings &amp; providers · ARS-CMS | 0
+/superadmin/templates | 404 | 200 | 404 | Message templates · ARS-CMS | 0

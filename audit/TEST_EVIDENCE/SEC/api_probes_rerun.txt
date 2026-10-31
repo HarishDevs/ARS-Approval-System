@@ -1,0 +1,56 @@
+# Re-run of API probes after the test DB was re-seeded by another run (E2E_* users gone). Users: USER=it-mvwo934e3 IT_ADMIN=it-mvwo932k1 SUPER=itadmin (test DB, sessions via session.mjs). 2026-10-31T22:57:39+05:30
+[B0 baseline status USER] => 200 application/json 86B | {"signedIn":true,"idleSecondsLeft":1799,"reason":null,"build":"O6uJvlEnEP9PlkY-_JB_Q"}
+[B0 baseline status ADMIN] => 200 application/json 86B | {"signedIn":true,"idleSecondsLeft":1799,"reason":null,"build":"O6uJvlEnEP9PlkY-_JB_Q"}
+[B0 baseline status SUPER] => 200 application/json 86B | {"signedIn":true,"idleSecondsLeft":1799,"reason":null,"build":"O6uJvlEnEP9PlkY-_JB_Q"}
+[P10 me/notifications POST malformed JSON (USER)] => 400 application/json 116B | {"success":false,"error":{"code":"VALIDATION_ERROR","message":"Nothing to mark.","requestId":"REQ-20261031-5A7DBD"}}
+[P11 me/notifications POST ids strings/SQL (USER)] => 400 application/json 116B | {"success":false,"error":{"code":"VALIDATION_ERROR","message":"Nothing to mark.","requestId":"REQ-20261031-D920AD"}}
+[P11b me/notifications POST read ids [1..5] belonging to others (USER)] => 200 application/json 23B | {"ok":true,"changed":2}
+[P12 me/notifications GET type=<script> (USER)] => 200 application/json 677B | {"items":[{"id":7,"title":"Request approved","message":"Fully approved: BC-2026-000002  BC rework","category":"APPROVAL","createdAt":"2026-10-31T17:25:15.000Z","read":false,"path":"/users/requests/2"},{"id":4,"title":"
+[P13 me/quick q=<script> (USER)] => 200 application/json 82B | {"kind":"search","items":[],"tasks":[],"projects":[],"people":[],"information":[]}
+[P14 me/quick q=' OR '1'='1 (USER)] => 200 application/json 82B | {"kind":"search","items":[],"tasks":[],"projects":[],"people":[],"information":[]}
+[P15 me/quick q=%% (USER)] => 200 application/json 82B | {"kind":"search","items":[],"tasks":[],"projects":[],"people":[],"information":[]}
+[P16 admin/records/bogus (ADMIN)] => 404 application/json 103B | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-3F717D"}}
+[P17 admin/import/users?type=bogus (ADMIN)] => 404 application/json 103B | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-BEA1EE"}}
+[P17b admin/import/users?type=template (ADMIN)] => 200 text/csv; charset=utf-8 111B | login_id,name,email,whatsapp_number,department_code,designation_code,manager_login_id,sign_in_method,roles
+[P18 admin/workflows/abc/export (ADMIN)] => 404 application/json 103B | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-061D87"}}
+[P18b admin/workflows/99999999/export (ADMIN)] => 404 application/json 103B | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-9E1BA4"}}
+[P19 admin/dashboards/bogus (ADMIN)] => 404 application/json 103B | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-880815"}}
+[P20 analytics/export?kind=bogus (ADMIN)] => 404 application/json 103B | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-71FC33"}}
+[P21 reports/bogus (ADMIN)] => 404 application/json 103B | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-E85B95"}}
+[P22 superadmin/audit?from=x&to=y (SUPER)] => 200 text/csv; charset=utf-8 130401B | When (India time),Who,Action,Entity,Entity id,Result,IP address,Details"31 Oct 2026, 10:57 pm",Both admin MVWOBOMX,USER_UPDATED,USER,289,SUCCESS,,"{""changes"":{""signInMethod"":{""after"":""GOOGLE"",""before"":""PA
+[P22b superadmin/audit as IT_ADMIN] => 404 application/json 103B | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-5C541D"}}
+[P23 ai/chat POST malformed JSON (SUPER)] => 400 application/json 127B | {"success":false,"error":{"code":"VALIDATION_FAILED","message":"That request wasn't valid.","requestId":"REQ-20261031-265107"}}
+[P24 ai/chat POST unknown mode (SUPER)] => 400 application/json 127B | {"success":false,"error":{"code":"VALIDATION_FAILED","message":"That request wasn't valid.","requestId":"REQ-20261031-20BD3C"}}
+[P25 ai/conversations/abc PATCH (SUPER)] => 404 application/json 103B | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-FA6F02"}}
+[P26 ai/conversations/999999 DELETE (SUPER)] => 404 application/json 103B | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-331992"}}
+[P27 ai/conversations GET (USER without AI module?)] => 404 application/json 103B | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-B22BF4"}}
+[P33 google-calendar/callback garbage state (USER)] => 303  0B | 
+[P34 salesforce/callback garbage state (SUPER)] => 303  0B | 
+[P39 me/notifications POST 1.1 MB body (USER)] => 400 application/json 116B | {"success":false,"error":{"code":"VALIDATION_ERROR","message":"Nothing to mark.","requestId":"REQ-20261031-314DF6"}}
+[P40 me/notifications POST text/plain body (USER)] => 200 application/json 23B | {"ok":true,"changed":0}
+[P42 requests/999999/summary.pdf (USER)] => 404 application/json 103B | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-1ADD06"}}
+[B9 baseline status USER (after)] => 200 application/json 86B | {"signedIn":true,"idleSecondsLeft":1793,"reason":null,"build":"O6uJvlEnEP9PlkY-_JB_Q"}
+[B9 baseline status SUPER (after)] => 200 application/json 86B | {"signedIn":true,"idleSecondsLeft":1792,"reason":null,"build":"O6uJvlEnEP9PlkY-_JB_Q"}
+┌─────────┬────┬─────────┬────────────────┬─────────┐
+│ (index) │ id │ user_id │ login_id       │ is_read │
+├─────────┼────┼─────────┼────────────────┼─────────┤
+│ 0       │ 1  │ 2       │ 'it-mvwo932k1' │ 0       │
+│ 1       │ 2  │ 3       │ 'it-mvwo934e3' │ 1       │
+│ 2       │ 3  │ 2       │ 'it-mvwo932k1' │ 0       │
+│ 3       │ 4  │ 3       │ 'it-mvwo934e3' │ 1       │
+│ 4       │ 5  │ 2       │ 'it-mvwo932k1' │ 0       │
+└─────────┴────┴─────────┴────────────────┴─────────┘
+# --- second batch 2026-10-31T23:04:07+05:30: invalid-id probes with a live session (baseline first)
+[B1 baseline status USER] => 200 application/json 86B | {"signedIn":true,"idleSecondsLeft":1799,"reason":null,"build":"O6uJvlEnEP9PlkY-_JB_Q"}
+[B1b baseline USER own notifications GET] => 200 application/json 677B | {"items":[{"id":7,"title":"Request approved","message":"Fully approved: BC-2026-000002  BC rework","category":"APPROVAL","createdAt":"2026-10-31T17:25:15.000Z","read":false,"path":"/users/requests/2
+[P1 attachments/abc] => 404 application/json 103B | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-C663E4"}}
+[P2 attachments/-1] => 404 application/json 103B | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-3AB3D2"}}
+[P3 attachments/99999999999999999999999] => 404 application/json 103B | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-67EF67"}}
+[P4 requests/99999999999999999999999/summary.pdf] => 404 application/json 103B | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-DAE0E0"}}
+[P5 requests/1' OR 1=1/summary.pdf] => 404 application/json 103B | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-3E5D4F"}}
+[P6 files/0] => 404 application/json 103B | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-3625ED"}}
+[P6b files/99999999999 (11 digits, over the 10-digit cap)] => 404 application/json 103B | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-0B6DC9"}}
+[P7 exports/abc (ADMIN)] => 404 application/json 103B | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-026EE6"}}
+[P8 users/abc/photo] => 404 application/json 103B | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-C55CBE"}}
+[P9 users/..%2F..%2Fetc/photo] => 404 application/json 103B | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-EE8649"}}
+[B2 baseline status USER (after)] => 200 application/json 86B | {"signedIn":true,"idleSecondsLeft":1797,"reason":null,"build":"O6uJvlEnEP9PlkY-_JB_Q"}

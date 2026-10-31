@@ -1,0 +1,465 @@
+M1.1-25 | ## 1.1 Existing core enhancement scope | Enterprise reliability, governance, workflow integrity, separation of duties, immutable history, monitoring, backup/recovery and controlled release.
+M4-09 | ## 4. Workflow, Security, Data Integrity and Release Non-Negotiables | Record important changes with actor, action, timestamp, record reference, workflow/configuration version and relevant before/after values.
+M4-15 | ## 4. Workflow, Security, Data Integrity and Release Non-Negotiables | Use feature flags or equivalent controls when appropriate, but never as a substitute for server-side authorization.
+A3.2-03 | ## 3.2 Approver workspace | Approvals Due Today and within the next seven days.
+A3.2-07 | ## 3.2 Approver workspace | Assigned, delegated, reassigned and completed approval activity.
+A3.3-06 | ## 3.3 Admin workspace | Rework, resubmission, rejection and withdrawal trends.
+A3.3-09 | ## 3.3 Admin workspace | Workload distribution and reassignment patterns.
+A3.3-14 | ## 3.3 Admin workspace | Retention and legal-hold reporting within granted permissions.
+A3.4-02 | ## 3.4 Super Admin workspace | Users, active accounts, roles and department distribution.
+A3.4-03 | ## 3.4 Super Admin workspace | Authentication and authorization anomalies.
+A3.4-11 | ## 3.4 Super Admin workspace | Workflow migration and configuration-promotion results.
+A3.4-12 | ## 3.4 Super Admin workspace | Retention jobs, legal holds and governance exceptions.
+A3.5-05 | ## 3.5 Authorization requirements | Separate permissions for viewing aggregates and viewing individual records.
+A4.1-07 | ## 4.1 Requester dashboards | Upcoming Deadlines.
+A4.1-09 | ## 4.1 Requester dashboards | My Notifications and Delivery Status.
+A4.2-07 | ## 4.2 Approver dashboards | Delegated and Reassigned Work.
+A4.3-12 | ## 4.3 Admin dashboards | Scheduled Reports and Governance Operations.
+A4.4-03 | ## 4.4 Super Admin dashboards | User and Access Governance.
+A4.4-09 | ## 4.4 Super Admin dashboards | Workflow Migration and Configuration Promotion.
+A4.4-10 | ## 4.4 Super Admin dashboards | Data Quality, Analytics Freshness and Reporting Operations.
+A4.4-11 | ## 4.4 Super Admin dashboards | Retention, Legal Holds and Governance Exceptions.
+A5-08 | ## 5. Comprehensive KPI Card Catalogue | Loading, empty, error and stale-data states.
+A5.1-02 | ## 5.1 Requester KPI cards | Draft Requests.
+A5.1-07 | ## 5.1 Requester KPI cards | Requests Awaiting Additional Information.
+A5.1-12 | ## 5.1 Requester KPI cards | Recalled Requests, if supported.
+A5.1-14 | ## 5.1 Requester KPI cards | Approvals Due Today.
+A5.1-15 | ## 5.1 Requester KPI cards | Approvals Due Within Seven Days.
+A5.1-18 | ## 5.1 Requester KPI cards | Requests Missing Required Documents.
+A5.1-19 | ## 5.1 Requester KPI cards | Submission Readiness Failures.
+A5.1-21 | ## 5.1 Requester KPI cards | Requests Requiring Amendment.
+A5.1-22 | ## 5.1 Requester KPI cards | Open Amendments.
+A5.1-26 | ## 5.1 Requester KPI cards | Fastest and Longest Completed Request, with suitable privacy and outlier handling.
+A5.1-28 | ## 5.1 Requester KPI cards | Request Value Submitted, if authoritative amounts exist.
+A5.1-29 | ## 5.1 Requester KPI cards | Request Value Approved, if authoritative amounts exist.
+A5.1-30 | ## 5.1 Requester KPI cards | Requests with Unread Notifications.
+A5.1-31 | ## 5.1 Requester KPI cards | Recoverable Drafts and Autosave Recovery Events, where supported.
+A5.1-32 | ## 5.1 Requester KPI cards | Upcoming Required-by Deadlines.
+A5.1-34 | ## 5.1 Requester KPI cards | Requests with Missing or Incomplete Information.
+A5.2-03 | ## 5.2 Approver KPI cards | Approvals Due Today.
+A5.2-04 | ## 5.2 Approver KPI cards | Approvals Due Within Seven Days.
+A5.2-07 | ## 5.2 Approver KPI cards | Oldest Pending Approval.
+A5.2-08 | ## 5.2 Approver KPI cards | Longest Current Wait.
+A5.2-10 | ## 5.2 Approver KPI cards | Approvals Blocked by Earlier Workflow Stages.
+A5.2-12 | ## 5.2 Approver KPI cards | Approvals Waiting for Consultation.
+A5.2-13 | ## 5.2 Approver KPI cards | Approvals Delegated to Me.
+A5.2-14 | ## 5.2 Approver KPI cards | Approvals Delegated by Me.
+A5.2-15 | ## 5.2 Approver KPI cards | Reassigned Approvals.
+A5.2-30 | ## 5.2 Approver KPI cards | Unread Approval Notifications.
+A5.2-31 | ## 5.2 Approver KPI cards | Failed or Unconfirmed Notification Deliveries relevant to my tasks, if supported.
+A5.2-33 | ## 5.2 Approver KPI cards | Requests Awaiting My Review After Amendment.
+A5.2-34 | ## 5.2 Approver KPI cards | Current Assigned Workload Compared with Team Average, only when the team aggregate is authorized and meaningful.
+A5.3-05 | ## 5.3 Admin KPI cards | Requests Due Today.
+A5.3-09 | ## 5.3 Admin KPI cards | Requests Awaiting Consultation.
+A5.3-25 | ## 5.3 Admin KPI cards | Department Overdue Backlog.
+A5.3-28 | ## 5.3 Admin KPI cards | Reassignment Volume.
+A5.3-32 | ## 5.3 Admin KPI cards | Pending Financial Exposure, if reliable.
+A5.3-33 | ## 5.3 Admin KPI cards | Requests Requiring Amendment.
+A5.3-34 | ## 5.3 Admin KPI cards | Open Amendment Count.
+A5.3-38 | ## 5.3 Admin KPI cards | Configuration Promotion Failures.
+A5.3-39 | ## 5.3 Admin KPI cards | Retention Jobs Due or Failed.
+A5.3-40 | ## 5.3 Admin KPI cards | Active Legal Holds and Exceptions.
+A5.3-41 | ## 5.3 Admin KPI cards | Data Quality Exceptions.
+A5.4-03 | ## 5.4 Super Admin KPI cards | Inactive or Suspended Users.
+A5.4-04 | ## 5.4 Super Admin KPI cards | Users by Role.
+A5.4-05 | ## 5.4 Super Admin KPI cards | Users by Department or Plant.
+A5.4-06 | ## 5.4 Super Admin KPI cards | Authentication Failures.
+A5.4-07 | ## 5.4 Super Admin KPI cards | Authorization Denials and Access Exceptions.
+A5.4-20 | ## 5.4 Super Admin KPI cards | Notification Delivery Success and Failure.
+A5.4-27 | ## 5.4 Super Admin KPI cards | Audit-Log Write Failures or Integrity Alerts.
+A5.4-29 | ## 5.4 Super Admin KPI cards | Restore Verification Status.
+A5.4-30 | ## 5.4 Super Admin KPI cards | Configuration Promotion Failures.
+A5.4-32 | ## 5.4 Super Admin KPI cards | Retention Job Status.
+A5.4-33 | ## 5.4 Super Admin KPI cards | Legal-Hold Exceptions.
+A5.4-34 | ## 5.4 Super Admin KPI cards | Security Alerts.
+A5.4-39 | ## 5.4 Super Admin KPI cards | Data Quality and Metric Coverage.
+A6.1-04 | ## 6.1 Request volume and status | Submitted, Approved, Rejected and Cancelled Trends — stacked column chart.
+A6.1-08 | ## 6.1 Request volume and status | Request Volume by Day of Week — bar chart.
+A6.1-09 | ## 6.1 Request volume and status | Request Volume by Hour — heatmap, only if timestamps and business relevance justify it.
+A6.1-10 | ## 6.1 Request volume and status | Current Backlog vs Previous Period — comparison chart.
+A6.1-11 | ## 6.1 Request volume and status | Submission-to-Completion Funnel — funnel chart with explicitly defined stages.
+A6.1-12 | ## 6.1 Request volume and status | Request Lifecycle Flow — Sankey or flow visualization when transition data is reliable.
+A6.1-13 | ## 6.1 Request volume and status | Request Cohort Completion — cohort chart when cohort definitions are meaningful.
+A6.2-02 | ## 6.2 Pending, overdue and aging | Overdue Approvals by Age Bucket — histogram.
+A6.2-03 | ## 6.2 Pending, overdue and aging | Pending vs Overdue by Department — grouped or stacked bars.
+A6.2-06 | ## 6.2 Pending, overdue and aging | SLA Breaches by Department — bar chart.
+A6.2-07 | ## 6.2 Pending, overdue and aging | SLA Breaches by Workflow Stage — bar chart.
+A6.2-11 | ## 6.2 Pending, overdue and aging | Pending Aging Heatmap by Department and Stage.
+A6.2-12 | ## 6.2 Pending, overdue and aging | Due Date Calendar — calendar visualization.
+A6.2-13 | ## 6.2 Pending, overdue and aging | Time Remaining Until Deadline — categorized distribution.
+A6.2-14 | ## 6.2 Pending, overdue and aging | Breach Duration Distribution — histogram.
+A6.2-16 | ## 6.2 Pending, overdue and aging | Escalation Volume Over Time — line chart.
+A6.2-17 | ## 6.2 Pending, overdue and aging | Requests Awaiting Information by Age — bar chart.
+A6.2-18 | ## 6.2 Pending, overdue and aging | Unassigned Approvals by Department and Stage — bar chart.
+A6.3-01 | ## 6.3 Turnaround and workflow bottlenecks | Average vs Median Turnaround — comparison chart.
+A6.3-02 | ## 6.3 Turnaround and workflow bottlenecks | Submission-to-First-Decision Time — line or distribution chart.
+A6.3-03 | ## 6.3 Turnaround and workflow bottlenecks | Stage-Level Duration — horizontal bar chart.
+A6.3-04 | ## 6.3 Turnaround and workflow bottlenecks | Stage Duration by Workflow — grouped bars.
+A6.3-05 | ## 6.3 Turnaround and workflow bottlenecks | End-to-End Completion Time — line and distribution charts.
+A6.3-06 | ## 6.3 Turnaround and workflow bottlenecks | Approval Queue Waiting Time vs Decision Time — stacked bar.
+A6.3-07 | ## 6.3 Turnaround and workflow bottlenecks | Workflow Bottleneck Heatmap.
+A6.3-08 | ## 6.3 Turnaround and workflow bottlenecks | Longest-Running Workflows — ranked table.
+A6.3-09 | ## 6.3 Turnaround and workflow bottlenecks | Workflow Duration Distribution — box plot where supported.
+A6.3-10 | ## 6.3 Turnaround and workflow bottlenecks | Time Between Sequential Decisions — distribution chart.
+A6.3-11 | ## 6.3 Turnaround and workflow bottlenecks | Parallel Group Completion Duration — distribution chart with explicit group semantics.
+A6.3-12 | ## 6.3 Turnaround and workflow bottlenecks | Workflow Completion Funnel — stage-level conversion chart.
+A6.3-13 | ## 6.3 Turnaround and workflow bottlenecks | Stage Revisit and Rework Frequency — bar chart.
+A6.3-14 | ## 6.3 Turnaround and workflow bottlenecks | Workflow Transition Sankey — only with reliable event history.
+A6.3-16 | ## 6.3 Turnaround and workflow bottlenecks | Control Chart for Turnaround — where statistical assumptions are appropriate.
+A6.4-04 | ## 6.4 Approver workload and decision performance | Workload by Department and Approver — heatmap.
+A6.4-05 | ## 6.4 Approver workload and decision performance | Decisions Completed Over Time — line chart.
+A6.4-06 | ## 6.4 Approver workload and decision performance | Decision Time by Approver — distribution chart with minimum sample thresholds.
+A6.4-07 | ## 6.4 Approver workload and decision performance | Approval and Rejection Trends — stacked bars.
+A6.4-08 | ## 6.4 Approver workload and decision performance | First-Pass Approval Rate by Department — bar chart.
+A6.4-09 | ## 6.4 Approver workload and decision performance | Rework Rate by Request Type — bar chart.
+A6.4-10 | ## 6.4 Approver workload and decision performance | Reassignment Frequency — bar chart.
+A6.4-11 | ## 6.4 Approver workload and decision performance | Delegation Volume — trend chart.
+A6.4-14 | ## 6.4 Approver workload and decision performance | SLA Risk by Approver — categorized table or chart.
+A6.4-15 | ## 6.4 Approver workload and decision performance | Approval Decisions by Workflow Stage — bar chart.
+A6.4-16 | ## 6.4 Approver workload and decision performance | Bulk Approval Activity — trend chart where recorded.
+A6.5-01 | ## 6.5 Financial and budget analytics | Requested Amount vs Approved Amount.
+A6.5-02 | ## 6.5 Financial and budget analytics | Approved Amount by Department.
+A6.5-03 | ## 6.5 Financial and budget analytics | Approved Amount by Request Type.
+A6.5-04 | ## 6.5 Financial and budget analytics | Pending Request Value.
+A6.5-05 | ## 6.5 Financial and budget analytics | Pending Financial Exposure.
+A6.5-08 | ## 6.5 Financial and budget analytics | Budget Warning and Over-Budget Trends.
+A6.5-09 | ## 6.5 Financial and budget analytics | Amount Distribution by Request Category.
+A6.5-10 | ## 6.5 Financial and budget analytics | Monthly Approved Amount.
+A6.5-11 | ## 6.5 Financial and budget analytics | Requests Near Approval Thresholds.
+A6.5-12 | ## 6.5 Financial and budget analytics | Requests Above Configured Thresholds.
+A6.5-13 | ## 6.5 Financial and budget analytics | Amendment-Related Amount Changes.
+A6.6-01 | ## 6.6 Automation and operational reliability | Automation Success vs Failure Over Time.
+A6.6-02 | ## 6.6 Automation and operational reliability | Automation Failures by Category.
+A6.6-03 | ## 6.6 Automation and operational reliability | Retry Attempts by Category.
+A6.6-04 | ## 6.6 Automation and operational reliability | Successful Recovery Rate.
+A6.6-06 | ## 6.6 Automation and operational reliability | Time to Recovery.
+A6.6-07 | ## 6.6 Automation and operational reliability | Automation Failure Heatmap by Workflow and Stage.
+A6.6-08 | ## 6.6 Automation and operational reliability | Notification Delivery Success vs Failure.
+A6.6-09 | ## 6.6 Automation and operational reliability | Notification Latency and Delivery Delays.
+A6.6-10 | ## 6.6 Automation and operational reliability | Notification Failures by Channel.
+A6.6-13 | ## 6.6 Automation and operational reliability | Stuck Workflow Count Over Time.
+A6.6-14 | ## 6.6 Automation and operational reliability | Manual Recovery Frequency.
+A6.6-17 | ## 6.6 Automation and operational reliability | Configuration Promotion Success vs Failure.
+A6.6-18 | ## 6.6 Automation and operational reliability | Retention Job Success vs Failure.
+A6.6-19 | ## 6.6 Automation and operational reliability | Backup and Restore Verification History.
+A6.7-01 | ## 6.7 Advanced visualizations | Sankey diagram for workflow transitions.
+A6.7-02 | ## 6.7 Advanced visualizations | Funnel analysis for lifecycle completion.
+A6.7-03 | ## 6.7 Advanced visualizations | Calendar heatmap for submissions or decisions.
+A6.7-04 | ## 6.7 Advanced visualizations | Pareto chart for delay or failure causes.
+A6.7-05 | ## 6.7 Advanced visualizations | Cohort analysis for requests created during a period.
+A6.7-06 | ## 6.7 Advanced visualizations | Box plots for turnaround distributions.
+A6.7-07 | ## 6.7 Advanced visualizations | Scatter plots for workload versus turnaround, with appropriate privacy controls.
+A6.7-08 | ## 6.7 Advanced visualizations | Gantt-style timelines for workflow stages.
+A6.7-09 | ## 6.7 Advanced visualizations | Waterfall chart for financial variance decomposition.
+A6.7-10 | ## 6.7 Advanced visualizations | Statistical control charts for process stability.
+A6.7-11 | ## 6.7 Advanced visualizations | Heatmaps for department, stage, priority and aging intersections.
+A7.1-07 | ## 7.1 Pending approval | Waiting for an authorized consultation or other non-decision step, when modeled.
+A7.3-09 | ## 7.3 SLA status | SLA Data Unavailable.
+A7.6-09 | ## 7.6 Aging buckets | Age since assignment to the current approver.
+A7.6-10 | ## 7.6 Aging buckets | Age since becoming overdue.
+A8-07 | ## 8. Conditional Formatting and Visual Status System | Distinct governance treatment: legal hold, restricted records or special compliance state.
+AConditional-02 | ## Conditional formatting rules | Approaching SLA: amber status indicator with remaining time.
+AConditional-03 | ## Conditional formatting rules | SLA breach: red indicator and breach duration.
+AConditional-11 | ## Conditional formatting rules | Retry in progress: neutral progress treatment.
+AConditional-16 | ## Conditional formatting rules | Legal hold: distinct compliance treatment that cannot be overridden by routine cleanup.
+AConditional-18 | ## Conditional formatting rules | Stale analytics: visible freshness warning.
+A9.1-04 | ## 9.1 Period comparisons | Current financial year vs previous financial year.
+A9.1-05 | ## 9.1 Period comparisons | Month-to-date vs equivalent prior-period dates.
+A9.1-06 | ## 9.1 Period comparisons | Year-to-date vs equivalent prior-year dates.
+A9.1-07 | ## 9.1 Period comparisons | Same period last year.
+A9.2-01 | ## 9.2 Organizational comparisons | Department vs organization aggregate.
+A9.2-02 | ## 9.2 Organizational comparisons | Department vs authorized peer departments.
+A9.2-03 | ## 9.2 Organizational comparisons | Approver vs team average or median.
+A9.2-04 | ## 9.2 Organizational comparisons | Workflow vs other comparable workflows.
+A9.2-05 | ## 9.2 Organizational comparisons | Request type vs organization baseline.
+A9.2-06 | ## 9.2 Organizational comparisons | Stage vs workflow average.
+A9.3-03 | ## 9.3 Process comparisons | Pending backlog vs completed volume.
+A9.3-04 | ## 9.3 Process comparisons | First-pass approval vs rework.
+A9.3-05 | ## 9.3 Process comparisons | Workflow version A vs version B.
+A9.3-06 | ## 9.3 Process comparisons | Before vs after an authorized workflow change.
+A9.3-07 | ## 9.3 Process comparisons | Automation success before vs after a change.
+A9.3-08 | ## 9.3 Process comparisons | Failure rate before vs after a fix.
+A9.4-03 | ## 9.4 Percentage and variance calculations | If the sample size is insufficient, show the sample limitation.
+A10.1-07 | ## 10.1 Requester reports | My Upcoming Deadlines.
+A10.1-08 | ## 10.1 Requester reports | My Missing Information and Document Checklist.
+A10.1-13 | ## 10.1 Requester reports | My Notification and Delivery History, where supported.
+A10.1-14 | ## 10.1 Requester reports | My Request Value Summary, if authoritative amounts exist.
+A10.2-03 | ## 10.2 Approver reports | Approvals Due Today and This Week.
+A10.2-05 | ## 10.2 Approver reports | My Decision History.
+A10.2-06 | ## 10.2 Approver reports | My Approval and Rejection Trend.
+A10.2-09 | ## 10.2 Approver reports | My Delegated and Reassigned Approval Report.
+A10.2-10 | ## 10.2 Approver reports | My Rework and Resubmission Report.
+A10.2-11 | ## 10.2 Approver reports | My Bulk Approval Activity.
+A10.2-12 | ## 10.2 Approver reports | My Notification Delivery Exceptions.
+A10.3-03 | ## 10.3 Admin reports | HOD-Wise Department Summary, where organizational mappings are reliable.
+A10.3-05 | ## 10.3 Admin reports | Department-Wise Overdue Report.
+A10.3-06 | ## 10.3 Admin reports | Employee-Wise Pending and Overdue Report.
+A10.3-15 | ## 10.3 Admin reports | Escalation and Reminder Report.
+A10.3-16 | ## 10.3 Admin reports | First-Pass Approval and Rework Report.
+A10.3-18 | ## 10.3 Admin reports | Reassignment and Delegation Report.
+A10.3-22 | ## 10.3 Admin reports | Automation Recovery and Reconciliation Report.
+A10.3-30 | ## 10.3 Admin reports | Configuration Promotion Results Report.
+A10.3-32 | ## 10.3 Admin reports | Retention and Legal-Hold Exception Report.
+A10.3-33 | ## 10.3 Admin reports | Data Quality and Metric Coverage Report.
+A10.3-34 | ## 10.3 Admin reports | Analytics Freshness and Refresh Status Report.
+A10.4-03 | ## 10.4 Super Admin reports | Role and Department Access Report.
+A10.4-04 | ## 10.4 Super Admin reports | User Lifecycle and Access Exception Report.
+A10.4-13 | ## 10.4 Super Admin reports | Audit-Log Health and Integrity Report.
+A10.4-14 | ## 10.4 Super Admin reports | Backup and Restore Verification Report.
+A10.4-16 | ## 10.4 Super Admin reports | Workflow Migration and Configuration Promotion Report.
+A10.4-17 | ## 10.4 Super Admin reports | Retention and Legal-Hold Governance Report.
+A10.4-18 | ## 10.4 Super Admin reports | Analytics Data Freshness and Quality Report.
+A10.5-06 | ## 10.5 Report metadata | Primary date field used.
+A10.5-07 | ## 10.5 Report metadata | Metric definitions and exclusions.
+A10.5-08 | ## 10.5 Report metadata | Available detail level.
+A10.5-12 | ## 10.5 Report metadata | Known data limitations.
+A10.5-13 | ## 10.5 Report metadata | Whether a report contains sensitive fields.
+A10.5-14 | ## 10.5 Report metadata | Retention and delivery rules, where applicable.
+ARequiredfil-04 | ## Required filters | Employee/requester.
+ARequiredfil-05 | ## Required filters | Approver.
+ARequiredfil-09 | ## Required filters | Request status.
+ARequiredfil-11 | ## Required filters | Workflow version.
+ARequiredfil-12 | ## Required filters | Workflow stage or approval level.
+ARequiredfil-14 | ## Required filters | SLA status.
+ARequiredfil-15 | ## Required filters | Pending, overdue, blocked or unassigned classification.
+ARequiredfil-16 | ## Required filters | Aging bucket.
+ARequiredfil-17 | ## Required filters | Overdue category.
+ARequiredfil-18 | ## Required filters | Amount range and currency, where supported.
+ARequiredfil-19 | ## Required filters | Budget status, where supported.
+ARequiredfil-21 | ## Required filters | Failure category.
+ARequiredfil-22 | ## Required filters | Retry status.
+ARequiredfil-23 | ## Required filters | Notification delivery status.
+ARequiredfil-25 | ## Required filters | Amendment status.
+ARequiredfil-26 | ## Required filters | Duplicate status.
+ARequiredfil-27 | ## Required filters | Data quality status.
+AFilterbehav-05 | ## Filter behavior | Validate combinations that return no meaningful result.
+ASavedviews-04 | ## Saved views | View name and description.
+ASavedviews-05 | ## Saved views | Filters, sort order, grouping and visible columns.
+ASavedviews-07 | ## Saved views | Owner, creation time and last-modified time.
+ASavedviews-08 | ## Saved views | Edit, duplicate and delete permissions.
+A12-01 | ## 12. Drill-Down and Navigation Requirements | Pending Approvals card → authorized pending approval register.
+A12-02 | ## 12. Drill-Down and Navigation Requirements | Overdue Approvals card → overdue register with deadline and aging filters.
+A12-05 | ## 12. Drill-Down and Navigation Requirements | Workflow bottleneck chart → workflow stages and relevant request instances.
+A12-06 | ## 12. Drill-Down and Navigation Requirements | Automation failure chart → failure records, safe retry state and reconciliation status.
+A12-07 | ## 12. Drill-Down and Navigation Requirements | Notification failure chart → delivery attempts and provider response where available.
+A12-09 | ## 12. Drill-Down and Navigation Requirements | Budget warning chart → authorized financial records and configured threshold.
+A12-10 | ## 12. Drill-Down and Navigation Requirements | Data quality card → affected metric, missing field and documented limitation.
+ADrilldowns-08 | ## Drill-down safeguards | Use pagination or virtualized tables for large result sets.
+ADrilldowns-10 | ## Drill-down safeguards | Record privileged drill-down access where required by the existing audit policy.
+AExportrequi-03 | ## Export requirements | Applied filters and generation timestamp.
+AExportrequi-04 | ## Export requirements | Metric definitions or a reference to the metric dictionary.
+AExportrequi-06 | ## Export requirements | Clear unavailable or incomplete metric labels.
+APDFsummary-07 | ## PDF summary requirements | Applicable deadlines and SLA status.
+APDFsummary-09 | ## PDF summary requirements | Amendment history where relevant.
+APDFsummary-11 | ## PDF summary requirements | Clear indication of missing historical data.
+APDFsummary-12 | ## PDF summary requirements | Audit reference or verification information if supported.
+ARequiredcap-02 | ## Required capabilities | Select an authorized report and saved view.
+AScheduledre-09 | ## Scheduled report controls | Keep execution failure distinct from delivery failure.
+AScheduledre-12 | ## Scheduled report controls | Apply retention rules to generated files and run logs.
+AScheduledre-13 | ## Scheduled report controls | Support manual rerun only when it is safe and authorized.
+ASchedulingU-01 | ## Scheduling UI states | Draft.
+ASchedulingU-06 | ## Scheduling UI states | Completed with warnings.
+ASchedulingU-08 | ## Scheduling UI states | Delivery failed.
+ASchedulingU-10 | ## Scheduling UI states | Disabled due to invalid configuration.
+A15.1-06 | ## 15.1 Alert catalogue | Requester response overdue.
+A15.1-10 | ## 15.1 Alert catalogue | Retry exhaustion.
+A15.1-11 | ## 15.1 Alert catalogue | Notification delivery failure.
+A15.1-14 | ## 15.1 Alert catalogue | Duplicate indicator requiring review.
+A15.1-16 | ## 15.1 Alert catalogue | Amendment requiring review.
+A15.1-17 | ## 15.1 Alert catalogue | Scheduled report failure.
+A15.1-19 | ## 15.1 Alert catalogue | Data freshness threshold breach.
+A15.1-21 | ## 15.1 Alert catalogue | Restore verification failure.
+A15.1-22 | ## 15.1 Alert catalogue | Configuration promotion failure.
+A15.1-23 | ## 15.1 Alert catalogue | Workflow migration failure.
+A15.1-24 | ## 15.1 Alert catalogue | Retention job failure.
+A15.1-25 | ## 15.1 Alert catalogue | Legal-hold exception.
+A15.2-05 | ## 15.2 Alert configuration | Eligible recipients or role-based audiences.
+A15.2-08 | ## 15.2 Alert configuration | Escalation rule.
+A15.2-12 | ## 15.2 Alert configuration | Delivery status and error reason.
+A15.2-13 | ## 15.2 Alert configuration | Acknowledgement state, where meaningful.
+A15.3-04 | ## 15.3 Alert quality controls | Distinguish an alert being acknowledged from the underlying issue being resolved.
+A15.4-02 | ## 15.4 Retry and resend controls | Retryable only after reconciliation.
+A15.4-03 | ## 15.4 Retry and resend controls | Requires correction before retry.
+A15.4-04 | ## 15.4 Retry and resend controls | Unsafe to retry automatically.
+A16-16 | ## 16. Metric Dictionary and Calculation Governance | Treatment of resubmissions and amendments.
+A16-19 | ## 16. Metric Dictionary and Calculation Governance | Minimum sample requirements, where applicable.
+A16-22 | ## 16. Metric Dictionary and Calculation Governance | Owning business rule or policy.
+A16.2-13 | ## 16.2 Missing data and historical limitations | Partial Data.
+A16.2-14 | ## 16.2 Missing data and historical limitations | Insufficient Evidence.
+A16.2-17 | ## 16.2 Missing data and historical limitations | Unavailable.
+A16.2-18 | ## 16.2 Missing data and historical limitations | Stale.
+ARequirements-14 | ## Requirements | Document behavior when historical records contain naive or inconsistent timestamps.
+AReportingda-03 | ## Reporting date field | Due during period.
+AReportingda-05 | ## Reporting date field | Entered current stage during period.
+AReportingda-06 | ## Reporting date field | Automation failed during period.
+AReportingda-07 | ## Reporting date field | Notification delivery failed during period.
+A18.1-14 | ## 18.1 Backend services | Data quality and metric coverage.
+A18.2-07 | ## 18.2 API design | Drill-down and paginated detail lists.
+A18.2-17 | ## 18.2 API design | Pagination and sorting.
+A18.3-08 | ## 18.3 Database and schema | Data quality exception records.
+A18.4-09 | ## 18.4 Schema migration safeguards | Include a documented plan for data retention and cleanup.
+A18.5-02 | ## 18.5 Query and aggregation design | Avoid N+1 queries.
+A18.5-04 | ## 18.5 Query and aggregation design | Use pagination for detail lists.
+A18.5-11 | ## 18.5 Query and aggregation design | Use transactions and consistent snapshots where needed to prevent contradictory report results.
+A18.5-12 | ## 18.5 Query and aggregation design | Avoid long-running dashboard requests that compete with approval transactions.
+A19.2-01 | ## 19.2 Required UI states | Loading.
+A19.2-04 | ## 19.2 Required UI states | Partial data.
+A19.2-05 | ## 19.2 Required UI states | Stale data.
+A19.2-14 | ## 19.2 Required UI states | Scheduled report running.
+A19.2-15 | ## 19.2 Required UI states | Scheduled report completed with warnings.
+A19.2-19 | ## 19.2 Required UI states | Retry in progress.
+A19.2-23 | ## 19.2 Required UI states | Data-quality exception.
+ASecurityreq-02 | ## Security requirements | Record-level and field-level access enforcement.
+AAuditevents-02 | ## Audit events | Scheduled report created, modified, paused or disabled.
+AAuditevents-04 | ## Audit events | Privileged report accessed.
+AAuditevents-05 | ## Audit events | Alert configuration changed.
+AAuditevents-08 | ## Audit events | Sensitive access denied.
+AAuditevents-09 | ## Audit events | Retention or legal-hold settings changed.
+A21-01 | ## 21. Performance and Reliability Requirements | Cached or lightweight dashboard summary: p95 within 3 seconds.
+A21-02 | ## 21. Performance and Reliability Requirements | Standard filtered dashboard queries: p95 within 5 seconds.
+A21-03 | ## 21. Performance and Reliability Requirements | Standard report queries: p95 within 10 seconds for a documented bounded dataset.
+A21-04 | ## 21. Performance and Reliability Requirements | Large exports: background generation with progress and completion status.
+A21-05 | ## 21. Performance and Reliability Requirements | No unbounded full-table scan triggered by a normal dashboard load.
+A21-06 | ## 21. Performance and Reliability Requirements | No significant degradation of approval submission or decision transactions.
+AReliability-03 | ## Reliability controls | Query timeouts where appropriate.
+AReliability-10 | ## Reliability controls | Graceful degradation when a noncritical analytics service fails.
+A22.1-01 | ## 22.1 Unit tests | Every metric formula.
+A22.1-10 | ## 22.1 Unit tests | Missing timestamps.
+A22.1-15 | ## 22.1 Unit tests | Partial historical data.
+A22.1-16 | ## 22.1 Unit tests | Withdrawn and cancelled request treatment.
+A22.1-17 | ## 22.1 Unit tests | Resubmission and rework definitions.
+A22.1-19 | ## 22.1 Unit tests | Any-One and Any-N-of-M semantics.
+A22.1-22 | ## 22.1 Unit tests | Notification delivery status calculations.
+A22.1-23 | ## 22.1 Unit tests | Currency handling.
+A22.1-26 | ## 22.1 Unit tests | Data freshness calculations.
+A22.2-04 | ## 22.2 API and integration tests | Field-level masking.
+A22.2-06 | ## 22.2 API and integration tests | Pagination and sorting.
+A22.2-07 | ## 22.2 API and integration tests | Drill-down consistency.
+A22.2-09 | ## 22.2 API and integration tests | Saved-view permissions.
+A22.2-12 | ## 22.2 API and integration tests | Notification and delivery history.
+A22.2-15 | ## 22.2 API and integration tests | Analytics freshness and partial-data behavior.
+A22.2-16 | ## 22.2 API and integration tests | API failure and timeout behavior.
+A22.2-17 | ## 22.2 API and integration tests | Audit-event creation.
+A22.3-06 | ## 22.3 Frontend tests | Error and partial-data states.
+A22.3-09 | ## 22.3 Frontend tests | Drill-down behavior.
+A22.3-11 | ## 22.3 Frontend tests | Export progress and completion.
+A22.3-16 | ## 22.3 Frontend tests | Correct display of missing data and unavailable metrics.
+A22.4-02 | ## 22.4 End-to-end tests | Dashboard reflects the submission accurately.
+A22.4-04 | ## 22.4 End-to-end tests | Pending counts update correctly.
+A22.4-05 | ## 22.4 End-to-end tests | Due-date and SLA classifications behave correctly.
+A22.4-07 | ## 22.4 End-to-end tests | Request and assignment counts update without double-counting.
+A22.4-08 | ## 22.4 End-to-end tests | Decision and stage-duration analytics update according to the documented refresh model.
+A22.4-10 | ## 22.4 End-to-end tests | Reports and exports reflect the same definitions.
+A22.4-11 | ## 22.4 End-to-end tests | Scheduled reports generate and deliver correctly.
+A22.4-12 | ## 22.4 End-to-end tests | Notification failures are represented accurately.
+A22.4-14 | ## 22.4 End-to-end tests | Role or department permission changes restrict future access.
+A22.6-01 | ## 22.6 Performance and security tests | Large request volumes.
+A22.6-02 | ## 22.6 Performance and security tests | Large date ranges within configured limits.
+A22.6-03 | ## 22.6 Performance and security tests | Concurrent dashboard access.
+A22.6-05 | ## 22.6 Performance and security tests | Export memory and resource limits.
+A22.6-06 | ## 22.6 Performance and security tests | Query plan and index effectiveness.
+A22.6-09 | ## 22.6 Performance and security tests | Malicious filter and sorting values.
+A22.6-15 | ## 22.6 Performance and security tests | Graceful degradation during analytics-service failures.
+AAC05Chart-03 | ## AC-05: Charts and comparisons | Zero denominators and insufficient samples are handled correctly.
+AAC05Chart-04 | ## AC-05: Charts and comparisons | Drill-down results match the chart's scope and authorization.
+AAC06Condi-03 | ## AC-06: Conditional formatting | Missing and stale data are visibly distinguished from healthy values.
+AAC08Sched-02 | ## AC-08: Scheduled reports and alerts | Execution and delivery failures are distinguishable.
+AAC10Secur-01 | ## AC-10: Security and audit | Role, record and field restrictions are enforced server-side.
+AAC11Perfo-01 | ## AC-11: Performance and reliability | Performance is measured against the documented baseline and targets.
+BB-02 | ## Addendum B-B: Separation of Duties and Authorization | Validate requester, approver, delegate, consultant, watcher, and administrator permissions independently.
+BB-05 | ## Addendum B-B: Separation of Duties and Authorization | Audit privileged changes, account suspension, permission modifications, and administrative overrides.
+BC-02 | ## Addendum B-C: Immutable History and Version Integrity | Record the actor, action, timestamp, request identifier, workflow version, and relevant before/after values for important changes.
+BC-06 | ## Addendum B-C: Immutable History and Version Integrity | Test audit integrity across resubmission, recall, delegation, reassignment, migration, and recovery operations.
+BD-01 | ## Addendum B-D: Monitoring and Operational Health | Add or improve monitoring for application availability, error rates, background workers, scheduled jobs, notification delivery, integration failures, and workflow backlogs.
+BD-02 | ## Addendum B-D: Monitoring and Operational Health | Detect missed scheduled-job executions and alert the appropriate IT personnel.
+BE-02 | ## Addendum B-E: Backup and Disaster Recovery | Verify backup completion, integrity, retention, and access controls.
+BE-03 | ## Addendum B-E: Backup and Disaster Recovery | Define recovery time and recovery point objectives with the appropriate business and IT stakeholders.
+BE-06 | ## Addendum B-E: Backup and Disaster Recovery | Verify that restored records, relationships, files, and workflow histories are consistent.
+BJ-08 | ## Addendum B-J: Extended Edge-Case and Resilience Testing | Partial bulk-reassignment failures.
+BJ-12 | ## Addendum B-J: Extended Edge-Case and Resilience Testing | Invalid workflow transitions and recovery from inconsistent states.
+BP1-01 | ## 1. Objective | Submission Readiness Checker.
+BP1-02 | ## 1. Objective | Stuck-Request Detection.
+BP1-03 | ## 1. Objective | Duplicate Request Detection.
+BP1-04 | ## 1. Objective | Smart Form Autofill.
+BP1-05 | ## 1. Objective | Approved-Request Amendment.
+BP1-06 | ## 1. Objective | Department Scorecards.
+BP1-07 | ## 1. Objective | Workflow Migration Assistant.
+BP1-08 | ## 1. Objective | Safe Workflow Replay.
+BP1-09 | ## 1. Objective | Configuration Promotion.
+BP1-10 | ## 1. Objective | Retention and Legal Hold.
+BP1-11 | ## 1. Objective | Centralized Failed Automation Recovery with Resend/Retry controls.
+FN1-3.4-06 | ## Function 1: SUBMISSION READINESS CHECKER › Acceptance criteria | Readiness checks work on desktop and mobile.
+FN2-4.1-04 | ## Function 2: STUCK-REQUEST DETECTION › Functional requirements | Requests with inconsistent workflow and assignment states.
+FN2-4.1-08 | ## Function 2: STUCK-REQUEST DETECTION › Functional requirements | Requests whose expected transition did not complete.
+FN2-4.1-16 | ## Function 2: STUCK-REQUEST DETECTION › Functional requirements | Inconsistent or orphaned workflow state.
+FN2-4.2-04 | ## Function 2: STUCK-REQUEST DETECTION › Administrative dashboard | Current workflow stage.
+FN2-4.2-05 | ## Function 2: STUCK-REQUEST DETECTION › Administrative dashboard | Current assignment.
+FN2-4.2-06 | ## Function 2: STUCK-REQUEST DETECTION › Administrative dashboard | Relevant error or correlation identifier.
+FN2-4.2-09 | ## Function 2: STUCK-REQUEST DETECTION › Administrative dashboard | Resolution status and audit history.
+FN2-4.3-03 | ## Function 2: STUCK-REQUEST DETECTION › Automated remediation | Re-evaluate expired assignments.
+FN2-4.3-06 | ## Function 2: STUCK-REQUEST DETECTION › Automated remediation | Reconcile inconsistent states using approved recovery logic.
+FN2-4.4-07 | ## Function 2: STUCK-REQUEST DETECTION › Acceptance criteria | Tests cover false positives, missing assignees, expired delegation, and failed background processing.
+FN3-5.1-06 | ## Function 3: DUPLICATE REQUEST DETECTION › Functional requirements | Requester.
+FN3-5.1-08 | ## Function 3: DUPLICATE REQUEST DETECTION › Functional requirements | Department.
+FN3-5.2-06 | ## Function 3: DUPLICATE REQUEST DETECTION › Business rules | Use database uniqueness constraints for identifiers that must be unique.
+FN4-6.1-13 | ## Function 4: SMART FORM AUTOFILL › Functional requirements | Explicit refresh where supported.
+FN4-6.4-05 | ## Function 4: SMART FORM AUTOFILL › Acceptance criteria | Autofill is accessible and works on mobile.
+FN5-7.2-01 | ## Function 5: APPROVED-REQUEST AMENDMENT › State management | Amendment draft.
+FN6-8.1-06 | ## Function 6: DEPARTMENT SCORECARDS › Metrics | Median approval duration.
+FN6-8.1-09 | ## Function 6: DEPARTMENT SCORECARDS › Metrics | Rework or changes-requested rate.
+FN6-8.1-10 | ## Function 6: DEPARTMENT SCORECARDS › Metrics | Requests awaiting additional information.
+FN6-8.2-07 | ## Function 6: DEPARTMENT SCORECARDS › Dashboard functions | Drill-down into authorized supporting records.
+FN6-8.2-09 | ## Function 6: DEPARTMENT SCORECARDS › Dashboard functions | Loading, empty, error, and partial-data states.
+FN6-8.4-06 | ## Function 6: DEPARTMENT SCORECARDS › Acceptance criteria | Performance remains acceptable for realistic data volumes.
+FN8-10.1-05 | ## Function 8: SAFE WORKFLOW REPLAY › Functional requirements | Reprocessing a failed integration callback.
+FN8-10.1-09 | ## Function 8: SAFE WORKFLOW REPLAY › Functional requirements | Reconcile the current state.
+FN8-10.3-06 | ## Function 8: SAFE WORKFLOW REPLAY › Acceptance criteria | Tests cover timeouts, partial side effects, duplicate clicks, worker crashes, and concurrent retries.
+FN9-11.1-05 | ## Function 9: CONFIGURATION PROMOTION › Configuration scope | Notification templates.
+FN9-11.1-08 | ## Function 9: CONFIGURATION PROMOTION › Configuration scope | Reference data where appropriate.
+FN9-11.1-09 | ## Function 9: CONFIGURATION PROMOTION › Configuration scope | Feature-flag definitions where permitted.
+FN9-11.4-04 | ## Function 9: CONFIGURATION PROMOTION › Acceptance criteria | The destination environment is clearly identified.
+FN10-12.1-08 | ## Function 10: RETENTION AND LEGAL HOLD › Functional requirements | Archived records.
+FN10-12.1-14 | ## Function 10: RETENTION AND LEGAL HOLD › Functional requirements | Scheduled cleanup.
+FN10-12.1-21 | ## Function 10: RETENTION AND LEGAL HOLD › Functional requirements | Deletion or archival execution history.
+FN10-12.3-06 | ## Function 10: RETENTION AND LEGAL HOLD › Data protection and deletion | Ensure retention jobs are idempotent and recoverable.
+FN10-12.4-01 | ## Function 10: RETENTION AND LEGAL HOLD › Acceptance criteria | Retention rules are traceable to approved policies.
+FN10-12.4-04 | ## Function 10: RETENTION AND LEGAL HOLD › Acceptance criteria | Retention processing is repeatable and recoverable.
+FN11-13.1-05 | ## Function 11: CENTRALIZED FAILED AUTOMATION RECOVERY AND RESEND BUTTON › Discover every automation | Scheduled reports.
+FN11-13.1-10 | ## Function 11: CENTRALIZED FAILED AUTOMATION RECOVERY AND RESEND BUTTON › Discover every automation | Import and export operations.
+FN11-13.1-11 | ## Function 11: CENTRALIZED FAILED AUTOMATION RECOVERY AND RESEND BUTTON › Discover every automation | Webhook handlers.
+FN11-13.2-07 | ## Function 11: CENTRALIZED FAILED AUTOMATION RECOVERY AND RESEND BUTTON › Central automation status | Retrying.
+FN11-13.2-09 | ## Function 11: CENTRALIZED FAILED AUTOMATION RECOVERY AND RESEND BUTTON › Central automation status | Cancelled.
+FN11-13.2-14 | ## Function 11: CENTRALIZED FAILED AUTOMATION RECOVERY AND RESEND BUTTON › Central automation status | Last attempt timestamp.
+FN11-13.2-15 | ## Function 11: CENTRALIZED FAILED AUTOMATION RECOVERY AND RESEND BUTTON › Central automation status | Failure category.
+FN11-13.2-21 | ## Function 11: CENTRALIZED FAILED AUTOMATION RECOVERY AND RESEND BUTTON › Central automation status | Recovery status.
+FN11-13.3-02 | ## Function 11: CENTRALIZED FAILED AUTOMATION RECOVERY AND RESEND BUTTON › Where the recovery button should appear | Request detail pages.
+FN11-13.3-07 | ## Function 11: CENTRALIZED FAILED AUTOMATION RECOVERY AND RESEND BUTTON › Where the recovery button should appear | Bulk-operation result pages.
+FN11-13.3-09 | ## Function 11: CENTRALIZED FAILED AUTOMATION RECOVERY AND RESEND BUTTON › Where the recovery button should appear | Failed import or export records.
+FN11-13.3-14 | ## Function 11: CENTRALIZED FAILED AUTOMATION RECOVERY AND RESEND BUTTON › Where the recovery button should appear | `Retry Export`
+FN11-13.3-15 | ## Function 11: CENTRALIZED FAILED AUTOMATION RECOVERY AND RESEND BUTTON › Where the recovery button should appear | `Reconcile Request`
+FN11-13.5-08 | ## Function 11: CENTRALIZED FAILED AUTOMATION RECOVERY AND RESEND BUTTON › Retry execution rules | Classification of retryable and non-retryable errors.
+FN11-13.8-02 | ## Function 11: CENTRALIZED FAILED AUTOMATION RECOVERY AND RESEND BUTTON › Acceptance criteria | Every eligible failed automation has a usable recovery action in an appropriate location.
+FN11-13.8-11 | ## Function 11: CENTRALIZED FAILED AUTOMATION RECOVERY AND RESEND BUTTON › Acceptance criteria | Automated tests cover safe retry, unsafe retry, duplicate clicks, permission failures, partial success, timeouts, and exhausted retries.
+BP15-01 | ## 15. Cross-functional requirements | Functional behaviour.
+BP15-02 | ## 15. Cross-functional requirements | UI states.
+BP15-03 | ## 15. Cross-functional requirements | Backend service changes.
+BP15-04 | ## 15. Cross-functional requirements | API contract changes.
+BP15-05 | ## 15. Cross-functional requirements | Database changes.
+BP15-06 | ## 15. Cross-functional requirements | Permissions and security rules.
+BP15-07 | ## 15. Cross-functional requirements | Audit requirements.
+BP15-08 | ## 15. Cross-functional requirements | Failure and recovery behaviour.
+BP15-09 | ## 15. Cross-functional requirements | Unit and integration tests.
+BP15-10 | ## 15. Cross-functional requirements | End-to-end acceptance tests.
+BP15-11 | ## 15. Cross-functional requirements | Known limitations.
+BP15-12 | ## 15. Cross-functional requirements | Operational support requirements.
+BP16-01 | ## 16. Global acceptance criteria | All 10 selected business functions have been assessed and implemented or explicitly classified as blocked or deferred.
+BP16-02 | ## 16. Global acceptance criteria | The automation inventory covers the actual asynchronous operations found in the repository.
+BP16-03 | ## 16. Global acceptance criteria | Every safely retryable failed automation has an appropriate recovery action.
+BP16-04 | ## 16. Global acceptance criteria | Unsafe retries are prevented or routed to manual reconciliation.
+BP16-05 | ## 16. Global acceptance criteria | No existing approval workflow is weakened.
+BP16-06 | ## 16. Global acceptance criteria | All new operations enforce server-side authorization.
+BP16-07 | ## 16. Global acceptance criteria | Audit history and historical approval decisions remain trustworthy.
+BP16-08 | ## 16. Global acceptance criteria | Automated tests provide evidence for the new functionality.
+BP16-09 | ## 16. Global acceptance criteria | Existing regressions are fixed or documented with evidence.
+BP16-10 | ## 16. Global acceptance criteria | Required database and API changes are documented.
+BP16-11 | ## 16. Global acceptance criteria | Known limitations and unresolved policy decisions are recorded.

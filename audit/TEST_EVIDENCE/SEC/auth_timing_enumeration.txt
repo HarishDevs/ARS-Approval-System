@@ -1,0 +1,29 @@
+# Timing of POST /api/auth/password/start (wrong password). XFF 198.51.100.12. 2026-10-31T22:51:23+05:30
+NO_SUCH_USER_T1 => 401 0.066031
+E2E_STAFF => 401 0.036228
+NO_SUCH_USER_T2 => 401 0.081301
+E2E_STAFF => 401 0.025425
+NO_SUCH_USER_T3 => 401 0.063315
+E2E_STAFF => 401 0.030167
+NO_SUCH_USER_T4 => 401 0.061782
+E2E_STAFF => 401 0.029179
+NO_SUCH_USER_T5 => 401 0.067327
+E2E_STAFF => 401 0.025499
+┌─────────┬────────────────┬────┬─────────┐
+│ (index) │ sign_in_method │ n  │ no_hash │
+├─────────┼────────────────┼────┼─────────┤
+│ 0       │ 'GOOGLE'       │ 50 │ '50'    │
+│ 1       │ 'PASSWORD'     │ 1  │ '0'     │
+│ 2       │ 'BOTH'         │ 1  │ '1'     │
+└─────────┴────────────────┴────┴─────────┘
+# Re-run 2026-10-31T23:04:24+05:30 after DB re-seed, existing Google-only user (no password hash) = it-mvwo944a6, XFF 198.51.100.14
+NO_SUCH_USER_R1 => 401 0.063831
+it-mvwo944a6 => 401 0.024523
+NO_SUCH_USER_R2 => 401 0.056254
+it-mvwo944a6 => 401 0.021339
+NO_SUCH_USER_R3 => 401 0.055994
+it-mvwo944a6 => 401 0.024312
+NO_SUCH_USER_R4 => 401 0.053919
+it-mvwo944a6 => 401 0.028427
+NO_SUCH_USER_R5 => 401 0.054751
+it-mvwo944a6 => 401 0.040780

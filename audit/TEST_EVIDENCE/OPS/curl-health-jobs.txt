@@ -1,0 +1,38 @@
+== GET /api/health
+HTTP/1.1 200 OK
+Cross-Origin-Opener-Policy: same-origin-allow-popups
+X-Content-Type-Options: nosniff
+Referrer-Policy: strict-origin-when-cross-origin
+X-Frame-Options: DENY
+Permissions-Policy: camera=(), microphone=(), geolocation=()
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+cache-control: private, no-store, max-age=0
+content-security-policy: default-src 'self'; script-src 'self' 'nonce-ikOJstH4/L4c0jkTt4gz9w==' 'strict-dynamic' https://apis.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com; frame-src https://power-bi-dashboard-3b29f.firebaseapp.com https://accounts.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests
+x-request-id: 71e55dd2-e56d-4dd0-8b44-41a4f6b4c952
+vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch
+content-type: application/json
+Date: Sat, 31 Oct 2026 17:22:40 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+{"status":"ok","version":"1.38.0","database":"ok","jobRunner":"NEVER","storage":"ok","ms":4}
+== POST /api/jobs/run without secret
+HTTP/1.1 404 Not Found
+Cross-Origin-Opener-Policy: same-origin-allow-popups
+X-Content-Type-Options: nosniff
+Referrer-Policy: strict-origin-when-cross-origin
+X-Frame-Options: DENY
+Permissions-Policy: camera=(), microphone=(), geolocation=()
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+cache-control: private, no-store, max-age=0
+content-security-policy: default-src 'self'; script-src 'self' 'nonce-4+aS3KAVV3dUWff0YOyaxw==' 'strict-dynamic' https://apis.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com; frame-src https://power-bi-dashboard-3b29f.firebaseapp.com https://accounts.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests
+x-request-id: be91ff40-ea2e-423a-9526-3a8e04dad6b9
+vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch
+content-type: application/json
+Date: Sat, 31 Oct 2026 17:22:40 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+{"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-2DD245"}}

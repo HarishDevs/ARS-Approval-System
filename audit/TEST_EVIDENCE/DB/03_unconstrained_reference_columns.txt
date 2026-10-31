@@ -1,0 +1,70 @@
+
+-- SELECT c.table_name, c.column_name, c.column_type, c.is_nullable, (SELECT COUNT(*) FROM information_schema.statistics s WHERE s.table_schema=c.table_schema AND s.table_name=c.table_name AND s.column_name=c.column_name AND s.seq_in_index=1) AS leading_idx FROM information_schema.columns c WHERE c.table_schema='ars_approvals_test' AND (c.column_name LIKE '%\_id' OR c.column_name LIKE '%\_by' OR c.column_name LIKE '%\_user') AND c.column_name<>'id' AND NOT EXISTS (SELECT 1 FROM information_schema.key_column_usage k WHERE k.table_schema=c.table_schema AND k.table_name=c.table_name AND k.column_name=c.column_name AND k.referenced_table_name IS NOT NULL) ORDER BY c.table_name, c.column_name
+TABLE_NAME	COLUMN_NAME	COLUMN_TYPE	IS_NULLABLE	leading_idx
+ai_proposals	conversation_id	bigint unsigned	YES	0
+ai_salesforce_connection	connected_by	bigint unsigned	YES	0
+ai_salesforce_connection	pending_user_id	bigint unsigned	YES	0
+ai_source_records	record_id	varchar(40)	NO	0
+ai_sync_runs	started_by	bigint unsigned	YES	0
+approval_events	node_id	varchar(100)	YES	0
+approval_tasks	node_id	varchar(100)	NO	0
+audit_logs	entity_id	varchar(64)	YES	0
+audit_logs	session_id	char(36)	YES	0
+gcal_conflicts	resolved_by	bigint unsigned	YES	0
+gcal_conflicts	user_id	bigint unsigned	NO	1
+gcal_connections	calendar_id	varchar(255)	YES	0
+gcal_connections	channel_id	varchar(64)	YES	1
+gcal_connections	channel_resource_id	varchar(255)	YES	0
+gcal_jobs	created_by	bigint unsigned	YES	0
+gcal_links	calendar_id	varchar(255)	NO	0
+gcal_links	entity_id	bigint unsigned	NO	0
+gcal_links	google_event_id	varchar(255)	NO	0
+gcal_links	user_id	bigint unsigned	NO	1
+gcal_settings	client_id	varchar(255)	YES	0
+info_targets	target_id	bigint unsigned	NO	0
+legal_holds	scope_id	bigint unsigned	NO	0
+login_logs	device_id	bigint unsigned	YES	0
+login_logs	session_id	char(36)	YES	0
+module_type_versions	published_type_id	bigint unsigned	YES	1
+notification_outbox	request_id	bigint unsigned	YES	0
+notification_rule_sends	record_id	bigint unsigned	NO	0
+notifications	entity_id	bigint unsigned	YES	0
+page_access_rules	scope_id	bigint unsigned	NO	0
+project_members	member_id	bigint unsigned	NO	0
+record_files	entity_id	bigint unsigned	NO	0
+task_comments	deleted_by	bigint unsigned	YES	0
+task_followers	added_by	bigint unsigned	YES	0
+tasks	assign_group_id	bigint unsigned	YES	1
+tasks	root_task_id	bigint unsigned	YES	1
+tasks	series_id	bigint unsigned	YES	1
+users	login_id	varchar(100)	NO	1
+work_favourites	object_id	bigint unsigned	NO	0
+work_likes	target_id	bigint unsigned	NO	0
+work_views	scope_id	bigint unsigned	NO	0
+workflow_versions	published_workflow_id	bigint unsigned	YES	1
+(41 rows)
+
+-- SELECT c.table_name, c.column_name, c.column_type FROM information_schema.columns c WHERE c.table_schema='ars_approvals_test' AND c.column_name IN ('row_version','draft_revision','version','lock_version') ORDER BY 1
+TABLE_NAME	COLUMN_NAME	COLUMN_TYPE
+ai_proposals	version	int unsigned
+calendar_items	version	int unsigned
+gcal_settings	version	int unsigned
+info_items	row_version	int unsigned
+projects	row_version	int unsigned
+request_drafts	version	int unsigned
+tasks	row_version	int unsigned
+whatsapp_templates	version	int unsigned
+workflow_versions	draft_revision	int unsigned
+(9 rows)
+
+-- SELECT c.table_name, c.column_name, c.column_type FROM information_schema.columns c WHERE c.table_schema='ars_approvals_test' AND (c.column_name LIKE '%deleted%' OR c.column_name IN ('is_active','status','inactive_at','deactivated_at')) AND c.table_name IN ('users','approval_requests','tasks','projects','approver_groups','approver_group_members','workflow_definitions','departments','designations','request_attachments','module_types') ORDER BY 1,2
+TABLE_NAME	COLUMN_NAME	COLUMN_TYPE
+approval_requests	deleted_at	datetime
+approval_requests	deleted_by	bigint unsigned
+approval_requests	status	enum('IN_PROGRESS','ON_HOLD','CHANGES_REQUIRED','APPROVED','REJECTED','CANCELLED')
+projects	deleted_at	datetime
+projects	deleted_by	bigint unsigned
+tasks	deleted_at	datetime
+tasks	deleted_by	bigint unsigned
+tasks	status	enum('OPEN','IN_PROGRESS','BLOCKED','COMPLETED','CANCELLED')
+(8 rows)

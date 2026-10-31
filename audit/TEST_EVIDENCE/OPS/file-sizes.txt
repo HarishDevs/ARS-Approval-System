@@ -1,0 +1,53 @@
+== largest source files (lines)
+  85948 total
+   1332 features/admin/WorkflowBuilder.tsx
+   1103 lib/db/repositories/work.repository.ts
+    982 server/approvals/service.ts
+    890 server/work/service.ts
+    833 features/work/TaskCreator.tsx
+    806 server/engine/engine.ts
+    782 lib/db/repositories/approvals.repository.ts
+    750 lib/db/repositories/analytics-center.repository.ts
+    737 features/work/ProjectWorkspace.tsx
+    689 features/analytics/CenterScreen.tsx
+    688 features/work/TaskGrid.tsx
+    671 lib/db/repositories/gcal.repository.ts
+    652 features/shell/CommandPalette.tsx
+    623 features/admin/FormFieldsEditor.tsx
+    543 features/analytics/Charts.tsx
+    513 app/users/work/actions.ts
+    504 server/import/plan.ts
+    504 features/admin/form-designer/FieldProperties.tsx
+    498 server/reports/catalogue.ts
+    481 app/users/requests/[id]/page.tsx
+    479 server/notifications/templates.ts
+    478 features/analytics/AnalyticsScreen.tsx
+    475 server/calendar/service.ts
+    464 features/requests/RequestListScreen.tsx
+    463 app/users/actions.ts
+    448 features/admin/WorkflowPanels.tsx
+    442 server/calendar/sync.ts
+    426 server/reports/schedules.ts
+    416 features/work/MoreParts.tsx
+    412 features/work/TaskWorkPanel.tsx
+== total ts/tsx lines in app/server/lib/features/config/types
+
+== files > 500 lines: 18
+== files > 800 lines: 6
+== largest .tsx components
+  40216 total
+   1332 features/admin/WorkflowBuilder.tsx
+    833 features/work/TaskCreator.tsx
+    737 features/work/ProjectWorkspace.tsx
+    689 features/analytics/CenterScreen.tsx
+    688 features/work/TaskGrid.tsx
+    652 features/shell/CommandPalette.tsx
+    623 features/admin/FormFieldsEditor.tsx
+    543 features/analytics/Charts.tsx
+    504 features/admin/form-designer/FieldProperties.tsx
+    481 app/users/requests/[id]/page.tsx
+    478 features/analytics/AnalyticsScreen.tsx
+    464 features/requests/RequestListScreen.tsx
+    448 features/admin/WorkflowPanels.tsx
+    416 features/work/MoreParts.tsx
+    412 features/work/TaskWorkPanel.tsx

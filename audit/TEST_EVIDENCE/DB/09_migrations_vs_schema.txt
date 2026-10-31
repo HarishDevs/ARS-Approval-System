@@ -1,0 +1,15 @@
+# Tables created by database/migrations/*.sql vs information_schema.tables (ars_approvals_test)
+migrations CREATE TABLE distinct: 110
+DB base tables: 112
+only in migrations:
+only in DB (created by scripts/database/migrate.js itself):
+schema_migration_progress
+schema_migrations
+
+# Migration files using IF NOT EXISTS / INSERT IGNORE / ON DUPLICATE (case-insensitive): 0 of 48
+# GET_LOCK use in scripts/server/lib: 0
+# @optional blocks:
+database/migrations/202610160900_v190.sql:106:-- @optional
+database/migrations/202610160900_v190.sql:115:-- @optional
+database/migrations/202610160900_v190.sql:201:-- @optional
+database/migrations/202610160900_v190.sql:210:-- @optional

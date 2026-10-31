@@ -1,0 +1,16 @@
+2026-10-31T23:01:09+05:30
+# POST /api/webhooks/ceoitbox (ceoitbox none)
+{"success":false,"error":{"code":"NOT_FOUND","message":"Not found."}}
+HTTP 404
+# POST /api/webhooks/ceoitbox (ceoitbox wrong secret)
+{"success":false,"error":{"code":"NOT_FOUND","message":"Not found."}}
+HTTP 404
+# POST /api/webhooks/google-calendar (google-calendar bogus channel)
+
+HTTP 404
+# POST /api/jobs/run (jobs/run no secret)
+{"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-2D68A9"}}
+HTTP 404
+# POST /api/jobs/run (jobs/run wrong secret)
+{"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-118E60"}}
+HTTP 404

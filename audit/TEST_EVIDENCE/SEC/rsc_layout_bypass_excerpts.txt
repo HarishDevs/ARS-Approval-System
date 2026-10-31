@@ -1,0 +1,40 @@
+# Excerpts of RSC payloads returned to a plain USER (it-mvwo934e3, roles USER) for Super-Admin-only pages. 2026-10-31T23:01:17+05:30
+===== /superadmin/ai/history (RSC: 1) — HTTP payload 25368 bytes; first 12 text cells:
+"404" "This page isn't available" "The link may be wrong, the item may have been removed, or it may not be shared with you." "Go to Home" "AI Activity History · ARS-CMS" "AI Activity History" "Person" "Conversation" "Chat" "Messages" "Last activity" "Analytics Asker" "Pipeline" "Salesforce data" "31 Oct 2026, 10:57 pm" "AI asker" "Suggest a follow-up" "Approvals" "31 Oct 2026, 10:56 pm" "AI asker" "Suggest a follow-up" "Approvals" "31 Oct 2026, 10:56 pm" "AI asker" "deals?" "Salesforce data" "31 Oct 2026, 10:56 pm" "AI asker" "deals?" "Salesforce data" "31 Oct 2026, 10:56 pm" "AI asker" "my accounts?" "Salesforce data" "31 Oct 2026, 10:56 pm" "Daily" "one" "Approvals" "31 Oct 2026, 10:56 pm" "Burst" 
+
+  plain HTML GET => rows in HTML: 0
+===== /superadmin/ai/reports (RSC: 1) — HTTP payload 16626 bytes; first 12 text cells:
+"404" "This page isn't available" "The link may be wrong, the item may have been removed, or it may not be shared with you." "Go to Home" "AI Reports · ARS-CMS" "AI Reports" "Usage by person, last 30 days" "Person" "Questions" "Failed" "Tokens in / out" "Last" "AI asker" "31 Oct 2026, 10:56 pm" "Load person 1" "31 Oct 2026, 10:55 pm" "Load person 2" "31 Oct 2026, 10:55 pm" "Load person 3" "31 Oct 2026, 10:55 pm" "Load person 4" "31 Oct 2026, 10:55 pm" "Load person 5" "31 Oct 2026, 10:55 pm" "Load person 6" "31 Oct 2026, 10:55 pm" "Load person 7" "31 Oct 2026, 10:55 pm" "Load person 8" "31 Oct 2026, 10:55 pm" "Load person 9" "31 Oct 2026, 10:55 pm" "Load person 10" "31 Oct 2026, 10:55 pm" "Load person 11" "31 Oct 2026, 10:55 pm" "AI other" "31 Oct 2026, 10:56 pm" "Analytics Asker" "04 Mar 2030, 03:41 pm" 
+
+  plain HTML GET => rows in HTML: 0
+===== /superadmin/ai/data-sources (RSC: 1) — HTTP payload 11003 bytes; first 12 text cells:
+"404" "This page isn't available" "The link may be wrong, the item may have been removed, or it may not be shared with you." "Go to Home" "Data Sources · ARS-CMS" "Data Sources" "Data sources" "Source" "What it provides" "Status" "Last successful sync" "Needed before connecting" "ARS-CMS (this app)" "Approvals, tasks and information, limited to what each person may see." "Read live at each question" "Nothing: limited to what each person may see." "Salesforce" "Never" "Oracle ERP" "Receivables, overdue balances, inventory, order fulfilment." "Never" "A read-only reporting account on approved views, reachable from the server." "Power BI datasets" "Approved reporting datasets already used by ARS." "Never" "The owner chooses which datasets, and a read-only service identity." "Salesforce objects" "Object" "Records copied" "Last run" "Result" "Account" "31 Oct 2026, 10:56 pm" "Succeeded (3 changed)" 
+
+  plain HTML GET => rows in HTML: 0
+===== /superadmin/salesforce (RSC: 1) — HTTP payload 16014 bytes; first 12 text cells:
+"404" "This page isn't available" "The link may be wrong, the item may have been removed, or it may not be shared with you." "Go to Home" "Salesforce Settings · ARS-CMS" "Salesforce Settings" "Salesforce connection" "Connected as" "integration@ars.test" "Instance" "—" "Last test" "Never" "http://localhost:3100/api/integrations/salesforce/callback" "Connect Salesforce" "Salesforce sync" "Not set up." "AI settings" 
+
+"key":"ai.salesforce.environment","label":"Salesforce environment (test in Sandbox first)","group":"AI_DATA","valueType":"STRING","encrypted":false,"options":["SANDBOX","PRODUCTION"],"status":"
+"key":"ai.salesforce.my_domain","label":"Salesforce My Domain login URL (optional, e.g. https://yourcompany--uat.sandbox.my.salesforce.com)","group":"AI_DATA","valueType":"STRING","encrypted"
+"key":"ai.salesforce.client_id","label":"Salesforce app consumer key","group":"AI_DATA","valueType":"STRING","encrypted":true,"status":"NOT_CONFIGURED","value":null,"updatedAt":"$D2026-10-31T
+"key":"ai.salesforce.client_secret","label":"Salesforce app consumer secret","group":"AI_DATA","valueType":"STRING","encrypted":true,"status":"NOT_CONFIGURED","value":null,"updatedAt":"$D2026-10-
+"key":"ai.salesforce.scopes","label":"OAuth scopes (least privilege)","group":"AI_DATA","valueType":"STRING","encrypted":false,"status":"VALUE","value":"api refresh_token","updatedAt":null
+"key":"ai.salesforce.objects","label":"Objects and fields Pico Bot may read: * for every object the connected Salesforce user can read, or a list such as Account:Name,Industry;Opportunity:N
+"key":"ai.salesforce.copy_hourly","label":"Also copy those objects hourly for the dashboard","group":"AI_DATA","valueType":"STRING","encrypted":false,"options":["ON","OFF"],"status":"VALUE","va
+  plain HTML GET => rows in HTML: 0
+===== UNAUTHENTICATED: cookie 'ars_session=garbage' (passes the middleware presence check), header 'RSC: 1' 2026-10-31T23:01:54+05:30
+/superadmin/ai/history => 200 25410B rows=47 cells: "404" "This page isn't available" "Go to Home" "AI Activity History · ARS-CMS" "AI Activity History" "Person" "Conversation" "Chat" "Messages" "Last activity" "Analytics Asker" "Pipeline" "Salesforce data" "31 Oct 2026, 10:57 pm" "AI asker" "Suggest a follow-up" "Approvals" "31 Oct 2026, 10:56 pm" "AI asker" "Suggest a follow-up" "Approvals" "31 Oct 2026, 10:56 pm" "AI asker" "deals?" 
+/superadmin/ai/reports => 200 17144B rows=17 cells: "404" "This page isn't available" "Go to Home" "AI Reports · ARS-CMS" "AI Reports" "Usage by person, last 30 days" "Person" "Questions" "Failed" "Tokens in / out" "Last" "AI asker" "31 Oct 2026, 10:56 pm" "Load person 1" "31 Oct 2026, 10:55 pm" "Load person 2" "31 Oct 2026, 10:55 pm" "Load person 3" "31 Oct 2026, 10:55 pm" "Load person 4" "31 Oct 2026, 10:55 pm" "Load person 5" "31 Oct 2026, 10:55 pm" "Load person 6" 
+/superadmin/ai/data-sources => 200 11045B rows=7 cells: "404" "This page isn't available" "Go to Home" "Data Sources · ARS-CMS" "Data Sources" "Data sources" "Source" "What it provides" "Status" "Last successful sync" "Needed before connecting" "ARS-CMS (this app)" "Read live at each question" "Nothing: limited to what each person may see." "Salesforce" "Never" "Oracle ERP" "Receivables, overdue balances, inventory, order fulfilment." "Never" "Power BI datasets" "Approved reporting datasets already used by ARS." "Never" "Salesforce objects" "Object" 
+/superadmin/salesforce => 200 16056B rows=0 cells: "404" "This page isn't available" "Go to Home" "Salesforce Settings · ARS-CMS" "Salesforce Settings" "Salesforce connection" "Connected as" "integration@ars.test" "Instance" "—" "Last test" "Never" "http://localhost:3100/api/integrations/salesforce/callback" "Connect Salesforce" "Salesforce sync" "Not set up." "AI settings" 
+===== no cookie at all, RSC: 1
+/superadmin/ai/history => 307 http://localhost:3100/login?next=%2Fsuperadmin%2Fai%2Fhistory 40B
+===== Re-confirmed with the brief's seeded users after the e2e global setup 2026-10-31T23:07:06+05:30
+/superadmin/ai/history as E2E_REQ => 200 12419B rows=13 h1="children":"This page isn't available" "children":"AI Activity History" 
+/superadmin/ai/reports as E2E_REQ => 200 15196B rows=12 h1="children":"This page isn't available" "children":"AI Reports" 
+/superadmin/ai/data-sources as E2E_REQ => 200 10093B rows=5 h1="children":"This page isn't available" "children":"Data Sources" 
+/superadmin/salesforce as E2E_REQ => 200 15821B rows=0 h1="children":"This page isn't available" "children":"Salesforce Settings" 
+/superadmin/ai/history as E2E_ADMIN => 200 12419B rows=13 h1="children":"This page isn't available" "children":"AI Activity History" 
+/superadmin/ai/reports as E2E_ADMIN => 200 15196B rows=12 h1="children":"This page isn't available" "children":"AI Reports" 
+/superadmin/ai/data-sources as E2E_ADMIN => 200 10093B rows=5 h1="children":"This page isn't available" "children":"Data Sources" 
+/superadmin/salesforce as E2E_ADMIN => 200 15821B rows=0 h1="children":"This page isn't available" "children":"Salesforce Settings" 

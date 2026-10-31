@@ -1,0 +1,1129 @@
+
+-- SELECT VERSION() AS v, DATABASE() AS db
+v	db
+8.0.46	ars_approvals_test
+(1 rows)
+
+-- SELECT table_name, engine, table_rows, table_collation FROM information_schema.tables WHERE table_schema='ars_approvals_test' ORDER BY table_name
+TABLE_NAME	ENGINE	TABLE_ROWS	TABLE_COLLATION
+ai_conversations	InnoDB	12	utf8mb4_unicode_ci
+ai_messages	InnoDB	22	utf8mb4_unicode_ci
+ai_proposals	InnoDB	0	utf8mb4_unicode_ci
+ai_rules	InnoDB	0	utf8mb4_unicode_ci
+ai_salesforce_connection	InnoDB	1	utf8mb4_unicode_ci
+ai_source_records	InnoDB	0	utf8mb4_unicode_ci
+ai_sync_runs	InnoDB	0	utf8mb4_unicode_ci
+alert_events	InnoDB	0	utf8mb4_unicode_ci
+alert_rules	InnoDB	1	utf8mb4_unicode_ci
+analytics_views	InnoDB	2	utf8mb4_unicode_ci
+approval_events	InnoDB	124	utf8mb4_unicode_ci
+approval_requests	InnoDB	17	utf8mb4_unicode_ci
+approval_tasks	InnoDB	26	utf8mb4_unicode_ci
+approver_group_members	InnoDB	10	utf8mb4_unicode_ci
+approver_groups	InnoDB	8	utf8mb4_unicode_ci
+audit_logs	InnoDB	413	utf8mb4_unicode_ci
+budgets	InnoDB	1	utf8mb4_unicode_ci
+calendar_items	InnoDB	1	utf8mb4_unicode_ci
+consultations	InnoDB	0	utf8mb4_unicode_ci
+custom_approval_settings	InnoDB	0	utf8mb4_unicode_ci
+delegations	InnoDB	0	utf8mb4_unicode_ci
+department_holidays	InnoDB	0	utf8mb4_unicode_ci
+departments	InnoDB	8	utf8mb4_unicode_ci
+designations	InnoDB	10	utf8mb4_unicode_ci
+export_jobs	InnoDB	1	utf8mb4_unicode_ci
+gcal_conflicts	InnoDB	0	utf8mb4_unicode_ci
+gcal_connections	InnoDB	0	utf8mb4_unicode_ci
+gcal_jobs	InnoDB	0	utf8mb4_unicode_ci
+gcal_links	InnoDB	0	utf8mb4_unicode_ci
+gcal_oauth_states	InnoDB	0	utf8mb4_unicode_ci
+gcal_settings	InnoDB	0	utf8mb4_unicode_ci
+holidays	InnoDB	0	utf8mb4_unicode_ci
+info_events	InnoDB	3	utf8mb4_unicode_ci
+info_items	InnoDB	1	utf8mb4_unicode_ci
+info_recipients	InnoDB	1	utf8mb4_unicode_ci
+info_targets	InnoDB	1	utf8mb4_unicode_ci
+job_runs	InnoDB	1	utf8mb4_unicode_ci
+jobs	InnoDB	0	utf8mb4_unicode_ci
+legal_holds	InnoDB	0	utf8mb4_unicode_ci
+login_logs	InnoDB	0	utf8mb4_unicode_ci
+module_type_versions	InnoDB	3	utf8mb4_unicode_ci
+module_types	InnoDB	3	utf8mb4_unicode_ci
+my_task_placements	InnoDB	0	utf8mb4_unicode_ci
+my_task_sections	InnoDB	15	utf8mb4_unicode_ci
+notification_deliveries	InnoDB	126	utf8mb4_unicode_ci
+notification_outbox	InnoDB	57	utf8mb4_unicode_ci
+notification_preferences	InnoDB	1	utf8mb4_unicode_ci
+notification_rule_sends	InnoDB	0	utf8mb4_unicode_ci
+notification_rules	InnoDB	0	utf8mb4_unicode_ci
+notifications	InnoDB	79	utf8mb4_unicode_ci
+otp_challenges	InnoDB	0	utf8mb4_unicode_ci
+page_access_rules	InnoDB	0	utf8mb4_unicode_ci
+password_tokens	InnoDB	1	utf8mb4_unicode_ci
+project_events	InnoDB	14	utf8mb4_unicode_ci
+project_fields	InnoDB	2	utf8mb4_unicode_ci
+project_members	InnoDB	9	utf8mb4_unicode_ci
+project_sections	InnoDB	15	utf8mb4_unicode_ci
+project_status_updates	InnoDB	1	utf8mb4_unicode_ci
+projects	InnoDB	7	utf8mb4_unicode_ci
+rate_limit_hits	InnoDB	231	utf8mb4_unicode_ci
+recent_views	InnoDB	63	utf8mb4_unicode_ci
+record_files	InnoDB	1	utf8mb4_unicode_ci
+report_runs	InnoDB	0	utf8mb4_unicode_ci
+report_schedules	InnoDB	1	utf8mb4_unicode_ci
+request_amendments	InnoDB	1	utf8mb4_unicode_ci
+request_attachments	InnoDB	4	utf8mb4_unicode_ci
+request_collaborators	InnoDB	3	utf8mb4_unicode_ci
+request_comments	InnoDB	1	utf8mb4_unicode_ci
+request_drafts	InnoDB	1	utf8mb4_unicode_ci
+request_links	InnoDB	0	utf8mb4_unicode_ci
+request_revisions	InnoDB	18	utf8mb4_unicode_ci
+request_sequences	InnoDB	11	utf8mb4_unicode_ci
+request_submission_checks	InnoDB	17	utf8mb4_unicode_ci
+request_templates	InnoDB	1	utf8mb4_unicode_ci
+roles	InnoDB	4	utf8mb4_unicode_ci
+saved_views	InnoDB	1	utf8mb4_unicode_ci
+schema_migration_progress	InnoDB	0	utf8mb4_unicode_ci
+schema_migrations	InnoDB	48	utf8mb4_unicode_ci
+settings_change_history	InnoDB	0	utf8mb4_unicode_ci
+stuck_snoozes	InnoDB	0	utf8mb4_unicode_ci
+system_settings	InnoDB	3	utf8mb4_unicode_ci
+task_comments	InnoDB	1	utf8mb4_unicode_ci
+task_dependencies	InnoDB	0	utf8mb4_unicode_ci
+task_events	InnoDB	40	utf8mb4_unicode_ci
+task_field_values	InnoDB	2	utf8mb4_unicode_ci
+task_followers	InnoDB	27	utf8mb4_unicode_ci
+task_item_reminders	InnoDB	0	utf8mb4_unicode_ci
+task_projects	InnoDB	13	utf8mb4_unicode_ci
+task_reminders	InnoDB	0	utf8mb4_unicode_ci
+task_tags	InnoDB	0	utf8mb4_unicode_ci
+tasks	InnoDB	19	utf8mb4_unicode_ci
+used_security_links	InnoDB	1	utf8mb4_unicode_ci
+user_devices	InnoDB	0	utf8mb4_unicode_ci
+user_flags	InnoDB	24	utf8mb4_unicode_ci
+user_roles	InnoDB	56	utf8mb4_unicode_ci
+user_sessions	InnoDB	263	utf8mb4_unicode_ci
+user_settings	InnoDB	2	utf8mb4_unicode_ci
+users	InnoDB	52	utf8mb4_unicode_ci
+whatsapp_rate_limit_log	InnoDB	0	utf8mb4_unicode_ci
+whatsapp_template_variables	InnoDB	5	utf8mb4_unicode_ci
+whatsapp_templates	InnoDB	2	utf8mb4_unicode_ci
+work_digest_sends	InnoDB	0	utf8mb4_unicode_ci
+work_favourites	InnoDB	0	utf8mb4_unicode_ci
+work_likes	InnoDB	1	utf8mb4_unicode_ci
+work_recent_projects	InnoDB	11	utf8mb4_unicode_ci
+work_saved_searches	InnoDB	1	utf8mb4_unicode_ci
+work_tags	InnoDB	0	utf8mb4_unicode_ci
+work_views	InnoDB	1	utf8mb4_unicode_ci
+workflow_definitions	InnoDB	23	utf8mb4_unicode_ci
+workflow_migration_items	InnoDB	2	utf8mb4_unicode_ci
+workflow_migrations	InnoDB	1	utf8mb4_unicode_ci
+workflow_versions	InnoDB	26	utf8mb4_unicode_ci
+(112 rows)
+
+-- SELECT table_name, column_name, ordinal_position, column_type, is_nullable, column_default, column_key, extra FROM information_schema.columns WHERE table_schema='ars_approvals_test' ORDER BY table_name, ordinal_position
+TABLE_NAME	COLUMN_NAME	ORDINAL_POSITION	COLUMN_TYPE	IS_NULLABLE	COLUMN_DEFAULT	COLUMN_KEY	EXTRA
+ai_conversations	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+ai_conversations	owner_user_id	2	bigint unsigned	NO	NULL	MUL	
+ai_conversations	title	3	varchar(200)	NO	NULL		
+ai_conversations	created_at	4	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+ai_conversations	updated_at	5	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+ai_conversations	mode	6	varchar(20)	NO	LEGACY		
+ai_conversations	pinned_at	7	datetime	YES	NULL		
+ai_messages	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+ai_messages	conversation_id	2	bigint unsigned	NO	NULL	MUL	
+ai_messages	role	3	enum('user','assistant')	NO	NULL		
+ai_messages	content	4	mediumtext	NO	NULL		
+ai_messages	provider	5	varchar(20)	YES	NULL		
+ai_messages	model	6	varchar(100)	YES	NULL		
+ai_messages	input_tokens	7	int unsigned	YES	NULL		
+ai_messages	output_tokens	8	int unsigned	YES	NULL		
+ai_messages	latency_ms	9	int unsigned	YES	NULL		
+ai_messages	error	10	varchar(300)	YES	NULL		
+ai_messages	evidence_json	11	json	YES	NULL		
+ai_messages	unverified_json	12	json	YES	NULL		
+ai_messages	created_at	13	datetime	NO	CURRENT_TIMESTAMP	MUL	DEFAULT_GENERATED
+ai_messages	request_key	14	char(36)	YES	NULL	MUL	
+ai_proposals	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+ai_proposals	conversation_id	2	bigint unsigned	YES	NULL		
+ai_proposals	requested_by	3	bigint unsigned	NO	NULL	MUL	
+ai_proposals	approver_user_id	4	bigint unsigned	YES	NULL	MUL	
+ai_proposals	kind	5	enum('REMINDER','FOLLOW_UP','REVIEW','OTHER')	NO	NULL		
+ai_proposals	title	6	varchar(200)	NO	NULL		
+ai_proposals	details	7	text	NO	NULL		
+ai_proposals	evidence_json	8	json	YES	NULL		
+ai_proposals	content_hash	9	char(64)	NO	NULL		
+ai_proposals	version	10	int unsigned	NO	1		
+ai_proposals	status	11	enum('PENDING','APPROVED','REJECTED','EXPIRED')	NO	PENDING		
+ai_proposals	decided_by	12	bigint unsigned	YES	NULL	MUL	
+ai_proposals	decided_at	13	datetime	YES	NULL		
+ai_proposals	decision_note	14	varchar(500)	YES	NULL		
+ai_proposals	expires_at	15	datetime	NO	NULL		
+ai_proposals	created_at	16	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+ai_rules	chat_mode	1	varchar(20)	NO	NULL	PRI	
+ai_rules	content	2	mediumtext	NO	NULL		
+ai_rules	updated_by	3	bigint unsigned	NO	NULL	MUL	
+ai_rules	updated_at	4	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+ai_salesforce_connection	id	1	tinyint unsigned	NO	NULL	PRI	
+ai_salesforce_connection	status	2	enum('DISCONNECTED','CONNECTED','NEEDS_REAUTH')	NO	DISCONNECTED		
+ai_salesforce_connection	instance_url	3	varchar(255)	YES	NULL		
+ai_salesforce_connection	connected_user_name	4	varchar(255)	YES	NULL		
+ai_salesforce_connection	access_token_enc	5	text	YES	NULL		
+ai_salesforce_connection	refresh_token_enc	6	text	YES	NULL		
+ai_salesforce_connection	scopes	7	varchar(255)	YES	NULL		
+ai_salesforce_connection	pending_state_hash	8	char(64)	YES	NULL		
+ai_salesforce_connection	pending_verifier_enc	9	text	YES	NULL		
+ai_salesforce_connection	pending_user_id	10	bigint unsigned	YES	NULL		
+ai_salesforce_connection	pending_expires_at	11	datetime	YES	NULL		
+ai_salesforce_connection	last_test_at	12	datetime	YES	NULL		
+ai_salesforce_connection	last_test_ok	13	tinyint(1)	YES	NULL		
+ai_salesforce_connection	last_error	14	varchar(300)	YES	NULL		
+ai_salesforce_connection	connected_by	15	bigint unsigned	YES	NULL		
+ai_salesforce_connection	connected_at	16	datetime	YES	NULL		
+ai_salesforce_connection	updated_at	17	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+ai_source_records	source_key	1	varchar(30)	NO	NULL	PRI	
+ai_source_records	dataset	2	varchar(80)	NO	NULL	PRI	
+ai_source_records	record_id	3	varchar(40)	NO	NULL	PRI	
+ai_source_records	modified_at	4	datetime	YES	NULL		
+ai_source_records	data_json	5	json	NO	NULL		
+ai_source_records	synced_at	6	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+ai_sync_runs	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+ai_sync_runs	source_key	2	varchar(30)	NO	NULL	MUL	
+ai_sync_runs	dataset	3	varchar(80)	NO	NULL		
+ai_sync_runs	status	4	enum('RUNNING','SUCCEEDED','FAILED')	NO	NULL		
+ai_sync_runs	rows_fetched	5	int unsigned	NO	0		
+ai_sync_runs	checkpoint_in	6	varchar(40)	YES	NULL		
+ai_sync_runs	checkpoint_out	7	varchar(40)	YES	NULL		
+ai_sync_runs	error	8	varchar(300)	YES	NULL		
+ai_sync_runs	started_by	9	bigint unsigned	YES	NULL		
+ai_sync_runs	started_at	10	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+ai_sync_runs	finished_at	11	datetime	YES	NULL		
+alert_events	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+alert_events	rule_id	2	bigint unsigned	NO	NULL	MUL	
+alert_events	value	3	int unsigned	NO	NULL		
+alert_events	fired_at	4	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+alert_rules	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+alert_rules	user_id	2	bigint unsigned	NO	NULL	MUL	
+alert_rules	metric	3	varchar(40)	NO	NULL		
+alert_rules	scope_kind	4	varchar(20)	NO	NULL		
+alert_rules	threshold	5	int unsigned	NO	NULL		
+alert_rules	param	6	int unsigned	YES	NULL		
+alert_rules	cooldown_hours	7	smallint unsigned	NO	24		
+alert_rules	severity	8	enum('INFO','WARNING','CRITICAL')	NO	WARNING		
+alert_rules	quiet_start	9	tinyint unsigned	YES	NULL		
+alert_rules	quiet_end	10	tinyint unsigned	YES	NULL		
+alert_rules	channels	11	enum('INBOX','INBOX_EMAIL')	NO	INBOX_EMAIL		
+alert_rules	active	12	tinyint(1)	NO	1	MUL	
+alert_rules	firing	13	tinyint(1)	NO	0		
+alert_rules	latest_value	14	int unsigned	YES	NULL		
+alert_rules	last_checked_at	15	datetime	YES	NULL		
+alert_rules	last_fired_at	16	datetime	YES	NULL		
+alert_rules	created_at	17	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+analytics_views	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+analytics_views	user_id	2	bigint unsigned	NO	NULL	MUL	
+analytics_views	name	3	varchar(80)	NO	NULL		
+analytics_views	target	4	varchar(60)	NO	NULL	MUL	
+analytics_views	query_json	5	json	NO	NULL		
+analytics_views	shared	6	tinyint(1)	NO	0		
+analytics_views	is_default	7	tinyint(1)	NO	0		
+analytics_views	created_at	8	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+approval_events	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+approval_events	request_id	2	bigint unsigned	NO	NULL	MUL	
+approval_events	event_type	3	varchar(40)	NO	NULL		
+approval_events	node_id	4	varchar(100)	YES	NULL		
+approval_events	actor_id	5	bigint unsigned	YES	NULL	MUL	
+approval_events	payload_json	6	json	YES	NULL		
+approval_events	created_at	7	datetime(3)	NO	CURRENT_TIMESTAMP(3)		DEFAULT_GENERATED
+approval_requests	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+approval_requests	request_no	2	varchar(30)	NO	NULL	UNI	
+approval_requests	workflow_version_id	3	bigint unsigned	NO	NULL	MUL	
+approval_requests	requester_id	4	bigint unsigned	NO	NULL	MUL	
+approval_requests	submission_key	5	char(36)	YES	NULL		
+approval_requests	title	6	varchar(200)	NO	NULL		
+approval_requests	form_data_json	7	json	NO	NULL		
+approval_requests	status	8	enum('IN_PROGRESS','ON_HOLD','CHANGES_REQUIRED','APPROVED','REJECTED','CANCELLED')	NO	NULL	MUL	
+approval_requests	round	9	int unsigned	NO	1		
+approval_requests	state_json	10	json	NO	NULL		
+approval_requests	state_version	11	int unsigned	NO	1		
+approval_requests	submitted_at	12	datetime	NO	CURRENT_TIMESTAMP	MUL	DEFAULT_GENERATED
+approval_requests	closed_at	13	datetime	YES	NULL	MUL	
+approval_requests	valid_until	14	datetime	YES	NULL		
+approval_requests	expiry_notified_at	15	datetime	YES	NULL		
+approval_requests	deleted_at	16	datetime	YES	NULL	MUL	
+approval_requests	deleted_by	17	bigint unsigned	YES	NULL	MUL	
+approval_requests	delete_reason	18	varchar(500)	YES	NULL		
+approval_requests	updated_at	19	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+approval_tasks	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+approval_tasks	request_id	2	bigint unsigned	NO	NULL	MUL	
+approval_tasks	task_key	3	varchar(40)	NO	NULL		
+approval_tasks	node_id	4	varchar(100)	NO	NULL		
+approval_tasks	node_label	5	varchar(200)	NO	NULL		
+approval_tasks	task_type	6	enum('APPROVAL','WORK')	NO	APPROVAL		
+approval_tasks	round	7	int unsigned	NO	NULL		
+approval_tasks	approver_id	8	bigint unsigned	NO	NULL	MUL	
+approval_tasks	status	9	enum('PENDING','APPROVED','REJECTED','CHANGES_REQUESTED','NOT_REQUIRED','CANCELLED')	NO	NULL	MUL	
+approval_tasks	decided_by	10	bigint unsigned	YES	NULL	MUL	
+approval_tasks	on_behalf_of	11	bigint unsigned	YES	NULL	MUL	
+approval_tasks	comment	12	varchar(2000)	YES	NULL		
+approval_tasks	created_at	13	datetime	NO	NULL		
+approval_tasks	due_at	14	datetime	YES	NULL		
+approval_tasks	escalate_at	15	datetime	YES	NULL		
+approval_tasks	decided_at	16	datetime	YES	NULL	MUL	
+approver_group_members	group_id	1	bigint unsigned	NO	NULL	PRI	
+approver_group_members	user_id	2	bigint unsigned	NO	NULL	PRI	
+approver_group_members	added_by	3	bigint unsigned	YES	NULL	MUL	
+approver_group_members	added_at	4	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+approver_groups	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+approver_groups	code	2	varchar(50)	NO	NULL	UNI	
+approver_groups	name	3	varchar(150)	NO	NULL		
+approver_groups	active	4	tinyint(1)	NO	1		
+approver_groups	created_by	5	bigint unsigned	YES	NULL	MUL	
+approver_groups	created_at	6	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+approver_groups	updated_at	7	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+audit_logs	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+audit_logs	actor_user_id	2	bigint unsigned	YES	NULL	MUL	
+audit_logs	on_behalf_of_user_id	3	bigint unsigned	YES	NULL	MUL	
+audit_logs	action	4	varchar(100)	NO	NULL	MUL	
+audit_logs	entity_type	5	varchar(100)	NO	NULL	MUL	
+audit_logs	entity_id	6	varchar(64)	YES	NULL		
+audit_logs	result	7	enum('SUCCESS','FAILURE')	NO	SUCCESS		
+audit_logs	ip_address	8	varchar(45)	YES	NULL		
+audit_logs	session_id	9	char(36)	YES	NULL		
+audit_logs	metadata_json	10	json	YES	NULL		
+audit_logs	occurred_at	11	datetime(3)	NO	CURRENT_TIMESTAMP(3)		DEFAULT_GENERATED
+budgets	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+budgets	department_id	2	bigint unsigned	NO	NULL	MUL	
+budgets	fy_start_year	3	smallint unsigned	NO	NULL		
+budgets	amount_paise	4	bigint unsigned	NO	NULL		
+budgets	warn_percent	5	tinyint unsigned	NO	90		
+budgets	updated_by	6	bigint unsigned	NO	NULL	MUL	
+budgets	updated_at	7	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+calendar_items	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+calendar_items	user_id	2	bigint unsigned	NO	NULL	MUL	
+calendar_items	title	3	varchar(200)	NO	NULL		
+calendar_items	notes	4	varchar(2000)	YES	NULL		
+calendar_items	all_day	5	tinyint(1)	NO	0		
+calendar_items	starts_at	6	datetime	YES	NULL		
+calendar_items	ends_at	7	datetime	YES	NULL		
+calendar_items	start_date	8	date	YES	NULL		
+calendar_items	end_date	9	date	YES	NULL		
+calendar_items	recurring	10	tinyint(1)	NO	0		
+calendar_items	origin	11	enum('ARS','GOOGLE')	NO	NULL		
+calendar_items	version	12	int unsigned	NO	1		
+calendar_items	deleted_at	13	datetime	YES	NULL		
+calendar_items	created_at	14	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+calendar_items	updated_at	15	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+consultations	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+consultations	request_id	2	bigint unsigned	NO	NULL	MUL	
+consultations	requested_by	3	bigint unsigned	NO	NULL	MUL	
+consultations	consultee_id	4	bigint unsigned	NO	NULL	MUL	
+consultations	question	5	varchar(2000)	NO	NULL		
+consultations	answer	6	varchar(2000)	YES	NULL		
+consultations	status	7	enum('OPEN','ANSWERED','WITHDRAWN')	NO	OPEN		
+consultations	created_at	8	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+consultations	answered_at	9	datetime	YES	NULL		
+custom_approval_settings	id	1	tinyint unsigned	NO	NULL	PRI	
+custom_approval_settings	form_json	2	json	NO	NULL		
+custom_approval_settings	policy_json	3	json	NO	NULL		
+custom_approval_settings	updated_by	4	bigint unsigned	YES	NULL	MUL	
+custom_approval_settings	updated_at	5	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+delegations	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+delegations	user_id	2	bigint unsigned	NO	NULL	MUL	
+delegations	delegate_id	3	bigint unsigned	NO	NULL	MUL	
+delegations	starts_on	4	date	NO	NULL		
+delegations	ends_on	5	date	NO	NULL		
+delegations	reason	6	varchar(200)	YES	NULL		
+delegations	created_by	7	bigint unsigned	NO	NULL	MUL	
+delegations	created_at	8	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+delegations	ended_at	9	datetime	YES	NULL		
+delegations	ended_by	10	bigint unsigned	YES	NULL	MUL	
+delegations	activation_logged_at	11	datetime	YES	NULL		
+delegations	expiry_logged_at	12	datetime	YES	NULL		
+department_holidays	department_id	1	bigint unsigned	NO	NULL	PRI	
+department_holidays	holiday_on	2	date	NO	NULL	PRI	
+department_holidays	name	3	varchar(100)	NO	NULL		
+department_holidays	created_by	4	bigint unsigned	YES	NULL	MUL	
+department_holidays	created_at	5	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+departments	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+departments	code	2	varchar(50)	NO	NULL	UNI	
+departments	name	3	varchar(150)	NO	NULL		
+departments	hod_user_id	4	bigint unsigned	YES	NULL	MUL	
+departments	active	5	tinyint(1)	NO	1		
+departments	created_at	6	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+departments	updated_at	7	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+designations	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+designations	code	2	varchar(50)	NO	NULL	UNI	
+designations	name	3	varchar(150)	NO	NULL		
+designations	is_approver	4	tinyint(1)	NO	0		
+designations	active	5	tinyint(1)	NO	1		
+designations	created_at	6	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+designations	updated_at	7	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+export_jobs	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+export_jobs	user_id	2	bigint unsigned	NO	NULL	MUL	
+export_jobs	report_key	3	varchar(60)	NO	NULL		
+export_jobs	query_json	4	json	NO	NULL		
+export_jobs	format	5	enum('csv','xlsx','pdf')	NO	NULL		
+export_jobs	status	6	enum('QUEUED','RUNNING','DONE','FAILED','EXPIRED')	NO	QUEUED	MUL	
+export_jobs	file_name	7	varchar(120)	YES	NULL		
+export_jobs	row_count	8	int unsigned	YES	NULL		
+export_jobs	bytes	9	int unsigned	YES	NULL		
+export_jobs	message	10	varchar(300)	YES	NULL		
+export_jobs	created_at	11	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+export_jobs	started_at	12	datetime	YES	NULL		
+export_jobs	finished_at	13	datetime	YES	NULL		
+export_jobs	expires_at	14	datetime	YES	NULL		
+gcal_conflicts	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+gcal_conflicts	link_id	2	bigint unsigned	NO	NULL	MUL	
+gcal_conflicts	user_id	3	bigint unsigned	NO	NULL	MUL	
+gcal_conflicts	conflict_type	4	enum('BOTH_CHANGED','DELETED_IN_GOOGLE_CHANGED_IN_ARS')	NO	NULL		
+gcal_conflicts	ars_json	5	json	NO	NULL		
+gcal_conflicts	google_json	6	json	NO	NULL		
+gcal_conflicts	status	7	enum('OPEN','RESOLVED')	NO	OPEN		
+gcal_conflicts	resolution	8	enum('KEEP_ARS','KEEP_GOOGLE','DISMISSED')	YES	NULL		
+gcal_conflicts	resolved_by	9	bigint unsigned	YES	NULL		
+gcal_conflicts	resolved_at	10	datetime	YES	NULL		
+gcal_conflicts	created_at	11	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+gcal_connections	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+gcal_connections	user_id	2	bigint unsigned	NO	NULL	UNI	
+gcal_connections	google_email	3	varchar(255)	YES	NULL		
+gcal_connections	scopes	4	varchar(1000)	NO			
+gcal_connections	refresh_token_enc	5	text	YES	NULL		
+gcal_connections	access_token_enc	6	text	YES	NULL		
+gcal_connections	access_expires_at	7	datetime	YES	NULL		
+gcal_connections	calendar_id	8	varchar(255)	YES	NULL		
+gcal_connections	calendar_name	9	varchar(255)	YES	NULL		
+gcal_connections	sync_token	10	varchar(1024)	YES	NULL		
+gcal_connections	channel_id	11	varchar(64)	YES	NULL	UNI	
+gcal_connections	channel_resource_id	12	varchar(255)	YES	NULL		
+gcal_connections	channel_token_hash	13	char(64)	YES	NULL		
+gcal_connections	channel_expires_at	14	datetime	YES	NULL		
+gcal_connections	status	15	enum('ACTIVE','NEEDS_REAUTH','DISCONNECTED','REVOKED')	NO	ACTIVE	MUL	
+gcal_connections	last_sync_at	16	datetime	YES	NULL		
+gcal_connections	last_error	17	varchar(500)	YES	NULL		
+gcal_connections	last_error_at	18	datetime	YES	NULL		
+gcal_connections	lock_until	19	datetime	YES	NULL		
+gcal_connections	connected_at	20	datetime	YES	NULL		
+gcal_connections	created_at	21	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+gcal_connections	updated_at	22	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+gcal_jobs	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+gcal_jobs	connection_id	2	bigint unsigned	NO	NULL	MUL	
+gcal_jobs	kind	3	enum('SYNC','FULL_RESYNC','RENEW_CHANNEL')	NO	NULL		
+gcal_jobs	reason	4	varchar(40)	NO	NULL		
+gcal_jobs	status	5	enum('PENDING','RUNNING','DONE','FAILED','DEAD')	NO	PENDING	MUL	
+gcal_jobs	attempts	6	int unsigned	NO	0		
+gcal_jobs	next_run_at	7	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+gcal_jobs	pending_key	8	varchar(80)	YES	NULL	UNI	
+gcal_jobs	started_at	9	datetime	YES	NULL		
+gcal_jobs	finished_at	10	datetime	YES	NULL		
+gcal_jobs	error_category	11	varchar(40)	YES	NULL		
+gcal_jobs	error_detail	12	varchar(500)	YES	NULL		
+gcal_jobs	result_json	13	json	YES	NULL		
+gcal_jobs	created_by	14	bigint unsigned	YES	NULL		
+gcal_jobs	created_at	15	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+gcal_links	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+gcal_links	connection_id	2	bigint unsigned	NO	NULL	MUL	
+gcal_links	user_id	3	bigint unsigned	NO	NULL	MUL	
+gcal_links	entity_type	4	enum('APPROVAL_TASK','REQUEST','TASK','INFO','ITEM')	NO	NULL		
+gcal_links	entity_id	5	bigint unsigned	NO	NULL		
+gcal_links	calendar_id	6	varchar(255)	NO	NULL		
+gcal_links	google_event_id	7	varchar(255)	NO	NULL		
+gcal_links	generation	8	int unsigned	NO	0		
+gcal_links	etag	9	varchar(255)	YES	NULL		
+gcal_links	origin	10	enum('ARS','GOOGLE')	NO	NULL		
+gcal_links	content_hash	11	char(64)	YES	NULL		
+gcal_links	ars_version	12	int unsigned	YES	NULL		
+gcal_links	state	13	enum('ACTIVE','CANCELLED','UNLINKED')	NO	ACTIVE		
+gcal_links	last_push_at	14	datetime	YES	NULL		
+gcal_links	last_pull_at	15	datetime	YES	NULL		
+gcal_links	last_error	16	varchar(500)	YES	NULL		
+gcal_links	created_at	17	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+gcal_links	updated_at	18	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+gcal_oauth_states	state_hash	1	char(64)	NO	NULL	PRI	
+gcal_oauth_states	user_id	2	bigint unsigned	NO	NULL	MUL	
+gcal_oauth_states	nonce_hash	3	char(64)	NO	NULL		
+gcal_oauth_states	expires_at	4	datetime	NO	NULL	MUL	
+gcal_oauth_states	used_at	5	datetime	YES	NULL		
+gcal_oauth_states	created_at	6	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+gcal_settings	id	1	tinyint unsigned	NO	NULL	PRI	
+gcal_settings	enabled	2	tinyint(1)	NO	0		
+gcal_settings	maintenance	3	tinyint(1)	NO	0		
+gcal_settings	client_id	4	varchar(255)	YES	NULL		
+gcal_settings	client_secret_enc	5	text	YES	NULL		
+gcal_settings	config_json	6	json	NO	NULL		
+gcal_settings	version	7	int unsigned	NO	1		
+gcal_settings	updated_by	8	bigint unsigned	YES	NULL	MUL	
+gcal_settings	updated_at	9	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+gcal_settings	last_test_at	10	datetime	YES	NULL		
+gcal_settings	last_test_ok	11	tinyint(1)	YES	NULL		
+gcal_settings	last_test_json	12	json	YES	NULL		
+holidays	holiday_on	1	date	NO	NULL	PRI	
+holidays	name	2	varchar(100)	NO	NULL		
+holidays	created_by	3	bigint unsigned	YES	NULL	MUL	
+holidays	created_at	4	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+info_events	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+info_events	info_id	2	bigint unsigned	NO	NULL	MUL	
+info_events	actor_id	3	bigint unsigned	YES	NULL	MUL	
+info_events	event_type	4	varchar(40)	NO	NULL		
+info_events	body	5	varchar(2000)	YES	NULL		
+info_events	payload_json	6	json	YES	NULL		
+info_events	created_at	7	datetime(3)	NO	CURRENT_TIMESTAMP(3)		DEFAULT_GENERATED
+info_items	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+info_items	info_no	2	varchar(30)	NO	NULL	UNI	
+info_items	type_version_id	3	bigint unsigned	NO	NULL	MUL	
+info_items	title	4	varchar(200)	NO	NULL		
+info_items	body	5	text	NO	NULL		
+info_items	priority	6	enum('NORMAL','IMPORTANT','URGENT')	NO	NORMAL		
+info_items	status	7	enum('DRAFT','PUBLISHED','WITHDRAWN','ARCHIVED')	NO	DRAFT	MUL	
+info_items	ack_required	8	tinyint(1)	NO	0		
+info_items	effective_on	9	date	YES	NULL		
+info_items	expires_on	10	date	YES	NULL		
+info_items	form_data_json	11	json	NO	NULL		
+info_items	created_by	12	bigint unsigned	NO	NULL	MUL	
+info_items	published_at	13	datetime	YES	NULL		
+info_items	withdrawn_by	14	bigint unsigned	YES	NULL	MUL	
+info_items	withdrawn_at	15	datetime	YES	NULL		
+info_items	withdraw_reason	16	varchar(500)	YES	NULL		
+info_items	archived_at	17	datetime	YES	NULL		
+info_items	row_version	18	int unsigned	NO	1		
+info_items	created_at	19	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+info_items	updated_at	20	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+info_recipients	info_id	1	bigint unsigned	NO	NULL	PRI	
+info_recipients	user_id	2	bigint unsigned	NO	NULL	PRI	
+info_recipients	source	3	varchar(20)	NO	NULL		
+info_recipients	added_at	4	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+info_recipients	read_at	5	datetime	YES	NULL		
+info_recipients	acknowledged_at	6	datetime	YES	NULL		
+info_recipients	reminded_at	7	datetime	YES	NULL		
+info_targets	info_id	1	bigint unsigned	NO	NULL	PRI	
+info_targets	target_type	2	enum('USER','DEPARTMENT','GROUP','EVERYONE')	NO	NULL	PRI	
+info_targets	target_id	3	bigint unsigned	NO	0	PRI	
+job_runs	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+job_runs	run_ref	2	varchar(64)	NO	NULL		
+job_runs	job_key	3	varchar(40)	NO	NULL	MUL	
+job_runs	trigger_kind	4	enum('CRON','MANUAL')	NO	CRON		
+job_runs	started_at	5	datetime(3)	NO	CURRENT_TIMESTAMP(3)	MUL	DEFAULT_GENERATED
+job_runs	finished_at	6	datetime(3)	YES	NULL		
+job_runs	status	7	enum('RUNNING','OK','FAILED')	NO	RUNNING		
+job_runs	counts_json	8	json	YES	NULL		
+job_runs	error_code	9	varchar(500)	YES	NULL		
+jobs	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+jobs	job_type	2	varchar(60)	NO	NULL		
+jobs	payload_json	3	json	YES	NULL		
+jobs	run_after	4	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+jobs	status	5	enum('PENDING','RUNNING','DONE','FAILED')	NO	PENDING	MUL	
+jobs	attempts	6	int unsigned	NO	0		
+jobs	last_error	7	varchar(500)	YES	NULL		
+jobs	locked_at	8	datetime	YES	NULL		
+jobs	created_at	9	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+legal_holds	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+legal_holds	reference	2	varchar(80)	NO	NULL		
+legal_holds	reason	3	varchar(500)	NO	NULL		
+legal_holds	scope_type	4	enum('REQUEST','REQUESTER','WORKFLOW')	NO	NULL		
+legal_holds	scope_id	5	bigint unsigned	NO	NULL		
+legal_holds	owner_user_id	6	bigint unsigned	NO	NULL	MUL	
+legal_holds	created_by	7	bigint unsigned	NO	NULL	MUL	
+legal_holds	created_at	8	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+legal_holds	released_by	9	bigint unsigned	YES	NULL	MUL	
+legal_holds	released_at	10	datetime	YES	NULL	MUL	
+legal_holds	release_reason	11	varchar(500)	YES	NULL		
+login_logs	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+login_logs	user_id	2	bigint unsigned	YES	NULL	MUL	
+login_logs	auth_method	3	enum('GOOGLE','PASSWORD_OTP')	NO	NULL		
+login_logs	step	4	enum('PASSWORD','OTP','GOOGLE')	NO	NULL		
+login_logs	success	5	tinyint(1)	NO	NULL		
+login_logs	failure_reason	6	varchar(100)	YES	NULL		
+login_logs	ip_address	7	varchar(45)	YES	NULL		
+login_logs	user_agent	8	varchar(500)	YES	NULL		
+login_logs	device_id	9	bigint unsigned	YES	NULL		
+login_logs	new_device	10	tinyint(1)	NO	0		
+login_logs	session_id	11	char(36)	YES	NULL		
+login_logs	occurred_at	12	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+module_type_versions	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+module_type_versions	type_id	2	bigint unsigned	NO	NULL	MUL	
+module_type_versions	version_no	3	int unsigned	NO	NULL		
+module_type_versions	status	4	enum('DRAFT','PUBLISHED','ARCHIVED')	NO	DRAFT		
+module_type_versions	form_json	5	json	NO	NULL		
+module_type_versions	settings_json	6	json	NO	NULL		
+module_type_versions	created_by	7	bigint unsigned	YES	NULL	MUL	
+module_type_versions	created_at	8	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+module_type_versions	updated_at	9	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+module_type_versions	published_by	10	bigint unsigned	YES	NULL	MUL	
+module_type_versions	published_at	11	datetime	YES	NULL		
+module_type_versions	published_type_id	12	bigint unsigned	YES	NULL	UNI	STORED GENERATED
+module_types	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+module_types	module	2	enum('TASK','INFO')	NO	NULL	MUL	
+module_types	code	3	varchar(40)	NO	NULL		
+module_types	name	4	varchar(120)	NO	NULL		
+module_types	description	5	varchar(500)	YES	NULL		
+module_types	active	6	tinyint(1)	NO	1		
+module_types	created_by	7	bigint unsigned	YES	NULL	MUL	
+module_types	created_at	8	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+module_types	updated_at	9	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+my_task_placements	user_id	1	bigint unsigned	NO	NULL	PRI	
+my_task_placements	task_id	2	bigint unsigned	NO	NULL	PRI	
+my_task_placements	section_id	3	bigint unsigned	NO	NULL	MUL	
+my_task_placements	position	4	double	NO	0		
+my_task_placements	placed_at	5	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+my_task_sections	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+my_task_sections	user_id	2	bigint unsigned	NO	NULL	MUL	
+my_task_sections	name	3	varchar(100)	NO	NULL		
+my_task_sections	position	4	double	NO	0		
+my_task_sections	system_key	5	enum('OVERDUE','RECENT','TODAY','UPCOMING','LATER')	YES	NULL		
+my_task_sections	created_at	6	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+notification_deliveries	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+notification_deliveries	notification_id	2	bigint unsigned	NO	NULL	MUL	
+notification_deliveries	channel	3	enum('EMAIL','WHATSAPP')	NO	NULL		
+notification_deliveries	provider	4	varchar(50)	NO	NULL		
+notification_deliveries	status	5	enum('QUEUED','SENT','DELIVERED','READ','FAILED','SKIPPED')	NO	QUEUED	MUL	
+notification_deliveries	provider_reference	6	varchar(255)	YES	NULL	MUL	
+notification_deliveries	attempt_count	7	int unsigned	NO	0		
+notification_deliveries	next_retry_at	8	datetime	YES	NULL		
+notification_deliveries	last_attempt_at	9	datetime	YES	NULL		
+notification_deliveries	sent_at	10	datetime	YES	NULL		
+notification_deliveries	delivered_at	11	datetime	YES	NULL		
+notification_deliveries	read_at	12	datetime	YES	NULL		
+notification_deliveries	failure_code	13	varchar(100)	YES	NULL		
+notification_deliveries	payload_json	14	json	YES	NULL		
+notification_deliveries	created_at	15	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+notification_outbox	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+notification_outbox	request_id	2	bigint unsigned	YES	NULL		
+notification_outbox	payload_json	3	json	NO	NULL		
+notification_outbox	created_at	4	datetime(3)	NO	CURRENT_TIMESTAMP(3)		DEFAULT_GENERATED
+notification_outbox	claimed_at	5	datetime(3)	YES	NULL		
+notification_outbox	sent_at	6	datetime(3)	YES	NULL	MUL	
+notification_outbox	attempts	7	int unsigned	NO	0		
+notification_preferences	user_id	1	bigint unsigned	NO	NULL	PRI	
+notification_preferences	event_group	2	varchar(40)	NO	NULL	PRI	
+notification_preferences	channel	3	enum('EMAIL','WHATSAPP','INAPP')	NO	NULL	PRI	
+notification_preferences	enabled	4	tinyint(1)	NO	NULL		
+notification_preferences	updated_at	5	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+notification_rule_sends	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+notification_rule_sends	rule_id	2	bigint unsigned	NO	NULL	MUL	
+notification_rule_sends	record_kind	3	enum('APPROVAL_STEP','TASK')	NO	NULL	MUL	
+notification_rule_sends	record_id	4	bigint unsigned	NO	NULL		
+notification_rule_sends	stage_no	5	tinyint unsigned	NO	NULL		
+notification_rule_sends	send_no	6	tinyint unsigned	NO	NULL		
+notification_rule_sends	recipients	7	smallint unsigned	NO	0		
+notification_rule_sends	sent_at	8	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+notification_rules	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+notification_rules	name	2	varchar(150)	NO	NULL		
+notification_rules	kind	3	enum('REMINDER','ESCALATION')	NO	NULL		
+notification_rules	module	4	enum('APPROVAL','TASK')	NO	NULL		
+notification_rules	active	5	tinyint(1)	NO	1	MUL	
+notification_rules	match_mode	6	enum('ALL','ANY')	NO	ALL		
+notification_rules	conditions_json	7	json	NO	NULL		
+notification_rules	stages_json	8	json	NO	NULL		
+notification_rules	send_email	9	tinyint(1)	NO	1		
+notification_rules	subject	10	varchar(200)	NO			
+notification_rules	body	11	text	NO	NULL		
+notification_rules	created_by	12	bigint unsigned	NO	NULL	MUL	
+notification_rules	updated_by	13	bigint unsigned	NO	NULL	MUL	
+notification_rules	created_at	14	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+notification_rules	updated_at	15	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+notifications	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+notifications	event_type	2	varchar(60)	NO	NULL		
+notifications	category	3	enum('APPROVAL','TASK','INFORMATION','SYSTEM')	YES	NULL		
+notifications	user_id	4	bigint unsigned	NO	NULL	MUL	
+notifications	title	5	varchar(200)	NO	NULL		
+notifications	message	6	varchar(1000)	NO	NULL		
+notifications	deep_link	7	varchar(500)	YES	NULL		
+notifications	entity_type	8	varchar(20)	YES	NULL		
+notifications	entity_id	9	bigint unsigned	YES	NULL		
+notifications	created_at	10	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+notifications	read_at	11	datetime	YES	NULL		
+notifications	archived_at	12	datetime	YES	NULL		
+notifications	bookmarked_at	13	datetime	YES	NULL		
+otp_challenges	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+otp_challenges	challenge_token_hash	2	char(64)	NO	NULL	UNI	
+otp_challenges	user_id	3	bigint unsigned	NO	NULL	MUL	
+otp_challenges	channel	4	enum('WHATSAPP')	NO	WHATSAPP		
+otp_challenges	purpose	5	enum('LOGIN','PASSWORD_RESET','VERIFY_WHATSAPP')	NO	NULL		
+otp_challenges	otp_hash	6	char(64)	NO	NULL		
+otp_challenges	expires_at	7	datetime	NO	NULL	MUL	
+otp_challenges	attempt_count	8	int unsigned	NO	0		
+otp_challenges	max_attempts	9	int unsigned	NO	5		
+otp_challenges	consumed_at	10	datetime	YES	NULL		
+otp_challenges	ip_address	11	varchar(45)	YES	NULL		
+otp_challenges	created_at	12	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+page_access_rules	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+page_access_rules	page_key	2	varchar(60)	NO	NULL	MUL	
+page_access_rules	scope	3	enum('EVERYONE','DEPARTMENT','USER')	NO	NULL	MUL	
+page_access_rules	scope_id	4	bigint unsigned	NO	0		
+page_access_rules	level	5	enum('HIDDEN','VIEW','FULL')	NO	NULL		
+page_access_rules	updated_by	6	bigint unsigned	YES	NULL	MUL	
+page_access_rules	updated_at	7	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+password_tokens	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+password_tokens	token_hash	2	char(64)	NO	NULL	UNI	
+password_tokens	user_id	3	bigint unsigned	NO	NULL	MUL	
+password_tokens	purpose	4	enum('SET_PASSWORD')	NO	SET_PASSWORD		
+password_tokens	created_by	5	bigint unsigned	YES	NULL	MUL	
+password_tokens	created_at	6	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+password_tokens	expires_at	7	datetime	NO	NULL		
+password_tokens	used_at	8	datetime	YES	NULL		
+project_events	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+project_events	project_id	2	bigint unsigned	NO	NULL	MUL	
+project_events	actor_id	3	bigint unsigned	YES	NULL	MUL	
+project_events	event_type	4	varchar(40)	NO	NULL		
+project_events	body	5	varchar(500)	YES	NULL		
+project_events	created_at	6	datetime(3)	NO	CURRENT_TIMESTAMP(3)		DEFAULT_GENERATED
+project_fields	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+project_fields	project_id	2	bigint unsigned	NO	NULL	MUL	
+project_fields	name	3	varchar(60)	NO	NULL		
+project_fields	kind	4	enum('TEXT','NUMBER','SELECT','DATE')	NO	NULL		
+project_fields	options_json	5	json	NO	NULL		
+project_fields	position	6	double	NO	0		
+project_fields	created_by	7	bigint unsigned	NO	NULL	MUL	
+project_fields	deleted_at	8	datetime	YES	NULL		
+project_fields	created_at	9	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+project_members	project_id	1	bigint unsigned	NO	NULL	PRI	
+project_members	member_type	2	enum('USER','DEPARTMENT')	NO	NULL	PRI	
+project_members	member_id	3	bigint unsigned	NO	NULL	PRI	
+project_members	role	4	enum('OWNER','EDITOR','COMMENTER','VIEWER')	NO	NULL		
+project_members	added_by	5	bigint unsigned	NO	NULL	MUL	
+project_members	created_at	6	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+project_sections	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+project_sections	project_id	2	bigint unsigned	NO	NULL	MUL	
+project_sections	name	3	varchar(150)	NO	NULL		
+project_sections	position	4	double	NO	0		
+project_sections	created_by	5	bigint unsigned	NO	NULL	MUL	
+project_sections	deleted_at	6	datetime	YES	NULL		
+project_sections	created_at	7	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+project_status_updates	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+project_status_updates	project_id	2	bigint unsigned	NO	NULL	MUL	
+project_status_updates	status	3	enum('ON_TRACK','AT_RISK','OFF_TRACK','ON_HOLD','COMPLETE','DROPPED')	NO	NULL		
+project_status_updates	title	4	varchar(200)	NO	NULL		
+project_status_updates	body	5	text	YES	NULL		
+project_status_updates	snapshot_json	6	json	NO	NULL		
+project_status_updates	author_id	7	bigint unsigned	NO	NULL	MUL	
+project_status_updates	deleted_at	8	datetime	YES	NULL		
+project_status_updates	created_at	9	datetime(3)	NO	CURRENT_TIMESTAMP(3)		DEFAULT_GENERATED
+projects	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+projects	name	2	varchar(150)	NO	NULL		
+projects	description	3	text	YES	NULL		
+projects	color	4	varchar(20)	NO	green		
+projects	department_id	5	bigint unsigned	YES	NULL	MUL	
+projects	privacy	6	enum('PRIVATE','DEPARTMENT','ORGANISATION')	NO	PRIVATE	MUL	
+projects	default_access_role	7	enum('EDITOR','COMMENTER','VIEWER')	NO	COMMENTER		
+projects	default_view	8	enum('LIST','BOARD','CALENDAR','TIMELINE')	NO	LIST		
+projects	is_template	9	tinyint(1)	NO	0		
+projects	template_json	10	json	YES	NULL		
+projects	permissions_json	11	json	YES	NULL		
+projects	owner_id	12	bigint unsigned	NO	NULL	MUL	
+projects	start_on	13	date	YES	NULL		
+projects	due_on	14	date	YES	NULL		
+projects	current_status	15	enum('ON_TRACK','AT_RISK','OFF_TRACK','ON_HOLD','COMPLETE','DROPPED')	YES	NULL		
+projects	completed_at	16	datetime	YES	NULL		
+projects	archived_at	17	datetime	YES	NULL		
+projects	row_version	18	int unsigned	NO	1		
+projects	created_by	19	bigint unsigned	NO	NULL	MUL	
+projects	deleted_at	20	datetime	YES	NULL		
+projects	deleted_by	21	bigint unsigned	YES	NULL	MUL	
+projects	created_at	22	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+projects	updated_at	23	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+rate_limit_hits	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+rate_limit_hits	bucket	2	varchar(190)	NO	NULL	MUL	
+rate_limit_hits	occurred_at	3	datetime(3)	NO	CURRENT_TIMESTAMP(3)	MUL	DEFAULT_GENERATED
+recent_views	user_id	1	bigint unsigned	NO	NULL	PRI	
+recent_views	request_id	2	bigint unsigned	NO	NULL	PRI	
+recent_views	viewed_at	3	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+record_files	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+record_files	entity_type	2	enum('TASK','INFO')	NO	NULL	MUL	
+record_files	entity_id	3	bigint unsigned	NO	NULL		
+record_files	field_key	4	varchar(50)	YES	NULL		
+record_files	purpose	5	varchar(20)	NO	GENERAL		
+record_files	uploaded_by	6	bigint unsigned	NO	NULL	MUL	
+record_files	original_name	7	varchar(255)	NO	NULL		
+record_files	stored_path	8	varchar(255)	NO	NULL	UNI	
+record_files	content_type	9	varchar(150)	NO	NULL		
+record_files	size_bytes	10	int unsigned	NO	NULL		
+record_files	sha256	11	char(64)	NO	NULL		
+record_files	created_at	12	datetime(3)	NO	CURRENT_TIMESTAMP(3)		DEFAULT_GENERATED
+report_runs	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+report_runs	schedule_id	2	bigint unsigned	NO	NULL	MUL	
+report_runs	due_at	3	datetime	NO	NULL		
+report_runs	started_at	4	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+report_runs	finished_at	5	datetime	YES	NULL		
+report_runs	status	6	enum('RUNNING','SENT','FAILED','SKIPPED')	NO	RUNNING		
+report_runs	row_count	7	int unsigned	YES	NULL		
+report_runs	bytes	8	int unsigned	YES	NULL		
+report_runs	message	9	varchar(300)	YES	NULL		
+report_schedules	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+report_schedules	user_id	2	bigint unsigned	NO	NULL	MUL	
+report_schedules	report_key	3	varchar(60)	NO	NULL		
+report_schedules	query_json	4	json	NO	NULL		
+report_schedules	format	5	enum('csv','xlsx','pdf')	NO	xlsx		
+report_schedules	frequency	6	enum('DAILY','WEEKLY','MONTHLY')	NO	NULL		
+report_schedules	weekday	7	tinyint unsigned	YES	NULL		
+report_schedules	month_day	8	tinyint unsigned	YES	NULL		
+report_schedules	hour_ist	9	tinyint unsigned	NO	8		
+report_schedules	recipients_json	10	json	YES	NULL		
+report_schedules	active	11	tinyint(1)	NO	1	MUL	
+report_schedules	next_run_at	12	datetime	NO	NULL		
+report_schedules	last_run_at	13	datetime	YES	NULL		
+report_schedules	last_status	14	varchar(20)	YES	NULL		
+report_schedules	failures	15	int unsigned	NO	0		
+report_schedules	created_at	16	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+request_amendments	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+request_amendments	original_id	2	bigint unsigned	NO	NULL	MUL	
+request_amendments	amendment_id	3	bigint unsigned	NO	NULL	UNI	
+request_amendments	reason	4	varchar(1000)	NO	NULL		
+request_amendments	changes_json	5	json	NO	NULL		
+request_amendments	base_paise	6	bigint	YES	NULL		
+request_amendments	created_by	7	bigint unsigned	NO	NULL	MUL	
+request_amendments	created_at	8	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+request_attachments	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+request_attachments	request_id	2	bigint unsigned	NO	NULL	MUL	
+request_attachments	uploaded_by	3	bigint unsigned	NO	NULL	MUL	
+request_attachments	round	4	int unsigned	NO	NULL		
+request_attachments	field_key	5	varchar(50)	YES	NULL		
+request_attachments	original_name	6	varchar(255)	NO	NULL		
+request_attachments	stored_path	7	varchar(255)	NO	NULL	UNI	
+request_attachments	content_type	8	varchar(150)	NO	NULL		
+request_attachments	size_bytes	9	int unsigned	NO	NULL		
+request_attachments	sha256	10	char(64)	NO	NULL		
+request_attachments	created_at	11	datetime(3)	NO	CURRENT_TIMESTAMP(3)		DEFAULT_GENERATED
+request_collaborators	request_id	1	bigint unsigned	NO	NULL	PRI	
+request_collaborators	user_id	2	bigint unsigned	NO	NULL	PRI	
+request_collaborators	added_by	3	bigint unsigned	NO	NULL	MUL	
+request_collaborators	added_at	4	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+request_collaborators	removed_by	5	bigint unsigned	YES	NULL	MUL	
+request_collaborators	removed_at	6	datetime	YES	NULL		
+request_comments	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+request_comments	request_id	2	bigint unsigned	NO	NULL	MUL	
+request_comments	author_id	3	bigint unsigned	NO	NULL	MUL	
+request_comments	body	4	varchar(2000)	NO	NULL		
+request_comments	created_at	5	datetime(3)	NO	CURRENT_TIMESTAMP(3)		DEFAULT_GENERATED
+request_drafts	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+request_drafts	user_id	2	bigint unsigned	NO	NULL	MUL	
+request_drafts	draft_key	3	varchar(40)	NO	NULL		
+request_drafts	title	4	varchar(200)	YES	NULL		
+request_drafts	fields_json	5	json	NO	NULL		
+request_drafts	version	6	int unsigned	NO	1		
+request_drafts	created_at	7	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+request_drafts	updated_at	8	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+request_drafts	expires_at	9	datetime	NO	NULL	MUL	
+request_links	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+request_links	from_request_id	2	bigint unsigned	NO	NULL	MUL	
+request_links	to_request_id	3	bigint unsigned	NO	NULL	MUL	
+request_links	kind	4	enum('RELATED','FOLLOW_UP')	NO	NULL		
+request_links	created_by	5	bigint unsigned	NO	NULL	MUL	
+request_links	created_at	6	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+request_revisions	request_id	1	bigint unsigned	NO	NULL	PRI	
+request_revisions	round	2	int unsigned	NO	NULL	PRI	
+request_revisions	title	3	varchar(200)	NO	NULL		
+request_revisions	fields_json	4	json	NO	NULL		
+request_revisions	created_by	5	bigint unsigned	NO	NULL	MUL	
+request_revisions	created_at	6	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+request_sequences	prefix	1	varchar(10)	NO	NULL	PRI	
+request_sequences	year	2	smallint unsigned	NO	NULL	PRI	
+request_sequences	current_value	3	int unsigned	NO	0		
+request_submission_checks	request_id	1	bigint unsigned	NO	NULL	PRI	
+request_submission_checks	result_json	2	json	NO	NULL		
+request_submission_checks	acknowledged	3	tinyint(1)	NO	0		
+request_submission_checks	override_reason	4	varchar(500)	YES	NULL		
+request_submission_checks	budget_department	5	bigint unsigned	YES	NULL	MUL	
+request_submission_checks	budget_fy	6	smallint unsigned	YES	NULL		
+request_submission_checks	budget_paise	7	bigint unsigned	YES	NULL		
+request_submission_checks	committed_paise	8	bigint unsigned	YES	NULL		
+request_submission_checks	request_paise	9	bigint	YES	NULL		
+request_submission_checks	budget_state	10	enum('NOT_CHECKED','NO_BUDGET','OK','WARN','OVER')	NO	NOT_CHECKED		
+request_submission_checks	created_at	11	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+request_templates	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+request_templates	user_id	2	bigint unsigned	NO	NULL	MUL	
+request_templates	workflow_id	3	bigint unsigned	NO	NULL	MUL	
+request_templates	name	4	varchar(80)	NO	NULL		
+request_templates	title	5	varchar(200)	YES	NULL		
+request_templates	fields_json	6	json	NO	NULL		
+request_templates	created_at	7	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+request_templates	updated_at	8	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+roles	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+roles	code	2	varchar(50)	NO	NULL	UNI	
+roles	name	3	varchar(100)	NO	NULL		
+roles	description	4	varchar(500)	YES	NULL		
+roles	is_system	5	tinyint(1)	NO	0		
+roles	active	6	tinyint(1)	NO	1		
+roles	created_at	7	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+roles	updated_at	8	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+saved_views	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+saved_views	user_id	2	bigint unsigned	NO	NULL	MUL	
+saved_views	name	3	varchar(80)	NO	NULL		
+saved_views	query_json	4	json	NO	NULL		
+saved_views	is_default	5	tinyint(1)	NO	0		
+saved_views	created_at	6	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+saved_views	updated_at	7	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+schema_migration_progress	filename	1	varchar(255)	NO	NULL	PRI	
+schema_migration_progress	statements_done	2	int	NO	NULL		
+schema_migration_progress	updated_at	3	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+schema_migrations	filename	1	varchar(255)	NO	NULL	PRI	
+schema_migrations	applied_at	2	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+settings_change_history	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+settings_change_history	setting_key	2	varchar(150)	NO	NULL	MUL	
+settings_change_history	changed_by	3	bigint unsigned	YES	NULL	MUL	
+settings_change_history	changed_at	4	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+settings_change_history	change_type	5	enum('CREATE','UPDATE')	NO	NULL		
+settings_change_history	old_value_reference	6	varchar(255)	YES	NULL		
+settings_change_history	new_value_reference	7	varchar(255)	YES	NULL		
+stuck_snoozes	request_id	1	bigint unsigned	NO	NULL	PRI	
+stuck_snoozes	reason_code	2	varchar(40)	NO	NULL	PRI	
+stuck_snoozes	until_at	3	datetime	NO	NULL		
+stuck_snoozes	note	4	varchar(300)	YES	NULL		
+stuck_snoozes	created_by	5	bigint unsigned	NO	NULL	MUL	
+stuck_snoozes	created_at	6	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+system_settings	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+system_settings	setting_key	2	varchar(150)	NO	NULL	UNI	
+system_settings	setting_group	3	varchar(100)	NO	NULL		
+system_settings	value_type	4	enum('STRING','NUMBER','BOOLEAN','JSON')	NO	STRING		
+system_settings	encrypted	5	tinyint(1)	NO	0		
+system_settings	value	6	text	YES	NULL		
+system_settings	updated_by	7	bigint unsigned	YES	NULL	MUL	
+system_settings	updated_at	8	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+task_comments	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+task_comments	task_id	2	bigint unsigned	NO	NULL	MUL	
+task_comments	parent_comment_id	3	bigint unsigned	YES	NULL	MUL	
+task_comments	author_id	4	bigint unsigned	NO	NULL	MUL	
+task_comments	body	5	text	NO	NULL		
+task_comments	is_pinned	6	tinyint(1)	NO	0		
+task_comments	edited_at	7	datetime	YES	NULL		
+task_comments	deleted_at	8	datetime	YES	NULL		
+task_comments	deleted_by	9	bigint unsigned	YES	NULL		
+task_comments	created_at	10	datetime(3)	NO	CURRENT_TIMESTAMP(3)		DEFAULT_GENERATED
+task_dependencies	blocker_task_id	1	bigint unsigned	NO	NULL	PRI	
+task_dependencies	blocked_task_id	2	bigint unsigned	NO	NULL	PRI	
+task_dependencies	created_by	3	bigint unsigned	NO	NULL	MUL	
+task_dependencies	created_at	4	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+task_events	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+task_events	task_id	2	bigint unsigned	NO	NULL	MUL	
+task_events	actor_id	3	bigint unsigned	YES	NULL	MUL	
+task_events	event_type	4	varchar(40)	NO	NULL		
+task_events	from_status	5	varchar(20)	YES	NULL		
+task_events	to_status	6	varchar(20)	YES	NULL		
+task_events	body	7	varchar(2000)	YES	NULL		
+task_events	payload_json	8	json	YES	NULL		
+task_events	created_at	9	datetime(3)	NO	CURRENT_TIMESTAMP(3)		DEFAULT_GENERATED
+task_field_values	task_id	1	bigint unsigned	NO	NULL	PRI	
+task_field_values	field_id	2	bigint unsigned	NO	NULL	PRI	
+task_field_values	value	3	varchar(500)	NO	NULL		
+task_field_values	updated_by	4	bigint unsigned	NO	NULL	MUL	
+task_field_values	updated_at	5	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+task_followers	task_id	1	bigint unsigned	NO	NULL	PRI	
+task_followers	user_id	2	bigint unsigned	NO	NULL	PRI	
+task_followers	source	3	enum('CREATOR','ASSIGNEE','MANUAL','MENTION','COMMENT')	NO	NULL		
+task_followers	added_by	4	bigint unsigned	YES	NULL		
+task_followers	created_at	5	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+task_item_reminders	task_id	1	bigint unsigned	NO	NULL	PRI	
+task_item_reminders	kind	2	varchar(30)	NO	NULL	PRI	
+task_item_reminders	sent_at	3	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+task_projects	task_id	1	bigint unsigned	NO	NULL	PRI	
+task_projects	project_id	2	bigint unsigned	NO	NULL	PRI	
+task_projects	section_id	3	bigint unsigned	NO	NULL	MUL	
+task_projects	position	4	double	NO	0		
+task_projects	added_by	5	bigint unsigned	NO	NULL	MUL	
+task_projects	added_at	6	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+task_reminders	task_id	1	bigint unsigned	NO	NULL	PRI	
+task_reminders	kind	2	enum('REMINDER','ESCALATION','ESCALATION_2','ESCALATION_3','DUE_SOON')	NO	NULL	PRI	
+task_reminders	sent_at	3	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+task_tags	task_id	1	bigint unsigned	NO	NULL	PRI	
+task_tags	tag_id	2	bigint unsigned	NO	NULL	PRI	
+task_tags	added_by	3	bigint unsigned	NO	NULL	MUL	
+tasks	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+tasks	parent_task_id	2	bigint unsigned	YES	NULL	MUL	
+tasks	root_task_id	3	bigint unsigned	YES	NULL	MUL	
+tasks	task_no	4	varchar(30)	NO	NULL	UNI	
+tasks	type_version_id	5	bigint unsigned	NO	NULL	MUL	
+tasks	title	6	varchar(200)	NO	NULL		
+tasks	description	7	text	YES	NULL		
+tasks	priority	8	enum('LOW','NORMAL','HIGH','URGENT')	NO	NORMAL		
+tasks	status	9	enum('OPEN','IN_PROGRESS','BLOCKED','COMPLETED','CANCELLED')	NO	OPEN	MUL	
+tasks	created_by	10	bigint unsigned	NO	NULL	MUL	
+tasks	assignee_id	11	bigint unsigned	NO	NULL	MUL	
+tasks	assigned_by	12	bigint unsigned	NO	NULL	MUL	
+tasks	due_at	13	datetime	YES	NULL		
+tasks	starts_on	14	date	YES	NULL		
+tasks	form_data_json	15	json	NO	NULL		
+tasks	related_request_id	16	bigint unsigned	YES	NULL	MUL	
+tasks	completed_by	17	bigint unsigned	YES	NULL	MUL	
+tasks	completed_at	18	datetime	YES	NULL		
+tasks	completion_note	19	varchar(2000)	YES	NULL		
+tasks	cancelled_by	20	bigint unsigned	YES	NULL	MUL	
+tasks	cancelled_at	21	datetime	YES	NULL		
+tasks	row_version	22	int unsigned	NO	1		
+tasks	submission_key	23	char(36)	YES	NULL		
+tasks	created_at	24	datetime	NO	CURRENT_TIMESTAMP	MUL	DEFAULT_GENERATED
+tasks	updated_at	25	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+tasks	depth	26	tinyint unsigned	NO	0		
+tasks	subtask_position	27	double	NO	0		
+tasks	is_milestone	28	tinyint(1)	NO	0		
+tasks	assigned_at	29	datetime	YES	NULL		
+tasks	deleted_at	30	datetime	YES	NULL		
+tasks	deleted_by	31	bigint unsigned	YES	NULL	MUL	
+tasks	recurrence_json	32	json	YES	NULL		
+tasks	series_id	33	bigint unsigned	YES	NULL	MUL	
+tasks	assign_group_id	34	bigint unsigned	YES	NULL	MUL	
+used_security_links	token_hash	1	char(64)	NO	NULL	PRI	
+used_security_links	used_at	2	datetime	NO	CURRENT_TIMESTAMP	MUL	DEFAULT_GENERATED
+user_devices	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+user_devices	user_id	2	bigint unsigned	NO	NULL	MUL	
+user_devices	device_key_hash	3	char(64)	NO	NULL		
+user_devices	user_agent	4	varchar(500)	YES	NULL		
+user_devices	first_seen_at	5	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+user_devices	last_seen_at	6	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+user_devices	last_ip	7	varchar(45)	YES	NULL		
+user_devices	trusted_until	8	datetime	YES	NULL		
+user_flags	user_id	1	bigint unsigned	NO	NULL	PRI	
+user_flags	flag	2	varchar(60)	NO	NULL	PRI	
+user_flags	set_at	3	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+user_roles	user_id	1	bigint unsigned	NO	NULL	PRI	
+user_roles	role_id	2	bigint unsigned	NO	NULL	PRI	
+user_roles	assigned_by	3	bigint unsigned	YES	NULL	MUL	
+user_roles	assigned_at	4	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+user_sessions	id	1	char(36)	NO	NULL	PRI	
+user_sessions	user_id	2	bigint unsigned	NO	NULL	MUL	
+user_sessions	device_id	3	bigint unsigned	YES	NULL	MUL	
+user_sessions	auth_method	4	enum('GOOGLE','PASSWORD_OTP','DEMO','TRY_AS')	NO	NULL		
+user_sessions	ip_address	5	varchar(45)	YES	NULL		
+user_sessions	user_agent	6	varchar(500)	YES	NULL		
+user_sessions	created_at	7	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+user_sessions	last_seen_at	8	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+user_sessions	expires_at	9	datetime	NO	NULL		
+user_sessions	revoked_at	10	datetime	YES	NULL		
+user_sessions	revoke_reason	11	varchar(50)	YES	NULL		
+user_sessions	tried_by	12	bigint unsigned	YES	NULL	MUL	
+user_settings	user_id	1	bigint unsigned	NO	NULL	PRI	
+user_settings	setting_key	2	varchar(60)	NO	NULL	PRI	
+user_settings	value	3	varchar(200)	NO	NULL		
+user_settings	updated_at	4	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+users	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+users	login_id	2	varchar(100)	NO	NULL	UNI	
+users	name	3	varchar(200)	NO	NULL		
+users	email	4	varchar(255)	NO	NULL	UNI	
+users	whatsapp_number	5	varchar(20)	YES	NULL	UNI	
+users	photo_path	6	varchar(255)	YES	NULL		
+users	photo_type	7	varchar(40)	YES	NULL		
+users	photo_updated_at	8	datetime	YES	NULL		
+users	about_me	9	varchar(1000)	YES	NULL		
+users	department_id	10	bigint unsigned	YES	NULL	MUL	
+users	designation_id	11	bigint unsigned	YES	NULL	MUL	
+users	reporting_manager_id	12	bigint unsigned	YES	NULL	MUL	
+users	sign_in_method	13	enum('GOOGLE','PASSWORD','BOTH')	NO	GOOGLE		
+users	firebase_uid	14	varchar(128)	YES	NULL	UNI	
+users	password_hash	15	varchar(255)	YES	NULL		
+users	password_set_at	16	datetime	YES	NULL		
+users	failed_login_count	17	int unsigned	NO	0		
+users	locked_until	18	datetime	YES	NULL		
+users	active	19	tinyint(1)	NO	1	MUL	
+users	is_break_glass	20	tinyint(1)	NO	0		
+users	is_demo	21	tinyint(1)	NO	0		
+users	break_glass_until	22	datetime	YES	NULL		
+users	last_login_at	23	datetime	YES	NULL		
+users	created_at	24	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+users	updated_at	25	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+users	created_by	26	bigint unsigned	YES	NULL	MUL	
+users	updated_by	27	bigint unsigned	YES	NULL	MUL	
+users	module_access	28	set('APPROVAL','TASK','INFORMATION','AI')	NO	APPROVAL,TASK,INFORMATION		
+users	chat_modes	29	set('GENERAL','APPROVAL','TASK','INFORMATION','SALESFORCE','COMBINED')	NO	APPROVAL,TASK,INFORMATION		
+users	salesforce_scope	30	enum('NONE','OWN','ALL')	NO	NONE		
+whatsapp_rate_limit_log	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+whatsapp_rate_limit_log	occurred_at	2	datetime(3)	NO	CURRENT_TIMESTAMP(3)	MUL	DEFAULT_GENERATED
+whatsapp_template_variables	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+whatsapp_template_variables	template_id	2	bigint unsigned	NO	NULL	MUL	
+whatsapp_template_variables	position	3	int unsigned	NO	NULL		
+whatsapp_template_variables	variable_key	4	varchar(100)	NO	NULL		
+whatsapp_template_variables	display_name	5	varchar(150)	NO	NULL		
+whatsapp_templates	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+whatsapp_templates	template_code	2	varchar(100)	NO	NULL	MUL	
+whatsapp_templates	event_type	3	varchar(60)	NO	NULL	MUL	
+whatsapp_templates	provider_name	4	varchar(150)	YES	NULL		
+whatsapp_templates	language	5	varchar(10)	NO	en		
+whatsapp_templates	category	6	varchar(20)	NO	UTILITY		
+whatsapp_templates	body_text	7	text	YES	NULL		
+whatsapp_templates	footer_text	8	varchar(60)	YES	NULL		
+whatsapp_templates	version	9	int unsigned	NO	1		
+whatsapp_templates	status	10	enum('DRAFT','ACTIVE','RETIRED')	NO	DRAFT		
+whatsapp_templates	approval_status	11	enum('PENDING','APPROVED','REJECTED')	NO	PENDING		
+whatsapp_templates	provider_status	12	varchar(30)	YES	NULL		
+whatsapp_templates	rejection_reason	13	varchar(500)	YES	NULL		
+whatsapp_templates	submitted_at	14	datetime	YES	NULL		
+whatsapp_templates	submitted_by	15	bigint unsigned	YES	NULL	MUL	
+whatsapp_templates	synced_at	16	datetime	YES	NULL		
+whatsapp_templates	created_by	17	bigint unsigned	YES	NULL	MUL	
+whatsapp_templates	updated_by	18	bigint unsigned	YES	NULL	MUL	
+whatsapp_templates	created_at	19	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+whatsapp_templates	updated_at	20	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+work_digest_sends	user_id	1	bigint unsigned	NO	NULL	PRI	
+work_digest_sends	day	2	date	NO	NULL	PRI	
+work_digest_sends	sent_at	3	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+work_favourites	user_id	1	bigint unsigned	NO	NULL	PRI	
+work_favourites	object_type	2	enum('PROJECT','SEARCH')	NO	NULL	PRI	
+work_favourites	object_id	3	bigint unsigned	NO	NULL	PRI	
+work_favourites	created_at	4	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+work_likes	target_type	1	enum('TASK','COMMENT','STATUS')	NO	NULL	PRI	
+work_likes	target_id	2	bigint unsigned	NO	NULL	PRI	
+work_likes	user_id	3	bigint unsigned	NO	NULL	PRI	
+work_likes	created_at	4	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+work_recent_projects	user_id	1	bigint unsigned	NO	NULL	PRI	
+work_recent_projects	project_id	2	bigint unsigned	NO	NULL	PRI	
+work_recent_projects	opened_at	3	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+work_saved_searches	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+work_saved_searches	user_id	2	bigint unsigned	NO	NULL	MUL	
+work_saved_searches	name	3	varchar(80)	NO	NULL		
+work_saved_searches	query	4	varchar(1000)	NO	NULL		
+work_saved_searches	created_at	5	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+work_tags	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+work_tags	name	2	varchar(60)	NO	NULL	UNI	
+work_tags	color	3	varchar(20)	NO	gray		
+work_tags	created_by	4	bigint unsigned	NO	NULL	MUL	
+work_tags	created_at	5	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+work_views	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+work_views	scope	2	enum('MY_TASKS','PROJECT')	NO	NULL	MUL	
+work_views	scope_id	3	bigint unsigned	NO	NULL		
+work_views	name	4	varchar(60)	NO	NULL		
+work_views	config_json	5	json	NO	NULL		
+work_views	position	6	double	NO	0		
+work_views	created_by	7	bigint unsigned	NO	NULL	MUL	
+work_views	created_at	8	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+work_views	updated_at	9	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+workflow_definitions	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+workflow_definitions	code	2	varchar(50)	NO	NULL	UNI	
+workflow_definitions	name	3	varchar(150)	NO	NULL		
+workflow_definitions	description	4	varchar(1000)	YES	NULL		
+workflow_definitions	kind	5	enum('PREDEFINED','CUSTOM')	NO	NULL		
+workflow_definitions	request_prefix	6	varchar(10)	NO	NULL		
+workflow_definitions	owner_user_id	7	bigint unsigned	YES	NULL	MUL	
+workflow_definitions	active	8	tinyint(1)	NO	1		
+workflow_definitions	resubmit_policy	9	enum('REQUESTING_STEP','BEGINNING')	NO	REQUESTING_STEP		
+workflow_definitions	settings_json	10	json	YES	NULL		
+workflow_definitions	created_by	11	bigint unsigned	YES	NULL	MUL	
+workflow_definitions	created_at	12	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+workflow_definitions	updated_at	13	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+workflow_migration_items	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+workflow_migration_items	migration_id	2	bigint unsigned	NO	NULL	MUL	
+workflow_migration_items	request_id	3	bigint unsigned	NO	NULL	MUL	
+workflow_migration_items	outcome	4	enum('MOVED','SKIPPED','FAILED')	NO	NULL		
+workflow_migration_items	verdict	5	varchar(20)	YES	NULL		
+workflow_migration_items	message	6	varchar(500)	YES	NULL		
+workflow_migration_items	created_at	7	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+workflow_migrations	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+workflow_migrations	workflow_id	2	bigint unsigned	NO	NULL	MUL	
+workflow_migrations	from_version_id	3	bigint unsigned	NO	NULL	MUL	
+workflow_migrations	to_version_id	4	bigint unsigned	NO	NULL	MUL	
+workflow_migrations	mapping_json	5	json	NO	NULL		
+workflow_migrations	accept_warnings	6	tinyint(1)	NO	0		
+workflow_migrations	requested_by	7	bigint unsigned	NO	NULL	MUL	
+workflow_migrations	created_at	8	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+workflow_migrations	finished_at	9	datetime	YES	NULL		
+workflow_migrations	moved	10	int unsigned	NO	0		
+workflow_migrations	skipped	11	int unsigned	NO	0		
+workflow_migrations	failed	12	int unsigned	NO	0		
+workflow_versions	id	1	bigint unsigned	NO	NULL	PRI	auto_increment
+workflow_versions	workflow_id	2	bigint unsigned	NO	NULL	MUL	
+workflow_versions	version_no	3	int unsigned	NO	NULL		
+workflow_versions	status	4	enum('DRAFT','PUBLISHED','ARCHIVED')	NO	DRAFT		
+workflow_versions	definition_json	5	json	NO	NULL		
+workflow_versions	form_json	6	json	YES	NULL		
+workflow_versions	builder_json	7	json	YES	NULL		
+workflow_versions	published_workflow_id	8	bigint unsigned	YES	NULL	UNI	STORED GENERATED
+workflow_versions	created_by	9	bigint unsigned	YES	NULL	MUL	
+workflow_versions	created_at	10	datetime	NO	CURRENT_TIMESTAMP		DEFAULT_GENERATED
+workflow_versions	published_by	11	bigint unsigned	YES	NULL	MUL	
+workflow_versions	published_at	12	datetime	YES	NULL		
+workflow_versions	draft_revision	13	int unsigned	NO	0		
+(1004 rows)

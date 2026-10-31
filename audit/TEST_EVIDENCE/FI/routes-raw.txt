@@ -1,0 +1,129 @@
+| `/forgot-password` | public | none (public) | link/other |  |
+| `/login` | public | none (public) | link/other |  |
+| `/privacy` | public | none (public) | link/other |  |
+| `/security/not-me` | public | none (public) | link/other |  |
+| `/set-password` | public | none (public) | link/other |  |
+| `/signed-out` | public | none (public) | link/other |  |
+| `/terms` | public | none (public) | link/other |  |
+| `/admin` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | menu |  |
+| `/admin/ai-analytics` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | menu |  |
+| `/admin/ai-rules` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | menu |  |
+| `/admin/analytics/list` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | link/other |  |
+| `/admin/analytics/metrics` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | link/other |  |
+| `/admin/analytics` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | menu |  |
+| `/admin/attention` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | menu |  |
+| `/admin/budgets` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | menu |  |
+| `/admin/calendar` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | menu |  |
+| `/admin/custom-approval` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | menu |  |
+| `/admin/dashboards/approvers` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | link/other |  |
+| `/admin/dashboards/departments` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | link/other |  |
+| `/admin/dashboards` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | menu | redirect-only? |
+| `/admin/dashboards/raisers` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | link/other |  |
+| `/admin/dashboards/utilisation` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | link/other |  |
+| `/admin/doa` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | menu |  |
+| `/admin/groups` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | menu |  |
+| `/admin/import` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | menu |  |
+| `/admin/information-types/[id]` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | link/other |  |
+| `/admin/information-types` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | menu |  |
+| `/admin/insights` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | menu |  |
+| `/admin/organisation` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | menu |  |
+| `/admin/records/information` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | menu |  |
+| `/admin/records` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | link/other | redirect-only? |
+| `/admin/records/requests` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | menu |  |
+| `/admin/records/tasks` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | menu |  |
+| `/admin/reminders/[id]` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | link/other |  |
+| `/admin/reminders` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | menu |  |
+| `/admin/reports/[key]` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | link/other |  |
+| `/admin/reports` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | menu |  |
+| `/admin/task-holidays` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | menu |  |
+| `/admin/task-types/[id]` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | link/other |  |
+| `/admin/task-types` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | menu |  |
+| `/admin/users` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | menu |  |
+| `/admin/users/[id]` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | link/other |  |
+| `/admin/users/new` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | link/other |  |
+| `/admin/workflows` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | menu |  |
+| `/admin/workflows/[id]/compare` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | link/other |  |
+| `/admin/workflows/[id]/migrate` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | link/other |  |
+| `/admin/workflows/[id]` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | link/other |  |
+| `/admin/workflows/import` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | link/other |  |
+| `/admin/workflows/new` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | link/other |  |
+| `/admin/workload` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | menu |  |
+| `/admin/workload/reassign` | admin | requireArea("admin") IT_ADMIN/SUPER_ADMIN + page rule | link/other |  |
+| `/` | public | none (public) | link/other |  |
+| `/superadmin` | superadmin | requireArea("superadmin") SUPER_ADMIN | menu |  |
+| `/superadmin/ai/data-sources` | superadmin | requireArea("superadmin") SUPER_ADMIN | menu |  |
+| `/superadmin/ai/history` | superadmin | requireArea("superadmin") SUPER_ADMIN | menu |  |
+| `/superadmin/ai` | superadmin | requireArea("superadmin") SUPER_ADMIN | menu |  |
+| `/superadmin/ai/reports` | superadmin | requireArea("superadmin") SUPER_ADMIN | menu |  |
+| `/superadmin/audit` | superadmin | requireArea("superadmin") SUPER_ADMIN | menu |  |
+| `/superadmin/automation` | superadmin | requireArea("superadmin") SUPER_ADMIN | menu |  |
+| `/superadmin/deliveries` | superadmin | requireArea("superadmin") SUPER_ADMIN | menu |  |
+| `/superadmin/demo` | superadmin | requireArea("superadmin") SUPER_ADMIN | menu |  |
+| `/superadmin/import` | superadmin | requireArea("superadmin") SUPER_ADMIN | menu |  |
+| `/superadmin/integrations/google-calendar` | superadmin | requireArea("superadmin") SUPER_ADMIN | link/other |  |
+| `/superadmin/integrations` | superadmin | requireArea("superadmin") SUPER_ADMIN | menu |  |
+| `/superadmin/logins` | superadmin | requireArea("superadmin") SUPER_ADMIN | menu |  |
+| `/superadmin/pages/[key]` | superadmin | requireArea("superadmin") SUPER_ADMIN | link/other |  |
+| `/superadmin/pages` | superadmin | requireArea("superadmin") SUPER_ADMIN | menu |  |
+| `/superadmin/requests` | superadmin | requireArea("superadmin") SUPER_ADMIN | menu |  |
+| `/superadmin/retention` | superadmin | requireArea("superadmin") SUPER_ADMIN | menu |  |
+| `/superadmin/salesforce` | superadmin | requireArea("superadmin") SUPER_ADMIN | menu |  |
+| `/superadmin/settings` | superadmin | requireArea("superadmin") SUPER_ADMIN | menu |  |
+| `/superadmin/templates` | superadmin | requireArea("superadmin") SUPER_ADMIN | menu |  |
+| `/superadmin/templates/[code]` | superadmin | requireArea("superadmin") SUPER_ADMIN | link/other |  |
+| `/try` | public | none (public) | link/other |  |
+| `/users` | users | requireArea("users") + page rule/module | menu |  |
+| `/users/ai/assistant` | users | requireArea("users") + page rule/module | menu |  |
+| `/users/ai/data-sources` | users | requireArea("users") + page rule/module | link/other | redirect-only? |
+| `/users/ai/history` | users | requireArea("users") + page rule/module | link/other | redirect-only? |
+| `/users/ai/insights` | users | requireArea("users") + page rule/module | link/other | redirect-only? |
+| `/users/ai/intelligence` | users | requireArea("users") + page rule/module | link/other | redirect-only? |
+| `/users/ai` | users | requireArea("users") + page rule/module | link/other | redirect-only? |
+| `/users/ai/reports` | users | requireArea("users") + page rule/module | link/other | redirect-only? |
+| `/users/analytics/list` | users | requireArea("users") + page rule/module | link/other |  |
+| `/users/analytics/metrics` | users | requireArea("users") + page rule/module | link/other |  |
+| `/users/analytics` | users | requireArea("users") + page rule/module | menu |  |
+| `/users/approved-by-me` | users | requireArea("users") + page rule/module | menu |  |
+| `/users/approved` | users | requireArea("users") + page rule/module | menu |  |
+| `/users/calendar/items/[id]` | users | requireArea("users") + page rule/module | link/other |  |
+| `/users/calendar` | users | requireArea("users") + page rule/module | menu |  |
+| `/users/collaborating` | users | requireArea("users") + page rule/module | menu |  |
+| `/users/custom` | users | requireArea("users") + page rule/module | menu |  |
+| `/users/delegation` | users | requireArea("users") + page rule/module | menu |  |
+| `/users/help` | users | requireArea("users") + page rule/module | menu |  |
+| `/users/inbox` | users | requireArea("users") + page rule/module | menu |  |
+| `/users/information/[id]` | users | requireArea("users") + page rule/module | link/other |  |
+| `/users/information/new` | users | requireArea("users") + page rule/module | menu |  |
+| `/users/information` | users | requireArea("users") + page rule/module | menu |  |
+| `/users/information/sent` | users | requireArea("users") + page rule/module | menu |  |
+| `/users/menu/[module]` | users | requireArea("users") + page rule/module | link/other |  |
+| `/users/new` | users | requireArea("users") + page rule/module | menu |  |
+| `/users/new/[workflowId]` | users | requireArea("users") + page rule/module | link/other |  |
+| `/users/notifications` | users | requireArea("users") + page rule/module | link/other | redirect-only? |
+| `/users/notifications/settings` | users | requireArea("users") + page rule/module | menu |  |
+| `/users/people/[id]` | users | requireArea("users") + page rule/module | link/other |  |
+| `/users/profile/calendar` | users | requireArea("users") + page rule/module | link/other |  |
+| `/users/profile` | users | requireArea("users") + page rule/module | menu |  |
+| `/users/queue` | users | requireArea("users") + page rule/module | menu |  |
+| `/users/reports/[key]` | users | requireArea("users") + page rule/module | link/other | redirect-only? |
+| `/users/reports` | users | requireArea("users") + page rule/module | link/other | redirect-only? |
+| `/users/requests` | users | requireArea("users") + page rule/module | menu |  |
+| `/users/requests/[id]/amend` | users | requireArea("users") + page rule/module | link/other |  |
+| `/users/requests/[id]` | users | requireArea("users") + page rule/module | link/other |  |
+| `/users/search` | users | requireArea("users") + page rule/module | menu |  |
+| `/users/security` | users | requireArea("users") + page rule/module | menu |  |
+| `/users/tasks/[id]` | users | requireArea("users") + page rule/module | link/other |  |
+| `/users/tasks/assigned` | users | requireArea("users") + page rule/module | menu |  |
+| `/users/tasks/new` | users | requireArea("users") + page rule/module | menu |  |
+| `/users/tasks` | users | requireArea("users") + page rule/module | menu |  |
+| `/users/tasks/team` | users | requireArea("users") + page rule/module | menu |  |
+| `/users/work/deleted` | users | requireArea("users") + page rule/module | link/other |  |
+| `/users/work/inbox` | users | requireArea("users") + page rule/module | link/other | redirect-only? |
+| `/users/work/my-tasks` | users | requireArea("users") + page rule/module | menu |  |
+| `/users/work` | users | requireArea("users") + page rule/module | link/other | redirect-only? |
+| `/users/work/periodic` | users | requireArea("users") + page rule/module | menu |  |
+| `/users/work/projects/[id]` | users | requireArea("users") + page rule/module | link/other |  |
+| `/users/work/projects/[id]/settings` | users | requireArea("users") + page rule/module | link/other |  |
+| `/users/work/projects/new` | users | requireArea("users") + page rule/module | menu |  |
+| `/users/work/projects` | users | requireArea("users") + page rule/module | menu |  |
+| `/users/work/search` | users | requireArea("users") + page rule/module | menu |  |

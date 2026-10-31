@@ -1,0 +1,25 @@
+2026-10-31T22:56:42+05:30
+NOTE: E2E_* users were absent at this moment (the shared test DB had been reset by another suite); used seeded login 'itadmin' for a read-only GET.
+# 1 valid DB session (row inserted by the brief's session.mjs) GET /api/me/notifications
+HTTP 200
+{"items":[{"id":340,"title":"Level 1: RUL-2026-000001 waiting at Finance check","message":"RUL-2026-000001 · Rules 6,50,000 has been waiting at Finance check with Rules approver MVWOAVYS for 30 hours
+# 2 HMAC-valid cookie (same test secret) whose sid has NO user_sessions row
+HTTP 404
+{"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-C94B0D"}}
+# 3 no cookie
+HTTP 404
+{"success":false,"error":{"code":"NOT_FOUND","message":"Not found."}}
+# 4 /api/health
+{"status":"ok","version":"1.38.0","database":"ok","jobRunner":"OK","storage":"ok","ms":4}
+HTTP 200
+
+=== RE-RUN after the lead's e2e global setup recreated E2E_* users (2026-10-31T23:07:51+05:30) ===
+# 1 valid DB session for E2E_REQ GET /api/me/notifications
+HTTP 200
+{"items":[{"id":9,"title":"Request removed","message":"EDL-2026-000001 · Raised by mistake was removed by IT. Reason: Raised by mistake in testing","category":"APPROVAL","createdAt":"2026-10-31T17:36
+# 2 HMAC-valid cookie (test secret) with a sid that has NO user_sessions row (uid 6)
+HTTP 404
+{"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-03ECED"}}
+# 3 /api/health
+{"status":"ok","version":"1.38.0","database":"ok","jobRunner":"NEVER","storage":"ok","ms":5}
+HTTP 200

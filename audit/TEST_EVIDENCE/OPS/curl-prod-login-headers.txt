@@ -1,0 +1,65 @@
+* Host approval.arssteels.net:443 was resolved.
+* IPv6: (none)
+* IPv4: 160.153.0.222
+*   Trying 160.153.0.222:443...
+* schannel: disabled automatic use of client certificate
+* ALPN: curl offers http/1.1
+* ALPN: server accepted http/1.1
+* Established connection to approval.arssteels.net (160.153.0.222 port 443) from 192.168.1.6 port 56657 
+* using HTTP/1.x
+> HEAD /login HTTP/1.1
+> Host: approval.arssteels.net
+> User-Agent: curl/8.19.0
+> Accept: */*
+> 
+* Request completely sent off
+* schannel: remote party requests renegotiation
+* schannel: renegotiating SSL/TLS connection
+* schannel: SSL/TLS connection renegotiated
+< HTTP/1.1 200 OK
+< Date: Sat, 31 Oct 2026 17:22:54 GMT
+< Content-Type: text/html; charset=utf-8
+< Connection: keep-alive
+< Cache-Control: private, no-store, max-age=0
+< content-security-policy: default-src 'self'; script-src 'self' 'nonce-vjgoV6lsEHQjjYHAuuxp2A==' 'strict-dynamic' https://apis.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com; frame-src https://power-bi-dashboard-3b29f.firebaseapp.com https://accounts.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests
+< cross-origin-opener-policy: same-origin-allow-popups
+< link: </_next/static/media/e4af272ccee01ff0-s.p.woff2>; rel=preload; as="font"; crossorigin=""; nonce="vjgoV6lsEHQjjYHAuuxp2A=="; type="font/woff2", </brand/ars-green-steel.svg>; rel=preload; as="image"
+< permissions-policy: camera=(), microphone=(), geolocation=()
+< referrer-policy: strict-origin-when-cross-origin
+< ss-product-id: paas-nodejs-v1
+< strict-transport-security: max-age=31536000; includeSubDomains
+< vary: Origin
+< vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch, Accept-Encoding
+< x-content-type-options: nosniff
+< x-frame-options: DENY
+< x-request-id: 410ff4513d92da8c
+< x-request-id: a534582dfa289040-MAA
+< cf-cache-status: DYNAMIC
+< set-cookie: __cf_bm=<redacted>; HttpOnly; SameSite=None; Secure; Path=/; Domain=approval.arssteels.net; Expires=Sat, 31 Oct 2026 17:52:54 GMT
+< Server: cloudflare
+< CF-RAY: a534582dfa289040-MAA
+< 
+* Connection #0 to host approval.arssteels.net:443 left intact
+HTTP/1.1 200 OK
+Date: Sat, 31 Oct 2026 17:22:54 GMT
+Content-Type: text/html; charset=utf-8
+Connection: keep-alive
+Cache-Control: private, no-store, max-age=0
+content-security-policy: default-src 'self'; script-src 'self' 'nonce-vjgoV6lsEHQjjYHAuuxp2A==' 'strict-dynamic' https://apis.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com; frame-src https://power-bi-dashboard-3b29f.firebaseapp.com https://accounts.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests
+cross-origin-opener-policy: same-origin-allow-popups
+link: </_next/static/media/e4af272ccee01ff0-s.p.woff2>; rel=preload; as="font"; crossorigin=""; nonce="vjgoV6lsEHQjjYHAuuxp2A=="; type="font/woff2", </brand/ars-green-steel.svg>; rel=preload; as="image"
+permissions-policy: camera=(), microphone=(), geolocation=()
+referrer-policy: strict-origin-when-cross-origin
+ss-product-id: paas-nodejs-v1
+strict-transport-security: max-age=31536000; includeSubDomains
+vary: Origin
+vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch, Accept-Encoding
+x-content-type-options: nosniff
+x-frame-options: DENY
+x-request-id: 410ff4513d92da8c
+x-request-id: a534582dfa289040-MAA
+cf-cache-status: DYNAMIC
+set-cookie: __cf_bm=<redacted>; HttpOnly; SameSite=None; Secure; Path=/; Domain=approval.arssteels.net; Expires=Sat, 31 Oct 2026 17:52:54 GMT
+Server: cloudflare
+CF-RAY: a534582dfa289040-MAA
+

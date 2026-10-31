@@ -1,0 +1,666 @@
+tests/e2e/ai-modules.spec.ts:25 test("an admin sets module access on the user page; it persists, shows on the list and filters it
+tests/e2e/ai-modules.spec.ts:46 test("an admin can
+tests/e2e/ai-modules.spec.ts:55 test("without the Task module: no Tasks in the sidebar, and typed task addresses are a plain 404
+tests/e2e/ai-modules.spec.ts:71 test("AI alone doesn
+tests/e2e/ai-modules.spec.ts:87 test("a Super Admin
+tests/e2e/ai-modules.spec.ts:98 test("with the AI module: the AI Assistant group lists chats with a search; the old AI pages open the assistant (D-180)
+tests/e2e/ai-modules.spec.ts:116 test("without the AI module: no AI group, every AI address is a 404, and the AI pages stay Super Admin only
+tests/e2e/ai-modules.spec.ts:126 test("the Super Admin
+tests/e2e/approval-flow.spec.ts:16 test("IT builds, tests and publishes a two-level workflow
+tests/e2e/approval-flow.spec.ts:41 test("a requester raises it; the manager approves
+tests/e2e/approval-flow.spec.ts:60 test("the HOD asks for changes; the requester resubmits; the HOD approves
+tests/e2e/approval-flow.spec.ts:82 test("someone not involved can
+tests/e2e/cloudflare-safe.spec.ts:19 test("no page shows an email address as plain text that Cloudflare would rewrite
+tests/e2e/guard.spec.ts:5 test("signed-out visitors are sent to sign-in
+tests/e2e/guard.spec.ts:11 test("a plain user gets a 404 for /admin and /superadmin, and lands on their own space
+tests/e2e/guard.spec.ts:19 test("an IT Admin reaches /admin but not /superadmin
+tests/e2e/guard.spec.ts:25 test("every page carries the security headers
+tests/e2e/job-runner.spec.ts:5 test("Message deliveries shows when the job runner last ran, and warns when it is stale
+tests/e2e/picbot.spec.ts:63 test("no AI module: no launcher, and every Pico Bot API is a 404
+tests/e2e/picbot.spec.ts:72 test("the launcher shows the Pico Bot logo; the panel answers with evidence, minimises, closes with Escape and keeps history
+tests/e2e/picbot.spec.ts:109 test("on a phone the panel fits the screen and the page never scrolls sideways
+tests/e2e/picbot.spec.ts:122 test("one person can
+tests/e2e/picbot.spec.ts:136 test("10 signed-in clients ask at the same time over HTTP: every answer reaches its own asker
+tests/e2e/picbot.spec.ts:173 test("the Super Admin sees the Salesforce connection with its callback URL; Connect without an app explains what
+tests/e2e/picbot.spec.ts:186 test("an admin sets a person
+tests/e2e/picbot.spec.ts:199 test("Bug 1: after an answer, New chat opens an empty chat and stays there (sidebar too)
+tests/e2e/profile.spec.ts:7 test("Profile groups the personal pages as tabs; it lives in the account menu, not the sidebar
+tests/e2e/session10.spec.ts:7 test("IT downloads the template, checks a file with a problem, then imports a fixed one
+tests/e2e/session10.spec.ts:38 test("the Super Admin has the same import screen; a plain user can
+tests/e2e/session11.spec.ts:13 test("only approver designations can be picked: the manager picker offers the manager, not the requester
+tests/e2e/session11.spec.ts:33 test("the Super Admin deletes a request with a reason; it leaves the approver
+tests/e2e/session11.spec.ts:74 test("the four dashboards open with filters and download as CSV
+tests/e2e/session12.spec.ts:24 test("IT builds a form with every field type; the dropdown creator and keys work key by key
+tests/e2e/session12.spec.ts:104 test("test mode follows the date and department conditions
+tests/e2e/session12.spec.ts:126 test("a requester fills every field type; values are checked, stored and shown back
+tests/e2e/session6.spec.ts:18 test("the Super Admin loads the demo staff and approval types
+tests/e2e/session6.spec.ts:32 test("the template creator drafts a message; submitting needs the CEOITBox key
+tests/e2e/session6.spec.ts:48 test("
+tests/e2e/session6.spec.ts:79 test("a wrong file type is refused, and an outsider can
+tests/e2e/session7.spec.ts:14 test("IT sets a DoA matrix when creating an approval type, and publishes it
+tests/e2e/session7.spec.ts:35 test("a ₹1,50,000 request needs only the manager; the map says why HOD is skipped
+tests/e2e/session7.spec.ts:47 test("QA fixes on screen: a negative amount is refused; a repeat title asks first
+tests/e2e/session9.spec.ts:6 test("the account menu shows the space and switches to another
+tests/e2e/session9.spec.ts:21 test("on a phone the sidebar opens as a drawer
+tests/e2e/user-commands.spec.ts:7 test("IT can sign a person out everywhere and deactivate them, after confirming
+tests/e2e/v1100-web.spec.ts:66 test("WEB-01/16/20: no page scrolls sideways at 360, 390, 768, 1366 and 1920 px
+tests/e2e/v1100-web.spec.ts:94 test("WEB-02/15: every sidebar and profile link answers for each space
+tests/e2e/v1100-web.spec.ts:108 test("WEB-08: an unknown address shows the 404 page with a way back
+tests/e2e/v1100-web.spec.ts:117 test("WEB-04/05: favicon files answer; each page has its own title
+tests/e2e/v1100-web.spec.ts:132 test("WEB-17: the logo goes to the space
+tests/e2e/v1100-web.spec.ts:139 test("WEB-03: the phone menu takes focus, keeps Tab inside, closes on Escape and after choosing a page
+tests/e2e/v1100-web.spec.ts:165 test("SEC-07/18: no CORS grant to other sites; signed-in answers aren
+tests/e2e/v1100-web.spec.ts:178 test("SEC-09: someone else
+tests/e2e/v1110-calendar.spec.ts:26 test("Super Admin sets up Google Calendar; the secret is stored but never shown again
+tests/e2e/v1110-calendar.spec.ts:44 test("nobody else reaches the Super Admin integration page
+tests/e2e/v1110-calendar.spec.ts:49 test("a person
+tests/e2e/v1110-calendar.spec.ts:59 test("connect and callback send people back with a relative address, never the server
+tests/e2e/v1110-calendar.spec.ts:68 test("calendar: add a personal entry, see it by day, week and month, edit and delete it
+tests/e2e/v1120-analytics.spec.ts:25 test("IT opens every dashboard from the one Analytics page; the period carries over
+tests/e2e/v1120-analytics.spec.ts:49 test("D-206: a plain user sees only the dashboards they need; others open the overview
+tests/e2e/v1120-analytics.spec.ts:60 test("employees: search, sort and a CSV with the same scope and period
+tests/e2e/v1120-analytics.spec.ts:79 test("a requester gets no people or department dashboards, and other scopes are refused
+tests/e2e/v1120-analytics.spec.ts:95 test("choosing whose numbers from the dropdown keeps the dashboard
+tests/e2e/v1120-analytics.spec.ts:104 test("older approval links still open Approval analytics
+tests/e2e/v1122-public.spec.ts:5 test("home, privacy policy and terms are public, link to each other, and describe the Google data use
+tests/e2e/v1122-public.spec.ts:35 test("a signed-in person opening the home page goes to their space
+tests/e2e/v1125-stale-page.spec.ts:9 test("a page opened before a publish says to reload, not 
+tests/e2e/v1125-stale-page.spec.ts:30 test("the session check notices a new build and shows the banner
+tests/e2e/v1130-invite.spec.ts:26 test("Add user emails an invitation; Re-invite is on the user page, not the users list
+tests/e2e/v1130-invite.spec.ts:45 test("a password user with a password gets Reset password on their page
+tests/e2e/v1130-invite.spec.ts:67 test("D-208: a person can be set to sign in with Google or password (Both)
+tests/e2e/v1140-tour.spec.ts:22 test("opens by itself once on Overview; Next walks every step on its page; Finish saves it
+tests/e2e/v1140-tour.spec.ts:57 test("Take the tour from Help and the account menu; keys move it; Esc skips and saves
+tests/e2e/v1140-tour.spec.ts:79 test("on a phone the card sits at the bottom and the page never scrolls sideways
+tests/e2e/v119-ai-rules-try-as.spec.ts:9 test("AI Rules: a formatted rule for one chat is saved as Markdown
+tests/e2e/v119-ai-rules-try-as.spec.ts:28 test("Try as: a one-time link that never replaces a signed-in session
+tests/e2e/v121-records.spec.ts:5 test("IT sees every approval request, task and information item, filters them and downloads a CSV
+tests/e2e/v121-records.spec.ts:29 test("a plain user gets a 404 for the records pages and the download
+tests/e2e/v122-ai-analytics.spec.ts:5 test("IT opens AI Analytics, sees the headline figures and changes the period
+tests/e2e/v122-ai-analytics.spec.ts:17 test("a plain user gets a 404 for AI Analytics
+tests/e2e/v127-classic-rules.spec.ts:22 test("D-210: switch to Classic; Gateway, module menu, page tabs, letters and Esc; switch back
+tests/e2e/v127-classic-rules.spec.ts:94 test("D-212: the keyboard works for a Super Admin too (closed confirmations on the page don
+tests/e2e/v127-classic-rules.spec.ts:128 test("D-209: IT builds, tests, saves, turns off and deletes an escalation rule
+tests/e2e/v128-classic-nav.spec.ts:48 test(`${role}: every entry, module page and tab has a way in and a way back
+tests/e2e/v128-classic-nav.spec.ts:101 test("a request opened from a list: its module in the breadcrumb, Esc back to the module
+tests/e2e/v128-classic-nav.spec.ts:115 test("the Classic loader shows while a page is on its way, then goes
+tests/e2e/v128-classic-nav.spec.ts:136 test("Quit signs out from the Central Management System
+tests/e2e/v128-classic-nav.spec.ts:144 test("signing in shows the ARS loader until the main page is ready
+tests/e2e/v130-work.spec.ts:20 test("a project: create it, add tasks inline, see them in list, board and timeline
+tests/e2e/v130-work.spec.ts:51 test("the task page: a subtask, a comment that mentions someone, a like
+tests/e2e/v130-work.spec.ts:78 test("My Tasks, Task home and Task search show the work
+tests/e2e/v130-work.spec.ts:101 test("a due date on a holiday: the warning offers to keep it or move it
+tests/e2e/v130-work.spec.ts:135 test("Admin → Task holidays: rules are saved; the sidebar lists the new task pages
+tests/e2e/v131-work-more.spec.ts:19 test("a project field shows as a List column and takes a value; two tasks change at once
+tests/e2e/v131-work-more.spec.ts:56 test("a repeating task makes its next one when completed
+tests/e2e/v131-work-more.spec.ts:83 test("save as template, then a new project from it
+tests/e2e/v131-work-more.spec.ts:104 test("the task inbox: archive a notice; the morning summary switch
+tests/e2e/v131-work-more.spec.ts:128 test("Admin → Task settings: a department holiday, the summary and repeating tasks
+tests/e2e/v132-asana-skeleton.spec.ts:19 test("the sidebar
+tests/e2e/v132-asana-skeleton.spec.ts:60 test("Mark complete in the pane; periodic tasks list; search by periodic or ad hoc
+tests/e2e/v132-asana-skeleton.spec.ts:88 test("ticks in the older task table and on the task page
+tests/e2e/v133-asana-compact.spec.ts:18 test("New project step by step: details with a Board view and own sections
+tests/e2e/v133-asana-compact.spec.ts:37 test("the table: Filters with quick filters, Groups by assignee, a saved tab
+tests/e2e/v133-asana-compact.spec.ts:69 test("Share a project and a task
+tests/e2e/v133-asana-compact.spec.ts:94 test("Save as template from the project
+tests/e2e/v133-asana-compact.spec.ts:108 test("D-222: an ad hoc task for two people; Project permissions
+tests/e2e/v134-classic-tally.spec.ts:9 test("Classic entry forms: Label : value rows, Enter moves on, Ctrl+A accepts; Compact unchanged
+tests/e2e/v135-profile-search.spec.ts:13 test("the sidebar folds into a rail and opens again; the choice is kept
+tests/e2e/v135-profile-search.spec.ts:34 test("profile: photo upload and removal, About me, every master detail; a colleague
+tests/e2e/v135-profile-search.spec.ts:65 test("notification control centre: one kind off, Do not disturb, kept after reload
+tests/e2e/v135-profile-search.spec.ts:100 test("universal search: chips, people, saved searches and Filters
+tests/e2e/v136-ui-states.spec.ts:10 test("offline: the banner shows, and 
+tests/e2e/v136-ui-states.spec.ts:20 test("slow network: a save still running after 8 seconds says so, then finishes
+tests/e2e/v136-ui-states.spec.ts:37 test("rate limited: quick search says to wait (not a generic error)
+tests/e2e/v136-ui-states.spec.ts:46 test("no results: the words searched, Clear search and Reset filters; an empty list says something else
+tests/e2e/v136-ui-states.spec.ts:60 test("unsaved changes: leaving a changed form asks first; Stay keeps it, Leave goes
+tests/e2e/v136-ui-states.spec.ts:76 test("maintenance: IT
+tests/e2e/v137-ux-laws.spec.ts:18 test("a custom request starts with the reporting manager as approver; the stepper shows where it is
+tests/e2e/v137-ux-laws.spec.ts:45 test("Postel: the number typed without dashes or leading zeros still finds it
+tests/e2e/v137-ux-laws.spec.ts:53 test("Reject is apart and asks first; Cancel keeps it waiting; after deciding, what
+tests/e2e/v137-ux-laws.spec.ts:72 test("Tesler: the requester raises the custom request again, approvers and details copied
+tests/e2e/v138-form-designer.spec.ts:6 test("add from the library, reorder, duplicate, remove only after asking, undo
+tests/e2e/v139-draft-task.spec.ts:35 test("the panel is taller than wide and steps up with the screen
+tests/e2e/v139-draft-task.spec.ts:57 test("formatting, / menu, emoji, @mention, a file and a collaborator reach the task
+tests/e2e/v139-draft-task.spec.ts:130 test("the + menu and the file limits
+tests/e2e/v1391-workflow-designer.spec.ts:7 test("map, problems by level, duplicate, remove with Undo, fold and open from the map
+tests/e2e/v1391-workflow-designer.spec.ts:57 test("autosave into the working draft; publishing stays separate
+tests/e2e/v1392-settings-console.spec.ts:7 test("search across categories, unsaved marks, and the AI page
+tests/e2e/v140-api.spec.ts:25 test("health check: 200 with the version, database and job runner state
+tests/e2e/v140-api.spec.ts:34 test("WhatsApp receipt webhook: refuses without the secret, records delivered and read with it
+tests/e2e/v140-api.spec.ts:70 test("a state-changing API call from another site is refused (P-07)
+tests/e2e/v140-api.spec.ts:79 test("a 
+tests/e2e/v140-api.spec.ts:98 test("installable: the web app manifest and icons load without signing in (P8-02)
+tests/e2e/v140-ui.spec.ts:16 test("the builder offers step kinds, all/any rules and choices inside choices
+tests/e2e/v140-ui.spec.ts:57 test("after approval the requester gets the work task and marks it done
+tests/e2e/v140-ui.spec.ts:88 test("IT moves stuck steps on: gives one to a person, skips another (D-098)
+tests/e2e/v140-ui.spec.ts:129 test("IT turns a custom approval into a reusable approval type (P5-04)
+tests/e2e/v150.spec.ts:31 test("#3 a draft is saved as you type, restored, and discarded
+tests/e2e/v150.spec.ts:52 test("#3 submitting removes the draft
+tests/e2e/v150.spec.ts:66 test("#4 search finds what you can see, not what you can
+tests/e2e/v150.spec.ts:75 test("#6 notification choices are saved; the mandatory ones are locked on
+tests/e2e/v150.spec.ts:88 test("#7 the manager approves two at once after reviewing them
+tests/e2e/v150.spec.ts:100 test("#5 on a phone the HOD finds it as a card and approves it
+tests/e2e/v150.spec.ts:117 test("#9 #10 a mention and the PDF summary, both limited to who can see it
+tests/e2e/v150.spec.ts:135 test("#13 help is searchable and copies details for IT
+tests/e2e/v150.spec.ts:143 test("#12 IT sees the workload
+tests/e2e/v160-reliability.spec.ts:13 test("IT sees Needs attention with reasons and filters; requesters get a 404
+tests/e2e/v160-reliability.spec.ts:31 test("the Super Admin runs one automation now and sees it in the history
+tests/e2e/v160-smart-forms.spec.ts:20 test("IT builds a smart form: a rule, line items and a calculated amount
+tests/e2e/v160-smart-forms.spec.ts:67 test("the requester sees the rule, the line totals and the worked-out amount; the server keeps its own figures
+tests/e2e/v160-smart-readiness.spec.ts:29 test("IT switches on duplicate and budget checks, and sets the department budget
+tests/e2e/v160-smart-readiness.spec.ts:47 test("the requester checks first, sees a possible duplicate and the budget, and gives a reason to submit
+tests/e2e/v160-smart-zamend.spec.ts:44 test("IT allows amending Freight; the requester raises a request that gets approved
+tests/e2e/v160-smart-zamend.spec.ts:73 test("the requester amends Freight with a reason; locked fields can
+tests/e2e/v160-smart-zversions.spec.ts:15 test("IT publishes version 2, compares, moves open requests, and restores version 1 as a draft
+tests/e2e/v160-ui.spec.ts:39 test("UI-02 the theme is chosen in Profile, saved, and painted before the page shows
+tests/e2e/v160-ui.spec.ts:54 test("RA-03 axe finds no serious problems on the main pages, light and dark
+tests/e2e/v160-ui.spec.ts:74 test("FB-07 a missing request shows the in-space page, with search and the menu
+tests/e2e/v160-ui.spec.ts:83 test("RA-03 the first Tab reaches 
+tests/e2e/v160-ui.spec.ts:93 test("RA-01 phones get the bottom bar with the real waiting count
+tests/e2e/v160-ui.spec.ts:108 test("UI-02 back to System: no data-theme, the device decides
+tests/e2e/v160-workspace.spec.ts:15 test("WS-02 J moves to a request; A opens it and asks first, nothing is decided
+tests/e2e/v160-workspace.spec.ts:41 test("WS-03 Ctrl+K finds a request by number and pages by name
+tests/e2e/v160-workspace.spec.ts:71 test("WS-01 queue filters show as chips that can be removed
+tests/e2e/v160-workspace.spec.ts:80 test("FB-03 mark all as read is instant and can be undone
+tests/e2e/v160-workspace.spec.ts:92 test("FB-03 deleting a saved view can be undone
+tests/e2e/v160-workspace.spec.ts:110 test("RD-01/RD-03 the history is grouped by day, and a resubmit shows what changed
+tests/e2e/v160-workspace.spec.ts:123 test("RD-02 an image previews inside the page; other files only download
+tests/e2e/v160-zanalytics.spec.ts:11 test("IT sees the organisation; filters and periods apply; every chart has a table
+tests/e2e/v160-zanalytics.spec.ts:31 test("a requester sees only their own numbers; the organisation scope is refused
+tests/e2e/v160-zreports.spec.ts:11 test("IT opens a report, downloads Excel, CSV and PDF, saves the view, schedules it and adds an alert
+tests/e2e/v160-zreports.spec.ts:58 test("a requester can
+tests/e2e/v161-attachments-collaborators.spec.ts:24 test("IT adds an Attachments field with a file limit
+tests/e2e/v161-attachments-collaborators.spec.ts:42 test("the requester must attach a file to the field, and adds a collaborator
+tests/e2e/v161-attachments-collaborators.spec.ts:70 test("the collaborator finds it under Shared with me, opens it, and can stop following
+tests/e2e/v170-abc.spec.ts:14 test("A4 the form builder previews the form, rules working, nothing sent
+tests/e2e/v170-abc.spec.ts:29 test("A2 the needed-by calendar opens and moves between months
+tests/e2e/v170-abc.spec.ts:40 test("A3 IT opens bulk reassignment from Workload
+tests/e2e/v170-abc.spec.ts:49 test("B analytics: new KPIs, comparison, more filters, charts and drill-down
+tests/e2e/v170-abc.spec.ts:73 test("B08 alerts offer severity, channels and quiet hours
+tests/e2e/v170-abc.spec.ts:81 test("C02 a large export is made in the background and listed for download
+tests/e2e/v171-nav.spec.ts:16 test("Analytics from the Admin space keeps the Admin space; Reports are there too
+tests/e2e/v171-nav.spec.ts:37 test("the sidebar has Home, and no Help, Profile or Reports; the account menu has them
+tests/e2e/v171-nav.spec.ts:50 test("Reports are refused to a requester everywhere
+tests/e2e/v172-lists.spec.ts:35 test("Collaborating is its own screen in the sidebar, with quick tabs and the full filter set
+tests/e2e/v172-lists.spec.ts:74 test("My requests has the same filters
+tests/e2e/v172-lists.spec.ts:103 test("Waiting for me has more filters, and every one becomes a removable chip
+tests/e2e/v180.spec.ts:31 test("My approved requests and Approved by me are in the sidebar, with their filters
+tests/e2e/v180.spec.ts:50 test("IT sets up custom approvals; the custom approval page follows it
+tests/e2e/v180.spec.ts:81 test("D-206/D-235: choice and skip appear on New request only when IT switches them on; DoA never
+tests/e2e/v180.spec.ts:108 test("the Super Admin hides a page and makes another view-only
+tests/e2e/v180.spec.ts:143 test("inactivity signs everyone out (the Super Admin too, v1.12.1) and the signed-out page says why
+tests/e2e/v190.spec.ts:28 test("IT sets up a task type: form field, options, preview, publish
+tests/e2e/v190.spec.ts:58 test("a task is created, started and completed with its note; the assignee hears through the bell
+tests/e2e/v190.spec.ts:101 test("information is published, read (not acknowledged) and acknowledged
+tests/e2e/v190.spec.ts:137 test("the bell shows at most 10, newest first; Read more opens the matching view without marking read
+tests/e2e/v190.spec.ts:158 test("the sidebar stays put and scrolls only when its entries don
+tests/e2e/v190.spec.ts:181 test("the user sidebar: Home, Inbox, collapsible My Approvals, Tasks & projects, Information, then Calendar, Analytics
+tests/e2e/zz-site-audit.spec.ts:159 test("site audit: every reachable page, link and download for each role, on desktop and a touch phone
+tests/integration/ai-analytics.int.test.ts:29 describe("AI Analytics queries (D-193)
+tests/integration/ai-analytics.int.test.ts:30 it("count questions, answers, failures, people, tokens and time for the period
+tests/integration/ai-analytics.int.test.ts:34 it("break down by day, chat, provider, person, department, hour, lookup, failure and the daily limit
+tests/integration/ai-assistant.int.test.ts:81 describe("chat modes are enforced on the server
+tests/integration/ai-assistant.int.test.ts:82 it("an Approval chat gets Approval tools only; a Salesforce or task tool the model asks for is refused
+tests/integration/ai-assistant.int.test.ts:100 it("modes the person may not use are refused (general off; a mode they don
+tests/integration/ai-assistant.int.test.ts:107 it("a General chat (switched on) gets no tools and is told it has no data
+tests/integration/ai-assistant.int.test.ts:121 it("revoking a mode applies to an open conversation at once; the emergency stop refuses everything
+tests/integration/ai-assistant.int.test.ts:132 it("evidence is saved and an invented figure is flagged
+tests/integration/ai-assistant.int.test.ts:145 describe("conversations: isolation and idempotency
+tests/integration/ai-assistant.int.test.ts:146 it("a conversation is its owner
+tests/integration/ai-assistant.int.test.ts:153 it("the same request key twice is one question, one charge; a failed one is retried without storing it twice
+tests/integration/ai-assistant.int.test.ts:174 it("the per-minute and daily limits stop bursts
+tests/integration/ai-assistant.int.test.ts:198 describe("Salesforce: OAuth, tokens and live queries
+tests/integration/ai-assistant.int.test.ts:204 it("the callback needs the right state from the same Super Admin; tokens are stored encrypted
+tests/integration/ai-assistant.int.test.ts:237 it("an expired session is refreshed once; a refused refresh asks for reconnecting
+tests/integration/ai-assistant.int.test.ts:253 it("a Salesforce chat reads only allowed fields, scoped to the person
+tests/integration/ai-assistant.int.test.ts:277 it("with 
+tests/integration/ai-assistant.int.test.ts:303 describe("proposals
+tests/integration/ai-assistant.int.test.ts:311 it("go to the asker
+tests/integration/ai-assistant.int.test.ts:324 it("expire after their time, by the job or at decision
+tests/integration/ai-assistant.int.test.ts:332 describe("Salesforce hourly copy (optional, through the same connection)
+tests/integration/ai-assistant.int.test.ts:333 it("copies every page, never duplicates, and a failed run keeps the last good checkpoint
+tests/integration/ai-concurrency.int.test.ts:106 describe(`${CLIENTS} people at once (mocked provider)
+tests/integration/ai-concurrency.int.test.ts:107 it("every question is answered, to its own asker, with consistent writes (global limit 10)
+tests/integration/ai-concurrency.int.test.ts:133 it("with a global limit of 4, the rest wait their turn (bounded) and still all succeed
+tests/integration/ai-concurrency.int.test.ts:143 it("one person
+tests/integration/ai-concurrency.int.test.ts:152 it("a person firing 3 at once gets 2 answered and 1 refused (per-person limit 2)
+tests/integration/ai-modules.int.test.ts:55 describe("module access in the database
+tests/integration/ai-modules.int.test.ts:56 it("anyone created without a choice has Approval, Task and Information, never AI (the safe default for every path)
+tests/integration/ai-modules.int.test.ts:66 it("a chosen set is saved at creation, including AI alone, and audited
+tests/integration/ai-modules.int.test.ts:76 it("an edit saves modules with before and after in the audit; they persist
+tests/integration/ai-modules.int.test.ts:83 it("editing other details never changes modules (the form didn
+tests/integration/ai-modules.int.test.ts:90 it("refused: changing your own; another IT Admin
+tests/integration/ai-modules.int.test.ts:101 it("the users list shows modules and filters by them
+tests/integration/ai-modules.int.test.ts:108 it("a page of a module the person lacks is refused, actions included; the Super Admin is exempt
+tests/integration/ai-task-draft.int.test.ts:39 describe("Pico Bot writes a task description (D-238)
+tests/integration/ai-task-draft.int.test.ts:40 it("sends only the name and what was typed, without tools, and returns the text; it is audited
+tests/integration/ai-task-draft.int.test.ts:52 it("is refused without Pico Bot, when switched off, and with nothing to go on
+tests/integration/ai-task-draft.int.test.ts:62 it("a provider failure comes back in words, never a key
+tests/integration/amendments.int.test.ts:83 describe("amending an approved request (FN5)
+tests/integration/amendments.int.test.ts:84 it("changes only allowed fields, goes through approval again, and keeps the original intact
+tests/integration/amendments.int.test.ts:114 it("a rejected or withdrawn amendment changes nothing; the next one amends the values in force
+tests/integration/amendments.int.test.ts:130 it("only the requester, only approved requests, only types that allow it; two at once make one
+tests/integration/amendments.int.test.ts:144 it("isn
+tests/integration/analytics.int.test.ts:71 describe("role scopes
+tests/integration/analytics.int.test.ts:72 it("everyone has My requests; only IT has the organisation; HODs have their department
+tests/integration/analytics.int.test.ts:80 it("a requester
+tests/integration/analytics.int.test.ts:90 describe("pending, overdue and SLA
+tests/integration/analytics.int.test.ts:91 it("counts requests and tasks apart; overdue only past a due time; my approvals are mine
+tests/integration/analytics.int.test.ts:108 it("decisions count by decision date; a request decided by both is approved; trend and aging add up
+tests/integration/approvals.int.test.ts:89 describe("request numbers
+tests/integration/approvals.int.test.ts:90 it("are PREFIX-YEAR-000001 and unique under concurrency
+tests/integration/approvals.int.test.ts:98 describe("hybrid multi-level request, persisted
+tests/integration/approvals.int.test.ts:99 it("runs manager → parallel HOD + any-one Finance → MD for ₹12.5L, with queues and timeline
+tests/integration/approvals.int.test.ts:137 it("small amounts skip the MD level
+tests/integration/approvals.int.test.ts:148 describe("safety on the server
+tests/integration/approvals.int.test.ts:149 it("nobody can decide someone else
+tests/integration/approvals.int.test.ts:173 it("two approvers of an any-one step acting at the same moment: one wins, the other is told clearly
+tests/integration/approvals.int.test.ts:208 it("the timeline is append-only
+tests/integration/approvals.int.test.ts:213 it("an invalid workflow can
+tests/integration/approvals.int.test.ts:232 it("only the IT team creates predefined workflows
+tests/integration/approvals.int.test.ts:238 describe("changes, hold and versions
+tests/integration/approvals.int.test.ts:253 it("changes required → requester resubmits the same request with new data → approved
+tests/integration/approvals.int.test.ts:277 it("hold pauses; the approver resumes
+tests/integration/approvals.int.test.ts:289 it("a running request stays on its version when a new one is published
+tests/integration/approvals.int.test.ts:326 describe("builder-made workflows and forms (S3)
+tests/integration/approvals.int.test.ts:327 it("a workflow built from stages runs end to end, and the form is enforced
+tests/integration/approvals.int.test.ts:370 it("a builder step naming an unknown form field can
+tests/integration/backup.int.test.ts:32 describe("SQL literals
+tests/integration/backup.int.test.ts:33 it("escape quotes, backslashes, new lines and binary; JSON as text; dates in UTC
+tests/integration/backup.int.test.ts:43 describe("backup and restore drill
+tests/integration/backup.int.test.ts:44 it("restores every table exactly, with the append-only triggers working
+tests/integration/bulk.int.test.ts:41 describe("bulk approve
+tests/integration/bulk.int.test.ts:42 it("approves the eligible ones, skips the rest with a reason, and never twice
+tests/integration/bulk.int.test.ts:77 it("a work task is never bulk-approved, and someone else
+tests/integration/collaborators.int.test.ts:72 describe("collaborators
+tests/integration/collaborators.int.test.ts:73 it("the requester adds people; they can then see the request (page and search) and are told
+tests/integration/collaborators.int.test.ts:88 it("only the requester or IT adds; inactive people are skipped; at most 20
+tests/integration/collaborators.int.test.ts:101 it("removal: the requester removes, a collaborator can leave, others can
+tests/integration/collaborators.int.test.ts:113 it("collaborators are told when it is approved; they never get a task
+tests/integration/collaborators.int.test.ts:124 describe("attachment fields
+tests/integration/collaborators.int.test.ts:125 it("a required attachment field needs a file; the server counts the files, not the browser
+tests/integration/collaborators.int.test.ts:142 it("files are stored against their field and count again on resubmit
+tests/integration/delegations.int.test.ts:28 describe("out of office start and end in the audit log
+tests/integration/delegations.int.test.ts:29 it("logs a start once, an end once, and nothing for one still to come
+tests/integration/drafts.int.test.ts:15 describe("request drafts
+tests/integration/drafts.int.test.ts:16 it("save, recover, and only the owner sees them
+tests/integration/drafts.int.test.ts:28 it("a second tab can
+tests/integration/drafts.int.test.ts:38 it("expired drafts aren
+tests/integration/drafts.int.test.ts:48 it("saving a draft creates no request and no notification
+tests/integration/engine-v160.int.test.ts:73 describe("recall (EN-04)
+tests/integration/engine-v160.int.test.ts:74 it("only the requester; approvers are told; resubmitting restarts the open step; audited
+tests/integration/engine-v160.int.test.ts:88 it("a recall and the final approval at the same moment: exactly one wins, never both
+tests/integration/engine-v160.int.test.ts:98 describe("ask for information (EN-05)
+tests/integration/engine-v160.int.test.ts:99 it("holds it, tells the requester, and the answer resumes it and tells the approver
+tests/integration/engine-v160.int.test.ts:116 describe("passing an approval on (EN-07)
+tests/integration/engine-v160.int.test.ts:117 it("to an eligible colleague only; never back; audited; the new person can decide
+tests/integration/engine-v160.int.test.ts:134 describe("advice (EN-06)
+tests/integration/engine-v160.int.test.ts:135 it("the approver asks; the consultee can read it and answer once, but never decide
+tests/integration/engine-v160.int.test.ts:154 describe("links and follow-ups (EN-08)
+tests/integration/engine-v160.int.test.ts:155 it("both sides must be visible to the linker; a link gives nobody access
+tests/integration/engine-v160.int.test.ts:166 it("a follow-up links only to an approved request the person can see
+tests/integration/governance.int.test.ts:67 describe("legal holds (FN10)
+tests/integration/governance.int.test.ts:68 it("only the Super Admin places a hold, with a reference and a reason
+tests/integration/governance.int.test.ts:75 it("a held request can
+tests/integration/governance.int.test.ts:91 it("a hold on a person or an approval type covers all their requests, and overlapping holds stay until both are released
+tests/integration/governance.int.test.ts:106 describe("retention dry run (FN10)
+tests/integration/governance.int.test.ts:107 it("not set means kept for ever; with a duration it counts eligible and held records, changing nothing
+tests/integration/inbox.int.test.ts:27 describe("the one Inbox (D-237)
+tests/integration/inbox.int.test.ts:28 it("bookmarks and archives any of one
+tests/integration/inbox.int.test.ts:36 it("Activity hides archived notices; Bookmarks and Archive list them, with their flags
+tests/integration/inbox.int.test.ts:48 it("unread counts leave archived notices out; Only unread filters
+tests/integration/jobs.int.test.ts:23 describe("rate-limit window in MySQL
+tests/integration/jobs.int.test.ts:24 it("counts hits in the window and prunes old ones
+tests/integration/jobs.int.test.ts:34 describe("delivery lease
+tests/integration/jobs.int.test.ts:35 it("leases only due rows, and never the same row twice at once
+tests/integration/jobs.int.test.ts:45 it("marks sent / reschedules / gives up, and Retry now makes it due
+tests/integration/jobs.int.test.ts:64 describe("job runner heartbeat
+tests/integration/jobs.int.test.ts:65 it("keeps one row and counts each run, so Super Admin sees when the cron last ran
+tests/integration/jobs.int.test.ts:76 describe("stored message bodies (audit S-01)
+tests/integration/jobs.int.test.ts:77 it("are encrypted, still retried as written, and wiped once sent or after 7 days
+tests/integration/mentions.int.test.ts:60 describe("@mentions
+tests/integration/mentions.int.test.ts:61 it("tells a mentioned participant once, and never someone who can
+tests/integration/migrate.int.test.ts:41 describe("migrations resume after a failure (R-10)
+tests/integration/migrate.int.test.ts:42 it("stops at the failing statement, then carries on from it
+tests/integration/migrate.int.test.ts:74 describe("optional statements skipped when the user isn
+tests/integration/migrate.int.test.ts:75 it("skips the optional trigger, applies the rest; a required trigger still fails
+tests/integration/migration.int.test.ts:54 describe("migration assistant (FN7)
+tests/integration/migration.int.test.ts:55 it("dry run changes nothing; compatible requests move, keep their decisions and continue on the new version
+tests/integration/migration.int.test.ts:93 it("a removed step needs a mapping; with it the step is renamed in the state and the task rows
+tests/integration/notification-rules.int.test.ts:67 describe("reminder and escalation rules (D-209)
+tests/integration/notification-rules.int.test.ts:68 it("an escalation on a form field reaches the approver
+tests/integration/notification-rules.int.test.ts:99 it("a repeating reminder sends the latest due repeat once, to the approver
+tests/integration/notification-rules.int.test.ts:118 it("open tasks: an urgent overdue task escalates to the assignee
+tests/integration/ops-alerts.int.test.ts:12 describe("Super Admin alerts
+tests/integration/ops-alerts.int.test.ts:13 it("sends once a day per kind
+tests/integration/otp.int.test.ts:11 describe("one-time code tries (audit S-03)
+tests/integration/otp.int.test.ts:12 it("never allows more than max_attempts, even when guesses arrive together
+tests/integration/promotion.int.test.ts:56 describe("configuration promotion (FN9)
+tests/integration/promotion.int.test.ts:57 it("exports with portable references, not ids; requesters can
+tests/integration/promotion.int.test.ts:66 it("refuses a changed file and names references it can
+tests/integration/promotion.int.test.ts:76 it("into an existing type: a new draft only; live version and checks untouched
+tests/integration/promotion.int.test.ts:89 it("as a new type: created as a draft with its checks, ids resolved locally
+tests/integration/readiness.int.test.ts:76 describe("possible duplicates (FN3)
+tests/integration/readiness.int.test.ts:77 it("warn: confirm and give a reason; the reason is kept and audited; others see no details
+tests/integration/readiness.int.test.ts:99 it("block: requesters can
+tests/integration/readiness.int.test.ts:108 it("two submits at the same moment: the type lock lets only one through unconfirmed
+tests/integration/readiness.int.test.ts:115 describe("budget (EN-09)
+tests/integration/readiness.int.test.ts:116 it("within, near the limit, over (confirm), and withdrawn requests stop counting; no budget is said plainly
+tests/integration/readiness.int.test.ts:136 it("over budget is refused when the Super Admin chose BLOCK
+tests/integration/readiness.int.test.ts:148 describe("documents and routing (FN1)
+tests/integration/readiness.int.test.ts:149 it("missing files block; a step nobody can approve is a warning
+tests/integration/readiness.int.test.ts:163 describe("autofill and templates (FN4)
+tests/integration/readiness.int.test.ts:164 it("profile fills the department; a template is the owner
+tests/integration/records.int.test.ts:54 describe("Admin records registers (D-191)
+tests/integration/records.int.test.ts:55 it("a request shows with its type, raiser, department, step and who it waits on
+tests/integration/records.int.test.ts:63 it("every filter and every sort is valid SQL for every register, and the download matches
+tests/integration/records.int.test.ts:76 it("a deleted request is never listed
+tests/integration/reliability.int.test.ts:60 describe("stuck-request detection (FN2)
+tests/integration/reliability.int.test.ts:61 it("a healthy new request is not listed
+tests/integration/reliability.int.test.ts:66 it("finds a task held by an inactive person with no delegate, and a snooze hides it
+tests/integration/reliability.int.test.ts:76 it("finds no activity past the limit, and a blocked step
+tests/integration/reliability.int.test.ts:88 describe("reconciliation (BA-08)
+tests/integration/reliability.int.test.ts:89 it("flags an in-progress request whose task rows don
+tests/integration/reliability.int.test.ts:101 describe("messages the sender gave up on (FN11)
+tests/integration/reliability.int.test.ts:102 it("are listed and resent once; a message being sent, or sent, is never released
+tests/integration/reliability.int.test.ts:121 describe("job-run history (FN11)
+tests/integration/reliability.int.test.ts:122 it("each step is recorded with its counts; health reads from the history
+tests/integration/reporting-views.int.test.ts:14 describe("reporting views for Power BI
+tests/integration/reporting-views.int.test.ts:15 it("create cleanly and show one row per request and per task, by name
+tests/integration/reports.int.test.ts:59 describe("reports
+tests/integration/reports.int.test.ts:60 it("are scoped to the person; organisation-only reports are refused to requesters
+tests/integration/reports.int.test.ts:82 describe("scheduled reports
+tests/integration/reports.int.test.ts:83 it("a due slot is claimed once even when two runs overlap; the next slot moves on
+tests/integration/reports.int.test.ts:96 it("v1.7.1: reports are for IT only; a requester
+tests/integration/reports.int.test.ts:105 it("an inactive owner
+tests/integration/reports.int.test.ts:116 describe("feature switches (D-124)
+tests/integration/reports.int.test.ts:117 it("OFF stops scheduled reports; IT_ONLY keeps them for the IT team; ON is the default
+tests/integration/reports.int.test.ts:138 describe("alert rules
+tests/integration/reports.int.test.ts:139 it("fire once on crossing, not again while over the line, and again after dropping back
+tests/integration/request-detail.int.test.ts:49 describe("rounds and what changed
+tests/integration/request-detail.int.test.ts:50 it("records each round and shows the changes after a resubmit
+tests/integration/request-detail.int.test.ts:74 it("a request from before v1.6.0 gets its earlier round on the next resubmit
+tests/integration/search.int.test.ts:66 describe("search access
+tests/integration/search.int.test.ts:67 it("requester, approver, active delegate and IT find it; outsider and an expired delegate don
+tests/integration/search.int.test.ts:76 it("the department filter is for IT only; 
+tests/integration/search.int.test.ts:85 it("wildcards and odd text are searched literally and never fail
+tests/integration/search.int.test.ts:94 describe("saved views are private
+tests/integration/search.int.test.ts:95 it("only the owner can list, rename, default or delete them
+tests/integration/search.int.test.ts:109 describe("search speed on a larger table
+tests/integration/search.int.test.ts:110 it("stays fast with a few thousand requests
+tests/integration/session10.int.test.ts:25 describe("bulk import (F-59)
+tests/integration/session10.int.test.ts:26 it("templates are the header row only
+tests/integration/session10.int.test.ts:31 it("imports designations, departments, then users whose manager is in the same file
+tests/integration/session10.int.test.ts:63 it("all or nothing: one bad row and nothing is written
+tests/integration/session10.int.test.ts:74 it("only a Super Admin can grant the Super Admin role by import
+tests/integration/session10.int.test.ts:80 it("the current-data download imports back with nothing to change
+tests/integration/session10.int.test.ts:89 it("an email change by import ends the person
+tests/integration/session10.int.test.ts:99 it("groups take the members list as written; holidays add and rename by date
+tests/integration/session11.int.test.ts:47 describe("approver designations (D-085)
+tests/integration/session11.int.test.ts:48 it("a workflow can
+tests/integration/session11.int.test.ts:66 it("custom approvals, delegates, handover, HOD and manager all take approvers only
+tests/integration/session11.int.test.ts:79 describe("Super Admin deletes a request (D-086)
+tests/integration/session11.int.test.ts:80 it("only the Super Admin, with a reason; the request vanishes from every list and its approvals are cancelled
+tests/integration/session11.int.test.ts:104 describe("admin dashboards (D-087)
+tests/integration/session11.int.test.ts:105 it("count by type, department, approver and raiser, and leave deleted requests out
+tests/integration/session4.int.test.ts:55 describe("custom approvals (F-33)
+tests/integration/session4.int.test.ts:56 it("anyone builds a route and submits it in one go; it stays private to them
+tests/integration/session4.int.test.ts:68 it("refuses a route where the requester approves alone, and a missing details field
+tests/integration/session4.int.test.ts:74 describe("delegation (F-30)
+tests/integration/session4.int.test.ts:75 it("the delegate sees and decides the approver
+tests/integration/session4.int.test.ts:97 it("a delegate can
+tests/integration/session4.int.test.ts:108 describe("handover and deactivation (F-16)
+tests/integration/session4.int.test.ts:109 it("deactivation is refused while approvals wait; handover moves them and then it
+tests/integration/session4.int.test.ts:126 it("a handover to the requester is skipped and reported
+tests/integration/session4.int.test.ts:136 describe("comments (F-15)
+tests/integration/session4.int.test.ts:137 it("participants comment; others can
+tests/integration/session4.int.test.ts:149 describe("SLA (F-31)
+tests/integration/session4.int.test.ts:150 it("sets a due time, reminds once, escalates once at twice the time
+tests/integration/session5.int.test.ts:46 describe("withdraw and reopen (F-17, F-29)
+tests/integration/session5.int.test.ts:47 it("only the requester withdraws; the approver
+tests/integration/session5.int.test.ts:59 it("only the Super Admin reopens an approved request; it runs again on the same number
+tests/integration/session5.int.test.ts:75 describe("working calendar on real tasks (F-31)
+tests/integration/session5.int.test.ts:76 it("due and escalation times skip non-working days and holidays
+tests/integration/session5.int.test.ts:99 describe("insights (F-70)
+tests/integration/session5.int.test.ts:100 it("loads every section from real data
+tests/integration/session6.int.test.ts:36 describe("demo data (S6-02a, D-071)
+tests/integration/session6.int.test.ts:37 it("only the Super Admin can load it
+tests/integration/session6.int.test.ts:41 it("loads people, groups and 12 published approval types; loading again changes nothing
+tests/integration/session6.int.test.ts:58 it("a ₹15 lakh purchase by a demo buyer goes SCM head → Finance head → ED, and skips MD
+tests/integration/session6.int.test.ts:76 it("
+tests/integration/session6.int.test.ts:94 it("retiring makes every demo person inactive (never deleted)
+tests/integration/session6.int.test.ts:103 describe("attachments (S6-05, D-072)
+tests/integration/session6.int.test.ts:129 it("the requester and the approver attach files; the timeline says so; the bytes come back
+tests/integration/session6.int.test.ts:148 it("someone not involved can neither add nor download; a closed request takes no files
+tests/integration/session6.int.test.ts:164 it("a file pretending to be a PDF is refused before anything is saved
+tests/integration/session6.int.test.ts:169 describe("WhatsApp template registry (S6-04, S7)
+tests/integration/session6.int.test.ts:170 it("a template is sent only once Meta has approved it, with variables in the saved order
+tests/integration/session7.int.test.ts:34 describe("DoA matrix per approval type (D-075)
+tests/integration/session7.int.test.ts:57 it("an approval type can
+tests/integration/session7.int.test.ts:61 it("routes each request by its band, including non-cumulative levels
+tests/integration/session7.int.test.ts:79 describe("WhatsApp template creator (D-076)
+tests/integration/session7.int.test.ts:108 it("only the Super Admin can use it
+tests/integration/session7.int.test.ts:112 it("draft → submit → Meta approves → live; a change becomes v2 and replaces v1 once approved
+tests/integration/session7.int.test.ts:149 it("a rejection shows Meta
+tests/integration/session7.int.test.ts:159 it("a test goes only to the Super Admin
+tests/integration/session8.int.test.ts:51 describe("D-QA-04: a negative amount can
+tests/integration/session8.int.test.ts:52 it("refused on submit even though the form field has no minimum
+tests/integration/session8.int.test.ts:76 describe("D-QA-01 / D-QA-02: one request per intent
+tests/integration/session8.int.test.ts:77 it("a retried submit with the same form key returns the first request
+tests/integration/session8.int.test.ts:90 it("two copies racing with the same key still make one request
+tests/integration/session8.int.test.ts:101 it("the same title again within 10 minutes asks first; ticking allows it
+tests/integration/session8.int.test.ts:112 describe("D-QA-06: notification outbox
+tests/integration/session8.int.test.ts:113 it("every message of an action is recorded with it and sent after the commit
+tests/integration/session8.int.test.ts:122 it("messages left unsent by a crash are sent by the job runner, once
+tests/integration/session8.int.test.ts:136 describe("D-QA-03: attachments under the request lock
+tests/integration/session8.int.test.ts:139 it("the same file isn
+tests/integration/session8.int.test.ts:149 it("two uploads at the limit can
+tests/integration/session8.int.test.ts:168 describe("D-QA-11: search, filter and paging of My requests
+tests/integration/session8.int.test.ts:169 it("finds by number or title, filters by status, pages by 25
+tests/integration/session8.int.test.ts:189 describe("D-QA-09: daily template sync
+tests/integration/session8.int.test.ts:190 it("runs at most once a day, only with a key and a named template
+tests/integration/sessions.int.test.ts:21 describe("idle sign-out (audit S-05)
+tests/integration/sessions.int.test.ts:22 it("ends a session left unused longer than the idle limit, even before its 12-hour expiry
+tests/integration/sign-in-both.int.test.ts:25 describe("sign in with Google or password (D-208)
+tests/integration/sign-in-both.int.test.ts:26 it("a person set to Both may use either method
+tests/integration/sign-in-both.int.test.ts:38 it("moving from Both to Google only clears the password; Both to Password keeps it
+tests/integration/test-mode.int.test.ts:25 describe("test mode against the live version
+tests/integration/test-mode.int.test.ts:26 it("shows the differences and the open requests that keep their version
+tests/integration/v1100.int.test.ts:53 describe("G-3: an action
+tests/integration/v1100.int.test.ts:54 it("Hidden refuses; View-only allows reading but not changing; Super Admin is exempt
+tests/integration/v1100.int.test.ts:66 describe("AUD-03: the start-up seed gives itadmin roles only when it has none
+tests/integration/v1100.int.test.ts:77 it("a removed Super Admin role stays removed after a restart; a fresh account still gets its roles
+tests/integration/v1100.int.test.ts:96 describe("SEC-12: request lifecycle changes are in the central audit log
+tests/integration/v1100.int.test.ts:97 it("submit and withdraw are audited with the actor
+tests/integration/v1110-calendar.int.test.ts:77 describe("Super Admin configuration
+tests/integration/v1110-calendar.int.test.ts:78 it("only the Super Admin changes it; bad values are refused; the secret is stored encrypted and never audited
+tests/integration/v1110-calendar.int.test.ts:90 it("can
+tests/integration/v1110-calendar.int.test.ts:102 it("disabled: nobody can start a connection (takes effect at once, no restart)
+tests/integration/v1110-calendar.int.test.ts:110 describe("OAuth connection
+tests/integration/v1110-calendar.int.test.ts:111 it("refuses a wrong nonce, another person
+tests/integration/v1110-calendar.int.test.ts:125 it("unticked calendar boxes on Google
+tests/integration/v1110-calendar.int.test.ts:141 it("connects: tokens stored encrypted, primary calendar, first sync and channel queued
+tests/integration/v1110-calendar.int.test.ts:158 describe("ARS → Google
+tests/integration/v1110-calendar.int.test.ts:159 it("a task due date becomes a private event with the reference only; the task is untouched; a second run writes nothing
+tests/integration/v1110-calendar.int.test.ts:181 it("a changed due date updates the same event; completing the task removes it (policy) without completing anything else
+tests/integration/v1110-calendar.int.test.ts:193 it("other people
+tests/integration/v1110-calendar.int.test.ts:202 it("information goes on the calendar only when its type is marked for calendars
+tests/integration/v1110-calendar.int.test.ts:227 describe("Google → ARS
+tests/integration/v1110-calendar.int.test.ts:228 it("imports new events once (all-day and timed, across pages), updates and deletes them
+tests/integration/v1110-calendar.int.test.ts:247 it("an ARS entry goes to Google once and its echo doesn
+tests/integration/v1110-calendar.int.test.ts:257 it("a Google edit to an ARS-managed event is put back (ARS is the source for business dates)
+tests/integration/v1110-calendar.int.test.ts:268 it("a change in both places makes a conflict (manual policy); keeping the ARS version writes it to Google
+tests/integration/v1110-calendar.int.test.ts:284 it("an expired sync token (410) does a controlled full resync without duplicates
+tests/integration/v1110-calendar.int.test.ts:295 describe("notifications, retries, credentials
+tests/integration/v1110-calendar.int.test.ts:296 it("a push notification must match channel, resource and token; duplicates make one waiting sync
+tests/integration/v1110-calendar.int.test.ts:307 it("a temporary Google error is retried later with backoff, not lost
+tests/integration/v1110-calendar.int.test.ts:314 it("an expired access token is refreshed; a withdrawn consent stops syncing with stale credentials
+tests/integration/v1110-calendar.int.test.ts:330 it("reconnecting restores it; disconnecting removes ARS events if asked, revokes and forgets the tokens
+tests/integration/v1120-analytics.int.test.ts:74 describe("tasks
+tests/integration/v1120-analytics.int.test.ts:75 it("completion rate excludes cancelled tasks; on-time uses real completion and due times only
+tests/integration/v1120-analytics.int.test.ts:88 it("an empty period gives unavailable rates, not errors or zeros dressed as rates
+tests/integration/v1120-analytics.int.test.ts:97 it("scope isolation: someone else
+tests/integration/v1120-analytics.int.test.ts:104 describe("information
+tests/integration/v1120-analytics.int.test.ts:105 it("acknowledgement rate uses eligible recipients; opening is not acknowledging
+tests/integration/v1120-analytics.int.test.ts:119 it("withdrawing doesn
+tests/integration/v1120-analytics.int.test.ts:130 describe("approvals
+tests/integration/v1120-analytics.int.test.ts:131 it("counts requests, not approvers: a parallel step of three makes one request
+tests/integration/v1120-analytics.int.test.ts:167 describe("people, departments, quality
+tests/integration/v1120-analytics.int.test.ts:168 it("employees: one row per person in scope, modules kept separate; search and sort are safe
+tests/integration/v1120-analytics.int.test.ts:178 it("departments: only for department or organisation scope
+tests/integration/v1120-analytics.int.test.ts:185 it("data quality finds the open task without a due date
+tests/integration/v1124-storage.int.test.ts:21 describe("file storage that can
+tests/integration/v1124-storage.int.test.ts:22 it("the check names the cause
+tests/integration/v1124-storage.int.test.ts:29 it("an upload returns a plain storage message and alerts the Super Admin once a day
+tests/integration/v1124-storage.int.test.ts:39 it("classifies the usual operating-system errors
+tests/integration/v140.int.test.ts:56 describe("work step for the requester (D-097)
+tests/integration/v140.int.test.ts:57 it("shows in their own 
+tests/integration/v140.int.test.ts:76 describe("blocked step recovery (D-098)
+tests/integration/v140.int.test.ts:77 it("IT gives the stuck step to a person; a plain user can
+tests/integration/v140.int.test.ts:92 describe("delete through the engine (audit R-04)
+tests/integration/v140.int.test.ts:93 it("closes the open request, its tasks and state agree, and the approver and requester are told
+tests/integration/v140.int.test.ts:114 describe("response clocks (audit R-07, hold)
+tests/integration/v140.int.test.ts:117 it("a handover gives the new person the full time again and forgets old reminders
+tests/integration/v140.int.test.ts:134 it("time on hold is added to the due time
+tests/integration/v140.int.test.ts:152 describe("publishing and numbering (audit R-05, R-09)
+tests/integration/v140.int.test.ts:153 it("publishing the same draft twice at once leaves exactly one published version
+tests/integration/v140.int.test.ts:163 it("request numbers use the year in India
+tests/integration/v140.int.test.ts:170 describe("custom approvals leave no orphan (audit R-06)
+tests/integration/v140.int.test.ts:171 it("a submit that fails removes the one-off approval type again
+tests/integration/v140.int.test.ts:188 describe("escalation goes up the management chain (D-100)
+tests/integration/v140.int.test.ts:189 it("at 3.5 times the response time: reminder, the manager, then the manager
+tests/integration/v170-a.int.test.ts:89 describe("A1 approval expiry
+tests/integration/v170-a.int.test.ts:90 it("fixes valid-until on approval and tells the requester once, 7 days before
+tests/integration/v170-a.int.test.ts:111 it("types without a validity period never expire
+tests/integration/v170-a.int.test.ts:120 describe("A2 needed-by calendar
+tests/integration/v170-a.int.test.ts:121 it("lists requests by their needed-by date, only for people who may see them
+tests/integration/v170-a.int.test.ts:134 describe("A3 bulk reassignment
+tests/integration/v170-a.int.test.ts:135 it("moves each chosen task and reports every one
+tests/integration/v170-a.int.test.ts:155 describe("A6 re-check and fix
+tests/integration/v170-a.int.test.ts:156 it("makes task rows match the workflow; never deletes or changes the state
+tests/integration/v170-a.int.test.ts:180 describe("A7 delegation end
+tests/integration/v170-a.int.test.ts:181 it("tells both people what is back with the person
+tests/integration/v170-a.int.test.ts:192 describe("A8 confidential fields
+tests/integration/v170-a.int.test.ts:193 it("hides the value from collaborators; requester, approver and IT see it
+tests/integration/v170-a.int.test.ts:205 describe("A9 export permission
+tests/integration/v170-a.int.test.ts:206 it("everyone by default; only Can export (or IT) when limited
+tests/integration/v170-a.int.test.ts:219 describe("A10 duplicate scope and unique fields
+tests/integration/v170-a.int.test.ts:220 it("same-requester scope ignores other people
+tests/integration/v170-a.int.test.ts:228 it("same-department scope counts colleagues in the department only
+tests/integration/v170-a.int.test.ts:239 it("a unique identifier is refused while open or approved, for everyone, and freed by withdrawal
+tests/integration/v170-a.int.test.ts:248 describe("A11 amendment drafts
+tests/integration/v170-a.int.test.ts:249 it("are listed with the request they amend
+tests/integration/v170-a.int.test.ts:260 describe("A5 stopped job runner
+tests/integration/v170-a.int.test.ts:261 it("alerts the Super Admin once when the runner hasn
+tests/integration/v170-bc.int.test.ts:102 describe("B01 drill-down lists match the numbers
+tests/integration/v170-bc.int.test.ts:103 it("raised, approved, withdrawn, open, pending, overdue, due soon, sent back
+tests/integration/v170-bc.int.test.ts:125 describe("B02 filters narrow every number
+tests/integration/v170-bc.int.test.ts:126 it("status, approver, step, response time and age
+tests/integration/v170-bc.int.test.ts:138 describe("B03 quality KPIs
+tests/integration/v170-bc.int.test.ts:139 it("median time, first pass, rework and withdrawal rates
+tests/integration/v170-bc.int.test.ts:149 describe("B05 charts
+tests/integration/v170-bc.int.test.ts:150 it("status mix, history and the department × step heatmap
+tests/integration/v170-bc.int.test.ts:165 describe("B07 shared and default views
+tests/integration/v170-bc.int.test.ts:166 it("others see a shared view; only the owner changes it; one default per page
+tests/integration/v170-bc.int.test.ts:185 describe("B06 schedule recipients
+tests/integration/v170-bc.int.test.ts:186 it("edits keep the history; each recipient gets their own scope or is skipped
+tests/integration/v170-bc.int.test.ts:202 describe("B08 alert severity, quiet hours and channels
+tests/integration/v170-bc.int.test.ts:203 it("quiet hours hold a warning; a critical alert goes at once, inbox only when chosen
+tests/integration/v170-bc.int.test.ts:221 describe("C02 background exports
+tests/integration/v170-bc.int.test.ts:222 it("made with the owner
+tests/integration/v170-bc.int.test.ts:242 describe("C04 analytics rate limit
+tests/integration/v170-bc.int.test.ts:243 it("slows a burst down per person
+tests/integration/v170-bc.int.test.ts:251 describe("C03 backup check script
+tests/integration/v170-bc.int.test.ts:262 it("restores into an empty database and proves every table and trigger; refuses the live or a used database
+tests/integration/v172-lists.int.test.ts:94 describe("Collaborating
+tests/integration/v172-lists.int.test.ts:95 it("lists only requests I
+tests/integration/v172-lists.int.test.ts:100 it("filters: tabs, several statuses, raised by, department, added by, step, waiting with, overdue, files, dates
+tests/integration/v172-lists.int.test.ts:122 it("tab counts follow the other filters; paging and sort work
+tests/integration/v172-lists.int.test.ts:130 it("choices come only from my own collaborations
+tests/integration/v172-lists.int.test.ts:139 describe("My requests
+tests/integration/v172-lists.int.test.ts:140 it("only what I raised, with the same filters
+tests/integration/v172-lists.int.test.ts:148 describe("Waiting for me (v1.7.2 filters)
+tests/integration/v172-lists.int.test.ts:149 it("search, raised by, department, step, due within, files, dates
+tests/integration/v180.int.test.ts:87 describe("My approved requests
+tests/integration/v180.int.test.ts:88 it("only my requests that were fully approved, with who approved
+tests/integration/v180.int.test.ts:99 describe("Approved by me
+tests/integration/v180.int.test.ts:100 it("every request I approved a step of, where it is now, and for whom
+tests/integration/v180.int.test.ts:116 describe("Custom approval set-up
+tests/integration/v180.int.test.ts:117 it("IT
+tests/integration/v180.int.test.ts:152 it("work tasks and FYIs can name someone who isn
+tests/integration/v180.int.test.ts:168 describe("Page access rules
+tests/integration/v180.int.test.ts:169 it("person over department over everyone; removing a rule falls back
+tests/integration/v180.int.test.ts:189 describe("Inactivity sign-out
+tests/integration/v180.int.test.ts:190 it("defaults to 30 minutes for everyone (v1.12.1); idle time is measured from the last use
+tests/integration/v190.int.test.ts:43 describe("module types: draft, publish, versions, retire
+tests/integration/v190.int.test.ts:44 it("only IT creates types; a draft is checked before publishing
+tests/integration/v190.int.test.ts:61 it("information type
+tests/integration/v190.int.test.ts:70 describe("tasks
+tests/integration/v190.int.test.ts:71 it("creates a task once (same submission key), tells the assignee, keeps its version
+tests/integration/v190.int.test.ts:88 it("refuses assignees outside the type
+tests/integration/v190.int.test.ts:93 it("only the parties, the assignee
+tests/integration/v190.int.test.ts:101 it("lifecycle: a stranger can
+tests/integration/v190.int.test.ts:121 it("a new version applies to new tasks only; a retired type takes no new tasks
+tests/integration/v190.int.test.ts:134 it("reminders: due-soon once, overdue once
+tests/integration/v190.int.test.ts:146 describe("information
+tests/integration/v190.int.test.ts:148 it("a draft is the sender
+tests/integration/v190.int.test.ts:164 it("reading is not acknowledging; acknowledgement is recorded once
+tests/integration/v190.int.test.ts:179 it("acknowledgement reminders go once to those who haven
+tests/integration/v190.int.test.ts:193 describe("approvals: who may raise; resubmit re-routing
+tests/integration/v190.int.test.ts:228 it("a type limited to a department refuses others (IT always may)
+tests/integration/v190.int.test.ts:238 it("raising the amount on resubmit brings back the skipped CFO level (AUD-02)
+tests/integration/v190.int.test.ts:250 describe("task and information reports (IT)
+tests/integration/v190.int.test.ts:251 it("run on real data: the task shows in the register and the workload; the information in its register
+tests/integration/work-management.int.test.ts:58 describe("Task & Project Management (D-215)
+tests/integration/work-management.int.test.ts:59 it("the built-in General task type exists for project tasks
+tests/integration/work-management.int.test.ts:63 it("a private project: its owner gets three sections; outsiders can
+tests/integration/work-management.int.test.ts:73 it("D-216: managers above a member, at every level, may look into the project (view only)
+tests/integration/work-management.int.test.ts:80 it("the last owner can
+tests/integration/work-management.int.test.ts:93 it("tasks in sections, subtasks, and one visibility rule for the task page and search
+tests/integration/work-management.int.test.ts:123 it("D-216: the whole reporting line above an assignee sees their tasks; peers don
+tests/integration/work-management.int.test.ts:135 it("subtasks can
+tests/integration/work-management.int.test.ts:146 it("moving within and across sections keeps the order
+tests/integration/work-management.int.test.ts:160 it("comments: replies one level deep; a mention tells the person and lets them see the task
+tests/integration/work-management.int.test.ts:177 it("dependencies refuse loops; completing the last blocker tells the waiting task
+tests/integration/work-management.int.test.ts:191 it("My Tasks: built-in sections once per person; placing a task is personal
+tests/integration/work-management.int.test.ts:201 it("delete closes the task and its subtasks for everyone; restore brings them back as they were
+tests/integration/work-management.int.test.ts:214 it("status updates are posted by editors and owners; deleting a project hides it until restored
+tests/integration/work-management.int.test.ts:226 it("D-217: a due date on a holiday is warned about, kept on purpose, refused when blocked, and IT can move them
+tests/integration/work-more.int.test.ts:57 describe("repeating tasks (D-218)
+tests/integration/work-more.int.test.ts:58 it("completing makes the next one (same project, tags, subtasks), once
+tests/integration/work-more.int.test.ts:85 it("the next date moves off the assignee
+tests/integration/work-more.int.test.ts:108 describe("project fields (D-218)
+tests/integration/work-more.int.test.ts:109 it("editors add fields; values are checked; viewers can
+tests/integration/work-more.int.test.ts:126 describe("templates and copies (D-218)
+tests/integration/work-more.int.test.ts:128 it("save as a template: it holds the tasks as a shape and isn
+tests/integration/work-more.int.test.ts:138 it("a project from the template gets sections, fields and tasks with dates moved to its start
+tests/integration/work-more.int.test.ts:153 it("copy a project with its members
+tests/integration/work-more.int.test.ts:164 describe("bulk actions (D-218)
+tests/integration/work-more.int.test.ts:165 it("several tasks at once; what the person may not change is counted, not done
+tests/integration/work-more.int.test.ts:184 describe("task inbox and morning summary (D-218)
+tests/integration/work-more.int.test.ts:185 it("archive and bookmark one
+tests/integration/work-more.int.test.ts:199 it("the summary goes once a day to people with something to do, not on holidays, not when switched off
+tests/integration/work-more.int.test.ts:221 describe("projects step by step, saved tabs, periodic and ad hoc (D-219, D-220)
+tests/integration/work-more.int.test.ts:222 it("a new project starts with the sections chosen in the steps
+tests/integration/work-more.int.test.ts:229 it("saved tabs: unique names per place; at most 30
+tests/integration/work-more.int.test.ts:240 it("periodic and ad hoc tasks are told apart in search and the periodic list
+tests/integration/work-more.int.test.ts:263 describe("ad hoc tasks and project permissions (D-222)
+tests/integration/work-more.int.test.ts:264 it("an ad hoc task for several people: one linked copy each
+tests/integration/work-more.int.test.ts:273 it("the assignee of an ad hoc task can
+tests/integration/work-more.int.test.ts:283 it("a periodic task
+tests/integration/work-more.int.test.ts:290 it("project permissions: a restricted field and who may share tasks
+tests/integration/workflow-draft.int.test.ts:26 describe("the working draft (D-241)
+tests/integration/workflow-draft.int.test.ts:27 it("makes one draft when none is open, then saves into it; publishing stays separate
+tests/integration/workflow-draft.int.test.ts:43 it("refuses a save from an older revision, or made before someone else
+tests/integration/workflow-draft.int.test.ts:52 it("after the draft is published, an editor still holding it is told; a fresh editor starts a new draft
+tests/integration/workload.int.test.ts:51 describe("due soon and workload
+tests/integration/workload.int.test.ts:52 it("sends one heads-up at 75%, and the reminder still follows when it
+tests/integration/workspace.int.test.ts:70 describe("Waiting for me filters (WS-01)
+tests/integration/workspace.int.test.ts:71 it("filters by type and overdue, orders by due time, and lists the types
+tests/integration/workspace.int.test.ts:95 describe("recently viewed (WS-04)
+tests/integration/workspace.int.test.ts:96 it("lists only requests the person can still see, newest first
+tests/integration/workspace.int.test.ts:108 describe("search visibility matches the request page
+tests/integration/workspace.int.test.ts:109 it("a stranger finds nothing, even by exact number
+tests/integration/workspace.int.test.ts:118 describe("notification read state (WS / FB-03)
+tests/integration/workspace.int.test.ts:119 it("mark all returns the ids for Undo; nobody can touch another person

@@ -1,0 +1,45 @@
+clsx imported-in-files=0
+firebase imported-in-files=1
+firebase-admin imported-in-files=1
+lucide-react imported-in-files=74
+mysql2 imported-in-files=171
+next imported-in-files=305
+pdf-lib imported-in-files=4
+react imported-in-files=101
+react-dom imported-in-files=2
+server-only imported-in-files=0
+tailwind-merge imported-in-files=0
+typescript imported-in-files=0
+zod imported-in-files=24
+@axe-core/playwright imported-in-files=1
+@eslint/eslintrc imported-in-files=1
+@playwright/test imported-in-files=69
+@vitejs/plugin-react imported-in-files=1
+@vitest/coverage-v8 imported-in-files=0
+autoprefixer imported-in-files=0
+jsdom imported-in-files=0
+postcss imported-in-files=0
+tailwindcss imported-in-files=1
+vite imported-in-files=0
+== jsdom env usage
+application-audit/01_APPLICATION_ARCHITECTURE.md
+tests/ui/queue-and-shortcuts.test.ts
+== eslintrc usage
+1:import { FlatCompat } from "@eslint/eslintrc";
+== autoprefixer/tailwind
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+// Tailwind looks for its config in the working directory by default; point it
+// at this project so the build works wherever the process starts (cPanel).
+const projectDir = path.dirname(fileURLToPath(import.meta.url));
+
+/** @type {import('postcss-load-config').Config} */
+const config = {
+  plugins: {
+    tailwindcss: { config: path.join(projectDir, "tailwind.config.ts") },
+    autoprefixer: {},
+  },
+};
+
+export default config;

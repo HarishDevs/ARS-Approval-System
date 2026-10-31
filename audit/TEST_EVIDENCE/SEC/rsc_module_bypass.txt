@@ -1,0 +1,13 @@
+# Users-area pages without a page-level guard, RSC request by a person WITHOUT the page's module (layout returns 404). 2026-10-31T23:01:39+05:30
+/users/work/my-tasks as it-mvwo9j8e2 (no TASK/INFORMATION) => 200 5144B 404digest=3 rows=0 cells: 
+/users/tasks as it-mvwo9j8e2 (no TASK/INFORMATION) => 200 4795B 404digest=2 rows=0 cells: 
+/users/tasks/assigned as it-mvwo9j8e2 (no TASK/INFORMATION) => 200 5209B 404digest=2 rows=0 cells: 
+/users/tasks/team as it-mvwo9j8e2 (no TASK/INFORMATION) => 200 5187B 404digest=2 rows=0 cells: 
+/users/work/projects as it-mvwo9j8e2 (no TASK/INFORMATION) => 200 4998B 404digest=3 rows=0 cells: 
+/users/work/search as it-mvwo9j8e2 (no TASK/INFORMATION) => 200 5140B 404digest=3 rows=0 cells: 
+/users/work/deleted as it-mvwo9j8e2 (no TASK/INFORMATION) => 200 4954B 404digest=3 rows=0 cells: 
+/users/work/periodic as it-mvwo9j8e2 (no TASK/INFORMATION) => 200 5150B 404digest=3 rows=0 cells: 
+/users/information as it-mvwo9j8e2 (no TASK/INFORMATION) => 200 4728B 404digest=2 rows=0 cells: 
+/users/information/sent as it-mvwo9j8e2 (no TASK/INFORMATION) => 200 5123B 404digest=2 rows=0 cells: 
+/users/ai/assistant as it-mvwo934e3 (no AI) => 200 5149B 404digest=2 cells: 
+/users/analytics as it-mvwo934e3 (no AI) => 200 41118B 404digest=0 cells: "Skip to content" "Central Management System" "This page isn't available" "Search your requests" "Search" "Go to Home" 

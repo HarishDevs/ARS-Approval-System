@@ -1,0 +1,25 @@
+# Superadmin pages without a page-level requireArea (layout guard only), probed as IT_ADMIN / USER / SUPER, as HTML and as RSC (RSC: 1). 2026-10-31T22:59:27+05:30
+/superadmin/ai/history as A HTML => 404 34288B ; page-specific strings found: 1
+/superadmin/ai/history as A RSC: 1 => 200 25368B ; page-specific strings found: 2
+/superadmin/ai/history as U HTML => 404 34288B ; page-specific strings found: 1
+/superadmin/ai/history as U RSC: 1 => 200 25368B ; page-specific strings found: 2
+/superadmin/ai/history as SU HTML => 200 87344B ; page-specific strings found: 1
+/superadmin/ai/history as SU RSC: 1 => 200 41943B ; page-specific strings found: 3
+/superadmin/ai/reports as A HTML => 404 23913B ; page-specific strings found: 0
+/superadmin/ai/reports as A RSC: 1 => 200 16626B ; page-specific strings found: 0
+/superadmin/ai/reports as U HTML => 404 23913B ; page-specific strings found: 0
+/superadmin/ai/reports as U RSC: 1 => 200 16626B ; page-specific strings found: 0
+/superadmin/ai/reports as SU HTML => 200 72418B ; page-specific strings found: 1
+/superadmin/ai/reports as SU RSC: 1 => 200 33201B ; page-specific strings found: 1
+/superadmin/ai/data-sources as A HTML => 404 16986B ; page-specific strings found: 0
+/superadmin/ai/data-sources as A RSC: 1 => 200 11003B ; page-specific strings found: 0
+/superadmin/ai/data-sources as U HTML => 404 16986B ; page-specific strings found: 0
+/superadmin/ai/data-sources as U RSC: 1 => 200 11003B ; page-specific strings found: 0
+/superadmin/ai/data-sources as SU HTML => 200 61976B ; page-specific strings found: 1
+/superadmin/ai/data-sources as SU RSC: 1 => 200 27578B ; page-specific strings found: 1
+/superadmin/salesforce as A HTML => 404 22491B ; page-specific strings found: 1
+/superadmin/salesforce as A RSC: 1 => 200 16014B ; page-specific strings found: 3
+/superadmin/salesforce as U HTML => 404 22491B ; page-specific strings found: 1
+/superadmin/salesforce as U RSC: 1 => 200 16014B ; page-specific strings found: 3
+/superadmin/salesforce as SU HTML => 200 81416B ; page-specific strings found: 1
+/superadmin/salesforce as SU RSC: 1 => 200 32589B ; page-specific strings found: 4

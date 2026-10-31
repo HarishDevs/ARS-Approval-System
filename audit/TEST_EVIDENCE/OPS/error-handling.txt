@@ -1,0 +1,37 @@
+== try/catch count
+391
+== empty or swallow catches 'catch {' / 'catch {}' / '.catch(() => {})'
+75
+app/(public)/login/page.tsx:13:  if (await getCurrentSession().catch(() => null)) redirect(next);
+app/api/ai/chat/route.ts:54:  const parsed = schema.safeParse(await request.json().catch(() => null));
+app/api/ai/conversations/[id]/route.ts:40:  const body = (await request.json().catch(() => null)) as { title?: unknown; pinned?: unknown } | null;
+app/api/auth/forgot/complete/route.ts:11:  const parsed = forgotCompleteSchema.safeParse(await request.json().catch(() => null));
+app/api/auth/forgot/start/route.ts:12:  const parsed = forgotStartSchema.safeParse(await request.json().catch(() => null));
+app/api/auth/google/route.ts:10:  const parsed = googleSignInSchema.safeParse(await request.json().catch(() => null));
+app/api/auth/not-me/route.ts:12:  const parsed = notMeSchema.safeParse(await request.json().catch(() => null));
+app/api/auth/password/resend/route.ts:10:  const parsed = otpResendSchema.safeParse(await request.json().catch(() => null));
+app/api/auth/password/start/route.ts:12:  const parsed = passwordStartSchema.safeParse(await request.json().catch(() => null));
+app/api/auth/password/verify/route.ts:11:  const parsed = otpVerifySchema.safeParse(await request.json().catch(() => null));
+app/api/auth/set-password/complete/route.ts:11:  const parsed = setPasswordCompleteSchema.safeParse(await request.json().catch(() => null));
+app/api/auth/set-password/start/route.ts:11:  const parsed = setPasswordStartSchema.safeParse(await request.json().catch(() => null));
+app/api/auth/status/route.ts:13:  const reason = status.signedIn ? null : await sessionEndReason().catch(() => null);
+app/api/me/notifications/route.ts:39:    const body = (await request.json().catch(() => null)) as { action?: unknown; ids?: unknown } | null;
+app/api/users/[id]/photo/route.ts:24:  const bytes = await readFile(file).catch(() => null);
+app/api/webhooks/ceoitbox/route.ts:20:  const expected = await getSettingValue("whatsapp.webhook_secret").catch(() => null);
+app/page.tsx:20:  if (await getCurrentSession().catch(() => null)) redirect("/users");
+app/superadmin/salesforce/page.tsx:37:  const [raw, sfConfigured, sfRuns, connection] = await Promise.all([listRawSettings(), loadSalesforceConfig().then(Boolean).catch(() => null) /* D-233: null = couldn't read, not "not set up" */, latestRuns(SALESFORCE_KEY), getConnection()]);
+app/users/(home)/page.tsx:37:  if (query.view !== "overview" && !query.tour && parseWorkspaceView(await getUserSetting(user.id, WORKSPACE_VIEW_SETTING).catch(() => null)) === "CLASSIC") return <ClassicGateway user={user} />;
+app/users/(home)/page.tsx:54:    listRecent({ id: user.id, isAdmin: user.roles.includes("IT_ADMIN") || user.roles.includes("SUPER_ADMIN") }, 5).catch(() => null), // D-233: a failure says so, it isn't "nothing viewed"
+== logError usage
+213
+== error.tsx / not-found.tsx
+app/admin/error.tsx
+app/admin/not-found.tsx
+app/global-error.tsx
+app/superadmin/error.tsx
+app/superadmin/not-found.tsx
+app/users/error.tsx
+app/users/not-found.tsx
+== Result type helpers (ok/fail)
+server/ai/analytics.ts:39:export function failureReason(error: string): string {
+server/approvals/service.ts:63:export type Result<T> = { ok: true; value: T } | { ok: false; code: string; message: string; validation?: ValidationResult; fieldErrors?: Record<string, string>; readiness?: Readiness };

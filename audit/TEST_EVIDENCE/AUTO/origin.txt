@@ -1,0 +1,6 @@
+
+Running 1 test using 1 worker
+
+  ok 1 tests\origin\origin-lock.spec.ts:4:5 › with ORIGIN_SECRET set, only requests carrying the Cloudflare header are served (2.1s)
+
+  1 passed (7.7s)

@@ -1,0 +1,8 @@
+E2E_REQ / | 200  | <title>ARS-CMS | ARS Steels</title> | <meta name="robots" content="index, follow" | h1: ARS-CMS
+E2E_REQ /login | 200  | <title>Sign in · ARS-CMS</title> | <meta name="robots" content="noindex, nofollow" | h1: Welcome back
+E2E_REQ /this-page-does-not-exist | 307 http://localhost:3100/login?next=%2Fthis-page-does-not-exist |  |  | h1: 
+E2E_REQ /users/this-does-not-exist | 307 http://localhost:3100/login?next=%2Fusers%2Fthis-does-not-exist |  |  | h1: 
+E2E_REQ /admin | 307 http://localhost:3100/login?next=%2Fadmin |  |  | h1: 
+E2E_REQ /superadmin | 307 http://localhost:3100/login?next=%2Fsuperadmin |  |  | h1: 
+E2E_REQ /users | 307 http://localhost:3100/login?next=%2Fusers |  |  | h1: 
+E2E_REQ /robots.txt | 307 http://localhost:3100/login?next=%2Frobots.txt |  |  | h1: 

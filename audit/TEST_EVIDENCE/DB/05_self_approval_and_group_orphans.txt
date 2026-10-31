@@ -1,0 +1,41 @@
+
+-- SELECT r.id, r.request_no, r.requester_id, u.login_id requester, r.status, r.workflow_version_id, wd.code, wd.kind, r.submitted_at FROM approval_requests r JOIN users u ON u.id=r.requester_id JOIN workflow_versions v ON v.id=r.workflow_version_id JOIN workflow_definitions wd ON wd.id=v.workflow_id WHERE r.request_no LIKE 'EHO-%'
+id	request_no	requester_id	requester	status	workflow_version_id	code	kind	submitted_at
+8	EHO-2026-000001	6	E2E_REQ	APPROVED	20	E2E_HANDOFF	PREDEFINED	Sat Oct 31 2026 17:01:17 GMT+0530 (India Standard Time)
+9	EHO-2026-000002	7	E2E_STAFF	IN_PROGRESS	20	E2E_HANDOFF	PREDEFINED	Sat Oct 31 2026 17:01:19 GMT+0530 (India Standard Time)
+(2 rows)
+
+-- SELECT t.id, t.request_id, t.task_key, t.node_id, t.node_label, t.task_type, t.round, t.approver_id, ua.login_id approver, t.status, t.decided_by, t.on_behalf_of, t.created_at, t.decided_at FROM approval_tasks t JOIN users ua ON ua.id=t.approver_id WHERE t.request_id IN (SELECT id FROM approval_requests WHERE request_no LIKE 'EHO-%') ORDER BY t.id
+id	request_id	task_key	node_id	node_label	task_type	round	approver_id	approver	status	decided_by	on_behalf_of	created_at	decided_at
+20	8	t1	step_manager	Manager	APPROVAL	1	5	E2E_MGR	APPROVED	5	NULL	Sat Oct 31 2026 17:01:17 GMT+0530 (India Standard Time)	Sat Oct 31 2026 17:01:18 GMT+0530 (India Standard Time)
+21	8	t2	step_hod	HOD	APPROVAL	1	4	E2E_HOD	APPROVED	4	NULL	Sat Oct 31 2026 17:01:18 GMT+0530 (India Standard Time)	Sat Oct 31 2026 17:01:18 GMT+0530 (India Standard Time)
+23	8	t3	step_s8e7b890b3cca	Raise the purchase order	WORK	1	6	E2E_REQ	APPROVED	6	NULL	Sat Oct 31 2026 17:01:18 GMT+0530 (India Standard Time)	Sat Oct 31 2026 17:01:19 GMT+0530 (India Standard Time)
+29	9	t1	step_manager	Manager	APPROVAL	1	5	E2E_MGR	APPROVED	5	NULL	Sat Oct 31 2026 17:01:20 GMT+0530 (India Standard Time)	Sat Oct 31 2026 17:01:21 GMT+0530 (India Standard Time)
+31	9	t2	step_s8e7b890b3cca	Raise the purchase order	WORK	1	7	E2E_STAFF	PENDING	NULL	NULL	Sat Oct 31 2026 17:01:21 GMT+0530 (India Standard Time)	NULL
+(5 rows)
+
+-- SELECT e.id, e.request_id, e.event_type, e.actor_id, e.node_id, LEFT(CAST(e.detail_json AS CHAR),300) detail FROM approval_events e WHERE e.request_id IN (SELECT id FROM approval_requests WHERE request_no LIKE 'EHO-%') ORDER BY e.id
+ERROR: Unknown column 'e.detail_json' in 'field list'
+
+-- SELECT v.id, LEFT(CAST(v.definition_json AS CHAR), 3000) def FROM workflow_versions v JOIN approval_requests r ON r.workflow_version_id=v.id WHERE r.request_no='EHO-2026-000001'
+id	def
+20	{"edges": [{"id": "e1", "to": "step_manager", "from": "start"}, {"id": "e2", "to": "step_hod", "from": "step_manager"}, {"id": "e3", "to": "step_senior", "from": "step_hod"}, {"id": "e4", "to": "step_s8e7b890b3cca", "from": "step_senior"}, {"id": "e5", "to": "end", "from": "step_s8e7b890b3cca"}], "nodes": [{"id": "start", "kind": "START", "label": "Start"}, {"id": "step_manager", "kind": "APPROVAL", "label": "Manager", "approvers": [{"type": "REQUESTER_MANAGER"}], "completion": {"type": "ALL"}}, {"id": "step_hod", "kind": "APPROVAL", "label": "HOD", "approvers": [{"type": "REQUESTER_DEPARTMENT_HOD"}], "completion": {"type": "ALL"}}, {"id": "step_senior", "kind": "APPROVAL", "label": "Senior approval", "skipIf": {"field": "amount", "value": 1000000, "operator": "LTE"}, "approvers": [{"type": "REQUESTER_MANAGERS_MANAGER"}], "completion": {"type": "ALL"}}, {"id": "step_s8e7b890b3cca", "kind": "APPROVAL", "mode": "WORK", "label": "Raise the purchase order", "approvers": [{"type": "REQUESTER"}], "completion": {"type": "ALL"}}, {"id": "end", "kind": "END", "label": "End"}]}
+(1 rows)
+
+-- SELECT t.id, t.task_no, t.assign_group_id, t.status, t.created_at FROM tasks t WHERE t.assign_group_id IS NOT NULL
+id	task_no	assign_group_id	status	created_at
+15	TSK-2026-000015	15	OPEN	Sat Oct 31 2026 17:00:25 GMT+0530 (India Standard Time)
+16	TSK-2026-000016	15	OPEN	Sat Oct 31 2026 17:00:25 GMT+0530 (India Standard Time)
+(2 rows)
+
+-- SELECT id, code, active FROM approver_groups
+id	code	active
+1	MD_OFFICE	1
+2	ED_OFFICE	1
+3	DIRECTOR_DESK	1
+4	FIN_CONTROLLER	1
+5	FIN_CHECKERS	1
+6	FIN_LEVEL2	1
+7	HR_MANAGERS	1
+8	RECRUITMENT	1
+(8 rows)

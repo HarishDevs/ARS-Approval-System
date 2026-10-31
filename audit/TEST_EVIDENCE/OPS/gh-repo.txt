@@ -1,0 +1,7 @@
+== branch protection (read-only)
+{"message":"Not Found","documentation_url":"https://docs.github.com/rest/branches/branch-protection#get-branch-protection","status":"404"}gh: Not Found (HTTP 404)
+== repo
+{"defaultBranchRef":{"name":"main"},"isPrivate":true,"visibility":"PRIVATE"}
+== releases
+== dependabot config
+workflows

@@ -1,0 +1,947 @@
+
+-- SELECT tc.table_name, tc.constraint_name, tc.constraint_type, GROUP_CONCAT(k.column_name ORDER BY k.ordinal_position) cols, MAX(k.referenced_table_name) ref_table, GROUP_CONCAT(k.referenced_column_name ORDER BY k.ordinal_position) ref_cols FROM information_schema.table_constraints tc JOIN information_schema.key_column_usage k ON k.constraint_schema=tc.constraint_schema AND k.table_name=tc.table_name AND k.constraint_name=tc.constraint_name WHERE tc.table_schema='ars_approvals_test' GROUP BY tc.table_name, tc.constraint_name, tc.constraint_type ORDER BY tc.table_name, tc.constraint_type, tc.constraint_name
+TABLE_NAME	CONSTRAINT_NAME	CONSTRAINT_TYPE	cols	ref_table	ref_cols
+ai_conversations	fk_ai_conversations_owner	FOREIGN KEY	owner_user_id	users	id
+ai_conversations	PRIMARY	PRIMARY KEY	id	NULL	NULL
+ai_messages	fk_ai_messages_conversation	FOREIGN KEY	conversation_id	ai_conversations	id
+ai_messages	PRIMARY	PRIMARY KEY	id	NULL	NULL
+ai_messages	uq_ai_messages_request	UNIQUE	conversation_id,request_key	NULL	NULL
+ai_proposals	fk_ai_proposals_approver	FOREIGN KEY	approver_user_id	users	id
+ai_proposals	fk_ai_proposals_decided_by	FOREIGN KEY	decided_by	users	id
+ai_proposals	fk_ai_proposals_requested_by	FOREIGN KEY	requested_by	users	id
+ai_proposals	PRIMARY	PRIMARY KEY	id	NULL	NULL
+ai_rules	fk_ai_rules_updated_by	FOREIGN KEY	updated_by	users	id
+ai_rules	PRIMARY	PRIMARY KEY	chat_mode	NULL	NULL
+ai_salesforce_connection	PRIMARY	PRIMARY KEY	id	NULL	NULL
+ai_source_records	PRIMARY	PRIMARY KEY	source_key,dataset,record_id	NULL	NULL
+ai_sync_runs	PRIMARY	PRIMARY KEY	id	NULL	NULL
+alert_events	fk_alert_events_rule	FOREIGN KEY	rule_id	alert_rules	id
+alert_events	PRIMARY	PRIMARY KEY	id	NULL	NULL
+alert_rules	fk_alert_rules_user	FOREIGN KEY	user_id	users	id
+alert_rules	PRIMARY	PRIMARY KEY	id	NULL	NULL
+analytics_views	fk_analytics_views_user	FOREIGN KEY	user_id	users	id
+analytics_views	PRIMARY	PRIMARY KEY	id	NULL	NULL
+analytics_views	uq_analytics_views_owner	UNIQUE	user_id,target,name	NULL	NULL
+approval_events	fk_approval_events_actor	FOREIGN KEY	actor_id	users	id
+approval_events	fk_approval_events_request	FOREIGN KEY	request_id	approval_requests	id
+approval_events	PRIMARY	PRIMARY KEY	id	NULL	NULL
+approval_requests	fk_approval_requests_deleted_by	FOREIGN KEY	deleted_by	users	id
+approval_requests	fk_approval_requests_requester	FOREIGN KEY	requester_id	users	id
+approval_requests	fk_approval_requests_version	FOREIGN KEY	workflow_version_id	workflow_versions	id
+approval_requests	PRIMARY	PRIMARY KEY	id	NULL	NULL
+approval_requests	uq_approval_requests_no	UNIQUE	request_no	NULL	NULL
+approval_requests	uq_approval_requests_submission	UNIQUE	requester_id,submission_key	NULL	NULL
+approval_tasks	fk_approval_tasks_approver	FOREIGN KEY	approver_id	users	id
+approval_tasks	fk_approval_tasks_decided_by	FOREIGN KEY	decided_by	users	id
+approval_tasks	fk_approval_tasks_on_behalf	FOREIGN KEY	on_behalf_of	users	id
+approval_tasks	fk_approval_tasks_request	FOREIGN KEY	request_id	approval_requests	id
+approval_tasks	PRIMARY	PRIMARY KEY	id	NULL	NULL
+approval_tasks	uq_approval_tasks_key	UNIQUE	request_id,task_key	NULL	NULL
+approver_group_members	fk_approver_group_members_added_by	FOREIGN KEY	added_by	users	id
+approver_group_members	fk_approver_group_members_group	FOREIGN KEY	group_id	approver_groups	id
+approver_group_members	fk_approver_group_members_user	FOREIGN KEY	user_id	users	id
+approver_group_members	PRIMARY	PRIMARY KEY	group_id,user_id	NULL	NULL
+approver_groups	fk_approver_groups_created_by	FOREIGN KEY	created_by	users	id
+approver_groups	PRIMARY	PRIMARY KEY	id	NULL	NULL
+approver_groups	uq_approver_groups_code	UNIQUE	code	NULL	NULL
+audit_logs	fk_audit_logs_actor	FOREIGN KEY	actor_user_id	users	id
+audit_logs	fk_audit_logs_on_behalf	FOREIGN KEY	on_behalf_of_user_id	users	id
+audit_logs	PRIMARY	PRIMARY KEY	id	NULL	NULL
+budgets	fk_budgets_department	FOREIGN KEY	department_id	departments	id
+budgets	fk_budgets_user	FOREIGN KEY	updated_by	users	id
+budgets	PRIMARY	PRIMARY KEY	id	NULL	NULL
+budgets	uq_budgets_dept_fy	UNIQUE	department_id,fy_start_year	NULL	NULL
+calendar_items	fk_calendar_items_user	FOREIGN KEY	user_id	users	id
+calendar_items	PRIMARY	PRIMARY KEY	id	NULL	NULL
+consultations	fk_consultations_consultee	FOREIGN KEY	consultee_id	users	id
+consultations	fk_consultations_request	FOREIGN KEY	request_id	approval_requests	id
+consultations	fk_consultations_requested_by	FOREIGN KEY	requested_by	users	id
+consultations	PRIMARY	PRIMARY KEY	id	NULL	NULL
+custom_approval_settings	fk_custom_approval_settings_user	FOREIGN KEY	updated_by	users	id
+custom_approval_settings	PRIMARY	PRIMARY KEY	id	NULL	NULL
+delegations	fk_delegations_created_by	FOREIGN KEY	created_by	users	id
+delegations	fk_delegations_delegate	FOREIGN KEY	delegate_id	users	id
+delegations	fk_delegations_ended_by	FOREIGN KEY	ended_by	users	id
+delegations	fk_delegations_user	FOREIGN KEY	user_id	users	id
+delegations	PRIMARY	PRIMARY KEY	id	NULL	NULL
+department_holidays	fk_department_holidays_creator	FOREIGN KEY	created_by	users	id
+department_holidays	fk_department_holidays_department	FOREIGN KEY	department_id	departments	id
+department_holidays	PRIMARY	PRIMARY KEY	department_id,holiday_on	NULL	NULL
+departments	fk_departments_hod	FOREIGN KEY	hod_user_id	users	id
+departments	PRIMARY	PRIMARY KEY	id	NULL	NULL
+departments	uq_departments_code	UNIQUE	code	NULL	NULL
+designations	PRIMARY	PRIMARY KEY	id	NULL	NULL
+designations	uq_designations_code	UNIQUE	code	NULL	NULL
+export_jobs	fk_export_jobs_user	FOREIGN KEY	user_id	users	id
+export_jobs	PRIMARY	PRIMARY KEY	id	NULL	NULL
+gcal_conflicts	fk_gcal_conflicts_link	FOREIGN KEY	link_id	gcal_links	id
+gcal_conflicts	PRIMARY	PRIMARY KEY	id	NULL	NULL
+gcal_connections	fk_gcal_connections_user	FOREIGN KEY	user_id	users	id
+gcal_connections	PRIMARY	PRIMARY KEY	id	NULL	NULL
+gcal_connections	uq_gcal_connections_channel	UNIQUE	channel_id	NULL	NULL
+gcal_connections	uq_gcal_connections_user	UNIQUE	user_id	NULL	NULL
+gcal_jobs	fk_gcal_jobs_connection	FOREIGN KEY	connection_id	gcal_connections	id
+gcal_jobs	PRIMARY	PRIMARY KEY	id	NULL	NULL
+gcal_jobs	uq_gcal_jobs_pending	UNIQUE	pending_key	NULL	NULL
+gcal_links	fk_gcal_links_connection	FOREIGN KEY	connection_id	gcal_connections	id
+gcal_links	PRIMARY	PRIMARY KEY	id	NULL	NULL
+gcal_links	uq_gcal_links_entity	UNIQUE	connection_id,entity_type,entity_id	NULL	NULL
+gcal_links	uq_gcal_links_event	UNIQUE	connection_id,google_event_id	NULL	NULL
+gcal_oauth_states	fk_gcal_oauth_states_user	FOREIGN KEY	user_id	users	id
+gcal_oauth_states	PRIMARY	PRIMARY KEY	state_hash	NULL	NULL
+gcal_settings	fk_gcal_settings_updated_by	FOREIGN KEY	updated_by	users	id
+gcal_settings	PRIMARY	PRIMARY KEY	id	NULL	NULL
+holidays	fk_holidays_created_by	FOREIGN KEY	created_by	users	id
+holidays	PRIMARY	PRIMARY KEY	holiday_on	NULL	NULL
+info_events	fk_info_events_actor	FOREIGN KEY	actor_id	users	id
+info_events	fk_info_events_info	FOREIGN KEY	info_id	info_items	id
+info_events	PRIMARY	PRIMARY KEY	id	NULL	NULL
+info_items	fk_info_items_creator	FOREIGN KEY	created_by	users	id
+info_items	fk_info_items_version	FOREIGN KEY	type_version_id	module_type_versions	id
+info_items	fk_info_items_withdrawer	FOREIGN KEY	withdrawn_by	users	id
+info_items	PRIMARY	PRIMARY KEY	id	NULL	NULL
+info_items	uq_info_items_no	UNIQUE	info_no	NULL	NULL
+info_recipients	fk_info_recipients_info	FOREIGN KEY	info_id	info_items	id
+info_recipients	fk_info_recipients_user	FOREIGN KEY	user_id	users	id
+info_recipients	PRIMARY	PRIMARY KEY	info_id,user_id	NULL	NULL
+info_targets	fk_info_targets_info	FOREIGN KEY	info_id	info_items	id
+info_targets	PRIMARY	PRIMARY KEY	info_id,target_type,target_id	NULL	NULL
+job_runs	PRIMARY	PRIMARY KEY	id	NULL	NULL
+jobs	PRIMARY	PRIMARY KEY	id	NULL	NULL
+legal_holds	fk_legal_holds_created	FOREIGN KEY	created_by	users	id
+legal_holds	fk_legal_holds_owner	FOREIGN KEY	owner_user_id	users	id
+legal_holds	fk_legal_holds_released	FOREIGN KEY	released_by	users	id
+legal_holds	PRIMARY	PRIMARY KEY	id	NULL	NULL
+login_logs	fk_login_logs_user	FOREIGN KEY	user_id	users	id
+login_logs	PRIMARY	PRIMARY KEY	id	NULL	NULL
+module_type_versions	fk_module_type_versions_creator	FOREIGN KEY	created_by	users	id
+module_type_versions	fk_module_type_versions_publisher	FOREIGN KEY	published_by	users	id
+module_type_versions	fk_module_type_versions_type	FOREIGN KEY	type_id	module_types	id
+module_type_versions	PRIMARY	PRIMARY KEY	id	NULL	NULL
+module_type_versions	uq_module_type_versions	UNIQUE	type_id,version_no	NULL	NULL
+module_type_versions	uq_module_type_versions_published	UNIQUE	published_type_id	NULL	NULL
+module_types	fk_module_types_creator	FOREIGN KEY	created_by	users	id
+module_types	PRIMARY	PRIMARY KEY	id	NULL	NULL
+module_types	uq_module_types_code	UNIQUE	module,code	NULL	NULL
+my_task_placements	fk_my_task_placements_section	FOREIGN KEY	section_id	my_task_sections	id
+my_task_placements	fk_my_task_placements_task	FOREIGN KEY	task_id	tasks	id
+my_task_placements	fk_my_task_placements_user	FOREIGN KEY	user_id	users	id
+my_task_placements	PRIMARY	PRIMARY KEY	user_id,task_id	NULL	NULL
+my_task_sections	fk_my_task_sections_user	FOREIGN KEY	user_id	users	id
+my_task_sections	PRIMARY	PRIMARY KEY	id	NULL	NULL
+my_task_sections	uq_my_task_sections_system	UNIQUE	user_id,system_key	NULL	NULL
+notification_deliveries	fk_notification_deliveries_notification	FOREIGN KEY	notification_id	notifications	id
+notification_deliveries	PRIMARY	PRIMARY KEY	id	NULL	NULL
+notification_outbox	PRIMARY	PRIMARY KEY	id	NULL	NULL
+notification_preferences	fk_notification_preferences_user	FOREIGN KEY	user_id	users	id
+notification_preferences	PRIMARY	PRIMARY KEY	user_id,event_group,channel	NULL	NULL
+notification_rule_sends	fk_notification_rule_sends_rule	FOREIGN KEY	rule_id	notification_rules	id
+notification_rule_sends	PRIMARY	PRIMARY KEY	id	NULL	NULL
+notification_rule_sends	uq_notification_rule_sends	UNIQUE	rule_id,record_kind,record_id,stage_no,send_no	NULL	NULL
+notification_rules	fk_notification_rules_created_by	FOREIGN KEY	created_by	users	id
+notification_rules	fk_notification_rules_updated_by	FOREIGN KEY	updated_by	users	id
+notification_rules	PRIMARY	PRIMARY KEY	id	NULL	NULL
+notifications	fk_notifications_user	FOREIGN KEY	user_id	users	id
+notifications	PRIMARY	PRIMARY KEY	id	NULL	NULL
+otp_challenges	fk_otp_challenges_user	FOREIGN KEY	user_id	users	id
+otp_challenges	PRIMARY	PRIMARY KEY	id	NULL	NULL
+otp_challenges	uq_otp_challenges_token	UNIQUE	challenge_token_hash	NULL	NULL
+page_access_rules	fk_page_access_rules_user	FOREIGN KEY	updated_by	users	id
+page_access_rules	PRIMARY	PRIMARY KEY	id	NULL	NULL
+page_access_rules	uq_page_access_rules	UNIQUE	page_key,scope,scope_id	NULL	NULL
+password_tokens	fk_password_tokens_created_by	FOREIGN KEY	created_by	users	id
+password_tokens	fk_password_tokens_user	FOREIGN KEY	user_id	users	id
+password_tokens	PRIMARY	PRIMARY KEY	id	NULL	NULL
+password_tokens	uq_password_tokens_hash	UNIQUE	token_hash	NULL	NULL
+project_events	fk_project_events_actor	FOREIGN KEY	actor_id	users	id
+project_events	fk_project_events_project	FOREIGN KEY	project_id	projects	id
+project_events	PRIMARY	PRIMARY KEY	id	NULL	NULL
+project_fields	fk_project_fields_creator	FOREIGN KEY	created_by	users	id
+project_fields	fk_project_fields_project	FOREIGN KEY	project_id	projects	id
+project_fields	PRIMARY	PRIMARY KEY	id	NULL	NULL
+project_members	fk_project_members_adder	FOREIGN KEY	added_by	users	id
+project_members	fk_project_members_project	FOREIGN KEY	project_id	projects	id
+project_members	PRIMARY	PRIMARY KEY	project_id,member_type,member_id	NULL	NULL
+project_sections	fk_project_sections_creator	FOREIGN KEY	created_by	users	id
+project_sections	fk_project_sections_project	FOREIGN KEY	project_id	projects	id
+project_sections	PRIMARY	PRIMARY KEY	id	NULL	NULL
+project_status_updates	fk_project_status_author	FOREIGN KEY	author_id	users	id
+project_status_updates	fk_project_status_project	FOREIGN KEY	project_id	projects	id
+project_status_updates	PRIMARY	PRIMARY KEY	id	NULL	NULL
+projects	fk_projects_creator	FOREIGN KEY	created_by	users	id
+projects	fk_projects_deleter	FOREIGN KEY	deleted_by	users	id
+projects	fk_projects_department	FOREIGN KEY	department_id	departments	id
+projects	fk_projects_owner	FOREIGN KEY	owner_id	users	id
+projects	PRIMARY	PRIMARY KEY	id	NULL	NULL
+rate_limit_hits	PRIMARY	PRIMARY KEY	id	NULL	NULL
+recent_views	fk_recent_views_request	FOREIGN KEY	request_id	approval_requests	id
+recent_views	fk_recent_views_user	FOREIGN KEY	user_id	users	id
+recent_views	PRIMARY	PRIMARY KEY	user_id,request_id	NULL	NULL
+record_files	fk_record_files_user	FOREIGN KEY	uploaded_by	users	id
+record_files	PRIMARY	PRIMARY KEY	id	NULL	NULL
+record_files	uq_record_files_path	UNIQUE	stored_path	NULL	NULL
+report_runs	fk_report_runs_schedule	FOREIGN KEY	schedule_id	report_schedules	id
+report_runs	PRIMARY	PRIMARY KEY	id	NULL	NULL
+report_runs	uq_report_runs_slot	UNIQUE	schedule_id,due_at	NULL	NULL
+report_schedules	fk_report_schedules_user	FOREIGN KEY	user_id	users	id
+report_schedules	PRIMARY	PRIMARY KEY	id	NULL	NULL
+request_amendments	fk_request_amendments_amendment	FOREIGN KEY	amendment_id	approval_requests	id
+request_amendments	fk_request_amendments_original	FOREIGN KEY	original_id	approval_requests	id
+request_amendments	fk_request_amendments_user	FOREIGN KEY	created_by	users	id
+request_amendments	PRIMARY	PRIMARY KEY	id	NULL	NULL
+request_amendments	uq_request_amendments_amendment	UNIQUE	amendment_id	NULL	NULL
+request_attachments	fk_request_attachments_request	FOREIGN KEY	request_id	approval_requests	id
+request_attachments	fk_request_attachments_user	FOREIGN KEY	uploaded_by	users	id
+request_attachments	PRIMARY	PRIMARY KEY	id	NULL	NULL
+request_attachments	uq_request_attachments_path	UNIQUE	stored_path	NULL	NULL
+request_collaborators	fk_request_collaborators_added	FOREIGN KEY	added_by	users	id
+request_collaborators	fk_request_collaborators_removed	FOREIGN KEY	removed_by	users	id
+request_collaborators	fk_request_collaborators_request	FOREIGN KEY	request_id	approval_requests	id
+request_collaborators	fk_request_collaborators_user	FOREIGN KEY	user_id	users	id
+request_collaborators	PRIMARY	PRIMARY KEY	request_id,user_id	NULL	NULL
+request_comments	fk_request_comments_author	FOREIGN KEY	author_id	users	id
+request_comments	fk_request_comments_request	FOREIGN KEY	request_id	approval_requests	id
+request_comments	PRIMARY	PRIMARY KEY	id	NULL	NULL
+request_drafts	fk_request_drafts_user	FOREIGN KEY	user_id	users	id
+request_drafts	PRIMARY	PRIMARY KEY	id	NULL	NULL
+request_drafts	uq_request_drafts_owner_key	UNIQUE	user_id,draft_key	NULL	NULL
+request_links	fk_request_links_from	FOREIGN KEY	from_request_id	approval_requests	id
+request_links	fk_request_links_to	FOREIGN KEY	to_request_id	approval_requests	id
+request_links	fk_request_links_user	FOREIGN KEY	created_by	users	id
+request_links	PRIMARY	PRIMARY KEY	id	NULL	NULL
+request_links	uq_request_links_pair	UNIQUE	from_request_id,to_request_id	NULL	NULL
+request_revisions	fk_request_revisions_request	FOREIGN KEY	request_id	approval_requests	id
+request_revisions	fk_request_revisions_user	FOREIGN KEY	created_by	users	id
+request_revisions	PRIMARY	PRIMARY KEY	request_id,round	NULL	NULL
+request_sequences	PRIMARY	PRIMARY KEY	prefix,year	NULL	NULL
+request_submission_checks	fk_submission_checks_request	FOREIGN KEY	request_id	approval_requests	id
+request_submission_checks	PRIMARY	PRIMARY KEY	request_id	NULL	NULL
+request_templates	fk_request_templates_user	FOREIGN KEY	user_id	users	id
+request_templates	fk_request_templates_workflow	FOREIGN KEY	workflow_id	workflow_definitions	id
+request_templates	PRIMARY	PRIMARY KEY	id	NULL	NULL
+request_templates	uq_request_templates_owner_name	UNIQUE	user_id,workflow_id,name	NULL	NULL
+roles	PRIMARY	PRIMARY KEY	id	NULL	NULL
+roles	uq_roles_code	UNIQUE	code	NULL	NULL
+saved_views	fk_saved_views_user	FOREIGN KEY	user_id	users	id
+saved_views	PRIMARY	PRIMARY KEY	id	NULL	NULL
+saved_views	uq_saved_views_owner_name	UNIQUE	user_id,name	NULL	NULL
+schema_migration_progress	PRIMARY	PRIMARY KEY	filename	NULL	NULL
+schema_migrations	PRIMARY	PRIMARY KEY	filename	NULL	NULL
+settings_change_history	fk_settings_history_changed_by	FOREIGN KEY	changed_by	users	id
+settings_change_history	PRIMARY	PRIMARY KEY	id	NULL	NULL
+stuck_snoozes	fk_stuck_snoozes_request	FOREIGN KEY	request_id	approval_requests	id
+stuck_snoozes	fk_stuck_snoozes_user	FOREIGN KEY	created_by	users	id
+stuck_snoozes	PRIMARY	PRIMARY KEY	request_id,reason_code	NULL	NULL
+system_settings	fk_system_settings_updated_by	FOREIGN KEY	updated_by	users	id
+system_settings	PRIMARY	PRIMARY KEY	id	NULL	NULL
+system_settings	uq_system_settings_key	UNIQUE	setting_key	NULL	NULL
+task_comments	fk_task_comments_author	FOREIGN KEY	author_id	users	id
+task_comments	fk_task_comments_parent	FOREIGN KEY	parent_comment_id	task_comments	id
+task_comments	fk_task_comments_task	FOREIGN KEY	task_id	tasks	id
+task_comments	PRIMARY	PRIMARY KEY	id	NULL	NULL
+task_dependencies	fk_task_dependencies_blocked	FOREIGN KEY	blocked_task_id	tasks	id
+task_dependencies	fk_task_dependencies_blocker	FOREIGN KEY	blocker_task_id	tasks	id
+task_dependencies	fk_task_dependencies_creator	FOREIGN KEY	created_by	users	id
+task_dependencies	PRIMARY	PRIMARY KEY	blocker_task_id,blocked_task_id	NULL	NULL
+task_events	fk_task_events_actor	FOREIGN KEY	actor_id	users	id
+task_events	fk_task_events_task	FOREIGN KEY	task_id	tasks	id
+task_events	PRIMARY	PRIMARY KEY	id	NULL	NULL
+task_field_values	fk_task_field_values_field	FOREIGN KEY	field_id	project_fields	id
+task_field_values	fk_task_field_values_task	FOREIGN KEY	task_id	tasks	id
+task_field_values	fk_task_field_values_user	FOREIGN KEY	updated_by	users	id
+task_field_values	PRIMARY	PRIMARY KEY	task_id,field_id	NULL	NULL
+task_followers	fk_task_followers_task	FOREIGN KEY	task_id	tasks	id
+task_followers	fk_task_followers_user	FOREIGN KEY	user_id	users	id
+task_followers	PRIMARY	PRIMARY KEY	task_id,user_id	NULL	NULL
+task_item_reminders	fk_task_item_reminders_task	FOREIGN KEY	task_id	tasks	id
+task_item_reminders	PRIMARY	PRIMARY KEY	task_id,kind	NULL	NULL
+task_projects	fk_task_projects_adder	FOREIGN KEY	added_by	users	id
+task_projects	fk_task_projects_project	FOREIGN KEY	project_id	projects	id
+task_projects	fk_task_projects_section	FOREIGN KEY	section_id	project_sections	id
+task_projects	fk_task_projects_task	FOREIGN KEY	task_id	tasks	id
+task_projects	PRIMARY	PRIMARY KEY	task_id,project_id	NULL	NULL
+task_reminders	fk_task_reminders_task	FOREIGN KEY	task_id	approval_tasks	id
+task_reminders	PRIMARY	PRIMARY KEY	task_id,kind	NULL	NULL
+task_tags	fk_task_tags_adder	FOREIGN KEY	added_by	users	id
+task_tags	fk_task_tags_tag	FOREIGN KEY	tag_id	work_tags	id
+task_tags	fk_task_tags_task	FOREIGN KEY	task_id	tasks	id
+task_tags	PRIMARY	PRIMARY KEY	task_id,tag_id	NULL	NULL
+tasks	fk_tasks_assignee	FOREIGN KEY	assignee_id	users	id
+tasks	fk_tasks_assigner	FOREIGN KEY	assigned_by	users	id
+tasks	fk_tasks_canceller	FOREIGN KEY	cancelled_by	users	id
+tasks	fk_tasks_completer	FOREIGN KEY	completed_by	users	id
+tasks	fk_tasks_creator	FOREIGN KEY	created_by	users	id
+tasks	fk_tasks_deleter	FOREIGN KEY	deleted_by	users	id
+tasks	fk_tasks_parent	FOREIGN KEY	parent_task_id	tasks	id
+tasks	fk_tasks_request	FOREIGN KEY	related_request_id	approval_requests	id
+tasks	fk_tasks_version	FOREIGN KEY	type_version_id	module_type_versions	id
+tasks	PRIMARY	PRIMARY KEY	id	NULL	NULL
+tasks	uq_tasks_no	UNIQUE	task_no	NULL	NULL
+tasks	uq_tasks_submission	UNIQUE	created_by,submission_key	NULL	NULL
+used_security_links	PRIMARY	PRIMARY KEY	token_hash	NULL	NULL
+user_devices	fk_user_devices_user	FOREIGN KEY	user_id	users	id
+user_devices	PRIMARY	PRIMARY KEY	id	NULL	NULL
+user_devices	uq_user_devices_user_key	UNIQUE	user_id,device_key_hash	NULL	NULL
+user_flags	fk_user_flags_user	FOREIGN KEY	user_id	users	id
+user_flags	PRIMARY	PRIMARY KEY	user_id,flag	NULL	NULL
+user_roles	fk_user_roles_assigned_by	FOREIGN KEY	assigned_by	users	id
+user_roles	fk_user_roles_role	FOREIGN KEY	role_id	roles	id
+user_roles	fk_user_roles_user	FOREIGN KEY	user_id	users	id
+user_roles	PRIMARY	PRIMARY KEY	user_id,role_id	NULL	NULL
+user_sessions	fk_user_sessions_device	FOREIGN KEY	device_id	user_devices	id
+user_sessions	fk_user_sessions_tried_by	FOREIGN KEY	tried_by	users	id
+user_sessions	fk_user_sessions_user	FOREIGN KEY	user_id	users	id
+user_sessions	PRIMARY	PRIMARY KEY	id	NULL	NULL
+user_settings	fk_user_settings_user	FOREIGN KEY	user_id	users	id
+user_settings	PRIMARY	PRIMARY KEY	user_id,setting_key	NULL	NULL
+users	fk_users_created_by	FOREIGN KEY	created_by	users	id
+users	fk_users_department	FOREIGN KEY	department_id	departments	id
+users	fk_users_designation	FOREIGN KEY	designation_id	designations	id
+users	fk_users_manager	FOREIGN KEY	reporting_manager_id	users	id
+users	fk_users_updated_by	FOREIGN KEY	updated_by	users	id
+users	PRIMARY	PRIMARY KEY	id	NULL	NULL
+users	uq_users_email	UNIQUE	email	NULL	NULL
+users	uq_users_firebase_uid	UNIQUE	firebase_uid	NULL	NULL
+users	uq_users_login_id	UNIQUE	login_id	NULL	NULL
+users	uq_users_whatsapp_number	UNIQUE	whatsapp_number	NULL	NULL
+whatsapp_rate_limit_log	PRIMARY	PRIMARY KEY	id	NULL	NULL
+whatsapp_template_variables	fk_whatsapp_template_variables_template	FOREIGN KEY	template_id	whatsapp_templates	id
+whatsapp_template_variables	PRIMARY	PRIMARY KEY	id	NULL	NULL
+whatsapp_template_variables	uq_whatsapp_template_variables_pos	UNIQUE	template_id,position	NULL	NULL
+whatsapp_templates	fk_whatsapp_templates_created_by	FOREIGN KEY	created_by	users	id
+whatsapp_templates	fk_whatsapp_templates_submitted_by	FOREIGN KEY	submitted_by	users	id
+whatsapp_templates	fk_whatsapp_templates_updated_by	FOREIGN KEY	updated_by	users	id
+whatsapp_templates	PRIMARY	PRIMARY KEY	id	NULL	NULL
+whatsapp_templates	uq_whatsapp_templates_code	UNIQUE	template_code,language,version	NULL	NULL
+work_digest_sends	fk_work_digest_sends_user	FOREIGN KEY	user_id	users	id
+work_digest_sends	PRIMARY	PRIMARY KEY	user_id,day	NULL	NULL
+work_favourites	fk_work_favourites_user	FOREIGN KEY	user_id	users	id
+work_favourites	PRIMARY	PRIMARY KEY	user_id,object_type,object_id	NULL	NULL
+work_likes	fk_work_likes_user	FOREIGN KEY	user_id	users	id
+work_likes	PRIMARY	PRIMARY KEY	target_type,target_id,user_id	NULL	NULL
+work_recent_projects	fk_work_recent_project	FOREIGN KEY	project_id	projects	id
+work_recent_projects	fk_work_recent_user	FOREIGN KEY	user_id	users	id
+work_recent_projects	PRIMARY	PRIMARY KEY	user_id,project_id	NULL	NULL
+work_saved_searches	fk_work_saved_searches_user	FOREIGN KEY	user_id	users	id
+work_saved_searches	PRIMARY	PRIMARY KEY	id	NULL	NULL
+work_saved_searches	uq_work_saved_searches	UNIQUE	user_id,name	NULL	NULL
+work_tags	fk_work_tags_creator	FOREIGN KEY	created_by	users	id
+work_tags	PRIMARY	PRIMARY KEY	id	NULL	NULL
+work_tags	uq_work_tags_name	UNIQUE	name	NULL	NULL
+work_views	fk_work_views_creator	FOREIGN KEY	created_by	users	id
+work_views	PRIMARY	PRIMARY KEY	id	NULL	NULL
+work_views	uq_work_views_name	UNIQUE	scope,scope_id,name	NULL	NULL
+workflow_definitions	fk_workflow_definitions_created_by	FOREIGN KEY	created_by	users	id
+workflow_definitions	fk_workflow_definitions_owner	FOREIGN KEY	owner_user_id	users	id
+workflow_definitions	PRIMARY	PRIMARY KEY	id	NULL	NULL
+workflow_definitions	uq_workflow_definitions_code	UNIQUE	code	NULL	NULL
+workflow_migration_items	fk_migration_items_request	FOREIGN KEY	request_id	approval_requests	id
+workflow_migration_items	fk_migration_items_run	FOREIGN KEY	migration_id	workflow_migrations	id
+workflow_migration_items	PRIMARY	PRIMARY KEY	id	NULL	NULL
+workflow_migrations	fk_workflow_migrations_from	FOREIGN KEY	from_version_id	workflow_versions	id
+workflow_migrations	fk_workflow_migrations_to	FOREIGN KEY	to_version_id	workflow_versions	id
+workflow_migrations	fk_workflow_migrations_user	FOREIGN KEY	requested_by	users	id
+workflow_migrations	fk_workflow_migrations_workflow	FOREIGN KEY	workflow_id	workflow_definitions	id
+workflow_migrations	PRIMARY	PRIMARY KEY	id	NULL	NULL
+workflow_versions	fk_workflow_versions_created_by	FOREIGN KEY	created_by	users	id
+workflow_versions	fk_workflow_versions_published_by	FOREIGN KEY	published_by	users	id
+workflow_versions	fk_workflow_versions_workflow	FOREIGN KEY	workflow_id	workflow_definitions	id
+workflow_versions	PRIMARY	PRIMARY KEY	id	NULL	NULL
+workflow_versions	uq_workflow_versions_no	UNIQUE	workflow_id,version_no	NULL	NULL
+workflow_versions	uq_workflow_versions_one_published	UNIQUE	published_workflow_id	NULL	NULL
+(348 rows)
+
+-- SELECT rc.table_name, rc.constraint_name, rc.referenced_table_name, rc.update_rule, rc.delete_rule FROM information_schema.referential_constraints rc WHERE rc.constraint_schema='ars_approvals_test' ORDER BY rc.table_name
+TABLE_NAME	CONSTRAINT_NAME	REFERENCED_TABLE_NAME	UPDATE_RULE	DELETE_RULE
+ai_conversations	fk_ai_conversations_owner	users	NO ACTION	NO ACTION
+ai_messages	fk_ai_messages_conversation	ai_conversations	NO ACTION	NO ACTION
+ai_proposals	fk_ai_proposals_approver	users	NO ACTION	NO ACTION
+ai_proposals	fk_ai_proposals_decided_by	users	NO ACTION	NO ACTION
+ai_proposals	fk_ai_proposals_requested_by	users	NO ACTION	NO ACTION
+ai_rules	fk_ai_rules_updated_by	users	NO ACTION	NO ACTION
+alert_events	fk_alert_events_rule	alert_rules	NO ACTION	NO ACTION
+alert_rules	fk_alert_rules_user	users	NO ACTION	NO ACTION
+analytics_views	fk_analytics_views_user	users	NO ACTION	NO ACTION
+approval_events	fk_approval_events_actor	users	NO ACTION	NO ACTION
+approval_events	fk_approval_events_request	approval_requests	NO ACTION	NO ACTION
+approval_requests	fk_approval_requests_deleted_by	users	NO ACTION	NO ACTION
+approval_requests	fk_approval_requests_requester	users	NO ACTION	NO ACTION
+approval_requests	fk_approval_requests_version	workflow_versions	NO ACTION	NO ACTION
+approval_tasks	fk_approval_tasks_approver	users	NO ACTION	NO ACTION
+approval_tasks	fk_approval_tasks_decided_by	users	NO ACTION	NO ACTION
+approval_tasks	fk_approval_tasks_on_behalf	users	NO ACTION	NO ACTION
+approval_tasks	fk_approval_tasks_request	approval_requests	NO ACTION	NO ACTION
+approver_group_members	fk_approver_group_members_added_by	users	NO ACTION	NO ACTION
+approver_group_members	fk_approver_group_members_group	approver_groups	NO ACTION	NO ACTION
+approver_group_members	fk_approver_group_members_user	users	NO ACTION	NO ACTION
+approver_groups	fk_approver_groups_created_by	users	NO ACTION	NO ACTION
+audit_logs	fk_audit_logs_actor	users	NO ACTION	NO ACTION
+audit_logs	fk_audit_logs_on_behalf	users	NO ACTION	NO ACTION
+budgets	fk_budgets_department	departments	NO ACTION	NO ACTION
+budgets	fk_budgets_user	users	NO ACTION	NO ACTION
+calendar_items	fk_calendar_items_user	users	NO ACTION	NO ACTION
+consultations	fk_consultations_consultee	users	NO ACTION	NO ACTION
+consultations	fk_consultations_request	approval_requests	NO ACTION	NO ACTION
+consultations	fk_consultations_requested_by	users	NO ACTION	NO ACTION
+custom_approval_settings	fk_custom_approval_settings_user	users	NO ACTION	NO ACTION
+delegations	fk_delegations_created_by	users	NO ACTION	NO ACTION
+delegations	fk_delegations_delegate	users	NO ACTION	NO ACTION
+delegations	fk_delegations_ended_by	users	NO ACTION	NO ACTION
+delegations	fk_delegations_user	users	NO ACTION	NO ACTION
+department_holidays	fk_department_holidays_creator	users	NO ACTION	NO ACTION
+department_holidays	fk_department_holidays_department	departments	NO ACTION	NO ACTION
+departments	fk_departments_hod	users	NO ACTION	NO ACTION
+export_jobs	fk_export_jobs_user	users	NO ACTION	NO ACTION
+gcal_conflicts	fk_gcal_conflicts_link	gcal_links	NO ACTION	NO ACTION
+gcal_connections	fk_gcal_connections_user	users	NO ACTION	NO ACTION
+gcal_jobs	fk_gcal_jobs_connection	gcal_connections	NO ACTION	NO ACTION
+gcal_links	fk_gcal_links_connection	gcal_connections	NO ACTION	NO ACTION
+gcal_oauth_states	fk_gcal_oauth_states_user	users	NO ACTION	NO ACTION
+gcal_settings	fk_gcal_settings_updated_by	users	NO ACTION	NO ACTION
+holidays	fk_holidays_created_by	users	NO ACTION	NO ACTION
+info_events	fk_info_events_actor	users	NO ACTION	NO ACTION
+info_events	fk_info_events_info	info_items	NO ACTION	NO ACTION
+info_items	fk_info_items_creator	users	NO ACTION	NO ACTION
+info_items	fk_info_items_version	module_type_versions	NO ACTION	NO ACTION
+info_items	fk_info_items_withdrawer	users	NO ACTION	NO ACTION
+info_recipients	fk_info_recipients_info	info_items	NO ACTION	NO ACTION
+info_recipients	fk_info_recipients_user	users	NO ACTION	NO ACTION
+info_targets	fk_info_targets_info	info_items	NO ACTION	NO ACTION
+legal_holds	fk_legal_holds_created	users	NO ACTION	NO ACTION
+legal_holds	fk_legal_holds_owner	users	NO ACTION	NO ACTION
+legal_holds	fk_legal_holds_released	users	NO ACTION	NO ACTION
+login_logs	fk_login_logs_user	users	NO ACTION	NO ACTION
+module_type_versions	fk_module_type_versions_creator	users	NO ACTION	NO ACTION
+module_type_versions	fk_module_type_versions_publisher	users	NO ACTION	NO ACTION
+module_type_versions	fk_module_type_versions_type	module_types	NO ACTION	NO ACTION
+module_types	fk_module_types_creator	users	NO ACTION	NO ACTION
+my_task_placements	fk_my_task_placements_section	my_task_sections	NO ACTION	CASCADE
+my_task_placements	fk_my_task_placements_task	tasks	NO ACTION	NO ACTION
+my_task_placements	fk_my_task_placements_user	users	NO ACTION	NO ACTION
+my_task_sections	fk_my_task_sections_user	users	NO ACTION	NO ACTION
+notification_deliveries	fk_notification_deliveries_notification	notifications	NO ACTION	NO ACTION
+notification_preferences	fk_notification_preferences_user	users	NO ACTION	NO ACTION
+notification_rule_sends	fk_notification_rule_sends_rule	notification_rules	NO ACTION	CASCADE
+notification_rules	fk_notification_rules_created_by	users	NO ACTION	NO ACTION
+notification_rules	fk_notification_rules_updated_by	users	NO ACTION	NO ACTION
+notifications	fk_notifications_user	users	NO ACTION	NO ACTION
+otp_challenges	fk_otp_challenges_user	users	NO ACTION	NO ACTION
+page_access_rules	fk_page_access_rules_user	users	NO ACTION	NO ACTION
+password_tokens	fk_password_tokens_created_by	users	NO ACTION	NO ACTION
+password_tokens	fk_password_tokens_user	users	NO ACTION	NO ACTION
+project_events	fk_project_events_actor	users	NO ACTION	NO ACTION
+project_events	fk_project_events_project	projects	NO ACTION	NO ACTION
+project_fields	fk_project_fields_creator	users	NO ACTION	NO ACTION
+project_fields	fk_project_fields_project	projects	NO ACTION	NO ACTION
+project_members	fk_project_members_adder	users	NO ACTION	NO ACTION
+project_members	fk_project_members_project	projects	NO ACTION	NO ACTION
+project_sections	fk_project_sections_creator	users	NO ACTION	NO ACTION
+project_sections	fk_project_sections_project	projects	NO ACTION	NO ACTION
+project_status_updates	fk_project_status_author	users	NO ACTION	NO ACTION
+project_status_updates	fk_project_status_project	projects	NO ACTION	NO ACTION
+projects	fk_projects_creator	users	NO ACTION	NO ACTION
+projects	fk_projects_deleter	users	NO ACTION	NO ACTION
+projects	fk_projects_department	departments	NO ACTION	NO ACTION
+projects	fk_projects_owner	users	NO ACTION	NO ACTION
+recent_views	fk_recent_views_request	approval_requests	NO ACTION	NO ACTION
+recent_views	fk_recent_views_user	users	NO ACTION	NO ACTION
+record_files	fk_record_files_user	users	NO ACTION	NO ACTION
+report_runs	fk_report_runs_schedule	report_schedules	NO ACTION	NO ACTION
+report_schedules	fk_report_schedules_user	users	NO ACTION	NO ACTION
+request_amendments	fk_request_amendments_amendment	approval_requests	NO ACTION	NO ACTION
+request_amendments	fk_request_amendments_original	approval_requests	NO ACTION	NO ACTION
+request_amendments	fk_request_amendments_user	users	NO ACTION	NO ACTION
+request_attachments	fk_request_attachments_request	approval_requests	NO ACTION	NO ACTION
+request_attachments	fk_request_attachments_user	users	NO ACTION	NO ACTION
+request_collaborators	fk_request_collaborators_added	users	NO ACTION	NO ACTION
+request_collaborators	fk_request_collaborators_removed	users	NO ACTION	NO ACTION
+request_collaborators	fk_request_collaborators_request	approval_requests	NO ACTION	NO ACTION
+request_collaborators	fk_request_collaborators_user	users	NO ACTION	NO ACTION
+request_comments	fk_request_comments_author	users	NO ACTION	NO ACTION
+request_comments	fk_request_comments_request	approval_requests	NO ACTION	NO ACTION
+request_drafts	fk_request_drafts_user	users	NO ACTION	NO ACTION
+request_links	fk_request_links_from	approval_requests	NO ACTION	NO ACTION
+request_links	fk_request_links_to	approval_requests	NO ACTION	NO ACTION
+request_links	fk_request_links_user	users	NO ACTION	NO ACTION
+request_revisions	fk_request_revisions_request	approval_requests	NO ACTION	NO ACTION
+request_revisions	fk_request_revisions_user	users	NO ACTION	NO ACTION
+request_submission_checks	fk_submission_checks_request	approval_requests	NO ACTION	NO ACTION
+request_templates	fk_request_templates_user	users	NO ACTION	NO ACTION
+request_templates	fk_request_templates_workflow	workflow_definitions	NO ACTION	NO ACTION
+saved_views	fk_saved_views_user	users	NO ACTION	NO ACTION
+settings_change_history	fk_settings_history_changed_by	users	NO ACTION	NO ACTION
+stuck_snoozes	fk_stuck_snoozes_request	approval_requests	NO ACTION	NO ACTION
+stuck_snoozes	fk_stuck_snoozes_user	users	NO ACTION	NO ACTION
+system_settings	fk_system_settings_updated_by	users	NO ACTION	NO ACTION
+task_comments	fk_task_comments_author	users	NO ACTION	NO ACTION
+task_comments	fk_task_comments_parent	task_comments	NO ACTION	NO ACTION
+task_comments	fk_task_comments_task	tasks	NO ACTION	NO ACTION
+task_dependencies	fk_task_dependencies_blocked	tasks	NO ACTION	NO ACTION
+task_dependencies	fk_task_dependencies_blocker	tasks	NO ACTION	NO ACTION
+task_dependencies	fk_task_dependencies_creator	users	NO ACTION	NO ACTION
+task_events	fk_task_events_actor	users	NO ACTION	NO ACTION
+task_events	fk_task_events_task	tasks	NO ACTION	NO ACTION
+task_field_values	fk_task_field_values_field	project_fields	NO ACTION	NO ACTION
+task_field_values	fk_task_field_values_task	tasks	NO ACTION	NO ACTION
+task_field_values	fk_task_field_values_user	users	NO ACTION	NO ACTION
+task_followers	fk_task_followers_task	tasks	NO ACTION	NO ACTION
+task_followers	fk_task_followers_user	users	NO ACTION	NO ACTION
+task_item_reminders	fk_task_item_reminders_task	tasks	NO ACTION	NO ACTION
+task_projects	fk_task_projects_adder	users	NO ACTION	NO ACTION
+task_projects	fk_task_projects_project	projects	NO ACTION	NO ACTION
+task_projects	fk_task_projects_section	project_sections	NO ACTION	NO ACTION
+task_projects	fk_task_projects_task	tasks	NO ACTION	NO ACTION
+task_reminders	fk_task_reminders_task	approval_tasks	NO ACTION	NO ACTION
+task_tags	fk_task_tags_adder	users	NO ACTION	NO ACTION
+task_tags	fk_task_tags_tag	work_tags	NO ACTION	NO ACTION
+task_tags	fk_task_tags_task	tasks	NO ACTION	NO ACTION
+tasks	fk_tasks_assignee	users	NO ACTION	NO ACTION
+tasks	fk_tasks_assigner	users	NO ACTION	NO ACTION
+tasks	fk_tasks_canceller	users	NO ACTION	NO ACTION
+tasks	fk_tasks_completer	users	NO ACTION	NO ACTION
+tasks	fk_tasks_creator	users	NO ACTION	NO ACTION
+tasks	fk_tasks_deleter	users	NO ACTION	NO ACTION
+tasks	fk_tasks_parent	tasks	NO ACTION	NO ACTION
+tasks	fk_tasks_request	approval_requests	NO ACTION	NO ACTION
+tasks	fk_tasks_version	module_type_versions	NO ACTION	NO ACTION
+user_devices	fk_user_devices_user	users	NO ACTION	NO ACTION
+user_flags	fk_user_flags_user	users	NO ACTION	NO ACTION
+user_roles	fk_user_roles_assigned_by	users	NO ACTION	NO ACTION
+user_roles	fk_user_roles_role	roles	NO ACTION	NO ACTION
+user_roles	fk_user_roles_user	users	NO ACTION	NO ACTION
+user_sessions	fk_user_sessions_device	user_devices	NO ACTION	NO ACTION
+user_sessions	fk_user_sessions_tried_by	users	NO ACTION	NO ACTION
+user_sessions	fk_user_sessions_user	users	NO ACTION	NO ACTION
+user_settings	fk_user_settings_user	users	NO ACTION	NO ACTION
+users	fk_users_created_by	users	NO ACTION	NO ACTION
+users	fk_users_department	departments	NO ACTION	NO ACTION
+users	fk_users_designation	designations	NO ACTION	NO ACTION
+users	fk_users_manager	users	NO ACTION	NO ACTION
+users	fk_users_updated_by	users	NO ACTION	NO ACTION
+whatsapp_template_variables	fk_whatsapp_template_variables_template	whatsapp_templates	NO ACTION	NO ACTION
+whatsapp_templates	fk_whatsapp_templates_created_by	users	NO ACTION	NO ACTION
+whatsapp_templates	fk_whatsapp_templates_submitted_by	users	NO ACTION	NO ACTION
+whatsapp_templates	fk_whatsapp_templates_updated_by	users	NO ACTION	NO ACTION
+work_digest_sends	fk_work_digest_sends_user	users	NO ACTION	NO ACTION
+work_favourites	fk_work_favourites_user	users	NO ACTION	NO ACTION
+work_likes	fk_work_likes_user	users	NO ACTION	NO ACTION
+work_recent_projects	fk_work_recent_project	projects	NO ACTION	NO ACTION
+work_recent_projects	fk_work_recent_user	users	NO ACTION	NO ACTION
+work_saved_searches	fk_work_saved_searches_user	users	NO ACTION	NO ACTION
+work_tags	fk_work_tags_creator	users	NO ACTION	NO ACTION
+work_views	fk_work_views_creator	users	NO ACTION	NO ACTION
+workflow_definitions	fk_workflow_definitions_created_by	users	NO ACTION	NO ACTION
+workflow_definitions	fk_workflow_definitions_owner	users	NO ACTION	NO ACTION
+workflow_migration_items	fk_migration_items_request	approval_requests	NO ACTION	NO ACTION
+workflow_migration_items	fk_migration_items_run	workflow_migrations	NO ACTION	NO ACTION
+workflow_migrations	fk_workflow_migrations_from	workflow_versions	NO ACTION	NO ACTION
+workflow_migrations	fk_workflow_migrations_to	workflow_versions	NO ACTION	NO ACTION
+workflow_migrations	fk_workflow_migrations_user	users	NO ACTION	NO ACTION
+workflow_migrations	fk_workflow_migrations_workflow	workflow_definitions	NO ACTION	NO ACTION
+workflow_versions	fk_workflow_versions_created_by	users	NO ACTION	NO ACTION
+workflow_versions	fk_workflow_versions_published_by	users	NO ACTION	NO ACTION
+workflow_versions	fk_workflow_versions_workflow	workflow_definitions	NO ACTION	NO ACTION
+(188 rows)
+
+-- SELECT table_name, index_name, non_unique, GROUP_CONCAT(column_name ORDER BY seq_in_index) cols FROM information_schema.statistics WHERE table_schema='ars_approvals_test' GROUP BY table_name, index_name, non_unique ORDER BY table_name, index_name
+TABLE_NAME	INDEX_NAME	NON_UNIQUE	cols
+ai_conversations	idx_ai_conversations_owner	1	owner_user_id,updated_at
+ai_conversations	PRIMARY	0	id
+ai_messages	idx_ai_messages_conversation	1	conversation_id,id
+ai_messages	idx_ai_messages_created	1	created_at
+ai_messages	idx_ai_messages_request_key	1	request_key
+ai_messages	PRIMARY	0	id
+ai_messages	uq_ai_messages_request	0	conversation_id,request_key
+ai_proposals	fk_ai_proposals_decided_by	1	decided_by
+ai_proposals	idx_ai_proposals_approver	1	approver_user_id,status
+ai_proposals	idx_ai_proposals_requested	1	requested_by,status
+ai_proposals	PRIMARY	0	id
+ai_rules	fk_ai_rules_updated_by	1	updated_by
+ai_rules	PRIMARY	0	chat_mode
+ai_salesforce_connection	PRIMARY	0	id
+ai_source_records	idx_ai_source_records_modified	1	source_key,dataset,modified_at
+ai_source_records	PRIMARY	0	source_key,dataset,record_id
+ai_sync_runs	idx_ai_sync_runs_source	1	source_key,dataset,id
+ai_sync_runs	PRIMARY	0	id
+alert_events	idx_alert_events_rule	1	rule_id,fired_at
+alert_events	PRIMARY	0	id
+alert_rules	fk_alert_rules_user	1	user_id
+alert_rules	idx_alert_rules_active	1	active
+alert_rules	PRIMARY	0	id
+analytics_views	idx_analytics_views_shared	1	target,shared
+analytics_views	PRIMARY	0	id
+analytics_views	uq_analytics_views_owner	0	user_id,target,name
+approval_events	fk_approval_events_actor	1	actor_id
+approval_events	idx_approval_events_request	1	request_id,id
+approval_events	PRIMARY	0	id
+approval_requests	fk_approval_requests_deleted_by	1	deleted_by
+approval_requests	fk_approval_requests_version	1	workflow_version_id
+approval_requests	idx_approval_requests_closed	1	closed_at
+approval_requests	idx_approval_requests_deleted	1	deleted_at
+approval_requests	idx_approval_requests_requester	1	requester_id,status
+approval_requests	idx_approval_requests_status	1	status,submitted_at
+approval_requests	idx_approval_requests_submitted	1	submitted_at
+approval_requests	idx_approval_requests_validity	1	status,valid_until
+approval_requests	PRIMARY	0	id
+approval_requests	uq_approval_requests_no	0	request_no
+approval_requests	uq_approval_requests_submission	0	requester_id,submission_key
+approval_tasks	fk_approval_tasks_decided_by	1	decided_by
+approval_tasks	fk_approval_tasks_on_behalf	1	on_behalf_of
+approval_tasks	idx_approval_tasks_decided	1	decided_at
+approval_tasks	idx_approval_tasks_due	1	status,due_at
+approval_tasks	idx_approval_tasks_queue	1	approver_id,status,created_at
+approval_tasks	idx_approval_tasks_request_status	1	request_id,status
+approval_tasks	PRIMARY	0	id
+approval_tasks	uq_approval_tasks_key	0	request_id,task_key
+approver_group_members	fk_approver_group_members_added_by	1	added_by
+approver_group_members	fk_approver_group_members_user	1	user_id
+approver_group_members	PRIMARY	0	group_id,user_id
+approver_groups	fk_approver_groups_created_by	1	created_by
+approver_groups	PRIMARY	0	id
+approver_groups	uq_approver_groups_code	0	code
+audit_logs	fk_audit_logs_on_behalf	1	on_behalf_of_user_id
+audit_logs	idx_audit_logs_action	1	action,occurred_at
+audit_logs	idx_audit_logs_actor	1	actor_user_id,occurred_at
+audit_logs	idx_audit_logs_entity	1	entity_type,entity_id,occurred_at
+audit_logs	PRIMARY	0	id
+budgets	fk_budgets_user	1	updated_by
+budgets	PRIMARY	0	id
+budgets	uq_budgets_dept_fy	0	department_id,fy_start_year
+calendar_items	idx_calendar_items_user	1	user_id,deleted_at,starts_at
+calendar_items	idx_calendar_items_user_date	1	user_id,deleted_at,start_date
+calendar_items	PRIMARY	0	id
+consultations	fk_consultations_requested_by	1	requested_by
+consultations	idx_consultations_consultee	1	consultee_id,status
+consultations	idx_consultations_request	1	request_id
+consultations	PRIMARY	0	id
+custom_approval_settings	fk_custom_approval_settings_user	1	updated_by
+custom_approval_settings	PRIMARY	0	id
+delegations	fk_delegations_created_by	1	created_by
+delegations	fk_delegations_ended_by	1	ended_by
+delegations	idx_delegations_delegate	1	delegate_id,ends_on
+delegations	idx_delegations_user	1	user_id,ends_on
+delegations	PRIMARY	0	id
+department_holidays	fk_department_holidays_creator	1	created_by
+department_holidays	PRIMARY	0	department_id,holiday_on
+departments	fk_departments_hod	1	hod_user_id
+departments	PRIMARY	0	id
+departments	uq_departments_code	0	code
+designations	PRIMARY	0	id
+designations	uq_designations_code	0	code
+export_jobs	idx_export_jobs_status	1	status,created_at
+export_jobs	idx_export_jobs_user	1	user_id,created_at
+export_jobs	PRIMARY	0	id
+gcal_conflicts	idx_gcal_conflicts_link	1	link_id,status
+gcal_conflicts	idx_gcal_conflicts_user	1	user_id,status
+gcal_conflicts	PRIMARY	0	id
+gcal_connections	idx_gcal_connections_status	1	status
+gcal_connections	PRIMARY	0	id
+gcal_connections	uq_gcal_connections_channel	0	channel_id
+gcal_connections	uq_gcal_connections_user	0	user_id
+gcal_jobs	idx_gcal_jobs_connection	1	connection_id,id
+gcal_jobs	idx_gcal_jobs_due	1	status,next_run_at
+gcal_jobs	PRIMARY	0	id
+gcal_jobs	uq_gcal_jobs_pending	0	pending_key
+gcal_links	idx_gcal_links_user	1	user_id,entity_type
+gcal_links	PRIMARY	0	id
+gcal_links	uq_gcal_links_entity	0	connection_id,entity_type,entity_id
+gcal_links	uq_gcal_links_event	0	connection_id,google_event_id
+gcal_oauth_states	fk_gcal_oauth_states_user	1	user_id
+gcal_oauth_states	idx_gcal_oauth_states_expiry	1	expires_at
+gcal_oauth_states	PRIMARY	0	state_hash
+gcal_settings	fk_gcal_settings_updated_by	1	updated_by
+gcal_settings	PRIMARY	0	id
+holidays	fk_holidays_created_by	1	created_by
+holidays	PRIMARY	0	holiday_on
+info_events	fk_info_events_actor	1	actor_id
+info_events	idx_info_events_info	1	info_id,id
+info_events	PRIMARY	0	id
+info_items	fk_info_items_version	1	type_version_id
+info_items	fk_info_items_withdrawer	1	withdrawn_by
+info_items	idx_info_items_creator	1	created_by,status
+info_items	idx_info_items_status	1	status,published_at
+info_items	PRIMARY	0	id
+info_items	uq_info_items_no	0	info_no
+info_recipients	idx_info_recipients_user	1	user_id,read_at
+info_recipients	PRIMARY	0	info_id,user_id
+info_targets	PRIMARY	0	info_id,target_type,target_id
+job_runs	idx_job_runs_key	1	job_key,started_at
+job_runs	idx_job_runs_started	1	started_at
+job_runs	PRIMARY	0	id
+jobs	idx_jobs_due	1	status,run_after
+jobs	PRIMARY	0	id
+legal_holds	fk_legal_holds_created	1	created_by
+legal_holds	fk_legal_holds_owner	1	owner_user_id
+legal_holds	fk_legal_holds_released	1	released_by
+legal_holds	idx_legal_holds_active	1	released_at,scope_type,scope_id
+legal_holds	PRIMARY	0	id
+login_logs	idx_login_logs_user	1	user_id,occurred_at
+login_logs	PRIMARY	0	id
+module_type_versions	fk_module_type_versions_creator	1	created_by
+module_type_versions	fk_module_type_versions_publisher	1	published_by
+module_type_versions	PRIMARY	0	id
+module_type_versions	uq_module_type_versions	0	type_id,version_no
+module_type_versions	uq_module_type_versions_published	0	published_type_id
+module_types	fk_module_types_creator	1	created_by
+module_types	idx_module_types_module	1	module,active
+module_types	PRIMARY	0	id
+module_types	uq_module_types_code	0	module,code
+my_task_placements	fk_my_task_placements_section	1	section_id
+my_task_placements	fk_my_task_placements_task	1	task_id
+my_task_placements	idx_my_task_placements_section	1	user_id,section_id,position
+my_task_placements	PRIMARY	0	user_id,task_id
+my_task_sections	idx_my_task_sections_user	1	user_id,position
+my_task_sections	PRIMARY	0	id
+my_task_sections	uq_my_task_sections_system	0	user_id,system_key
+notification_deliveries	fk_notification_deliveries_notification	1	notification_id
+notification_deliveries	idx_notification_deliveries_reference	1	provider_reference
+notification_deliveries	idx_notification_deliveries_retry	1	status,next_retry_at
+notification_deliveries	PRIMARY	0	id
+notification_outbox	idx_notification_outbox_unsent	1	sent_at,created_at
+notification_outbox	PRIMARY	0	id
+notification_preferences	PRIMARY	0	user_id,event_group,channel
+notification_rule_sends	idx_notification_rule_sends_record	1	record_kind,record_id
+notification_rule_sends	PRIMARY	0	id
+notification_rule_sends	uq_notification_rule_sends	0	rule_id,record_kind,record_id,stage_no,send_no
+notification_rules	fk_notification_rules_created_by	1	created_by
+notification_rules	fk_notification_rules_updated_by	1	updated_by
+notification_rules	idx_notification_rules_active	1	active,module
+notification_rules	PRIMARY	0	id
+notifications	idx_notifications_user_id	1	user_id,id
+notifications	idx_notifications_user_read	1	user_id,read_at
+notifications	PRIMARY	0	id
+otp_challenges	idx_otp_challenges_expires	1	expires_at
+otp_challenges	idx_otp_challenges_user_created	1	user_id,created_at
+otp_challenges	PRIMARY	0	id
+otp_challenges	uq_otp_challenges_token	0	challenge_token_hash
+page_access_rules	fk_page_access_rules_user	1	updated_by
+page_access_rules	idx_page_access_scope	1	scope,scope_id
+page_access_rules	PRIMARY	0	id
+page_access_rules	uq_page_access_rules	0	page_key,scope,scope_id
+password_tokens	fk_password_tokens_created_by	1	created_by
+password_tokens	idx_password_tokens_user	1	user_id,used_at
+password_tokens	PRIMARY	0	id
+password_tokens	uq_password_tokens_hash	0	token_hash
+project_events	fk_project_events_actor	1	actor_id
+project_events	idx_project_events_project	1	project_id,id
+project_events	PRIMARY	0	id
+project_fields	fk_project_fields_creator	1	created_by
+project_fields	idx_project_fields_project	1	project_id,deleted_at,position
+project_fields	PRIMARY	0	id
+project_members	fk_project_members_adder	1	added_by
+project_members	idx_project_members_member	1	member_type,member_id
+project_members	PRIMARY	0	project_id,member_type,member_id
+project_sections	fk_project_sections_creator	1	created_by
+project_sections	idx_project_sections_project	1	project_id,deleted_at,position
+project_sections	PRIMARY	0	id
+project_status_updates	fk_project_status_author	1	author_id
+project_status_updates	idx_project_status_project	1	project_id,created_at
+project_status_updates	PRIMARY	0	id
+projects	fk_projects_creator	1	created_by
+projects	fk_projects_deleter	1	deleted_by
+projects	fk_projects_department	1	department_id
+projects	fk_projects_owner	1	owner_id
+projects	idx_projects_privacy	1	privacy,department_id,archived_at,deleted_at
+projects	PRIMARY	0	id
+rate_limit_hits	idx_rate_limit_hits_bucket	1	bucket,occurred_at
+rate_limit_hits	idx_rate_limit_hits_time	1	occurred_at
+rate_limit_hits	PRIMARY	0	id
+recent_views	fk_recent_views_request	1	request_id
+recent_views	idx_recent_views_user_time	1	user_id,viewed_at
+recent_views	PRIMARY	0	user_id,request_id
+record_files	fk_record_files_user	1	uploaded_by
+record_files	idx_record_files_entity	1	entity_type,entity_id
+record_files	PRIMARY	0	id
+record_files	uq_record_files_path	0	stored_path
+report_runs	PRIMARY	0	id
+report_runs	uq_report_runs_slot	0	schedule_id,due_at
+report_schedules	fk_report_schedules_user	1	user_id
+report_schedules	idx_report_schedules_due	1	active,next_run_at
+report_schedules	PRIMARY	0	id
+request_amendments	fk_request_amendments_user	1	created_by
+request_amendments	idx_request_amendments_original	1	original_id
+request_amendments	PRIMARY	0	id
+request_amendments	uq_request_amendments_amendment	0	amendment_id
+request_attachments	fk_request_attachments_user	1	uploaded_by
+request_attachments	idx_request_attachments_request	1	request_id
+request_attachments	PRIMARY	0	id
+request_attachments	uq_request_attachments_path	0	stored_path
+request_collaborators	fk_request_collaborators_added	1	added_by
+request_collaborators	fk_request_collaborators_removed	1	removed_by
+request_collaborators	idx_request_collaborators_user	1	user_id,removed_at
+request_collaborators	PRIMARY	0	request_id,user_id
+request_comments	fk_request_comments_author	1	author_id
+request_comments	idx_request_comments_request	1	request_id,id
+request_comments	PRIMARY	0	id
+request_drafts	idx_request_drafts_expires	1	expires_at
+request_drafts	PRIMARY	0	id
+request_drafts	uq_request_drafts_owner_key	0	user_id,draft_key
+request_links	fk_request_links_user	1	created_by
+request_links	idx_request_links_to	1	to_request_id
+request_links	PRIMARY	0	id
+request_links	uq_request_links_pair	0	from_request_id,to_request_id
+request_revisions	fk_request_revisions_user	1	created_by
+request_revisions	PRIMARY	0	request_id,round
+request_sequences	PRIMARY	0	prefix,year
+request_submission_checks	idx_submission_checks_budget	1	budget_department,budget_fy
+request_submission_checks	PRIMARY	0	request_id
+request_templates	fk_request_templates_workflow	1	workflow_id
+request_templates	PRIMARY	0	id
+request_templates	uq_request_templates_owner_name	0	user_id,workflow_id,name
+roles	PRIMARY	0	id
+roles	uq_roles_code	0	code
+saved_views	PRIMARY	0	id
+saved_views	uq_saved_views_owner_name	0	user_id,name
+schema_migration_progress	PRIMARY	0	filename
+schema_migrations	PRIMARY	0	filename
+settings_change_history	fk_settings_history_changed_by	1	changed_by
+settings_change_history	idx_settings_history_key	1	setting_key
+settings_change_history	PRIMARY	0	id
+stuck_snoozes	fk_stuck_snoozes_user	1	created_by
+stuck_snoozes	PRIMARY	0	request_id,reason_code
+system_settings	fk_system_settings_updated_by	1	updated_by
+system_settings	PRIMARY	0	id
+system_settings	uq_system_settings_key	0	setting_key
+task_comments	fk_task_comments_author	1	author_id
+task_comments	fk_task_comments_parent	1	parent_comment_id
+task_comments	idx_task_comments_task	1	task_id,id
+task_comments	PRIMARY	0	id
+task_dependencies	fk_task_dependencies_creator	1	created_by
+task_dependencies	idx_task_dependencies_blocked	1	blocked_task_id
+task_dependencies	PRIMARY	0	blocker_task_id,blocked_task_id
+task_events	fk_task_events_actor	1	actor_id
+task_events	idx_task_events_task	1	task_id,id
+task_events	PRIMARY	0	id
+task_field_values	fk_task_field_values_field	1	field_id
+task_field_values	fk_task_field_values_user	1	updated_by
+task_field_values	PRIMARY	0	task_id,field_id
+task_followers	idx_task_followers_user	1	user_id
+task_followers	PRIMARY	0	task_id,user_id
+task_item_reminders	PRIMARY	0	task_id,kind
+task_projects	fk_task_projects_adder	1	added_by
+task_projects	fk_task_projects_section	1	section_id
+task_projects	idx_task_projects_list	1	project_id,section_id,position
+task_projects	PRIMARY	0	task_id,project_id
+task_reminders	PRIMARY	0	task_id,kind
+task_tags	fk_task_tags_adder	1	added_by
+task_tags	idx_task_tags_tag	1	tag_id
+task_tags	PRIMARY	0	task_id,tag_id
+tasks	fk_tasks_assigner	1	assigned_by
+tasks	fk_tasks_canceller	1	cancelled_by
+tasks	fk_tasks_completer	1	completed_by
+tasks	fk_tasks_deleter	1	deleted_by
+tasks	fk_tasks_request	1	related_request_id
+tasks	fk_tasks_version	1	type_version_id
+tasks	idx_tasks_assign_group	1	assign_group_id
+tasks	idx_tasks_assignee	1	assignee_id,status,due_at
+tasks	idx_tasks_created	1	created_at
+tasks	idx_tasks_creator	1	created_by,status
+tasks	idx_tasks_parent	1	parent_task_id,subtask_position
+tasks	idx_tasks_root	1	root_task_id
+tasks	idx_tasks_series	1	series_id
+tasks	idx_tasks_status_due	1	status,due_at
+tasks	PRIMARY	0	id
+tasks	uq_tasks_no	0	task_no
+tasks	uq_tasks_submission	0	created_by,submission_key
+used_security_links	idx_used_security_links_used	1	used_at
+used_security_links	PRIMARY	0	token_hash
+user_devices	PRIMARY	0	id
+user_devices	uq_user_devices_user_key	0	user_id,device_key_hash
+user_flags	PRIMARY	0	user_id,flag
+user_roles	fk_user_roles_assigned_by	1	assigned_by
+user_roles	fk_user_roles_role	1	role_id
+user_roles	PRIMARY	0	user_id,role_id
+user_sessions	fk_user_sessions_device	1	device_id
+user_sessions	fk_user_sessions_tried_by	1	tried_by
+user_sessions	idx_user_sessions_user	1	user_id,revoked_at
+user_sessions	PRIMARY	0	id
+user_settings	PRIMARY	0	user_id,setting_key
+users	fk_users_created_by	1	created_by
+users	fk_users_designation	1	designation_id
+users	fk_users_updated_by	1	updated_by
+users	idx_users_active	1	active
+users	idx_users_department	1	department_id
+users	idx_users_manager	1	reporting_manager_id
+users	PRIMARY	0	id
+users	uq_users_email	0	email
+users	uq_users_firebase_uid	0	firebase_uid
+users	uq_users_login_id	0	login_id
+users	uq_users_whatsapp_number	0	whatsapp_number
+whatsapp_rate_limit_log	idx_whatsapp_rate_limit_occurred	1	occurred_at
+whatsapp_rate_limit_log	PRIMARY	0	id
+whatsapp_template_variables	PRIMARY	0	id
+whatsapp_template_variables	uq_whatsapp_template_variables_pos	0	template_id,position
+whatsapp_templates	fk_whatsapp_templates_created_by	1	created_by
+whatsapp_templates	fk_whatsapp_templates_submitted_by	1	submitted_by
+whatsapp_templates	fk_whatsapp_templates_updated_by	1	updated_by
+whatsapp_templates	idx_whatsapp_templates_event	1	event_type,status,approval_status
+whatsapp_templates	PRIMARY	0	id
+whatsapp_templates	uq_whatsapp_templates_code	0	template_code,language,version
+work_digest_sends	PRIMARY	0	user_id,day
+work_favourites	PRIMARY	0	user_id,object_type,object_id
+work_likes	fk_work_likes_user	1	user_id
+work_likes	PRIMARY	0	target_type,target_id,user_id
+work_recent_projects	fk_work_recent_project	1	project_id
+work_recent_projects	idx_work_recent_user	1	user_id,opened_at
+work_recent_projects	PRIMARY	0	user_id,project_id
+work_saved_searches	PRIMARY	0	id
+work_saved_searches	uq_work_saved_searches	0	user_id,name
+work_tags	fk_work_tags_creator	1	created_by
+work_tags	PRIMARY	0	id
+work_tags	uq_work_tags_name	0	name
+work_views	fk_work_views_creator	1	created_by
+work_views	idx_work_views_scope	1	scope,scope_id,position
+work_views	PRIMARY	0	id
+work_views	uq_work_views_name	0	scope,scope_id,name
+workflow_definitions	fk_workflow_definitions_created_by	1	created_by
+workflow_definitions	fk_workflow_definitions_owner	1	owner_user_id
+workflow_definitions	PRIMARY	0	id
+workflow_definitions	uq_workflow_definitions_code	0	code
+workflow_migration_items	idx_migration_items_request	1	request_id
+workflow_migration_items	idx_migration_items_run	1	migration_id
+workflow_migration_items	PRIMARY	0	id
+workflow_migrations	fk_workflow_migrations_from	1	from_version_id
+workflow_migrations	fk_workflow_migrations_to	1	to_version_id
+workflow_migrations	fk_workflow_migrations_user	1	requested_by
+workflow_migrations	idx_workflow_migrations_workflow	1	workflow_id,created_at
+workflow_migrations	PRIMARY	0	id
+workflow_versions	fk_workflow_versions_created_by	1	created_by
+workflow_versions	fk_workflow_versions_published_by	1	published_by
+workflow_versions	PRIMARY	0	id
+workflow_versions	uq_workflow_versions_no	0	workflow_id,version_no
+workflow_versions	uq_workflow_versions_one_published	0	published_workflow_id
+(365 rows)
+
+-- SELECT event_object_table, trigger_name, action_timing, event_manipulation FROM information_schema.triggers WHERE trigger_schema='ars_approvals_test'
+EVENT_OBJECT_TABLE	TRIGGER_NAME	ACTION_TIMING	EVENT_MANIPULATION
+audit_logs	trg_audit_logs_no_update	BEFORE	UPDATE
+audit_logs	trg_audit_logs_no_delete	BEFORE	DELETE
+approval_events	trg_approval_events_no_update	BEFORE	UPDATE
+approval_events	trg_approval_events_no_delete	BEFORE	DELETE
+request_comments	trg_request_comments_no_update	BEFORE	UPDATE
+request_comments	trg_request_comments_no_delete	BEFORE	DELETE
+task_events	trg_task_events_no_update	BEFORE	UPDATE
+task_events	trg_task_events_no_delete	BEFORE	DELETE
+info_events	trg_info_events_no_update	BEFORE	UPDATE
+info_events	trg_info_events_no_delete	BEFORE	DELETE
+(10 rows)
+
+-- SELECT table_name FROM information_schema.tables t WHERE table_schema='ars_approvals_test' AND NOT EXISTS (SELECT 1 FROM information_schema.table_constraints c WHERE c.table_schema=t.table_schema AND c.table_name=t.table_name AND c.constraint_type='PRIMARY KEY')
+(0 rows)
+
+-- SELECT * FROM information_schema.user_privileges WHERE grantee LIKE '%ars_dev%'
+GRANTEE	TABLE_CATALOG	PRIVILEGE_TYPE	IS_GRANTABLE
+'ars_dev'@'%'	def	USAGE	NO
+(1 rows)
+
+-- SHOW GRANTS
+Grants for ars_dev@%
+GRANT USAGE ON *.* TO `ars_dev`@`%`
+GRANT ALL PRIVILEGES ON `ars\_approvals`.* TO `ars_dev`@`%`
+GRANT ALL PRIVILEGES ON `ars_approvals_test`.* TO `ars_dev`@`%`
+GRANT ALL PRIVILEGES ON `ars_importcheck`.* TO `ars_dev`@`%`
+GRANT ALL PRIVILEGES ON `ars_migrate_resume_test`.* TO `ars_dev`@`%`
+GRANT ALL PRIVILEGES ON `ars_release`.* TO `ars_dev`@`%`
+GRANT ALL PRIVILEGES ON `ars_restore_drill_test`.* TO `ars_dev`@`%`
+GRANT ALL PRIVILEGES ON `ars_verify_check_test`.* TO `ars_dev`@`%`
+(8 rows)

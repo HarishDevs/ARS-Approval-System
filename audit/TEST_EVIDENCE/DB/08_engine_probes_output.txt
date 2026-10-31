@@ -1,0 +1,23 @@
+
+ RUN  v5.0.3 D:/Omniroute/ARS Approval System
+
+ ✓ audit/TEST_EVIDENCE/DB/probes/engine.probe.test.ts > DB-P1 DoA/skip level on resubmit (Q-022 / AUD-02) > engine alone (REQUESTING_STEP) keeps the skipped senior level skipped after the amount rises 4ms
+ ✓ audit/TEST_EVIDENCE/DB/probes/engine.probe.test.ts > DB-P1 DoA/skip level on resubmit (Q-022 / AUD-02) > service guard: routeChanged() detects it, and BEGINNING restores the senior level 1ms
+ ✓ audit/TEST_EVIDENCE/DB/probes/engine.probe.test.ts > DB-P2 conditional branch change on resubmit > routeChanged() flags a branch flip 0ms
+ ✓ audit/TEST_EVIDENCE/DB/probes/engine.probe.test.ts > DB-P3 approver chosen in a form field changes on resubmit > routeChanged() is false, so REQUESTING_STEP keeps the earlier approval by the previously chosen person 0ms
+ ✓ audit/TEST_EVIDENCE/DB/probes/engine.probe.test.ts > DB-P4 self-exclusion and onNoApprover > BLOCK (default): a step with nobody left blocks, it is not skipped 0ms
+ ✓ audit/TEST_EVIDENCE/DB/probes/engine.probe.test.ts > DB-P4 self-exclusion and onNoApprover > SKIP: every approval step skipped -> APPROVED at submit with zero decisions 0ms
+ ✓ audit/TEST_EVIDENCE/DB/probes/engine.probe.test.ts > DB-P4 self-exclusion and onNoApprover > SKIP: requester is the only member of the group -> step skipped, request APPROVED 0ms
+ ✓ audit/TEST_EVIDENCE/DB/probes/engine.probe.test.ts > DB-P4 self-exclusion and onNoApprover > inactive approver at activation is filtered out -> BLOCKED by default 0ms
+ ✓ audit/TEST_EVIDENCE/DB/probes/engine.probe.test.ts > DB-P4 self-exclusion and onNoApprover > ANY_N needing more people than resolve -> BLOCKED, not skipped 0ms
+ ✓ audit/TEST_EVIDENCE/DB/probes/engine.probe.test.ts > DB-P5 nobody approves their own request > a requester who is the approver's delegate cannot decide 1ms
+ ✓ audit/TEST_EVIDENCE/DB/probes/engine.probe.test.ts > DB-P5 nobody approves their own request > a requester inside a ROLE source is excluded from the tasks 1ms
+ ✓ audit/TEST_EVIDENCE/DB/probes/engine.probe.test.ts > DB-P5 nobody approves their own request > IT 'ASSIGN' on a blocked step refuses the requester 0ms
+ ✓ audit/TEST_EVIDENCE/DB/probes/engine.probe.test.ts > DB-P6 IT recovery of a blocked step on the IT person's OWN request > SKIP by the requester themself is accepted by the engine and the request ends APPROVED 0ms
+ ✓ audit/TEST_EVIDENCE/DB/probes/engine.probe.test.ts > DB-P6 IT recovery of a blocked step on the IT person's OWN request > RETRY / ASSIGN still refuse the requester as approver (contrast) 0ms
+
+ Test Files  1 passed (1)
+      Tests  14 passed (14)
+   Start at  23:02:00
+   Duration  322ms (transform 71%, import 16%, worker 7%, tests 7%)
+

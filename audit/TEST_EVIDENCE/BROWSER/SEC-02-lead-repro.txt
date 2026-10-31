@@ -1,0 +1,21 @@
+Lead auditor reproduction of SEC-02, 2026-10-31T23:10:22+05:30, server http://localhost:3100 (v1.39.0 code)
+== /superadmin/ai/history
+garbage cookie, plain: 307
+garbage cookie, RSC: 1: 200 12461 bytes; page strings: AI Activity History;
+requireArea calls in page.tsx: 0
+== /superadmin/ai/reports
+garbage cookie, plain: 307
+garbage cookie, RSC: 1: 200 15238 bytes; page strings: AI Reports;
+requireArea calls in page.tsx: 0
+== /superadmin/ai/data-sources
+garbage cookie, plain: 307
+garbage cookie, RSC: 1: 200 10135 bytes; page strings: Data Sources;
+requireArea calls in page.tsx: 0
+== /superadmin/salesforce
+garbage cookie, plain: 307
+garbage cookie, RSC: 1: 200 15863 bytes; page strings: Salesforce Settings;
+requireArea calls in page.tsx: 0
+== /superadmin/settings
+garbage cookie, plain: 307
+garbage cookie, RSC: 1: 200 4917 bytes; page strings: 
+requireArea calls in page.tsx: 2

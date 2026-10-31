@@ -1,0 +1,19 @@
+/ | 200  19700 | <title>ARS-CMS | ARS Steels</title> | <meta name="robots" content="index, follow" |  | canon:none | og-tags:0 | <meta name="description" content="ARS-CMS is the Central Management System of ARS Steels &amp; Alloy Internati
+/login | 200  19139 | <title>Sign in · ARS-CMS</title> | <meta name="robots" content="noindex, nofollow" |  | canon:none | og-tags:0 | <meta name="description" content="ARS-CMS — the Central Management System of ARS Steels &amp; Alloy Internat
+/privacy | 200  29469 | <title>Privacy policy · ARS-CMS</title> | <meta name="robots" content="index, follow" |  | canon:none | og-tags:0 | <meta name="description" content="How ARS-CMS collects, uses, stores and protects information, including data 
+/terms | 200  18997 | <title>Terms of use · ARS-CMS</title> | <meta name="robots" content="index, follow" |  | canon:none | og-tags:0 | <meta name="description" content="Terms for using ARS-CMS, the internal approval, task and information platfor
+/forgot-password | 200  16934 | <title>Forgot password · ARS-CMS</title> | <meta name="robots" content="noindex, nofollow" |  | canon:none | og-tags:0 | <meta name="description" content="ARS-CMS — the Central Management System of ARS Steels &amp; Alloy Internat
+/set-password | 200  16924 | <title>Set your password · ARS-CMS</title> | <meta name="robots" content="noindex, nofollow" |  | canon:none | og-tags:0 | <meta name="description" content="ARS-CMS — the Central Management System of ARS Steels &amp; Alloy Internat
+/signed-out | 200  16762 | <title>Signed out · ARS-CMS</title> | <meta name="robots" content="noindex, nofollow" |  | canon:none | og-tags:0 | <meta name="description" content="ARS-CMS — the Central Management System of ARS Steels &amp; Alloy Internat
+/security/not-me | 200  13095 | <title>Secure your account · ARS-CMS</title> | <meta name="robots" content="noindex, nofollow" |  | canon:none | og-tags:0 | <meta name="description" content="ARS-CMS — the Central Management System of ARS Steels &amp; Alloy Internat
+/try | 200  11524 | <title>Try as · ARS-CMS</title> | <meta name="robots" content="noindex, nofollow" |  | canon:none | og-tags:0 | <meta name="description" content="ARS-CMS — the Central Management System of ARS Steels &amp; Alloy Internat
+/robots.txt | 307 http://localhost:3100/login?next=%2Frobots.txt 25 |  |  |  | canon:none | og-tags:0 | 
+/sitemap.xml | 307 http://localhost:3100/login?next=%2Fsitemap.xml 26 |  |  |  | canon:none | og-tags:0 | 
+/manifest.webmanifest | 200  553 |  |  |  | canon:none | og-tags:0 | 
+/favicon.ico | 200  2739 |  |  |  | canon:none | og-tags:0 | 
+/this-page-does-not-exist | 307 http://localhost:3100/login?next=%2Fthis-page-does-not-exist 39 |  |  |  | canon:none | og-tags:0 | 
+/users | 307 http://localhost:3100/login?next=%2Fusers 20 |  |  |  | canon:none | og-tags:0 | 
+/admin | 307 http://localhost:3100/login?next=%2Fadmin 20 |  |  |  | canon:none | og-tags:0 | 
+/superadmin | 307 http://localhost:3100/login?next=%2Fsuperadmin 25 |  |  |  | canon:none | og-tags:0 | 
+/users/requests | 307 http://localhost:3100/login?next=%2Fusers%2Frequests 31 |  |  |  | canon:none | og-tags:0 | 
+/api/does-not-exist | 404  69 |  |  |  | canon:none | og-tags:0 | 

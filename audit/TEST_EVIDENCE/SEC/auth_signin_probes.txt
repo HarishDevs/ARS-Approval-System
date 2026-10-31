@@ -1,0 +1,47 @@
+# Sign-in / OTP / password-flow probes 2026-10-31T22:51:02+05:30. X-Forwarded-For set to 198.51.100.x (TEST-NET) so the shared null-IP bucket is not consumed.
+[S1 password/start malformed JSON] => 400 0.006479s  | {"success":false,"error":{"code":"AUTH_INVALID_CREDENTIALS","message":"The user ID or password is incorrect.","requestId":"REQ-20261031-0E1850"}}
+[S2 password/start wrong content-type text/plain] => 400 0.005159s  | {"success":false,"error":{"code":"AUTH_INVALID_CREDENTIALS","message":"The user ID or password is incorrect.","requestId":"REQ-20261031-626642"}}
+[S3 password/start empty object] => 400 0.005185s  | {"success":false,"error":{"code":"AUTH_INVALID_CREDENTIALS","message":"The user ID or password is incorrect.","requestId":"REQ-20261031-16C8B4"}}
+[S4 password/start unknown loginId] => 401 0.093290s  | {"success":false,"error":{"code":"AUTH_INVALID_CREDENTIALS","message":"The user ID or password is incorrect.","requestId":"REQ-20261031-67A37B"}}
+[S5 password/start Google-only user E2E_STAFF, wrong password] => 401 0.029012s  | {"success":false,"error":{"code":"AUTH_INVALID_CREDENTIALS","message":"The user ID or password is incorrect.","requestId":"REQ-20261031-AF0882"}}
+[S6 password/start inactive user E2E_LEAVER, wrong password] => 401 0.026685s  | {"success":false,"error":{"code":"AUTH_INVALID_CREDENTIALS","message":"The user ID or password is incorrect.","requestId":"REQ-20261031-2AF470"}}
+[S7 password/start SQL-ish loginId] => 401 0.063984s  | {"success":false,"error":{"code":"AUTH_INVALID_CREDENTIALS","message":"The user ID or password is incorrect.","requestId":"REQ-20261031-E7D7F2"}}
+[S8 password/verify garbage challenge] => 410 0.022989s  | {"success":false,"error":{"code":"AUTH_CHALLENGE_EXPIRED","message":"This code has expired. Please start again.","requestId":"REQ-20261031-2C0C50"}}
+[S9 password/verify non-numeric code] => 400 0.005536s  | {"success":false,"error":{"code":"AUTH_INVALID_OTP","message":"Enter the code from WhatsApp.","requestId":"REQ-20261031-6C93DF"}}
+[S10 password/resend garbage challenge] => 410 0.016679s  | {"success":false,"error":{"code":"AUTH_CHALLENGE_EXPIRED","message":"This code has expired. Please start again.","requestId":"REQ-20261031-9AA767"}}
+[S11 google garbage idToken] => 401 0.019547s  | {"success":false,"error":{"code":"AUTH_INVALID_TOKEN","message":"Google sign-in failed. Please try again.","requestId":"REQ-20261031-465F8F"}}
+[S12 google short idToken] => 400 0.022971s  | {"success":false,"error":{"code":"AUTH_INVALID_TOKEN","message":"Google sign-in failed. Please try again.","requestId":"REQ-20261031-086BF4"}}
+[S13 forgot/start unknown loginId] => 200 0.024329s  | {"success":true,"data":{"challengeToken":"q3bJlJBgtmMyioqzkNEGIk2LZxUw01aqLigbPdF5B3Q","expiresInSeconds":300}}
+[S14 forgot/start Google-only user E2E_STAFF] => 200 0.021707s  | {"success":true,"data":{"challengeToken":"SEB_17PDgDOFKiAuWBzKxQmJc1LTh0MoAFzk_4K6Mbk","expiresInSeconds":300}}
+[S15 forgot/complete with that (never-issued) challenge, wrong code] => 401 0.017147s  | {"success":false,"error":{"code":"AUTH_INVALID_OTP","message":"That code isn't right or has expired. Ask for a new code if you need one.","requestId":"REQ-20261031-7884EC"}}
+[S16 forgot/complete weak password] => 400 0.015044s  | {"success":false,"error":{"code":"AUTH_PASSWORD_POLICY","message":"Use at least 10 characters.","requestId":"REQ-20261031-D08893"}}
+[S17 set-password/start garbage link token] => 410 0.016398s  | {"success":false,"error":{"code":"AUTH_LINK_INVALID","message":"This link has expired or was already used. Ask IT for a new one.","requestId":"REQ-20261031-97BBEE"}}
+[S18 set-password/complete garbage] => 410 0.016266s  | {"success":false,"error":{"code":"AUTH_LINK_INVALID","message":"This link has expired or was already used. Ask IT for a new one.","requestId":"REQ-20261031-D4AD56"}}
+[S19 GET /set-password?token=garbage (page)] => 200 0.013433s  | <!DOCTYPE html><html lang="en" class="__variable_d8ebd1"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="preload" as="image" href="/brand/ars-green-steel.svg"/><link rel="stylesheet" href="/_next/static/css/7b736202f0b1dbfd.css" nonce="YV+
+[S20 POST password/start cross-site (Sec-Fetch-Site: cross-site)] => 403 0.003020s  | {"success":false,"error":{"code":"FORBIDDEN","message":"Not allowed."}}
+RL1 attempt 1 (XFF 198.51.100.77) => 401 {"success":false,"error":{"code":"AUTH_INVALID_CREDENTIALS","message":"The user ID or password is incorrect.","requestId
+RL1 attempt 2 (XFF 198.51.100.77) => 401 {"success":false,"error":{"code":"AUTH_INVALID_CREDENTIALS","message":"The user ID or password is incorrect.","requestId
+RL1 attempt 3 (XFF 198.51.100.77) => 401 {"success":false,"error":{"code":"AUTH_INVALID_CREDENTIALS","message":"The user ID or password is incorrect.","requestId
+RL1 attempt 4 (XFF 198.51.100.77) => 401 {"success":false,"error":{"code":"AUTH_INVALID_CREDENTIALS","message":"The user ID or password is incorrect.","requestId
+RL1 attempt 5 (XFF 198.51.100.77) => 401 {"success":false,"error":{"code":"AUTH_INVALID_CREDENTIALS","message":"The user ID or password is incorrect.","requestId
+RL1 attempt 6 (XFF 198.51.100.77) => 401 {"success":false,"error":{"code":"AUTH_INVALID_CREDENTIALS","message":"The user ID or password is incorrect.","requestId
+RL1 attempt 7 (XFF 198.51.100.77) => 401 {"success":false,"error":{"code":"AUTH_INVALID_CREDENTIALS","message":"The user ID or password is incorrect.","requestId
+RL1 attempt 8 (XFF 198.51.100.77) => 401 {"success":false,"error":{"code":"AUTH_INVALID_CREDENTIALS","message":"The user ID or password is incorrect.","requestId
+RL1 attempt 9 (XFF 198.51.100.77) => 401 {"success":false,"error":{"code":"AUTH_INVALID_CREDENTIALS","message":"The user ID or password is incorrect.","requestId
+RL1 attempt 10 (XFF 198.51.100.77) => 401 {"success":false,"error":{"code":"AUTH_INVALID_CREDENTIALS","message":"The user ID or password is incorrect.","requestId
+RL1 attempt 11 (XFF 198.51.100.77) => 401 {"success":false,"error":{"code":"AUTH_INVALID_CREDENTIALS","message":"The user ID or password is incorrect.","requestId
+RL1 attempt 12 (XFF 198.51.100.77) => 401 {"success":false,"error":{"code":"AUTH_INVALID_CREDENTIALS","message":"The user ID or password is incorrect.","requestId
+RL1 attempt 13 (XFF 198.51.100.77) => 401 {"success":false,"error":{"code":"AUTH_INVALID_CREDENTIALS","message":"The user ID or password is incorrect.","requestId
+RL1 attempt 14 (XFF 198.51.100.77) => 401 {"success":false,"error":{"code":"AUTH_INVALID_CREDENTIALS","message":"The user ID or password is incorrect.","requestId
+RL1 attempt 15 (XFF 198.51.100.77) => 401 {"success":false,"error":{"code":"AUTH_INVALID_CREDENTIALS","message":"The user ID or password is incorrect.","requestId
+RL1 attempt 16 (XFF 198.51.100.77) => 401 {"success":false,"error":{"code":"AUTH_INVALID_CREDENTIALS","message":"The user ID or password is incorrect.","requestId
+RL1 attempt 17 (XFF 198.51.100.77) => 401 {"success":false,"error":{"code":"AUTH_INVALID_CREDENTIALS","message":"The user ID or password is incorrect.","requestId
+RL1 attempt 18 (XFF 198.51.100.77) => 401 {"success":false,"error":{"code":"AUTH_INVALID_CREDENTIALS","message":"The user ID or password is incorrect.","requestId
+RL1 attempt 19 (XFF 198.51.100.77) => 401 {"success":false,"error":{"code":"AUTH_INVALID_CREDENTIALS","message":"The user ID or password is incorrect.","requestId
+RL1 attempt 20 (XFF 198.51.100.77) => 401 {"success":false,"error":{"code":"AUTH_INVALID_CREDENTIALS","message":"The user ID or password is incorrect.","requestId
+RL1 attempt 21 (XFF 198.51.100.77) => 429 {"success":false,"error":{"code":"AUTH_RATE_LIMITED","message":"Too many attempts. Try again in a few minutes.","request
+RL1 attempt 22 (XFF 198.51.100.77) => 429 {"success":false,"error":{"code":"AUTH_RATE_LIMITED","message":"Too many attempts. Try again in a few minutes.","request
+[RL2 same request, XFF changed to 198.51.100.78 (new bucket)] => 401 0.061810s  | {"success":false,"error":{"code":"AUTH_INVALID_CREDENTIALS","message":"The user ID or password is incorrect.","requestId":"REQ-20261031-697E2F"}}
+[RL3 XFF '198.51.100.77, 203.0.113.9' (right-most trusted)] => 401 0.065501s  | {"success":false,"error":{"code":"AUTH_INVALID_CREDENTIALS","message":"The user ID or password is incorrect.","requestId":"REQ-20261031-E564A0"}}
+# CF-Connecting-IP trust check 2026-10-31T22:51:46+05:30
+{"success":false,"error":{"code":"AUTH_RATE_LIMITED","message":"Too many attempts. Try again in a few minutes.","requestId":"REQ-20261031-0D7B46"}} => 429

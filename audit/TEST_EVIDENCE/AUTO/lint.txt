@@ -1,0 +1,4 @@
+
+> ars-approval-system@1.39.0 lint
+> eslint .
+

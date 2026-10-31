@@ -1,0 +1,14 @@
+== run 41188584683
+End-to-end tests (Playwright)	failure
+Integration tests (MySQL 8)	success
+Lint, typecheck, unit tests, build	success
+End-to-end tests (Playwright)	Run npm run test:e2e	2026-10-31T09:34:48.7326452Z   ✘  122 tests/e2e/v137-ux-laws.spec.ts:53:5 › Reject is apart and asks first; Cancel keeps it waiting; after deciding, what's next (11.3s)
+End-to-end tests (Playwright)	Run npm run test:e2e	2026-10-31T09:50:07.0790979Z   1 failed
+End-to-end tests (Playwright)	Run npm run test:e2e	2026-10-31T09:50:07.0794072Z   192 passed (23.8m)
+== run 41185787171
+Integration tests (MySQL 8)	success
+End-to-end tests (Playwright)	failure
+Lint, typecheck, unit tests, build	success
+End-to-end tests (Playwright)	Run npm run test:e2e	2026-10-31T08:53:08.1597900Z   ✘   97 tests/e2e/v131-work-more.spec.ts:56:5 › a repeating task makes its next one when completed (12.6s)
+End-to-end tests (Playwright)	Run npm run test:e2e	2026-10-31T09:10:05.3514314Z   1 failed
+End-to-end tests (Playwright)	Run npm run test:e2e	2026-10-31T09:10:05.3517307Z   190 passed (24.8m)

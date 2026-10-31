@@ -1,0 +1,78 @@
+
+-- SELECT NOW() AS db_now, (SELECT COUNT(*) FROM users) users, (SELECT COUNT(*) FROM approval_requests) requests, (SELECT COUNT(*) FROM approval_tasks) tasks, (SELECT COUNT(*) FROM approval_events) events, (SELECT COUNT(*) FROM audit_logs) audit, (SELECT COUNT(*) FROM tasks) work_tasks
+db_now	users	requests	tasks	events	audit	work_tasks
+Sat Oct 31 2026 17:37:58 GMT+0530 (India Standard Time)	47	6	8	33	122	0
+(1 rows)
+
+-- SELECT 'open request without pending task' chk, r.status, COUNT(*) n FROM approval_requests r WHERE r.status='IN_PROGRESS' AND r.deleted_at IS NULL AND NOT EXISTS (SELECT 1 FROM approval_tasks t WHERE t.request_id=r.id AND t.status='PENDING') GROUP BY r.status
+(0 rows)
+
+-- SELECT 'pending task on closed request' chk, COUNT(*) n FROM approval_tasks t JOIN approval_requests r ON r.id=t.request_id WHERE t.status='PENDING' AND r.status NOT IN ('IN_PROGRESS','ON_HOLD')
+chk	n
+pending task on closed request	0
+(1 rows)
+
+-- SELECT 'APPROVAL task approver=requester' chk, COUNT(*) n FROM approval_tasks t JOIN approval_requests r ON r.id=t.request_id WHERE t.task_type='APPROVAL' AND (t.approver_id=r.requester_id OR t.decided_by=r.requester_id)
+chk	n
+APPROVAL task approver=requester	0
+(1 rows)
+
+-- SELECT 'WORK task approver=requester (allowed by design)' chk, COUNT(*) n FROM approval_tasks t JOIN approval_requests r ON r.id=t.request_id WHERE t.task_type='WORK' AND t.approver_id=r.requester_id
+chk	n
+WORK task approver=requester (allowed by design)	0
+(1 rows)
+
+-- SELECT 'approved requests with zero APPROVED approval tasks' chk, COUNT(*) n FROM approval_requests r WHERE r.status='APPROVED' AND NOT EXISTS (SELECT 1 FROM approval_tasks t WHERE t.request_id=r.id AND t.task_type='APPROVAL' AND t.status='APPROVED')
+chk	n
+approved requests with zero APPROVED approval tasks	0
+(1 rows)
+
+-- SELECT 'state_json status vs column' chk, COUNT(*) n FROM approval_requests WHERE JSON_UNQUOTE(JSON_EXTRACT(state_json,'$.status')) <> status
+chk	n
+state_json status vs column	0
+(1 rows)
+
+-- SELECT 'state_json round vs column' chk, COUNT(*) n FROM approval_requests WHERE CAST(JSON_EXTRACT(state_json,'$.round') AS UNSIGNED) <> round
+chk	n
+state_json round vs column	0
+(1 rows)
+
+-- SELECT 'pending task for inactive approver' chk, COUNT(*) n FROM approval_tasks t JOIN users u ON u.id=t.approver_id WHERE t.status='PENDING' AND u.active=0
+chk	n
+pending task for inactive approver	0
+(1 rows)
+
+-- SELECT 'closed request with closed_at null' chk, COUNT(*) n FROM approval_requests WHERE status IN ('APPROVED','REJECTED','CANCELLED') AND closed_at IS NULL
+chk	n
+closed request with closed_at null	0
+(1 rows)
+
+-- SELECT 'duplicate pending tasks' chk, COUNT(*) n FROM (SELECT request_id FROM approval_tasks WHERE status='PENDING' GROUP BY request_id,node_id,round,approver_id HAVING COUNT(*)>1) x
+chk	n
+duplicate pending tasks	0
+(1 rows)
+
+-- SELECT 'tasks.assign_group_id -> tasks.id orphan' chk, COUNT(*) n FROM tasks t WHERE t.assign_group_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM tasks r WHERE r.id=t.assign_group_id)
+chk	n
+tasks.assign_group_id -> tasks.id orphan	0
+(1 rows)
+
+-- SELECT 'notification_outbox.request_id orphan' chk, COUNT(*) n FROM notification_outbox o WHERE o.request_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM approval_requests r WHERE r.id=o.request_id)
+chk	n
+notification_outbox.request_id orphan	0
+(1 rows)
+
+-- SELECT 'deleted requests (soft)' chk, COUNT(*) n FROM approval_requests WHERE deleted_at IS NOT NULL
+chk	n
+deleted requests (soft)	1
+(1 rows)
+
+-- SELECT 'soft-deleted request still open' chk, COUNT(*) n FROM approval_requests WHERE deleted_at IS NOT NULL AND status IN ('IN_PROGRESS','ON_HOLD','CHANGES_REQUIRED')
+chk	n
+soft-deleted request still open	0
+(1 rows)
+
+-- SELECT 'users max id vs count' chk, (SELECT MAX(id) FROM users) maxid, (SELECT COUNT(*) FROM users) cnt
+chk	maxid	cnt
+users max id vs count	47	47
+(1 rows)

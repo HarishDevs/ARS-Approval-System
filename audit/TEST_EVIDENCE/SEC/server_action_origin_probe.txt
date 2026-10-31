@@ -1,0 +1,12 @@
+# Server Action origin check (Next.js built-in) 2026-10-31T22:58:04+05:30. Action id is bogus (40 hex).
+== Origin: http://localhost:3100
+HTTP/1.1 404 Not Found
+X-Content-Type-Options: nosniff
+x-nextjs-action-not-found: 1
+content-type: text/plain
+Server action not found.
+== Origin: https://evil.example
+HTTP/1.1 500 Internal Server Error
+X-Content-Type-Options: nosniff
+Content-Type: text/x-component
+0:{"a":"$@1","f":"","b":"O6uJvlEnEP9PlkY-_JB_Q"}1:E{"digest":"2297885652@E80"}

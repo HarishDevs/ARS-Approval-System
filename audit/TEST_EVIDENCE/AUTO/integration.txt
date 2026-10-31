@@ -1,0 +1,12 @@
+
+ RUN  v5.0.3 D:/Omniroute/ARS Approval System
+
+
+ Test Files  56 passed (56)
+      Tests  312 passed (312)
+   Start at  22:54:59
+   Duration  139.10s (tests 76%, import 21%, transform 2%, worker 1%)
+
+    Isolate  56 workers spawned · ~159ms startup each (spawn + environment, per file)
+             at least ~8.73s faster with isolate: false — reuses workers across files instead of one per file
+

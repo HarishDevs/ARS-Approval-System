@@ -1,0 +1,355 @@
+
+ RUN  v5.0.3 D:/Omniroute/ARS Approval System
+
+ ✓ tests/approvals/request-detail.test.ts > timeline (RD-01) > gives each event a kind for its icon 3ms
+ ✓ tests/approvals/request-detail.test.ts > timeline (RD-01) > says how long ago, and groups by the India day 3ms
+ ✓ tests/approvals/request-detail.test.ts > what changed between rounds (RD-03) > lists changed, added and removed fields, and a new title 26ms
+ ✓ tests/approvals/request-detail.test.ts > what changed between rounds (RD-03) > no changes when only the stored form differs but the shown value is the same 1ms
+ ✓ tests/approvals/request-detail.test.ts > file preview (RD-02) > only images and PDFs can be shown inline; never SVG, HTML or office files 1ms
+ ✓ tests/approvals/request-detail.test.ts > file preview (RD-02) > inline answers are sandboxed and never sniffed 1ms
+ ✓ tests/notifications/templates.test.ts > WhatsApp template catalogue > every entry follows Meta's rules 4ms
+ ✓ tests/notifications/templates.test.ts > WhatsApp template catalogue > codes, names and events are unique 1ms
+ ✓ tests/notifications/templates.test.ts > WhatsApp template catalogue > the preview fills every variable 1ms
+ ✓ tests/notifications/templates.test.ts > WhatsApp template catalogue > request messages send exactly the variables their template uses 3ms
+ ✓ tests/notifications/templates.test.ts > WhatsApp template catalogue > security messages send exactly the variables their template uses 29ms
+ ✓ tests/notifications/templates.test.ts > WhatsApp template catalogue > messages sent from other files use the same keys (source check) 2ms
+ ✓ tests/notifications/templates.test.ts > WhatsApp template catalogue > docs/NOTIFICATION-TEMPLATES.md is up to date 3ms
+ ✓ tests/notifications/templates.test.ts > WhatsApp template catalogue > values go to Meta on one line, never empty, never too long 1ms
+ ✓ tests/notifications/templates.test.ts > short labels (S9-15) > every message has its own short screen name, not the raw event code 3ms
+ ✓ tests/notifications/template-authoring.test.ts > named placeholders → Meta's numbered ones > numbers placeholders in order of first use, reusing a repeated one 4ms
+ ✓ tests/notifications/template-authoring.test.ts > named placeholders → Meta's numbered ones > refuses what Meta refuses 27ms
+ ✓ tests/notifications/template-authoring.test.ts > named placeholders → Meta's numbered ones > round-trips the suggested wording, and every suggestion compiles 3ms
+ ✓ tests/notifications/template-authoring.test.ts > named placeholders → Meta's numbered ones > names, footers, versions and Meta statuses 1ms
+ ✓ tests/notifications/template-authoring.test.ts > CEOITBox calls (Master Documentation) > builds the CreateTemplate body with BODY example values and an optional FOOTER 1ms
+ ✓ tests/notifications/template-authoring.test.ts > CEOITBox calls (Master Documentation) > reads Meta's template status from getTemplates results 1ms
+ ✓ tests/notifications/template-authoring.test.ts > CEOITBox calls (Master Documentation) > sends with the key in the header and our userMessageId; a 200 with an error object is a failure 74ms
+ ✓ tests/notifications/template-authoring.test.ts > CEOITBox calls (Master Documentation) > maps 401 and 400 to errors that are not retried 5ms
+ ✓ tests/workflows/attachment-field.test.ts > attachment field > is a valid field type with a file limit of 1–5 11ms
+ ✓ tests/workflows/attachment-field.test.ts > attachment field > the builder refuses a file limit on another type, a default, and value rules on it 1ms
+ ✓ tests/workflows/attachment-field.test.ts > attachment field > required means at least one file; the count is the value; the limit applies 3ms
+ ✓ tests/workflows/attachment-field.test.ts > attachment field > required-when works on attachment fields 1ms
+ ✓ tests/workflows/attachment-field.test.ts > attachment field > shows as a file count 1ms
+ ✓ tests/workflows/attachment-field.test.ts > collaborator updates > collaborators get an FYI when the request is approved, rejected, sent back or withdrawn; never the requester twice 2ms
+ ✓ tests/workflows/attachment-field.test.ts > collaborator updates > no update for steps that don't change the outcome 0ms
+ ✓ tests/workflows/smart-forms.test.ts > rules > compare numbers as numbers and text case-insensitively 3ms
+ ✓ tests/workflows/smart-forms.test.ts > formulas > parse with precedence and brackets; never eval 2ms
+ ✓ tests/workflows/smart-forms.test.ts > formulas > missing inputs and division by zero give no value (never 0) 0ms
+ ✓ tests/workflows/smart-forms.test.ts > formulas > rounds half away from zero, without binary-fraction surprises 0ms
+ ✓ tests/workflows/smart-forms.test.ts > line items in paise > quantity × rate + GST, rounded per line to the paisa 28ms
+ ✓ tests/workflows/smart-forms.test.ts > line items in paise > refuses bad rows with a plain reason 1ms
+ ✓ tests/workflows/smart-forms.test.ts > dependencies > orders fields after what they depend on, and finds cycles 1ms
+ ✓ tests/workflows/smart-forms.test.ts > dependencies > a field hidden by its rule hides the fields that depend on it 1ms
+ ✓ tests/workflows/smart-forms.test.ts > the server decides (parseFormSubmission) > works out totals and calculated fields itself, ignoring what the browser sent 3ms
+ ✓ tests/workflows/smart-forms.test.ts > the server decides (parseFormSubmission) > clears hidden fields and enforces 'required when' 1ms
+ ✓ tests/workflows/smart-forms.test.ts > the server decides (parseFormSubmission) > required line items need at least one row; bad JSON is refused 1ms
+ ✓ tests/workflows/smart-forms.test.ts > form check (builder side) > accepts the smart form above 1ms
+ ✓ tests/workflows/smart-forms.test.ts > form check (builder side) > refuses unknown references, non-number maths, cycles and self rules 1ms
+ ✓ tests/approvals/tracker.test.ts > tracker summary > in progress: who it waits for, where, and what comes next 9ms
+ ✓ tests/approvals/tracker.test.ts > tracker summary > finished, held, sent back and withdrawn 29ms
+ ✓ tests/approvals/tracker.test.ts > tracker summary > a stuck step says IT has been told 1ms
+ ✓ tests/workflows/branch.test.ts > choices in the builder (D-068) > compiles to a CONDITION node with one condition edge and one otherwise edge, and validates 16ms
+ ✓ tests/workflows/branch.test.ts > choices in the builder (D-068) > takes the right path on the engine 5ms
+ ✓ tests/workflows/branch.test.ts > choices in the builder (D-068) > an empty path goes straight on 2ms
+ ✓ tests/workflows/branch.test.ts > choices in the builder (D-068) > refuses a choice with no levels on either path 2ms
+ ✓ tests/workflows/branch.test.ts > choices in the builder (D-068) > the level map shows the path taken and marks the other not taken 29ms
+ ✓ tests/workflows/branch.test.ts > choices in the builder (D-068) > the DoA view follows amount choices 7ms
+ ✓ tests/workflows/doa-matrix.test.ts > DoA bands > labels and finds bands; the upper limit is inclusive 31ms
+ ✓ tests/workflows/doa-matrix.test.ts > DoA bands > builds the smallest skip condition for each level 1ms
+ ✓ tests/workflows/doa-matrix.test.ts > a DoA matrix on the engine > compiles to one approval step per level and validates 16ms
+ ✓ tests/workflows/doa-matrix.test.ts > a DoA matrix on the engine > routes by band, at every edge 13ms
+ ✓ tests/workflows/doa-matrix.test.ts > a DoA matrix on the engine > the DoA view reads the matrix 2ms
+ ✓ tests/workflows/doa-matrix.test.ts > a DoA matrix on the engine > the request map says a level isn't needed at this amount 4ms
+ ✓ tests/workflows/doa-matrix.test.ts > DoA checks > refuses falling limits, an empty band, a level with no band, and a second matrix 6ms
+ ✓ tests/workflows/doa-matrix.test.ts > DoA checks > the amount field must be on the form, a number, and required 1ms
+ ✓ tests/workflows/doa-matrix.test.ts > DoA checks > a fresh matrix is valid as it comes 2ms
+ ✓ tests/workflows/builder.test.ts > builder → graph (D-056) > produces a graph the validator accepts 18ms
+ ✓ tests/workflows/builder.test.ts > builder → graph (D-056) > parallel stages become SPLIT → steps → JOIN with the join rule 3ms
+ ✓ tests/workflows/builder.test.ts > builder → graph (D-056) > runs on the engine: ₹12.5L includes the ED, ₹75k skips it 7ms
+ ✓ tests/workflows/builder.test.ts > builder → graph (D-056) > maps every approver source 1ms
+ ✓ tests/workflows/builder.test.ts > builder → graph (D-056) > any-N steps and joins carry N 1ms
+ ✓ tests/workflows/builder.test.ts > builder → graph (D-056) > rejects duplicate ids and bad specs 5ms
+ ✓ tests/workflows/builder.test.ts > step map (S3-05b) > shows every stage, parallel branches together, with people and statuses 3ms
+ ✓ tests/workflows/builder.test.ts > step map (S3-05b) > falls back to graph order without a builder spec, and explains skipped/blocked steps 2ms
+ ✓ tests/workflows/builder.test.ts > step map (S3-05b) > describes rules in plain words 0ms
+ ✓ tests/workflows/builder.test.ts > form fields (D-055) > parses Indian number grouping, dates, choices and people 4ms
+ ✓ tests/workflows/builder.test.ts > form fields (D-055) > reports every problem at once 1ms
+ ✓ tests/workflows/builder.test.ts > form fields (D-055) > checks the form definition 1ms
+ ✓ tests/workflows/builder.test.ts > form fields (D-055) > displays stored values 34ms
+ ✓ tests/workflows/builder.test.ts > timeline wording and resubmitted maps > keeps the approver of a step finished in an earlier round 3ms
+ ✓ tests/workflows/builder.test.ts > timeline wording and resubmitted maps > describes events in plain sentences and hides bookkeeping 8ms
+ ✓ tests/engine/engine.test.ts > sequential levels > activates only the first level, then each next level in order 9ms
+ ✓ tests/engine/engine.test.ts > sequential levels > supports any number of levels (12 in a row) 2ms
+ ✓ tests/engine/engine.test.ts > parallel levels > ALL: waits for every branch, then continues 2ms
+ ✓ tests/engine/engine.test.ts > parallel levels > ANY_ONE join: first finished branch continues and the others are closed 1ms
+ ✓ tests/engine/engine.test.ts > parallel levels > ANY_N join: 2 of 3 branches 1ms
+ ✓ tests/engine/engine.test.ts > any-N-of-M on one level > needs 3 approvals out of 4 1ms
+ ✓ tests/engine/engine.test.ts > any-N-of-M on one level > one rejection doesn't end it while 3 approvals are still possible; two do 1ms
+ ✓ tests/engine/engine.test.ts > conditions and amount routing > ₹75,000 → HOD only 1ms
+ ✓ tests/engine/engine.test.ts > conditions and amount routing > ₹12,50,000 → HOD, Finance, ED 1ms
+ ✓ tests/engine/engine.test.ts > conditions and amount routing > skipIf skips a level 1ms
+ ✓ tests/engine/engine.test.ts > approver resolution and safety > never makes the requester their own approver, drops inactive users, and removes duplicates 0ms
+ ✓ tests/engine/engine.test.ts > approver resolution and safety > blocks a level with no eligible approver (never silently approves) 0ms
+ ✓ tests/engine/engine.test.ts > approver resolution and safety > can skip a level with no approver when configured 0ms
+ ✓ tests/engine/engine.test.ts > approver resolution and safety > only the task's approver (or their delegate) can decide it (G-01) 2ms
+ ✓ tests/engine/engine.test.ts > approver resolution and safety > a decided task can't be decided again 1ms
+ ✓ tests/engine/engine.test.ts > approver resolution and safety > reject and request changes need a reason 1ms
+ ✓ tests/engine/engine.test.ts > approver resolution and safety > decisions don't mutate the previous state 0ms
+ ✓ tests/engine/engine.test.ts > reject, changes, hold, resubmit > reject at any level ends the request and closes open tasks (never shows as approved, G-02) 0ms
+ ✓ tests/engine/engine.test.ts > reject, changes, hold, resubmit > changes required keeps the request open, then resubmits from the requesting level with earlier approvals kept 2ms
+ ✓ tests/engine/engine.test.ts > reject, changes, hold, resubmit > resubmit from the beginning restarts every level 0ms
+ ✓ tests/engine/engine.test.ts > reject, changes, hold, resubmit > previous-round approvals don't count in the new round 1ms
+ ✓ tests/engine/engine.test.ts > reject, changes, hold, resubmit > restart at the requesting level also restarts open parallel branches and keeps finished ones 1ms
+ ✓ tests/engine/engine.test.ts > reject, changes, hold, resubmit > on hold pauses decisions and stays open; the approver resumes 4ms
+ ✓ tests/engine/engine.test.ts > hybrid workflow from the plan (HOD → parallel → any-one of ED/CFO → MD) > runs end to end 1ms
+ ✓ tests/engine/engine.test.ts > hybrid workflow from the plan (HOD → parallel → any-one of ED/CFO → MD) > refuses to start an invalid workflow 0ms
+ ✓ tests/engine/v140-engine.test.ts > designation and requester sources (D-097) > DESIGNATION finds everyone active with it, optionally only in the requester's department 4ms
+ ✓ tests/engine/v140-engine.test.ts > designation and requester sources (D-097) > REQUESTER is never an approver, but can be given work or an FYI 1ms
+ ✓ tests/engine/v140-engine.test.ts > designation and requester sources (D-097) > the validator refuses the requester on an approval step but allows it on a work step 3ms
+ ✓ tests/engine/v140-engine.test.ts > designation and requester sources (D-097) > a workflow of only work steps isn't an approval 1ms
+ ✓ tests/engine/v140-engine.test.ts > work steps (hand-off after approval, F-32) > after approval the work goes to the requester (or the buyer); one marking it done finishes the request 2ms
+ ✓ tests/engine/v140-engine.test.ts > work steps (hand-off after approval, F-32) > a work task can't be rejected, but can be sent back for changes 1ms
+ ✓ tests/engine/v140-engine.test.ts > work steps (hand-off after approval, F-32) > the requester still can't decide an approval step of their own request 1ms
+ ✓ tests/engine/v140-engine.test.ts > FYI steps > tells the people and moves straight on 1ms
+ ✓ tests/engine/v140-engine.test.ts > FYI steps > the validator wants someone to tell 1ms
+ ✓ tests/engine/v140-engine.test.ts > blocked step recovery by IT (D-098) > starts blocked when nobody resolves 1ms
+ ✓ tests/engine/v140-engine.test.ts > blocked step recovery by IT (D-098) > ASSIGN: chosen people decide the step 2ms
+ ✓ tests/engine/v140-engine.test.ts > blocked step recovery by IT (D-098) > ASSIGN refuses the requester, inactive people and too few people 2ms
+ ✓ tests/engine/v140-engine.test.ts > blocked step recovery by IT (D-098) > SKIP moves on to the next level 1ms
+ ✓ tests/engine/v140-engine.test.ts > blocked step recovery by IT (D-098) > RETRY resolves again (after IT fixed the masters) 1ms
+ ✓ tests/engine/v140-engine.test.ts > blocked step recovery by IT (D-098) > TAKE_PATH on a choice that found no path (only possible in data from before the validator) 1ms
+ ✓ tests/engine/v140-engine.test.ts > blocked step recovery by IT (D-098) > needs a reason, and only works on a step that is blocked 1ms
+ ✓ tests/engine/v140-engine.test.ts > event details used for messages and due times > RESUMED says since when and who is still waiting; RESUBMITTED says who asked 2ms
+ ✓ tests/work/grid.test.ts > task table (D-220) > by default: incomplete tasks, in manual order, in one group 9ms
+ ✓ tests/work/grid.test.ts > task table (D-220) > quick filters: completed, due this week / next week 2ms
+ ✓ tests/work/grid.test.ts > task table (D-220) > field filters: assignee (me), project, periodic, due, tag 4ms
+ ✓ tests/work/grid.test.ts > task table (D-220) > search, sort and groups 33ms
+ ✓ tests/work/grid.test.ts > task table (D-220) > saved settings are read safely 3ms
+ ✓ tests/engine/validate-simulate.test.ts > conditions > compares text case-insensitively, numbers from strings, and lists 4ms
+ ✓ tests/engine/validate-simulate.test.ts > conditions > combines AND / OR groups 1ms
+ ✓ tests/engine/validate-simulate.test.ts > validator > accepts a well-formed hybrid workflow 3ms
+ ✓ tests/engine/validate-simulate.test.ts > validator > needs one start, an end and an approval step 2ms
+ ✓ tests/engine/validate-simulate.test.ts > validator > finds dead ends and cycles 1ms
+ ✓ tests/engine/validate-simulate.test.ts > validator > requires exactly one 'otherwise' path on a decision and a condition on the others 1ms
+ ✓ tests/engine/validate-simulate.test.ts > validator > G-08: rejects conditions that can never be true 1ms
+ ✓ tests/engine/validate-simulate.test.ts > validator > G-09: rejects unknown roles, users, groups and form fields when the context is given 1ms
+ ✓ tests/engine/validate-simulate.test.ts > validator > checks any-N and join counts 1ms
+ ✓ tests/engine/validate-simulate.test.ts > validator > an approval step needs an approver 0ms
+ ✓ tests/engine/validate-simulate.test.ts > simulator (test mode) > shows stages in order, with parallel steps together 4ms
+ ✓ tests/engine/validate-simulate.test.ts > simulator (test mode) > follows the default path for small amounts 1ms
+ ✓ tests/engine/validate-simulate.test.ts > simulator (test mode) > reports a blocked step 0ms
+ ✓ tests/workflows/form-fields.test.ts > form definitions (what IT saves) > a form with every type is valid and passes the schema 10ms
+ ✓ tests/workflows/form-fields.test.ts > form definitions (what IT saves) > refuses a dropdown with fewer than two or repeated options, a list field without a list, and options or lists on other types 2ms
+ ✓ tests/workflows/form-fields.test.ts > what the requester sends > every type is stored as its own kind of value 3ms
+ ✓ tests/workflows/form-fields.test.ts > what the requester sends > refuses bad values field by field, and keeps the good ones for test mode 24ms
+ ✓ tests/workflows/form-fields.test.ts > what the requester sends > required fields must be filled; a date must be a real calendar date 1ms
+ ✓ tests/workflows/form-fields.test.ts > what the requester sends > shows stored values back readably 8ms
+ ✓ tests/workflows/form-fields.test.ts > conditions on dates and lists > dates compare by calendar order 1ms
+ ✓ tests/workflows/form-fields.test.ts > conditions on dates and lists > the validator accepts a date for before/after and still refuses words 5ms
+ ✓ tests/workflows/form-fields.test.ts > builder helpers > the key follows the label, always a valid key 1ms
+ ✓ tests/workflows/form-fields.test.ts > builder helpers > offers operators that suit the field type 1ms
+ ✓ tests/workflows/form-fields.test.ts > the request page's level map previews skip conditions (S12) > a level not reached yet shows as skipped when its condition already holds, in plain words 54ms
+ ✓ tests/approvals/session5.test.ts > working calendar (D-067) > uses India dates 5ms
+ ✓ tests/approvals/session5.test.ts > working calendar (D-067) > counts within a working day 2ms
+ ✓ tests/approvals/session5.test.ts > working calendar (D-067) > skips Sunday and a holiday 0ms
+ ✓ tests/approvals/session5.test.ts > working calendar (D-067) > a start on a non-working day begins at the next working midnight 0ms
+ ✓ tests/approvals/session5.test.ts > working calendar (D-067) > no working days set means plain hours 0ms
+ ✓ tests/approvals/session5.test.ts > working calendar (D-067) > reads the stored setting safely 1ms
+ ✓ tests/approvals/session5.test.ts > withdraw and reopen (D-066) > withdraw closes pending approvals and names who had them 4ms
+ ✓ tests/approvals/session5.test.ts > withdraw and reopen (D-066) > reopen restarts an approved request from the first level in a new round 4ms
+ ✓ tests/approvals/session5.test.ts > withdraw and reopen (D-066) > only an approved request can be reopened 1ms
+ ✓ tests/work/work-rules.test.ts > project roles > a private project is seen by its members only 3ms
+ ✓ tests/work/work-rules.test.ts > project roles > a department grant counts for the department's people, never as owner 0ms
+ ✓ tests/work/work-rules.test.ts > project roles > shared projects give their default role; the highest grant wins 0ms
+ ✓ tests/work/work-rules.test.ts > project roles > D-216: a manager can look into projects their reporting line is in (view only) 2ms
+ ✓ tests/work/work-rules.test.ts > project roles > IT acts as owner everywhere 0ms
+ ✓ tests/work/work-rules.test.ts > project roles > what each role may do 1ms
+ ✓ tests/work/work-rules.test.ts > project roles > a project keeps at least one person as owner 0ms
+ ✓ tests/work/work-rules.test.ts > task rights > strangers see nothing 1ms
+ ✓ tests/work/work-rules.test.ts > task rights > followers and managers (any level) read and comment, not edit 0ms
+ ✓ tests/work/work-rules.test.ts > task rights > project roles carry over to the project's tasks 1ms
+ ✓ tests/work/work-rules.test.ts > task rights > the assignee progresses their task; the creator edits it 0ms
+ ✓ tests/work/work-rules.test.ts > reporting hierarchy (D-216) > everyone below, at every level 1ms
+ ✓ tests/work/work-rules.test.ts > reporting hierarchy (D-216) > a loop in the data is cut 0ms
+ ✓ tests/work/work-rules.test.ts > reporting hierarchy (D-216) > the chain above a person 0ms
+ ✓ tests/work/work-rules.test.ts > order, subtasks and dependencies > a move takes the midpoint of its neighbours 0ms
+ ✓ tests/work/work-rules.test.ts > order, subtasks and dependencies > subtasks: no loops, at most five levels 0ms
+ ✓ tests/work/work-rules.test.ts > order, subtasks and dependencies > dependencies never wait in a loop 0ms
+ ✓ tests/work/work-rules.test.ts > My Tasks sections > newly assigned by someone else: Recently assigned 0ms
+ ✓ tests/work/work-rules.test.ts > My Tasks sections > otherwise by due date 3ms
+ ✓ tests/work/work-rules.test.ts > My Tasks sections > placed tasks stay put, but move forward as their date nears 1ms
+ ✓ tests/work/work-rules.test.ts > My Tasks sections > India's day 0ms
+ ✓ tests/work/work-rules.test.ts > mentions and search > mentions keep only the person's id 1ms
+ ✓ tests/work/work-rules.test.ts > mentions and search > search filters parse from the address and round-trip 1ms
+ ✓ tests/notifications/rule-model.test.ts > conditions on any field > text ignores capitals; numbers compare as numbers (Indian commas too) 4ms
+ ✓ tests/notifications/rule-model.test.ts > conditions on any field > all or any; no conditions means every record 1ms
+ ✓ tests/notifications/rule-model.test.ts > stages: when a send is due > once, after the anchor 1ms
+ ✓ tests/notifications/rule-model.test.ts > stages: when a send is due > repeats up to the limit; missed repeats count as the latest only 0ms
+ ✓ tests/notifications/rule-model.test.ts > stages: when a send is due > before the due time; no due time means never 0ms
+ ✓ tests/notifications/rule-model.test.ts > rules are checked before saving > a valid escalation is accepted with defaults 8ms
+ ✓ tests/notifications/rule-model.test.ts > rules are checked before saving > needs recipients, a value for each condition, 'before' only with the due time, and a repeat interval 5ms
+ ✓ tests/notifications/rule-model.test.ts > message and description > fills placeholders and leaves unknown ones 0ms
+ ✓ tests/notifications/rule-model.test.ts > message and description > describes a stage in words 1ms
+ ✓ tests/work/more-rules.test.ts > repeating tasks > reads only well-formed rules 6ms
+ ✓ tests/work/more-rules.test.ts > repeating tasks > labels 1ms
+ ✓ tests/work/more-rules.test.ts > repeating tasks > the next due day 5ms
+ ✓ tests/work/more-rules.test.ts > repeating tasks > settings default to on and holiday-aware 1ms
+ ✓ tests/work/more-rules.test.ts > custom fields > choices come one per line or comma, without repeats 1ms
+ ✓ tests/work/more-rules.test.ts > custom fields > values are checked by kind; empty clears 1ms
+ ✓ tests/work/more-rules.test.ts > templates > are checked and counted with their subtasks 6ms
+ ✓ tests/work/more-rules.test.ts > morning summary > says nothing when there is nothing 1ms
+ ✓ tests/work/more-rules.test.ts > morning summary > lists overdue, today and new, at most 15 each 1ms
+ ✓ tests/work/more-rules.test.ts > morning summary > settings: on at 9 on working days by default 1ms
+ ✓ tests/work/more-rules.test.ts > department holidays merge with the organisation's > a department's own day counts like any holiday 0ms
+ ✓ tests/engine/v160-engine.test.ts > recall (EN-04) > closes the pending approvals, keeps earlier decisions, and resubmitting restarts where it was 8ms
+ ✓ tests/engine/v160-engine.test.ts > recall (EN-04) > with parallel branches, every open branch restarts 3ms
+ ✓ tests/engine/v160-engine.test.ts > recall (EN-04) > needs a reason, and only an open request can be recalled 1ms
+ ✓ tests/engine/v160-engine.test.ts > recall (EN-04) > a decision on the old state after a recall is refused (no double outcome) 1ms
+ ✓ tests/engine/v160-engine.test.ts > ask for information (EN-05) > holds the request with the question; only the requester's answer resumes it 2ms
+ ✓ tests/engine/v160-engine.test.ts > ask for information (EN-05) > the approver can also simply resume; a plain hold can't be 'answered' 1ms
+ ✓ tests/engine/v160-engine.test.ts > hand-on history (EN-07) > records who held the task before 1ms
+ ✓ tests/approvals/v180-rules.test.ts > pageForPath > finds the page by the longest match, including its API routes 6ms
+ ✓ tests/approvals/v180-rules.test.ts > pageForPath > every page has a unique key and at least one address 1ms
+ ✓ tests/approvals/v180-rules.test.ts > effectiveLevel > person over department over everyone; no rule = Full 1ms
+ ✓ tests/approvals/v180-rules.test.ts > effectiveLevel > a space's first page is never hidden (at most view-only) 0ms
+ ✓ tests/approvals/v180-rules.test.ts > signed page address > verifies only the same address with the same secret 12ms
+ ✓ tests/approvals/v180-rules.test.ts > custom approval step options > defaults leave everything as sent 2ms
+ ✓ tests/approvals/v180-rules.test.ts > custom approval step options > fixed options overwrite every step (not FYIs) 3ms
+ ✓ tests/approvals/v180-rules.test.ts > custom approval step options > bad stored values fall back to the defaults 1ms
+ ✓ tests/approvals/v180-rules.test.ts > custom approval step options > the set-up rejects reserved keys and broken forms 1ms
+ ✓ tests/approvals/v180-rules.test.ts > approved lists (v1.8.0) > My approved requests: validity tabs, approved by, amended; no status or waiting filters 2ms
+ ✓ tests/approvals/v180-rules.test.ts > approved lists (v1.8.0) > Approved by me: my step, for someone else, my decision dates; bound to my id 1ms
+ ✓ tests/notifications/notify.test.ts > notification hub > records in-app, sends email and WhatsApp with variables in template order 7ms
+ ✓ tests/notifications/notify.test.ts > notification hub > skips WhatsApp when the template isn't configured yet (Q-013) 2ms
+ ✓ tests/notifications/notify.test.ts > notification hub > skips WhatsApp when the user has no number 1ms
+ ✓ tests/notifications/notify.test.ts > notification hub > never throws: provider failures become FAILED deliveries 8ms
+ ✓ tests/notifications/notify.test.ts > notification hub > never throws even if the database is down 1ms
+ ✓ tests/notifications/notify.test.ts > notification hub > a send that worked is never marked FAILED when recording it fails (no double send on retry) 1ms
+ ✓ tests/notifications/notify.test.ts > notification hub > sends nothing to an inactive user 0ms
+ ✓ tests/notifications/notify.test.ts > notification preferences (#6, D-110) > a channel switched off is skipped (recorded as USER_PREFERENCE); the inbox still gets it 1ms
+ ✓ tests/notifications/notify.test.ts > notification preferences (#6, D-110) > security and approval-needed messages ignore opt-outs 1ms
+ ✓ tests/notifications/notify.test.ts > notification preferences (#6, D-110) > if the choices can't be read, everything is sent 1ms
+ ✓ tests/workflows/version-migration.test.ts > diffVersions > names added, removed and changed steps, routes and fields 6ms
+ ✓ tests/workflows/version-migration.test.ts > diffVersions > two identical versions are the same 1ms
+ ✓ tests/workflows/version-migration.test.ts > checkMigration > compatible when every reached step is still there 2ms
+ ✓ tests/workflows/version-migration.test.ts > checkMigration > warns when a new step comes before where the request is 1ms
+ ✓ tests/workflows/version-migration.test.ts > checkMigration > warns when the waiting step's approvers or rule changed, or a new required field is empty 1ms
+ ✓ tests/workflows/version-migration.test.ts > checkMigration > needs manual review when a reached step was removed; a mapping onto the same kind fixes it 1ms
+ ✓ tests/workflows/version-migration.test.ts > checkMigration > blocks finished requests, same version, a changed step kind, and a part-way parallel join 1ms
+ ✓ tests/workflows/version-migration.test.ts > remapState > renames the step everywhere and keeps decisions 1ms
+ ✓ tests/workflows/version-migration.test.ts > remapState > lines the step list up with the target: new steps WAITING, unreached old ones dropped 2ms
+ ✓ tests/approvals/v172-list-filters.test.ts > parseListFilters > reads every filter, several statuses, and keeps only valid values 6ms
+ ✓ tests/approvals/v172-list-filters.test.ts > parseListFilters > collaboration-only filters are ignored on My requests; junk falls back to defaults 1ms
+ ✓ tests/approvals/v172-list-filters.test.ts > parseListFilters > round-trips through the address bar 1ms
+ ✓ tests/approvals/v172-list-filters.test.ts > listFilterSql > binds every value; collaboration conditions only on Collaborating 1ms
+ ✓ tests/approvals/v172-list-filters.test.ts > Waiting for me filters (v1.7.2) > parse, filter flag, SQL with the person's id, and the address 2ms
+ ✓ tests/approvals/approver-rules.test.ts > approver eligibility (D-085) > active, not break-glass, designation ticked as Approver 3ms
+ ✓ tests/approvals/approver-rules.test.ts > approver eligibility (D-085) > says why someone can't be chosen 1ms
+ ✓ tests/approvals/approver-rules.test.ts > approver eligibility (D-085) > only new choices are checked; what was saved before stays valid 2ms
+ ✓ tests/approvals/approver-rules.test.ts > approver eligibility (D-085) > finds named approvers and approver person fields in a workflow 1ms
+ ✓ tests/approvals/approver-rules.test.ts > dashboard filters (D-087) > defaults to the Indian financial year to date 1ms
+ ✓ tests/approvals/approver-rules.test.ts > dashboard filters (D-087) > swaps reversed dates, ignores bad ones, and knows custom approvals 3ms
+ ✓ tests/approvals/approver-rules.test.ts > dashboard filters (D-087) > presets and maths 1ms
+ ✓ tests/workflows/v140-builder.test.ts > step types in the builder (D-097) > compiles work as an approval step in WORK mode and FYI as a NOTIFY node 12ms
+ ✓ tests/workflows/v140-builder.test.ts > step types in the builder (D-097) > runs end to end: approval, the requester's own work, then the FYI; the map says so 6ms
+ ✓ tests/workflows/v140-builder.test.ts > step types in the builder (D-097) > work tasks are announced as tasks, not approvals; the timeline says 'Marked done' 2ms
+ ✓ tests/workflows/v140-builder.test.ts > step types in the builder (D-097) > a custom approval may give work to yourself, but not an approval 2ms
+ ✓ tests/workflows/v140-builder.test.ts > and/or conditions (D-099) > compile to OR / AND groups, and a single row stays a plain comparison 1ms
+ ✓ tests/workflows/v140-builder.test.ts > and/or conditions (D-099) > a choice with 'any of' takes the path when either holds; the words say 'or' 36ms
+ ✓ tests/workflows/v140-builder.test.ts > and/or conditions (D-099) > the validator still catches impossible 'all of' rules (G-08) 2ms
+ ✓ tests/workflows/v140-builder.test.ts > choices inside choices (D-099) > route through two levels of choices 6ms
+ ✓ tests/workflows/v140-builder.test.ts > choices inside choices (D-099) > refuses more than three levels of choices 2ms
+ ✓ tests/work/holidays.test.ts > task holidays > named holidays and (by default) weekly offs are holidays 3ms
+ ✓ tests/work/holidays.test.ts > task holidays > offers the nearest working day either way 3ms
+ ✓ tests/work/holidays.test.ts > task holidays > warn: keep on purpose; block: never; off: no check 2ms
+ ✓ tests/work/holidays.test.ts > task holidays > settings: safe defaults for missing or broken values 2ms
+ ✓ tests/approvals/session4.test.ts > handover: reassignTask (F-16) > moves a pending task to the new person, who can then decide it 9ms
+ ✓ tests/approvals/session4.test.ts > handover: reassignTask (F-16) > refuses the requester, inactive people, same person and decided tasks 2ms
+ ✓ tests/approvals/session4.test.ts > handover: reassignTask (F-16) > won't put two tasks on one step for the same person 1ms
+ ✓ tests/approvals/session4.test.ts > handover: reassignTask (F-16) > a delegate acts on behalf, recorded as actor + on-behalf-of (D-062) 1ms
+ ✓ tests/approvals/session4.test.ts > custom approvals (D-060) > refuses a step made only of the requester 2ms
+ ✓ tests/approvals/session4.test.ts > delegation dates (D-062) > accepts a normal range and refuses bad ones 1ms
+ ✓ tests/approvals/session4.test.ts > SLA (D-063) > reminds once when due and escalates once at twice the time 1ms
+ ✓ tests/approvals/session4.test.ts > SLA (D-063) > the builder carries respond-within hours onto the step 1ms
+ ✓ tests/approvals/session4.test.ts > DoA view (D-065) > turns amount skip conditions into bands 2ms
+ ✓ tests/approvals/session4.test.ts > DoA view (D-065) > a workflow without amount rules is one band 1ms
+ ✓ tests/approvals/session4.test.ts > multi-level escalation (D-100) > adds one level per extra response time, up to the levels allowed, each once 1ms
+ ✓ tests/workflows/form-designer.test.ts > Form Designer > moves a field without losing or duplicating any 4ms
+ ✓ tests/workflows/form-designer.test.ts > Form Designer > a duplicate gets its own key, and the needed-by date stays on the original 2ms
+ ✓ tests/workflows/form-designer.test.ts > Form Designer > a type change keeps what still applies and names what it would drop 1ms
+ ✓ tests/workflows/form-designer.test.ts > Form Designer > knows which fields use a field before it is removed 1ms
+ ✓ tests/workflows/form-designer.test.ts > Form Designer > flags what still needs fixing on a card 2ms
+ ✓ tests/workflows/form-designer.test.ts > Form Designer > a new section from the library has a label and a key 1ms
+ ✓ tests/jobs/retry-rate-limit.test.ts > retry backoff (D-058) > waits 2, 4, 8 minutes and stops after the retry limit 3ms
+ ✓ tests/jobs/retry-rate-limit.test.ts > retry runner > resends email and WhatsApp from the stored payload 3ms
+ ✓ tests/jobs/retry-rate-limit.test.ts > retry runner > reschedules retryable failures and gives up on the rest 6ms
+ ✓ tests/jobs/retry-rate-limit.test.ts > rate limits (D-059) > uses IP and User ID buckets, case-insensitive 1ms
+ ✓ tests/jobs/retry-rate-limit.test.ts > rate limits (D-059) > refuses once a bucket is over its limit 2ms
+ ✓ tests/approvals/v170-rules.test.ts > A1 expiryState > NONE without a date, then VALID, EXPIRING (last 7 days), EXPIRED 3ms
+ ✓ tests/approvals/v170-rules.test.ts > A2 calendar rules > reads the needed-by date only from the marked date field 1ms
+ ✓ tests/approvals/v170-rules.test.ts > A2 calendar rules > months: parse, shift across years, Monday-first grid 3ms
+ ✓ tests/approvals/v170-rules.test.ts > A6 diagnoseState > OK when rows match 1ms
+ ✓ tests/approvals/v170-rules.test.ts > A6 diagnoseState > finds missing, mismatched and orphan rows 2ms
+ ✓ tests/approvals/v170-rules.test.ts > A6 diagnoseState > no open step can't be fixed by a button 0ms
+ ✓ tests/approvals/v170-rules.test.ts > A8 / A10 / A11 settings and keys > a heading can't be confidential; other fields can 1ms
+ ✓ tests/approvals/v170-rules.test.ts > A8 / A10 / A11 settings and keys > old type settings still parse, with scope ANY and no unique fields 2ms
+ ✓ tests/approvals/v170-rules.test.ts > A8 / A10 / A11 settings and keys > amendment draft keys 1ms
+ ✓ tests/notifications/control-center.test.ts > choices per kind of message > one kind can be off while the rest of its group stays on 3ms
+ ✓ tests/notifications/control-center.test.ts > choices per kind of message > only optional groups and kinds can be stored 1ms
+ ✓ tests/notifications/control-center.test.ts > choices per kind of message > the app alert switched off keeps the message, already read 4ms
+ ✓ tests/notifications/control-center.test.ts > Do not disturb > quiet hours may cross midnight; days off; a pause 1ms
+ ✓ tests/notifications/control-center.test.ts > Do not disturb > is read safely 1ms
+ ✓ tests/notifications/control-center.test.ts > Do not disturb > holds email and WhatsApp, not the app, and never security messages 2ms
+ ✓ tests/notifications/control-center.test.ts > profile photos > JPEG, PNG and WebP by their first bytes, at most 3 MB 2ms
+ ✓ tests/notifications/control-center.test.ts > profile photos > the address changes with the photo 1ms
+ ✓ tests/work/rich-text.test.ts > task description formatting > reads bold, italic, struck and mentions; anything else stays text 4ms
+ ✓ tests/work/rich-text.test.ts > task description formatting > groups bullet and numbered lines into lists 2ms
+ ✓ tests/work/rich-text.test.ts > task description formatting > turns picked @Names into mentions, longest name first, and lists who is mentioned 1ms
+ ✓ tests/work/rich-text.test.ts > task description formatting > wraps the selection and marks lines for the Formatting bar 1ms
+ ✓ tests/workflows/workflow-designer.test.ts > workflow designer > names each level's problems where they are 5ms
+ ✓ tests/workflows/workflow-designer.test.ts > workflow designer > checks parallel steps, choices (with their paths) and the DoA matrix 1ms
+ ✓ tests/workflows/workflow-designer.test.ts > workflow designer > summarises a level in one line 1ms
+ ✓ tests/workflows/workflow-designer.test.ts > workflow designer > duplicates with fresh ids everywhere, leaving the original alone 1ms
+ ✓ tests/workflows/workflow-designer.test.ts > workflow designer > offers a kept browser copy only for the same version 1ms
+ ✓ tests/approvals/search-filters.test.ts > search filters (#4) > keeps only known values; bad input falls back safely 6ms
+ ✓ tests/approvals/search-filters.test.ts > search filters (#4) > round-trips to the address bar without defaults 1ms
+ ✓ tests/approvals/search-filters.test.ts > search filters (#4) > LIKE wildcards in what people type match themselves 0ms
+ ✓ tests/work/adhoc-permissions.test.ts > ad hoc and periodic task rights > ad hoc: only the creator (and IT) change details and plans 5ms
+ ✓ tests/work/adhoc-permissions.test.ts > ad hoc and periodic task rights > periodic: editors change details; the assignee plans dates 1ms
+ ✓ tests/work/adhoc-permissions.test.ts > ad hoc and periodic task rights > ad hoc: the assignee may start and complete but not edit, reassign or cancel 1ms
+ ✓ tests/work/adhoc-permissions.test.ts > project permissions > are read safely 1ms
+ ✓ tests/work/adhoc-permissions.test.ts > project permissions > field restrictions and sharing follow the role 1ms
+ ✓ tests/approvals/v1250-custom-features.test.ts > custom approval options (D-206) > are off unless IT switches them on, also for set-ups saved before 5ms
+ ✓ tests/approvals/v1250-custom-features.test.ts > custom approval options (D-206) > levels and parallel steps are always allowed 1ms
+ ✓ tests/approvals/v1250-custom-features.test.ts > custom approval options (D-206) > a DoA matrix, a choice or a skip condition is refused when off, accepted when on 1ms
+ ✓ tests/approvals/v1250-custom-features.test.ts > analytics dashboards per person (D-206) > a plain user with only Approvals sees the overview, approvals, SLA and trends 1ms
+ ✓ tests/approvals/v1250-custom-features.test.ts > analytics dashboards per person (D-206) > a manager also sees employees; an HOD also departments; IT also data quality 1ms
+ ✓ tests/approvals/v1250-custom-features.test.ts > analytics dashboards per person (D-206) > someone with no task or approval module gets no SLA board 0ms
+ ✓ tests/approvals/workload.test.ts > workload (#12) > medians, age bands and text 4ms
+ ✓ tests/approvals/workload.test.ts > workload (#12) > groups by person, most overdue first 2ms
+ ✓ tests/approvals/workload.test.ts > workload (#12) > suggests the people with the fewest waiting, never the person themselves 0ms
+ ✓ tests/approvals/mentions.test.ts > @mentions (#9) > finds User IDs after @, once each, case-insensitively 3ms
+ ✓ tests/approvals/mentions.test.ts > @mentions (#9) > an email address or a lone @ is not a mention 0ms
+ ✓ tests/approvals/mentions.test.ts > @mentions (#9) > stops at the limit 1ms
+ ✓ tests/notifications/receipts.test.ts > WhatsApp delivery receipts > reads Meta's webhook shape 4ms
+ ✓ tests/notifications/receipts.test.ts > WhatsApp delivery receipts > reads a flat receipt or a list of them 1ms
+ ✓ tests/notifications/receipts.test.ts > WhatsApp delivery receipts > ignores anything without an id or a known status 0ms
+ ✓ tests/approvals/route-compare.test.ts > test mode: compare with the live version (#11) > the same route says so 4ms
+ ✓ tests/approvals/route-compare.test.ts > test mode: compare with the live version (#11) > names changed, new and removed stages, skips and the outcome 1ms
+ ✓ tests/approvals/directory-messages.test.ts > directory snapshot → engine directory > resolves managers, HODs, roles and groups 3ms
+ ✓ tests/approvals/directory-messages.test.ts > directory snapshot → engine directory > inactive people and the break-glass account are never approvers 0ms
+ ✓ tests/approvals/directory-messages.test.ts > directory snapshot → engine directory > a delegate acts only for who named them, only while active, never in a chain 0ms
+ ✓ tests/approvals/directory-messages.test.ts > directory snapshot → engine directory > a delegate who is no longer approver-eligible can't act (#8) 0ms
+ ✓ tests/approvals/directory-messages.test.ts > who hears about what > each new task tells its approver, with a sign-in deep link 2ms
+ ✓ tests/approvals/directory-messages.test.ts > who hears about what > outcomes go to the requester; the rejection reason is included 1ms
+ ✓ tests/approvals/directory-messages.test.ts > who hears about what > a blocked step alerts every IT admin 0ms
+ ✓ tests/approvals/directory-messages.test.ts > who hears about what > internal events send nothing 0ms
+
+ Test Files  41 passed (41)
+      Tests  342 passed (342)
+   Start at  22:55:18
+   Duration  4.62s (import 55%, transform 33%, tests 6%, worker 4%, setup 2%)
+
+  Transform  transforming modules took 7.66s · 33% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+

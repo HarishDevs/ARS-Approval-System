@@ -1,0 +1,129 @@
+
+-- SELECT NOW() AS db_now, (SELECT COUNT(*) FROM users) users, (SELECT COUNT(*) FROM approval_requests) requests, (SELECT COUNT(*) FROM approval_tasks) tasks, (SELECT COUNT(*) FROM approval_events) events, (SELECT COUNT(*) FROM audit_logs) audit, (SELECT COUNT(*) FROM tasks) work_tasks
+db_now	users	requests	tasks	events	audit	work_tasks
+Sat Oct 31 2026 17:30:29 GMT+0530 (India Standard Time)	342	17561	226	870	1322	54
+(1 rows)
+
+-- SELECT 'open request without pending task' chk, r.status, COUNT(*) n FROM approval_requests r WHERE r.status='IN_PROGRESS' AND r.deleted_at IS NULL AND NOT EXISTS (SELECT 1 FROM approval_tasks t WHERE t.request_id=r.id AND t.status='PENDING') GROUP BY r.status
+chk	status	n
+open request without pending task	IN_PROGRESS	12928
+(1 rows)
+
+-- SELECT 'pending task on closed request' chk, COUNT(*) n FROM approval_tasks t JOIN approval_requests r ON r.id=t.request_id WHERE t.status='PENDING' AND r.status NOT IN ('IN_PROGRESS','ON_HOLD')
+chk	n
+pending task on closed request	0
+(1 rows)
+
+-- SELECT 'APPROVAL task approver=requester' chk, COUNT(*) n FROM approval_tasks t JOIN approval_requests r ON r.id=t.request_id WHERE t.task_type='APPROVAL' AND (t.approver_id=r.requester_id OR t.decided_by=r.requester_id)
+chk	n
+APPROVAL task approver=requester	0
+(1 rows)
+
+-- SELECT 'WORK task approver=requester (allowed by design)' chk, COUNT(*) n FROM approval_tasks t JOIN approval_requests r ON r.id=t.request_id WHERE t.task_type='WORK' AND t.approver_id=r.requester_id
+chk	n
+WORK task approver=requester (allowed by design)	1
+(1 rows)
+
+-- SELECT 'approved requests with zero APPROVED approval tasks' chk, COUNT(*) n FROM approval_requests r WHERE r.status='APPROVED' AND NOT EXISTS (SELECT 1 FROM approval_tasks t WHERE t.request_id=r.id AND t.task_type='APPROVAL' AND t.status='APPROVED')
+chk	n
+approved requests with zero APPROVED approval tasks	3660
+(1 rows)
+
+-- SELECT 'state_json status vs column' chk, COUNT(*) n FROM approval_requests WHERE JSON_UNQUOTE(JSON_EXTRACT(state_json,'$.status')) <> status
+chk	n
+state_json status vs column	0
+(1 rows)
+
+-- SELECT 'state_json round vs column' chk, COUNT(*) n FROM approval_requests WHERE CAST(JSON_EXTRACT(state_json,'$.round') AS UNSIGNED) <> round
+chk	n
+state_json round vs column	0
+(1 rows)
+
+-- SELECT 'pending task for inactive approver' chk, COUNT(*) n FROM approval_tasks t JOIN users u ON u.id=t.approver_id WHERE t.status='PENDING' AND u.active=0
+chk	n
+pending task for inactive approver	1
+(1 rows)
+
+-- SELECT 'closed request with closed_at null' chk, COUNT(*) n FROM approval_requests WHERE status IN ('APPROVED','REJECTED','CANCELLED') AND closed_at IS NULL
+chk	n
+closed request with closed_at null	4295
+(1 rows)
+
+-- SELECT 'duplicate pending tasks' chk, COUNT(*) n FROM (SELECT request_id FROM approval_tasks WHERE status='PENDING' GROUP BY request_id,node_id,round,approver_id HAVING COUNT(*)>1) x
+chk	n
+duplicate pending tasks	0
+(1 rows)
+
+-- SELECT 'tasks.assign_group_id -> tasks.id orphan' chk, COUNT(*) n FROM tasks t WHERE t.assign_group_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM tasks r WHERE r.id=t.assign_group_id)
+chk	n
+tasks.assign_group_id -> tasks.id orphan	0
+(1 rows)
+
+-- SELECT 'notification_outbox.request_id orphan' chk, COUNT(*) n FROM notification_outbox o WHERE o.request_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM approval_requests r WHERE r.id=o.request_id)
+chk	n
+notification_outbox.request_id orphan	0
+(1 rows)
+
+-- SELECT 'deleted requests (soft)' chk, COUNT(*) n FROM approval_requests WHERE deleted_at IS NOT NULL
+chk	n
+deleted requests (soft)	5
+(1 rows)
+
+-- SELECT 'soft-deleted request still open' chk, COUNT(*) n FROM approval_requests WHERE deleted_at IS NOT NULL AND status IN ('IN_PROGRESS','ON_HOLD','CHANGES_REQUIRED')
+chk	n
+soft-deleted request still open	1
+(1 rows)
+
+-- SELECT 'users max id vs count' chk, (SELECT MAX(id) FROM users) maxid, (SELECT COUNT(*) FROM users) cnt
+chk	maxid	cnt
+users max id vs count	344	342
+(1 rows)
+
+-- SELECT 'outbox unsent >10min' chk, COUNT(*) n, MAX(attempts) max_attempts FROM notification_outbox WHERE sent_at IS NULL AND created_at < NOW() - INTERVAL 10 MINUTE
+chk	n	max_attempts
+outbox unsent >10min	0	NULL
+(1 rows)
+
+-- SELECT status, channel, failure_code, COUNT(*) n FROM notification_deliveries GROUP BY status, channel, failure_code
+status	channel	failure_code	n
+FAILED	EMAIL	EMAIL_NOT_CONFIGURED	554
+SKIPPED	WHATSAPP	NO_WHATSAPP_NUMBER	446
+SKIPPED	WHATSAPP	TEMPLATE_NOT_CONFIGURED	3
+FAILED	EMAIL	EMAIL_REQUEST_FAILED	4
+SENT	EMAIL	NULL	2
+(5 rows)
+
+-- SELECT job_key, status, COUNT(*) n FROM job_runs GROUP BY job_key, status ORDER BY job_key
+job_key	status	n
+delegations	OK	1
+stuck	OK	1
+(2 rows)
+
+-- EXPLAIN SELECT t.id FROM approval_tasks t JOIN approval_requests r ON r.id = t.request_id WHERE t.approver_id = 2 AND t.status = 'PENDING' AND r.deleted_at IS NULL ORDER BY t.created_at
+id	select_type	table	partitions	type	possible_keys	key	key_len	ref	rows	filtered	Extra
+1	SIMPLE	t	NULL	ref	uq_approval_tasks_key,idx_approval_tasks_queue,idx_approval_tasks_due,idx_approval_tasks_request_status	idx_approval_tasks_queue	9	const,const	3	100	NULL
+1	SIMPLE	r	NULL	eq_ref	PRIMARY,idx_approval_requests_deleted	PRIMARY	8	ars_approvals_test.t.request_id	1	50	Using where
+(2 rows)
+
+-- EXPLAIN SELECT t.id FROM approval_tasks t JOIN approval_requests r ON r.id = t.request_id JOIN users u ON u.id = t.approver_id WHERE t.status = 'PENDING' AND r.status = 'IN_PROGRESS' AND r.deleted_at IS NULL AND t.due_at IS NOT NULL AND t.due_at <= CURRENT_TIMESTAMP ORDER BY t.due_at LIMIT 200
+id	select_type	table	partitions	type	possible_keys	key	key_len	ref	rows	filtered	Extra
+1	SIMPLE	t	NULL	range	uq_approval_tasks_key,idx_approval_tasks_queue,idx_approval_tasks_due,idx_approval_tasks_request_status	idx_approval_tasks_due	7	NULL	8	100	Using index condition
+1	SIMPLE	u	NULL	eq_ref	PRIMARY	PRIMARY	8	ars_approvals_test.t.approver_id	1	100	Using index
+1	SIMPLE	r	NULL	eq_ref	PRIMARY,idx_approval_requests_status,idx_approval_requests_deleted,idx_approval_requests_validity	PRIMARY	8	ars_approvals_test.t.request_id	1	25	Using where
+(3 rows)
+
+-- EXPLAIN SELECT id FROM notification_outbox WHERE sent_at IS NULL AND attempts < 5 AND created_at < DATE_SUB(CURRENT_TIMESTAMP(3), INTERVAL 2 MINUTE) ORDER BY id LIMIT 200
+id	select_type	table	partitions	type	possible_keys	key	key_len	ref	rows	filtered	Extra
+1	SIMPLE	notification_outbox	NULL	range	idx_notification_outbox_unsent	idx_notification_outbox_unsent	15	NULL	1	33.33	Using index condition; Using where; Using filesort
+(1 rows)
+
+-- EXPLAIN SELECT r.id FROM approval_requests r JOIN workflow_versions v ON v.id = r.workflow_version_id WHERE v.workflow_id = 1 AND r.deleted_at IS NULL AND r.status IN ('IN_PROGRESS','APPROVED') AND r.submitted_at > DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 30 DAY) AND LOWER(JSON_UNQUOTE(JSON_EXTRACT(r.form_data_json, '$.vendor'))) = 'x' ORDER BY r.id DESC LIMIT 5
+id	select_type	table	partitions	type	possible_keys	key	key_len	ref	rows	filtered	Extra
+1	SIMPLE	v	NULL	ref	PRIMARY,uq_workflow_versions_no	uq_workflow_versions_no	8	const	1	100	Using index; Using temporary; Using filesort
+1	SIMPLE	r	NULL	ref	fk_approval_requests_version,idx_approval_requests_status,idx_approval_requests_deleted,idx_approval_requests_validity,idx_approval_requests_submitted	fk_approval_requests_version	8	ars_approvals_test.v.id	223	36.48	Using where
+(2 rows)
+
+-- EXPLAIN SELECT id FROM tasks WHERE deleted_at IS NULL AND assignee_id = 2 AND status IN ('OPEN','IN_PROGRESS','BLOCKED') ORDER BY due_at
+id	select_type	table	partitions	type	possible_keys	key	key_len	ref	rows	filtered	Extra
+1	SIMPLE	tasks	NULL	range	idx_tasks_assignee,idx_tasks_status_due	idx_tasks_assignee	9	NULL	3	10	Using index condition; Using where; Using filesort
+(1 rows)

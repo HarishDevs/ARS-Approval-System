@@ -1,0 +1,121 @@
+# Live headers and CORS 2026-10-31T22:51:46+05:30
+===== curl -I GET / (as E2E_REQ)
+HTTP/1.1 307 Temporary Redirect
+Cross-Origin-Opener-Policy: same-origin-allow-popups
+X-Content-Type-Options: nosniff
+Referrer-Policy: strict-origin-when-cross-origin
+X-Frame-Options: DENY
+Permissions-Policy: camera=(), microphone=(), geolocation=()
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+cache-control: private, no-store, max-age=0
+content-security-policy: default-src 'self'; script-src 'self' 'nonce-<n>' 'strict-dynamic' https://apis.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com; frame-src https://power-bi-dashboard-3b29f.firebaseapp.com https://accounts.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests
+x-request-id: aa113cd3-ca45-492a-9058-2dd04427885b
+Vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch, Accept-Encoding
+link: </_next/static/css/7b736202f0b1dbfd.css>; rel=preload; as="style"; nonce="uGWyZ+BfbkStgXVmOry8WQ==", </_next/static/css/770b571451b53448.css>; rel=preload; as="style"; nonce="uGWyZ+BfbkStgXVmOry8WQ=="
+location: /users
+Content-Type: text/html; charset=utf-8
+
+===== curl -I GET /login (as E2E_REQ)
+HTTP/1.1 307 Temporary Redirect
+Cross-Origin-Opener-Policy: same-origin-allow-popups
+X-Content-Type-Options: nosniff
+Referrer-Policy: strict-origin-when-cross-origin
+X-Frame-Options: DENY
+Permissions-Policy: camera=(), microphone=(), geolocation=()
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+cache-control: private, no-store, max-age=0
+content-security-policy: default-src 'self'; script-src 'self' 'nonce-<n>' 'strict-dynamic' https://apis.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com; frame-src https://power-bi-dashboard-3b29f.firebaseapp.com https://accounts.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests
+x-request-id: af6ffe68-ef6a-489c-b95f-38411ce32a59
+Vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch, Accept-Encoding
+link: </_next/static/css/7b736202f0b1dbfd.css>; rel=preload; as="style"; nonce="3AIwD2jLOgUnTbwZH8xVSg==", </_next/static/css/770b571451b53448.css>; rel=preload; as="style"; nonce="3AIwD2jLOgUnTbwZH8xVSg=="
+location: /users
+Content-Type: text/html; charset=utf-8
+
+===== curl -I GET /users (as E2E_REQ)
+HTTP/1.1 200 OK
+Cross-Origin-Opener-Policy: same-origin-allow-popups
+X-Content-Type-Options: nosniff
+Referrer-Policy: strict-origin-when-cross-origin
+X-Frame-Options: DENY
+Permissions-Policy: camera=(), microphone=(), geolocation=()
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+cache-control: private, no-store, max-age=0
+content-security-policy: default-src 'self'; script-src 'self' 'nonce-<n>' 'strict-dynamic' https://apis.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com; frame-src https://power-bi-dashboard-3b29f.firebaseapp.com https://accounts.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests
+x-request-id: 9e6f0b2d-4432-4970-845b-e34de3f3a0e5
+Vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch, Accept-Encoding
+link: </_next/static/css/7b736202f0b1dbfd.css>; rel=preload; as="style"; nonce="z/CvHdnrh1zd5Q9DJsukAA==", </_next/static/css/770b571451b53448.css>; rel=preload; as="style"; nonce="z/CvHdnrh1zd5Q9DJsukAA=="
+Content-Type: text/html; charset=utf-8
+
+===== curl -I GET /api/health (as E2E_REQ)
+HTTP/1.1 200 OK
+Cross-Origin-Opener-Policy: same-origin-allow-popups
+X-Content-Type-Options: nosniff
+Referrer-Policy: strict-origin-when-cross-origin
+X-Frame-Options: DENY
+Permissions-Policy: camera=(), microphone=(), geolocation=()
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+cache-control: private, no-store, max-age=0
+content-security-policy: default-src 'self'; script-src 'self' 'nonce-<n>' 'strict-dynamic' https://apis.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com; frame-src https://power-bi-dashboard-3b29f.firebaseapp.com https://accounts.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests
+x-request-id: eb1aa399-b892-4d2e-af27-5218b0eaa379
+vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch
+content-type: application/json
+
+===== curl -I GET /api/me/quick?q=ab (as E2E_REQ)
+HTTP/1.1 200 OK
+Cross-Origin-Opener-Policy: same-origin-allow-popups
+X-Content-Type-Options: nosniff
+Referrer-Policy: strict-origin-when-cross-origin
+X-Frame-Options: DENY
+Permissions-Policy: camera=(), microphone=(), geolocation=()
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+cache-control: private, no-store, max-age=0
+content-security-policy: default-src 'self'; script-src 'self' 'nonce-<n>' 'strict-dynamic' https://apis.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com; frame-src https://power-bi-dashboard-3b29f.firebaseapp.com https://accounts.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests
+x-request-id: f6b3fcde-35e3-4fab-ab4e-1a6c092ecd41
+vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch
+content-type: application/json
+
+===== curl -I GET /api/attachments/2 (as E2E_REQ)
+HTTP/1.1 200 OK
+Cross-Origin-Opener-Policy: same-origin-allow-popups
+X-Content-Type-Options: nosniff
+Referrer-Policy: strict-origin-when-cross-origin
+X-Frame-Options: DENY
+Permissions-Policy: camera=(), microphone=(), geolocation=()
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+cache-control: private, no-store, max-age=0
+x-request-id: 06db0f7e-f6f2-40d7-840c-1f735c78b9f6
+vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch
+content-disposition: attachment; filename="site-photo.png"; filename*=UTF-8''site-photo.png
+content-length: 70
+content-security-policy: default-src 'none'; sandbox
+content-type: image/png
+
+===== OPTIONS preflight /api/me/notifications Origin: https://evil.example
+HTTP/1.1 204 No Content
+Cross-Origin-Opener-Policy: same-origin-allow-popups
+X-Content-Type-Options: nosniff
+Referrer-Policy: strict-origin-when-cross-origin
+X-Frame-Options: DENY
+Permissions-Policy: camera=(), microphone=(), geolocation=()
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+allow: GET, POST, HEAD
+cache-control: no-store
+vary: Origin
+Date: Sat, 31 Oct 2026 17:21:47 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+===== GET /api/me/notifications with Origin: https://evil.example (as E2E_REQ)
+HTTP/1.1 200 OK
+vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch
+content-type: application/json
+(no access-control-* lines above = no CORS grant)
+===== GET /api/me/quick?q=ab with Origin: https://evil.example
+HTTP/1.1 200 OK
+vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch
+===== POST /api/me/notifications Sec-Fetch-Site: cross-site
+{"success":false,"error":{"code":"FORBIDDEN","message":"Not allowed."}} => 403
+===== POST /api/me/notifications Sec-Fetch-Site: same-site (sibling subdomain)
+{"success":false,"error":{"code":"FORBIDDEN","message":"Not allowed."}} => 403
+===== POST /api/me/notifications NO Sec-Fetch-Site, Origin: https://evil.example (non-browser / old browser)
+{"ok":true,"changed":0} => 200

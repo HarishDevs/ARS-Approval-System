@@ -1,0 +1,43 @@
+# NOTE (added by SEC after the run): between ~22:52 and ~22:55 IST another run re-seeded ars_approvals_test (all E2E_* users and their sessions were removed; user_sessions went to 0). Every probe below that sends a session cookie (P1-P27, P33, P34, P39, P40) therefore only shows the no-session answer and is NOT used as evidence; all of them were re-run with live sessions in api_probes_rerun.txt. Probes without a session (P28-P32, P35-P38, P41) are valid.
+# API negative probes 2026-10-31T22:55:59+05:30
+[P1 attachments/abc (REQ)] => 404 application/json 103B  | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-12FC48"}}
+[P2 attachments/-1 (REQ)] => 404 application/json 103B  | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-00949B"}}
+[P3 attachments/99999999999999999999999 (REQ)] => 404 application/json 103B  | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-7EFC7A"}}
+[P4 requests/99999999999999999999999/summary.pdf (REQ)] => 404 application/json 103B  | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-9D2650"}}
+[P5 requests/1%27%20OR%201=1/summary.pdf (REQ)] => 404 application/json 103B  | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-5E4F3C"}}
+[P6 files/0 (REQ)] => 404 application/json 103B  | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-948816"}}
+[P7 exports/abc (ADMIN)] => 404 application/json 103B  | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-5DE27C"}}
+[P8 users/abc/photo (REQ)] => 404 application/json 103B  | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-70BA39"}}
+[P9 users/..%2F..%2Fetc/photo (REQ)] => 404 application/json 103B  | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-D30E6C"}}
+[P10 me/notifications POST malformed JSON (REQ)] => 404 application/json 103B  | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-52B16B"}}
+[P11 me/notifications POST ids as strings/SQL (REQ)] => 404 application/json 103B  | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-A62657"}}
+[P12 me/notifications GET type=<script> (REQ)] => 404 application/json 103B  | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-8327E2"}}
+[P13 me/quick q=<script>alert(1)</script> (REQ)] => 404 application/json 103B  | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-F83F3E"}}
+[P14 me/quick q=%27%20OR%20%271%27=%271 (REQ)] => 404 application/json 103B  | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-2E859A"}}
+[P15 me/quick q=%25 (wildcard) (REQ)] => 404 application/json 103B  | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-7959D0"}}
+[P16 admin/records/bogus (ADMIN)] => 404 application/json 103B  | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-83A227"}}
+[P17 admin/import/users?type=bogus (ADMIN)] => 404 application/json 103B  | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-DCC5FC"}}
+[P18 admin/workflows/abc/export (ADMIN)] => 404 application/json 103B  | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-F4ECB4"}}
+[P19 admin/dashboards/bogus (ADMIN)] => 404 application/json 103B  | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-81C504"}}
+[P20 analytics/export?kind=bogus (ADMIN)] => 404 application/json 103B  | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-AAE69D"}}
+[P21 reports/bogus (ADMIN)] => 404 application/json 103B  | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-7AE1C8"}}
+[P22 superadmin/audit?from=x&to=y (SUPER)] => 404 application/json 103B  | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-4D9A2C"}}
+[P23 ai/chat POST malformed JSON (SUPER)] => 404 application/json 103B  | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-D4F048"}}
+[P24 ai/chat POST unknown mode (SUPER)] => 404 application/json 103B  | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-22AC4E"}}
+[P25 ai/conversations/abc PATCH (SUPER)] => 404 application/json 103B  | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-7E5804"}}
+[P26 ai/conversations/2 DELETE other owner's chat (SUPER)] => 404 application/json 103B  | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-D0291B"}}
+[P27 ai/conversations/2 PATCH other owner's chat (SUPER)] => 404 application/json 103B  | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-39E07A"}}
+[P28 webhooks/ceoitbox no secret] => 404 application/json 69B  | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found."}}
+[P29 webhooks/ceoitbox wrong secret] => 404 application/json 69B  | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found."}}
+[P30 webhooks/google-calendar no channel headers] => 404  0B  | 
+[P31 jobs/run no secret] => 404 application/json 103B  | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-FE2EF7"}}
+[P32 jobs/run wrong secret] => 404 application/json 103B  | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-43E2D0"}}
+[P33 integrations/google-calendar/callback garbage state (REQ)] => 404 application/json 69B  | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found."}}
+[P34 integrations/salesforce/callback garbage state (SUPER)] => 404 application/json 69B  | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found."}}
+[P35 DELETE on GET-only /api/attachments/2 (REQ)] => 405  0B  | 
+[P36 PUT on /api/me/notifications (REQ)] => 405  0B  | 
+[P37 GET on POST-only /api/auth/password/start] => 405  0B  | 
+[P38 password/start 1.1 MB JSON body] => 400 application/json 145B  | {"success":false,"error":{"code":"AUTH_INVALID_CREDENTIALS","message":"The user ID or password is incorrect.","requestId":"REQ-20261031-60E7E8"}}
+[P39 me/notifications POST 1.1 MB body (REQ)] => 404 application/json 103B  | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-B3B791"}}
+[P40 me/notifications POST text/plain JSON (REQ)] => 404 application/json 103B  | {"success":false,"error":{"code":"NOT_FOUND","message":"Not found.","requestId":"REQ-20261031-8ACBAD"}}
+[P41 health (anon)] => 200 application/json 92B  | {"status":"ok","version":"1.38.0","database":"ok","jobRunner":"NEVER","storage":"ok","ms":5}
