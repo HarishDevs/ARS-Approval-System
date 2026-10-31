@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Trash2 } from "lucide-react";
 import Link from "next/link";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { EmptyState } from "@/features/ui/Display";
@@ -17,7 +18,7 @@ export default async function DeletedTasksPage() {
   const tasks = await listDeletedTasks(user.id);
   return (
     <>
-      <PageHeader title="Deleted tasks" description="Deleted tasks stay here for 30 days. Restoring one brings back its subtasks, projects and comments." />
+      <PageHeader title="Deleted tasks" icon={Trash2} description="Deleted tasks stay here for 30 days. Restoring one brings back its subtasks, projects and comments." />
       {tasks.length === 0 ? (
         <EmptyState title="Nothing deleted" body="Tasks you create or delete appear here for 30 days after they are deleted." />
       ) : (

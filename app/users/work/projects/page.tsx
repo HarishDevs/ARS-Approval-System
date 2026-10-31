@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { FolderKanban } from "lucide-react";
 import Link from "next/link";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { Badge, EmptyState, NoResults } from "@/features/ui/Display";
@@ -31,7 +32,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
   );
   return (
     <>
-      <PageHeader title="Projects" description="Projects group tasks in sections, with list, board, calendar and timeline views, members and status updates." >
+      <PageHeader title="Projects" icon={FolderKanban} description="Projects group tasks in sections, with list, board, calendar and timeline views, members and status updates." >
         <Link href="/users/work/projects/new" className="btn-primary btn-compact inline-flex items-center gap-1" data-testid="create-project">
           + Create project
         </Link>

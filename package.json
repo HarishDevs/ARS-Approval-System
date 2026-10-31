@@ -1,6 +1,6 @@
 {
   "name": "ars-approval-system",
-  "version": "1.40.0",
+  "version": "1.41.0",
   "private": true,
   "description": "ARS Approval Platform — multi-level approvals in any custom manner",
   "engines": {
@@ -35,6 +35,7 @@
     "react-dom": "19.1.0",
     "server-only": "0.0.1",
     "typescript": "5.7.3",
+    "web-push": "3.6.7",
     "zod": "4.6.7"
   },
   "devDependencies": {
@@ -44,6 +45,7 @@
     "@types/node": "22.20.5",
     "@types/react": "19.0.2",
     "@types/react-dom": "19.0.2",
+    "@types/web-push": "3.6.4",
     "@vitejs/plugin-react": "5.2.0",
     "@vitest/coverage-v8": "5.0.3",
     "autoprefixer": "10.4.20",

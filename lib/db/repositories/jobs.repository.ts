@@ -45,7 +45,7 @@ export async function leaseDueDeliveries(limit: number, onlyIds?: readonly numbe
   return withTransaction(async (connection) => {
     const [rows] = await connection.query<(RowDataPacket & { id: number; channel: "EMAIL" | "WHATSAPP"; attempt_count: number; payload_json: Record<string, unknown> | string | null })[]>(
       `SELECT id, channel, attempt_count, payload_json FROM notification_deliveries
-       WHERE status = 'FAILED' AND next_retry_at IS NOT NULL AND next_retry_at <= CURRENT_TIMESTAMP
+       WHERE status = 'FAILED' AND channel <> 'PUSH' AND next_retry_at IS NOT NULL AND next_retry_at <= CURRENT_TIMESTAMP
        ${onlyIds?.length ? "AND id IN (?)" : ""}
        ORDER BY next_retry_at LIMIT ? FOR UPDATE SKIP LOCKED`,
       onlyIds?.length ? [onlyIds, limit] : [limit],

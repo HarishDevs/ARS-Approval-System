@@ -8,7 +8,8 @@ import { SESSION_TTL_SECONDS } from "@/lib/session/constants";
 import { createDeviceCookieValue, createPurposeToken, createSessionToken } from "@/lib/session/token";
 import { notify, type NotifyInput } from "@/server/notifications/notify";
 import { newSignInMessage, superAdminSignInMessage } from "@/server/notifications/security-messages";
-import { getAuthSecurityConfig } from "@/server/settings/values";
+import { getAuthSecurityConfig, getDailySessionScope } from "@/server/settings/values";
+import { dailySessionApplies, secondsUntilIndiaMidnight, type DailySessionScope } from "@/lib/session/daily";
 import { logError } from "@/lib/logging/logger";
 import type { AuthMethod, RequestContext } from "@/types/auth";
 import { appBaseUrl } from "@/lib/http/app-url";
@@ -22,6 +23,9 @@ export const POST_SIGN_IN_PATH = "/users";
 export interface CompleteSignInResult {
   sessionToken: string;
   sessionId: string;
+  // D-250: how long the session cookie lives (until midnight IST for a daily session).
+  cookieMaxAge?: number;
+  daily?: boolean;
   newDeviceCookie: string | null;
   isNewDevice: boolean;
   redirectTo: string;
@@ -40,6 +44,8 @@ export interface CompleteSignInDeps {
   // Alerts run after the response is decided; they never block or fail sign-in.
   dispatch: (work: () => Promise<void>) => void;
   getTrustedDeviceDays: () => Promise<number>;
+  // D-250: optional for tests (default: off, the 12-hour session).
+  dailySessionScope?: () => Promise<DailySessionScope>;
   randomUUID: () => string;
   now: () => Date;
   appBaseUrl: () => string;
@@ -59,6 +65,7 @@ export const defaultCompleteSignInDeps: CompleteSignInDeps = {
     void work().catch((error) => logError("sign-in alert dispatch failed", error));
   },
   getTrustedDeviceDays: async () => (await getAuthSecurityConfig()).trustedDeviceDays,
+  dailySessionScope: () => getDailySessionScope(),
   randomUUID: () => crypto.randomUUID(),
   now: () => new Date(),
   appBaseUrl: () => appBaseUrl(),
@@ -98,6 +105,11 @@ export async function completeSignIn(
   }
 
   const sessionId = deps.randomUUID();
+  // D-250: a phone, tablet or the installed app stays signed in until the
+  // next midnight, India time (the server's clock), with no idle sign-out.
+  const scope = deps.dailySessionScope ? await deps.dailySessionScope().catch(() => "OFF" as const) : "OFF";
+  const daily = dailySessionApplies(scope, context.userAgent, context.clientKind ?? null);
+  const ttlSeconds = daily ? secondsUntilIndiaMidnight(deps.now()) : SESSION_TTL_SECONDS;
   await deps.createSession({
     id: sessionId,
     userId: user.id,
@@ -105,7 +117,8 @@ export async function completeSignIn(
     authMethod,
     ipAddress: context.ipAddress,
     userAgent: context.userAgent,
-    ttlSeconds: SESSION_TTL_SECONDS,
+    ttlSeconds,
+    daily,
   });
   await deps.markLoginSuccess(user.id);
   await deps.recordLogin({
@@ -126,7 +139,7 @@ export async function completeSignIn(
     entityId: user.id,
     ipAddress: context.ipAddress,
     sessionId,
-    metadata: { authMethod, newDevice: isNewDevice, breakGlass: user.isBreakGlass },
+    metadata: { authMethod, newDevice: isNewDevice, breakGlass: user.isBreakGlass, dailySession: daily },
   });
 
   const details = { userName: user.name, when: deps.now(), userAgent: context.userAgent, ipAddress: context.ipAddress };
@@ -155,8 +168,13 @@ export async function completeSignIn(
   }
 
   return {
-    sessionToken: createSessionToken(sessionId, user.id),
+    sessionToken: createSessionToken(sessionId, user.id, Math.floor(deps.now().getTime() / 1000), ttlSeconds),
     sessionId,
+    // D-250: the cookie outlives the session by 12 hours, so after midnight
+    // the browser still sends it and the app can say why it ended (the token
+    // and the session row both expire at midnight; nothing is extended).
+    cookieMaxAge: daily ? ttlSeconds + 12 * 60 * 60 : ttlSeconds,
+    daily,
     newDeviceCookie,
     isNewDevice,
     redirectTo: POST_SIGN_IN_PATH,

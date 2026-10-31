@@ -282,3 +282,13 @@ export async function setUserActive(userId: number, active: boolean, updatedBy: 
 export async function unlockUser(userId: number, updatedBy: number, db: Queryable = getDbPool()): Promise<void> {
   await db.query<ResultSetHeader>("UPDATE users SET locked_until = NULL, failed_login_count = 0, updated_by = ? WHERE id = ?", [updatedBy, userId]);
 }
+
+// D-255: "Designation, Department" for each active person (people pickers).
+export async function listPeopleDetails(db: Queryable = getDbPool()): Promise<Map<number, string>> {
+  const [rows] = await db.query<(RowDataPacket & { id: number; designation: string | null; department: string | null })[]>(
+    `SELECT u.id, g.name AS designation, d.name AS department FROM users u
+     LEFT JOIN designations g ON g.id = u.designation_id LEFT JOIN departments d ON d.id = u.department_id
+     WHERE u.active = TRUE AND u.is_break_glass = FALSE`,
+  );
+  return new Map(rows.filter((row) => row.designation || row.department).map((row) => [row.id, [row.designation, row.department].filter(Boolean).join(", ")]));
+}

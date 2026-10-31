@@ -297,8 +297,9 @@ export function listFilterSql(f: ListFilters, base: ListBase, userId = 0): { whe
   }
   if (f.q) {
     const like = `%${f.q.replace(/[\\%_]/g, (match) => `\\${match}`)}%`;
-    where.push("(r.request_no LIKE ? OR r.title LIKE ? OR u.name LIKE ?)");
-    params.push(like, like, like);
+    // D-256: also the approval type and the people it is waiting on now.
+    where.push("(r.request_no LIKE ? OR r.title LIKE ? OR u.name LIKE ? OR w.name LIKE ? OR EXISTS (SELECT 1 FROM approval_tasks qt JOIN users qp ON qp.id = qt.approver_id WHERE qt.request_id = r.id AND qt.status = 'PENDING' AND qp.name LIKE ?))");
+    params.push(like, like, like, like, like);
   }
   if (f.typeId === -1) where.push("w.kind = 'CUSTOM'");
   else if (f.typeId !== null) {

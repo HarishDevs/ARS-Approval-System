@@ -9,6 +9,7 @@ import { listVisibleProjects } from "@/lib/db/repositories/work.repository";
 import { peopleOptions } from "@/server/work/page-context";
 import { workViewer } from "@/server/work/task-access";
 import { chatAccess } from "@/server/ai/policy";
+import { PushKeeper } from "@/features/pwa/PushKeeper";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +33,7 @@ export default async function UsersLayout({ children }: { children: React.ReactN
     <AppShell area="users" user={user} nav={await usersNav(user)}>
       {children}
       <HolidayPrompt />
+      <PushKeeper userId={user.id} />
       {creator && <TaskCreator projects={creator.projects} people={creator.people} meId={user.id} ai={ai} />}
     </AppShell>
   );

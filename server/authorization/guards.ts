@@ -1,4 +1,7 @@
 import "server-only";
+import { headers } from "next/headers";
+import { safeNextPath } from "@/lib/http/safe-next";
+import { NEXT_HEADER } from "@/lib/security/path-signature";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentSession, sessionEndReason, type CurrentSession } from "@/server/auth/session";
 import { evaluateAreaAccess } from "@/server/authorization/policy";
@@ -31,7 +34,9 @@ export async function requireArea(area: AppArea): Promise<CurrentSession> {
   if (!session) {
     // v1.12.1 (D-158): a session that ended shows why, with a way back in.
     const reason = await sessionEndReason().catch(() => null);
-    redirect(reason ? `/signed-out?reason=${reason}&next=/${area}` : `/login?next=/${area}`);
+    // D-250: return to the page asked for (checked again after sign-in).
+    const next = encodeURIComponent(safeNextPath((await headers()).get(NEXT_HEADER), `/${area}`));
+    redirect(reason ? `/signed-out?reason=${reason}&next=${next}` : `/login?next=${next}`);
   }
   await recordAudit({
     actorUserId: session.user.id,

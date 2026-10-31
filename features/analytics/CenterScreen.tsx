@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { BarChart3 } from "lucide-react";
+import { FitPages } from "@/features/analytics/FitPages";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { Hint } from "@/features/ui/Hint";
 import { AnalyticsPicker } from "@/features/analytics/AnalyticsPicker";
@@ -153,7 +155,7 @@ export async function CenterScreen({ base, board, boards, modules, query, scope,
 
   return (
     <>
-      <PageHeader title="Analytics" description={meta.what} meta={`${scope.label} · ${period.label}: ${day(period.from)} – ${day(period.to)}, compared with ${day(previous.from)} – ${day(previous.to)}. India time (UTC+5:30).`}>
+      <PageHeader title="Analytics" icon={BarChart3} description={meta.what} meta={`${scope.label} · ${period.label}: ${day(period.from)} – ${day(period.to)}, compared with ${day(previous.from)} – ${day(previous.to)}. India time (UTC+5:30).`}>
         <Link href={`${base}/metrics`} className="link text-label">
           How these are worked out
         </Link>
@@ -227,6 +229,8 @@ export async function CenterScreen({ base, board, boards, modules, query, scope,
         </Link>
       </form>
 
+      {/* D-258: the board in pages that each fit the window. */}
+      <FitPages label="Analytics">
       {board === "overview" && <Overview scope={scope} viewer={viewer} period={period} previous={previous} compareLabel={compareLabel} today={today} modules={modules} />}
       {board === "tasks" && <Tasks scope={scope} viewer={viewer} period={period} previous={previous} compareLabel={compareLabel} buckets={buckets} />}
       {board === "information" && <Information scope={scope} viewer={viewer} period={period} previous={previous} compareLabel={compareLabel} buckets={buckets} today={today} />}
@@ -235,6 +239,7 @@ export async function CenterScreen({ base, board, boards, modules, query, scope,
       {board === "sla" && <Sla base={base} carry={carry} scope={scope} viewer={viewer} period={period} />}
       {board === "trends" && <Trends scope={scope} viewer={viewer} period={period} previous={previous} compareLabel={compareLabel} today={today} exportHref={canExport ? exportHref("monthly") : null} />}
       {board === "quality" && <Quality base={base} carry={carry} scope={scope} viewer={viewer} today={today} />}
+      </FitPages>
 
       <p className="mt-8 flex items-center gap-1.5 text-caption text-ink-muted" data-testid="center-refreshed">
         As of {formatIndiaTime(now)}.

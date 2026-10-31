@@ -25,7 +25,9 @@ export const TASK_EVENTS: readonly string[] = [
   "WORK_PROJECT_STATUS",
   "WORK_TASK_DIGEST", // D-218
 ];
-export const INFO_EVENTS: readonly string[] = ["INFO_PUBLISHED", "INFO_UPDATED", "INFO_WITHDRAWN", "INFO_ACK_REMINDER"];
+// D-252: IT's announcements and management notices sit with Information; its
+// system notices and important alerts with System.
+export const INFO_EVENTS: readonly string[] = ["INFO_PUBLISHED", "INFO_UPDATED", "INFO_WITHDRAWN", "INFO_ACK_REMINDER", "ADMIN_ANNOUNCEMENT", "ADMIN_MANAGEMENT"];
 export const SYSTEM_EVENTS: readonly string[] = [
   "NEW_LOGIN",
   "ACCOUNT_LOCKED",
@@ -44,6 +46,9 @@ export const SYSTEM_EVENTS: readonly string[] = [
   "EXPORT_READY",
   "ANALYTICS_ALERT",
   "PROVIDER_TEST",
+  "ADMIN_SYSTEM",
+  "ADMIN_IMPORTANT",
+  "PUSH_TEST",
 ];
 
 export function categoryOf(eventType: string): NotificationCategory {

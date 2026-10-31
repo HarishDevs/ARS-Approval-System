@@ -24,8 +24,8 @@ import { doaBandLabels, isConditionGroup, MAX_CHOICE_DEPTH, type ApproverPick, t
 // is one step or several steps in parallel. The server compiles, validates
 // and stores it; nothing here is trusted.
 export interface BuilderOptions {
-  people: { id: number; label: string }[]; // approver-eligible people (approval steps, D-085)
-  anyone?: { id: number; label: string }[]; // everyone active (work and FYI steps, v1.8.0)
+  people: { id: number; label: string; detail?: string }[]; // approver-eligible people (approval steps, D-085)
+  anyone?: { id: number; label: string; detail?: string }[]; // everyone active (work and FYI steps, v1.8.0)
   roles: { code: string; name: string }[];
   departments: { id: number; label: string }[];
   groups: { id: number; label: string }[];

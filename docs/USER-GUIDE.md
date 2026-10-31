@@ -1,8 +1,8 @@
-# ARS-CMS: user guide (v1.40.0)
+# ARS-CMS: user guide (v1.41.0)
 
 **Address:** https://approval.arssteels.net. Sign in with your company Google account, or with your User ID and password and a WhatsApp code, as IT set you up (or either way, if IT chose **Both**). Questions: IT (itadmin@arssteels.co.in).
 
-You are signed out after **30 minutes without activity** (IT can change this), and always 12 hours after signing in. Anything you were typing in a form is kept; sign in again and carry on.
+**On a phone, a tablet or the installed app** you stay signed in until **midnight (India time)**, even if you close the app or lock the screen; then you sign in again. **On a computer** you are signed out after **30 minutes without activity** (IT can change this), and always 12 hours after signing in. Anything you were typing in a form is kept; sign in again and carry on. Notifications keep coming while you're signed out.
 
 What's new in each release: `docs/RELEASE-NOTES.md`.
 
@@ -29,6 +29,21 @@ Groups open and close like a dropdown; the group of the page you're on opens by 
 
 There is **no Search in the sidebar**: use the search bar at the top. On a phone, the bar at the bottom has Home, Waiting, New, Search and Profile.
 
+### Install the app
+ARS-CMS can be installed like an app: it opens in its own window from your home screen, dock or start menu.
+- **Android, and Chrome or Edge on a computer:** the first time you visit, a card offers **Install app**; or use the browser's install icon.
+- **iPhone and iPad (Safari):** tap **Share** → **Add to Home Screen** → **Add**, then open ARS-CMS from the Home Screen.
+- **Safari on a Mac:** File → Add to Dock.
+- **Maybe later** hides the card; **Profile → App & devices** always has the steps.
+
+### Phone and desktop notifications
+**Profile → App & devices → Turn on notifications on this device.** Your browser asks once; choose Allow. Do it on each phone or computer you use.
+- Approvals waiting for you, tasks, reminders, information and IT's notices then appear as alerts, even when ARS-CMS is closed. Tapping one opens the record (after you sign in, if your daily session has ended).
+- On iPhone and iPad they work only in the installed app (iOS 16.4 or later).
+- **Send a test** checks it. The list shows every device that gets your notifications; **Remove** one you no longer use.
+- Choose which kinds come in **Profile → Notifications → Phone & desktop**. Security alerts and work waiting for you always come.
+- If you chose **Block** by mistake, the page shows how to allow notifications again in your browser.
+
 ### Search
 The search bar in the middle of the top bar finds requests, tasks, projects, people, information and pages. It keeps your recent and saved searches; **Filters** opens the full search. A request number works without dashes or zeros (e.g. "pur 2026 123"). **Ctrl+K** jumps to any page.
 
@@ -43,6 +58,13 @@ Everything the app has told you, in one place: **All**, **Approvals**, **Tasks**
 - **Notification settings** (top right) opens Profile → Notifications.
 
 The **bell** at the top still shows your latest notices; **Read more** opens the Inbox.
+
+### My requests
+- **Raised by me / Shared with me** at the top, each with how many requests it holds.
+- The **status cards** (All, Open, Waiting for approvers, Sent back, On hold, Approved, Rejected, Withdrawn, Overdue) filter the list. Overdue requests are also counted under Waiting for approvers.
+- **Search** finds a request by number, title, approval type or the person it is waiting on.
+- **Filters, Sort, Group** and **Columns** (which columns you see; kept on your account). Lists come a page at a time.
+- **Progress** shows how far each request has gone; click it to see the road. **⋮** on a row: view, progress, history, update and resubmit, raise again, download the summary, withdraw (the request page asks first).
 
 ### My Approvals: the lists
 - **My pending requests:** what you raised that is still open.
@@ -73,6 +95,15 @@ You can't approve your own request, but you can give yourself a **work task** (e
 ### When an approver asks for changes
 You get a message. Open the request, change the fields or add files, then **Resubmit**. It goes back to the level that asked, or to the first level if the approval type is set that way.
 When you resubmit, the same checks as a new request run again (duplicates, unique values, budget): fix what they point out before it goes back to the approvers.
+
+### The road (where your request is)
+At the top of **Approval levels** on a request, the road shows the journey: **Request submitted**, one point per level, and the finish flag.
+- The red **ARS van** stands at the level waiting now. The road behind it is green.
+- When a level finishes, the van drives on by itself (the page checks every 20 seconds).
+- Fully approved: the van reaches the flag with a big tick.
+- A red cross marks where a request was rejected; amber means changes asked, on hold or stuck.
+- Tap a point to see who decides there, when, and their comments.
+- Below the road: progress, levels completed and remaining, time in process and the last update.
 
 ### Withdraw
 While it's open: **Withdraw** on the request. The approvers are told.
@@ -180,6 +211,10 @@ Switch to it from the account menu → **Switch space**.
 - **Task set-up:** Task types and **Task settings** (department holidays, morning summary, repeating tasks). **Information types.**
 - **Reminders & escalations:** rules for pending approvals and open tasks, escalation levels and wording. **Test** sends nothing.
 - **AI Analytics** and **AI Rules** (what Pico Bot may answer).
+- **Notifications:** send a notification to people, departments, roles, heads of department, managers or everyone active.
+  - Choose its category (Announcement, Management notice, System notice, Important alert), its priority and the page it opens.
+  - **Count who it reaches** first; **Send** asks to confirm. It goes to their Inbox and their registered devices, and is in the audit log.
+  - **History** shows how many were accepted by the push services, are still waiting or failed. **Devices** lists every registered device; the push address is never shown.
 - **Working calendar:** working days and holidays (used for due times).
 - **Import data:** CSV templates for users, departments, designations, groups and holidays. Check first, then import.
 - **Stuck requests:** if a level finds nobody (e.g. a department has no HOD), IT gets a message and the request shows **Stuck: needs IT**. You can give the step to people, skip it, or **Try again** after fixing the master data. Your reason is shown on the timeline and to the requester. Nobody can skip or route a step of their **own** request (ask another IT person), and a request is never approved when every approval level was skipped for want of an approver: it stops as Stuck instead.
@@ -187,6 +222,7 @@ Switch to it from the account menu → **Switch space**.
 ---
 
 ## 4. Super Admin
+- **Phone & desktop notifications:** Settings → **Generate keys** once (no outside account is needed); choose what a lock screen shows (title, full message or only "New in ARS-CMS"). **Daily session** (Sign-in security): phones and the app until midnight (default), everyone, or off.
 - **Providers & security:** the settings console: categories down the side, a search across every setting, a mark on anything not saved yet. Email (Resend), WhatsApp (CEOITBox, including the webhook secret), sign-in security, idle sign-out, escalation levels, the maintenance notice (General). Secret values are stored encrypted. **General → Weekly HOD report** switches the Monday email to heads of department on or off. **Backup:** off-site copies to an S3-compatible bucket (endpoint, region, bucket, keys); copies are always encrypted first.
 - **Integrations → Google Calendar:** set up the Google OAuth client, policies and modules; **Test configuration**, then **Enable**; watch health, failed syncs (**Retry**), connected people (**Revoke**, **Full resync**) and conflicts. Maintenance mode pauses syncing. Step by step: deployment guide, Part Q.
 - **AI settings, Salesforce Settings, AI Details** (data sources, reports, activity history).

@@ -54,6 +54,9 @@ export interface ListedRequest {
   myStep: string | null; // APPROVED_BY_ME
   myForName: string | null; // APPROVED_BY_ME: approved for this person (covering)
   amended: boolean;
+  requesterId: number; // D-256: the row's actions
+  workflowId: number;
+  isCustom: boolean;
 }
 
 export async function listRequests(base: ListBase, userId: number, filters: ListFilters, db: Queryable = getDbPool()): Promise<{ items: ListedRequest[]; total: number; page: number; pages: number }> {
@@ -65,7 +68,7 @@ export async function listRequests(base: ListBase, userId: number, filters: List
   const pages = Math.max(1, Math.ceil(total / filters.size));
   const page = Math.min(filters.page, pages);
   const [rows] = await db.query<RowDataPacket[]>(
-    `SELECT r.id, r.request_no, r.title, w.name AS workflow_name, u.name AS requester_name, r.status, r.submitted_at, r.closed_at, r.updated_at, r.valid_until,
+    `SELECT r.id, r.request_no, r.title, w.name AS workflow_name, w.id AS workflow_id, w.kind AS workflow_kind, r.requester_id, u.name AS requester_name, r.status, r.submitted_at, r.closed_at, r.updated_at, r.valid_until,
             (SELECT GROUP_CONCAT(DISTINCT p.name ORDER BY p.name SEPARATOR ', ') FROM approval_tasks t JOIN users p ON p.id = t.approver_id WHERE t.request_id = r.id AND t.status = 'PENDING') AS pending_with,
             (SELECT GROUP_CONCAT(DISTINCT t.node_label ORDER BY t.node_label SEPARATOR ', ') FROM approval_tasks t WHERE t.request_id = r.id AND t.status = 'PENDING') AS pending_step,
             (SELECT MIN(t.due_at) FROM approval_tasks t WHERE t.request_id = r.id AND t.status = 'PENDING') AS next_due,
@@ -84,6 +87,9 @@ export async function listRequests(base: ListBase, userId: number, filters: List
       id: row.id,
       requestNo: row.request_no,
       title: row.title,
+      requesterId: row.requester_id,
+      workflowId: row.workflow_id,
+      isCustom: row.workflow_kind === "CUSTOM",
       workflowName: row.workflow_name,
       requesterName: row.requester_name,
       status: row.status,
@@ -120,6 +126,13 @@ export async function tabCounts(base: ListBase, userId: number, filters: ListFil
     out[tab.key] = Number(row?.n ?? 0);
   }
   return out;
+}
+
+// D-256: how many requests a list holds in all (the Raised by me / Shared
+// with me tabs), whatever is filtered.
+export async function baseTotal(base: ListBase, userId: number, db: Queryable = getDbPool()): Promise<number> {
+  const [[row]] = await db.query<RowDataPacket[]>(`SELECT COUNT(*) AS n ${FROM(base)} WHERE r.deleted_at IS NULL AND ${BASE[base]}`, [userId]);
+  return Number(row?.n ?? 0);
 }
 
 export interface ListChoices {

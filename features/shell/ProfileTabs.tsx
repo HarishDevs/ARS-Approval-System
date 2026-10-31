@@ -12,6 +12,8 @@ export const PROFILE_TABS = [
   { href: "/users/delegation", label: "Out of office" },
   { href: "/users/security", label: "Sign-in & devices" },
   { href: "/users/profile/calendar", label: "Calendar" },
+  // D-251/D-252: install the app, this device's notifications, registered devices.
+  { href: "/users/profile/devices", label: "App & devices" },
 ] as const;
 
 export function ProfileTabs() {

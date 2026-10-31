@@ -1,5 +1,30 @@
 # Release notes
 
+## v1.41.0 (1 Nov 2026): install the app, notifications on your phone, the approval road (owner)
+- **Install ARS-CMS as an app** on Android, iPhone, iPad, Windows and Mac. A card offers it on the first visit (on iPhone and iPad it shows the Share → Add to Home Screen steps). **Maybe later** is remembered. Profile → **App & devices** always has it.
+- **Phone and desktop notifications:** turn them on per device in Profile → App & devices.
+  - Approvals, tasks, reminders, information and IT's notices arrive even when the app is closed or you're signed out. Tapping one opens the record.
+  - Choose which kinds come under Profile → Notifications → **Phone & desktop**.
+  - The Super Admin makes the keys once (Settings → Phone & desktop notifications); no outside account is needed.
+- **Stay signed in all day on phones:** on a phone, a tablet or the installed app you stay signed in until midnight (India time); computers keep the inactivity sign-out. The Super Admin can change who gets this.
+- **Admin → Notifications:**
+  - IT sends a notice to people, departments, roles, heads of department, managers or everyone, with a category and priority.
+  - History shows how many the push services accepted.
+  - Devices lists every registered device.
+- **The approval road:** on every request, a road shows the journey, with the red ARS van at the level waiting now. It drives on by itself as levels finish and reaches the flag with a big tick when fully approved. Tap a point to see who decides there.
+- **My requests, redesigned:**
+  - Raised by me / Shared with me with totals.
+  - Status cards (All to Overdue).
+  - Search also by approval type and approver.
+  - Your own columns, a progress bar per row and a ⋮ menu of what you can do.
+  - Numbered pages.
+  - The same on My approved requests, Approved by me and Collaborating.
+- **New request in three steps** (details, workflow, review) with a live summary and an action bar. People pickers show initials, designation and department.
+- **Tables and Analytics fit the window:** every table scrolls in its own box with the header kept in view, and long tables come in pages. Each Analytics board is split into pages that fit the screen.
+- **Look:** the main screens get the new header icons and summary cards in the Compact view (Classic stays as it was), in both light and dark themes.
+- **Fixed:** with the sidebar folded, the Create (+) menu was hidden and labels such as "Information" were cut off.
+- Privacy policy, terms, User Guide, Help, tour and first-use checklist cover all of the above.
+
 ## v1.40.0 (1 Nov 2026): every audit finding addressed (owner)
 - **Security:** four Super Admin pages could be read without signing in through a client-navigation request; every admin page now checks access itself, and a test keeps it so. Signing in no longer hints which User IDs exist. The break-glass account's actions are recorded and alerted.
 - **Approvals:** nobody can skip a step of their own request, and a request is never approved without at least one real approval (a step skipped for having nobody now waits for IT instead). Changing the approver chosen in a field restarts that step on resubmit.

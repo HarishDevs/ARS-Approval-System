@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, BellOff, ChevronDown, Mail, MessageCircle, Moon, Sunrise } from "lucide-react";
+import { Bell, BellOff, ChevronDown, Mail, MessageCircle, Moon, Sunrise, Smartphone } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { savePreferencesAction } from "@/app/users/preferences-actions";
 import { ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
@@ -29,6 +29,7 @@ export interface CenterDnd {
 
 const CHANNEL: Record<Channel, { title: string; by: string; help: string; icon: typeof Bell }> = {
   INAPP: { title: "In the app", by: "in the app", help: "The bell and pop-ups here. Switched off, a message is still kept under Notifications, already read.", icon: Bell },
+  PUSH: { title: "Phone & desktop", by: "on your devices", help: "Alerts on the phones and computers where you turned on notifications (Profile → App & devices). They come even when the app is closed.", icon: Smartphone },
   EMAIL: { title: "Email", by: "by email", help: "Sent to your email address.", icon: Mail },
   WHATSAPP: { title: "WhatsApp", by: "by WhatsApp", help: "Sent to your WhatsApp number.", icon: MessageCircle },
 };
@@ -118,8 +119,9 @@ export function NotificationCenter({ groups, channels, digest, dnd }: { groups: 
   const setState = (changes: Record<string, boolean>) => setStateRaw((current) => ({ ...current, ...changes }));
   const [quietOn, setQuietOn] = useState(Boolean(dnd.quiet));
   const [days, setDays] = useState<number[]>(dnd.daysOff);
+  const [dirty, setDirty] = useState(false);
   return (
-    <form onSubmit={onSubmit} className="space-y-4" data-testid="notification-center">
+    <form onSubmit={onSubmit} onChange={() => setDirty(true)} className="space-y-4" data-testid="notification-center">
       <UnsavedGuard />
       {channels.map((channel) => (
         <Card key={channel} icon={CHANNEL[channel].icon} title={`${CHANNEL[channel].title} notifications`} help={CHANNEL[channel].help} testId={`channel-${channel}`}>
@@ -170,11 +172,11 @@ export function NotificationCenter({ groups, channels, digest, dnd }: { groups: 
           </fieldset>
           <fieldset>
             <legend className="mb-2 font-semibold">Do not disturb me on my days off</legend>
-            <div className="inline-flex overflow-hidden rounded-md border border-line-strong" role="group" aria-label="Days off">
+            <div className="grid max-w-full grid-cols-7 overflow-hidden rounded-md border border-line-strong sm:inline-grid" role="group" aria-label="Days off">
               {DAYS.map(([day, label]) => {
                 const on = days.includes(day);
                 return (
-                  <label key={day} className={`cursor-pointer border-l border-line-strong px-3 py-1.5 first:border-l-0 ${on ? "bg-primary-solid font-semibold text-on-solid" : "hover:bg-surface-muted"}`}>
+                  <label key={day} className={`min-w-0 cursor-pointer border-l border-line-strong px-1 py-1.5 text-center first:border-l-0 sm:px-3 ${on ? "bg-primary-solid font-semibold text-on-solid" : "hover:bg-surface-muted"}`}>
                     <input type="checkbox" name="dayOff" value={day} checked={on} onChange={() => setDays((value) => (on ? value.filter((item) => item !== day) : [...value, day]))} className="sr-only" />
                     {label}
                   </label>
@@ -184,7 +186,9 @@ export function NotificationCenter({ groups, channels, digest, dnd }: { groups: 
           </fieldset>
         </div>
       </Card>
-      <div className="sticky bottom-0 z-10 flex flex-wrap items-center gap-3 border-t border-line bg-[var(--color-surface-page)] py-3">
+      {/* Kept in view at the bottom once something has changed (before that it
+          sits after the choices and covers none of them). */}
+      <div className={`${dirty ? "sticky bottom-0 z-10" : ""} flex flex-wrap items-center gap-3 border-t border-line bg-[var(--color-surface-page)] py-3`}>
         <SubmitButton pending={pending} className="btn-compact">
           Save choices
         </SubmitButton>

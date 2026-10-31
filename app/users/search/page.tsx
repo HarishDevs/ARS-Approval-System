@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Search } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireArea } from "@/server/authorization/guards";
@@ -42,7 +43,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
 
   return (
     <>
-      <PageHeader title="Search" description={isAdmin ? "Every request (you're IT). Search by number, title or who raised it." : "Every request you raised, approve or covered for. Search by number, title or who raised it."} />
+      <PageHeader title="Search" icon={Search} description={isAdmin ? "Every request (you're IT). Search by number, title or who raised it." : "Every request you raised, approve or covered for. Search by number, title or who raised it."} />
       <form method="get" className="card mb-4 grid gap-3 px-5 py-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="sm:col-span-2">
           <label htmlFor="s-q" className="field-label">

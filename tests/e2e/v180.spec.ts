@@ -155,7 +155,8 @@ test("inactivity signs everyone out (the Super Admin too, v1.12.1) and the signe
   await expect(page).toHaveURL(/\/signed-out\?reason=idle/);
   await expect(page.getByRole("heading", { name: "Signed out after inactivity" })).toBeVisible();
   await expect(page.getByText(/no activity for 5 minutes/)).toBeVisible();
-  await expect(page.getByRole("link", { name: "Sign in again" })).toHaveAttribute("href", "/login?next=%2Fusers");
+  // D-250: back to the exact page asked for after signing in.
+  await expect(page.getByRole("link", { name: "Sign in again" })).toHaveAttribute("href", "/login?next=%2Fusers%2Fqueue");
   // The ended session stays ended even if activity starts again.
   await sql("UPDATE user_sessions SET last_seen_at = CURRENT_TIMESTAMP WHERE user_id = ?", [requester]);
   expect(await (await page.request.get("/api/auth/status")).json()).toMatchObject({ signedIn: false, reason: "idle" });

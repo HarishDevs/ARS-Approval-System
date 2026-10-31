@@ -23,6 +23,8 @@ export interface MapStep {
   people: MapPerson[];
   notTaken?: boolean; // on the path a choice didn't take (D-068)
   type?: "WORK" | "NOTIFY"; // D-097; an approval step has none
+  activatedAt?: string; // D-253: when it started waiting (the road's "pending since")
+  completedAt?: string; // D-253: when it finished
 }
 
 export interface MapStage {
@@ -130,6 +132,8 @@ function mapStep(node: ApprovalNode, state: InstanceState, names: ReadonlyMap<nu
     ...(reason ? { reason } : {}),
     people,
     ...(node.mode === "WORK" ? { type: "WORK" as const } : {}),
+    ...(nodeState?.activatedAt ? { activatedAt: nodeState.activatedAt } : {}),
+    ...(nodeState?.completedAt ? { completedAt: nodeState.completedAt } : {}),
   };
 }
 

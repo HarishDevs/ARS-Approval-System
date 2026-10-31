@@ -12,7 +12,17 @@ import { CREATE_TASK_EVENT } from "@/features/work/client";
 // D-229: `compact` is the collapsed sidebar's round + (the menu opens beside it).
 export function CreateMenu({ approval, task, information, compact = false }: { approval: boolean; task: boolean; information: boolean; compact?: boolean }) {
   const [open, setOpen] = useState(false);
+  // The folded sidebar scrolls, which clips anything sticking out of it, so
+  // there the menu is placed on the page (fixed) beside the + button.
+  const [spot, setSpot] = useState<{ top: number; left: number } | null>(null);
   const box = useRef<HTMLDivElement>(null);
+  const toggle = () => {
+    if (compact && !open && box.current) {
+      const rect = box.current.getBoundingClientRect();
+      setSpot({ top: Math.max(8, Math.min(rect.top, window.innerHeight - 280)), left: rect.right + 8 });
+    }
+    setOpen((value) => !value);
+  };
   const router = useRouter();
   useEffect(() => {
     if (!open) return;
@@ -38,11 +48,11 @@ export function CreateMenu({ approval, task, information, compact = false }: { a
   return (
     <div ref={box} className={compact ? "relative mb-2" : "relative px-3 pt-3"} data-testid="create-menu">
       {compact ? (
-        <button type="button" aria-haspopup="menu" aria-expanded={open} aria-label="Create" title="Create" onClick={() => setOpen((value) => !value)} className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary-solid text-on-solid shadow-button hover:bg-primary-solid-hover">
+        <button type="button" aria-haspopup="menu" aria-expanded={open} aria-label="Create" title="Create" onClick={toggle} className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary-solid text-on-solid shadow-button hover:bg-primary-solid-hover">
           <Plus aria-hidden="true" className="h-5 w-5" />
         </button>
       ) : (
-        <button type="button" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((value) => !value)} className="btn-primary inline-flex w-full items-center justify-center gap-1.5">
+        <button type="button" aria-haspopup="menu" aria-expanded={open} onClick={toggle} className="btn-primary inline-flex w-full items-center justify-center gap-1.5">
           <Plus aria-hidden="true" className="h-4 w-4" /> Create
         </button>
       )}
@@ -50,7 +60,8 @@ export function CreateMenu({ approval, task, information, compact = false }: { a
         <div
           role="menu"
           aria-label="Create"
-          className={`absolute z-50 rounded-lg border border-line bg-raised p-1 shadow-overlay ${compact ? "left-full top-0 ml-2 w-64" : "left-3 right-3 mt-1"}`}
+          className={`z-[var(--z-drawer)] rounded-lg border border-line bg-raised p-1 shadow-overlay ${compact ? "fixed w-64" : "absolute left-3 right-3 mt-1"}`}
+          style={compact && spot ? { top: spot.top, left: spot.left } : undefined}
           onKeyDown={(event) => {
             if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
             event.preventDefault();

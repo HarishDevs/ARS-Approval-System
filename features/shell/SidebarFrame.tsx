@@ -51,7 +51,7 @@ export function SidebarFrame({
 
   return (
     <aside
-      className={`hidden shrink-0 flex-col border-r border-line bg-surface transition-[width] duration-150 motion-reduce:transition-none md:sticky md:top-0 md:flex md:h-dvh md:self-start ${collapsed ? "w-[4.5rem]" : "w-sidebar"}`}
+      className={`hidden shrink-0 flex-col border-r border-line bg-surface transition-[width] duration-150 motion-reduce:transition-none md:sticky md:top-0 md:flex md:h-dvh md:self-start ${collapsed ? "w-20" : "w-sidebar"}`}
       data-testid="sidebar"
       data-collapsed={collapsed ? "true" : undefined}
     >
@@ -76,14 +76,14 @@ export function SidebarFrame({
         )}
       </div>
       {collapsed ? (
-        <nav aria-label="Main" className="flex min-h-0 flex-1 flex-col items-center gap-1 overflow-y-auto px-1.5 py-3" data-testid="sidebar-rail">
+        <nav aria-label="Main" className="flex min-h-0 flex-1 flex-col items-center gap-1 overflow-y-auto overflow-x-hidden px-1 py-3" data-testid="sidebar-rail">
           {create && <CreateMenu {...create} compact />}
           {rail.map((entry) => {
             const active = entry.kind === "item" ? here(entry.href) : false;
             const body = (
               <>
                 {entry.kind === "item" ? <NavIcon href={entry.href} className="h-5 w-5" /> : <SectionIcon section={entry.section} className="h-5 w-5" />}
-                <span className="line-clamp-2 w-full text-center text-[length:calc(10px*var(--text-scale,1))] leading-tight">{entry.label}</span>
+                <span className="line-clamp-2 w-full break-words text-center text-[length:calc(10px*var(--text-scale,1))] leading-tight [hyphens:auto]">{entry.label}</span>
               </>
             );
             const style = `flex w-full flex-col items-center gap-1 rounded-md px-1 py-1.5 ${active ? "bg-primary-50 text-primary-700" : "text-ink-muted hover:bg-surface-muted hover:text-ink"}`;

@@ -7,7 +7,7 @@ export type SettingValueType = "STRING" | "NUMBER" | "BOOLEAN";
 
 export interface SettingDefinition {
   key: string;
-  group: "GENERAL" | "AUTHENTICATION" | "EMAIL" | "WHATSAPP" | "FEATURES" | "RETENTION" | "AI" | "AI_DATA" | "BACKUP";
+  group: "GENERAL" | "AUTHENTICATION" | "EMAIL" | "WHATSAPP" | "FEATURES" | "RETENTION" | "AI" | "AI_DATA" | "BACKUP" | "PUSH";
   label: string;
   valueType: SettingValueType;
   encrypted: boolean;
@@ -32,6 +32,13 @@ export const SETTING_DEFINITIONS: readonly SettingDefinition[] = [
   { key: "backup.s3_bucket", group: "BACKUP", label: "Bucket", valueType: "STRING", encrypted: false, schema: z.string().trim().regex(/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/, "Use the bucket's name (lower-case letters, numbers, dots and hyphens).") },
   { key: "backup.s3_access_key_id", group: "BACKUP", label: "Access key ID (a key that may only write to this bucket)", valueType: "STRING", encrypted: false, schema: z.string().trim().min(1).max(200) },
   { key: "backup.s3_secret_access_key", group: "BACKUP", label: "Secret access key", valueType: "STRING", encrypted: true, schema: z.string().trim().min(1).max(200) },
+  // D-252: phone and desktop notifications (Web Push with VAPID). The keys are made by
+  // "Generate keys" on this page; the private key is stored encrypted and never leaves the server.
+  { key: "push.enabled", group: "PUSH", label: "Phone and desktop notifications (Web Push)", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF"]), defaultValue: "ON" },
+  { key: "push.vapid_public_key", group: "PUSH", label: "VAPID public key (made by Generate keys; shared with browsers)", valueType: "STRING", encrypted: false, schema: z.string().trim().regex(/^[A-Za-z0-9_-]{80,100}$/, "Use Generate keys.") },
+  { key: "push.vapid_private_key", group: "PUSH", label: "VAPID private key (made by Generate keys)", valueType: "STRING", encrypted: true, schema: z.string().trim().regex(/^[A-Za-z0-9_-]{40,50}$/, "Use Generate keys.") },
+  { key: "push.vapid_subject", group: "PUSH", label: "Contact for the push services (mailto: or https:)", valueType: "STRING", encrypted: false, schema: z.string().trim().regex(/^(mailto:\S+@\S+|https:\/\/\S+)$/, "Use mailto:address or an https:// address."), defaultValue: "mailto:itadmin@arssteels.co.in" },
+  { key: "push.lock_screen_detail", group: "PUSH", label: "What a notification shows on a lock screen: TITLE = the title and a short line without amounts or names of fields; FULL = the message as in the Inbox; GENERIC = only \"New in ARS-CMS\"", valueType: "STRING", encrypted: false, schema: z.enum(["TITLE", "FULL", "GENERIC"]), defaultValue: "TITLE" },
   // D-247 (audit FI-D01, BD-5): off until the Super Admin switches it on (it sends real email).
   { key: "general.hod_weekly_report", group: "GENERAL", label: "Weekly report to each head of department (Mondays from 9:00, by email: their department's requests in the last 7 days)", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF"]), defaultValue: "OFF" },
   { key: "general.stuck_idle_days", group: "GENERAL", label: "Days without activity before a request is listed as possibly stuck", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(1).max(90), defaultValue: "7" },
@@ -69,6 +76,8 @@ export const SETTING_DEFINITIONS: readonly SettingDefinition[] = [
   { key: "auth.lockout_threshold", group: "AUTHENTICATION", label: "Wrong passwords before lock", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(3).max(10), defaultValue: "5" },
   { key: "auth.lockout_minutes", group: "AUTHENTICATION", label: "Lock duration (minutes)", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(5).max(1440), defaultValue: "15" },
   // v1.8.0 (owner): 30 minutes by default; users and IT admins only, never the Super Admin.
+  // D-250 (owner): the daily session. DEVICES = phones, tablets and the installed app; EVERYONE; OFF = the idle rule for all.
+  { key: "auth.daily_session_scope", group: "AUTHENTICATION", label: "Daily session (stay signed in until midnight, India time, with no sign-out for inactivity): DEVICES = phones, tablets and the installed app; EVERYONE; OFF", valueType: "STRING", encrypted: false, schema: z.enum(["DEVICES", "EVERYONE", "OFF"]), defaultValue: "DEVICES" },
   { key: "auth.idle_timeout_minutes", group: "AUTHENTICATION", label: "Sign everyone out after no activity (minutes, 5 to 480; the Super Admin too)", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(5).max(480), defaultValue: "30" },
   { key: "auth.trusted_device_days", group: "AUTHENTICATION", label: "Remember a device for (days)", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(1).max(90), defaultValue: "30" },
 

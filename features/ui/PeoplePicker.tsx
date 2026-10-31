@@ -12,7 +12,19 @@ import { Hint } from "@/features/ui/Hint";
 export interface PersonOption {
   id: number;
   label: string;
+  detail?: string; // D-255: designation and department, shown and searched
 }
+
+// Initials for the round badge beside a name ("Asha Rao (asha)" -> "AR").
+const initialsOf = (label: string) =>
+  label
+    .replace(/\(.*?\)/g, "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]!.toUpperCase())
+    .join("");
 
 export function PeoplePicker({
   name,
@@ -50,7 +62,7 @@ export function PeoplePicker({
   const byId = useMemo(() => new Map(options.map((option) => [option.id, option])), [options]);
   const matches = useMemo(() => {
     const words = query.toLowerCase().trim().split(/\s+/).filter(Boolean);
-    return options.filter((option) => !chosen.includes(option.id) && words.every((word) => option.label.toLowerCase().includes(word))).slice(0, 8);
+    return options.filter((option) => !chosen.includes(option.id) && words.every((word) => `${option.label} ${option.detail ?? ""}`.toLowerCase().includes(word))).slice(0, 8);
   }, [options, chosen, query]);
   const full = chosen.length >= max;
   const add = (option: PersonOption) => {
@@ -75,7 +87,10 @@ export function PeoplePicker({
       {chosen.length > 0 && (
         <ul className="mb-2 flex flex-wrap gap-2" aria-label={`${label}: chosen`}>
           {chosen.map((personId) => (
-            <li key={personId} className="inline-flex items-center gap-1 rounded-full border border-line bg-surface-muted py-0.5 pl-3 pr-1 text-label">
+            <li key={personId} className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface-muted py-0.5 pl-1 pr-1 text-label" title={byId.get(personId)?.detail}>
+              <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary-solid text-[10px] font-semibold text-on-solid" aria-hidden="true">
+                {initialsOf(byId.get(personId)?.label ?? "?")}
+              </span>
               {byId.get(personId)?.label ?? `#${personId}`}
               <button type="button" onClick={() => remove(personId)} aria-label={`Remove ${byId.get(personId)?.label ?? personId}`} className="flex h-7 w-7 items-center justify-center rounded-full text-ink-muted hover:text-danger-600">
                 <X aria-hidden="true" className="h-3.5 w-3.5" />
@@ -138,9 +153,15 @@ export function PeoplePicker({
                     add(option);
                   }}
                   onMouseEnter={() => setActive(index)}
-                  className={`cursor-pointer px-3 py-2 text-label ${index === active ? "bg-primary-50 text-primary-700" : ""}`}
+                  className={`flex cursor-pointer items-center gap-2 px-3 py-2 text-label ${index === active ? "bg-primary-50 text-primary-700" : ""}`}
                 >
-                  {option.label}
+                  <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary-50 text-[11px] font-semibold text-primary-700" aria-hidden="true">
+                    {initialsOf(option.label)}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block">{option.label}</span>
+                    {option.detail && <span className="block truncate text-caption text-ink-muted">{option.detail}</span>}
+                  </span>
                 </li>
               ))
             )}

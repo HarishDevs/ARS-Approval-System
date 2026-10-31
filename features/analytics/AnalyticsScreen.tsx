@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { BarChart3 } from "lucide-react";
+import { FitPages } from "@/features/analytics/FitPages";
 import { notFound, redirect } from "next/navigation";
 import { canExport, featureOn } from "@/server/settings/features";
 import { BoardPicker, CenterScreen } from "@/features/analytics/CenterScreen";
@@ -108,7 +110,7 @@ export async function AnalyticsScreen({ searchParams, base }: { searchParams: Re
 
   return (
     <>
-      <PageHeader title="Analytics" meta={`${scope.label} · ${period.label}: ${day(period.from)} – ${day(period.to)} (India time), compared with ${day(previous.from)} – ${day(previous.to)}`}>
+      <PageHeader title="Analytics" icon={BarChart3} meta={`${scope.label} · ${period.label}: ${day(period.from)} – ${day(period.to)} (India time), compared with ${day(previous.from)} – ${day(previous.to)}`}>
         <Link href={`${base}/metrics`} className="link text-label">
           How these are worked out
         </Link>
@@ -261,6 +263,9 @@ export async function AnalyticsScreen({ searchParams, base }: { searchParams: Re
           </Link>
         </div>
       </form>
+
+      {/* D-258: the board in pages that each fit the window. */}
+      <FitPages label="Analytics">
 
       <div className="mb-6 flex flex-wrap items-start gap-6">
         <SavedViews views={views.map((view) => ({ id: view.id, name: view.name, href: `${base}?${new URLSearchParams(view.query).toString()}`, mine: view.mine, shared: view.shared, isDefault: view.isDefault, ownerName: view.ownerName }))} />
@@ -466,6 +471,7 @@ export async function AnalyticsScreen({ searchParams, base }: { searchParams: Re
         </div>
       )}
 
+      </FitPages>
       <p className="flex flex-wrap items-center gap-1.5 text-caption text-ink-muted">
         As of {formatIndiaTime(now)}.
         <Link href={here({})} className="link">

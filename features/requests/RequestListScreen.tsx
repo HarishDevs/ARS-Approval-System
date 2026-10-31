@@ -1,5 +1,10 @@
 import Link from "next/link";
-import { X } from "lucide-react";
+import { AlarmClock, Ban, CheckCircle2, ClipboardList, FileText, FolderOpen, Hourglass, Layers, PauseCircle, ShieldCheck, Undo2, UserCheck, X, XCircle, type LucideIcon } from "lucide-react";
+import { RoadMini } from "@/features/requests/RoadMini";
+import { RequestRowMenu, type RowAction } from "@/features/requests/RequestRowMenu";
+import { ColumnPicker } from "@/features/requests/ColumnPicker";
+import { COLUMN_LABEL, type ListColumn } from "@/server/requests/list-columns";
+import type { MiniRoad } from "@/server/approvals/road";
 import { RequestStatusPill } from "@/features/requests/StatusPill";
 import { PendingLink } from "@/features/ui/PendingLink";
 import { SafeText } from "@/features/ui/SafeText";
@@ -36,6 +41,78 @@ const day = (value: Date) => new Date(value).toLocaleDateString("en-IN", { day: 
 
 export const VIEW_TARGET: Record<ListBase, string> = { MINE: "my_requests", COLLAB: "collaborating", APPROVED_MINE: "my_approved", APPROVED_BY_ME: "approved_by_me" };
 
+// D-256: the columns each list can show (the request itself always shows).
+export function columnsFor(base: ListBase): ListColumn[] {
+  const showRaiser = base === "COLLAB" || base === "APPROVED_BY_ME";
+  return ["status", "waiting", ...(showRaiser ? (["raiser"] as const) : []), "raised", "activity", "progress", ...(base === "COLLAB" ? (["added"] as const) : []), "actions"];
+}
+
+// D-256 (owner's My Requests design): each quick filter as a status card.
+const CARD_ICON: Record<string, LucideIcon> = {
+  all: Layers,
+  open: FolderOpen,
+  waiting: Hourglass,
+  sentback: Undo2,
+  hold: PauseCircle,
+  approved: CheckCircle2,
+  rejected: XCircle,
+  withdrawn: Ban,
+  overdue: AlarmClock,
+  valid: ShieldCheck,
+  expiring: AlarmClock,
+  expired: XCircle,
+  noexpiry: CheckCircle2,
+  amended: FileText,
+  behalf: UserCheck,
+};
+const CARD_TONE: Record<string, string> = {
+  waiting: "text-warning-600",
+  sentback: "text-warning-600",
+  hold: "text-primary-700",
+  approved: "text-success-600",
+  rejected: "text-danger-600",
+  overdue: "text-danger-600",
+  expired: "text-danger-600",
+  expiring: "text-warning-600",
+};
+
+// The row's actions: only what this request allows this person (the same
+// rules as the request page, which checks again and asks before any change).
+function rowActions(item: ListedRequest, userId: number): RowAction[] {
+  const mine = item.requesterId === userId;
+  const open = ["IN_PROGRESS", "ON_HOLD", "CHANGES_REQUIRED"].includes(item.status);
+  const page = `/users/requests/${item.id}`;
+  return [
+    { label: "View details", href: page },
+    { label: "View approval progress", href: `${page}#levels` },
+    { label: "View history", href: `${page}#history` },
+    ...(mine && item.status === "CHANGES_REQUIRED" ? [{ label: "Update and resubmit", href: `${page}#resubmit` }] : []),
+    ...(mine && item.isCustom && !open ? [{ label: "Raise again like this", href: `/users/custom?from=${item.id}` }] : []),
+    { label: "Download summary (PDF)", href: `/api/requests/${item.id}/summary.pdf`, download: true },
+    ...(mine && open ? [{ label: "Withdraw…", href: `${page}#request-actions`, tone: "danger" as const }] : []),
+  ];
+}
+
+const initialsOf = (name: string) =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]!.toUpperCase())
+    .join("");
+
+// Page numbers with gaps: 1 … 4 5 6 … 12.
+function pageList(page: number, pages: number): (number | "gap")[] {
+  const wanted = new Set([1, pages, page - 1, page, page + 1].filter((value) => value >= 1 && value <= pages));
+  const sorted = [...wanted].sort((a, b) => a - b);
+  const out: (number | "gap")[] = [];
+  sorted.forEach((value, index) => {
+    if (index > 0 && value - sorted[index - 1]! > 1) out.push("gap");
+    out.push(value);
+  });
+  return out;
+}
+
 export function RequestListScreen({
   base,
   path,
@@ -45,6 +122,9 @@ export function RequestListScreen({
   choices,
   views,
   empty,
+  progress = {},
+  columns,
+  userId,
 }: {
   base: ListBase;
   path: string;
@@ -54,12 +134,18 @@ export function RequestListScreen({
   choices: ListChoices;
   views: ViewChip[];
   empty: string;
+  progress?: Record<number, MiniRoad>; // D-256: the small road per row
+  columns?: ListColumn[]; // D-256: the person's chosen columns
+  userId: number;
 }) {
   const can = BASE_FEATURES[base];
   const collab = base === "COLLAB";
   const approvedMine = base === "APPROVED_MINE";
   const byMe = base === "APPROVED_BY_ME";
-  const showRaiser = collab || byMe;
+  const available = columnsFor(base);
+  const shown = new Set(columns ?? available);
+  const show = (column: ListColumn) => shown.has(column) && available.includes(column);
+  const showRaiser = (collab || byMe) && show("raiser");
   const tabs = tabsFor(base);
   const currentTab = tabs.find((tab) => tab.key === filters.tab);
   const used = activeCount(filters, base);
@@ -148,22 +234,38 @@ export function RequestListScreen({
     if (found) found.items.push(item);
     else grouped.push({ key, label, items: [item] });
   }
-  const columns = 5 + (showRaiser ? 1 : 0) + (collab ? 1 : 0);
+  const columnCount = 1 + available.filter((column) => show(column)).length;
   const sortChoices = can.sorts.map((value) => ({ label: SORT_LABEL[value], href: href({ sort: value, page: 1 }), active: filters.sort === value }));
 
   return (
     <>
-      <nav aria-label="Quick filters" className="mb-3 flex flex-wrap gap-x-1 border-b border-line">
-        {tabs.map((tab) => (
-          <Link
-            key={tab.key}
-            href={href({ tab: tab.key, page: 1, overdue: tab.overdue ? true : currentTab?.overdue ? false : filters.overdue })}
-            aria-current={filters.tab === tab.key ? "page" : undefined}
-            className={`-mb-px border-b-2 px-2.5 py-1.5 text-label ${filters.tab === tab.key ? "border-primary-600 font-semibold text-primary-700" : "border-transparent text-ink-muted hover:text-ink"}`}
-          >
-            {tab.label} <span className="tabular-nums">({(counts[tab.key] ?? 0).toLocaleString("en-IN")})</span>
-          </Link>
-        ))}
+      <nav aria-label="Quick filters" className="status-cards scroll-hint -mx-4 mb-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0" data-testid="status-cards">
+        <ul className="flex min-w-max gap-2 xl:grid xl:min-w-0 xl:grid-flow-col xl:auto-cols-fr">
+          {tabs.map((tab) => {
+            const Icon = CARD_ICON[tab.key] ?? ClipboardList;
+            const active = filters.tab === tab.key;
+            return (
+              <li key={tab.key}>
+                <Link
+                  href={href({ tab: tab.key, page: 1, overdue: tab.overdue ? true : currentTab?.overdue ? false : filters.overdue })}
+                  aria-current={active ? "page" : undefined}
+                  className={`status-card flex h-full min-w-[7.5rem] flex-col gap-1.5 rounded-lg border px-3 py-2.5 transition-colors ${active ? "border-primary-600 bg-primary-solid text-on-solid shadow-button" : "border-line bg-surface hover:border-line-strong hover:bg-surface-muted"}`}
+                  title={tab.key === "overdue" ? "Requests with a step past its response time. They are also counted under Waiting for approvers." : undefined}
+                >
+                  {/* Read as one name, e.g. "Waiting for approvers (3)"; the visible parts are hidden from screen readers. */}
+                  <span className="sr-only">{`${tab.label} (${(counts[tab.key] ?? 0).toLocaleString("en-IN")})`}</span>
+                  <span className="flex items-center gap-2 text-label" aria-hidden="true">
+                    <Icon className={`h-4 w-4 shrink-0 ${active ? "" : (CARD_TONE[tab.key] ?? "text-ink-muted")}`} aria-hidden="true" />
+                    <span className="leading-tight">{tab.label}</span>
+                  </span>
+                  <span className="text-title font-semibold tabular-nums" aria-hidden="true">
+                    {(counts[tab.key] ?? 0).toLocaleString("en-IN")}
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
       </nav>
 
       <ListToolbar
@@ -293,6 +395,9 @@ export function RequestListScreen({
       />
 
       <div className="mb-3 flex flex-wrap items-center gap-2 text-label">
+        <div className="order-last ml-auto">
+          <ColumnPicker list={VIEW_TARGET[base]} available={available.map((column) => ({ key: column, label: COLUMN_LABEL[column] }))} shown={available.filter((column) => show(column))} />
+        </div>
         <p className="text-ink-muted" role="status">
           {result.total === 0 ? "No requests match." : `${result.total.toLocaleString("en-IN")} request${result.total === 1 ? "" : "s"}${result.pages > 1 ? ` · page ${result.page} of ${result.pages}` : ""}`}
         </p>
@@ -331,8 +436,13 @@ export function RequestListScreen({
                 </li>
               ) : null,
               ...group.items.map((item) => (
-                <li key={item.id}>
-                  <Link href={`/users/requests/${item.id}`} className="block px-4 py-3 active:bg-surface-muted">
+                <li key={item.id} className="relative">
+                  {show("actions") && (
+                    <div className="absolute right-2 top-2 z-[1]">
+                      <RequestRowMenu title={item.title} actions={rowActions(item, userId)} />
+                    </div>
+                  )}
+                  <Link href={`/users/requests/${item.id}`} className="block px-4 py-3 pr-12 active:bg-surface-muted">
                     <p className="font-medium text-primary-700">
                       <SafeText text={item.title} />
                     </p>
@@ -346,8 +456,14 @@ export function RequestListScreen({
                       {approvedMine && item.closedAt && <span className="text-ink-muted">Approved {day(item.closedAt)}</span>}
                       {item.pendingWith && <span className="text-ink-muted">With {item.pendingWith}</span>}
                       {item.overdue && <span className="font-semibold text-danger-600">Overdue</span>}
+                      <span className="text-ink-muted">· {day(item.updatedAt)}</span>
                     </div>
                   </Link>
+                  {show("progress") && progress[item.id] && (
+                    <div className="px-4 pb-3">
+                      <RoadMini road={progress[item.id]!} href={`/users/requests/${item.id}#levels`} />
+                    </div>
+                  )}
                 </li>
               )),
             ])}
@@ -358,16 +474,24 @@ export function RequestListScreen({
               <thead>
                 <tr>
                   <th scope="col">Request</th>
-                  <th scope="col">Status</th>
-                  {approvedMine ? <th scope="col">Approved</th> : byMe ? <th scope="col">Your approval</th> : <th scope="col">Waiting</th>}
+                  {show("status") && <th scope="col">Status</th>}
+                  {show("waiting") && (approvedMine ? <th scope="col">Approved</th> : byMe ? <th scope="col">Your approval</th> : <th scope="col">Waiting on</th>)}
                   {showRaiser && <th scope="col">Raised by</th>}
-                  <th scope="col">Raised</th>
-                  <th scope="col" className="hidden lg:table-cell">
-                    Last activity
-                  </th>
-                  {collab && (
+                  {show("raised") && <th scope="col">Raised</th>}
+                  {show("activity") && (
+                    <th scope="col" className="hidden lg:table-cell">
+                      Last activity
+                    </th>
+                  )}
+                  {show("progress") && <th scope="col">Progress</th>}
+                  {collab && show("added") && (
                     <th scope="col" className="hidden xl:table-cell">
                       Added
+                    </th>
+                  )}
+                  {show("actions") && (
+                    <th scope="col" className="w-12">
+                      <span className="sr-only">Actions</span>
                     </th>
                   )}
                 </tr>
@@ -376,28 +500,38 @@ export function RequestListScreen({
                 <tbody key={group.key}>
                   {group.label && (
                     <tr className="bg-surface-muted">
-                      <th scope="rowgroup" colSpan={columns} className="text-left text-label font-semibold">
+                      <th scope="rowgroup" colSpan={columnCount} className="text-left text-label font-semibold">
                         {group.label} <span className="font-normal text-ink-muted">{group.items.length}</span>
                       </th>
                     </tr>
                   )}
                   {group.items.map((item) => (
                     <tr key={item.id}>
-                      <td className="max-w-80">
-                        <Link href={`/users/requests/${item.id}`} className="link font-medium">
-                          <SafeText text={item.title} />
-                        </Link>
-                        <span className="block text-caption text-ink-muted">
-                          {item.requestNo} · {item.workflowName}
-                          {item.files ? ` · ${item.files} file${item.files === 1 ? "" : "s"}` : ""}
-                          {item.amended ? " · amended" : ""}
-                        </span>
+                      <td className="max-w-96">
+                        <div className="flex items-start gap-3">
+                          <span className="row-icon mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary-50 text-primary-700" aria-hidden="true">
+                            <FileText className="h-4 w-4" />
+                          </span>
+                          <span className="min-w-0">
+                            <Link href={`/users/requests/${item.id}`} className="link font-medium">
+                              <SafeText text={item.title} />
+                            </Link>
+                            <span className="block text-caption text-ink-muted">
+                              {item.requestNo} · {item.workflowName}
+                              {item.files ? ` · ${item.files} file${item.files === 1 ? "" : "s"}` : ""}
+                              {item.amended ? " · amended" : ""}
+                            </span>
+                          </span>
+                        </div>
                       </td>
-                      <td>
-                        <RequestStatusPill status={item.status} />
-                        {item.validUntil && item.status === "APPROVED" && <span className="block text-caption text-ink-muted">valid until {day(item.validUntil)}</span>}
-                      </td>
-                      {approvedMine ? (
+                      {show("status") && (
+                        <td>
+                          <RequestStatusPill status={item.status} />
+                          {item.overdue && <span className="mt-1 block text-caption font-semibold text-danger-600">Overdue</span>}
+                          {item.validUntil && item.status === "APPROVED" && <span className="block text-caption text-ink-muted">valid until {day(item.validUntil)}</span>}
+                        </td>
+                      )}
+                      {!show("waiting") ? null : approvedMine ? (
                         <td className="text-label">
                           {item.closedAt ? day(item.closedAt) : "—"}
                           {item.approvedBy && <span className="block text-caption text-ink-muted">by {item.approvedBy}</span>}
@@ -412,6 +546,18 @@ export function RequestListScreen({
                         <td className="text-label">
                           {item.pendingStep ? (
                             <>
+                              {item.pendingWith && (
+                                <span className="mb-1 flex -space-x-1.5" aria-hidden="true">
+                                  {item.pendingWith
+                                    .split(", ")
+                                    .slice(0, 3)
+                                    .map((name) => (
+                                      <span key={name} className="grid h-6 w-6 place-items-center rounded-full bg-primary-solid text-[10px] font-semibold text-on-solid ring-2 ring-surface">
+                                        {initialsOf(name)}
+                                      </span>
+                                    ))}
+                                </span>
+                              )}
                               {item.pendingStep}
                               <span className="block text-caption text-ink-muted">{item.pendingWith}</span>
                               {item.nextDue && (
@@ -426,12 +572,22 @@ export function RequestListScreen({
                         </td>
                       )}
                       {showRaiser && <td>{item.requesterName}</td>}
-                      <td className="whitespace-nowrap">{day(item.submittedAt)}</td>
-                      <td className="hidden whitespace-nowrap lg:table-cell">{formatIndiaTime(item.updatedAt)}</td>
-                      {collab && (
+                      {show("raised") && (
+                        <td className="whitespace-nowrap" title={formatIndiaTime(item.submittedAt)}>
+                          {day(item.submittedAt)}
+                        </td>
+                      )}
+                      {show("activity") && <td className="hidden whitespace-nowrap lg:table-cell">{formatIndiaTime(item.updatedAt)}</td>}
+                      {show("progress") && <td>{progress[item.id] ? <RoadMini road={progress[item.id]!} href={`/users/requests/${item.id}#levels`} /> : <span className="text-ink-faint">—</span>}</td>}
+                      {collab && show("added") && (
                         <td className="hidden whitespace-nowrap xl:table-cell">
                           {item.addedAt ? day(item.addedAt) : "—"}
                           <span className="block text-caption text-ink-muted">by {item.addedByName}</span>
+                        </td>
+                      )}
+                      {show("actions") && (
+                        <td className="text-right">
+                          <RequestRowMenu title={item.title} actions={rowActions(item, userId)} />
                         </td>
                       )}
                     </tr>
@@ -443,19 +599,38 @@ export function RequestListScreen({
         </>
       )}
       {result.pages > 1 && (
-        <nav aria-label="Pages" className="mt-4 flex items-center gap-3 text-label">
-          {result.page > 1 && (
-            <PendingLink href={href({ page: result.page - 1 })} className="btn-secondary btn-compact">
-              ← Previous
-            </PendingLink>
-          )}
+        <nav aria-label="Pages" className="mt-4 flex flex-wrap items-center justify-between gap-3 text-label" data-testid="list-pages">
           <span className="text-ink-muted">
-            Page {result.page} of {result.pages}
+            Showing {((result.page - 1) * filters.size + 1).toLocaleString("en-IN")}–{Math.min(result.page * filters.size, result.total).toLocaleString("en-IN")} of {result.total.toLocaleString("en-IN")} requests
           </span>
-          {result.page < result.pages && (
-            <PendingLink href={href({ page: result.page + 1 })} className="btn-secondary btn-compact">
-              Next →
-            </PendingLink>
+          {result.pages > 1 && (
+            <span className="flex items-center gap-1">
+              {result.page > 1 && (
+                <PendingLink href={href({ page: result.page - 1 })} className="btn-secondary btn-compact" aria-label="Previous page">
+                  ←
+                </PendingLink>
+              )}
+              {pageList(result.page, result.pages).map((value, index) =>
+                value === "gap" ? (
+                  <span key={`gap-${index}`} className="px-1 text-ink-muted">
+                    …
+                  </span>
+                ) : value === result.page ? (
+                  <span key={value} aria-current="page" className="grid h-8 min-w-8 place-items-center rounded-md bg-primary-solid px-2 font-semibold text-on-solid">
+                    {value}
+                  </span>
+                ) : (
+                  <PendingLink key={value} href={href({ page: value })} className="grid h-8 min-w-8 place-items-center rounded-md px-2 hover:bg-surface-muted">
+                    {value}
+                  </PendingLink>
+                ),
+              )}
+              {result.page < result.pages && (
+                <PendingLink href={href({ page: result.page + 1 })} className="btn-secondary btn-compact" aria-label="Next page">
+                  →
+                </PendingLink>
+              )}
+            </span>
           )}
         </nav>
       )}

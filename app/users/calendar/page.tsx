@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { CalendarDays } from "lucide-react";
 import { TaskCheck } from "@/features/work/client";
 import { calendarKindAllowed } from "@/server/modules/modules";
 import Link from "next/link";
@@ -51,7 +52,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
 
   return (
     <>
-      <PageHeader title="Calendar" description="Your approvals, tasks, information and needed-by dates, and your own entries, in one place." />
+      <PageHeader title="Calendar" icon={CalendarDays} description="Your approvals, tasks, information and needed-by dates, and your own entries, in one place." />
 
       <div className="card mb-3 flex flex-wrap items-center gap-3 px-4 py-3">
         <Link href={href({ date: state.prev })} className="btn-secondary btn-compact" aria-label={`Previous ${unit}`}>

@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { InstallInviteAccountSync } from "@/features/pwa/InstallInvite";
+import { INSTALL_INVITE_FLAG } from "@/server/pwa/flags";
 import { Wrench } from "lucide-react";
 import { Suspense } from "react";
 import { areasForUser } from "@/server/authorization/policy";
@@ -119,6 +121,7 @@ export async function AppShell({
     { href: "/users/notifications/settings", label: "Notifications (settings)", group: "Profile" },
     { href: "/users/delegation", label: "Out of office", group: "Profile" },
     { href: "/users/security", label: "Sign-in & devices", group: "Profile" },
+    { href: "/users/profile/devices", label: "App & devices (install, notifications)", group: "Profile" },
     { href: "/users/profile", label: "Profile and theme", group: "Profile" },
     { href: "/users/help", label: "Help", group: "Profile" },
   ];
@@ -162,6 +165,8 @@ export async function AppShell({
   return (
     <div className="flex min-h-full" data-view={classic ? "classic" : undefined} style={textScale && textScale !== 1 ? ({ "--text-scale": String(textScale) } as React.CSSProperties) : undefined}>
       <TextScale scale={textScale} />
+      {/* D-251: "Maybe later" said on another device (or before this browser's storage was cleared). */}
+      <InstallInviteAccountSync dismissed={await hasFlag(user.id, INSTALL_INVITE_FLAG).catch(() => false)} />
       <a href="#main" className="skip-link">
         Skip to content
       </a>

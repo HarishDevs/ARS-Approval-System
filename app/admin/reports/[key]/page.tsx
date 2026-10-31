@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PagedRows } from "@/features/ui/PagedRows";
 import { canExport, featureOn } from "@/server/settings/features";
 import { notFound, redirect } from "next/navigation";
 import { Download } from "lucide-react";
@@ -166,7 +167,7 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
               ))}
             </tr>
           </thead>
-          <tbody>
+          <PagedRows colSpan={1}>
             {result.rows.slice(0, PREVIEW).map((row, index) => (
               <tr key={index}>
                 {row.map((cell, cellIndex) => {
@@ -186,7 +187,7 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
                 </td>
               </tr>
             )}
-          </tbody>
+          </PagedRows>
         </table>
       </div>
       <p className="mt-2 text-caption text-ink-muted">

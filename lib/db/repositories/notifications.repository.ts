@@ -30,11 +30,13 @@ export async function createNotification(input: {
   message: string;
   deepLink: string | null;
   entity?: EntityRef | null;
+  priority?: "NORMAL" | "HIGH"; // D-252
+  broadcastId?: number | null; // D-252
 }): Promise<number> {
   const entity = input.entity ?? entityFromLink(input.deepLink);
   const [result] = await getDbPool().query<ResultSetHeader>(
-    "INSERT INTO notifications (event_type, category, user_id, title, message, deep_link, entity_type, entity_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-    [input.eventType, categoryOf(input.eventType), input.userId, input.title.slice(0, 200), input.message.slice(0, 1000), input.deepLink, entity?.type ?? null, entity?.id ?? null],
+    "INSERT INTO notifications (event_type, category, user_id, title, message, deep_link, entity_type, entity_id, priority, broadcast_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    [input.eventType, categoryOf(input.eventType), input.userId, input.title.slice(0, 200), input.message.slice(0, 1000), input.deepLink, entity?.type ?? null, entity?.id ?? null, input.priority ?? "NORMAL", input.broadcastId ?? null],
   );
   return result.insertId;
 }

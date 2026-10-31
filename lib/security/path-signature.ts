@@ -30,3 +30,6 @@ export async function verifyPath(path: string | null, signature: string | null, 
 // request that may change something: a POST/PUT/PATCH/DELETE or a Server
 // Action. A view-only Try as session is refused for those.
 export const WRITE_HEADER = "x-ars-write";
+// D-250: the page asked for, with its query (only ever used through
+// safeNextPath as where to return after sign-in; not trusted for anything else).
+export const NEXT_HEADER = "x-ars-next";

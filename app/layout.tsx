@@ -4,6 +4,9 @@ import { cookies, headers } from "next/headers";
 import { Providers } from "@/app/providers";
 import { THEME_COOKIE, parseTheme, themeAttribute } from "@/server/ui/theme";
 import { REQUEST_ID_HEADER } from "@/lib/logging/request-id";
+import { PwaBoot } from "@/features/pwa/PwaBoot";
+import { ScrollRegions } from "@/features/ui/ScrollRegions";
+import { buildId } from "@/server/ops/build";
 import "../styles/globals.css";
 
 // Every page is rendered per request so Next.js can stamp this request's
@@ -52,6 +55,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body className="bg-page font-sans text-body text-ink antialiased">
         <Providers>{children}</Providers>
+        {/* D-251: service worker, install invitation, daily-session device hint. */}
+        <PwaBoot build={buildId()} />
+        <ScrollRegions />
       </body>
     </html>
   );

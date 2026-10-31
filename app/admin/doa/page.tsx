@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PagedRows } from "@/features/ui/PagedRows";
 import { PageHeader, EmptyState } from "@/features/shell/PageHeader";
 import { requireArea } from "@/server/authorization/guards";
 import { findPublishedVersion, listWorkflows } from "@/lib/db/repositories/approvals.repository";
@@ -46,14 +47,14 @@ export default async function DoaPage() {
                     <th>Levels needed, in order</th>
                   </tr>
                 </thead>
-                <tbody>
+                <PagedRows colSpan={2}>
                   {table.bands.map((band) => (
                     <tr key={band.from}>
                       <td className="whitespace-nowrap">{bandLabel(band.from, band.to)}</td>
                       <td>{band.levels.join(" → ")}</td>
                     </tr>
                   ))}
-                </tbody>
+                </PagedRows>
               </table>
               {table.otherConditions.length > 0 && <p className="px-5 py-3 text-caption text-ink-muted">Also depends on other fields: {table.otherConditions.join(", ")}</p>}
             </section>

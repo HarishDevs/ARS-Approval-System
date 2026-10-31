@@ -47,6 +47,8 @@ test("A3 IT opens bulk reassignment from Workload", async ({ page, context }) =>
 });
 
 test("B analytics: new KPIs, comparison, more filters, charts and drill-down", async ({ page, context }) => {
+  // D-258: this test reads the whole board at once ("Show all" on the board's pager).
+  await context.addInitScript(() => window.localStorage.setItem("ars.fitPages.all", "1"));
   await as(context, "E2E_ADMIN");
   await page.goto("/users/analytics?board=approvals&scope=ORGANISATION&period=90d");
   await expect(page.getByText("Due today", { exact: true }).first()).toBeVisible();

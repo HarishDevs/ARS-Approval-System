@@ -53,7 +53,7 @@ describe("listFilterSql", () => {
   it("binds every value; collaboration conditions only on Collaborating", () => {
     const f = parseListFilters({ tab: "open", status: "IN_PROGRESS", q: "50%_off", raisedBy: "4", addedBy: "5", step: "HOD", due: "3", files: "yes", sort: "added" }, "COLLAB");
     const sql = listFilterSql(f, "COLLAB");
-    expect(sql.params).toEqual([["IN_PROGRESS", "ON_HOLD", "CHANGES_REQUIRED"], ["IN_PROGRESS"], "%50\\%\\_off%", "%50\\%\\_off%", "%50\\%\\_off%", 4, 5, "HOD", 3]);
+    expect(sql.params).toEqual([["IN_PROGRESS", "ON_HOLD", "CHANGES_REQUIRED"], ["IN_PROGRESS"], "%50\\%\\_off%", "%50\\%\\_off%", "%50\\%\\_off%", "%50\\%\\_off%", "%50\\%\\_off%", 4, 5, "HOD", 3]);
     expect(sql.where.join(" ")).not.toContain("50%");
     expect(sql.orderBy).toContain("k.added_at");
     const mine = listFilterSql(parseListFilters({ raisedBy: "4" }, "MINE"), "MINE");

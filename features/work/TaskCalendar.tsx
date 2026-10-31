@@ -52,11 +52,11 @@ export function TaskCalendar({ tasks, month, todayDay, canEdit, meId, projectId,
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px]" data-testid="task-calendar">
       <div>
-        <div className="mb-2 flex items-center gap-2">
+        <div className="mb-2 flex flex-wrap items-center gap-2">
           <Link href={hrefFor(shift(-1))} className="btn-secondary btn-compact" aria-label="Previous month">
             ‹
           </Link>
-          <h2 className="min-w-40 text-center font-semibold">
+          <h2 className="min-w-0 text-center font-semibold sm:min-w-40">
             {MONTH_NAMES[monthIndex - 1]} {year}
           </h2>
           <Link href={hrefFor(shift(1))} className="btn-secondary btn-compact" aria-label="Next month">

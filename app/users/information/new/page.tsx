@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Megaphone } from "lucide-react";
 import { featureOn } from "@/server/settings/features";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -50,7 +51,7 @@ export default async function NewInformationPage({ searchParams }: { searchParam
     if (!chosen) {
       return (
         <>
-          <PageHeader title="New information" description="Choose the kind of information. Each has its own form, recipients and acknowledgement rules, set by IT." />
+          <PageHeader title="New information" icon={Megaphone} description="Choose the kind of information. Each has its own form, recipients and acknowledgement rules, set by IT." />
           {allowed.length === 0 ? (
             <EmptyState title="No information types for you yet" body="IT sets up the kinds of information in Admin → Information types. Ask them if you need one." />
           ) : (

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PagedRows } from "@/features/ui/PagedRows";
 import Link from "next/link";
 import { PageHeader, EmptyState } from "@/features/shell/PageHeader";
 import { NoResults } from "@/features/ui/Display";
@@ -85,7 +86,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
                 <th>Details</th>
               </tr>
             </thead>
-            <tbody>
+            <PagedRows colSpan={6}>
               {entries.map((entry) => (
                 <tr key={entry.id}>
                   <td className="whitespace-nowrap">{formatIndiaTime(entry.occurredAt)}</td>
@@ -101,7 +102,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
                   <td className="max-w-md break-words font-mono text-caption text-ink-muted">{entry.metadata ? <SafeText text={JSON.stringify(entry.metadata)} /> : ""}</td>
                 </tr>
               ))}
-            </tbody>
+            </PagedRows>
           </table>
         </div>
       )}

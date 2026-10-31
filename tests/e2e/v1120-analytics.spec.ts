@@ -22,25 +22,41 @@ const BOARD_CHECKS: [string, RegExp | string][] = [
   ["Executive overview", "Activity by month"],
 ];
 
+// D-258: a board comes in pages that fit the window; look through them.
+async function seeOnSomePage(page: import("@playwright/test").Page, text: string | RegExp) {
+  const target = page.getByText(text).first();
+  const pager = page.getByTestId("fit-pages");
+  if ((await pager.count()) === 0) return expect(target).toBeVisible();
+  const pages = pager.getByRole("button").filter({ hasNotText: /^[←→]$/ });
+  const total = await pages.count();
+  for (let index = 0; index < total; index += 1) {
+    await pages.nth(index).click();
+    if (await target.isVisible()) return;
+  }
+  await expect(target).toBeVisible();
+}
+
 test("IT opens every dashboard from the one Analytics page; the period carries over", async ({ page, context }) => {
+  // D-258: this test reads whole boards ("Show all" on the board's pager).
+  await context.addInitScript(() => window.localStorage.setItem("ars.fitPages.all", "1"));
   await as(context, "E2E_ADMIN");
   await page.goto("/users/analytics");
   // v1.12.1: dashboards and scopes are dropdowns.
   const boards = page.getByLabel("Dashboard", { exact: true });
   await expect(boards.locator("option")).toHaveCount(9);
   await expect(boards).toHaveValue("overview");
-  await expect(page.getByText("Tasks created", { exact: true }).first()).toBeVisible();
-  await expect(page.getByText(/Overdue acknowledgements: not available/)).toBeVisible();
+  await seeOnSomePage(page, "Tasks created");
+  await seeOnSomePage(page, /Overdue acknowledgements: not available/);
   await expect(page.getByTestId("center-refreshed")).toContainText("As of");
   await page.getByLabel("Period").selectOption("last_quarter");
   await page.getByRole("button", { name: "Apply" }).click();
   await expect(page).toHaveURL(/period=last_quarter/);
-  await expect(page.getByText(/Previous quarter/).first()).toBeVisible();
+  await seeOnSomePage(page, /Previous quarter/);
   for (const [tab, check] of BOARD_CHECKS) {
     await page.getByLabel("Dashboard", { exact: true }).selectOption({ label: tab });
     await expect(page).toHaveURL(/period=last_quarter/);
     await expect(page.getByLabel("Dashboard", { exact: true }).locator("option:checked")).toHaveText(tab);
-    await expect(page.getByText(check).first()).toBeVisible();
+    await seeOnSomePage(page, check);
     // D-206: "Opening…" ends once the dashboard has arrived.
     await expect(page.getByText("Opening…")).toHaveCount(0);
   }

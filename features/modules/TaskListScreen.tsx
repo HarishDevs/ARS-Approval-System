@@ -1,4 +1,5 @@
 import { featureOn } from "@/server/settings/features";
+import { ListChecks } from "lucide-react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { requireArea } from "@/server/authorization/guards";
@@ -59,7 +60,7 @@ export async function TaskListScreen({ base, query }: { base: TaskBase; query: R
 
   return (
     <>
-      <PageHeader title={TITLE[base]} description={DESCRIPTION[base]}>
+      <PageHeader title={TITLE[base]} description={DESCRIPTION[base]} icon={ListChecks}>
         <Link href="/users/tasks/new" className="btn-primary btn-compact">
           New task
         </Link>

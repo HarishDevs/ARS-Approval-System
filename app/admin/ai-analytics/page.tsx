@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PagedRows } from "@/features/ui/PagedRows";
 import Link from "next/link";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { BarList, Heatmap, LineChart } from "@/features/analytics/Charts";
@@ -154,7 +155,7 @@ export default async function AiAnalyticsPage({ searchParams }: { searchParams: 
                 <th scope="col">Estimated cost</th>
               </tr>
             </thead>
-            <tbody>
+            <PagedRows colSpan={8}>
               {providers.map((row) => {
                 const rowCost = costEstimate(row.inputTokens, row.outputTokens, priceIn, priceOut);
                 return (
@@ -172,7 +173,7 @@ export default async function AiAnalyticsPage({ searchParams }: { searchParams: 
                   </tr>
                 );
               })}
-            </tbody>
+            </PagedRows>
           </table>
         )}
       </section>
@@ -197,7 +198,7 @@ export default async function AiAnalyticsPage({ searchParams }: { searchParams: 
                 <th scope="col">Last used</th>
               </tr>
             </thead>
-            <tbody>
+            <PagedRows colSpan={7}>
               {people.map((row) => (
                 <tr key={row.userId}>
                   <td className="font-medium">
@@ -213,7 +214,7 @@ export default async function AiAnalyticsPage({ searchParams }: { searchParams: 
                   <td className="text-label text-ink-muted">{row.lastAt ? formatIndiaTime(row.lastAt) : "—"}</td>
                 </tr>
               ))}
-            </tbody>
+            </PagedRows>
           </table>
         )}
       </section>

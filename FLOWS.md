@@ -1055,6 +1055,47 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 2. They filter (search, status, type, department, person, waiting on, priority, overdue, dates) and sort by a column title; 50 rows a page.
 3. **Download CSV** gives every matching row (up to 10,000) for Excel; audited. A row number opens the record.
 
+## F-193 My requests (v1.41.0, D-256)
+1. My requests opens on **Raised by me** (Shared with me beside it, each with its total).
+2. A status card (All, Open, Waiting for approvers, Sent back, On hold, Approved, Rejected, Withdrawn, Overdue) filters the list; the counts follow the search and filters. Overdue requests are also counted under Waiting.
+3. Search (number, title, type, the person it waits on), Filter, Sort, Group and Columns; the choices stay in the address (bookmarks and saved views) and the columns on the account.
+4. A row shows who it waits on and its progress (the small road); the ⋮ menu offers only what that request allows: view, progress, history, update and resubmit, raise again, download the summary, withdraw (the request page asks first).
+5. Pages: numbered, 25, 50 or 100 a page; the table scrolls in its own box. On a phone each request is a card.
+
+## F-192 New request in three steps (v1.41.0, D-255)
+1. **Request details:** title (required), IT's fields, files, collaborators. **Next** needs a title.
+2. **Approval workflow:** levels in order, parallel steps, choices; the reporting manager is the first approver. **Next: Review & submit** needs approvers on every step.
+3. **Review & submit:** the summary and the route; **Submit request** (the server checks everything again; a refused submit goes back to the step with the problem).
+4. All along: a live summary (sticky on wide screens, folded on phones); the draft saves itself (**Save as draft** saves at once); **Reset** asks first and clears the draft; Back keeps everything typed.
+
+## F-191 Road tracker on a request (v1.41.0, D-253)
+1. The request page shows the road: "Request submitted", then one checkpoint per level of the route actually taken (a parallel level is one checkpoint; a choice shows only the path taken; FYI levels are left out), then the finish flag.
+2. The van stands at the level waiting now; the road behind it is green. Rejected: a red cross where it stopped. Changes asked, on hold or stuck: amber. Withdrawn: muted. Fully approved: the van at the flag with a large tick.
+3. Tapping a checkpoint shows its approvers, their status, times and comments (as the page already shows them).
+4. While the page is open it checks for news every 20 seconds (only while visible); when a level finishes, the van drives to the next one. Old or repeated news never moves it back.
+
+## F-190 Notifications from IT (v1.41.0, D-252)
+1. IT Admin or Super Admin opens **Admin → Notifications → Send**: title, message, category (Announcement, Management, System, Important alert), audience (people, departments, roles, heads of department and managers, everyone active), priority and the page to open.
+2. Preview shows how many people and devices it reaches; **Send** asks to confirm, records it in the audit log and queues it.
+3. Each person gets it in the Inbox and, on every registered device, as a phone/desktop notification. History shows queued, sent, failed and expired counts. Sent means the push service accepted it, not that it was seen.
+
+## F-189 Phone and desktop notifications (v1.41.0, D-252)
+1. Profile → App & devices → **Turn on notifications on this device**: the app explains what comes, then the browser asks once. Allowed: the device is registered (several devices per person).
+2. Every message ARS sends that the person hasn't switched off for "This device" (Profile → Notifications) is queued per device and sent by the server, even when the app is closed or the person is signed out.
+3. Clicking it opens the record; if the daily session ended, sign-in comes first and then the record (only if the person may see it).
+4. A device the push service says is gone (404/410) is marked expired; the app re-registers it on the next visit. **Remove** on a device stops it.
+
+## F-188 Install the app (v1.41.0, D-251)
+1. First visit in a browser that can install (Android, Windows, macOS Chrome/Edge): a card "Install ARS-CMS" with **Install app** (the browser's own install) and **Maybe later**. Not over the sign-in form; never inside the installed app.
+2. iPhone and iPad Safari: the card shows the steps: Share → Add to Home Screen → Add.
+3. **Maybe later** hides it on that device (and on the account once signed in). Profile → App & devices always has Install and the steps.
+
+## F-187 Daily session (v1.41.0, D-250)
+1. Signing in on a phone, a tablet or the installed app starts a session that lasts until the next midnight (India time), with no sign-out for inactivity; closing the app or locking the phone keeps it.
+2. On a computer browser the existing rule stays (sign-out after the idle time, 12 hours at most), unless the Super Admin chooses "everyone".
+3. At midnight the server refuses the session; the next action shows "Your daily session has expired. Please sign in again." and, after sign-in, the page asked for.
+4. Signing out, the midnight end or a lock never removes push registrations; deactivating a person stops their notifications.
+
 ## F-186 Backups off-site and monitoring (v1.40.0, D-246)
 1. The daily backup writes `ars-db-…sql.gz` (or `.sql.gz.enc` with `BACKUP_ENCRYPTION_KEY`) and a `.sha256`.
 2. With Super Admin → Settings → Off-site backup on, the encrypted file and its hash are copied to the bucket; a failed copy marks the run failed and the Super Admin is told.

@@ -17,7 +17,8 @@ export const metadata: Metadata = {
 // calendar sync changes what it reads or stores, update this page.
 // D-249 (owner, v1.40.0): also covers the AI Assistant, Salesforce, profile
 // photos, tasks and projects, notification choices, the weekly HOD email and
-// encrypted off-site backups.
+// encrypted off-site backups. D-250 to D-252 (v1.41.0): the installed app,
+// phone and desktop notifications (push) and the daily session.
 const PRIVACY_EFFECTIVE = "1 November 2026";
 
 export default function PrivacyPage() {
@@ -51,6 +52,10 @@ export default function PrivacyPage() {
           </li>
           <li>
             <strong>AI Assistant (Pico Bot) conversations</strong>, only for people IT has given access: the questions they ask and the answers, kept for the period IT sets.
+          </li>
+          <li>
+            <strong>Devices that get notifications</strong>, only when a person turns notifications on for a device: the push address and keys the browser gives for it (stored encrypted), the kind of
+            device, the browser and operating system, and when it was added and last reached. It is used only to send that person&apos;s ARS notifications.
           </li>
           <li>
             <strong>Google sign-in</strong>: if a person signs in with Google, we receive their Google account email and account identifier to match them to the account IT created.
@@ -105,13 +110,27 @@ export default function PrivacyPage() {
           name and the text the person typed.
         </p>
 
+        <h2>The installed app and phone and desktop notifications</h2>
+        <p>
+          ARS-CMS can be installed on a phone or computer. The installed app keeps only its own program files and images on the device, never pages, records or files: everything comes from the
+          server each time. When a person turns on notifications, ARS sends each notification through the push service of that device&apos;s browser maker (Google for Chrome and Android, Apple for
+          Safari, Mozilla for Firefox, Microsoft for Edge). The message is encrypted so that only the device can read it. By default a notification shows its title and a plain line, without amounts
+          or other details, because it can appear on a lock screen. A person can turn notifications off for a device, remove a device, or choose which kinds of message come, at any time
+          (Profile &rarr; App &amp; devices and Profile &rarr; Notifications). Signing out does not stop notifications on a device; removing the device does.
+        </p>
+        <p>
+          On a phone, a tablet or the installed app, a sign-in lasts until midnight (India time), so people aren&apos;t asked to sign in again during the day; on a computer it ends after a period
+          without activity. Keep your devices locked.
+        </p>
+
         <h2>How information is shared</h2>
         <p>We do not sell personal information. Information is shared only:</p>
         <ul>
           <li>inside ARS, with the colleagues a record involves (for example the approvers of a request), as the app&apos;s access rules allow;</li>
           <li>
             with service providers that run parts of the app for us, under their terms: GoDaddy (hosting), Cloudflare (network and security), Google Firebase (Google sign-in), Resend (email),
-            CEOITBox (WhatsApp messages), the AI providers above (for the AI Assistant only), Salesforce (only when ARS connects it) and, when IT switches it on, an S3-compatible storage
+            CEOITBox (WhatsApp messages), the browsers&apos; push services (to deliver phone and desktop notifications, encrypted), the AI providers above (for the AI Assistant only), Salesforce
+            (only when ARS connects it) and, when IT switches it on, an S3-compatible storage
             provider that keeps an <strong>encrypted</strong> copy of the daily backup outside the hosting account. Google Calendar data is not shared with any of them beyond the hosting,
             network and encrypted backups that carry it;
           </li>
@@ -141,12 +160,16 @@ export default function PrivacyPage() {
           <li>
             <strong>Profile photo and About me</strong> can be changed or removed by the person at any time from Profile.
           </li>
+          <li>
+            <strong>Devices that get notifications</strong> stop at once when removed or when notifications are turned off on them, or when the push service says the device is gone; their record
+            is deleted 90 days later.
+          </li>
         </ul>
 
         <h2>Your choices and rights</h2>
         <p>
-          People can see their own details and sign-in history in the app, add or remove their photo, choose which notifications they receive (and pause them), and connect or disconnect Google
-          Calendar. Heads of department may receive a weekly email summarising their department&apos;s requests, if IT switches it on. To ask about, correct or remove your information, contact the IT
+          People can see their own details and sign-in history in the app, add or remove their photo, choose which notifications they receive (and pause them), see and remove the devices that get
+          their notifications, and connect or disconnect Google Calendar. Heads of department may receive a weekly email summarising their department&apos;s requests, if IT switches it on. To ask about, correct or remove your information, contact the IT
           team at <MailLink address={CONTACT_EMAIL} />.
         </p>
 

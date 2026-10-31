@@ -56,6 +56,13 @@
   --z-dialog: 60;
   --z-toast: 70;
   --z-palette: 80;
+  /* D-253: the approval road (TMT road tracker). */
+  --road-surface: #3b4656;
+  --road-edge: #2b3441;
+  --road-done: #16a34a;
+  --road-lane: rgba(255, 255, 255, 0.85);
+  --van-body: #e11d2a;
+  --van-shade: #b5121d;
 }
 
 /* Dark: chosen in Profile (data-theme on <html>), or the device setting when
@@ -98,6 +105,12 @@
   --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.35);
   --shadow-button: 0 4px 12px rgba(0, 0, 0, 0.35);
   --shadow-overlay: 0 20px 48px rgba(0, 0, 0, 0.55);
+  --road-surface: #2c3646;
+  --road-edge: #1d2531;
+  --road-done: #22a356;
+  --road-lane: rgba(255, 255, 255, 0.7);
+  --van-body: #ef2b37;
+  --van-shade: #c0141f;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
@@ -138,6 +151,12 @@
   --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.35);
   --shadow-button: 0 4px 12px rgba(0, 0, 0, 0.35);
   --shadow-overlay: 0 20px 48px rgba(0, 0, 0, 0.55);
+    --road-surface: #2c3646;
+    --road-edge: #1d2531;
+    --road-done: #22a356;
+    --road-lane: rgba(255, 255, 255, 0.7);
+    --van-body: #ef2b37;
+    --van-shade: #c0141f;
   }
 }
 
@@ -378,6 +397,18 @@ html,
 [data-view="classic"] main {
   font-variant-numeric: tabular-nums;
 }
+/* D-257: the Compact redesign's decorations stay out of the Classic view:
+   no icon tiles; status cards and list rows in Tally's flat, ruled style. */
+[data-view="classic"] .page-icon,
+[data-view="classic"] .row-icon {
+  display: none;
+}
+[data-view="classic"] .status-card {
+  @apply rounded-none border-line-strong shadow-none;
+}
+[data-view="classic"] .status-card[aria-current="page"] {
+  @apply bg-primary-50 text-primary-700;
+}
 /* The screen title bar. */
 [data-view="classic"] [data-tour="page-header"] {
   @apply mb-4 border-b-2 border-primary-600 pb-2;
@@ -497,4 +528,37 @@ html,
     linear-gradient(to left, var(--scroll-bg) 30%, transparent) right center / 2rem 100% no-repeat local,
     radial-gradient(farthest-side at 0 50%, color-mix(in srgb, var(--color-text-primary) 18%, transparent), transparent) left center / 0.75rem 100% no-repeat scroll,
     radial-gradient(farthest-side at 100% 50%, color-mix(in srgb, var(--color-text-primary) 18%, transparent), transparent) right center / 0.75rem 100% no-repeat scroll;
+}
+
+/* D-251, D-253: the install card slides in; the approved tick pops. */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes pop {
+  0% { transform: translateX(-50%) scale(0.4); opacity: 0; }
+  70% { transform: translateX(-50%) scale(1.15); opacity: 1; }
+  100% { transform: translateX(-50%) scale(1); }
+}
+
+/* D-258 (owner: "pagination and a vertical scrollbar wherever a table is
+   used"): a table's own box scrolls (both ways) and keeps the page short; the
+   header row stays in view. Pages of rows come from each list's paging. */
+:where(.overflow-x-auto, .overflow-auto):has(> table) {
+  max-height: max(18rem, calc(100dvh - 15rem));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+:where(.overflow-x-auto, .overflow-auto):has(> table) > table > thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--color-surface-raised);
+  box-shadow: inset 0 -1px 0 var(--color-border-default);
+}
+@media print {
+  :where(.overflow-x-auto, .overflow-auto):has(> table) {
+    max-height: none;
+    overflow: visible;
+  }
 }

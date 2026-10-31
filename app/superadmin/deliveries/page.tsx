@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PagedRows } from "@/features/ui/PagedRows";
 import { PageHeader, EmptyState } from "@/features/shell/PageHeader";
 import { requireArea } from "@/server/authorization/guards";
 import { listRecentDeliveries } from "@/lib/db/repositories/notifications.repository";
@@ -44,7 +45,7 @@ export default async function DeliveriesPage() {
                 <th></th>
               </tr>
             </thead>
-            <tbody>
+            <PagedRows colSpan={8}>
               {deliveries.map((delivery) => (
                 <tr key={delivery.id}>
                   <td className="whitespace-nowrap">{formatIndiaTime(delivery.createdAt)}</td>
@@ -62,7 +63,7 @@ export default async function DeliveriesPage() {
                   <td>{delivery.canRetry && <RetryButton deliveryId={delivery.id} />}</td>
                 </tr>
               ))}
-            </tbody>
+            </PagedRows>
           </table>
         </div>
       )}

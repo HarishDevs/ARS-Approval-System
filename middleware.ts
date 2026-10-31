@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { SESSION_COOKIE_NAME } from "@/lib/session/constants";
 import { buildCsp, createNonce } from "@/lib/security/csp";
 import { pickRequestId, REQUEST_ID_HEADER } from "@/lib/logging/request-id";
-import { PATH_HEADER, PATH_SIGNATURE_HEADER, signPath, WRITE_HEADER } from "@/lib/security/path-signature";
+import { PATH_HEADER, PATH_SIGNATURE_HEADER, signPath, WRITE_HEADER, NEXT_HEADER } from "@/lib/security/path-signature";
 import { sessionCookieLooksValid } from "@/lib/security/session-cookie-edge";
 
 // Layer 1 of 3 (P1-30a): only checks that a session cookie is present.
@@ -15,7 +15,7 @@ import { sessionCookieLooksValid } from "@/lib/security/session-cookie-edge";
 // Next.js reads the nonce from the request's CSP header and adds it to its
 // own scripts, so every page is rendered per request (root layout is dynamic).
 // v1.12.2: "/" (the public home page), "/privacy" and "/terms" are public (Google OAuth verification).
-const PUBLIC_PREFIXES = ["/", "/try", "/privacy", "/terms", "/login", "/signed-out", "/set-password", "/forgot-password", "/security", "/api/auth", "/api/jobs", "/api/health", "/api/webhooks", "/_next", "/brand", "/icons", "/manifest.webmanifest", "/favicon.ico", "/icon.svg", "/robots.txt", "/sitemap.xml"];
+const PUBLIC_PREFIXES = ["/", "/try", "/privacy", "/terms", "/login", "/signed-out", "/set-password", "/forgot-password", "/security", "/api/auth", "/api/jobs", "/api/health", "/api/webhooks", "/api/push/resubscribe", "/sw.js", "/offline.html", "/_next", "/brand", "/icons", "/manifest.webmanifest", "/favicon.ico", "/icon.svg", "/robots.txt", "/sitemap.xml"];
 
 const CSP_OPTIONS = {
   dev: process.env.NODE_ENV !== "production",
@@ -111,7 +111,8 @@ export async function middleware(request: NextRequest) {
       return NextResponse.json({ success: false, error: { code: "NOT_FOUND", message: "Not found." } }, { status: 404 });
     }
     const loginUrl = new URL("/login", request.url);
-    if (pathname !== "/") loginUrl.searchParams.set("next", pathname);
+    // D-250: back to the exact page after sign-in (e.g. a notification's record).
+    if (pathname !== "/") loginUrl.searchParams.set("next", `${pathname}${request.nextUrl.search}`);
     return NextResponse.redirect(loginUrl);
   }
   // D-244 (audit OPS-20): for the admin areas, a cookie that isn't a valid,
@@ -137,6 +138,7 @@ export async function middleware(request: NextRequest) {
   }
   // D-185: marks a request that may change something (see WRITE_HEADER).
   requestHeaders.delete(WRITE_HEADER);
+  requestHeaders.set(NEXT_HEADER, `${pathname}${request.nextUrl.search}`.slice(0, 500));
   if (UNSAFE_METHODS.has(request.method) || request.headers.has("next-action")) requestHeaders.set(WRITE_HEADER, "1");
   requestHeaders.set("x-nonce", nonce);
   requestHeaders.set("Content-Security-Policy", csp);

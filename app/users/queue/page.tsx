@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { X } from "lucide-react";
+import { Hourglass, X } from "lucide-react";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { QueueTable } from "@/features/requests/lists";
@@ -60,7 +60,7 @@ export default async function QueuePage({ searchParams }: { searchParams: Promis
   const select = "field-input h-10";
   return (
     <>
-      <PageHeader title="Waiting for me" description="Every request that needs your decision, and work given to you. Keys: J/K to move, Enter to open, ? for all shortcuts." />
+      <PageHeader title="Waiting for me" icon={Hourglass} description="Every request that needs your decision, and work given to you. Keys: J/K to move, Enter to open, ? for all shortcuts." />
       {everything > 0 && (
         <ListToolbar
           id="queue-filters"

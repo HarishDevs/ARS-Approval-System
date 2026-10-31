@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
-import { RequestListScreen, VIEW_TARGET } from "@/features/requests/RequestListScreen";
+import { RequestListScreen, VIEW_TARGET, columnsFor } from "@/features/requests/RequestListScreen";
+import { listExtras } from "@/server/requests/list-extras";
+import { CheckCheck } from "lucide-react";
 import { listChoices, listRequests, tabCounts } from "@/lib/db/repositories/request-lists.repository";
 import { listViews } from "@/lib/db/repositories/analytics-views.repository";
 import { parseListFilters } from "@/server/requests/list-filters";
@@ -22,9 +24,10 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
   if (defaultView) redirect(`/users/approved-by-me?${new URLSearchParams(defaultView.query).toString()}`);
   const filters = parseListFilters(params, "APPROVED_BY_ME");
   const [result, counts, choices] = await Promise.all([listRequests("APPROVED_BY_ME", user.id, filters), tabCounts("APPROVED_BY_ME", user.id, filters), listChoices("APPROVED_BY_ME", user.id)]);
+  const extras = await listExtras(VIEW_TARGET.APPROVED_BY_ME, columnsFor("APPROVED_BY_ME"), user.id, result.items);
   return (
     <>
-      <PageHeader title="Approved by me" description="Every request where you approved a step, yourself or for someone you cover, and what happened to it after." />
+      <PageHeader title="Approved by me" description="Every request where you approved a step, yourself or for someone you cover, and what happened to it after." icon={CheckCheck} />
       <RequestListScreen
         base="APPROVED_BY_ME"
         path="/users/approved-by-me"
@@ -34,6 +37,9 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
         choices={choices}
         views={views.map((view) => ({ id: view.id, name: view.name, href: `/users/approved-by-me?${new URLSearchParams(view.query).toString()}`, mine: view.mine, shared: view.shared, isDefault: view.isDefault, ownerName: view.ownerName }))}
         empty="You haven't approved anything yet."
+        userId={user.id}
+        progress={extras.progress}
+        columns={extras.columns}
       />
     </>
   );

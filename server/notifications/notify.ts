@@ -17,6 +17,7 @@ import { getUserSetting } from "@/lib/db/repositories/user-settings.repository";
 import { markNotificationRead } from "@/lib/db/repositories/notifications.repository";
 import { loadOptOuts } from "@/lib/db/repositories/preferences.repository";
 import type { EntityRef } from "@/server/notifications/categories";
+import { queuePushForNotification } from "@/server/push/service";
 
 // Notification hub (F-40, P1-40..P1-47). One call = one event for one
 // recipient: an in-app row plus one delivery per channel (email + WhatsApp,
@@ -32,6 +33,8 @@ export interface NotifyInput {
   email: { subject: string; text: string } | null;
   // Values by variable_key; mapped to the template's positional {{n}} slots.
   whatsappVariables: Record<string, string> | null;
+  priority?: "NORMAL" | "HIGH"; // D-252: IT's notices; others follow their kind
+  broadcastId?: number | null; // D-252: sent from Admin → Notifications
 }
 
 export interface NotifyDeps {
@@ -49,6 +52,9 @@ export interface NotifyDeps {
   // D-231: Do not disturb, and the app alert switched off. Optional for tests.
   loadDnd?: (userId: number) => Promise<DoNotDisturb>;
   markRead?: (notificationId: number) => Promise<void>;
+  // D-252: queue a phone/desktop notification per device (null = push off or
+  // no devices). Optional for tests.
+  queuePush?: typeof queuePushForNotification;
   now?: () => Date;
 }
 
@@ -66,6 +72,7 @@ const defaultDeps: NotifyDeps = {
   loadOptOuts: (userId) => loadOptOuts(userId),
   loadDnd: async (userId) => parseDnd(await getUserSetting(userId, DND_SETTING)),
   markRead: (notificationId) => markNotificationRead(notificationId),
+  queuePush: (input) => queuePushForNotification(input),
   findRecipient,
   createNotification,
   createDelivery,
@@ -109,6 +116,7 @@ export interface NotifySummary {
   inactive?: boolean; // nobody to tell (no such active person): nothing to retry
   email: ChannelOutcome;
   whatsapp: ChannelOutcome;
+  push?: { status: "QUEUED" | "SKIPPED"; code?: string; devices: number } | null; // D-252
 }
 
 export async function notifyWithDeps(input: NotifyInput, deps: NotifyDeps, options: NotifyOptions = {}): Promise<NotifySummary> {
@@ -125,6 +133,8 @@ export async function notifyWithDeps(input: NotifyInput, deps: NotifyDeps, optio
       message: input.message,
       deepLink: input.deepLink ?? null,
       entity: input.entity ?? null,
+      priority: input.priority,
+      broadcastId: input.broadcastId ?? null,
     });
     summary.recorded = true;
   } catch (error) {
@@ -152,6 +162,18 @@ export async function notifyWithDeps(input: NotifyInput, deps: NotifyDeps, optio
   if (input.whatsappVariables && whatsappSkip) {
     summary.whatsapp = { status: "SKIPPED", code: whatsappSkip };
     await safeDelivery(deps, { notificationId, channel: "WHATSAPP", provider: "CEOITBOX", status: "SKIPPED", failureCode: whatsappSkip });
+  }
+
+  // D-252: phone and desktop notifications. Queued per device and sent in the
+  // background; they never wait for (or depend on) the person's session.
+  if (deps.queuePush) {
+    const pushSkip = skip(channelWanted(input.eventType, "PUSH", optOuts));
+    summary.push = await deps
+      .queuePush({ notificationId, userId: input.userId, eventType: input.eventType, title: input.title, message: input.message, deepLink: input.deepLink ?? null, entity: input.entity ?? null, priority: input.priority, skipCode: pushSkip })
+      .catch((error) => {
+        logError("notify: push queue failed", error, { eventType: input.eventType, userId: input.userId });
+        return null;
+      });
   }
 
   const reference = options.reference ?? `ars-n${notificationId}`;

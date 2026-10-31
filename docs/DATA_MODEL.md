@@ -943,6 +943,19 @@ These tables reject every `UPDATE` and `DELETE` with `SIGNAL SQLSTATE '45000'`:
 - **Identity:** `users.login_id`, `email`, `whatsapp_number`, `firebase_uid`; `approval_requests.request_no`; `tasks.task_no`; `info_items.info_no`; `request_attachments.stored_path`; `record_files.stored_path`.
 - **One per person:** `gcal_connections.user_id`; `request_amendments.amendment_id` (an amendment has one original).
 
+### v1.41.0 (D-250, D-252): push and daily sessions
+- **`push_subscriptions`:**
+  - one row per browser push endpoint (`endpoint_hash` unique);
+  - `user_id`, `p256dh_enc` and `auth_enc` (AES-256-GCM);
+  - `device_type`, `browser`, `operating_system`, `installed`, `permission`;
+  - `status` ACTIVE / EXPIRED (the push service answered 404/410) / REMOVED;
+  - `failure_count`, `last_failure_code`, `last_seen_at`, `last_used_at`.
+  Signing out never changes it. Expired or removed rows are deleted after 90 days (housekeeping).
+- **`notification_deliveries`:** channel `PUSH`; `subscription_id`. QUEUED rows are the push queue (`next_retry_at` = when due); SENT = accepted by the push service; FAILED keeps the code.
+- **`notification_preferences.channel`:** adds `PUSH` ("Phone & desktop" in Profile → Notifications).
+- **`admin_broadcasts`:** what IT sent from Admin → Notifications (title, message, category, priority, link, the audience as chosen and in words, recipients). `notifications.broadcast_id` links each Inbox message to it; `notifications.priority` is NORMAL or HIGH.
+- **`user_sessions.session_policy`:** IDLE (the idle limit and 12 hours) or DAILY (ends at the next midnight IST, no idle limit).
+
 ### Encrypted and hashed columns
 - **AES-256-GCM with `ENCRYPTION_KEY`** (`lib/security/encryption.ts`): `system_settings.value` when `encrypted = TRUE` (API keys, webhook secret, Salesforce app keys); `gcal_settings.client_secret_enc`; `gcal_connections.refresh_token_enc`, `access_token_enc`; `ai_salesforce_connection.access_token_enc`, `refresh_token_enc`, `pending_verifier_enc`. Changing `ENCRYPTION_KEY` makes these unreadable; they must be entered again.
 - **Sealed in code:** `notification_deliveries.payload_json` is stored as `{"sealed": "<encrypted>"}` since v1.3.6 (`lib/security/delivery-payload.ts`), because it can hold a set-password link. The column type is still plain JSON.

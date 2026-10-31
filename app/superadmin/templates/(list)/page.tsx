@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PagedRows } from "@/features/ui/PagedRows";
 import Link from "next/link";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { requireArea } from "@/server/authorization/guards";
@@ -60,7 +61,7 @@ export default async function TemplatesPage() {
               </th>
             </tr>
           </thead>
-          <tbody>
+          <PagedRows colSpan={5}>
             {board.map(({ entry, live: current, latest }) => (
               <tr key={entry.code}>
                 <td>
@@ -91,7 +92,7 @@ export default async function TemplatesPage() {
                 </td>
               </tr>
             ))}
-          </tbody>
+          </PagedRows>
         </table>
       </section>
     </>

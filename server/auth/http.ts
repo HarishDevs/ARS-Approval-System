@@ -14,7 +14,7 @@ export function setSignInCookies(response: NextResponse, result: CompleteSignInR
     secure,
     sameSite: "lax",
     path: "/",
-    maxAge: SESSION_TTL_SECONDS,
+    maxAge: result.cookieMaxAge ?? SESSION_TTL_SECONDS,
   });
   if (result.newDeviceCookie) {
     response.cookies.set(DEVICE_COOKIE_NAME, result.newDeviceCookie, {

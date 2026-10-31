@@ -31,6 +31,10 @@ export function buildCsp(nonce: string, options: CspOptions): string {
     "img-src": ["'self'", "data:", "blob:"],
     "font-src": ["'self'"],
     "connect-src": connectSrc,
+    // D-251: the service worker (/sw.js) is this site's own file; 'strict-dynamic'
+    // above would otherwise refuse it. Manifest likewise.
+    "worker-src": ["'self'"],
+    "manifest-src": ["'self'"],
     "frame-src": [`https://${options.firebaseAuthDomain}`, "https://accounts.google.com"],
     "frame-ancestors": ["'none'"],
     "base-uri": ["'self'"],

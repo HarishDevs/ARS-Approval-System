@@ -4,7 +4,7 @@ import { cookies, headers } from "next/headers";
 import { PATH_HEADER, WRITE_HEADER } from "@/lib/security/path-signature";
 import { SESSION_COOKIE_NAME } from "@/lib/session/constants";
 import { verifySessionToken, verifyPurposeToken } from "@/lib/session/token";
-import { sessionIdleSeconds, sessionState, revokeAllSessionsForUser, revokeSession, touchSession, claimSecurityLink, sessionTriedBy } from "@/lib/db/repositories/sessions.repository";
+import { sessionIdleSeconds, sessionLive, sessionState, revokeAllSessionsForUser, revokeSession, touchSession, claimSecurityLink, sessionTriedBy } from "@/lib/db/repositories/sessions.repository";
 import { findUserById, securityLockUser, listUserIdsWithRole } from "@/lib/db/repositories/users.repository";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { notify } from "@/server/notifications/notify";
@@ -58,13 +58,15 @@ async function loadCurrentSession(touch: boolean): Promise<CurrentSession | { se
   const token = (await cookies()).get(SESSION_COOKIE_NAME)?.value;
   const payload = verifySessionToken(token);
   if (!payload) return null;
-  const idleSeconds = await sessionIdleSeconds(payload.sid, payload.uid);
-  if (idleSeconds === null) return null;
+  const live = await sessionLive(payload.sid, payload.uid);
+  if (live === null) return null;
+  const idleSeconds = live.idleSeconds;
   const user = await findUserById(payload.uid);
   if (!user || !user.active || user.lockedSecondsRemaining > 0) return null;
   if (user.isBreakGlass && user.breakGlassSecondsRemaining <= 0) return null;
-  const limitSeconds = (await idleLimitMinutes()) * 60;
-  if (idleSeconds >= limitSeconds) {
+  // D-250: a daily session has no idle limit; it ends at midnight (its expiry).
+  const limitSeconds = live.daily ? null : (await idleLimitMinutes()) * 60;
+  if (limitSeconds !== null && idleSeconds >= limitSeconds) {
     // Ended for good: coming back later never revives it (D-158).
     await revokeSession(payload.sid, IDLE_REASON);
     return null;
@@ -104,19 +106,22 @@ async function loadCurrentSession(touch: boolean): Promise<CurrentSession | { se
 
 // v1.12.1 (D-158): why the person was signed out, for the signed-out page.
 export const IDLE_REASON = "IDLE_TIMEOUT";
-export type EndReason = "idle" | "expired" | "signed_out" | "revoked" | "deactivated" | "locked" | "unknown";
+export type EndReason = "idle" | "expired" | "daily" | "signed_out" | "revoked" | "deactivated" | "locked" | "unknown";
 
 export async function sessionEndReason(): Promise<EndReason | null> {
   const token = (await cookies()).get(SESSION_COOKIE_NAME)?.value;
   if (!token) return null;
-  const payload = verifySessionToken(token);
+  // Signed by us but past its time (e.g. the daily session at midnight): the
+  // row says why; it is never accepted as a session here.
+  const payload = verifySessionToken(token, 0);
   if (!payload) return "unknown";
   const [state, user] = await Promise.all([sessionState(payload.sid, payload.uid), findUserById(payload.uid)]);
   if (!user || !user.active) return "deactivated";
   if (user.lockedSecondsRemaining > 0) return "locked";
   if (!state) return "unknown";
   if (state.revoked) return state.revokeReason === IDLE_REASON ? "idle" : state.revokeReason === "SIGN_OUT" ? "signed_out" : "revoked";
-  if (state.expired) return "expired";
+  if (state.expired) return state.daily ? "daily" : "expired";
+  if (state.daily) return null;
   const idle = await sessionIdleSeconds(payload.sid, payload.uid);
   if (idle !== null && idle >= (await idleLimitMinutes()) * 60) return "idle";
   return null; // still live

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { FilePlus2 } from "lucide-react";
 import Link from "next/link";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
@@ -49,7 +50,7 @@ export default async function CustomApprovalPage({ searchParams }: { searchParam
   const defaultApproverId = managerId && managerId !== user.id && options.people.some((person) => person.id === managerId) ? managerId : null;
   return (
     <>
-      <PageHeader title="New request" description="You choose who approves and in what order. For a standard approval type, use Request templates.">
+      <PageHeader title="New request" icon={FilePlus2} description="You choose who approves and in what order. For a standard approval type, use Request templates.">
         <Link href="/users/new" className="link text-label">
           Request templates
         </Link>

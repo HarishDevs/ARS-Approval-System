@@ -4,8 +4,9 @@
 // person: sign-in and account security, and work waiting for them.
 // D-231: INAPP is the alert in the app (bell and pop-up). A message switched
 // off there is still kept under Notifications, already read.
-export type Channel = "EMAIL" | "WHATSAPP" | "INAPP";
-export const CHANNELS: readonly Channel[] = ["INAPP", "EMAIL", "WHATSAPP"];
+// D-252: PUSH = phone and desktop notifications on the person's registered devices.
+export type Channel = "EMAIL" | "WHATSAPP" | "INAPP" | "PUSH";
+export const CHANNELS: readonly Channel[] = ["INAPP", "PUSH", "EMAIL", "WHATSAPP"];
 
 export interface EventGroup {
   key: string;
@@ -66,6 +67,21 @@ export const EVENT_GROUPS: readonly EventGroup[] = [
     help: "Changes, comments, mentions, completion, due-soon and overdue reminders on tasks you're part of; projects you're added to and their status updates.",
     mandatory: false,
     events: ["WORK_TASK_UPDATED", "WORK_TASK_COMMENT", "WORK_TASK_COMPLETED", "WORK_TASK_REOPENED", "WORK_TASK_CANCELLED", "WORK_TASK_DUE_SOON", "WORK_TASK_OVERDUE", "WORK_TASK_MENTION", "WORK_PROJECT_MEMBER", "WORK_PROJECT_STATUS", "WORK_TASK_DIGEST"],
+  },
+  // D-252: notifications IT sends from Admin → Notifications.
+  {
+    key: "IMPORTANT",
+    label: "Important alerts from IT",
+    help: "Urgent notices from the IT team (for example a system outage or a safety alert). Always sent.",
+    mandatory: true,
+    events: ["ADMIN_IMPORTANT"],
+  },
+  {
+    key: "ANNOUNCEMENTS",
+    label: "Announcements from IT and management",
+    help: "Announcements, management notices and system notices sent by the IT team.",
+    mandatory: false,
+    events: ["ADMIN_ANNOUNCEMENT", "ADMIN_MANAGEMENT", "ADMIN_SYSTEM"],
   },
   {
     key: "INFORMATION",
@@ -147,6 +163,11 @@ export const EVENT_LABEL: Record<string, string> = {
   INFO_UPDATED: "Information you got is updated",
   INFO_WITHDRAWN: "Information you got is withdrawn",
   INFO_ACK_REMINDER: "Reminders to acknowledge information",
+  ADMIN_IMPORTANT: "Important alerts from IT",
+  ADMIN_ANNOUNCEMENT: "Announcements",
+  ADMIN_MANAGEMENT: "Management notices",
+  ADMIN_SYSTEM: "System notices",
+  PUSH_TEST: "Test notifications",
 };
 export const eventLabel = (eventType: string) => EVENT_LABEL[eventType] ?? eventType.toLowerCase().replace(/_/g, " ");
 

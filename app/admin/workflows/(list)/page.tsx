@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PagedRows } from "@/features/ui/PagedRows";
 import Link from "next/link";
 import { EmptyState, PageHeader } from "@/features/shell/PageHeader";
 import { requireArea } from "@/server/authorization/guards";
@@ -43,7 +44,7 @@ export default async function WorkflowsPage({ searchParams }: { searchParams: Pr
                 <th>Status</th>
               </tr>
             </thead>
-            <tbody>
+            <PagedRows colSpan={6}>
               {workflows.map((workflow) => (
                 <tr key={workflow.id}>
                   <td>
@@ -61,7 +62,7 @@ export default async function WorkflowsPage({ searchParams }: { searchParams: Pr
                   </td>
                 </tr>
               ))}
-            </tbody>
+            </PagedRows>
           </table>
         </div>
       )}

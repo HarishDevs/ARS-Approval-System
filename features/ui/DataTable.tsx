@@ -24,6 +24,7 @@ export interface Row {
 }
 
 type Density = "comfortable" | "compact";
+const PAGE_SIZE = 25;
 
 function readDensity(storageKey: string): Density {
   try {
@@ -54,7 +55,10 @@ export function DataTable({
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const [density, setDensity] = useState<Density>("comfortable");
   const [columnsOpen, setColumnsOpen] = useState(false);
+  // D-258: rows come in pages, so a long table never makes a long page.
+  const [page, setPage] = useState(1);
   useEffect(() => setDensity(readDensity(storageKey)), [storageKey]);
+  useEffect(() => setPage(1), [rows, sort]);
 
   const shown = columns.filter((column) => !hidden.has(column.key));
   const sorted = useMemo(() => {
@@ -82,6 +86,9 @@ export function DataTable({
 
   if (rows.length === 0) return <EmptyState title={empty.title} body={empty.body} action={empty.action} />;
   const pad = density === "compact" ? "py-1.5" : "py-3";
+  const pages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+  const current = Math.min(page, pages);
+  const visible = sorted.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
   const optional = columns.filter((column) => column.optional);
   return (
     <div className="card">
@@ -155,7 +162,7 @@ export function DataTable({
             </tr>
           </thead>
           <tbody>
-            {sorted.map((row) => (
+            {visible.map((row) => (
               <tr key={row.id}>
                 {shown.map((column, index) => {
                   const Tag = index === 0 ? "th" : "td";
@@ -174,6 +181,36 @@ export function DataTable({
           </tbody>
         </table>
       </div>
+      {pages > 1 && (
+        <nav aria-label={`${caption}: pages`} className="flex flex-wrap items-center justify-between gap-2 border-t border-line px-4 py-2 text-label">
+          <span className="text-ink-muted">
+            {((current - 1) * PAGE_SIZE + 1).toLocaleString("en-IN")}–{Math.min(current * PAGE_SIZE, sorted.length).toLocaleString("en-IN")} of {sorted.length.toLocaleString("en-IN")}
+          </span>
+          <span className="flex items-center gap-1">
+            <button type="button" className="btn-ghost btn-compact" disabled={current === 1} onClick={() => setPage(current - 1)} aria-label="Previous page">
+              ←
+            </button>
+            {Array.from({ length: pages }, (_, index) => index + 1)
+              .filter((value) => value === 1 || value === pages || Math.abs(value - current) <= 1)
+              .map((value, index, list) => (
+                <span key={value} className="flex items-center">
+                  {index > 0 && value - list[index - 1]! > 1 && <span className="px-1 text-ink-muted">…</span>}
+                  <button
+                    type="button"
+                    aria-current={value === current ? "page" : undefined}
+                    onClick={() => setPage(value)}
+                    className={`grid h-8 min-w-8 place-items-center rounded-md px-2 ${value === current ? "bg-primary-solid font-semibold text-on-solid" : "hover:bg-surface-muted"}`}
+                  >
+                    {value}
+                  </button>
+                </span>
+              ))}
+            <button type="button" className="btn-ghost btn-compact" disabled={current === pages} onClick={() => setPage(current + 1)} aria-label="Next page">
+              →
+            </button>
+          </span>
+        </nav>
+      )}
     </div>
   );
 }

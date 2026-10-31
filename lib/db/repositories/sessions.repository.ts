@@ -53,13 +53,14 @@ export async function createSession(
     userAgent: string | null;
     ttlSeconds: number;
     triedBy?: number | null; // D-185
+    daily?: boolean; // D-250: ends at the next midnight IST, no idle limit
   },
   db: Queryable = getDbPool(),
 ): Promise<void> {
   await db.query<ResultSetHeader>(
-    `INSERT INTO user_sessions (id, user_id, device_id, auth_method, ip_address, user_agent, expires_at, tried_by)
-     VALUES (?, ?, ?, ?, ?, ?, DATE_ADD(CURRENT_TIMESTAMP, INTERVAL ? SECOND), ?)`,
-    [input.id, input.userId, input.deviceId, input.authMethod, input.ipAddress, input.userAgent, input.ttlSeconds, input.triedBy ?? null],
+    `INSERT INTO user_sessions (id, user_id, device_id, auth_method, ip_address, user_agent, expires_at, session_policy, tried_by)
+     VALUES (?, ?, ?, ?, ?, ?, DATE_ADD(CURRENT_TIMESTAMP, INTERVAL ? SECOND), ?, ?)`,
+    [input.id, input.userId, input.deviceId, input.authMethod, input.ipAddress, input.userAgent, input.ttlSeconds, input.daily ? "DAILY" : "IDLE", input.triedBy ?? null],
   );
 }
 
@@ -73,22 +74,29 @@ export async function sessionTriedBy(sessionId: string, db: Queryable = getDbPoo
 // revoked or past its absolute expiry. The idle limit is applied by the
 // caller, per person (the Super Admin is never signed out for inactivity).
 export async function sessionIdleSeconds(sessionId: string, userId: number, db: Queryable = getDbPool()): Promise<number | null> {
-  const [rows] = await db.query<(RowDataPacket & { idle: number })[]>(
-    `SELECT TIMESTAMPDIFF(SECOND, last_seen_at, CURRENT_TIMESTAMP) AS idle FROM user_sessions
+  return (await sessionLive(sessionId, userId, db))?.idleSeconds ?? null;
+}
+
+// The same, with the session's policy: a DAILY session (D-250) has no idle
+// limit; it simply ends at its expiry (the next midnight, India time).
+export async function sessionLive(sessionId: string, userId: number, db: Queryable = getDbPool()): Promise<{ idleSeconds: number; daily: boolean } | null> {
+  const [rows] = await db.query<(RowDataPacket & { idle: number; session_policy: string })[]>(
+    `SELECT TIMESTAMPDIFF(SECOND, last_seen_at, CURRENT_TIMESTAMP) AS idle, session_policy FROM user_sessions
      WHERE id = ? AND user_id = ? AND revoked_at IS NULL AND expires_at > CURRENT_TIMESTAMP LIMIT 1`,
     [sessionId, userId],
   );
-  return rows[0] ? Math.max(0, Number(rows[0].idle)) : null;
+  const row = rows[0];
+  return row ? { idleSeconds: Math.max(0, Number(row.idle)), daily: row.session_policy === "DAILY" } : null;
 }
 
 // v1.12.1: why a session is no longer live (for the signed-out page).
-export async function sessionState(sessionId: string, userId: number, db: Queryable = getDbPool()): Promise<{ revokeReason: string | null; revoked: boolean; expired: boolean } | null> {
-  const [rows] = await db.query<(RowDataPacket & { revoke_reason: string | null; revoked: number; expired: number })[]>(
-    "SELECT revoke_reason, revoked_at IS NOT NULL AS revoked, expires_at <= CURRENT_TIMESTAMP AS expired FROM user_sessions WHERE id = ? AND user_id = ? LIMIT 1",
+export async function sessionState(sessionId: string, userId: number, db: Queryable = getDbPool()): Promise<{ revokeReason: string | null; revoked: boolean; expired: boolean; daily: boolean } | null> {
+  const [rows] = await db.query<(RowDataPacket & { revoke_reason: string | null; revoked: number; expired: number; session_policy: string })[]>(
+    "SELECT revoke_reason, revoked_at IS NOT NULL AS revoked, expires_at <= CURRENT_TIMESTAMP AS expired, session_policy FROM user_sessions WHERE id = ? AND user_id = ? LIMIT 1",
     [sessionId, userId],
   );
   const row = rows[0];
-  return row ? { revokeReason: row.revoke_reason, revoked: Boolean(Number(row.revoked)), expired: Boolean(Number(row.expired)) } : null;
+  return row ? { revokeReason: row.revoke_reason, revoked: Boolean(Number(row.revoked)), expired: Boolean(Number(row.expired)), daily: row.session_policy === "DAILY" } : null;
 }
 
 // Live = not revoked, not past its absolute expiry, and used within the
@@ -130,4 +138,10 @@ export async function revokeAllSessionsForUser(userId: number, reason: string, d
 export async function claimSecurityLink(tokenHash: string, db: Queryable = getDbPool()): Promise<boolean> {
   const [result] = await db.query<ResultSetHeader>("INSERT IGNORE INTO used_security_links (token_hash) VALUES (?)", [tokenHash]);
   return result.affectedRows === 1;
+}
+
+// D-250: when this session ends and whether it is a daily one (App & devices).
+export async function sessionExpiry(sessionId: string, db: Queryable = getDbPool()): Promise<{ expiresAt: Date; daily: boolean } | null> {
+  const [rows] = await db.query<(RowDataPacket & { expires_at: Date; session_policy: string })[]>("SELECT expires_at, session_policy FROM user_sessions WHERE id = ? LIMIT 1", [sessionId]);
+  return rows[0] ? { expiresAt: rows[0].expires_at, daily: rows[0].session_policy === "DAILY" } : null;
 }

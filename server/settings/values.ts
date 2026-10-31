@@ -1,4 +1,5 @@
 import "server-only";
+import { DAILY_SCOPES, type DailySessionScope } from "@/lib/session/daily";
 import { findSettingDefinition } from "@/server/settings/definitions";
 import { getRawSetting } from "@/lib/db/repositories/settings.repository";
 import { decryptSecret } from "@/lib/security/encryption";
@@ -85,4 +86,10 @@ export async function getEmailConfig(): Promise<EmailConfig> {
     getSettingValue("email.reply_to"),
   ]);
   return { apiKey, fromAddress: fromAddress ?? "no_reply@approval.arssteels.net", fromName: fromName ?? "ARS-CMS", replyTo };
+}
+
+// D-250: who gets the daily session (until midnight IST, no idle sign-out).
+export async function getDailySessionScope(): Promise<DailySessionScope> {
+  const value = await getSettingValue("auth.daily_session_scope").catch(() => null);
+  return (DAILY_SCOPES as readonly string[]).includes(value ?? "") ? (value as DailySessionScope) : "DEVICES";
 }

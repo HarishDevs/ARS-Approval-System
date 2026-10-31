@@ -32,7 +32,7 @@ Unified prompt FN2, FN8, FN11 and Addendum B (monitoring). The live version of t
 
 ## Inventory
 
-Applies to v1.40.0 (1 Nov 2026): **17 automations**, all in `AUTOMATIONS` in `server/ops/automation.ts`, run in this order by `runAutomations()`. Every one runs on the same cron call (`POST /api/jobs/run`, every 5 minutes); `server/jobs/` holds the code for three of them (`sla`, `deliveries` and `housekeeping`, `delegations`), the rest live with their module. There is no other scheduled entry point. If this table and the Automation page ever differ, the page is right; update this table.
+Applies to v1.41.0 (1 Nov 2026): **18 automations**, all in `AUTOMATIONS` in `server/ops/automation.ts`, run in this order by `runAutomations()`. Every one runs on the same cron call (`POST /api/jobs/run`, every 5 minutes); `server/jobs/` holds the code for three of them (`sla`, `deliveries` and `housekeeping`, `delegations`), the rest live with their module. There is no other scheduled entry point. If this table and the Automation page ever differ, the page is right; update this table.
 
 | Key | Automation | Trigger | Retry | Idempotency | On failure | Recovery | Owner |
 |---|---|---|---|---|---|---|---|
@@ -52,6 +52,7 @@ Applies to v1.40.0 (1 Nov 2026): **17 automations**, all in `AUTOMATIONS` in `se
 | ai | AI module upkeep (v1.15.0): expire proposals after 7 days, remove old conversations, copy Salesforce data read-only at most hourly | Every run; the Salesforce copy only when the last is an hour old | Next run; a failed Salesforce object keeps its last good copy | Single statements; Salesforce records stored by their own Id | Recorded; AI → Data Sources shows each object's last run and error | AI settings → **Sync now** after fixing the cause | Super Admin |
 | exports | Background exports (v1.7.0); export files removed after 7 days | Every run, and right after each request | A run that died is re-queued after 30 min | Each export claimed (queued → running) | Shown as failed on Reports | Ask again | Each export's owner |
 | hodWeekly | Weekly HOD report (D-247; off until the Super Admin switches it on) | Every run; sends from Monday 09:00 IST, once a week | A failed department is recorded FAILED for that week; the next week sends again | One claim per department and week (`hod_report_runs`), plus a one-per-week email key | Recorded with the failed count | Fix email settings or the HOD's address | Super Admin; IT |
+| push | Send phone and desktop notifications (D-252) | Right after each action that notifies someone (a drain in the app process) and every job run | Up to 5 tries per device (1, 5, 15, 60 min); Retry-After respected; 404/410 marks the device expired | Each push is leased before sending; a repeat carries the same tag, so a device shows it once | FAILED rows in the delivery log; the message is always in the Inbox | Check Super Admin → Settings → Phone & desktop notifications (switch, keys) | Super Admin |
 | stuck | Stuck-request scan | Every run | Next run | Read-only | Needs attention still works | None needed | IT team |
 
 **Event-driven, not scheduled (so not in the table):**

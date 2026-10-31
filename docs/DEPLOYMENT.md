@@ -33,6 +33,7 @@ Work through the parts **in order**. Tick each box as you go. Anything marked **
 - **Part S:** Pic bot - ai (v1.16.0)
 - **Part T:** v1.19.0 to v1.20.0 (analyst chat, Try as, AI Rules, clean screens)
 - **Part U:** v1.21.0 to v1.39.0 (Tasks & projects, notification rules, Configuration Studio)
+- **Part V:** v1.41.0 (installable app, phone and desktop notifications, daily session, road tracker)
 
 Related: `docs/BACKUP_RESTORE_AND_ROLLBACK.md`, `docs/AUTOMATION_INVENTORY_AND_RECOVERY.md`, `docs/RECOVERY_OBJECTIVES_AND_INCIDENT_RESPONSE.md` (draft), `docs/ARCHITECTURE.md`, `docs/DATA_MODEL.md`, `docs/API_REFERENCE.md`.
 
@@ -620,3 +621,45 @@ After publishing:
 4. Admin → Approval types & workflows: open a workflow, change a label, wait a few seconds: "Saved" appears and nothing is published.
 
 Rollback: redeploy the previous tag (Part M). The rollback note for v1.39.0's column is in the migration file itself; dropping it is never needed for the older code to run.
+
+## Part V: v1.41.0 (installable app, phone and desktop notifications, daily session, road tracker)
+
+**Nothing new in cPanel.** No new environment variable is required and no new cron job: the existing job runner also sends the push queue. HTTPS (already on, through Cloudflare) is required for the service worker and for push.
+
+**Migration (runs on start):** `202611011200_v141_pwa_push_session.sql`
+- `user_sessions.session_policy` (`IDLE` / `DAILY`);
+- new table `push_subscriptions` (one row per browser endpoint; keys stored encrypted);
+- `notification_deliveries.channel` gains `PUSH`, plus `subscription_id` and an index;
+- `notification_preferences.channel` gains `PUSH`;
+- new table `admin_broadcasts`; `notifications.broadcast_id` and `notifications.priority`.
+
+All additive; the rollback statements are at the top of the file.
+
+**After publishing, as Super Admin:**
+1. **Settings → Phone & desktop notifications → Generate keys** (right-hand panel). This makes the VAPID key pair; the private key is stored encrypted like the other secrets and is never shown or sent to browsers. No outside account (Firebase or other) is needed.
+   - Keep "Phone and desktop notifications" ON.
+   - Choose what a lock screen shows: TITLE (default), FULL or GENERIC.
+   - "Make new keys" only if the private key may have leaked: every device then registers again by itself on its next visit.
+2. **Settings → Sign-in security → Daily session:**
+   - DEVICES (default): phones, tablets and the installed app stay signed in until midnight (India time), with no idle sign-out;
+   - EVERYONE: computers too;
+   - OFF: the idle rule for everyone, as before.
+   Computers keep the idle time and the 12-hour limit unless EVERYONE is chosen.
+3. On your own phone: open ARS-CMS, install it (Android: Install app; iPhone: Share → Add to Home Screen), open it from the home screen, then **Profile → App & devices → Turn on notifications** and **Send a test**.
+4. **Admin → Notifications → Send** a test to yourself, then check **History**: "accepted" means the push service took it (it does not prove the person saw it).
+
+**Files served from the site root:**
+- `/sw.js` (the service worker, sent with `Cache-Control: no-cache` so updates are seen at once);
+- `/offline.html`;
+- `/manifest.webmanifest`.
+
+The middleware lets these through without a session. The CSP adds `worker-src 'self'` and `manifest-src 'self'`.
+
+**What the service worker keeps:** only build files and brand images. Never pages, API answers, attachments or anything personal. A new build gets a new cache and the old one is deleted.
+
+**Limits:**
+- iPhone and iPad show web push only for the installed app (iOS/iPadOS 16.4 or later).
+- Firefox can't install web apps.
+- A push service may drop messages for a device that has been off for weeks; the message is always in the Inbox.
+
+**Rollback:** redeploy v1.40.0 (Part M). Browsers keep the service worker until it updates; v1.40.0 doesn't register one, so it stays inert apart from showing pushes. To remove it, open DevTools → Application → Service workers → Unregister.

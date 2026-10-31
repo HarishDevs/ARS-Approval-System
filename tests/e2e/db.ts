@@ -40,6 +40,8 @@ export async function sessionCookie(loginId: string, options: { tourDone?: boole
     );
     if (options.tourDone === false) await conn.query("DELETE FROM user_flags WHERE user_id = ? AND flag = 'TOUR_DONE'", [userId]);
     else await conn.query("INSERT IGNORE INTO user_flags (user_id, flag) VALUES (?, 'TOUR_DONE')", [userId]);
+    // D-251: likewise the install invitation (it would cover the corner of every screen).
+    await conn.query("INSERT IGNORE INTO user_flags (user_id, flag) VALUES (?, 'INSTALL_INVITE_DISMISSED')", [userId]);
   } finally {
     await conn.end();
   }

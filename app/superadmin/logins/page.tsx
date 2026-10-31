@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PagedRows } from "@/features/ui/PagedRows";
 import { PageHeader, EmptyState } from "@/features/shell/PageHeader";
 import { NoResults } from "@/features/ui/Display";
 import { PendingLink } from "@/features/ui/PendingLink";
@@ -58,7 +59,7 @@ export default async function LoginHistoryPage({ searchParams }: { searchParams:
                 <th>From</th>
               </tr>
             </thead>
-            <tbody>
+            <PagedRows colSpan={5}>
               {items.map((item) => (
                 <tr key={item.id}>
                   <td className="whitespace-nowrap">{formatIndiaTime(item.occurredAt)}</td>
@@ -81,7 +82,7 @@ export default async function LoginHistoryPage({ searchParams }: { searchParams:
                   </td>
                 </tr>
               ))}
-            </tbody>
+            </PagedRows>
           </table>
         </div>
       )}

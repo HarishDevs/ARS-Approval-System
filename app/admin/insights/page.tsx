@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PagedRows } from "@/features/ui/PagedRows";
 import Link from "next/link";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { requireArea } from "@/server/authorization/guards";
@@ -39,7 +40,7 @@ function Table({ title, empty, head, rows }: { title: string; empty: string; hea
               ))}
             </tr>
           </thead>
-          <tbody>
+          <PagedRows colSpan={1}>
             {rows.map((row, rowIndex) => (
               <tr key={rowIndex}>
                 {row.map((cell, index) => (
@@ -49,7 +50,7 @@ function Table({ title, empty, head, rows }: { title: string; empty: string; hea
                 ))}
               </tr>
             ))}
-          </tbody>
+          </PagedRows>
         </table>
       )}
     </section>

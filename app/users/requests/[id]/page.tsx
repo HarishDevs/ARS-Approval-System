@@ -9,6 +9,8 @@ import { PageHeader } from "@/features/shell/PageHeader";
 import { Hint } from "@/features/ui/Hint";
 import { RequestStatusPill } from "@/features/requests/StatusPill";
 import { StepMap, TrackerBanner } from "@/features/requests/StepMap";
+import { ApprovalRoad } from "@/features/requests/ApprovalRoad";
+import { loadRequestRoad } from "@/server/approvals/road-view";
 import { AnswerQuestionForm, BlockedStepForm, DecisionForm, DecisionShortcuts, DelegateTaskForm, MobileDecisionBar, RecallForm, ReopenForm, ResumeForm, WithdrawForm } from "@/features/requests/ActionPanel";
 import { Advice, Links } from "@/features/requests/Collaboration";
 import { STATUS_WORD } from "@/features/ui/labels";
@@ -47,6 +49,7 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
   const { id } = await params;
   if (!/^\d+$/.test(id)) notFound();
   const view = await loadRequestView(Number(id), { id: user.id, roles: user.roles });
+  const road = view ? await loadRequestRoad(view.id, { id: user.id, roles: user.roles }).catch(() => null) : null;
   if (!view) notFound();
   // WS-04: remember the visit (only after the access check passed).
   await recordView(user.id, view.id).catch(() => undefined);
@@ -217,13 +220,13 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
           {/* Room for the phone decision bar, so it never covers the page's end. */}
           {view.myTasks[0] && <div aria-hidden="true" className="h-16 md:hidden" />}
           {view.canResubmit && (
-            <section>
+            <section id="resubmit" className="scroll-mt-20">
               <h2 className="mb-3 font-semibold">Update and resubmit</h2>
               <RequestForm mode="resubmit" requestId={view.id} fields={view.form} people={people} initial={view.rawFields} lookups={lookups} existingFiles={Object.fromEntries(view.fields.filter((field) => field.files).map((field) => [field.key, field.files!.length]))} />
             </section>
           )}
           {(view.canWithdraw || view.canReopen || view.canRecall) && (
-            <section className="card divide-y divide-line">
+            <section id="request-actions" className="card scroll-mt-20 divide-y divide-line">
               {view.canRecall && <RecallForm requestId={view.id} />}
               {view.canWithdraw && <WithdrawForm requestId={view.id} />}
               {view.canReopen && <ReopenForm requestId={view.id} />}
@@ -277,6 +280,8 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
             <h2 id="levels" className="mb-3 font-semibold">
               Approval levels
             </h2>
+            {/* D-253: the road, from the same level map as below it. */}
+            {road && <ApprovalRoad requestId={view.id} initial={road.road} initialUpdatedAt={road.updatedAt} serverNow={new Date().toISOString()} />}
             <TrackerBanner summary={view.tracker} />
             <StepMap stages={view.stages} />
           </section>

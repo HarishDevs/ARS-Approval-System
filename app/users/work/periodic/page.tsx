@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Repeat } from "lucide-react";
 import Link from "next/link";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { EmptyState } from "@/features/ui/Display";
@@ -26,7 +27,7 @@ export default async function PeriodicPage({ searchParams }: { searchParams: Pro
   const pane = paneId ? <TaskPane taskId={paneId} user={user} closeHref={links.close} /> : null;
   return (
     <>
-      <PageHeader title="Periodic tasks" description="Tasks that repeat. When one is completed the next one is made. Make any task periodic from its Repeats box." />
+      <PageHeader title="Periodic tasks" icon={Repeat} description="Tasks that repeat. When one is completed the next one is made. Make any task periodic from its Repeats box." />
       <WithPane pane={pane}>
         {items.length === 0 ? (
           <EmptyState title="No periodic tasks yet" body="Open a task and choose Repeats → Make it repeat, or create one with Create → Task → Periodic." />

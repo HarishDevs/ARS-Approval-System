@@ -9,6 +9,8 @@ async function as(context: BrowserContext, loginId: string) {
 }
 
 test("IT sees the organisation; filters and periods apply; every chart has a table", async ({ page, context }) => {
+  // D-258: this test reads the whole board at once ("Show all" on the board's pager).
+  await context.addInitScript(() => window.localStorage.setItem("ars.fitPages.all", "1"));
   await as(context, "E2E_ADMIN");
   await page.goto("/users/analytics?board=approvals"); // v1.12.0: Approval analytics is one of the boards
   await expect(page.getByRole("heading", { name: "Analytics", exact: true })).toBeVisible();

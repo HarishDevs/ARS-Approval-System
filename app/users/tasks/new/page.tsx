@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SquarePen } from "lucide-react";
 import { featureOn } from "@/server/settings/features";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -33,7 +34,7 @@ export default async function NewTaskPage({ searchParams }: { searchParams: Prom
   if (!chosen) {
     return (
       <>
-        <PageHeader title="New task" description="Choose the kind of task. Each has its own form and rules, set by IT." />
+        <PageHeader title="New task" icon={SquarePen} description="Choose the kind of task. Each has its own form and rules, set by IT." />
         {allowed.length === 0 ? (
           <EmptyState title="No task types for you yet" body="IT sets up the kinds of task in Admin → Task types. Ask them if you need one." />
         ) : (

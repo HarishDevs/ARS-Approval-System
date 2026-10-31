@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Inbox } from "lucide-react";
 import Link from "next/link";
 import { requireArea } from "@/server/authorization/guards";
 import { EmptyState, PageHeader } from "@/features/shell/PageHeader";
@@ -52,6 +53,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
   return (
     <>
       <PageHeader
+        icon={Inbox}
         title={stateLabel ? `Inbox: ${stateLabel}` : category ? `Inbox: ${VIEWS.find((view) => view.category === category)?.label ?? CATEGORY_LABEL[category]}` : "Inbox"}
         description="Everything we've told you, in one place: approvals, tasks, information and system messages. Bookmark what you'll come back to; archive what's done."
       >

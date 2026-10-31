@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PagedRows } from "@/features/ui/PagedRows";
 import Link from "next/link";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
@@ -66,7 +67,7 @@ export default async function AutomationPage({ searchParams }: { searchParams: P
               <th scope="col">If it fails</th>
             </tr>
           </thead>
-          <tbody>
+          <PagedRows colSpan={5}>
             {board.map(({ automation, summary, health }) => (
               <tr key={automation.key}>
                 <td className="min-w-56">
@@ -108,7 +109,7 @@ export default async function AutomationPage({ searchParams }: { searchParams: P
                 </td>
               </tr>
             ))}
-          </tbody>
+          </PagedRows>
         </table>
       </section>
 
@@ -131,7 +132,7 @@ export default async function AutomationPage({ searchParams }: { searchParams: P
                 </th>
               </tr>
             </thead>
-            <tbody>
+            <PagedRows colSpan={5}>
               {unsent.map((row) => (
                 <tr key={row.id}>
                   <td className="font-mono text-caption">{row.eventType}</td>
@@ -159,7 +160,7 @@ export default async function AutomationPage({ searchParams }: { searchParams: P
                   </td>
                 </tr>
               ))}
-            </tbody>
+            </PagedRows>
           </table>
         )}
       </section>
@@ -186,7 +187,7 @@ export default async function AutomationPage({ searchParams }: { searchParams: P
                 <th scope="col">Reference</th>
               </tr>
             </thead>
-            <tbody>
+            <PagedRows colSpan={5}>
               {runs.map((run) => (
                 <tr key={run.id}>
                   <td className="whitespace-nowrap">{formatIndiaTime(run.startedAt)}</td>
@@ -199,7 +200,7 @@ export default async function AutomationPage({ searchParams }: { searchParams: P
                   <td className="font-mono text-caption text-ink-muted">{run.runRef.slice(0, 12)}</td>
                 </tr>
               ))}
-            </tbody>
+            </PagedRows>
           </table>
         )}
       </section>

@@ -33,4 +33,6 @@ export interface RequestContext {
   ipAddress: string | null;
   userAgent: string | null;
   deviceKey: string | null;
+  // D-250: what the browser says it is (installed app / touch phone or tablet).
+  clientKind?: "app" | "handheld" | null;
 }

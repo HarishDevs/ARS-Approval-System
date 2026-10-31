@@ -32,6 +32,11 @@ export default function TermsPage() {
           <li>Don&apos;t try to access records you aren&apos;t given, get around security, or disrupt the service.</li>
           <li>Tasks, projects, comments, mentions and notices are work records: keep them to work, and mention or add people only where they need to know.</li>
           <li>Your profile photo and About me are seen by colleagues: keep them suitable for work.</li>
+          <li>
+            On a phone, a tablet or the installed app you stay signed in until midnight: keep the device locked, sign out on a shared device, and remove a device you no longer use from Profile &rarr;
+            App &amp; devices.
+          </li>
+          <li>IT&apos;s notifications to staff (Admin &rarr; Notifications) are for work notices only, sent to the people who need them; important alerts only for what is urgent.</li>
         </ul>
         <h2>AI Assistant</h2>
         <p>

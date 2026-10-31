@@ -1,4 +1,5 @@
 import { featureOn } from "@/server/settings/features";
+import { Megaphone } from "lucide-react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { requireArea } from "@/server/authorization/guards";
@@ -48,6 +49,7 @@ export async function InfoListScreen({ base, query }: { base: InfoBase; query: R
   return (
     <>
       <PageHeader
+        icon={Megaphone}
         title={TITLE[base]}
         description={
           base === "INBOX"

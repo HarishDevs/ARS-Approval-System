@@ -309,6 +309,54 @@ These answer with redirects. Denied: `404` JSON.
 
 ---
 
+## Phone and desktop notifications, request progress (v1.41.0, D-252, D-253)
+
+Push uses standard Web Push with VAPID; the server queues one delivery per device (`notification_deliveries`, channel `PUSH`) and the job runner and an in-process drain send them. The owner of a device is always the signed-in person; no request can name another person.
+
+### GET `/api/push/key`
+- Auth: `requireApiArea("users")`. `{ enabled, publicKey }`. `enabled` is false when push is off or has no keys.
+
+### POST `/api/push/subscribe`
+- Auth: `requireApiArea("users")`.
+- Body: `{ subscription: { endpoint, keys: { p256dh, auth } }, installed, permission, touch }`.
+- The endpoint must be a browser push service (Google, Mozilla, Microsoft, Apple); anything else is refused, so the server never posts to an address of the caller's choosing.
+- Rate-limited (30 a minute). Upserts by endpoint: the same browser updates its row, and another person signing in on it takes it over.
+- Audited when new or moved. Answers `409` when push isn't set up.
+
+### GET `/api/push/subscriptions`
+- Auth: `requireApiArea("users")`. The caller's devices: type, browser, OS, installed, status, the push service's host, and dates.
+- Never the endpoint or the keys.
+
+### DELETE `/api/push/subscriptions/{id}`
+- Auth: `requireApiArea("users")`. Removes one of the caller's own devices. Audited. Someone else's device answers `404`.
+
+### POST `/api/push/status`
+- Auth: `requireApiArea("users")`. Body `{ endpoint }`.
+- Whether that browser is registered to the caller. POST, so the endpoint is never in an address or a log.
+
+### POST `/api/push/resubscribe`
+- No session, because it is called by the service worker, possibly after midnight.
+- Body `{ oldEndpoint, subscription }`.
+- Proven by the old endpoint. It can only swap that row's endpoint and keys; the owner never changes.
+- Rate-limited per IP; listed in the route inventory test.
+
+### POST `/api/push/test`
+- Auth: `requireApiArea("users")`. Sends "Test notification" to the caller's Inbox and devices. 5 a minute.
+
+### GET `/api/requests/{id}/progress`
+- Auth: `requireApiArea("users")` plus the request page's record check (requester, a participant, or IT); anyone else gets `404`.
+- Answers `{ road, updatedAt }`: the road's checkpoints, the van's place, levels done, percent and outcome, from the same level map as the page. Polled every 20 s while the page is visible.
+- Rate-limited (60 a minute).
+
+### Server actions
+- `/admin/notifications`: `previewBroadcastAction` (who an audience reaches) and `sendBroadcastAction` (IT Admin and Super Admin; 5 a minute; audited `NOTIFICATION_BROADCAST`; queued through the notification outbox).
+- `/superadmin/settings`: `generatePushKeysAction` (Super Admin; keys saved through the settings store, audited).
+- `/users`:
+  - `dismissInstallInviteAction` ("Maybe later" remembered on the account);
+  - `saveListColumnsAction` (a list's columns).
+
+---
+
 ## Jobs, webhooks and health
 
 These are called by machines. The middleware's cross-site check doesn't apply to `/api/jobs/` and `/api/webhooks/`. A wrong or missing secret looks like a missing route (`404`).

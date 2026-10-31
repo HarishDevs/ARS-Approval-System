@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AlarmClock, CalendarClock, CalendarRange, CheckCircle2, ListTodo } from "lucide-react";
 import { paneLinks, paneTaskId, TaskPane, WithPane } from "@/features/work/TaskPane";
 import Link from "next/link";
 import { MyTasks, MyTasksGrid } from "@/features/work/MyTasks";
@@ -49,6 +50,24 @@ export default async function MyTasksPage({
     "t.assignee_id = ?",
     "t.deleted_at IS NULL",
     showDone ? "(t.status IN ('OPEN', 'IN_PROGRESS', 'BLOCKED') OR (t.status = 'COMPLETED' AND t.completed_at >= ?))" : "t.status IN ('OPEN', 'IN_PROGRESS', 'BLOCKED')",
+  ];
+  // D-257 (owner's My Tasks design): the summary cards, counted in the
+  // database (open, overdue, due today, upcoming, completed in the last 7 days).
+  const [[cardRow]] = await getDbPool().query<RowDataPacket[]>(
+    `SELECT COALESCE(SUM(t.status IN ('OPEN', 'IN_PROGRESS', 'BLOCKED')), 0) AS open_count,
+            COALESCE(SUM(t.status IN ('OPEN', 'IN_PROGRESS', 'BLOCKED') AND t.due_at IS NOT NULL AND DATE(DATE_ADD(t.due_at, INTERVAL 330 MINUTE)) < ?), 0) AS overdue,
+            COALESCE(SUM(t.status IN ('OPEN', 'IN_PROGRESS', 'BLOCKED') AND t.due_at IS NOT NULL AND DATE(DATE_ADD(t.due_at, INTERVAL 330 MINUTE)) = ?), 0) AS today,
+            COALESCE(SUM(t.status IN ('OPEN', 'IN_PROGRESS', 'BLOCKED') AND t.due_at IS NOT NULL AND DATE(DATE_ADD(t.due_at, INTERVAL 330 MINUTE)) > ?), 0) AS upcoming,
+            COALESCE(SUM(t.status = 'COMPLETED' AND t.completed_at >= DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 7 DAY)), 0) AS done_week
+     FROM tasks t WHERE t.assignee_id = ? AND t.deleted_at IS NULL`,
+    [today, today, today, user.id],
+  );
+  const cards = [
+    { key: "open", label: "Open tasks", value: Number(cardRow?.open_count ?? 0), icon: ListTodo, tone: "text-primary-700" },
+    { key: "overdue", label: "Overdue", value: Number(cardRow?.overdue ?? 0), icon: AlarmClock, tone: "text-danger-600" },
+    { key: "today", label: "Due today", value: Number(cardRow?.today ?? 0), icon: CalendarClock, tone: "text-warning-600" },
+    { key: "upcoming", label: "Upcoming", value: Number(cardRow?.upcoming ?? 0), icon: CalendarRange, tone: "text-primary-700" },
+    { key: "done", label: "Completed (7 days)", value: Number(cardRow?.done_week ?? 0), icon: CheckCircle2, tone: "text-success-600" },
   ];
   const [sections, placements, list, digestOff] = await Promise.all([
     ensureMySections(user.id),
@@ -118,6 +137,9 @@ export default async function MyTasksPage({
   return (
     <>
       <header className="mb-4 flex flex-wrap items-center gap-3" data-testid="my-tasks-header">
+        <span className="page-icon grid h-12 w-12 shrink-0 place-items-center rounded-xl border border-line bg-primary-50 text-primary-700 shadow-card" aria-hidden="true">
+          <ListTodo className="h-6 w-6" />
+        </span>
         <Avatar name={user.name} />
         <h1 className="text-title font-semibold tracking-tight">My Tasks</h1>
         <span className="text-caption text-ink-muted">Everything assigned to you, from every project, in your own sections. Only you see these sections and this order.</span>
@@ -125,6 +147,17 @@ export default async function MyTasksPage({
           <CreateTaskButton label="Add task" />
         </span>
       </header>
+      <ul className="status-cards scroll-hint mb-4 flex gap-2 overflow-x-auto pb-1 2xl:grid 2xl:grid-cols-5 2xl:overflow-visible" data-testid="task-cards" aria-label="Your tasks at a glance">
+        {cards.map((card) => (
+          <li key={card.key} className="status-card flex min-w-[8rem] shrink-0 items-center gap-3 rounded-lg border border-line bg-surface px-3 py-2.5">
+            <card.icon className={`h-5 w-5 shrink-0 ${card.tone}`} aria-hidden="true" />
+            <span>
+              <span className="block text-title font-semibold leading-none tabular-nums">{card.value.toLocaleString("en-IN")}</span>
+              <span className="text-caption text-ink-muted">{card.label}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
       <WithPane pane={pane}>
         <div className="mb-4 flex flex-wrap items-center gap-2">
           <nav aria-label="My Tasks views" className="flex flex-wrap gap-1 border-b border-line" data-testid="view-tabs">

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ShieldCheck } from "lucide-react";
 import { requireArea } from "@/server/authorization/guards";
 import { ProfileTabs } from "@/features/shell/ProfileTabs";
 import { PageHeader } from "@/features/shell/PageHeader";
@@ -17,7 +18,7 @@ export default async function SecurityPage() {
   const recent = await listLoginHistory({ userId: user.id }, 10);
   return (
     <>
-      <PageHeader title="Sign-in & devices" description="How you sign in, and what to do if you see a sign-in you don't recognise." />
+      <PageHeader title="Sign-in & devices" icon={ShieldCheck} description="How you sign in, and what to do if you see a sign-in you don't recognise." />
       <ProfileTabs />
       <div className="max-w-2xl space-y-4">
         <section className="rounded-lg border border-line bg-surface p-5">

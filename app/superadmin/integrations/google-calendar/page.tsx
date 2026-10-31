@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PagedRows } from "@/features/ui/PagedRows";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { Badge, Breadcrumbs, Card, EmptyState } from "@/features/ui/Display";
@@ -171,7 +172,7 @@ export default async function GoogleCalendarAdminPage() {
                   <th scope="col" className="px-4 py-2">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-line">
+              <PagedRows colSpan={6}>
                 {connections.map((connection) => (
                   <tr key={connection.id}>
                     <td className="px-4 py-2">
@@ -205,7 +206,7 @@ export default async function GoogleCalendarAdminPage() {
                     </td>
                   </tr>
                 ))}
-              </tbody>
+              </PagedRows>
             </table>
           </div>
         )}
@@ -270,7 +271,7 @@ export default async function GoogleCalendarAdminPage() {
                 <th scope="col" className="px-4 py-2">Result</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-line">
+            <PagedRows colSpan={5}>
               {recent.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-4 py-3 text-ink-muted">
@@ -296,7 +297,7 @@ export default async function GoogleCalendarAdminPage() {
                   </td>
                 </tr>
               ))}
-            </tbody>
+            </PagedRows>
           </table>
         </div>
       </Card>

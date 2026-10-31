@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { LayoutTemplate } from "lucide-react";
 import Link from "next/link";
 import { requireArea } from "@/server/authorization/guards";
 import { EmptyState, PageHeader } from "@/features/shell/PageHeader";
@@ -21,7 +22,7 @@ export default async function NewRequestPage({ searchParams }: { searchParams: P
   const types = (await listWorkflows({ kind: "PREDEFINED" })).filter((item) => item.active && item.publishedVersionNo !== null && mayRaise(item.settings, { id: user.id, roles: user.roles, departmentId }));
   return (
     <>
-      <PageHeader title="Request templates" description="Choose the kind of approval you need.">
+      <PageHeader title="Request templates" icon={LayoutTemplate} description="Choose the kind of approval you need.">
         <Link href="/users/custom" className="btn-secondary btn-compact">
           Something else? New request
         </Link>

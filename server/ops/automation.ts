@@ -18,6 +18,8 @@ import { runNotificationRules } from "@/server/notifications/rule-runner";
 import { runCalendarStep } from "@/server/calendar/jobs";
 import { runAiStep } from "@/server/ai/jobs";
 import { runHodWeekly } from "@/server/reports/hod-weekly";
+import { drainPushQueue } from "@/server/push/service";
+import { prunePushSubscriptions } from "@/lib/db/repositories/push.repository";
 
 // Automation inventory (unified prompt FN11, Addendum B). Every background
 // job the platform runs, what it does, how it is retried and how IT
@@ -61,6 +63,19 @@ export const AUTOMATIONS: readonly Automation[] = [
     idempotency: "Each delivery is leased before a retry; a sent delivery is never retried. A retry that stopped before its result was recorded isn't retried by itself (it may have gone out): it shows as SEND_UNCONFIRMED in the delivery log for Retry now after a check.",
     onFailure: "The delivery stays FAILED in the delivery log.",
     recovery: "Retry now on Deliveries.",
+    owner: "Super Admin",
+  },
+  // D-252: the push queue.
+  {
+    key: "push",
+    name: "Send phone and desktop notifications",
+    what: "Sends the queued Web Push notifications (one per registered device) through each browser's push service.",
+    trigger: "Right after each action that notifies someone; every job run picks up the rest.",
+    everyMinutes: 5,
+    retry: "Up to 5 tries per device with growing waits (1, 5, 15, 60 minutes); a push service's Retry-After is respected.",
+    idempotency: "Each push is leased before it is sent, so two senders never send the same one. A sender that stops mid-send lets it come due again; a repeat carries the same tag, so the device shows one notification.",
+    onFailure: "The push stays FAILED in the delivery log. A device the push service says is gone (404/410) is marked expired and the app registers it again on its next visit.",
+    recovery: "Nothing to resend: the message is always in the person's Inbox. Check Super Admin → Settings → Phone & desktop notifications (keys, switch) if every push fails.",
     owner: "Super Admin",
   },
   {
@@ -265,9 +280,10 @@ export function softFailure(counts: StepResult): string | null {
 const STEPS: Record<string, () => Promise<StepResult>> = {
   outbox: () => runOutbox(),
   deliveries: async () => ({ ...(await runDeliveryRetries()) }) as StepResult,
+  push: async () => ({ ...(await drainPushQueue()) }),
   sla: () => runSlaChecks(),
   templates: () => runDailyTemplateSync(),
-  housekeeping: async () => ({ ...(await runHousekeeping()), outboxPruned: await pruneOutbox(), jobRunsPruned: await pruneJobRuns(), abandonedRunsClosed: await closeAbandonedRuns() }),
+  housekeeping: async () => ({ ...(await runHousekeeping()), outboxPruned: await pruneOutbox(), jobRunsPruned: await pruneJobRuns(), abandonedRunsClosed: await closeAbandonedRuns(), pushDevicesPruned: await prunePushSubscriptions() }),
   delegations: () => auditDelegationDates(),
   backup: () => runDailyBackup(),
   reports: async () => ({ ...(await runDueSchedules()) }),

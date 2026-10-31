@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { BellRing } from "lucide-react";
 import Link from "next/link";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
@@ -30,7 +31,7 @@ export default async function NotificationSettingsPage() {
   const pausedText = paused ? new Date(paused).toLocaleString("en-IN", { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata" }) : null;
   return (
     <>
-      <PageHeader title="Notifications" description="Choose what reaches you in the app, by email and on WhatsApp, kind by kind; pause them when you need quiet. Everything is always kept in your Inbox.">
+      <PageHeader title="Notifications" icon={BellRing} description="Choose what reaches you in the app, by email and on WhatsApp, kind by kind; pause them when you need quiet. Everything is always kept in your Inbox.">
         <Link href="/users/inbox" className="link text-label">
           Open the Inbox
         </Link>

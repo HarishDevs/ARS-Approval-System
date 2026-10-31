@@ -11,6 +11,7 @@ const STEPS: { text: string; href: string; link: string }[] = [
   { text: "Going on leave? Name someone to approve for you.", href: "/users/delegation", link: "Out of office" },
   { text: "Give a task: Create → Task. Type / in the description for the menu, @ to mention someone.", href: "/users/work/my-tasks", link: "My Tasks" },
   { text: "Choose which messages also come by email or WhatsApp (Profile → Notifications). Everything is in your Inbox.", href: "/users/notifications/settings", link: "Notifications" },
+  { text: "Install the app and turn on notifications on your phone (Profile → App & devices).", href: "/users/profile/devices", link: "App & devices" },
   { text: "What does each screen and status mean? Find anything with the search bar at the top.", href: "/users/help", link: "Help" },
 ];
 
@@ -19,7 +20,7 @@ export function FirstUseChecklist() {
   return (
     <section aria-labelledby="first-use" className="card mb-6 border-primary-600/40 px-5 py-4">
       <h2 id="first-use" className="font-semibold">
-        New here? Six things to know
+        New here? Seven things to know
       </h2>
       <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-label">
         {STEPS.map((step) => (

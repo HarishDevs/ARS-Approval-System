@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PagedRows } from "@/features/ui/PagedRows";
 import Link from "next/link";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
@@ -44,7 +45,7 @@ export default async function RetentionPage() {
                   <th scope="col">Status</th>
                 </tr>
               </thead>
-              <tbody>
+              <PagedRows colSpan={5}>
                 {holds.map((hold) => (
                   <tr key={hold.id}>
                     <td className="min-w-48">
@@ -78,7 +79,7 @@ export default async function RetentionPage() {
                     </td>
                   </tr>
                 ))}
-              </tbody>
+              </PagedRows>
             </table>
           </div>
         )}
@@ -114,7 +115,7 @@ export default async function RetentionPage() {
                 <th scope="col">Oldest</th>
               </tr>
             </thead>
-            <tbody>
+            <PagedRows colSpan={5}>
               {dryRun.map((row) => (
                 <tr key={row.key}>
                   <td className="text-label">{row.label}</td>
@@ -124,7 +125,7 @@ export default async function RetentionPage() {
                   <td className="text-label">{row.oldest ? formatIndiaTime(row.oldest) : "—"}</td>
                 </tr>
               ))}
-            </tbody>
+            </PagedRows>
           </table>
         </div>
       </section>
