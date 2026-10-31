@@ -1,5 +1,6 @@
 "use client";
 
+import { ConditionRow } from "@/features/admin/conditions/ConditionRow";
 import { useEffect, useState } from "react";
 import { NUMERIC_TYPES, OPTION_TYPES, type FieldType, type FormField, type LookupSource } from "@/server/forms/fields";
 import { RULE_OPERATORS, RULE_WORDS, type FieldRule } from "@/server/forms/dynamic";
@@ -353,40 +354,36 @@ export function RuleEditor({ label, rule, others, onChange }: { label: string; r
           Remove
         </button>
       </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <select aria-label={`${label}: field`} value={rule.field} onChange={(event) => onChange({ ...rule, field: event.target.value })} className="field-input w-auto min-w-0 flex-1">
-          {others.map((other) => (
-            <option key={other.key} value={other.key}>
-              {other.label || other.key}
-            </option>
-          ))}
-        </select>
-        <select aria-label={`${label}: test`} value={rule.op} onChange={(event) => onChange({ ...rule, op: event.target.value as FieldRule["op"] })} className="field-input w-auto">
-          {operators.map((op) => (
-            <option key={op} value={op}>
-              {RULE_WORDS[op]}
-            </option>
-          ))}
-        </select>
-        {rule.op !== "FILLED" &&
-          rule.op !== "EMPTY" &&
-          (target && OPTION_TYPES.includes(target.type) ? (
-            <select aria-label={`${label}: value`} value={rule.value ?? ""} onChange={(event) => onChange({ ...rule, value: event.target.value })} className="field-input w-auto">
-              <option value="">Choose…</option>
-              {(target.options ?? []).map((option) => (
-                <option key={option}>{option}</option>
-              ))}
-            </select>
-          ) : (
-            <input
-              aria-label={`${label}: value`}
-              value={rule.value ?? ""}
-              onChange={(event) => onChange({ ...rule, value: event.target.value.slice(0, 100) })}
-              inputMode={numeric ? "decimal" : undefined}
-              className="field-input w-32"
-            />
-          ))}
-      </div>
+      {/* D-242: the shared condition row (the workflow's rules use it too). */}
+      <ConditionRow
+        fields={others}
+        fieldKey={rule.field}
+        onField={(key) => onChange({ ...rule, field: key })}
+        operators={operators.map((op) => [op, RULE_WORDS[op]] as const)}
+        operator={rule.op}
+        onOperator={(op) => onChange({ ...rule, op: op as FieldRule["op"] })}
+        labels={{ field: `${label}: field`, operator: `${label}: test` }}
+        value={
+          rule.op !== "FILLED" && rule.op !== "EMPTY" ? (
+            target && OPTION_TYPES.includes(target.type) ? (
+              <select aria-label={`${label}: value`} value={rule.value ?? ""} onChange={(event) => onChange({ ...rule, value: event.target.value })} className="field-input w-auto">
+                <option value="">Choose…</option>
+                {(target.options ?? []).map((option) => (
+                  <option key={option}>{option}</option>
+                ))}
+              </select>
+            ) : (
+              <input
+                aria-label={`${label}: value`}
+                value={rule.value ?? ""}
+                onChange={(event) => onChange({ ...rule, value: event.target.value.slice(0, 100) })}
+                inputMode={numeric ? "decimal" : undefined}
+                className="field-input w-32"
+              />
+            )
+          ) : undefined
+        }
+      />
     </div>
   );
 }

@@ -50,3 +50,12 @@
 
 - The production build took 7.5 minutes on this machine, against Playwright's 5-minute server limit. The full runs used a scratch config with the same suite and server and a 15-minute limit; the project's config is unchanged.
 - One full run lost its network part-way (`ERR_NETWORK_IO_SUSPENDED`; the computer suspended), and one test lost the database connection (`ETIMEDOUT`). Both were re-run.
+
+## v1.39.0 (working draft on the server, one condition builder)
+
+| Suite | Result |
+|---|---|
+| Unit | 767 passed |
+| Integration | 312 passed (new: `workflow-draft`, 3) |
+| End to end | **201 / 201 passed** in one full run (new: v1391 autosave) |
+| Lint, typecheck | clean |

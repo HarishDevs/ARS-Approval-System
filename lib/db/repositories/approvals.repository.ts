@@ -43,6 +43,7 @@ export interface WorkflowVersionRecord {
   builder: BuilderSpec | null;
   createdAt: Date;
   publishedAt: Date | null;
+  draftRevision: number; // D-241: raised by each save of the open draft
 }
 
 export async function insertWorkflow(
@@ -111,9 +112,10 @@ type VersionRow = RowDataPacket & {
   builder_json: BuilderSpec | string | null;
   created_at: Date;
   published_at: Date | null;
+  draft_revision: number | null;
 };
 
-const VERSION_COLUMNS = "id, workflow_id, version_no, status, definition_json, form_json, builder_json, created_at, published_at";
+const VERSION_COLUMNS = "id, workflow_id, version_no, status, definition_json, form_json, builder_json, created_at, published_at, draft_revision";
 
 function toVersion(row: VersionRow): WorkflowVersionRecord {
   const json = <T>(value: T | string | null): T | null => (value === null ? null : typeof value === "string" ? (JSON.parse(value) as T) : value);
@@ -127,7 +129,23 @@ function toVersion(row: VersionRow): WorkflowVersionRecord {
     builder: json(row.builder_json),
     createdAt: row.created_at,
     publishedAt: row.published_at,
+    draftRevision: Number(row.draft_revision ?? 0),
   };
+}
+
+// D-241: the working draft is saved in place, only from the revision the
+// editor last saw (a save from an older one changes nothing: null).
+export async function updateDraftVersion(
+  versionId: number,
+  content: { definition: WorkflowDefinition; form: FormField[]; builder: BuilderSpec | null },
+  expectedRevision: number,
+  db: Queryable = getDbPool(),
+): Promise<number | null> {
+  const [result] = await db.query<ResultSetHeader>(
+    "UPDATE workflow_versions SET definition_json = ?, form_json = ?, builder_json = ?, draft_revision = draft_revision + 1 WHERE id = ? AND status = 'DRAFT' AND draft_revision = ?",
+    [JSON.stringify(content.definition), JSON.stringify(content.form), content.builder ? JSON.stringify(content.builder) : null, versionId, expectedRevision],
+  );
+  return result.affectedRows === 1 ? expectedRevision + 1 : null;
 }
 
 export async function findWorkflowVersion(id: number, db: Queryable = getDbPool()): Promise<WorkflowVersionRecord | null> {

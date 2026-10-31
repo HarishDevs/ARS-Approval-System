@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getAdminActor, parseId } from "@/server/admin/actor";
-import { addDraftVersion, createWorkflow, publishVersion, simulateVersion } from "@/server/approvals/service";
+import { addDraftVersion, saveWorkingDraft, createWorkflow, publishVersion, simulateVersion } from "@/server/approvals/service";
 import { deleteUnusedWorkflow, findRequest, findWorkflow, findWorkflowVersion, listVersions, updateWorkflowDetails, updateWorkflowSettings } from "@/lib/db/repositories/approvals.repository";
 import { NUMERIC_TYPES } from "@/server/forms/fields";
 import { typeSettingsSchema } from "@/server/workflows/type-settings";
@@ -77,15 +77,20 @@ export async function saveDraftAction(_previous: ActionResult | null, formData: 
   if (!actor || workflowId === null) return NOT_FOUND;
   const content = parseContent(formData);
   if (!content.ok) return { ok: false, message: content.message };
+  // D-241: into the open draft (as the editor last saw it), or a new one.
+  const seenRaw = formData.get("draftVersionId");
+  const seen = { versionId: typeof seenRaw === "string" && /^\d+$/.test(seenRaw) ? Number(seenRaw) : null, revision: Math.max(0, Number(formData.get("draftRevision") ?? 0) || 0) };
+  const autosave = formData.get("autosave") === "1";
   try {
-    const result = await addDraftVersion(workflowId, { builder: content.builder, form: content.form }, actor);
-    if (!result.ok) return { ok: false, message: result.message };
+    const result = await saveWorkingDraft(workflowId, { builder: content.builder, form: content.form }, actor, seen, { autosave });
+    if (!result.ok) return { ok: false, message: result.message, data: { conflict: result.code === "CONFLICT" } };
     revalidatePath(`/admin/workflows/${workflowId}`);
-    const { validation, versionNo } = result.value;
+    const { validation, versionNo, versionId, revision, created } = result.value;
+    const what = created ? `Saved as draft version ${versionNo}` : `Draft version ${versionNo} saved`;
     return {
       ok: true,
-      message: validation.valid ? `Saved as draft version ${versionNo}. It passes every check; test it, then publish.` : `Saved as draft version ${versionNo}, but it has errors to fix before publishing.`,
-      data: validationData(validation),
+      message: validation.valid ? `${what}. It passes every check; test it, then publish.` : `${what}, but it has errors to fix before publishing.`,
+      data: { ...validationData(validation), draft: { versionId, versionNo, revision } },
     };
   } catch (error) {
     logError("saveDraftAction failed", error);

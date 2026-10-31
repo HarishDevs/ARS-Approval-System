@@ -1,5 +1,10 @@
 # Release notes
 
+## v1.39.0 (31 Oct 2026): workflows save as you work (owner)
+- **Workflows (IT):** changes save into the draft by themselves a few seconds after you stop (nothing is published), and Save draft saves at once. If a colleague saved or published in the meantime, you're told and nothing of theirs is overwritten.
+- **Rules:** the "only when" rules on form fields and the conditions in workflows now use the same row (field, test, value), and both show a field that is no longer on the form.
+- **Publishing:** this release adds one column to the database; it is applied when the app starts.
+
 ## v1.38.0 (31 Oct 2026): Workflow Designer and settings console (owner)
 - **Workflows (IT):** a map of the flow above the levels: click a box to open that level. Levels fold, can be dragged or moved with Alt+↑/↓, duplicated, and removed with a question first and Undo after. Each level says what needs fixing before you save. Unsaved changes are kept in your browser and offered back next time. Test mode now has the right box for every kind of field.
 - **Settings (Super Admin):** categories down the side, a search across every setting, a mark on anything not saved yet, and a question before leaving with unsaved changes. AI settings are saved with one button (it was nine).

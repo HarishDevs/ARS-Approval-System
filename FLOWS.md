@@ -1055,6 +1055,11 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 2. They filter (search, status, type, department, person, waiting on, priority, overdue, dates) and sort by a column title; 50 rows a page.
 3. **Download CSV** gives every matching row (up to 10,000) for Excel; audited. A row number opens the record.
 
+## F-184 Workflow working draft (v1.39.0, D-241)
+1. Admin → Approval types → a type: change anything. With nothing to fix, about 4 seconds later: "Saved to draft version N at hh:mm. Not published." (into the open draft, or a new one when the live version was the latest).
+2. Save draft does the same at once. Publish version N → Yes, publish (unchanged).
+3. If someone else saved or published since the page opened: "Someone else saved or published this workflow since you opened it…" → Reload (the browser copy keeps your changes, F-182 step 4).
+
 ## F-183 Settings console (v1.38.0, D-240)
 1. Super Admin → Settings & providers (or AI settings): categories down the side; **Find a setting** narrows every category at once.
 2. Change values: the category shows "Unsaved changes" (and Unsaved in the list); leaving asks first.
@@ -1064,7 +1069,7 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 1. Admin → Approval types → a type (or New workflow): the form designer, then **The flow**: the map (Request submitted → levels → Decided) and the levels list.
 2. Click a box on the map → its level opens in the list. Fold levels (or Collapse all); drag by the handle or Alt+↑/↓; Duplicate; Remove level → "Remove level N?" → message with Undo; Undo/Redo.
 3. "N to fix" (toolbar and each level) lists what to fix; "Ready to save" when none. Save as before; the server checks everything.
-4. Leave without saving → next visit to the same version: "Restore them" / "Discard". Publish stays "Publish version N" → "Yes, publish".
+4. Leave without saving → next visit to the same version: "Restore them" / "Discard". Publish stays "Publish version N" → "Yes, publish". (v1.39.0: changes also save to the draft on the server by themselves, F-184.)
 5. Test mode: sample values with each field's own input → the route.
 
 ## F-181 Draft task toolbar (v1.37.0, D-238)

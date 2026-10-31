@@ -51,3 +51,34 @@ test("map, problems by level, duplicate, remove with Undo, fold and open from th
   await page.keyboard.press("Alt+ArrowDown");
   await expect(map.getByRole("button", { name: /^Level 3: Finance check\./ })).toBeVisible();
 });
+
+// D-241 (Q-026): changes save into the working draft by themselves (never
+// published); once a version is live, the next change starts a new draft.
+test("autosave into the working draft; publishing stays separate", async ({ page, context }) => {
+  await context.addCookies([await sessionCookie("E2E_ADMIN")]);
+  await page.setViewportSize({ width: 1366, height: 900 });
+  const tag = Date.now().toString(36).toUpperCase();
+  await page.goto("/admin/workflows/new");
+  await page.getByLabel("Name", { exact: true }).fill(`E2E Autosave ${tag}`);
+  await page.getByLabel("Code").fill(`E2E_AUTO_${tag}`);
+  await page.getByLabel("Number prefix").fill(`A${tag.replace(/[^A-Z]/g, "").padEnd(3, "Q").slice(0, 4)}`);
+  await page.getByRole("button", { name: "Create workflow (as draft)" }).click();
+  await expect(page).toHaveURL(/\/admin\/workflows\/\d+\?created=1/);
+  const address = page.url().replace(/\?.*$/, "");
+
+  // Draft version 1 is open: a change saves into it.
+  await page.getByLabel("DoA name").fill("Authority (autosaved)");
+  await expect(page.getByTestId("autosave-status")).toContainText("Saved to draft version 1", { timeout: 20_000 });
+  await page.goto(address);
+  await expect(page.getByLabel("DoA name")).toHaveValue("Authority (autosaved)");
+  await expect(page.getByText("Version 2")).toHaveCount(0);
+
+  // Publish it; the next change makes draft version 2, and version 1 stays live.
+  await page.getByRole("button", { name: "Publish version 1" }).click();
+  await page.getByRole("button", { name: "Yes, publish" }).click();
+  await expect(page.getByText(/version 1 is live/)).toBeVisible();
+  await page.getByLabel("DoA name").fill("Authority, round two");
+  await expect(page.getByTestId("autosave-status")).toContainText("Saved to draft version 2", { timeout: 20_000 });
+  await expect(page.getByRole("button", { name: "Publish version 2" })).toBeVisible();
+  await expect(page.getByText(/version 1 is live/)).toBeVisible();
+});

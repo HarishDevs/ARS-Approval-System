@@ -16,6 +16,7 @@ import {
   insertRequest,
   insertWorkflow,
   insertWorkflowVersion,
+  updateDraftVersion,
   findBySubmissionKey,
   findRecentDuplicate,
   listVersions,
@@ -228,6 +229,43 @@ export async function addDraftVersion(workflowId: number, content: WorkflowConte
     return created;
   });
   return { ok: true, value: { versionId: version.id, versionNo: version.versionNo, validation } };
+}
+
+// D-241 (Q-026): the editor's working draft. Saving (by hand or by the
+// editor's autosave) writes into the open draft, guarded by its revision so
+// two editors can't overwrite each other; with no open draft it makes one.
+// It never publishes: that stays publishVersion, asked for separately.
+export type DraftSave = { versionId: number; versionNo: number; revision: number; created: boolean; validation: ValidationResult };
+export async function saveWorkingDraft(
+  workflowId: number,
+  content: WorkflowContent,
+  actor: Actor,
+  seen: { versionId: number | null; revision: number },
+  options: { autosave: boolean } = { autosave: false },
+): Promise<Result<DraftSave>> {
+  const workflow = await findWorkflow(workflowId);
+  if (!workflow || !canManageWorkflow(actor, workflow)) return { ok: false, code: "NOT_FOUND", message: "Workflow not found." };
+  const latest = (await listVersions(workflowId))[0];
+  const stale = { ok: false as const, code: "CONFLICT", message: "Someone else saved or published this workflow since you opened it. Reload to see their version; your changes are kept in this browser." };
+  const open = latest?.status === "DRAFT" ? latest : null;
+  // The editor saw a draft that is no longer the open one, or no draft when there is one now.
+  if ((open?.id ?? null) !== seen.versionId && !(open === null && seen.versionId === null)) return stale;
+  const resolved = await resolveContent(content, latest ? namedApprovers(latest.definition) : []);
+  if (!resolved.ok) return resolved;
+  const { definition, builder, form, validation } = resolved.value;
+  const saved = await withTransaction(async (connection) => {
+    if (open) {
+      const revision = await updateDraftVersion(open.id, { definition, form, builder }, seen.revision, connection);
+      if (revision === null) return null;
+      await recordAudit({ actorUserId: actor.id, action: "WORKFLOW_DRAFT_SAVED", entityType: "WORKFLOW", entityId: workflowId, metadata: { versionNo: open.versionNo, revision, autosave: options.autosave } }, connection);
+      return { versionId: open.id, versionNo: open.versionNo, revision, created: false };
+    }
+    const created = await insertWorkflowVersion(workflowId, { definition, form, builder }, actor.id, connection);
+    await recordAudit({ actorUserId: actor.id, action: "WORKFLOW_VERSION_CREATED", entityType: "WORKFLOW", entityId: workflowId, metadata: { versionNo: created.versionNo, autosave: options.autosave } }, connection);
+    return { versionId: created.id, versionNo: created.versionNo, revision: 0, created: true };
+  });
+  if (!saved) return stale;
+  return { ok: true, value: { ...saved, validation } };
 }
 
 export async function validateVersion(versionId: number): Promise<ValidationResult | null> {

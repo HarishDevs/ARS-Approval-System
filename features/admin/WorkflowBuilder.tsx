@@ -7,11 +7,13 @@ import { ConfirmDialog } from "@/features/ui/Dialog";
 import { useToast } from "@/features/ui/Toast";
 import { UnsavedGuard } from "@/features/ui/UnsavedGuard";
 import { WorkflowMap } from "@/features/admin/workflow-designer/WorkflowMap";
+import { ConditionRow } from "@/features/admin/conditions/ConditionRow";
 import { allProblems, duplicateStage, parseLocalDraft, stageName, stageProblems, stageSummary, type DesignContext, type LocalDraft } from "@/features/admin/workflow-designer/model";
 import { moveItem } from "@/features/admin/form-designer/model";
 import { NOBODY_TEXT, RULE_TEXT, stepDefaults, type StepPolicy } from "@/server/workflows/step-policy";
 import { createWorkflowAction, saveDraftAction } from "@/app/admin/workflows/actions";
-import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
+import { FieldError, guardAction, ResultMessage, SAVED_EVENT, SubmitButton, useActionForm } from "@/features/ui/form";
+import { useRouter } from "next/navigation";
 import { NUMERIC_TYPES, type FieldLookups, type FormField } from "@/server/forms/fields";
 import { RequestForm } from "@/features/requests/RequestForm";
 import { Hint } from "@/features/ui/Hint";
@@ -89,6 +91,7 @@ export function WorkflowBuilder({
   initialForm,
   options,
   draftKey,
+  draft: openDraft,
 }: {
   mode: "create" | "edit";
   workflowId?: number;
@@ -96,6 +99,7 @@ export function WorkflowBuilder({
   initialForm: FormField[];
   options: BuilderOptions;
   draftKey?: string; // D-239: where unsaved work is kept in this browser (workflow and version)
+  draft?: { versionId: number | null; revision: number }; // D-241: the open draft as this page saw it
 }) {
   // D-239: Undo / Redo for the levels (the Form Designer keeps its own).
   const history = useStageHistory(initialStages);
@@ -154,6 +158,64 @@ export function WorkflowBuilder({
   // D-239: the map, problems by level, collapsing and the selected level.
   const designContext = useMemo<DesignContext>(() => ({ form }), [form]);
   const problemCount = allProblems(stages, designContext);
+
+  // D-241 (Q-026): the working draft on the server. A few seconds after the
+  // last change (and only with nothing to fix) the editor saves into the open
+  // draft, or makes one, from the revision it last saw. Someone else's newer
+  // save stops it and says so. It never publishes.
+  const router = useRouter();
+  const [draft, setDraft] = useState(openDraft ?? { versionId: null, revision: 0 });
+  const [autosave, setAutosave] = useState<{ state: "idle" | "saving" | "saved" | "waiting" | "conflict"; text?: string }>({ state: "idle" });
+  const autosaveOn = mode === "edit" && workflowId !== undefined && openDraft !== undefined;
+  // After a refresh that changed which draft is open (a publish or restore on
+  // this page) the editor follows it. A newer revision of the same draft is
+  // never taken up silently: saving from the old one is refused instead.
+  const pageVersion = openDraft?.versionId ?? null;
+  const pageRevision = openDraft?.revision ?? 0;
+  useEffect(() => {
+    setDraft((current) => (current.versionId !== pageVersion ? { versionId: pageVersion, revision: pageRevision } : current));
+    // Only when the open draft changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageVersion]);
+  useEffect(() => {
+    const data = result?.data as { draft?: { versionId: number; revision: number }; conflict?: boolean } | undefined;
+    if (result?.ok && data?.draft) {
+      setDraft({ versionId: data.draft.versionId, revision: data.draft.revision });
+      setAutosave({ state: "idle" });
+    }
+    if (result && !result.ok && data?.conflict) setAutosave({ state: "conflict", text: result.message });
+  }, [result]);
+  useEffect(() => {
+    if (!autosaveOn || !dirty || pending || offered || problemCount > 0 || autosave.state === "saving" || autosave.state === "conflict") return;
+    const timer = window.setTimeout(async () => {
+      const snapshot = JSON.stringify({ initialStages: stages, initialForm: form });
+      const data = new FormData();
+      data.set("workflowId", String(workflowId));
+      data.set("spec", JSON.stringify({ stages }));
+      data.set("form", JSON.stringify(form));
+      data.set("draftVersionId", draft.versionId === null ? "" : String(draft.versionId));
+      data.set("draftRevision", String(draft.revision));
+      data.set("autosave", "1");
+      setAutosave({ state: "saving" });
+      const outcome = await guardAction(saveDraftAction)(null, data);
+      const back = outcome.data as { draft?: { versionId: number; versionNo: number; revision: number }; conflict?: boolean } | undefined;
+      if (outcome.ok && back?.draft) {
+        setDraft({ versionId: back.draft.versionId, revision: back.draft.revision });
+        saved.current = snapshot;
+        if (draftKey) forgetLocal(draftKey);
+        formRef.current?.dispatchEvent(new Event(SAVED_EVENT));
+        setAutosave({
+          state: "saved",
+          text: `Saved to draft version ${back.draft.versionNo} at ${new Date().toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata" })}. Not published.`,
+        });
+        router.refresh();
+      } else if (back?.conflict) setAutosave({ state: "conflict", text: outcome.message });
+      else setAutosave({ state: "waiting", text: `Not saved yet: ${outcome.message}` });
+    }, 4000);
+    return () => window.clearTimeout(timer);
+    // The draft is saved from the latest content; the timer restarts on each change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autosaveOn, dirty, pending, offered, problemCount, stages, form, draft, autosave.state]);
   const [showMap, setShowMap] = useState(true);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<number | null>(null);
@@ -229,6 +291,8 @@ export function WorkflowBuilder({
       <form ref={formRef} onSubmit={onSubmit} className="space-y-6">
         <UnsavedGuard />
         {workflowId && <input type="hidden" name="workflowId" value={workflowId} />}
+        {autosaveOn && <input type="hidden" name="draftVersionId" value={draft.versionId ?? ""} />}
+        {autosaveOn && <input type="hidden" name="draftRevision" value={draft.revision} />}
         <input type="hidden" name="spec" value={JSON.stringify({ stages })} />
         <input type="hidden" name="form" value={JSON.stringify(form)} />
 
@@ -329,13 +393,32 @@ export function WorkflowBuilder({
         </DesignerContext.Provider>
 
         <div className="flex flex-wrap items-center gap-3">
-          <SubmitButton pending={pending} className="btn-compact">
-            {mode === "create" ? "Create workflow (as draft)" : "Save as new draft version"}
+          <SubmitButton pending={pending || autosave.state === "saving"} className="btn-compact">
+            {mode === "create" ? "Create workflow (as draft)" : autosaveOn ? "Save draft" : "Save as new draft version"}
           </SubmitButton>
           <div className="min-w-0 flex-1">
             <ResultMessage result={result} />
             {dirty && !pending && <p className="text-label text-warning-600">You have changes that aren&apos;t saved yet.</p>}
-            {dirty && !pending && draftKey && <p className="text-caption text-ink-muted">Kept in this browser until you save; nothing is published.</p>}
+            {autosaveOn && autosave.state !== "conflict" && (
+              <p className={`text-caption ${autosave.state === "waiting" ? "text-warning-600" : "text-ink-muted"}`} role="status" data-testid="autosave-status">
+                {autosave.state === "saving"
+                  ? "Saving the draft…"
+                  : (autosave.text ??
+                    (dirty
+                      ? problemCount > 0
+                        ? "Saved to the draft once nothing is left to fix; kept in this browser meanwhile."
+                        : "Saves to the draft a few seconds after you stop. Nothing is published."
+                      : "Changes save to the draft by themselves. Nothing is published."))}
+              </p>
+            )}
+            {autosave.state === "conflict" && (
+              <p role="alert" className="text-label text-danger-600" data-testid="autosave-status">
+                {autosave.text}{" "}
+                <button type="button" className="link" onClick={() => window.location.reload()}>
+                  Reload
+                </button>
+              </p>
+            )}
           </div>
         </div>
         {checks && (checks.errors.length > 0 || checks.warnings.length > 0) && (
@@ -1021,26 +1104,19 @@ function RuleEditor({ form, value, onChange, prefix, options }: { form: FormFiel
 // the value box follow the field's type (S12-04/05).
 function ConditionEditor({ form, value, onChange, prefix, options }: { form: FormField[]; value: SimpleCondition; onChange: (value: SimpleCondition) => void; prefix: string; options: BuilderOptions }) {
   const field = form.find((item) => item.key === value.field);
+  // D-242: the shared condition row (the form designer's rules use it too).
   return (
-    <div className="flex flex-wrap items-center gap-2 text-label">
-      {prefix && <span className="font-medium">{prefix}</span>}
-      <select value={value.field} onChange={(event) => onChange(freshCondition(form.find((item) => item.key === event.target.value)))} className="field-input w-auto" aria-label="Field">
-        {!field && <option value={value.field}>Choose a field…</option>}
-        {form.map((item) => (
-          <option key={item.key} value={item.key}>
-            {item.label || item.key}
-          </option>
-        ))}
-      </select>
-      <select value={value.operator} onChange={(event) => onChange({ ...value, operator: event.target.value as SimpleCondition["operator"] })} className="field-input w-auto" aria-label="Condition">
-        {operatorsFor(field).map(([operator, label]) => (
-          <option key={operator} value={operator}>
-            {label}
-          </option>
-        ))}
-      </select>
-      {needsValue(value.operator) && <ConditionValueInput field={field} value={value.value} onChange={(next) => onChange({ ...value, value: next })} lookups={options.lookups} people={options.people} />}
-    </div>
+    <ConditionRow
+      fields={form}
+      fieldKey={value.field}
+      onField={(key) => onChange(freshCondition(form.find((item) => item.key === key)))}
+      operators={operatorsFor(field)}
+      operator={value.operator}
+      onOperator={(operator) => onChange({ ...value, operator: operator as SimpleCondition["operator"] })}
+      prefix={prefix}
+      labels={{ field: "Field", operator: "Condition" }}
+      value={needsValue(value.operator) ? <ConditionValueInput field={field} value={value.value} onChange={(next) => onChange({ ...value, value: next })} lookups={options.lookups} people={options.people} /> : undefined}
+    />
   );
 }
 

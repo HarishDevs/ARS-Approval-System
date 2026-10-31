@@ -117,7 +117,36 @@
 
 **Database:** none.
 
-## Not done (recorded)
+## Phase 5: Working draft and one condition builder (31 Oct 2026, v1.39.0, D-241, D-242)
 
-- **The shared condition builder.** The workflow's step/choice rule and the form field's "show only when" rule still have their own editors. They store different shapes (a builder condition against field rules), and merging them would change saved JSON, so it waits for a decision on whether that is wanted.
-- **The server-side working draft:** Q-026 (above).
+The owner said "go ahead with all the pending points".
+
+**Files created**
+- `database/migrations/202610311400_workflow_draft_revision.sql`
+- `features/admin/conditions/ConditionRow.tsx`
+- `tests/integration/workflow-draft.int.test.ts`
+
+**Files modified**
+- `lib/db/repositories/approvals.repository.ts`: `draftRevision`, `updateDraftVersion`
+- `server/approvals/service.ts`: `saveWorkingDraft`
+- `app/admin/workflows/actions.ts`: `saveDraftAction` saves into the open draft
+- `features/admin/WorkflowBuilder.tsx`: autosave and its status, "Save draft"
+- `app/admin/workflows/[id]/page.tsx`: the open draft
+- `features/admin/form-designer/FieldProperties.tsx`: the shared row
+- Tests: `tests/e2e/v1391-workflow-designer.spec.ts` (autosave), `tests/e2e/v160-smart-zversions.spec.ts` ("Save draft")
+
+**Functionality**
+- **Working draft:**
+  - The editor saves into the open draft about 4 seconds after the last change, and only when nothing is left to fix (otherwise it waits and says so).
+  - It makes a draft only when the latest version is live.
+  - Every save carries the revision it saw. A save from an older revision, or for a draft that is no longer the open one, is refused and changes nothing; the editor says so, offers Reload, and stops autosaving (the browser copy keeps the work).
+  - "Save draft" does the same at once and waits for an autosave in flight.
+  - After a publish on the same page the editor follows the new state, so the next change starts the next draft.
+  - Publishing is unchanged and still asks first.
+- **One condition builder:** both rule editors draw the same row (field, test, value). Each still saves its own shape, so no stored JSON changes. A field that is no longer on the form shows as "(not on the form)".
+
+**Database:** one additive column (above). Rollback: drop it.
+
+## Not done
+
+Nothing from the owner's Configuration Studio brief is left open.

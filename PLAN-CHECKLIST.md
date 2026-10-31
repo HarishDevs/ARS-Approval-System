@@ -17,6 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (31 Oct 2026):** v1.39.0: workflow working draft saved on the server as you edit (D-241, Q-026 answered; never publishes) and one condition builder for workflow and form rules (D-242). **Owner:** publish v1.39.0: the migration adds one column (`workflow_versions.draft_revision`, runs on start; rollback in docs/ADMIN_CONFIGURATION_STUDIO_DEPLOYMENT.md). The Configuration Studio brief is complete.
 - **Now (31 Oct 2026):** v1.38.0: Workflow Designer (D-239: flow map, fold, drag, duplicate, remove with Undo, problems by level, browser copy of unsaved work, Test mode inputs) and the settings console (D-240: categories, search, one Save per category; AI one form). **Owner:** publish v1.38.0 (no migration); decide Q-026 (server-side workflow drafts). **Next:** the shared condition builder if wanted (changes saved JSON).
 - **Now (31 Oct 2026):** v1.37.0: Form Designer (D-235: reorder, confirm-before-remove, undo; DoA dropped from custom approvals), Home = Overview + Task home (D-236), sidebar without Search, space named Central Management System, one Inbox with Notifications as a Profile page (D-237), Draft task toolbar like Asana (D-238). **Owner:** publish v1.37.0 (no migration); try Create → Task: / for the menu, @ to mention, paste a screenshot. **Next:** Workflow Designer and Settings console (D-235e/f; the autosave migration is additive and will be shown before it runs).
 - **Now (31 Oct 2026):** v1.36.0: the 24 UX laws applied (D-234; docs/UX_*). **Owner:** publish v1.36.0 (no migration); decide whether Users & roles should move up the Admin menu (recorded in the UX audit).
@@ -136,7 +137,9 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 - [x] Draft task toolbar (Asana: +, Formatting, Emoji, @mention, Attach/paste, ✨ Pico Bot, due date, repeat, collaborators, / menu) and a taller, narrower panel that steps up with the screen (D-238) — 31 Oct 2026
 - [x] Workflow Designer: map + structured list, fold, drag, duplicate, remove with Undo, Undo/Redo, problems by level, browser copy of unsaved work, Test mode inputs (D-239) — 31 Oct 2026
 - [~] Server-side working-draft autosave: needs an additive column and changes version numbering; put to the owner as Q-026 (31 Oct 2026)
+- [x] Server-side working draft (Q-026 answered: go ahead): migration, saveWorkingDraft with revision guard, editor autosave, Save draft (D-241) — 31 Oct 2026
 - [~] Shared condition builder: the two rule editors store different shapes; merging changes saved JSON; waits for a decision (31 Oct 2026)
+- [x] Shared condition builder without changing saved JSON: one ConditionRow for both editors (D-242) — 31 Oct 2026
 - [x] Settings console: categories, search, unsaved marks, leave guard, one Save per category; AI one form (D-240) — 31 Oct 2026
 - [x] Studio docs: IMPLEMENTATION_LOG, ARCHITECTURE, TEST_REPORT, DEPLOYMENT — 31 Oct 2026
 

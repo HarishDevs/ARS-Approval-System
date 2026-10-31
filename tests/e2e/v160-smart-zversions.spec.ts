@@ -19,7 +19,8 @@ test("IT publishes version 2, compares, moves open requests, and restores versio
   await expect(page).toHaveURL(/\/admin\/workflows\/\d+$/);
   const workflowUrl = page.url();
   await page.getByLabel("Level 1 name").fill("Line manager");
-  await page.getByRole("button", { name: "Save as new draft version" }).click();
+  // D-241: saving goes into the working draft (version 2 here).
+  await page.getByRole("button", { name: "Save draft" }).click();
   await page.getByRole("button", { name: "Publish version 2" }).click();
   await page.getByRole("button", { name: "Yes, publish" }).click();
   await expect(page.getByText(/version 2 is live/)).toBeVisible();

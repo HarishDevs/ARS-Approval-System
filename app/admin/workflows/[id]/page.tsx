@@ -55,7 +55,15 @@ export default async function WorkflowPage({ params, searchParams }: { params: P
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="space-y-6">
           {latest?.builder ? (
-            <WorkflowBuilder mode="edit" workflowId={workflow.id} initialStages={latest.builder.stages} initialForm={latest.form} options={options} draftKey={`${workflow.id}-v${latest.id}`} />
+            <WorkflowBuilder
+              mode="edit"
+              workflowId={workflow.id}
+              initialStages={latest.builder.stages}
+              initialForm={latest.form}
+              options={options}
+              draftKey={`${workflow.id}-v${latest.id}`}
+              draft={latest.status === "DRAFT" ? { versionId: latest.id, revision: latest.draftRevision } : { versionId: null, revision: 0 }}
+            />
           ) : (
             <p className="card px-5 py-4 text-label text-ink-muted">This workflow was made outside the builder, so it can&apos;t be edited here yet.</p>
           )}
