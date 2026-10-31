@@ -846,75 +846,75 @@
  },
  "A6.5-15": {
   "status": "Not feasible",
-  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers); no transaction amounts, spend or reconciliation data exist",
+  "blocker": "There is no ERP integration, so no transaction amounts, spend or reconciliation data exist. The business integrations that do exist (Google Calendar two-way sync, D-152; Salesforce read-only copy for Pico Bot, D-172/D-181) carry none of this data (reason updated 31 Oct 2026)",
   "prerequisite": "An ERP integration project",
-  "alternative": "Provider (email/WhatsApp) health is reported under notifications"
+  "alternative": "Provider (email/WhatsApp) health is reported under notifications; Google Calendar health and failed syncs on Super Admin → Integrations → Google Calendar; the Salesforce copy's last run and errors on Super Admin → AI Details → Data Sources"
  },
  "A6.5-16": {
   "status": "Not feasible",
-  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers); no transaction amounts, spend or reconciliation data exist",
+  "blocker": "There is no ERP integration, so no transaction amounts, spend or reconciliation data exist. The business integrations that do exist (Google Calendar two-way sync, D-152; Salesforce read-only copy for Pico Bot, D-172/D-181) carry none of this data (reason updated 31 Oct 2026)",
   "prerequisite": "An ERP integration project",
-  "alternative": "Provider (email/WhatsApp) health is reported under notifications"
+  "alternative": "Provider (email/WhatsApp) health is reported under notifications; Google Calendar health and failed syncs on Super Admin → Integrations → Google Calendar; the Salesforce copy's last run and errors on Super Admin → AI Details → Data Sources"
  },
  "A6.5-17": {
   "status": "Not feasible",
-  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers); no transaction amounts, spend or reconciliation data exist",
+  "blocker": "There is no ERP integration, so no transaction amounts, spend or reconciliation data exist. The business integrations that do exist (Google Calendar two-way sync, D-152; Salesforce read-only copy for Pico Bot, D-172/D-181) carry none of this data (reason updated 31 Oct 2026)",
   "prerequisite": "An ERP integration project",
-  "alternative": "Provider (email/WhatsApp) health is reported under notifications"
+  "alternative": "Provider (email/WhatsApp) health is reported under notifications; Google Calendar health and failed syncs on Super Admin → Integrations → Google Calendar; the Salesforce copy's last run and errors on Super Admin → AI Details → Data Sources"
  },
  "A10.3-24": {
   "status": "Not feasible",
-  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers); no transaction amounts, spend or reconciliation data exist",
+  "blocker": "There is no ERP integration, so no transaction amounts, spend or reconciliation data exist. The business integrations that do exist (Google Calendar two-way sync, D-152; Salesforce read-only copy for Pico Bot, D-172/D-181) carry none of this data (reason updated 31 Oct 2026)",
   "prerequisite": "An ERP integration project",
-  "alternative": "Provider (email/WhatsApp) health is reported under notifications"
+  "alternative": "Provider (email/WhatsApp) health is reported under notifications; Google Calendar health and failed syncs on Super Admin → Integrations → Google Calendar; the Salesforce copy's last run and errors on Super Admin → AI Details → Data Sources"
  },
  "A3.4-07": {
   "status": "Not feasible",
-  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers); no transaction amounts, spend or reconciliation data exist",
+  "blocker": "There is no ERP integration, so no transaction amounts, spend or reconciliation data exist. The business integrations that do exist (Google Calendar two-way sync, D-152; Salesforce read-only copy for Pico Bot, D-172/D-181) carry none of this data (reason updated 31 Oct 2026)",
   "prerequisite": "An ERP integration project",
-  "alternative": "Provider (email/WhatsApp) health is reported under notifications"
+  "alternative": "Provider (email/WhatsApp) health is reported under notifications; Google Calendar health and failed syncs on Super Admin → Integrations → Google Calendar; the Salesforce copy's last run and errors on Super Admin → AI Details → Data Sources"
  },
  "A6.6-11": {
   "status": "Not feasible",
-  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers); no transaction amounts, spend or reconciliation data exist",
+  "blocker": "There is no ERP integration, so no transaction amounts, spend or reconciliation data exist. The business integrations that do exist (Google Calendar two-way sync, D-152; Salesforce read-only copy for Pico Bot, D-172/D-181) carry none of this data (reason updated 31 Oct 2026)",
   "prerequisite": "An ERP integration project",
-  "alternative": "Provider (email/WhatsApp) health is reported under notifications"
+  "alternative": "Provider (email/WhatsApp) health is reported under notifications; Google Calendar health and failed syncs on Super Admin → Integrations → Google Calendar; the Salesforce copy's last run and errors on Super Admin → AI Details → Data Sources"
  },
  "A6.6-12": {
   "status": "Not feasible",
-  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers); no transaction amounts, spend or reconciliation data exist",
+  "blocker": "There is no ERP integration, so no transaction amounts, spend or reconciliation data exist. The business integrations that do exist (Google Calendar two-way sync, D-152; Salesforce read-only copy for Pico Bot, D-172/D-181) carry none of this data (reason updated 31 Oct 2026)",
   "prerequisite": "An ERP integration project",
-  "alternative": "Provider (email/WhatsApp) health is reported under notifications"
+  "alternative": "Provider (email/WhatsApp) health is reported under notifications; Google Calendar health and failed syncs on Super Admin → Integrations → Google Calendar; the Salesforce copy's last run and errors on Super Admin → AI Details → Data Sources"
  },
  "A5.3-15": {
   "status": "Not feasible",
-  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers); no transaction amounts, spend or reconciliation data exist",
+  "blocker": "There is no ERP integration, so no transaction amounts, spend or reconciliation data exist. The business integrations that do exist (Google Calendar two-way sync, D-152; Salesforce read-only copy for Pico Bot, D-172/D-181) carry none of this data (reason updated 31 Oct 2026)",
   "prerequisite": "An ERP integration project",
-  "alternative": "Provider (email/WhatsApp) health is reported under notifications"
+  "alternative": "Provider (email/WhatsApp) health is reported under notifications; Google Calendar health and failed syncs on Super Admin → Integrations → Google Calendar; the Salesforce copy's last run and errors on Super Admin → AI Details → Data Sources"
  },
  "A5.4-21": {
   "status": "Not feasible",
-  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers); no transaction amounts, spend or reconciliation data exist",
+  "blocker": "There is no ERP integration, so no transaction amounts, spend or reconciliation data exist. The business integrations that do exist (Google Calendar two-way sync, D-152; Salesforce read-only copy for Pico Bot, D-172/D-181) carry none of this data (reason updated 31 Oct 2026)",
   "prerequisite": "An ERP integration project",
-  "alternative": "Provider (email/WhatsApp) health is reported under notifications"
+  "alternative": "Provider (email/WhatsApp) health is reported under notifications; Google Calendar health and failed syncs on Super Admin → Integrations → Google Calendar; the Salesforce copy's last run and errors on Super Admin → AI Details → Data Sources"
  },
  "A5.4-22": {
   "status": "Not feasible",
-  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers); no transaction amounts, spend or reconciliation data exist",
+  "blocker": "There is no ERP integration, so no transaction amounts, spend or reconciliation data exist. The business integrations that do exist (Google Calendar two-way sync, D-152; Salesforce read-only copy for Pico Bot, D-172/D-181) carry none of this data (reason updated 31 Oct 2026)",
   "prerequisite": "An ERP integration project",
-  "alternative": "Provider (email/WhatsApp) health is reported under notifications"
+  "alternative": "Provider (email/WhatsApp) health is reported under notifications; Google Calendar health and failed syncs on Super Admin → Integrations → Google Calendar; the Salesforce copy's last run and errors on Super Admin → AI Details → Data Sources"
  },
  "A7.2-10": {
   "status": "Not feasible",
-  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers); no transaction amounts, spend or reconciliation data exist",
+  "blocker": "There is no ERP integration, so no transaction amounts, spend or reconciliation data exist. The business integrations that do exist (Google Calendar two-way sync, D-152; Salesforce read-only copy for Pico Bot, D-172/D-181) carry none of this data (reason updated 31 Oct 2026)",
   "prerequisite": "An ERP integration project",
-  "alternative": "Provider (email/WhatsApp) health is reported under notifications"
+  "alternative": "Provider (email/WhatsApp) health is reported under notifications; Google Calendar health and failed syncs on Super Admin → Integrations → Google Calendar; the Salesforce copy's last run and errors on Super Admin → AI Details → Data Sources"
  },
  "A7.4-09": {
   "status": "Not feasible",
-  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers); no transaction amounts, spend or reconciliation data exist",
+  "blocker": "There is no ERP integration, so no transaction amounts, spend or reconciliation data exist. The business integrations that do exist (Google Calendar two-way sync, D-152; Salesforce read-only copy for Pico Bot, D-172/D-181) carry none of this data (reason updated 31 Oct 2026)",
   "prerequisite": "An ERP integration project",
-  "alternative": "Provider (email/WhatsApp) health is reported under notifications"
+  "alternative": "Provider (email/WhatsApp) health is reported under notifications; Google Calendar health and failed syncs on Super Admin → Integrations → Google Calendar; the Salesforce copy's last run and errors on Super Admin → AI Details → Data Sources"
  },
  "A5.4-24": {
   "status": "Not feasible",
@@ -1622,7 +1622,7 @@
  },
  "FN4-6.1-08": {
   "status": "Not feasible",
-  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers)",
+  "blocker": "The requirement assumes an ERP-style integration with transactions, retries and reconciliation; there is none. The business integrations that do exist (Google Calendar two-way sync, D-152; Salesforce read-only copy for Pico Bot, D-172/D-181) have their own status pages and retries but no reconciliation (reason updated 31 Oct 2026)",
   "prerequisite": "Owner: choose an integration and supply API access",
   "alternative": "Templates, earlier requests and profile data are used instead"
  },
@@ -1658,7 +1658,7 @@
  },
  "FN4-6.2-05": {
   "status": "Not feasible",
-  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers)",
+  "blocker": "The requirement assumes an ERP-style integration with transactions, retries and reconciliation; there is none. The business integrations that do exist (Google Calendar two-way sync, D-152; Salesforce read-only copy for Pico Bot, D-172/D-181) have their own status pages and retries but no reconciliation (reason updated 31 Oct 2026)",
   "prerequisite": "Owner: choose an integration and supply API access",
   "alternative": "Templates, earlier requests and profile data are used instead"
  },
@@ -1689,7 +1689,7 @@
  },
  "FN4-6.3-06": {
   "status": "Not feasible",
-  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers)",
+  "blocker": "The requirement assumes an ERP-style integration with transactions, retries and reconciliation; there is none. The business integrations that do exist (Google Calendar two-way sync, D-152; Salesforce read-only copy for Pico Bot, D-172/D-181) have their own status pages and retries but no reconciliation (reason updated 31 Oct 2026)",
   "prerequisite": "Owner: choose an integration and supply API access",
   "alternative": "Templates, earlier requests and profile data are used instead"
  },
@@ -2080,7 +2080,7 @@
  },
  "FN11-13.1-08": {
   "status": "Not feasible",
-  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers)",
+  "blocker": "The requirement assumes an ERP-style integration with transactions, retries and reconciliation; there is none. The business integrations that do exist (Google Calendar two-way sync, D-152; Salesforce read-only copy for Pico Bot, D-172/D-181) have their own status pages and retries but no reconciliation (reason updated 31 Oct 2026)",
   "prerequisite": "Owner: choose an integration and supply API access",
   "alternative": "Not applicable until an integration exists"
  },
@@ -2281,7 +2281,7 @@
  },
  "FN11-13.3-04": {
   "status": "Not feasible",
-  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers)",
+  "blocker": "The requirement assumes an ERP-style integration with transactions, retries and reconciliation; there is none. The business integrations that do exist (Google Calendar two-way sync, D-152; Salesforce read-only copy for Pico Bot, D-172/D-181) have their own status pages and retries but no reconciliation (reason updated 31 Oct 2026)",
   "prerequisite": "Owner: choose an integration and supply API access",
   "alternative": "Not applicable until an integration exists"
  },
@@ -2302,7 +2302,7 @@
  },
  "FN11-13.3-11": {
   "status": "Not feasible",
-  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers)",
+  "blocker": "The requirement assumes an ERP-style integration with transactions, retries and reconciliation; there is none. The business integrations that do exist (Google Calendar two-way sync, D-152; Salesforce read-only copy for Pico Bot, D-172/D-181) have their own status pages and retries but no reconciliation (reason updated 31 Oct 2026)",
   "prerequisite": "Owner: choose an integration and supply API access",
   "alternative": "Not applicable until an integration exists"
  },
@@ -2398,7 +2398,7 @@
  },
  "FN11-13.5-15": {
   "status": "Not feasible",
-  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers)",
+  "blocker": "The requirement assumes an ERP-style integration with transactions, retries and reconciliation; there is none. The business integrations that do exist (Google Calendar two-way sync, D-152; Salesforce read-only copy for Pico Bot, D-172/D-181) have their own status pages and retries but no reconciliation (reason updated 31 Oct 2026)",
   "prerequisite": "Owner: choose an integration and supply API access",
   "alternative": "Not applicable until an integration exists"
  },
@@ -2529,7 +2529,7 @@
  },
  "FN11-13.8-07": {
   "status": "Not feasible",
-  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers)",
+  "blocker": "The requirement assumes an ERP-style integration with transactions, retries and reconciliation; there is none. The business integrations that do exist (Google Calendar two-way sync, D-152; Salesforce read-only copy for Pico Bot, D-172/D-181) have their own status pages and retries but no reconciliation (reason updated 31 Oct 2026)",
   "prerequisite": "Owner: choose an integration and supply API access",
   "alternative": "Not applicable until an integration exists"
  },
@@ -3231,7 +3231,7 @@
  },
  "A10.4-10": {
   "status": "Not feasible",
-  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers)",
+  "blocker": "The requirement assumes an ERP-style integration with transactions, retries and reconciliation; there is none. The business integrations that do exist (Google Calendar two-way sync, D-152; Salesforce read-only copy for Pico Bot, D-172/D-181) have their own status pages and retries but no reconciliation (reason updated 31 Oct 2026)",
   "prerequisite": "Owner: choose an integration and supply API access",
   "alternative": "Not applicable until an integration exists"
  },
@@ -3377,7 +3377,7 @@
  },
  "A12-08": {
   "status": "Not feasible",
-  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers)",
+  "blocker": "The requirement assumes an ERP-style integration with transactions, retries and reconciliation; there is none. The business integrations that do exist (Google Calendar two-way sync, D-152; Salesforce read-only copy for Pico Bot, D-172/D-181) have their own status pages and retries but no reconciliation (reason updated 31 Oct 2026)",
   "prerequisite": "Owner: choose an integration and supply API access",
   "alternative": "Not applicable until an integration exists"
  },
@@ -3453,13 +3453,13 @@
  },
  "A15.1-12": {
   "status": "Not feasible",
-  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers)",
+  "blocker": "The requirement assumes an ERP-style integration with transactions, retries and reconciliation; there is none. The business integrations that do exist (Google Calendar two-way sync, D-152; Salesforce read-only copy for Pico Bot, D-172/D-181) have their own status pages and retries but no reconciliation (reason updated 31 Oct 2026)",
   "prerequisite": "Owner: choose an integration and supply API access",
   "alternative": "Not applicable until an integration exists"
  },
  "A15.1-13": {
   "status": "Not feasible",
-  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers)",
+  "blocker": "The requirement assumes an ERP-style integration with transactions, retries and reconciliation; there is none. The business integrations that do exist (Google Calendar two-way sync, D-152; Salesforce read-only copy for Pico Bot, D-172/D-181) have their own status pages and retries but no reconciliation (reason updated 31 Oct 2026)",
   "prerequisite": "Owner: choose an integration and supply API access",
   "alternative": "Not applicable until an integration exists"
  },
@@ -4995,7 +4995,7 @@
  },
  "A5.3-43": {
   "status": "Not feasible",
-  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers)",
+  "blocker": "The requirement assumes an ERP-style integration with transactions, retries and reconciliation; there is none. The business integrations that do exist (Google Calendar two-way sync, D-152; Salesforce read-only copy for Pico Bot, D-172/D-181) have their own status pages and retries but no reconciliation (reason updated 31 Oct 2026)",
   "prerequisite": "Owner: choose an integration and supply API access",
   "alternative": "Not applicable until an integration exists"
  },
@@ -6261,7 +6261,7 @@
  },
  "AConditional-14": {
   "status": "Not feasible",
-  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers)",
+  "blocker": "The requirement assumes an ERP-style integration with transactions, retries and reconciliation; there is none. The business integrations that do exist (Google Calendar two-way sync, D-152; Salesforce read-only copy for Pico Bot, D-172/D-181) have their own status pages and retries but no reconciliation (reason updated 31 Oct 2026)",
   "prerequisite": "Owner: choose an integration and supply API access",
   "alternative": "Not applicable until an integration exists"
  },
@@ -6392,7 +6392,7 @@
  },
  "ARequiredfil-24": {
   "status": "Not feasible",
-  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers)",
+  "blocker": "The requirement assumes an ERP-style integration with transactions, retries and reconciliation; there is none. The business integrations that do exist (Google Calendar two-way sync, D-152; Salesforce read-only copy for Pico Bot, D-172/D-181) have their own status pages and retries but no reconciliation (reason updated 31 Oct 2026)",
   "prerequisite": "Owner: choose an integration and supply API access",
   "alternative": "Not applicable until an integration exists"
  },
@@ -8054,7 +8054,7 @@
  },
  "A22.2-14": {
   "status": "Not feasible",
-  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers)",
+  "blocker": "The requirement assumes an ERP-style integration with transactions, retries and reconciliation; there is none. The business integrations that do exist (Google Calendar two-way sync, D-152; Salesforce read-only copy for Pico Bot, D-172/D-181) have their own status pages and retries but no reconciliation (reason updated 31 Oct 2026)",
   "prerequisite": "Owner: choose an integration and supply API access",
   "alternative": "Not applicable until an integration exists"
  },
@@ -8330,7 +8330,7 @@
  },
  "A22.5-21": {
   "status": "Not feasible",
-  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers)",
+  "blocker": "The requirement assumes an ERP-style integration with transactions, retries and reconciliation; there is none. The business integrations that do exist (Google Calendar two-way sync, D-152; Salesforce read-only copy for Pico Bot, D-172/D-181) have their own status pages and retries but no reconciliation (reason updated 31 Oct 2026)",
   "prerequisite": "Owner: choose an integration and supply API access",
   "alternative": "Not applicable until an integration exists"
  },
@@ -8466,7 +8466,7 @@
  },
  "A22.7-12": {
   "status": "Not feasible",
-  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers)",
+  "blocker": "The requirement assumes an ERP-style integration with transactions, retries and reconciliation; there is none. The business integrations that do exist (Google Calendar two-way sync, D-152; Salesforce read-only copy for Pico Bot, D-172/D-181) have their own status pages and retries but no reconciliation (reason updated 31 Oct 2026)",
   "prerequisite": "Owner: choose an integration and supply API access",
   "alternative": "Not applicable until an integration exists"
  },
@@ -9067,7 +9067,7 @@
  },
  "FN10-12.1-07": {
   "status": "Not feasible",
-  "blocker": "The platform has no ERP or external business integration (only email/WhatsApp providers)",
+  "blocker": "The requirement assumes an ERP-style integration with transactions, retries and reconciliation; there is none. The business integrations that do exist (Google Calendar two-way sync, D-152; Salesforce read-only copy for Pico Bot, D-172/D-181) have their own status pages and retries but no reconciliation (reason updated 31 Oct 2026)",
   "prerequisite": "Owner: choose an integration and supply API access",
   "alternative": "Not applicable until an integration exists"
  },
@@ -9576,5 +9576,10 @@
   "status": "Implemented",
   "evidence": "integration promotion.int.test.ts",
   "test": "see docs/ANALYTICS_TEST_MATRIX.md"
+ },
+ "BB-02": {
+  "status": "Implemented",
+  "evidence": "The same requirement as M4-05 (Addendum B repeats it): loadRequestView/isParticipant/visibility.ts; consultee read-only; admin role checks (status reconciled with M4-05, 31 Oct 2026, audit FI-D05)",
+  "test": "workspace.int, engine-v160.int"
  }
 }

@@ -54,7 +54,7 @@ export default async function AmendRequestPage({ params }: { params: Promise<{ i
 
   return (
     <>
-      <Breadcrumbs items={[{ href: "/users", label: "Overview" }, { href: `/users/requests/${plan.original.id}`, label: plan.original.requestNo }, { label: "Amend" }]} />
+      <Breadcrumbs items={[{ href: "/users", label: "Home" }, { href: `/users/requests/${plan.original.id}`, label: plan.original.requestNo }, { label: "Amend" }]} />
       <PageHeader title={`Amend ${plan.original.requestNo}`} description="Change what the approval type allows. The approval steps run again on the new values; the original approval stays on record.">
         {back}
       </PageHeader>

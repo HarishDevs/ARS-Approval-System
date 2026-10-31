@@ -15,7 +15,6 @@ import { recordAudit } from "@/lib/db/repositories/audit.repository";
 //     for a person to act on. Carrying actions out automatically needs a
 //     separately reviewed change (docs/ai-module/approval-workflow.md).
 export const PROPOSAL_DAYS = 7;
-export const EXECUTION_ENABLED = false as const;
 
 // The decision covers what the approver reads: kind, title and details (text
 // columns, stored exactly). Evidence is shown beside it; MySQL's JSON type

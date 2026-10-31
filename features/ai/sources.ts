@@ -15,18 +15,3 @@ export const PLANNED_SOURCES: readonly PlannedSource[] = [
   { key: "oracle", name: "Oracle ERP", what: "Receivables, overdue balances, inventory, order fulfilment.", needs: "A read-only reporting account on approved views, reachable from the server." },
   { key: "powerbi", name: "Power BI datasets", what: "Approved reporting datasets already used by ARS.", needs: "The owner chooses which datasets, and a read-only service identity." },
 ];
-
-// What the AI dashboard will show, and the source each part needs.
-export const DASHBOARD_SECTIONS: readonly { title: string; needs: PlannedSource["key"][] }[] = [
-  { title: "Overall business performance", needs: ["salesforce", "oracle"] },
-  { title: "Sales performance and target achievement", needs: ["salesforce"] },
-  { title: "Dealer and customer insights", needs: ["salesforce"] },
-  { title: "Order fulfilment", needs: ["oracle", "salesforce"] },
-  { title: "Receivables and overdue balances", needs: ["oracle"] },
-  { title: "Inventory risks", needs: ["oracle"] },
-  { title: "Important business exceptions", needs: ["ars", "salesforce", "oracle"] },
-  { title: "Recent AI reports", needs: ["ars"] },
-  { title: "Recommendations waiting for approval", needs: ["ars"] },
-];
-
-export const sourceName = (key: PlannedSource["key"]) => PLANNED_SOURCES.find((source) => source.key === key)!.name;

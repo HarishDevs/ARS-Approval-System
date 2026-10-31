@@ -17,8 +17,8 @@ const nav = [
 describe("Classic modules", () => {
   const modules = classicModules(nav);
   it("modules first (as in the sketch), then the single pages; each with its own letter", () => {
-    expect(modules.map((entry) => entry.label)).toEqual(["Approval Management", "Tasks Management", "Pico Bot (AI Assistant)", "Overview dashboard", "Search", "Calendar"]);
-    expect(modules.map((entry) => entry.hotkey)).toEqual(["a", "t", "p", "o", "s", "c"]);
+    expect(modules.map((entry) => entry.label)).toEqual(["Approval Management", "Tasks Management", "Pico Bot (AI Assistant)", "Home dashboard", "Search", "Calendar"]);
+    expect(modules.map((entry) => entry.hotkey)).toEqual(["a", "t", "p", "h", "s", "c"]);
     expect(new Set(modules.map((entry) => entry.hotkey)).size).toBe(modules.length);
   });
   it("a module with several pages opens its menu; one page opens directly; Overview keeps its dashboard", () => {

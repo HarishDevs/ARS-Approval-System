@@ -2,11 +2,14 @@ import "server-only";
 import fs from "node:fs";
 import path from "node:path";
 import zlib from "node:zlib";
+import crypto from "node:crypto";
 import { pipeline } from "node:stream/promises";
 import { Readable } from "node:stream";
 import type { RowDataPacket } from "mysql2/promise";
 import { getDbPool } from "@/lib/db/client";
 import { getEnv } from "@/config/environment";
+import { loadOffsiteConfig, uploadOffsite } from "@/server/ops/offsite";
+import { logError } from "@/lib/logging/logger";
 
 // Backups (P0-21, D-104). A gzipped, plain-SQL copy of the whole database
 // (tables, data, triggers), importable with scripts/database/restore.js or
@@ -124,6 +127,25 @@ async function* dumpWith(db: Awaited<ReturnType<ReturnType<typeof getDbPool>["ge
   yield "\nSET FOREIGN_KEY_CHECKS = 1;\nSET UNIQUE_CHECKS = 1;\n";
 }
 
+// D-246 (audit OPS-09): the same format as scripts/database/backup-file.js
+// (which restore and verify read): "ARSBK1", IV, AES-256-GCM ciphertext, tag.
+export const BACKUP_NAME = /^ars-db-\d{8}-\d{6}\.sql\.gz(\.enc)?$/;
+const BACKUP_MAGIC = Buffer.from("ARSBK1");
+
+export function backupEncryptionKey(value = getEnv().BACKUP_ENCRYPTION_KEY): Buffer | null {
+  if (!value) return null;
+  const key = Buffer.from(value, "base64");
+  if (key.length !== 32) throw new Error("BACKUP_ENCRYPTION_KEY must be 32 bytes, base64-encoded.");
+  return key;
+}
+
+export function encryptBackup(gzip: Buffer, key: Buffer): Buffer {
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
+  const body = Buffer.concat([cipher.update(gzip), cipher.final()]);
+  return Buffer.concat([BACKUP_MAGIC, iv, body, cipher.getAuthTag()]);
+}
+
 function copyNewFiles(from: string, to: string): number {
   if (!fs.existsSync(from)) return 0;
   let copied = 0;
@@ -146,19 +168,25 @@ export async function createBackup(options: { dir?: string; keepDays?: number; u
   const keepDays = options.keepDays ?? 14;
   fs.mkdirSync(dir, { recursive: true });
   const stamp = new Date().toISOString().replace(/[-:]/g, "").replace("T", "-").slice(0, 15);
-  const file = path.join(dir, `ars-db-${stamp}.sql.gz`);
+  const key = backupEncryptionKey();
+  const file = path.join(dir, `ars-db-${stamp}.sql.gz${key ? ".enc" : ""}`);
   const partial = `${file}.part`;
   const stats = { tables: 0, rows: 0 };
   await pipeline(Readable.from(dumpStatements(stats)), zlib.createGzip({ level: 6 }), fs.createWriteStream(partial));
+  // D-246 (audit OPS-09): encrypted when a key is set, and always with a
+  // .sha256 next to it (restore.js and verify-backup.js check both).
+  if (key) fs.writeFileSync(partial, encryptBackup(fs.readFileSync(partial), key));
+  fs.writeFileSync(`${file}.sha256`, `${crypto.createHash("sha256").update(fs.readFileSync(partial)).digest("hex")}  ${path.basename(file)}\n`);
   fs.renameSync(partial, file); // a half-written file never looks like a backup
 
   let deletedOldFiles = 0;
   const cutoff = Date.now() - keepDays * 86_400_000;
   for (const name of fs.readdirSync(dir)) {
-    if (!/^ars-db-\d{8}-\d{6}\.sql\.gz$/.test(name)) continue;
+    if (!BACKUP_NAME.test(name)) continue;
     const full = path.join(dir, name);
     if (full !== file && fs.statSync(full).mtimeMs < cutoff) {
       fs.rmSync(full);
+      fs.rmSync(`${full}.sha256`, { force: true });
       deletedOldFiles += 1;
     }
   }
@@ -177,7 +205,7 @@ export function backupStatus(dir = backupDir()): BackupStatus {
   if (!fs.existsSync(dir)) return { latest: null, count: 0, dir };
   const files = fs
     .readdirSync(dir)
-    .filter((name) => /^ars-db-\d{8}-\d{6}\.sql\.gz$/.test(name))
+    .filter((name) => BACKUP_NAME.test(name))
     .map((name) => ({ name, stat: fs.statSync(path.join(dir, name)) }))
     .sort((a, b) => b.stat.mtimeMs - a.stat.mtimeMs);
   const latest = files[0];
@@ -185,9 +213,19 @@ export function backupStatus(dir = backupDir()): BackupStatus {
 }
 
 // The job runner calls this every 5 minutes; it backs up at most once a day.
-export async function runDailyBackup(): Promise<{ backup: "DONE" | "NOT_DUE" | "FAILED" }> {
+export async function runDailyBackup(): Promise<{ backup: "DONE" | "NOT_DUE" | "FAILED"; offsite?: "DONE" | "OFF" | "FAILED"; offsiteError?: string }> {
   const latest = backupStatus().latest;
   if (latest && Date.now() - latest.at.getTime() < 23 * 3_600_000) return { backup: "NOT_DUE" };
-  await createBackup({ keepDays: getEnv().BACKUP_KEEP_DAYS ?? 14 });
-  return { backup: "DONE" };
+  const report = await createBackup({ keepDays: getEnv().BACKUP_KEEP_DAYS ?? 14 });
+  // D-246 (audit OPS-08): then the off-site copy. A failure is reported (the
+  // run is marked failed, so the Super Admin is told); the local backup stays.
+  try {
+    const config = await loadOffsiteConfig();
+    if (!config) return { backup: "DONE", offsite: "OFF" };
+    await uploadOffsite(report.file, config);
+    return { backup: "DONE", offsite: "DONE" };
+  } catch (error) {
+    logError("off-site backup copy failed", error);
+    return { backup: "DONE", offsite: "FAILED", offsiteError: error instanceof Error ? error.message.slice(0, 300) : "Failed" };
+  }
 }

@@ -27,6 +27,9 @@ export default defineConfig({
   globalSetup: "./tests/e2e/global-setup.ts",
   fullyParallel: false,
   workers: 1,
+  // D-246 (audit OPS-04): one retry on CI only. A test that passes on retry is
+  // reported as "flaky" in the run (never hidden); locally a failure stays a failure.
+  retries: process.env.CI ? 1 : 0,
   timeout: 60_000,
   expect: { timeout: 10_000 },
   reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : "list",

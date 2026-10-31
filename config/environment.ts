@@ -33,6 +33,9 @@ const envSchema = z.object({
   // Defaults to ./storage/backups. Files older than BACKUP_KEEP_DAYS go.
   BACKUP_DIR: optional(z.string().min(1)),
   BACKUP_KEEP_DAYS: optional(z.coerce.number().int().min(1).max(365)),
+  // D-246 (audit OPS-09): backups are encrypted when this is set (32 bytes,
+  // base64; never the same as ENCRYPTION_KEY). Keep a copy outside the server.
+  BACKUP_ENCRYPTION_KEY: optional(z.string().min(1)),
 });
 
 export type Env = z.infer<typeof envSchema>;

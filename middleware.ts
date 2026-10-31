@@ -4,6 +4,7 @@ import { SESSION_COOKIE_NAME } from "@/lib/session/constants";
 import { buildCsp, createNonce } from "@/lib/security/csp";
 import { pickRequestId, REQUEST_ID_HEADER } from "@/lib/logging/request-id";
 import { PATH_HEADER, PATH_SIGNATURE_HEADER, signPath, WRITE_HEADER } from "@/lib/security/path-signature";
+import { sessionCookieLooksValid } from "@/lib/security/session-cookie-edge";
 
 // Layer 1 of 3 (P1-30a): only checks that a session cookie is present.
 // Roles and the session row are checked on the server in every layout,
@@ -14,7 +15,7 @@ import { PATH_HEADER, PATH_SIGNATURE_HEADER, signPath, WRITE_HEADER } from "@/li
 // Next.js reads the nonce from the request's CSP header and adds it to its
 // own scripts, so every page is rendered per request (root layout is dynamic).
 // v1.12.2: "/" (the public home page), "/privacy" and "/terms" are public (Google OAuth verification).
-const PUBLIC_PREFIXES = ["/", "/try", "/privacy", "/terms", "/login", "/signed-out", "/set-password", "/forgot-password", "/security", "/api/auth", "/api/jobs", "/api/health", "/api/webhooks", "/_next", "/brand", "/icons", "/manifest.webmanifest", "/favicon.ico", "/icon.svg"];
+const PUBLIC_PREFIXES = ["/", "/try", "/privacy", "/terms", "/login", "/signed-out", "/set-password", "/forgot-password", "/security", "/api/auth", "/api/jobs", "/api/health", "/api/webhooks", "/_next", "/brand", "/icons", "/manifest.webmanifest", "/favicon.ico", "/icon.svg", "/robots.txt", "/sitemap.xml"];
 
 const CSP_OPTIONS = {
   dev: process.env.NODE_ENV !== "production",
@@ -112,6 +113,15 @@ export async function middleware(request: NextRequest) {
     const loginUrl = new URL("/login", request.url);
     if (pathname !== "/") loginUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(loginUrl);
+  }
+  // D-244 (audit OPS-20): for the admin areas, a cookie that isn't a valid,
+  // unexpired session is sent on here, before anything renders, so the
+  // answer carries no page (not even the area's title).
+  if (/^\/(admin|superadmin)(\/|$)/.test(pathname) && !(await sessionCookieLooksValid(request.cookies.get(SESSION_COOKIE_NAME)?.value, process.env.SESSION_SECRET))) {
+    const signedOut = new URL("/signed-out", request.url);
+    signedOut.searchParams.set("reason", "unknown");
+    signedOut.searchParams.set("next", pathname);
+    return NextResponse.redirect(signedOut);
   }
 
   const requestHeaders = new Headers(request.headers);

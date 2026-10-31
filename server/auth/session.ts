@@ -96,6 +96,7 @@ async function loadCurrentSession(touch: boolean): Promise<CurrentSession | { se
       salesforceScope: user.salesforceScope,
       isDemo: user.isDemo,
       triedBy,
+      isBreakGlass: user.isBreakGlass,
     },
   };
   return touch ? session : { session, idleSecondsLeft: limitSeconds === null ? null : limitSeconds - idleSeconds };

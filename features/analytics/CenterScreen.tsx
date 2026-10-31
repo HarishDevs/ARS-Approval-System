@@ -413,7 +413,7 @@ async function Tasks({ scope, viewer, period, previous, compareLabel, buckets }:
       <Section title="Not tracked">
         <div className="space-y-2">
           <Unavailable title="Effort and utilisation" why="Tasks record no effort estimates or time logs, and there are no working hours per person." />
-          <Unavailable title="Dependencies and recurring tasks" why="Tasks have no dependency links and don't repeat." />
+          <Unavailable title="Dependencies and recurring tasks" why="Tasks can wait on other tasks and repeat (Tasks & projects), but this board doesn't count them yet." />
         </div>
       </Section>
     </>

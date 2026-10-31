@@ -1,8 +1,8 @@
-# Deployment guide: ARS Approval Platform on GoDaddy (step by step)
+# Deployment guide: ARS-CMS (ARS Approval Platform) on GoDaddy (step by step)
 
 | | |
 |---|---|
-| App | ARS Approval Platform **v1.4.0** (`docs/RELEASE-NOTES.md`) |
+| App | ARS-CMS **v1.39.0** (31 Oct 2026). The current version is always the top entry of `docs/RELEASE-NOTES.md`. |
 | Address | **https://approval.arssteels.net** (one app: `/users`, `/admin`, `/superadmin`) |
 | Hosting | GoDaddy **Node.js Hosting** ("Deploy your Node.js app"), from GitHub `HarishDevs/ARS-Approval-System`, branch `main` |
 | Database | MySQL 8 in GoDaddy cPanel |
@@ -26,9 +26,15 @@ Work through the parts **in order**. Tick each box as you go. Anything marked **
 - **Part L:** Go-live checks
 - **Part M:** Updating later, and rollback
 - **Part N:** Troubleshooting
-- **Part O:** Known limits
+- **Part O:** Known limits (set in v1.5.0; open issues today: `docs/KNOWN_ISSUES.md`)
 - **Part P:** Backups and restore (v1.4.0)
 - **Part Q:** Google Calendar (v1.11.0)
+- **Part R:** AI module (v1.15.0)
+- **Part S:** Pic bot - ai (v1.16.0)
+- **Part T:** v1.19.0 to v1.20.0 (analyst chat, Try as, AI Rules, clean screens)
+- **Part U:** v1.21.0 to v1.39.0 (Tasks & projects, notification rules, Configuration Studio)
+
+Related: `docs/BACKUP_RESTORE_AND_ROLLBACK.md`, `docs/AUTOMATION_INVENTORY_AND_RECOVERY.md`, `docs/RECOVERY_OBJECTIVES_AND_INCIDENT_RESPONSE.md` (draft), `docs/ARCHITECTURE.md`, `docs/DATA_MODEL.md`, `docs/API_REFERENCE.md`.
 
 ---
 
@@ -36,7 +42,7 @@ Work through the parts **in order**. Tick each box as you go. Anything marked **
 
 ### A1. Check the release is green
 - [ ] Open https://github.com/HarishDevs/ARS-Approval-System/actions. The latest run on `main` must show **3 green jobs**: checks, integration and end-to-end. If any is red, stop; don't deploy.
-- [ ] GoDaddy deploys the **`main` branch**. The release tags (`v1.0.0`, `v1.0.1`) mark what was released.
+- [ ] GoDaddy deploys the **`main` branch**. Each release has a tag (`v1.0.0` … `v1.39.0`) that marks what was released; `git tag --sort=-v:refname` lists the newest first.
 
 ### A2. The secrets file (already created)
 The file `D:\Omniroute\deploy-secrets\ars-approvals.production.env` was generated for you. It's outside the repository. It already holds fresh values for `SESSION_SECRET`, `ENCRYPTION_KEY` and `JOB_RUNNER_SECRET`.
@@ -75,10 +81,10 @@ GoDaddy's Node.js hosting provisions a MySQL database **with the app**: **App �
 
 ### B1. Create the tables: automatic on the first start (recommended)
 Nothing to do. **`npm start` applies all database migrations and seeds before the app starts** (v1.0.2):
-- it creates the 35 tables, the 6 append-only triggers, the roles, the sign-in code template and the Super Admin itadmin@arssteels.co.in;
-- on later starts it applies only what's new, and skips what's already there.
+- it creates every table (listed in `docs/DATA_MODEL.md`), the append-only triggers, the roles, the sign-in code template and the Super Admin itadmin@arssteels.co.in;
+- on later starts it applies only what's new (it records each file in `schema_migrations`), and skips what's already there.
 
-After the first deploy (D5), open **Runtime Logs**. You should see `Done. Applied 15 migration(s).` and `Done. Ran 3 seed file(s).` before `Ready`. **Browse tables** then shows 35 tables.
+After the first deploy (D5), open **Runtime Logs**. You should see `Done. Applied <n> migration(s).` (48 for v1.39.0 on an empty database) and `Done. Ran 3 seed file(s).` before `Ready`. On a later start that brings nothing new it says `No pending migrations.`
 
 ### B1-alt. Import the SQL file instead (optional)
 `D:\Omniroute\deploy-secrets\ars-approvals-v1.0.1-database.sql` creates the same database. It's tested and contains no keys.
@@ -147,10 +153,10 @@ GoDaddy → **My Products** → **Node.js Hosting** (host.godaddy.com/hosting) �
 1. **Deploy** / **Publish**. Open the build log.
 2. A good log ends the build with `✓ Compiled successfully` and the route list, then shows:
    ```
-   Applying 202609281200_create_organisation.sql ... (15 files on the first start)
-   Done. Applied 15 migration(s).
+   Applying 202609281200_create_organisation.sql ... (one line per new file)
+   Done. Applied <n> migration(s).
    Seeding 001_roles.sql ... Done. Ran 3 seed file(s).
-   ▲ Next.js 15.5.25 - Local: http://localhost:<port>  ✓ Ready
+   ▲ Next.js 15.5.28 - Local: http://localhost:<port>  ✓ Ready
    ```
 3. The app shows **Running / Build status Healthy**. Its preview address looks like `30yc8vknqm.preview.c40.airoapp.ai`.
 4. If it says **"Your app is redirecting"**: the site root `/` sends visitors to `/login`, so health checks need that path. Press **Open General settings** → set the root/health-check path to **`/login`** → save.
@@ -403,7 +409,7 @@ Never re-import the database file: it's for the very first setup only. New migra
 To rebuild a full import file for a brand-new environment: apply the migrations and seeds to an empty local database, `mysqldump --triggers --no-tablespaces --set-gtid-purged=OFF`, then `python scripts/database/release-sql-clean.py <dump> <out>`. That removes DEFINER, DELIMITER, DROP and LOCK statements, and adds one-line triggers.
 
 1. Changes are pushed to `main` → GitHub Actions must be **green on all 3 jobs**.
-2. Tag it: `v1.0.2` and so on.
+2. Tag it with the version in `package.json` (e.g. `v1.39.0`).
 3. GoDaddy redeploys from `main`: automatically, or press **Redeploy** (**confirm** which).
 4. The start command applies any new migrations by itself. Migrations only ever **add**, so older code keeps working on a newer database.
 5. Run the Smoke suite (Part L, short version).
@@ -451,7 +457,9 @@ To rebuild a full import file for a brand-new environment: apply the migrations 
 
 ---
 
-## Part O: Known limits (v1.5.0)
+## Part O: Known limits (set in v1.5.0)
+These limits date from v1.5.0 and still hold unless noted. For issues found since, see `docs/KNOWN_ISSUES.md`.
+
 - **Break-glass** sign-in needs the WhatsApp code (Q-015).
 - **WhatsApp** messages go out only once their template is live (Part H): 26 templates, 6 of them new in v1.4.0 (work task, FYI, resumed, changes made, removed, moving again). Email and in-app always go out.
 - **Owner decisions kept (D-078):**
@@ -580,3 +588,35 @@ After publishing:
 6. Remove test provider keys; rotate any key or secret that was shared in a chat.
 
 Rollback: redeploy v1.18.0. The new column, enum value and table are ignored by it.
+
+## Part U: v1.21.0 to v1.39.0 (Tasks & projects, notification rules, Configuration Studio)
+
+Nothing new on GoDaddy: no new environment variables (the full list is in `config/environment.ts`) and no new cron job. Publish as usual. **`npm start` applies the migrations on start**, in file-name order, each once; you don't run anything by hand. Since v1.20.0 these were added:
+- `202610261500_ai_rules_salesforce.sql` (Salesforce guide as AI Rules, only if none were written),
+- `202610281000_sign_in_both.sql` (sign-in method "Both": widens an ENUM),
+- `202610281200_notification_rules.sql` (reminder and escalation rules),
+- `202610301000_work_management.sql`, `202610301200_work_more.sql`, `202610301400_work_views.sql`, `202610301600_task_kinds_permissions.sql`, `202610311000_my_tasks_overdue.sql` (Tasks & projects),
+- `202610311200_profile_notifications.sql` (profile photo, About me, notification settings),
+- **`202611010900_outbox_claim_token.sql` (v1.40.0, D-243):** adds the nullable `notification_outbox.claim_token`. A queued message is claimed before it is sent, and a message whose send may have gone out is never sent again automatically (Super Admin → Automation shows "may have been sent").
+- **`202611011000_hod_weekly_report.sql` (v1.40.0, D-247):** adds the table `hod_report_runs` (one row per department and week), so each head of department gets the weekly report once.
+- **`202610311400_workflow_draft_revision.sql` (v1.39.0):** adds `workflow_versions.draft_revision` (`INT UNSIGNED NOT NULL DEFAULT 0`). Each save of the open workflow draft raises it, and a save from an older revision is refused, so two editors can't overwrite each other. Existing rows get 0 and v1.38.0 never reads the column.
+
+All of them only add tables, columns or ENUM values, so rolling back the code (Part M) leaves a database the older version still works with.
+
+**v1.40.0 server settings (optional, D-246):**
+- **`BACKUP_ENCRYPTION_KEY`:** 32 random bytes, base64-encoded, for example `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`. Set it in cPanel → Node.js app → Environment variables. Daily backups are then encrypted (`.sql.gz.enc`), and every backup gets a `.sha256`.
+  - Keep a copy of this key **outside the server**: without it an encrypted backup can't be restored.
+  - Never reuse `ENCRYPTION_KEY`.
+  - `restore.js` and `verify-backup.js` read the same variable.
+- **Off-site copy:** Super Admin → Settings → Off-site backup takes an S3-compatible bucket (AWS S3, Cloudflare R2, Backblaze B2, Wasabi) with a key that may only write. It needs `BACKUP_ENCRYPTION_KEY`. A failed copy marks the backup run failed, and the Super Admin is told.
+- **Monitoring:**
+  - `/api/health/deep` answers 503 when the job runner is late, the newest backup is over 26 hours old or uploads can't be written. Point an uptime monitor at it.
+  - `/api/health` stays 200 while the app and the database answer.
+
+After publishing:
+1. Runtime log: `Done. Applied <n> migration(s).` (or `No pending migrations.`), then `Ready`.
+2. `/api/health` shows the new version.
+3. Super Admin → **Automation**: every job has a recent "last run" (see `docs/AUTOMATION_INVENTORY_AND_RECOVERY.md`).
+4. Admin → Approval types & workflows: open a workflow, change a label, wait a few seconds: "Saved" appears and nothing is published.
+
+Rollback: redeploy the previous tag (Part M). The rollback note for v1.39.0's column is in the migration file itself; dropping it is never needed for the older code to run.

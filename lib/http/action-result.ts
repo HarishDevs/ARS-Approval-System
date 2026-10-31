@@ -3,5 +3,3 @@
 export type ActionResult =
   | { ok: true; message?: string; data?: Record<string, unknown> }
   | { ok: false; message: string; fieldErrors?: Record<string, string>; data?: Record<string, unknown> };
-
-export const IDLE: ActionResult | null = null;

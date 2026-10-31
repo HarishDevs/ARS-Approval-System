@@ -54,7 +54,7 @@ export function ErrorState({
         )}
         {homeHref && (
           <Link href={homeHref} className="btn-secondary btn-compact">
-            Go to Overview
+            Go to Home
           </Link>
         )}
       </div>

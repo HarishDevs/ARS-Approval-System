@@ -1,6 +1,7 @@
 import "server-only";
 import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { getDbPool } from "@/lib/db/client";
+import { withTransaction } from "@/lib/db/transaction";
 import { getSettingValue } from "@/server/settings/values";
 import { loadSalesforceConfig, SALESFORCE_KEY, syncSalesforce } from "@/server/ai/connectors/salesforce";
 
@@ -18,13 +19,22 @@ export async function runAiStep(): Promise<Record<string, number | string>> {
   let conversationsRemoved = 0;
   const keepDays = Number(await getSettingValue("ai.conversation_keep_days"));
   if (keepDays > 0) {
-    const [old] = await db.query<RowDataPacket[]>("SELECT id FROM ai_conversations WHERE updated_at < CURRENT_TIMESTAMP - INTERVAL ? DAY LIMIT 500", [keepDays]);
+    // D-246 (audit DB-003): chats of someone under an active legal hold
+    // (REQUESTER scope) are kept, and the three statements go together.
+    const [old] = await db.query<RowDataPacket[]>(
+      `SELECT c.id FROM ai_conversations c WHERE c.updated_at < CURRENT_TIMESTAMP - INTERVAL ? DAY
+         AND NOT EXISTS (SELECT 1 FROM legal_holds h WHERE h.released_at IS NULL AND h.scope_type = 'REQUESTER' AND h.scope_id = c.owner_user_id)
+       LIMIT 500`,
+      [keepDays],
+    );
     const ids = old.map((row) => row.id as number);
     if (ids.length) {
-      await db.query("UPDATE ai_proposals SET conversation_id = NULL WHERE conversation_id IN (?)", [ids]);
-      await db.query("DELETE FROM ai_messages WHERE conversation_id IN (?)", [ids]);
-      const [removed] = await db.query<ResultSetHeader>("DELETE FROM ai_conversations WHERE id IN (?)", [ids]);
-      conversationsRemoved = removed.affectedRows;
+      conversationsRemoved = await withTransaction(async (connection) => {
+        await connection.query("UPDATE ai_proposals SET conversation_id = NULL WHERE conversation_id IN (?)", [ids]);
+        await connection.query("DELETE FROM ai_messages WHERE conversation_id IN (?)", [ids]);
+        const [removed] = await connection.query<ResultSetHeader>("DELETE FROM ai_conversations WHERE id IN (?)", [ids]);
+        return removed.affectedRows;
+      });
     }
   }
 

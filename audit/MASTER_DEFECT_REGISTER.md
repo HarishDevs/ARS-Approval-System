@@ -75,6 +75,51 @@ The full fields for each defect (expected, actual, reproduction, evidence, root 
 | OPS-19 | Public web | `/`, `/privacy` and `/terms` have no canonical link or Open Graph tags | 14 |
 | OPS-20 | Security | With any cookie, `/admin` and `/superadmin` return a 307 whose body includes the area title, while unknown paths return 404 (goes against D-016; minor information disclosure; related to SEC-02) | 14 |
 
+## Remediation (v1.40.0, 1 Nov 2026)
+
+The owner approved fixing every defect ("fix all the defects in one go"). Status after v1.40.0: **Fixed** means changed and covered by a test or a doc check.
+
+**Fixed in code, with tests:**
+
+| Defect | Change | Proof |
+|---|---|---|
+| SEC-02 | `requireArea` on the 15 admin and superadmin pages that lacked their own; guard test (D-244) | `tests/security/page-guards.test.ts` (fails when a guard is removed) |
+| OPS-20 | Middleware: an invalid or expired session cookie on `/admin` or `/superadmin` is redirected before rendering (D-244) | `tests/security/session-cookie-edge.test.ts` |
+| DB-004, DB-005 | Engine: no self-skip or self-path; no approval without a decision; readiness warning (D-245) | `tests/engine/no-decision-guards.test.ts` |
+| DB-006 | `routeChanged` compares approver fields | same file |
+| DB-001 | Project save checks `row_version` | `tests/integration/audit-fixes.int.test.ts` |
+| DB-002 | Migration runner `GET_LOCK` | code review; the integration suite runs the migrations |
+| DB-003 | AI retention: holds respected, one transaction | `audit-fixes.int.test.ts` |
+| DB-007 | Multi-person task: continues, names who was missed, partial-success count | `audit-fixes.int.test.ts` |
+| DB-008 to DB-014 | Messaging (D-243) | `tests/notifications/*`, `tests/jobs/delivery-retry-policy.test.ts`, `tests/ai/salesforce-refresh.test.ts`, `tests/analytics/schedule-recipients.test.ts`, `tests/integration/delivery-idempotency.int.test.ts` |
+| SEC-01 | No stored password still costs a full hash check | `tests/security/security.test.ts` |
+| FI-D01 | Weekly HOD report (D-247) | `tests/reports/hod-weekly.test.ts`, `audit-fixes.int.test.ts` |
+| FI-D02 | Analytics wording corrected | code |
+| FI-D03 | Calendar sync filters by the person's modules | code review; calendar integration tests still pass |
+| FI-D06 | Break-glass actions audited and alerted (throttled) | `tests/security/break-glass-alert.test.ts` |
+| UI-D01 to UI-D04 | Names, titles, the task destination | e2e suite |
+| PF-R01 | Home task sections stream (Suspense) | the load test is re-run in the release check |
+| OPS-09 | `.sha256` on every backup, optional AES-GCM; restore and verify check both | `tests/ops/backup-file.test.ts` |
+| OPS-11 | Health: backup age, `degraded`, `/api/health/deep` | e2e v140 |
+| OPS-18, OPS-19 | robots, sitemap, canonical, Open Graph | build output |
+| OPS-01, OPS-02 | Unused dependencies and 30 unused exports removed | lint and typecheck clean |
+| OPS-03, OPS-04, OPS-06 | CI timeout 45 min; one CI-only retry, reported as flaky; actions v5 (Node 24) | the CI run of v1.40.0. The cancelled audit-commit run 41227016909 shows the old limit. |
+
+**Fixed in docs or the release:**
+
+| Defect | Change |
+|---|---|
+| OPS-05 | Tag `v1.34.0` added at b764c41, with a note in the release notes |
+| OPS-12 to OPS-17, FI-D04, FI-D05 | Documentation rewritten or updated (see 18) |
+
+**Built, needs the owner's action:**
+
+| Defect | What is built | What the owner does |
+|---|---|---|
+| OPS-08 | Off-site copy to S3-compatible storage, encrypted only, failure alerted | Enter the bucket and key, and set `BACKUP_ENCRYPTION_KEY` |
+| OPS-07 | Restore and verify tools, plus a drill checklist | Run the drill on a real production backup and record it |
+| OPS-10 | Draft RPO/RTO and incident procedure | Approve or adjust it |
+
 ## Audit-process note
 
 During the audit the lead auditor's own integration-test run recreated the throw-away test database, which removed the seeded users for a while. Every auditor re-ran the checks that this affected, as recorded in 04–07 and 15–18. No application defect follows from it.

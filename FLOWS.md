@@ -26,7 +26,7 @@ The number of levels and how they combine is unlimited. There are no fixed "Leve
 | F-06 | User creation, roles, inactivation (Admin Portal) | Built 30 Sep 2026 (bulk import later) |
 | F-07 | Break-glass access | Partly built: sign-in window + alert; enable script S2-07 |
 | F-08 | Role routing: /users, /admin, /superadmin | Built 28 Sep 2026 |
-| F-10 | Request state machine | Planned |
+| F-10 | Request state machine | Built (engine and request lifecycle; status checked 31 Oct 2026) |
 | F-11 | Submission → workflow resolution | Built with screens 30 Sep 2026 |
 | F-12 | Approver action authorisation | Built and tested on MySQL 30 Sep 2026 |
 | F-20 | Multi-level building blocks | Engine core built 28 Sep 2026 |
@@ -48,7 +48,7 @@ The number of levels and how they combine is unlimited. There are no fixed "Leve
 | F-42 | WhatsApp template registry → creator | Creator built 8 Oct 2026 (create, sync, test via CEOITBox API); goes live with the app's CEOITBox key |
 | F-30 | Delegation | Built and verified 1 Oct 2026 |
 | F-31 | SLA, reminder, escalation | Built 1 Oct 2026 (working days and holidays) |
-| F-32 | Work assignment after approval | Planned |
+| F-32 | Work assignment after approval | Built as work steps, v1.4.0 (F-79, D-097; status checked 31 Oct 2026) |
 | F-33 | Employee custom approval | Built and verified 1 Oct 2026 |
 | F-40 | Notification pipeline | Built (in-app + email + WhatsApp, retries); WhatsApp per template as approved; outbox 8 Oct 2026 (F-43) |
 | F-43 | Notification outbox and idempotent submit | Built and tested 8 Oct 2026 |
@@ -1055,6 +1055,17 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 2. They filter (search, status, type, department, person, waiting on, priority, overdue, dates) and sort by a column title; 50 rows a page.
 3. **Download CSV** gives every matching row (up to 10,000) for Excel; audited. A row number opens the record.
 
+## F-186 Backups off-site and monitoring (v1.40.0, D-246)
+1. The daily backup writes `ars-db-…sql.gz` (or `.sql.gz.enc` with `BACKUP_ENCRYPTION_KEY`) and a `.sha256`.
+2. With Super Admin → Settings → Off-site backup on, the encrypted file and its hash are copied to the bucket; a failed copy marks the run failed and the Super Admin is told.
+3. Restore: `node scripts/database/restore.js <file> --confirm-database=<DB>` checks the hash and decrypts (same key). Check first with `npm run db:verify-backup`.
+4. An uptime monitor on `/api/health/deep` alerts (503) when the job runner is late, the backup is over 26 h old, or files can't be written.
+
+## F-185 Weekly HOD report (v1.40.0, D-247)
+1. Super Admin → Settings → General → Weekly report to each head of department: On.
+2. Every Monday from 09:00 (India time), the next job run emails each active department's head: their department's requests in the last 7 days (raised, approved, rejected), open and overdue now, and the 5 waiting longest, with a link to Analytics.
+3. Each department gets it once a week (claimed first); a failed email is recorded on the Automation page and next week's goes out as normal.
+
 ## F-184 Workflow working draft (v1.39.0, D-241)
 1. Admin → Approval types → a type: change anything. With nothing to fix, about 4 seconds later: "Saved to draft version N at hh:mm. Not published." (into the open draft, or a new one when the live version was the latest).
 2. Save draft does the same at once. Publish version N → Yes, publish (unchanged).
@@ -1219,7 +1230,7 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 1. A person chooses View → Classic in the profile menu (or Profile → Appearance); saved on the account.
 2. After sign-in /users shows the Central Management System (one box): modules with highlighted letters; ↑↓ Enter or the letter opens one (v1.28.0, D-212).
 3. A module page shows its name, its pages as tabs (letters open them) and its boxes; every page shows Central Management System › module › page with the tabs; Esc goes back a level.
-4. Overview dashboard is a Gateway entry. Choosing Compact brings the sidebar back.
+4. Home dashboard (called Overview dashboard until D-249) is a Gateway entry. Choosing Compact brings the sidebar back.
 6. (v1.29.0, D-214) The Central Management System also lists the person's other spaces and Quit (sign out). Every page change shows the Classic loader box when it takes a moment; the Overview dashboard and pages outside the modules have their breadcrumb and Esc back; in a text box the first Esc leaves the box.
 5. (v1.28.0, D-211) Text size (Small to Largest) appears under View while Classic is chosen; every text on every page changes at once and the choice is saved.
 

@@ -79,6 +79,7 @@ export default async function ProjectSettingsPage({ params }: { params: Promise<
                   defaultView: project.defaultView,
                   startOn: project.startOn ?? "",
                   dueOn: project.dueOn ?? "",
+                  rowVersion: project.rowVersion,
                 }}
                 departments={activeDepartments}
                 myDepartmentId={viewer.departmentId}

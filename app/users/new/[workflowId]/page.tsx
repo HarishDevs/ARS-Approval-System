@@ -71,7 +71,7 @@ export default async function RaiseRequestPage({ params, searchParams }: { param
 
   return (
     <>
-      <Breadcrumbs items={[{ href: "/users", label: "Overview" }, { href: "/users/new", label: "Request templates" }, { label: workflow.name }]} />
+      <Breadcrumbs items={[{ href: "/users", label: "Home" }, { href: "/users/new", label: "Request templates" }, { label: workflow.name }]} />
       <PageHeader title={workflow.name} description="Fill in the details. Approvers are chosen automatically from the rules IT has set.">
         <Link href="/users/new" className="link text-label">
           ← All types

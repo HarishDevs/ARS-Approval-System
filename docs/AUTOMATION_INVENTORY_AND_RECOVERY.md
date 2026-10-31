@@ -1,5 +1,7 @@
 # Automation inventory and recovery
 
+Applies to v1.39.0 (31 Oct 2026).
+
 Unified prompt FN2, FN8, FN11 and Addendum B (monitoring). The live version of this table is **Super Admin → Automation** (`/superadmin/automation`), built from `server/ops/automation.ts`. That page also shows each job's health, its last run, its 24-hour failures and its run history.
 
 ## How automations run
@@ -30,30 +32,39 @@ Unified prompt FN2, FN8, FN11 and Addendum B (monitoring). The live version of t
 
 ## Inventory
 
+Applies to v1.40.0 (1 Nov 2026): **17 automations**, all in `AUTOMATIONS` in `server/ops/automation.ts`, run in this order by `runAutomations()`. Every one runs on the same cron call (`POST /api/jobs/run`, every 5 minutes); `server/jobs/` holds the code for three of them (`sla`, `deliveries` and `housekeeping`, `delegations`), the rest live with their module. There is no other scheduled entry point. If this table and the Automation page ever differ, the page is right; update this table.
+
 | Key | Automation | Trigger | Retry | Idempotency | On failure | Recovery | Owner |
 |---|---|---|---|---|---|---|---|
 | outbox | Send queued messages | Every run; also right after each action | Up to 5 tries per message, then waits for IT | Each message is claimed before sending; sent messages are never sent again | Stays unsent; listed under Messages not sent and on Needs attention | **Resend** (fresh tries, never a second send) | Super Admin (providers); IT team (affected requests) |
 | deliveries | Retry failed deliveries | Every run | Backs off between tries, up to the limit | Deliveries are leased before retry; sent ones are never retried | Stays FAILED in the delivery log | **Retry now** on Deliveries | Super Admin |
-| sla | Reminders and escalations | Every run | The next run picks up anything missed | Each reminder or escalation level is recorded once per task (`task_reminders`) | Recorded; the next run tries again | Run now | IT team |
-| templates | WhatsApp template status sync | Daily | Next day's run | Read and store only | Templates keep their last status | Sync now on Templates | Super Admin |
-| housekeeping | Housekeeping (drafts, rate limits, payloads, old queue rows, job history) | Every run | Next run continues | Deletes only data past its retention | Data kept a little longer; nothing lost | None needed | Super Admin |
+| sla | Reminders and escalations (built-in) | Every run | The next run picks up anything missed | Each reminder or escalation level is recorded once per task (`task_reminders`) | Recorded; the next run tries again | Run now | IT team |
+| templates | WhatsApp template status sync | Daily, inside the run | Next day's run | Read and store only | Templates keep their last status | **Sync now** on Templates | Super Admin |
+| housekeeping | Housekeeping: expired drafts, rate limits, old payloads, old sent queue rows, job history over 90 days, abandoned runs | Every run | Next run continues | Deletes only data past its retention | Data kept a little longer; nothing lost | None needed | Super Admin |
 | delegations | Delegation start and end audit | Every run | Next run | Each start and end recorded once | Delegations still apply by date | None needed | IT team |
-| backup | Daily backup | Daily | Each run tries until today's backup exists | At most one a day; never overwrites | Super Admin alerted | Back up now (Super Admin home) | Super Admin |
+| backup | Daily backup | Daily, inside the run | Each run tries until today's backup exists | At most one a day; never overwrites | Super Admin alerted (once a day) | **Back up now** (Super Admin home) | Super Admin |
+| reports | Scheduled reports (v1.7.0) | Every run (reports due since the last run) | A failed delivery is retried at its next slot; three failures in a row pause the schedule | Each slot is claimed once (unique schedule + due time) | Shown in the schedule's run history under Reports | Fix the cause (usually email settings), then switch the schedule on again | The report's owner; Super Admin for email |
+| alerts | Alert rules (v1.7.0) | Every run | Next run checks again | Each firing is claimed on the rule; at most once per cool-down while over the line | Recorded; checked again next run | None needed | Each rule's owner |
 | expiry | Approval expiry notices (v1.7.0) | Every run | Next run | Each request claimed before its notice | Recorded; next run | None needed | IT team |
-| exports | Background exports (v1.7.0) | Every run, and right after each request | A run that died is re-queued after 30 min | Each export claimed (queued → running) | Shown as failed on Reports | Ask again | Each export's owner |
+| rules | Reminder and escalation rules (v1.27.0, Admin → Reminders & escalations) | Every run | A failed send is logged; the run carries on | One send per rule, record, stage and repeat, claimed first | Recorded; other steps still run | Fix the rule or recipient; due sends go next run | IT team |
+| modules | Task and information reminders (v1.9.0) | Every run | Next run | Each reminder claimed (per task, kind and due time; per recipient) | Recorded; next run | None needed | IT team |
+| calendar | Google Calendar two-way sync (v1.11.0) | Every run, only when the integration is enabled | Exponential backoff with jitter up to the set limit; then marked failed for review | Fixed Google event id and stored version per record; one sync per connection at a time | Shown on the Google Calendar page; Super Admin alerted when retries run out | **Retry**, or **Full resync** for one person | Super Admin |
+| ai | AI module upkeep (v1.15.0): expire proposals after 7 days, remove old conversations, copy Salesforce data read-only at most hourly | Every run; the Salesforce copy only when the last is an hour old | Next run; a failed Salesforce object keeps its last good copy | Single statements; Salesforce records stored by their own Id | Recorded; AI → Data Sources shows each object's last run and error | AI settings → **Sync now** after fixing the cause | Super Admin |
+| exports | Background exports (v1.7.0); export files removed after 7 days | Every run, and right after each request | A run that died is re-queued after 30 min | Each export claimed (queued → running) | Shown as failed on Reports | Ask again | Each export's owner |
+| hodWeekly | Weekly HOD report (D-247; off until the Super Admin switches it on) | Every run; sends from Monday 09:00 IST, once a week | A failed department is recorded FAILED for that week; the next week sends again | One claim per department and week (`hod_report_runs`), plus a one-per-week email key | Recorded with the failed count | Fix email settings or the HOD's address | Super Admin; IT |
 | stuck | Stuck-request scan | Every run | Next run | Read-only | Needs attention still works | None needed | IT team |
 
-**Not automated, so not in the inventory:**
+**Event-driven, not scheduled (so not in the table):**
 
+- Delivery receipts: CEOITBox calls `POST /api/webhooks/ceoitbox` (DELIVERED, READ).
+- Google Calendar change notifications: Google calls `POST /api/webhooks/google-calendar`; the `calendar` step then processes them.
 - File uploads are processed during the request; there is no background file job.
 - Imports run synchronously and show a result page.
-- There is no ERP or other business integration.
 
 **Gaps (register: Yet to do):**
 
-- Provider delivery-receipt webhooks.
-- Imports and exports with their own recovery.
-- Scheduled reports, once they are built.
+- Imports have no background run or recovery of their own; a failed import is simply run again.
+- `/api/health` reports the runner heartbeat only (OK within 15 minutes, LATE, NEVER), not each job or the age of the last backup (audit OPS-11).
 
 ## Stuck-request detection (FN2)
 

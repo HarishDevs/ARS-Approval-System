@@ -22,6 +22,7 @@ const PUBLIC: Record<string, string> = {
   "app/api/auth/status/route.ts": "says only whether the caller is signed in",
   "app/api/auth/try/[token]/route.ts": "Try as: signed single-use 5-minute link, refused where anyone is signed in, view-only session",
   "app/api/health/route.ts": "health check: status words only, no data",
+  "app/api/health/deep/route.ts": "health check for alerting (D-246): the same status words, 503 when degraded",
   "app/api/jobs/run/route.ts": "cron runner: JOB_RUNNER_SECRET compared in constant time",
   "app/api/webhooks/google-calendar/route.ts": "Google push notifications: channel id, resource id and hashed token must match, rate-limited",
   "app/api/webhooks/ceoitbox/route.ts": "provider receipts: shared secret compared in constant time, rate-limited",

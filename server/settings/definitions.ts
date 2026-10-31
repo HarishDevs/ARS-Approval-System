@@ -7,7 +7,7 @@ export type SettingValueType = "STRING" | "NUMBER" | "BOOLEAN";
 
 export interface SettingDefinition {
   key: string;
-  group: "GENERAL" | "AUTHENTICATION" | "EMAIL" | "WHATSAPP" | "FEATURES" | "RETENTION" | "AI" | "AI_DATA";
+  group: "GENERAL" | "AUTHENTICATION" | "EMAIL" | "WHATSAPP" | "FEATURES" | "RETENTION" | "AI" | "AI_DATA" | "BACKUP";
   label: string;
   valueType: SettingValueType;
   encrypted: boolean;
@@ -25,6 +25,15 @@ export const SETTING_DEFINITIONS: readonly SettingDefinition[] = [
   // D-233 (UI states: maintenance): a notice for everyone, e.g. planned
   // downtime. Shown at the top of every page while it is filled in.
   { key: "general.maintenance_notice", group: "GENERAL", label: "Maintenance notice shown to everyone (leave empty for none), e.g. \"ARS will be unavailable on Sunday 10:00–12:00 for an upgrade.\"", valueType: "STRING", encrypted: false, schema: z.string().trim().max(300) },
+  // D-246 (audit OPS-08): the off-site copy of each daily backup (S3-compatible storage; encrypted backups only).
+  { key: "backup.offsite_enabled", group: "BACKUP", label: "Copy each daily backup off-site (needs BACKUP_ENCRYPTION_KEY on the server)", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF"]), defaultValue: "OFF" },
+  { key: "backup.s3_endpoint", group: "BACKUP", label: "Storage endpoint (https://…, e.g. https://<account>.r2.cloudflarestorage.com or https://s3.ap-south-1.amazonaws.com)", valueType: "STRING", encrypted: false, schema: z.string().trim().url().startsWith("https://").max(300) },
+  { key: "backup.s3_region", group: "BACKUP", label: "Region (\"auto\" for Cloudflare R2)", valueType: "STRING", encrypted: false, schema: z.string().trim().min(1).max(50), defaultValue: "auto" },
+  { key: "backup.s3_bucket", group: "BACKUP", label: "Bucket", valueType: "STRING", encrypted: false, schema: z.string().trim().regex(/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/, "Use the bucket's name (lower-case letters, numbers, dots and hyphens).") },
+  { key: "backup.s3_access_key_id", group: "BACKUP", label: "Access key ID (a key that may only write to this bucket)", valueType: "STRING", encrypted: false, schema: z.string().trim().min(1).max(200) },
+  { key: "backup.s3_secret_access_key", group: "BACKUP", label: "Secret access key", valueType: "STRING", encrypted: true, schema: z.string().trim().min(1).max(200) },
+  // D-247 (audit FI-D01, BD-5): off until the Super Admin switches it on (it sends real email).
+  { key: "general.hod_weekly_report", group: "GENERAL", label: "Weekly report to each head of department (Mondays from 9:00, by email: their department's requests in the last 7 days)", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF"]), defaultValue: "OFF" },
   { key: "general.stuck_idle_days", group: "GENERAL", label: "Days without activity before a request is listed as possibly stuck", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(1).max(90), defaultValue: "7" },
   // Feature switches (Addendum B, D-124): ON, OFF, or IT_ONLY for a trial with
   // the IT team first. A switch only hides or shows a feature; who may see

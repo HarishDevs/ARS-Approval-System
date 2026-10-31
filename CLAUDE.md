@@ -28,3 +28,12 @@ Every session:
 - Hosting: GoDaddy Node.js Hosting (cPanel). Stack: Next.js 15, React 19, TypeScript, Tailwind (ARS tokens from `D:\Omniroute\assets`), MySQL 8 (`mysql2`), Firebase Auth, HMAC sessions, AES-GCM encrypted settings, cron job runner, Vitest + Playwright.
 - **Reference implementation: `D:\PBI New`** (read-only). Reuse its patterns. **Never open or copy its `.env.local` or any real secret.**
 - Break-glass admin account; append-only audit log. No Asana import (Asana is a flow reference only, see `reference/`).
+
+## STRICT RULE (zero tolerance): general pages follow every feature change
+Whenever a feature is **built new or an existing feature is modified**, in the same change also update every general item that the feature touches, before the work counts as done:
+- **Privacy policy** (`app/(public)/privacy/page.tsx`): any new data collected, stored, shared, sent to a provider, or retained (bump the effective date).
+- **Terms** (`app/(public)/terms/page.tsx`): any new rule of use or responsibility (bump the effective date).
+- **User Guide** (`docs/USER-GUIDE.md`) and **in-app Help** (`app/users/help/page.tsx` topics).
+- **Tour** (`features/help/tour-steps.ts` + `tests/help/tour-steps.test.ts`) and the **first-use checklist** (`features/help/FirstUseChecklist.tsx`).
+- Other general surfaces where relevant: landing page, `/users/menu`, release notes, admin/superadmin docs (DEPLOYMENT, API_REFERENCE, DATA_MODEL, AUTOMATION_INVENTORY).
+If an item really needs no change, say so in the work log ("general pages checked: no change because …"). Never skip this check; verify the changed pages in the local browser.

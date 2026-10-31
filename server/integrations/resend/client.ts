@@ -26,6 +26,10 @@ export interface SendEmailInput {
   html?: string;
   // Scheduled reports (D-123): small files only; the caller caps the size.
   attachments?: { filename: string; content: Uint8Array | string }[];
+  // D-243: Resend sends one email per key within 24 hours, so a repeat of the
+  // same send (a retry after a timeout that did reach Resend) isn't delivered
+  // twice. 1-256 characters.
+  idempotencyKey?: string;
 }
 
 export async function sendEmail(
@@ -42,7 +46,11 @@ export async function sendEmail(
     response = await deps.fetch("https://api.resend.com/emails", {
       method: "POST",
       signal: controller.signal,
-      headers: { Authorization: `Bearer ${config.apiKey}`, "Content-Type": "application/json" },
+      headers: {
+        Authorization: `Bearer ${config.apiKey}`,
+        "Content-Type": "application/json",
+        ...(input.idempotencyKey ? { "Idempotency-Key": input.idempotencyKey.slice(0, 256) } : {}),
+      },
       body: JSON.stringify({
         from: `${config.fromName} <${config.fromAddress}>`,
         to: input.to,

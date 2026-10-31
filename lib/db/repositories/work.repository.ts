@@ -208,11 +208,16 @@ export async function insertProject(project: NewProject, db: Queryable): Promise
   return result.insertId;
 }
 
-export async function updateProject(id: number, changes: Record<string, unknown>, db: Queryable): Promise<void> {
+// D-246 (audit DB-001): with expectedVersion, only from that version (false when someone saved first).
+export async function updateProject(id: number, changes: Record<string, unknown>, db: Queryable, expectedVersion?: number): Promise<boolean> {
   const allowed = ["name", "description", "color", "department_id", "privacy", "default_access_role", "default_view", "owner_id", "start_on", "due_on", "current_status", "completed_at", "archived_at", "deleted_at", "deleted_by"];
   const keys = Object.keys(changes).filter((key) => allowed.includes(key));
-  if (!keys.length) return;
-  await db.query<ResultSetHeader>(`UPDATE projects SET ${keys.map((key) => `${key} = ?`).join(", ")}, row_version = row_version + 1 WHERE id = ?`, [...keys.map((key) => changes[key]), id]);
+  if (!keys.length) return true;
+  const [result] = await db.query<ResultSetHeader>(
+    `UPDATE projects SET ${keys.map((key) => `${key} = ?`).join(", ")}, row_version = row_version + 1 WHERE id = ?${expectedVersion === undefined ? "" : " AND row_version = ?"}`,
+    [...keys.map((key) => changes[key]), id, ...(expectedVersion === undefined ? [] : [expectedVersion])],
+  );
+  return result.affectedRows > 0;
 }
 
 export async function setProjectMember(projectId: number, type: "USER" | "DEPARTMENT", memberId: number, role: ProjectRole, addedBy: number, db: Queryable): Promise<void> {

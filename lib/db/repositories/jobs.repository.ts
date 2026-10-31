@@ -22,6 +22,10 @@ export async function pruneRateLimitHits(db: Queryable = getDbPool()): Promise<n
 }
 
 // ---- delivery retries (D-058) -------------------------------------------------
+// D-243: the failure code of a delivery whose resend started but whose
+// outcome was never recorded. It may have been sent.
+export const SEND_UNCONFIRMED = "SEND_UNCONFIRMED";
+
 export interface DueDelivery {
   id: number;
   channel: "EMAIL" | "WHATSAPP";
@@ -29,9 +33,14 @@ export interface DueDelivery {
   payload: Record<string, unknown> | null;
 }
 
-// Leases due FAILED deliveries: pushes their next_retry_at 10 minutes
-// ahead inside the same transaction, so two runner calls never send the
-// same message twice (SKIP LOCKED lets a second runner take other rows).
+// Leases due FAILED deliveries inside one transaction, so two runner calls
+// never send the same message twice (SKIP LOCKED lets a second runner take
+// other rows). D-243: a leased row has no next try and is marked
+// SEND_UNCONFIRMED until the runner records the outcome. A runner that stops
+// mid-send (or can't record a send that worked) leaves it like that: it is
+// never resent by itself, and stays on the delivery log for a person to check
+// and use Retry now. (Before, the lease ran out after 10 minutes and the
+// message could go twice.)
 export async function leaseDueDeliveries(limit: number, onlyIds?: readonly number[]): Promise<DueDelivery[]> {
   return withTransaction(async (connection) => {
     const [rows] = await connection.query<(RowDataPacket & { id: number; channel: "EMAIL" | "WHATSAPP"; attempt_count: number; payload_json: Record<string, unknown> | string | null })[]>(
@@ -42,7 +51,7 @@ export async function leaseDueDeliveries(limit: number, onlyIds?: readonly numbe
       onlyIds?.length ? [onlyIds, limit] : [limit],
     );
     if (rows.length) {
-      await connection.query<ResultSetHeader>("UPDATE notification_deliveries SET next_retry_at = DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 10 MINUTE) WHERE id IN (?)", [rows.map((row) => row.id)]);
+      await connection.query<ResultSetHeader>(`UPDATE notification_deliveries SET next_retry_at = NULL, failure_code = '${SEND_UNCONFIRMED}' WHERE id IN (?)`, [rows.map((row) => row.id)]);
     }
     return rows.map((row) => ({
       id: row.id,

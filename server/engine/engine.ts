@@ -225,6 +225,7 @@ class Run {
         this.advanceFrom(node.id);
         return;
       case "END":
+        if (this.blockIfNobodyDecided()) return;
         nodeState.status = "APPROVED";
         nodeState.activatedAt = this.context.now;
         nodeState.completedAt = this.context.now;
@@ -321,6 +322,22 @@ class Run {
       byNode.set(task.nodeId, [...(byNode.get(task.nodeId) ?? []), task.id]);
     }
     for (const [id, taskIds] of byNode) this.events.push({ type: "TASKS_CLOSED", nodeId: id, taskIds, status });
+  }
+
+  // D-245 (audit DB-005): a request never finishes approved without at least
+  // one independent approval. When steps were skipped for having nobody to
+  // approve ("if nobody: skip") and nobody approved anything, the last such
+  // step blocks instead, so IT is told and chooses who decides. Steps skipped
+  // by a rule IT set, or by IT itself, still count as decided by design.
+  private blockIfNobodyDecided(): boolean {
+    const decided = this.state.tasks.some((task) => task.status === "APPROVED" && !isWork(this.graph.node(task.nodeId)));
+    if (decided) return false;
+    const skipped = [...this.graph.nodes.values()].filter((node) => node.kind === "APPROVAL" && !isWork(node) && this.state.nodes[node.id]?.status === "SKIPPED" && this.state.nodes[node.id]?.reason === "NO_APPROVER");
+    const last = skipped.at(-1);
+    if (!last) return false;
+    this.state.nodes[last.id]!.completedAt = undefined;
+    this.block(last.id, "NO_ELIGIBLE_APPROVER");
+    return true;
   }
 
   private finishApproved(): void {
@@ -698,6 +715,11 @@ export function resolveBlocked(
   const reason = input.reason.trim();
   if (!reason) throw new EngineError("COMMENT_REQUIRED", "Please give a reason.");
   if (previous.nodes[input.nodeId]?.status !== "BLOCKED") throw new EngineError("NOT_BLOCKED", "This step isn't blocked any more. Reload the page.");
+  // D-245 (audit DB-004): nobody moves a step of their own request past its
+  // approvers. Skipping it or choosing its path is for another IT person.
+  if ((input.action === "SKIP" || input.action === "TAKE_PATH") && input.actorId === context.requesterId) {
+    throw new EngineError("INVALID_ACTION", "You can't move a step of your own request on. Ask another IT person.");
+  }
   const graph = new Graph(definition);
   const node = graph.node(input.nodeId);
   const state = clone(previous);

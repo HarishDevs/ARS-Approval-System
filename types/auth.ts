@@ -3,7 +3,6 @@ export type RoleCode = "SUPER_ADMIN" | "IT_ADMIN" | "USER" | "EXPORTER"; // EXPO
 // password + WhatsApp code. A sign-in attempt itself is always one of the two.
 export type SignInMethod = "GOOGLE" | "PASSWORD" | "BOTH";
 export type SignInAttempt = "GOOGLE" | "PASSWORD";
-export const SIGN_IN_METHODS: readonly SignInMethod[] = ["GOOGLE", "PASSWORD", "BOTH"];
 export const allowsGoogle = (method: SignInMethod) => method === "GOOGLE" || method === "BOTH";
 export const allowsPassword = (method: SignInMethod) => method === "PASSWORD" || method === "BOTH";
 export const SIGN_IN_LABEL: Record<SignInMethod, string> = { GOOGLE: "Google", PASSWORD: "Password + WhatsApp", BOTH: "Google or password + WhatsApp" };
@@ -27,6 +26,7 @@ export interface AuthenticatedUser {
   salesforceScope: "NONE" | "OWN" | "ALL";
   isDemo?: boolean; // D-071: a demo person the Super Admin is trying the app as
   triedBy?: string | null; // D-185: a view-only Try as session, opened by this admin
+  isBreakGlass?: boolean; // D-246: the break-glass account (its changes alert the Super Admins)
 }
 
 export interface RequestContext {

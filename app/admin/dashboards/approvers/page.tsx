@@ -3,12 +3,16 @@ import { DashboardFrame, DashboardTable, KpiTiles, MeasureBar } from "@/features
 import { dashboardPage, type DashboardSearch } from "@/features/admin/dashboards/page-data";
 import { loadApprovers } from "@/lib/db/repositories/dashboards.repository";
 import { hoursText, percent } from "@/server/dashboards/filters";
+import { requireArea } from "@/server/authorization/guards";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
 export const metadata: Metadata = { title: "Approvers dashboard" };
 
 // Approver-wise (F-74): approvals given to each person in the period.
 export default async function ApproversDashboardPage({ searchParams }: { searchParams: DashboardSearch }) {
+  // D-244 (audit SEC-02): the page checks its own area too (not only the
+  // screen it renders, nor the layout).
+  await requireArea("admin");
   const { today, filter, choices } = await dashboardPage(searchParams);
   const rows = await loadApprovers(filter);
   const assigned = rows.reduce((sum, row) => sum + row.assigned, 0);

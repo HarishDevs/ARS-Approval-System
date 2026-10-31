@@ -225,7 +225,9 @@ function CreateTaskDialog({ onClose, projects, people, meId, defaultProject, ai 
     const follow = [...new Set([...collaborators, ...mentionIds(body)])].filter((person) => person !== meId && !assignees.includes(person));
     for (const person of follow) await call(() => followAction(id, person, true), { success: false });
     onClose();
-    router.push(project === "" ? `/users/work/my-tasks?task=${id}` : `/users/work/projects/${project}?task=${id}`);
+    // D-246 (audit UI-D04): a task for someone else isn't in my own list, so it
+    // opens on its page (still found later under Tasks assigned by me).
+    router.push(project !== "" ? `/users/work/projects/${project}?task=${id}` : assignees.includes(meId) ? `/users/work/my-tasks?task=${id}` : `/users/tasks/${id}`);
   };
   const chip = "inline-flex items-center gap-1 rounded-full border border-line px-2 py-0.5 text-label hover:border-line-strong";
   const tool = (on = false) => `grid h-8 w-8 place-items-center rounded hover:bg-surface-muted ${on ? "bg-primary-50 text-primary-700" : "text-ink-muted hover:text-ink"}`;

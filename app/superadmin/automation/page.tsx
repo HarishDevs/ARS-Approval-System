@@ -145,7 +145,15 @@ export default async function AutomationPage({ searchParams }: { searchParams: P
                     )}
                   </td>
                   <td className="whitespace-nowrap">{formatIndiaTime(row.createdAt)}</td>
-                  <td>{row.gaveUp ? <Badge tone="danger">{row.attempts} · gave up</Badge> : row.attempts}</td>
+                  <td>
+                    {row.gaveUp ? <Badge tone="danger">{row.attempts} · gave up</Badge> : row.attempts}
+                    {/* D-243 (audit DB-014): a send that started but wasn't recorded may have gone out; check before resending. */}
+                    {row.unconfirmed && (
+                      <span className="ml-2" title="The send started but its result wasn't recorded. Check with the person (or the provider) before resending.">
+                        <Badge tone="warning">may have been sent</Badge>
+                      </span>
+                    )}
+                  </td>
                   <td>
                     <ResendOutbox outboxId={row.id} />
                   </td>

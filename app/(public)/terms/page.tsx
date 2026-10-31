@@ -7,6 +7,8 @@ export const metadata: Metadata = {
   title: "Terms of use",
   description: "Terms for using ARS-CMS, the internal approval, task and information platform of ARS.",
   robots: { index: true, follow: true },
+  alternates: { canonical: "/terms" },
+  openGraph: { type: "website", siteName: "ARS-CMS", url: "/terms", title: "Terms of use · ARS-CMS", description: "Terms for using ARS-CMS, the internal platform of ARS.", images: [{ url: "/icons/icon-512.png", width: 512, height: 512, alt: "ARS" }] },
 };
 
 // v1.12.2 (D-161): terms of use, linked from the home page and the Google
@@ -16,7 +18,7 @@ export default function TermsPage() {
     <PublicPage>
       <Prose>
         <h1>Terms of use</h1>
-        <p className="text-label text-ink-muted">Effective 17 October 2026</p>
+        <p className="text-label text-ink-muted">Effective 1 November 2026</p>
         <p>
           ARS-CMS (approval.arssteels.net) is provided by {COMPANY} (&ldquo;ARS&rdquo;) for its employees to carry out company work. By signing in you agree to these terms and to ARS&apos;s
           policies that apply to company systems.
@@ -28,7 +30,15 @@ export default function TermsPage() {
           <li>Use it for genuine company work, and enter accurate information.</li>
           <li>Approve, decide or acknowledge only what you have actually reviewed. Your decisions are recorded under your name.</li>
           <li>Don&apos;t try to access records you aren&apos;t given, get around security, or disrupt the service.</li>
+          <li>Tasks, projects, comments, mentions and notices are work records: keep them to work, and mention or add people only where they need to know.</li>
+          <li>Your profile photo and About me are seen by colleagues: keep them suitable for work.</li>
         </ul>
+        <h2>AI Assistant</h2>
+        <p>
+          If IT gives you the AI Assistant (Pico Bot), use it for work questions. It reads the data you may see and sends your question to an external AI provider, as described in the{" "}
+          <Link href="/privacy" className="link">privacy policy</Link>. Its answers can be wrong: check figures before you rely on them or pass them on. Don&apos;t paste passwords, keys or
+          other people&apos;s personal details into it. It never approves, sends or changes anything; you remain responsible for your decisions.
+        </p>
         <h2>Google Calendar</h2>
         <p>
           Connecting your Google Calendar is optional. You can disconnect it at any time from Profile → Calendar. A calendar event never approves, completes or acknowledges anything in ARS-CMS:

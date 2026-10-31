@@ -72,8 +72,3 @@ export async function findAttachment(id: number, db: Queryable = getDbPool()): P
   const [rows] = await db.query<AttachmentRow[]>(`${SELECT} WHERE a.id = ?`, [id]);
   return rows[0] ? toRecord(rows[0]) : null;
 }
-
-export async function countAttachments(requestId: number, db: Queryable = getDbPool()): Promise<number> {
-  const [rows] = await db.query<(RowDataPacket & { total: number })[]>("SELECT COUNT(*) AS total FROM request_attachments WHERE request_id = ?", [requestId]);
-  return Number(rows[0]?.total ?? 0);
-}

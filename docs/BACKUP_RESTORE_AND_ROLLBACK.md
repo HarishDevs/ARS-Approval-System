@@ -45,7 +45,7 @@ Never restore over the live database without the owner's explicit decision. Befo
 - that Needs attention shows no "Workflow state doesn't add up" findings (the reconciliation check, BA-08);
 - that a sample of requests opens with its timeline and attachments.
 
-**Recovery point.** At most one day of data can be lost: backups are daily, plus any manual backup. Recovery time is the time of a phpMyAdmin import. RTO and RPO targets are for the owner to confirm (register BE-03).
+**Recovery point.** At most one day of data can be lost: backups are daily, plus any manual backup. Recovery time is the time of a phpMyAdmin import. RTO and RPO targets are for the owner to confirm (register BE-03). Proposed targets, with an incident procedure and a restore drill checklist: `docs/RECOVERY_OBJECTIVES_AND_INCIDENT_RESPONSE.md` (draft for the owner's approval, 31 Oct 2026).
 
 ## 3. v1.6.0 database changes
 

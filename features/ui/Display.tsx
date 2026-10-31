@@ -169,22 +169,6 @@ export function Progress({ value, max, label }: { value: number; max: number; la
   );
 }
 
-// A hover/focus hint for an icon-only control. The text is also its
-// accessible description, so it isn't hidden from screen readers.
-export function Tooltip({ text, children }: { text: string; children: React.ReactNode }) {
-  return (
-    <span className="group relative inline-flex">
-      {children}
-      <span
-        role="tooltip"
-        className="pointer-events-none absolute bottom-full left-1/2 z-toast mb-1.5 -translate-x-1/2 whitespace-nowrap rounded bg-ink px-2 py-1 text-caption text-surface opacity-0 shadow-overlay transition-opacity duration-fast group-focus-within:opacity-100 group-hover:opacity-100"
-      >
-        {text}
-      </span>
-    </span>
-  );
-}
-
 // Page-number paging with plain links (works without JavaScript).
 export function Pagination({ page, pages, hrefFor }: { page: number; pages: number; hrefFor: (page: number) => string }) {
   if (pages <= 1) return null;

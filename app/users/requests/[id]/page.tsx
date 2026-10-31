@@ -103,7 +103,7 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
       {/* D-234 (Jakob): ← Back goes to the list the breadcrumb names. */}
       <Breadcrumbs
         items={[
-          { href: "/users", label: "Overview" },
+          { href: "/users", label: "Home" },
           backTo,
           { label: view.requestNo },
         ]}

@@ -1,5 +1,17 @@
 # Release notes
 
+## v1.40.0 (1 Nov 2026): every audit finding addressed (owner)
+- **Security:** four Super Admin pages could be read without signing in through a client-navigation request; every admin page now checks access itself, and a test keeps it so. Signing in no longer hints which User IDs exist. The break-glass account's actions are recorded and alerted.
+- **Approvals:** nobody can skip a step of their own request, and a request is never approved without at least one real approval (a step skipped for having nobody now waits for IT instead). Changing the approver chosen in a field restarts that step on resubmit.
+- **Resubmit:** a request sent back for changes goes through the same duplicate, unique-value and budget checks as a new one. A background step that partly failed is shown as failed.
+- **Privacy, terms, Help and tour:** updated for every module (AI Assistant, tasks and projects, Inbox, profile photo, weekly HOD email, encrypted backups); the tour now covers Home, Inbox, Create, My Tasks, Draft task, Projects and your profile.
+- **Messages:** WhatsApp rate limits are retried properly, sign-in codes can't be crowded out by bulk messages, a message is never sent twice after a crash, and a scheduled report reaches everyone else when one address fails.
+- **Backups:** every backup gets a checksum; with a key set they are encrypted, and an automatic off-site copy can be switched on (S3-compatible storage). `/api/health/deep` lets a monitor alert when backups or jobs stop.
+- **New:** a weekly email to each head of department (off until switched on).
+- **Smaller:** "Home" everywhere (no more "Overview"), page titles that match their headings, a task given to someone else opens on its page, Home's task sections load after the approvals, project edits can't overwrite each other, and the user guide and technical documents are up to date.
+- **Database:** two additive migrations (`notification_outbox.claim_token`, `hod_report_runs`), applied on start.
+
+
 ## v1.39.0 (31 Oct 2026): workflows save as you work (owner)
 - **Workflows (IT):** changes save into the draft by themselves a few seconds after you stop (nothing is published), and Save draft saves at once. If a colleague saved or published in the meantime, you're told and nothing of theirs is overwritten.
 - **Rules:** the "only when" rules on form fields and the conditions in workflows now use the same row (field, test, value), and both show a field that is no longer on the form.
@@ -34,6 +46,7 @@
 - **Maintenance notice:** IT can show a message to everyone (Super Admin → Settings → General).
 
 ## v1.34.0 (31 Oct 2026): Classic view like Tally (owner)
+_Shipped in the same commit as v1.35.0 (b764c41); the `v1.34.0` tag points there (audit OPS-05)._
 - In the **Classic** view every screen now looks like Tally: a title bar, square ruled boxes, forms laid out as **Label : value**, the field you are typing in highlighted, ruled tables with the current row highlighted.
 - **Every list's toolbar looks like Asana's:** Filter, Sort and Group show as soft blue pills with × when in use, a line before Options, and Search as an icon (Admin → Records too).
 - **Collapsible sidebar:** ☰ folds it into a narrow row of icons (like Asana) and opens it again; the app remembers.

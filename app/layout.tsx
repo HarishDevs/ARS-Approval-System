@@ -13,6 +13,8 @@ export const dynamic = "force-dynamic";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 
 export const metadata: Metadata = {
+  // D-246 (audit OPS-19): absolute canonical and preview links on the public pages.
+  metadataBase: new URL(process.env.APP_BASE_URL ?? "https://approval.arssteels.net"),
   // D-188 (owner): the visible name is ARS Internal Workspace.
   title: { default: "ARS-CMS", template: "%s · ARS-CMS" },
   description: "ARS-CMS — the Central Management System of ARS Steels & Alloy International Pvt. Ltd.",

@@ -9,7 +9,7 @@ import { loadOptOuts } from "@/lib/db/repositories/preferences.repository";
 import { getUserSetting } from "@/lib/db/repositories/user-settings.repository";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
-export const metadata: Metadata = { title: "Notification settings" };
+export const metadata: Metadata = { title: "Notifications" };
 
 // #6 (D-110) → D-231: the notification control centre for the whole app.
 export default async function NotificationSettingsPage() {

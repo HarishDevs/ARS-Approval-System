@@ -84,11 +84,6 @@ export function groupOf(eventType: string): EventGroup | null {
   return BY_EVENT.get(eventType) ?? null;
 }
 
-export function mayOptOut(eventType: string): boolean {
-  const group = groupOf(eventType);
-  return Boolean(group && !group.mandatory);
-}
-
 // optedOut: the person's stored choices, as "GROUP:CHANNEL" strings, and
 // (D-231) "E:EVENT:CHANNEL" for one kind of message.
 export function channelWanted(eventType: string, channel: Channel, optedOut: ReadonlySet<string>): boolean {

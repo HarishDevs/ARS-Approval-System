@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import Link from "next/link";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
@@ -41,7 +42,11 @@ export default async function UsersHome({ searchParams }: { searchParams: Promis
   // approvals), for people who have Tasks and may open its pages.
   const tasks =
     (await featureOn("tasks", user).catch(() => false)) && !isHiddenHref("/users/work", (await navAccess(user)).hidden) ? (
-      <TaskHome user={user} viewer={await workViewer(user)} params={{ tab: query.tab, given: query.given, task: query.task }} basePath="/users" greet={false} />
+      // D-246 (audit PF-R01): the task sections stream in after the approvals, so
+      // Home's first part never waits for them.
+      <Suspense fallback={<p className="mt-10 text-label text-ink-muted" role="status">Loading your tasks…</p>}>
+        <TaskHome user={user} viewer={await workViewer(user)} params={{ tab: query.tab, given: query.given, task: query.task }} basePath="/users" greet={false} />
+      </Suspense>
     ) : null;
   if (!hasModule(user, "APPROVAL")) return <ModulesHome name={displayName(user.name)} user={user} tasks={tasks} />;
   const [queue, waiting, attention, mine, drafts, onboarded, recent] = await Promise.all([

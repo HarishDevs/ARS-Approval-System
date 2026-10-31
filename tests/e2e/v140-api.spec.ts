@@ -29,6 +29,13 @@ test("health check: 200 with the version, database and job runner state", async 
   expect(body).toMatchObject({ status: "ok", database: "ok" });
   expect(body.version).toMatch(/^\d+\.\d+\.\d+$/);
   expect(["OK", "LATE", "NEVER"]).toContain(body.jobRunner);
+  // D-246 (audit OPS-11): the backup's age and an overall "degraded"; the deep
+  // check answers 503 when degraded (here: no backup, no job runner yet).
+  expect(body).toHaveProperty("backupAgeHours");
+  expect(typeof body.degraded).toBe("boolean");
+  const deep = await request.get("/api/health/deep");
+  expect(deep.status()).toBe(body.degraded ? 503 : 200);
+  expect((await deep.json()).database).toBe("ok");
 });
 
 test("WhatsApp receipt webhook: refuses without the secret, records delivered and read with it", async ({ request }) => {

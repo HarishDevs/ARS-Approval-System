@@ -1,5 +1,5 @@
 import "server-only";
-import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
+import type { PoolConnection, ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { getDbPool, type Queryable } from "@/lib/db/client";
 
 export interface ActiveTemplate {
@@ -43,18 +43,49 @@ interface CountRow extends RowDataPacket {
   recent: number;
 }
 
-// MySQL-backed sliding window: prune old rows, count, then record.
-export async function tryConsumeWhatsAppRateLimit(limitPerMinute: number): Promise<boolean> {
-  const pool = getDbPool();
-  await pool.query<ResultSetHeader>(
-    "DELETE FROM whatsapp_rate_limit_log WHERE occurred_at < DATE_SUB(CURRENT_TIMESTAMP(3), INTERVAL 60 SECOND)",
-  );
-  const [rows] = await pool.query<CountRow[]>("SELECT COUNT(*) AS recent FROM whatsapp_rate_limit_log");
-  if ((rows[0]?.recent ?? 0) >= limitPerMinute) return false;
-  await pool.query<ResultSetHeader>("INSERT INTO whatsapp_rate_limit_log () VALUES ()");
-  return true;
+// D-243: slots a minute kept back for sign-in codes, so a burst of bulk
+// notifications can never make a code fail with "try again". A fifth of the
+// limit (at least 1, none when the limit is 1). Sign-in codes may use every
+// slot; everything else stops at the limit less the reserve.
+export function whatsAppSlotsFor(limitPerMinute: number, priority: "OTP" | "BULK"): number {
+  const limit = Math.max(0, Math.floor(limitPerMinute));
+  if (priority === "OTP" || limit < 2) return limit;
+  return limit - Math.max(1, Math.floor(limit / 5));
 }
 
+const RATE_LOCK = "ars_whatsapp_send_limit";
+
+type LockConnection = Pick<PoolConnection, "query" | "release">;
+
+// MySQL-backed sliding window: prune old rows, count, then record. D-243:
+// the three statements run under a named lock, so concurrent senders (app
+// processes and the cron runner) can't all pass the same count.
+export async function tryConsumeWhatsAppRateLimit(
+  limitPerMinute: number,
+  priority: "OTP" | "BULK" = "BULK",
+  connect: () => Promise<LockConnection> = () => getDbPool().getConnection(),
+): Promise<boolean> {
+  const allowed = whatsAppSlotsFor(limitPerMinute, priority);
+  if (allowed <= 0) return false;
+  const connection = await connect();
+  try {
+    const [lock] = await connection.query<(RowDataPacket & { got: number | null })[]>("SELECT GET_LOCK(?, 5) AS got", [RATE_LOCK]);
+    if (Number(lock[0]?.got) !== 1) return false; // busy for 5 s: treated as the limit (retried)
+    try {
+      await connection.query<ResultSetHeader>(
+        "DELETE FROM whatsapp_rate_limit_log WHERE occurred_at < DATE_SUB(CURRENT_TIMESTAMP(3), INTERVAL 60 SECOND)",
+      );
+      const [rows] = await connection.query<CountRow[]>("SELECT COUNT(*) AS recent FROM whatsapp_rate_limit_log");
+      if (Number(rows[0]?.recent ?? 0) >= allowed) return false;
+      await connection.query<ResultSetHeader>("INSERT INTO whatsapp_rate_limit_log () VALUES ()");
+      return true;
+    } finally {
+      await connection.query("DO RELEASE_LOCK(?)", [RATE_LOCK]);
+    }
+  } finally {
+    connection.release();
+  }
+}
 
 // ---- template registry and creator (S6-04, S7, F-42b, D-076) -------------------------
 // One row per version (English). A version is a draft until it's submitted;

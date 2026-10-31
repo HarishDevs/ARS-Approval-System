@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { RowDataPacket } from "mysql2/promise";
 import { getDbPool } from "@/lib/db/client";
-import { createWorkflow, publishVersion, submitRequest, withdrawRequest, type Actor } from "@/server/approvals/service";
+import { createWorkflow, decideTask, publishVersion, resubmitRequest, submitRequest, withdrawRequest, type Actor } from "@/server/approvals/service";
 import { findPublishedVersion, findWorkflow, listVersions, updateWorkflowSettings } from "@/lib/db/repositories/approvals.repository";
 import { assessReadiness } from "@/server/approvals/readiness";
 import { saveBudget } from "@/lib/db/repositories/budgets.repository";
@@ -10,7 +10,7 @@ import { financialYear, typeSettingsSchema } from "@/server/workflows/type-setti
 import { saveTemplate, listTemplates } from "@/lib/db/repositories/templates.repository";
 import { prefill, reusableValues } from "@/server/approvals/autofill";
 import type { FormField } from "@/server/forms/fields";
-import { createDepartment, createUser } from "./helpers";
+import { createDepartment, createUser, pendingTaskKey } from "./helpers";
 
 // Unified prompt FN1/FN3/EN-09/FN4 on real MySQL: readiness, duplicates
 // (incl. two submits at once), budgets, attachments, routing, templates.
@@ -181,5 +181,23 @@ describe("autofill and templates (FN4)", () => {
     expect(reusableValues(lineForm, { fields: { items: "100", items__lines: rows } }).values).toEqual({ items: "100", items__lines: rows });
     // Someone else's template id gives nothing.
     expect((await prefill({ user: person(other), workflowId: type, form: FORM, templateId: template!.id })).origin).toBeNull();
+  });
+});
+
+// D-248 (V181-A1, audit AUD-11): a resubmit with new values passes the same
+// blocking checks as a submit; the request itself never counts against itself.
+describe("resubmit is checked like a submit", () => {
+  it("a must-be-unique value already used elsewhere is refused on resubmit; keeping its own value is fine", async () => {
+    const workflowId = await liveType({ unique: { fields: ["invoice_no"] } });
+    const tag = Date.now().toString(36).toUpperCase();
+    const first = await submit(workflowId, person(raiser), { invoice_no: `A-${tag}`, amount: "10" });
+    const second = await submit(workflowId, person(raiser), { invoice_no: `B-${tag}`, amount: "10" });
+    if (!first.ok || !second.ok) throw new Error("setup");
+    const asked = await decideTask({ requestId: second.value.requestId, taskKey: await pendingTaskKey(second.value.requestId, approver), decision: "REQUEST_CHANGES", comment: "Fix the amount" }, person(approver));
+    expect(asked).toMatchObject({ ok: true });
+    const clash = await resubmitRequest({ requestId: second.value.requestId, fields: { invoice_no: `A-${tag}`, amount: "12" } }, person(raiser));
+    expect(clash).toMatchObject({ ok: false });
+    const own = await resubmitRequest({ requestId: second.value.requestId, fields: { invoice_no: `B-${tag}`, amount: "12" } }, person(raiser));
+    expect(own).toMatchObject({ ok: true });
   });
 });

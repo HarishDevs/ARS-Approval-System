@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BellRing, CalendarDays, GitBranch, ListChecks } from "lucide-react";
+import { BellRing, CalendarDays, GitBranch, ListChecks, Sparkles } from "lucide-react";
 import { MailLink } from "@/features/ui/MailLink";
 
 // D-190 (owner): the welcome on the split layout. Signing in fades this out
@@ -21,8 +21,9 @@ const LEAVE_MS = 200;
 const FEATURES = [
   { icon: GitBranch, text: "Multi-level approvals: route a request through as many levels as it needs" },
   { icon: BellRing, text: "Information notices: share updates and see who acknowledged them" },
-  { icon: ListChecks, text: "Tasks: assign work with due dates and follow progress" },
+  { icon: ListChecks, text: "Tasks & projects: assign work with due dates, repeat it, and follow projects on lists and boards" },
   { icon: CalendarDays, text: "Google Calendar (optional): your own due dates in your calendar" },
+  { icon: Sparkles, text: "AI Assistant (for people IT chooses): answers from your own work data" },
 ] as const;
 
 export function LandingWelcome() {

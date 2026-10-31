@@ -4,6 +4,7 @@ import { EmptyState } from "@/features/ui/Display";
 import { listAllConversations } from "@/lib/db/repositories/ai.repository";
 import { MODE_LABEL, type ChatMode } from "@/server/ai/chat-access";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
+import { requireArea } from "@/server/authorization/guards";
 
 export const metadata: Metadata = { title: "AI Activity History" };
 export const dynamic = "force-dynamic";
@@ -11,6 +12,10 @@ export const dynamic = "force-dynamic";
 // D-180 (owner): everyone's AI conversations, newest first, for the Super
 // Admin (layout). Titles and counts only; the messages stay their owner's.
 export default async function AiActivityHistoryPage() {
+  // D-244 (audit SEC-02): every page checks its own area. The layout's
+  // check alone isn't enough: a client-navigation request (RSC) renders the
+  // page without waiting for the layout.
+  await requireArea("superadmin");
   const conversations = await listAllConversations(200);
   return (
     <>

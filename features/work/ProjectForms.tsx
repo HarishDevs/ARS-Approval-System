@@ -11,6 +11,7 @@ import { PRIVACY, PRIVACY_LABEL, PROJECT_COLORS, PROJECT_ROLE_HELP, PROJECT_ROLE
 // and the small project commands (star, join, leave, archive, delete).
 export interface ProjectFormValues {
   id?: number;
+  rowVersion?: number; // D-246: the version this form was opened at
   name: string;
   description: string;
   color: string;
@@ -29,6 +30,7 @@ export function ProjectForm({ values, departments, myDepartmentId }: { values?: 
   return (
     <form onSubmit={onSubmit} className="space-y-4" aria-label={values?.id ? "Project details" : "New project"}>
       {values?.id && <input type="hidden" name="projectId" value={values.id} />}
+      {values?.rowVersion !== undefined && <input type="hidden" name="rowVersion" value={values.rowVersion} />}
       <div>
         <label htmlFor="project-name" className="field-label">
           Project name

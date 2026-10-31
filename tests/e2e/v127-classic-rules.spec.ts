@@ -33,7 +33,7 @@ test("D-210: switch to Classic; Gateway, module menu, page tabs, letters and Esc
   const gateway = page.getByTestId("gateway-menu");
   await expect(gateway.getByRole("link", { name: /Approval Management/ })).toBeFocused();
   await expect(gateway.getByRole("link").first()).toContainText("Approval Management");
-  await expect(gateway.getByRole("link", { name: "Overview dashboard" })).toBeVisible();
+  await expect(gateway.getByRole("link", { name: "Home dashboard" })).toBeVisible();
   await page.screenshot({ path: "test-results/classic-gateway.png", fullPage: true });
 
   // Arrow keys move; Enter opens the module menu.

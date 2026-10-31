@@ -4,12 +4,16 @@ import { dashboardPage, type DashboardSearch } from "@/features/admin/dashboards
 import { loadUtilisation } from "@/lib/db/repositories/dashboards.repository";
 import { approvalRate, hoursText } from "@/server/dashboards/filters";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
+import { requireArea } from "@/server/authorization/guards";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
 export const metadata: Metadata = { title: "Utilisation dashboard" };
 
 // Utilisation (F-74): every approval type, used or not, and how it ends.
 export default async function UtilisationPage({ searchParams }: { searchParams: DashboardSearch }) {
+  // D-244 (audit SEC-02): the page checks its own area too (not only the
+  // screen it renders, nor the layout).
+  await requireArea("admin");
   const { today, filter, choices } = await dashboardPage(searchParams);
   const rows = await loadUtilisation(filter);
   const live = rows.filter((row) => row.workflowId !== null && row.active && row.published);

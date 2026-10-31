@@ -4,6 +4,7 @@ import { recentAiEvents, recentFailures, usageByPerson, usageByProvider } from "
 import { getSettingValue } from "@/server/settings/values";
 import { PROVIDER_LABEL } from "@/server/ai/providers";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
+import { requireArea } from "@/server/authorization/guards";
 
 export const metadata: Metadata = { title: "AI Reports" };
 export const dynamic = "force-dynamic";
@@ -12,6 +13,10 @@ export const dynamic = "force-dynamic";
 // by person and provider over 30 days, failed answers with their technical
 // reason, and security and setting events. Super Admin only (layout).
 export default async function AiReportsPage() {
+  // D-244 (audit SEC-02): every page checks its own area. The layout's
+  // check alone isn't enough: a client-navigation request (RSC) renders the
+  // page without waiting for the layout.
+  await requireArea("superadmin");
   const [usage, people, failures, events, priceIn, priceOut] = await Promise.all([usageByProvider(30), usageByPerson(30, 100), recentFailures(30), recentAiEvents(40), getSettingValue("ai.price_in_per_million"), getSettingValue("ai.price_out_per_million")]);
   // An estimate only, from the prices entered in AI settings; the provider's bill is the real figure.
   const cost = (inTokens: number, outTokens: number) =>

@@ -14,8 +14,6 @@
 // - Terminal: APPROVED, REJECTED or CANCELLED (withdrawn).
 
 export type RequestState = "IN_PROGRESS" | "ON_HOLD" | "CHANGES_REQUIRED" | "APPROVED" | "REJECTED" | "CANCELLED";
-export const OPEN_STATES: readonly RequestState[] = ["IN_PROGRESS", "ON_HOLD", "CHANGES_REQUIRED"];
-export const TERMINAL_STATES: readonly RequestState[] = ["APPROVED", "REJECTED", "CANCELLED"];
 
 // ---- aging ---------------------------------------------------------------------
 // Elapsed calendar time (not working time). Buckets follow the prompt's

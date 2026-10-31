@@ -128,7 +128,9 @@ test("D-222: an ad hoc task for two people; Project permissions", async ({ page,
   await draft.getByRole("option", { name: "Manoj Manager" }).click();
   await expect(draft.getByTestId("assignee-chip")).toHaveCount(2);
   await draft.getByRole("button", { name: "Create task" }).click();
-  await expect(page.getByTestId("task-pane").getByTestId("assign-group")).toContainText(/Sita Staff|Manoj Manager/);
+  // D-246 (audit UI-D04): a task only for others opens on its own page.
+  await expect(page).toHaveURL(/\/users\/tasks\/\d+$/);
+  await expect(page.getByTestId("assign-group")).toContainText(/Sita Staff|Manoj Manager/);
 
   // Project permissions: restrict Due date to project admins.
   await page.goto(`${projectUrl}/settings#permissions`);

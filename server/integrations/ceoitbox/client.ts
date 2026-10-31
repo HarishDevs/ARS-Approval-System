@@ -13,7 +13,7 @@ export type CeoitboxErrorCode =
   | "CEOITBOX_NOT_CONFIGURED"
   | "CEOITBOX_REQUEST_FAILED" // network or 5xx: worth retrying
   | "CEOITBOX_TIMEOUT"
-  | "CEOITBOX_RATE_LIMITED"
+  | "CEOITBOX_RATE_LIMITED" // our own send limit, or CEOITBox's 429 (D-243): worth retrying
   | "CEOITBOX_UNAUTHORIZED" // 401: wrong, switched-off or deleted key
   | "CEOITBOX_REJECTED" // 400: Meta refused (bad number, template, variable count)
   | "CEOITBOX_BLOCKED"; // 200 with an error object: wallet too low, or the number opted out
@@ -24,6 +24,8 @@ export class CeoitboxError extends Error {
     message: string,
     readonly providerStatus?: number,
     readonly providerBody?: unknown,
+    // D-243: CEOITBox's Retry-After on a 429, in seconds (when it sent one).
+    readonly retryAfterSeconds?: number,
   ) {
     super(message);
     this.name = "CeoitboxError";
@@ -36,7 +38,11 @@ export interface SendTemplateInput {
   language: string;
   templateVariables: string[];
   userMessageId?: string; // our own reference, for CEOITBox reports
+  // D-243: a sign-in code may use the slots kept back from bulk messages.
+  priority?: WhatsAppSendPriority;
 }
+
+export type WhatsAppSendPriority = "OTP" | "BULK";
 
 export interface SendTemplateResult {
   id: string;
@@ -45,12 +51,22 @@ export interface SendTemplateResult {
 
 export interface CeoitboxDeps {
   fetch: typeof fetch;
-  tryConsumeRateLimit: (limitPerMinute: number) => Promise<boolean>;
+  tryConsumeRateLimit: (limitPerMinute: number, priority: WhatsAppSendPriority) => Promise<boolean>;
 }
 
 // Digits only, country code included, no "+".
 export function normalizeWhatsAppNumber(raw: string): string {
   return raw.replace(/\D/g, "");
+}
+
+// D-243: Retry-After as seconds or an HTTP date; null when absent or unreadable.
+// Capped at an hour so a bad header can't park a message for days.
+export function retryAfterSeconds(header: string | null, now = Date.now()): number | null {
+  if (!header) return null;
+  const value = header.trim();
+  const seconds = /^\d+$/.test(value) ? Number(value) : Math.ceil((Date.parse(value) - now) / 1000);
+  if (!Number.isFinite(seconds)) return null;
+  return Math.min(Math.max(seconds, 0), 3600);
 }
 
 // The text of a problem+json reply, without anything from the request.
@@ -67,9 +83,12 @@ async function call(config: WhatsAppConfig, fetcher: typeof fetch, method: "GET"
   if (body !== undefined) headers["Content-Type"] = "application/json";
   if (config.phoneId) headers["x-phone-id"] = config.phoneId;
 
+  // D-243: the timer runs until the body is read, not only the headers, so a
+  // provider that sends headers and then stalls can't hang the send.
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), config.timeoutMs);
   let response: Response;
+  let text: string;
   try {
     response = await fetcher(`${config.baseUrl.replace(/\/$/, "")}${path}`, {
       method,
@@ -77,8 +96,12 @@ async function call(config: WhatsAppConfig, fetcher: typeof fetch, method: "GET"
       ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
       signal: controller.signal,
     });
+    text = await response.text().catch((error: unknown) => {
+      if (controller.signal.aborted) throw error;
+      return "";
+    });
   } catch (error) {
-    if (error instanceof Error && error.name === "AbortError") {
+    if (controller.signal.aborted || (error instanceof Error && error.name === "AbortError")) {
       throw new CeoitboxError("CEOITBOX_TIMEOUT", `CEOITBox request timed out after ${config.timeoutMs}ms.`);
     }
     throw new CeoitboxError("CEOITBOX_REQUEST_FAILED", "CEOITBox request failed.", undefined, String(error));
@@ -86,12 +109,16 @@ async function call(config: WhatsAppConfig, fetcher: typeof fetch, method: "GET"
     clearTimeout(timer);
   }
 
-  const text = await response.text().catch(() => "");
   let parsed: unknown = null;
   try {
     parsed = text ? JSON.parse(text) : null;
   } catch {
     parsed = text;
+  }
+  // D-243: CEOITBox throttling us is temporary, never a refusal of the message.
+  if (response.status === 429) {
+    const wait = retryAfterSeconds(response.headers?.get?.("retry-after") ?? null);
+    throw new CeoitboxError("CEOITBOX_RATE_LIMITED", `CEOITBox is limiting requests (HTTP 429)${wait !== null ? `; retry after ${wait}s` : ""}.`, 429, parsed, wait ?? undefined);
   }
   if (response.status === 401) throw new CeoitboxError("CEOITBOX_UNAUTHORIZED", "CEOITBox refused the API key (401). Check the key in Providers & security.", 401, parsed);
   if (response.status >= 400 && response.status < 500) {
@@ -109,7 +136,7 @@ async function call(config: WhatsAppConfig, fetcher: typeof fetch, method: "GET"
 
 export async function sendTemplateMessage(config: WhatsAppConfig, input: SendTemplateInput, deps: CeoitboxDeps): Promise<SendTemplateResult> {
   if (!config.apiKey) throw new CeoitboxError("CEOITBOX_NOT_CONFIGURED", "CEOITBox API key is not configured.");
-  if (!(await deps.tryConsumeRateLimit(config.rateLimitPerMinute))) {
+  if (!(await deps.tryConsumeRateLimit(config.rateLimitPerMinute, input.priority ?? "BULK"))) {
     throw new CeoitboxError("CEOITBOX_RATE_LIMITED", `WhatsApp send limit (${config.rateLimitPerMinute}/min) reached.`);
   }
   const body = await call(config, deps.fetch, "POST", "/api/v1/whatsapp/sendMessage", {

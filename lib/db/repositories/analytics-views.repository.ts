@@ -42,10 +42,6 @@ export async function listViews(userId: number, target: string): Promise<Analyti
   return rows.map((row) => toView(row, userId));
 }
 
-export async function findDefaultView(userId: number, target: string): Promise<AnalyticsView | null> {
-  return (await listViews(userId, target)).find((view) => view.isDefault) ?? null;
-}
-
 export async function saveView(input: { userId: number; target: string; name: string; query: Record<string, string>; shared?: boolean }): Promise<"OK" | "TOO_MANY"> {
   const db = getDbPool();
   const [[count]] = await db.query<RowDataPacket[]>("SELECT COUNT(*) AS n FROM analytics_views WHERE user_id = ?", [input.userId]);

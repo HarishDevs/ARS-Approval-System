@@ -7,13 +7,18 @@ export const metadata: Metadata = {
   title: "Privacy policy",
   description: "How ARS-CMS collects, uses, stores and protects information, including data received from Google APIs.",
   robots: { index: true, follow: true },
+  alternates: { canonical: "/privacy" },
+  openGraph: { type: "website", siteName: "ARS-CMS", url: "/privacy", title: "Privacy policy · ARS-CMS", description: "How ARS-CMS collects, uses, stores and protects information.", images: [{ url: "/icons/icon-512.png", width: 512, height: 512, alt: "ARS" }] },
 };
 
 // v1.12.2 (D-161): the privacy policy Google's OAuth verification checks.
 // It must describe, accurately, what the app does with Google user data and
 // carry the Limited Use statement. Keep it true to the code: if the
 // calendar sync changes what it reads or stores, update this page.
-const PRIVACY_EFFECTIVE = "17 October 2026";
+// D-249 (owner, v1.40.0): also covers the AI Assistant, Salesforce, profile
+// photos, tasks and projects, notification choices, the weekly HOD email and
+// encrypted off-site backups.
+const PRIVACY_EFFECTIVE = "1 November 2026";
 
 export default function PrivacyPage() {
   return (
@@ -35,7 +40,17 @@ export default function PrivacyPage() {
             <strong>Sign-in and security records</strong>: sign-in times, the method used, IP address and browser details, to protect accounts and to show people their own sign-in history.
           </li>
           <li>
-            <strong>Work records</strong> people create in the app: approval requests and decisions, comments, tasks, information notices, acknowledgements and attached files.
+            <strong>Work records</strong> people create in the app: approval requests and decisions, comments and mentions, tasks and projects (with their descriptions, files, followers and
+            history), information notices and acknowledgements, calendar entries people add, and attached files and pasted images.
+          </li>
+          <li>
+            <strong>Profile</strong> details people add themselves: a profile photo and a short &ldquo;About me&rdquo;, shown to colleagues on their profile card.
+          </li>
+          <li>
+            <strong>Preferences</strong>: which notifications reach a person in the app, by email and on WhatsApp, quiet hours (Do not disturb), the screen theme and view, saved searches and views.
+          </li>
+          <li>
+            <strong>AI Assistant (Pico Bot) conversations</strong>, only for people IT has given access: the questions they ask and the answers, kept for the period IT sets.
           </li>
           <li>
             <strong>Google sign-in</strong>: if a person signs in with Google, we receive their Google account email and account identifier to match them to the account IT created.
@@ -80,13 +95,25 @@ export default function PrivacyPage() {
           consent, where needed for security (for example investigating abuse), to comply with the law, or where the data has been aggregated and anonymised for internal operations.
         </p>
 
+        <h2>AI Assistant (Pico Bot)</h2>
+        <p>
+          The AI Assistant is switched on by IT for chosen people only. When someone asks a question, the question, the recent turns of that conversation and the business data needed to answer
+          it are sent to the AI provider IT has chosen (Anthropic Claude, OpenAI ChatGPT, xAI Grok, DeepSeek, Groq, Google Gemini or NVIDIA), under that provider&apos;s API terms. Only
+          data the person is allowed to see is used; a provider is only given business data if IT has allowed it. The assistant reads data; it can&apos;t approve, send or change anything.
+          When the Salesforce connection is set up, selected Salesforce records are copied read-only into ARS for the assistant to use. Answers can be wrong, so important figures should
+          be checked. <strong>Google Calendar data is never sent to an AI provider.</strong> In a Draft task, the optional &ldquo;write with Pico Bot&rdquo; button sends only the task&apos;s
+          name and the text the person typed.
+        </p>
+
         <h2>How information is shared</h2>
         <p>We do not sell personal information. Information is shared only:</p>
         <ul>
           <li>inside ARS, with the colleagues a record involves (for example the approvers of a request), as the app&apos;s access rules allow;</li>
           <li>
-            with service providers that run parts of the app for us, under their terms: GoDaddy (hosting), Cloudflare (network and security), Google Firebase (Google sign-in), Resend (email) and
-            CEOITBox (WhatsApp messages). Google Calendar data is not shared with any of them beyond the hosting and network that carry it;
+            with service providers that run parts of the app for us, under their terms: GoDaddy (hosting), Cloudflare (network and security), Google Firebase (Google sign-in), Resend (email),
+            CEOITBox (WhatsApp messages), the AI providers above (for the AI Assistant only), Salesforce (only when ARS connects it) and, when IT switches it on, an S3-compatible storage
+            provider that keeps an <strong>encrypted</strong> copy of the daily backup outside the hosting account. Google Calendar data is not shared with any of them beyond the hosting,
+            network and encrypted backups that carry it;
           </li>
           <li>where the law requires it.</li>
         </ul>
@@ -94,7 +121,7 @@ export default function PrivacyPage() {
         <h2>Security</h2>
         <p>
           The app is served only over HTTPS. Access is checked on the server for every page and action. Secrets and Google tokens are stored encrypted. Changes and sensitive actions are recorded in an
-          audit log that cannot be edited.
+          audit log that cannot be edited. Daily backups carry a checksum, can be encrypted (AES-256-GCM), and are encrypted before any copy leaves the server.
         </p>
 
         <h2>Keeping and deleting information</h2>
@@ -106,14 +133,21 @@ export default function PrivacyPage() {
           </li>
           <li>
             <strong>Work records</strong> are kept as ARS&apos;s business records, following ARS&apos;s retention rules. Accounts are switched off rather than deleted, to keep the history of decisions
-            intact.
+            intact. Records under a legal hold are kept until the hold is released.
+          </li>
+          <li>
+            <strong>AI conversations</strong> are removed after the period IT sets (unless a legal hold applies). <strong>Backups</strong> are kept for a limited number of days, then deleted.
+          </li>
+          <li>
+            <strong>Profile photo and About me</strong> can be changed or removed by the person at any time from Profile.
           </li>
         </ul>
 
         <h2>Your choices and rights</h2>
         <p>
-          People can see their own details and sign-in history in the app, choose which notifications they receive, and connect or disconnect Google Calendar. To ask about, correct or remove your
-          information, contact the IT team at <MailLink address={CONTACT_EMAIL} />.
+          People can see their own details and sign-in history in the app, add or remove their photo, choose which notifications they receive (and pause them), and connect or disconnect Google
+          Calendar. Heads of department may receive a weekly email summarising their department&apos;s requests, if IT switches it on. To ask about, correct or remove your information, contact the IT
+          team at <MailLink address={CONTACT_EMAIL} />.
         </p>
 
         <h2>Changes</h2>

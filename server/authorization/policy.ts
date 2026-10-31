@@ -23,7 +23,3 @@ export function evaluateAreaAccess(user: AuthenticatedUser | null, area: AppArea
 export function areasForUser(user: AuthenticatedUser): AppArea[] {
   return (Object.keys(AREA_ROLES) as AppArea[]).filter((area) => evaluateAreaAccess(user, area).allowed);
 }
-
-export function hasRole(user: AuthenticatedUser, role: RoleCode): boolean {
-  return user.roles.includes(role);
-}

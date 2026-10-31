@@ -17,6 +17,14 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (1 Nov 2026):** v1.40.0: every audit defect addressed (D-243 to D-247; `audit/MASTER_DEFECT_REGISTER.md` Remediation). **Owner:**
+  1. Publish v1.40.0. Two additive migrations run on start.
+  2. Set `BACKUP_ENCRYPTION_KEY` in cPanel and keep a copy off the server.
+  3. Enter the off-site bucket in Super Admin → Settings → Off-site backup.
+  4. Point the uptime monitor at `/api/health/deep`.
+  5. Run the restore drill (OPS-07, checklist in `docs/RECOVERY_OBJECTIVES_AND_INCIDENT_RESPONSE.md`).
+  6. Approve or adjust the draft RPO/RTO there (OPS-10).
+  7. Switch on the weekly HOD report if wanted.
 - **Now (31 Oct 2026):** independent audit of v1.39.0 done (`audit/FINAL_APPLICATION_AUDIT_REPORT.md`): 45 defects, 1 High. **Owner:** approve the fixes. First **SEC-02** (Super Admin pages need their own guard; a hotfix, as the site is live), then OPS-07 (restore test), DB-004/DB-005 (approval edge cases), and the rest by priority in `audit/MASTER_DEFECT_REGISTER.md`.
 - **Now (31 Oct 2026):** v1.39.0: workflow working draft saved on the server as you edit (D-241, Q-026 answered; never publishes) and one condition builder for workflow and form rules (D-242). **Owner:** publish v1.39.0: the migration adds one column (`workflow_versions.draft_revision`, runs on start; rollback in docs/ADMIN_CONFIGURATION_STUDIO_DEPLOYMENT.md). The Configuration Studio brief is complete.
 - **Now (31 Oct 2026):** v1.38.0: Workflow Designer (D-239: flow map, fold, drag, duplicate, remove with Undo, problems by level, browser copy of unsaved work, Test mode inputs) and the settings console (D-240: categories, search, one Save per category; AI one form). **Owner:** publish v1.38.0 (no migration); decide Q-026 (server-side workflow drafts). **Next:** the shared condition builder if wanted (changes saved JSON).
@@ -125,6 +133,20 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 - **Still open:** Q-015.
 
 ---
+
+## Session log — v1.40.0 (1 Nov 2026): audit remediation, planned before starting
+- [x] SEC-02 page guards + guard test; OPS-20 middleware session check (D-244) — 1 Nov 2026
+- [x] DB-004, DB-005 approval integrity; readiness warning (D-245) — 1 Nov 2026
+- [x] DB-008 to DB-014 messaging (D-243, helper agent) — 1 Nov 2026
+- [x] DB-001, DB-002, DB-003, DB-006, DB-007, SEC-01, FI-D02, FI-D03, FI-D06, UI-D01 to UI-D04, PF-R01 (D-246) — 1 Nov 2026
+- [x] OPS-01, OPS-02, OPS-03, OPS-04, OPS-05, OPS-06, OPS-09, OPS-11, OPS-18, OPS-19 (D-246) — 1 Nov 2026
+- [x] OPS-08 off-site copy built (S3-compatible, encrypted only) — 1 Nov 2026; [ ] owner enters the bucket and key
+- [x] FI-D01 weekly HOD report (D-247) — 1 Nov 2026
+- [x] OPS-12 to OPS-17, FI-D04, FI-D05 docs (helper agent) — 1 Nov 2026
+- [~] OPS-07 restore drill: tools ready (`npm run db:verify-backup`, checklist); needs the owner's production backup (1 Nov 2026)
+- [~] OPS-10 RPO/RTO and incident response: drafted; needs the owner's approval (1 Nov 2026)
+- [x] V181-A1 (resubmit skips readiness checks, AUD-11) and V181-A6 (failed template sync recorded OK, AUD-17): done 1 Nov 2026 (D-248)
+- [x] General pages brought up to date with every module (privacy, terms, User Guide, Help, tour, first-use checklist, landing page) and the STRICT general-pages rule added to CLAUDE.md: done 1 Nov 2026 (D-249)
 
 ## Session log — v1.37.0 (31 Oct 2026), planned before starting
 - [x] Form Designer: library, canvas, property tabs, reorder (drag, buttons, Alt+arrows), duplicate, remove asks first and can be undone, Undo/Redo, type change asks first (D-235) — 31 Oct 2026
@@ -609,12 +631,12 @@ Owner: a read-only, evidence-based audit of the whole application, then a roadma
 - [x] AUD1-05 Living files, commit and push (done 16 Oct 2026)
 
 Phase A of the roadmap, planned here and not started (details in `application-audit/09` and `11`):
-- [ ] V181-A1 Re-route on resubmit when routing values change; readiness checks on resubmit (AUD-02, AUD-11; needs Q-022)
-- [ ] V181-A2 CSV import enforces the contact-change rule (AUD-01)
-- [ ] V181-A3 Bootstrap seed stops re-granting Super Admin (AUD-03)
+- [x] V181-A1 Re-route on resubmit when routing values change; readiness checks on resubmit (AUD-02, AUD-11; needs Q-022) (checked 31 Oct 2026 against v1.39.0: the re-route half (AUD-02) was done in v1.9.0 under V190-06 / D-147, `resubmitRequest` restarts from the beginning when `routeChanged`; the readiness half (AUD-11) was then open; done 1 Nov 2026 under D-248: resubmit runs the duplicate, unique and budget checks inside the transaction and re-syncs the budget there)
+- [x] V181-A2 CSV import enforces the contact-change rule (AUD-01) (done 16 Oct 2026 as V1100-02, v1.10.0: `checkContactChange` in `server/import/plan.ts`; ticked 31 Oct 2026)
+- [x] V181-A3 Bootstrap seed stops re-granting Super Admin (AUD-03) (done 16 Oct 2026 as V1100-03, v1.10.0: `database/seeds/003_bootstrap_super_admin.sql` grants roles only when the user has none; ticked 31 Oct 2026)
 - [ ] V181-A4 Pin the DB session time zone to UTC; health reports it (AUD-04; after Q-020)
-- [ ] V181-A5 One person, one vote per step (AUD-05)
-- [ ] V181-A6 Outbox honours notify's result; job steps report soft failures (AUD-08, AUD-17)
+- [x] V181-A5 One person, one vote per step (AUD-05) (done 16 Oct 2026 as V190-06, v1.9.0, D-147: `server/engine/engine.ts`; ticked 31 Oct 2026)
+- [x] V181-A6 Outbox honours notify's result; job steps report soft failures (AUD-08, AUD-17) (checked 31 Oct 2026 against v1.39.0: the outbox half (AUD-08) was done in v1.9.0, `deliverOutbox` retries when nothing was recorded; the job-step half (AUD-17) is still open: `runAutomations` treats only a backup "FAILED" value as a failure, so a template sync that returns "failed: …" was recorded OK; done 1 Nov 2026 under D-248: `softFailure` records any FAILED / "failed…" step value as an error)
 - [ ] V181-A7 Page access bound to actions; fail closed on unknown pages; security page exempt (AUD-14)
 - [ ] V181-A8 Confirmations on high-impact admin actions; demo-data guard (AUD-25)
 - [ ] V181-A9 Bring KNOWN_ISSUES, SECURITY review, GO_LIVE checklist and DEPLOYMENT up to date (AUD-29)
@@ -693,7 +715,7 @@ Prompt: `docs/requirements/UNIFIED_MASTER_PROMPT.md`. Status register: `docs/IMP
 - [x] U-06 Role dashboards, KPI cards, SVG charts, FN6 department scorecards (done 10 Oct 2026, 8d9d7dc, 2ebac42; more chart types remain in the register)
 - [x] U-07 Reports catalogue, exports (CSV formula-safe, XLSX, PDF), analytics saved views, scheduled reports, alert rules (done 10 Oct 2026, c2bdc5d)
 - [x] U-08 FN9 config promotion, FN10 retention and legal hold (dry run), feature flags (done 10 Oct 2026, 2ebac42)
-- [ ] U-09 Remaining v1.6.0: watchers, calendar (neededBy), builder sections/preview, approval expiry (validityDays), bulk reassignment (not started; carried to v1.7.0, register Yet to do)
+- [x] U-09 Remaining v1.6.0: watchers, calendar (neededBy), builder sections/preview, approval expiry (validityDays), bulk reassignment (not started; carried to v1.7.0, register Yet to do) (done in v1.6.1–v1.7.0 under other items, checked 31 Oct 2026: watchers = collaborators (v1.6.1); calendar with `neededBy` (`server/approvals/calendar-rules.ts`); SECTION fields and field preview; `validityDays` with the `expiry` job; bulk reassignment in Admin → Workload (`bulkReassign`))
 - [x] U-10 Verification, required docs, living files, version bump, tag, push; final report (§6.1) (done 10 Oct 2026, v1.6.0)
 
 ## Session log — v1.6.0: master prompt (audit, UI modernisation, features, validation), 9 Oct 2026, planned before starting
@@ -706,7 +728,7 @@ Plan: `docs/IMPLEMENTATION_PLAN.md`. Acceptance criteria: `docs/FEATURE_ACCEPTAN
 - [x] V160-05 Phase 5: timeline, file preview, resubmission diff (request_revisions) (done 10 Oct 2026, 324ef40)
 - [~] V160-06 Phase 6 (recall, ask for info, consultation, delegation, links done 076a3bc; smart forms 491a012; budgets 8809552; expiry still open): conditional and calculated fields, line items, recall, ask for info, consultation, request delegation, links and follow-ups, budgets, expiry
 - [~] V160-07 Phase 7 (templates done 8809552; watchers, calendar, builder sections and preview open): templates, watchers, calendar, builder sections and preview
-- [ ] V160-08 Phase 8: version diff and restore, analytics, weekly HOD report (off), bulk reassignment
+- [~] V160-08 Phase 8: version diff and restore, analytics, weekly HOD report (off), bulk reassignment (checked 31 Oct 2026: version diff and restore done under U-04, analytics under U-05/U-06 and v1.12.0, bulk reassignment under U-09; the weekly HOD report was never built: no job step, setting or template, audit FI-D01)
 - [ ] V160-09 Phases 9–12: standardise routes, performance, security review, full tests, IMPLEMENTATION_REPORT, go-live checklist, living files, push
 
 ## Session log — v1.5.0: owner's development spec (9 Oct 2026), planned before starting

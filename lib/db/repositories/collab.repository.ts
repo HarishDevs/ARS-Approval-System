@@ -196,10 +196,6 @@ export async function listInbox(userId: number, limit: number, beforeId?: number
   return rows.map((row) => ({ id: row.id, title: row.title, message: row.message, deepLink: row.deep_link, createdAt: row.created_at, read: row.read_at !== null, category: row.category, bookmarked: row.bookmarked_at !== null, archived: row.archived_at !== null }));
 }
 
-export async function markAllRead(userId: number, db: Queryable = getDbPool()): Promise<number> {
-  return (await markAllReadReturningIds(userId, db)).length;
-}
-
 // WS / FB-03: which ones were marked, so "Undo" can put exactly those back.
 export async function markAllReadReturningIds(userId: number, db: Queryable = getDbPool()): Promise<number[]> {
   const [rows] = await db.query<(RowDataPacket & { id: number })[]>("SELECT id FROM notifications WHERE user_id = ? AND read_at IS NULL ORDER BY id DESC LIMIT 1000", [userId]);

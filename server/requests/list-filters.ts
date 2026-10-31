@@ -80,8 +80,6 @@ export const TABS: Record<ListBase, readonly TabDef[]> = {
     { key: "behalf", label: "For someone else", onBehalf: true },
   ],
 };
-// Kept for the lists that always had these (My requests, Collaborating).
-export const QUICK_TABS = STATUS_TABS;
 export type QuickTab = string;
 export const tabsFor = (base: ListBase) => TABS[base];
 

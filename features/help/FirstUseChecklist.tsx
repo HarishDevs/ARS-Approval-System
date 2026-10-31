@@ -9,8 +9,9 @@ const STEPS: { text: string; href: string; link: string }[] = [
   { text: "Raise a request: pick a type, fill in the form, add files. Your typing is saved as a draft as you go.", href: "/users/new", link: "Request templates" },
   { text: "Approve from Waiting for me: open a request and choose Approve, Ask for changes, Put on hold or Reject.", href: "/users/queue", link: "Waiting for me" },
   { text: "Going on leave? Name someone to approve for you.", href: "/users/delegation", link: "Out of office" },
-  { text: "Choose which messages also come by email or WhatsApp.", href: "/users/notifications/settings", link: "Notification settings" },
-  { text: "What do the statuses mean? Find anything with search.", href: "/users/help", link: "Help" },
+  { text: "Give a task: Create → Task. Type / in the description for the menu, @ to mention someone.", href: "/users/work/my-tasks", link: "My Tasks" },
+  { text: "Choose which messages also come by email or WhatsApp (Profile → Notifications). Everything is in your Inbox.", href: "/users/notifications/settings", link: "Notifications" },
+  { text: "What does each screen and status mean? Find anything with the search bar at the top.", href: "/users/help", link: "Help" },
 ];
 
 export function FirstUseChecklist() {
@@ -18,7 +19,7 @@ export function FirstUseChecklist() {
   return (
     <section aria-labelledby="first-use" className="card mb-6 border-primary-600/40 px-5 py-4">
       <h2 id="first-use" className="font-semibold">
-        New here? Five things to know
+        New here? Six things to know
       </h2>
       <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-label">
         {STEPS.map((step) => (

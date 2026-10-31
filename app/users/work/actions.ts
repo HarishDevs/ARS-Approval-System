@@ -85,7 +85,8 @@ export async function createProjectAction(_previous: ActionResult | null, formDa
 export async function updateProjectAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
   const projectId = id(text(formData, "projectId"));
   if (!projectId) return NOT_FOUND;
-  return run("updateProject", await actor(), (me) => work.updateProjectDetails(projectId, projectInput(formData), me));
+  const version = text(formData, "rowVersion");
+  return run("updateProject", await actor(), (me) => work.updateProjectDetails(projectId, { ...projectInput(formData), rowVersion: /^\d+$/.test(version) ? Number(version) : undefined }, me));
 }
 
 export async function memberAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {

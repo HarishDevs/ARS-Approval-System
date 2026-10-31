@@ -24,7 +24,10 @@ export async function retryNowAction(_previous: ActionResult | null, formData: F
     const report = await runDeliveryRetries({ onlyIds: [id] });
     await recordAudit({ actorUserId: session.user.id, action: "DELIVERY_RETRIED", entityType: "DELIVERY", entityId: id, sessionId: session.sessionId, metadata: { ...report } });
     revalidatePath("/superadmin/deliveries");
-    return report.sent ? { ok: true, message: "Sent." } : { ok: false, message: "Still failing. See the reason in the list." };
+    // D-243 (audit DB-014): a send that went out but couldn't be recorded isn't "still failing".
+    if (report.sent) return { ok: true, message: "Sent." };
+    if (report.unconfirmed) return { ok: false, message: "Sent, but the result couldn't be recorded. Check before retrying again." };
+    return { ok: false, message: "Still failing. See the reason in the list." };
   } catch (error) {
     logError("retryNowAction failed", error);
     return { ok: false, message: "Couldn't retry. Please try again." };

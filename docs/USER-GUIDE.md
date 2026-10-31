@@ -1,42 +1,100 @@
-# ARS Approvals: user guide (v1.5.0)
+# ARS-CMS: user guide (v1.40.0)
 
-**Address:** https://approval.arssteels.net. Sign in with your company Google account, or with your User ID and password and a WhatsApp code if IT set you up that way. Questions: IT (itadmin@arssteels.co.in).
+**Address:** https://approval.arssteels.net. Sign in with your company Google account, or with your User ID and password and a WhatsApp code, as IT set you up (or either way, if IT chose **Both**). Questions: IT (itadmin@arssteels.co.in).
 
-You are signed out after **2 hours without activity**, and 12 hours after signing in. Anything you were typing in a form is kept; sign in again and carry on.
+You are signed out after **30 minutes without activity** (IT can change this), and always 12 hours after signing in. Anything you were typing in a form is kept; sign in again and carry on.
+
+What's new in each release: `docs/RELEASE-NOTES.md`.
 
 ---
 
 ## 1. Everyone
 
-### Overview
-The first page (called "My work" before v1.7.1) after signing in. Tiles show what is waiting for you, what is overdue, your open requests and what was sent back. Below are, in order: **due soon / overdue**, **waiting for me**, **returned for changes**, **your drafts**, **your recent requests** and **finished lately**.
+### Getting around
+The space you work in is called **Central Management System**. There are two views; choose one in the account menu (your name, top right) → **View**:
+- **Compact** (the default): a sidebar on the left and a search bar at the top.
+- **Classic** (like Tally): no sidebar. After signing in you see a menu of the modules; each module has its own menu, summary boxes and its pages as tabs. Use the highlighted letters or the arrow keys and **Enter**; **Esc** goes back; **Ctrl+A** accepts a form. You can also choose a **text size** for the Classic view.
 
-### Collaborating, My requests and Waiting for me: filters
-- **Collaborating** lists the requests people added you to follow.
-- On all three lists, click a quick tab (Open, Sent back, Overdue…) or open **More filters**. You can combine search, status, type, people, step, due dates, files and date ranges.
-- Each filter in use shows as a chip; click it to remove it. **Clear all** resets.
-- **Save these filters** keeps the combination as a view; you can share it or make it your default.
+### The sidebar (Compact view)
+From the top:
+- **+ Create:** a new approval request, task, project or information (only what you can create).
+- **Home** and **Inbox**.
+- **My Approvals:** New request, My pending requests, My approved requests, Waiting for me, Approved by me, Collaborating, Request templates.
+- **Tasks & projects:** My Tasks, All projects, Periodic tasks, New project, Templates, Task with a type (form).
+- **Information:** Information inbox, Sent by me, New information.
+- **AI Assistant** (if Pico Bot is on for you), with your chats.
+- **Calendar** and **Analytics**.
 
-### My approved requests and Approved by me
-- **My approved requests** lists what you raised that was approved: when, by whom, and whether the approval is still valid.
-- **Approved by me** lists every request you approved a step of, including ones you approved for someone you cover, and where each one is now.
-- Both have quick tabs, **More filters**, removable filter chips and saved views, like My requests.
+Groups open and close like a dropdown; the group of the page you're on opens by itself and the app remembers the rest. **☰** folds the sidebar into a narrow row of icons. You only see the modules IT gave you.
 
-### Signing out after no activity
-- For safety you're signed out after a while without activity (30 minutes unless IT set otherwise).
-- Two minutes before, the app asks "Still there?": choose **Stay signed in**.
-- Typing, clicking or scrolling counts as activity.
+There is **no Search in the sidebar**: use the search bar at the top. On a phone, the bar at the bottom has Home, Waiting, New, Search and Profile.
 
-### The sidebar
-Overview at the top, then three groups that open and close like a dropdown: **My Approvals**, **Tasks** and **Information**. Click a group's name to show its pages. The group of the page you're on opens by itself, and the app remembers which groups you keep open. Search, Calendar and Analytics are below.
+### Search
+The search bar in the middle of the top bar finds requests, tasks, projects, people, information and pages. It keeps your recent and saved searches; **Filters** opens the full search. A request number works without dashes or zeros (e.g. "pur 2026 123"). **Ctrl+K** jumps to any page.
 
-### Tasks
-- **New task:** choose the type, fill in the title, who should do it, priority, due date and the type's fields, then **Create task**.
-- **Assigned to you:** **Start**, then **Complete** (the type may ask for a note or a file). You can also mark it **Blocked** with the reason, and add comments and files.
-- **Your lists:**
-  - **My tasks**: assigned to you;
-  - **Assigned by me**: tasks you created;
-  - **Team tasks**: tasks of the people who report to you.
+### Home
+The first page after signing in. Tiles show what is waiting for you, what is overdue, your open requests and what was sent back. Then, in order: **Due soon or overdue**, **Waiting for me**, **Returned to you for changes**, **Your drafts**, **Recently viewed**, **My recent requests** and **Finished in the last 30 days**, followed by your tasks, your team and your projects.
+
+### Inbox
+Everything the app has told you, in one place: **All**, **Approvals**, **Tasks**, **Information** and **System**, each with its unread count, and an unread-only switch.
+- **Bookmarks:** notices you will come back to.
+- **Archive:** notices that are done.
+- Opening a notice marks it read; opening the Inbox does not.
+- **Notification settings** (top right) opens Profile → Notifications.
+
+The **bell** at the top still shows your latest notices; **Read more** opens the Inbox.
+
+### My Approvals: the lists
+- **My pending requests:** what you raised that is still open.
+- **My approved requests:** what you raised that was approved: when, by whom, and whether the approval is still valid.
+- **Waiting for me:** what needs you (see section 2).
+- **Approved by me:** every request you approved a step of, including ones you approved for someone you cover, and where each one is now.
+- **Collaborating:** requests people added you to follow.
+
+Every list has the same toolbar: **Filter**, **Sort**, **Group**, **Options** (rows per page, save the view) and **Search**. Filters in use show as pills with **×**. A saved view can be shared or made your default.
+
+### Raise a request
+1. **Request templates** → pick the approval type IT set up (e.g. *Purchase & SCM Approval*).
+2. Fill in the form. Add files if needed: up to 5 at a time, 10 MB each (PDF, images, Word, Excel, PowerPoint, CSV, text).
+3. **Submit request.** You see its number (e.g. `PUR-2026-000123`), and the first approvers are told by email and WhatsApp.
+
+**Drafts:** what you type is saved as a draft as you go ("Draft saved 10:42"). If you leave, open it again from **Home → Your drafts**. **Discard draft** clears it. Files aren't kept in drafts, so add them again before submitting. Drafts are removed when you submit, or after 30 days.
+
+A line above the **level map** says who it's waiting for, since when, and what comes next. The level map shows every level, who approves, and where it is now. Levels that the amount (DoA) or a rule doesn't need show as *skipped*.
+
+### New request (your own approvers)
+For something without an approval type: **New request** → title, the fields IT has set up (Admin → Custom approval), files (optional) → pick who approves. It starts with your reporting manager as approver.
+- **in order:** add a level for each;
+- **at the same time:** use *Add parallel steps*;
+- **depending on something:** *Add a choice*, only if IT switched choices on.
+
+You can't approve your own request, but you can give yourself a **work task** (e.g. *Raise the PO* after approval). For **Specific people**, type a name and pick from the list. Approval steps list only people who can approve; a work task or an FYI can go to anyone. Options marked "(set by IT)" can't be changed. A request can be **raised again** with the same approvers.
+
+### When an approver asks for changes
+You get a message. Open the request, change the fields or add files, then **Resubmit**. It goes back to the level that asked, or to the first level if the approval type is set that way.
+When you resubmit, the same checks as a new request run again (duplicates, unique values, budget): fix what they point out before it goes back to the approvers.
+
+### Withdraw
+While it's open: **Withdraw** on the request. The approvers are told.
+
+### Comments and mentions
+Comments on a request can't be edited or removed. To tell someone in particular, type `@` and their User ID (or tap their name under the box). Only people who can already see the request are told; if someone couldn't be told, you see their User ID after posting.
+
+### Download a summary
+**Download PDF** at the top of a request: details, levels, who decided what, files and history.
+
+### Tasks & projects
+- **Draft task:** **+ Create → Task** opens a panel beside the page.
+  - The task is for **Myself** by default; choose **Others** and type part of a name to find people.
+  - The toolbar at the bottom: **More**, **Formatting** (bold, italic, strikethrough, lists), **Emoji**, **@mention** (people you mention become collaborators), **Attach a file or paste an image**, **Due date** and **Repeat**. If Pico Bot is on for you, **✨** writes the description from the task's name.
+  - Type **/** in the description for the command menu.
+  - Collaborators are set beside **Create task**.
+- **Task with a type (form):** for task types IT set up with their own fields.
+- **Working on a task:** **Start**, then **Complete** (the type may ask for a note or a file), or tick it on any list. You can mark it **Blocked** with the reason, and add comments, files, subtasks and followers.
+- **My Tasks:** Overdue, Recently assigned, Today, Upcoming, Later and your own sections, as a list, board or calendar.
+- **Projects:** private, department or everyone; List, Board, Calendar, Timeline and Overview. Start blank or from a template; **Share** a project or a task.
+- **Periodic tasks** repeat (daily, weekly, monthly, yearly, or some days after completion) and are marked ↻.
+- **Managers** see the tasks of everyone below them.
 - **Separate from approvals:** completing a task never approves a request.
 
 ### Information
@@ -45,64 +103,37 @@ Overview at the top, then three groups that open and close like a dropdown: **My
 - **Information inbox:** opening an item marks it read. If it asks for acknowledgement, press **Acknowledge**.
 - **Sent by me:** shows who read and who acknowledged.
 
-### The notification bell
-Click the bell to see your latest 10, and filter Approvals, Tasks or Information. Click one to open it. **Read more** opens all your notifications.
+### AI Assistant (Pico Bot)
+Only if IT turned it on for you. Ask questions about your approvals, tasks and, if allowed, the ARS Salesforce. Your chats are listed under it in the sidebar. Pico Bot gives real numbers or says it can't; it never approves or changes anything. Your question and the data needed to answer it go to the AI provider IT chose; check important figures, and don't paste passwords or other people's personal details (see the privacy policy and terms).
 
-### Raise a request
-1. **New request** → pick the approval type (e.g. *Purchase & SCM Approval*).
-2. Fill in the form. Add files if needed: up to 5 at a time, 10 MB each (PDF, images, Word, Excel, PowerPoint, CSV, text).
-3. **Submit request.** You see its number (e.g. `PUR-2026-000123`), and the first approvers are told by email and WhatsApp.
+### Calendar
+Month, week or day. Filter by Approvals, Tasks, Information, Needed by and Personal. **Add a personal entry** at the bottom; open an entry to edit or delete it. "From Google" marks entries from your Google Calendar.
 
-**Drafts:** what you type is saved as a draft as you go ("Draft saved 10:42"). If you leave, open it again from **Overview → Your drafts**. **Discard draft** clears it. Files aren't kept in drafts, so add them again before submitting. Drafts are removed when you submit, or after 30 days.
-
-A line above the **level map** says who it's waiting for, since when, and what comes next. The **level map** on the request shows every level, who approves, and where it is now. Levels that the amount (DoA) or a rule doesn't need show as *skipped*.
-
-### Custom approval
-For something without an approval type: **Custom approval** → title, the fields IT has set up (Admin → Custom approval), files (optional) → pick who approves:
-- **in order:** add a level for each;
-- **at the same time:** use *Add parallel steps*;
-- **depending on something:** use *Add a choice*.
-
-You can't approve your own request, but you can give yourself a **work task** (e.g. *Raise the PO* after approval).
-
-For **Specific people**, type a name and pick from the list. Approval steps list only people who can approve; a work task or an FYI can go to anyone. Options marked "(set by IT)" can't be changed.
-
-### When an approver asks for changes
-You get a message. Open the request, change the fields or add files, then **Resubmit**. It goes back to the level that asked, or to the first level if the approval type is set that way.
-
-### Withdraw
-While it's open: **Withdraw** on the request. The approvers are told.
-
-### Find a request
-**Search** in the sidebar finds requests you raised, approve(d) or cover for: by number, title or name, with filters for status, type and dates. **Save view** keeps a search for later; make one your default.
-
-### Comments and mentions
-Comments can't be edited or removed. To tell someone in particular, type `@` and their User ID (or tap their name under the box). Only people who can already see the request are told; if someone couldn't be told, you see their User ID after posting.
-
-### Download a summary
-**Download PDF** at the top of a request: details, levels, who decided what, files and history.
-
-### Help
-**Help** in the account menu (your name, top right): how-tos and what each status means. If something goes wrong, use **Copy details for IT** and paste it in your message to IT. It contains a reference IT can look up, and nothing private.
+### Analytics
+One page with tabs. You see only the dashboards for your modules and role.
+- **Choosing what you see:** whose numbers (your own, your team, your department, or everyone for IT), the period and the comparison, then **Apply**.
+- **"How these are worked out"** explains every number.
+- **A figure shown as "not available"** isn't recorded by the app yet; it is never guessed.
 
 ### Profile
-**Profile** in the sidebar (or the menu at the top right):
-- **Profile:** your details. Only IT can change them.
-- **Notifications:** everything sent to you; *Older →* for earlier ones. **Settings** lets you switch off email or WhatsApp for updates on your requests, reminders, comments and FYIs. Approvals waiting for you and security messages always come.
-- **Out of office:** name someone to approve for you between two dates (up to 90 days, India dates, whole days). They see what is already waiting and anything new. Both names are recorded on every decision. The page lists what is waiting for you now.
-- **Calendar (Profile tab, v1.11.0):** connect your own Google Calendar.
-  - Your approvals and tasks with due times, information marked for calendars and your personal entries then appear in Google, and your Google events appear in ARS. Changes follow both ways.
-  - **Sync now** runs it at once; **Review conflicts** asks you which version to keep when an entry changed in both places; **Disconnect** stops it (optionally removing the events ARS added).
-  - A calendar change never approves, completes or acknowledges anything: do that in ARS.
-- **Analytics (sidebar, v1.12.0):** one page with tabs.
-  - **The tabs:** Executive overview, Approvals, Tasks, Information, Employees, Departments, SLA & performance, Trends, Data quality.
-  - **Choosing what you see:** choose whose numbers (your own, your team, your department, or everyone for IT), the period and the comparison, then **Apply**. The choice stays when you change tab.
-  - **"How these are worked out"** explains every number.
-  - **A figure shown as "not available"** isn't recorded by the app yet; it is never guessed.
-- **Calendar (sidebar):** month, week or day. Filter by Approvals, Tasks, Information, Needed by and Personal. **Add a personal entry** at the bottom; open an entry to edit or delete it. "From Google" marks entries from your Google Calendar.
+Open it from the account menu (your name, top right). It has five tabs:
+- **Profile:** your details, photo and About me, and what IT holds about you (manager, head of department, team, access, modules). Only IT can change your details.
+- **Notifications:** choose, kind by kind, what reaches you in the app, by email and on WhatsApp; the morning summary; **Do not disturb** (pause, quiet hours, days off). Approvals waiting for you and security messages always come. The notices themselves are in the **Inbox**.
+- **Out of office:** name someone to approve for you between two dates (up to 90 days, India dates, whole days). They see what is already waiting and anything new. Both names are recorded on every decision.
 - **Sign-in & devices:** how you sign in, your last 10 sign-ins, and **Sign out everywhere** if a phone or laptop was lost.
+- **Calendar:** connect your own Google Calendar.
+  - Your approvals and tasks with due times, information marked for calendars and your personal entries then appear in Google, and your Google events appear in ARS. Changes follow both ways.
+  - **Sync now** runs it at once; **Review conflicts** asks which version to keep; **Disconnect** stops it (optionally removing the events ARS added).
+  - A calendar change never approves, completes or acknowledges anything: do that in ARS.
 
 If you get a *new sign-in* alert that wasn't you, use its **This wasn't me** link. Your account is signed out everywhere and locked until IT unlocks it.
+
+### Signing out after no activity
+- Two minutes before, the app asks "Still there?": choose **Stay signed in**.
+- Typing, clicking or scrolling counts as activity.
+
+### Help
+**Help** in the account menu: how-tos and what each status means. **Take the tour** shows the app again. If something goes wrong, use **Copy details for IT** and paste it in your message to IT. It contains a reference IT can look up, and nothing private.
 
 ---
 
@@ -111,7 +142,9 @@ If you get a *new sign-in* alert that wasn't you, use its **This wasn't me** lin
 - **Approve.**
 - **Ask for changes:** say what to change.
 - **Put on hold:** the time on hold doesn't count against your response time.
-- **Reject:** give a reason. Rejection is final.
+- **Reject:** give a reason. It asks before it rejects; rejection is final.
+
+After a decision, **Next waiting for you** opens the next one. Budget warnings show right above the decision buttons.
 
 **Work tasks** (marked *To do*) are things to do rather than approve, e.g. raise a PO. Do the work, write what you did, and press **Mark as done**, or **Ask for changes** if something is missing.
 
@@ -119,47 +152,51 @@ If you get a *new sign-in* alert that wasn't you, use its **This wasn't me** lin
 
 **Approve several at once:** on Waiting for me, tick the straightforward approvals (up to 25), press **Review**, check the list, add a comment if you like, and **Yes, approve**. Each one is approved on its own and you see the result for each. Work tasks and requests on hold aren't offered; open them one by one.
 
-If you don't act in time: you get a **due soon** heads-up first, then a reminder, then your manager and IT are told, and then your manager's manager.
+**Heads of department:** if IT switches it on, a short email every Monday morning sums up your department's requests from the past week (raised, approved, rejected, still waiting, overdue).
+
+If you don't act in time: you get a **due soon** heads-up first, then reminders and escalations as IT set them up (Admin → Reminders & escalations).
 
 ---
 
 ## 3. IT team (Admin space)
-- **Users:** add people, set department, designation, reporting manager, roles, sign-in method. Deactivate leavers: *Deactivate user* asks to confirm, then signs them out everywhere. *Hand over* moves someone's pending approvals to another person.
-- **Organisation:** departments (with HOD) and designations. Tick **Approver** on designations of Manager and above. Only approver designations can be chosen to approve.
-- **Groups:** approver groups (e.g. Finance team) for "any one of the group".
-- **Workflows:** each approval type has:
-  - **the form:** text, number, date, dropdown, person, or a department/designation list;
-  - **the levels:**
+Switch to it from the account menu → **Switch space**.
+- **Overview, Needs attention, Analytics, Reports, Insights, Dashboards, Workload:** how approvals are flowing; CSV downloads.
+- **Records:** every approval request, task and information item, with filters.
+- **Users & roles:** add people, set department, designation, reporting manager, roles, modules and sign-in method (Google, User ID and password, or Both). **Re-invite** emails their User ID and a set-password link. Deactivate leavers: *Deactivate user* asks to confirm, then signs them out everywhere. *Hand over* moves someone's pending approvals to another person.
+- **Departments:** departments (with HOD) and designations. Tick **Approver** on designations of Manager and above. Only approver designations can be chosen to approve.
+- **Approver groups:** e.g. Finance team, for "any one of the group".
+- **Approval types & workflows:** each approval type has:
+  - **the form**, built in the Form Designer: add fields from a library, drag them into order (or ↑/↓), duplicate, remove (with Undo). Fields can show "only when" a rule is true;
+  - **the levels**, built in the Workflow Designer: a map of the flow above the levels (click a box to open that level); levels fold, move (drag or Alt+↑/↓), duplicate and remove (with Undo). Each level says what needs fixing before you save.
     - one step, parallel steps, or a **DoA matrix** (amount bands, with the levels each band needs);
-    - **choices** (if / otherwise, up to 3 deep), whose rules can combine conditions with *all of these* or *any one of these*;
+    - **choices** (if / otherwise), whose rules use the same row as the form rules (field, test, value);
   - **who approves:** specific people, the requester's manager or manager's manager, a department HOD, a group, a role, a person picked on the form, **everyone with a designation** (optionally only in the requester's department), or, for work and FYI only, **the requester**;
-  - **the kind of step:** *Approval*, *Work task* (marked done) or *FYI* (tells people and moves on);
+  - **the kind of step:** *Approval*, *Work task* or *FYI*;
   - **per step:** a response time, and what to do if nobody resolves (stop and tell IT, or skip).
 
-  Save a draft, check it with **Test mode** (sample values show who would approve), then **Publish**. In *Details*, choose where a resubmitted request restarts, and untick *Open for new requests* to archive a type. **Remove approval type** works only if it was never used.
-- **Stuck requests:** if a level finds nobody (e.g. a department has no HOD), IT gets a message, and the request page shows **Stuck: needs IT**. You can:
-  - give the step to people;
-  - skip it;
-  - **Try again** after fixing the master data.
-
-  Your reason is shown on the timeline and to the requester.
-- **Calendar:** working days and holidays (used for due times).
+  Changes **save into the draft by themselves** a few seconds after you stop; **Save draft** saves at once. Nothing is live until you **Publish**. If a colleague saved or published in the meantime, you're told and nothing of theirs is overwritten. Check a draft with **Test mode** before publishing. Untick *Open for new requests* to archive a type. **Remove approval type** works only if it was never used.
+- **Custom approval:** the fields and options for **New request**.
+- **Approval authority (DoA)** and **Budgets.**
+- **Task set-up:** Task types and **Task settings** (department holidays, morning summary, repeating tasks). **Information types.**
+- **Reminders & escalations:** rules for pending approvals and open tasks, escalation levels and wording. **Test** sends nothing.
+- **AI Analytics** and **AI Rules** (what Pico Bot may answer).
+- **Working calendar:** working days and holidays (used for due times).
 - **Import data:** CSV templates for users, departments, designations, groups and holidays. Check first, then import.
-- **Dashboards / Insights:** utilisation, by department, by approver, by raiser; CSV download.
+- **Stuck requests:** if a level finds nobody (e.g. a department has no HOD), IT gets a message and the request shows **Stuck: needs IT**. You can give the step to people, skip it, or **Try again** after fixing the master data. Your reason is shown on the timeline and to the requester. Nobody can skip or route a step of their **own** request (ask another IT person), and a request is never approved when every approval level was skipped for want of an approver: it stops as Stuck instead.
 
 ---
 
 ## 4. Super Admin
-- **Providers & security:** Resend (email), CEOITBox (WhatsApp, including the webhook secret), sign-in security, idle sign-out, escalation levels.
-- **WhatsApp templates:** write, submit to Meta, sync status (26 messages).
+- **Providers & security:** the settings console: categories down the side, a search across every setting, a mark on anything not saved yet. Email (Resend), WhatsApp (CEOITBox, including the webhook secret), sign-in security, idle sign-out, escalation levels, the maintenance notice (General). Secret values are stored encrypted. **General → Weekly HOD report** switches the Monday email to heads of department on or off. **Backup:** off-site copies to an S3-compatible bucket (endpoint, region, bucket, keys); copies are always encrypted first.
+- **Integrations → Google Calendar:** set up the Google OAuth client, policies and modules; **Test configuration**, then **Enable**; watch health, failed syncs (**Retry**), connected people (**Revoke**, **Full resync**) and conflicts. Maintenance mode pauses syncing. Step by step: deployment guide, Part Q.
+- **AI settings, Salesforce Settings, AI Details** (data sources, reports, activity history).
+- **Page access:** hide pages, or make them view-only, for everyone, a department or a person (the most specific rule wins).
+- **WhatsApp templates:** write, submit to Meta, sync status.
 - **Requests:** every request; **Delete** with a reason (the people waiting are told).
-- **Message deliveries:** every email and WhatsApp, with retries, the job runner's last run and (with the webhook) DELIVERED and READ.
+- **Automation:** every background job and its last run. A step that partly failed (for example a template sync) shows as failed, not OK; an unconfirmed send shows *may have been sent*. See `docs/AUTOMATION_INVENTORY_AND_RECOVERY.md`.
+- **Retention & holds**, **Import data**, **Demo data.**
+- **Message deliveries:** every email and WhatsApp, with retries and (with the webhook) DELIVERED and READ.
 - **Audit log:** every change; **Download CSV** for a date range.
 - **Sign-in history:** every sign-in attempt, with the reason it failed.
-- **Overview → Backups:** the last backup; **Back up now**. How to restore: deployment guide, Part P.
-- **Integrations → Google Calendar (v1.11.0):**
-  - set up the Google OAuth client, policies and modules;
-  - **Test configuration**, then **Enable**;
-  - watch health, failed syncs (**Retry**), connected people (**Revoke**, **Full resync**) and conflicts;
-  - Maintenance mode pauses syncing.
-  - Step by step: deployment guide, Part Q.
+- **Break-glass:** every change made with the break-glass account is recorded and alerts the Super Admins and the holder.
+- **Overview → Backups:** the last backup (checksum, encrypted when `BACKUP_ENCRYPTION_KEY` is set, and the off-site copy's status); **Back up now**. `/api/health/deep` reports the database, the last backup's age and degraded checks for monitoring. How to restore: deployment guide, Part P, and `docs/BACKUP_RESTORE_AND_ROLLBACK.md`.

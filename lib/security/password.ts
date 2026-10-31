@@ -28,9 +28,13 @@ export async function hashPassword(password: string): Promise<string> {
 }
 
 export async function verifyPassword(password: string, stored: string | null): Promise<boolean> {
-  if (!stored) return false;
-  const parts = stored.split("$");
-  if (parts.length !== 6 || parts[0] !== "scrypt") return false;
+  // D-246 (audit SEC-01): no (or no usable) stored password costs the same
+  // time as a wrong one, so the answer's timing can't tell which User IDs exist.
+  const parts = stored?.split("$") ?? [];
+  if (parts.length !== 6 || parts[0] !== "scrypt") {
+    await burnPasswordCheck(password);
+    return false;
+  }
   const [, n, r, p, saltB64, hashB64] = parts as [string, string, string, string, string, string];
   const expected = Buffer.from(hashB64, "base64");
   const actual = await scryptAsync(password, Buffer.from(saltB64, "base64"), Number(n), Number(r), Number(p));

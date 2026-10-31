@@ -11,6 +11,7 @@ import { sendEmail, EmailSendError } from "@/server/integrations/resend/client";
 import { getEmailConfig, getWhatsAppConfig } from "@/server/settings/values";
 import { logError } from "@/lib/logging/logger";
 import { whatsappValue } from "@/server/notifications/templates";
+import { isRetryableCode, retryDelayMinutes } from "@/server/notifications/retry-policy";
 import { channelWanted, dndApplies, dndHolds, DND_SETTING, NO_DND, parseDnd, type DoNotDisturb } from "@/server/notifications/preferences";
 import { getUserSetting } from "@/lib/db/repositories/user-settings.repository";
 import { markNotificationRead } from "@/lib/db/repositories/notifications.repository";
@@ -39,7 +40,10 @@ export interface NotifyDeps {
   createDelivery: typeof createDelivery;
   findActiveTemplate: (eventType: string) => Promise<ActiveTemplate | null>;
   sendWhatsApp: (to: string, template: ActiveTemplate, variables: string[], reference: string) => Promise<{ waMessageId: string }>;
-  sendEmail: (to: string, subject: string, text: string) => Promise<{ id: string | null }>;
+  // D-243: idempotencyKey goes to Resend, so a repeat of this send isn't delivered twice.
+  sendEmail: (to: string, subject: string, text: string, idempotencyKey: string) => Promise<{ id: string | null }>;
+  // D-243: "Retries for a failed send"; 0 = no retry. Optional for tests (3).
+  retryLimit?: () => Promise<number>;
   // #6: the person's "off" choices (GROUP:CHANNEL). Optional for tests.
   loadOptOuts?: (userId: number) => Promise<Set<string>>;
   // D-231: Do not disturb, and the app alert switched off. Optional for tests.
@@ -48,7 +52,15 @@ export interface NotifyDeps {
   now?: () => Date;
 }
 
-const RETRY_DELAY_SECONDS = 120;
+// D-243: the settings default when the limit can't be read.
+const DEFAULT_RETRY_LIMIT = 3;
+
+export interface NotifyOptions {
+  // D-243: a stable reference for this message (e.g. "ars-o12" for outbox row
+  // 12). It names the WhatsApp userMessageId and the email idempotency key, so
+  // sending the same message again is recognised. Default: "ars-n<notification id>".
+  reference?: string;
+}
 
 const defaultDeps: NotifyDeps = {
   loadOptOuts: (userId) => loadOptOuts(userId),
@@ -58,6 +70,7 @@ const defaultDeps: NotifyDeps = {
   createNotification,
   createDelivery,
   findActiveTemplate: (eventType) => findActiveTemplate(eventType),
+  retryLimit: async () => (await getWhatsAppConfig()).retryLimit,
   async sendWhatsApp(to, template, variables, reference) {
     const config = await getWhatsAppConfig();
     const result = await sendTemplateMessage(
@@ -67,8 +80,8 @@ const defaultDeps: NotifyDeps = {
     );
     return { waMessageId: result.waMessageId };
   },
-  async sendEmail(to, subject, text) {
-    return sendEmail(await getEmailConfig(), { to, subject, text }, { fetch });
+  async sendEmail(to, subject, text, idempotencyKey) {
+    return sendEmail(await getEmailConfig(), { to, subject, text, idempotencyKey }, { fetch });
   },
 };
 
@@ -77,8 +90,14 @@ function failureCode(error: unknown): string {
   return "UNEXPECTED_ERROR";
 }
 
-function isRetryable(code: string): boolean {
-  return code === "CEOITBOX_REQUEST_FAILED" || code === "CEOITBOX_TIMEOUT" || code === "CEOITBOX_RATE_LIMITED" || code === "EMAIL_REQUEST_FAILED";
+// D-243: when the first failed send is tried again, in seconds; null = never
+// (not retryable, or the retry limit is 0). The first retry is retry 1 of the
+// limit, and a provider's Retry-After is respected.
+async function firstRetrySeconds(deps: NotifyDeps, code: string, error: unknown): Promise<number | null> {
+  if (!isRetryableCode(code)) return null;
+  const limit = deps.retryLimit ? await deps.retryLimit().catch(() => DEFAULT_RETRY_LIMIT) : DEFAULT_RETRY_LIMIT;
+  const minutes = retryDelayMinutes(code, error, 1, limit);
+  return minutes === null ? null : minutes * 60;
 }
 
 export type ChannelOutcome = { status: "SENT" | "FAILED" | "SKIPPED"; code?: string } | null;
@@ -92,7 +111,7 @@ export interface NotifySummary {
   whatsapp: ChannelOutcome;
 }
 
-export async function notifyWithDeps(input: NotifyInput, deps: NotifyDeps): Promise<NotifySummary> {
+export async function notifyWithDeps(input: NotifyInput, deps: NotifyDeps, options: NotifyOptions = {}): Promise<NotifySummary> {
   const summary: NotifySummary = { recorded: false, email: null, whatsapp: null };
   let notificationId: number;
   let recipient: NotificationRecipient | null;
@@ -135,12 +154,16 @@ export async function notifyWithDeps(input: NotifyInput, deps: NotifyDeps): Prom
     await safeDelivery(deps, { notificationId, channel: "WHATSAPP", provider: "CEOITBOX", status: "SKIPPED", failureCode: whatsappSkip });
   }
 
+  const reference = options.reference ?? `ars-n${notificationId}`;
+
   if (input.email && emailWanted) {
     // Sending and recording fail separately: a send that worked must never
     // be marked FAILED and retried (that would send it twice).
     let sent: { id: string | null } | null = null;
+    // D-243: kept with the delivery, so the retry runner sends with the same key.
+    const idempotencyKey = `${reference}-email`;
     try {
-      sent = await deps.sendEmail(recipient.email, input.email.subject, input.email.text);
+      sent = await deps.sendEmail(recipient.email, input.email.subject, input.email.text, idempotencyKey);
     } catch (error) {
       const code = failureCode(error);
       logError("notify: email failed", error, { eventType: input.eventType, userId: input.userId });
@@ -151,8 +174,8 @@ export async function notifyWithDeps(input: NotifyInput, deps: NotifyDeps): Prom
         provider: "RESEND",
         status: "FAILED",
         failureCode: code,
-        payload: { to: recipient.email, subject: input.email.subject, text: input.email.text },
-        retryInSeconds: isRetryable(code) ? RETRY_DELAY_SECONDS : null,
+        payload: { to: recipient.email, subject: input.email.subject, text: input.email.text, idempotencyKey },
+        retryInSeconds: await firstRetrySeconds(deps, code, error),
       });
     }
     if (sent) {
@@ -182,7 +205,7 @@ export async function notifyWithDeps(input: NotifyInput, deps: NotifyDeps): Prom
         let sent: { waMessageId: string } | null = null;
         try {
           // Our reference shows in CEOITBox reports (userMessageId).
-          sent = await deps.sendWhatsApp(recipient.whatsappNumber, template, variables, `ars-n${notificationId}`);
+          sent = await deps.sendWhatsApp(recipient.whatsappNumber, template, variables, reference);
         } catch (error) {
           const code = failureCode(error);
           logError("notify: WhatsApp failed", error, { eventType: input.eventType, userId: input.userId });
@@ -193,8 +216,9 @@ export async function notifyWithDeps(input: NotifyInput, deps: NotifyDeps): Prom
             provider: "CEOITBOX",
             status: "FAILED",
             failureCode: code,
-            payload: { to: recipient.whatsappNumber, templateId: template.id, variables },
-            retryInSeconds: isRetryable(code) ? RETRY_DELAY_SECONDS : null,
+            // D-243: the reference is kept, so a retry carries the same userMessageId.
+            payload: { to: recipient.whatsappNumber, templateId: template.id, variables, reference },
+            retryInSeconds: await firstRetrySeconds(deps, code, error),
           });
         }
         if (sent) {
@@ -215,6 +239,6 @@ async function safeDelivery(deps: NotifyDeps, input: Parameters<NotifyDeps["crea
   }
 }
 
-export function notify(input: NotifyInput): Promise<NotifySummary> {
-  return notifyWithDeps(input, defaultDeps);
+export function notify(input: NotifyInput, options: NotifyOptions = {}): Promise<NotifySummary> {
+  return notifyWithDeps(input, defaultDeps, options);
 }

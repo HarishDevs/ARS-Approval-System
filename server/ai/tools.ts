@@ -276,8 +276,6 @@ export function toolsFor(context: Pick<ToolContext, "person" | "dataModes">, inc
   return TOOLS.filter((tool) => allowedNow(tool, context) && (includeBusinessData || !tool.businessData));
 }
 
-export const TOOL_NAMES = TOOLS.map((tool) => tool.spec.name);
-
 // Runs one tool call from the model. Unknown tools, tools not allowed now and
 // bad arguments are refused with a message the model can read; refusals and
 // source failures never invent data.

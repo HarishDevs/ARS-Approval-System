@@ -3,12 +3,16 @@ import { DashboardFrame, DashboardTable, KpiTiles, MeasureBar, OutcomeBar } from
 import { dashboardPage, type DashboardSearch } from "@/features/admin/dashboards/page-data";
 import { loadDepartments } from "@/lib/db/repositories/dashboards.repository";
 import { approvalRate, hoursText } from "@/server/dashboards/filters";
+import { requireArea } from "@/server/authorization/guards";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
 export const metadata: Metadata = { title: "Departments dashboard" };
 
 // Department-wise raised (F-74): by the raiser's department.
 export default async function DepartmentsDashboardPage({ searchParams }: { searchParams: DashboardSearch }) {
+  // D-244 (audit SEC-02): the page checks its own area too (not only the
+  // screen it renders, nor the layout).
+  await requireArea("admin");
   const { today, filter, choices } = await dashboardPage(searchParams);
   const rows = await loadDepartments(filter);
   const total = rows.reduce((sum, row) => sum + row.raised, 0);

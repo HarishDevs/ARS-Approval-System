@@ -12,8 +12,10 @@ import { redactSecrets } from "@/server/ai/providers";
 //     who started it, valid 10 minutes, single use;
 //   - PKCE: S256 challenge; the verifier is stored encrypted until the callback;
 //   - tokens: AES-256-GCM encrypted at rest, never sent to the browser or logged;
-//   - an expired access token is refreshed with the refresh token; a refused
-//     refresh marks the connection NEEDS_REAUTH (Reconnect);
+//   - an expired access token is refreshed with the refresh token; a refresh
+//     Salesforce refuses for good marks the connection NEEDS_REAUTH
+//     (Reconnect). D-243: an outage (5xx, 429, network) keeps the connection
+//     and is tried again on the next use (refreshNeedsReauth);
 //   - Disconnect revokes the refresh token at Salesforce, then deletes it here.
 // Not yet tested against a real org: needs the owner's sandbox connected app.
 export const CALLBACK_PATH = "/api/integrations/salesforce/callback";
@@ -112,6 +114,15 @@ export class SalesforceUnavailable extends Error {
   }
 }
 
+// D-243 (audit DB-012): only a definitive refusal needs a person to
+// reconnect: invalid_grant (refresh token revoked or expired), or a 400/401
+// carrying an OAuth error (e.g. invalid_client, inactive_user). A 5xx, a
+// 429, or any other answer is temporary: the connection is kept.
+export function refreshNeedsReauth(status: number, error: string | undefined): boolean {
+  if (error === "invalid_grant") return true;
+  return (status === 400 || status === 401) && typeof error === "string" && error.length > 0;
+}
+
 async function refreshAccessToken(fetchImpl: typeof fetch): Promise<string> {
   const [connection, config] = await Promise.all([getConnection(), loadAppConfig()]);
   if (!connection.refreshTokenEnc || !config) {
@@ -127,9 +138,12 @@ async function refreshAccessToken(fetchImpl: typeof fetch): Promise<string> {
   const body = response ? ((await response.json().catch(() => ({}))) as { access_token?: string; error?: string; error_description?: string }) : {};
   if (!response) throw new SalesforceUnavailable("Couldn't reach Salesforce.");
   if (!response.ok || !body.access_token) {
-    // invalid_grant: the refresh token was revoked or expired; a person must reconnect.
-    await markNeedsReauth(`Refresh refused (${redactSecrets(body.error ?? `HTTP ${response.status}`)}).`);
-    throw new SalesforceUnavailable("Salesforce needs reconnecting.");
+    if (refreshNeedsReauth(response.status, body.error)) {
+      // invalid_grant: the refresh token was revoked or expired; a person must reconnect.
+      await markNeedsReauth(`Refresh refused (${redactSecrets(body.error ?? `HTTP ${response.status}`)}).`);
+      throw new SalesforceUnavailable("Salesforce needs reconnecting.");
+    }
+    throw new SalesforceUnavailable(`Salesforce couldn't refresh the session just now (HTTP ${response.status}); it will be tried again.`);
   }
   await saveAccessToken(encryptSecret(body.access_token));
   return body.access_token;

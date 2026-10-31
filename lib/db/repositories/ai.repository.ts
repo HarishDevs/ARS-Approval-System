@@ -299,11 +299,6 @@ export async function findProposal(id: number, db: Queryable = getDbPool(), lock
   return rows[0] ? toProposal(rows[0]) : null;
 }
 
-export async function listProposalsRequestedBy(userId: number, db: Queryable = getDbPool()): Promise<AiProposal[]> {
-  const [rows] = await db.query<RowDataPacket[]>(`${PROPOSAL_SELECT} WHERE p.requested_by = ? ORDER BY p.id DESC LIMIT 50`, [userId]);
-  return rows.map(toProposal);
-}
-
 // Waiting for this person's decision: they are the named approver, or (as an
 // IT Admin) no approver is named. Never their own proposals.
 export async function listProposalsToDecide(userId: number, isItAdmin: boolean, db: Queryable = getDbPool()): Promise<AiProposal[]> {

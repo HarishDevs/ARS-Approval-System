@@ -5,6 +5,7 @@ import { evaluateAreaAccess } from "@/server/authorization/policy";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import type { AppArea } from "@/types/auth";
 import { checkPageAccess, checkPageKey, requestPage } from "@/server/authorization/page-access";
+import { alertBreakGlassAction } from "@/server/auth/break-glass-alert";
 
 export class ForbiddenError extends Error {
   constructor() {
@@ -57,7 +58,11 @@ export async function requireApiArea(area: AppArea, options: { change?: boolean;
     const change = options.change ?? (await requestPage()).isAction;
     const byPath = await checkPageAccess(session.user, change);
     const page = byPath.ok && options.page ? await checkPageKey(session.user, options.page, change) : byPath;
-    if (page.ok) return session;
+    if (page.ok) {
+      // D-246 (audit FI-D06): what the break-glass account changes is audited and alerted (never blocks).
+      if (change && session.user.isBreakGlass) void alertBreakGlassAction(session, (await requestPage()).page?.key ?? area);
+      return session;
+    }
     await recordAudit({ actorUserId: session.user.id, action: "PAGE_ACCESS_DENIED", entityType: "PAGE", entityId: page.pageKey ?? "unknown", result: "FAILURE", sessionId: session.sessionId, metadata: { reason: page.reason, change } });
     throw new ForbiddenError();
   }

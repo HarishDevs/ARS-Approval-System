@@ -11,6 +11,7 @@ import { findStuckRequests } from "@/server/ops/stuck";
 import { listBudgets } from "@/lib/db/repositories/budgets.repository";
 import { financialYear } from "@/server/workflows/type-settings";
 import { sendEmail } from "@/server/integrations/resend/client";
+import { runResult, sendToEach } from "@/server/reports/send-each";
 import { getEmailConfig } from "@/server/settings/values";
 import { notify } from "@/server/notifications/notify";
 import { logError } from "@/lib/logging/logger";
@@ -216,7 +217,9 @@ export async function runDueSchedules(limit = 20): Promise<{ reportsSent: number
       const { audience, skippedPeople } = await scheduleAudience(row, person, ran, now);
       let totalBytes = 0;
       let attachedAll = true;
-      for (const entry of audience) {
+      // D-243 (audit DB-013): each recipient on their own; one failure is
+      // recorded and the others still get the report.
+      const outcome = await sendToEach(audience, async (entry) => {
         const meta = { title: entry.ran.report.name, scopeLabel: entry.ran.scope.label, periodLabel: entry.ran.report.usesPeriod ? `${entry.ran.filter.period.label} (${entry.ran.filter.period.from} to ${entry.ran.filter.period.to})` : null, generatedAt: now, generatedBy: `${person.name} (scheduled)` };
         const file = await exportReport(row.format, entry.ran.result, meta);
         const bytes = typeof file === "string" ? Buffer.byteLength(file) : file.byteLength;
@@ -233,15 +236,23 @@ export async function runDueSchedules(limit = 20): Promise<{ reportsSent: number
             subject: `ARS-CMS: ${entry.ran.report.name} (${describeSchedule(row).toLowerCase()})`,
             text: `${entry.ran.report.name}\n${meta.scopeLabel}${meta.periodLabel ? ` · ${meta.periodLabel}` : ""}\n${entry.ran.result.rows.length} row${entry.ran.result.rows.length === 1 ? "" : "s"}${entry.ran.result.truncated ? " (first rows only)" : ""}.\n\n${attach ? "The report is attached." : "The report is too large to attach."} Open it in the app:\n${link}\n\n${why} Manage schedules: ${base()}/admin/reports`,
             attachments: attach ? [{ filename: fileName(row.reportKey, row.format, now), content: file }] : undefined,
+            // D-243: one email per run and person, even if the send is repeated.
+            idempotencyKey: `ars-report-r${runId}-u${entry.person.id}`,
           },
           { fetch },
         );
+      }, (entry, error) => logError("scheduled report: a recipient failed", error, { scheduleId: row.id, userId: entry.person.id }));
+      const result = runResult(outcome, audience.length);
+      if (result.status === "FAILED") {
+        await finish("FAILED", result.note);
+        await db.query("UPDATE report_schedules SET active = FALSE WHERE id = ? AND failures >= 3", [row.id]).catch(() => undefined);
+        continue;
       }
       const rows = ran.result.rows.length;
       const bytes = totalBytes;
       const attach = attachedAll;
       const extra = audience.length > 1 || skippedPeople ? ` To ${audience.length} ${audience.length === 1 ? "person" : "people"}${skippedPeople ? `, ${skippedPeople} skipped (no access)` : ""}.` : "";
-      await finish("SENT", `${attach ? "Sent with the file attached." : "Sent with a link (file too large to attach)."}${extra}`, { rows, bytes });
+      await finish("SENT", `${attach ? "Sent with the file attached." : "Sent with a link (file too large to attach)."}${extra}${result.note}`, { rows, bytes });
     } catch (error) {
       logError("scheduled report failed", error, { scheduleId: row.id });
       await finish("FAILED", error instanceof Error ? `${error.name}: ${error.message}` : "Failed").catch(() => undefined);

@@ -105,5 +105,9 @@ export function routeChanged(definition: WorkflowDefinition, before: FormData, a
     ...definition.nodes.flatMap((node) => (node.kind === "APPROVAL" && node.skipIf ? [node.skipIf] : [])),
     ...definition.edges.flatMap((edge) => (edge.condition ? [edge.condition] : [])),
   ];
-  return conditions.some((condition) => evaluateCondition(condition, before) !== evaluateCondition(condition, after));
+  if (conditions.some((condition) => evaluateCondition(condition, before) !== evaluateCondition(condition, after))) return true;
+  // D-246 (audit DB-006): so does a different person in a field that chooses
+  // an approval step's approver (that step must be decided by the new person).
+  const approverFields = definition.nodes.flatMap((node) => (node.kind === "APPROVAL" ? node.approvers.flatMap((source) => (source.type === "FORM_FIELD_USER" ? [source.fieldKey] : [])) : []));
+  return approverFields.some((key) => String(before[key] ?? "") !== String(after[key] ?? ""));
 }

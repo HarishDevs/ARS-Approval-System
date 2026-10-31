@@ -1,6 +1,5 @@
 "use client";
 
-import { Search } from "lucide-react";
 import { useEffect, useId, useRef } from "react";
 import { Hint } from "@/features/ui/Hint";
 
@@ -53,25 +52,8 @@ export function Field({ label, hint, error, optional, children, className = "", 
   );
 }
 
-export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
-  return <input {...props} className={`field-input ${props["aria-invalid"] ? "field-invalid" : ""} ${props.className ?? ""}`} />;
-}
-
-export function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return <textarea rows={3} {...props} className={`field-input h-auto py-2.5 ${props["aria-invalid"] ? "field-invalid" : ""} ${props.className ?? ""}`} />;
-}
-
 export function Select(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
   return <select {...props} className={`field-input ${props["aria-invalid"] ? "field-invalid" : ""} ${props.className ?? ""}`} />;
-}
-
-export function SearchInput({ label, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { label: string }) {
-  return (
-    <div className="relative">
-      <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-faint" />
-      <input type="search" aria-label={label} {...props} className={`field-input pl-9 ${props.className ?? ""}`} />
-    </div>
-  );
 }
 
 export function Checkbox({ label, hint, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { label: React.ReactNode; hint?: React.ReactNode }) {

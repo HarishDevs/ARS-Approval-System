@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { forwardRef } from "react";
 import { Spinner } from "@/features/ui/Spinner";
 
@@ -55,13 +54,3 @@ export const Button = forwardRef<HTMLButtonElement, Props>(function Button(
     </button>
   );
 });
-
-// A link that looks like a button.
-export function ButtonLink({ href, variant = "secondary", size = "md", icon, className = "", children, ...rest }: { href: string; variant?: ButtonVariant; size?: ButtonSize; icon?: React.ReactNode; className?: string; children: React.ReactNode } & Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, "href">) {
-  return (
-    <Link href={href} className={buttonClass(variant, size, className)} {...rest}>
-      {icon}
-      {children}
-    </Link>
-  );
-}

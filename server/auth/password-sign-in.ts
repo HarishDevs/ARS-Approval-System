@@ -49,7 +49,8 @@ export const defaultOtpDeps: OtpDeps = {
     const variables = template.variableKeys.map((key) => (key === "otp_code" ? code : ""));
     await sendTemplateMessage(
       await getWhatsAppConfig(),
-      { to, templateName: template.providerName, language: template.language, templateVariables: variables },
+      // D-243: sign-in codes may use the WhatsApp slots kept back from bulk sends.
+      { to, templateName: template.providerName, language: template.language, templateVariables: variables, priority: "OTP" },
       { fetch, tryConsumeRateLimit: tryConsumeWhatsAppRateLimit },
     );
   },

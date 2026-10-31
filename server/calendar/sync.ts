@@ -1,4 +1,5 @@
 import "server-only";
+import { calendarKindAllowed } from "@/server/modules/modules";
 import crypto from "node:crypto";
 import { decryptSecret, encryptSecret } from "@/lib/security/encryption";
 import { getEnv } from "@/config/environment";
@@ -140,7 +141,17 @@ export async function desiredEvents(connection: ConnectionRow, config: CalendarC
   const user = await findUserById(connection.userId);
   if (!user || !user.active) return [];
   const today = indiaDate(new Date());
-  const sources = await businessSources({ id: user.id, roles: user.roles }, { from: addDays(today, -7), to: addDays(today, 365) }, config.modules);
+  // D-246 (audit FI-D03, AI-04b): only the kinds of entry this person's
+  // modules allow, as on the in-app calendar (calendarKindAllowed).
+  const allowed = (kind: Parameters<typeof calendarKindAllowed>[1]) => calendarKindAllowed({ roles: user.roles, modules: user.modules }, kind);
+  const switches = {
+    ...config.modules,
+    approvalDue: config.modules.approvalDue && allowed("approval"),
+    neededBy: config.modules.neededBy && allowed("needed"),
+    taskDue: config.modules.taskDue && allowed("task"),
+    infoEvents: config.modules.infoEvents && allowed("info"),
+  };
+  const sources = await businessSources({ id: user.id, roles: user.roles }, { from: addDays(today, -7), to: addDays(today, 365) }, switches);
   const out = sources.map((source) => businessEvent(source, config, baseUrl));
   if (config.modules.personal) {
     for (const item of await listItemsForUser(connection.userId)) {

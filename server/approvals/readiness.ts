@@ -62,6 +62,9 @@ export interface ReadinessInput {
   // amendments) aren't duplicates of it, and only the change in amount
   // counts against the budget.
   amendment?: { originalId: number; basePaise: number | null };
+  // D-248 (V181-A1, AUD-11): a resubmit is checked like a submit, leaving the
+  // request itself out of the duplicate, unique and budget checks.
+  excludeRequestId?: number;
 }
 
 const isAdmin = (roles: readonly string[]) => roles.includes("IT_ADMIN") || roles.includes("SUPER_ADMIN");
@@ -118,10 +121,17 @@ export async function assessReadiness(
     const route = simulate(input.version.definition, { requesterId: input.requester.id, formData: parsed.data, now: new Date().toISOString() }, toDirectory(snapshot));
     const labels = new Map(input.version.definition.nodes.map((node) => [node.id, node.label]));
     for (const blocked of route.blocked) items.push({ code: "ROUTING", severity: "WARNING", message: `Nobody is set up to approve "${labels.get(blocked.nodeId) ?? blocked.nodeId}" for these details. You can still submit; IT will be asked to choose someone.` });
+    // D-245 (audit DB-005): a step skipped for having nobody is said too.
+    for (const skipped of route.skipped.filter((item) => item.reason === "NO_APPROVER")) {
+      items.push({ code: "ROUTING", severity: "WARNING", message: `Nobody is set up to approve "${labels.get(skipped.nodeId) ?? skipped.nodeId}", so that step will be skipped.` });
+    }
   }
 
   // 3. Possible duplicates: the type's matching fields, in its window.
   const amendmentOf = input.amendment?.originalId ?? null;
+  const self = input.excludeRequestId ?? null;
+  const selfSql = self ? " AND r.id <> ?" : "";
+  const selfParams = self ? [self] : [];
   if (parsed.ok && !input.isCustom) {
     const keys = settings.duplicates.fields.filter((key) => input.version.form.some((field) => field.key === key));
     const values = keys.map((key) => parsed.data[key]);
@@ -136,9 +146,9 @@ export async function assessReadiness(
       const params = keys.flatMap((key, index) => [`$.${key}`, String(values[index])]);
       const [rows] = await db.query<(RowDataPacket & { id: number; request_no: string; status: string; requester_id: number })[]>(
         `SELECT r.id, r.request_no, r.status, r.requester_id FROM approval_requests r JOIN workflow_versions v ON v.id = r.workflow_version_id
-         WHERE v.workflow_id = ? AND r.deleted_at IS NULL AND r.status IN (?) AND r.submitted_at > DATE_SUB(CURRENT_TIMESTAMP, INTERVAL ? DAY) AND ${where}${scopeSql}${amendmentOf ? " AND r.id <> ? AND NOT EXISTS (SELECT 1 FROM request_amendments ra WHERE ra.amendment_id = r.id AND ra.original_id = ?)" : ""}
+         WHERE v.workflow_id = ? AND r.deleted_at IS NULL AND r.status IN (?) AND r.submitted_at > DATE_SUB(CURRENT_TIMESTAMP, INTERVAL ? DAY) AND ${where}${scopeSql}${amendmentOf ? " AND r.id <> ? AND NOT EXISTS (SELECT 1 FROM request_amendments ra WHERE ra.amendment_id = r.id AND ra.original_id = ?)" : ""}${selfSql}
          ORDER BY r.id DESC LIMIT 5${latest}`,
-        [input.workflow.id, OPEN_OR_APPROVED, settings.duplicates.windowDays, ...params, ...scopeParams, ...(amendmentOf ? [amendmentOf, amendmentOf] : [])],
+        [input.workflow.id, OPEN_OR_APPROVED, settings.duplicates.windowDays, ...params, ...scopeParams, ...(amendmentOf ? [amendmentOf, amendmentOf] : []), ...selfParams],
       );
       if (rows.length > 0) {
         const visible = await visibleIds(rows.map((row) => row.id), input.requester, db);
@@ -164,9 +174,9 @@ export async function assessReadiness(
       if (value === undefined || value === null || value === "") continue;
       const [rows] = await db.query<(RowDataPacket & { id: number; request_no: string; status: string })[]>(
         `SELECT r.id, r.request_no, r.status FROM approval_requests r JOIN workflow_versions v ON v.id = r.workflow_version_id
-         WHERE v.workflow_id = ? AND r.deleted_at IS NULL AND r.status IN (?) AND LOWER(TRIM(JSON_UNQUOTE(JSON_EXTRACT(r.form_data_json, ?)))) = LOWER(TRIM(?))${amendmentOf ? " AND r.id <> ? AND NOT EXISTS (SELECT 1 FROM request_amendments ra WHERE ra.amendment_id = r.id AND ra.original_id = ?)" : ""}
+         WHERE v.workflow_id = ? AND r.deleted_at IS NULL AND r.status IN (?) AND LOWER(TRIM(JSON_UNQUOTE(JSON_EXTRACT(r.form_data_json, ?)))) = LOWER(TRIM(?))${amendmentOf ? " AND r.id <> ? AND NOT EXISTS (SELECT 1 FROM request_amendments ra WHERE ra.amendment_id = r.id AND ra.original_id = ?)" : ""}${selfSql}
          ORDER BY r.id DESC LIMIT 3${latest}`,
-        [input.workflow.id, OPEN_OR_APPROVED, `$.${key}`, String(value), ...(amendmentOf ? [amendmentOf, amendmentOf] : [])],
+        [input.workflow.id, OPEN_OR_APPROVED, `$.${key}`, String(value), ...(amendmentOf ? [amendmentOf, amendmentOf] : []), ...selfParams],
       );
       if (!rows.length) continue;
       const visible = await visibleIds(rows.map((row) => row.id), input.requester, db);
@@ -181,7 +191,7 @@ export async function assessReadiness(
     }
   }
   // An amendment repeats the original's title on purpose.
-  if (title && !input.amendment) {
+  if (title && !input.amendment && !self) {
     const recent = await findRecentDuplicate({ requesterId: input.requester.id, title, workflowId: input.isCustom ? null : input.workflow.id }, db);
     if (recent) items.push({ code: "RECENT_DUPLICATE", severity: "WARNING", message: `You raised “${title}” as ${recent} a few minutes ago. If this is a separate request, confirm and submit again.` });
   }
@@ -203,8 +213,8 @@ export async function assessReadiness(
       );
       const [[committed]] = await db.query<RowDataPacket[]>(
         `SELECT COALESCE(SUM(CASE WHEN c.request_paise < 0 AND r.status <> 'APPROVED' THEN 0 ELSE c.request_paise END), 0) AS paise FROM request_submission_checks c JOIN approval_requests r ON r.id = c.request_id
-         WHERE c.budget_department = ? AND c.budget_fy = ? AND r.deleted_at IS NULL AND r.status IN (?)${latest}`,
-        [departmentId, fy, OPEN_OR_APPROVED],
+         WHERE c.budget_department = ? AND c.budget_fy = ? AND r.deleted_at IS NULL AND r.status IN (?)${selfSql}${latest}`,
+        [departmentId, fy, OPEN_OR_APPROVED, ...selfParams],
       );
       // An amendment counts only its change against the effective amount.
       const requestPaise = Math.round(amount * 100) - (input.amendment?.basePaise ?? 0);

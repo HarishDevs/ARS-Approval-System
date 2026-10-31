@@ -1,6 +1,6 @@
 {
   "name": "ars-approval-system",
-  "version": "1.39.0",
+  "version": "1.40.0",
   "private": true,
   "description": "ARS Approval Platform — multi-level approvals in any custom manner",
   "engines": {
@@ -25,7 +25,6 @@
     "db:verify-backup": "node scripts/database/verify-backup.js"
   },
   "dependencies": {
-    "clsx": "2.1.1",
     "firebase": "11.1.0",
     "firebase-admin": "14.5.0",
     "lucide-react": "0.469.0",
@@ -35,7 +34,6 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "server-only": "0.0.1",
-    "tailwind-merge": "2.6.0",
     "typescript": "5.7.3",
     "zod": "4.6.7"
   },

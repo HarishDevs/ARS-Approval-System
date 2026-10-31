@@ -58,6 +58,9 @@ function splitStatements(sql) {
   return statements;
 }
 
+const MIGRATION_LOCK = "ars_migrate";
+const MIGRATION_LOCK_WAIT_SECONDS = 120;
+
 async function main() {
   const connection = await connect();
   try {
@@ -76,6 +79,12 @@ async function main() {
         statements_done INT NOT NULL,
         updated_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+
+    // D-246 (audit DB-002): one runner at a time. Two app processes starting
+    // together (a redeploy, Passenger workers) wait for each other; the second
+    // then reads the ledger after the first has finished and finds nothing to do.
+    const [locked] = await connection.query("SELECT GET_LOCK(?, ?) AS got", [MIGRATION_LOCK, MIGRATION_LOCK_WAIT_SECONDS]);
+    if (Number(locked[0]?.got) !== 1) throw new Error(`Another process is applying migrations (waited ${MIGRATION_LOCK_WAIT_SECONDS} s for the lock). Start again when it has finished.`);
 
     const [rows] = await connection.query("SELECT filename FROM schema_migrations");
     const applied = new Set(rows.map((row) => row.filename));
@@ -126,6 +135,7 @@ async function main() {
     }
     console.log(`Done. Applied ${pending.length} migration(s).`);
   } finally {
+    await connection.query("SELECT RELEASE_LOCK(?)", [MIGRATION_LOCK]).catch(() => undefined);
     await connection.end();
   }
 }

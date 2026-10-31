@@ -5,6 +5,7 @@ import { dashboardPage, type DashboardSearch } from "@/features/admin/dashboards
 import { loadRaisers, type RaiserRow } from "@/lib/db/repositories/dashboards.repository";
 import { approvalRate, hoursText } from "@/server/dashboards/filters";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
+import { requireArea } from "@/server/authorization/guards";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
 export const metadata: Metadata = { title: "Raisers dashboard" };
@@ -19,6 +20,9 @@ const rateText = (approved: number, rejected: number) => {
 // Raiser-wise by department (F-74): each raiser under their department, with
 // a subtotal row per department.
 export default async function RaisersDashboardPage({ searchParams }: { searchParams: DashboardSearch }) {
+  // D-244 (audit SEC-02): the page checks its own area too (not only the
+  // screen it renders, nor the layout).
+  await requireArea("admin");
   const { today, filter, choices } = await dashboardPage(searchParams);
   const rows = await loadRaisers(filter);
   const groups = new Map<string, RaiserRow[]>();

@@ -300,11 +300,6 @@ export async function updateLink(id: number, patch: Partial<Record<keyof typeof 
   await db.query<ResultSetHeader>(`UPDATE gcal_links SET ${keys.map((key) => `${LINK_COLUMNS[key]} = ?`).join(", ")} WHERE id = ?`, [...keys.map((key) => patch[key] ?? null), id]);
 }
 
-export async function deleteLink(id: number, db: Queryable = getDbPool()): Promise<void> {
-  await db.query("DELETE FROM gcal_conflicts WHERE link_id = ?", [id]);
-  await db.query("DELETE FROM gcal_links WHERE id = ?", [id]);
-}
-
 // For the calendar page: sync state of the person's linked records.
 export async function linkStates(userId: number, db: Queryable = getDbPool()): Promise<Map<string, { state: LinkRow["state"]; synced: boolean; error: string | null; conflict: boolean }>> {
   const [rows] = await db.query<RowDataPacket[]>(

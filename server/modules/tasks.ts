@@ -6,11 +6,11 @@ import { findRequest, findRequestByNumber, nextRequestNumber } from "@/lib/db/re
 import { loadFieldLookups } from "@/lib/db/repositories/lookups.repository";
 import { listActiveUserOptions } from "@/lib/db/repositories/admin-users.repository";
 import { findLiveType, versionWithType } from "@/lib/db/repositories/module-types.repository";
-import { appendTaskEvent, findTask, findTaskBySubmissionKey, insertTask, personFacts, updateTask, type TaskRecord } from "@/lib/db/repositories/tasks.repository";
+import { appendTaskEvent, findTask, findTaskBySubmissionKey, insertTask, personFacts, updateTask } from "@/lib/db/repositories/tasks.repository";
 import { countEvidence, discardStaged, insertRecordFiles, RecordFileError, type StagedFile } from "@/server/modules/files";
 import { taskMessages } from "@/server/modules/messages";
 import { indiaLocalToUtc, mayCreate, parseTaskSettings, TASK_PRIORITIES, type TaskPriority, type TaskSettings } from "@/server/modules/settings";
-import { allowedTaskActions, canSeeTask, completionProblems, mayAssignTo, NEXT_STATUS, needsReason, type TaskAction, type TaskViewer } from "@/server/modules/task-rules";
+import { allowedTaskActions, canSeeTask, completionProblems, mayAssignTo, NEXT_STATUS, needsReason, type TaskAction } from "@/server/modules/task-rules";
 import { parseFormSubmission, type FormField } from "@/server/forms/fields";
 import { canSeeRequest } from "@/server/attachments/service";
 import { deliverOutbox } from "@/server/approvals/service";
@@ -49,10 +49,6 @@ export interface TaskActor {
 export type TaskResult<T = undefined> = { ok: true; value: T } | { ok: false; message: string; fieldErrors?: Record<string, string> };
 
 export const isAdminActor = (actor: { roles: readonly string[] }) => actor.roles.includes("IT_ADMIN") || actor.roles.includes("SUPER_ADMIN");
-
-export function viewerFor(task: Pick<TaskRecord, "assigneeManagerId">, actor: { id: number; roles: readonly string[] }): TaskViewer {
-  return { id: actor.id, isAdmin: isAdminActor(actor), managesAssignee: task.assigneeManagerId === actor.id };
-}
 
 // The task and its settings, if this person may see it (else null: a 404).
 // D-215: projects, followers and the top task count too (taskViewerFor); a

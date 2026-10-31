@@ -48,7 +48,7 @@ export function classicModules(items: readonly NavItem[]): ClassicModule[] {
   const modules: ClassicModule[] = [];
   for (const item of items) {
     if (item.href === GATEWAY) {
-      modules.push({ key: "overview", label: "Overview dashboard", hotkey: "", href: `${GATEWAY}?view=overview`, pages: [] });
+      modules.push({ key: "overview", label: "Home dashboard", hotkey: "", href: `${GATEWAY}?view=overview`, pages: [] });
       continue;
     }
     const section = item.section ? (MODULE_NAME[item.section] ?? { key: slug(item.section), label: item.section }) : null;

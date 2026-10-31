@@ -7,6 +7,7 @@ import { sourceDatasetCounts } from "@/lib/db/repositories/ai-data.repository";
 import { SALESFORCE_KEY } from "@/server/ai/connectors/salesforce";
 import { getConnection } from "@/lib/db/repositories/salesforce.repository";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
+import { requireArea } from "@/server/authorization/guards";
 
 export const metadata: Metadata = { title: "Data Sources" };
 export const dynamic = "force-dynamic";
@@ -14,6 +15,10 @@ export const dynamic = "force-dynamic";
 // D-169: where the AI's data comes from, its status and how fresh it is.
 // Credentials are never shown here. D-180: Super Admin only (moved from /users/ai).
 export default async function AiDataSourcesPage() {
+  // D-244 (audit SEC-02): every page checks its own area. The layout's
+  // check alone isn't enough: a client-navigation request (RSC) renders the
+  // page without waiting for the layout.
+  await requireArea("superadmin");
   const [connection, sfRuns, sfLast, sfCounts] = await Promise.all([
     getConnection(),
     latestRuns(SALESFORCE_KEY),

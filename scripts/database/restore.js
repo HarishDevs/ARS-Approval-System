@@ -3,11 +3,12 @@
 // database named by DB_NAME. Every table in the file is dropped and
 // re-created, so you must name the database on the command line to confirm.
 // Usage:
-//   node scripts/database/restore.js <ars-db-YYYYMMDD-HHMMSS.sql.gz> --confirm-database=<DB_NAME>
+//   node scripts/database/restore.js <ars-db-YYYYMMDD-HHMMSS.sql.gz[.enc]> --confirm-database=<DB_NAME>
+// An encrypted backup needs BACKUP_ENCRYPTION_KEY (the key it was made with).
 // Restore into a NEW, empty database first and check it (DEPLOYMENT Part P).
 const fs = require("node:fs");
-const zlib = require("node:zlib");
 const { connect } = require("./env");
+const { readBackup } = require("./backup-file");
 
 // Statements end with ";" at the end of a line; "DELIMITER $$" blocks
 // (triggers) end with "$$". Quotes inside values never end a statement
@@ -41,8 +42,8 @@ async function main() {
   if (!confirm || confirm !== process.env.DB_NAME) {
     throw new Error(`This replaces every table in "${process.env.DB_NAME}". Run again with --confirm-database=${process.env.DB_NAME} to confirm.`);
   }
-  const raw = fs.readFileSync(file);
-  const sql = (file.endsWith(".gz") ? zlib.gunzipSync(raw) : raw).toString("utf8");
+  // D-246 (audit OPS-09): the .sha256 is checked, and an encrypted (.enc) file decrypted.
+  const sql = readBackup(file);
   const statements = splitDump(sql);
   const connection = await connect();
   try {

@@ -132,7 +132,7 @@ export function ClassicBar({ modules }: { modules: ClassicModule[] }) {
   const pathname = usePathname();
   const search = useSearchParams();
   const router = useRouter();
-  // D-214: the Overview dashboard (/users?view=overview) is a page of its own, with a way back.
+  // D-214: the Home dashboard (/users?view=overview; "Overview" until D-249) is a page of its own, with a way back.
   const overview = pathname === GATEWAY && search.get("view") === "overview";
   const atGateway = pathname === GATEWAY && !overview;
   const located = locate(modules, pathname);

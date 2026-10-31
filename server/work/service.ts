@@ -75,6 +75,7 @@ export interface ProjectInput {
   startOn: string;
   dueOn: string;
   sections?: string; // D-220: the new-project steps' sections, one per line
+  rowVersion?: number; // D-246 (audit DB-001): the version the editor saw
 }
 function checkProjectInput(input: ProjectInput): { errors: Record<string, string>; value: Omit<repo.NewProject, "ownerId"> } {
   const errors: Record<string, string> = {};
@@ -130,16 +131,22 @@ export async function updateProjectDetails(projectId: number, input: ProjectInpu
   if (!found.can.manage) return fail("Only the project's owners can change its details and privacy.");
   const { errors, value } = checkProjectInput(input);
   if (Object.keys(errors).length) return fail("Check the highlighted fields.", errors);
-  await withTransaction(async (connection) => {
-    await repo.updateProject(
+  // D-246 (audit DB-001): a save from an older version is refused, as for tasks.
+  if (input.rowVersion !== undefined && input.rowVersion !== found.project.rowVersion) return fail("Someone changed this project while you were looking. Reload and try again.");
+  const saved = await withTransaction(async (connection) => {
+    const changed = await repo.updateProject(
       projectId,
       { name: value.name, description: value.description, color: value.color, department_id: value.departmentId, privacy: value.privacy, default_access_role: value.defaultAccessRole, default_view: value.defaultView, start_on: value.startOn, due_on: value.dueOn },
       connection,
+      input.rowVersion,
     );
+    if (!changed) return false;
     if (value.privacy !== found.project.privacy) await repo.appendProjectEvent(projectId, actor.id, "PRIVACY", `${found.project.privacy} → ${value.privacy}`, connection);
     await repo.appendProjectEvent(projectId, actor.id, "DETAILS", null, connection);
     await recordAudit({ actorUserId: actor.id, action: "PROJECT_UPDATED", entityType: "PROJECT", entityId: projectId, sessionId: actor.sessionId, ipAddress: actor.ipAddress ?? null, metadata: { privacy: value.privacy } }, connection);
+    return true;
   });
+  if (!saved) return fail("Someone changed this project while you were looking. Reload and try again.");
   return { ok: true, value: undefined, message: "Saved." };
 }
 
@@ -868,23 +875,33 @@ export async function setPermissions(projectId: number, raw: unknown, actor: Tas
 }
 
 // D-222: an ad hoc task for several people: one copy each, linked as a group.
-export async function quickAddForMany(input: QuickTaskInput, assigneeIds: readonly number[], actor: TaskActor): Promise<WorkResult<{ id: number; taskNo: string; ids: number[] }>> {
+export async function quickAddForMany(input: QuickTaskInput, assigneeIds: readonly number[], actor: TaskActor): Promise<WorkResult<{ id: number; taskNo: string; ids: number[]; failed?: number }>> {
   const people = [...new Set(assigneeIds)].slice(0, 50);
   if (people.length < 2) {
     const one = await quickAddTask({ ...input, assigneeId: people[0] ?? input.assigneeId }, actor);
     return one.ok ? { ok: true, value: { ...one.value, ids: [one.value.id] } } : one;
   }
+  // D-246 (audit DB-007): one person's problem doesn't stop the others, and
+  // the answer names who was missed (the page shows it as a partial success).
   const ids: number[] = [];
+  const missed: { id: number; message: string }[] = [];
   let first: { id: number; taskNo: string } | null = null;
   for (const person of people) {
     const made = await quickAddTask({ ...input, assigneeId: person }, actor);
     if (!made.ok) {
-      if (!ids.length) return made;
-      break;
+      missed.push({ id: person, message: made.message });
+      continue;
     }
     ids.push(made.value.id);
     first ??= made.value;
   }
+  if (!first) return fail(missed[0]?.message ?? "Couldn't create the task.");
   await getDbPool().query("UPDATE tasks SET assign_group_id = ? WHERE id IN (?)", [ids[0], ids]);
-  return { ok: true, value: { ...first!, ids }, message: `Created for ${ids.length} people: each has their own copy.` };
+  if (!missed.length) return { ok: true, value: { ...first, ids }, message: `Created for ${ids.length} people: each has their own copy.` };
+  const names = await Promise.all(missed.map(async (item) => (await personFacts(item.id))?.name ?? `person ${item.id}`));
+  return {
+    ok: true,
+    value: { ...first, ids, failed: missed.length },
+    message: `Created for ${ids.length} of ${people.length} people. Not for ${names.join(", ")}: ${[...new Set(missed.map((item) => item.message))].join(" ")}`,
+  };
 }

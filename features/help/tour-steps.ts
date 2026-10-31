@@ -6,6 +6,9 @@
 export interface TourStep {
   id: string;
   section: "Start" | "Approvals" | "Tasks" | "Calendar" | "Everyday";
+  // D-249 (owner: "the tour includes all the features built new"): v1.40.0
+  // covers Home, the Inbox, Create, Tasks & projects, the Draft task, the
+  // header search, Profile → Notifications and the Classic view.
   title: string;
   intro: string;
   points: string[];
@@ -20,20 +23,41 @@ export const TOUR_STEPS: readonly TourStep[] = [
     id: "welcome",
     section: "Start",
     title: "Welcome to ARS-CMS",
-    intro: "This is where ARS raises requests, approves them, hands out tasks and keeps dates in one calendar. The tour takes about two minutes.",
+    intro: "This is where ARS raises requests, approves them, runs tasks and projects, shares notices and keeps dates in one calendar. The tour takes about three minutes.",
     points: ["Next and Back move through the steps; each one opens the page it talks about.", "Skip ends the tour at any time. You can take it again from Help or your account menu."],
   },
   {
     id: "overview",
     section: "Start",
-    title: "Overview: what needs you first",
+    title: "Home: what needs you first",
     intro: "Your home page. Start here every day.",
     points: [
       "The tiles count what's waiting for you, what's overdue, your open requests and changes asked of you. Click one to open the list.",
       "Drafts you haven't submitted are listed here, so you can carry on where you left off.",
+      "Below them, My work: your tasks (upcoming, overdue, done), tasks you gave, your team and your projects.",
     ],
     path: "/users",
     target: '[data-tour="overview-tiles"]',
+  },
+  {
+    id: "inbox",
+    section: "Start",
+    title: "Inbox: every message in one place",
+    intro: "Everything ARS tells you: approvals, tasks, information and system messages. The number beside Inbox is what you haven't read.",
+    points: [
+      "Open a message to go to what it's about. Bookmark what you'll come back to; Archive what's done.",
+      "Filter by Approvals, Tasks, Information or System, or show only what you haven't read. Mark all as read can be undone.",
+    ],
+    path: "/users/inbox",
+    target: HEADER,
+  },
+  {
+    id: "create",
+    section: "Start",
+    title: "Create",
+    intro: "One button for anything new: an approval request, a task, a project or a notice (what you're allowed to make).",
+    points: ["It's at the top of the sidebar, on every page.", "Q opens a new task straight away when you're in Tasks & projects."],
+    target: '[data-testid="create-menu"]',
   },
   {
     id: "new-request",
@@ -54,9 +78,9 @@ export const TOUR_STEPS: readonly TourStep[] = [
     title: "New request: your own approvers",
     intro: "For anything that has no ready-made type.",
     points: [
-      "Add as many levels as you need, one after another.",
+      "Your reporting manager is already the first approver; add as many levels as you need.",
       "At each level pick the approvers (Manager and above) and whether any one of them or all of them must approve.",
-      "Nobody can approve their own request.",
+      "Nobody can approve their own request. A finished request can be raised again with the same approvers.",
     ],
     path: "/users/custom",
     target: HEADER,
@@ -82,7 +106,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
     points: [
       "Statuses: In progress, On hold, Changes required, Approved, Rejected, Withdrawn.",
       "Changes required: edit and resubmit. You can withdraw a request before it finishes.",
-      "On a request: comments (type @ and a User ID to mention someone), files, the full history and Download PDF.",
+      "On a request: comments (type @ and a name to mention someone), files, the full history and Download PDF.",
     ],
     path: "/users/requests",
     target: HEADER,
@@ -90,28 +114,39 @@ export const TOUR_STEPS: readonly TourStep[] = [
   {
     id: "tasks",
     section: "Tasks",
-    title: "My tasks",
-    intro: "Work given to you, separate from approvals.",
+    title: "My Tasks",
+    intro: "Everything given to you, from every project, in your own sections (Overdue, Recently assigned, Today, Upcoming, Later).",
     points: [
-      "Tabs show what's overdue and due soon. Open a task to Start it, add comments and files, and Complete it.",
-      "Blocked (when the task type allows it) says why you can't go on.",
-      "Assigned by me shows tasks you gave; Team tasks shows your team's.",
-      "Reminders come before the due time and once when it's overdue.",
+      "Tick a task to complete it; click its name to open it beside the list (comments, files, subtasks, followers).",
+      "List, Board and Calendar views; Filter, Sort and Group like any list. Periodic tasks repeat by themselves.",
+      "The morning summary email lists what's due; switch it off here.",
     ],
-    path: "/users/tasks",
-    target: HEADER,
+    path: "/users/work/my-tasks",
+    target: "main h1",
   },
   {
     id: "new-task",
     section: "Tasks",
     title: "Give someone a task",
-    intro: "New task, in the Tasks group of the sidebar.",
+    intro: "Create → Task opens a Draft task in the corner of any page.",
     points: [
-      "Choose a task type, then the title, who does it, the due date and priority, and add files.",
-      "You can link it to a request it belongs to.",
-      "They're told straight away, and you can follow it in Assigned by me.",
+      "Name it; it's for Myself, or choose Others (type part of a name). Pick a project if it belongs to one.",
+      "In the description, type / for the menu, @ to mention someone (they follow the task), or paste a screenshot to attach it.",
+      "The toolbar adds a due date, a repeat (periodic), files, emoji and collaborators. They're told straight away.",
     ],
-    path: "/users/tasks/new",
+    path: "/users/work/my-tasks",
+    target: '[data-testid="create-menu"]',
+  },
+  {
+    id: "projects",
+    section: "Tasks",
+    title: "Projects",
+    intro: "Group work into projects with sections, like a board.",
+    points: [
+      "All projects lists what you're in; New project sets one up step by step (or from a template).",
+      "Each project has List, Board, Calendar, Timeline and Overview (status updates), and its own members and permissions.",
+    ],
+    path: "/users/work/projects",
     target: HEADER,
   },
   {
@@ -164,21 +199,32 @@ export const TOUR_STEPS: readonly TourStep[] = [
   {
     id: "notifications",
     section: "Everyday",
-    title: "Notifications",
-    intro: "The bell shows the latest messages; click one to open it.",
+    title: "The bell and your notifications",
+    intro: "The bell shows the latest messages; click one to open it, or Read more for the Inbox.",
     points: [
       "Approvals waiting for you and security messages also come by email and WhatsApp.",
-      "Choose which other messages come by email or WhatsApp in Notification settings.",
+      "Profile → Notifications: choose, kind by kind, what reaches you in the app, by email and on WhatsApp, and pause them (Do not disturb).",
     ],
     target: '[data-tour="bell"]',
   },
   {
     id: "search",
     section: "Everyday",
-    title: "Go to and search",
-    intro: "Press Ctrl K (or this button) to jump to any page or request by name or number.",
-    points: ["Search, in the sidebar, finds requests by number, title, type, status and dates, and saves searches as views."],
+    title: "Search everything",
+    intro: "The search bar at the top (or Ctrl K) finds requests, tasks, projects, people, notices and pages.",
+    points: ["Type a number, a name or a few words. Filters opens a full search; you can save a search and reuse it."],
     target: '[data-tour="search"]',
+  },
+  {
+    id: "profile",
+    section: "Everyday",
+    title: "Your profile and view",
+    intro: "Your account menu (your initials, top right) has Profile, the Inbox, Sign-in & devices, Out of office and Help.",
+    points: [
+      "Profile: add your photo and a few words about you; see what IT holds about you.",
+      "View: Compact (this layout) or Classic (Tally-style screens with keyboard keys). ☰ folds the sidebar to icons.",
+    ],
+    target: 'button[aria-label^="Account menu"]',
   },
   {
     id: "out-of-office",
@@ -194,7 +240,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
     section: "Everyday",
     title: "You're ready",
     intro: "That's the tour.",
-    points: ["Help (in your account menu) explains every status and has Copy details for IT if something isn't working.", "Take the tour again any time from Help or your account menu."],
+    points: ["Help (in your account menu) explains every feature and status, and has Copy details for IT if something isn't working.", "Take the tour again any time from Help or your account menu."],
   },
 ];
 

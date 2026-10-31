@@ -15,6 +15,7 @@ import { getEnv } from "@/config/environment";
 import { loadSalesforceConfig, SALESFORCE_KEY } from "@/server/ai/connectors/salesforce";
 import { ErrorState } from "@/features/ui/States";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
+import { requireArea } from "@/server/authorization/guards";
 
 export const metadata: Metadata = { title: "Salesforce Settings" };
 export const dynamic = "force-dynamic";
@@ -33,6 +34,10 @@ const SF_RESULT: Record<string, { ok: boolean; text: string }> = {
 };
 
 export default async function SalesforceSettingsPage({ searchParams }: { searchParams: Promise<{ salesforce?: string }> }) {
+  // D-244 (audit SEC-02): every page checks its own area. The layout's
+  // check alone isn't enough: a client-navigation request (RSC) renders the
+  // page without waiting for the layout.
+  await requireArea("superadmin");
   const sfResult = SF_RESULT[(await searchParams).salesforce ?? ""];
   const [raw, sfConfigured, sfRuns, connection] = await Promise.all([listRawSettings(), loadSalesforceConfig().then(Boolean).catch(() => null) /* D-233: null = couldn't read, not "not set up" */, latestRuns(SALESFORCE_KEY), getConnection()]);
   const base = getEnv().APP_BASE_URL;

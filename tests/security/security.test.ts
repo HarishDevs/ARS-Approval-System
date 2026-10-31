@@ -98,3 +98,20 @@ describe("session and purpose tokens", () => {
     expect(readDeviceKey("nodot")).toBeNull();
   });
 });
+
+// D-246 (audit SEC-01): an account without a password takes as long to refuse as a wrong password.
+describe("password check timing", () => {
+  it("no stored password still runs a full hash check", async () => {
+    const real = await hashPassword("Correct-horse-1");
+    const time = async (stored: string | null) => {
+      const started = performance.now();
+      expect(await verifyPassword("Wrong-horse-2", stored)).toBe(false);
+      return performance.now() - started;
+    };
+    await time(real); // warm up (the dummy hash is made once)
+    await time(null);
+    const wrong = await time(real);
+    const none = await time(null);
+    expect(none).toBeGreaterThan(wrong * 0.5);
+  });
+});

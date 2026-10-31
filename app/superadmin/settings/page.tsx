@@ -10,13 +10,14 @@ import { listRawSettings, listSettingHistory } from "@/lib/db/repositories/setti
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
-export const metadata: Metadata = { title: "Settings & providers" };
+export const metadata: Metadata = { title: "Providers & security" };
 
 const GROUPS: { group: SettingDefinition["group"]; title: string; description: string }[] = [
   { group: "EMAIL", title: "Email", description: "Resend, sending from the ARS address. GoDaddy blocks SMTP, so email goes over HTTPS." },
   { group: "WHATSAPP", title: "WhatsApp", description: "CEOITBox, the same number and account as the Power BI site." },
   { group: "AUTHENTICATION", title: "Sign-in security", description: "Code, lockout and device limits. Each value has safe minimum and maximum bounds." },
   { group: "GENERAL", title: "General", description: "Application name, timezone, the maintenance notice and the other app-wide basics." },
+  { group: "BACKUP", title: "Off-site backup", description: "After each daily backup, an encrypted copy goes to S3-compatible storage outside the hosting account (AWS S3, Cloudflare R2, Backblaze B2, Wasabi). Use a key that may only write to the bucket. The server must have BACKUP_ENCRYPTION_KEY." },
   { group: "RETENTION", title: "Retention", description: "How long records are kept. 0 keeps them for ever. These values only feed the dry run on Retention & holds; nothing is deleted automatically." },
   { group: "FEATURES", title: "Feature switches", description: "Turn new features on, off, or on for the IT team only (a trial before everyone). Switching off hides a feature; no data is removed." },
 ];

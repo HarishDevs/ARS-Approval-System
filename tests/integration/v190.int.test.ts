@@ -132,14 +132,20 @@ describe("tasks", () => {
   });
 
   it("reminders: due-soon once, overdue once", async () => {
-    await getDbPool().query("UPDATE tasks SET due_at = DATE_ADD(UTC_TIMESTAMP(), INTERVAL 2 HOUR), status = 'OPEN' WHERE id = ?", [taskId]);
-    const first = await runModuleReminders();
-    const second = await runModuleReminders();
+    // On the next weekday: reminders wait on weekly offs (D-217), so "now" can't be a Sunday
+    // (the reminder list only looks 7 days ahead of the real clock).
+    const now = new Date();
+    now.setUTCHours(30, 0, 0, 0);
+    while ([0, 6].includes(now.getUTCDay())) now.setUTCDate(now.getUTCDate() + 1);
+    const at = (hours: number) => new Date(now.getTime() + hours * 3_600_000);
+    await getDbPool().query("UPDATE tasks SET due_at = ?, status = 'OPEN' WHERE id = ?", [at(2), taskId]);
+    const first = await runModuleReminders(now);
+    const second = await runModuleReminders(now);
     expect(first.taskDueSoon).toBeGreaterThanOrEqual(1);
     expect(second.taskDueSoon).toBe(0);
-    await getDbPool().query("UPDATE tasks SET due_at = DATE_SUB(UTC_TIMESTAMP(), INTERVAL 2 HOUR) WHERE id = ?", [taskId]);
-    expect((await runModuleReminders()).taskOverdue).toBeGreaterThanOrEqual(1);
-    expect((await runModuleReminders()).taskOverdue).toBe(0);
+    await getDbPool().query("UPDATE tasks SET due_at = ? WHERE id = ?", [at(-2), taskId]);
+    expect((await runModuleReminders(now)).taskOverdue).toBeGreaterThanOrEqual(1);
+    expect((await runModuleReminders(now)).taskOverdue).toBe(0);
   });
 });
 

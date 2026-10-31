@@ -17,6 +17,7 @@ import { runModuleReminders } from "@/server/modules/jobs";
 import { runNotificationRules } from "@/server/notifications/rule-runner";
 import { runCalendarStep } from "@/server/calendar/jobs";
 import { runAiStep } from "@/server/ai/jobs";
+import { runHodWeekly } from "@/server/reports/hod-weekly";
 
 // Automation inventory (unified prompt FN11, Addendum B). Every background
 // job the platform runs, what it does, how it is retried and how IT
@@ -43,9 +44,11 @@ export const AUTOMATIONS: readonly Automation[] = [
     trigger: "Every job run (cron, 5 minutes); also right after each action.",
     everyMinutes: 5,
     retry: "Up to 5 tries per message; after that it waits for IT.",
-    idempotency: "Each message is claimed before sending, so only one sender sends it; sent messages are never sent again.",
+    // D-243 (audit DB-014): states the real guarantee.
+    idempotency:
+      "Each message is claimed before sending, so only one sender sends it, and a message recorded as sent is never sent again. A send that stopped before it was confirmed is never repeated by itself: it waits under Messages not sent, because it may already have arrived. Emails carry a key, so the email provider drops a repeat within 24 hours.",
     onFailure: "The message stays unsent and is listed under Messages not sent.",
-    recovery: "Resend (gives the message fresh tries; never sends one already sent).",
+    recovery: "Resend (gives the message fresh tries; never sends one recorded as sent). For a message whose send stopped part-way, check first that the person didn't get it.",
     owner: "Super Admin (providers); IT team for the affected requests",
   },
   {
@@ -55,7 +58,7 @@ export const AUTOMATIONS: readonly Automation[] = [
     trigger: "Every job run.",
     everyMinutes: 5,
     retry: "Backs off between tries; stops after the configured limit.",
-    idempotency: "Each delivery is leased before a retry; a sent delivery is never retried.",
+    idempotency: "Each delivery is leased before a retry; a sent delivery is never retried. A retry that stopped before its result was recorded isn't retried by itself (it may have gone out): it shows as SEND_UNCONFIRMED in the delivery log for Retry now after a check.",
     onFailure: "The delivery stays FAILED in the delivery log.",
     recovery: "Retry now on Deliveries.",
     owner: "Super Admin",
@@ -126,7 +129,7 @@ export const AUTOMATIONS: readonly Automation[] = [
     what: "Emails each scheduled report when it is due, with the owner's current permissions.",
     trigger: "Every job run (reports due since the last run).",
     everyMinutes: 5,
-    retry: "A failed delivery is retried at its next slot; three failures in a row pause the schedule.",
+    retry: "Each recipient is sent to on their own, so one failure doesn't stop the others (the run shows who got it). A run that reached nobody is retried at its next slot; three such runs in a row pause the schedule.",
     idempotency: "Each slot is claimed once (unique schedule + due time), so a report is never sent twice for the same slot.",
     onFailure: "Recorded in the schedule's run history; the owner sees it under Reports.",
     recovery: "Fix the cause (usually email settings), then switch the schedule on again.",
@@ -217,6 +220,18 @@ export const AUTOMATIONS: readonly Automation[] = [
     owner: "Each export's owner; Super Admin for storage",
   },
   {
+    key: "hodWeekly",
+    name: "Weekly HOD report",
+    what: "Every Monday from 9:00 (India time) emails each department's head their department's requests of the last 7 days: raised, approved, rejected, open and overdue now, the oldest waiting (D-247). Off until the Super Admin switches it on.",
+    trigger: "Every job run; sends once a week.",
+    everyMinutes: 5,
+    retry: "A department whose email failed is recorded as failed for that week (Super Admin can see it in the run counts); the next week sends again.",
+    idempotency: "Each department is claimed once per week (unique week + department) before the email, and the email carries a one-per-week key, so nobody gets it twice.",
+    onFailure: "Recorded here with the count of failed departments.",
+    recovery: "Fix the email settings or the HOD's address; the next Monday's report goes out as normal.",
+    owner: "Super Admin (email settings); IT (department heads)",
+  },
+  {
     key: "stuck",
     name: "Stuck-request scan",
     what: "Counts open requests that need IT (blocked steps, inactive approvers, no activity, unsent messages).",
@@ -231,6 +246,21 @@ export const AUTOMATIONS: readonly Automation[] = [
 ];
 
 type StepResult = Record<string, number | string>;
+
+// D-248 (V181-A6, audit AUD-17): a step that reports its own failure (a
+// value "FAILED", or text starting "failed", like the template sync's
+// "failed: …") is recorded as failed, so the Super Admin is told, just as
+// for a step that throws.
+export function softFailure(counts: StepResult): string | null {
+  for (const [key, value] of Object.entries(counts)) {
+    if (typeof value !== "string") continue;
+    if (value === "FAILED" || /^failed\b/i.test(value)) {
+      const detail = typeof counts[`${key}Error`] === "string" ? `: ${counts[`${key}Error`]}` : value.length > 6 ? `: ${value.replace(/^failed:?\s*/i, "")}` : "";
+      return `${key.toUpperCase()}_FAILED${detail}`.slice(0, 250);
+    }
+  }
+  return null;
+}
 
 const STEPS: Record<string, () => Promise<StepResult>> = {
   outbox: () => runOutbox(),
@@ -248,6 +278,7 @@ const STEPS: Record<string, () => Promise<StepResult>> = {
   exports: async () => ({ ...(await runExportJobs()) }),
   calendar: async () => ({ ...(await runCalendarStep()) }),
   ai: () => runAiStep(),
+  hodWeekly: () => runHodWeekly(),
   stuck: async () => {
     const counts = countByReason(await findStuckRequests());
     return { ...counts };
@@ -276,10 +307,10 @@ export async function runAutomations(input: { runRef?: string | null; trigger?: 
     try {
       const counts = await STEPS[automation.key]!();
       // backup "FAILED" is reported as a value, not thrown.
-      const failed = counts.backup === "FAILED";
-      report.steps[automation.key] = { status: failed ? "FAILED" : "OK", counts };
-      if (failed) report.failed.push(automation.key);
-      if (runId) await finishJobRun(runId, { status: failed ? "FAILED" : "OK", counts, errorCode: failed ? "BACKUP_FAILED" : null });
+      const failure = softFailure(counts);
+      report.steps[automation.key] = { status: failure ? "FAILED" : "OK", counts };
+      if (failure) report.failed.push(automation.key);
+      if (runId) await finishJobRun(runId, { status: failure ? "FAILED" : "OK", counts, errorCode: failure });
     } catch (error) {
       logError("automation step failed", error, { job: automation.key, runRef });
       report.steps[automation.key] = { status: "FAILED" };

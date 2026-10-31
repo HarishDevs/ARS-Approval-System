@@ -3,7 +3,7 @@ import { routeChanged } from "@/server/engine/conditions";
 import { departmentOfUser, mayRaise } from "@/server/approvals/raisers";
 import type { PoolConnection, RowDataPacket } from "mysql2/promise";
 import { withTransaction } from "@/lib/db/transaction";
-import { getDbPool } from "@/lib/db/client";
+import { getDbPool, type Queryable } from "@/lib/db/client";
 import {
   appendEvents,
   countOpenRequests,
@@ -42,7 +42,7 @@ import { approverStatuses } from "@/lib/db/repositories/approvers.repository";
 import { loadFieldLookups } from "@/lib/db/repositories/lookups.repository";
 import { listUserIdsWithRole } from "@/lib/db/repositories/users.repository";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
-import { notify } from "@/server/notifications/notify";
+import { deliverOutboxRows } from "@/server/notifications/outbox-sender";
 import { messagesForEvents } from "@/server/approvals/messages";
 import { answerInformation, askForInformation, decide, putOnHold, reassignTask, recall, reopen, resolveBlocked, resubmit, resume, simulate, startInstance, validateWorkflow, withdraw, EngineError } from "@/server/engine";
 import type { BlockAction, Decision, EngineEvent, EngineResult, FormData as EngineFormData, RestartPolicy, ValidationResult, WorkflowDefinition, WorkflowNode } from "@/server/engine";
@@ -50,10 +50,10 @@ import { insertRevision } from "@/lib/db/repositories/revisions.repository";
 import { insertSubmissionCheck, updateCommittedAmount } from "@/lib/db/repositories/checks.repository";
 import { assessReadiness, type Readiness } from "@/server/approvals/readiness";
 import type { InstanceStatus } from "@/server/engine/types";
-import { claimOutbox, dropOutboxForDeletedRequests, insertOutbox, listStaleOutbox, markOutboxSent } from "@/lib/db/repositories/outbox.repository";
+import { dropOutboxForDeletedRequests, insertOutbox, listStaleOutbox } from "@/lib/db/repositories/outbox.repository";
 import type { NotifyInput } from "@/server/notifications/notify";
 import { logError } from "@/lib/logging/logger";
-import { DEFAULT_CUSTOM_FORM, loadCustomConfig } from "@/server/approvals/custom-config";
+import { loadCustomConfig } from "@/server/approvals/custom-config";
 import { applyStepPolicy, unavailableFeatures } from "@/server/workflows/step-policy";
 import type { RoleCode } from "@/types/auth";
 import { appBaseUrl } from "@/lib/http/app-url";
@@ -399,26 +399,9 @@ export async function queueMessages(change: { request: RequestRecord; events: En
 }
 
 // Send outbox rows; each is claimed first so it is sent by one sender only.
+// D-243: the sending rules live in server/notifications/outbox-sender.ts.
 export async function deliverOutbox(ids: readonly number[]): Promise<number> {
-  let sent = 0;
-  for (const id of ids) {
-    try {
-      const message = await claimOutbox(id);
-      if (!message) continue;
-      const summary = await notify(message);
-      // Audit AUD-08 (v1.9.0): nothing recorded (e.g. the database was busy)
-      // = not sent; the row is tried again after its claim runs out.
-      if (!summary.recorded && !summary.inactive) {
-        logError("approvals: outbox message not recorded; will retry", null, { outboxId: id });
-        continue;
-      }
-      await markOutboxSent(id);
-      sent += 1;
-    } catch (error) {
-      logError("approvals: outbox delivery failed", error, { outboxId: id });
-    }
-  }
-  return sent;
+  return deliverOutboxRows(ids);
 }
 
 // Job runner: whatever the in-process sender didn't finish.
@@ -595,7 +578,14 @@ type StepContext = { version: WorkflowVersionRecord; snapshot: DirectorySnapshot
 type Step = (request: RequestRecord, definition: WorkflowDefinition, directory: ReturnType<typeof toDirectory>, extra: StepContext) => EngineResult & { formData?: Record<string, unknown> };
 
 // One locked read-modify-write for every action on an existing request.
-async function mutate(requestId: number, actor: Actor, step: Step): Promise<Result<{ status: string }>> {
+// D-248: optional checks before the change and work after it, in the same
+// transaction (a resubmit's readiness checks and its budget amount).
+interface MutateHooks {
+  check?: (request: RequestRecord, version: WorkflowVersionRecord, connection: PoolConnection) => Promise<void>;
+  afterSave?: (request: RequestRecord, connection: PoolConnection) => Promise<void>;
+}
+
+async function mutate(requestId: number, actor: Actor, step: Step, hooks: MutateHooks = {}): Promise<Result<{ status: string }>> {
   let changed: Changed;
   try {
     changed = await withTransaction(async (connection) => {
@@ -604,10 +594,12 @@ async function mutate(requestId: number, actor: Actor, step: Step): Promise<Resu
       const version = await findWorkflowVersion(request.workflowVersionId, connection);
       if (!version) throw new Error(`workflow version ${request.workflowVersionId} missing`);
       const snapshot = await loadDirectorySnapshot(connection);
+      if (hooks.check) await hooks.check(request, version, connection);
       const result = step(request, version.definition, toDirectory(snapshot), { version, snapshot });
       if (!(await saveRequestState(request.id, request.stateVersion, result.state, result.formData ?? null, connection))) {
         throw new ServiceError("CONFLICT", "Someone else just changed this request. Reload and try again.");
       }
+      if (hooks.afterSave) await hooks.afterSave(request, connection);
       const calendar = await loadWorkingCalendar(connection);
       await syncTasks(request.id, result.state, version.definition.nodes, connection, calendar);
       await appendEvents(request.id, result.events, actor.id, connection);
@@ -722,22 +714,39 @@ export async function resubmitRequest(input: { requestId: number; fields?: Recor
     const effectivePolicy = input.fields && routeChanged(definition, request.formData as EngineFormData, formData) ? "BEGINNING" : policy;
     const result = resubmit(definition, request.state, effectivePolicy, { requesterId: request.requesterId, formData, now: now() }, directory);
     return { ...result, formData: input.fields ? formData : undefined };
-  });
-  // EN-09: a new amount moves the budget commitment with it.
-  if (result.ok && input.fields) await syncBudgetAmount(input.requestId).catch((error) => logError("resubmit: budget amount not updated", error, { requestId: input.requestId }));
+  }, input.fields ? { check: (request, version, connection) => resubmitChecks(request, version, input.fields!, actor, connection), afterSave: (request, connection) => syncBudgetAmount(request.id, connection) } : {});
   return result;
 }
 
-async function syncBudgetAmount(requestId: number): Promise<void> {
-  const request = await findRequest(requestId);
-  const version = request ? await findWorkflowVersion(request.workflowVersionId) : null;
-  const workflow = version ? await findWorkflow(version.workflowId) : null;
+// D-248 (V181-A1, audit AUD-11): new values on a resubmit pass the same
+// blocking checks as a submit: no duplicate where the type forbids them, no
+// repeat of a must-be-unique value, and no going over budget under the Block
+// policy. (Warnings were confirmed at the first submit; the request itself is
+// left out of every check.)
+async function resubmitChecks(request: RequestRecord, version: WorkflowVersionRecord, fields: Record<string, string | undefined>, actor: Actor, connection: PoolConnection): Promise<void> {
+  const workflow = await findWorkflow(version.workflowId, connection);
+  if (!workflow) return;
+  const { readiness } = await assessReadiness(
+    { workflow, version, title: request.title, fields, attachmentCount: Number.MAX_SAFE_INTEGER, requester: actor, isCustom: workflow.kind === "CUSTOM", excludeRequestId: request.id },
+    { db: connection },
+  );
+  const blocking = readiness.items.filter((item) => item.severity === "BLOCKING" && (item.code === "DUPLICATE" || item.code === "UNIQUE" || item.code === "BUDGET"));
+  if (!blocking.length) return;
+  const fieldErrors: Record<string, string> = {};
+  for (const item of blocking) fieldErrors[item.field ?? "readiness"] ??= item.message;
+  throw new FormError(fieldErrors, blocking[0]!.message, readiness);
+}
+
+async function syncBudgetAmount(requestId: number, db: Queryable = getDbPool()): Promise<void> {
+  const request = await findRequest(requestId, db);
+  const version = request ? await findWorkflowVersion(request.workflowVersionId, db) : null;
+  const workflow = version ? await findWorkflow(version.workflowId, db) : null;
   if (!request || !workflow?.settings?.budget.enabled) return;
   const amount = request.formData[workflow.settings.budget.amountField];
   // FN5: an amendment counts only its change against the amount it amended.
-  const [base] = await getDbPool().query<(RowDataPacket & { base_paise: number | null })[]>("SELECT base_paise FROM request_amendments WHERE amendment_id = ?", [requestId]);
+  const [base] = await db.query<(RowDataPacket & { base_paise: number | null })[]>("SELECT base_paise FROM request_amendments WHERE amendment_id = ?", [requestId]);
   const basePaise = base[0]?.base_paise === null || base[0]?.base_paise === undefined ? 0 : Number(base[0].base_paise);
-  await updateCommittedAmount(requestId, typeof amount === "number" ? Math.round(amount * 100) - basePaise : null);
+  await updateCommittedAmount(requestId, typeof amount === "number" ? Math.round(amount * 100) - basePaise : null, db);
 }
 
 async function policyForRequest(requestId: number, typePolicy: (workflowId: number) => Promise<RestartPolicy>): Promise<RestartPolicy> {
@@ -801,14 +810,6 @@ export function resolveBlockedStep(input: { requestId: number; nodeId: string; r
     return resolveBlocked(definition, request.state, { ...rest, actorId: actor.id }, context(request), directory);
   });
 }
-
-// ---- custom approvals (F-33, D-060) -------------------------------------------------
-// Any user, any people, any mix of levels; submitted in one go as a CUSTOM
-// workflow they own. A step made only of the requester is refused (no
-// self-approval); everything else goes through the same validator.
-// v1.8.0: the fields and step options come from Admin → Custom approval
-// (server/approvals/custom-config.ts); these are the defaults.
-export const CUSTOM_FORM: FormField[] = DEFAULT_CUSTOM_FORM;
 
 export function checkCustomSpec(spec: BuilderSpec, requesterId: number): string[] {
   const problems: string[] = [];

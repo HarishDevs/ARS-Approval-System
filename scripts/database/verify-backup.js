@@ -13,9 +13,9 @@
 //   node scripts/database/verify-backup.js <ars-db-YYYYMMDD-HHMMSS.sql.gz> --into=<empty_database> [--report=<file.json>]
 // Exit code 0 when everything matches, 1 otherwise.
 const fs = require("node:fs");
-const zlib = require("node:zlib");
 const mysql = require("mysql2/promise");
 const { splitDump } = require("./restore");
+const { readBackup } = require("./backup-file");
 require("./env"); // loads .env.local for the connection settings
 
 const APPEND_ONLY = ["audit_logs", "approval_events"];
@@ -63,8 +63,8 @@ async function main() {
     const [existing] = await connection.query("SHOW TABLES");
     if (existing.length > 0) throw new Error(`"${into}" already has ${existing.length} table(s). The check only restores into an empty database.`);
 
-    const raw = fs.readFileSync(file);
-    const sql = (file.endsWith(".gz") ? zlib.gunzipSync(raw) : raw).toString("utf8");
+    // D-246 (audit OPS-09): the .sha256 is checked, and an encrypted (.enc) file decrypted.
+    const sql = readBackup(file);
     const statements = splitDump(sql);
     const expected = expectedFromDump(statements);
     for (const statement of statements) await connection.query(statement);
