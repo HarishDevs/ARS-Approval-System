@@ -9,6 +9,11 @@ export type ListStatus = (typeof LIST_STATUSES)[number];
 export const LIST_SORTS = ["newest", "oldest", "activity", "due", "number", "added", "approved", "mine"] as const;
 export type ListSort = (typeof LIST_SORTS)[number];
 export const LIST_SIZES = [25, 50, 100] as const;
+// D-226: the list's rows in groups (the page shown).
+export const LIST_GROUPS = ["status", "type", "month", "raiser"] as const;
+export type ListGroup = (typeof LIST_GROUPS)[number];
+export const GROUP_LABEL: Record<ListGroup, string> = { status: "Status", type: "Approval type", month: "Month raised", raiser: "Raised by" };
+export const groupsFor = (base: ListBase): ListGroup[] => LIST_GROUPS.filter((group) => group !== "raiser" || BASE_FEATURES[base].people);
 export const VALIDITY = ["valid", "expiring", "expired"] as const;
 // MINE: raised by me. COLLAB: I'm a collaborator. APPROVED_MINE: raised by me
 // and approved. APPROVED_BY_ME: I approved a step (myself or for someone).
@@ -110,6 +115,7 @@ export interface ListFilters {
   activityTo: string | null;
   sort: ListSort;
   size: (typeof LIST_SIZES)[number];
+  group: ListGroup | null;
   page: number;
 }
 
@@ -173,6 +179,7 @@ export function parseListFilters(params: Record<string, unknown>, base: ListBase
     activityTo,
     sort,
     size,
+    group: groupsFor(base).find((value) => value === str(params.group)) ?? null,
     page: page && page > 0 && page <= 10000 ? page : 1,
   };
 }
@@ -219,6 +226,7 @@ export function listQuery(filters: Partial<ListFilters>, changes: Partial<ListFi
   const defaultSort = base ? BASE_FEATURES[base].sorts[0] : "newest";
   if (f.sort && f.sort !== defaultSort) put("sort", f.sort);
   if (f.size && f.size !== 25) put("size", f.size);
+  put("group", f.group);
   if (f.page && f.page > 1) put("page", f.page);
   return out;
 }

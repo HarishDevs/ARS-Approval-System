@@ -10,6 +10,7 @@ import { QueueKeyboard } from "@/features/requests/QueueKeyboard";
 import { countPendingTasksFor, listPendingTasksFor, queueChoicesFor, queueTypesFor } from "@/lib/db/repositories/approvals.repository";
 import { listViews } from "@/lib/db/repositories/analytics-views.repository";
 import { SavedViews, SaveViewForm } from "@/features/analytics/ReportForms";
+import { ListToolbar } from "@/features/ui/ListToolbar";
 import { QUEUE_SHOW_LABEL, QUEUE_SHOWS, QUEUE_SIZES, QUEUE_SORT_LABEL, QUEUE_SORTS, parseQueueFilter, queueFiltered, queueHref, type QueueFilter } from "@/server/approvals/queue-filters";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
@@ -22,7 +23,13 @@ export default async function QueuePage({ searchParams }: { searchParams: Promis
   const params = await searchParams;
   const filter = parseQueueFilter(params);
   const PAGE_SIZE = filter.size ?? 25;
-  const [total, everything, types, choices, views] = await Promise.all([countPendingTasksFor(user.id, filter), countPendingTasksFor(user.id), queueTypesFor(user.id), queueChoicesFor(user.id), listViews(user.id, "queue")]);
+  const [total, everything, types, choices, views] = await Promise.all([
+    countPendingTasksFor(user.id, filter),
+    countPendingTasksFor(user.id),
+    queueTypesFor(user.id),
+    queueChoicesFor(user.id),
+    listViews(user.id, "queue"),
+  ]);
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const page = Math.min(Math.max(1, Number(params.page) || 1), pages);
   const queue = await listPendingTasksFor(user.id, { limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE }, undefined, filter);
@@ -43,61 +50,45 @@ export default async function QueuePage({ searchParams }: { searchParams: Promis
     filter.raisedFrom || filter.raisedTo ? { label: `Raised ${filter.raisedFrom ?? "…"} to ${filter.raisedTo ?? "…"}`, href: without({ raisedFrom: null, raisedTo: null }) } : null,
     filter.waitingFrom || filter.waitingTo ? { label: `Waiting since ${filter.waitingFrom ?? "…"} to ${filter.waitingTo ?? "…"}`, href: without({ waitingFrom: null, waitingTo: null }) } : null,
   ].filter((chip): chip is { label: string; href: string } => chip !== null);
-  const more = chips.length - (filter.show !== "all" ? 1 : 0) - (filter.typeId !== null ? 1 : 0);
-  const select = "field-input";
+  const select = "field-input h-10";
   return (
     <>
       <PageHeader title="Waiting for me" description="Every request that needs your decision, and work given to you. Keys: J/K to move, Enter to open, ? for all shortcuts." />
       {everything > 0 && (
-        <form method="get" className="card mb-4 grid gap-3 px-4 py-3 sm:grid-cols-[1fr_1fr_1fr_auto] sm:items-end">
-          <div>
-            <label htmlFor="q-show" className="field-label">
-              Show
-            </label>
-            <select id="q-show" name="show" defaultValue={filter.show} className="field-input">
-              {QUEUE_SHOWS.map((show) => (
-                <option key={show} value={show}>
-                  {QUEUE_SHOW_LABEL[show]}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label htmlFor="q-type" className="field-label">
-              Approval type
-            </label>
-            <select id="q-type" name="type" defaultValue={filter.typeId ?? ""} className="field-input">
-              <option value="">All types</option>
-              {types.map((type) => (
-                <option key={type.id} value={type.id}>
-                  {type.name} ({type.count})
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label htmlFor="q-sort" className="field-label">
-              Order
-            </label>
-            <select id="q-sort" name="sort" defaultValue={filter.sort} className="field-input">
-              {QUEUE_SORTS.map((sort) => (
-                <option key={sort} value={sort}>
-                  {QUEUE_SORT_LABEL[sort]}
-                </option>
-              ))}
-            </select>
-          </div>
-          <button type="submit" className="btn-secondary btn-compact h-11">
-            Apply
-          </button>
-          <details open={more > 0} className="text-label sm:col-span-4">
-            <summary className="cursor-pointer font-semibold text-primary-600">More filters{more > 0 ? ` (${more} in use)` : ""}</summary>
-            <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <div className="sm:col-span-2 lg:col-span-1">
-                <label htmlFor="q-q" className="field-label">
-                  Search
+        <ListToolbar
+          id="queue-filters"
+          path="/users/queue"
+          label="Filter what is waiting"
+          keep={{ sort: filter.sort !== "oldest" ? filter.sort : undefined, size: filter.size && filter.size !== 25 ? String(filter.size) : undefined }}
+          search={{ name: "q", value: filter.q ?? "", placeholder: "Number, title or who raised it" }}
+          filterCount={chips.length - (filter.q ? 1 : 0)}
+          clearHref={filtered ? queueHref({ sort: filter.sort, size: filter.size }) : null}
+          filters={
+            <>
+              <div>
+                <label htmlFor="q-show" className="field-label">
+                  Show
                 </label>
-                <input id="q-q" name="q" defaultValue={filter.q ?? ""} placeholder="Request number, title or who raised it" className={select} />
+                <select id="q-show" name="show" defaultValue={filter.show} className="field-input">
+                  {QUEUE_SHOWS.map((show) => (
+                    <option key={show} value={show}>
+                      {QUEUE_SHOW_LABEL[show]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="q-type" className="field-label">
+                  Approval type
+                </label>
+                <select id="q-type" name="type" defaultValue={filter.typeId ?? ""} className="field-input">
+                  <option value="">All types</option>
+                  {types.map((type) => (
+                    <option key={type.id} value={type.id}>
+                      {type.name} ({type.count})
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label htmlFor="q-raisedby" className="field-label">
@@ -173,18 +164,6 @@ export default async function QueuePage({ searchParams }: { searchParams: Promis
                   <option value="no">Without files</option>
                 </select>
               </div>
-              <div>
-                <label htmlFor="q-size" className="field-label">
-                  Per page
-                </label>
-                <select id="q-size" name="size" defaultValue={filter.size ?? 25} className={select}>
-                  {QUEUE_SIZES.map((size) => (
-                    <option key={size} value={size}>
-                      {size}
-                    </option>
-                  ))}
-                </select>
-              </div>
               {(
                 [
                   ["raised", "Raised", filter.raisedFrom, filter.raisedTo],
@@ -200,9 +179,16 @@ export default async function QueuePage({ searchParams }: { searchParams: Promis
                   </div>
                 </fieldset>
               ))}
-            </div>
-          </details>
-        </form>
+            </>
+          }
+          sort={{
+            label: QUEUE_SORT_LABEL[filter.sort],
+            changed: filter.sort !== "oldest",
+            choices: QUEUE_SORTS.map((sort) => ({ label: QUEUE_SORT_LABEL[sort], href: queueHref({ ...filter, sort }), active: filter.sort === sort })),
+          }}
+          sizes={QUEUE_SIZES.map((size) => ({ label: `${size} per page`, href: queueHref({ ...filter, size }), active: (filter.size ?? 25) === size }))}
+          options={<SaveViewForm target="queue" query={Object.fromEntries(new URLSearchParams(queueHref(filter).split("?")[1] ?? ""))} />}
+        />
       )}
       {(total > 0 || filtered) && (
         <div className="mb-3 flex flex-wrap items-center gap-2 text-label">
@@ -211,7 +197,12 @@ export default async function QueuePage({ searchParams }: { searchParams: Promis
             {pages > 1 ? ` · page ${page} of ${pages}` : ""}
           </p>
           {chips.map((chip) => (
-            <Link key={chip.label} href={chip.href} className="inline-flex items-center gap-1 rounded-full border border-line bg-surface px-2.5 py-0.5 text-caption font-medium hover:bg-surface-muted" aria-label={`Remove filter: ${chip.label}`}>
+            <Link
+              key={chip.label}
+              href={chip.href}
+              className="inline-flex items-center gap-1 rounded-full border border-line bg-surface px-2.5 py-0.5 text-caption font-medium hover:bg-surface-muted"
+              aria-label={`Remove filter: ${chip.label}`}
+            >
               {chip.label}
               <X aria-hidden="true" className="h-3.5 w-3.5" />
             </Link>
@@ -223,10 +214,19 @@ export default async function QueuePage({ searchParams }: { searchParams: Promis
           )}
         </div>
       )}
-      {everything > 0 && (
-        <div className="mb-4 flex flex-wrap items-start gap-6">
-          <SavedViews views={views.map((view) => ({ id: view.id, name: view.name, href: `/users/queue?${new URLSearchParams(view.query).toString()}`, mine: view.mine, shared: view.shared, isDefault: view.isDefault, ownerName: view.ownerName }))} />
-          <SaveViewForm target="queue" query={Object.fromEntries(new URLSearchParams(queueHref(filter).split("?")[1] ?? ""))} />
+      {everything > 0 && views.length > 0 && (
+        <div className="mb-4">
+          <SavedViews
+            views={views.map((view) => ({
+              id: view.id,
+              name: view.name,
+              href: `/users/queue?${new URLSearchParams(view.query).toString()}`,
+              mine: view.mine,
+              shared: view.shared,
+              isDefault: view.isDefault,
+              ownerName: view.ownerName,
+            }))}
+          />
         </div>
       )}
       {!filtered && <BulkApprove items={queue} />}

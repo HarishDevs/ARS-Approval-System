@@ -35,7 +35,7 @@ test("My approved requests and Approved by me are in the sidebar, with their fil
   await page.locator("aside nav").getByRole("link", { name: "My approved requests" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "My approved requests" })).toBeVisible();
   for (const tab of ["Still valid", "Expired", "No expiry", "Amended"]) await expect(page.getByRole("navigation", { name: "Quick filters" }).getByRole("link", { name: new RegExp(`^${tab} \\(`) })).toBeVisible();
-  await page.getByText("More filters").click();
+  await page.getByTestId("list-toolbar").getByTestId("filter-menu").locator("summary").click();
   await expect(page.getByLabel("Approved by")).toBeVisible();
   await expect(page.getByLabel("Approved on from")).toBeVisible();
 
@@ -43,7 +43,7 @@ test("My approved requests and Approved by me are in the sidebar, with their fil
   await page.goto("/users/approved-by-me");
   await expect(page.getByRole("heading", { level: 1, name: "Approved by me" })).toBeVisible();
   await expect(page.getByTestId("request-table").getByRole("row").nth(1)).toBeVisible();
-  await page.getByText("More filters").click();
+  await page.getByTestId("list-toolbar").getByTestId("filter-menu").locator("summary").click();
   for (const label of ["Step I approved", "Approved for", "I approved from", "Raised by"]) await expect(page.getByLabel(label, { exact: true })).toBeVisible();
 });
 
@@ -123,6 +123,7 @@ test("the Super Admin hides a page and makes another view-only", async ({ page, 
   await page.goto("/users/collaborating");
   await expect(page.getByTestId("view-only")).toBeVisible();
   // A change on a view-only page is refused by the server.
+  await page.getByTestId("options-menu").getByLabel("Options", { exact: true }).click();
   await page.getByText("Save these filters").click();
   await page.getByLabel("View name").fill("Should not save");
   await page.getByRole("button", { name: "Save view" }).click();

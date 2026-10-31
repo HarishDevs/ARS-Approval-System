@@ -14,6 +14,7 @@ import { displayValue, type FormField } from "@/server/forms/fields";
 import { isAdminActor } from "@/server/modules/tasks";
 import { TaskCheck } from "@/features/work/client";
 import { teamOf } from "@/server/work/task-access";
+import { ListToolbar } from "@/features/ui/ListToolbar";
 
 // v1.9.0 (D-143): My tasks / Assigned by me / Team tasks. Filters live in
 // the address (GET form), so a list can be bookmarked and shared.
@@ -66,109 +67,101 @@ export async function TaskListScreen({ base, query }: { base: TaskBase; query: R
         <EmptyState title="Nobody reports to you" body="Team tasks shows the tasks of people whose reporting manager you are." />
       ) : (
         <>
-          <nav aria-label="Quick filters" className="mb-4 flex flex-wrap gap-2">
+          <nav aria-label="Quick filters" className="mb-3 flex flex-wrap gap-x-1 border-b border-line">
             {counts.map(([tab, count]) => (
-              <Link key={tab} href={`${path}${taskQuery(filters, { tab })}`} aria-current={filters.tab === tab ? "page" : undefined} className={`rounded-full border px-3 py-1 text-label ${filters.tab === tab ? "border-primary-600 bg-primary-50 font-semibold text-primary-700" : "border-line text-ink-muted hover:bg-surface-muted"}`}>
+              <Link
+                key={tab}
+                href={`${path}${taskQuery(filters, { tab })}`}
+                aria-current={filters.tab === tab ? "page" : undefined}
+                className={`-mb-px border-b-2 px-2.5 py-1.5 text-label ${filters.tab === tab ? "border-primary-600 font-semibold text-primary-700" : "border-transparent text-ink-muted hover:text-ink"}`}
+              >
                 {TASK_TAB_LABEL[tab]} ({count})
               </Link>
             ))}
           </nav>
-          <details className="card mb-4 px-5 py-3" open={Boolean(filters.q || filters.typeId || filters.priorities.length || filters.statuses.length || filters.personId || filters.dueFrom || filters.dueTo || filters.createdFrom || filters.createdTo)}>
-            <summary className="cursor-pointer font-medium">More filters</summary>
-            <form method="get" action={path} className="mt-3 grid gap-3 md:grid-cols-4">
-              {filters.tab !== "open" && <input type="hidden" name="tab" value={filters.tab} />}
-              <label className="text-label md:col-span-2">
-                Search (number, title, description, searchable fields)
-                <input name="q" defaultValue={filters.q} maxLength={100} className="field-input" />
-              </label>
-              <label className="text-label">
-                Type
-                <select name="type" defaultValue={filters.typeId ?? ""} className="field-input">
-                  <option value="">Any</option>
-                  {types.map((type) => (
-                    <option key={type.id} value={type.id}>
-                      {type.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="text-label">
-                {base === "MINE" ? "Created by" : "Assigned to"}
-                <select name="person" defaultValue={filters.personId ?? ""} className="field-input">
-                  <option value="">Anyone</option>
-                  {people.map((person) => (
-                    <option key={person.id} value={person.id}>
-                      {person.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="text-label">
-                Priority
-                <select name="priority" defaultValue={filters.priorities[0] ?? ""} className="field-input">
-                  <option value="">Any</option>
-                  {TASK_PRIORITIES.map((priority) => (
-                    <option key={priority} value={priority}>
-                      {PRIORITY_LABEL[priority]}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="text-label">
-                Status
-                <select name="status" defaultValue={filters.statuses[0] ?? ""} className="field-input">
-                  <option value="">Any</option>
-                  {TASK_STATUSES.map((status) => (
-                    <option key={status} value={status}>
-                      {TASK_STATUS_LABEL[status]}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="text-label">
-                Due from
-                <input type="date" name="dueFrom" defaultValue={filters.dueFrom ?? ""} className="field-input" />
-              </label>
-              <label className="text-label">
-                Due to
-                <input type="date" name="dueTo" defaultValue={filters.dueTo ?? ""} className="field-input" />
-              </label>
-              <label className="text-label">
-                Created from
-                <input type="date" name="createdFrom" defaultValue={filters.createdFrom ?? ""} className="field-input" />
-              </label>
-              <label className="text-label">
-                Created to
-                <input type="date" name="createdTo" defaultValue={filters.createdTo ?? ""} className="field-input" />
-              </label>
-              <label className="text-label">
-                Sort
-                <select name="sort" defaultValue={filters.sort} className="field-input">
-                  {TASK_SORTS.map((sort) => (
-                    <option key={sort} value={sort}>
-                      {TASK_SORT_LABEL[sort]}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="text-label">
-                Per page
-                <select name="size" defaultValue={filters.size} className="field-input">
-                  {PAGE_SIZES.map((size) => (
-                    <option key={size}>{size}</option>
-                  ))}
-                </select>
-              </label>
-              <div className="flex items-end gap-2 md:col-span-4">
-                <button type="submit" className="btn-primary btn-compact">
-                  Apply
-                </button>
-                <Link href={path} className="btn-secondary btn-compact">
-                  Clear all
-                </Link>
-              </div>
-            </form>
-          </details>
+          <ListToolbar
+            id="task-filters"
+            path={path}
+            label="Filter tasks"
+            keep={{ tab: filters.tab !== "open" ? filters.tab : undefined, sort: filters.sort !== "due" ? filters.sort : undefined, size: filters.size !== 25 ? String(filters.size) : undefined }}
+            search={{ name: "q", value: filters.q, placeholder: "Number, title or description" }}
+            filterCount={[filters.typeId, filters.priorities.length, filters.statuses.length, filters.personId, filters.dueFrom || filters.dueTo, filters.createdFrom || filters.createdTo].filter(Boolean).length}
+            clearHref={
+              filters.q || filters.typeId || filters.priorities.length || filters.statuses.length || filters.personId || filters.dueFrom || filters.dueTo || filters.createdFrom || filters.createdTo
+                ? `${path}${taskQuery({ ...filters, q: "", typeId: null, priorities: [], statuses: [], personId: null, dueFrom: null, dueTo: null, createdFrom: null, createdTo: null })}`
+                : null
+            }
+            filters={
+              <>
+                <label className="text-label">
+                  Type
+                  <select name="type" defaultValue={filters.typeId ?? ""} className="field-input h-10">
+                    <option value="">Any</option>
+                    {types.map((type) => (
+                      <option key={type.id} value={type.id}>
+                        {type.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="text-label">
+                  {base === "MINE" ? "Created by" : "Assigned to"}
+                  <select name="person" defaultValue={filters.personId ?? ""} className="field-input h-10">
+                    <option value="">Anyone</option>
+                    {people.map((person) => (
+                      <option key={person.id} value={person.id}>
+                        {person.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="text-label">
+                  Priority
+                  <select name="priority" defaultValue={filters.priorities[0] ?? ""} className="field-input h-10">
+                    <option value="">Any</option>
+                    {TASK_PRIORITIES.map((priority) => (
+                      <option key={priority} value={priority}>
+                        {PRIORITY_LABEL[priority]}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="text-label">
+                  Status
+                  <select name="status" defaultValue={filters.statuses[0] ?? ""} className="field-input h-10">
+                    <option value="">Any</option>
+                    {TASK_STATUSES.map((status) => (
+                      <option key={status} value={status}>
+                        {TASK_STATUS_LABEL[status]}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="text-label">
+                  Due from
+                  <input type="date" name="dueFrom" defaultValue={filters.dueFrom ?? ""} className="field-input h-10" />
+                </label>
+                <label className="text-label">
+                  Due to
+                  <input type="date" name="dueTo" defaultValue={filters.dueTo ?? ""} className="field-input h-10" />
+                </label>
+                <label className="text-label">
+                  Created from
+                  <input type="date" name="createdFrom" defaultValue={filters.createdFrom ?? ""} className="field-input h-10" />
+                </label>
+                <label className="text-label">
+                  Created to
+                  <input type="date" name="createdTo" defaultValue={filters.createdTo ?? ""} className="field-input h-10" />
+                </label>
+              </>
+            }
+            sort={{
+              label: TASK_SORT_LABEL[filters.sort],
+              changed: filters.sort !== "due",
+              choices: TASK_SORTS.map((sort) => ({ label: TASK_SORT_LABEL[sort], href: `${path}${taskQuery(filters, { sort })}`, active: filters.sort === sort })),
+            }}
+            sizes={PAGE_SIZES.map((size) => ({ label: `${size} per page`, href: `${path}${taskQuery(filters, { size })}`, active: filters.size === size }))}
+          />
           {list.rows.length === 0 ? (
             <EmptyState title="No tasks match" body={filters.tab === "open" ? "Nothing open here. Try another tab or clear the filters." : "Try another tab or clear the filters."} />
           ) : (
@@ -234,11 +227,23 @@ export async function TaskListScreen({ base, query }: { base: TaskBase; query: R
           )}
           {pages > 1 && (
             <nav aria-label="Pages" className="mt-4 flex items-center justify-between text-label">
-              {filters.page > 1 ? <Link href={`${path}${taskQuery(filters, { page: filters.page - 1 })}`} className="link">← Previous</Link> : <span />}
+              {filters.page > 1 ? (
+                <Link href={`${path}${taskQuery(filters, { page: filters.page - 1 })}`} className="link">
+                  ← Previous
+                </Link>
+              ) : (
+                <span />
+              )}
               <span className="text-ink-muted">
                 Page {filters.page} of {pages} · {list.total} tasks
               </span>
-              {filters.page < pages ? <Link href={`${path}${taskQuery(filters, { page: filters.page + 1 })}`} className="link">Next →</Link> : <span />}
+              {filters.page < pages ? (
+                <Link href={`${path}${taskQuery(filters, { page: filters.page + 1 })}`} className="link">
+                  Next →
+                </Link>
+              ) : (
+                <span />
+              )}
             </nav>
           )}
         </>

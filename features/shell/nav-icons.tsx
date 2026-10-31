@@ -1,5 +1,7 @@
 import {
   AlarmClock,
+  FolderPlus,
+  LayoutTemplate,
   BookOpenCheck,
   ChartNoAxesCombined,
   Sheet,
@@ -82,6 +84,9 @@ const ICONS: Record<string, LucideIcon> = {
   "/users/work/projects": FolderKanban,
   "/users/work/search": FileSearch,
   "/users/work/periodic": Repeat,
+  "/users/work/inbox": Inbox,
+  "/users/work/projects/new": FolderPlus,
+  "/users/work/projects?show=templates": LayoutTemplate,
   "/users/information": Newspaper,
   "/users/information/sent": Megaphone,
   "/users/information/new": MailPlus,
@@ -139,7 +144,7 @@ const ICONS: Record<string, LucideIcon> = {
 };
 
 // v1.9.2: the collapsible groups of the user sidebar.
-const SECTION_ICONS: Record<string, LucideIcon> = { "My Approvals": ClipboardCheck, Tasks: ListTodo, Information: Newspaper, AI: Sparkles, "AI Assistant": MessagesSquare, "AI Details": Sparkles };
+const SECTION_ICONS: Record<string, LucideIcon> = { "My Approvals": ClipboardCheck, Tasks: ListTodo, "Tasks & projects": ListTodo, Information: Newspaper, AI: Sparkles, "AI Assistant": MessagesSquare, "AI Details": Sparkles };
 
 export function SectionIcon({ section, className = "h-4 w-4" }: { section: string; className?: string }) {
   const Icon = SECTION_ICONS[section];

@@ -58,7 +58,7 @@ test("without the Task module: no Tasks in the sidebar, and typed task addresses
   await page.goto("/users");
   const sidebar = page.getByTestId("sidebar");
   await expect(sidebar.getByTestId("nav-group-My Approvals")).toBeVisible();
-  await expect(sidebar.getByTestId("nav-group-Tasks")).toHaveCount(0);
+  await expect(sidebar.getByTestId("nav-group-Tasks & projects")).toHaveCount(0);
   for (const path of ["/users/tasks", "/users/tasks/new", "/users/tasks/assigned"]) {
     const response = await page.goto(path);
     expect(response?.status(), path).toBe(404);

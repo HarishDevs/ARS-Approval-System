@@ -6,6 +6,7 @@ import { CreateMenu } from "@/features/shell/CreateMenu";
 import { MobileNav } from "@/features/shell/MobileNav";
 import { ProfileMenu } from "@/features/shell/ProfileMenu";
 import { countUnread } from "@/lib/db/repositories/collab.repository";
+import { inboxUnread } from "@/lib/db/repositories/work.repository";
 import { getUserSetting } from "@/lib/db/repositories/user-settings.repository";
 import { ThemeSync } from "@/features/shell/ThemeControls";
 import { OfflineBanner, SessionWatch, UpdateNotice } from "@/features/shell/SessionWatch";
@@ -123,15 +124,26 @@ export async function AppShell({
   ];
   // The "Waiting for me" entry shows the real count (RA-01).
   const items = nav.filter((item) => visible(item.href)).map((item) => (item.href === "/users/queue" ? { ...item, count: waiting } : item));
-  // D-221 (owner): the Compact sidebar keeps one "Tasks & projects" entry (the
-  // Tasks area has its own Asana-style bar); the Classic view keeps the
-  // Tasks module's pages. + Create offers what the person can create.
+  // D-221 / D-223 (owner): in the Compact view the Tasks pages become one
+  // "Tasks & projects" group holding the Tasks bar's pages (the area has no
+  // bar of its own any more); the Classic view keeps the Tasks module's
+  // pages. + Create offers what the person can create.
   const tasksOn = items.some((item) => item.section === "Tasks");
+  const inbox = area === "users" && tasksOn ? await inboxUnread(user.id).catch(() => 0) : 0;
+  const workGroup: NavItem[] = [
+    { href: "/users/work", label: "Home" },
+    { href: "/users/work/inbox", label: "Inbox", count: inbox },
+    { href: "/users/work/my-tasks", label: "My Tasks", also: ["/users/tasks"] },
+    { href: "/users/work/projects", label: "All projects" },
+    { href: "/users/work/periodic", label: "Periodic tasks" },
+    { href: "/users/work/search", label: "Search tasks" },
+    { href: "/users/work/projects/new", label: "New project" },
+    { href: "/users/work/projects?show=templates", label: "Templates" },
+    { href: "/users/tasks/new", label: "Task with a type (form)" },
+  ].map((item) => ({ ...item, section: "Tasks & projects" }));
   const sideItems: NavItem[] =
     area === "users"
-      ? items.flatMap((item, index) =>
-          item.section !== "Tasks" ? [item] : items.findIndex((other) => other.section === "Tasks") === index ? [{ href: "/users/work", label: "Tasks & projects", also: ["/users/tasks"] }] : [],
-        )
+      ? items.flatMap((item, index) => (item.section !== "Tasks" ? [item] : items.findIndex((other) => other.section === "Tasks") === index ? workGroup : []))
       : items;
 
   return (
@@ -160,7 +172,7 @@ export async function AppShell({
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-header flex h-topbar items-center justify-between gap-4 border-b border-line bg-surface px-4 sm:px-6">
-          <MobileNav items={items} spaceLabel={SPACE_LABEL[area]} home={`/${area}`} collapsible={area !== "admin"} chats={chats} />
+          <MobileNav items={sideItems} spaceLabel={SPACE_LABEL[area]} home={`/${area}`} collapsible={area !== "admin"} chats={chats} />
           {/* D-210: Classic has no sidebar, so the logo leads back to the Gateway from the top bar. */}
           {classic && (
             <Link href="/users" aria-label="ARS-CMS: Central Management System" className="hidden items-center gap-3 rounded-md md:flex" data-testid="classic-home">

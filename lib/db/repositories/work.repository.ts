@@ -713,7 +713,8 @@ export interface MySection {
   position: number;
   system: MySystemSection | null;
 }
-// The four built-in sections exist once per person (made on first use).
+// The built-in sections exist once per person (made on first use). D-225:
+// Overdue, added later, goes above the person's first section.
 export async function ensureMySections(userId: number, db: Queryable = getDbPool()): Promise<MySection[]> {
   const read = async () => {
     const [rows] = await db.query<Row[]>("SELECT id, name, position, system_key FROM my_task_sections WHERE user_id = ? ORDER BY position, id", [userId]);
@@ -722,8 +723,10 @@ export async function ensureMySections(userId: number, db: Queryable = getDbPool
   let sections = await read();
   const missing = MY_SECTION_ORDER.filter((key) => !sections.some((section) => section.system === key));
   if (missing.length) {
+    const top = sections.length ? Math.min(...sections.map((section) => section.position)) : 1024;
     for (const key of missing) {
-      await db.query<ResultSetHeader>("INSERT IGNORE INTO my_task_sections (user_id, name, position, system_key) VALUES (?, ?, ?, ?)", [userId, MY_SECTION_NAMES[key], (MY_SECTION_ORDER.indexOf(key) + 1) * 1024, key]);
+      const position = key === "OVERDUE" ? top - 1024 : (MY_SECTION_ORDER.indexOf(key) + 1) * 1024;
+      await db.query<ResultSetHeader>("INSERT IGNORE INTO my_task_sections (user_id, name, position, system_key) VALUES (?, ?, ?, ?)", [userId, MY_SECTION_NAMES[key], position, key]);
     }
     sections = await read();
   }

@@ -47,9 +47,10 @@ export function dependencyLoop(blocker: number, blocked: number, edges: readonly
 }
 
 // ---- My Tasks ---------------------------------------------------------------------------
-export type MySystemSection = "RECENT" | "TODAY" | "UPCOMING" | "LATER";
-export const MY_SECTION_NAMES: Record<MySystemSection, string> = { RECENT: "Recently assigned", TODAY: "Today", UPCOMING: "Upcoming", LATER: "Later" };
-export const MY_SECTION_ORDER: readonly MySystemSection[] = ["RECENT", "TODAY", "UPCOMING", "LATER"];
+// D-225 (owner): Overdue is the first section.
+export type MySystemSection = "OVERDUE" | "RECENT" | "TODAY" | "UPCOMING" | "LATER";
+export const MY_SECTION_NAMES: Record<MySystemSection, string> = { OVERDUE: "Overdue", RECENT: "Recently assigned", TODAY: "Today", UPCOMING: "Upcoming", LATER: "Later" };
+export const MY_SECTION_ORDER: readonly MySystemSection[] = ["OVERDUE", "RECENT", "TODAY", "UPCOMING", "LATER"];
 export const RECENT_DAYS = 3;
 export const UPCOMING_DAYS = 7;
 
@@ -58,12 +59,15 @@ export const UPCOMING_DAYS = 7;
 // Later to Upcoming) as their due date comes near: never backwards, never out
 // of Recently assigned or the person's own sections. A task never placed is
 // in Recently assigned for a few days after it was assigned, then by date.
+// D-225: an open task past its due day is always in Overdue, wherever it was
+// put; it leaves when it is completed or its date moves.
 export function myTaskBucket(
-  task: { dueDay: string | null; assignedAt: Date | null; selfAssigned: boolean },
+  task: { dueDay: string | null; assignedAt: Date | null; selfAssigned: boolean; open?: boolean },
   placement: { system: MySystemSection | null; sectionId: number } | null,
   today: string,
   now: Date,
 ): { system: MySystemSection | null; sectionId: number | null } {
+  if (task.open !== false && task.dueDay !== null && task.dueDay < today) return { system: "OVERDUE", sectionId: null };
   const byDate = (): MySystemSection => (task.dueDay === null ? "LATER" : task.dueDay <= today ? "TODAY" : task.dueDay <= addDays(today, UPCOMING_DAYS) ? "UPCOMING" : "LATER");
   if (placement) {
     if (placement.system === "UPCOMING" || placement.system === "LATER") {

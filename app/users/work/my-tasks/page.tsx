@@ -67,6 +67,7 @@ export default async function MyTasksPage({
         dueDay: task.dueAt ? indiaDayOf(task.dueAt) : null,
         assignedAt: task.assignedAt,
         selfAssigned: task.createdBy === user.id,
+        open: task.status !== "COMPLETED",
       },
       placedSection ? { system: placedSection.system, sectionId: placedSection.id } : null,
       today,

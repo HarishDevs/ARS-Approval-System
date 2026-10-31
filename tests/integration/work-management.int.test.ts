@@ -190,7 +190,7 @@ describe("Task & Project Management (D-215)", () => {
 
   it("My Tasks: built-in sections once per person; placing a task is personal", async () => {
     const sections = await repo.ensureMySections(member);
-    expect(sections.filter((section) => section.system).map((section) => section.system)).toEqual(["RECENT", "TODAY", "UPCOMING", "LATER"]);
+    expect(sections.filter((section) => section.system).map((section) => section.system)).toEqual(["OVERDUE", "RECENT", "TODAY", "UPCOMING", "LATER"]); // D-225: Overdue first
     expect((await repo.ensureMySections(member)).length).toBe(sections.length);
     const later = sections.find((section) => section.system === "LATER")!;
     expect((await work.placeMine(parentTask, later.id, 5, who(member))).ok).toBe(true);

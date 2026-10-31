@@ -16,14 +16,20 @@ async function as(context: BrowserContext, loginId: string) {
   await context.addCookies([await sessionCookie(loginId)]);
 }
 
-test("the left bar lists the projects; Create task makes a periodic task that opens in the pane", async ({ page, context }) => {
+test("the sidebar's Tasks & projects group; + Create → Task makes a periodic task that opens in the pane", async ({ page, context }) => {
   await as(context, "E2E_REQ");
   await createProject(page, projectName);
-  const rail = page.getByTestId("work-rail");
-  await expect(rail.getByRole("link", { name: projectName })).toBeVisible();
-  for (const label of ["Home", "My Tasks", "Inbox", "Periodic tasks", "Search", "All projects"]) await expect(rail.getByRole("link", { name: new RegExp(`^${label}`) })).toBeVisible();
+  // D-223 (owner): the Tasks bar's pages sit in the sidebar; no second bar.
+  await expect(page.getByTestId("work-rail")).toHaveCount(0);
+  const group = page.getByTestId("nav-group-Tasks & projects");
+  for (const label of ["Home", "Inbox", "My Tasks", "All projects", "Periodic tasks", "Search tasks", "New project", "Templates", "Task with a type (form)"]) await expect(group.getByRole("link", { name: new RegExp(`^${label.replace(/[()]/g, "\\$&")}`) })).toBeVisible();
 
-  await rail.getByTestId("create-task").click();
+  const create = page.getByTestId("create-menu");
+  await expect(async () => {
+    if ((await create.getByRole("button", { name: "Create" }).getAttribute("aria-expanded")) !== "true") await create.getByRole("button", { name: "Create" }).click();
+    await expect(create.getByRole("menuitem", { name: /^Task/ })).toBeVisible({ timeout: 1000 });
+  }).toPass();
+  await create.getByRole("menuitem", { name: /^Task/ }).click();
   const dialog = page.getByTestId("create-dialog");
   await dialog.getByLabel("Task name").fill(`Weekly stock count ${stamp}`);
   // D-220: the Draft task panel: "For <assignee> in <project>", then Repeat.

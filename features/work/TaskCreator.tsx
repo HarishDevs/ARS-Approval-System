@@ -34,11 +34,14 @@ function CreateTaskDialog({ onClose, projects, people, meId, defaultProject }: {
   const { call, pending } = useWorkCall();
   const [title, setTitle] = useState("");
   // D-222: an ad hoc task may go to several people (one copy each); a periodic one to one.
-  const [assignees, setAssignees] = useState<number[]>([meId]);
+  // D-224: for myself by default; "Others" picks people by searching.
+  const [forWhom, setForWhom] = useState<"self" | "others">("self");
+  const [others, setOthers] = useState<number[]>([]);
   const [due, setDue] = useState("");
   const [project, setProject] = useState<number | "">(defaultProject ?? "");
   const [description, setDescription] = useState("");
   const [periodic, setPeriodic] = useState(false);
+  const assignees = forWhom === "self" ? [meId] : periodic ? others.slice(0, 1) : others;
   const [kind, setKind] = useState<Recurrence["kind"]>("WEEKLY");
   const [every, setEvery] = useState(1);
   const [weekdays, setWeekdays] = useState<number[]>([]);
@@ -48,13 +51,21 @@ function CreateTaskDialog({ onClose, projects, people, meId, defaultProject }: {
   useEffect(() => {
     name.current?.focus();
   }, []);
-  const label = (id: number) => people.find((item) => item.id === id)?.label ?? "Me";
+  const label = (id: number) => people.find((item) => item.id === id)?.label ?? "Someone";
   const chosen = projects.find((item) => item.id === project);
   const submit = async () => {
-    if (!title.trim()) return;
+    if (!title.trim() || assignees.length === 0) return;
     const result = await call(
       (choice) =>
-        quickAddAction({ title, assigneeId: assignees[0] ?? meId, assigneeIds: !periodic && assignees.length > 1 ? assignees : undefined, dueDay: choice?.moveTo ?? due, holidayOk: choice?.holidayOk, projectId: project === "" ? null : project, description }),
+        quickAddAction({
+          title,
+          assigneeId: assignees[0] ?? meId,
+          assigneeIds: !periodic && assignees.length > 1 ? assignees : undefined,
+          dueDay: choice?.moveTo ?? due,
+          holidayOk: choice?.holidayOk,
+          projectId: project === "" ? null : project,
+          description,
+        }),
       { success: false },
     );
     if (!result?.ok || !result.value) return;
@@ -98,48 +109,71 @@ function CreateTaskDialog({ onClose, projects, people, meId, defaultProject }: {
           <label htmlFor="create-title" className="sr-only">
             Task name
           </label>
-          <input ref={name} id="create-title" required maxLength={200} placeholder="Task name" value={title} onChange={(event) => setTitle(event.target.value)} className="w-full bg-transparent text-title font-semibold placeholder:text-ink-faint focus:outline-none" />
+          <input
+            ref={name}
+            id="create-title"
+            required
+            maxLength={200}
+            placeholder="Task name"
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            className="w-full bg-transparent text-title font-semibold placeholder:text-ink-faint focus:outline-none"
+          />
           <div className="flex flex-wrap items-center gap-2 text-label">
             <span className="text-ink-muted">For</span>
-            {assignees.map((id) => (
-              <span key={id} className={chip} data-testid="assignee-chip">
-                {label(id)}
-                {assignees.length > 1 && (
-                  <button type="button" aria-label={`Remove ${label(id)}`} onClick={() => setAssignees((value) => value.filter((item) => item !== id))} className="text-ink-faint hover:text-danger-600">
+            {/* D-224 (owner): a task is for myself (the default) or for others. */}
+            <span role="radiogroup" aria-label="Who is the task for" className="inline-flex rounded-full border border-line p-0.5">
+              {(["self", "others"] as const).map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  role="radio"
+                  aria-checked={forWhom === value}
+                  onClick={() => {
+                    setForWhom(value);
+                    setPicking(value === "others" && others.length === 0 ? "assignee" : "");
+                  }}
+                  className={`rounded-full px-2.5 py-0.5 text-label ${forWhom === value ? "bg-primary-50 font-semibold text-primary-700" : "text-ink-muted hover:text-ink"}`}
+                >
+                  {value === "self" ? "Myself" : "Others"}
+                </button>
+              ))}
+            </span>
+            {forWhom === "others" &&
+              others.map((id) => (
+                <span key={id} className={chip} data-testid="assignee-chip">
+                  {label(id)}
+                  <button type="button" aria-label={`Remove ${label(id)}`} onClick={() => setOthers((value) => value.filter((item) => item !== id))} className="text-ink-faint hover:text-danger-600">
                     <X aria-hidden="true" className="h-3 w-3" />
                   </button>
-                )}
-              </span>
-            ))}
-            {picking === "assignee" ? (
+                </span>
+              ))}
+            {forWhom === "others" &&
+              (picking === "assignee" ? (
+                <PersonSearch
+                  people={people.filter((item) => item.id !== meId && !others.includes(item.id))}
+                  onPick={(id) => {
+                    // Periodic: one person (the choice replaces); ad hoc: add people.
+                    setOthers((value) => (periodic ? [id] : [...value, id]));
+                    if (periodic) setPicking("");
+                  }}
+                  onDone={() => setPicking("")}
+                />
+              ) : (
+                <button type="button" className={`${chip} border-dashed text-ink-muted`} onClick={() => setPicking("assignee")} aria-label={periodic && others.length ? "Change the assignee" : "Add an assignee"}>
+                  {periodic && others.length ? "Change" : "+ Person"}
+                </button>
+              ))}
+            <span className="text-ink-muted">in</span>
+            {picking === "project" ? (
               <select
                 autoFocus
-                aria-label="Add an assignee"
-                value=""
-                onChange={(event) => {
-                  const id = Number(event.target.value);
-                  // Periodic: one person (the choice replaces); ad hoc: add people.
-                  setAssignees((value) => (periodic ? [id] : value.includes(id) ? value : value[0] === meId && value.length === 1 && id !== meId ? [id] : [...value, id]));
-                  setPicking("");
-                }}
+                aria-label="Project"
+                value={project}
+                onChange={(event) => setProject(event.target.value ? Number(event.target.value) : "")}
                 onBlur={() => setPicking("")}
                 className="field-input h-8 w-56 py-0 text-label"
               >
-                <option value="">Choose a person…</option>
-                {people.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.id === meId ? `${item.label} (me)` : item.label}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <button type="button" className={`${chip} border-dashed text-ink-muted`} onClick={() => setPicking("assignee")} aria-label={periodic ? "Change the assignee" : "Add an assignee"}>
-                {periodic ? "Change" : "+ Person"}
-              </button>
-            )}
-            <span className="text-ink-muted">in</span>
-            {picking === "project" ? (
-              <select autoFocus aria-label="Project" value={project} onChange={(event) => setProject(event.target.value ? Number(event.target.value) : "")} onBlur={() => setPicking("")} className="field-input h-8 w-56 py-0 text-label">
                 <option value="">No project (My Tasks)</option>
                 {projects.map((item) => (
                   <option key={item.id} value={item.id}>
@@ -162,7 +196,15 @@ function CreateTaskDialog({ onClose, projects, people, meId, defaultProject }: {
           <label htmlFor="create-description" className="sr-only">
             Description
           </label>
-          <textarea id="create-description" rows={4} maxLength={4000} placeholder="Description" value={description} onChange={(event) => setDescription(event.target.value)} className="w-full resize-none bg-transparent text-body placeholder:text-ink-faint focus:outline-none" />
+          <textarea
+            id="create-description"
+            rows={4}
+            maxLength={4000}
+            placeholder="Description"
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+            className="w-full resize-none bg-transparent text-body placeholder:text-ink-faint focus:outline-none"
+          />
           {(picking === "due" || due) && (
             <div className="flex items-center gap-2 text-label">
               <label htmlFor="create-due" className="text-ink-muted">
@@ -189,7 +231,7 @@ function CreateTaskDialog({ onClose, projects, people, meId, defaultProject }: {
                   checked={periodic}
                   onChange={() => {
                     setPeriodic(true);
-                    setAssignees((value) => value.slice(0, 1));
+                    setOthers((value) => value.slice(0, 1));
                   }}
                 />{" "}
                 Periodic (repeats)
@@ -199,7 +241,15 @@ function CreateTaskDialog({ onClose, projects, people, meId, defaultProject }: {
               <>
                 <div className="flex flex-wrap items-center gap-2 text-label">
                   Every
-                  <input type="number" min={1} max={365} value={every} onChange={(event) => setEvery(Math.max(1, Math.min(365, Number(event.target.value) || 1)))} aria-label="Every how many" className="field-input h-8 w-20 py-0" />
+                  <input
+                    type="number"
+                    min={1}
+                    max={365}
+                    value={every}
+                    onChange={(event) => setEvery(Math.max(1, Math.min(365, Number(event.target.value) || 1)))}
+                    aria-label="Every how many"
+                    className="field-input h-8 w-20 py-0"
+                  />
                   <select value={kind} onChange={(event) => setKind(event.target.value as Recurrence["kind"])} aria-label="Repeat unit" className="field-input h-8 w-auto py-0">
                     {RECURRENCE_KINDS.map((item) => (
                       <option key={item} value={item}>
@@ -222,16 +272,28 @@ function CreateTaskDialog({ onClose, projects, people, meId, defaultProject }: {
             )}
           </fieldset>
           <footer className="flex items-center gap-1 border-t border-line pt-3">
-            <button type="button" aria-label="Set a due date" title="Due date" onClick={() => setPicking(picking === "due" ? "" : "due")} className={`rounded p-1.5 hover:bg-surface-muted ${due ? "text-primary-700" : "text-ink-muted"}`}>
+            <button
+              type="button"
+              aria-label="Set a due date"
+              title="Due date"
+              onClick={() => setPicking(picking === "due" ? "" : "due")}
+              className={`rounded p-1.5 hover:bg-surface-muted ${due ? "text-primary-700" : "text-ink-muted"}`}
+            >
               <CalendarDays aria-hidden="true" className="h-4 w-4" />
             </button>
-            <button type="button" aria-label="Repeat (periodic)" title="Repeat" onClick={() => setPicking(picking === "repeat" ? "" : "repeat")} className={`rounded p-1.5 hover:bg-surface-muted ${periodic ? "text-primary-700" : "text-ink-muted"}`}>
+            <button
+              type="button"
+              aria-label="Repeat (periodic)"
+              title="Repeat"
+              onClick={() => setPicking(picking === "repeat" ? "" : "repeat")}
+              className={`rounded p-1.5 hover:bg-surface-muted ${periodic ? "text-primary-700" : "text-ink-muted"}`}
+            >
               <Repeat aria-hidden="true" className="h-4 w-4" />
             </button>
             <Link href="/users/tasks/new" className="ml-1 text-caption text-ink-muted hover:text-ink">
               Task with a form
             </Link>
-            <button type="submit" disabled={pending || !title.trim()} className="btn-primary btn-compact ml-auto">
+            <button type="submit" disabled={pending || !title.trim() || assignees.length === 0} title={assignees.length === 0 ? "Choose who the task is for" : undefined} className="btn-primary btn-compact ml-auto">
               Create task
             </button>
           </footer>
@@ -241,3 +303,70 @@ function CreateTaskDialog({ onClose, projects, people, meId, defaultProject }: {
   );
 }
 
+// D-224 (owner): the assignee is chosen by typing part of a name; arrows and
+// Enter pick, Esc or leaving the box closes it.
+function PersonSearch({ people, onPick, onDone }: { people: { id: number; label: string }[]; onPick: (id: number) => void; onDone: () => void }) {
+  const [query, setQuery] = useState("");
+  const [at, setAt] = useState(0);
+  const terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const matches = people.filter((item) => terms.every((term) => item.label.toLowerCase().includes(term))).slice(0, 8);
+  const pick = (id: number) => {
+    onPick(id);
+    setQuery("");
+    setAt(0);
+  };
+  return (
+    <span className="relative inline-block">
+      <input
+        autoFocus
+        role="combobox"
+        aria-label="Search people"
+        aria-expanded={matches.length > 0}
+        aria-controls="person-search-list"
+        aria-autocomplete="list"
+        aria-activedescendant={matches[at] ? `person-option-${matches[at].id}` : undefined}
+        placeholder="Type a name…"
+        value={query}
+        onChange={(event) => {
+          setQuery(event.target.value);
+          setAt(0);
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+            event.preventDefault();
+            setAt((value) => Math.max(0, Math.min(matches.length - 1, value + (event.key === "ArrowDown" ? 1 : -1))));
+          } else if (event.key === "Enter" && !(event.ctrlKey || event.metaKey)) {
+            event.preventDefault();
+            if (matches[at]) pick(matches[at].id);
+          } else if (event.key === "Escape") {
+            event.stopPropagation();
+            onDone();
+          }
+        }}
+        onBlur={() => window.setTimeout(onDone, 150)}
+        className="field-input h-8 w-56 py-0 text-label"
+      />
+      <ul id="person-search-list" role="listbox" aria-label="People" className="absolute left-0 top-full z-10 mt-1 max-h-64 w-64 overflow-y-auto rounded-md border border-line bg-raised py-1 shadow-overlay">
+        {matches.length === 0 ? (
+          <li className="px-3 py-1.5 text-label text-ink-muted">No one matches.</li>
+        ) : (
+          matches.map((item, index) => (
+            <li
+              key={item.id}
+              id={`person-option-${item.id}`}
+              role="option"
+              aria-selected={index === at}
+              onMouseDown={(event) => {
+                event.preventDefault();
+                pick(item.id);
+              }}
+              className={`cursor-pointer px-3 py-1.5 text-label ${index === at ? "bg-primary-50 text-primary-700" : "text-ink hover:bg-surface-muted"}`}
+            >
+              {item.label}
+            </li>
+          ))
+        )}
+      </ul>
+    </span>
+  );
+}

@@ -117,10 +117,15 @@ test("D-222: an ad hoc task for two people; Project permissions", async ({ page,
   await create.getByRole("menuitem", { name: /^Task/ }).click();
   const draft = page.getByTestId("create-dialog");
   await draft.getByLabel("Task name").fill(`Count stock ${stamp}`);
-  await draft.getByRole("button", { name: "Add an assignee" }).click();
-  await draft.getByRole("combobox", { name: "Add an assignee" }).selectOption({ label: "Sita Staff" });
-  await draft.getByRole("button", { name: "Add an assignee" }).click();
-  await draft.getByRole("combobox", { name: "Add an assignee" }).selectOption({ label: "Manoj Manager" });
+  // D-224: Myself is the default; Others searches people by name.
+  await expect(draft.getByRole("radio", { name: "Myself" })).toHaveAttribute("aria-checked", "true");
+  await draft.getByRole("radio", { name: "Others" }).click();
+  const search = draft.getByRole("combobox", { name: "Search people" });
+  await search.fill("sita");
+  await expect(draft.getByRole("option")).toHaveCount(1);
+  await search.press("Enter");
+  await search.fill("manoj man");
+  await draft.getByRole("option", { name: "Manoj Manager" }).click();
   await expect(draft.getByTestId("assignee-chip")).toHaveCount(2);
   await draft.getByRole("button", { name: "Create task" }).click();
   await expect(page.getByTestId("task-pane").getByTestId("assign-group")).toContainText(/Sita Staff|Manoj Manager/);

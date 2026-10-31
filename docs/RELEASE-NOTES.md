@@ -1,5 +1,11 @@
 # Release notes
 
+## v1.33.0 (31 Oct 2026): sidebar, Myself/Others, Overdue, list toolbar (owner)
+- **Tasks & projects** is now a group in the sidebar with Home, Inbox, My Tasks, All projects, Periodic tasks, Search tasks, New project, Templates and Task with a type; the Tasks pages use the full width.
+- **Draft task:** the task is for **Myself** by default, or **Others**: type part of a name to find people.
+- **My Tasks** has an **Overdue** section at the top for open tasks past their due date.
+- **Every list** (requests, Waiting for me, information, typed tasks) has the task table's toolbar: **Filter**, **Sort**, **Group** (request lists), **Options** (per page, save the view) and **Search**.
+
 ## v1.32.0 (30 Oct 2026): Tasks like Asana (owner)
 - **The Tasks area looks and works like Asana** in the ARS colours: a left bar with Create task, Home, Inbox, My Tasks, all your projects (by department, with Starred), Periodic tasks and Search; tasks open in a panel beside the list.
 - **Compact table** for projects, My Tasks and search: numbered rows, ticks, Filters (quick filters and field filters), Sort, Groups, Options and **saved tabs**.

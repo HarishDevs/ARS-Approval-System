@@ -1055,6 +1055,14 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 2. They filter (search, status, type, department, person, waiting on, priority, overdue, dates) and sort by a column title; 50 rows a page.
 3. **Download CSV** gives every matching row (up to 10,000) for Excel; audited. A row number opens the record.
 
+## F-169 Filter, sort and group a list (v1.33.0, D-226)
+1. Any request, waiting, information or task list → toolbar: Filter → choose fields → Apply (or Clear all); "Filters: N" and × show when in use.
+2. Sort → an order; Group → Status / Approval type / Month raised / Raised by (request lists); Options → Per page, Save these filters.
+3. Search box → Enter (keeps the tab, filters, sort and group).
+
+## F-170 Draft task for others (v1.33.0, D-224)
+1. + Create → Task → For: Myself (default) or Others → type part of a name → pick (Enter or click; more people for ad hoc) → Create task.
+
 ## F-166 + Create (v1.32.0, D-221)
 1. Sidebar → + Create → Approval request (New request), Task (Draft task panel, any page), Project (new-project steps) or Information.
 

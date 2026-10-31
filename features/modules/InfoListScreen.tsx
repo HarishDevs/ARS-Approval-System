@@ -12,6 +12,11 @@ import { infoState, INFO_STATE_LABEL, type InfoState } from "@/server/modules/in
 import { indiaDateTimeText, INFO_PRIORITIES, INFO_PRIORITY_LABEL, type InfoPriority } from "@/server/modules/settings";
 import { PAGE_SIZES } from "@/server/modules/task-lists";
 import { indiaToday } from "@/server/modules/information";
+import { ListToolbar } from "@/features/ui/ListToolbar";
+
+// D-226: the sorts offered in the toolbar.
+const INFO_SORTS = ["newest", "oldest", "expiry"] as const;
+const INFO_SORT_LABEL: Record<(typeof INFO_SORTS)[number], string> = { newest: "Newest", oldest: "Oldest", expiry: "Expiring first" };
 
 // v1.9.0 (D-143): Information inbox and Sent by me.
 const TITLE: Record<InfoBase, string> = { INBOX: "Information inbox", SENT: "Information sent by me" };
@@ -41,95 +46,92 @@ export async function InfoListScreen({ base, query }: { base: InfoBase; query: R
   const path = PATH[base];
   return (
     <>
-      <PageHeader title={TITLE[base]} description={base === "INBOX" ? "Information sent to you. Opening one marks it read; acknowledging is a separate button." : "Information you wrote: drafts, published, withdrawn and archived, with who read and acknowledged it."}>
+      <PageHeader
+        title={TITLE[base]}
+        description={
+          base === "INBOX"
+            ? "Information sent to you. Opening one marks it read; acknowledging is a separate button."
+            : "Information you wrote: drafts, published, withdrawn and archived, with who read and acknowledged it."
+        }
+      >
         <Link href="/users/information/new" className="btn-primary btn-compact">
           New information
         </Link>
       </PageHeader>
-      <nav aria-label="Quick filters" className="mb-4 flex flex-wrap gap-2">
+      <nav aria-label="Quick filters" className="mb-3 flex flex-wrap gap-x-1 border-b border-line">
         {counts.map(([tab, count]) => (
-          <Link key={tab} href={`${path}${infoQuery(filters, base, { tab })}`} aria-current={filters.tab === tab ? "page" : undefined} className={`rounded-full border px-3 py-1 text-label ${filters.tab === tab ? "border-primary-600 bg-primary-50 font-semibold text-primary-700" : "border-line text-ink-muted hover:bg-surface-muted"}`}>
+          <Link
+            key={tab}
+            href={`${path}${infoQuery(filters, base, { tab })}`}
+            aria-current={filters.tab === tab ? "page" : undefined}
+            className={`-mb-px border-b-2 px-2.5 py-1.5 text-label ${filters.tab === tab ? "border-primary-600 font-semibold text-primary-700" : "border-transparent text-ink-muted hover:text-ink"}`}
+          >
             {INFO_TAB_LABEL[tab]} ({count})
           </Link>
         ))}
       </nav>
-      <details className="card mb-4 px-5 py-3" open={Boolean(filters.q || filters.typeId || filters.priority || filters.senderId || filters.from || filters.to)}>
-        <summary className="cursor-pointer font-medium">More filters</summary>
-        <form method="get" action={path} className="mt-3 grid gap-3 md:grid-cols-4">
-          <input type="hidden" name="tab" value={filters.tab} />
-          <label className="text-label md:col-span-2">
-            Search (number, subject, message, searchable fields)
-            <input name="q" defaultValue={filters.q} maxLength={100} className="field-input" />
-          </label>
-          <label className="text-label">
-            Type
-            <select name="type" defaultValue={filters.typeId ?? ""} className="field-input">
-              <option value="">Any</option>
-              {types.map((type) => (
-                <option key={type.id} value={type.id}>
-                  {type.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="text-label">
-            Importance
-            <select name="priority" defaultValue={filters.priority ?? ""} className="field-input">
-              <option value="">Any</option>
-              {INFO_PRIORITIES.map((priority) => (
-                <option key={priority} value={priority}>
-                  {INFO_PRIORITY_LABEL[priority]}
-                </option>
-              ))}
-            </select>
-          </label>
-          {base === "INBOX" && (
+      <ListToolbar
+        id="info-filters"
+        path={path}
+        label="Filter information"
+        keep={{ tab: filters.tab, sort: filters.sort !== "newest" ? filters.sort : undefined, size: filters.size !== 25 ? String(filters.size) : undefined }}
+        search={{ name: "q", value: filters.q, placeholder: "Number, subject or message" }}
+        filterCount={[filters.typeId, filters.priority, filters.senderId, filters.from || filters.to].filter(Boolean).length}
+        clearHref={filters.q || filters.typeId || filters.priority || filters.senderId || filters.from || filters.to ? `${path}?tab=${filters.tab}` : null}
+        filters={
+          <>
             <label className="text-label">
-              From
-              <select name="sender" defaultValue={filters.senderId ?? ""} className="field-input">
-                <option value="">Anyone</option>
-                {people.map((person) => (
-                  <option key={person.id} value={person.id}>
-                    {person.name}
+              Type
+              <select name="type" defaultValue={filters.typeId ?? ""} className="field-input h-10">
+                <option value="">Any</option>
+                {types.map((type) => (
+                  <option key={type.id} value={type.id}>
+                    {type.name}
                   </option>
                 ))}
               </select>
             </label>
-          )}
-          <label className="text-label">
-            {base === "INBOX" ? "Published from" : "Created from"}
-            <input type="date" name="from" defaultValue={filters.from ?? ""} className="field-input" />
-          </label>
-          <label className="text-label">
-            To
-            <input type="date" name="to" defaultValue={filters.to ?? ""} className="field-input" />
-          </label>
-          <label className="text-label">
-            Sort
-            <select name="sort" defaultValue={filters.sort} className="field-input">
-              <option value="newest">Newest</option>
-              <option value="oldest">Oldest</option>
-              <option value="expiry">Expiring first</option>
-            </select>
-          </label>
-          <label className="text-label">
-            Per page
-            <select name="size" defaultValue={filters.size} className="field-input">
-              {PAGE_SIZES.map((size) => (
-                <option key={size}>{size}</option>
-              ))}
-            </select>
-          </label>
-          <div className="flex items-end gap-2 md:col-span-4">
-            <button type="submit" className="btn-primary btn-compact">
-              Apply
-            </button>
-            <Link href={path} className="btn-secondary btn-compact">
-              Clear all
-            </Link>
-          </div>
-        </form>
-      </details>
+            <label className="text-label">
+              Importance
+              <select name="priority" defaultValue={filters.priority ?? ""} className="field-input h-10">
+                <option value="">Any</option>
+                {INFO_PRIORITIES.map((priority) => (
+                  <option key={priority} value={priority}>
+                    {INFO_PRIORITY_LABEL[priority]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {base === "INBOX" && (
+              <label className="text-label">
+                From
+                <select name="sender" defaultValue={filters.senderId ?? ""} className="field-input h-10">
+                  <option value="">Anyone</option>
+                  {people.map((person) => (
+                    <option key={person.id} value={person.id}>
+                      {person.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            <label className="text-label">
+              {base === "INBOX" ? "Published from" : "Created from"}
+              <input type="date" name="from" defaultValue={filters.from ?? ""} className="field-input h-10" />
+            </label>
+            <label className="text-label">
+              To
+              <input type="date" name="to" defaultValue={filters.to ?? ""} className="field-input h-10" />
+            </label>
+          </>
+        }
+        sort={{
+          label: INFO_SORT_LABEL[filters.sort],
+          changed: filters.sort !== "newest",
+          choices: INFO_SORTS.map((sort) => ({ label: INFO_SORT_LABEL[sort], href: `${path}${infoQuery(filters, base, { sort })}`, active: filters.sort === sort })),
+        }}
+        sizes={PAGE_SIZES.map((size) => ({ label: `${size} per page`, href: `${path}${infoQuery(filters, base, { size })}`, active: filters.size === size }))}
+      />
       {list.rows.length === 0 ? (
         <EmptyState title="Nothing here" body="Try another tab or clear the filters." />
       ) : (
@@ -178,7 +180,7 @@ export async function InfoListScreen({ base, query }: { base: InfoBase; query: R
                           : `${item.read} / ${item.ackRequired ? item.acknowledged : "—"}`}
                     </td>
                     <td className="text-label">
-                      {base === "INBOX" ? (item.publishedAt ? indiaDateTimeText(item.publishedAt) : "—") : <Badge tone={INFO_STATE_TONE[state]}>{INFO_STATE_LABEL[state]}</Badge>}
+                      {base === "INBOX" ? item.publishedAt ? indiaDateTimeText(item.publishedAt) : "—" : <Badge tone={INFO_STATE_TONE[state]}>{INFO_STATE_LABEL[state]}</Badge>}
                       {base === "INBOX" && state !== "PUBLISHED" && <span className="block text-caption text-ink-muted">{INFO_STATE_LABEL[state]}</span>}
                     </td>
                   </tr>
@@ -190,11 +192,23 @@ export async function InfoListScreen({ base, query }: { base: InfoBase; query: R
       )}
       {pages > 1 && (
         <nav aria-label="Pages" className="mt-4 flex items-center justify-between text-label">
-          {filters.page > 1 ? <Link href={`${path}${infoQuery(filters, base, { page: filters.page - 1 })}`} className="link">← Previous</Link> : <span />}
+          {filters.page > 1 ? (
+            <Link href={`${path}${infoQuery(filters, base, { page: filters.page - 1 })}`} className="link">
+              ← Previous
+            </Link>
+          ) : (
+            <span />
+          )}
           <span className="text-ink-muted">
             Page {filters.page} of {pages} · {list.total} items
           </span>
-          {filters.page < pages ? <Link href={`${path}${infoQuery(filters, base, { page: filters.page + 1 })}`} className="link">Next →</Link> : <span />}
+          {filters.page < pages ? (
+            <Link href={`${path}${infoQuery(filters, base, { page: filters.page + 1 })}`} className="link">
+              Next →
+            </Link>
+          ) : (
+            <span />
+          )}
         </nav>
       )}
     </>

@@ -58,9 +58,9 @@ test("a task is created, started and completed with its note; the assignee hears
   const staff = await userIdByLogin("E2E_STAFF");
   await as(context, "E2E_REQ");
   await page.goto("/users");
-  // D-221: the sidebar has one "Tasks & projects" entry; typed tasks start from its bar.
-  await page.locator("aside nav").getByRole("link", { name: "Tasks & projects" }).click();
-  await page.getByTestId("work-rail").getByRole("link", { name: "Task with a type (form)" }).click();
+  // D-223: the sidebar's "Tasks & projects" group holds Task with a type (form).
+  await page.locator("aside nav").getByRole("button", { name: "Tasks & projects" }).click();
+  await page.getByTestId("nav-group-Tasks & projects").getByRole("link", { name: "Task with a type (form)" }).click();
   await expect(page.getByRole("heading", { level: 1, name: /New task/ })).toBeVisible();
   await page.goto(`/users/tasks/new?type=${taskTypeUrl.split("/").pop()}`);
   await expect(page.getByRole("heading", { level: 1, name: `New task: E2E repair ${stamp}` })).toBeVisible();

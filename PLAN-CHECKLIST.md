@@ -17,6 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (31 Oct 2026):** v1.33.0: Tasks & projects in the sidebar (D-223), Draft task for Myself or Others (D-224), My Tasks Overdue (D-225), the list toolbar everywhere (D-226). **Owner:** publish v1.33.0 (migration adds the Overdue section); try My requests → Filter / Sort / Group.
 - **Now (30 Oct 2026):** v1.32.0: ticks everywhere, periodic and ad hoc tasks, Asana-style Tasks area (left bar, task pane, Home, Inbox), compact table with Filters/Sort/Groups/Options and saved tabs, Share for projects and tasks, Draft task, New project step by step (D-219, D-220), the sidebar + Create (D-221), periodic/ad hoc rules and Project permissions (D-222). **Owner:** publish v1.32.0 (migrations add saved tabs, task groups and project permissions); try Tasks → My tasks, a project's List, Share and New project.
 - **Now (30 Oct 2026):** v1.31.0: repeating tasks, project fields, templates and copies, bulk actions, task inbox, morning summary, department holidays (D-218). **Owner:** publish v1.31.0 (migration runs on start); check Admin → Task set-up → Task settings (summary at 9:00 on working days, repeating tasks on); add department holidays there; email needs the Resend key already in Super Admin settings.
 - **Now (30 Oct 2026):** v1.30.0: Task & Project Management (D-215: projects, sections, list/board/calendar/timeline, subtasks, dependencies, comments with mentions, followers, likes, My Tasks, Task home, task search), multi-level reporting hierarchy (D-216) and holidays for tasks (D-217). **Owner:** publish v1.30.0 (migration runs on start and adds the General task type); check Admin → Task set-up → Task holidays (default: warn); keep reporting managers correct in Admin → Users (the hierarchy follows them); add holidays in Working calendar or Task holidays.
@@ -393,7 +394,12 @@ Plan: `docs/CHATBOT_IMPLEMENTATION_PLAN.md`; audit: `docs/CHATBOT_ARCHITECTURE_A
 - [x] PB-80 Compact table with Filters, Sort, Groups, Options and saved tabs; Share for projects and tasks; Draft task; New project step by step; Save as template from the menu (30 Oct 2026, D-220)
 - [x] PB-82 Compact sidebar in the Tasks bar style with + Create (Approval, Task, Project, Information) (30 Oct 2026, D-221)
 - [x] PB-83 Periodic and Ad hoc tasks: ad hoc for several people, creator-only details; Project permissions (fields, sharing tasks) (30 Oct 2026, D-222)
-- [ ] PB-81 Same table and toolbar for the Approval and Information lists, if the owner wants the whole app in this style
+- [x] PB-84 Tasks & projects sidebar group; the Tasks area's bar removed (31 Oct 2026, D-223)
+- [x] PB-85 Draft task: Myself (default) or Others, people found by typing (31 Oct 2026, D-224)
+- [x] PB-86 My Tasks Overdue section (31 Oct 2026, D-225)
+- [x] PB-87 The task table's toolbar (Filter, Sort, Group, Options, Search) on the request, queue, information and typed-task lists (31 Oct 2026, D-226)
+- [ ] PB-88 Classic view like Tally for every form, entry screen and report (owner, 31 Oct 2026)
+- [~] PB-81 (toolbar done in PB-87; the numbered, editable table stays for tasks) Same table and toolbar for the Approval and Information lists, if the owner wants the whole app in this style
 - [ ] PB-78 Not planned unless asked (Asana spec §5): portfolios, goals, workload, rules builder, forms, guests, integrations, saved view tabs
 - [x] PB-69 Custom loaders: sign-in to main page, every Classic page change (29 Oct 2026, D-214)
 - [x] PB-70 Classic navigation in and out for every role: Overview back, page titles, Esc out of text boxes, spaces and Quit (29 Oct 2026, D-214)

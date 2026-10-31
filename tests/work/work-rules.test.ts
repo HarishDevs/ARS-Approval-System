@@ -124,14 +124,15 @@ describe("order, subtasks and dependencies", () => {
 describe("My Tasks sections", () => {
   const now = new Date("2026-10-30T06:00:00Z");
   const today = "2026-10-30";
-  const task = (over: Partial<{ dueDay: string | null; assignedAt: Date | null; selfAssigned: boolean }> = {}) => ({ dueDay: null, assignedAt: new Date("2026-10-01T00:00:00Z"), selfAssigned: false, ...over });
+  const task = (over: Partial<{ dueDay: string | null; assignedAt: Date | null; selfAssigned: boolean; open: boolean }> = {}) => ({ dueDay: null, assignedAt: new Date("2026-10-01T00:00:00Z"), selfAssigned: false, ...over });
   it("newly assigned by someone else: Recently assigned", () => {
     expect(myTaskBucket(task({ assignedAt: new Date("2026-10-29T00:00:00Z") }), null, today, now).system).toBe("RECENT");
     expect(myTaskBucket(task({ assignedAt: new Date("2026-10-29T00:00:00Z"), selfAssigned: true }), null, today, now).system).toBe("LATER");
   });
   it("otherwise by due date", () => {
     expect(myTaskBucket(task({ dueDay: "2026-10-30" }), null, today, now).system).toBe("TODAY");
-    expect(myTaskBucket(task({ dueDay: "2026-10-01" }), null, today, now).system).toBe("TODAY");
+    expect(myTaskBucket(task({ dueDay: "2026-10-01", open: false }), null, today, now).system).toBe("TODAY"); // completed late
+    expect(myTaskBucket(task({ dueDay: "2026-10-29" }), null, today, now).system).toBe("OVERDUE");
     expect(myTaskBucket(task({ dueDay: "2026-11-05" }), null, today, now).system).toBe("UPCOMING");
     expect(myTaskBucket(task({ dueDay: "2026-12-30" }), null, today, now).system).toBe("LATER");
   });
@@ -141,6 +142,9 @@ describe("My Tasks sections", () => {
     expect(myTaskBucket(task({ dueDay: "2026-12-30" }), { system: "TODAY", sectionId: 2 }, today, now).system).toBe("TODAY"); // never backwards
     expect(myTaskBucket(task({ dueDay: "2026-10-30" }), { system: "RECENT", sectionId: 1 }, today, now).system).toBe("RECENT");
     expect(myTaskBucket(task({ dueDay: "2026-10-30" }), { system: null, sectionId: 9 }, today, now)).toEqual({ system: null, sectionId: 9 });
+    // D-225: past due and open: Overdue, wherever it was put.
+    expect(myTaskBucket(task({ dueDay: "2026-10-28" }), { system: null, sectionId: 9 }, today, now)).toEqual({ system: "OVERDUE", sectionId: null });
+    expect(myTaskBucket(task({ dueDay: "2026-10-28", assignedAt: new Date("2026-10-29T00:00:00Z") }), { system: "RECENT", sectionId: 1 }, today, now).system).toBe("OVERDUE");
   });
   it("India's day", () => {
     expect(indiaDay(new Date("2026-10-30T19:00:00Z"))).toBe("2026-10-31");

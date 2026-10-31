@@ -4,14 +4,33 @@ import { RequestStatusPill } from "@/features/requests/StatusPill";
 import { PendingLink } from "@/features/ui/PendingLink";
 import { SafeText } from "@/features/ui/SafeText";
 import { SavedViews, SaveViewForm, type ViewChip } from "@/features/analytics/ReportForms";
+import { ListToolbar } from "@/features/ui/ListToolbar";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 import type { ListChoices, ListedRequest } from "@/lib/db/repositories/request-lists.repository";
-import { activeCount, BASE_FEATURES, LIST_SIZES, LIST_STATUSES, listHref, listQuery, SORT_LABEL, STATUS_LABEL, tabsFor, VALIDITY, VALIDITY_LABEL, type ListBase, type ListFilters, type QuickTab } from "@/server/requests/list-filters";
+import {
+  activeCount,
+  BASE_FEATURES,
+  GROUP_LABEL,
+  groupsFor,
+  LIST_SIZES,
+  LIST_STATUSES,
+  listHref,
+  listQuery,
+  SORT_LABEL,
+  STATUS_LABEL,
+  tabsFor,
+  VALIDITY,
+  VALIDITY_LABEL,
+  type ListBase,
+  type ListFilters,
+  type QuickTab,
+} from "@/server/requests/list-filters";
 
 // v1.7.2: the filtered list used by My requests and Collaborating; v1.8.0
 // also My approved requests and Approved by me. Plain GET forms (every
 // filter is in the address, so it can be bookmarked, saved as a view, and
 // Back keeps it). Each list shows only the filters that apply to it.
+const month = (value: Date) => new Date(value).toLocaleDateString("en-IN", { month: "long", year: "numeric", timeZone: "Asia/Kolkata" });
 const day = (value: Date) => new Date(value).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Kolkata" });
 
 export const VIEW_TARGET: Record<ListBase, string> = { MINE: "my_requests", COLLAB: "collaborating", APPROVED_MINE: "my_approved", APPROVED_BY_ME: "approved_by_me" };
@@ -110,68 +129,54 @@ export function RequestListScreen({
     </div>
   );
 
+  // D-226: rows in groups (this page's rows), like the task table.
+  const groupOf = (item: ListedRequest): [string, string] =>
+    filters.group === "status"
+      ? [item.status, item.status === "IN_PROGRESS" ? "Waiting for approvers" : (STATUS_LABEL[item.status as keyof typeof STATUS_LABEL] ?? item.status)]
+      : filters.group === "type"
+        ? [item.workflowName, item.workflowName]
+        : filters.group === "month"
+          ? [month(item.submittedAt), month(item.submittedAt)]
+          : filters.group === "raiser"
+            ? [item.requesterName, item.requesterName]
+            : ["all", ""];
+  const grouped: { key: string; label: string; items: ListedRequest[] }[] = [];
+  for (const item of result.items) {
+    const [key, label] = groupOf(item);
+    const found = grouped.find((group) => group.key === key);
+    if (found) found.items.push(item);
+    else grouped.push({ key, label, items: [item] });
+  }
+  const columns = 5 + (showRaiser ? 1 : 0) + (collab ? 1 : 0);
+  const sortChoices = can.sorts.map((value) => ({ label: SORT_LABEL[value], href: href({ sort: value, page: 1 }), active: filters.sort === value }));
+
   return (
     <>
-      <nav aria-label="Quick filters" className="mb-3 flex flex-wrap gap-2">
+      <nav aria-label="Quick filters" className="mb-3 flex flex-wrap gap-x-1 border-b border-line">
         {tabs.map((tab) => (
           <Link
             key={tab.key}
             href={href({ tab: tab.key, page: 1, overdue: tab.overdue ? true : currentTab?.overdue ? false : filters.overdue })}
             aria-current={filters.tab === tab.key ? "page" : undefined}
-            className={`rounded-full border px-3 py-1 text-label ${filters.tab === tab.key ? "border-primary-600 bg-primary-50 font-semibold text-primary-700" : "border-line text-ink-muted hover:bg-surface-muted"}`}
+            className={`-mb-px border-b-2 px-2.5 py-1.5 text-label ${filters.tab === tab.key ? "border-primary-600 font-semibold text-primary-700" : "border-transparent text-ink-muted hover:text-ink"}`}
           >
             {tab.label} <span className="tabular-nums">({(counts[tab.key] ?? 0).toLocaleString("en-IN")})</span>
           </Link>
         ))}
       </nav>
 
-      <form method="get" action={path} className="card mb-3 space-y-3 px-4 py-3" role="search" aria-label="Filter requests">
-        {filters.tab !== "all" && <input type="hidden" name="tab" value={filters.tab} />}
-        <div className="flex flex-wrap items-end gap-3">
-          <div className="min-w-0 flex-1 basis-64">
-            <label htmlFor="list-q" className="field-label">
-              Search
-            </label>
-            <input id="list-q" name="q" defaultValue={filters.q} placeholder={showRaiser ? "Request number, title or who raised it" : "Request number or title"} className="field-input" />
-          </div>
-          <div>
-            <label htmlFor="list-sort" className="field-label">
-              Order
-            </label>
-            <select id="list-sort" name="sort" defaultValue={filters.sort} className={select}>
-              {can.sorts.map((sort) => (
-                <option key={sort} value={sort}>
-                  {SORT_LABEL[sort]}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label htmlFor="list-size" className="field-label">
-              Per page
-            </label>
-            <select id="list-size" name="size" defaultValue={filters.size} className={`${select} w-24`}>
-              {LIST_SIZES.map((size) => (
-                <option key={size} value={size}>
-                  {size}
-                </option>
-              ))}
-            </select>
-          </div>
-          <button type="submit" className="btn-primary btn-compact h-10">
-            Apply
-          </button>
-          {(used > 0 || filters.tab !== "all") && (
-            <Link href={path} className="link text-label">
-              Clear all
-            </Link>
-          )}
-        </div>
-        <details open={used > (filters.q ? 1 : 0)} className="text-label">
-          <summary className="cursor-pointer font-semibold text-primary-600">More filters{used ? ` (${used} in use)` : ""}</summary>
-          <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <ListToolbar
+        id="request-filters"
+        path={path}
+        label="Filter requests"
+        keep={{ tab: filters.tab !== "all" ? filters.tab : undefined, ...Object.fromEntries(Object.entries(listQuery({ sort: filters.sort, size: filters.size, group: filters.group }, {}, base))) }}
+        search={{ name: "q", value: filters.q, placeholder: showRaiser ? "Number, title or who raised it" : "Number or title" }}
+        filterCount={used - (filters.q ? 1 : 0)}
+        clearHref={used > 0 || filters.tab !== "all" ? path : null}
+        filters={
+          <>
             {can.status && (
-              <fieldset className="sm:col-span-2 lg:col-span-3">
+              <fieldset className="sm:col-span-2">
                 <legend className="field-label">{byMe ? "Where the request is now" : "Status"}</legend>
                 <div className="flex flex-wrap gap-x-4 gap-y-2">
                   {LIST_STATUSES.map((status) => (
@@ -274,25 +279,39 @@ export function RequestListScreen({
             {can.mine && dates("mine", "I approved", filters.mineFrom, filters.mineTo)}
             {dates("closed", closedLabel, filters.closedFrom, filters.closedTo)}
             {dates("activity", "Last activity", filters.activityFrom, filters.activityTo)}
-          </div>
-        </details>
-      </form>
+          </>
+        }
+        sort={{ label: SORT_LABEL[filters.sort], changed: filters.sort !== can.sorts[0], choices: sortChoices }}
+        group={{
+          label: filters.group ? GROUP_LABEL[filters.group] : null,
+          clearHref: href({ group: null, page: 1 }),
+          choices: groupsFor(base).map((value) => ({ label: GROUP_LABEL[value], href: href({ group: value, page: 1 }), active: filters.group === value })),
+        }}
+        sizes={LIST_SIZES.map((size) => ({ label: `${size} per page`, href: href({ size, page: 1 }), active: filters.size === size }))}
+        options={<SaveViewForm target={VIEW_TARGET[base]} query={listQuery({ ...filters, page: 1 }, {}, base)} />}
+      />
 
       <div className="mb-3 flex flex-wrap items-center gap-2 text-label">
         <p className="text-ink-muted" role="status">
           {result.total === 0 ? "No requests match." : `${result.total.toLocaleString("en-IN")} request${result.total === 1 ? "" : "s"}${result.pages > 1 ? ` · page ${result.page} of ${result.pages}` : ""}`}
         </p>
         {chips.map((chip) => (
-          <Link key={chip.label} href={href({ ...chip.remove, page: 1 })} className="inline-flex items-center gap-1 rounded-full border border-line bg-surface px-2.5 py-0.5 text-caption font-medium hover:bg-surface-muted" aria-label={`Remove filter: ${chip.label}`}>
+          <Link
+            key={chip.label}
+            href={href({ ...chip.remove, page: 1 })}
+            className="inline-flex items-center gap-1 rounded-full border border-line bg-surface px-2.5 py-0.5 text-caption font-medium hover:bg-surface-muted"
+            aria-label={`Remove filter: ${chip.label}`}
+          >
             {chip.label}
             <X aria-hidden="true" className="h-3.5 w-3.5" />
           </Link>
         ))}
       </div>
-      <div className="mb-4 flex flex-wrap items-start gap-6">
-        <SavedViews views={views} />
-        <SaveViewForm target={VIEW_TARGET[base]} query={listQuery({ ...filters, page: 1 }, {}, base)} />
-      </div>
+      {views.length > 0 && (
+        <div className="mb-4">
+          <SavedViews views={views} />
+        </div>
+      )}
 
       {result.items.length === 0 ? (
         <p className="card px-5 py-6 text-label text-ink-muted">
@@ -310,26 +329,33 @@ export function RequestListScreen({
       ) : (
         <>
           <ul className="card divide-y divide-line sm:hidden" data-testid="request-cards">
-            {result.items.map((item) => (
-              <li key={item.id}>
-                <Link href={`/users/requests/${item.id}`} className="block px-4 py-3 active:bg-surface-muted">
-                  <p className="font-medium text-primary-700">
-                    <SafeText text={item.title} />
-                  </p>
-                  <p className="text-caption text-ink-muted">
-                    {item.requestNo} · {item.workflowName}
-                    {showRaiser ? ` · from ${item.requesterName}` : ""}
-                  </p>
-                  <div className="mt-1 flex flex-wrap items-center gap-2 text-caption">
-                    <RequestStatusPill status={item.status} />
-                    {byMe && item.myApprovedAt && <span className="text-ink-muted">You approved {day(item.myApprovedAt)}</span>}
-                    {approvedMine && item.closedAt && <span className="text-ink-muted">Approved {day(item.closedAt)}</span>}
-                    {item.pendingWith && <span className="text-ink-muted">With {item.pendingWith}</span>}
-                    {item.overdue && <span className="font-semibold text-danger-600">Overdue</span>}
-                  </div>
-                </Link>
-              </li>
-            ))}
+            {grouped.map((group) => [
+              group.label ? (
+                <li key={`group-${group.key}`} className="bg-surface-muted px-4 py-1.5 text-label font-semibold">
+                  {group.label} <span className="font-normal text-ink-muted">{group.items.length}</span>
+                </li>
+              ) : null,
+              ...group.items.map((item) => (
+                <li key={item.id}>
+                  <Link href={`/users/requests/${item.id}`} className="block px-4 py-3 active:bg-surface-muted">
+                    <p className="font-medium text-primary-700">
+                      <SafeText text={item.title} />
+                    </p>
+                    <p className="text-caption text-ink-muted">
+                      {item.requestNo} · {item.workflowName}
+                      {showRaiser ? ` · from ${item.requesterName}` : ""}
+                    </p>
+                    <div className="mt-1 flex flex-wrap items-center gap-2 text-caption">
+                      <RequestStatusPill status={item.status} />
+                      {byMe && item.myApprovedAt && <span className="text-ink-muted">You approved {day(item.myApprovedAt)}</span>}
+                      {approvedMine && item.closedAt && <span className="text-ink-muted">Approved {day(item.closedAt)}</span>}
+                      {item.pendingWith && <span className="text-ink-muted">With {item.pendingWith}</span>}
+                      {item.overdue && <span className="font-semibold text-danger-600">Overdue</span>}
+                    </div>
+                  </Link>
+                </li>
+              )),
+            ])}
           </ul>
           <div className="card hidden overflow-x-auto sm:block">
             <table className="data-table" data-testid="request-table">
@@ -351,59 +377,72 @@ export function RequestListScreen({
                   )}
                 </tr>
               </thead>
-              <tbody>
-                {result.items.map((item) => (
-                  <tr key={item.id}>
-                    <td className="max-w-80">
-                      <Link href={`/users/requests/${item.id}`} className="link font-medium">
-                        <SafeText text={item.title} />
-                      </Link>
-                      <span className="block text-caption text-ink-muted">
-                        {item.requestNo} · {item.workflowName}
-                        {item.files ? ` · ${item.files} file${item.files === 1 ? "" : "s"}` : ""}
-                        {item.amended ? " · amended" : ""}
-                      </span>
-                    </td>
-                    <td>
-                      <RequestStatusPill status={item.status} />
-                      {item.validUntil && item.status === "APPROVED" && <span className="block text-caption text-ink-muted">valid until {day(item.validUntil)}</span>}
-                    </td>
-                    {approvedMine ? (
-                      <td className="text-label">
-                        {item.closedAt ? day(item.closedAt) : "—"}
-                        {item.approvedBy && <span className="block text-caption text-ink-muted">by {item.approvedBy}</span>}
+              {grouped.map((group) => (
+                <tbody key={group.key}>
+                  {group.label && (
+                    <tr className="bg-surface-muted">
+                      <th scope="rowgroup" colSpan={columns} className="text-left text-label font-semibold">
+                        {group.label} <span className="font-normal text-ink-muted">{group.items.length}</span>
+                      </th>
+                    </tr>
+                  )}
+                  {group.items.map((item) => (
+                    <tr key={item.id}>
+                      <td className="max-w-80">
+                        <Link href={`/users/requests/${item.id}`} className="link font-medium">
+                          <SafeText text={item.title} />
+                        </Link>
+                        <span className="block text-caption text-ink-muted">
+                          {item.requestNo} · {item.workflowName}
+                          {item.files ? ` · ${item.files} file${item.files === 1 ? "" : "s"}` : ""}
+                          {item.amended ? " · amended" : ""}
+                        </span>
                       </td>
-                    ) : byMe ? (
-                      <td className="text-label">
-                        {item.myApprovedAt ? formatIndiaTime(item.myApprovedAt) : "—"}
-                        {item.myStep && <span className="block text-caption text-ink-muted">{item.myStep}</span>}
-                        {item.myForName && <span className="block text-caption text-ink-muted">for {item.myForName}</span>}
+                      <td>
+                        <RequestStatusPill status={item.status} />
+                        {item.validUntil && item.status === "APPROVED" && <span className="block text-caption text-ink-muted">valid until {day(item.validUntil)}</span>}
                       </td>
-                    ) : (
-                      <td className="text-label">
-                        {item.pendingStep ? (
-                          <>
-                            {item.pendingStep}
-                            <span className="block text-caption text-ink-muted">{item.pendingWith}</span>
-                            {item.nextDue && <span className={`block text-caption ${item.overdue ? "font-semibold text-danger-600" : "text-ink-muted"}`}>{item.overdue ? "Overdue since" : "Due"} {formatIndiaTime(item.nextDue)}</span>}
-                          </>
-                        ) : (
-                          <span className="text-ink-faint">—</span>
-                        )}
-                      </td>
-                    )}
-                    {showRaiser && <td>{item.requesterName}</td>}
-                    <td className="whitespace-nowrap">{day(item.submittedAt)}</td>
-                    <td className="hidden whitespace-nowrap lg:table-cell">{formatIndiaTime(item.updatedAt)}</td>
-                    {collab && (
-                      <td className="hidden whitespace-nowrap xl:table-cell">
-                        {item.addedAt ? day(item.addedAt) : "—"}
-                        <span className="block text-caption text-ink-muted">by {item.addedByName}</span>
-                      </td>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
+                      {approvedMine ? (
+                        <td className="text-label">
+                          {item.closedAt ? day(item.closedAt) : "—"}
+                          {item.approvedBy && <span className="block text-caption text-ink-muted">by {item.approvedBy}</span>}
+                        </td>
+                      ) : byMe ? (
+                        <td className="text-label">
+                          {item.myApprovedAt ? formatIndiaTime(item.myApprovedAt) : "—"}
+                          {item.myStep && <span className="block text-caption text-ink-muted">{item.myStep}</span>}
+                          {item.myForName && <span className="block text-caption text-ink-muted">for {item.myForName}</span>}
+                        </td>
+                      ) : (
+                        <td className="text-label">
+                          {item.pendingStep ? (
+                            <>
+                              {item.pendingStep}
+                              <span className="block text-caption text-ink-muted">{item.pendingWith}</span>
+                              {item.nextDue && (
+                                <span className={`block text-caption ${item.overdue ? "font-semibold text-danger-600" : "text-ink-muted"}`}>
+                                  {item.overdue ? "Overdue since" : "Due"} {formatIndiaTime(item.nextDue)}
+                                </span>
+                              )}
+                            </>
+                          ) : (
+                            <span className="text-ink-faint">—</span>
+                          )}
+                        </td>
+                      )}
+                      {showRaiser && <td>{item.requesterName}</td>}
+                      <td className="whitespace-nowrap">{day(item.submittedAt)}</td>
+                      <td className="hidden whitespace-nowrap lg:table-cell">{formatIndiaTime(item.updatedAt)}</td>
+                      {collab && (
+                        <td className="hidden whitespace-nowrap xl:table-cell">
+                          {item.addedAt ? day(item.addedAt) : "—"}
+                          <span className="block text-caption text-ink-muted">by {item.addedByName}</span>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              ))}
             </table>
           </div>
         </>

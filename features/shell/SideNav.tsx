@@ -50,9 +50,11 @@ export function SideNav({ items, collapsible = false, chats = [] }: { items: Nav
   const pathname = usePathname();
   // Only the most specific entry is highlighted (My tasks vs Assigned by me
   // under /users/tasks/assigned).
-  const matches = (href: string) => pathname === href || (href.split("/").length > 2 && pathname.startsWith(`${href}/`));
+  const matches = (href: string) => !href.includes("?") && (pathname === href || (href.split("/").length > 2 && pathname.startsWith(`${href}/`)));
   const best = items.filter((item) => matches(item.href)).sort((a, b) => b.href.length - a.href.length)[0]?.href;
-  const isActive = (item: NavItem) => item.href === best || (item.also ?? []).some((path) => pathname === path || pathname.startsWith(`${path}/`));
+  // "also" pages count only when no entry names the page itself (My Tasks
+  // stays lit on a task, not on Task with a type).
+  const isActive = (item: NavItem) => item.href === best || (!best?.startsWith("/users/tasks") && (item.also ?? []).some((path) => pathname === path || pathname.startsWith(`${path}/`)));
   const list = blocks(items);
   const activeGroup = list.find((block) => block.kind === "group" && block.items.some(isActive));
   const activeName = activeGroup?.kind === "group" ? activeGroup.section : null;
