@@ -44,6 +44,8 @@ test("the builder offers step kinds, all/any rules and choices inside choices", 
   expect(await nestedChoice.count()).toBeGreaterThan(1); // one inside each path of the choice
   // Top-level order: DoA, the work step, the choice (its inner step comes after).
   await page.getByRole("button", { name: "Remove level" }).nth(2).click();
+  // D-239: removing a level asks first (and can be undone).
+  await page.getByRole("alertdialog", { name: /Remove level/ }).getByRole("button", { name: "Remove level" }).click();
 
   await page.getByRole("button", { name: "Create workflow (as draft)" }).click();
   await expect(page).toHaveURL(/\/admin\/workflows\/\d+\?created=1/);

@@ -1,19 +1,32 @@
 "use client";
 
 import { disconnectSalesforceAction, syncSalesforceAction, testProviderAction, testSalesforceAction } from "@/app/superadmin/ai/actions";
-import { ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
+import { useState } from "react";
+import { guardAction, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
+import type { ActionResult } from "@/lib/http/action-result";
 
 // D-169: Super Admin AI tools.
+// D-240: a button, not a form: it sits inside the one AI settings form.
 export function ProviderTestButton({ provider, label }: { provider: string; label: string }) {
-  const { result, pending, onSubmit } = useActionForm(testProviderAction);
+  const [result, setResult] = useState<ActionResult | null>(null);
+  const [pending, setPending] = useState(false);
+  const run = async () => {
+    setPending(true);
+    try {
+      const data = new FormData();
+      data.set("provider", provider);
+      setResult(await guardAction(testProviderAction)(null, data));
+    } finally {
+      setPending(false);
+    }
+  };
   return (
-    <form onSubmit={onSubmit} className="space-y-2">
-      <input type="hidden" name="provider" value={provider} />
-      <SubmitButton pending={pending} variant="secondary" className="btn-compact">
-        Test {label}
-      </SubmitButton>
+    <span className="space-y-2">
+      <button type="button" onClick={() => void run()} disabled={pending} className="btn-secondary btn-compact">
+        {pending ? "Testing…" : `Test ${label}`}
+      </button>
       <ResultMessage result={result} />
-    </form>
+    </span>
   );
 }
 

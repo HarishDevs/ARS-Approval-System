@@ -30,8 +30,10 @@ ARS-CMS, from 31 Oct 2026 (D-235 onwards). Owner brief: "Build all of it, start 
 | D-235b | **Form Designer = library · canvas · properties.** It uses the same component (`FormFieldsEditor`) in all four places, so no second editor exists. On a narrow container the properties open under the chosen field instead of a right column (measured on the designer's own width, not the window's). | It is used inside the workflow builder's column, which is narrower than the screen. |
 | D-235c | **Stable field identity.** Each field carries a client-side id while it is edited, so reorder, remove and duplicate never mix up "key typed by hand" or the open field. Saved keys stay locked. | Rows used to be keyed by position. |
 | D-235d | **Remove asks first and can be undone.** Undo/redo keeps up to 100 snapshots, and typing in one box counts as one step. A type change that would drop settings asks first and names what goes. | Owner: "removals don't ask first". |
-| D-235e (planned) | **Workflow autosave uses a working draft.** Every save currently inserts a new DRAFT version. Autosave will update the latest DRAFT in place, guarded by a revision number so a stale editor can't overwrite another's work. It creates the draft only when none exists, and saves only content that `resolveContent` accepts (otherwise it shows "Not saved: fix N problems"). Publish stays a separate, confirmed action. Needs one additive migration (`workflow_versions.draft_revision`). | Avoids hundreds of draft versions; keeps publish explicit. |
-| D-235f (planned) | **One settings console with one Save per category.** It keeps the server's per-group transaction (`saveSettingsGroup`). Blank secret = keep; "Remove" = clear; secrets never reach the browser. | The current screens have 15 separate Save buttons on two pages. |
+| D-235e (planned; superseded for now by D-239's browser copy, Q-026) | **Workflow autosave uses a working draft.** Every save currently inserts a new DRAFT version. Autosave will update the latest DRAFT in place, guarded by a revision number so a stale editor can't overwrite another's work. It creates the draft only when none exists, and saves only content that `resolveContent` accepts (otherwise it shows "Not saved: fix N problems"). Publish stays a separate, confirmed action. Needs one additive migration (`workflow_versions.draft_revision`). | Avoids hundreds of draft versions; keeps publish explicit. |
+| D-235f (built as D-240) | **One settings console with one Save per category.** It keeps the server's per-group transaction (`saveSettingsGroup`). Blank secret = keep; "Remove" = clear; secrets never reach the browser. | The current screens have 15 separate Save buttons on two pages. |
+| D-239 | **Workflow Designer:** a visual map plus the structured list (the one place a level is edited). Levels fold, drag, duplicate, and Remove asks first and can be undone. Undo/Redo, problems by level, Test mode with real inputs, and a browser copy of unsaved work (never published). | Owner's Configuration Studio brief. |
+| D-240 | **Settings console:** categories, a search across them, unsaved marks and the leave guard. AI becomes one form with one Save. | Owner's Configuration Studio brief. |
 
 ## 3. Components
 
@@ -41,7 +43,8 @@ ARS-CMS, from 31 Oct 2026 (D-235 onwards). Owner brief: "Build all of it, start 
 | Field model (pure, unit-tested) | `features/admin/form-designer/model.ts` | Designer; tests |
 | `FieldProperties` (tabs, rule editor, options, formula insert chips) | `features/admin/form-designer/FieldProperties.tsx` | Designer |
 | `ConfirmDialog`, `useToast` (Undo action), `Hint`, `UnsavedGuard` | `features/ui/*` | All editors |
-| Workflow Designer, Settings console, shared history and save status | (next phases) | — |
+| Workflow Designer (map, problems, duplicate, browser copy) | `features/admin/workflow-designer/*`, `WorkflowBuilder.tsx` | Admin → Approval types (new and edit). The levels list is shared with custom requests, without the designer extras. |
+| Settings console | `features/superadmin/SettingsConsole.tsx`, `SettingsGroupForm.tsx` | Super Admin → Settings & providers, AI settings (and Salesforce's form) |
 
 ## 4. Test strategy
 

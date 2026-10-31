@@ -1,7 +1,14 @@
 "use client";
 
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { ChevronDown, Copy, GripVertical, List as ListIcon, Map as MapIcon, Redo2, TriangleAlert, Undo2 } from "lucide-react";
 import { PeoplePicker } from "@/features/ui/PeoplePicker";
+import { ConfirmDialog } from "@/features/ui/Dialog";
+import { useToast } from "@/features/ui/Toast";
+import { UnsavedGuard } from "@/features/ui/UnsavedGuard";
+import { WorkflowMap } from "@/features/admin/workflow-designer/WorkflowMap";
+import { allProblems, duplicateStage, parseLocalDraft, stageName, stageProblems, stageSummary, type DesignContext, type LocalDraft } from "@/features/admin/workflow-designer/model";
+import { moveItem } from "@/features/admin/form-designer/model";
 import { NOBODY_TEXT, RULE_TEXT, stepDefaults, type StepPolicy } from "@/server/workflows/step-policy";
 import { createWorkflowAction, saveDraftAction } from "@/app/admin/workflows/actions";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
@@ -81,29 +88,38 @@ export function WorkflowBuilder({
   initialStages,
   initialForm,
   options,
+  draftKey,
 }: {
   mode: "create" | "edit";
   workflowId?: number;
   initialStages: BuilderStage[];
   initialForm: FormField[];
   options: BuilderOptions;
+  draftKey?: string; // D-239: where unsaved work is kept in this browser (workflow and version)
 }) {
-  const [stages, setStages] = useState<BuilderStage[]>(initialStages);
+  // D-239: Undo / Redo for the levels (the Form Designer keeps its own).
+  const history = useStageHistory(initialStages);
+  const stages = history.value;
+  const setStages = history.set;
   const [form, setForm] = useState<FormField[]>(initialForm);
+  const [formKey, setFormKey] = useState(0); // remounts the Form Designer after a restore
   const [previewing, setPreviewing] = useState(false); // A4
   // Keys already saved never change (S12-02).
   const [lockedKeys] = useState(() => initialForm.map((field) => field.key));
   // Random ids: a counter restarts on every page load and would collide
   // with ids already saved in the version being edited.
   const newId = newStepId;
-  const { result, pending, onSubmit } = useActionForm(mode === "create" ? createWorkflowAction : saveDraftAction);
+  const { result, pending, onSubmit, formRef } = useActionForm(mode === "create" ? createWorkflowAction : saveDraftAction);
   const checks = (result?.ok ? result.data : undefined) as { errors: string[]; warnings: string[] } | undefined;
 
   // Leaving the page with unsaved changes asks first (audit gap A-05).
   const saved = useRef(JSON.stringify({ initialStages, initialForm }));
   const dirty = JSON.stringify({ initialStages: stages, initialForm: form }) !== saved.current;
   useEffect(() => {
-    if (result?.ok) saved.current = JSON.stringify({ initialStages: stages, initialForm: form });
+    if (result?.ok) {
+      saved.current = JSON.stringify({ initialStages: stages, initialForm: form });
+      if (draftKey) forgetLocal(draftKey);
+    }
     // Only when a save has just succeeded.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [result]);
@@ -117,96 +133,320 @@ export function WorkflowBuilder({
     return () => window.removeEventListener("beforeunload", warn);
   }, [dirty]);
 
+  // D-239 (autosave without publishing): unsaved work is copied to this
+  // browser as it changes; on the next visit to the same version it can be
+  // restored or discarded. Nothing reaches the server until Save, and
+  // publishing stays its own confirmed step.
+  const [offered, setOffered] = useState<LocalDraft | null>(null);
+  useEffect(() => {
+    if (!draftKey) return;
+    const found = parseLocalDraft(readLocal(draftKey), draftKey);
+    if (found && JSON.stringify({ initialStages: found.stages, initialForm: found.form }) !== saved.current) setOffered(found);
+    // Once, when the page opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    if (!draftKey || !dirty || offered) return;
+    const timer = window.setTimeout(() => writeLocal(draftKey, { base: draftKey, savedAt: Date.now(), stages, form }), 800);
+    return () => window.clearTimeout(timer);
+  }, [draftKey, dirty, offered, stages, form]);
+
+  // D-239: the map, problems by level, collapsing and the selected level.
+  const designContext = useMemo<DesignContext>(() => ({ form }), [form]);
+  const problemCount = allProblems(stages, designContext);
+  const [showMap, setShowMap] = useState(true);
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const [selected, setSelected] = useState<number | null>(null);
+  const toast = useToast();
+  const designer = useMemo<Designer>(
+    () => ({
+      context: designContext,
+      collapsed,
+      toggle: (key) =>
+        setCollapsed((current) => {
+          const next = new Set(current);
+          if (next.has(key)) next.delete(key);
+          else next.add(key);
+          return next;
+        }),
+      removed: (name) => toast({ tone: "info", title: `Removed “${name}”.`, action: { label: "Undo", onClick: history.undo } }),
+    }),
+    [designContext, collapsed, toast, history.undo],
+  );
+  const select = (index: number) => {
+    const stage = stages[index];
+    if (!stage) return;
+    const key = stageKey(stage);
+    setSelected(index);
+    setCollapsed((current) => {
+      const next = new Set(current);
+      next.delete(key);
+      return next;
+    });
+    requestAnimationFrame(() => document.getElementById(`level-${key}`)?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  };
+  const onKeyDown = (event: React.KeyboardEvent) => {
+    if (!(event.ctrlKey || event.metaKey) || ["INPUT", "TEXTAREA", "SELECT"].includes((event.target as HTMLElement).tagName)) return;
+    const key = event.key.toLowerCase();
+    if (key === "z" && !event.shiftKey) {
+      event.preventDefault();
+      history.undo();
+    } else if (key === "y" || (key === "z" && event.shiftKey)) {
+      event.preventDefault();
+      history.redo();
+    }
+  };
 
   return (
     <>
-    <form onSubmit={onSubmit} className="space-y-6">
-      {workflowId && <input type="hidden" name="workflowId" value={workflowId} />}
-      <input type="hidden" name="spec" value={JSON.stringify({ stages })} />
-      <input type="hidden" name="form" value={JSON.stringify(form)} />
+      {offered && (
+        <div role="status" className="mb-4 flex flex-wrap items-center gap-3 rounded-md border border-info-200 bg-info-50 px-4 py-3 text-label" data-testid="local-draft">
+          <span className="min-w-0 flex-1">Changes you hadn&apos;t saved ({formatLocalTime(offered.savedAt)}) were kept in this browser.</span>
+          <button
+            type="button"
+            className="btn-primary btn-compact"
+            onClick={() => {
+              history.set(offered.stages);
+              setForm(offered.form);
+              setFormKey((value) => value + 1);
+              setOffered(null);
+            }}
+          >
+            Restore them
+          </button>
+          <button
+            type="button"
+            className="btn-secondary btn-compact"
+            onClick={() => {
+              if (draftKey) forgetLocal(draftKey);
+              setOffered(null);
+            }}
+          >
+            Discard
+          </button>
+        </div>
+      )}
+      <form ref={formRef} onSubmit={onSubmit} className="space-y-6">
+        <UnsavedGuard />
+        {workflowId && <input type="hidden" name="workflowId" value={workflowId} />}
+        <input type="hidden" name="spec" value={JSON.stringify({ stages })} />
+        <input type="hidden" name="form" value={JSON.stringify(form)} />
 
-      {mode === "create" && (
-        <section className="card grid gap-5 px-5 py-5 sm:grid-cols-2">
-          <div>
-            <label htmlFor="wf-name" className="field-label">
-              Name
-            </label>
-            <input id="wf-name" name="name" placeholder="e.g. Purchase & SCM Approval" className="field-input" />
-            <FieldError result={result} name="name" />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
+        {mode === "create" && (
+          <section className="card grid gap-5 px-5 py-5 sm:grid-cols-2">
             <div>
-              <label htmlFor="wf-code" className="field-label">
-                Code
+              <label htmlFor="wf-name" className="field-label">
+                Name
               </label>
-              <input id="wf-code" name="code" placeholder="PURCHASE" className="field-input uppercase" />
-              <FieldError result={result} name="code" />
+              <input id="wf-name" name="name" placeholder="e.g. Purchase & SCM Approval" className="field-input" />
+              <FieldError result={result} name="name" />
             </div>
-            <div>
-              <label htmlFor="wf-prefix" className="field-label">
-                Number prefix
-              </label>
-              <input id="wf-prefix" name="prefix" placeholder="PUR" maxLength={6} className="field-input uppercase" />
-              <FieldError result={result} name="prefix" />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label htmlFor="wf-code" className="field-label">
+                  Code
+                </label>
+                <input id="wf-code" name="code" placeholder="PURCHASE" className="field-input uppercase" />
+                <FieldError result={result} name="code" />
+              </div>
+              <div>
+                <label htmlFor="wf-prefix" className="field-label">
+                  Number prefix
+                </label>
+                <input id="wf-prefix" name="prefix" placeholder="PUR" maxLength={6} className="field-input uppercase" />
+                <FieldError result={result} name="prefix" />
+              </div>
             </div>
+            <div className="sm:col-span-2">
+              <div className="flex items-center gap-1.5">
+                <label htmlFor="wf-description" className="field-label">
+                  Description
+                </label>
+                <Hint text="Shown to people raising a request." align="start" className="mb-1.5" />
+              </div>
+              <input id="wf-description" name="description" className="field-input" />
+            </div>
+          </section>
+        )}
+
+        <FormFieldsEditor key={formKey} form={form} setForm={setForm} lockedKeys={lockedKeys} />
+        <div className="flex flex-wrap items-center gap-3">
+          <button type="button" className="btn-secondary btn-compact" aria-expanded={previewing} aria-controls="form-preview" onClick={() => setPreviewing((open) => !open)}>
+            {previewing ? "Hide form preview" : "Preview the form"}
+          </button>
+          <Hint text="See the form as requesters will, with its rules and formulas working. Nothing is saved or sent." align="start" />
+        </div>
+
+        <DesignerContext.Provider value={designer}>
+          <section className="card" aria-labelledby="flow-title" onKeyDown={onKeyDown} data-testid="workflow-designer">
+            <div className="flex flex-wrap items-center gap-2 border-b border-line px-5 py-3" role="toolbar" aria-label="Workflow tools">
+              <h2 id="flow-title" className="mr-auto flex items-center gap-1.5 font-semibold">
+                The flow
+                <Hint text="The map shows the levels from submission to decision; click a box to open it below. Undo / Redo with Ctrl+Z / Ctrl+Y outside text boxes." align="start" />
+              </h2>
+              {problemCount > 0 ? (
+                <button
+                  type="button"
+                  className="flex items-center gap-1 rounded-full bg-danger-50 px-2.5 py-1 text-caption font-semibold text-danger-600"
+                  onClick={() => {
+                    const first = stages.findIndex((stage) => stageProblems(stage, designContext).length > 0);
+                    if (first >= 0) select(first);
+                  }}
+                  data-testid="flow-problems"
+                >
+                  <TriangleAlert aria-hidden="true" className="h-3.5 w-3.5" />
+                  {problemCount} to fix
+                </button>
+              ) : (
+                <span className="rounded-full bg-success-50 px-2.5 py-1 text-caption font-semibold text-success-600" data-testid="flow-problems">
+                  Ready to save
+                </span>
+              )}
+              <button type="button" className="tb-btn" aria-pressed={showMap} onClick={() => setShowMap((value) => !value)}>
+                <MapIcon aria-hidden="true" className="h-4 w-4" />
+                {showMap ? "Hide map" : "Show map"}
+              </button>
+              <button
+                type="button"
+                className="tb-btn"
+                onClick={() => setCollapsed((current) => (current.size ? new Set() : new Set(stages.map(stageKey))))}
+                aria-label={collapsed.size ? "Expand all levels" : "Collapse all levels"}
+              >
+                <ListIcon aria-hidden="true" className="h-4 w-4" />
+                {collapsed.size ? "Expand all" : "Collapse all"}
+              </button>
+              <span aria-hidden="true" className="tb-sep" />
+              <button type="button" className="tb-btn" onClick={history.undo} disabled={!history.canUndo} aria-label="Undo" title="Undo (Ctrl+Z)">
+                <Undo2 aria-hidden="true" className="h-4 w-4" />
+              </button>
+              <button type="button" className="tb-btn" onClick={history.redo} disabled={!history.canRedo} aria-label="Redo" title="Redo (Ctrl+Y)">
+                <Redo2 aria-hidden="true" className="h-4 w-4" />
+              </button>
+            </div>
+            {showMap && <WorkflowMap stages={stages} context={designContext} onSelect={select} selected={selected} />}
+          </section>
+          <LevelsEditor stages={stages} setStages={setStages} options={options} form={form} newId={newId} />
+        </DesignerContext.Provider>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <SubmitButton pending={pending} className="btn-compact">
+            {mode === "create" ? "Create workflow (as draft)" : "Save as new draft version"}
+          </SubmitButton>
+          <div className="min-w-0 flex-1">
+            <ResultMessage result={result} />
+            {dirty && !pending && <p className="text-label text-warning-600">You have changes that aren&apos;t saved yet.</p>}
+            {dirty && !pending && draftKey && <p className="text-caption text-ink-muted">Kept in this browser until you save; nothing is published.</p>}
           </div>
-          <div className="sm:col-span-2">
-            <div className="flex items-center gap-1.5">
-              <label htmlFor="wf-description" className="field-label">
-                Description
-              </label>
-              <Hint text="Shown to people raising a request." align="start" className="mb-1.5" />
-            </div>
-            <input id="wf-description" name="description" className="field-input" />
+        </div>
+        {checks && (checks.errors.length > 0 || checks.warnings.length > 0) && (
+          <div className="space-y-1 text-label">
+            {checks.errors.map((message) => (
+              <p key={message} className="text-danger-600">
+                ✗ {message}
+              </p>
+            ))}
+            {checks.warnings.map((message) => (
+              <p key={message} className="text-warning-600">
+                ! {message}
+              </p>
+            ))}
           </div>
+        )}
+      </form>
+      {previewing && (
+        <section id="form-preview" aria-labelledby="form-preview-title" className="mt-6 rounded-lg border-2 border-dashed border-primary-200 p-3">
+          <h2 id="form-preview-title" className="mb-3 px-2 font-semibold">
+            Form preview <Hint text="Unsaved changes included." align="start" />
+          </h2>
+          <RequestForm key={JSON.stringify(form)} preview mode="submit" fields={form} people={options.people} lookups={options.lookups} />
         </section>
       )}
-
-      <FormFieldsEditor form={form} setForm={setForm} lockedKeys={lockedKeys} />
-      <div className="flex flex-wrap items-center gap-3">
-        <button type="button" className="btn-secondary btn-compact" aria-expanded={previewing} aria-controls="form-preview" onClick={() => setPreviewing((open) => !open)}>
-          {previewing ? "Hide form preview" : "Preview the form"}
-        </button>
-        <Hint text="See the form as requesters will, with its rules and formulas working. Nothing is saved or sent." align="start" />
-      </div>
-
-      <LevelsEditor stages={stages} setStages={setStages} options={options} form={form} newId={newId} />
-
-      <div className="flex flex-wrap items-center gap-3">
-        <SubmitButton pending={pending} className="btn-compact">
-          {mode === "create" ? "Create workflow (as draft)" : "Save as new draft version"}
-        </SubmitButton>
-        <div className="min-w-0 flex-1">
-          <ResultMessage result={result} />
-          {dirty && !pending && <p className="text-label text-warning-600">You have changes that aren&apos;t saved yet.</p>}
-        </div>
-      </div>
-      {checks && (checks.errors.length > 0 || checks.warnings.length > 0) && (
-        <div className="space-y-1 text-label">
-          {checks.errors.map((message) => (
-            <p key={message} className="text-danger-600">
-              ✗ {message}
-            </p>
-          ))}
-          {checks.warnings.map((message) => (
-            <p key={message} className="text-warning-600">
-              ! {message}
-            </p>
-          ))}
-        </div>
-      )}
-    </form>
-    {previewing && (
-      <section id="form-preview" aria-labelledby="form-preview-title" className="mt-6 rounded-lg border-2 border-dashed border-primary-200 p-3">
-        <h2 id="form-preview-title" className="mb-3 px-2 font-semibold">
-          Form preview <Hint text="Unsaved changes included." align="start" />
-        </h2>
-        <RequestForm key={JSON.stringify(form)} preview mode="submit" fields={form} people={options.people} lookups={options.lookups} />
-      </section>
-    )}
     </>
   );
 }
+
+// D-239: the designer's shared state for the levels (the custom approval page
+// uses the levels without it: nothing collapses there and removal just asks).
+interface Designer {
+  context: DesignContext;
+  collapsed: Set<string>;
+  toggle: (key: string) => void;
+  removed: (name: string) => void;
+}
+const DesignerContext = createContext<Designer | null>(null);
+
+// Undo / Redo for the levels. Typing in one box is one step: changes that keep
+// the same levels (by id) within a moment of each other merge.
+const shape = (stages: readonly BuilderStage[]) => JSON.stringify(stages.map((stage) => [stage.kind, stageKey(stage)]));
+function useStageHistory(initial: BuilderStage[]) {
+  const [value, setValue] = useState(initial);
+  const past = useRef<BuilderStage[][]>([]);
+  const future = useRef<BuilderStage[][]>([]);
+  const last = useRef({ at: 0, shape: shape(initial) });
+  const current = useRef(value);
+  current.current = value;
+  const [, bump] = useState(0);
+  const set: React.Dispatch<React.SetStateAction<BuilderStage[]>> = useCallback((action) => {
+    const before = current.current;
+    const next = typeof action === "function" ? action(before) : action;
+    if (next === before) return;
+    const now = Date.now();
+    const nextShape = shape(next);
+    if (!(now - last.current.at < 1200 && nextShape === last.current.shape && past.current.length)) {
+      past.current = [...past.current.slice(-99), before];
+    }
+    last.current = { at: now, shape: nextShape };
+    future.current = [];
+    current.current = next;
+    setValue(next);
+  }, []);
+  const undo = useCallback(() => {
+    const previous = past.current.at(-1);
+    if (!previous) return;
+    past.current = past.current.slice(0, -1);
+    future.current = [current.current, ...future.current];
+    last.current = { at: 0, shape: shape(previous) };
+    current.current = previous;
+    setValue(previous);
+    bump((count) => count + 1);
+  }, []);
+  const redo = useCallback(() => {
+    const [next, ...rest] = future.current;
+    if (!next) return;
+    future.current = rest;
+    past.current = [...past.current, current.current];
+    last.current = { at: 0, shape: shape(next) };
+    current.current = next;
+    setValue(next);
+    bump((count) => count + 1);
+  }, []);
+  return { value, set, undo, redo, canUndo: past.current.length > 0, canRedo: future.current.length > 0 };
+}
+
+// Browser storage can be missing or refused (private windows, policies):
+// then there is simply no kept copy.
+function readLocal(key: string): string | null {
+  try {
+    return window.localStorage.getItem(`ars-wf-draft:${key}`);
+  } catch {
+    return null;
+  }
+}
+function writeLocal(key: string, draft: LocalDraft) {
+  try {
+    window.localStorage.setItem(`ars-wf-draft:${key}`, JSON.stringify(draft));
+  } catch {
+    // full or blocked: the beforeunload question still protects the work
+  }
+}
+function forgetLocal(key: string) {
+  try {
+    window.localStorage.removeItem(`ars-wf-draft:${key}`);
+  } catch {
+    // nothing to forget
+  }
+}
+const formatLocalTime = (at: number) => new Date(at).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata" });
 
 export function newStepId(): string {
   return `s${crypto.randomUUID().replace(/-/g, "").slice(0, 12)}`;
@@ -269,6 +509,11 @@ function StageList({
   depth: number; // choices this list is inside (D-099: up to MAX_CHOICE_DEPTH)
 }) {
   const defaults = useNewStepDefaults();
+  // D-239: the designer (workflow page) adds collapsing, problems and Undo.
+  const designer = useContext(DesignerContext);
+  const [removing, setRemoving] = useState<number | null>(null);
+  const [dragging, setDragging] = useState<number | null>(null);
+  const [dropAt, setDropAt] = useState<number | null>(null);
   // D-206: on the custom approval page IT decides whether the choice is offered.
   // D-235: a DoA matrix is never offered there (approval types only, D-075).
   const features = useContext(StepPolicyContext)?.features;
@@ -279,10 +524,16 @@ function StageList({
   const move = (index: number, delta: number) => {
     const target = index + delta;
     if (target < 0 || target >= stages.length) return;
-    const next = [...stages];
-    [next[index], next[target]] = [next[target]!, next[index]!];
-    onChange(next);
+    onChange(moveItem(stages, index, target));
+    // Keep the keyboard on the level it moved (Alt+↑ / Alt+↓).
+    requestAnimationFrame(() => document.getElementById(`level-head-${stageKey(stages[index]!)}`)?.focus());
   };
+  const remove = (index: number) => {
+    const name = stageName(stages[index]!) || `Level ${index + 1}`;
+    onChange(stages.filter((_, i) => i !== index));
+    designer?.removed(name);
+  };
+  const duplicate = (index: number) => onChange([...stages.slice(0, index + 1), duplicateStage(stages[index]!, newId), ...stages.slice(index + 1)]);
   const personFields = form.filter((field) => field.type === "PERSON");
   const kindLabel = (stage: BuilderStage) => (stage.kind === "STEP" ? "one step" : stage.kind === "PARALLEL" ? "parallel steps" : stage.kind === "DOA" ? "DoA matrix" : "a choice");
   const hasDoa = stages.some((stage) => stage.kind === "DOA");
@@ -292,94 +543,197 @@ function StageList({
     <>
       <ol className={nested ? "space-y-3" : "divide-y divide-line"}>
         {stages.length === 0 && nested && <li className="text-label text-ink-muted">No levels on this path: it goes straight on.</li>}
-        {stages.map((stage, index) => (
-          <li key={stageKey(stage)} className={nested ? "rounded-md border border-line p-3" : "px-5 py-4"}>
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <p className="text-caption font-semibold uppercase tracking-wider text-ink-faint">
-                Level {index + 1} · {kindLabel(stage)}
-              </p>
-              <div className="flex gap-2">
-                <button type="button" onClick={() => move(index, -1)} disabled={index === 0} className="btn-secondary btn-compact" aria-label="Move up">
-                  ↑
-                </button>
-                <button type="button" onClick={() => move(index, 1)} disabled={index === stages.length - 1} className="btn-secondary btn-compact" aria-label="Move down">
-                  ↓
-                </button>
-                <button type="button" onClick={() => onChange(stages.filter((_, i) => i !== index))} className="btn-danger-quiet btn-compact">
-                  Remove level
-                </button>
-              </div>
-            </div>
-            {stage.kind === "STEP" && (
-              <StepEditor step={stage.step} onChange={(step) => setStage(index, { kind: "STEP", step })} options={options} form={form} personFields={personFields} />
-            )}
-            {stage.kind === "PARALLEL" && (
-              <div className="space-y-3">
-                <div className="grid gap-3 md:grid-cols-[1fr_auto_auto]">
-                  <input aria-label="Parallel level name" value={stage.label} onChange={(event) => setStage(index, { ...stage, label: event.target.value })} className="field-input" />
-                  <select aria-label="How many branches must finish" value={stage.join} onChange={(event) => setStage(index, { ...stage, join: event.target.value as Rule })} className="field-input">
-                    <option value="ALL">All branches must finish</option>
-                    <option value="ANY_ONE">Any one branch is enough</option>
-                    <option value="ANY_N">Any N branches</option>
-                  </select>
-                  {stage.join === "ANY_N" && (
-                    <input aria-label="N" type="number" min={1} max={stage.steps.length} value={stage.n ?? 1} onChange={(event) => setStage(index, { ...stage, n: Number(event.target.value) })} className="field-input w-24" />
+        {stages.map((stage, index) => {
+          const key = stageKey(stage);
+          const folded = Boolean(designer?.collapsed.has(key));
+          const problems = designer ? stageProblems(stage, designer.context) : [];
+          return (
+            <li
+              key={key}
+              id={`level-${key}`}
+              data-testid="workflow-level"
+              onDragOver={(event) => {
+                if (dragging === null) return;
+                event.preventDefault();
+                setDropAt(index);
+              }}
+              onDrop={(event) => {
+                if (dragging === null) return;
+                event.preventDefault();
+                onChange(moveItem(stages, dragging, index));
+                setDragging(null);
+                setDropAt(null);
+              }}
+              className={`${nested ? "rounded-md border border-line p-3" : "scroll-mt-20 px-5 py-4"} ${dropAt === index && dragging !== null && dragging !== index ? "outline outline-2 outline-primary-600" : ""} ${dragging === index ? "opacity-50" : ""}`}
+            >
+              <div className={`flex flex-wrap items-center justify-between gap-2 ${folded ? "" : "mb-3"}`}>
+                <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                  <span
+                    draggable
+                    onDragStart={(event) => {
+                      event.dataTransfer.effectAllowed = "move";
+                      event.dataTransfer.setData("text/plain", key);
+                      setDragging(index);
+                    }}
+                    onDragEnd={() => {
+                      setDragging(null);
+                      setDropAt(null);
+                    }}
+                    title="Drag to move this level"
+                    aria-hidden="true"
+                    className="cursor-grab text-ink-faint hover:text-ink"
+                  >
+                    <GripVertical className="h-4 w-4" />
+                  </span>
+                  {designer && (
+                    <button
+                      type="button"
+                      id={`level-head-${key}`}
+                      aria-expanded={!folded}
+                      aria-label={`${folded ? "Open" : "Fold"} level ${index + 1}: ${stageName(stage) || kindLabel(stage)}`}
+                      onClick={() => designer.toggle(key)}
+                      onKeyDown={(event) => {
+                        if (event.altKey && (event.key === "ArrowUp" || event.key === "ArrowDown")) {
+                          event.preventDefault();
+                          move(index, event.key === "ArrowUp" ? -1 : 1);
+                        }
+                      }}
+                      title="Alt+↑ / Alt+↓ moves the level"
+                      className="rounded p-0.5 text-ink-muted hover:bg-surface-muted"
+                    >
+                      <ChevronDown aria-hidden="true" className={`h-4 w-4 transition-transform ${folded ? "-rotate-90" : ""}`} />
+                    </button>
+                  )}
+                  <p className="text-caption font-semibold uppercase tracking-wider text-ink-faint">
+                    Level {index + 1} · {kindLabel(stage)}
+                  </p>
+                  {folded && (
+                    <p className="min-w-0 truncate text-label">
+                      <span className="font-medium">{stageName(stage)}</span> <span className="text-ink-muted">· {stageSummary(stage)}</span>
+                    </p>
+                  )}
+                  {problems.length > 0 && (
+                    <span className="flex shrink-0 items-center gap-1 rounded-full bg-danger-50 px-2 py-0.5 text-caption font-semibold text-danger-600" title={problems.join("\n")} data-testid="level-problems">
+                      <TriangleAlert aria-hidden="true" className="h-3 w-3" />
+                      {problems.length} to fix
+                    </span>
                   )}
                 </div>
-                <div className="grid gap-3 lg:grid-cols-2">
-                  {stage.steps.map((step, stepIndex) => (
-                    <div key={step.id} className="rounded-md border border-dashed border-line p-3">
-                      <StepEditor
-                        step={step}
-                        onChange={(next) => setStage(index, { ...stage, steps: stage.steps.map((item, i) => (i === stepIndex ? next : item)) })}
-                        options={options}
-                        form={form}
-                        personFields={personFields}
-                      />
-                      {stage.steps.length > 2 && (
-                        <button type="button" onClick={() => setStage(index, { ...stage, steps: stage.steps.filter((_, i) => i !== stepIndex) })} className="link mt-2 text-label">
-                          Remove this branch
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                <button type="button" onClick={() => setStage(index, { ...stage, steps: [...stage.steps, newStep("New branch")] })} className="btn-secondary btn-compact">
-                  Add a parallel branch
-                </button>
-              </div>
-            )}
-            {stage.kind === "DOA" && (
-              <DoaEditor stage={stage} onChange={(next) => setStage(index, next)} options={options} form={form} personFields={personFields} newId={newId} />
-            )}
-            {stage.kind === "BRANCH" && (
-              <div className="space-y-3">
-                <div className="space-y-2">
-                  <input aria-label="Choice name" value={stage.label} onChange={(event) => setStage(index, { ...stage, label: event.target.value })} className="field-input max-w-xs" />
-                  <RuleEditor form={form} value={stage.condition} onChange={(condition) => setStage(index, { ...stage, condition })} prefix="If" options={options} />
-                </div>
-                <div className="grid gap-3 lg:grid-cols-2">
-                  {(["then", "otherwise"] as const).map((path) => (
-                    <div key={path} className="rounded-md bg-surface-muted p-3">
-                      <p className="mb-2 text-label font-semibold">{path === "then" ? "Then these levels" : "Otherwise these levels"}</p>
-                      <StageList
-                        stages={stage[path]}
-                        onChange={(next) => setStage(index, { ...stage, [path]: next as BuilderInnerStage[] })}
-                        options={options}
-                        form={form}
-                        newId={newId}
-                        allowChoice={allowChoice && depth + 1 < MAX_CHOICE_DEPTH}
-                        nested
-                        depth={depth + 1}
-                      />
-                    </div>
-                  ))}
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => move(index, -1)} disabled={index === 0} className="btn-secondary btn-compact" aria-label="Move up">
+                    ↑
+                  </button>
+                  <button type="button" onClick={() => move(index, 1)} disabled={index === stages.length - 1} className="btn-secondary btn-compact" aria-label="Move down">
+                    ↓
+                  </button>
+                  {!(stage.kind === "DOA") && (
+                    <button type="button" onClick={() => duplicate(index)} className="btn-secondary btn-compact" aria-label={`Duplicate level ${index + 1}`} title="Duplicate">
+                      <Copy aria-hidden="true" className="h-4 w-4" />
+                    </button>
+                  )}
+                  <button type="button" onClick={() => setRemoving(index)} className="btn-danger-quiet btn-compact">
+                    Remove level
+                  </button>
                 </div>
               </div>
-            )}
-          </li>
-        ))}
+              {!folded && problems.length > 0 && (
+                <ul className="mb-3 space-y-0.5 rounded-md bg-danger-50 px-3 py-2 text-label text-danger-600" aria-label={`What to fix in level ${index + 1}`}>
+                  {problems.map((problem) => (
+                    <li key={problem}>✗ {problem}</li>
+                  ))}
+                </ul>
+              )}
+              {!folded && (
+                <>
+                  {stage.kind === "STEP" && <StepEditor step={stage.step} onChange={(step) => setStage(index, { kind: "STEP", step })} options={options} form={form} personFields={personFields} />}
+                  {stage.kind === "PARALLEL" && (
+                    <div className="space-y-3">
+                      <div className="grid gap-3 md:grid-cols-[1fr_auto_auto]">
+                        <input aria-label="Parallel level name" value={stage.label} onChange={(event) => setStage(index, { ...stage, label: event.target.value })} className="field-input" />
+                        <select aria-label="How many branches must finish" value={stage.join} onChange={(event) => setStage(index, { ...stage, join: event.target.value as Rule })} className="field-input">
+                          <option value="ALL">All branches must finish</option>
+                          <option value="ANY_ONE">Any one branch is enough</option>
+                          <option value="ANY_N">Any N branches</option>
+                        </select>
+                        {stage.join === "ANY_N" && (
+                          <input
+                            aria-label="N"
+                            type="number"
+                            min={1}
+                            max={stage.steps.length}
+                            value={stage.n ?? 1}
+                            onChange={(event) => setStage(index, { ...stage, n: Number(event.target.value) })}
+                            className="field-input w-24"
+                          />
+                        )}
+                      </div>
+                      <div className="grid gap-3 lg:grid-cols-2">
+                        {stage.steps.map((step, stepIndex) => (
+                          <div key={step.id} className="rounded-md border border-dashed border-line p-3">
+                            <StepEditor
+                              step={step}
+                              onChange={(next) => setStage(index, { ...stage, steps: stage.steps.map((item, i) => (i === stepIndex ? next : item)) })}
+                              options={options}
+                              form={form}
+                              personFields={personFields}
+                            />
+                            {stage.steps.length > 2 && (
+                              <button type="button" onClick={() => setStage(index, { ...stage, steps: stage.steps.filter((_, i) => i !== stepIndex) })} className="link mt-2 text-label">
+                                Remove this branch
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      <button type="button" onClick={() => setStage(index, { ...stage, steps: [...stage.steps, newStep("New branch")] })} className="btn-secondary btn-compact">
+                        Add a parallel branch
+                      </button>
+                    </div>
+                  )}
+                  {stage.kind === "DOA" && <DoaEditor stage={stage} onChange={(next) => setStage(index, next)} options={options} form={form} personFields={personFields} newId={newId} />}
+                  {stage.kind === "BRANCH" && (
+                    <div className="space-y-3">
+                      <div className="space-y-2">
+                        <input aria-label="Choice name" value={stage.label} onChange={(event) => setStage(index, { ...stage, label: event.target.value })} className="field-input max-w-xs" />
+                        <RuleEditor form={form} value={stage.condition} onChange={(condition) => setStage(index, { ...stage, condition })} prefix="If" options={options} />
+                      </div>
+                      <div className="grid gap-3 lg:grid-cols-2">
+                        {(["then", "otherwise"] as const).map((path) => (
+                          <div key={path} className="rounded-md bg-surface-muted p-3">
+                            <p className="mb-2 text-label font-semibold">{path === "then" ? "Then these levels" : "Otherwise these levels"}</p>
+                            <StageList
+                              stages={stage[path]}
+                              onChange={(next) => setStage(index, { ...stage, [path]: next as BuilderInnerStage[] })}
+                              options={options}
+                              form={form}
+                              newId={newId}
+                              allowChoice={allowChoice && depth + 1 < MAX_CHOICE_DEPTH}
+                              nested
+                              depth={depth + 1}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </li>
+          );
+        })}
       </ol>
+      <ConfirmDialog
+        open={removing !== null}
+        onCancel={() => setRemoving(null)}
+        onConfirm={() => {
+          if (removing !== null) remove(removing);
+          setRemoving(null);
+        }}
+        title={removing !== null ? `Remove level ${removing + 1}?` : "Remove this level?"}
+        body={removing !== null && stages[removing] ? `“${stageName(stages[removing]!) || kindLabel(stages[removing]!)}” (${stageSummary(stages[removing]!)}) leaves the flow.${designer ? " You can undo it." : ""}` : ""}
+        confirmLabel="Remove level"
+        tone="danger"
+      />
       <div className={`flex flex-wrap gap-2 ${nested ? "pt-3" : "border-t border-line px-5 py-3"}`}>
         <button type="button" onClick={() => onChange([...stages, { kind: "STEP", step: newStep("New step") }])} className="btn-secondary btn-compact">
           Add a level
@@ -518,13 +872,7 @@ function DoaEditor({
         <div className="flex flex-wrap items-center gap-2">
           {stage.limits.map((limit, index) => (
             <span key={index} className="flex items-center gap-1">
-              <input
-                aria-label={`Limit ${index + 1}`}
-                inputMode="numeric"
-                value={limit ? limit.toLocaleString("en-IN") : ""}
-                onChange={(event) => setLimit(index, event.target.value)}
-                className="field-input w-36"
-              />
+              <input aria-label={`Limit ${index + 1}`} inputMode="numeric" value={limit ? limit.toLocaleString("en-IN") : ""} onChange={(event) => setLimit(index, event.target.value)} className="field-input w-36" />
               {stage.limits.length > 1 && (
                 <button type="button" onClick={() => removeLimit(index)} className="btn-secondary btn-compact h-11" aria-label={`Remove limit ${index + 1}`}>
                   ×
@@ -557,7 +905,12 @@ function DoaEditor({
             {stage.levels.map((level, index) => (
               <tr key={level.step.id}>
                 <td>
-                  <input aria-label={`Level ${index + 1} name`} value={level.step.label} onChange={(event) => setLevel(index, { ...level, step: { ...level.step, label: event.target.value } })} className="field-input min-w-40" />
+                  <input
+                    aria-label={`Level ${index + 1} name`}
+                    value={level.step.label}
+                    onChange={(event) => setLevel(index, { ...level, step: { ...level.step, label: event.target.value } })}
+                    className="field-input min-w-40"
+                  />
                 </td>
                 {level.bands.map((tick, band) => (
                   <td key={band} className="text-center">
@@ -591,7 +944,18 @@ function DoaEditor({
       {empty.some(Boolean) && <p className="text-label text-danger-600">Every amount band needs at least one ticked level.</p>}
       <button
         type="button"
-        onClick={() => onChange({ ...stage, levels: [...stage.levels, { step: { id: newId(), label: `Level ${stage.levels.length + 1}`, approvers: { kind: "REQUESTER_MANAGER" }, rule: "ALL" }, bands: bandLabels.map(() => false).map((_, band) => band === bandLabels.length - 1) }] })}
+        onClick={() =>
+          onChange({
+            ...stage,
+            levels: [
+              ...stage.levels,
+              {
+                step: { id: newId(), label: `Level ${stage.levels.length + 1}`, approvers: { kind: "REQUESTER_MANAGER" }, rule: "ALL" },
+                bands: bandLabels.map(() => false).map((_, band) => band === bandLabels.length - 1),
+              },
+            ],
+          })
+        }
         className="btn-secondary btn-compact"
       >
         Add a DoA level
@@ -602,7 +966,11 @@ function DoaEditor({
         {stage.levels.map((level, index) => (
           <details key={level.step.id} className="rounded-md border border-line p-3" open={index === 0}>
             <summary className="cursor-pointer text-label font-medium">
-              {level.step.label || `Level ${index + 1}`} · needed for {level.bands.map((tick, band) => (tick ? bandLabels[band] : null)).filter(Boolean).join("; ") || "no band yet"}
+              {level.step.label || `Level ${index + 1}`} · needed for{" "}
+              {level.bands
+                .map((tick, band) => (tick ? bandLabels[band] : null))
+                .filter(Boolean)
+                .join("; ") || "no band yet"}
             </summary>
             <div className="mt-3">
               <StepEditor step={level.step} onChange={(step) => setLevel(index, { ...level, step })} options={options} form={form} personFields={personFields} hideSkip />
@@ -618,19 +986,7 @@ type SimpleCondition = Exclude<BuilderCondition, { match: string }>;
 
 // A rule (D-099): one or more conditions, all or any of which must hold.
 // One row is saved as a plain condition, so older specs stay as they were.
-function RuleEditor({
-  form,
-  value,
-  onChange,
-  prefix,
-  options,
-}: {
-  form: FormField[];
-  value: BuilderCondition;
-  onChange: (value: BuilderCondition) => void;
-  prefix: string;
-  options: BuilderOptions;
-}) {
+function RuleEditor({ form, value, onChange, prefix, options }: { form: FormField[]; value: BuilderCondition; onChange: (value: BuilderCondition) => void; prefix: string; options: BuilderOptions }) {
   const rows: SimpleCondition[] = isConditionGroup(value) ? (value.conditions as SimpleCondition[]) : [value as SimpleCondition];
   const match = isConditionGroup(value) ? value.match : "ALL";
   const save = (next: SimpleCondition[], nextMatch: "ALL" | "ANY" = match) => onChange(next.length === 1 ? next[0]! : { match: nextMatch, conditions: next });
@@ -644,13 +1000,7 @@ function RuleEditor({
       )}
       {rows.map((row, index) => (
         <div key={index} className="flex flex-wrap items-center gap-2">
-          <ConditionEditor
-            form={form}
-            value={row}
-            onChange={(next) => save(rows.map((item, i) => (i === index ? next : item)))}
-            prefix={index === 0 ? prefix : match === "ALL" ? "and" : "or"}
-            options={options}
-          />
+          <ConditionEditor form={form} value={row} onChange={(next) => save(rows.map((item, i) => (i === index ? next : item)))} prefix={index === 0 ? prefix : match === "ALL" ? "and" : "or"} options={options} />
           {rows.length > 1 && (
             <button type="button" onClick={() => save(rows.filter((_, i) => i !== index))} className="btn-secondary btn-compact" aria-label={`Remove condition ${index + 1}`}>
               ×
@@ -669,19 +1019,7 @@ function RuleEditor({
 
 // One field-operator-value condition, used inside rules. The operators and
 // the value box follow the field's type (S12-04/05).
-function ConditionEditor({
-  form,
-  value,
-  onChange,
-  prefix,
-  options,
-}: {
-  form: FormField[];
-  value: SimpleCondition;
-  onChange: (value: SimpleCondition) => void;
-  prefix: string;
-  options: BuilderOptions;
-}) {
+function ConditionEditor({ form, value, onChange, prefix, options }: { form: FormField[]; value: SimpleCondition; onChange: (value: SimpleCondition) => void; prefix: string; options: BuilderOptions }) {
   const field = form.find((item) => item.key === value.field);
   return (
     <div className="flex flex-wrap items-center gap-2 text-label">
@@ -803,7 +1141,12 @@ function StepEditor({
         </select>
       )}
       {pick.kind === "DEPARTMENT_HOD" && (
-        <select value={pick.departmentId} onChange={(event) => onChange({ ...step, approvers: { kind: "DEPARTMENT_HOD", departmentId: Number(event.target.value) } })} className="field-input md:col-span-2" aria-label="Department">
+        <select
+          value={pick.departmentId}
+          onChange={(event) => onChange({ ...step, approvers: { kind: "DEPARTMENT_HOD", departmentId: Number(event.target.value) } })}
+          className="field-input md:col-span-2"
+          aria-label="Department"
+        >
           {options.departments.map((department) => (
             <option key={department.id} value={department.id}>
               {department.label}
@@ -847,62 +1190,57 @@ function StepEditor({
         </select>
       )}
       {type !== "NOTIFY" && (
-      <div className="flex flex-wrap items-center gap-2 md:col-span-2">
-        {policy && !policy.rule.editable ? (
-          <span className="text-label text-ink-muted" data-testid="fixed-rule">
-            {policy.rule.value === "ANY_N" ? `Any ${policy.rule.n} of them` : type === "WORK" && policy.rule.value === "ALL" ? "All of them must mark it done" : RULE_TEXT[policy.rule.value]} (set by IT)
-          </span>
-        ) : (
-        <>
-        <select value={step.rule} onChange={(event) => onChange({ ...step, rule: event.target.value as Rule })} className="field-input w-auto" aria-label="How many must approve">
-          <option value="ALL">{type === "WORK" ? "All of them must mark it done" : "All of them must approve"}</option>
-          <option value="ANY_ONE">Any one of them</option>
-          <option value="ANY_N">Any N of them</option>
-        </select>
-        {step.rule === "ANY_N" && <input aria-label="N" type="number" min={1} value={step.n ?? 1} onChange={(event) => onChange({ ...step, n: Number(event.target.value) })} className="field-input w-24" />}
-        </>
-        )}
-        {policy && !policy.slaHours.editable ? (
-          <span className="text-label text-ink-muted" data-testid="fixed-sla">
-            {policy.slaHours.value ? `Respond within ${policy.slaHours.value} hours` : "No response time"} (set by IT)
-          </span>
-        ) : (
-        <label className="flex items-center gap-2 text-label">
-          Respond within
-          <input
-            aria-label="Respond within hours"
-            type="number"
-            min={1}
-            max={720}
-            value={step.slaHours ?? ""}
-            onChange={(event) => onChange({ ...step, slaHours: event.target.value ? Number(event.target.value) : null })}
-            placeholder="—"
-            className="field-input w-20"
-          />
-          hours
-        </label>
-        )}
-        {policy && !policy.onNoApprover.editable ? (
-          <span className="text-label text-ink-muted" data-testid="fixed-nobody">
-            {type === "WORK" ? "If nobody to do it" : "If nobody to approve"}: {NOBODY_TEXT[policy.onNoApprover.value].toLowerCase()} (set by IT)
-          </span>
-        ) : (
-        <select value={step.onNoApprover ?? "BLOCK"} onChange={(event) => onChange({ ...step, onNoApprover: event.target.value as "BLOCK" | "SKIP" })} className="field-input w-auto" aria-label="If nobody resolves">
-          <option value="BLOCK">{type === "WORK" ? "If nobody to do it" : "If nobody to approve"}: stop and tell IT</option>
-          <option value="SKIP">{type === "WORK" ? "If nobody to do it" : "If nobody to approve"}: skip this step</option>
-        </select>
-        )}
-      </div>
+        <div className="flex flex-wrap items-center gap-2 md:col-span-2">
+          {policy && !policy.rule.editable ? (
+            <span className="text-label text-ink-muted" data-testid="fixed-rule">
+              {policy.rule.value === "ANY_N" ? `Any ${policy.rule.n} of them` : type === "WORK" && policy.rule.value === "ALL" ? "All of them must mark it done" : RULE_TEXT[policy.rule.value]} (set by IT)
+            </span>
+          ) : (
+            <>
+              <select value={step.rule} onChange={(event) => onChange({ ...step, rule: event.target.value as Rule })} className="field-input w-auto" aria-label="How many must approve">
+                <option value="ALL">{type === "WORK" ? "All of them must mark it done" : "All of them must approve"}</option>
+                <option value="ANY_ONE">Any one of them</option>
+                <option value="ANY_N">Any N of them</option>
+              </select>
+              {step.rule === "ANY_N" && <input aria-label="N" type="number" min={1} value={step.n ?? 1} onChange={(event) => onChange({ ...step, n: Number(event.target.value) })} className="field-input w-24" />}
+            </>
+          )}
+          {policy && !policy.slaHours.editable ? (
+            <span className="text-label text-ink-muted" data-testid="fixed-sla">
+              {policy.slaHours.value ? `Respond within ${policy.slaHours.value} hours` : "No response time"} (set by IT)
+            </span>
+          ) : (
+            <label className="flex items-center gap-2 text-label">
+              Respond within
+              <input
+                aria-label="Respond within hours"
+                type="number"
+                min={1}
+                max={720}
+                value={step.slaHours ?? ""}
+                onChange={(event) => onChange({ ...step, slaHours: event.target.value ? Number(event.target.value) : null })}
+                placeholder="—"
+                className="field-input w-20"
+              />
+              hours
+            </label>
+          )}
+          {policy && !policy.onNoApprover.editable ? (
+            <span className="text-label text-ink-muted" data-testid="fixed-nobody">
+              {type === "WORK" ? "If nobody to do it" : "If nobody to approve"}: {NOBODY_TEXT[policy.onNoApprover.value].toLowerCase()} (set by IT)
+            </span>
+          ) : (
+            <select value={step.onNoApprover ?? "BLOCK"} onChange={(event) => onChange({ ...step, onNoApprover: event.target.value as "BLOCK" | "SKIP" })} className="field-input w-auto" aria-label="If nobody resolves">
+              <option value="BLOCK">{type === "WORK" ? "If nobody to do it" : "If nobody to approve"}: stop and tell IT</option>
+              <option value="SKIP">{type === "WORK" ? "If nobody to do it" : "If nobody to approve"}: skip this step</option>
+            </select>
+          )}
+        </div>
       )}
       {!hideSkip && (policy?.features.skip ?? true) && type !== "NOTIFY" && (
         <div className="md:col-span-2">
           <label className="flex items-center gap-2 text-label">
-            <input
-              type="checkbox"
-              checked={skip !== null}
-              disabled={form.length === 0}
-              onChange={(event) => onChange({ ...step, skipWhen: event.target.checked ? freshCondition(form[0]) : null })}
-            />
+            <input type="checkbox" checked={skip !== null} disabled={form.length === 0} onChange={(event) => onChange({ ...step, skipWhen: event.target.checked ? freshCondition(form[0]) : null })} />
             Skip this step when…
             {form.length === 0 && <span className="text-ink-faint">(add a form field first)</span>}
           </label>

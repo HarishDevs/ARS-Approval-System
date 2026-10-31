@@ -1,5 +1,9 @@
 # Release notes
 
+## v1.38.0 (31 Oct 2026): Workflow Designer and settings console (owner)
+- **Workflows (IT):** a map of the flow above the levels: click a box to open that level. Levels fold, can be dragged or moved with Alt+↑/↓, duplicated, and removed with a question first and Undo after. Each level says what needs fixing before you save. Unsaved changes are kept in your browser and offered back next time. Test mode now has the right box for every kind of field.
+- **Settings (Super Admin):** categories down the side, a search across every setting, a mark on anything not saved yet, and a question before leaving with unsaved changes. AI settings are saved with one button (it was nine).
+
 ## v1.37.0 (31 Oct 2026): Form Designer, Home and one Inbox (owner)
 - **Form fields (IT):** a new designer. Add fields from a library, drag them into order (or use ↑/↓), duplicate them, and remove them with a question first and Undo after. Settings are grouped in tabs, and changing a field's type tells you what would be lost.
 - **Custom approvals:** the DoA option is gone (it never applied to custom requests).

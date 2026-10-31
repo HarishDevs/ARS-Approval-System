@@ -4,6 +4,7 @@ import { PageHeader } from "@/features/shell/PageHeader";
 import { Badge } from "@/features/ui/Display";
 import { Hint } from "@/features/ui/Hint";
 import { SettingsGroupForm } from "@/features/superadmin/SettingsGroupForm";
+import { SettingsConsole } from "@/features/superadmin/SettingsConsole";
 import { ProviderTestButton } from "@/features/ai/AiAdminForms";
 import { requireArea } from "@/server/authorization/guards";
 import { featureMode } from "@/server/settings/features";
@@ -25,7 +26,19 @@ export const dynamic = "force-dynamic";
 // fingerprint only. Every change is recorded.
 
 const GENERAL_KEYS = ["ai.active_provider", "ai.fallback_provider", "ai.emergency_stop", "ai.launcher", "ai.general_chat", "ai.combined_chat", "ai.module_modes"] as const;
-const COMMON_KEYS = ["ai.daily_questions_per_person", "ai.requests_per_minute", "ai.concurrent_per_person", "ai.concurrent_global", "ai.max_question_chars", "ai.max_output_tokens", "ai.history_turns", "ai.timeout_seconds", "ai.conversation_keep_days", "ai.price_in_per_million", "ai.price_out_per_million"] as const;
+const COMMON_KEYS = [
+  "ai.daily_questions_per_person",
+  "ai.requests_per_minute",
+  "ai.concurrent_per_person",
+  "ai.concurrent_global",
+  "ai.max_question_chars",
+  "ai.max_output_tokens",
+  "ai.history_turns",
+  "ai.timeout_seconds",
+  "ai.conversation_keep_days",
+  "ai.price_in_per_million",
+  "ai.price_out_per_million",
+] as const;
 
 // Inside a provider's card the provider's name is the title, so fields say
 // just "API key", "Model"; any explanation stays in the hover hint.
@@ -43,7 +56,11 @@ export default async function AiSettingsPage() {
   const [mode, settings, raw, emergency] = await Promise.all([featureMode("ai"), loadAiSettings(), listRawSettings(), getSettingValue("ai.emergency_stop")]);
   const gate = aiGate.stats();
   const byKey = new Map(raw.map((row) => [row.key, row]));
-  const pick = (keys: readonly string[]) => keys.map((key) => SETTING_DEFINITIONS.find((definition) => definition.key === key)).filter((definition) => definition !== undefined).map((definition) => resolveSettingForDisplay(definition, byKey.get(definition.key) ?? null));
+  const pick = (keys: readonly string[]) =>
+    keys
+      .map((key) => SETTING_DEFINITIONS.find((definition) => definition.key === key))
+      .filter((definition) => definition !== undefined)
+      .map((definition) => resolveSettingForDisplay(definition, byKey.get(definition.key) ?? null));
 
   return (
     <>
@@ -55,33 +72,61 @@ export default async function AiSettingsPage() {
               Emergency stop is ON: every Pico Bot request is refused. Turn it OFF below when it is safe.
             </p>
           )}
-          {/* D-184 (owner): General, then each provider on its own, then the common settings. */}
-          <SettingsGroupForm group="AI" title="General" description="Which provider answers (and the fallback), the emergency stop, the floating launcher and which chats exist." settings={pick(GENERAL_KEYS)} testId="ai-general" />
-          <div className="space-y-6" data-testid="ai-providers">
-            {PROVIDERS.map((provider) => {
-              const state = settings.providers[provider];
-              const prefix = `ai.${PROVIDER_SETTING[provider]}`;
-              return (
-                <SettingsGroupForm
-                  key={provider}
-                  group="AI"
-                  title={PROVIDER_LABEL[provider]}
-                  description="The key is stored encrypted and never shown again; leave it empty to keep the saved one. Business data: whether this provider may see ARS and Salesforce data."
-                  settings={renamed(pick([`${prefix}.api_key`, `${prefix}.model`, `${prefix}.business_data`]), { api_key: "API key", model: "Model", business_data: "May see business data" })}
-                  testId={`ai-provider-${provider}`}
-                  actions={
-                    <>
-                      {state.configured ? <Badge tone="success">Set up</Badge> : <Badge tone="neutral">Not set up</Badge>}
-                      {settings.active === provider && <Badge tone="info">Active</Badge>}
-                      {settings.fallback === provider && <Badge tone="info">Fallback</Badge>}
-                      {state.configured && <ProviderTestButton provider={provider} label={PROVIDER_LABEL[provider]} />}
-                    </>
-                  }
-                />
-              );
-            })}
-          </div>
-          <SettingsGroupForm group="AI" title="Common settings" description="Limits, speed, answer length, retention and price estimates; they apply whichever provider answers." settings={pick(COMMON_KEYS)} testId="ai-common" />
+          {/* D-184 (owner): General, then each provider on its own, then the common settings.
+              D-240: one AI form with one Save (it was nine), in the settings console. */}
+          <SettingsConsole
+            sections={[
+              { id: "ai-part-general", title: "General", keywords: `General provider fallback emergency launcher chats ${GENERAL_KEYS.join(" ")}` },
+              { id: "ai-part-providers", title: "Providers", keywords: `Providers API key model business data ${PROVIDERS.map((provider) => PROVIDER_LABEL[provider]).join(" ")}` },
+              { id: "ai-part-common", title: "Common settings", keywords: `Common limits speed answer retention price ${COMMON_KEYS.join(" ")}` },
+            ]}
+          >
+            <SettingsGroupForm
+              group="AI"
+              id="settings-AI"
+              title="AI settings"
+              description="Everything here is saved together, in one change with its history and audit. Keys are stored encrypted and never shown again; leave a key empty to keep the saved one."
+              parts={[
+                {
+                  id: "ai-part-general",
+                  title: "General",
+                  description: "Which provider answers (and the fallback), the emergency stop, the floating launcher and which chats exist.",
+                  settings: pick(GENERAL_KEYS),
+                  testId: "ai-general",
+                },
+                {
+                  id: "ai-part-providers",
+                  title: "Providers",
+                  description: "Business data: whether a provider may see ARS and Salesforce data.",
+                  testId: "ai-providers",
+                  parts: PROVIDERS.map((provider) => {
+                    const state = settings.providers[provider];
+                    const prefix = `ai.${PROVIDER_SETTING[provider]}`;
+                    return {
+                      title: PROVIDER_LABEL[provider],
+                      testId: `ai-provider-${provider}`,
+                      settings: renamed(pick([`${prefix}.api_key`, `${prefix}.model`, `${prefix}.business_data`]), { api_key: "API key", model: "Model", business_data: "May see business data" }),
+                      actions: (
+                        <>
+                          {state.configured ? <Badge tone="success">Set up</Badge> : <Badge tone="neutral">Not set up</Badge>}
+                          {settings.active === provider && <Badge tone="info">Active</Badge>}
+                          {settings.fallback === provider && <Badge tone="info">Fallback</Badge>}
+                          {state.configured && <ProviderTestButton provider={provider} label={PROVIDER_LABEL[provider]} />}
+                        </>
+                      ),
+                    };
+                  }),
+                },
+                {
+                  id: "ai-part-common",
+                  title: "Common settings",
+                  description: "Limits, speed, answer length, retention and price estimates; they apply whichever provider answers.",
+                  settings: pick(COMMON_KEYS),
+                  testId: "ai-common",
+                },
+              ]}
+            />
+          </SettingsConsole>
         </div>
         <div className="space-y-6">
           <section className="card space-y-2 px-5 py-4">

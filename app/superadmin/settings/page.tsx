@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { SettingsGroupForm } from "@/features/superadmin/SettingsGroupForm";
+import { SettingsConsole } from "@/features/superadmin/SettingsConsole";
 import { TestSendPanel } from "@/features/superadmin/TestSendPanel";
 import { requireArea } from "@/server/authorization/guards";
 import { SETTING_DEFINITIONS, type SettingDefinition } from "@/server/settings/definitions";
@@ -15,7 +16,7 @@ const GROUPS: { group: SettingDefinition["group"]; title: string; description: s
   { group: "EMAIL", title: "Email", description: "Resend, sending from the ARS address. GoDaddy blocks SMTP, so email goes over HTTPS." },
   { group: "WHATSAPP", title: "WhatsApp", description: "CEOITBox, the same number and account as the Power BI site." },
   { group: "AUTHENTICATION", title: "Sign-in security", description: "Code, lockout and device limits. Each value has safe minimum and maximum bounds." },
-  { group: "GENERAL", title: "General", description: "Application name and timezone." },
+  { group: "GENERAL", title: "General", description: "Application name, timezone, the maintenance notice and the other app-wide basics." },
   { group: "RETENTION", title: "Retention", description: "How long records are kept. 0 keeps them for ever. These values only feed the dry run on Retention & holds; nothing is deleted automatically." },
   { group: "FEATURES", title: "Feature switches", description: "Turn new features on, off, or on for the IT team only (a trial before everyone). Switching off hides a feature; no data is removed." },
 ];
@@ -30,20 +31,25 @@ export default async function SettingsPage() {
   return (
     <>
       <PageHeader title="Providers & security" description="Keys are stored encrypted and are never shown again after saving. Every change is recorded." />
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="space-y-6">
+      <div className="grid gap-6 2xl:grid-cols-[minmax(0,1fr)_360px]">
+        {/* D-240: one console: categories, a search across them, one Save per category. */}
+        <SettingsConsole
+          sections={GROUPS.map(({ group, title, description }) => ({
+            id: `settings-${group}`,
+            title,
+            keywords: [title, description, ...SETTING_DEFINITIONS.filter((definition) => definition.group === group).flatMap((definition) => [definition.label, definition.key])].join(" "),
+          }))}
+        >
           {GROUPS.map(({ group, title, description }) => (
             <SettingsGroupForm
               key={group}
               group={group}
               title={title}
               description={description}
-              settings={SETTING_DEFINITIONS.filter((definition) => definition.group === group).map((definition) =>
-                resolveSettingForDisplay(definition, byKey.get(definition.key) ?? null),
-              )}
+              settings={SETTING_DEFINITIONS.filter((definition) => definition.group === group).map((definition) => resolveSettingForDisplay(definition, byKey.get(definition.key) ?? null))}
             />
           ))}
-        </div>
+        </SettingsConsole>
         <div className="space-y-6">
           <TestSendPanel email={user.email} whatsapp={user.whatsappNumber} />
           <section className="card">

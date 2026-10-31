@@ -9,6 +9,21 @@ import { Hint } from "@/features/ui/Hint";
 import { NO_LOOKUPS, NUMERIC_TYPES, type FieldLookups, type FormField } from "@/server/forms/fields";
 import type { SimulationView } from "@/server/approvals/service";
 
+// D-239: several options ticked, sent as the JSON list a real request sends.
+function MultiChoiceSample({ field }: { field: FormField }) {
+  const [picked, setPicked] = useState<string[]>([]);
+  return (
+    <>
+      <input type="hidden" name={`field:${field.key}`} value={picked.length ? JSON.stringify(picked) : ""} />
+      <select id={`sim-${field.key}`} multiple value={picked} onChange={(event) => setPicked(Array.from(event.target.selectedOptions, (option) => option.value))} className="field-input h-auto min-h-[5.5rem]">
+        {field.options?.map((option) => (
+          <option key={option}>{option}</option>
+        ))}
+      </select>
+    </>
+  );
+}
+
 // Test mode (P3-05): sample values → the exact route and names. Nothing is saved.
 export function TestModePanel({ versionId, form, people, lookups = NO_LOOKUPS }: { versionId: number; form: FormField[]; people: { id: number; label: string }[]; lookups?: FieldLookups }) {
   const { result, pending, onSubmit } = useActionForm(simulateAction);
@@ -35,45 +50,63 @@ export function TestModePanel({ versionId, form, people, lookups = NO_LOOKUPS }:
           </select>
           <FieldError result={result} name="requesterId" />
         </div>
-        {form.filter((field) => field.type !== "SECTION" && field.type !== "CALC").map((field) => (
-          <div key={field.key}>
-            <label htmlFor={`sim-${field.key}`} className="field-label">
-              {field.label}
-              {field.type === "LINE_ITEMS" && <span className="font-normal text-ink-faint"> (sample total, ₹)</span>}
-              {field.type === "ATTACHMENT" && <span className="font-normal text-ink-faint"> (number of files)</span>}
-            </label>
-            {field.type === "LINE_ITEMS" ? (
-              <input id={`sim-${field.key}`} name={`lines:${field.key}`} inputMode="decimal" className="field-input" />
-            ) : field.type === "CHOICE" ? (
-              <select id={`sim-${field.key}`} name={`field:${field.key}`} defaultValue="" className="field-input">
-                <option value="">—</option>
-                {field.options?.map((option) => (
-                  <option key={option}>{option}</option>
-                ))}
-              </select>
-            ) : field.type === "LOOKUP" ? (
-              <select id={`sim-${field.key}`} name={`field:${field.key}`} defaultValue="" className="field-input">
-                <option value="">—</option>
-                {(field.source ? lookups[field.source] : []).map((item) => (
-                  <option key={item.code} value={item.code}>
-                    {item.name}
-                  </option>
-                ))}
-              </select>
-            ) : field.type === "PERSON" ? (
-              <select id={`sim-${field.key}`} name={`field:${field.key}`} defaultValue="" className="field-input">
-                <option value="">—</option>
-                {people.map((person) => (
-                  <option key={person.id} value={person.id}>
-                    {person.label}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <input id={`sim-${field.key}`} name={`field:${field.key}`} type={field.type === "DATE" ? "date" : "text"} className="field-input" />
-            )}
-          </div>
-        ))}
+        {form
+          .filter((field) => field.type !== "SECTION" && field.type !== "CALC")
+          .map((field) => (
+            <div key={field.key}>
+              <label htmlFor={`sim-${field.key}`} className="field-label">
+                {field.label}
+                {field.type === "LINE_ITEMS" && <span className="font-normal text-ink-faint"> (sample total, ₹)</span>}
+                {field.type === "ATTACHMENT" && <span className="font-normal text-ink-faint"> (number of files)</span>}
+              </label>
+              {field.type === "LINE_ITEMS" ? (
+                <input id={`sim-${field.key}`} name={`lines:${field.key}`} inputMode="decimal" className="field-input" />
+              ) : field.type === "CHOICE" || field.type === "RADIO" ? (
+                <select id={`sim-${field.key}`} name={`field:${field.key}`} defaultValue="" className="field-input">
+                  <option value="">—</option>
+                  {field.options?.map((option) => (
+                    <option key={option}>{option}</option>
+                  ))}
+                </select>
+              ) : field.type === "LOOKUP" ? (
+                <select id={`sim-${field.key}`} name={`field:${field.key}`} defaultValue="" className="field-input">
+                  <option value="">—</option>
+                  {(field.source ? lookups[field.source] : []).map((item) => (
+                    <option key={item.code} value={item.code}>
+                      {item.name}
+                    </option>
+                  ))}
+                </select>
+              ) : field.type === "PERSON" ? (
+                <select id={`sim-${field.key}`} name={`field:${field.key}`} defaultValue="" className="field-input">
+                  <option value="">—</option>
+                  {people.map((person) => (
+                    <option key={person.id} value={person.id}>
+                      {person.label}
+                    </option>
+                  ))}
+                </select>
+              ) : field.type === "MULTI_CHOICE" ? (
+                <MultiChoiceSample field={field} />
+              ) : field.type === "CHECKBOX" ? (
+                <label className="flex h-11 items-center gap-2 text-label">
+                  <input id={`sim-${field.key}`} type="checkbox" name={`field:${field.key}`} value="yes" className="h-4 w-4" /> Ticked
+                </label>
+              ) : field.type === "LONG_TEXT" ? (
+                <textarea id={`sim-${field.key}`} name={`field:${field.key}`} rows={2} className="field-input" />
+              ) : (
+                // D-239: each type's own box (the server reads them as on a real request).
+                <input
+                  id={`sim-${field.key}`}
+                  name={`field:${field.key}`}
+                  type={field.type === "DATE" ? "date" : field.type === "DATETIME" ? "datetime-local" : field.type === "URL" ? "url" : "text"}
+                  inputMode={field.type === "NUMBER" || field.type === "CURRENCY" ? "decimal" : undefined}
+                  placeholder={field.type === "CURRENCY" ? "₹" : field.type === "ATTACHMENT" ? "0" : undefined}
+                  className="field-input"
+                />
+              )}
+            </div>
+          ))}
       </div>
       <SubmitButton pending={pending} variant="secondary" className="btn-compact">
         Run test
@@ -81,9 +114,7 @@ export function TestModePanel({ versionId, form, people, lookups = NO_LOOKUPS }:
       <ResultMessage result={result} />
       {view && (
         <div className="space-y-3">
-          {Object.keys(view.formErrors).length > 0 && (
-            <p className="text-label text-warning-600">Some sample values aren&apos;t valid, so they were left out: {Object.values(view.formErrors).join(" ")}</p>
-          )}
+          {Object.keys(view.formErrors).length > 0 && <p className="text-label text-warning-600">Some sample values aren&apos;t valid, so they were left out: {Object.values(view.formErrors).join(" ")}</p>}
           <ol className="space-y-2">
             {view.stages.map((stage, index) => (
               <li key={index} className="rounded-md border border-line p-3 text-label">
@@ -136,9 +167,7 @@ export function TestModePanel({ versionId, form, people, lookups = NO_LOOKUPS }:
           )}
           {view.impact && (
             <p className="text-label text-ink-muted">
-              {view.impact.isLive
-                ? `This is the live version. `
-                : `Publishing version ${view.impact.versionNo} affects new requests only. `}
+              {view.impact.isLive ? `This is the live version. ` : `Publishing version ${view.impact.versionNo} affects new requests only. `}
               {view.impact.openRequests === 0
                 ? "No requests of this type are open right now."
                 : `${view.impact.openRequests} open request${view.impact.openRequests === 1 ? "" : "s"} of this type keep the version they started with.`}
@@ -151,7 +180,11 @@ export function TestModePanel({ versionId, form, people, lookups = NO_LOOKUPS }:
 }
 
 export function PublishButton({ workflowId, versionId, versionNo }: { workflowId: number; versionId: number; versionNo: number }) {
-  const { result, pending, onSubmit, confirmBar } = useActionForm(publishAction, { confirmTitle: `Publish version ${versionNo}?`, confirmLabel: "Yes, publish", confirm: `Publish version ${versionNo}? New requests will use it straight away.` });
+  const { result, pending, onSubmit, confirmBar } = useActionForm(publishAction, {
+    confirmTitle: `Publish version ${versionNo}?`,
+    confirmLabel: "Yes, publish",
+    confirm: `Publish version ${versionNo}? New requests will use it straight away.`,
+  });
   return (
     <form onSubmit={onSubmit} className="space-y-2">
       <input type="hidden" name="workflowId" value={workflowId} />
@@ -221,7 +254,12 @@ export function DetailsForm({
 
 // Remove an approval type that was never used (two-step confirmation).
 export function DeleteWorkflowForm({ workflowId, name }: { workflowId: number; name: string }) {
-  const { result, pending, onSubmit, confirmBar } = useActionForm(deleteWorkflowAction, { confirm: `Remove "${name}" for good? This can't be undone.`, confirmTitle: "Remove this approval type?", confirmLabel: "Yes, remove", confirmTone: "danger" });
+  const { result, pending, onSubmit, confirmBar } = useActionForm(deleteWorkflowAction, {
+    confirm: `Remove "${name}" for good? This can't be undone.`,
+    confirmTitle: "Remove this approval type?",
+    confirmLabel: "Yes, remove",
+    confirmTone: "danger",
+  });
   return (
     <form onSubmit={onSubmit} className="card space-y-2 px-5 py-4">
       <input type="hidden" name="workflowId" value={workflowId} />
@@ -325,7 +363,10 @@ export function TypeSettingsForm({
       <fieldset className="space-y-2">
         <legend className="field-label">
           Must be unique{" "}
-          <Hint text="Never repeated on an open or approved request of this type. For identifiers such as an invoice or PO number. A repeat is refused for everyone, at any date; a rejected or withdrawn request frees the value." align="start" />
+          <Hint
+            text="Never repeated on an open or approved request of this type. For identifiers such as an invoice or PO number. A repeat is refused for everyone, at any date; a rejected or withdrawn request frees the value."
+            align="start"
+          />
         </legend>
         <div className="flex flex-wrap gap-3">
           {fields
