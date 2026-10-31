@@ -7,6 +7,7 @@ import { Hint } from "@/features/ui/Hint";
 import type { ModuleCode, RoleCode, SignInMethod } from "@/types/auth";
 import { MODULE_HELP, MODULE_LABEL, MODULES } from "@/server/modules/modules";
 import { CHAT_MODES, MODE_HELP, MODE_LABEL, type ChatMode, type SalesforceScope } from "@/server/ai/chat-access";
+import { UnsavedGuard } from "@/features/ui/UnsavedGuard";
 
 export interface Option {
   id: number;
@@ -64,6 +65,7 @@ export function UserForm({
 
   return (
     <form onSubmit={onSubmit} className="card">
+      <UnsavedGuard />
       {values.id && <input type="hidden" name="id" value={values.id} />}
       <fieldset disabled={readOnly} className="grid gap-5 px-5 py-5 sm:grid-cols-2">
         <Field label="Full name" name="name" defaultValue={values.name} result={result} autoComplete="off" />

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/features/shell/PageHeader";
-import { Badge, EmptyState } from "@/features/ui/Display";
+import { Badge, EmptyState, NoResults } from "@/features/ui/Display";
 import { ProjectDot } from "@/features/work/client";
 import { ProjectCommandButton, StarButton } from "@/features/work/ProjectForms";
 import { countTemplateTasks, parseTemplate } from "@/server/work/more-rules";
@@ -86,7 +86,11 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
               </ul>
             )
           ) : projects.length === 0 ? (
-            <EmptyState title={q ? "No project matches" : "No projects yet"} body="Use Create project: you'll be its owner and can add people or a whole department." />
+            q ? (
+              <NoResults what="projects" query={q} clearSearchHref={show === "all" ? "/users/work/projects" : `/users/work/projects?show=${show}`} />
+            ) : (
+              <EmptyState title="No projects yet" body="Use Create project: you'll be its owner and can add people or a whole department." />
+            )
           ) : (
             <ul className="card divide-y divide-line" data-testid="project-list-items">
               {projects.map((project) => {

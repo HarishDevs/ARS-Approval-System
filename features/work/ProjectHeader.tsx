@@ -12,6 +12,7 @@ import { StarButton } from "@/features/work/ProjectForms";
 import { ProjectShareButton } from "@/features/work/ShareDialogs";
 import type { ProjectRole } from "@/server/work/access";
 import { STATUS_KIND_LABEL, STATUS_KINDS, type ProjectStatusKind } from "@/server/work/access";
+import { COPY_BLOCKED, copyText } from "@/features/ui/clipboard";
 
 // D-219 (screen catalog S-06): the project header: icon, name, the actions
 // menu, star, the "Set status" pill, then member avatars, Share and Customize.
@@ -55,10 +56,8 @@ export function ProjectHeader({
   }, [saving]);
   const base = `/users/work/projects/${projectId}`;
   const copyLink = () => {
-    void navigator.clipboard
-      ?.writeText(`${window.location.origin}${base}`)
-      .then(() => toast({ tone: "success", title: "Project link copied." }))
-      .catch(() => toast({ tone: "error", title: "Couldn't copy the link." }));
+    const link = `${window.location.origin}${base}`;
+    void copyText(link).then((done) => toast(done ? { tone: "success", title: "Project link copied." } : { tone: "error", title: `${COPY_BLOCKED} ${link}` }));
   };
   const actions: MenuItem[] = [
     { label: "Edit project settings", href: `${base}/settings#details` },

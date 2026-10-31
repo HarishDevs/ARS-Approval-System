@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { BrandLoader } from "@/features/ui/BrandLoader";
+import { navigationHeld } from "@/features/ui/UnsavedGuard";
 import { ChevronRight } from "lucide-react";
 import { GATEWAY, locate, MENU_BASE, pageHotkeys, type ClassicModule } from "@/features/shell/classic-modules";
 
@@ -174,7 +175,8 @@ export function ClassicBar({ modules }: { modules: ClassicModule[] }) {
       if (url.origin !== window.location.origin || url.pathname.startsWith("/api/")) return;
       if (url.pathname === window.location.pathname && url.search === window.location.search) return;
       const label = (link.getAttribute("aria-label") || link.textContent || "").replace(/\s+/g, " ").trim().slice(0, 60);
-      setLoading(label ? `Opening ${label}…` : "Opening…");
+      // D-233: a click the page took over ("Leave without saving?") doesn't count.
+      window.setTimeout(() => !navigationHeld(event) && setLoading(label ? `Opening ${label}…` : "Opening…"), 0);
     };
     window.addEventListener(CLASSIC_LOADING_EVENT, onAnnounce);
     document.addEventListener("click", onClick, true);
@@ -247,7 +249,9 @@ export function ClassicBar({ modules }: { modules: ClassicModule[] }) {
             </span>
           </>
         )}
-        <span className="ml-auto hidden text-caption text-ink-faint sm:inline">Esc: back</span>
+        <span className="ml-auto hidden text-caption text-ink-faint sm:inline" data-testid="classic-keys">
+          Enter: next field · Ctrl+A: accept · Esc: back
+        </span>
       </nav>
       {entry && entry.pages.length > 1 && (
         <nav aria-label={`${entry.label} pages`} className="flex gap-1 overflow-x-auto px-4 pt-2 sm:px-8" data-testid="classic-tabs">
@@ -279,4 +283,50 @@ export function ClassicBar({ modules }: { modules: ClassicModule[] }) {
       )}
     </div>
   );
+}
+
+// D-227 (owner: "in Classic mode make everything Classic, including all the
+// forms and entry screens… like Tally"): Tally's entry keys on every form of
+// two or more fields. Enter accepts a field and moves to the next one (the
+// last moves to the form's button; Enter there submits); Ctrl+A accepts the
+// whole form. Text areas keep Enter for new lines, an open suggestion list
+// keeps it for picking, and search boxes and one-field forms still submit.
+const FIELD = 'input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]), select, textarea';
+function fieldsOf(form: HTMLFormElement): HTMLElement[] {
+  return [...form.querySelectorAll<HTMLElement>(`${FIELD}, button[type="submit"], button:not([type])`)].filter(
+    (element) => !(element as HTMLInputElement).disabled && !(element as HTMLInputElement).readOnly && element.getClientRects().length > 0 && !element.closest("details:not([open])"),
+  );
+}
+function entryForm(target: EventTarget | null): HTMLFormElement | null {
+  const element = target as HTMLElement | null;
+  const form = element?.closest?.("form");
+  if (!form || form.getAttribute("role") === "search" || form.getAttribute("method")?.toLowerCase() === "get") return null;
+  return fieldsOf(form).filter((item) => item.matches(FIELD)).length >= 2 ? form : null;
+}
+
+export function ClassicForms() {
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.altKey || event.metaKey) return;
+      const target = event.target as HTMLElement;
+      const form = entryForm(target);
+      if (!form) return;
+      if (event.ctrlKey && (event.key === "a" || event.key === "A") && !event.shiftKey) {
+        event.preventDefault();
+        const button = fieldsOf(form).find((item) => item.tagName === "BUTTON" && (item as HTMLButtonElement).type === "submit");
+        form.requestSubmit(button as HTMLButtonElement | undefined);
+        return;
+      }
+      if (event.key !== "Enter" || event.ctrlKey || event.shiftKey || !target.matches(FIELD) || target.tagName === "TEXTAREA" || target.getAttribute("aria-expanded") === "true") return;
+      const list = fieldsOf(form);
+      const next = list[list.indexOf(target) + 1];
+      if (!next) return;
+      event.preventDefault();
+      next.focus();
+      if (next instanceof HTMLInputElement && ["text", "search", "email", "tel", "url", "number"].includes(next.type)) next.select();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+  return null;
 }

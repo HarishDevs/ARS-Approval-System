@@ -8,6 +8,7 @@ import { PeoplePicker } from "@/features/ui/PeoplePicker";
 import { Hint } from "@/features/ui/Hint";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import { NO_LOOKUPS, type FieldLookups, type FormField } from "@/server/forms/fields";
+import { UnsavedGuard } from "@/features/ui/UnsavedGuard";
 import {
   ACK_LABEL,
   ACK_RULES,
@@ -262,6 +263,7 @@ export function ModuleTypeEditor({
 
   return (
     <form onSubmit={onSubmit} className="space-y-6" aria-label="Draft set-up">
+      <UnsavedGuard />
       <input type="hidden" name="module" value={module} />
       <input type="hidden" name="typeId" value={typeId} />
       <input type="hidden" name="form" value={JSON.stringify(form)} />

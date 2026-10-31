@@ -6,6 +6,7 @@ import { Copy, History, Minus, Plus, RotateCcw, Square, Trash2, X } from "lucide
 import { ConfirmDialog } from "@/features/ui/Dialog";
 import { Hint } from "@/features/ui/Hint";
 import { RichAnswer } from "@/features/ai/RichAnswer";
+import { COPY_BLOCKED, copyText } from "@/features/ui/clipboard";
 
 // D-172 Pic bot - ai: the floating launcher (the supplied logo) and chat
 // panel, on every page for people who have at least one chat mode. It talks
@@ -177,13 +178,10 @@ export function PicBot({ initialModes }: { initialModes: ModeOption[] }) {
   }
 
   async function copy(message: Message) {
-    try {
-      await navigator.clipboard.writeText(message.content);
+    if (await copyText(message.content)) {
       setCopied(message.id);
       setTimeout(() => setCopied(null), 1500);
-    } catch {
-      setNotice("Couldn't copy. Select the text and copy it instead.");
-    }
+    } else setNotice(COPY_BLOCKED);
   }
 
   const modeLabel = (mode: string) => modes.find((item) => item.mode === mode)?.label ?? (mode === "LEGACY" ? "Earlier version" : mode);

@@ -8,6 +8,7 @@ import { ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import { Hint } from "@/features/ui/Hint";
 import { NO_LOOKUPS, type FieldLookups, type FormField } from "@/server/forms/fields";
 import { NOBODY, NOBODY_TEXT, RULES, RULE_TEXT, type StepPolicy } from "@/server/workflows/step-policy";
+import { UnsavedGuard } from "@/features/ui/UnsavedGuard";
 
 // v1.8.0 (owner): Admin → Custom approval. The fields everyone fills in on a
 // custom approval, and the step options they may change. A change applies to
@@ -25,6 +26,7 @@ export function CustomApprovalSetup({ initialForm, initialPolicy, lookups = NO_L
 
   return (
     <form onSubmit={onSubmit} className="space-y-6">
+      <UnsavedGuard />
       <input type="hidden" name="form" value={JSON.stringify(form)} />
       <input type="hidden" name="policy" value={JSON.stringify(policy)} />
       <FormFieldsEditor form={form} setForm={setForm} lockedKeys={[]} intro="Everyone fills in a title, the fields below, any files and the levels of approvers. Collaborators can always be added." />

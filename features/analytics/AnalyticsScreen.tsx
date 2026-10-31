@@ -15,6 +15,7 @@ import { loadAging, loadApproverLoad, loadBreakdown, loadKpis, loadNow, loadSla,
 import { loadDueSoon, loadFilterChoices, loadHeatmap, loadHistory, loadQuality, loadStatusMix, type DrillKind } from "@/lib/db/repositories/analytics-more.repository";
 import { dashboardChoices } from "@/lib/db/repositories/dashboards.repository";
 import { findStuckRequests } from "@/server/ops/stuck";
+import { ErrorState } from "@/features/ui/States";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 import { listViews } from "@/lib/db/repositories/analytics-views.repository";
 import { SavedViews, SaveViewForm } from "@/features/analytics/ReportForms";
@@ -83,7 +84,7 @@ export async function AnalyticsScreen({ searchParams, base }: { searchParams: Re
     scope.kind === "ORGANISATION" ? loadBreakdown("department", scope, viewer, filter) : Promise.resolve([]),
     scope.kind === "MINE" ? Promise.resolve([]) : loadSteps(scope, viewer, filter),
     loadApproverLoad(scope, viewer, filter),
-    scope.kind === "ORGANISATION" ? findStuckRequests().catch(() => null) : Promise.resolve(null),
+    scope.kind === "ORGANISATION" ? findStuckRequests().catch(() => "failed" as const) : Promise.resolve(null),
     loadDueSoon(scope, viewer, filter),
     loadQuality(scope, viewer, filter),
     loadQuality(scope, viewer, filter, previous),
@@ -290,7 +291,8 @@ export async function AnalyticsScreen({ searchParams, base }: { searchParams: Re
         )}
         <KpiCard metric="due_today" value={due.dueToday} href={drill("due_today")} />
         <KpiCard metric="due_week" value={due.dueWeek} href={drill("due_week")} />
-        {stuck && <KpiCard metric="stuck" value={stuck.length} href="/admin/attention" />}
+        {/* D-233: a failed check shows as such, not as a missing tile. */}
+        {stuck === "failed" ? <ErrorState variant="card" title="Stuck requests" body="This number couldn't be worked out just now. Reload to try again." /> : stuck && <KpiCard metric="stuck" value={stuck.length} href="/admin/attention" />}
       </div>
 
       <h2 className="mb-2 text-label font-semibold uppercase tracking-wide text-ink-muted">{period.label}</h2>

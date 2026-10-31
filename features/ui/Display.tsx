@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronRight, Inbox } from "lucide-react";
+import { ChevronRight, Inbox, SearchX } from "lucide-react";
 import { SafeText } from "@/features/ui/SafeText";
 
 // Display components (UI-03). Server-friendly: no client state.
@@ -40,13 +40,30 @@ export function initials(name: string): string {
 // Decorative by default: the name is always written next to it.
 export function Avatar({ name, size = "md" }: { name: string; size?: "sm" | "md" }) {
   return (
-    <span aria-hidden="true" className={`inline-flex shrink-0 items-center justify-center rounded-full bg-primary-50 font-semibold text-primary-700 ${size === "sm" ? "h-6 w-6 text-[length:calc(10px*var(--text-scale,1))]" : "h-8 w-8 text-caption"}`}>
+    <span
+      aria-hidden="true"
+      className={`inline-flex shrink-0 items-center justify-center rounded-full bg-primary-50 font-semibold text-primary-700 ${size === "sm" ? "h-6 w-6 text-[length:calc(10px*var(--text-scale,1))]" : "h-8 w-8 text-caption"}`}
+    >
       {initials(name)}
     </span>
   );
 }
 
-export function Card({ title, actions, children, className = "", bodyClassName = "", id }: { title?: React.ReactNode; actions?: React.ReactNode; children: React.ReactNode; className?: string; bodyClassName?: string; id?: string }) {
+export function Card({
+  title,
+  actions,
+  children,
+  className = "",
+  bodyClassName = "",
+  id,
+}: {
+  title?: React.ReactNode;
+  actions?: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
+  bodyClassName?: string;
+  id?: string;
+}) {
   return (
     <section className={`card ${className}`} aria-labelledby={title && id ? `${id}-title` : undefined}>
       {title && (
@@ -78,6 +95,44 @@ export function EmptyState({ title, body, icon, action }: { title: string; body?
         )}
       </div>
       {action}
+    </div>
+  );
+}
+
+// D-233 (UI states): a search or filter that matched nothing is not the
+// same as "nothing here yet". It names the words searched for and offers
+// the way back: clear the search, reset the filters.
+export function NoResults({ query, clearSearchHref, resetHref, hint, what = "results" }: { query?: string | null; clearSearchHref?: string | null; resetHref?: string | null; hint?: string; what?: string }) {
+  const words = query?.trim();
+  return (
+    <div role="status" data-testid="no-results" className="flex flex-col items-start gap-3 rounded-lg border border-dashed border-line bg-surface px-5 py-5 sm:flex-row sm:items-center">
+      <span aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-muted text-ink-faint">
+        <SearchX className="h-5 w-5" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="font-semibold">
+          {words ? (
+            <>
+              No {what} for “<SafeText text={words} />”
+            </>
+          ) : (
+            `No ${what} match these filters`
+          )}
+        </p>
+        <p className="text-label text-ink-muted">{hint ?? (words ? "Check the spelling, try fewer or different words, or reset the filters." : "Try fewer filters, or reset them to see everything.")}</p>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {words && clearSearchHref && (
+          <Link href={clearSearchHref} className="btn-secondary btn-compact">
+            Clear search
+          </Link>
+        )}
+        {resetHref && (
+          <Link href={resetHref} className="btn-secondary btn-compact">
+            Reset filters
+          </Link>
+        )}
+      </div>
     </div>
   );
 }
@@ -120,7 +175,10 @@ export function Tooltip({ text, children }: { text: string; children: React.Reac
   return (
     <span className="group relative inline-flex">
       {children}
-      <span role="tooltip" className="pointer-events-none absolute bottom-full left-1/2 z-toast mb-1.5 -translate-x-1/2 whitespace-nowrap rounded bg-ink px-2 py-1 text-caption text-surface opacity-0 shadow-overlay transition-opacity duration-fast group-focus-within:opacity-100 group-hover:opacity-100">
+      <span
+        role="tooltip"
+        className="pointer-events-none absolute bottom-full left-1/2 z-toast mb-1.5 -translate-x-1/2 whitespace-nowrap rounded bg-ink px-2 py-1 text-caption text-surface opacity-0 shadow-overlay transition-opacity duration-fast group-focus-within:opacity-100 group-hover:opacity-100"
+      >
         {text}
       </span>
     </span>

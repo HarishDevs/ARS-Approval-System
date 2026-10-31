@@ -5,6 +5,7 @@ import { Check, Copy, Eye } from "lucide-react";
 import { tryAsLinkAction } from "@/app/admin/users/actions";
 import { ResultMessage, useActionForm } from "@/features/ui/form";
 import { Hint } from "@/features/ui/Hint";
+import { COPY_BLOCKED, copyText } from "@/features/ui/clipboard";
 
 // D-185: "Try as" on a person's page. It makes a one-time link to open in a
 // private window (the admin's own session stays as it is); the session it
@@ -12,6 +13,7 @@ import { Hint } from "@/features/ui/Hint";
 export function TryAsButton({ userId }: { userId: number }) {
   const { result, pending, onSubmit } = useActionForm(tryAsLinkAction);
   const [copied, setCopied] = useState(false);
+  const [blocked, setBlocked] = useState(false); // D-233: the browser refused to copy
   const url = result?.ok && typeof result.data?.url === "string" ? result.data.url : null;
   return (
     <div className="relative">
@@ -35,7 +37,9 @@ export function TryAsButton({ userId }: { userId: number }) {
               type="button"
               className="btn-primary btn-compact"
               onClick={() => {
-                void navigator.clipboard?.writeText(url).then(() => {
+                void copyText(url).then((done) => {
+                  setBlocked(!done);
+                  if (!done) return;
                   setCopied(true);
                   setTimeout(() => setCopied(false), 2000);
                 });
@@ -44,6 +48,11 @@ export function TryAsButton({ userId }: { userId: number }) {
               {copied ? <Check aria-hidden="true" className="h-4 w-4" /> : <Copy aria-hidden="true" className="h-4 w-4" />} {copied ? "Copied" : "Copy"}
             </button>
           </div>
+          {blocked && (
+            <p role="status" className="text-caption text-warning-600">
+              {COPY_BLOCKED}
+            </p>
+          )}
         </div>
       )}
     </div>

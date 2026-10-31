@@ -680,21 +680,21 @@ export function AddTask({ projectId, sectionId, parentId, mySectionId, compact, 
 }
 
 function AddSection({ projectId, afterId, board }: { projectId: number; afterId: number | null; board?: boolean }) {
-  const { call } = useWorkCall();
+  const { call, pending: busy } = useWorkCall();
   const [name, setName] = useState("");
   return (
     <form
       className={board ? "w-64 shrink-0 rounded-lg border border-dashed border-line p-2" : "flex items-center gap-2 px-3 py-3"}
       onSubmit={(event) => {
         event.preventDefault();
-        if (name.trim()) void call(() => addSectionAction(projectId, name, afterId), { success: "Section added." }).then((result) => result?.ok && setName(""));
+        if (name.trim() && !busy) void call(() => addSectionAction(projectId, name, afterId), { success: "Section added." }).then((result) => result?.ok && setName(""));
       }}
     >
       <label className="sr-only" htmlFor={`add-section-${board ? "b" : "l"}`}>
         New section name
       </label>
       <input id={`add-section-${board ? "b" : "l"}`} value={name} onChange={(event) => setName(event.target.value)} placeholder="New section…" className="field-input h-8 text-label" />
-      <button type="submit" className="btn-secondary btn-compact mt-0 shrink-0">
+      <button type="submit" disabled={busy} aria-busy={busy || undefined} className="btn-secondary btn-compact mt-0 shrink-0">
         Add section
       </button>
     </form>

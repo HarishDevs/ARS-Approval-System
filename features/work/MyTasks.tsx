@@ -38,7 +38,7 @@ export interface MySectionRow {
 }
 
 export function MyTasks({ sections, tasks, layout, nowIso }: { sections: MySectionRow[]; tasks: MyTaskRow[]; layout: "LIST" | "BOARD"; nowIso: string }) {
-  const { call } = useWorkCall();
+  const { call, pending: busy } = useWorkCall();
   const now = useMemo(() => new Date(nowIso), [nowIso]);
   const [dragging, setDragging] = useState<number | null>(null);
   const [newSection, setNewSection] = useState("");
@@ -132,14 +132,14 @@ export function MyTasks({ sections, tasks, layout, nowIso }: { sections: MySecti
       className={layout === "BOARD" ? "w-64 shrink-0" : "flex items-center gap-2 px-3 py-3"}
       onSubmit={(event) => {
         event.preventDefault();
-        if (newSection.trim()) void call(() => mySectionAction("ADD", null, newSection)).then((result) => result?.ok && setNewSection(""));
+        if (newSection.trim() && !busy) void call(() => mySectionAction("ADD", null, newSection)).then((result) => result?.ok && setNewSection(""));
       }}
     >
       <label htmlFor="my-new-section" className="sr-only">
         New section name
       </label>
       <input id="my-new-section" value={newSection} onChange={(event) => setNewSection(event.target.value)} placeholder="New section…" className="field-input h-8 text-label" />
-      <button type="submit" className="btn-secondary btn-compact mt-1 shrink-0">
+      <button type="submit" disabled={busy} aria-busy={busy || undefined} className="btn-secondary btn-compact mt-1 shrink-0">
         Add section
       </button>
     </form>
@@ -199,7 +199,7 @@ export function MyTasks({ sections, tasks, layout, nowIso }: { sections: MySecti
 }
 
 function SectionTitle({ section, count }: { section: MySectionRow; count: number }) {
-  const { call } = useWorkCall();
+  const { call, pending: busy } = useWorkCall();
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(section.name);
   if (editing)
@@ -208,11 +208,11 @@ function SectionTitle({ section, count }: { section: MySectionRow; count: number
         className="flex items-center gap-2"
         onSubmit={(event) => {
           event.preventDefault();
-          void call(() => mySectionAction("RENAME", section.id, name)).then((result) => result?.ok && setEditing(false));
+          if (!busy) void call(() => mySectionAction("RENAME", section.id, name)).then((result) => result?.ok && setEditing(false));
         }}
       >
         <input autoFocus aria-label="Section name" value={name} onChange={(event) => setName(event.target.value)} onKeyDown={(event) => event.key === "Escape" && setEditing(false)} className="field-input h-8 text-label" />
-        <button type="submit" className="btn-secondary btn-compact">
+        <button type="submit" disabled={busy} aria-busy={busy || undefined} className="btn-secondary btn-compact">
           Save
         </button>
       </form>

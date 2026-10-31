@@ -129,10 +129,10 @@ export function TaskGrid({
     <div data-testid={testId}>
       <div className="mb-2 flex flex-wrap items-center gap-2" role="toolbar" aria-label="View options">
         <span className="inline-flex">
-          <button type="button" onClick={() => window.dispatchEvent(new CustomEvent(CREATE_TASK_EVENT, { detail: { projectId: addTo?.projectId ?? null } }))} className="btn-primary btn-compact inline-flex items-center gap-1 rounded-r-none">
+          <button type="button" onClick={() => window.dispatchEvent(new CustomEvent(CREATE_TASK_EVENT, { detail: { projectId: addTo?.projectId ?? null } }))} className="tb-split rounded-l-md">
             <Plus aria-hidden="true" className="h-4 w-4" /> Add task
           </button>
-          <Drop label="More ways to add" icon={<ChevronDown aria-hidden="true" className="h-4 w-4" />} buttonClass="btn-primary btn-compact rounded-l-none border-l border-white/30 px-1.5">
+          <Drop label="More ways to add" icon={<ChevronDown aria-hidden="true" className="h-4 w-4" />} buttonClass="tb-split rounded-r-md border-l-0 px-1.5">
             <Link href="/users/tasks/new" className="block rounded px-2 py-1.5 text-label hover:bg-surface-muted">
               Task with a type (form)
             </Link>
@@ -143,8 +143,8 @@ export function TaskGrid({
             )}
           </Drop>
         </span>
-        <span className="ml-auto flex flex-wrap items-center gap-1">
-          <span className="inline-flex items-center">
+        <span className="ml-auto flex flex-wrap items-center gap-0.5">
+          <span className={count ? "tb-pill" : "inline-flex items-center"}>
             <Drop
               label={count ? `Filters: ${count}` : "Filter"}
               icon={
@@ -152,35 +152,42 @@ export function TaskGrid({
                   <Filter aria-hidden="true" className="h-4 w-4" /> {count ? `Filters: ${count}` : "Filter"}
                 </>
               }
-              buttonClass={`btn-compact inline-flex items-center gap-1 ${count ? "btn-secondary border-primary-600 bg-primary-50 text-primary-700" : "btn-ghost"}`}
+              buttonClass="tb-btn"
               panelClass="w-[min(560px,90vw)] right-0"
               testId="filter-menu"
             >
               <FilterPanel config={config} set={set} people={people} projects={projects} />
             </Drop>
             {count > 0 && (
-              <button type="button" aria-label="Clear filters" onClick={() => set({ incomplete: true, completed: "none", dueThisWeek: false, dueNextWeek: false, filters: [] })} className="rounded p-1 text-primary-700 hover:bg-primary-50">
+              <button type="button" aria-label="Clear filters" onClick={() => set({ incomplete: true, completed: "none", dueThisWeek: false, dueNextWeek: false, filters: [] })} className="tb-x">
                 <X aria-hidden="true" className="h-3.5 w-3.5" />
               </button>
             )}
           </span>
-          <Drop
-            label="Sort"
-            icon={
-              <>
-                <ArrowUpDown aria-hidden="true" className="h-4 w-4" /> {config.sort === "none" ? "Sort" : `Sort: ${SORT_LABEL[config.sort]}`}
-              </>
-            }
-            buttonClass={`btn-compact inline-flex items-center gap-1 ${config.sort !== "none" ? "btn-secondary border-primary-600 text-primary-700" : "btn-ghost"}`}
-            panelClass="right-0 w-52"
-          >
-            {SORTS.map((sort) => (
-              <label key={sort} className="flex items-center gap-2 rounded px-2 py-1 text-label hover:bg-surface-muted">
-                <input type="radio" name={`${testId}-sort`} checked={config.sort === sort} onChange={() => set({ sort })} /> {SORT_LABEL[sort]}
-              </label>
-            ))}
-          </Drop>
-          <span className="inline-flex items-center">
+          <span className={config.sort !== "none" ? "tb-pill" : "inline-flex items-center"}>
+            <Drop
+              label="Sort"
+              icon={
+                <>
+                  <ArrowUpDown aria-hidden="true" className="h-4 w-4" /> {config.sort === "none" ? "Sort" : `Sort: ${SORT_LABEL[config.sort]}`}
+                </>
+              }
+              buttonClass="tb-btn"
+              panelClass="right-0 w-52"
+            >
+              {SORTS.map((sort) => (
+                <label key={sort} className="flex items-center gap-2 rounded px-2 py-1 text-label hover:bg-surface-muted">
+                  <input type="radio" name={`${testId}-sort`} checked={config.sort === sort} onChange={() => set({ sort })} /> {SORT_LABEL[sort]}
+                </label>
+              ))}
+            </Drop>
+            {config.sort !== "none" && (
+              <button type="button" aria-label="Default order" onClick={() => set({ sort: "none" })} className="tb-x">
+                <X aria-hidden="true" className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </span>
+          <span className={config.group !== "none" ? "tb-pill" : "inline-flex items-center"}>
             <Drop
               label="Group"
               icon={
@@ -188,7 +195,7 @@ export function TaskGrid({
                   <Layers aria-hidden="true" className="h-4 w-4" /> {config.group === "none" ? "Group" : "Groups: 1"}
                 </>
               }
-              buttonClass={`btn-compact inline-flex items-center gap-1 ${config.group !== "none" ? "btn-secondary border-primary-600 bg-primary-50 text-primary-700" : "btn-ghost"}`}
+              buttonClass="tb-btn"
               panelClass="right-0 w-56"
               testId="group-menu"
             >
@@ -200,11 +207,12 @@ export function TaskGrid({
               ))}
             </Drop>
             {config.group !== "none" && (
-              <button type="button" aria-label="Remove grouping" onClick={() => set({ group: "none" })} className="rounded p-1 text-primary-700 hover:bg-primary-50">
+              <button type="button" aria-label="Remove grouping" onClick={() => set({ group: "none" })} className="tb-x">
                 <X aria-hidden="true" className="h-3.5 w-3.5" />
               </button>
             )}
           </span>
+          <span aria-hidden="true" className="tb-sep" />
           <Drop
             label="Options"
             icon={
@@ -212,13 +220,18 @@ export function TaskGrid({
                 <Settings2 aria-hidden="true" className="h-4 w-4" /> Options
               </>
             }
-            buttonClass="btn-ghost btn-compact inline-flex items-center gap-1"
+            buttonClass="tb-btn"
             panelClass="right-0 w-60"
           >
             <p className="mb-1 px-2 text-label font-semibold">Columns</p>
             {columns.map((column) => (
               <label key={column} className="flex items-center gap-2 rounded px-2 py-1 text-label hover:bg-surface-muted">
-                <input type="checkbox" checked={!config.hidden.includes(column)} onChange={(event) => set({ hidden: event.target.checked ? config.hidden.filter((item) => item !== column) : [...config.hidden, column] })} /> {COLUMN_LABEL[column]}
+                <input
+                  type="checkbox"
+                  checked={!config.hidden.includes(column)}
+                  onChange={(event) => set({ hidden: event.target.checked ? config.hidden.filter((item) => item !== column) : [...config.hidden, column] })}
+                />{" "}
+                {COLUMN_LABEL[column]}
               </label>
             ))}
             {view?.canSave && (
@@ -227,7 +240,11 @@ export function TaskGrid({
                   Save as a new tab…
                 </button>
                 {view.current && (
-                  <button type="button" className="block w-full rounded px-2 py-1 text-left text-label text-danger-600 hover:bg-danger-50" onClick={() => void call(() => deleteViewAction(view.current!.id)).then((result) => result?.ok && router.push(window.location.pathname))}>
+                  <button
+                    type="button"
+                    className="block w-full rounded px-2 py-1 text-left text-label text-danger-600 hover:bg-danger-50"
+                    onClick={() => void call(() => deleteViewAction(view.current!.id)).then((result) => result?.ok && router.push(window.location.pathname))}
+                  >
                     Delete tab “{view.current.name}”
                   </button>
                 )}
@@ -235,9 +252,18 @@ export function TaskGrid({
             )}
           </Drop>
           {searching ? (
-            <input autoFocus type="search" aria-label="Search this view" placeholder="Search this view" value={config.search} onChange={(event) => set({ search: event.target.value })} onBlur={() => !config.search && setSearching(false)} className="field-input h-8 w-48 text-label" />
+            <input
+              autoFocus
+              type="search"
+              aria-label="Search this view"
+              placeholder="Search this view"
+              value={config.search}
+              onChange={(event) => set({ search: event.target.value })}
+              onBlur={() => !config.search && setSearching(false)}
+              className="field-input h-7 w-48 text-label"
+            />
           ) : (
-            <button type="button" aria-label="Search this view" onClick={() => setSearching(true)} className="btn-ghost btn-compact">
+            <button type="button" aria-label="Search this view" onClick={() => setSearching(true)} className="tb-btn">
               <Search aria-hidden="true" className="h-4 w-4" />
             </button>
           )}
@@ -254,7 +280,12 @@ export function TaskGrid({
           <div role="row" style={gridColumns} className="sticky top-0 z-10 grid border-b border-line bg-surface text-caption font-medium text-ink-muted">
             {bulk && (
               <span role="columnheader" className="flex items-center justify-center">
-                <input type="checkbox" aria-label="Select all shown tasks" checked={allShown.length > 0 && allShown.every((task) => selected.includes(task.id))} onChange={(event) => setSelected(event.target.checked ? allShown.map((task) => task.id) : [])} />
+                <input
+                  type="checkbox"
+                  aria-label="Select all shown tasks"
+                  checked={allShown.length > 0 && allShown.every((task) => selected.includes(task.id))}
+                  onChange={(event) => setSelected(event.target.checked ? allShown.map((task) => task.id) : [])}
+                />
               </span>
             )}
             <span role="columnheader" className="px-2 py-2">
@@ -338,7 +369,12 @@ export function TaskGrid({
                       >
                         {bulk && (
                           <span role="cell" className="flex items-center justify-center">
-                            <input type="checkbox" aria-label={`Select ${task.title}`} checked={selected.includes(task.id)} onChange={(event) => setSelected((value) => (event.target.checked ? [...value, task.id] : value.filter((one) => one !== task.id)))} />
+                            <input
+                              type="checkbox"
+                              aria-label={`Select ${task.title}`}
+                              checked={selected.includes(task.id)}
+                              onChange={(event) => setSelected((value) => (event.target.checked ? [...value, task.id] : value.filter((one) => one !== task.id)))}
+                            />
                           </span>
                         )}
                         <span role="cell" className="px-2 text-caption text-ink-faint">
@@ -379,7 +415,12 @@ export function TaskGrid({
                               (editAssignee && task.canEdit && open ? (
                                 <span className="flex min-w-0 items-center gap-1.5">
                                   <PersonDot name={task.assigneeName} />
-                                  <select aria-label={`Assignee of ${task.title}`} value={task.assigneeId} onChange={(event) => void call(() => taskFieldsAction(task.id, { assigneeId: Number(event.target.value) }))} className="min-w-0 flex-1 truncate border-0 bg-transparent text-label focus:outline-none">
+                                  <select
+                                    aria-label={`Assignee of ${task.title}`}
+                                    value={task.assigneeId}
+                                    onChange={(event) => void call(() => taskFieldsAction(task.id, { assigneeId: Number(event.target.value) }))}
+                                    className="min-w-0 flex-1 truncate border-0 bg-transparent text-label focus:outline-none"
+                                  >
                                     {!people.some((person) => person.id === task.assigneeId) && <option value={task.assigneeId}>{task.assigneeName}</option>}
                                     {people.map((person) => (
                                       <option key={person.id} value={person.id}>
@@ -406,7 +447,11 @@ export function TaskGrid({
                             {column === "projects" && (
                               <span className="flex min-w-0 gap-1">
                                 {task.projects.slice(0, 2).map((project) => (
-                                  <Link key={project.id} href={`/users/work/projects/${project.id}`} className="inline-flex min-w-0 items-center gap-1.5 rounded-md border border-line bg-surface-muted px-1.5 py-0.5 hover:border-line-strong">
+                                  <Link
+                                    key={project.id}
+                                    href={`/users/work/projects/${project.id}`}
+                                    className="inline-flex min-w-0 items-center gap-1.5 rounded-md border border-line bg-surface-muted px-1.5 py-0.5 hover:border-line-strong"
+                                  >
                                     <span aria-hidden="true" className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ backgroundColor: COLOR_HEX[project.color] ?? COLOR_HEX.gray }} />
                                     <span className="truncate">{project.name}</span>
                                   </Link>
@@ -421,7 +466,12 @@ export function TaskGrid({
                             )}
                             {column === "priority" &&
                               (editPriority && task.canEdit && open ? (
-                                <select aria-label={`Priority of ${task.title}`} value={task.priority} onChange={(event) => void call(() => taskFieldsAction(task.id, { priority: event.target.value }), { success: false })} className={`rounded-full border-0 px-2 py-0.5 text-caption ${PRIORITY_CLASS[task.priority]}`}>
+                                <select
+                                  aria-label={`Priority of ${task.title}`}
+                                  value={task.priority}
+                                  onChange={(event) => void call(() => taskFieldsAction(task.id, { priority: event.target.value }), { success: false })}
+                                  className={`rounded-full border-0 px-2 py-0.5 text-caption ${PRIORITY_CLASS[task.priority]}`}
+                                >
                                   <option value="LOW">Low</option>
                                   <option value="NORMAL">Normal</option>
                                   <option value="HIGH">High</option>
@@ -448,7 +498,15 @@ export function TaskGrid({
           })}
         </div>
       </div>
-      {bulk && <BulkBar ids={selected.filter((one) => rows.some((task) => task.id === one))} clear={() => setSelected([])} people={people.length ? people : undefined} sections={addTo?.projectId ? sections : undefined} projectId={addTo?.projectId} />}
+      {bulk && (
+        <BulkBar
+          ids={selected.filter((one) => rows.some((task) => task.id === one))}
+          clear={() => setSelected([])}
+          people={people.length ? people : undefined}
+          sections={addTo?.projectId ? sections : undefined}
+          projectId={addTo?.projectId}
+        />
+      )}
     </div>
   );
 }
@@ -459,18 +517,34 @@ function FilterPanel({ config, set, people, projects }: { config: GridConfig; se
   const options = (field: FilterField): [string, string][] => {
     switch (field) {
       case "completion":
-        return [["incomplete", "Incomplete tasks"], ["completed", "Completed tasks"]];
+        return [
+          ["incomplete", "Incomplete tasks"],
+          ["completed", "Completed tasks"],
+        ];
       case "assignee":
       case "createdBy":
         return [["me", "Me"], ...people.map((person) => [String(person.id), person.label] as [string, string])];
       case "project":
         return [["none", "No project"], ...projects.map((project) => [String(project.id), project.name] as [string, string])];
       case "priority":
-        return [["URGENT", "Urgent"], ["HIGH", "High"], ["NORMAL", "Normal"], ["LOW", "Low"]];
+        return [
+          ["URGENT", "Urgent"],
+          ["HIGH", "High"],
+          ["NORMAL", "Normal"],
+          ["LOW", "Low"],
+        ];
       case "kind":
-        return [["periodic", "Periodic"], ["adhoc", "Ad hoc"]];
+        return [
+          ["periodic", "Periodic"],
+          ["adhoc", "Ad hoc"],
+        ];
       case "due":
-        return [["overdue", "Overdue"], ["today", "Today"], ["next7", "Next 7 days"], ["none", "No due date"]];
+        return [
+          ["overdue", "Overdue"],
+          ["today", "Today"],
+          ["next7", "Next 7 days"],
+          ["none", "No due date"],
+        ];
       case "tag":
         return [];
     }
@@ -490,10 +564,21 @@ function FilterPanel({ config, set, people, projects }: { config: GridConfig; se
             Incomplete tasks
           </button>
           <span className="inline-flex items-center">
-            <button type="button" aria-pressed={config.completed !== "none"} data-testid="show-completed" className={`${chip(config.completed !== "none")} rounded-r-none`} onClick={() => set({ completed: config.completed === "none" ? "all" : "none" })}>
+            <button
+              type="button"
+              aria-pressed={config.completed !== "none"}
+              data-testid="show-completed"
+              className={`${chip(config.completed !== "none")} rounded-r-none`}
+              onClick={() => set({ completed: config.completed === "none" ? "all" : "none" })}
+            >
               Completed tasks
             </button>
-            <select aria-label="Which completed tasks" value={config.completed} onChange={(event) => set({ completed: event.target.value as GridConfig["completed"] })} className={`${chip(config.completed !== "none")} rounded-l-none border-l-0 py-1 pr-6`}>
+            <select
+              aria-label="Which completed tasks"
+              value={config.completed}
+              onChange={(event) => set({ completed: event.target.value as GridConfig["completed"] })}
+              className={`${chip(config.completed !== "none")} rounded-l-none border-l-0 py-1 pr-6`}
+            >
               {COMPLETED_RANGES.map((range) => (
                 <option key={range} value={range}>
                   {COMPLETED_LABEL[range]}
@@ -517,7 +602,9 @@ function FilterPanel({ config, set, people, projects }: { config: GridConfig; se
               <select
                 aria-label="Filter field"
                 value={filter.field}
-                onChange={(event) => set({ filters: config.filters.map((item, at) => (at === index ? { field: event.target.value as FilterField, value: options(event.target.value as FilterField)[0]?.[0] ?? "" } : item)) })}
+                onChange={(event) =>
+                  set({ filters: config.filters.map((item, at) => (at === index ? { field: event.target.value as FilterField, value: options(event.target.value as FilterField)[0]?.[0] ?? "" } : item)) })
+                }
                 className="field-input h-9 w-48"
               >
                 {FILTER_FIELDS.map((field) => (
@@ -527,9 +614,19 @@ function FilterPanel({ config, set, people, projects }: { config: GridConfig; se
                 ))}
               </select>
               {filter.field === "tag" ? (
-                <input aria-label="Tag" value={filter.value} onChange={(event) => set({ filters: config.filters.map((item, at) => (at === index ? { ...item, value: event.target.value } : item)) })} className="field-input h-9 flex-1" />
+                <input
+                  aria-label="Tag"
+                  value={filter.value}
+                  onChange={(event) => set({ filters: config.filters.map((item, at) => (at === index ? { ...item, value: event.target.value } : item)) })}
+                  className="field-input h-9 flex-1"
+                />
               ) : (
-                <select aria-label="Filter value" value={filter.value} onChange={(event) => set({ filters: config.filters.map((item, at) => (at === index ? { ...item, value: event.target.value } : item)) })} className="field-input h-9 flex-1">
+                <select
+                  aria-label="Filter value"
+                  value={filter.value}
+                  onChange={(event) => set({ filters: config.filters.map((item, at) => (at === index ? { ...item, value: event.target.value } : item)) })}
+                  className="field-input h-9 flex-1"
+                >
                   {options(filter.field).map(([value, label]) => (
                     <option key={value} value={value}>
                       {label}
@@ -542,7 +639,12 @@ function FilterPanel({ config, set, people, projects }: { config: GridConfig; se
               </button>
             </div>
           ))}
-          <button type="button" className="inline-flex items-center gap-1 text-label text-ink-muted hover:text-ink" onClick={() => set({ filters: [...config.filters, { field: "assignee", value: "me" }] })} disabled={config.filters.length >= 10}>
+          <button
+            type="button"
+            className="inline-flex items-center gap-1 text-label text-ink-muted hover:text-ink"
+            onClick={() => set({ filters: [...config.filters, { field: "assignee", value: "me" }] })}
+            disabled={config.filters.length >= 10}
+          >
             <Plus aria-hidden="true" className="h-4 w-4" /> Add filter
           </button>
         </div>
@@ -575,7 +677,11 @@ function DueInput({ task, toneClass }: { task: GridTask; toneClass: string }) {
 
 export function PersonDot({ name, size = "sm", ring }: { name: string; size?: "sm" | "md"; ring?: boolean }) {
   return (
-    <span title={name} aria-hidden="true" className={`inline-flex shrink-0 items-center justify-center rounded-full bg-primary-50 font-semibold text-primary-700 ${ring ? "border-2 border-surface" : ""} ${size === "md" ? "h-8 w-8 text-caption" : "h-6 w-6 text-[length:calc(10px*var(--text-scale,1))]"}`}>
+    <span
+      title={name}
+      aria-hidden="true"
+      className={`inline-flex shrink-0 items-center justify-center rounded-full bg-primary-50 font-semibold text-primary-700 ${ring ? "border-2 border-surface" : ""} ${size === "md" ? "h-8 w-8 text-caption" : "h-6 w-6 text-[length:calc(10px*var(--text-scale,1))]"}`}
+    >
       {initials(name)}
     </span>
   );

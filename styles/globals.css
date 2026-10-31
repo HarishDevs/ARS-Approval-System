@@ -226,6 +226,30 @@ body {
   .data-table tbody th {
     @apply text-label font-normal normal-case tracking-normal text-ink;
   }
+  /* D-228 (owner's screenshot of Asana's toolbar): small quiet buttons;
+     a choice in use is a soft blue pill with its × inside; a thin line
+     before Options. Used by TaskGrid and ListToolbar. */
+  .tb-btn {
+    @apply inline-flex h-7 cursor-pointer list-none items-center gap-1 whitespace-nowrap rounded-md px-2 text-label font-medium text-ink-muted transition-colors hover:bg-surface-muted hover:text-ink;
+  }
+  .tb-on {
+    @apply bg-primary-50 text-primary-700 hover:bg-primary-100 hover:text-primary-700;
+  }
+  .tb-pill {
+    @apply inline-flex items-center rounded-md bg-primary-50 text-primary-700;
+  }
+  .tb-pill .tb-btn {
+    @apply text-primary-700 hover:bg-primary-100 hover:text-primary-700;
+  }
+  .tb-x {
+    @apply mr-0.5 inline-flex h-6 w-6 items-center justify-center rounded text-primary-700 hover:bg-primary-100;
+  }
+  .tb-sep {
+    @apply mx-1 h-4 w-px bg-line-strong;
+  }
+  .tb-split {
+    @apply inline-flex h-7 cursor-pointer list-none items-center gap-1 border border-line-strong bg-surface px-2 text-label font-medium text-ink transition-colors hover:bg-surface-muted;
+  }
   .skip-link {
     @apply sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-palette focus:rounded-md focus:bg-primary-solid focus:px-4 focus:py-2 focus:text-on-solid;
   }
@@ -336,4 +360,115 @@ html,
 .loader-bar { animation: loader-slide 1.1s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) {
   .loader-bar { animation: none; transform: none; width: 100%; opacity: 0.6; }
+}
+
+/* D-227 (owner: "in Classic mode make everything Classic, including all the
+   forms and all the entry screens and visual screens. Like Tally"). Only
+   under the Classic view (data-view on the app frame); Compact is untouched.
+   Tally's look in the ARS colours: square boxes with a title strip, a screen
+   title bar, "Label : value" rows on entry forms, the field being entered
+   lit up, ruled dense tables with a lit current row, plain flat buttons.
+   Colours are the theme tokens, so light and dark both work. */
+[data-view="classic"] main {
+  font-variant-numeric: tabular-nums;
+}
+/* The screen title bar. */
+[data-view="classic"] [data-tour="page-header"] {
+  @apply mb-4 border-b-2 border-primary-600 pb-2;
+}
+[data-view="classic"] [data-tour="page-header"] h1 {
+  @apply text-[length:calc(20px*var(--text-scale,1))] font-bold uppercase tracking-wide text-primary-700;
+}
+/* Boxes: square, ruled, no shadow; a box's own heading is its title strip. */
+[data-view="classic"] .card,
+[data-view="classic"] .card-link {
+  @apply rounded-none border-line-strong shadow-none;
+}
+[data-view="classic"] .card-link:hover {
+  @apply translate-y-0 bg-primary-50;
+}
+[data-view="classic"] .card > h2:first-child,
+[data-view="classic"] .card > h3:first-child,
+[data-view="classic"] .card > header:first-child {
+  @apply -mx-px -mt-px mb-3 border-b border-line-strong bg-primary-50 px-3 py-1.5 text-label font-bold uppercase tracking-wide text-primary-700;
+}
+[data-view="classic"] section > h2,
+[data-view="classic"] .card h2 {
+  @apply uppercase tracking-wide;
+}
+/* Entry fields: flat, and the field being entered is lit (Tally's bar). */
+[data-view="classic"] .field-input {
+  @apply h-9 rounded-none border-line-strong bg-surface text-label;
+}
+[data-view="classic"] textarea.field-input {
+  @apply h-auto py-1.5;
+}
+[data-view="classic"] .field-input:focus {
+  @apply border-primary-600 bg-warning-50 ring-0;
+}
+[data-view="classic"] .field-label::after {
+  content: " :";
+}
+/* "Label : value" rows on entry forms (stacked again on phones). A field
+   wrapper is a div, label or fieldset whose label (or label row with its
+   hint) comes first and whose control is a direct child; wrappers holding a
+   table (line items) keep their own layout. */
+@media (min-width: 640px) {
+  [data-view="classic"] main form :is(div, label, fieldset):is(:has(> .field-label:first-child), :has(> div:first-child > .field-label)):has(> :is(.field-input, input:not([type="hidden"]), textarea, select)):not(:has(table)):not([hidden]) {
+    display: grid;
+    grid-template-columns: minmax(6rem, 11rem) minmax(0, 1fr);
+    column-gap: 0.75rem;
+    align-items: center;
+  }
+  [data-view="classic"] main form :is(div, label, fieldset):is(:has(> .field-label:first-child), :has(> div:first-child > .field-label)):has(> :is(.field-input, input:not([type="hidden"]), textarea, select)):not(:has(table)) > * {
+    grid-column: 2;
+  }
+  [data-view="classic"] main form :is(div, label, fieldset):is(:has(> .field-label:first-child), :has(> div:first-child > .field-label)):has(> :is(.field-input, input:not([type="hidden"]), textarea, select)):not(:has(table)) > :first-child {
+    grid-column: 1;
+  }
+  [data-view="classic"] main form :is(div, label, fieldset):has(> :is(.field-input, input:not([type="hidden"]), textarea, select)) > :first-child .field-label,
+  [data-view="classic"] main form :is(div, label, fieldset):has(> :is(.field-input, input:not([type="hidden"]), textarea, select)) > .field-label:first-child {
+    @apply mb-0 text-ink-muted;
+  }
+}
+/* A form's main button sits at the right, its own size (Tally's Accept). */
+[data-view="classic"] main form :is(.btn-primary, .btn-secondary, .btn-danger):not(.btn-compact) {
+  width: max-content;
+  min-width: 8rem;
+}
+[data-view="classic"] main form :is(.btn-primary, .btn-secondary, .btn-danger):not(.btn-compact):last-child {
+  display: flex;
+  margin-left: auto;
+}
+/* Buttons: flat, nearly square. */
+[data-view="classic"] :is(.btn-primary, .btn-secondary, .btn-danger, .btn-ghost) {
+  @apply rounded-sm shadow-none;
+}
+[data-view="classic"] .badge {
+  @apply rounded-sm;
+}
+/* Tables: ruled, dense, a bold header row, the current row lit. */
+[data-view="classic"] .data-table {
+  @apply border-collapse;
+}
+[data-view="classic"] .data-table th {
+  @apply border border-line-strong bg-surface-muted px-3 py-1.5 text-caption font-bold text-ink;
+}
+[data-view="classic"] .data-table td {
+  @apply border border-line px-3 py-1.5;
+}
+[data-view="classic"] .data-table tbody tr:hover,
+[data-view="classic"] .data-table tbody tr:focus-within {
+  @apply bg-warning-50;
+}
+/* Toolbars, menus and panels: square too. */
+[data-view="classic"] [role="toolbar"] details > div,
+[data-view="classic"] [role="dialog"],
+[data-view="classic"] dialog {
+  @apply rounded-none;
+}
+/* Every other rounded box on a Classic page is square too (pills, avatars
+   and dots, rounded-full, stay round). */
+[data-view="classic"] main :is(.rounded, .rounded-md, .rounded-lg, .rounded-xl, .rounded-2xl) {
+  border-radius: 2px;
 }

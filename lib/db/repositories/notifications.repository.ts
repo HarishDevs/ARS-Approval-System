@@ -39,6 +39,11 @@ export async function createNotification(input: {
   return result.insertId;
 }
 
+// D-231: a message whose app alert the person switched off is kept, read.
+export async function markNotificationRead(notificationId: number): Promise<void> {
+  await getDbPool().query<ResultSetHeader>("UPDATE notifications SET read_at = COALESCE(read_at, CURRENT_TIMESTAMP) WHERE id = ?", [notificationId]);
+}
+
 export type DeliveryStatus = "QUEUED" | "SENT" | "FAILED" | "SKIPPED";
 
 export async function createDelivery(input: {

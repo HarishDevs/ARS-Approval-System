@@ -9,7 +9,8 @@ import { CREATE_TASK_EVENT } from "@/features/work/client";
 // create Approval, Task, Project"): the sidebar's + Create, as in Asana.
 // Approval opens New request; Task opens the Draft task panel; Project opens
 // the new-project steps; Information (when the person has it) opens its form.
-export function CreateMenu({ approval, task, information }: { approval: boolean; task: boolean; information: boolean }) {
+// D-229: `compact` is the collapsed sidebar's round + (the menu opens beside it).
+export function CreateMenu({ approval, task, information, compact = false }: { approval: boolean; task: boolean; information: boolean; compact?: boolean }) {
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -35,15 +36,21 @@ export function CreateMenu({ approval, task, information }: { approval: boolean;
   ].filter(Boolean) as { key: string; label: string; hint: string; icon: typeof Plus; run: () => void }[];
   if (!items.length) return null;
   return (
-    <div ref={box} className="relative px-3 pt-3" data-testid="create-menu">
-      <button type="button" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((value) => !value)} className="btn-primary inline-flex w-full items-center justify-center gap-1.5">
-        <Plus aria-hidden="true" className="h-4 w-4" /> Create
-      </button>
+    <div ref={box} className={compact ? "relative mb-2" : "relative px-3 pt-3"} data-testid="create-menu">
+      {compact ? (
+        <button type="button" aria-haspopup="menu" aria-expanded={open} aria-label="Create" title="Create" onClick={() => setOpen((value) => !value)} className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary-solid text-on-solid shadow-button hover:bg-primary-solid-hover">
+          <Plus aria-hidden="true" className="h-5 w-5" />
+        </button>
+      ) : (
+        <button type="button" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((value) => !value)} className="btn-primary inline-flex w-full items-center justify-center gap-1.5">
+          <Plus aria-hidden="true" className="h-4 w-4" /> Create
+        </button>
+      )}
       {open && (
         <div
           role="menu"
           aria-label="Create"
-          className="absolute left-3 right-3 z-50 mt-1 rounded-lg border border-line bg-raised p-1 shadow-overlay"
+          className={`absolute z-50 rounded-lg border border-line bg-raised p-1 shadow-overlay ${compact ? "left-full top-0 ml-2 w-64" : "left-3 right-3 mt-1"}`}
           onKeyDown={(event) => {
             if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
             event.preventDefault();

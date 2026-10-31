@@ -23,7 +23,7 @@ const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "Ju
 
 export function TaskCalendar({ tasks, month, todayDay, canEdit, meId, projectId, monthHref, holidays = {} }: { tasks: CalendarTask[]; month: string; todayDay: string; canEdit: boolean; meId: number; projectId?: number; monthHref: string; holidays?: Record<string, string> }) {
   const hrefFor = (value: string) => `${monthHref}${value}`;
-  const { call } = useWorkCall();
+  const { call, pending: busy } = useWorkCall();
   const paneLink = usePaneLink();
   const [dragging, setDragging] = useState<number | null>(null);
   const [adding, setAdding] = useState<string | null>(null);
@@ -117,7 +117,7 @@ export function TaskCalendar({ tasks, month, todayDay, canEdit, meId, projectId,
                   <form
                     onSubmit={(event) => {
                       event.preventDefault();
-                      if (!title.trim()) return;
+                      if (!title.trim() || busy) return;
                       void call((choice) => quickAddAction({ title, projectId: projectId ?? null, dueDay: choice?.moveTo ?? day, holidayOk: choice?.holidayOk }), { success: "Added." }).then((result) => {
                         if (result?.ok) {
                           setTitle("");
@@ -126,7 +126,7 @@ export function TaskCalendar({ tasks, month, todayDay, canEdit, meId, projectId,
                       });
                     }}
                   >
-                    <input autoFocus aria-label={`New task due ${day}`} value={title} onChange={(event) => setTitle(event.target.value)} onKeyDown={(event) => event.key === "Escape" && setAdding(null)} className="field-input h-7 text-caption" placeholder="Task name, Enter" />
+                    <input autoFocus aria-label={`New task due ${day}`} aria-busy={busy || undefined} readOnly={busy} value={title} onChange={(event) => setTitle(event.target.value)} onKeyDown={(event) => event.key === "Escape" && setAdding(null)} className="field-input h-7 text-caption" placeholder="Task name, Enter" />
                   </form>
                 )}
               </div>

@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { ArrowUpDown, Check, Filter, Layers, Search, Settings2, X } from "lucide-react";
+import { ArrowUpDown, Check, Filter, Layers, Settings2, X } from "lucide-react";
 import { Drop } from "@/features/ui/Drop";
+import { ToolbarSearch } from "@/features/ui/ToolbarSearch";
 
 // D-226 (owner: "change all these Filters like the one we did in Task
 // management"): the lists' filters in the task table's toolbar: Filter
@@ -10,8 +11,9 @@ import { Drop } from "@/features/ui/Drop";
 // saved views). Sort, Group and Per page are links.
 export type ToolbarChoice = { label: string; href: string; active: boolean };
 
-const ghost = "btn-ghost btn-compact inline-flex items-center gap-1";
-const lit = "btn-secondary btn-compact inline-flex items-center gap-1 border-primary-600 bg-primary-50 text-primary-700";
+// D-228: Asana's look (owner's screenshot): quiet buttons, a choice in use
+// is a soft pill with its × inside, a line before Options, Search an icon.
+const X_ICON = <X aria-hidden="true" className="h-3.5 w-3.5" />;
 
 export function ListToolbar({
   id,
@@ -36,7 +38,7 @@ export function ListToolbar({
   filterCount: number;
   clearHref: string | null;
   filters: React.ReactNode;
-  sort?: { label: string; changed: boolean; choices: ToolbarChoice[] };
+  sort?: { label: string; changed: boolean; choices: ToolbarChoice[]; clearHref?: string };
   group?: { label: string | null; clearHref: string; choices: ToolbarChoice[] };
   sizes?: ToolbarChoice[];
   options?: React.ReactNode;
@@ -61,10 +63,10 @@ export function ListToolbar({
   return (
     <div className="mb-3 flex flex-wrap items-center gap-2" role="toolbar" aria-label="View options" data-testid="list-toolbar">
       {lead}
-      <span className="ml-auto flex flex-wrap items-center gap-1">
+      <span className="ml-auto flex flex-wrap items-center gap-0.5">
         <form id={id} method="get" action={path} role="search" aria-label={label} className="contents">
           {Object.entries(keep).map(([name, value]) => (value ? <input key={name} type="hidden" name={name} value={value} /> : null))}
-          <span className="inline-flex items-center">
+          <span className={filterCount ? "tb-pill" : "inline-flex items-center"}>
             <Drop
               label={filterCount ? `Filters: ${filterCount}` : "Filter"}
               icon={
@@ -72,7 +74,7 @@ export function ListToolbar({
                   <Filter aria-hidden="true" className="h-4 w-4" /> {filterCount ? `Filters: ${filterCount}` : "Filter"}
                 </>
               }
-              buttonClass={filterCount ? lit : ghost}
+              buttonClass="tb-btn"
               panelClass="right-0 w-[min(640px,calc(100vw-2rem))] max-h-[70vh] overflow-y-auto"
               testId="filter-menu"
             >
@@ -90,47 +92,48 @@ export function ListToolbar({
               </div>
             </Drop>
             {filterCount > 0 && clearHref && (
-              <Link href={clearHref} aria-label="Clear filters" className="rounded p-1 text-primary-700 hover:bg-primary-50">
-                <X aria-hidden="true" className="h-3.5 w-3.5" />
+              <Link href={clearHref} aria-label="Clear filters" className="tb-x">
+                {X_ICON}
               </Link>
             )}
           </span>
           <span className="order-last inline-flex items-center">
-            <label htmlFor={`${id}-q`} className="sr-only">
-              Search
-            </label>
-            <span className="relative">
-              <Search aria-hidden="true" className="pointer-events-none absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-faint" />
-              <input id={`${id}-q`} type="search" name={search.name} defaultValue={search.value} placeholder={search.placeholder} className="field-input h-8 w-48 pl-8 text-label sm:w-64" />
-            </span>
+            <ToolbarSearch id={`${id}-q`} name={search.name} defaultValue={search.value} placeholder={search.placeholder} />
           </span>
         </form>
         {sort && (
-          <Drop
-            label="Sort"
-            icon={
-              <>
-                <ArrowUpDown aria-hidden="true" className="h-4 w-4" /> {sort.changed ? `Sort: ${sort.label}` : "Sort"}
-              </>
-            }
-            buttonClass={sort.changed ? lit.replace(" bg-primary-50", "") : ghost}
-            panelClass="right-0 w-60"
-            testId="sort-menu"
-          >
-            <p className="mb-1 px-2 text-label font-semibold">Sort by</p>
-            {links(sort.choices)}
-          </Drop>
+          <span className={sort.changed ? "tb-pill" : "inline-flex items-center"}>
+            <Drop
+              label="Sort"
+              icon={
+                <>
+                  <ArrowUpDown aria-hidden="true" className="h-4 w-4" /> {sort.changed ? `Sort: ${sort.label}` : "Sort"}
+                </>
+              }
+              buttonClass="tb-btn"
+              panelClass="right-0 w-60"
+              testId="sort-menu"
+            >
+              <p className="mb-1 px-2 text-label font-semibold">Sort by</p>
+              {links(sort.choices)}
+            </Drop>
+            {sort.changed && (
+              <Link href={sort.clearHref ?? sort.choices[0]!.href} aria-label="Default order" className="tb-x">
+                {X_ICON}
+              </Link>
+            )}
+          </span>
         )}
         {group && (
-          <span className="inline-flex items-center">
+          <span className={group.label ? "tb-pill" : "inline-flex items-center"}>
             <Drop
               label="Group"
               icon={
                 <>
-                  <Layers aria-hidden="true" className="h-4 w-4" /> {group.label ? `Group: ${group.label}` : "Group"}
+                  <Layers aria-hidden="true" className="h-4 w-4" /> {group.label ? `Groups: 1 (${group.label})` : "Group"}
                 </>
               }
-              buttonClass={group.label ? lit : ghost}
+              buttonClass="tb-btn"
               panelClass="right-0 w-56"
               testId="group-menu"
             >
@@ -138,12 +141,13 @@ export function ListToolbar({
               {links(group.choices)}
             </Drop>
             {group.label && (
-              <Link href={group.clearHref} aria-label="Remove grouping" className="rounded p-1 text-primary-700 hover:bg-primary-50">
-                <X aria-hidden="true" className="h-3.5 w-3.5" />
+              <Link href={group.clearHref} aria-label="Remove grouping" className="tb-x">
+                {X_ICON}
               </Link>
             )}
           </span>
         )}
+        {(sizes || options) && <span aria-hidden="true" className="tb-sep" />}
         {(sizes || options) && (
           <Drop
             label="Options"
@@ -152,7 +156,7 @@ export function ListToolbar({
                 <Settings2 aria-hidden="true" className="h-4 w-4" /> Options
               </>
             }
-            buttonClass={ghost}
+            buttonClass="tb-btn"
             panelClass="right-0 w-[min(360px,calc(100vw-2rem))]"
             testId="options-menu"
           >

@@ -6,6 +6,7 @@ import { displayName } from "@/features/shell/AppShell";
 import { MyRequestsTable, QueueTable } from "@/features/requests/lists";
 import { countPendingTasksFor, listAttentionTasksFor, listMyRequests, listPendingTasksFor } from "@/lib/db/repositories/approvals.repository";
 import { listRecent } from "@/lib/db/repositories/recent.repository";
+import { ErrorState } from "@/features/ui/States";
 import { listDrafts } from "@/lib/db/repositories/drafts.repository";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 import { SafeText } from "@/features/ui/SafeText";
@@ -40,7 +41,7 @@ export default async function UsersHome({ searchParams }: { searchParams: Promis
     listMyRequests(user.id),
     listDrafts(user.id, 5),
     hasFlag(user.id, "ONBOARDING_DONE"),
-    listRecent({ id: user.id, isAdmin: user.roles.includes("IT_ADMIN") || user.roles.includes("SUPER_ADMIN") }, 5).catch(() => []),
+    listRecent({ id: user.id, isAdmin: user.roles.includes("IT_ADMIN") || user.roles.includes("SUPER_ADMIN") }, 5).catch(() => null), // D-233: a failure says so, it isn't "nothing viewed"
   ]);
   const name = displayName(user.name);
   const words = name.split(/\s+/);
@@ -130,7 +131,12 @@ export default async function UsersHome({ searchParams }: { searchParams: Promis
         </section>
       )}
 
-      {recent.length > 0 && (
+      {recent === null && (
+        <div className="mt-8">
+          <ErrorState variant="inline" body="Recently viewed couldn't be loaded just now. Reload the page to try again." />
+        </div>
+      )}
+      {recent && recent.length > 0 && (
         <section className="mt-8" aria-labelledby="recently-viewed">
           <h2 id="recently-viewed" className="mb-3 text-card-title font-semibold">
             Recently viewed

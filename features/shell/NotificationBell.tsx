@@ -45,7 +45,7 @@ export function NotificationBell({ initialUnread }: { initialUnread: number }) {
   const [filter, setFilter] = useState<Filter>("ALL");
   const [items, setItems] = useState<Item[] | null>(null);
   const [unread, setUnread] = useState<Record<string, number>>({ ALL: initialUnread });
-  const [state, setState] = useState<"idle" | "loading" | "error" | "signed-out">("idle");
+  const [state, setState] = useState<"idle" | "loading" | "error" | "signed-out" | "limited">("idle");
   const button = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -57,6 +57,11 @@ export function NotificationBell({ initialUnread }: { initialUnread: number }) {
       const response = await fetch(`/api/me/notifications${which === "ALL" ? "" : `?type=${which}`}`, { cache: "no-store", headers: { Accept: "application/json" } });
       if (response.status === 404 || response.status === 401) {
         setState("signed-out");
+        return;
+      }
+      // D-233: too many requests in a short time is its own answer.
+      if (response.status === 429) {
+        setState("limited");
         return;
       }
       if (!response.ok) throw new Error(String(response.status));
@@ -132,7 +137,9 @@ export function NotificationBell({ initialUnread }: { initialUnread: number }) {
       >
         <Bell aria-hidden="true" className="h-5 w-5" />
         {total > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 min-w-[18px] rounded-full bg-danger-solid px-1 text-center text-[length:calc(11px*var(--text-scale,1))] font-semibold leading-[18px] text-on-solid">{total > 99 ? "99+" : total}</span>
+          <span className="absolute -right-0.5 -top-0.5 min-w-[18px] rounded-full bg-danger-solid px-1 text-center text-[length:calc(11px*var(--text-scale,1))] font-semibold leading-[18px] text-on-solid">
+            {total > 99 ? "99+" : total}
+          </span>
         )}
       </button>
       {open && (
@@ -174,6 +181,14 @@ export function NotificationBell({ initialUnread }: { initialUnread: number }) {
               </p>
             ) : state === "signed-out" ? (
               <p className="px-4 py-6 text-label text-ink-muted">Your session has ended. Sign in again to see your notifications.</p>
+            ) : state === "limited" ? (
+              <p className="px-4 py-6 text-label text-warning-600">
+                Too many requests in a short time. Wait a moment, then{" "}
+                <button type="button" className="link" onClick={() => void load(filter)}>
+                  try again
+                </button>
+                .
+              </p>
             ) : state === "error" ? (
               <p className="px-4 py-6 text-label text-danger-600">
                 Couldn&apos;t load notifications.{" "}

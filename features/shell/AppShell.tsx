@@ -1,15 +1,22 @@
 import Link from "next/link";
+import { Wrench } from "lucide-react";
 import { Suspense } from "react";
 import { areasForUser } from "@/server/authorization/policy";
 import { SideNav, type NavItem } from "@/features/shell/SideNav";
 import { CreateMenu } from "@/features/shell/CreateMenu";
+import { NavigationProgress } from "@/features/shell/NavigationProgress";
+import { SidebarFrame, type RailEntry } from "@/features/shell/SidebarFrame";
+import { SIDEBAR_COOKIE } from "@/features/shell/sidebar-cookie";
+import { cookies } from "next/headers";
+import { photoVersion } from "@/lib/db/repositories/profile.repository";
+import { photoUrl } from "@/server/profile/photo";
 import { MobileNav } from "@/features/shell/MobileNav";
 import { ProfileMenu } from "@/features/shell/ProfileMenu";
 import { countUnread } from "@/lib/db/repositories/collab.repository";
 import { inboxUnread } from "@/lib/db/repositories/work.repository";
 import { getUserSetting } from "@/lib/db/repositories/user-settings.repository";
 import { ThemeSync } from "@/features/shell/ThemeControls";
-import { OfflineBanner, SessionWatch, UpdateNotice } from "@/features/shell/SessionWatch";
+import { OfflineBanner, SessionWatch, SlowNetworkNotice, UpdateNotice } from "@/features/shell/SessionWatch";
 import { OnboardingTour } from "@/features/help/OnboardingTour";
 import { tourStepsFor } from "@/features/help/tour-steps";
 import { hasFlag } from "@/lib/db/repositories/user-flags.repository";
@@ -25,7 +32,7 @@ import { countPendingTasksFor } from "@/lib/db/repositories/approvals.repository
 import { THEME_SETTING, parseTheme } from "@/server/ui/theme";
 import { parseTextSize, parseWorkspaceView, TEXT_SCALE, TEXT_SIZE_SETTING, WORKSPACE_VIEW_SETTING } from "@/server/ui/workspace-view";
 import { TextScale } from "@/features/shell/TextScale";
-import { ClassicBar } from "@/features/shell/Classic";
+import { ClassicBar, ClassicForms } from "@/features/shell/Classic";
 import { classicModules } from "@/features/shell/classic-modules";
 import { NotificationBell } from "@/features/shell/NotificationBell";
 import { isHiddenHref, navAccess } from "@/server/authorization/page-access";
@@ -146,28 +153,39 @@ export async function AppShell({
       ? items.flatMap((item, index) => (item.section !== "Tasks" ? [item] : items.findIndex((other) => other.section === "Tasks") === index ? workGroup : []))
       : items;
 
+  // D-229: the sidebar's rail (collapsed): top-level pages and each group once.
+  const rail: RailEntry[] = [];
+  for (const item of sideItems) {
+    if (!item.section) rail.push({ kind: "item", href: item.href, label: item.label });
+    else if (!rail.some((entry) => entry.kind === "group" && entry.section === item.section)) rail.push({ kind: "group", section: item.section, href: item.href, label: item.section });
+  }
+  const sidebarCollapsed = (await cookies()).get(SIDEBAR_COOKIE)?.value === "rail";
+  // D-233: IT's maintenance notice, if any (a failed read shows none).
+  const maintenance = await getSettingValue("general.maintenance_notice").catch(() => null);
+  // D-230: the person's photo in the account menu.
+  const photo = await photoVersion(user.id).catch(() => null);
+
   return (
-    <div className="flex min-h-full" style={textScale && textScale !== 1 ? ({ "--text-scale": String(textScale) } as React.CSSProperties) : undefined}>
+    <div className="flex min-h-full" data-view={classic ? "classic" : undefined} style={textScale && textScale !== 1 ? ({ "--text-scale": String(textScale) } as React.CSSProperties) : undefined}>
       <TextScale scale={textScale} />
       <a href="#main" className="skip-link">
         Skip to content
       </a>
       {theme && <ThemeSync theme={parseTheme(theme)} />}
       {!classic && (
-      <aside className="hidden w-sidebar shrink-0 flex-col border-r border-line bg-surface md:sticky md:top-0 md:flex md:h-dvh md:self-start" data-testid="sidebar">
-        <div className="flex h-topbar shrink-0 items-center border-b border-line px-5">
-          {/* WEB-17 (v1.10.0): the logo goes to this space's first page. */}
-          <Link href={`/${area}`} aria-label={`ARS Green Steel: ${SPACE_LABEL[area]} home`} className="rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600">
-            {/* eslint-disable-next-line @next/next/no-img-element -- static SVG logo */}
-            <img src="/brand/ars-green-steel.svg" alt="" width={77} height={36} className="h-9 w-auto" />
-          </Link>
-        </div>
-        {area === "users" && <CreateMenu approval={items.some((item) => item.href === "/users/custom")} task={tasksOn} information={items.some((item) => item.href === "/users/information/new")} />}
-        <p className="shrink-0 px-6 pt-4 text-caption font-semibold uppercase tracking-wider text-ink-faint">{SPACE_LABEL[area]}</p>
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain" data-testid="sidebar-scroll">
-          <SideNav items={sideItems} collapsible={area !== "admin"} chats={chats} />
-        </div>
-      </aside>
+        <SidebarFrame
+          initialCollapsed={sidebarCollapsed}
+          homeHref={`/${area}`}
+          homeLabel={`ARS Green Steel: ${SPACE_LABEL[area]} home`}
+          rail={rail}
+          create={area === "users" ? { approval: items.some((item) => item.href === "/users/custom"), task: tasksOn, information: items.some((item) => item.href === "/users/information/new") } : null}
+        >
+          {area === "users" && <CreateMenu approval={items.some((item) => item.href === "/users/custom")} task={tasksOn} information={items.some((item) => item.href === "/users/information/new")} />}
+          <p className="shrink-0 px-6 pt-4 text-caption font-semibold uppercase tracking-wider text-ink-faint">{SPACE_LABEL[area]}</p>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain" data-testid="sidebar-scroll">
+            <SideNav items={sideItems} collapsible={area !== "admin"} chats={chats} />
+          </div>
+        </SidebarFrame>
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -181,13 +199,17 @@ export async function AppShell({
               <span className="text-label font-semibold uppercase tracking-wider text-ink-muted">Central Management System</span>
             </Link>
           )}
-          <div className="ml-auto flex items-center gap-2">
+          {/* D-232: the universal search sits in the middle of the top bar (Asana). */}
+          <div className="flex min-w-0 flex-1 justify-end sm:justify-center">
             <CommandPalette pages={palettePages} />
+          </div>
+          <div className="flex items-center gap-2">
             <NotificationBell initialUnread={unread} />
             <ProfileMenu
               name={displayName(user.name)}
               email={user.email}
               initials={initialsOf(user.name)}
+              photo={photoUrl(user.id, photo)}
               spaceLabel={SPACE_LABEL[area]}
               otherSpaces={spaces.filter((other) => other !== area).map((other) => ({ href: `/${other}`, label: SPACE_LABEL[other] }))}
               unread={unread}
@@ -201,7 +223,22 @@ export async function AppShell({
             <ClassicBar modules={classicModules(items)} />
           </Suspense>
         )}
+        {classic && <ClassicForms />}
+        {maintenance && (
+          <p role="status" data-testid="maintenance-notice" className="flex items-center gap-2 border-b border-info-600/30 bg-info-50 px-4 py-2 text-label text-info-600 sm:px-8">
+            <Wrench aria-hidden="true" className="h-4 w-4 shrink-0" />
+            <span>
+              <strong>Planned maintenance:</strong> {maintenance}
+            </span>
+          </p>
+        )}
         <OfflineBanner />
+        <SlowNetworkNotice />
+        {!classic && (
+          <Suspense fallback={null}>
+            <NavigationProgress />
+          </Suspense>
+        )}
         <UpdateNotice />
         <SessionWatch build={buildId()} />
         {/* Not by itself while IT tries the app as a demo person. */}

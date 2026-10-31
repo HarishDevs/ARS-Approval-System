@@ -11,7 +11,9 @@ import { sendEmail, EmailSendError } from "@/server/integrations/resend/client";
 import { getEmailConfig, getWhatsAppConfig } from "@/server/settings/values";
 import { logError } from "@/lib/logging/logger";
 import { whatsappValue } from "@/server/notifications/templates";
-import { channelWanted } from "@/server/notifications/preferences";
+import { channelWanted, dndApplies, dndHolds, DND_SETTING, NO_DND, parseDnd, type DoNotDisturb } from "@/server/notifications/preferences";
+import { getUserSetting } from "@/lib/db/repositories/user-settings.repository";
+import { markNotificationRead } from "@/lib/db/repositories/notifications.repository";
 import { loadOptOuts } from "@/lib/db/repositories/preferences.repository";
 import type { EntityRef } from "@/server/notifications/categories";
 
@@ -40,12 +42,18 @@ export interface NotifyDeps {
   sendEmail: (to: string, subject: string, text: string) => Promise<{ id: string | null }>;
   // #6: the person's "off" choices (GROUP:CHANNEL). Optional for tests.
   loadOptOuts?: (userId: number) => Promise<Set<string>>;
+  // D-231: Do not disturb, and the app alert switched off. Optional for tests.
+  loadDnd?: (userId: number) => Promise<DoNotDisturb>;
+  markRead?: (notificationId: number) => Promise<void>;
+  now?: () => Date;
 }
 
 const RETRY_DELAY_SECONDS = 120;
 
 const defaultDeps: NotifyDeps = {
   loadOptOuts: (userId) => loadOptOuts(userId),
+  loadDnd: async (userId) => parseDnd(await getUserSetting(userId, DND_SETTING)),
+  markRead: (notificationId) => markNotificationRead(notificationId),
   findRecipient,
   createNotification,
   createDelivery,
@@ -108,15 +116,23 @@ export async function notifyWithDeps(input: NotifyInput, deps: NotifyDeps): Prom
   // #6: email / WhatsApp the person switched off for this kind of message.
   // Mandatory kinds always go (preferences.ts). The inbox row above is kept.
   const optOuts = deps.loadOptOuts ? await deps.loadOptOuts(input.userId).catch(() => new Set<string>()) : new Set<string>();
-  const emailWanted = channelWanted(input.eventType, "EMAIL", optOuts);
-  const whatsappWanted = channelWanted(input.eventType, "WHATSAPP", optOuts);
-  if (input.email && !emailWanted) {
-    summary.email = { status: "SKIPPED", code: "USER_PREFERENCE" };
-    await safeDelivery(deps, { notificationId, channel: "EMAIL", provider: "RESEND", status: "SKIPPED", failureCode: "USER_PREFERENCE" });
+  // D-231: the app alert switched off: the message stays in Notifications, read.
+  if (!channelWanted(input.eventType, "INAPP", optOuts) && deps.markRead) await deps.markRead(notificationId).catch(() => undefined);
+  // D-231: Do not disturb holds email and WhatsApp (not security messages).
+  const dnd = deps.loadDnd ? await deps.loadDnd(input.userId).catch(() => NO_DND) : NO_DND;
+  const quiet = dndApplies(input.eventType) && dndHolds(dnd, deps.now ? deps.now() : new Date());
+  const skip = (wanted: boolean) => (!wanted ? "USER_PREFERENCE" : quiet ? "DO_NOT_DISTURB" : null);
+  const emailSkip = skip(channelWanted(input.eventType, "EMAIL", optOuts));
+  const whatsappSkip = skip(channelWanted(input.eventType, "WHATSAPP", optOuts));
+  const emailWanted = emailSkip === null;
+  const whatsappWanted = whatsappSkip === null;
+  if (input.email && emailSkip) {
+    summary.email = { status: "SKIPPED", code: emailSkip };
+    await safeDelivery(deps, { notificationId, channel: "EMAIL", provider: "RESEND", status: "SKIPPED", failureCode: emailSkip });
   }
-  if (input.whatsappVariables && !whatsappWanted) {
-    summary.whatsapp = { status: "SKIPPED", code: "USER_PREFERENCE" };
-    await safeDelivery(deps, { notificationId, channel: "WHATSAPP", provider: "CEOITBOX", status: "SKIPPED", failureCode: "USER_PREFERENCE" });
+  if (input.whatsappVariables && whatsappSkip) {
+    summary.whatsapp = { status: "SKIPPED", code: whatsappSkip };
+    await safeDelivery(deps, { notificationId, channel: "WHATSAPP", provider: "CEOITBOX", status: "SKIPPED", failureCode: whatsappSkip });
   }
 
   if (input.email && emailWanted) {

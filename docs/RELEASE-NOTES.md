@@ -1,5 +1,22 @@
 # Release notes
 
+## v1.35.0 (31 Oct 2026): every screen state handled (owner)
+- **Slow connection:** a save that takes more than a few seconds says "Still working…", and a thin bar at the top shows a page is on its way.
+- **Offline:** when the connection comes back the app checks ARS answers, then says "Back online".
+- **No results** for a search or filter now name what you searched and offer **Clear search** and **Reset filters**, everywhere.
+- **Leaving a long form you changed** asks first.
+- **Clearer messages** for view-only pages, too many searches, copying blocked by the browser, and parts of a page that failed to load (instead of looking empty).
+- **Maintenance notice:** IT can show a message to everyone (Super Admin → Settings → General).
+
+## v1.34.0 (31 Oct 2026): Classic view like Tally (owner)
+- In the **Classic** view every screen now looks like Tally: a title bar, square ruled boxes, forms laid out as **Label : value**, the field you are typing in highlighted, ruled tables with the current row highlighted.
+- **Every list's toolbar looks like Asana's:** Filter, Sort and Group show as soft blue pills with × when in use, a line before Options, and Search as an icon (Admin → Records too).
+- **Collapsible sidebar:** ☰ folds it into a narrow row of icons (like Asana) and opens it again; the app remembers.
+- **Your profile:** upload your photo, write About me, and see everything IT holds about you (manager, head of department, your team, access, modules…). Colleagues' names open their profile card.
+- **Notification settings, all in one place:** choose kind by kind what reaches you in the app, by email and on WhatsApp; the morning summary; **Do not disturb** (pause, quiet hours, days off).
+- **Search like Asana:** the search bar in the middle of the top bar finds requests, tasks, projects, people, information and pages; recents and saved searches; **Filters** for a full search.
+- **Tally keys on every form:** **Enter** moves to the next field (and finally to the button), **Ctrl+A** accepts the form, **Esc** goes back. The Compact view is unchanged.
+
 ## v1.33.0 (31 Oct 2026): sidebar, Myself/Others, Overdue, list toolbar (owner)
 - **Tasks & projects** is now a group in the sidebar with Home, Inbox, My Tasks, All projects, Periodic tasks, Search tasks, New project, Templates and Task with a type; the Tasks pages use the full width.
 - **Draft task:** the task is for **Myself** by default, or **Others**: type part of a name to find people.

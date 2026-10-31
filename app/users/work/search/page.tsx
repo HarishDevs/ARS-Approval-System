@@ -5,7 +5,7 @@ import { toGridTask } from "@/server/work/grid-rows";
 import { DEFAULT_GRID } from "@/server/work/grid";
 import Link from "next/link";
 import { PageHeader } from "@/features/shell/PageHeader";
-import { EmptyState, Pagination } from "@/features/ui/Display";
+import { NoResults, Pagination } from "@/features/ui/Display";
 import { SaveSearchForm, SavedSearchButtons } from "@/features/work/SearchParts";
 import { listSavedSearches, listTags, listTaskItems, listVisibleProjects, WORK_SEARCH_PAGE, workSearchSql } from "@/lib/db/repositories/work.repository";
 import { parseWorkSearch, SEARCH_PRESETS, workSearchQuery } from "@/server/work/rules";
@@ -173,7 +173,7 @@ export default async function WorkSearchPage({ searchParams }: { searchParams: P
               )}
             </nav>
             {result.items.length === 0 ? (
-              <EmptyState title="No tasks match" body="Try fewer filters, or Status: Any." />
+              <NoResults what="tasks" query={search.q} clearSearchHref={`/users/work/search?${new URLSearchParams(workSearchQuery({ ...search, q: "", page: 1 }))}`} resetHref="/users/work/search" hint={search.q ? undefined : "Try fewer filters, or Status: Any."} />
             ) : (
               <TaskGrid
                 rows={result.items.map((task) => toGridTask(task, user.id, false))}

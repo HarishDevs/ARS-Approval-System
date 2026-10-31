@@ -8,6 +8,7 @@ import { initials } from "@/features/ui/Display";
 import { useToast } from "@/features/ui/Toast";
 import { useWorkCall } from "@/features/work/client";
 import { PRIVACY, PRIVACY_LABEL, PROJECT_ROLE_LABEL, PROJECT_ROLES, type ProjectRole } from "@/server/work/access";
+import { COPY_BLOCKED, copyText } from "@/features/ui/clipboard";
 
 // D-220 (owner's screenshot: Asana's Share dialog): share a project or a
 // task from its own screen. Project: invite people or a department with a
@@ -24,10 +25,8 @@ function useDialog(open: boolean, onClose: () => void) {
 }
 
 function copy(path: string, toast: ReturnType<typeof useToast>, what: string) {
-  void navigator.clipboard
-    ?.writeText(`${window.location.origin}${path}`)
-    .then(() => toast({ tone: "success", title: `${what} link copied.` }))
-    .catch(() => toast({ tone: "error", title: "Couldn't copy the link." }));
+  const link = `${window.location.origin}${path}`;
+  void copyText(link).then((done) => toast(done ? { tone: "success", title: `${what} link copied.` } : { tone: "error", title: `${COPY_BLOCKED} ${link}` }));
 }
 
 const Dot = ({ name }: { name: string }) => (

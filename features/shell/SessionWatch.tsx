@@ -1,10 +1,11 @@
 "use client";
 
-import { RefreshCw, WifiOff } from "lucide-react";
+import { RefreshCw, Wifi, WifiOff } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Dialog } from "@/features/ui/Dialog";
-import { APP_UPDATED_EVENT, SESSION_ENDED_EVENT } from "@/features/ui/form";
+import { APP_UPDATED_EVENT, SESSION_ENDED_EVENT, SLOW_EVENT } from "@/features/ui/form";
+import { Spinner } from "@/features/ui/Spinner";
 
 // FB-04: when the session ends (idle limit, 12-hour limit, signed out on
 // another device), say so in a dialog instead of letting the next click
@@ -115,10 +116,14 @@ export function SessionWatch({ build }: { build: string }) {
         size="sm"
         footer={
           <>
-            <a href="/api/auth/logout" className="btn-secondary btn-compact" onClick={(event) => {
-              event.preventDefault();
-              void fetch("/api/auth/logout", { method: "POST" }).finally(() => window.location.assign("/login"));
-            }}>
+            <a
+              href="/api/auth/logout"
+              className="btn-secondary btn-compact"
+              onClick={(event) => {
+                event.preventDefault();
+                void fetch("/api/auth/logout", { method: "POST" }).finally(() => window.location.assign("/login"));
+              }}
+            >
               Sign out now
             </a>
             <button type="button" className="btn-primary btn-compact" onClick={() => void keepAlive()}>
@@ -133,23 +138,94 @@ export function SessionWatch({ build }: { build: string }) {
 
 // FB-05: a visible banner while the device is offline. Nothing claims to be
 // saved while it shows (forms say they couldn't reach the server).
+// D-233: the browser's "online" doesn't prove ARS answers, so on the way
+// back the server is asked; then "Back online" shows for a few seconds, or
+// "Connected, but ARS can't be reached" stays until it answers.
+type Link = "online" | "offline" | "unreachable" | "restored";
+async function serverAnswers(): Promise<boolean> {
+  try {
+    const response = await fetch("/api/auth/status", { cache: "no-store" });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
 export function OfflineBanner() {
-  const [offline, setOffline] = useState(false);
+  const [link, setLink] = useState<Link>("online");
   useEffect(() => {
-    const update = () => setOffline(navigator.onLine === false);
-    update();
-    window.addEventListener("online", update);
-    window.addEventListener("offline", update);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let cancelled = false;
+    const check = async (attempt = 0) => {
+      if (navigator.onLine === false) return setLink("offline");
+      const ok = await serverAnswers();
+      if (cancelled) return;
+      if (ok) {
+        setLink("restored");
+        timer = setTimeout(() => setLink("online"), 4000);
+      } else {
+        setLink("unreachable");
+        // Ask again with a growing pause (5 s, 10 s … at most a minute).
+        timer = setTimeout(() => void check(attempt + 1), Math.min(60_000, 5000 * 2 ** attempt));
+      }
+    };
+    const onOffline = () => {
+      clearTimeout(timer);
+      setLink("offline");
+    };
+    const onOnline = () => {
+      clearTimeout(timer);
+      void check();
+    };
+    if (navigator.onLine === false) setLink("offline");
+    window.addEventListener("online", onOnline);
+    window.addEventListener("offline", onOffline);
     return () => {
-      window.removeEventListener("online", update);
-      window.removeEventListener("offline", update);
+      cancelled = true;
+      clearTimeout(timer);
+      window.removeEventListener("online", onOnline);
+      window.removeEventListener("offline", onOffline);
     };
   }, []);
-  if (!offline) return null;
+  if (link === "online") return null;
+  if (link === "restored")
+    return (
+      <p role="status" data-testid="back-online" className="flex items-center gap-2 border-b border-success-600/30 bg-success-50 px-4 py-2 text-label text-success-600 sm:px-8">
+        <Wifi aria-hidden="true" className="h-4 w-4 shrink-0" />
+        Back online. You can carry on; anything that failed while offline was not sent, so try it again.
+      </p>
+    );
   return (
-    <p role="status" className="flex items-center gap-2 border-b border-warning-600/30 bg-warning-50 px-4 py-2 text-label text-warning-600 sm:px-8">
+    <p role="status" data-testid="offline-banner" className="flex items-center gap-2 border-b border-warning-600/30 bg-warning-50 px-4 py-2 text-label text-warning-600 sm:px-8">
       <WifiOff aria-hidden="true" className="h-4 w-4 shrink-0" />
-      You&apos;re offline. Changes can&apos;t be sent until you&apos;re back online; what you type stays on this page.
+      {link === "offline"
+        ? "You're offline. Changes can't be sent until you're back online; what you type stays on this page."
+        : "Connected, but ARS can't be reached right now. Checking again… what you type stays on this page."}
+    </p>
+  );
+}
+
+// D-233: a call that is still running after a few seconds says so, quietly,
+// at the bottom of the screen (no percentage: the real progress isn't known).
+export function SlowNetworkNotice() {
+  const [slow, setSlow] = useState<Set<number>>(new Set());
+  useEffect(() => {
+    const onSlow = (event: Event) => {
+      const { id, on } = (event as CustomEvent<{ id: number; on: boolean }>).detail;
+      setSlow((current) => {
+        const next = new Set(current);
+        if (on) next.add(id);
+        else next.delete(id);
+        return next.size === current.size && [...next].every((item) => current.has(item)) ? current : next;
+      });
+    };
+    window.addEventListener(SLOW_EVENT, onSlow);
+    return () => window.removeEventListener(SLOW_EVENT, onSlow);
+  }, []);
+  if (!slow.size) return null;
+  return (
+    <p role="status" data-testid="slow-network" className="fixed bottom-4 left-1/2 z-toast flex -translate-x-1/2 items-center gap-2 rounded-full border border-line bg-raised px-4 py-2 text-label text-ink shadow-overlay">
+      <Spinner className="h-4 w-4" label="Working" />
+      Still working… the connection seems slow. Please wait; don&apos;t send it again.
     </p>
   );
 }

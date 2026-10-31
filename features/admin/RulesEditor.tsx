@@ -6,6 +6,7 @@ import { saveAiRuleAction } from "@/app/admin/ai-rules/actions";
 import { ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import { parseBlocks } from "@/features/ai/RichAnswer";
 import { Hint } from "@/features/ui/Hint";
+import { UnsavedGuard } from "@/features/ui/UnsavedGuard";
 
 // D-187 (owner): the AI Rules editor. A formatted document like an email
 // body (bold, italic, underline, strikethrough, headings, lists, quotes,
@@ -158,6 +159,7 @@ export function RulesEditor({ rules, maxChars }: { rules: { scope: string; conte
       className="card"
       data-testid="ai-rules"
     >
+      <UnsavedGuard />
       <input type="hidden" name="scope" value={scope} />
       <input ref={content} type="hidden" name="content" />
       <div className="flex flex-wrap items-center gap-3 border-b border-line px-5 py-4">

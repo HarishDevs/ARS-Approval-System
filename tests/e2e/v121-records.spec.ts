@@ -8,8 +8,10 @@ test("IT sees every approval request, task and information item, filters them an
   await expect(page).toHaveURL(/\/admin\/records\/requests$/);
   await expect(page.getByRole("heading", { level: 1, name: "Approval requests" })).toBeVisible();
   await expect(page.getByTestId("records-table").getByRole("columnheader", { name: /Waiting on/ })).toBeVisible();
+  await page.getByTestId("list-toolbar").getByTestId("filter-menu").locator("summary").click();
   await page.getByLabel("Status").selectOption("APPROVED");
-  await page.getByRole("button", { name: "Apply" }).click();
+  await page.getByTestId("filter-menu").getByRole("button", { name: "Apply" }).click();
+  await expect(page.getByTestId("filter-menu").locator("summary")).toContainText("Filters: 1");
   await expect(page).toHaveURL(/status=APPROVED/);
   await page.getByRole("link", { name: /Submitted/ }).click();
   await expect(page).toHaveURL(/sort=submitted/);

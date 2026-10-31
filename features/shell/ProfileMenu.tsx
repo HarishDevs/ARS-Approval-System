@@ -20,6 +20,7 @@ export function ProfileMenu({
   name,
   email,
   initials,
+  photo = null,
   spaceLabel,
   otherSpaces,
   unread,
@@ -29,6 +30,7 @@ export function ProfileMenu({
   name: string;
   email: string;
   initials: string;
+  photo?: string | null; // D-230: the person's photo
   spaceLabel: string;
   otherSpaces: SpaceLink[];
   unread: number;
@@ -78,9 +80,14 @@ export function ProfileMenu({
           <span className="block text-label font-semibold leading-tight text-ink">{name}</span>
           <span className="mt-0.5 inline-block rounded-full bg-primary-50 px-2 py-px text-[length:calc(11px*var(--text-scale,1))] font-semibold leading-4 text-primary-700">{spaceLabel}</span>
         </span>
-        <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-solid text-caption font-semibold text-on-solid">
-          {initials}
-        </span>
+        {photo ? (
+          // eslint-disable-next-line @next/next/no-img-element -- the person's own small photo
+          <img src={photo} alt="" className="h-9 w-9 shrink-0 rounded-full object-cover" data-testid="menu-photo" />
+        ) : (
+          <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-solid text-caption font-semibold text-on-solid">
+            {initials}
+          </span>
+        )}
         <svg viewBox="0 0 20 20" className="hidden h-4 w-4 text-ink-faint sm:block" fill="currentColor" aria-hidden="true">
           <path d="M5.3 7.3a1 1 0 0 1 1.4 0L10 10.6l3.3-3.3a1 1 0 1 1 1.4 1.4l-4 4a1 1 0 0 1-1.4 0l-4-4a1 1 0 0 1 0-1.4Z" />
         </svg>

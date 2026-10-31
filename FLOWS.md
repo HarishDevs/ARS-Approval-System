@@ -1055,6 +1055,32 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 2. They filter (search, status, type, department, person, waiting on, priority, overdue, dates) and sort by a column title; 50 rows a page.
 3. **Download CSV** gives every matching row (up to 10,000) for Excel; audited. A row number opens the record.
 
+## F-176 When something is slow, offline or blocked (v1.35.0, D-233)
+1. A save still running after 8 s → "Still working… the connection seems slow"; after 30 s it stops waiting and says it may still go through.
+2. Offline → banner; back → "Back online" (or "Connected, but ARS can't be reached" until the server answers).
+3. Leaving a changed long form → "Leave without saving?" (Cancel / Leave without saving).
+4. A search or filter with no matches → No results for "…" → Clear search / Reset filters.
+
+## F-172 Profile and photo (v1.34.0, D-230)
+1. Account menu → Profile → Upload a photo (JPEG/PNG/WebP, 3 MB) → it shows at once in the menu; Remove photo takes it away.
+2. About me → Save. The details below are IT's (Admin → Users).
+3. A colleague's name (search, your team list) → their card.
+
+## F-173 Notification control centre (v1.34.0, D-231)
+1. Profile → Notifications → In the app / Email / WhatsApp → untick a group or one kind → Save choices.
+2. Do not disturb → pause (1 h, 3 h, until tomorrow 9:00, a week) or Resume; quiet hours from–to; days off → Save choices.
+
+## F-174 Universal search (v1.34.0, D-232)
+1. Top bar → Search ARS-CMS (or Ctrl+K) → a chip (Tasks, Requests, Projects, People, Information, Pages) → type → arrows and Enter, or click.
+2. Empty: Recents and Saved searches. Filters → Type → its fields (Add filter for more) → Search → the full results page.
+
+## F-175 Collapse the sidebar (v1.34.0, D-229)
+1. ☰ → the rail (icons) → ☰ again, or a group's icon, opens it.
+
+## F-171 Entering a form in Classic (v1.34.0, D-227)
+1. Classic view → any entry screen (New request, New task, …): type a field → Enter → the next field (lit) … → the last field → Enter → the button → Enter (or Ctrl+A anywhere in the form) accepts.
+2. Esc leaves a field; Esc again goes back a level.
+
 ## F-169 Filter, sort and group a list (v1.33.0, D-226)
 1. Any request, waiting, information or task list → toolbar: Filter → choose fields → Apply (or Clear all); "Filters: N" and × show when in use.
 2. Sort → an order; Group → Status / Approval type / Month raised / Raised by (request lists); Options → Per page, Save these filters.

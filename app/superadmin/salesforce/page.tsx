@@ -13,6 +13,7 @@ import { getConnection } from "@/lib/db/repositories/salesforce.repository";
 import { CALLBACK_PATH } from "@/server/ai/connectors/salesforce-auth";
 import { getEnv } from "@/config/environment";
 import { loadSalesforceConfig, SALESFORCE_KEY } from "@/server/ai/connectors/salesforce";
+import { ErrorState } from "@/features/ui/States";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 
 export const metadata: Metadata = { title: "Salesforce Settings" };
@@ -33,7 +34,7 @@ const SF_RESULT: Record<string, { ok: boolean; text: string }> = {
 
 export default async function SalesforceSettingsPage({ searchParams }: { searchParams: Promise<{ salesforce?: string }> }) {
   const sfResult = SF_RESULT[(await searchParams).salesforce ?? ""];
-  const [raw, sfConfigured, sfRuns, connection] = await Promise.all([listRawSettings(), loadSalesforceConfig().then(Boolean).catch(() => false), latestRuns(SALESFORCE_KEY), getConnection()]);
+  const [raw, sfConfigured, sfRuns, connection] = await Promise.all([listRawSettings(), loadSalesforceConfig().then(Boolean).catch(() => null) /* D-233: null = couldn't read, not "not set up" */, latestRuns(SALESFORCE_KEY), getConnection()]);
   const base = getEnv().APP_BASE_URL;
   const callbackUrl = base ? new URL(CALLBACK_PATH, base).toString() : `(set APP_BASE_URL)${CALLBACK_PATH}`;
   const byKey = new Map(raw.map((row) => [row.key, row]));
@@ -99,7 +100,9 @@ export default async function SalesforceSettingsPage({ searchParams }: { searchP
               </h2>
               <Hint text="Fill in the Salesforce fields to copy data hourly (read-only). Oracle ERP isn't connected: the hosting can't reach an internal Oracle server. See the AI module design notes for the relay option." align="start" />
             </div>
-            {!sfConfigured ? (
+            {sfConfigured === null ? (
+              <ErrorState variant="inline" body="The Salesforce settings couldn't be read just now, so we can't tell whether sync is set up. Reload to try again." />
+            ) : !sfConfigured ? (
               <p className="text-label text-ink-muted">Not set up.</p>
             ) : (
               <>

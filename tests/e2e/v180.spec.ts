@@ -127,7 +127,8 @@ test("the Super Admin hides a page and makes another view-only", async ({ page, 
   await page.getByText("Save these filters").click();
   await page.getByLabel("View name").fill("Should not save");
   await page.getByRole("button", { name: "Save view" }).click();
-  await expect(page.getByText("Not found.").first()).toBeVisible();
+  // D-233: the refusal says the page is view-only (not "Not found.").
+  await expect(page.getByText("This page is view-only for you, so nothing was changed.").first()).toBeVisible();
   // Others aren't affected by a person's rule; the Super Admin never is.
   await as(context, "E2E_STAFF");
   await page.goto("/users/collaborating");

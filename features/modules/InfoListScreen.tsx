@@ -13,6 +13,7 @@ import { indiaDateTimeText, INFO_PRIORITIES, INFO_PRIORITY_LABEL, type InfoPrior
 import { PAGE_SIZES } from "@/server/modules/task-lists";
 import { indiaToday } from "@/server/modules/information";
 import { ListToolbar } from "@/features/ui/ListToolbar";
+import { NoResults } from "@/features/ui/Display";
 
 // D-226: the sorts offered in the toolbar.
 const INFO_SORTS = ["newest", "oldest", "expiry"] as const;
@@ -133,7 +134,11 @@ export async function InfoListScreen({ base, query }: { base: InfoBase; query: R
         sizes={PAGE_SIZES.map((size) => ({ label: `${size} per page`, href: `${path}${infoQuery(filters, base, { size })}`, active: filters.size === size }))}
       />
       {list.rows.length === 0 ? (
-        <EmptyState title="Nothing here" body="Try another tab or clear the filters." />
+        filters.q || filters.typeId || filters.priority || filters.senderId || filters.from || filters.to ? (
+          <NoResults what="information" query={filters.q} clearSearchHref={`${path}${infoQuery(filters, base, { q: "" })}`} resetHref={`${path}?tab=${filters.tab}`} />
+        ) : (
+          <EmptyState title="Nothing here" body="Nothing in this tab yet. Try another tab." />
+        )
       ) : (
         <div className="card overflow-x-auto">
           <table className="data-table" data-testid="info-table">

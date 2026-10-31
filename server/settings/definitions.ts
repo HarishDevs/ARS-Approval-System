@@ -22,6 +22,9 @@ export const SETTING_DEFINITIONS: readonly SettingDefinition[] = [
   // Unified prompt (BD-3): over-budget requests warn by default; BLOCK is an owner decision.
   { key: "general.budget_policy", group: "GENERAL", label: "Over-budget requests (Warn asks to confirm; Block refuses)", valueType: "STRING", encrypted: false, schema: z.enum(["WARN", "BLOCK"]), defaultValue: "WARN" },
   // FN2: an open request with no activity for this many days is listed as possibly stuck.
+  // D-233 (UI states: maintenance): a notice for everyone, e.g. planned
+  // downtime. Shown at the top of every page while it is filled in.
+  { key: "general.maintenance_notice", group: "GENERAL", label: "Maintenance notice shown to everyone (leave empty for none), e.g. \"ARS will be unavailable on Sunday 10:00–12:00 for an upgrade.\"", valueType: "STRING", encrypted: false, schema: z.string().trim().max(300) },
   { key: "general.stuck_idle_days", group: "GENERAL", label: "Days without activity before a request is listed as possibly stuck", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(1).max(90), defaultValue: "7" },
   // Feature switches (Addendum B, D-124): ON, OFF, or IT_ONLY for a trial with
   // the IT team first. A switch only hides or shows a feature; who may see

@@ -65,35 +65,64 @@ async function signedIn(): Promise<boolean | null> {
   }
 }
 
-export function guardAction(action: Action, timeoutMs = ACTION_TIMEOUT_MS): Action {
-  return async (previous, formData) => {
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const timeout = new Promise<ActionResult>((resolve) => {
-      timer = setTimeout(() => resolve({ ok: false, message: TIMED_OUT }), timeoutMs);
-    });
-    try {
-      const result = await Promise.race([action(previous, formData), timeout]);
-      // Actions answer "Not found." to anyone they can't identify; when that
-      // is because the session ended, say so (DEF-07).
-      if (!result.ok && result.message === "Not found." && (await signedIn()) === false) {
+// D-233 (UI states): a call still running after SLOW_AFTER_MS says so
+// (the shell's SlowNetworkNotice listens), well before the time limit.
+// There is no percentage: the real progress isn't known.
+// D-233: fired on a form once its action has saved it.
+export const SAVED_EVENT = "ars:saved";
+export const SLOW_EVENT = "ars:slow";
+export const SLOW_AFTER_MS = 8_000;
+// D-233: a refusal on a page the person may only view says so, instead of "Not found."
+export const VIEW_ONLY = "This page is view-only for you, so nothing was changed.";
+let slowSeq = 0;
+function slowSignal(id: number, on: boolean) {
+  if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(SLOW_EVENT, { detail: { id, on } }));
+}
+
+// D-233: one guarded call for every way the app runs a Server Action
+// (forms, the task area's clicks, saved views…): a time limit, offline,
+// ended session, view-only, app updated and server errors all answer in
+// words, and slowness is announced. It never throws.
+export async function guardCall<T extends ActionResult>(run: () => Promise<T>, timeoutMs = ACTION_TIMEOUT_MS): Promise<T | ActionResult> {
+  const id = ++slowSeq;
+  const slow = setTimeout(() => slowSignal(id, true), Math.min(SLOW_AFTER_MS, timeoutMs));
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<ActionResult>((resolve) => {
+    timer = setTimeout(() => resolve({ ok: false, message: TIMED_OUT }), timeoutMs);
+  });
+  try {
+    const result = await Promise.race([run(), timeout]);
+    // Actions answer "Not found." to anyone they can't identify; when that
+    // is because the session ended, say so (DEF-07); on a view-only page,
+    // say that instead (D-233).
+    if (!result.ok && result.message === "Not found.") {
+      const session = await signedIn();
+      if (session === false) {
         announceSessionEnded();
         return { ok: false, message: SESSION_ENDED };
       }
-      return result;
-    } catch (error) {
-      const known = actionErrorMessage(error);
-      if (known && known !== UNEXPECTED) return { ok: false, message: known };
-      if (typeof navigator !== "undefined" && navigator.onLine === false) return { ok: false, message: OFFLINE };
-      // An ended session answers with the sign-in page (unexpected too).
-      if ((await signedIn()) === false) {
-        announceSessionEnded();
-        return { ok: false, message: SESSION_ENDED };
-      }
-      return { ok: false, message: known ?? UNREACHABLE };
-    } finally {
-      clearTimeout(timer);
+      if (session === true && typeof document !== "undefined" && document.querySelector('[data-testid="view-only"]')) return { ok: false, message: VIEW_ONLY };
     }
-  };
+    return result;
+  } catch (error) {
+    const known = actionErrorMessage(error);
+    if (known && known !== UNEXPECTED) return { ok: false, message: known };
+    if (typeof navigator !== "undefined" && navigator.onLine === false) return { ok: false, message: OFFLINE };
+    // An ended session answers with the sign-in page (unexpected too).
+    if ((await signedIn()) === false) {
+      announceSessionEnded();
+      return { ok: false, message: SESSION_ENDED };
+    }
+    return { ok: false, message: known ?? UNREACHABLE };
+  } finally {
+    clearTimeout(timer);
+    clearTimeout(slow);
+    slowSignal(id, false);
+  }
+}
+
+export function guardAction(action: Action, timeoutMs = ACTION_TIMEOUT_MS): Action {
+  return (previous, formData) => guardCall(() => action(previous, formData), timeoutMs);
 }
 
 // A form with `confirm` asks in the page, not with window.confirm: embedded
@@ -142,6 +171,8 @@ export function useActionForm(action: Action, options: ConfirmOptions = {}) {
 
   useEffect(() => {
     if (result?.ok && resetOnSuccess) formRef.current?.reset();
+    // D-233: a saved form has no unsaved changes (UnsavedGuard listens).
+    if (result?.ok) formRef.current?.dispatchEvent(new Event(SAVED_EVENT));
   }, [result, resetOnSuccess]);
 
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -179,17 +210,7 @@ export function useActionForm(action: Action, options: ConfirmOptions = {}) {
 
 // While busy the button keeps its width (the label stays, hidden) and shows
 // a spinner; a polite live region tells screen readers (DEF-05/08).
-export function SubmitButton({
-  children,
-  pending,
-  variant = "primary",
-  className = "",
-}: {
-  children: React.ReactNode;
-  pending: boolean;
-  variant?: "primary" | "secondary";
-  className?: string;
-}) {
+export function SubmitButton({ children, pending, variant = "primary", className = "" }: { children: React.ReactNode; pending: boolean; variant?: "primary" | "secondary"; className?: string }) {
   return (
     <>
       <button type="submit" disabled={pending} aria-busy={pending || undefined} className={`${variant === "primary" ? "btn-primary" : "btn-secondary"} relative shrink-0 ${className}`}>
@@ -211,12 +232,7 @@ export function SubmitButton({
 export function ResultMessage({ result }: { result: ActionResult | null }) {
   if (!result?.message) return null;
   return (
-    <p
-      role={result.ok ? "status" : "alert"}
-      className={`rounded-md border px-3 py-2 text-label ${
-        result.ok ? "border-transparent bg-success-50 text-success-600" : "border-danger-200 bg-danger-50 text-danger-600"
-      }`}
-    >
+    <p role={result.ok ? "status" : "alert"} className={`rounded-md border px-3 py-2 text-label ${result.ok ? "border-transparent bg-success-50 text-success-600" : "border-danger-200 bg-danger-50 text-danger-600"}`}>
       {result.message}
     </p>
   );

@@ -90,8 +90,9 @@ test("My requests has the same filters", async ({ page, context }) => {
   await page.getByTestId("group-menu").locator("summary").click();
   await page.getByTestId("group-menu").getByRole("link", { name: "Status" }).click();
   await expect(page).toHaveURL(/group=status/);
-  await expect(page.getByTestId("group-menu").locator("summary")).toContainText("Group: Status");
+  await expect(page.getByTestId("group-menu").locator("summary")).toContainText("Groups: 1 (Status)");
   // The search box keeps the other choices.
+  await page.getByTestId("list-toolbar").getByRole("button", { name: "Search" }).click();
   await page.getByLabel("Search", { exact: true }).fill("zz-no-such-request");
   await page.getByLabel("Search", { exact: true }).press("Enter");
   await expect(page).toHaveURL(/q=zz-no-such-request/);
@@ -103,7 +104,7 @@ test("Waiting for me has more filters, and every one becomes a removable chip", 
   await as(context, "E2E_MGR");
   await page.goto("/users/queue");
   await page.getByTestId("list-toolbar").getByTestId("filter-menu").locator("summary").click();
-  for (const label of ["Search", "Raised by", "Their department", "Step", "Due within", "Files", "Raised from", "Waiting since from"]) {
+  for (const label of ["Raised by", "Their department", "Step", "Due within", "Files", "Raised from", "Waiting since from"]) {
     await expect(page.getByLabel(label, { exact: true })).toBeVisible();
   }
   await page.getByLabel("Files", { exact: true }).selectOption("no");

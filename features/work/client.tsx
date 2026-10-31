@@ -4,9 +4,10 @@ import { Check, Link2, Plus } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { completeAction } from "@/app/users/work/actions";
-import { actionErrorMessage, UNEXPECTED } from "@/features/ui/form";
+import { actionErrorMessage, guardCall, UNEXPECTED } from "@/features/ui/form";
 import { useToast } from "@/features/ui/Toast";
 import type { ActionResult } from "@/lib/http/action-result";
+import { COPY_BLOCKED, copyText } from "@/features/ui/clipboard";
 
 // D-215: small shared pieces of the Task & Project Management screens.
 
@@ -34,26 +35,36 @@ function askHoliday(info: HolidayInfo): Promise<HolidayChoice | null> {
 export function useWorkCall() {
   const toast = useToast();
   const router = useRouter();
-  const [pending, startTransition] = useTransition();
+  const [refreshing, startTransition] = useTransition();
+  // D-233: busy while a call runs (callers disable their buttons), and every
+  // call is guarded like a form: time limit, offline, ended session, slowness.
+  const [running, setRunning] = useState(0);
+  const pending = refreshing || running > 0;
   const call = useCallback(
     async <T extends ActionResult & { holiday?: HolidayInfo }>(run: (choice?: HolidayChoice) => Promise<T>, options: { success?: string | false } = {}): Promise<T | null> => {
+      setRunning((count) => count + 1);
       try {
-        let result = await run();
+        let result = (await guardCall(() => run())) as T;
         if (!result.ok && result.holiday) {
           const choice = await askHoliday(result.holiday);
           if (!choice) return result;
-          result = await run(choice);
+          result = (await guardCall(() => run(choice))) as T;
         }
         if (!result.ok) {
           toast({ tone: "error", title: result.message || "Couldn't do that." });
           return result;
         }
-        if (options.success !== false && (options.success || result.message)) toast({ tone: "success", title: options.success || result.message || "Saved." });
+        // D-233 (partial success): some done and some not is a warning, not a green tick.
+        const partial = Number((result as { value?: { failed?: number } }).value?.failed ?? 0) > 0;
+        if (partial) toast({ tone: "warning", title: result.message || "Some of them couldn't be changed." });
+        else if (options.success !== false && (options.success || result.message)) toast({ tone: "success", title: options.success || result.message || "Saved." });
         startTransition(() => router.refresh());
         return result;
       } catch (error) {
         toast({ tone: "error", title: actionErrorMessage(error) ?? UNEXPECTED });
         return null;
+      } finally {
+        setRunning((count) => count - 1);
       }
     },
     [router, toast],
@@ -223,10 +234,7 @@ export function CopyLinkButton({ path, label = "Copy task link" }: { path: strin
       aria-label={label}
       title={label}
       onClick={() =>
-        void navigator.clipboard
-          ?.writeText(`${window.location.origin}${path}`)
-          .then(() => toast({ tone: "success", title: "Link copied." }))
-          .catch(() => toast({ tone: "error", title: "Couldn't copy the link." }))
+        void copyText(`${window.location.origin}${path}`).then((done) => toast(done ? { tone: "success", title: "Link copied." } : { tone: "error", title: `${COPY_BLOCKED} ${window.location.origin}${path}` }))
       }
       className="rounded p-1 text-ink-muted hover:bg-surface-muted hover:text-ink"
     >

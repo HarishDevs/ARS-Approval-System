@@ -71,7 +71,7 @@ test("WS-03 Ctrl+K finds a request by number and pages by name", async ({ page, 
 test("WS-01 queue filters show as chips that can be removed", async ({ page, context }) => {
   await as(context, "E2E_HOD");
   await page.goto("/users/queue?show=overdue");
-  await expect(page.getByText("Nothing matches these filters.")).toBeVisible();
+  await expect(page.getByTestId("no-results")).toContainText("No items waiting match these filters");
   await page.getByRole("link", { name: "Remove filter: Overdue" }).click();
   await expect(page).toHaveURL(/\/users\/queue$/);
   await expect(page.getByRole("link", { name: /E2E bulk desks/ }).first()).toBeVisible();

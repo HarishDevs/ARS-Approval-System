@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Download } from "lucide-react";
 import { PageHeader } from "@/features/shell/PageHeader";
-import { EmptyState } from "@/features/ui/Display";
+import { EmptyState, NoResults } from "@/features/ui/Display";
+import { ListToolbar } from "@/features/ui/ListToolbar";
 import { requireArea } from "@/server/authorization/guards";
 import { canExport } from "@/server/settings/features";
 import { listRecords, recordChoices, RECORDS_EXPORT_MAX, RECORDS_PAGE_SIZE } from "@/lib/db/repositories/records.repository";
@@ -44,58 +45,73 @@ export async function RecordsRegister({ kind, searchParams }: { kind: RecordKind
 
       <nav aria-label="Records" className="mb-4 flex flex-wrap gap-2" data-testid="records-tabs">
         {(Object.keys(BASE) as RecordKind[]).map((tab) => (
-          <Link key={tab} href={BASE[tab]} aria-current={tab === kind ? "page" : undefined} className={`rounded-md px-3 py-1.5 text-label ${tab === kind ? "bg-primary-50 font-semibold text-primary-700" : "text-ink-muted hover:bg-surface-muted"}`}>
+          <Link
+            key={tab}
+            href={BASE[tab]}
+            aria-current={tab === kind ? "page" : undefined}
+            className={`rounded-md px-3 py-1.5 text-label ${tab === kind ? "bg-primary-50 font-semibold text-primary-700" : "text-ink-muted hover:bg-surface-muted"}`}
+          >
             {RECORD_TITLE[tab]}
           </Link>
         ))}
       </nav>
 
-      <form method="get" action={base} role="search" className="card mb-4 grid grid-cols-2 gap-3 px-4 py-3 sm:grid-cols-3 lg:grid-cols-6" data-testid="records-filters">
-        {filter.sort !== "no" && <input type="hidden" name="sort" value={filter.sort} />}
-        {filter.dir !== "desc" && <input type="hidden" name="dir" value={filter.dir} />}
-        <div className="col-span-2">
-          <label htmlFor="rq" className="field-label">
-            Search
-          </label>
-          <input id="rq" name="q" defaultValue={filter.q} placeholder="Number, title or person" className="field-input h-10" />
-        </div>
-        <Choice name="status" label="Status" value={filter.status} options={statuses.map((status) => [status, kind === "tasks" && status === "CANCELLED" ? "Cancelled" : STATUS_LABEL[status] ?? status])} />
-        <Choice name="type" label="Type" value={filter.type ?? ""} options={choices.types.map((type) => [String(type.id), type.name])} />
-        <Choice name="department" label="Department" value={filter.department ?? ""} options={choices.departments.map((department) => [String(department.id), department.name])} />
-        <Choice name="person" label={PERSON_LABEL[kind]} value={filter.person ?? ""} options={choices.people.map((person) => [String(person.id), person.name])} />
-        {kind === "requests" && <Choice name="waiting" label="Waiting on" value={filter.waitingOn ?? ""} options={choices.people.map((person) => [String(person.id), person.name])} />}
-        {priorities.length > 0 && <Choice name="priority" label="Priority" value={filter.priority} options={priorities.map((priority) => [priority, PRIORITY_LABEL[priority] ?? priority])} />}
-        <div>
-          <label htmlFor="rfrom" className="field-label">
-            {DATE_LABEL[kind]} from
-          </label>
-          <input id="rfrom" type="date" name="from" defaultValue={filter.from ?? ""} className="field-input h-10" />
-        </div>
-        <div>
-          <label htmlFor="rto" className="field-label">
-            {DATE_LABEL[kind]} to
-          </label>
-          <input id="rto" type="date" name="to" defaultValue={filter.to ?? ""} className="field-input h-10" />
-        </div>
-        {kind === "tasks" && (
-          <label className="flex items-end gap-2 pb-2.5 text-label">
-            <input type="checkbox" name="overdue" value="1" defaultChecked={filter.overdue} className="h-4 w-4 accent-[var(--color-primary-solid)]" /> Overdue only
-          </label>
-        )}
-        <div className="col-span-2 flex items-end gap-2 sm:col-span-1">
-          <button type="submit" className="btn-primary btn-compact w-auto">
-            Apply
-          </button>
-          {filtered && (
-            <Link href={base} className="btn-secondary btn-compact">
-              Clear
-            </Link>
-          )}
-        </div>
-      </form>
+      {/* D-228: the same toolbar as every list (Filter, Sort, Search). */}
+      <ListToolbar
+        id="records-filters"
+        path={base}
+        label="Filter records"
+        keep={{ sort: filter.sort !== "no" ? filter.sort : undefined, dir: filter.dir !== "desc" ? filter.dir : undefined }}
+        search={{ name: "q", value: filter.q, placeholder: "Number, title or person" }}
+        filterCount={[filter.status, filter.type, filter.department, filter.person, filter.waitingOn, filter.priority, filter.overdue, filter.from || filter.to].filter(Boolean).length}
+        clearHref={
+          filtered
+            ? `${base}${recordQuery({ ...filter, q: "", status: "", type: null, department: null, person: null, waitingOn: null, priority: "", overdue: false, from: null, to: null } as RecordFilter, { page: null })}`
+            : null
+        }
+        filters={
+          <>
+            <Choice name="status" label="Status" value={filter.status} options={statuses.map((status) => [status, kind === "tasks" && status === "CANCELLED" ? "Cancelled" : (STATUS_LABEL[status] ?? status)])} />
+            <Choice name="type" label="Type" value={filter.type ?? ""} options={choices.types.map((type) => [String(type.id), type.name])} />
+            <Choice name="department" label="Department" value={filter.department ?? ""} options={choices.departments.map((department) => [String(department.id), department.name])} />
+            <Choice name="person" label={PERSON_LABEL[kind]} value={filter.person ?? ""} options={choices.people.map((person) => [String(person.id), person.name])} />
+            {kind === "requests" && <Choice name="waiting" label="Waiting on" value={filter.waitingOn ?? ""} options={choices.people.map((person) => [String(person.id), person.name])} />}
+            {priorities.length > 0 && <Choice name="priority" label="Priority" value={filter.priority} options={priorities.map((priority) => [priority, PRIORITY_LABEL[priority] ?? priority])} />}
+            <div>
+              <label htmlFor="rfrom" className="field-label">
+                {DATE_LABEL[kind]} from
+              </label>
+              <input id="rfrom" type="date" name="from" defaultValue={filter.from ?? ""} className="field-input h-10" />
+            </div>
+            <div>
+              <label htmlFor="rto" className="field-label">
+                {DATE_LABEL[kind]} to
+              </label>
+              <input id="rto" type="date" name="to" defaultValue={filter.to ?? ""} className="field-input h-10" />
+            </div>
+            {kind === "tasks" && (
+              <label className="flex items-center gap-2 self-end pb-2.5 text-label">
+                <input type="checkbox" name="overdue" value="1" defaultChecked={filter.overdue} className="h-4 w-4 accent-[var(--color-primary-solid)]" /> Overdue only
+              </label>
+            )}
+          </>
+        }
+        sort={{
+          label: columns.find((column) => column.sort === filter.sort)?.label ?? "Number",
+          changed: filter.sort !== "no" || filter.dir !== "desc",
+          clearHref: `${base}${recordQuery(filter, { sort: null, dir: null, page: null })}`,
+          choices: columns
+            .filter((column) => column.sort)
+            .map((column) => ({ label: column.label, href: `${base}${recordQuery(filter, { sort: column.sort === "no" ? null : column.sort!, dir: null, page: null })}`, active: filter.sort === column.sort })),
+        }}
+      />
 
       {shown === 0 ? (
-        <EmptyState title="No records" body={filtered ? "Nothing matches these filters." : `No ${RECORD_TITLE[kind].toLowerCase()} yet.`} />
+        filtered ? (
+          <NoResults what="records" query={filter.q} clearSearchHref={`${base}${recordQuery(filter, { q: null, page: null })}`} resetHref={base} />
+        ) : (
+          <EmptyState title="No records" body={`No ${RECORD_TITLE[kind].toLowerCase()} yet.`} />
+        )
       ) : (
         <div className="card overflow-hidden">
           <div className="max-h-[70vh] overflow-auto" data-testid="records-table">
@@ -107,7 +123,12 @@ export async function RecordsRegister({ kind, searchParams }: { kind: RecordKind
                     #
                   </th>
                   {columns.map((column) => (
-                    <th key={column.key} scope="col" aria-sort={column.sort && filter.sort === column.sort ? (filter.dir === "asc" ? "ascending" : "descending") : undefined} className="whitespace-nowrap border-b border-r border-line px-3 py-2 text-left font-medium text-ink-muted">
+                    <th
+                      key={column.key}
+                      scope="col"
+                      aria-sort={column.sort && filter.sort === column.sort ? (filter.dir === "asc" ? "ascending" : "descending") : undefined}
+                      className="whitespace-nowrap border-b border-r border-line px-3 py-2 text-left font-medium text-ink-muted"
+                    >
                       {column.sort ? <SortLink filter={filter} base={base} column={column.sort} label={column.label} /> : column.label}
                     </th>
                   ))}

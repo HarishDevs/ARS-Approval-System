@@ -70,7 +70,7 @@ function Body({ text }: { text: string }) {
 }
 
 function CommentItem({ comment, meId, canPin, isAdmin }: { comment: CommentView; meId: number; canPin: boolean; isAdmin: boolean }) {
-  const { call } = useWorkCall();
+  const { call, pending: busy } = useWorkCall();
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(comment.body);
   if (comment.deleted) return <p className="text-label italic text-ink-muted">This comment was deleted.</p>;
@@ -92,7 +92,7 @@ function CommentItem({ comment, meId, canPin, isAdmin }: { comment: CommentView;
           className="mt-1 space-y-2"
           onSubmit={(event) => {
             event.preventDefault();
-            void call(() => commentChangeAction(comment.id, { body: text })).then((result) => result?.ok && setEditing(false));
+            if (!busy) void call(() => commentChangeAction(comment.id, { body: text })).then((result) => result?.ok && setEditing(false));
           }}
         >
           <label htmlFor={`edit-${comment.id}`} className="sr-only">
@@ -100,7 +100,7 @@ function CommentItem({ comment, meId, canPin, isAdmin }: { comment: CommentView;
           </label>
           <textarea id={`edit-${comment.id}`} value={text} onChange={(event) => setText(event.target.value)} rows={3} maxLength={4000} className="field-input h-auto py-2" />
           <div className="flex gap-2">
-            <button type="submit" className="btn-primary btn-compact">
+            <button type="submit" disabled={busy} aria-busy={busy || undefined} className="btn-primary btn-compact">
               Save
             </button>
             <button type="button" className="btn-secondary btn-compact" onClick={() => setEditing(false)}>

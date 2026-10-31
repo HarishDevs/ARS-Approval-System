@@ -5,6 +5,7 @@ import { PendingLink } from "@/features/ui/PendingLink";
 import { SafeText } from "@/features/ui/SafeText";
 import { SavedViews, SaveViewForm, type ViewChip } from "@/features/analytics/ReportForms";
 import { ListToolbar } from "@/features/ui/ListToolbar";
+import { EmptyState, NoResults } from "@/features/ui/Display";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 import type { ListChoices, ListedRequest } from "@/lib/db/repositories/request-lists.repository";
 import {
@@ -314,18 +315,12 @@ export function RequestListScreen({
       )}
 
       {result.items.length === 0 ? (
-        <p className="card px-5 py-6 text-label text-ink-muted">
-          {used || filters.tab !== "all" ? (
-            <>
-              Nothing matches these filters.{" "}
-              <Link href={path} className="link">
-                Show everything
-              </Link>
-            </>
-          ) : (
-            empty
-          )}
-        </p>
+        // D-233: "nothing matches" (with the way back) is not "nothing yet".
+        used || filters.tab !== "all" ? (
+          <NoResults what="requests" query={filters.q} clearSearchHref={href({ q: "", page: 1 })} resetHref={path} />
+        ) : (
+          <EmptyState title="Nothing here yet" body={empty} />
+        )
       ) : (
         <>
           <ul className="card divide-y divide-line sm:hidden" data-testid="request-cards">

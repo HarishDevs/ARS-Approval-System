@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { PageHeader, EmptyState } from "@/features/shell/PageHeader";
+import { NoResults } from "@/features/ui/Display";
 import { PendingLink } from "@/features/ui/PendingLink";
 import { requireArea } from "@/server/authorization/guards";
 import { listLoginHistory } from "@/lib/db/repositories/audit.repository";
@@ -40,7 +41,11 @@ export default async function LoginHistoryPage({ searchParams }: { searchParams:
         </button>
       </form>
       {items.length === 0 ? (
-        <EmptyState title="No sign-ins" body="Nothing matches this filter." />
+        outcome ? (
+          <NoResults what="sign-ins" resetHref="/superadmin/logins" hint={`No ${outcome === "SUCCESS" ? "successful" : "failed"} sign-ins${beforeId ? " before this point" : ""}.`} />
+        ) : (
+          <EmptyState title="No sign-ins" body={beforeId ? "Nothing older than this." : "Nobody has signed in yet."} />
+        )
       ) : (
         <div className="card overflow-x-auto">
           <table className="data-table">

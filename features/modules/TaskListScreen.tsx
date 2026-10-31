@@ -15,6 +15,7 @@ import { isAdminActor } from "@/server/modules/tasks";
 import { TaskCheck } from "@/features/work/client";
 import { teamOf } from "@/server/work/task-access";
 import { ListToolbar } from "@/features/ui/ListToolbar";
+import { NoResults } from "@/features/ui/Display";
 
 // v1.9.0 (D-143): My tasks / Assigned by me / Team tasks. Filters live in
 // the address (GET form), so a list can be bookmarked and shared.
@@ -163,7 +164,11 @@ export async function TaskListScreen({ base, query }: { base: TaskBase; query: R
             sizes={PAGE_SIZES.map((size) => ({ label: `${size} per page`, href: `${path}${taskQuery(filters, { size })}`, active: filters.size === size }))}
           />
           {list.rows.length === 0 ? (
-            <EmptyState title="No tasks match" body={filters.tab === "open" ? "Nothing open here. Try another tab or clear the filters." : "Try another tab or clear the filters."} />
+            filters.q || filters.typeId || filters.priorities.length || filters.statuses.length || filters.personId || filters.dueFrom || filters.dueTo || filters.createdFrom || filters.createdTo ? (
+              <NoResults what="tasks" query={filters.q} clearSearchHref={`${path}${taskQuery(filters, { q: "" })}`} resetHref={`${path}${taskQuery({ ...filters, q: "", typeId: null, priorities: [], statuses: [], personId: null, dueFrom: null, dueTo: null, createdFrom: null, createdTo: null })}`} />
+            ) : (
+              <EmptyState title="No tasks here" body={filters.tab === "open" ? "Nothing open here. Try another tab." : "Nothing in this tab. Try another tab."} />
+            )
           ) : (
             <div className="card overflow-x-auto">
               <table className="data-table" data-testid="task-table">

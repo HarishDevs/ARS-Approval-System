@@ -9,6 +9,11 @@ import { describe, expect, it } from "vitest";
 // loading.tsx must be checked against both rules and added here.
 const ALLOWED = [
   "app/admin/(home)/loading.tsx",
+  // D-233: read-only registers and AI analytics (GET filters only, no notFound()).
+  "app/admin/ai-analytics/loading.tsx",
+  "app/admin/records/information/loading.tsx",
+  "app/admin/records/requests/loading.tsx",
+  "app/admin/records/tasks/loading.tsx",
   "app/admin/dashboards/loading.tsx",
   "app/admin/doa/loading.tsx",
   "app/admin/import/loading.tsx", // results come back in the action's answer, not a refresh

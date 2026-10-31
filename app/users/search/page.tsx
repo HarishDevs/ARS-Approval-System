@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireArea } from "@/server/authorization/guards";
-import { PageHeader, EmptyState } from "@/features/shell/PageHeader";
+import { PageHeader } from "@/features/shell/PageHeader";
+import { NoResults } from "@/features/ui/Display";
 import { PendingLink } from "@/features/ui/PendingLink";
 import { RequestStatusPill } from "@/features/requests/StatusPill";
 import { SaveViewForm, SavedViewList } from "@/features/requests/SavedViews";
@@ -140,7 +141,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
         {result.total === 0 ? "No requests match." : `${result.total.toLocaleString("en-IN")} request${result.total === 1 ? "" : "s"}${pages > 1 ? ` · page ${filters.page} of ${pages}` : ""}`}
       </p>
       {result.items.length === 0 ? (
-        <EmptyState title="Nothing found" body="Try fewer words, another status, or a wider date range." />
+        <NoResults what="requests" query={filters.q} clearSearchHref={`/users/search?${new URLSearchParams(searchQuery({ ...filters, q: "", page: 1 }))}`} resetHref="/users/search" hint={filters.q ? undefined : "Try another status, or a wider date range."} />
       ) : (
         <ul className="card divide-y divide-line">
           {result.items.map((item) => (

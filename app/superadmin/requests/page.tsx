@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { NoResults } from "@/features/ui/Display";
 import Link from "next/link";
 import { PendingLink } from "@/features/ui/PendingLink";
 import { requireArea } from "@/server/authorization/guards";
@@ -75,6 +76,9 @@ export default async function SuperAdminRequestsPage({ searchParams }: { searchP
       <p className="mb-2 text-caption text-ink-muted" role="status">
         {result.total === 0 ? "No requests match." : `${result.total.toLocaleString("en-IN")} request${result.total === 1 ? "" : "s"}${result.pages > 1 ? ` · page ${result.page} of ${result.pages}` : ""}`}
       </p>
+      {result.items.length === 0 && (q || status) && (
+        <NoResults what="requests" query={q} clearSearchHref={`/superadmin/requests?${new URLSearchParams({ ...(deleted ? { tab: "deleted" } : {}), ...(status ? { status } : {}) })}`} resetHref={deleted ? "/superadmin/requests?tab=deleted" : "/superadmin/requests"} />
+      )}
       {result.items.length > 0 && (
         <section className="card overflow-x-auto">
           <table className="data-table">

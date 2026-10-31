@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader, EmptyState } from "@/features/shell/PageHeader";
+import { NoResults } from "@/features/ui/Display";
 import { requireArea } from "@/server/authorization/guards";
 import { listAuditActions, listAuditEntries } from "@/lib/db/repositories/audit.repository";
 import { SafeText } from "@/features/ui/SafeText";
@@ -66,7 +67,11 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
         </button>
       </form>
       {entries.length === 0 ? (
-        <EmptyState title="No entries" body="Nothing matches this filter." />
+        action ? (
+          <NoResults what="entries" resetHref="/superadmin/audit" hint={`Nothing recorded for ${action}${beforeId ? " before this point" : ""}.`} />
+        ) : (
+          <EmptyState title="No entries" body={beforeId ? "Nothing older than this." : "Nothing has been recorded yet."} />
+        )
       ) : (
         <div className="card overflow-x-auto">
           <table className="data-table">

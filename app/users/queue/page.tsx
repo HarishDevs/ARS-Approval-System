@@ -11,6 +11,7 @@ import { countPendingTasksFor, listPendingTasksFor, queueChoicesFor, queueTypesF
 import { listViews } from "@/lib/db/repositories/analytics-views.repository";
 import { SavedViews, SaveViewForm } from "@/features/analytics/ReportForms";
 import { ListToolbar } from "@/features/ui/ListToolbar";
+import { NoResults } from "@/features/ui/Display";
 import { QUEUE_SHOW_LABEL, QUEUE_SHOWS, QUEUE_SIZES, QUEUE_SORT_LABEL, QUEUE_SORTS, parseQueueFilter, queueFiltered, queueHref, type QueueFilter } from "@/server/approvals/queue-filters";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
@@ -231,12 +232,7 @@ export default async function QueuePage({ searchParams }: { searchParams: Promis
       )}
       {!filtered && <BulkApprove items={queue} />}
       {filtered && queue.length === 0 ? (
-        <p className="card px-5 py-5 text-label text-ink-muted">
-          Nothing matches these filters.{" "}
-          <Link href="/users/queue" className="link">
-            Show everything
-          </Link>
-        </p>
+        <NoResults what="items waiting" query={filter.q} clearSearchHref={without({ q: "" })} resetHref="/users/queue" />
       ) : (
         <QueueKeyboard>
           <QueueTable items={queue} />
