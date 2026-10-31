@@ -11,7 +11,7 @@ import { findPublishedVersion, findWorkflow } from "@/lib/db/repositories/approv
 import { addAttachments, filesFrom, prepareFiles } from "@/server/attachments/service";
 import { existingFieldCounts, prepareFieldFiles, reportedFieldCounts, saveFieldFiles } from "@/server/attachments/field-files";
 import { addCollaborators, collaboratorIdsFrom } from "@/server/approvals/collaborators";
-import { findRequest, findWorkflowVersion } from "@/lib/db/repositories/approvals.repository";
+import { countPendingTasksFor, findRequest, findWorkflowVersion, listPendingTasksFor } from "@/lib/db/repositories/approvals.repository";
 import { logError } from "@/lib/logging/logger";
 import { isStorageError, reportStorageFailure, STORAGE_USER_MESSAGE } from "@/server/attachments/storage";
 import { deleteDraft } from "@/lib/db/repositories/drafts.repository";
@@ -187,7 +187,18 @@ export async function decideAction(_previous: ActionResult | null, formData: For
   }
   revalidatePath(`/users/requests/${requestId}`);
   revalidatePath("/users");
-  return { ok: true, message: decision === "APPROVE" && formData.get("work") === "1" ? "Marked as done." : DONE[decision] };
+  // D-234 (Peak-end, Parkinson): offer the next thing waiting, so the approver
+  // doesn't have to go back to the list for each one.
+  const waiting = await listPendingTasksFor(me.id, { limit: 5, offset: 0 })
+    .then((items) => items.filter((item) => item.requestId !== requestId))
+    .catch(() => null);
+  const left = waiting === null ? null : await countPendingTasksFor(me.id).catch(() => null);
+  const next = waiting?.[0];
+  return {
+    ok: true,
+    message: decision === "APPROVE" && formData.get("work") === "1" ? "Marked as done." : DONE[decision],
+    data: { next: next ? { id: next.requestId, requestNo: next.requestNo, title: next.title } : null, left },
+  };
 }
 
 // IT moves a blocked step on (D-098). The service checks the role again.

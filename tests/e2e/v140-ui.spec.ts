@@ -130,8 +130,11 @@ test("IT turns a custom approval into a reusable approval type (P5-04)", async (
   await page.getByLabel("Title").fill("Team offsite in Ooty");
   await page.getByLabel("Details").fill("Two days, 12 people.");
   // v1.8.0: search and pick, like Collaborators.
+  // D-234: Manoj (the reporting manager) is usually the first approver already; pick him only if he isn't.
   await page.getByRole("combobox", { name: /^People \(search and pick/ }).fill("Manoj");
-  await page.getByRole("option", { name: "Manoj Manager (E2E_MGR)" }).click();
+  const manoj = page.getByRole("option", { name: "Manoj Manager (E2E_MGR)" });
+  if (await manoj.waitFor({ timeout: 3000 }).then(() => true).catch(() => false)) await manoj.click();
+  await expect(page.locator("main form").getByText("Manoj Manager").first()).toBeVisible();
   await page.getByRole("button", { name: "Submit request" }).click();
   await expect(page).toHaveURL(/\/users\/requests\/\d+\?submitted=1/);
   const path = new URL(page.url()).pathname;

@@ -153,8 +153,8 @@ export function ProjectCommandButton({ projectId, command, label, danger, confir
     return (
       <span className="inline-flex flex-wrap items-center gap-2 rounded-md bg-danger-50 px-2 py-1 text-label" role="group">
         {confirmText}
-        <button type="button" className="btn-danger btn-compact" onClick={() => void call(() => projectCommand(projectId, command)).then(() => setAsking(false))}>
-          Yes, {label.toLowerCase()}
+        <button type="button" className="btn-danger btn-compact" disabled={pending} aria-busy={pending || undefined} onClick={() => void call(() => projectCommand(projectId, command)).then(() => setAsking(false))}>
+          {pending ? "Working…" : `Yes, ${label.toLowerCase()}`}
         </button>
         <button type="button" className="btn-secondary btn-compact" onClick={() => setAsking(false)}>
           Cancel

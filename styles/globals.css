@@ -217,6 +217,12 @@ body {
   .btn-danger {
     @apply inline-flex h-[46px] w-full items-center justify-center gap-2 rounded-md bg-danger-solid px-5 text-body font-semibold text-on-solid transition-colors hover:bg-danger-solid-hover disabled:cursor-not-allowed disabled:opacity-60;
   }
+  /* D-234: an irreversible action (Reject, Withdraw, Delete) that is not the
+     confirm button itself: outlined in danger red, never the same look as
+     its neighbours; the dialog it opens uses btn-danger. */
+  .btn-danger-quiet {
+    @apply inline-flex h-[46px] items-center justify-center gap-2 rounded-md border border-danger-200 bg-surface px-5 text-body font-semibold text-danger-600 transition-colors hover:bg-danger-50 disabled:cursor-not-allowed disabled:opacity-60;
+  }
   .btn-ghost {
     @apply inline-flex h-9 items-center justify-center gap-1.5 rounded-md px-2.5 text-label font-medium text-ink-muted transition-colors hover:bg-surface-muted hover:text-ink disabled:cursor-not-allowed disabled:opacity-60;
   }
@@ -471,4 +477,24 @@ html,
    and dots, rounded-full, stay round). */
 [data-view="classic"] main :is(.rounded, .rounded-md, .rounded-lg, .rounded-xl, .rounded-2xl) {
   border-radius: 2px;
+}
+
+/* D-234 (Fitts): on phones the request decision bar owns the bottom of the
+   screen; the Pico Bot launcher waits above it. */
+@media (max-width: 767px) {
+  body[data-decision-bar] .picbot-launcher {
+    bottom: calc(56px + 76px + 1rem);
+  }
+}
+
+/* D-234 (Closure): a strip that scrolls sideways shows a soft shadow on the
+   side that has more, and none once the end is reached (the covers scroll
+   with the content; the shadows stay). --scroll-bg is the colour behind it. */
+.scroll-hint {
+  --scroll-bg: var(--color-surface-page);
+  background:
+    linear-gradient(to right, var(--scroll-bg) 30%, transparent) left center / 2rem 100% no-repeat local,
+    linear-gradient(to left, var(--scroll-bg) 30%, transparent) right center / 2rem 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, color-mix(in srgb, var(--color-text-primary) 18%, transparent), transparent) left center / 0.75rem 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, color-mix(in srgb, var(--color-text-primary) 18%, transparent), transparent) right center / 0.75rem 100% no-repeat scroll;
 }

@@ -6,6 +6,7 @@ import { commentAction, commentChangeAction, likeAction } from "@/app/users/work
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import { useWorkCall } from "@/features/work/client";
 import { commentParts } from "@/server/work/rules";
+import { ConfirmButton } from "@/features/ui/ConfirmButton";
 
 // D-215: the task's conversation. Comments with one level of replies, likes,
 // pins; @mention a person to tell them (people who can't see the task are
@@ -128,9 +129,9 @@ function CommentItem({ comment, meId, canPin, isAdmin }: { comment: CommentView;
           </button>
         )}
         {(mine || isAdmin) && (
-          <button type="button" className="text-ink-muted hover:text-danger-600" onClick={() => void call(() => commentChangeAction(comment.id, { delete: true }), { success: "Comment deleted." })}>
+          <ConfirmButton title="Delete this comment?" body="It's removed for everyone on this task." className="text-ink-muted hover:text-danger-600" onConfirm={() => call(() => commentChangeAction(comment.id, { delete: true }), { success: "Comment deleted." })}>
             Delete
-          </button>
+          </ConfirmButton>
         )}
       </div>
     </div>

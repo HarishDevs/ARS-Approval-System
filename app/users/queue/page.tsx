@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { X } from "lucide-react";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
@@ -22,6 +23,11 @@ export const metadata: Metadata = { title: "Waiting for me" };
 export default async function QueuePage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const { user } = await requireArea("users");
   const params = await searchParams;
+  // D-234 (Default effect): no filters in the address → your default view, as on the other lists.
+  if (Object.keys(params).length === 0) {
+    const preferred = (await listViews(user.id, "queue")).find((view) => view.isDefault && Object.keys(view.query).length > 0);
+    if (preferred) redirect(`/users/queue?${new URLSearchParams(preferred.query).toString()}`);
+  }
   const filter = parseQueueFilter(params);
   const PAGE_SIZE = filter.size ?? 25;
   const [total, everything, types, choices, views] = await Promise.all([

@@ -30,6 +30,11 @@ export default async function MyRequestsPage({ searchParams }: { searchParams: P
   const params = await searchParams;
   // v1.7.2: the old "Shared with me" tab is its own screen now.
   if (params.tab === "shared") redirect("/users/collaborating");
+  // D-234 (Default effect): no filters in the address → your default view, as on the other lists.
+  if (Object.keys(params).length === 0) {
+    const preferred = (await listViews(user.id, "my_requests")).find((view) => view.isDefault && Object.keys(view.query).length > 0);
+    if (preferred) redirect(`/users/requests?${new URLSearchParams(preferred.query).toString()}`);
+  }
   const filters = parseListFilters(params, "MINE");
   const [result, counts, choices, views] = await Promise.all([listRequests("MINE", user.id, filters), tabCounts("MINE", user.id, filters), listChoices("MINE", user.id), listViews(user.id, "my_requests")]);
   return (

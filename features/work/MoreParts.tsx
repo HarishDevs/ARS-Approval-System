@@ -8,6 +8,7 @@ import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/featur
 import { useWorkCall } from "@/features/work/client";
 import { FIELD_KIND_LABEL, FIELD_KINDS, recurrenceLabel, RECURRENCE_KINDS, type Recurrence } from "@/server/work/more-rules";
 import { PRIVACY, PRIVACY_LABEL } from "@/server/work/access";
+import { ConfirmButton } from "@/features/ui/ConfirmButton";
 
 // D-218: repeating tasks, custom fields, templates, bulk actions, the inbox
 // and the morning summary switch.
@@ -135,9 +136,9 @@ export function FieldsManager({ projectId, fields }: { projectId: number; fields
             <span className="flex-1">
               <span className="font-medium">{field.name}</span> <span className="text-ink-muted">· {FIELD_KIND_LABEL[field.kind]}{field.options.length ? `: ${field.options.join(", ")}` : ""}</span>
             </span>
-            <button type="button" aria-label={`Remove field ${field.name}`} onClick={() => void call(() => removeFieldAction(field.id))} className="rounded p-1 text-ink-faint hover:text-danger-600">
+            <ConfirmButton ariaLabel={`Remove field ${field.name}`} title={`Remove the field “${field.name}”?`} body="The column and its values on every task in this project are removed. This can't be undone." confirmLabel="Remove" onConfirm={() => call(() => removeFieldAction(field.id))} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-ink-faint hover:bg-danger-50 hover:text-danger-600">
               <Trash2 aria-hidden="true" className="h-4 w-4" />
-            </button>
+            </ConfirmButton>
           </li>
         ))}
       </ul>

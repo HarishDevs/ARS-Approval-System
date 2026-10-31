@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { isTyping } from "@/features/shell/shortcuts";
 import { Check, MessageSquareWarning, PauseCircle, XCircle } from "lucide-react";
-import { Dialog } from "@/features/ui/Dialog";
+import { ConfirmDialog, Dialog } from "@/features/ui/Dialog";
 import { answerInfoAction, decideAction, delegateTaskAction, recallAction, reopenAction, resolveBlockedAction, resumeAction, withdrawAction } from "@/app/users/actions";
 import { FieldError, ResultMessage, useActionForm } from "@/features/ui/form";
 import { Hint } from "@/features/ui/Hint";
@@ -17,8 +18,35 @@ export type DecisionKind = "APPROVE" | "REQUEST_CHANGES" | "HOLD" | "REJECT" | "
 export function DecisionForm({ requestId, taskKey, label, work = false, only, idPrefix = "comment" }: { requestId: number; taskKey: string; label: string; work?: boolean; only?: DecisionKind; idPrefix?: string }) {
   const { result, pending, onSubmit } = useActionForm(decideAction);
   const shows = (kind: DecisionKind) => !only || only === kind;
+  // D-234 (Fitts, Von Restorff): Reject is apart from the rest, in the
+  // danger style, and asks first (it can't be undone). An empty reason goes
+  // straight to the server, which asks for one.
+  const form = useRef<HTMLFormElement>(null);
+  const rejectButton = useRef<HTMLButtonElement>(null);
+  const confirmed = useRef(false);
+  const [asking, setAsking] = useState(false);
+  // D-234 (Doherty): the pressed button says "Working…".
+  const [pressed, setPressed] = useState<DecisionKind | null>(null);
+  const working = (kind: DecisionKind) => pending && (only === kind || pressed === kind);
+  const next = result?.ok ? (result.data?.next as { id: number; requestNo: string; title: string } | null | undefined) : undefined;
+  const left = result?.ok ? (result.data?.left as number | null | undefined) : undefined;
   return (
-    <form onSubmit={onSubmit} className={only ? "space-y-3" : "space-y-3 px-5 py-4"}>
+    <form
+      ref={form}
+      onSubmit={(event) => {
+        const kind = ((event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null)?.value as DecisionKind | undefined;
+        const comment = new FormData(event.currentTarget).get("comment");
+        if (kind === "REJECT" && !confirmed.current && typeof comment === "string" && comment.trim()) {
+          event.preventDefault();
+          setAsking(true);
+          return;
+        }
+        confirmed.current = false;
+        setPressed(kind ?? null);
+        onSubmit(event);
+      }}
+      className={only ? "space-y-3" : "space-y-3 px-5 py-4"}
+    >
       <input type="hidden" name="requestId" value={requestId} />
       <input type="hidden" name="taskKey" value={taskKey} />
       {work && <input type="hidden" name="work" value="1" />}
@@ -35,34 +63,64 @@ export function DecisionForm({ requestId, taskKey, label, work = false, only, id
         <textarea id={`${idPrefix}-${taskKey}`} name="comment" rows={3} maxLength={2000} data-autofocus={only ? true : undefined} className="field-input h-auto py-2.5" />
         <FieldError result={result} name="comment" />
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {shows("APPROVE") && (
           <button type="submit" name="decision" value="APPROVE" disabled={pending} className="btn-primary btn-compact">
-            {pending && only ? "Working…" : work ? "Mark as done" : "Approve"}
+            {working("APPROVE") ? "Working…" : work ? "Mark as done" : "Approve"}
           </button>
         )}
         {shows("REQUEST_CHANGES") && (
           <button type="submit" name="decision" value="REQUEST_CHANGES" disabled={pending} className={only ? "btn-primary btn-compact" : "btn-secondary btn-compact"}>
-            {pending && only ? "Working…" : "Ask for changes"}
+            {working("REQUEST_CHANGES") ? "Working…" : "Ask for changes"}
           </button>
         )}
         {shows("HOLD") && (
           <button type="submit" name="decision" value="HOLD" disabled={pending} className={only ? "btn-primary btn-compact" : "btn-secondary btn-compact"}>
-            {pending && only ? "Working…" : "Put on hold"}
+            {working("HOLD") ? "Working…" : "Put on hold"}
           </button>
         )}
         {shows("INFO") && (
           <button type="submit" name="decision" value="INFO" disabled={pending} className={only ? "btn-primary btn-compact" : "btn-secondary btn-compact"}>
-            {pending && only ? "Working…" : "Ask a question"}
+            {working("INFO") ? "Working…" : "Ask a question"}
           </button>
         )}
         {!work && shows("REJECT") && (
-          <button type="submit" name="decision" value="REJECT" disabled={pending} className={only ? "btn-danger btn-compact" : "btn-secondary btn-compact text-danger-600"}>
-            {pending && only ? "Working…" : "Reject"}
+          <button ref={rejectButton} type="submit" name="decision" value="REJECT" disabled={pending} className={only ? "btn-danger btn-compact" : "btn-danger-quiet btn-compact sm:ml-auto"}>
+            {working("REJECT") ? "Working…" : "Reject"}
           </button>
         )}
       </div>
       <ResultMessage result={result} />
+      {result?.ok && (next || left === 0) && (
+        <p className="flex flex-wrap items-center gap-2 text-label" data-testid="next-waiting">
+          {next ? (
+            <>
+              <Link href={`/users/requests/${next.id}`} className="btn-primary btn-compact w-auto">
+                Next waiting for you →
+              </Link>
+              <span className="text-ink-muted">
+                {next.requestNo}: {next.title}
+                {typeof left === "number" ? ` · ${left.toLocaleString("en-IN")} still waiting` : ""}
+              </span>
+            </>
+          ) : (
+            <span className="text-success-600">Nothing else is waiting for you. All done.</span>
+          )}
+        </p>
+      )}
+      <ConfirmDialog
+        open={asking}
+        onCancel={() => setAsking(false)}
+        onConfirm={() => {
+          setAsking(false);
+          confirmed.current = true;
+          form.current?.requestSubmit(rejectButton.current ?? undefined);
+        }}
+        title="Reject this request?"
+        body="The requester is told and the request closes. This can't be undone."
+        confirmLabel="Yes, reject"
+        tone="danger"
+      />
     </form>
   );
 }
@@ -161,7 +219,12 @@ export function ResumeForm({ requestId }: { requestId: number }) {
 }
 
 export function WithdrawForm({ requestId }: { requestId: number }) {
-  const { result, pending, onSubmit, confirmBar } = useActionForm(withdrawAction, { confirmTitle: "Withdraw this request?", confirmLabel: "Yes, withdraw", confirmTone: "danger", confirm: "Withdraw this request? It can't be undone; you'd raise a new one instead." });
+  const { result, pending, onSubmit, confirmBar } = useActionForm(withdrawAction, {
+    confirmTitle: "Withdraw this request?",
+    confirmLabel: "Yes, withdraw",
+    confirmTone: "danger",
+    confirm: "Withdraw this request? It can't be undone; you'd raise a new one instead.",
+  });
   return (
     <form onSubmit={onSubmit} className="space-y-2 px-5 py-4">
       <input type="hidden" name="requestId" value={requestId} />
@@ -170,7 +233,7 @@ export function WithdrawForm({ requestId }: { requestId: number }) {
         <Hint text="Closes it now. Anyone still to approve is told it's no longer needed." align="start" />
       </p>
       <input name="reason" maxLength={500} placeholder="Reason (optional)" aria-label="Reason for withdrawing" className="field-input" />
-      <button type="submit" disabled={pending} className="btn-secondary btn-compact text-danger-600">
+      <button type="submit" disabled={pending} className="btn-danger-quiet btn-compact">
         {pending ? "Working…" : "Withdraw"}
       </button>
       <ResultMessage result={result} />
@@ -204,11 +267,19 @@ export function ReopenForm({ requestId }: { requestId: number }) {
 // which goes through the same server action (and checks) as the full form.
 export function MobileDecisionBar({ requestId, taskKey, label, work = false }: { requestId: number; taskKey: string; label: string; work?: boolean }) {
   const [open, setOpen] = useState<DecisionKind | null>(null);
+  // D-234 (Fitts, Figure-ground): floating buttons (Pico Bot) move up while
+  // this bar is on screen, so nothing sits over Reject.
+  useEffect(() => {
+    document.body.dataset.decisionBar = "1";
+    return () => {
+      delete document.body.dataset.decisionBar;
+    };
+  }, []);
   const actions: { kind: DecisionKind; label: string; icon: React.ReactNode; style: string }[] = [
     { kind: "APPROVE", label: work ? "Done" : "Approve", icon: <Check aria-hidden="true" className="h-4 w-4" />, style: "btn-primary" },
     { kind: "REQUEST_CHANGES", label: "Changes", icon: <MessageSquareWarning aria-hidden="true" className="h-4 w-4" />, style: "btn-secondary" },
     { kind: "HOLD", label: "Hold", icon: <PauseCircle aria-hidden="true" className="h-4 w-4" />, style: "btn-secondary" },
-    ...(work ? [] : [{ kind: "REJECT" as const, label: "Reject", icon: <XCircle aria-hidden="true" className="h-4 w-4" />, style: "btn-secondary text-danger-600" }]),
+    ...(work ? [] : [{ kind: "REJECT" as const, label: "Reject", icon: <XCircle aria-hidden="true" className="h-4 w-4" />, style: "btn-danger-quiet" }]),
   ];
   const titles: Record<DecisionKind, string> = { APPROVE: work ? "Mark as done" : "Approve", REQUEST_CHANGES: "Ask for changes", HOLD: "Put on hold", REJECT: "Reject", INFO: "Ask a question" };
   return (

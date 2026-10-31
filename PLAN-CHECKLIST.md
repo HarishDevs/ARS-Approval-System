@@ -17,6 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (31 Oct 2026):** v1.36.0: the 24 UX laws applied (D-234; docs/UX_*). **Owner:** publish v1.36.0 (no migration); decide whether Users & roles should move up the Admin menu (recorded in the UX audit).
 - **Now (31 Oct 2026):** v1.35.0: every UI state audited and completed (D-233; docs/UI_STATE_*_REPORT.md). **Owner:** publish v1.35.0 (no migration beyond v1.34.0's); Super Admin → Settings → General → Maintenance notice to warn everyone of downtime.
 - **Now (31 Oct 2026):** v1.34.0: Classic view like Tally on every screen (D-227); Asana's toolbar look on every list (D-228), collapsible sidebar (D-229), profile with photo (D-230), notification control centre (D-231), universal search (D-232). **Owner:** publish v1.34.0 (migration 202610311200 adds the photo, About me and the in-app choice; photos go in UPLOAD_DIR/profile-photos); switch to Classic (profile menu → View) and try New request: Enter moves field to field, Ctrl+A accepts.
 - **Now (31 Oct 2026):** v1.33.0: Tasks & projects in the sidebar (D-223), Draft task for Myself or Others (D-224), My Tasks Overdue (D-225), the list toolbar everywhere (D-226). **Owner:** publish v1.33.0 (migration adds the Overdue section); try My requests → Filter / Sort / Group.
@@ -401,7 +402,7 @@ Plan: `docs/CHATBOT_IMPLEMENTATION_PLAN.md`; audit: `docs/CHATBOT_ARCHITECTURE_A
 - [x] PB-86 My Tasks Overdue section (31 Oct 2026, D-225)
 - [x] PB-87 The task table's toolbar (Filter, Sort, Group, Options, Search) on the request, queue, information and typed-task lists (31 Oct 2026, D-226)
 - [x] PB-94 UI states audit and completion (offline/slow/no results/unsaved/429/view-only/maintenance/copy) (31 Oct 2026, D-233)
-- [ ] PB-95 The 24 UX laws: audit, implement, four reports (owner, 31 Oct 2026)
+- [x] PB-95 The 24 UX laws: audit, implement, four reports (31 Oct 2026, D-234)
 - [x] PB-90 Collapsible sidebar (Asana's rail) in every space (31 Oct 2026, D-229)
 - [x] PB-91 Profile with all user-master details, photo upload, About me, colleagues' cards (31 Oct 2026, D-230)
 - [x] PB-92 Notification control centre: app/email/WhatsApp per kind, summaries, Do not disturb (31 Oct 2026, D-231)

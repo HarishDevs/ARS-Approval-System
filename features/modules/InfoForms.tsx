@@ -10,6 +10,7 @@ import { ACCEPT_ATTRIBUTE } from "@/server/attachments/files";
 import { INFO_PRIORITIES, INFO_PRIORITY_LABEL, type AckRule, type InfoPriority } from "@/server/modules/settings";
 import type { FieldLookups, FormField } from "@/server/forms/fields";
 import type { InfoAction } from "@/server/modules/info-rules";
+import { UnsavedGuard } from "@/features/ui/UnsavedGuard";
 
 type Option = { id: number; label: string };
 
@@ -43,6 +44,8 @@ export function InfoForm({
   const [everyone, setEveryone] = useState(defaults.everyone);
   return (
     <form onSubmit={onSubmit} encType="multipart/form-data" className="card space-y-5 px-5 py-5" aria-label="Information">
+      {/* D-234 (Active user): leaving with unsaved changes asks first. */}
+      <UnsavedGuard />
       <input type="hidden" name="type" value={typeId} />
       {infoId && <input type="hidden" name="infoId" value={infoId} />}
       {rowVersion !== null && <input type="hidden" name="rowVersion" value={rowVersion} />}

@@ -6,6 +6,7 @@ import { BookmarkPlus, FileStack, Trash2 } from "lucide-react";
 import { deleteTemplateAction, saveTemplateFromRequestAction } from "@/app/users/template-actions";
 import { FieldError, ResultMessage, SubmitButton, guardAction, useActionForm } from "@/features/ui/form";
 import { useToast } from "@/features/ui/Toast";
+import { ConfirmButton } from "@/features/ui/ConfirmButton";
 
 // FN4 / RP-01: start a request from a personal template; save one from an
 // earlier request.
@@ -24,11 +25,12 @@ export function TemplatePicker({ workflowId, templates }: { workflowId: number; 
             <Link href={`/users/new/${workflowId}?template=${template.id}`} className="link">
               {template.name}
             </Link>
-            <button
-              type="button"
-              aria-label={`Delete template ${template.name}`}
-              className="flex h-8 w-8 items-center justify-center rounded-full text-ink-muted hover:text-danger-600"
-              onClick={async () => {
+            <ConfirmButton
+              ariaLabel={`Delete template ${template.name}`}
+              title={`Delete the template “${template.name}”?`}
+              body="Requests already raised from it are not affected."
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-ink-faint hover:bg-danger-50 hover:text-danger-600"
+              onConfirm={async () => {
                 const data = new FormData();
                 data.set("templateId", String(template.id));
                 const result = await guardAction(deleteTemplateAction)(null, data);
@@ -36,8 +38,8 @@ export function TemplatePicker({ workflowId, templates }: { workflowId: number; 
                 router.refresh();
               }}
             >
-              <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
-            </button>
+              <Trash2 aria-hidden="true" className="h-4 w-4" />
+            </ConfirmButton>
           </li>
         ))}
       </ul>

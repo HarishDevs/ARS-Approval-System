@@ -1055,6 +1055,10 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 2. They filter (search, status, type, department, person, waiting on, priority, overdue, dates) and sort by a column title; 50 rows a page.
 3. **Download CSV** gives every matching row (up to 10,000) for Excel; audited. A row number opens the record.
 
+## F-177 Approver's path (v1.36.0, D-234)
+1. Waiting for me → a request → warnings shown above the decision → Approve (or Reject → "Reject this request?" → Yes, reject) → "Next waiting for you →" → the next one.
+2. Requester: a custom request → Raise again like this → the same title, details and approvers → Submit.
+
 ## F-176 When something is slow, offline or blocked (v1.35.0, D-233)
 1. A save still running after 8 s → "Still working… the connection seems slow"; after 30 s it stops waiting and says it may still go through.
 2. Offline → banner; back → "Back online" (or "Connected, but ARS can't be reached" until the server answers).

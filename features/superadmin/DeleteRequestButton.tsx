@@ -22,7 +22,7 @@ export function DeleteRequestButton({ requestId, requestNo, redirectTo }: { requ
 
   if (!open) {
     return (
-      <button type="button" onClick={() => setOpen(true)} className="btn-secondary btn-compact border-danger-200 text-danger-600 hover:bg-danger-50">
+      <button type="button" onClick={() => setOpen(true)} className="btn-danger-quiet btn-compact">
         Delete
       </button>
     );

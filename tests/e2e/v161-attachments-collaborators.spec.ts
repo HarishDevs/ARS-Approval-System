@@ -74,7 +74,7 @@ test("the collaborator finds it under Shared with me, opens it, and can stop fol
   await expect(page.getByRole("heading", { name: "New gearbox quotes" })).toBeVisible();
   await expect(page.getByText("vendor-quote.pdf").first()).toBeVisible();
   // Not an approver: no decision to make.
-  await expect(page.getByRole("button", { name: "Approve", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Needs your action" })).toHaveCount(0);
   const card = page.getByRole("region", { name: "Collaborators" });
   await card.getByRole("button", { name: "Stop following this request" }).click();
   await page.getByRole("alertdialog").getByRole("button", { name: "Stop following" }).click();

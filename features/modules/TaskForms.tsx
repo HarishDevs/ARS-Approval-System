@@ -9,6 +9,7 @@ import { ACCEPT_ATTRIBUTE } from "@/server/attachments/files";
 import { PRIORITY_LABEL, TASK_PRIORITIES, type TaskPriority } from "@/server/modules/settings";
 import type { FieldLookups, FormField } from "@/server/forms/fields";
 import type { TaskAction } from "@/server/modules/task-rules";
+import { UnsavedGuard } from "@/features/ui/UnsavedGuard";
 
 type Option = { id: number; label: string };
 
@@ -42,6 +43,8 @@ export function CreateTaskForm({
   const { result, pending, onSubmit } = useActionForm(createTaskAction);
   return (
     <form onSubmit={onSubmit} className="card space-y-5 px-5 py-5" encType="multipart/form-data" aria-label="New task">
+      {/* D-234 (Active user): leaving with unsaved changes asks first. */}
+      <UnsavedGuard />
       <input type="hidden" name="type" value={typeId} />
       <input type="hidden" name="submission_key" value={submissionKey} />
       <div>
@@ -168,7 +171,7 @@ export function TaskActionButton({
   const label = ACTION_LABEL[action] ?? action;
   if ((needsText || allowFiles) && !open) {
     return (
-      <button type="button" className={danger ? "btn-secondary btn-compact text-danger-600" : action === "COMPLETE" ? "btn-primary btn-compact" : "btn-secondary btn-compact"} onClick={() => setOpen(true)}>
+      <button type="button" className={danger ? "btn-danger-quiet btn-compact" : action === "COMPLETE" ? "btn-primary btn-compact" : "btn-secondary btn-compact"} onClick={() => setOpen(true)}>
         {label}
       </button>
     );

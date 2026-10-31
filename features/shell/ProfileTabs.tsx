@@ -16,7 +16,7 @@ export const PROFILE_TABS = [
 export function ProfileTabs() {
   const pathname = usePathname();
   return (
-    <nav aria-label="Profile" className="-mx-4 mb-6 overflow-x-auto border-b border-line px-4 sm:mx-0 sm:px-0">
+    <nav aria-label="Profile" className="scroll-hint -mx-4 mb-6 overflow-x-auto border-b border-line px-4 sm:mx-0 sm:px-0">
       <ul className="flex min-w-max gap-1">
         {PROFILE_TABS.map((tab) => {
           const active = pathname === tab.href || (tab.href !== "/users/profile" && pathname.startsWith(`${tab.href}/`));

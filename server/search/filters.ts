@@ -23,8 +23,16 @@ const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const pick = <T extends readonly string[]>(list: T, value: unknown): T[number] | null => (typeof value === "string" && (list as readonly string[]).includes(value) ? (value as T[number]) : null);
 const id = (value: unknown) => (typeof value === "string" && /^\d{1,10}$/.test(value) ? Number(value) : null);
 
+// D-234 (Postel): a request number typed loosely ("pur2026123",
+// "PUR 2026 123", "pur/2026/000123") is read as the number it means
+// (PUR-2026-000123). Anything else is searched as typed.
+export function normaliseRecordNumber(text: string): string {
+  const match = /^([A-Za-z]{2,6})[\s\-_/.]*(\d{4})[\s\-_/.]*(\d{1,6})$/.exec(text.trim());
+  return match ? `${match[1]!.toUpperCase()}-${match[2]}-${match[3]!.padStart(6, "0")}` : text;
+}
+
 export function parseSearchFilters(params: Record<string, unknown>): SearchFilters {
-  const q = typeof params.q === "string" ? params.q.replace(/\s+/g, " ").trim().slice(0, 100) : "";
+  const q = normaliseRecordNumber(typeof params.q === "string" ? params.q.replace(/\s+/g, " ").trim().slice(0, 100) : "");
   const from = typeof params.from === "string" && DATE.test(params.from) ? params.from : null;
   const to = typeof params.to === "string" && DATE.test(params.to) ? params.to : null;
   const page = id(params.page);

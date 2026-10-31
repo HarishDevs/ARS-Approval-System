@@ -34,7 +34,8 @@ async function approveAll(page: Page, context: BrowserContext, requestPath: stri
     await page.goto(requestPath);
     await page.getByRole("button", { name: "Approve", exact: true }).click();
     // Done when the decision form has gone (earlier levels already say "Approved by").
-    await expect(page.getByRole("button", { name: "Approve", exact: true })).toHaveCount(0);
+    // D-234: the pressed button says "Working…" while it sends; done is when the panel has gone.
+    await expect(page.getByRole("heading", { name: "Needs your action" })).toHaveCount(0);
   }
 }
 

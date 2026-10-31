@@ -254,7 +254,7 @@ export function ClassicBar({ modules }: { modules: ClassicModule[] }) {
         </span>
       </nav>
       {entry && entry.pages.length > 1 && (
-        <nav aria-label={`${entry.label} pages`} className="flex gap-1 overflow-x-auto px-4 pt-2 sm:px-8" data-testid="classic-tabs">
+        <nav aria-label={`${entry.label} pages`} className="scroll-hint flex gap-1 overflow-x-auto px-4 pt-2 [--scroll-bg:var(--color-surface-white)] sm:px-8" data-testid="classic-tabs">
           {entry.pages.map((item, index) => {
             const current = item.href === page?.href;
             const at = keys[index] ? item.label.toLowerCase().indexOf(keys[index]!) : -1;

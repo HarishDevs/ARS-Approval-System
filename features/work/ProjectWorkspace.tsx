@@ -259,7 +259,7 @@ export function ProjectWorkspace({
     return (
       <div>
         {toolbar}
-        <div className="flex gap-3 overflow-x-auto pb-4" data-testid="board">
+        <div className="scroll-hint flex gap-3 overflow-x-auto pb-4" data-testid="board">
           {sections.map((section) => (
             <section
               key={section.id}
@@ -586,7 +586,7 @@ function TaskMeta({ task, now }: { task: BoardTask; now: Date }) {
 }
 
 function SectionHeader({ section, sections, count, canEdit, plain }: { section: BoardSection; sections: BoardSection[]; count: number; canEdit: boolean; plain?: boolean }) {
-  const { call } = useWorkCall();
+  const { call, pending } = useWorkCall();
   const [name, setName] = useState(section.name);
   const [deleting, setDeleting] = useState(false);
   const [moveTo, setMoveTo] = useState<number>(sections.find((item) => item.id !== section.id)?.id ?? 0);
@@ -623,8 +623,8 @@ function SectionHeader({ section, sections, count, canEdit, plain }: { section: 
                 </option>
               ))}
           </select>
-          <button type="button" className="btn-danger btn-compact" onClick={() => void call(() => sectionAction(section.id, { deleteMoveTo: moveTo }), { success: "Section deleted." })}>
-            Delete section
+          <button type="button" className="btn-danger btn-compact" disabled={pending} aria-busy={pending || undefined} onClick={() => void call(() => sectionAction(section.id, { deleteMoveTo: moveTo }), { success: "Section deleted." })}>
+            {pending ? "Working…" : "Delete section"}
           </button>
           <button type="button" className="btn-secondary btn-compact" onClick={() => setDeleting(false)}>
             Keep it

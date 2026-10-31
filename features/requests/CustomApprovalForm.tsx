@@ -37,6 +37,7 @@ export function CustomApprovalForm({
   policy = DEFAULT_STEP_POLICY,
   lookups = NO_LOOKUPS,
   people = [],
+  defaultApproverId = null,
 }: {
   options: BuilderOptions;
   draft?: DraftInfo;
@@ -46,10 +47,11 @@ export function CustomApprovalForm({
   policy?: StepPolicy;
   lookups?: FieldLookups;
   people?: PersonOption[];
+  defaultApproverId?: number | null; // D-234: the reporting manager, when they may approve
 }) {
   const [stages, setStages] = useState<BuilderStage[]>(
     () =>
-      restoredStages(initial?.fields.spec) ?? [{ kind: "STEP", step: { id: "s1", label: "First approval", approvers: { kind: "PEOPLE", userIds: [] }, ...stepDefaults(policy) } }],
+      restoredStages(initial?.fields.spec) ?? [{ kind: "STEP", step: { id: "s1", label: "First approval", approvers: { kind: "PEOPLE", userIds: defaultApproverId ? [defaultApproverId] : [] }, ...stepDefaults(policy) } }],
   );
   const { result, pending, onSubmit } = useActionForm(submitCustomAction);
   const restoredAt = draft?.savedAt ? new Date(draft.savedAt) : null;

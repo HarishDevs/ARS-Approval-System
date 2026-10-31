@@ -107,7 +107,8 @@ export function checkFieldValue(kind: FieldKind, options: readonly string[], raw
     case "TEXT":
       return value.length <= 500 ? { ok: true, value } : { ok: false, message: "Use 500 characters or fewer." };
     case "NUMBER": {
-      const number = Number(value.replace(/,/g, ""));
+      // D-234 (Postel): "₹ 1,200" and "1 200" are read like the request forms read them.
+      const number = Number(value.replace(/[,\s₹]/g, ""));
       return Number.isFinite(number) && Math.abs(number) < 1e15 ? { ok: true, value: String(number) } : { ok: false, message: "Enter a number." };
     }
     case "SELECT":

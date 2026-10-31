@@ -1,5 +1,12 @@
 # Release notes
 
+## v1.36.0 (31 Oct 2026): easier to use, everywhere (owner)
+- **Approving:** Reject now stands apart and asks before it rejects; after any decision a **Next waiting for you** button takes you to the next one; budget warnings show right above the decision buttons; the approval steps are a connected line with ✓ for done.
+- **Raising:** a new request starts with your reporting manager as approver; a custom request can be **raised again** with the same approvers.
+- **Search** finds a request number typed without dashes or zeros (e.g. "pur 2026 123").
+- **Fewer slips:** deleting a section, saved search, field, template or comment asks first; the task tick is easier to hit.
+- **Small things:** "← Back to …" returns to your list; the Overdue tile opens the overdue items; strips that scroll sideways show there's more.
+
 ## v1.35.0 (31 Oct 2026): every screen state handled (owner)
 - **Slow connection:** a save that takes more than a few seconds says "Still working…", and a thin bar at the top shows a page is on its way.
 - **Offline:** when the connection comes back the app checks ARS answers, then says "Back online".

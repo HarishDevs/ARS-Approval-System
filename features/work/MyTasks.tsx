@@ -11,6 +11,7 @@ import { AddTask, useAutoRefresh } from "@/features/work/ProjectWorkspace";
 import { BulkBar } from "@/features/work/MoreParts";
 import { TaskGrid, type GridView } from "@/features/work/TaskGrid";
 import type { GridConfig, GridTask } from "@/server/work/grid";
+import { ConfirmButton } from "@/features/ui/ConfirmButton";
 
 // D-215: My Tasks. The person's own sections: Recently assigned, Today,
 // Upcoming, Later (built in) and any they add. Drag a task between sections
@@ -151,7 +152,7 @@ export function MyTasks({ sections, tasks, layout, nowIso }: { sections: MySecti
         {live}
       </span>
       {layout === "BOARD" ? (
-        <div className="flex gap-3 overflow-x-auto pb-4" data-testid="my-board">
+        <div className="scroll-hint flex gap-3 overflow-x-auto pb-4" data-testid="my-board">
           {sections.map((section) => (
             <section
               key={section.id}
@@ -225,9 +226,9 @@ function SectionTitle({ section, count }: { section: MySectionRow; count: number
         <Pencil aria-hidden="true" className="h-3.5 w-3.5" />
       </button>
       {!section.system && (
-        <button type="button" aria-label={`Delete section ${section.name}`} onClick={() => void call(() => mySectionAction("DELETE", section.id, ""))} className="rounded p-1 text-ink-faint hover:bg-danger-50 hover:text-danger-600">
-          <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
-        </button>
+        <ConfirmButton ariaLabel={`Delete section ${section.name}`} title={`Delete the section “${section.name}”?`} body="Its tasks move back to their usual sections in My Tasks. The tasks themselves are kept." onConfirm={() => call(() => mySectionAction("DELETE", section.id, ""))} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-ink-faint hover:bg-danger-50 hover:text-danger-600">
+          <Trash2 aria-hidden="true" className="h-4 w-4" />
+        </ConfirmButton>
       )}
     </div>
   );

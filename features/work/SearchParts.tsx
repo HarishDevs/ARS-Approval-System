@@ -4,6 +4,7 @@ import { Star, Trash2 } from "lucide-react";
 import { deleteTaskAction, saveSearchAction, savedSearchCommand } from "@/app/users/work/actions";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import { useWorkCall } from "@/features/work/client";
+import { ConfirmButton } from "@/features/ui/ConfirmButton";
 
 // D-215: saving a task search, and a saved search's star and delete.
 export function SaveSearchForm({ query }: { query: string }) {
@@ -33,9 +34,9 @@ export function SavedSearchButtons({ id, name, starred }: { id: number; name: st
       <button type="button" aria-pressed={starred} aria-label={`${starred ? "Unstar" : "Star"} ${name}`} onClick={() => void call(() => savedSearchCommand(id, "STAR"), { success: false })} className={`rounded p-1 ${starred ? "text-warning-600" : "text-ink-faint hover:text-warning-600"}`}>
         <Star aria-hidden="true" className="h-3.5 w-3.5" fill={starred ? "currentColor" : "none"} />
       </button>
-      <button type="button" aria-label={`Delete ${name}`} onClick={() => void call(() => savedSearchCommand(id, "DELETE"))} className="rounded p-1 text-ink-faint hover:text-danger-600">
-        <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
-      </button>
+      <ConfirmButton ariaLabel={`Delete ${name}`} title={`Delete the saved search “${name}”?`} body="Only the saved search goes; no task changes." onConfirm={() => call(() => savedSearchCommand(id, "DELETE"))} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-ink-faint hover:bg-danger-50 hover:text-danger-600">
+        <Trash2 aria-hidden="true" className="h-4 w-4" />
+      </ConfirmButton>
     </span>
   );
 }

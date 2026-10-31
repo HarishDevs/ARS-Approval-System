@@ -304,7 +304,7 @@ function StageList({
                 <button type="button" onClick={() => move(index, 1)} disabled={index === stages.length - 1} className="btn-secondary btn-compact" aria-label="Move down">
                   ↓
                 </button>
-                <button type="button" onClick={() => onChange(stages.filter((_, i) => i !== index))} className="btn-secondary btn-compact text-danger-600">
+                <button type="button" onClick={() => onChange(stages.filter((_, i) => i !== index))} className="btn-danger-quiet btn-compact">
                   Remove level
                 </button>
               </div>
@@ -577,7 +577,7 @@ function DoaEditor({
                     ↓
                   </button>{" "}
                   {stage.levels.length > 1 && (
-                    <button type="button" onClick={() => onChange({ ...stage, levels: stage.levels.filter((_, i) => i !== index) })} className="btn-secondary btn-compact text-danger-600">
+                    <button type="button" onClick={() => onChange({ ...stage, levels: stage.levels.filter((_, i) => i !== index) })} className="btn-danger-quiet btn-compact">
                       Remove
                     </button>
                   )}

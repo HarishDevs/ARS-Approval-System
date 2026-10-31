@@ -108,8 +108,10 @@ export function TaskCheck({ taskId, done, disabled, label, size = "md" }: { task
         void toggle();
       }}
       data-testid="task-check"
-      className={`flex ${box} shrink-0 items-center justify-center rounded-full border transition ${
-        shown ? "border-success-600 bg-success-600 text-white" : "border-line-strong text-transparent hover:border-success-600 hover:text-success-600"
+      // D-234 (Fitts): the circle stays small, but the area that takes the
+      // click reaches 8px around it (about 36px), like Asana's.
+      className={`relative flex ${box} shrink-0 items-center justify-center rounded-full border transition before:absolute before:-inset-2 before:rounded-full before:content-[''] ${
+        shown ? "border-success-600 bg-success-600 text-on-solid" : "border-line-strong text-transparent hover:border-success-600 hover:text-success-600"
       } disabled:cursor-not-allowed disabled:opacity-60`}
     >
       <Check aria-hidden="true" className="h-3 w-3" strokeWidth={3} />

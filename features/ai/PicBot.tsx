@@ -198,7 +198,7 @@ export function PicBot({ initialModes }: { initialModes: ModeOption[] }) {
           }}
           aria-label={minimised ? "Open Pico Bot (minimised)" : "Open Pico Bot"}
           data-testid="picbot-launcher"
-          className="fixed bottom-20 right-4 z-40 h-14 w-14 overflow-hidden rounded-full border border-line bg-white shadow-lg transition-transform hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 motion-reduce:transition-none md:bottom-6 md:right-6"
+          className="picbot-launcher fixed bottom-20 right-4 z-40 h-14 w-14 overflow-hidden rounded-full border border-line bg-surface shadow-lg transition-transform hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 motion-reduce:transition-none md:bottom-6 md:right-6"
           style={{ marginBottom: "env(safe-area-inset-bottom)" }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element -- small static logo */}

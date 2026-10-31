@@ -52,7 +52,7 @@ export default async function UsersHome({ searchParams }: { searchParams: Promis
   const completed = mine.filter((item) => (item.status === "APPROVED" || item.status === "REJECTED") && item.closedAt && item.closedAt.getTime() >= since).slice(0, 5);
   const tiles = [
     { label: "Waiting for me", value: waiting, href: "/users/queue", alert: waiting > 0 },
-    { label: "Overdue for me", value: attention.overdue, href: "/users/queue", alert: attention.overdue > 0, danger: true },
+    { label: "Overdue for me", value: attention.overdue, href: "/users/queue?show=overdue", alert: attention.overdue > 0, danger: true },
     { label: "My open requests", value: open.length, href: "/users/requests?status=IN_PROGRESS", alert: false },
     { label: "Changes asked of me", value: returned.length, href: "/users/requests?status=CHANGES_REQUIRED", alert: returned.length > 0 },
   ];

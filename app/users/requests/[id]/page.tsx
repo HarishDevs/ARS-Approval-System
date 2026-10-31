@@ -90,12 +90,14 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
     meta: `${file.fieldLabel ? `${file.fieldLabel} · ` : ""}${file.uploaderName} · ${formatIndiaTime(file.createdAt)}${view.round > 1 ? ` · round ${file.round}` : ""}`,
   }));
 
+  const backTo = view.myTasks.length > 0 ? { href: "/users/queue", label: "Waiting for me" } : view.requesterId === user.id ? { href: "/users/requests", label: "My requests" } : { href: "/users/search", label: "Search" };
   return (
     <>
+      {/* D-234 (Jakob): ← Back goes to the list the breadcrumb names. */}
       <Breadcrumbs
         items={[
           { href: "/users", label: "Overview" },
-          view.myTasks.length > 0 ? { href: "/users/queue", label: "Waiting for me" } : view.requesterId === user.id ? { href: "/users/requests", label: "My requests" } : { href: "/users/search", label: "Search" },
+          backTo,
           { label: view.requestNo },
         ]}
       />
@@ -107,8 +109,8 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
           <a href={`/api/requests/${view.id}/summary.pdf`} className="link text-label" download>
             Download PDF
           </a>
-          <Link href="/users" className="link text-label">
-            ← Back
+          <Link href={backTo.href} className="link text-label">
+            ← Back to {backTo.label}
           </Link>
         </div>
       </PageHeader>
@@ -150,6 +152,9 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
               <AnswerQuestionForm requestId={view.id} question={view.question.text} byName={view.question.byName} />
             </section>
           )}
+          {/* D-234 (Banner blindness, Proximity): an approver sees the budget
+              and submission warnings right above their decision, not below it. */}
+          {view.myTasks.length > 0 && <SubmissionChecks check={view.submissionCheck} department={view.budgetDepartment} />}
           {(view.myTasks.length > 0 || view.canResume) && (
             <section className="card divide-y divide-line border-primary-600">
               <h2 className="px-5 py-4 font-semibold">Needs your action</h2>
@@ -242,7 +247,7 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
               )}
             </section>
           )}
-          <SubmissionChecks check={view.submissionCheck} department={view.budgetDepartment} />
+          {view.myTasks.length === 0 && <SubmissionChecks check={view.submissionCheck} department={view.budgetDepartment} />}
           <section className="card px-5 py-4" aria-labelledby="levels">
             <h2 id="levels" className="mb-3 font-semibold">
               Approval levels
@@ -360,6 +365,14 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
               Raise again like this
             </Link>
             <SaveTemplateForm requestId={view.id} />
+          </section>
+        )}
+        {/* D-234: a custom request can be raised again too (approvers included). */}
+        {view.requesterId === user.id && view.isCustom && (
+          <section className="card space-y-2 px-5 py-4" aria-label="Reuse this request">
+            <Link href={`/users/custom?from=${view.id}`} className="link text-label">
+              Raise again like this
+            </Link>
           </section>
         )}
         <SectionBoundary label="Advice">

@@ -49,7 +49,7 @@ export interface PanelData {
 const OPEN = ["OPEN", "IN_PROGRESS", "BLOCKED"];
 
 export function TaskWorkPanel({ data }: { data: PanelData }) {
-  const { call } = useWorkCall();
+  const { call, pending } = useWorkCall();
   const now = new Date(data.nowIso);
   const [addProject, setAddProject] = useState<number | "">("");
   const paneLink = usePaneLink();
@@ -60,8 +60,8 @@ export function TaskWorkPanel({ data }: { data: PanelData }) {
     return (
       <section className="card space-y-2 px-5 py-4" aria-label="Deleted">
         <p>This task was deleted. It can be restored for 30 days after it was deleted.</p>
-        <button type="button" className="btn-primary btn-compact" onClick={() => void call(() => deleteTaskAction(data.taskId, true))}>
-          Restore task
+        <button type="button" className="btn-primary btn-compact" disabled={pending} aria-busy={pending || undefined} onClick={() => void call(() => deleteTaskAction(data.taskId, true))}>
+          {pending ? "Working…" : "Restore task"}
         </button>
       </section>
     );
@@ -401,7 +401,7 @@ export function TaskWorkSide({ data }: { data: PanelData }) {
               </button>
             </span>
           ) : (
-            <button type="button" className="btn-secondary btn-compact text-danger-600" onClick={() => setConfirming(true)}>
+            <button type="button" className="btn-danger-quiet btn-compact" onClick={() => setConfirming(true)}>
               Delete task
             </button>
           )}

@@ -114,8 +114,9 @@ export function checkManager(userId: number | null, managerId: number | null, ma
 }
 
 // Digits only with country code. A 10-digit Indian mobile number gets 91.
+// D-234 (Postel): the trunk 0 people often type first (09876543210) is dropped.
 export function normaliseWhatsAppNumber(raw: string): string | null {
-  const digits = raw.replace(/\D/g, "");
+  const digits = raw.replace(/\D/g, "").replace(/^0(?=[6-9]\d{9}$)/, "");
   if (digits === "") return null;
   if (digits.length === 10 && /^[6-9]/.test(digits)) return `91${digits}`;
   return digits;
