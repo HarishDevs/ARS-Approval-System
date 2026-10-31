@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ExternalLink, X } from "lucide-react";
 import { Badge } from "@/features/ui/Display";
 import { SafeText } from "@/features/ui/SafeText";
+import { RichText } from "@/features/work/RichText";
 import { CopyLinkButton, TaskCompleteButton } from "@/features/work/client";
 import { TaskShareButton } from "@/features/work/ShareDialogs";
 import { TaskWorkPanel, TaskWorkSide } from "@/features/work/TaskWorkPanel";
@@ -105,11 +106,7 @@ export async function TaskPane({ taskId, user, closeHref }: { taskId: number; us
             ))}
           </p>
         )}
-        {task.description && (
-          <p className="whitespace-pre-wrap rounded-md bg-surface-muted p-3 text-body">
-            <SafeText text={task.description} />
-          </p>
-        )}
+        {task.description && <RichText text={task.description} className="rounded-md bg-surface-muted p-3 text-body" />}
       </div>
       <div className="space-y-4 px-4">
         <TaskWorkPanel data={view.panel} />

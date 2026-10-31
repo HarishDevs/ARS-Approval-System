@@ -8,6 +8,7 @@ import { hasModule } from "@/server/modules/modules";
 import { listVisibleProjects } from "@/lib/db/repositories/work.repository";
 import { peopleOptions } from "@/server/work/page-context";
 import { workViewer } from "@/server/work/task-access";
+import { chatAccess } from "@/server/ai/policy";
 
 export const dynamic = "force-dynamic";
 
@@ -20,11 +21,18 @@ export default async function UsersLayout({ children }: { children: React.ReactN
           .then(([projects, people]) => ({ projects: projects.slice(0, 200).map((project) => ({ id: project.id, name: project.name, color: project.color })), people }))
           .catch(() => null)
       : null;
+  // D-238: the Draft task's sparkle shows only for people Pico Bot answers.
+  const ai =
+    creator && (await featureOn("ai", user))
+      ? await chatAccess(user)
+          .then((access) => !access.policy.emergencyStop && access.modes.length > 0)
+          .catch(() => false)
+      : false;
   return (
     <AppShell area="users" user={user} nav={await usersNav(user)}>
       {children}
       <HolidayPrompt />
-      {creator && <TaskCreator projects={creator.projects} people={creator.people} meId={user.id} />}
+      {creator && <TaskCreator projects={creator.projects} people={creator.people} meId={user.id} ai={ai} />}
     </AppShell>
   );
 }

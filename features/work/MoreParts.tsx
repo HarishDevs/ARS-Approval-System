@@ -1,9 +1,8 @@
 "use client";
 
-import { Archive, ArchiveRestore, Bookmark, BookmarkCheck, Mail, MailOpen, Trash2 } from "lucide-react";
-import Link from "next/link";
+import { Trash2 } from "lucide-react";
 import { useState } from "react";
-import { addFieldAction, bulkAction, digestChoiceAction, fieldValueAction, fromTemplateAction, inboxAction, recurrenceAction, removeFieldAction, saveTemplateAction } from "@/app/users/work/actions";
+import { addFieldAction, bulkAction, digestChoiceAction, fieldValueAction, fromTemplateAction, recurrenceAction, removeFieldAction, saveTemplateAction } from "@/app/users/work/actions";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import { useWorkCall } from "@/features/work/client";
 import { FIELD_KIND_LABEL, FIELD_KINDS, recurrenceLabel, RECURRENCE_KINDS, type Recurrence } from "@/server/work/more-rules";
@@ -45,7 +44,15 @@ export function RepeatEditor({ taskId, current, canChange }: { taskId: number; c
         <div className="space-y-2 rounded-md border border-line p-3">
           <div className="flex flex-wrap items-center gap-2 text-label">
             Every
-            <input type="number" min={1} max={365} value={every} onChange={(event) => setEvery(Math.max(1, Math.min(365, Number(event.target.value) || 1)))} aria-label="Every how many" className="field-input h-8 w-20 py-0" />
+            <input
+              type="number"
+              min={1}
+              max={365}
+              value={every}
+              onChange={(event) => setEvery(Math.max(1, Math.min(365, Number(event.target.value) || 1)))}
+              aria-label="Every how many"
+              className="field-input h-8 w-20 py-0"
+            />
             <select value={kind} onChange={(event) => setKind(event.target.value as Recurrence["kind"])} aria-label="Repeat unit" className="field-input h-8 w-auto py-0">
               {RECURRENCE_KINDS.map((item) => (
                 <option key={item} value={item}>
@@ -134,9 +141,20 @@ export function FieldsManager({ projectId, fields }: { projectId: number; fields
         {fields.map((field) => (
           <li key={field.id} className="flex items-center gap-3 py-2 text-label">
             <span className="flex-1">
-              <span className="font-medium">{field.name}</span> <span className="text-ink-muted">· {FIELD_KIND_LABEL[field.kind]}{field.options.length ? `: ${field.options.join(", ")}` : ""}</span>
+              <span className="font-medium">{field.name}</span>{" "}
+              <span className="text-ink-muted">
+                · {FIELD_KIND_LABEL[field.kind]}
+                {field.options.length ? `: ${field.options.join(", ")}` : ""}
+              </span>
             </span>
-            <ConfirmButton ariaLabel={`Remove field ${field.name}`} title={`Remove the field “${field.name}”?`} body="The column and its values on every task in this project are removed. This can't be undone." confirmLabel="Remove" onConfirm={() => call(() => removeFieldAction(field.id))} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-ink-faint hover:bg-danger-50 hover:text-danger-600">
+            <ConfirmButton
+              ariaLabel={`Remove field ${field.name}`}
+              title={`Remove the field “${field.name}”?`}
+              body="The column and its values on every task in this project are removed. This can't be undone."
+              confirmLabel="Remove"
+              onConfirm={() => call(() => removeFieldAction(field.id))}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-ink-faint hover:bg-danger-50 hover:text-danger-600"
+            >
               <Trash2 aria-hidden="true" className="h-4 w-4" />
             </ConfirmButton>
           </li>
@@ -281,19 +299,7 @@ export function FromTemplateForm({ templates, copyFrom, departments, defaultName
 }
 
 // ---- bulk actions ----------------------------------------------------------------------
-export function BulkBar({
-  ids,
-  clear,
-  people,
-  sections,
-  projectId,
-}: {
-  ids: number[];
-  clear: () => void;
-  people?: { id: number; label: string }[];
-  sections?: { id: number; name: string }[];
-  projectId?: number;
-}) {
+export function BulkBar({ ids, clear, people, sections, projectId }: { ids: number[]; clear: () => void; people?: { id: number; label: string }[]; sections?: { id: number; name: string }[]; projectId?: number }) {
   const { call, pending } = useWorkCall();
   const [op, setOp] = useState("COMPLETE");
   const [value, setValue] = useState("");
@@ -321,10 +327,15 @@ export function BulkBar({
   return (
     <div role="region" aria-label="Selected tasks" className="sticky bottom-3 z-20 mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-primary-200 bg-raised px-3 py-2 shadow-lg" data-testid="bulk-bar">
       <span className="text-label font-semibold">{ids.length} selected</span>
-      <select aria-label="Do" value={op} onChange={(event) => {
+      <select
+        aria-label="Do"
+        value={op}
+        onChange={(event) => {
           setOp(event.target.value);
           setValue("");
-        }} className="field-input h-8 w-auto py-0 text-label">
+        }}
+        className="field-input h-8 w-auto py-0 text-label"
+      >
         <option value="COMPLETE">Complete</option>
         {people && <option value="ASSIGN">Assign to</option>}
         <option value="DUE">Set due date</option>
@@ -371,90 +382,6 @@ export function BulkBar({
         Clear
       </button>
     </div>
-  );
-}
-
-// ---- inbox -----------------------------------------------------------------------------
-export interface InboxRow {
-  id: number;
-  title: string;
-  message: string;
-  link: string | null;
-  when: string;
-  day: string; // Today, Yesterday, a weekday or a date (catalog S-03 dividers)
-  read: boolean;
-  archived: boolean;
-  bookmarked: boolean;
-}
-export function InboxList({ items, tab }: { items: InboxRow[]; tab: string }) {
-  const { call } = useWorkCall();
-  const [selected, setSelected] = useState<number[]>([]);
-  const act = (ids: number[] | null, command: string) => void call(() => inboxAction(ids, command), { success: false }).then(() => setSelected([]));
-  return (
-    <div className="space-y-2">
-      <div className="flex flex-wrap items-center gap-2" role="toolbar" aria-label="Inbox actions">
-        {selected.length > 0 ? (
-          <>
-            <span className="text-label">{selected.length} selected</span>
-            <button type="button" className="btn-secondary btn-compact" onClick={() => act(selected, "READ")}>
-              Mark read
-            </button>
-            <button type="button" className="btn-secondary btn-compact" onClick={() => act(selected, tab === "archive" ? "UNARCHIVE" : "ARCHIVE")}>
-              {tab === "archive" ? "Move back to Activity" : "Archive"}
-            </button>
-          </>
-        ) : (
-          tab === "activity" &&
-          items.length > 0 && (
-            <button type="button" className="btn-secondary btn-compact" onClick={() => act(null, "ARCHIVE")}>
-              Archive all
-            </button>
-          )
-        )}
-      </div>
-      <ul className="space-y-1" data-testid="inbox">
-        {items.map((item, index) => (
-          <li key={item.id}>
-            {(index === 0 || items[index - 1]!.day !== item.day) && <p className="mb-1 mt-4 border-b border-line pb-1 text-caption font-semibold uppercase tracking-wide text-ink-faint">{item.day}</p>}
-            <div className={`flex items-start gap-3 rounded-lg border border-line px-4 py-3 ${item.read ? "bg-surface" : "bg-primary-50/40"}`}>
-            <input type="checkbox" aria-label={`Select: ${item.title}`} checked={selected.includes(item.id)} onChange={(event) => setSelected((value) => (event.target.checked ? [...value, item.id] : value.filter((one) => one !== item.id)))} className="mt-1" />
-            <div className="min-w-0 flex-1">
-              <p className={`text-label ${item.read ? "" : "font-semibold"}`}>
-                {item.link ? (
-                  <Link href={item.link.replace(/^https?:\/\/[^/]+/, "")} onClick={() => !item.read && void inboxAction([item.id], "READ")} className="hover:underline">
-                    {item.title}
-                  </Link>
-                ) : (
-                  item.title
-                )}
-              </p>
-              <p className="whitespace-pre-wrap text-caption text-ink-muted">{item.message}</p>
-              <p className="text-caption text-ink-faint">{item.when}</p>
-            </div>
-            <span className="flex shrink-0 gap-1">
-              <IconButton label={item.read ? "Mark unread" : "Mark read"} onClick={() => act([item.id], item.read ? "UNREAD" : "READ")}>
-                {item.read ? <Mail className="h-4 w-4" /> : <MailOpen className="h-4 w-4" />}
-              </IconButton>
-              <IconButton label={item.bookmarked ? "Remove bookmark" : "Bookmark"} onClick={() => act([item.id], item.bookmarked ? "UNBOOKMARK" : "BOOKMARK")}>
-                {item.bookmarked ? <BookmarkCheck className="h-4 w-4 text-primary-700" /> : <Bookmark className="h-4 w-4" />}
-              </IconButton>
-              <IconButton label={item.archived ? "Move back to Activity" : "Archive"} onClick={() => act([item.id], item.archived ? "UNARCHIVE" : "ARCHIVE")}>
-                {item.archived ? <ArchiveRestore className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
-              </IconButton>
-            </span>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function IconButton({ label, onClick, children }: { label: string; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button type="button" aria-label={label} title={label} onClick={onClick} className="rounded p-1.5 text-ink-muted hover:bg-surface-muted hover:text-ink">
-      {children}
-    </button>
   );
 }
 

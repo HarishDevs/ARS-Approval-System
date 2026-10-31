@@ -421,20 +421,6 @@ export async function bulkAction(ids: number[], op: string, value: { assigneeId?
   );
 }
 
-export async function inboxAction(ids: number[] | null, command: string): Promise<ActionResult> {
-  const me = await actor();
-  if (!me || !repo.INBOX_COMMANDS.includes(command)) return NOT_FOUND;
-  const clean = ids === null ? null : (Array.isArray(ids) ? ids : []).map((item) => id(item)).filter((item): item is number => item !== null).slice(0, 500);
-  try {
-    const changed = await repo.setInbox(me.id, clean, command);
-    revalidatePath("/users/work/inbox");
-    return { ok: true, message: changed ? "Done." : "Nothing to change." };
-  } catch (error) {
-    logError("inboxAction failed", error);
-    return { ok: false, message: "Couldn't do that. Please try again." };
-  }
-}
-
 export async function digestChoiceAction(on: boolean): Promise<ActionResult> {
   const me = await actor();
   if (!me) return NOT_FOUND;

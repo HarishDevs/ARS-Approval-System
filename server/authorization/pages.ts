@@ -29,7 +29,7 @@ const exact = (path: string) => new RegExp(`^${path.replace(/[/]/g, "\\/")}\\/?$
 const under = (path: string) => new RegExp(`^${path.replace(/[/]/g, "\\/")}(\\/.*)?$`);
 
 export const PAGES: readonly PageDef[] = [
-  { key: "users.overview", area: "users", label: "Overview", what: "The first page: what needs you, your requests, drafts.", paths: [exact("/users")], neverHidden: true },
+  { key: "users.overview", area: "users", label: "Home", what: "The first page: what needs you, your requests, drafts, and (with Tasks) your tasks and projects.", paths: [exact("/users")], neverHidden: true },
   { key: "users.menu", area: "users", label: "Classic view menus", what: "The module menus of the Classic view (D-210).", paths: [under("/users/menu")], neverHidden: true },
   { key: "users.queue", module: "APPROVAL", area: "users", label: "Waiting for me", what: "Approvals and work waiting for the person; bulk approval.", paths: [under("/users/queue")] },
   { key: "users.requests", module: "APPROVAL", area: "users", label: "My requests", what: "The requests the person raised.", paths: [exact("/users/requests")] },
@@ -58,7 +58,7 @@ export const PAGES: readonly PageDef[] = [
   { key: "users.ai_assistant", module: "AI", area: "users", label: "AI: assistant", what: "Asking the AI questions about the business.", paths: [under("/users/ai")], apis: [/^\/api\/ai\//] },
   { key: "users.help", area: "users", label: "Help", what: "How-tos and status meanings.", paths: [under("/users/help")] },
   { key: "users.profile", area: "users", label: "Profile", what: "Personal details and theme.", paths: [under("/users/profile")] },
-  { key: "users.notifications", area: "users", label: "Notifications", what: "The inbox and notification settings.", paths: [under("/users/notifications")] },
+  { key: "users.notifications", area: "users", label: "Inbox and notifications", what: "The Inbox (every notification, bookmarks, archive) and the notification settings.", paths: [under("/users/inbox"), under("/users/notifications")] },
   { key: "users.delegation", area: "users", label: "Out of office", what: "Naming a delegate while away.", paths: [under("/users/delegation")] },
   // SEC-17 (v1.10.0): "Sign-in & devices" is no longer on this list. It is a
   // person's own security control (signing out a lost device), so a page

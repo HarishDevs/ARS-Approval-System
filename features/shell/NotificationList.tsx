@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { CheckCheck } from "lucide-react";
-import { markAllReadAction, markReadAction, markUnreadAction } from "@/app/users/collab-actions";
+import { Archive, ArchiveRestore, Bookmark, BookmarkCheck, CheckCheck } from "lucide-react";
+import { inboxStateAction, markAllReadAction, markReadAction, markUnreadAction } from "@/app/users/collab-actions";
 import { guardAction } from "@/features/ui/form";
 import { useToast } from "@/features/ui/Toast";
 import { SafeText } from "@/features/ui/SafeText";
@@ -20,6 +20,8 @@ export interface InboxRow {
   read: boolean;
   path: string | null;
   type?: string; // v1.9.0: Approval / Task / Information / System
+  bookmarked?: boolean; // D-237: the one Inbox
+  archived?: boolean;
 }
 
 const ids = (list: readonly number[]) => {
@@ -28,7 +30,7 @@ const ids = (list: readonly number[]) => {
   return data;
 };
 
-export function NotificationList({ items, showMarkAll }: { items: InboxRow[]; showMarkAll: boolean }) {
+export function NotificationList({ items, showMarkAll, manage = false }: { items: InboxRow[]; showMarkAll: boolean; manage?: boolean }) {
   const [readNow, setReadNow] = useState<Set<number>>(new Set());
   const [busy, start] = useTransition();
   const toast = useToast();
@@ -79,6 +81,20 @@ export function NotificationList({ items, showMarkAll }: { items: InboxRow[]; sh
     });
   };
 
+  // D-237: bookmark or archive one (the page refreshes with the server's answer).
+  const setState = (item: InboxRow, command: string, done: string) =>
+    start(async () => {
+      const data = ids([item.id]);
+      data.set("command", command);
+      const result = await guardAction(inboxStateAction)(null, data);
+      if (!result.ok) {
+        toast({ tone: "error", title: "Not changed", body: result.message });
+        return;
+      }
+      router.refresh();
+      toast({ tone: "success", title: done });
+    });
+
   return (
     <>
       {showMarkAll && unread.length > 0 && (
@@ -110,20 +126,46 @@ export function NotificationList({ items, showMarkAll }: { items: InboxRow[]; sh
             </>
           );
           return (
-            <li key={item.id} className={read ? "" : "bg-primary-50/40"}>
-              {item.path ? (
-                <Link href={item.path} onClick={() => open(item)} className="block px-5 py-3 hover:bg-surface-muted">
-                  {body}
-                </Link>
-              ) : (
-                <div className="flex items-start justify-between gap-3 px-5 py-3">
-                  <div>{body}</div>
-                  {!read && (
-                    <button type="button" className="link shrink-0 text-label" onClick={() => open(item)}>
-                      Mark as read
-                    </button>
-                  )}
-                </div>
+            <li key={item.id} className={`flex items-start ${read ? "" : "bg-primary-50/40"}`}>
+              <div className="min-w-0 flex-1">
+                {item.path ? (
+                  <Link href={item.path} onClick={() => open(item)} className="block px-5 py-3 hover:bg-surface-muted">
+                    {body}
+                  </Link>
+                ) : (
+                  <div className="flex items-start justify-between gap-3 px-5 py-3">
+                    <div>{body}</div>
+                    {!read && (
+                      <button type="button" className="link shrink-0 text-label" onClick={() => open(item)}>
+                        Mark as read
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+              {manage && (
+                <span className="flex shrink-0 gap-1 px-3 py-3">
+                  <button
+                    type="button"
+                    disabled={busy}
+                    aria-label={item.bookmarked ? `Remove bookmark: ${item.title}` : `Bookmark: ${item.title}`}
+                    title={item.bookmarked ? "Remove bookmark" : "Bookmark"}
+                    onClick={() => setState(item, item.bookmarked ? "UNBOOKMARK" : "BOOKMARK", item.bookmarked ? "Bookmark removed" : "Bookmarked")}
+                    className="grid h-8 w-8 place-items-center rounded text-ink-muted hover:bg-surface-muted hover:text-ink"
+                  >
+                    {item.bookmarked ? <BookmarkCheck aria-hidden="true" className="h-4 w-4 text-primary-700" /> : <Bookmark aria-hidden="true" className="h-4 w-4" />}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    aria-label={item.archived ? `Move back to the inbox: ${item.title}` : `Archive: ${item.title}`}
+                    title={item.archived ? "Move back to the inbox" : "Archive"}
+                    onClick={() => setState(item, item.archived ? "UNARCHIVE" : "ARCHIVE", item.archived ? "Moved back to the inbox" : "Archived")}
+                    className="grid h-8 w-8 place-items-center rounded text-ink-muted hover:bg-surface-muted hover:text-ink"
+                  >
+                    {item.archived ? <ArchiveRestore aria-hidden="true" className="h-4 w-4" /> : <Archive aria-hidden="true" className="h-4 w-4" />}
+                  </button>
+                </span>
               )}
             </li>
           );

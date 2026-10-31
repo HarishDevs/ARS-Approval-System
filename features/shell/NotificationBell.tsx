@@ -9,7 +9,7 @@ import { Spinner } from "@/features/ui/Spinner";
 // v1.9.0 (owner, D-146): the bell opens a dropdown with the latest 10
 // notifications (newest first) and filters All / Approvals / Tasks /
 // Information. Opening one marks only that one read and opens its record;
-// "Read more" opens the Notifications page with the same filter and marks
+// "Read more" opens the Inbox with the same filter and marks
 // nothing. Data comes from /api/me/notifications (the signed-in person only).
 type Category = "APPROVAL" | "TASK" | "INFORMATION" | "SYSTEM";
 interface Item {
@@ -106,7 +106,7 @@ export function NotificationBell({ initialUnread }: { initialUnread: number }) {
       await post({ action: "read", ids: [item.id] }).catch(() => undefined);
     }
     setOpen(false);
-    router.push(item.path ?? "/users/notifications");
+    router.push(item.path ?? "/users/inbox");
     router.refresh();
   }
 
@@ -120,7 +120,7 @@ export function NotificationBell({ initialUnread }: { initialUnread: number }) {
   }
 
   const total = unread.ALL ?? 0;
-  const readMore = `/users/notifications${filter === "ALL" ? "" : `?type=${FILTERS.find((entry) => entry.key === filter)!.slug}`}`;
+  const readMore = `/users/inbox${filter === "ALL" ? "" : `?type=${FILTERS.find((entry) => entry.key === filter)!.slug}`}`;
   return (
     <div className="relative">
       <button

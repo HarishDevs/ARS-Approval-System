@@ -96,7 +96,7 @@ test("RA-01 phones get the bottom bar with the real waiting count", async ({ pag
   await page.goto("/users");
   const bar = page.getByRole("navigation", { name: "Quick" });
   await expect(bar).toBeVisible();
-  await expect(bar.getByRole("link", { name: /Overview/ })).toHaveAttribute("aria-current", "page");
+  await expect(bar.getByRole("link", { name: /Home/ })).toHaveAttribute("aria-current", "page");
   await bar.getByRole("link", { name: /Waiting/ }).click();
   await expect(page).toHaveURL(/\/users\/queue$/);
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();

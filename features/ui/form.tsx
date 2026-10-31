@@ -135,6 +135,9 @@ export interface ConfirmOptions {
   confirmLabel?: string; // the action, named (default "Yes, continue")
   confirmTone?: "primary" | "danger";
   timeoutMs?: number; // D-201: Pico Bot answers take longer than a save
+  // Where to go once it is saved, instead of refreshing this page. Done here,
+  // not in the caller's effect: the caller's form may be gone after the save.
+  successHref?: string;
 }
 
 export function useActionForm(action: Action, options: ConfirmOptions = {}) {
@@ -158,7 +161,8 @@ export function useActionForm(action: Action, options: ConfirmOptions = {}) {
         // The action's revalidatePath answer doesn't always repaint a page
         // that streams behind a loading skeleton (v1.6.0 testing); ask for
         // the page again so what's shown always matches the server.
-        if (next.ok) router.refresh();
+        if (next.ok && options.successHref) router.replace(options.successHref, { scroll: false });
+        else if (next.ok) router.refresh();
       })
       .finally(() => {
         busy.current = false;

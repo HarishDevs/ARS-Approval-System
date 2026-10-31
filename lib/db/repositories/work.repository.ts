@@ -1027,12 +1027,14 @@ const INBOX_SET: Record<string, string> = {
   UNBOOKMARK: "bookmarked_at = NULL",
 };
 export const INBOX_COMMANDS = Object.keys(INBOX_SET);
-// Only the person's own task notices change; `ids` null = all of them (not archived).
-export async function setInbox(userId: number, ids: readonly number[] | null, command: string, db: Queryable = getDbPool()): Promise<number> {
+// Only the person's own notices change; `ids` null = all of them (not
+// archived), only the task ones unless `everything` (D-237: the one Inbox).
+export async function setInbox(userId: number, ids: readonly number[] | null, command: string, db: Queryable = getDbPool(), everything = false): Promise<number> {
   const set = INBOX_SET[command];
   if (!set) return 0;
+  const scope = everything ? "" : `AND ${TASK_NOTICE}`;
   const [result] = await db.query<ResultSetHeader>(
-    `UPDATE notifications n SET ${set} WHERE n.user_id = ? AND ${TASK_NOTICE} ${ids === null ? "AND n.archived_at IS NULL" : "AND n.id IN (?)"}`,
+    `UPDATE notifications n SET ${set} WHERE n.user_id = ? ${scope} ${ids === null ? "AND n.archived_at IS NULL" : "AND n.id IN (?)"}`,
     ids === null ? [userId] : [userId, ids.length ? [...ids] : [0]],
   );
   return result.affectedRows;

@@ -15,7 +15,9 @@ import { Hint } from "@/features/ui/Hint";
 export type DecisionKind = "APPROVE" | "REQUEST_CHANGES" | "HOLD" | "REJECT" | "INFO";
 
 export function DecisionForm({ requestId, taskKey, label, work = false, only, idPrefix = "comment" }: { requestId: number; taskKey: string; label: string; work?: boolean; only?: DecisionKind; idPrefix?: string }) {
-  const { result, pending, onSubmit } = useActionForm(decideAction);
+  // D-234 (Peak-end): once the decision is saved, the page itself says what is
+  // next (the decision panel goes away as the page refreshes).
+  const { result, pending, onSubmit } = useActionForm(decideAction, { successHref: `/users/requests/${requestId}?decided=1` });
   const shows = (kind: DecisionKind) => !only || only === kind;
   // D-234 (Fitts, Von Restorff): Reject is apart from the rest, in the
   // danger style, and asks first (it can't be undone). An empty reason goes
@@ -27,12 +29,6 @@ export function DecisionForm({ requestId, taskKey, label, work = false, only, id
   // D-234 (Doherty): the pressed button says "Working…".
   const [pressed, setPressed] = useState<DecisionKind | null>(null);
   const working = (kind: DecisionKind) => pending && (only === kind || pressed === kind);
-  // D-234 (Peak-end): once the decision is saved, the page itself says what is
-  // next (the decision panel goes away as the page refreshes).
-  const router = useRouter();
-  useEffect(() => {
-    if (result?.ok) router.replace(`/users/requests/${requestId}?decided=1`, { scroll: false });
-  }, [result, router, requestId]);
   return (
     <form
       ref={form}

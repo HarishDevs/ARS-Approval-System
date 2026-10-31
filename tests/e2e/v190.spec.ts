@@ -147,8 +147,8 @@ test("the bell shows at most 10, newest first; Read more opens the matching view
   await expect(items.first()).toContainText("Information");
   const [before] = await sql<RowDataPacket[]>("SELECT COUNT(*) AS n FROM notifications WHERE user_id = ? AND read_at IS NULL", [staff]);
   await page.getByRole("link", { name: "Read more" }).click();
-  await expect(page).toHaveURL(/\/users\/notifications\?type=information/);
-  await expect(page.getByRole("heading", { level: 1, name: "Information notifications" })).toBeVisible();
+  await expect(page).toHaveURL(/\/users\/inbox\?type=information/);
+  await expect(page.getByRole("heading", { level: 1, name: "Inbox: Information" })).toBeVisible();
   const [after] = await sql<RowDataPacket[]>("SELECT COUNT(*) AS n FROM notifications WHERE user_id = ? AND read_at IS NULL", [staff]);
   expect(Number(after!.n)).toBe(Number(before!.n));
   await page.getByTestId("notification-views").getByRole("link", { name: /Tasks/ }).click();
@@ -178,7 +178,7 @@ test("the sidebar stays put and scrolls only when its entries don't fit", async 
   await expect(page.locator("aside nav").getByRole("link", { name: "New information" })).toBeInViewport();
 });
 
-test("the user sidebar: Overview, collapsible My Approvals, Tasks & projects, Information, then Search, Calendar, Analytics", async ({ page, context }) => {
+test("the user sidebar: Home, Inbox, collapsible My Approvals, Tasks & projects, Information, then Calendar, Analytics", async ({ page, context }) => {
   await as(context, "E2E_REQ");
   await page.goto("/users");
   const nav = page.locator("aside nav");
@@ -186,7 +186,7 @@ test("the user sidebar: Overview, collapsible My Approvals, Tasks & projects, In
   const top = await nav.evaluate((element) =>
     Array.from(element.children).map((child) => (child.querySelector(":scope > button") ?? child).textContent?.trim().replace(/\s+/g, " ") ?? ""),
   );
-  expect(top.map((text) => text.replace(/\s*\d+( waiting)?$/, ""))).toEqual(["Overview", "My Approvals", "Tasks & projects", "Information", "Search", "Calendar", "Analytics"]);
+  expect(top.map((text) => text.replace(/\s*\d+( waiting)?$/, ""))).toEqual(["Home", "Inbox", "My Approvals", "Tasks & projects", "Information", "Calendar", "Analytics"]);
   // A group opens like a dropdown, with its pages in the owner's order.
   const approvals = nav.getByRole("button", { name: "My Approvals" });
   await expect(approvals).toHaveAttribute("aria-expanded", "false");
@@ -196,8 +196,8 @@ test("the user sidebar: Overview, collapsible My Approvals, Tasks & projects, In
   const links = await page.getByTestId("nav-group-My Approvals").getByRole("link").allTextContents();
   expect(links.map((text) => text.replace(/\d+ waiting$/, "").trim())).toEqual(["New request", "My pending requests", "My approved requests", "Waiting for me", "Approved by me", "Collaborating", "Request templates"]);
   // The choice is remembered on the next page.
-  await nav.getByRole("link", { name: "Search" }).click();
-  await expect(page).toHaveURL(/\/users\/search/);
+  await nav.getByRole("link", { name: "Calendar" }).click();
+  await expect(page).toHaveURL(/\/users\/calendar/);
   await expect(page.locator("aside nav").getByRole("button", { name: "My Approvals" })).toHaveAttribute("aria-expanded", "true");
   // The group holding the current page opens by itself and marks it.
   await page.goto("/users/information/sent");

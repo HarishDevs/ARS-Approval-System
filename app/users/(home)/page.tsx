@@ -16,9 +16,13 @@ import { hasModule } from "@/server/modules/modules";
 import { getUserSetting } from "@/lib/db/repositories/user-settings.repository";
 import { parseWorkspaceView, WORKSPACE_VIEW_SETTING } from "@/server/ui/workspace-view";
 import { ClassicGateway } from "@/features/shell/ClassicScreens";
+import { featureOn } from "@/server/settings/features";
+import { isHiddenHref, navAccess } from "@/server/authorization/page-access";
+import { workViewer } from "@/server/work/task-access";
+import { TaskHome } from "@/features/work/TaskHome";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
-export const metadata: Metadata = { title: "Overview" };
+export const metadata: Metadata = { title: "Home" };
 
 // My Work (S9-11, spec #1): the next thing to do first. Every list uses the
 // same access rules as its full page (Waiting for me, My requests) and is
@@ -33,7 +37,13 @@ export default async function UsersHome({ searchParams }: { searchParams: Promis
   if (query.view !== "overview" && !query.tour && parseWorkspaceView(await getUserSetting(user.id, WORKSPACE_VIEW_SETTING).catch(() => null)) === "CLASSIC") return <ClassicGateway user={user} />;
   // D-168: everything below is about approvals; without the Approval module
   // the page offers the person's other modules instead.
-  if (!hasModule(user, "APPROVAL")) return <ModulesHome name={displayName(user.name)} user={user} />;
+  // D-236 (owner): Home holds the Task home too (its sections under the
+  // approvals), for people who have Tasks and may open its pages.
+  const tasks =
+    (await featureOn("tasks", user).catch(() => false)) && !isHiddenHref("/users/work", (await navAccess(user)).hidden) ? (
+      <TaskHome user={user} viewer={await workViewer(user)} params={{ tab: query.tab, given: query.given, task: query.task }} basePath="/users" greet={false} />
+    ) : null;
+  if (!hasModule(user, "APPROVAL")) return <ModulesHome name={displayName(user.name)} user={user} tasks={tasks} />;
   const [queue, waiting, attention, mine, drafts, onboarded, recent] = await Promise.all([
     listPendingTasksFor(user.id, { limit: 5, offset: 0 }),
     countPendingTasksFor(user.id),
@@ -177,12 +187,13 @@ export default async function UsersHome({ searchParams }: { searchParams: Promis
           <MyRequestsTable items={completed} />
         </section>
       )}
+      {tasks}
     </>
   );
 }
 
-// D-168: Overview for someone without the Approval module.
-function ModulesHome({ name, user }: { name: string; user: Parameters<typeof hasModule>[0] }) {
+// D-168: Home for someone without the Approval module.
+function ModulesHome({ name, user, tasks }: { name: string; user: Parameters<typeof hasModule>[0]; tasks: React.ReactNode }) {
   const links = [
     hasModule(user, "TASK") && { href: "/users/tasks", label: "My tasks", body: "Tasks given to you, and tasks you give others." },
     hasModule(user, "INFORMATION") && { href: "/users/information", label: "Information inbox", body: "Notices and circulars for you." },
@@ -202,6 +213,7 @@ function ModulesHome({ name, user }: { name: string; user: Parameters<typeof has
           </li>
         ))}
       </ul>
+      {tasks}
     </>
   );
 }

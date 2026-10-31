@@ -17,6 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (31 Oct 2026):** v1.37.0: Form Designer (D-235: reorder, confirm-before-remove, undo; DoA dropped from custom approvals), Home = Overview + Task home (D-236), sidebar without Search, space named Central Management System, one Inbox with Notifications as a Profile page (D-237), Draft task toolbar like Asana (D-238). **Owner:** publish v1.37.0 (no migration); try Create → Task: / for the menu, @ to mention, paste a screenshot. **Next:** Workflow Designer and Settings console (D-235e/f; the autosave migration is additive and will be shown before it runs).
 - **Now (31 Oct 2026):** v1.36.0: the 24 UX laws applied (D-234; docs/UX_*). **Owner:** publish v1.36.0 (no migration); decide whether Users & roles should move up the Admin menu (recorded in the UX audit).
 - **Now (31 Oct 2026):** v1.35.0: every UI state audited and completed (D-233; docs/UI_STATE_*_REPORT.md). **Owner:** publish v1.35.0 (no migration beyond v1.34.0's); Super Admin → Settings → General → Maintenance notice to warn everyone of downtime.
 - **Now (31 Oct 2026):** v1.34.0: Classic view like Tally on every screen (D-227); Asana's toolbar look on every list (D-228), collapsible sidebar (D-229), profile with photo (D-230), notification control centre (D-231), universal search (D-232). **Owner:** publish v1.34.0 (migration 202610311200 adds the photo, About me and the in-app choice; photos go in UPLOAD_DIR/profile-photos); switch to Classic (profile menu → View) and try New request: Enter moves field to field, Ctrl+A accepts.
@@ -121,6 +122,20 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 - **Still open:** Q-015.
 
 ---
+
+## Session log — v1.37.0 (31 Oct 2026), planned before starting
+- [x] Form Designer: library, canvas, property tabs, reorder (drag, buttons, Alt+arrows), duplicate, remove asks first and can be undone, Undo/Redo, type change asks first (D-235) — 31 Oct 2026
+- [x] DoA dropped from custom approvals (D-235a) — 31 Oct 2026
+- [x] CI fix: "Next waiting for you" survives the form leaving the page (useActionForm successHref) — 31 Oct 2026
+- [x] Sidebar: drop Search and Search tasks (D-236) — 31 Oct 2026
+- [x] Space name "Central Management System" (D-236) — 31 Oct 2026
+- [x] Overview + Task home → Home; /users/work redirects (D-236) — 31 Oct 2026
+- [x] One Inbox at /users/inbox; old addresses redirect; bookmark/archive any notice; notification settings as Profile → Notifications (D-237) — 31 Oct 2026
+- [x] Tests: e2e session9, v128, v130, v131, v132, v160-ui, v171, v190, v1100 and profile updated; integration inbox (3) — 31 Oct 2026
+- [x] Draft task toolbar (Asana: +, Formatting, Emoji, @mention, Attach/paste, ✨ Pico Bot, due date, repeat, collaborators, / menu) and a taller, narrower panel that steps up with the screen (D-238) — 31 Oct 2026
+- [ ] Workflow Designer (visual + structured, working-draft autosave, test mode)
+- [ ] Settings console (categories, search, one Save per category, AI providers)
+- [ ] Studio docs: TEST_REPORT, DEPLOYMENT
 
 ## Session log — build session 1 (28 Sep 2026): planned before starting
 - [x] S1-01 Record the owner's confirmation of both assumptions (D-042, Q-014) and the build choices (D-043) (done 28 Sep 2026)

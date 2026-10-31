@@ -7,7 +7,7 @@ test("the account menu shows the space and switches to another", async ({ page, 
   await context.addCookies([await sessionCookie("E2E_ADMIN")]);
   await page.goto("/users");
   const menuButton = page.getByRole("button", { name: /Account menu for/ });
-  await expect(menuButton).toContainText("My approvals");
+  await expect(menuButton).toContainText("Central Management System");
   await menuButton.click();
   const menu = page.getByRole("menu", { name: "Account" });
   await expect(menu.getByText("Switch space")).toBeVisible();

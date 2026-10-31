@@ -63,7 +63,7 @@ for (const role of ROLES) {
         // Out to another space, and back through Switch space.
         await expect(page).toHaveURL(label === "Admin space" ? /\/admin$/ : /\/superadmin$/);
         await page.getByRole("button", { name: /Account menu/ }).click();
-        await page.getByRole("menuitem", { name: /My approvals/ }).click();
+        await page.getByRole("menuitem", { name: /Central Management System/ }).click();
         await expect(page.getByTestId("classic-gateway")).toBeVisible();
         continue;
       }
@@ -90,7 +90,7 @@ for (const role of ROLES) {
     }
 
     // Pages outside the modules name themselves and lead back too.
-    for (const path of ["/users/profile", "/users/notifications", "/users/help", "/users/security", "/users/delegation"]) {
+    for (const path of ["/users/profile", "/users/notifications/settings", "/users/help", "/users/security", "/users/delegation"]) {
       await page.goto(path);
       await expect(bar(page).getByTestId("classic-page-title")).not.toBeEmpty();
       await escapeHome(page);

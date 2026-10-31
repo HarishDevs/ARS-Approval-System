@@ -123,8 +123,8 @@ export function ProfileMenu({
             <Link href="/users/profile" role="menuitem" className={item}>
               Profile
             </Link>
-            <Link href="/users/notifications" role="menuitem" className={item}>
-              Notifications
+            <Link href="/users/inbox" role="menuitem" className={item}>
+              Inbox
               {unread > 0 && <span className="rounded-full bg-danger-solid px-1.5 text-[length:calc(11px*var(--text-scale,1))] font-semibold leading-[18px] text-on-solid">{unread > 99 ? "99+" : unread}</span>}
             </Link>
             <Link href="/users/security" role="menuitem" className={item}>

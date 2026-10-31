@@ -7,7 +7,8 @@ import { usePathname } from "next/navigation";
 // tab keeps its own address, so links in emails and WhatsApp still work.
 export const PROFILE_TABS = [
   { href: "/users/profile", label: "Profile" },
-  { href: "/users/notifications", label: "Notifications" },
+  // D-237 (owner): the notification settings are their own Profile page.
+  { href: "/users/notifications/settings", label: "Notifications" },
   { href: "/users/delegation", label: "Out of office" },
   { href: "/users/security", label: "Sign-in & devices" },
   { href: "/users/profile/calendar", label: "Calendar" },

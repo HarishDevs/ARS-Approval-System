@@ -1055,6 +1055,27 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 2. They filter (search, status, type, department, person, waiting on, priority, overdue, dates) and sort by a column title; 50 rows a page.
 3. **Download CSV** gives every matching row (up to 10,000) for Excel; audited. A row number opens the record.
 
+## F-181 Draft task toolbar (v1.37.0, D-238)
+1. Create → Task (or Q): the Draft task panel (taller than wide; larger on larger screens). Task name; For Myself / Others; in a project.
+2. Description: type **/** for the menu (lists, bold, italic, strikethrough, mention, emoji, attach, due date, repeat) or **@** to mention someone; paste an image to attach it.
+3. Toolbar: + (more), Formatting, Emoji, @mention, Attach, ✨ Pico Bot (if it answers you: writes the description from the name and your text; Undo), due date, repeat; collaborators beside Create task.
+4. Create task → the task is made; then its files are attached and collaborators and mentioned people follow it (they are told). The description shows its formatting and mentions.
+
+## F-180 Inbox (v1.37.0, D-237)
+1. Sidebar → **Inbox** (unread count), or the bell → Read more, or an old Notifications / Task inbox link (it redirects with its view).
+2. Views: All, Approvals, Tasks, Information, System; then Bookmarks and Archive; Hide the read ones / Show all.
+3. Open a notice → it is marked read and its page opens. Beside each: Bookmark / Remove bookmark, Archive / Move back to the inbox. Mark all as read → Undo.
+4. Notification settings: Profile → **Notifications** (or the Inbox's "Notification settings" button).
+
+## F-179 Home (v1.37.0, D-236)
+1. Sidebar → Home (`/users`): welcome, tiles, due soon, waiting for me, drafts, my requests, finished.
+2. With Tasks, **My work** follows: My tasks (Upcoming, Overdue, Completed), Tasks I've assigned, My team, Projects, Latest status updates; a task opens in the pane beside them. `/users/work` comes here.
+
+## F-178 Form Designer (v1.37.0, D-235)
+1. Admin → a workflow's Form, Custom approval, or a task/information type → the designer: the field library (click or drag), the canvas, and the chosen field's properties (General, Validation, Conditions, Advanced).
+2. Reorder by drag, ↑/↓ or Alt+↑/↓; Duplicate; Remove → "Remove “X”?" (names the fields that use it) → toast with Undo; Undo/Redo (Ctrl+Z / Ctrl+Y).
+3. A type change that loses settings asks first. Save as before (the server checks everything).
+
 ## F-177 Approver's path (v1.36.0, D-234)
 1. Waiting for me → a request → warnings shown above the decision → Approve (or Reject → "Reject this request?" → Yes, reject) → "Next waiting for you →" → the next one.
 2. Requester: a custom request → Raise again like this → the same title, details and approvers → Submit.
@@ -1135,7 +1156,7 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 
 ## F-160 Bulk changes, inbox, morning summary (v1.31.0, D-218)
 1. Tick tasks in a project List or My Tasks → the bar: Complete, Assign to, Set due date, Set priority, Move to section, Add tag, Delete → Apply.
-2. Tasks → Inbox: Activity, Bookmarks, Archive; mark read/unread, bookmark, archive one or all; Only unread.
+2. Tasks → Inbox: Activity, Bookmarks, Archive; mark read/unread, bookmark, archive one or all; Only unread. (v1.37.0: part of the one Inbox, F-180.)
 3. Each working morning (from 9:00) people with overdue, due-today or new tasks get one summary; My Tasks → Morning summary email turns it off or on.
 
 ## F-161 Task settings (Admin, v1.31.0, D-218)

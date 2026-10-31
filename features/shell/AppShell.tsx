@@ -13,7 +13,6 @@ import { photoUrl } from "@/server/profile/photo";
 import { MobileNav } from "@/features/shell/MobileNav";
 import { ProfileMenu } from "@/features/shell/ProfileMenu";
 import { countUnread } from "@/lib/db/repositories/collab.repository";
-import { inboxUnread } from "@/lib/db/repositories/work.repository";
 import { getUserSetting } from "@/lib/db/repositories/user-settings.repository";
 import { ThemeSync } from "@/features/shell/ThemeControls";
 import { OfflineBanner, SessionWatch, SlowNetworkNotice, UpdateNotice } from "@/features/shell/SessionWatch";
@@ -40,7 +39,7 @@ import { ViewOnlyNote } from "@/features/shell/ViewOnlyNote";
 import type { AppArea, AuthenticatedUser } from "@/types/auth";
 
 // The three spaces of the one app (D-034, S9-03: called "spaces" on screen).
-export const SPACE_LABEL: Record<AppArea, string> = { users: "My approvals", admin: "Admin", superadmin: "Super Admin" };
+export const SPACE_LABEL: Record<AppArea, string> = { users: "Central Management System", admin: "Admin", superadmin: "Super Admin" };
 
 // "IT Admin (Super Admin)" → "IT Admin"; "Ravi Kumar (demo)" → "Ravi Kumar".
 export function displayName(name: string): string {
@@ -96,7 +95,7 @@ export async function AppShell({
   const visible = (href: string) => !isHiddenHref(href, access.hidden);
   // WS-03: everywhere the person can go, for the command palette.
   const userPages: PaletteLink[] = [
-    { href: "/users", label: "Overview", group: "My approvals" },
+    { href: "/users", label: "Home", group: "My approvals" },
     { href: "/users/custom", label: "New request", group: "My approvals" },
     { href: "/users/requests", label: "My pending requests", group: "My approvals" },
     { href: "/users/approved", label: "My approved requests", group: "My approvals" },
@@ -109,7 +108,6 @@ export async function AppShell({
     { href: "/users/tasks/new", label: "New task", group: "Tasks" },
     { href: "/users/work/my-tasks", label: "My tasks", group: "Tasks" },
     { href: "/users/tasks", label: "My tasks (table with filters)", group: "Tasks" },
-    { href: "/users/work", label: "Task home", group: "Tasks" },
     { href: "/users/work/projects", label: "Projects", group: "Tasks" },
     { href: "/users/work/search", label: "Task search", group: "Tasks" },
     { href: "/users/tasks/assigned", label: "Tasks assigned by me", group: "Tasks" },
@@ -117,8 +115,8 @@ export async function AppShell({
     { href: "/users/information", label: "Information inbox", group: "Information" },
     { href: "/users/information/sent", label: "Information sent by me", group: "Information" },
     { href: "/users/information/new", label: "New information", group: "Information" },
-    { href: "/users/notifications", label: "Notifications", group: "Profile" },
-    { href: "/users/notifications/settings", label: "Notification settings", group: "Profile" },
+    { href: "/users/inbox", label: "Inbox", group: "My approvals" },
+    { href: "/users/notifications/settings", label: "Notifications (settings)", group: "Profile" },
     { href: "/users/delegation", label: "Out of office", group: "Profile" },
     { href: "/users/security", label: "Sign-in & devices", group: "Profile" },
     { href: "/users/profile", label: "Profile and theme", group: "Profile" },
@@ -130,20 +128,16 @@ export async function AppShell({
     ...spaces.filter((other) => other !== area && other !== "users").map((other) => ({ href: `/${other}`, label: `${SPACE_LABEL[other]} space`, group: "Spaces" })),
   ];
   // The "Waiting for me" entry shows the real count (RA-01).
-  const items = nav.filter((item) => visible(item.href)).map((item) => (item.href === "/users/queue" ? { ...item, count: waiting } : item));
+  const items = nav.filter((item) => visible(item.href)).map((item) => (item.href === "/users/queue" ? { ...item, count: waiting } : item.href === "/users/inbox" ? { ...item, count: unread } : item));
   // D-221 / D-223 (owner): in the Compact view the Tasks pages become one
   // "Tasks & projects" group holding the Tasks bar's pages (the area has no
   // bar of its own any more); the Classic view keeps the Tasks module's
   // pages. + Create offers what the person can create.
   const tasksOn = items.some((item) => item.section === "Tasks");
-  const inbox = area === "users" && tasksOn ? await inboxUnread(user.id).catch(() => 0) : 0;
   const workGroup: NavItem[] = [
-    { href: "/users/work", label: "Home" },
-    { href: "/users/work/inbox", label: "Inbox", count: inbox },
     { href: "/users/work/my-tasks", label: "My Tasks", also: ["/users/tasks"] },
     { href: "/users/work/projects", label: "All projects" },
     { href: "/users/work/periodic", label: "Periodic tasks" },
-    { href: "/users/work/search", label: "Search tasks" },
     { href: "/users/work/projects/new", label: "New project" },
     { href: "/users/work/projects?show=templates", label: "Templates" },
     { href: "/users/tasks/new", label: "Task with a type (form)" },

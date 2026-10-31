@@ -34,11 +34,11 @@ test("Analytics from the Admin space keeps the Admin space; Reports are there to
   await expect(page).toHaveURL(/\/admin\/reports\/request_register\?period=30d/);
 });
 
-test("the sidebar has Overview, and no Help, Profile or Reports; the account menu has them", async ({ page, context }) => {
+test("the sidebar has Home, and no Help, Profile or Reports; the account menu has them", async ({ page, context }) => {
   await as(context, "E2E_REQ");
   await page.goto("/users");
   const nav = sidebar(page);
-  await expect(nav.getByRole("link", { name: "Overview" })).toHaveAttribute("aria-current", "page");
+  await expect(nav.getByRole("link", { name: "Home" })).toHaveAttribute("aria-current", "page");
   for (const name of ["Help", "Profile", "Reports", "My work"]) await expect(nav.getByRole("link", { name, exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: /Account menu/ }).click();
   const menu = page.getByRole("menu", { name: "Account" });

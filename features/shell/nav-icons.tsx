@@ -85,6 +85,7 @@ const ICONS: Record<string, LucideIcon> = {
   "/users/work/search": FileSearch,
   "/users/work/periodic": Repeat,
   "/users/work/inbox": Inbox,
+  "/users/inbox": Inbox,
   "/users/work/projects/new": FolderPlus,
   "/users/work/projects?show=templates": LayoutTemplate,
   "/users/information": Newspaper,

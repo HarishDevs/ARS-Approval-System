@@ -80,10 +80,17 @@ export function OnboardingTour({ steps, autoStart }: { steps: TourStep[]; autoSt
 
   // Start: ?tour=1 (asked for), a tour already running in this tab
   // (reload), or the first visit to Overview for someone who hasn't done it.
+  // One start per "?tour=1": until the address is cleaned up, Skip must not
+  // start it again (seen when Home took longer to load, v1.37.0).
+  const handled = useRef(false);
+  useEffect(() => {
+    if (!asked) handled.current = false;
+  }, [asked]);
   useEffect(() => {
     if (steps.length === 0) return;
     const params = new URLSearchParams(window.location.search);
-    if (asked && params.get("tour") === "1") {
+    if (asked && params.get("tour") === "1" && !handled.current) {
+      handled.current = true;
       params.delete("tour");
       const rest = params.toString();
       router.replace(rest ? `${pathname}?${rest}` : pathname, { scroll: false });

@@ -103,15 +103,18 @@ test("save as template, then a new project from it", async ({ page, context }) =
 
 test("the task inbox: archive a notice; the morning summary switch", async ({ page, context }) => {
   await as(context, "E2E_REQ");
+  // D-237: the Task inbox is the one Inbox's Tasks view.
   await page.goto("/users/work/inbox");
-  await expect(page.getByRole("heading", { level: 1, name: "Inbox" })).toBeVisible();
-  const inbox = page.getByTestId("inbox");
-  if ((await inbox.count()) > 0) {
-    const first = inbox.getByRole("listitem").first();
-    const title = (await first.locator("p").first().innerText()).trim();
-    await first.getByRole("button", { name: "Archive" }).click();
+  await expect(page).toHaveURL(/\/users\/inbox\?type=tasks$/);
+  await expect(page.getByRole("heading", { level: 1, name: "Inbox: Tasks" })).toBeVisible();
+  const archive = page.getByRole("button", { name: /^Archive: / }).first();
+  if ((await archive.count()) > 0) {
+    const title = ((await archive.getAttribute("aria-label")) ?? "").replace(/^Archive: /, "");
+    await archive.click();
+    await expect(page.getByText("Archived", { exact: true })).toBeVisible();
     await page.goto("/users/work/inbox?tab=archive");
-    await expect(page.getByTestId("inbox")).toContainText(title);
+    await expect(page).toHaveURL(/state=archive/);
+    await expect(page.getByRole("button", { name: `Move back to the inbox: ${title}` }).first()).toBeVisible();
   }
   await page.goto("/users/work/my-tasks");
   const toggle = page.getByLabel("Morning summary email");

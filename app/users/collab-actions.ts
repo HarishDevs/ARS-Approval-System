@@ -7,6 +7,7 @@ import { submitCustomRequest, type Actor } from "@/server/approvals/service";
 import { addComment, createDelegation, stopDelegation } from "@/server/approvals/collab";
 import { answerConsultation, consult, linkRequests } from "@/server/approvals/consult";
 import { markAllReadReturningIds, markRead, markUnread } from "@/lib/db/repositories/collab.repository";
+import { INBOX_COMMANDS, setInbox } from "@/lib/db/repositories/work.repository";
 import { builderSpecSchema } from "@/server/workflows/builder";
 import { addAttachments, filesFrom, prepareFiles } from "@/server/attachments/service";
 import { addCollaborators, collaboratorIdsFrom, removeCollaborator } from "@/server/approvals/collaborators";
@@ -182,6 +183,23 @@ const idList = (value: FormDataEntryValue | null) =>
     .filter((part) => /^\d{1,12}$/.test(part))
     .map(Number)
     .slice(0, 1000);
+
+// D-237: the one Inbox's bookmark and archive (any notice of one's own).
+export async function inboxStateAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const me = await actor();
+  const command = String(formData.get("command") ?? "");
+  if (!me || !INBOX_COMMANDS.includes(command)) return NOT_FOUND;
+  const ids = idList(formData.get("ids"));
+  if (!ids.length) return { ok: false, message: "Choose a notification first." };
+  try {
+    const changed = await setInbox(me.id, ids, command, undefined, true);
+    revalidatePath("/users", "layout");
+    return { ok: true, message: changed ? "Done." : "Nothing to change." };
+  } catch (error) {
+    logError("inboxStateAction failed", error);
+    return { ok: false, message: "Couldn't do that. Please try again." };
+  }
+}
 
 export async function markReadAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
   const me = await actor();

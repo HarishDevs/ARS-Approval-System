@@ -19,7 +19,7 @@ test("Profile groups the personal pages as tabs; it lives in the account menu, n
 
   const tabs = page.getByRole("navigation", { name: "Profile" });
   for (const [label, path, heading] of [
-    ["Notifications", "/users/notifications", "Notifications"],
+    ["Notifications", "/users/notifications/settings", "Notifications"], // D-237: the settings are their own Profile page
     ["Out of office", "/users/delegation", "Out of office"],
     ["Sign-in & devices", "/users/security", "Sign-in & devices"],
   ] as const) {

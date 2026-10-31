@@ -11,8 +11,8 @@ import { CREATE_TASK_EVENT } from "@/features/work/client";
 // used here. D-223 (owner): the area's own left bar is gone; its pages are
 // the sidebar's "Tasks & projects" group, and + Create makes tasks.
 const MAIN = [
-  { href: "/users/work", key: "h" },
-  { href: "/users/work/inbox", key: "i" },
+  { href: "/users", key: "h" },
+  { href: "/users/inbox?type=tasks", key: "i" },
   { href: "/users/work/my-tasks", key: "m" },
   { href: "/users/work/projects", key: "p" },
   { href: "/users/work/periodic", key: "r" },

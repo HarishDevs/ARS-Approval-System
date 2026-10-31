@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { RichText } from "@/features/work/RichText";
 import { featureOn } from "@/server/settings/features";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -88,14 +89,22 @@ export default async function TaskPage({ params, searchParams }: { params: Promi
   const now = new Date();
   const late = isOverdue(task, now);
   const options = people.map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` }));
-  const assignable = people.filter((person) => person.id !== task.assigneeId && mayAssignTo(settings, { creatorId: user.id, creatorDepartmentId: me?.departmentId ?? null, creatorTeamIds: loaded.viewer.teamIds ?? [], candidate: person }, isAdminActor(user)));
+  const assignable = people.filter(
+    (person) =>
+      person.id !== task.assigneeId && mayAssignTo(settings, { creatorId: user.id, creatorDepartmentId: me?.departmentId ?? null, creatorTeamIds: loaded.viewer.teamIds ?? [], candidate: person }, isAdminActor(user)),
+  );
   const editable = form.filter((field) => field.editable && field.type !== "ATTACHMENT" && field.type !== "CALC");
-  const values = Object.fromEntries(editable.map((field) => [field.key, Array.isArray(task.formData[field.key]) ? JSON.stringify(task.formData[field.key]) : task.formData[field.key] === undefined ? "" : String(task.formData[field.key])]));
+  const values = Object.fromEntries(
+    editable.map((field) => [field.key, Array.isArray(task.formData[field.key]) ? JSON.stringify(task.formData[field.key]) : task.formData[field.key] === undefined ? "" : String(task.formData[field.key])]),
+  );
   const history: HistoryEntry[] = events.map((event) => ({
     id: event.id,
     when: event.createdAt,
     who: event.actorName,
-    what: event.eventType === "REASSIGN" && event.payload ? `Reassigned from ${names.get(Number(event.payload.from)) ?? "someone"} to ${names.get(Number(event.payload.to)) ?? "someone"}` : (EVENT_TEXT[event.eventType] ?? event.eventType),
+    what:
+      event.eventType === "REASSIGN" && event.payload
+        ? `Reassigned from ${names.get(Number(event.payload.from)) ?? "someone"} to ${names.get(Number(event.payload.to)) ?? "someone"}`
+        : (EVENT_TEXT[event.eventType] ?? event.eventType),
     // D-215: mentions read as @Name.
     detail: event.body?.replace(/@\[([^\]\n]{1,80})\]\(user:\d{1,10}\)/g, "@$1") ?? null,
   }));
@@ -112,7 +121,9 @@ export default async function TaskPage({ params, searchParams }: { params: Promi
       <PageHeader title={task.title} meta={`${task.taskNo} · ${task.typeName} (version ${versionNo})`}>
         <TaskShareButton taskId={task.id} title={task.title} followers={panel.followers} people={panel.people} visibility={visibilityText(links)} canAdd={rights.comment} />
         {/* D-219: complete or reopen in one click, as in Asana (types that need a note or file say so). */}
-        {((actions.has("COMPLETE") && settings.completion === "NONE") || actions.has("REOPEN") || task.status === "COMPLETED") && <TaskCompleteButton taskId={task.id} done={task.status === "COMPLETED"} disabled={!(actions.has("COMPLETE") || actions.has("REOPEN"))} title={task.title} />}
+        {((actions.has("COMPLETE") && settings.completion === "NONE") || actions.has("REOPEN") || task.status === "COMPLETED") && (
+          <TaskCompleteButton taskId={task.id} done={task.status === "COMPLETED"} disabled={!(actions.has("COMPLETE") || actions.has("REOPEN"))} title={task.title} />
+        )}
         <Badge tone={STATUS_TONE[task.status]}>{TASK_STATUS_LABEL[task.status]}</Badge>
         <Badge tone={PRIORITY_TONE[task.priority]}>{PRIORITY_LABEL[task.priority]}</Badge>
         {late && <Badge tone="danger">Overdue</Badge>}
@@ -132,7 +143,7 @@ export default async function TaskPage({ params, searchParams }: { params: Promi
             <h2 id="details" className="font-semibold">
               Details
             </h2>
-            {task.description && <p className="whitespace-pre-wrap">{task.description}</p>}
+            {task.description && <RichText text={task.description} />}
             <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
               <Fact label="Assigned to" value={task.assigneeName} />
               <Fact label="Assigned by" value={task.assignedByName} />
@@ -180,15 +191,7 @@ export default async function TaskPage({ params, searchParams }: { params: Promi
             </p>
           )}
           <TaskWorkPanel data={panel} />
-          <CommentThread
-            taskId={task.id}
-            meId={user.id}
-            canComment={rights.comment && !task.deletedAt}
-            canPin={rights.edit}
-            isAdmin={viewer.isAdmin}
-            people={panel.people}
-            comments={view.comments}
-          />
+          <CommentThread taskId={task.id} meId={user.id} canComment={rights.comment && !task.deletedAt} canPin={rights.edit} isAdmin={viewer.isAdmin} people={panel.people} comments={view.comments} />
           <section className="card space-y-4 px-5 py-4" aria-labelledby="history">
             <h2 id="history" className="font-semibold">
               History

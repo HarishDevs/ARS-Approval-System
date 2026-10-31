@@ -9,7 +9,10 @@ export async function usersNav(user: { roles: readonly string[] }): Promise<NavI
   return [
     // v1.9.2 (owner): Overview; My Approvals, Tasks and Information as
     // collapsible groups; then Search, Calendar and Analytics.
-    { href: "/users", label: "Overview" },
+    // D-236 (owner): Overview and Task home are one page, "Home".
+    { href: "/users", label: "Home" },
+    // D-237 (owner): one Inbox (notifications and the task inbox).
+    { href: "/users/inbox", label: "Inbox" },
     // D-207 (owner): this order; "My requests" is "My pending requests" here.
     { href: "/users/custom", label: "New request", section: "My Approvals" },
     { href: "/users/requests", label: "My pending requests", section: "My Approvals" },
@@ -28,7 +31,6 @@ export async function usersNav(user: { roles: readonly string[] }): Promise<NavI
           { href: "/users/tasks/assigned", label: "Assigned by me", section: "Tasks" },
           { href: "/users/tasks/team", label: "Team tasks", section: "Tasks" },
           { href: "/users/work/projects", label: "Projects", section: "Tasks" },
-          { href: "/users/work", label: "Task home", section: "Tasks" },
           { href: "/users/work/search", label: "Task search", section: "Tasks" },
           // D-219: repeating tasks have their own list.
           { href: "/users/work/periodic", label: "Periodic tasks", section: "Tasks" },
@@ -44,7 +46,7 @@ export async function usersNav(user: { roles: readonly string[] }): Promise<NavI
     // D-168: the fourth module. D-180 (owner): the assistant only; its
     // group lists the person's chats with a search (SideNav).
     ...(features.ai ? [{ href: "/users/ai/assistant", label: "AI Assistant", section: "AI Assistant", chats: true }] : []),
-    { href: "/users/search", label: "Search" },
+    // D-236 (owner): no Search in the sidebar; the header search covers it.
     { href: "/users/calendar", label: "Calendar" },
     ...(features.analytics ? [{ href: "/users/analytics", label: "Analytics" }] : []),
   ];

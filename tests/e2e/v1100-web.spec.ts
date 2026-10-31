@@ -110,7 +110,7 @@ test("WEB-08: an unknown address shows the 404 page with a way back", async ({ p
   const response = await page.goto("/users/this-page-does-not-exist");
   expect(response?.status()).toBe(404);
   await expect(page.getByRole("heading", { name: "This page isn't available" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Go to Overview" })).toHaveAttribute("href", "/users");
+  await expect(page.getByRole("link", { name: "Go to Home" })).toHaveAttribute("href", "/users");
   await expect(page.locator("body")).not.toContainText(/stack|Error:|at \w+ \(/);
 });
 
@@ -151,8 +151,9 @@ test("WEB-03: the phone menu takes focus, keeps Tab inside, closes on Escape and
   await expect(dialog).toBeHidden();
   await expect(opener).toBeFocused();
   await opener.click();
-  await dialog.getByRole("link", { name: "Search" }).click();
-  await expect(page).toHaveURL(/\/users\/search/);
+  // D-236: no Search in the menu any more; Calendar is a top-level page.
+  await dialog.getByRole("link", { name: "Calendar" }).click();
+  await expect(page).toHaveURL(/\/users\/calendar/);
   await expect(page.getByRole("dialog", { name: "Menu" })).toBeHidden();
   // WEB-15: the phone bar belongs to My approvals only.
   await expect(page.getByRole("navigation", { name: "Quick" })).toBeVisible();

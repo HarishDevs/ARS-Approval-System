@@ -1,5 +1,14 @@
 # Release notes
 
+## v1.37.0 (31 Oct 2026): Form Designer, Home and one Inbox (owner)
+- **Form fields (IT):** a new designer. Add fields from a library, drag them into order (or use ↑/↓), duplicate them, and remove them with a question first and Undo after. Settings are grouped in tabs, and changing a field's type tells you what would be lost.
+- **Custom approvals:** the DoA option is gone (it never applied to custom requests).
+- **Home:** Overview and Task home are now one page, **Home**: your approvals first, then your tasks, team and projects.
+- **Inbox:** notifications and the task inbox are one **Inbox** in the sidebar, with Bookmarks and Archive for every kind of notice. Notification settings are now **Profile → Notifications**.
+- **Sidebar:** Search and Search tasks are gone (use the search bar at the top); the space is called **Central Management System**.
+- **Draft task like Asana:** a taller, narrower panel that grows with your screen, and a toolbar: formatting (bold, italic, lists), emoji, @mention (people mentioned become collaborators), attach a file or paste a screenshot, collaborators, due date and repeat. Type **/** in the description for the menu. If Pico Bot is on for you, ✨ writes the description from the task's name.
+- **Fixed:** after a decision, "Next waiting for you" now always appears.
+
 ## v1.36.0 (31 Oct 2026): easier to use, everywhere (owner)
 - **Approving:** Reject now stands apart and asks before it rejects; after any decision a **Next waiting for you** button takes you to the next one; budget warnings show right above the decision buttons; the approval steps are a connected line with ✓ for done.
 - **Raising:** a new request starts with your reporting manager as approver; a custom request can be **raised again** with the same approvers.

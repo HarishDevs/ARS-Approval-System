@@ -84,8 +84,10 @@ test("My Tasks, Task home and Task search show the work", async ({ page, context
   await page.goto("/users/work/my-tasks?view=board");
   await expect(page.getByTestId("my-board")).toBeVisible();
 
+  // D-236: Task home is part of Home; its old address leads there.
   await page.goto("/users/work");
-  await expect(page.getByRole("heading", { level: 1, name: /Good (morning|afternoon|evening)/ })).toBeVisible();
+  await expect(page).toHaveURL(/\/users$/);
+  await expect(page.getByRole("heading", { level: 2, name: "My work" })).toBeVisible();
   await expect(page.getByRole("region", { name: "Projects" }).getByRole("link", { name: new RegExp(projectName) })).toBeVisible();
   await expect(page.getByRole("region", { name: "Latest status updates" })).toContainText("Vendor quotes are late");
 

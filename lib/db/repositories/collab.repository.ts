@@ -149,11 +149,16 @@ export interface InboxItem {
   createdAt: Date;
   read: boolean;
   category: NotificationCategory;
+  bookmarked: boolean;
+  archived: boolean;
 }
+
+// D-237: the one Inbox's views. Activity hides what was archived.
+export type InboxState = "activity" | "bookmarks" | "archive";
 
 export async function countUnread(userId: number, db: Queryable = getDbPool(), category?: NotificationCategory | null): Promise<number> {
   const [rows] = await db.query<(RowDataPacket & { total: number })[]>(
-    `SELECT COUNT(*) AS total FROM notifications n WHERE n.user_id = ? AND n.read_at IS NULL${category ? ` AND ${CATEGORY_SQL} = ?` : ""}`,
+    `SELECT COUNT(*) AS total FROM notifications n WHERE n.user_id = ? AND n.read_at IS NULL AND n.archived_at IS NULL${category ? ` AND ${CATEGORY_SQL} = ?` : ""}`,
     category ? [userId, category] : [userId],
   );
   return Number(rows[0]?.total ?? 0);
@@ -162,7 +167,7 @@ export async function countUnread(userId: number, db: Queryable = getDbPool(), c
 // Unread counts per module, in one query.
 export async function countUnreadByCategory(userId: number, db: Queryable = getDbPool()): Promise<Record<NotificationCategory, number>> {
   const [rows] = await db.query<(RowDataPacket & { category: NotificationCategory; total: number })[]>(
-    `SELECT ${CATEGORY_SQL} AS category, COUNT(*) AS total FROM notifications n WHERE n.user_id = ? AND n.read_at IS NULL GROUP BY 1`,
+    `SELECT ${CATEGORY_SQL} AS category, COUNT(*) AS total FROM notifications n WHERE n.user_id = ? AND n.read_at IS NULL AND n.archived_at IS NULL GROUP BY 1`,
     [userId],
   );
   const counts: Record<NotificationCategory, number> = { APPROVAL: 0, TASK: 0, INFORMATION: 0, SYSTEM: 0 };
@@ -172,8 +177,9 @@ export async function countUnreadByCategory(userId: number, db: Queryable = getD
 
 // Newest first (by id, so the order is stable), a page at a time: `beforeId`
 // continues after the last one shown. Only the person's own rows.
-export async function listInbox(userId: number, limit: number, beforeId?: number, db: Queryable = getDbPool(), category?: NotificationCategory | null): Promise<InboxItem[]> {
-  const where = ["n.user_id = ?"];
+export async function listInbox(userId: number, limit: number, beforeId?: number, db: Queryable = getDbPool(), category?: NotificationCategory | null, state: InboxState = "activity", unreadOnly = false): Promise<InboxItem[]> {
+  const where = ["n.user_id = ?", state === "archive" ? "n.archived_at IS NOT NULL" : state === "bookmarks" ? "n.bookmarked_at IS NOT NULL" : "n.archived_at IS NULL"];
+  if (unreadOnly) where.push("n.read_at IS NULL");
   const params: unknown[] = [userId];
   if (beforeId) {
     where.push("n.id < ?");
@@ -183,11 +189,11 @@ export async function listInbox(userId: number, limit: number, beforeId?: number
     where.push(`${CATEGORY_SQL} = ?`);
     params.push(category);
   }
-  const [rows] = await db.query<(RowDataPacket & { id: number; title: string; message: string; deep_link: string | null; created_at: Date; read_at: Date | null; category: NotificationCategory })[]>(
-    `SELECT n.id, n.title, n.message, n.deep_link, n.created_at, n.read_at, ${CATEGORY_SQL} AS category FROM notifications n WHERE ${where.join(" AND ")} ORDER BY n.id DESC LIMIT ?`,
+  const [rows] = await db.query<(RowDataPacket & { id: number; title: string; message: string; deep_link: string | null; created_at: Date; read_at: Date | null; bookmarked_at: Date | null; archived_at: Date | null; category: NotificationCategory })[]>(
+    `SELECT n.id, n.title, n.message, n.deep_link, n.created_at, n.read_at, n.bookmarked_at, n.archived_at, ${CATEGORY_SQL} AS category FROM notifications n WHERE ${where.join(" AND ")} ORDER BY n.id DESC LIMIT ?`,
     [...params, limit],
   );
-  return rows.map((row) => ({ id: row.id, title: row.title, message: row.message, deepLink: row.deep_link, createdAt: row.created_at, read: row.read_at !== null, category: row.category }));
+  return rows.map((row) => ({ id: row.id, title: row.title, message: row.message, deepLink: row.deep_link, createdAt: row.created_at, read: row.read_at !== null, category: row.category, bookmarked: row.bookmarked_at !== null, archived: row.archived_at !== null }));
 }
 
 export async function markAllRead(userId: number, db: Queryable = getDbPool()): Promise<number> {

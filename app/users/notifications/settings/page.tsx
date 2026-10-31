@@ -30,9 +30,9 @@ export default async function NotificationSettingsPage() {
   const pausedText = paused ? new Date(paused).toLocaleString("en-IN", { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata" }) : null;
   return (
     <>
-      <PageHeader title="Notification settings" description="Choose what reaches you in the app, by email and on WhatsApp, kind by kind; pause them when you need quiet. Everything is always kept under Notifications.">
-        <Link href="/users/notifications" className="link text-label">
-          ← Notifications
+      <PageHeader title="Notifications" description="Choose what reaches you in the app, by email and on WhatsApp, kind by kind; pause them when you need quiet. Everything is always kept in your Inbox.">
+        <Link href="/users/inbox" className="link text-label">
+          Open the Inbox
         </Link>
       </PageHeader>
       <ProfileTabs />
