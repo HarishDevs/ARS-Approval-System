@@ -643,7 +643,7 @@
 ## 5. Work log (newest first)
 
 ### 31 Oct 2026 (v1.33.0: Tasks & projects in the sidebar; Myself/Others; Overdue; list toolbar)
-- D-223 to D-226. Tests changed for the sidebar group, + Create → Task, the Myself/Others search and the toolbar (Filter panel, Sort/Group/Options links, search keeps the other choices). Unit tests cover Overdue. Results: unit 734, integration 303, e2e 179 of 179.
+- D-223 to D-226. Tests changed for the sidebar group, + Create → Task, the Myself/Others search and the toolbar (Filter panel, Sort/Group/Options links, search keeps the other choices). Unit tests cover Overdue. Results: unit 734, integration 303, e2e 179 of 179. CI's npm audit then flagged new moderate advisories (glob GHSA-3g3m-2fjr-6pw4, minimatch GHSA-g3hv-75wg-m249) in firebase-admin → google-gax → rimraf 5 → glob 10; fixed with an override (google-gax › rimraf › glob 14.0.3, which brings minimatch 11.0.3; rimraf's glob/globSync API unchanged); audit clean, build and unit tests pass.
 
 ### 30 Oct 2026 (v1.32.0 continued: sidebar + Create; periodic and ad hoc; project permissions)
 - D-221, D-222. Found while testing: "Mark complete" also matched a type's own Complete button; it now shows only where one click can complete (types needing a note keep their form); the new-project steps scrolled sideways on phones (the full-width Create button beside Back; both are now sized to their text). Results: unit 734, integration 303, e2e 179 of 179.
