@@ -68,12 +68,14 @@ test("a repeating task makes its next one when completed", async ({ page, contex
   await expect.poll(async () => {
     const conn = await db();
     try {
-      const [rows] = await conn.query("SELECT COUNT(*) AS n FROM tasks WHERE title = ? AND status = 'OPEN' AND deleted_at IS NULL", [`Close ledgers ${stamp}`]);
-      return Number((rows as { n: number }[])[0]!.n);
+      // The first one completed AND its next one open (an open count alone is true before the click lands).
+      const [rows] = await conn.query("SELECT SUM(status = 'COMPLETED') AS done, SUM(status = 'OPEN') AS open FROM tasks WHERE title = ? AND deleted_at IS NULL", [`Close ledgers ${stamp}`]);
+      const row = (rows as { done: number | string | null; open: number | string | null }[])[0]!;
+      return `${Number(row.done ?? 0)}/${Number(row.open ?? 0)}`;
     } finally {
       await conn.end();
     }
-  }).toBe(1);
+  }).toBe("1/1");
   await page.goto(projectUrl);
   await expect(page.getByTestId("task-row").filter({ hasText: `Close ledgers ${stamp}` })).toHaveCount(1);
 });
