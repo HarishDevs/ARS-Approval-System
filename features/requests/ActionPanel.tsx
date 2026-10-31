@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { isTyping } from "@/features/shell/shortcuts";
 import { Check, MessageSquareWarning, PauseCircle, XCircle } from "lucide-react";
@@ -28,8 +27,12 @@ export function DecisionForm({ requestId, taskKey, label, work = false, only, id
   // D-234 (Doherty): the pressed button says "Working…".
   const [pressed, setPressed] = useState<DecisionKind | null>(null);
   const working = (kind: DecisionKind) => pending && (only === kind || pressed === kind);
-  const next = result?.ok ? (result.data?.next as { id: number; requestNo: string; title: string } | null | undefined) : undefined;
-  const left = result?.ok ? (result.data?.left as number | null | undefined) : undefined;
+  // D-234 (Peak-end): once the decision is saved, the page itself says what is
+  // next (the decision panel goes away as the page refreshes).
+  const router = useRouter();
+  useEffect(() => {
+    if (result?.ok) router.replace(`/users/requests/${requestId}?decided=1`, { scroll: false });
+  }, [result, router, requestId]);
   return (
     <form
       ref={form}
@@ -91,23 +94,6 @@ export function DecisionForm({ requestId, taskKey, label, work = false, only, id
         )}
       </div>
       <ResultMessage result={result} />
-      {result?.ok && (next || left === 0) && (
-        <p className="flex flex-wrap items-center gap-2 text-label" data-testid="next-waiting">
-          {next ? (
-            <>
-              <Link href={`/users/requests/${next.id}`} className="btn-primary btn-compact w-auto">
-                Next waiting for you →
-              </Link>
-              <span className="text-ink-muted">
-                {next.requestNo}: {next.title}
-                {typeof left === "number" ? ` · ${left.toLocaleString("en-IN")} still waiting` : ""}
-              </span>
-            </>
-          ) : (
-            <span className="text-success-600">Nothing else is waiting for you. All done.</span>
-          )}
-        </p>
-      )}
       <ConfirmDialog
         open={asking}
         onCancel={() => setAsking(false)}

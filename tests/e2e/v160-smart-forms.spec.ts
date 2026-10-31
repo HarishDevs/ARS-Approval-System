@@ -32,6 +32,7 @@ test("IT builds a smart form: a rule, line items and a calculated amount", async
   await page.getByLabel("Required: Kind").check();
 
   await addField(page, "GSTIN", "TEXT");
+  await page.getByRole("tab", { name: "Conditions" }).click(); // D-235: the rules are on the Conditions tab
   await page.getByRole("button", { name: "+ Show only when" }).last().click();
   await page.getByLabel("Show only when: field").last().selectOption({ label: "Kind" });
   await page.getByLabel("Show only when: test").last().selectOption("EQ");
@@ -46,8 +47,10 @@ test("IT builds a smart form: a rule, line items and a calculated amount", async
   await addField(page, "Freight", "NUMBER");
   await page.getByLabel("Required: Freight").check();
 
-  // The DoA amount becomes a calculated field.
-  await page.getByLabel("Field type").first().selectOption("CALC");
+  // The DoA amount becomes a calculated field (D-235: it asks first, since the smallest value goes).
+  await page.getByRole("button", { name: "Edit Amount (₹)" }).click();
+  await page.getByLabel("Field type").selectOption("CALC");
+  await page.getByRole("alertdialog").getByRole("button", { name: "Change type" }).click();
   const formula = page.getByLabel("Formula");
   await formula.fill("items + freigt");
   await expect(page.getByText('"freigt" isn\'t a field on this form.')).toBeVisible();

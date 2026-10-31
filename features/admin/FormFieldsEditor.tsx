@@ -1,274 +1,101 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { LOOKUP_SOURCES, NUMERIC_TYPES, OPTION_TYPES, type FieldLookups, type FieldType, type FormField, type LookupSource } from "@/server/forms/fields";
-import { RULE_OPERATORS, RULE_WORDS, formulaFields, parseFormula, type FieldRule } from "@/server/forms/dynamic";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  AlignLeft,
+  AtSign,
+  Calculator,
+  Calendar,
+  CalendarClock,
+  CheckSquare,
+  ChevronDown,
+  ChevronUp,
+  CircleDot,
+  Copy,
+  GripVertical,
+  Hash,
+  Heading,
+  IndianRupee,
+  Link2,
+  List,
+  ListChecks,
+  Paperclip,
+  Redo2,
+  Rows3,
+  Search,
+  Trash2,
+  Type,
+  Undo2,
+  User,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
+import { NUMERIC_TYPES, type FieldLookups, type FormField } from "@/server/forms/fields";
 import type { Comparison } from "@/server/engine/types";
 import { Hint } from "@/features/ui/Hint";
+import { ConfirmDialog } from "@/features/ui/Dialog";
+import { useToast } from "@/features/ui/Toast";
+import { FieldProperties, NumberDraftInput } from "@/features/admin/form-designer/FieldProperties";
+import { conversionLosses, dependentsOf, duplicateField, fieldProblems, formulaProblem, GROUP_LABEL, moveItem, newField, TYPE_CHOICES, typeChoice, withType, type FieldGroup } from "@/features/admin/form-designer/model";
+
+export { slugKey } from "@/features/admin/form-designer/model";
+export { ChoiceListEditor, NumberDraftInput, SOURCE_LABEL } from "@/features/admin/form-designer/FieldProperties";
 
 type ConditionValue = string | number;
 
-// The form field creator of the workflow builder (S12, F-75, D-088).
-// Fixed after testing key by key in the browser:
-//   - the key follows the label until IT edits it (it used to stop after the
-//     first letter);
-//   - choices are a list editor (the old comma box dropped every comma);
-//   - number boxes keep what is typed ("1." and "-" no longer vanish);
-//   - condition values match the field: a date picker, a dropdown of the
-//     choices / list / people, or a number.
-const TYPE_CHOICES: { value: string; label: string }[] = [
-  { value: "TEXT", label: "Short text" },
-  { value: "LONG_TEXT", label: "Long text" },
-  { value: "NUMBER", label: "Number / amount" },
-  { value: "CURRENCY", label: "Currency (₹, paise)" },
-  { value: "DATE", label: "Date" },
-  { value: "DATETIME", label: "Date and time" },
-  { value: "CHOICE", label: "Dropdown (your options)" },
-  { value: "MULTI_CHOICE", label: "Multi-select (your options)" },
-  { value: "RADIO", label: "Radio buttons (your options)" },
-  { value: "CHECKBOX", label: "Checkbox (yes when ticked)" },
-  { value: "URL", label: "Web link (URL)" },
-  { value: "LOOKUP:DEPARTMENT", label: "Department (from the list)" },
-  { value: "LOOKUP:DESIGNATION", label: "Designation (from the list)" },
-  { value: "PERSON", label: "Person" },
-  // v1.6.0 smart forms
-  { value: "CALC", label: "Calculated (formula)" },
-  { value: "LINE_ITEMS", label: "Line items (qty × rate + GST)" },
-  { value: "SECTION", label: "Section heading" },
-  // v1.6.1
-  { value: "ATTACHMENT", label: "Attachments (files)" },
-];
-export const SOURCE_LABEL: Record<LookupSource, string> = { DEPARTMENT: "Departments", DESIGNATION: "Designations" };
-// D-179: what each field type does, as a hover hint beside the type.
-const TYPE_HELP: Partial<Record<FieldType, string>> = {
-  DATE: "The requester picks a date from a calendar.",
-  DATETIME: "A date and a time of day, in India time.",
-  CHECKBOX: 'One tick box. Required means it must be ticked (e.g. "I confirm the details are correct").',
-  URL: "A web link starting with https:// or http://. Shown as a link that opens in a new tab.",
-  LINE_ITEMS: "The requester adds rows of description, quantity, rate (₹) and GST %. The total (worked out in paise on the server) is this field's value, so it can be the DoA amount or used in a formula.",
-  SECTION: "A heading that groups the fields below it. It holds no value.",
-  ATTACHMENT: "The requester attaches files here (PDF, images, Word, Excel, PowerPoint, CSV or text; 10 MB each). Required means at least one file. The files are listed under this field on the request.",
+// D-235 (owner: "Build all of it, start with the form fields editor";
+// "Fields can't be reordered, and removals don't ask first"): the Form
+// Designer. Library (add a field by type) · canvas (the fields as cards, in
+// order: drag, or Move up / down with the buttons or Alt+↑/↓; Duplicate;
+// Delete asks first and can be undone) · properties of the selected field
+// only (tabs: General, Validation, Conditions, Advanced; only what applies to
+// its type). Undo / Redo (Ctrl+Z / Ctrl+Y outside text boxes). Changing a
+// type that would drop settings asks first. Each field keeps its own
+// identity while it moves, so nothing typed is lost when another is removed.
+// The server checks the whole form again on save (checkFormDefinition).
+const TYPE_ICON: Record<string, LucideIcon> = {
+  TEXT: Type,
+  LONG_TEXT: AlignLeft,
+  NUMBER: Hash,
+  DATE: Calendar,
+  CHOICE: List,
+  PERSON: User,
+  CHECKBOX: CheckSquare,
+  RADIO: CircleDot,
+  MULTI_CHOICE: ListChecks,
+  CURRENCY: IndianRupee,
+  DATETIME: CalendarClock,
+  ATTACHMENT: Paperclip,
+  "LOOKUP:DEPARTMENT": Users,
+  "LOOKUP:DESIGNATION": AtSign,
+  CALC: Calculator,
+  LINE_ITEMS: Rows3,
+  URL: Link2,
+  SECTION: Heading,
 };
-function typeHelp(field: FormField): string | undefined {
-  if (field.type === "LOOKUP" && field.source) return `The requester picks from the active ${SOURCE_LABEL[field.source].toLowerCase()} kept in Admin → Departments. New ones appear by themselves.`;
-  return TYPE_HELP[field.type];
-}
+const iconFor = (field: FormField): LucideIcon => TYPE_ICON[typeChoice(field)?.value ?? "TEXT"] ?? Type;
 
-export function slugKey(label: string): string {
-  const slug = label
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "")
-    .slice(0, 50);
-  return /^[a-z]/.test(slug) ? slug : slug ? `f_${slug}`.slice(0, 50) : "";
-}
+type Snapshot = { form: FormField[]; ids: string[] };
+let seq = 0;
+const newId = () => `f${Date.now().toString(36)}${(seq += 1).toString(36)}`;
+const HISTORY_LIMIT = 100;
+const TYPING = new Set(["INPUT", "TEXTAREA", "SELECT"]);
 
-const typeValue = (field: FormField) => (field.type === "LOOKUP" ? `LOOKUP:${field.source ?? "DEPARTMENT"}` : field.type);
-
-function withType(field: FormField, value: string): FormField {
-  const [type, source] = value.split(":") as [FieldType, LookupSource | undefined];
-  return {
-    key: field.key,
-    label: field.label,
-    required: field.required,
-    ...(field.help ? { help: field.help } : {}),
-    type,
-    ...(OPTION_TYPES.includes(type) ? { options: field.options ?? [] } : {}),
-    ...((type === "NUMBER" || type === "CURRENCY") && field.min !== undefined ? { min: field.min } : {}),
-    ...(type === "LOOKUP" ? { source: source && (LOOKUP_SOURCES as readonly string[]).includes(source) ? source : "DEPARTMENT" } : {}),
-    ...(type === "CALC" ? { formula: field.formula ?? "", required: false } : {}),
-    ...(type === "SECTION" ? { required: false } : {}),
-    ...(type === "ATTACHMENT" ? { maxFiles: field.maxFiles ?? 5 } : {}),
-    ...(field.showIf ? { showIf: field.showIf } : {}),
-    ...(field.requiredIf && type !== "SECTION" && type !== "CALC" ? { requiredIf: field.requiredIf } : {}),
-    ...(field.defaultValue && ["TEXT", "NUMBER", "CURRENCY", "CHOICE", "RADIO", "DATE", "URL"].includes(type) ? { defaultValue: field.defaultValue } : {}),
-    ...(field.listed ? { listed: true } : {}),
-    ...(field.searchable ? { searchable: true } : {}),
-    ...(field.editable ? { editable: true } : {}),
-  };
-}
-
-// The rule editor for "show only when" / "required when" (EN-01).
-function RuleEditor({ label, rule, others, onChange }: { label: string; rule: FieldRule | undefined; others: FormField[]; onChange: (rule: FieldRule | undefined) => void }) {
-  if (!rule) {
-    return (
-      <button type="button" className="link text-label" disabled={others.length === 0} onClick={() => onChange({ field: others[0]!.key, op: "FILLED" })}>
-        + {label}
-      </button>
-    );
-  }
-  const target = others.find((other) => other.key === rule.field);
-  const numeric = target ? NUMERIC_TYPES.includes(target.type) : false;
-  const operators = RULE_OPERATORS.filter((op) => numeric || !["GT", "GTE", "LT", "LTE"].includes(op));
-  return (
-    <div className="flex flex-wrap items-center gap-2 rounded-md bg-surface-muted px-3 py-2 text-label">
-      <span className="font-medium">{label}</span>
-      <select aria-label={`${label}: field`} value={rule.field} onChange={(event) => onChange({ ...rule, field: event.target.value })} className="field-input w-auto">
-        {others.map((other) => (
-          <option key={other.key} value={other.key}>
-            {other.label || other.key}
-          </option>
-        ))}
-      </select>
-      <select aria-label={`${label}: test`} value={rule.op} onChange={(event) => onChange({ ...rule, op: event.target.value as FieldRule["op"] })} className="field-input w-auto">
-        {operators.map((op) => (
-          <option key={op} value={op}>
-            {RULE_WORDS[op]}
-          </option>
-        ))}
-      </select>
-      {rule.op !== "FILLED" && rule.op !== "EMPTY" &&
-        (target && OPTION_TYPES.includes(target.type) ? (
-          <select aria-label={`${label}: value`} value={rule.value ?? ""} onChange={(event) => onChange({ ...rule, value: event.target.value })} className="field-input w-auto">
-            <option value="">Choose…</option>
-            {(target.options ?? []).map((option) => (
-              <option key={option}>{option}</option>
-            ))}
-          </select>
-        ) : (
-          <input aria-label={`${label}: value`} value={rule.value ?? ""} onChange={(event) => onChange({ ...rule, value: event.target.value.slice(0, 100) })} inputMode={numeric ? "decimal" : undefined} className="field-input w-40" />
-        ))}
-      <button type="button" className="link text-danger-600" onClick={() => onChange(undefined)} aria-label={`Remove: ${label}`}>
-        Remove
-      </button>
-    </div>
-  );
-}
-
-// Live check of a formula against the form (EN-02).
-function formulaProblem(formula: string, form: FormField[], self: string): string | null {
-  if (!formula.trim()) return "Write a formula, e.g. quantity * rate.";
-  try {
-    for (const ref of formulaFields(parseFormula(formula))) {
-      const target = form.find((field) => field.key === ref);
-      if (!target) return `"${ref}" isn't a field on this form.`;
-      if (target.key === self) return "A formula can't use its own field.";
-      if (!NUMERIC_TYPES.includes(target.type)) return `"${target.label}" isn't a number.`;
-    }
-    return null;
-  } catch (error) {
-    return (error as Error).message;
-  }
-}
-
-// A number box that keeps the text being typed and reports a number (or
-// undefined) once it is one.
-export function NumberDraftInput({
-  value,
-  onChange,
-  label,
-  placeholder,
-  className = "field-input w-32",
-}: {
-  value: number | undefined;
-  onChange: (value: number | undefined) => void;
-  label: string;
-  placeholder?: string;
-  className?: string;
-}) {
-  const [text, setText] = useState(value === undefined ? "" : String(value));
-  const parse = (raw: string): number | undefined | null => {
-    const cleaned = raw.replace(/[,\s₹]/g, "");
-    if (cleaned === "") return undefined;
-    const number = Number(cleaned);
-    // null = still being typed ("-", "1.") or not a number yet.
-    return cleaned === "-" || cleaned.endsWith(".") || !Number.isFinite(number) ? null : number;
-  };
-  // A new value from outside (another row removed, a reset) replaces the text.
+// The designer is wide enough for three columns (library · canvas · properties)
+// only when its own box is; inside the workflow builder it often isn't, and
+// the properties then open under the chosen field.
+function useWide(ref: React.RefObject<HTMLElement | null>, at = 960) {
+  const [wide, setWide] = useState(false);
   useEffect(() => {
-    const typed = parse(text);
-    if (typed !== null && typed !== value) setText(value === undefined ? "" : String(value));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value]);
-  return (
-    <input
-      aria-label={label}
-      inputMode="decimal"
-      value={text}
-      placeholder={placeholder}
-      className={className}
-      onChange={(event) => {
-        setText(event.target.value);
-        const next = parse(event.target.value);
-        if (next !== null) onChange(next);
-      }}
-    />
-  );
+    const node = ref.current;
+    if (!node || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(([entry]) => setWide((entry?.contentRect.width ?? 0) >= at));
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [ref, at]);
+  return wide;
 }
 
-// Dropdown options: type one and press Add or Enter; paste several
-// separated by commas, semicolons or new lines.
-export function ChoiceListEditor({ options, onChange, label }: { options: string[]; onChange: (options: string[]) => void; label: string }) {
-  const [draft, setDraft] = useState("");
-  const [note, setNote] = useState<string | null>(null);
-  function add(text: string) {
-    const items = text
-      .split(/[,;\n]/)
-      .map((item) => item.trim().slice(0, 100))
-      .filter(Boolean);
-    if (!items.length) return;
-    const next = [...options];
-    const skipped: string[] = [];
-    for (const item of items) {
-      if (next.some((existing) => existing.toLowerCase() === item.toLowerCase())) skipped.push(item);
-      else if (next.length < 50) next.push(item);
-    }
-    onChange(next);
-    setDraft("");
-    setNote(skipped.length ? `Already in the list: ${skipped.join(", ")}` : null);
-  }
-  return (
-    <div className="space-y-2">
-      <ul aria-label={`Options for ${label}`} className="flex flex-wrap gap-2">
-        {options.map((option, index) => (
-          <li key={option} className="inline-flex items-center gap-1 rounded-full border border-line bg-surface-muted py-1 pl-3 pr-1 text-label">
-            {option}
-            <button
-              type="button"
-              aria-label={`Remove option ${option}`}
-              onClick={() => onChange(options.filter((_, i) => i !== index))}
-              className="flex h-6 w-6 items-center justify-center rounded-full text-ink-muted hover:bg-surface hover:text-danger-600"
-            >
-              ✕
-            </button>
-          </li>
-        ))}
-        {options.length === 0 && <li className="text-caption text-ink-faint">No options yet: add at least two.</li>}
-      </ul>
-      <div className="flex flex-wrap gap-2">
-        <input
-          aria-label={`New option for ${label}`}
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              event.preventDefault();
-              add(draft);
-            }
-          }}
-          onPaste={(event) => {
-            const text = event.clipboardData.getData("text");
-            if (/[,;\n]/.test(text)) {
-              event.preventDefault();
-              add(text);
-            }
-          }}
-          placeholder="New option"
-          className="field-input min-w-0 flex-1"
-        />
-        <button type="button" onClick={() => add(draft)} className="btn-secondary btn-compact h-11">
-          Add option
-        </button>
-        <Hint text="Press Enter to add. Paste a list separated by commas or new lines to add many at once." align="end" className="self-center" />
-      </div>
-      {note && <p className="text-caption text-ink-faint">{note}</p>}
-    </div>
-  );
-}
-
-// v1.9.0: `recordOptions` adds the task / information choices per field
-// (show in lists, searchable, editable later); `intro` replaces the
-// approval wording at the top.
 export function FormFieldsEditor({
   form,
   setForm,
@@ -282,209 +109,423 @@ export function FormFieldsEditor({
   recordOptions?: boolean;
   intro?: string;
 }) {
-  // Keys of saved fields never change; a new field's key follows its label
-  // until IT edits the key.
-  const [editedKeys, setEditedKeys] = useState<Set<number>>(new Set());
-  const update = (index: number, change: (field: FormField) => FormField) => setForm((all) => all.map((item, i) => (i === index ? change(item) : item)));
+  const toast = useToast();
+  const box = useRef<HTMLElement>(null);
+  const wide = useWide(box);
+  // A stable identity per field (not its place in the list).
+  const [ids, setIds] = useState<string[]>(() => form.map(newId));
+  useEffect(() => {
+    if (ids.length !== form.length) setIds(form.map((_, index) => ids[index] ?? newId()));
+  }, [form, ids]);
+  const [selected, setSelected] = useState<string | null>(null);
+  // Keys of saved fields never change; a new field's key follows its label until IT edits the key.
+  const [editedKeys, setEditedKeys] = useState<Set<string>>(new Set());
+  const [query, setQuery] = useState("");
+  const [dragging, setDragging] = useState<string | null>(null);
+  const [dropAt, setDropAt] = useState<number | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [confirmType, setConfirmType] = useState<{ id: string; value: string; losses: string[] } | null>(null);
+
+  // Undo / redo: whole snapshots of the form and the identities.
+  const past = useRef<Snapshot[]>([]);
+  const future = useRef<Snapshot[]>([]);
+  const lastTag = useRef<{ tag: string; at: number } | null>(null);
+  const [, bump] = useState(0);
+  const current = useRef<Snapshot>({ form, ids });
+  current.current = { form, ids };
+
+  const commit = useCallback(
+    (next: Snapshot, tag?: string) => {
+      const now = Date.now();
+      // Typing in one box is one step, not one per letter.
+      const coalesce = tag && lastTag.current?.tag === tag && now - lastTag.current.at < 1500;
+      if (!coalesce) {
+        past.current = [...past.current, current.current].slice(-HISTORY_LIMIT);
+      }
+      future.current = [];
+      lastTag.current = tag ? { tag, at: now } : null;
+      setIds(next.ids);
+      setForm(() => next.form);
+      bump((value) => value + 1);
+    },
+    [setForm],
+  );
+  const restore = useCallback(
+    (from: React.MutableRefObject<Snapshot[]>, to: React.MutableRefObject<Snapshot[]>) => {
+      const snapshot = from.current[from.current.length - 1];
+      if (!snapshot) return;
+      from.current = from.current.slice(0, -1);
+      to.current = [...to.current, current.current];
+      lastTag.current = null;
+      setIds(snapshot.ids);
+      setForm(() => snapshot.form);
+      bump((value) => value + 1);
+    },
+    [setForm],
+  );
+  const undo = () => restore(past, future);
+  const redo = () => restore(future, past);
+
+  const indexOf = (id: string) => ids.indexOf(id);
+  const keys = form.map((field) => field.key);
+  const updateField = (id: string, change: (field: FormField) => FormField, tag: string) => {
+    const index = indexOf(id);
+    if (index < 0) return;
+    commit({ form: form.map((field, i) => (i === index ? change(field) : field)), ids }, `${id}:${tag}`);
+  };
+  const add = (value: string, at = form.length) => {
+    const field = newField(value, keys);
+    const id = newId();
+    commit({ form: [...form.slice(0, at), field, ...form.slice(at)], ids: [...ids.slice(0, at), id, ...ids.slice(at)] });
+    setSelected(id);
+    setQuery("");
+  };
+  const move = (id: string, to: number) => {
+    const from = indexOf(id);
+    if (from < 0 || to < 0 || to >= form.length || from === to) return;
+    commit({ form: moveItem(form, from, to), ids: moveItem(ids, from, to) });
+  };
+  const duplicate = (id: string) => {
+    const index = indexOf(id);
+    if (index < 0) return;
+    const copy = duplicateField(form[index]!, keys);
+    const copyId = newId();
+    commit({ form: [...form.slice(0, index + 1), copy, ...form.slice(index + 1)], ids: [...ids.slice(0, index + 1), copyId, ...ids.slice(index + 1)] });
+    setEditedKeys((all) => new Set(all).add(copyId));
+    setSelected(copyId);
+  };
+  const remove = (id: string) => {
+    const index = indexOf(id);
+    if (index < 0) return;
+    const name = form[index]!.label || form[index]!.key || "the field";
+    commit({ form: form.filter((_, i) => i !== index), ids: ids.filter((_, i) => i !== index) });
+    if (selected === id) setSelected(null);
+    toast({ tone: "info", title: `Removed “${name}”.`, action: { label: "Undo", onClick: undo } });
+  };
+  const changeType = (id: string, value: string) => {
+    const index = indexOf(id);
+    if (index < 0) return;
+    const losses = conversionLosses(form[index]!, value);
+    if (losses.length) setConfirmType({ id, value, losses });
+    else updateField(id, (field) => withType(field, value), "type");
+  };
+
+  // Ctrl+Z / Ctrl+Y (and Ctrl+Shift+Z) outside text boxes, which keep their own undo.
+  const onKeyDown = (event: React.KeyboardEvent) => {
+    if (!(event.ctrlKey || event.metaKey) || TYPING.has((event.target as HTMLElement).tagName)) return;
+    const key = event.key.toLowerCase();
+    if (key === "z" && !event.shiftKey) {
+      event.preventDefault();
+      undo();
+    } else if (key === "y" || (key === "z" && event.shiftKey)) {
+      event.preventDefault();
+      redo();
+    }
+  };
+
+  const shown = useMemo(() => {
+    const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+    return form
+      .map((field, index) => ({ field, index, id: ids[index] ?? `${index}` }))
+      .filter(({ field }) => words.every((word) => `${field.label} ${field.key} ${typeChoice(field)?.label ?? ""}`.toLowerCase().includes(word)));
+  }, [form, ids, query]);
+  const selectedIndex = selected ? indexOf(selected) : -1;
+  const selectedField = selectedIndex >= 0 ? form[selectedIndex] : undefined;
+  const deleting = confirmDelete ? form[indexOf(confirmDelete)] : undefined;
+
+  const properties = (id: string, field: FormField) => (
+    <FieldProperties
+      key={id}
+      field={field}
+      form={form}
+      locked={lockedKeys.includes(field.key)}
+      keyFollows={!lockedKeys.includes(field.key) && !editedKeys.has(id)}
+      recordOptions={recordOptions}
+      onChange={(change, tag) => updateField(id, change, tag)}
+      onKeyEdited={() => setEditedKeys((all) => new Set(all).add(id))}
+      onTypeChange={(value) => changeType(id, value)}
+    />
+  );
+
+  const library = (
+    <nav aria-label="Add a field" className={wide ? "space-y-4" : "flex flex-wrap gap-1.5"} data-testid="field-library">
+      {(["BASIC", "ADVANCED", "LAYOUT"] as FieldGroup[]).map((group) => (
+        <div key={group} className={wide ? "space-y-1" : "contents"}>
+          {wide && <p className="px-1 text-caption font-semibold uppercase tracking-wide text-ink-faint">{GROUP_LABEL[group]}</p>}
+          {TYPE_CHOICES.filter((choice) => choice.group === group).map((choice) => {
+            const Icon = TYPE_ICON[choice.value] ?? Type;
+            return (
+              <button
+                key={choice.value}
+                type="button"
+                draggable
+                onDragStart={(event) => {
+                  event.dataTransfer.setData("application/x-ars-field-type", choice.value);
+                  event.dataTransfer.effectAllowed = "copy";
+                }}
+                onClick={() => add(choice.value)}
+                aria-label={`Add a ${choice.short} field`}
+                title={choice.label}
+                className={
+                  wide
+                    ? "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-label text-ink hover:bg-surface-muted"
+                    : "inline-flex items-center gap-1.5 rounded-full border border-line px-2.5 py-1 text-caption text-ink hover:bg-surface-muted"
+                }
+              >
+                <Icon aria-hidden="true" className="h-4 w-4 shrink-0 text-ink-muted" />
+                {choice.short}
+              </button>
+            );
+          })}
+        </div>
+      ))}
+    </nav>
+  );
 
   return (
-    <section className="card">
-      <div className="border-b border-line px-5 py-4">
+    <section ref={box} className="card" aria-labelledby="form-fields-title" onKeyDown={onKeyDown} data-testid="form-designer">
+      <div className="flex flex-wrap items-center gap-2 border-b border-line px-5 py-3">
         <div className="flex items-center gap-1.5">
-          <h2 className="font-semibold">Form fields</h2>
+          <h2 id="form-fields-title" className="font-semibold">
+            Form fields
+          </h2>
           <Hint text={intro ?? "What the requester fills in. Steps can skip on these values, e.g. amount, a date or a department."} align="start" />
+          <span className="text-caption text-ink-muted">
+            {form.length} field{form.length === 1 ? "" : "s"}
+          </span>
         </div>
+        <span className="ml-auto flex items-center gap-1">
+          <label className="relative">
+            <span className="sr-only">Find a field</span>
+            <Search aria-hidden="true" className="pointer-events-none absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-faint" />
+            <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Find a field" className="field-input h-8 w-40 pl-8 text-label" />
+          </label>
+          <button type="button" className="tb-btn" onClick={undo} disabled={!past.current.length} aria-label="Undo" title="Undo (Ctrl+Z)">
+            <Undo2 aria-hidden="true" className="h-4 w-4" />
+          </button>
+          <button type="button" className="tb-btn" onClick={redo} disabled={!future.current.length} aria-label="Redo" title="Redo (Ctrl+Y)">
+            <Redo2 aria-hidden="true" className="h-4 w-4" />
+          </button>
+        </span>
       </div>
-      <div className="divide-y divide-line">
-        {form.map((field, index) => {
-          const name = field.label || field.key || `field ${index + 1}`;
-          const keyFollows = !lockedKeys.includes(field.key) && !editedKeys.has(index);
-          return (
-            <div key={index} className="grid items-start gap-3 px-5 py-4 lg:grid-cols-[1fr_170px_210px_auto_auto]" data-testid="form-field">
-              <div>
-                <input
-                  aria-label="Field label"
-                  value={field.label}
-                  onChange={(event) => {
-                    const label = event.target.value;
-                    update(index, (item) => ({ ...item, label, key: keyFollows ? slugKey(label) : item.key }));
-                  }}
-                  placeholder="Label, e.g. Amount (₹)"
-                  className="field-input"
-                />
-              </div>
-              <input
-                aria-label="Field key"
-                value={field.key}
-                readOnly={lockedKeys.includes(field.key)}
-                title={lockedKeys.includes(field.key) ? "Saved keys can't change: running requests and conditions use them." : "Used in conditions. Fills in from the label."}
-                onChange={(event) => {
-                  setEditedKeys((all) => new Set(all).add(index));
-                  update(index, (item) => ({ ...item, key: event.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "") }));
-                }}
-                placeholder="key"
-                className="field-input font-mono read-only:bg-surface read-only:text-ink-muted"
-              />
-              <div className="flex items-center gap-1">
-                <select aria-label="Field type" value={typeValue(field)} onChange={(event) => update(index, (item) => withType(item, event.target.value))} className="field-input min-w-0 flex-1">
-                  {TYPE_CHOICES.map((type) => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
-                  ))}
-                </select>
-                <Hint text={typeHelp(field)} align="end" />
-              </div>
-              <label className="flex h-11 items-center gap-2 text-label">
-                <input type="checkbox" aria-label={`Required: ${name}`} checked={field.required} disabled={field.type === "CALC" || field.type === "SECTION"} onChange={(event) => update(index, (item) => ({ ...item, required: event.target.checked }))} />
-                Required
-              </label>
-              <button
-                type="button"
-                aria-label={`Remove field ${name}`}
-                onClick={() => {
-                  setEditedKeys(new Set());
-                  setForm((all) => all.filter((_, i) => i !== index));
-                }}
-                className="btn-secondary btn-compact h-11"
-              >
-                Remove
-              </button>
-              <div className="space-y-3 lg:col-span-5">
-                <input
-                  aria-label={`Help text for ${name}`}
-                  value={field.help ?? ""}
-                  onChange={(event) => update(index, (item) => ({ ...item, help: event.target.value ? event.target.value.slice(0, 200) : undefined }))}
-                  placeholder="Help text (optional)"
-                  className="field-input"
-                />
-                {(field.type === "NUMBER" || field.type === "CURRENCY") && (
-                  <div className="flex flex-wrap items-center gap-2 text-label">
-                    Smallest value allowed
-                    <NumberDraftInput label={`Smallest value for ${name}`} value={field.min} onChange={(min) => update(index, (item) => ({ ...item, min }))} placeholder="none" />
-                    <Hint text="Use 0 for amounts. A DoA amount can never be negative." />
-                  </div>
-                )}
-                {OPTION_TYPES.includes(field.type) && <ChoiceListEditor label={name} options={field.options ?? []} onChange={(options) => update(index, (item) => ({ ...item, options }))} />}
-                {field.type !== "SECTION" && (
-                  <div className="flex items-center gap-1.5">
-                    <label className="flex items-center gap-2 text-label">
-                      <input type="checkbox" checked={Boolean(field.confidential)} onChange={(event) => update(index, (item) => ({ ...item, confidential: event.target.checked || undefined }))} />
-                      Confidential
-                    </label>
-                    <Hint text="Only the requester, the approvers and IT see the value (hidden from collaborators, advisers and in exports)." align="start" />
-                  </div>
-                )}
-                {field.type === "DATE" && (
-                  <div className="flex items-center gap-1.5">
-                    <label className="flex items-center gap-2 text-label">
-                      <input type="checkbox" checked={Boolean(field.neededBy)} onChange={(event) => update(index, (item) => ({ ...item, neededBy: event.target.checked || undefined }))} />
-                      This is the &quot;needed by&quot; date
-                    </label>
-                    <Hint text="Shown in the calendar and reports." align="start" />
-                  </div>
-                )}
-                {field.type === "CALC" && (
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-1.5">
-                      <label className="field-label" htmlFor={`formula-${index}`}>
-                        Formula
-                      </label>
-                      <Hint
-                        text={`Uses + − × ÷, brackets and round(x, 2). Number fields you can use: ${form.filter((other) => NUMERIC_TYPES.includes(other.type) && other.key !== field.key).map((other) => other.key).join(", ") || "none yet"}.`}
-                        align="start"
-                        className="mb-1.5"
-                      />
+
+      <div className={wide ? "grid grid-cols-[13rem_minmax(0,1fr)_22rem] items-start" : ""}>
+        {wide ? <aside className="sticky top-20 border-r border-line p-3">{library}</aside> : <div className="border-b border-line px-5 py-3">{library}</div>}
+
+        <div className="min-w-0 p-3">
+          {form.length === 0 ? (
+            <p className="rounded-md border border-dashed border-line px-4 py-6 text-center text-label text-ink-muted">No fields yet. Pick a field type to add the first one.</p>
+          ) : shown.length === 0 ? (
+            <p className="px-2 py-4 text-label text-ink-muted">No field matches “{query}”.</p>
+          ) : (
+            <ol
+              aria-label="Fields, in order"
+              className="space-y-2"
+              onDragOver={(event) => {
+                if (event.dataTransfer.types.includes("application/x-ars-field-type") || dragging) event.preventDefault();
+              }}
+              onDrop={(event) => {
+                const type = event.dataTransfer.getData("application/x-ars-field-type");
+                if (type && dropAt === null) {
+                  event.preventDefault();
+                  add(type);
+                }
+              }}
+            >
+              {shown.map(({ field, index, id }) => {
+                const name = field.label || field.key || `field ${index + 1}`;
+                const problems = fieldProblems(field, form);
+                const Icon = iconFor(field);
+                const isSelected = selected === id;
+                return (
+                  <li
+                    key={id}
+                    data-testid="form-field"
+                    data-selected={isSelected ? "true" : undefined}
+                    onDragOver={(event) => {
+                      event.preventDefault();
+                      setDropAt(index);
+                    }}
+                    onDragLeave={() => setDropAt((value) => (value === index ? null : value))}
+                    onDrop={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      const type = event.dataTransfer.getData("application/x-ars-field-type");
+                      if (type) add(type, index);
+                      else if (dragging) move(dragging, index);
+                      setDragging(null);
+                      setDropAt(null);
+                    }}
+                    className={`rounded-lg border bg-surface transition-colors ${isSelected ? "border-primary-600 ring-2 ring-primary-100" : "border-line"} ${dropAt === index ? "border-t-4 border-t-primary-600" : ""} ${field.type === "SECTION" ? "bg-surface-muted" : ""}`}
+                  >
+                    <div className="flex items-start gap-1 p-2">
+                      <span
+                        draggable
+                        onDragStart={(event) => {
+                          event.dataTransfer.setData("text/plain", id);
+                          event.dataTransfer.effectAllowed = "move";
+                          setDragging(id);
+                        }}
+                        onDragEnd={() => {
+                          setDragging(null);
+                          setDropAt(null);
+                        }}
+                        title="Drag to move"
+                        className="mt-1.5 cursor-grab text-ink-faint active:cursor-grabbing"
+                        aria-hidden="true"
+                      >
+                        <GripVertical className="h-4 w-4" />
+                      </span>
+                      <button
+                        type="button"
+                        aria-expanded={isSelected}
+                        aria-label={`Edit ${name}`}
+                        onClick={() => setSelected(isSelected ? null : id)}
+                        onKeyDown={(event) => {
+                          if (event.altKey && (event.key === "ArrowUp" || event.key === "ArrowDown")) {
+                            event.preventDefault();
+                            move(id, index + (event.key === "ArrowUp" ? -1 : 1));
+                          }
+                        }}
+                        className="flex min-w-0 flex-1 items-start gap-2 rounded-md px-1 py-1 text-left hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-600"
+                      >
+                        <Icon aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-ink-muted" />
+                        <span className="min-w-0 flex-1">
+                          <span className={`block truncate ${field.type === "SECTION" ? "font-semibold uppercase tracking-wide" : "font-medium"}`}>
+                            {field.label || <span className="text-ink-faint">Untitled field</span>}
+                            {field.required && (
+                              <span className="text-danger-600" aria-label="required">
+                                {" "}
+                                *
+                              </span>
+                            )}
+                          </span>
+                          <span className="block truncate text-caption text-ink-muted">
+                            {typeChoice(field)?.short ?? field.type}
+                            {field.key ? ` · ${field.key}` : ""}
+                            {field.showIf ? " · shown when…" : ""}
+                            {field.confidential ? " · confidential" : ""}
+                            {field.help ? ` · ${field.help}` : ""}
+                          </span>
+                        </span>
+                        {problems.length > 0 && (
+                          <span className="shrink-0 rounded-full bg-warning-50 px-2 py-0.5 text-caption font-semibold text-warning-600" title={problems.join(" ")} data-testid="field-problem">
+                            {problems.length} to fix
+                          </span>
+                        )}
+                      </button>
+                      <span className="flex shrink-0 items-center">
+                        <IconButton label={`Move ${name} up`} disabled={index === 0 || Boolean(query)} onClick={() => move(id, index - 1)}>
+                          <ChevronUp className="h-4 w-4" />
+                        </IconButton>
+                        <IconButton label={`Move ${name} down`} disabled={index === form.length - 1 || Boolean(query)} onClick={() => move(id, index + 1)}>
+                          <ChevronDown className="h-4 w-4" />
+                        </IconButton>
+                        <IconButton label={`Duplicate ${name}`} onClick={() => duplicate(id)}>
+                          <Copy className="h-4 w-4" />
+                        </IconButton>
+                        <IconButton label={`Remove field ${name}`} danger onClick={() => setConfirmDelete(id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </IconButton>
+                      </span>
                     </div>
-                    <input
-                      id={`formula-${index}`}
-                      value={field.formula ?? ""}
-                      onChange={(event) => update(index, (item) => ({ ...item, formula: event.target.value.slice(0, 500) }))}
-                      placeholder="e.g. quantity * rate * (1 + gst / 100)"
-                      className="field-input font-mono"
-                    />
-                    {formulaProblem(field.formula ?? "", form, field.key) && <p className="text-caption text-danger-600">{formulaProblem(field.formula ?? "", form, field.key)}</p>}
-                    <label className="flex items-center gap-2 text-label">
-                      Decimal places
-                      <select value={field.decimals ?? 2} onChange={(event) => update(index, (item) => ({ ...item, decimals: Number(event.target.value) }))} className="field-input w-20">
-                        {[0, 1, 2, 3, 4].map((digits) => (
-                          <option key={digits}>{digits}</option>
-                        ))}
-                      </select>
-                    </label>
-                  </div>
-                )}
-                {field.type === "ATTACHMENT" && (
-                  <div className="space-y-1">
-                    <label className="flex flex-wrap items-center gap-2 text-label">
-                      Up to
-                      <select aria-label={`Most files for ${name}`} value={field.maxFiles ?? 5} onChange={(event) => update(index, (item) => ({ ...item, maxFiles: Number(event.target.value) }))} className="field-input w-20">
-                        {[1, 2, 3, 4, 5].map((count) => (
-                          <option key={count}>{count}</option>
-                        ))}
-                      </select>
-                      file(s)
-                    </label>
-                  </div>
-                )}
-                {["TEXT", "NUMBER", "CURRENCY", "DATE", "URL"].includes(field.type) && (
-                  <input
-                    aria-label={`Default value for ${name}`}
-                    type={field.type === "DATE" ? "date" : "text"}
-                    value={field.defaultValue ?? ""}
-                    onChange={(event) => update(index, (item) => ({ ...item, defaultValue: event.target.value ? event.target.value.slice(0, 200) : undefined }))}
-                    placeholder="Default value (optional)"
-                    className="field-input"
-                  />
-                )}
-                {(field.type === "CHOICE" || field.type === "RADIO") && (field.options ?? []).length > 0 && (
-                  <label className="flex flex-wrap items-center gap-2 text-label">
-                    Default choice
-                    <select value={field.defaultValue ?? ""} onChange={(event) => update(index, (item) => ({ ...item, defaultValue: event.target.value || undefined }))} className="field-input w-auto">
-                      <option value="">None</option>
-                      {(field.options ?? []).map((option) => (
-                        <option key={option}>{option}</option>
-                      ))}
-                    </select>
-                  </label>
-                )}
-                {recordOptions && field.type !== "SECTION" && (
-                  <div className="flex flex-wrap gap-x-5 gap-y-1 text-label">
-                    <label className="flex items-center gap-2">
-                      <input type="checkbox" checked={Boolean(field.listed)} onChange={(event) => update(index, (item) => ({ ...item, listed: event.target.checked || undefined }))} />
-                      Show in lists
-                    </label>
-                    <label className="flex items-center gap-2">
-                      <input type="checkbox" checked={Boolean(field.searchable)} disabled={!["TEXT", "LONG_TEXT", "CHOICE", "RADIO", "NUMBER", "CURRENCY", "URL"].includes(field.type)} onChange={(event) => update(index, (item) => ({ ...item, searchable: event.target.checked || undefined }))} />
-                      Searchable
-                    </label>
-                    <label className="flex items-center gap-2">
-                      <input type="checkbox" checked={Boolean(field.editable)} disabled={field.type === "CALC" || field.type === "ATTACHMENT"} onChange={(event) => update(index, (item) => ({ ...item, editable: event.target.checked || undefined }))} />
-                      Can be changed after it&apos;s created
-                    </label>
-                  </div>
-                )}
-                <div className="flex flex-col gap-2">
-                  <RuleEditor label="Show only when" rule={field.showIf} others={form.filter((other, i) => i !== index && other.type !== "SECTION" && other.key)} onChange={(showIf) => update(index, (item) => ({ ...item, showIf }))} />
-                  {field.type !== "CALC" && field.type !== "SECTION" && (
-                    <RuleEditor label="Required when" rule={field.requiredIf} others={form.filter((other, i) => i !== index && other.type !== "SECTION" && other.key)} onChange={(requiredIf) => update(index, (item) => ({ ...item, requiredIf }))} />
-                  )}
-                </div>
-              </div>
-            </div>
-          );
-        })}
+                    {!wide && isSelected && (
+                      <div className="border-t border-line px-3 pb-3 pt-2" data-testid="field-inline-properties">
+                        <Problems problems={problems} field={field} form={form} />
+                        {properties(id, field)}
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <button type="button" onClick={() => add("TEXT")} className="btn-secondary btn-compact">
+              Add field
+            </button>
+            <span className="text-caption text-ink-muted">or pick a type{wide ? " on the left" : " above"}; drag fields, or Alt+↑/↓, to change the order.</span>
+          </div>
+        </div>
+
+        {wide && (
+          <aside className="sticky top-20 min-h-[12rem] border-l border-line p-4" aria-label="Field properties">
+            {selectedField && selected ? (
+              <>
+                <p className="mb-3 truncate text-label font-semibold">{selectedField.label || "Untitled field"}</p>
+                <Problems problems={fieldProblems(selectedField, form)} field={selectedField} form={form} />
+                {properties(selected, selectedField)}
+              </>
+            ) : (
+              <p className="text-label text-ink-muted">Choose a field to see and change its properties.</p>
+            )}
+          </aside>
+        )}
       </div>
-      <div className="px-5 py-3">
-        <button type="button" onClick={() => setForm((all) => [...all, { key: "", label: "", type: "TEXT", required: false }])} className="btn-secondary btn-compact">
-          Add field
-        </button>
-      </div>
+
+      <ConfirmDialog
+        open={Boolean(confirmDelete && deleting)}
+        onCancel={() => setConfirmDelete(null)}
+        onConfirm={() => {
+          if (confirmDelete) remove(confirmDelete);
+          setConfirmDelete(null);
+        }}
+        title={`Remove “${deleting?.label || deleting?.key || "this field"}”?`}
+        body={(() => {
+          const users = deleting ? dependentsOf(form, deleting.key) : [];
+          return users.length
+            ? `${users.join(", ")} use${users.length === 1 ? "s" : ""} this field in a condition or formula; ${users.length === 1 ? "it" : "they"} will need fixing. You can undo this.`
+            : "It is removed from the form. You can undo this until you leave the page.";
+        })()}
+        confirmLabel="Remove field"
+        tone="danger"
+      />
+      <ConfirmDialog
+        open={Boolean(confirmType)}
+        onCancel={() => setConfirmType(null)}
+        onConfirm={() => {
+          if (confirmType) updateField(confirmType.id, (field) => withType(field, confirmType.value), "type");
+          setConfirmType(null);
+        }}
+        title="Change the type?"
+        body={`As ${TYPE_CHOICES.find((choice) => choice.value === confirmType?.value)?.label ?? "the new type"}, this field loses ${confirmType?.losses.join(", ")}. You can undo this.`}
+        confirmLabel="Change type"
+      />
     </section>
   );
 }
 
-// ---- conditions ---------------------------------------------------------------------------
+function IconButton({ label, onClick, disabled, danger, children }: { label: string; onClick: () => void; disabled?: boolean; danger?: boolean; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      onClick={onClick}
+      disabled={disabled}
+      className={`inline-flex h-8 w-8 items-center justify-center rounded-md text-ink-muted hover:bg-surface-muted disabled:opacity-30 ${danger ? "hover:bg-danger-50 hover:text-danger-600" : "hover:text-ink"}`}
+    >
+      {children}
+    </button>
+  );
+}
+
+// What needs fixing, above the properties. A formula's problem is shown
+// beside the formula itself, so it isn't repeated here.
+function Problems({ problems, field, form }: { problems: string[]; field: FormField; form: readonly FormField[] }) {
+  const formula = field.type === "CALC" ? formulaProblem(field.formula ?? "", form, field.key) : null;
+  const shown = problems.filter((problem) => problem !== formula);
+  if (!shown.length) return null;
+  return (
+    <ul role="status" className="mb-3 space-y-0.5 rounded-md bg-warning-50 px-3 py-2 text-caption text-warning-600">
+      {shown.map((problem) => (
+        <li key={problem}>! {problem}</li>
+      ))}
+    </ul>
+  );
+}
+
+// ---- conditions (the workflow builder's step and choice conditions) ---------------------
 type Operator = Comparison["operator"];
 const ALL: Record<string, [Operator, string][]> = {
   NUMBER: [
@@ -543,7 +584,12 @@ export function ConditionValueInput({
 }) {
   const current = Array.isArray(value) ? value[0] : value;
   const select = (items: { value: string; label: string }[], numeric = false) => (
-    <select aria-label="Value" value={current === undefined || current === null ? "" : String(current)} onChange={(event) => onChange(numeric ? Number(event.target.value) : event.target.value)} className="field-input w-auto min-w-40">
+    <select
+      aria-label="Value"
+      value={current === undefined || current === null ? "" : String(current)}
+      onChange={(event) => onChange(numeric ? Number(event.target.value) : event.target.value)}
+      className="field-input w-auto min-w-40"
+    >
       <option value="">Choose…</option>
       {items.map((item) => (
         <option key={item.value} value={item.value}>

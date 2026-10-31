@@ -42,6 +42,7 @@ test("IT sets up a task type: form field, options, preview, publish", async ({ p
     await page.getByLabel(/New option for Machine/).fill(option);
     await page.getByRole("button", { name: "Add option" }).click();
   }
+  await page.getByRole("tab", { name: "Advanced" }).click(); // D-235
   await page.getByText("Show in lists").last().click();
   await page.getByLabel("Completion evidence").selectOption("NOTE");
   await page.getByRole("button", { name: "Preview the form" }).click();

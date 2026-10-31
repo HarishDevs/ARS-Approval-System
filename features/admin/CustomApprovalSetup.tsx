@@ -109,7 +109,6 @@ export function CustomApprovalSetup({ initialForm, initialPolicy, lookups = NO_L
         <div className="flex flex-wrap gap-x-6 gap-y-2">
           {(
             [
-              ["doa", "DoA matrix", "Approval authority by amount band. Needs a number field such as Amount."],
               ["choice", "Choice (if / otherwise)", "Different approvers depending on a field's value."],
               ["skip", "“Skip this step when…”", "Skip a level when a field matches a condition."],
             ] as const

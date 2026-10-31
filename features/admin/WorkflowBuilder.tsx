@@ -269,9 +269,10 @@ function StageList({
   depth: number; // choices this list is inside (D-099: up to MAX_CHOICE_DEPTH)
 }) {
   const defaults = useNewStepDefaults();
-  // D-206: on the custom approval page IT decides whether the DoA matrix and the choice are offered.
+  // D-206: on the custom approval page IT decides whether the choice is offered.
+  // D-235: a DoA matrix is never offered there (approval types only, D-075).
   const features = useContext(StepPolicyContext)?.features;
-  const allowDoa = allowChoice && (features?.doa ?? true);
+  const allowDoa = allowChoice && !features;
   const allowBranch = allowChoice && (features?.choice ?? true);
   const newStep = (label: string): BuilderStep => ({ id: newId(), label, approvers: { kind: "REQUESTER_MANAGER" }, rule: "ALL" as const, ...defaults });
   const setStage = (index: number, stage: BuilderStage) => onChange(stages.map((item, i) => (i === index ? stage : item)));

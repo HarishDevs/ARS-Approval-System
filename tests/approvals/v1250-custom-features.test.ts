@@ -12,8 +12,10 @@ const on = (features: Partial<StepPolicy["features"]>): StepPolicy => ({ ...DEFA
 
 describe("custom approval options (D-206)", () => {
   it("are off unless IT switches them on, also for set-ups saved before", () => {
-    expect(DEFAULT_STEP_POLICY.features).toEqual({ doa: false, choice: false, skip: false });
-    expect(parseStepPolicy({ rule: { value: "ALL", editable: true } }).features).toEqual({ doa: false, choice: false, skip: false });
+    expect(DEFAULT_STEP_POLICY.features).toEqual({ choice: false, skip: false });
+    expect(parseStepPolicy({ rule: { value: "ALL", editable: true } }).features).toEqual({ choice: false, skip: false });
+    // D-235: an old stored "doa" choice is dropped.
+    expect(parseStepPolicy({ features: { doa: true, choice: true } }).features).toEqual({ choice: true, skip: false });
   });
   it("levels and parallel steps are always allowed", () => {
     expect(unavailableFeatures(spec([{ kind: "STEP", step: step("a") }, { kind: "PARALLEL", id: "p", label: "P", join: "ALL", steps: [step("b"), step("c")] }]), DEFAULT_STEP_POLICY)).toEqual([]);
@@ -25,7 +27,8 @@ describe("custom approval options (D-206)", () => {
     expect(unavailableFeatures(doa, DEFAULT_STEP_POLICY)).toEqual(["A DoA matrix isn't available on custom approvals."]);
     expect(unavailableFeatures(choice, DEFAULT_STEP_POLICY)).toEqual(["A choice (if / otherwise) isn't available on custom approvals.", "“Skip this step when…” isn't available on custom approvals."]);
     expect(unavailableFeatures(skip, DEFAULT_STEP_POLICY)).toEqual(["“Skip this step when…” isn't available on custom approvals."]);
-    expect(unavailableFeatures(doa, on({ doa: true }))).toEqual([]);
+    // D-235: DoA is never available on a custom approval, whatever is switched on.
+    expect(unavailableFeatures(doa, on({ choice: true, skip: true }))).toEqual(["A DoA matrix isn't available on custom approvals."]);
     expect(unavailableFeatures(choice, on({ choice: true, skip: true }))).toEqual([]);
     expect(unavailableFeatures(skip, on({ skip: true }))).toEqual([]);
   });

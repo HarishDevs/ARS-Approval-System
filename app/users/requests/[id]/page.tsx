@@ -1,3 +1,4 @@
+import { countPendingTasksFor, listPendingTasksFor } from "@/lib/db/repositories/approvals.repository";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Breadcrumbs } from "@/features/ui/Display";
@@ -41,7 +42,7 @@ export const metadata: Metadata = { title: "Request" };
 
 // F-14 request page. loadRequestView applies the record-level check
 // (D-057); anyone else gets the same 404 as a request that doesn't exist.
-export default async function RequestPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ submitted?: string; files?: string; act?: string }> }) {
+export default async function RequestPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ submitted?: string; files?: string; act?: string; decided?: string }> }) {
   const { user } = await requireArea("users");
   const { id } = await params;
   if (!/^\d+$/.test(id)) notFound();
@@ -52,6 +53,12 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
   const query = await searchParams;
   const mentionable = (await listMentionable(view.id)).filter((person) => person.loginId !== user.loginId);
   const submitted = query.submitted === "1";
+  const afterDecision =
+    query.decided === "1"
+      ? await Promise.all([listPendingTasksFor(user.id, { limit: 5, offset: 0 }), countPendingTasksFor(user.id)])
+          .then(([items, left]) => ({ next: items.find((item) => item.requestId !== view.id) ?? null, left }))
+          .catch(() => null)
+      : null;
   const lookups = view.canResubmit && view.form.some((field) => field.type === "LOOKUP") ? await loadFieldLookups() : undefined;
   const people =
     view.canResubmit && view.form.some((field) => field.type === "PERSON")
@@ -114,6 +121,24 @@ export default async function RequestPage({ params, searchParams }: { params: Pr
           </Link>
         </div>
       </PageHeader>
+      {afterDecision && (
+        // D-234 (Peak-end, Parkinson): after a decision, the next thing waiting.
+        <p role="status" data-testid="next-waiting" className="mb-4 flex flex-wrap items-center gap-2 rounded-md bg-success-50 px-3 py-2 text-label text-success-600">
+          <span className="font-semibold">Your decision is recorded.</span>
+          {afterDecision.next ? (
+            <>
+              <Link href={`/users/requests/${afterDecision.next.requestId}`} className="btn-primary btn-compact w-auto">
+                Next waiting for you →
+              </Link>
+              <span className="text-ink-muted">
+                {afterDecision.next.requestNo}: {afterDecision.next.title} · {afterDecision.left.toLocaleString("en-IN")} still waiting
+              </span>
+            </>
+          ) : (
+            <span>Nothing else is waiting for you. All done.</span>
+          )}
+        </p>
+      )}
       {submitted && (
         <p role="status" className="mb-4 rounded-md bg-success-50 px-3 py-2 text-label text-success-600">
           Submitted as {view.requestNo}. The first approvers have been told.

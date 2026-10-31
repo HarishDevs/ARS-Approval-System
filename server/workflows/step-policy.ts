@@ -16,7 +16,9 @@ export const stepPolicySchema = z.object({
   // D-206 (owner): levels and parallel steps are for everyone; the DoA
   // matrix, the if / otherwise choice and "Skip this step when…" appear on
   // the custom approval page only when IT switches them on (off by default).
-  features: z.object({ doa: z.boolean().default(false), choice: z.boolean().default(false), skip: z.boolean().default(false) }).default({ doa: false, choice: false, skip: false }),
+  // D-235 (owner): DoA was dropped from custom approvals (a DoA matrix belongs to an
+  // approval type, D-075); an old stored "doa" choice is ignored.
+  features: z.object({ choice: z.boolean().default(false), skip: z.boolean().default(false) }).default({ choice: false, skip: false }),
 });
 export type StepPolicy = z.infer<typeof stepPolicySchema>;
 export const DEFAULT_STEP_POLICY: StepPolicy = stepPolicySchema.parse({});
@@ -79,7 +81,7 @@ export function unavailableFeatures(spec: BuilderSpec, policy: StepPolicy): stri
     if (item.kind === "STEP") step(item.step);
     else if (item.kind === "PARALLEL") item.steps.forEach(step);
     else if (item.kind === "DOA") {
-      if (!policy.features.doa) found.add("A DoA matrix isn't available on custom approvals.");
+      found.add("A DoA matrix isn't available on custom approvals."); // D-235: never, whatever is stored
       item.levels.forEach((level) => step(level.step));
     } else {
       if (!policy.features.choice) found.add("A choice (if / otherwise) isn't available on custom approvals.");

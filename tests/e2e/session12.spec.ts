@@ -57,6 +57,9 @@ test("IT builds a form with every field type; the dropdown creator and keys work
   await addField(page, "Designation", "LOOKUP:DESIGNATION");
 
   // The smallest amount keeps what is typed, decimals included.
+  // D-235: open the Amount field's properties, then its Validation tab.
+  await page.getByRole("button", { name: "Edit Amount (₹)" }).click();
+  await page.getByRole("tab", { name: "Validation" }).click();
   const smallest = page.getByLabel("Smallest value for Amount (₹)");
   await smallest.fill("");
   await smallest.pressSequentially("0.5");
@@ -94,7 +97,8 @@ test("IT builds a form with every field type; the dropdown creator and keys work
   workflowPath = new URL(page.url()).pathname;
 
   // Saved keys are locked from now on.
-  await expect(page.getByLabel("Field key").first()).toHaveAttribute("readonly", "");
+  await page.getByRole("button", { name: "Edit Amount (₹)" }).click();
+  await expect(page.getByLabel("Field key")).toHaveAttribute("readonly", "");
 });
 
 test("test mode follows the date and department conditions", async ({ page, context }) => {
