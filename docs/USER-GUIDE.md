@@ -27,7 +27,17 @@ From the top:
 
 Groups open and close like a dropdown; the group of the page you're on opens by itself and the app remembers the rest. **☰** folds the sidebar into a narrow row of icons. You only see the modules IT gave you.
 
-There is **no Search in the sidebar**: use the search bar at the top. On a phone, the bar at the bottom has Home, Waiting, New, Search and Profile.
+There is **no Search in the sidebar**: use the search bar at the top. On a phone, see **On your phone** below.
+
+### On your phone
+On a screen narrower than 768 pixels (a phone, or a narrow window) ARS-CMS uses its **phone layout**. On a computer nothing changes. Turning a tablet or widening a window switches over by itself.
+- **The bar at the bottom:** **Home**, **Approvals**, **Tasks**, **Inbox** and **More**. The numbers on Approvals and Inbox are what waits for you and what you haven't read.
+- **Home:** one line on what needs you (approvals waiting, overdue steps, requests returned to you, overdue tasks), four counts that open their lists, quick actions (New request, New task, Search, Ask AI), the first approvals waiting for you, your tasks due today and your requests in progress.
+- **Approvals:** four tabs, **Waiting for me**, **My requests**, **Approved** and **Drafts**, as cards: request number and title, who raised it and their department, the amount (when the form has one and it isn't confidential), who has it now, when it was submitted, how long it has waited, **Overdue** or **Due soon**, and the status. Tap a card to open the request.
+- **Deciding on a request:** the buttons stay at the bottom of the request: **Approve**, **Return** (ask for changes), **Hold** and **Reject**. Each opens a panel with the comment box and that one action; Reject asks once more.
+- **Tasks:** **Today**, **Upcoming**, **Overdue**, **Completed** and **Assigned by me**, as cards; a task from an approval shows its request number. The red **+** opens Create task.
+- **Inbox:** **All**, **Approvals**, **Tasks**, **Information** and **Mentions** (someone @-mentioned you); Bookmarks, Archive, System and Settings are below the list.
+- **More:** your profile, then Information, Projects, Periodic tasks, Calendar, AI Assistant, Analytics, Search, templates, Notifications, App & devices, Out of office, Sign-in & devices, Help, the Admin spaces you have, and **Sign out** (it asks first).
 
 ### Install the app
 ARS-CMS can be installed like an app: it opens in its own window from your home screen, dock or start menu.
@@ -88,7 +98,7 @@ Every list has the same toolbar: **Filter**, **Sort**, **Group**, **Options** (r
 A line above the **level map** says who it's waiting for, since when, and what comes next. The level map shows every level, who approves, and where it is now. Levels that the amount (DoA) or a rule doesn't need show as *skipped*.
 
 ### New request (your own approvers)
-Three steps: Request details, Approval workflow, Review & submit (on a computer each column scrolls on its own; each approval level is a small card on top, click one to edit it); the bar with Save as draft, Reset, Back and Next is at the top, under the steps. Fields with a red **\*** are required: **Next** moves on only when they're all filled in, and shows what's missing. The approvers can be changed only after Next. **Submit request** is on Review & submit.
+Three steps: Request details, Approval workflow, Review & submit (on a computer each column scrolls on its own; each approval level is a small card on top, click one to edit it); the bar with Save as draft, Reset, Back and Next is at the top, under the steps. Each level is **Approval** (they approve or reject), **Work task** (they do the work and mark it done; it also appears in their My Tasks, and ticking it there marks it done on the request; untick **The request waits until it's done** to give the work as tasks and let the request move straight on, in which case finishing the tasks decides nothing on the request, and the people can read the request) or **FYI** (they're told and the request moves on; they can open it from the message; put it after the last approval to tell people only once it's fully approved). Fields with a red **\*** are required: **Next** moves on only when they're all filled in, and shows what's missing. The approvers can be changed only after Next. **Submit request** is on Review & submit.
 For something without an approval type: **New request** → title, the fields IT has set up (Admin → Custom approval), files (optional) → pick who approves. It starts with your reporting manager as approver.
 - **in order:** add a level for each;
 - **at the same time:** use *Add parallel steps*;
@@ -101,11 +111,14 @@ You get a message. Open the request, change the fields or add files, then **Resu
 When you resubmit, the same checks as a new request run again (duplicates, unique values, budget): fix what they point out before it goes back to the approvers.
 
 ### The road (where your request is)
-At the top of a request page, the road shows the journey: **Request submitted**, one point per level, and the finish flag. Below it, **Request details** starts with who raised it (User ID, department, designation, email, reporting manager), then the form. On the right: your action box (approve, recall, withdraw), then Attachments, then Collaborators.
-- While a level waits, the red **ARS van** is on its way, halfway to it; it reaches the approver's name once they approve. The finished road is green.
-- When a level finishes, the van drives on by itself (the page checks every 20 seconds).
-- Fully approved: the van reaches the flag with a big tick.
-- A red cross marks where a request was rejected; amber means changes asked, on hold or stuck.
+At the top of a request page, under its title and number, the **approval journey** shows where it is: **Request submitted**, one point per level, and the finish flag. Below it, **Request details** starts with who raised it (User ID, department, designation, email, reporting manager), then the form; then **Approval levels** with the progress figures and each level. On the right: your action box (the decisions as buttons: Approve, Ask for changes, Put on hold, Ask a question, Reject; or recall, withdraw), then Attachments, then Collaborators.
+- Just after you submit, your request is folded into a sealed envelope and loaded into the red **ARS van**, which drives to the first level.
+- While a level decides, the van waits beside it and the request is out for review (blue point). When they approve, the request gets a green stamp, is folded back into the van, and the van drives to the next level. The finished road is green.
+- The page checks for news every 10 seconds (at once when you come back to it); a reload shows where it is without replaying.
+- Fully approved: the van reaches the flag, the road turns green and shows 100%.
+- Rejected: a red stamp where it stopped. Changes asked: an orange stamp and the van drives back to you; it sets off again when you resubmit. Amber: on hold or stuck.
+- **Work tasks** and **Information (FYI)** show beside the road: who has each task and its status (and whether the request waits for it), and who was told and whether the message reached them.
+- Hide the journey with the arrow at its top right (remembered on your device). With "reduce motion" on in your device, nothing moves; everything is still shown.
 - Tap a point to see who decides there, when, and their comments.
 - Below the road: progress, levels completed and remaining, time in process and the last update.
 
@@ -119,7 +132,7 @@ Comments on a request can't be edited or removed. To tell someone in particular,
 **Download PDF** at the top of a request: details, levels, who decided what, files and history.
 
 ### Tasks & projects
-- **Create task:** **+ Create → Task** opens it. On a computer it is a card in the middle of the screen: task details on the left (name, who it's for, project, description), task settings on the right (due date, **priority**, repeat, collaborators, Task with a form). On a phone it is a panel at the bottom.
+- **Create task:** **+ Create → Task** opens it. On a computer it is a card in the middle of the screen: task details on the left (name, who it's for, project, description), task settings on the right (due date, **priority**, repeat, collaborators, Task with a form). On a phone it is a panel at the bottom (on the Tasks tab, the red **+** opens it).
   - The task is for **Myself** by default; choose **Others** and type part of a name to find people.
   - The toolbar at the bottom: **More**, **Formatting** (bold, italic, strikethrough, lists), **Emoji**, **@mention** (people you mention become collaborators), **Attach a file or paste an image**, **Due date** and **Repeat**. If Pico Bot is on for you, **✨** writes the description from the task's name.
   - Type **/** in the description for the command menu.

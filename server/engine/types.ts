@@ -89,6 +89,10 @@ export interface ApprovalNode extends BaseNode {
   // can go to the requester, can't be rejected, and changes can still be
   // asked. Default APPROVE.
   mode?: "APPROVE" | "WORK";
+  // D-273 (owner's journey brief): a WORK step that doesn't hold the request
+  // up. The people get the work as linked tasks and the request moves on at
+  // once; finishing the tasks doesn't decide anything on the request.
+  background?: boolean;
 }
 
 // FYI (D-097): tells people the request reached this point, then moves on
@@ -180,6 +184,7 @@ export interface NodeState {
   completedAt?: string;
   reason?: string;
   notified?: number[]; // FYI step: who was told
+  assigned?: number[]; // background work step (D-273): who was given the work
 }
 
 export interface InstanceState {
@@ -214,6 +219,7 @@ export type EngineEvent =
   | { type: "RESUMED"; actorId: number; heldSince?: string; pendingApproverIds?: number[] }
   | { type: "RESUBMITTED"; round: number; restartNodeId: string; changesAskedBy?: number }
   | { type: "NOTIFIED"; nodeId: string; userIds: number[]; note?: string }
+  | { type: "WORK_ASSIGNED"; nodeId: string; label: string; userIds: number[]; slaHours?: number }
   | { type: "BLOCK_RESOLVED"; nodeId: string; actorId: number; action: BlockAction["action"]; userIds?: number[]; reason: string }
   | { type: "TASK_REASSIGNED"; taskId: string; nodeId: string; fromId: number; toId: number; actorId: number; reason?: string; byApprover?: boolean }
   | { type: "WITHDRAWN"; actorId: number; reason?: string; closedTaskIds: string[]; approverIds: number[] }

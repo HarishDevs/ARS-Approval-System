@@ -6,6 +6,7 @@ import { loadWorkingCalendar } from "@/lib/db/repositories/calendar.repository";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import type { Actor } from "@/server/approvals/service";
 import { diagnoseState, type Diagnosis } from "@/server/ops/repair-rules";
+import { mirrorWorkTasks } from "@/server/approvals/work-mirror";
 
 export { diagnoseState, type Diagnosis };
 
@@ -41,6 +42,8 @@ export async function recheckAndFix(requestId: number, actor: Actor & { sessionI
       const [result] = await connection.query<ResultSetHeader>("UPDATE approval_tasks SET status = 'CANCELLED' WHERE request_id = ? AND status = 'PENDING' AND task_key IN (?)", [requestId, diagnosis.orphanKeys]);
       closed = result.affectedRows;
     }
+    // QA-WF-06 (v1.42.1): after the orphan steps are closed, so their work-step tasks close too.
+    await mirrorWorkTasks(requestId, connection);
     await recordAudit(
       {
         actorUserId: actor.id,

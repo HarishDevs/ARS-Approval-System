@@ -1,5 +1,6 @@
 "use client";
 
+import { ApprovalBadge, approvalRowClass } from "@/features/work/ApprovalLink";
 import { CalendarClock, ChevronDown, ChevronRight, GitBranch, GripVertical, Heart, Lock, MessageSquare, Plus, Repeat, Trash2, Diamond } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -36,6 +37,7 @@ export interface BoardTask {
   blockedBy: number;
   isMilestone: boolean;
   isPeriodic?: boolean; // D-219
+  approval?: { requestId: number; requestNo: string; workStep: boolean; linked?: boolean } | null; // v1.42.1
   tags: { id: number; name: string }[];
 }
 export interface BoardSection {
@@ -289,7 +291,7 @@ export function ProjectWorkspace({
                       setDragging(null);
                     }}
                     onKeyDown={(event) => keyMove(event, task)}
-                    className={`kanban-card rounded-lg border border-line bg-surface p-3.5 shadow-card hover:border-line-strong ${dragging === task.id ? "opacity-50" : ""} ${openTask === String(task.id) ? "outline outline-2 outline-primary-600" : ""}`}
+                    className={`kanban-card rounded-lg border border-line bg-surface p-3.5 shadow-card hover:border-line-strong ${approvalRowClass(task.approval)} ${dragging === task.id ? "opacity-50" : ""} ${openTask === String(task.id) ? "outline outline-2 outline-primary-600" : ""}`}
                     data-testid="board-card"
                   >
                     <div className="flex items-start gap-2">
@@ -536,6 +538,7 @@ export function ProjectWorkspace({
 function RowBadges({ task }: { task: BoardTask }) {
   return (
     <span className="ml-1 flex shrink-0 items-center gap-2 text-caption text-ink-muted">
+      <ApprovalBadge approval={task.approval} size="sm" />
       {task.isPeriodic && (
         <span role="img" aria-label="Periodic" title="Periodic: repeats" className="inline-flex items-center text-info-600">
           <Repeat aria-hidden="true" className="h-3 w-3" />

@@ -34,7 +34,8 @@ export default async function InformationPage({ params, searchParams }: { params
   const loaded = await loadInfoFor(Number(id), user);
   if (!loaded) notFound();
   const { item, settings, form, versionNo, viewer, actions } = loaded;
-  if (viewer.recipient && !viewer.recipient.readAt && item.status !== "DRAFT") await markInfoRead(item.id, user.id);
+  // QA-SEC-02: IT looking as someone (Try as, view-only) doesn't mark it read for them.
+  if (viewer.recipient && !viewer.recipient.readAt && item.status !== "DRAFT" && !user.triedBy) await markInfoRead(item.id, user.id);
   const owner = viewer.id === item.createdBy || viewer.isAdmin;
   const [events, files, people, lookups, lookupNames, recipients] = await Promise.all([
     listInfoEvents(item.id),

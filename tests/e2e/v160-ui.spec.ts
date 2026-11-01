@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type BrowserContext, type Page } from "@playwright/test";
-import { db, sessionCookie } from "./db";
+import { db, phoneLayoutCookie, sessionCookie } from "./db";
 
 // v1.6.0 Phases 1–3 through the real screens: theme choice saved and
 // painted on the first byte, accessibility scans (axe) in light and dark,
@@ -91,15 +91,19 @@ test("RA-03 the first Tab reaches 'Skip to content', which moves focus to the pa
 });
 
 test("RA-01 phones get the bottom bar with the real waiting count", async ({ page, context }) => {
+  // v1.43.0 (D-272): the phone layout's tabs replaced the old quick bar.
   await page.setViewportSize({ width: 390, height: 844 });
   await as(context, "E2E_MGR");
+  await context.addCookies([phoneLayoutCookie()]);
   await page.goto("/users");
-  const bar = page.getByRole("navigation", { name: "Quick" });
+  const bar = page.getByTestId("mobile-tabbar");
   await expect(bar).toBeVisible();
-  await expect(bar.getByRole("link", { name: /Home/ })).toHaveAttribute("aria-current", "page");
-  await bar.getByRole("link", { name: /Waiting/ }).click();
-  await expect(page).toHaveURL(/\/users\/queue$/);
-  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await expect(bar.getByRole("link", { name: /^Home/ })).toHaveAttribute("aria-current", "page");
+  // The Approvals tab's count is what waits for this person.
+  const waiting = Number((await bar.getByRole("link", { name: /^Approvals/ }).innerText()).match(/\d+/)?.[0] ?? 0);
+  await bar.getByRole("link", { name: /^Approvals/ }).click();
+  await expect(page).toHaveURL(/\/users\/approvals/);
+  await expect(page.getByTestId("m-approval-card")).toHaveCount(waiting);
   const width = await page.evaluate(() => document.documentElement.scrollWidth);
   expect(width).toBeLessThanOrEqual(392);
   await page.screenshot({ path: "test-results/v160-phone-queue.png", fullPage: false });

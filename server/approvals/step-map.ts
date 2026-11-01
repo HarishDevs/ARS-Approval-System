@@ -8,7 +8,7 @@ import type { ApprovalNode, CompletionRule, FormData, InstanceState, NodeStatus,
 export interface MapPerson {
   userId: number;
   name: string;
-  status: TaskStatus | "TOLD";
+  status: TaskStatus | "TOLD" | "ASSIGNED";
   decidedByName?: string; // only when a delegate acted
   comment?: string;
   decidedAt?: string;
@@ -25,6 +25,7 @@ export interface MapStep {
   type?: "WORK" | "NOTIFY"; // D-097; an approval step has none
   activatedAt?: string; // D-253: when it started waiting (the road's "pending since")
   completedAt?: string; // D-253: when it finished
+  background?: boolean; // D-273: work handed out without holding the request up
 }
 
 export interface MapStage {
@@ -115,7 +116,9 @@ function mapStep(node: ApprovalNode, state: InstanceState, names: ReadonlyMap<nu
   const nodeTasks = state.tasks.filter((task) => task.nodeId === node.id);
   const latestRound = nodeTasks.reduce((max, task) => Math.max(max, task.round), 0);
   const tasks = nodeTasks.filter((task) => task.round === latestRound);
-  const people: MapPerson[] = tasks.map((task) => ({
+  // D-273: background work: the people it was given to (their tasks live in Task Management).
+  const handedTo: MapPerson[] = node.background ? (nodeState?.assigned ?? []).map((userId) => ({ userId, name: names.get(userId) ?? `User #${userId}`, status: "ASSIGNED" as const })) : [];
+  const people: MapPerson[] = node.background ? handedTo : tasks.map((task) => ({
     userId: task.approverId,
     name: names.get(task.approverId) ?? `User #${task.approverId}`,
     status: task.status,
@@ -124,14 +127,19 @@ function mapStep(node: ApprovalNode, state: InstanceState, names: ReadonlyMap<nu
     ...(task.decidedAt ? { decidedAt: task.decidedAt } : {}),
   }));
   const reason = nodeState?.reason ? (REASONS[nodeState.reason] ?? nodeState.reason) : undefined;
+  // QA-WF-01 (v1.42.1): a step closed because another step at its level was
+  // enough (an "any one" / "any N" join) is finished, not cancelled: the
+  // level counts as done and the road's van moves on.
+  const notNeeded = nodeState?.status === "CANCELLED" && nodeState.reason === "NOT_REQUIRED";
   return {
     nodeId: node.id,
     label: node.label,
-    status: nodeState?.status ?? "WAITING",
-    rule: describeRule(node.completion, Math.max(people.length, 1), node.mode === "WORK"),
+    status: notNeeded ? "SKIPPED" : (nodeState?.status ?? "WAITING"),
+    rule: node.background ? "Given as tasks; the request doesn't wait for them" : describeRule(node.completion, Math.max(people.length, 1), node.mode === "WORK"),
     ...(reason ? { reason } : {}),
     people,
     ...(node.mode === "WORK" ? { type: "WORK" as const } : {}),
+    ...(node.background ? { background: true } : {}),
     ...(nodeState?.activatedAt ? { activatedAt: nodeState.activatedAt } : {}),
     ...(nodeState?.completedAt ? { completedAt: nodeState.completedAt } : {}),
   };

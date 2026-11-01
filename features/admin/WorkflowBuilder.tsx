@@ -53,10 +53,17 @@ const useNewStepDefaults = () => {
   const policy = useContext(StepPolicyContext);
   return policy ? stepDefaults(policy) : {};
 };
+// v1.42.1: short names fit the box in narrow columns (New request); what
+// each kind does is said under it.
 const STEP_TYPE_LABEL: Record<StepType, string> = {
-  APPROVE: "Approval: they approve or reject",
-  WORK: "Work task: they do it and mark it done",
-  NOTIFY: "FYI: tell them and move on",
+  APPROVE: "Approval",
+  WORK: "Work task",
+  NOTIFY: "FYI (tell only)",
+};
+const STEP_TYPE_HELP: Record<StepType, string> = {
+  APPROVE: "They approve or reject.",
+  WORK: "They do the work and mark it done. It also appears in their Task Management (My Tasks).",
+  NOTIFY: "They're told, and the request moves straight on.",
 };
 const WHO_LABEL: Record<StepType, string> = { APPROVE: "Who approves", WORK: "Who does it", NOTIFY: "Who to tell" };
 
@@ -1239,6 +1246,7 @@ function StepEditor({
       type: next === "APPROVE" ? undefined : next,
       approvers: next === "APPROVE" && pick.kind === "REQUESTER" ? { kind: "REQUESTER_MANAGER" } : pick,
       ...(next === "NOTIFY" ? { skipWhen: null } : {}),
+      ...(next !== "WORK" ? { holdsUp: undefined } : {}),
     });
   return (
     <div className="grid gap-3 md:grid-cols-2">
@@ -1256,6 +1264,25 @@ function StepEditor({
           ))}
         </select>
       </div>
+      <p className="-mt-1 text-caption text-ink-muted md:col-span-2" data-testid="step-kind-help">
+        {STEP_TYPE_HELP[type]}
+      </p>
+      {/* D-273 (owner's journey brief): whether the request waits for the work. */}
+      {type === "WORK" && (
+        <label className="flex items-start gap-2 text-label md:col-span-2">
+          <input
+            type="checkbox"
+            className="mt-0.5"
+            checked={step.holdsUp !== false}
+            onChange={(event) => onChange({ ...step, holdsUp: event.target.checked ? undefined : false })}
+            data-testid="step-holds-up"
+          />
+          <span>
+            The request waits until it&apos;s done
+            <span className="block text-caption text-ink-muted">Untick to give the work as tasks and let the request move on at once; finishing them won&apos;t decide anything on the request.</span>
+          </span>
+        </label>
+      )}
       <div className="md:col-span-2">
         <label className="field-label">{WHO_LABEL[type]}</label>
         <select

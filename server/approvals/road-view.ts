@@ -1,7 +1,7 @@
 import "server-only";
 import type { RowDataPacket } from "mysql2/promise";
 import { getDbPool } from "@/lib/db/client";
-import { findRequest, findWorkflowVersion, isParticipant, userNames } from "@/lib/db/repositories/approvals.repository";
+import { canViewRequest, findRequest, findWorkflowVersion, userNames } from "@/lib/db/repositories/approvals.repository";
 import { buildStepMap, peopleInState } from "@/server/approvals/step-map";
 import { buildRoad, miniRoad, type MiniRoad, type Road } from "@/server/approvals/road";
 import type { FormData as EngineFormData, InstanceState } from "@/server/engine/types";
@@ -15,7 +15,7 @@ const isAdmin = (actor: Actor) => actor.roles.includes("IT_ADMIN") || actor.role
 export async function loadRequestRoad(requestId: number, viewer: Actor): Promise<{ road: Road; updatedAt: string } | null> {
   const request = await findRequest(requestId);
   if (!request) return null;
-  if (request.requesterId !== viewer.id && !isAdmin(viewer) && !(await isParticipant(requestId, viewer.id))) return null;
+  if (request.requesterId !== viewer.id && !isAdmin(viewer) && !(await canViewRequest(requestId, viewer.id))) return null;
   const version = await findWorkflowVersion(request.workflowVersionId);
   if (!version) return null;
   const names = await userNames(peopleInState(request.state));

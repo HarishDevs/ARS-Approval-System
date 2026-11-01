@@ -1,4 +1,6 @@
 import "server-only";
+import { workMirrorLink, WORK_MIRROR_KEY } from "@/server/approvals/work-mirror";
+
 import type { RowDataPacket } from "mysql2/promise";
 import { getDbPool, type Queryable } from "@/lib/db/client";
 import { withTransaction } from "@/lib/db/transaction";
@@ -13,10 +15,13 @@ import { OPEN_STATUSES } from "@/server/modules/task-rules";
 import { indiaDate } from "@/server/workflows/calendar";
 import { nearestWorkingDay } from "@/server/work/holidays";
 import { departmentOf, holidayContext, loadSetting } from "@/server/work/holiday-store";
-import { daysBetween, nextDueDay, parseRecurrence, parseRecurrenceSettings, RECURRENCE_SETTINGS_KEY } from "@/server/work/more-rules";
+import { daysBetween, nextOccurrence, parseRecurrence, parseRecurrenceSettings, RECURRENCE_SETTINGS_KEY } from "@/server/work/more-rules";
 import { positionBetween } from "@/server/work/rules";
 import { logError } from "@/lib/logging/logger";
 import type { NotifyInput } from "@/server/notifications/notify";
+
+// QA-WF-03 (v1.42.1): a repeat or copy of a task is never a request's work step.
+const withoutMirrorLink = (formData: Record<string, unknown>) => Object.fromEntries(Object.entries(formData).filter(([key]) => key !== WORK_MIRROR_KEY));
 
 // D-218: what happens after a task is completed, however it was completed
 // (the tick in a list, the task page): people waiting for it hear when it
@@ -65,7 +70,9 @@ export async function createNextOccurrence(taskId: number, actor: { id: number; 
     const rule = parseRecurrence(rows[0]?.recurrence_json ?? null);
     if (!rule) return null;
     const dueDay = task.dueAt ? indiaDate(task.dueAt) : null;
-    let next = nextDueDay(rule, dueDay, indiaDate(task.completedAt ?? new Date()));
+    // QA-WF-04 (v1.42.1): from the series' planned day and day of the month, not the last (moved) due day.
+    const occurrence = nextOccurrence(rule, dueDay, indiaDate(task.completedAt ?? new Date()));
+    let next = occurrence.planned;
     if (settings.skipHolidays) {
       const { settings: holidays, calendar } = await holidayContext(connection, await departmentOf(task.assigneeId, connection));
       if (holidays.mode !== "OFF") next = nearestWorkingDay(next, calendar, holidays, "NEXT");
@@ -73,7 +80,7 @@ export async function createNextOccurrence(taskId: number, actor: { id: number; 
     const shift = dueDay ? daysBetween(dueDay, next) : 0;
     const dueAt = task.dueAt ? new Date(task.dueAt.getTime() + shift * 86_400_000) : new Date(`${next}T18:00:00+05:30`);
     const seriesId = rows[0]?.series_id ? Number(rows[0].series_id) : task.id;
-    const newId = await cloneTask(task, { parentId: task.parentTaskId, rootId: task.rootTaskId, depth: task.depth, dueAt, shiftDays: shift, recurrence: rows[0]!.recurrence_json, seriesId, withProjects: true }, actor.id, connection);
+    const newId = await cloneTask(task, { parentId: task.parentTaskId, rootId: task.rootTaskId, depth: task.depth, dueAt, shiftDays: shift, recurrence: JSON.stringify(occurrence.rule), seriesId, withProjects: true }, actor.id, connection);
     await connection.query("UPDATE tasks SET recurrence_json = NULL, series_id = ? WHERE id = ?", [seriesId, task.id]);
     const created = (await findTask(newId, connection))!;
     await appendTaskEvent(task.id, { actorId: actor.id, type: "RECURRED", body: `Next: ${created.taskNo}, due ${next}`, payload: { nextId: newId } }, connection);
@@ -96,7 +103,7 @@ async function cloneTask(
 ): Promise<number> {
   const taskNo = await nextRequestNumber("TSK", db);
   const id = await insertTask(
-    { taskNo, typeVersionId: source.typeVersionId, title: source.title, description: source.description, priority: source.priority, createdBy: actorId, assigneeId: source.assigneeId, dueAt: place.dueAt, startsOn: source.startsOn ? shiftDay(source.startsOn, place.shiftDays) : null, formData: source.formData, relatedRequestId: source.relatedRequestId, submissionKey: null },
+    { taskNo, typeVersionId: source.typeVersionId, title: source.title, description: source.description, priority: source.priority, createdBy: actorId, assigneeId: source.assigneeId, dueAt: place.dueAt, startsOn: source.startsOn ? shiftDay(source.startsOn, place.shiftDays) : null, formData: withoutMirrorLink(source.formData), relatedRequestId: workMirrorLink(source.formData) ? null : source.relatedRequestId, submissionKey: null },
     db,
   );
   const position = place.parentId === null ? 0 : positionBetween(await repo.lastSubtaskPosition(place.parentId, db), null);

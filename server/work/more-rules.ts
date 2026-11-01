@@ -9,6 +9,11 @@ export const recurrenceSchema = z.object({
   kind: z.enum(RECURRENCE_KINDS),
   every: z.number().int().min(1).max(365),
   weekdays: z.array(z.number().int().min(0).max(6)).max(7).default([]), // 0 = Sunday (WEEKLY)
+  // QA-WF-04 (v1.42.1), kept by the series itself: the day of the month it's
+  // meant for (31 stays 31 after a short month) and the current occurrence's
+  // planned day before any holiday move, so neither drifts.
+  anchorDay: z.number().int().min(1).max(31).optional(),
+  planned: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 });
 export type Recurrence = z.infer<typeof recurrenceSchema>;
 
@@ -18,6 +23,14 @@ export function parseRecurrence(raw: unknown): Recurrence | null {
   if (!parsed.success) return null;
   const rule = parsed.data;
   return rule.kind === "WEEKLY" ? { ...rule, weekdays: [...new Set(rule.weekdays)].sort() } : { ...rule, weekdays: [] };
+}
+
+// The next planned day of a series and what the rule remembers for the one after (QA-WF-04).
+export function nextOccurrence(rule: Recurrence, dueDay: string | null, doneDay: string): { planned: string; rule: Recurrence } {
+  const base = rule.planned ?? dueDay;
+  const anchorDay = rule.anchorDay ?? (base ? Number(base.slice(8, 10)) : undefined);
+  const planned = nextDueDay(rule, base, doneDay, anchorDay);
+  return { planned, rule: { ...rule, planned, ...(anchorDay ? { anchorDay } : {}) } };
 }
 
 const WEEKDAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -49,9 +62,9 @@ export function shiftDays(day: string, days: number): string {
 export function daysBetween(from: string, to: string): number {
   return Math.round((toDate(to).getTime() - toDate(from).getTime()) / 86_400_000);
 }
-function addMonths(day: string, months: number): string {
+function addMonths(day: string, months: number, anchorDay?: number): string {
   const date = toDate(day);
-  const wanted = date.getUTCDate();
+  const wanted = anchorDay ?? date.getUTCDate();
   const target = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + months, 1));
   const last = new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0)).getUTCDate();
   target.setUTCDate(Math.min(wanted, last)); // 31 Jan + 1 month = 28/29 Feb
@@ -60,15 +73,15 @@ function addMonths(day: string, months: number): string {
 
 // The next due day. `dueDay` is the completed task's due day (or null), and
 // `doneDay` the day it was completed; both are India dates.
-export function nextDueDay(rule: Recurrence, dueDay: string | null, doneDay: string): string {
+export function nextDueDay(rule: Recurrence, dueDay: string | null, doneDay: string, anchorDay?: number): string {
   const base = dueDay ?? doneDay;
   switch (rule.kind) {
     case "DAILY":
       return shiftDays(base, rule.every);
     case "MONTHLY":
-      return addMonths(base, rule.every);
+      return addMonths(base, rule.every, anchorDay);
     case "YEARLY":
-      return addMonths(base, rule.every * 12);
+      return addMonths(base, rule.every * 12, anchorDay);
     case "AFTER_DONE":
       return shiftDays(doneDay, rule.every);
     case "WEEKLY": {

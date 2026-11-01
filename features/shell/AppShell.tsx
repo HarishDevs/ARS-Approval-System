@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { BrandLockup } from "@/features/ui/Brand";
+import { BrandLockup, CmsMark } from "@/features/ui/Brand";
 import { InstallInviteAccountSync } from "@/features/pwa/InstallInvite";
 import { INSTALL_INVITE_FLAG } from "@/server/pwa/flags";
-import { Wrench } from "lucide-react";
+import { Search, Wrench } from "lucide-react";
 import { Suspense } from "react";
 import { areasForUser } from "@/server/authorization/policy";
 import { SideNav, type NavItem } from "@/features/shell/SideNav";
@@ -29,6 +29,9 @@ import { MODE_LABEL, offerOrder } from "@/server/ai/chat-access";
 import { getSettingValue } from "@/server/settings/values";
 import { buildId } from "@/server/ops/build";
 import { BottomNav } from "@/features/shell/BottomNav";
+import { MobileTabBar } from "@/features/mobile/MobileTabBar";
+import { LayoutSync } from "@/features/mobile/LayoutSync";
+import { layoutMode } from "@/server/ui/layout-mode";
 import { CommandPalette, type PaletteLink } from "@/features/shell/CommandPalette";
 import { countPendingTasksFor } from "@/lib/db/repositories/approvals.repository";
 import { THEME_SETTING, parseTheme } from "@/server/ui/theme";
@@ -46,7 +49,12 @@ export const SPACE_LABEL: Record<AppArea, string> = { users: "Central Management
 
 // "IT Admin (Super Admin)" → "IT Admin"; "Ravi Kumar (demo)" → "Ravi Kumar".
 export function displayName(name: string): string {
-  return name.replace(/\s*\([^)]*\)\s*/g, " ").replace(/\s+/g, " ").trim() || name;
+  return (
+    name
+      .replace(/\s*\([^)]*\)\s*/g, " ")
+      .replace(/\s+/g, " ")
+      .trim() || name
+  );
 }
 
 function initialsOf(name: string): string {
@@ -60,17 +68,7 @@ function initialsOf(name: string): string {
   );
 }
 
-export async function AppShell({
-  area,
-  user,
-  nav,
-  children,
-}: {
-  area: AppArea;
-  user: AuthenticatedUser;
-  nav: NavItem[];
-  children: React.ReactNode;
-}) {
+export async function AppShell({ area, user, nav, children }: { area: AppArea; user: AuthenticatedUser; nav: NavItem[]; children: React.ReactNode }) {
   const spaces = areasForUser(user);
   const [unread, theme, waiting, access, tourDone, picbot, chats, savedView, savedText] = await Promise.all([
     countUnread(user.id).catch(() => 0),
@@ -84,7 +82,11 @@ export async function AppShell({
       .then(([chat, launcher]) => (launcher === "OFF" ? [] : offerOrder(chat.modes).map((mode) => ({ mode, label: MODE_LABEL[mode] }))))
       .catch(() => []),
     // D-180: the person's AI chats for the sidebar's AI Assistant group.
-    nav.some((item) => item.chats) ? listConversations(user.id, 200).then((rows) => rows.map((row) => ({ id: row.id, title: row.title, pinned: row.pinned }))).catch(() => []) : Promise.resolve([]),
+    nav.some((item) => item.chats)
+      ? listConversations(user.id, 200)
+          .then((rows) => rows.map((row) => ({ id: row.id, title: row.title, pinned: row.pinned })))
+          .catch(() => [])
+      : Promise.resolve([]),
     // D-210: the person's workspace view (My approvals space only).
     area === "users" ? getUserSetting(user.id, WORKSPACE_VIEW_SETTING).catch(() => null) : Promise.resolve(null),
     // D-211: the Classic view's text size.
@@ -147,9 +149,7 @@ export async function AppShell({
     { href: "/users/tasks/new", label: "Task with a type (form)" },
   ].map((item) => ({ ...item, section: "Tasks & projects" }));
   const sideItems: NavItem[] =
-    area === "users"
-      ? items.flatMap((item, index) => (item.section !== "Tasks" ? [item] : items.findIndex((other) => other.section === "Tasks") === index ? workGroup : []))
-      : items;
+    area === "users" ? items.flatMap((item, index) => (item.section !== "Tasks" ? [item] : items.findIndex((other) => other.section === "Tasks") === index ? workGroup : [])) : items;
 
   // D-229: the sidebar's rail (collapsed): top-level pages and each group once.
   const rail: RailEntry[] = [];
@@ -163,16 +163,28 @@ export async function AppShell({
   // D-230: the person's photo in the account menu.
   const photo = await photoVersion(user.id).catch(() => null);
 
+  // v1.43.0 (owner's mobile brief): phones get the mobile layout in the users
+  // area (docs/mobile/MOBILE_REDESIGN_ARCHITECTURE.md); everything else, and
+  // every window from 768 px, renders exactly as before.
+  const layout = await layoutMode();
+  const mobile = area === "users" && layout === "mobile";
+
   return (
-    <div className="flex min-h-full" data-view={classic ? "classic" : undefined} style={textScale && textScale !== 1 ? ({ "--text-scale": String(textScale) } as React.CSSProperties) : undefined}>
+    <div
+      className="flex min-h-full"
+      data-view={classic && !mobile ? "classic" : undefined}
+      data-layout={mobile ? "mobile" : undefined}
+      style={textScale && textScale !== 1 ? ({ "--text-scale": String(textScale) } as React.CSSProperties) : undefined}
+    >
       <TextScale scale={textScale} />
+      <LayoutSync current={layout} />
       {/* D-251: "Maybe later" said on another device (or before this browser's storage was cleared). */}
       <InstallInviteAccountSync dismissed={await hasFlag(user.id, INSTALL_INVITE_FLAG).catch(() => false)} />
       <a href="#main" className="skip-link">
         Skip to content
       </a>
       {theme && <ThemeSync theme={parseTheme(theme)} />}
-      {!classic && (
+      {!classic && !mobile && (
         <SidebarFrame
           initialCollapsed={sidebarCollapsed}
           homeHref={`/${area}`}
@@ -189,19 +201,19 @@ export async function AppShell({
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-header flex h-topbar items-center justify-between gap-4 border-b border-line bg-surface px-4 sm:px-6">
-          <MobileNav items={sideItems} spaceLabel={SPACE_LABEL[area]} home={`/${area}`} collapsible={area !== "admin"} chats={chats} />
-          {/* D-210: Classic has no sidebar, so the logo leads back to the Gateway from the top bar. */}
-          {classic && (
-            <Link href="/users" aria-label="ARS-CMS: Central Management System" className="hidden items-center gap-3 rounded-md md:flex" data-testid="classic-home">
-              <BrandLockup size="md" />
+        {mobile ? (
+          // The mobile top bar: the mark and name, search, notifications, account.
+          <header
+            className="mob-topbar sticky top-0 z-header flex h-14 items-center gap-2 border-b border-line bg-surface/95 px-3 pt-[env(safe-area-inset-top)] backdrop-blur"
+            data-testid="mobile-topbar"
+          >
+            <Link href="/users" aria-label="ARS-CMS home" className="flex min-w-0 flex-1 items-center gap-2">
+              <CmsMark className="h-8 w-8" />
+              <span className="truncate text-[17px] font-extrabold tracking-tight text-[color:var(--m-navy-text)]">ARS CMS</span>
             </Link>
-          )}
-          {/* D-232: the universal search sits in the middle of the top bar (Asana). */}
-          <div className="flex min-w-0 flex-1 justify-end sm:justify-center">
-            <CommandPalette pages={palettePages} />
-          </div>
-          <div className="flex items-center gap-2">
+            <Link href="/users/search" aria-label="Search" className="grid h-11 w-11 place-items-center rounded-full text-ink-muted hover:bg-surface-muted">
+              <Search aria-hidden="true" className="h-5 w-5" />
+            </Link>
             <NotificationBell initialUnread={unread} />
             <ProfileMenu
               name={displayName(user.name)}
@@ -211,17 +223,46 @@ export async function AppShell({
               spaceLabel={SPACE_LABEL[area]}
               otherSpaces={spaces.filter((other) => other !== area).map((other) => ({ href: `/${other}`, label: SPACE_LABEL[other] }))}
               unread={unread}
-              view={area === "users" ? (classic ? "CLASSIC" : "COMPACT") : null}
+              view={null}
               textSize={textSize}
             />
-          </div>
-        </header>
-        {classic && (
+          </header>
+        ) : null}
+        {mobile ? null : (
+          <header className="sticky top-0 z-header flex h-topbar items-center justify-between gap-4 border-b border-line bg-surface px-4 sm:px-6">
+            <MobileNav items={sideItems} spaceLabel={SPACE_LABEL[area]} home={`/${area}`} collapsible={area !== "admin"} chats={chats} />
+            {/* D-210: Classic has no sidebar, so the logo leads back to the Gateway from the top bar. */}
+            {classic && (
+              <Link href="/users" aria-label="ARS-CMS: Central Management System" className="hidden items-center gap-3 rounded-md md:flex" data-testid="classic-home">
+                <BrandLockup size="md" />
+              </Link>
+            )}
+            {/* D-232: the universal search sits in the middle of the top bar (Asana). */}
+            <div className="flex min-w-0 flex-1 justify-end sm:justify-center">
+              <CommandPalette pages={palettePages} />
+            </div>
+            <div className="flex items-center gap-2">
+              <NotificationBell initialUnread={unread} />
+              <ProfileMenu
+                name={displayName(user.name)}
+                email={user.email}
+                initials={initialsOf(user.name)}
+                photo={photoUrl(user.id, photo)}
+                spaceLabel={SPACE_LABEL[area]}
+                otherSpaces={spaces.filter((other) => other !== area).map((other) => ({ href: `/${other}`, label: SPACE_LABEL[other] }))}
+                unread={unread}
+                view={area === "users" ? (classic ? "CLASSIC" : "COMPACT") : null}
+                textSize={textSize}
+              />
+            </div>
+          </header>
+        )}
+        {classic && !mobile && (
           <Suspense fallback={null}>
             <ClassicBar modules={classicModules(items)} />
           </Suspense>
         )}
-        {classic && <ClassicForms />}
+        {classic && !mobile && <ClassicForms />}
         {maintenance && (
           <p role="status" data-testid="maintenance-notice" className="flex items-center gap-2 border-b border-info-600/30 bg-info-50 px-4 py-2 text-label text-info-600 sm:px-8">
             <Wrench aria-hidden="true" className="h-4 w-4 shrink-0" />
@@ -232,7 +273,7 @@ export async function AppShell({
         )}
         <OfflineBanner />
         <SlowNetworkNotice />
-        {!classic && (
+        {(!classic || mobile) && (
           <Suspense fallback={null}>
             <NavigationProgress />
           </Suspense>
@@ -254,12 +295,32 @@ export async function AppShell({
             You&apos;re trying the app as {user.name}, a demo person. Sign out and sign in again to return to your own account.
           </p>
         )}
-        <main id="main" tabIndex={-1} className={`mx-auto w-full max-w-7xl flex-1 px-4 pt-6 focus:outline-none sm:px-8 sm:pt-10 md:pb-10 ${area === "users" ? "pb-28" : "pb-10"}`}>
+        <main
+          id="main"
+          tabIndex={-1}
+          className={
+            mobile
+              ? "mob-main w-full flex-1 px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-4 focus:outline-none"
+              : `mx-auto w-full max-w-7xl flex-1 px-4 pt-6 focus:outline-none sm:px-8 sm:pt-10 md:pb-10 ${area === "users" ? "pb-28" : "pb-10"}`
+          }
+        >
           {children}
         </main>
         {/* WEB-15 (v1.10.0): the phone bar holds My approvals destinations, so it
             shows in that space only; Admin and Super Admin use the menu. */}
-        {area === "users" && <BottomNav waiting={waiting} hidden={["/users", "/users/queue", "/users/new", "/users/search", "/users/profile"].filter((href) => !visible(href))} />}
+        {area === "users" && !mobile && <BottomNav waiting={waiting} hidden={["/users", "/users/queue", "/users/new", "/users/search", "/users/profile"].filter((href) => !visible(href))} />}
+        {mobile && (
+          <MobileTabBar
+            waiting={waiting}
+            unread={unread}
+            hidden={[
+              ...(visible("/users") ? [] : ["home"]),
+              ...(visible("/users/queue") || visible("/users/requests") ? [] : ["approvals"]),
+              ...(tasksOn ? [] : ["tasks"]),
+              ...(visible("/users/inbox") ? [] : ["inbox"]),
+            ]}
+          />
+        )}
       </div>
     </div>
   );

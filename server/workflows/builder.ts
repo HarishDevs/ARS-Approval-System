@@ -53,6 +53,9 @@ const stepSchema = z.object({
   id: z.string().regex(/^[a-z0-9_]{1,30}$/),
   label: z.string().trim().min(1, "Every step needs a name.").max(100),
   type: z.enum(["APPROVE", "WORK", "NOTIFY"]).optional(),
+  // D-273: a work step holds the request up until it's done (default); false
+  // hands the work out as linked tasks and lets the request move on.
+  holdsUp: z.boolean().optional(),
   note: z.string().trim().max(300).optional(),
   approvers: approverPickSchema,
   rule: ruleSchema,
@@ -184,6 +187,7 @@ function stepNode(step: BuilderStep): WorkflowNode {
     approvers: toSources(step.approvers),
     completion: toRule(step.rule, step.n),
     ...(step.type === "WORK" ? { mode: "WORK" as const } : {}),
+    ...(step.type === "WORK" && step.holdsUp === false ? { background: true } : {}),
     ...(step.skipWhen ? { skipIf: toCondition(step.skipWhen) } : {}),
     ...(step.onNoApprover ? { onNoApprover: step.onNoApprover } : {}),
     ...(step.slaHours ? { slaHours: step.slaHours } : {}),

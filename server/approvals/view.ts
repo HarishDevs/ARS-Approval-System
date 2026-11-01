@@ -1,6 +1,6 @@
 import "server-only";
 import { loadLookupNames } from "@/lib/db/repositories/lookups.repository";
-import { findRequest, findValidity, findWorkflow, findWorkflowVersion, isParticipant, listTimeline, userNames } from "@/lib/db/repositories/approvals.repository";
+import { canViewRequest, findRequest, findValidity, findWorkflow, findWorkflowVersion, listTimeline, userNames } from "@/lib/db/repositories/approvals.repository";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { activeDelegatorsFor, listComments, type CommentItem } from "@/lib/db/repositories/collab.repository";
 import { buildStepMap, peopleInState, summarizeTracker, type MapStage, type TrackerSummary } from "@/server/approvals/step-map";
@@ -19,6 +19,7 @@ import { listConsultations, type Consultation } from "@/lib/db/repositories/cons
 import { visibleLinks } from "@/server/approvals/consult";
 import type { LinkedRequest } from "@/lib/db/repositories/consult.repository";
 import { diffRounds, type FieldChange } from "@/server/approvals/revisions";
+import { canSeeConfidential as canSeeConfidentialValues } from "@/server/approvals/confidential";
 
 // Everything the request page shows (F-14), after the record-level check
 // (P1-30a layer 3, D-057): the requester, anyone with a task on it, or
@@ -81,7 +82,7 @@ function closedAt(state: { status: string; tasks: { decidedAt?: string }[] }): s
 export async function loadRequestView(requestId: number, viewer: Actor): Promise<RequestView | null> {
   const request = await findRequest(requestId);
   if (!request) return null;
-  const allowed = request.requesterId === viewer.id || isAdmin(viewer) || (await isParticipant(requestId, viewer.id));
+  const allowed = request.requesterId === viewer.id || isAdmin(viewer) || (await canViewRequest(requestId, viewer.id));
   if (!allowed) {
     await recordAudit({ actorUserId: viewer.id, action: "REQUEST_ACCESS_DENIED", entityType: "REQUEST", entityId: requestId, result: "FAILURE" });
     return null;
@@ -145,12 +146,12 @@ export async function loadRequestView(requestId: number, viewer: Actor): Promise
 
   // A8: confidential values are for the requester, IT, and anyone who holds
   // or decided a task on the request (or covers a pending one today).
-  const canSeeConfidential =
-    request.requesterId === viewer.id ||
-    isAdmin(viewer) ||
-    state.tasks.some((task) => task.approverId === viewer.id || task.decidedBy === viewer.id || (task.status === "PENDING" && delegators.has(task.approverId)));
+  const canSeeConfidential = await canSeeConfidentialValues(request, viewer);
   const hiddenKeys = new Set(canSeeConfidential ? [] : version.form.filter(isConfidential).map((field) => field.key));
-  const attachmentRows = (await listAttachments(requestId)).filter((file) => !file.fieldKey || !hiddenKeys.has(file.fieldKey));
+  const allAttachments = await listAttachments(requestId);
+  const attachmentRows = allAttachments.filter((file) => !file.fieldKey || !hiddenKeys.has(file.fieldKey));
+  // QA-SEC-01: the timeline doesn't name a confidential field's files either.
+  const hiddenNames = new Set(allAttachments.filter((file) => file.fieldKey && hiddenKeys.has(file.fieldKey)).map((file) => file.name));
   const submissionCheck = await findSubmissionCheck(requestId);
   const stages = buildStepMap(version.definition, state, version.builder, names, {
     formData: request.formData as EngineFormData,
@@ -187,7 +188,10 @@ export async function loadRequestView(requestId: number, viewer: Actor): Promise
     stages,
     tracker: summarizeTracker(stages, { status: state.status, requesterName: nameOf(request.requesterId), closedAt: closedAt(state), holdSince: state.hold?.at ?? null }),
     timeline: timelineRows
-      .map((row) => ({ id: row.id, at: row.createdAt, text: describeEvent(row.payload, labelOf, nameOf, (nodeId) => workNodes.has(nodeId)), kind: eventKind(row.payload) }))
+      .map((row) => {
+        const payload = row.payload.type === "ATTACHMENTS_ADDED" && hiddenNames.size ? { ...row.payload, names: row.payload.names.map((name) => (hiddenNames.has(name) ? "a confidential file" : name)) } : row.payload;
+        return { id: row.id, at: row.createdAt, text: describeEvent(payload, labelOf, nameOf, (nodeId) => workNodes.has(nodeId)), kind: eventKind(payload) };
+      })
       .filter((row): row is { id: number; at: Date; text: string; kind: TimelineKind } => row.text !== null),
     myTasks:
       state.status === "IN_PROGRESS"

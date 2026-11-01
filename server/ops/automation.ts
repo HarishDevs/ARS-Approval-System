@@ -9,6 +9,7 @@ import { closeAbandonedRuns, finishJobRun, pruneJobRuns, startJobRun, summariseJ
 import { explainBackupError, runDailyBackup } from "@/server/ops/backup";
 import { runDailyTemplateSync } from "@/server/notifications/template-registry";
 import { countByReason, findStuckRequests } from "@/server/ops/stuck";
+import { backfillWorkMirrors } from "@/server/approvals/work-mirror";
 import { evaluateAlerts, runDueSchedules } from "@/server/reports/schedules";
 import { logError } from "@/lib/logging/logger";
 import { runExpiryNotices } from "@/server/approvals/expiry";
@@ -247,6 +248,18 @@ export const AUTOMATIONS: readonly Automation[] = [
     owner: "Super Admin (email settings); IT (department heads)",
   },
   {
+    key: "workTasks",
+    name: "Work-step tasks",
+    what: "Makes sure every open work step of a request has its task in Task Management (D-269): steps opened before v1.42.1, or any the request's change missed.",
+    trigger: "Every job run.",
+    everyMinutes: 5,
+    retry: "The next run tries again.",
+    idempotency: "Each request is locked and synced as on any change; a step that already has its task gets nothing new.",
+    onFailure: "Recorded here; the work still shows on the request and in Waiting for me.",
+    recovery: "None needed; Needs attention → Recheck also syncs one request.",
+    owner: "IT team",
+  },
+  {
     key: "stuck",
     name: "Stuck-request scan",
     what: "Counts open requests that need IT (blocked steps, inactive approvers, no activity, unsent messages).",
@@ -295,6 +308,7 @@ const STEPS: Record<string, () => Promise<StepResult>> = {
   calendar: async () => ({ ...(await runCalendarStep()) }),
   ai: () => runAiStep(),
   hodWeekly: () => runHodWeekly(),
+  workTasks: async () => ({ ...(await backfillWorkMirrors()) }),
   stuck: async () => {
     const counts = countByReason(await findStuckRequests());
     return { ...counts };

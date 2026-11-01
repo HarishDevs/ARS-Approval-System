@@ -1,4 +1,5 @@
 import "server-only";
+import { workMirrorLink } from "@/server/approvals/work-mirror";
 import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { appBaseUrl } from "@/lib/http/app-url";
 import { getDbPool, type Queryable } from "@/lib/db/client";
@@ -53,6 +54,8 @@ export async function setRecurrence(taskId: number, raw: unknown, actor: TaskAct
   if (!task || task.deletedAt) return fail(NOT_FOUND);
   const rights = await rightsOn(task, await workViewer(actor));
   if (!rights.view) return fail(NOT_FOUND);
+  // QA-WF-03 (v1.42.1): a work step doesn't repeat (its request decides when there's work).
+  if (workMirrorLink(task.formData)) return fail(`This task is a work step of ${task.relatedRequestNo ?? "a request"}; it can't be made to repeat.`);
   // D-222: making a task periodic or ad hoc is a detail: an ad hoc task's creator decides.
   if (!rights.planning) return fail(rights.adhoc ? "Only its creator can change an ad hoc task's details." : "You can't change how this task repeats.");
   const settings = parseRecurrenceSettings(await loadSetting(RECURRENCE_SETTINGS_KEY));

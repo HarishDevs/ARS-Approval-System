@@ -18,12 +18,14 @@ import { getUserSetting } from "@/lib/db/repositories/user-settings.repository";
 import { parseWorkspaceView, WORKSPACE_VIEW_SETTING } from "@/server/ui/workspace-view";
 import { ClassicGateway } from "@/features/shell/ClassicScreens";
 import { featureOn } from "@/server/settings/features";
+import { isMobileLayout } from "@/server/ui/layout-mode";
+import { MobileHome } from "@/features/mobile/MobileHome";
 import { isHiddenHref, navAccess } from "@/server/authorization/page-access";
 import { workViewer } from "@/server/work/task-access";
 import { TaskHome } from "@/features/work/TaskHome";
 import { MyWorkOverview } from "@/features/home/MyWorkOverview";
 import { DeleteDraftButton, PeriodPicker, QuietRefresh } from "@/features/home/HomeClient";
-import { approvalInsights, isApproverForHome } from "@/lib/db/repositories/overview.repository";
+import { approvalInsights, isApproverForHome, myRequestCounts } from "@/lib/db/repositories/overview.repository";
 import { indiaDayOf } from "@/features/work/format";
 import { parsePeriod } from "@/server/work/period";
 import { AlertTriangle, ArrowRight, BarChart3, CheckCircle2, Clock3, FileEdit, FilePlus2, FileText, Inbox, Layers, PenSquare, Repeat2 } from "lucide-react";
@@ -45,6 +47,21 @@ export default async function UsersHome({ searchParams }: { searchParams: Promis
   // D-210: in the Classic view the first screen is the Gateway; the Overview
   // dashboard is one of its entries (?view=overview).
   const query = await searchParams;
+  // v1.43.0: phones get the mobile Home (features/mobile/MobileHome.tsx).
+  if (await isMobileLayout()) {
+    const access = await navAccess(user);
+    const open = (href: string) => !isHiddenHref(href, access.hidden);
+    const words = displayName(user.name).split(/\s+/);
+    return (
+      <MobileHome
+        user={user}
+        greeting={`${greetingFor(new Date())}, ${words.length <= 2 ? words.join(" ") : words[0]}`}
+        approvals={hasModule(user, "APPROVAL") && (open("/users/queue") || open("/users/requests"))}
+        tasks={(await featureOn("tasks", user).catch(() => false)) && open("/users/work")}
+        can={{ newRequest: open("/users/new"), search: open("/users/search"), ai: (await featureOn("ai", user).catch(() => false)) && open("/users/ai/assistant") }}
+      />
+    );
+  }
   if (query.view !== "overview" && !query.tour && parseWorkspaceView(await getUserSetting(user.id, WORKSPACE_VIEW_SETTING).catch(() => null)) === "CLASSIC") return <ClassicGateway user={user} />;
   // D-236 (owner): Home holds the Task home too, for people who have Tasks
   // and may open its pages.
@@ -98,7 +115,7 @@ export default async function UsersHome({ searchParams }: { searchParams: Promis
 
   const today = indiaDayOf(new Date());
   const period = parsePeriod({ period: query.period, from: query.from, to: query.to }, today, "month");
-  const [queue, waiting, attention, mine, drafts, onboarded, recent, insights] = await Promise.all([
+  const [queue, waiting, attention, mine, drafts, onboarded, recent, insights, counts] = await Promise.all([
     listPendingTasksFor(user.id, { limit: 5, offset: 0 }),
     countPendingTasksFor(user.id),
     listAttentionTasksFor(user.id, 10),
@@ -107,8 +124,8 @@ export default async function UsersHome({ searchParams }: { searchParams: Promis
     hasFlag(user.id, "ONBOARDING_DONE"),
     listRecent({ id: user.id, isAdmin: user.roles.includes("IT_ADMIN") || user.roles.includes("SUPER_ADMIN") }, 5).catch(() => null), // D-233: a failure says so, it isn't "nothing viewed"
     approvalInsights(user.id, period).catch(() => null),
+    myRequestCounts(user.id),
   ]);
-  const open = mine.filter((item) => item.status === "IN_PROGRESS" || item.status === "ON_HOLD");
   const returned = mine.filter((item) => item.status === "CHANGES_REQUIRED");
   const since = Date.now() - RECENT_DAYS * 86_400_000;
   const completed = mine.filter((item) => (item.status === "APPROVED" || item.status === "REJECTED") && item.closedAt && item.closedAt.getTime() >= since).slice(0, 5);
@@ -128,7 +145,7 @@ export default async function UsersHome({ searchParams }: { searchParams: Promis
     {
       label: "My open requests",
       note: "Raised by you, in progress",
-      value: open.length,
+      value: counts.open,
       href: "/users/requests?status=IN_PROGRESS",
       icon: FileText,
       tone: "bg-[color:var(--violet-bg)] text-[color:var(--violet-fg)]",
@@ -137,11 +154,11 @@ export default async function UsersHome({ searchParams }: { searchParams: Promis
     {
       label: "Changes asked of me",
       note: "Returned to you for changes",
-      value: returned.length,
+      value: counts.returned,
       href: "/users/requests?status=CHANGES_REQUIRED",
       icon: PenSquare,
       tone: "bg-danger-50 text-danger-600",
-      alert: returned.length > 0,
+      alert: counts.returned > 0,
     },
   ];
   const keep = { home: "approvals", ...(overview ? { view: "overview" } : {}) };
@@ -429,4 +446,10 @@ function ModulesHome({ name, user, tasks }: { name: string; user: Parameters<typ
       {tasks}
     </>
   );
+}
+
+// v1.43.0: the greeting by the hour in India.
+function greetingFor(now: Date): string {
+  const hour = Number(new Intl.DateTimeFormat("en-IN", { timeZone: "Asia/Kolkata", hour: "numeric", hourCycle: "h23" }).format(now));
+  return hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 }

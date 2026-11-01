@@ -46,10 +46,11 @@ interface RouteFacts {
   named: number; // people named as approvers
   ruleSteps: number; // steps whose approvers come from a rule (manager, HOD, group, role…)
   empty: string[]; // steps with nobody chosen
+  needs: string[]; // v1.42.1: what each of them still needs, in the step's own words
   kind: "Sequential" | "Parallel" | "Mixed";
 }
 function routeFacts(stages: readonly BuilderStage[]): RouteFacts {
-  const facts: RouteFacts = { levels: stages.length, named: 0, ruleSteps: 0, empty: [], kind: "Sequential" };
+  const facts: RouteFacts = { levels: stages.length, named: 0, ruleSteps: 0, empty: [], needs: [], kind: "Sequential" };
   const people = new Set<number>();
   let parallel = 0;
   const visit = (stage: BuilderStage | BuilderInnerStage) => {
@@ -59,7 +60,10 @@ function routeFacts(stages: readonly BuilderStage[]): RouteFacts {
       for (const step of steps) {
         const pick = step.approvers as { kind: string; userIds?: number[] };
         if (pick.kind === "PEOPLE") {
-          if (!pick.userIds?.length) facts.empty.push(step.label);
+          if (!pick.userIds?.length) {
+            facts.empty.push(step.label);
+            facts.needs.push(step.type === "WORK" ? `someone to do "${step.label}"` : step.type === "NOTIFY" ? `someone to tell for "${step.label}"` : `approvers for "${step.label}"`);
+          }
           pick.userIds?.forEach((id) => people.add(id));
         } else facts.ruleSteps += 1;
       }
@@ -194,7 +198,7 @@ export function CustomApprovalForm({
   }, [refresh, stages]);
   const facts = routeFacts(stages);
   const title = (snapshot.values.title ?? "").trim();
-  const missing = [...(title ? [] : ["a title"]), ...facts.empty.map((label) => `approvers for "${label}"`)];
+  const missing = [...(title ? [] : ["a title"]), ...facts.needs];
 
   // After a refused submit, go to the step the problem is on.
   useEffect(() => {
@@ -219,7 +223,7 @@ export function CustomApprovalForm({
     }
     if (next === 3 && facts.empty.length) {
       setStep(2);
-      setStepError(`Choose who approves at "${facts.empty[0]}".`);
+      setStepError(`Choose ${facts.needs[0]}.`);
       return;
     }
     setStep(next);

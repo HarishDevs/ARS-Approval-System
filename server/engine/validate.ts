@@ -195,6 +195,10 @@ function validateApprovalNode(
     }
     checkSource(source, node.label, where, errors, context);
   }
+  // D-273: only a work step can run in the background.
+  if (node.background && node.mode !== "WORK") {
+    errors.push({ code: "BACKGROUND_NOT_WORK", message: `"${node.label}": only a work step can let the request move on without waiting.`, ...where });
+  }
   if (node.completion.type === "ANY_N") {
     if (node.completion.n < 1) errors.push({ code: "ANY_N_INVALID", message: `"${node.label}" needs a number of approvals of 1 or more.`, ...where });
     else if (onlyUsers && node.completion.n > userIds.size) {

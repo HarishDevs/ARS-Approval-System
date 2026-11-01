@@ -31,7 +31,7 @@ function StepCard({ step }: { step: MapStep }) {
         <ul className="mt-2 space-y-1.5">
           {step.people.map((person) => {
             const status =
-              person.status === "TOLD" ? { label: "told", style: "text-ink-muted" } : step.type === "WORK" && person.status === "APPROVED" ? { label: "done", style: "text-success-600" } : taskStatusText(person.status);
+              person.status === "TOLD" ? { label: "told", style: "text-ink-muted" } : person.status === "ASSIGNED" ? { label: "given the task", style: "text-ink-muted" } : step.type === "WORK" && person.status === "APPROVED" ? { label: "done", style: "text-success-600" } : taskStatusText(person.status);
             return (
               <li key={`${person.userId}-${person.status}`} className="text-label">
                 <span className="font-medium">{person.name}</span> <span className={status.style}>· {status.label}</span>

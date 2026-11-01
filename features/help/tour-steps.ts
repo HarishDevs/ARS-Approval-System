@@ -38,7 +38,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
     ],
     path: "/users",
     // D-265: approvers see the approval cards, everyone else My Work's.
-    target: '[data-tour="overview-tiles"], [data-testid="work-kpis"]',
+    target: '[data-tour="overview-tiles"], [data-testid="work-kpis"], [data-testid="m-kpis"]',
   },
   {
     id: "inbox",
@@ -106,7 +106,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
     intro: "Raised by me and Shared with me, with a card per status (All, Open, Waiting, Sent back, On hold, Approved, Rejected, Withdrawn, Overdue).",
     points: [
       "Each row shows who it's waiting on and its progress; ⋮ has the row's actions. Search, Filter, Sort, Group and Columns are above the list.",
-      "On a request, the road shows where it is: the red ARS van stands at the level waiting now and drives on as levels finish.",
+      "On a request, the journey shows where it is: the ARS van waits beside the level deciding now, with the request out for review; each approval stamps it and the van drives on to the flag.",
       "Changes required: edit and resubmit. You can withdraw a request before it finishes. On a request: comments, files, history and Download PDF.",
     ],
     path: "/users/requests",

@@ -344,8 +344,8 @@ Push uses standard Web Push with VAPID; the server queues one delivery per devic
 - Auth: `requireApiArea("users")`. Sends "Test notification" to the caller's Inbox and devices. 5 a minute.
 
 ### GET `/api/requests/{id}/progress`
-- Auth: `requireApiArea("users")` plus the request page's record check (requester, a participant, or IT); anyone else gets `404`.
-- Answers `{ road, updatedAt }`: the road's checkpoints, the van's place, levels done, percent and outcome, from the same level map as the page. Polled every 20 s while the page is visible.
+- Auth: `requireApiArea("users")` plus the request page's record check (requester, a participant, IT, an FYI recipient or a background-task holder); anyone else gets `404`. Any failure also answers `404` (nothing about the record leaks).
+- Answers `{ road, updatedAt, journey }`: the road's checkpoints, the van's place, levels done, percent and outcome, from the same level map as the page; v1.44.0 (D-273) `journey` adds the request's linked work tasks (`tasks`: status, assignee, due, overdue, `blocking`), its FYI messages with delivery per person (`fyi`: DELIVERED / PENDING / FAILED), `cursor` (the newest `approval_events` id: older answers are ignored) and `version`. Polled every 10 s while the page is visible (at once on return and reconnect). Read-only: it changes nothing. See `docs/journey/ARS_APPROVAL_JOURNEY.md`.
 - Rate-limited (60 a minute).
 
 ### Server actions
@@ -378,7 +378,10 @@ These are called by machines. The middleware's cross-site check doesn't apply to
 
 ### GET `/api/health`
 - Public, cheap, says nothing private. For an uptime monitor.
-- `200` when the database answers, `503` when it doesn't. Body (no envelope): `{ status: "ok" | "error", version, database: "ok" | "down", jobRunner: "OK" | "LATE" | "NEVER" | "UNKNOWN", storage: "ok" | "failed", ms }`. `LATE` means no run in the last 15 minutes and also alerts the Super Admin after the answer is sent.
+- `200` when the database answers, `503` when it doesn't. Body (no envelope): `{ status: "ok" | "error", version, database: "ok" | "down", dbClockOffsetMinutes, jobRunner: "OK" | "LATE" | "NEVER" | "UNKNOWN", storage: "ok" | "failed", backupAgeHours, degraded, ms }`. `LATE` means no run in the last 15 minutes and also alerts the Super Admin after the answer is sent. `dbClockOffsetMinutes` (v1.43.0, QA-DB-02): the database session clock minus UTC; anything but `0` means some times are stored in two clocks.
+
+### GET `/api/health/deep`
+- Public (D-246), for an uptime monitor that should alert on more than "the site answers". Same body as `/api/health`; `503` when `degraded` (database down, job runner late or never run, files can't be written, or the newest backup older than 26 hours).
 
 ---
 

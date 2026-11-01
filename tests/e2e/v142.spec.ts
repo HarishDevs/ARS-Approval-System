@@ -213,7 +213,12 @@ test("the request page: the road on top, the requester's details below it, the a
   const actions = (await page.locator("#request-actions").boundingBox())!;
   const attachments = (await page.getByRole("heading", { name: "Attachments", exact: true }).boundingBox())!;
   const collaborators = (await page.getByRole("region", { name: "Collaborators" }).boundingBox())!;
-  expect(actions.x).toBeGreaterThan(road.x + road.width);
+  // v1.42.1 (owner's sketch): the road runs across the top band; the actions sit beside the details, below it.
+  const details = (await requester.boundingBox())!;
+  expect(actions.y).toBeGreaterThan(road.y + road.height - 1);
+  expect(actions.x).toBeGreaterThan(details.x + details.width);
+  const levels = (await page.getByRole("heading", { name: "Approval levels", exact: true }).boundingBox())!;
+  expect(levels.y).toBeGreaterThan(details.y);
   expect(actions.y).toBeLessThan(attachments.y);
   expect(attachments.y).toBeLessThan(collaborators.y);
 });
@@ -284,4 +289,76 @@ test("New request: each level shows as a small card on top; the fixed options ar
   const scrolls = await page.getByTestId("step-workflow").evaluate((element) => getComputedStyle(element).overflowY);
   expect(scrolls).toBe("auto");
   await dropCustomDraft("E2E_REQ");
+});
+
+// D-269 (owner: "work task and FYI are not working… the task raised also
+// should be created in task management"): a custom request with a work step,
+// an FYI step and an approval, through to approved.
+test("New request with a work step, an FYI and an approval: the work is a task in My Tasks; ticking it moves the request on; the FYI person can open it", async ({ page, context }) => {
+  const subject = `Load the truck ${stamp}`;
+  const pickPerson = async (name: RegExp) => {
+    const level = page.getByTestId("workflow-level").filter({ visible: true }).last();
+    await level.getByLabel("Who approves").selectOption("PEOPLE");
+    const picker = level.getByRole("combobox", { name: /People \(search and pick/ });
+    await picker.fill(String(name).replace(/[\/^$]/g, "").split(" ")[0]!);
+    await page.getByRole("option", { name }).first().click();
+  };
+  await as(context, "E2E_STAFF");
+  await dropCustomDraft("E2E_STAFF");
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/users/custom");
+  await page.locator("#c-title").fill(subject);
+  await toWorkflowStep(page);
+  // Level 1: work, for Ravi (anyone may be given work).
+  let level = page.getByTestId("workflow-level").filter({ visible: true }).last();
+  await level.getByLabel("Step name").fill("Loading");
+  await level.getByLabel("Kind of step").selectOption("WORK");
+  await expect(level.getByTestId("step-kind-help")).toContainText("Task Management");
+  await pickPerson(/Ravi Requester/);
+  // Level 2: FYI to Harini.
+  await page.getByRole("button", { name: "Add a level" }).click();
+  level = page.getByTestId("workflow-level").filter({ visible: true }).last();
+  await level.getByLabel("Step name").fill("Tell the HOD");
+  await level.getByLabel("Kind of step").selectOption("NOTIFY");
+  await pickPerson(/Harini HOD/);
+  // Level 3: Manoj approves.
+  await page.getByRole("button", { name: "Add a level" }).click();
+  level = page.getByTestId("workflow-level").filter({ visible: true }).last();
+  await level.getByLabel("Step name").fill("Manager sign-off");
+  await pickPerson(/Manoj Manager/);
+  // Already on the workflow step: one Next opens Review & submit.
+  await page.getByTestId("step-next").click();
+  await page.getByTestId("action-bar").getByRole("button", { name: "Submit request" }).click();
+  await expect(page).toHaveURL(/\/users\/requests\/\d+\?submitted=1/);
+  const requestPath = new URL(page.url()).pathname;
+
+  // Ravi: the work is in My Tasks, linked to the request; ticking it is "done".
+  await as(context, "E2E_REQ");
+  await page.goto("/users/work/my-tasks");
+  const row = page.getByRole("row").filter({ hasText: `Loading: ${subject}` }).first();
+  await expect(row).toBeVisible();
+  // Owner: highlighted, and mapped to the approval's number (a link to the request).
+  await expect(row).toHaveClass(/approval-task/);
+  const requestNo = (await page.request.get(requestPath).then((response) => response.text())).match(/CUS-\d{4}-\d{6}/)?.[0] ?? "CUS-";
+  await expect(row.getByTestId("approval-badge")).toContainText(requestNo);
+  await expect(row.getByTestId("approval-badge")).toHaveAttribute("href", requestPath);
+  await row.getByRole("checkbox", { name: new RegExp(`Complete Loading: ${subject}`) }).click();
+  await expect(page.getByText(new RegExp(`Completed: Loading: ${subject}`)).first()).toBeVisible();
+
+  // Harini was told (Inbox) and can open the request; Manoj now has it waiting.
+  await as(context, "E2E_HOD");
+  await page.goto("/users/inbox");
+  await expect(page.getByText(/For your information/).first()).toBeVisible();
+  expect((await page.goto(requestPath))?.status()).toBe(200);
+  await expect(page.getByRole("heading", { level: 1, name: subject })).toBeVisible();
+
+  await as(context, "E2E_MGR");
+  await page.goto(requestPath);
+  await page.getByTestId("decision-buttons").getByRole("button", { name: "Approve", exact: true }).click();
+  await expect(page.getByTestId("approval-road")).toHaveAttribute("data-outcome", "APPROVED");
+
+  // The task stays completed; it can't be reopened against a finished step.
+  await as(context, "E2E_REQ");
+  await page.goto("/users/work/search?status=completed&assignee=me");
+  await expect(page.getByTestId("work-search-results")).toContainText(`Loading: ${subject}`);
 });

@@ -31,7 +31,7 @@ export function CmsMark({ className = "h-8 w-8", tone = "color", title }: { clas
 // "ARS-CMS" in the brand's two blues.
 export function CmsWordmark({ className = "", tone = "color" }: { className?: string; tone?: "color" | "white" }) {
   return (
-    <span className={`font-extrabold tracking-tight ${className}`}>
+    <span className={`whitespace-nowrap font-extrabold tracking-tight ${className}`}>
       <span className={tone === "white" ? "text-white" : "text-[color:var(--brand-navy)]"}>ARS-</span>
       <span className={tone === "white" ? "text-[#9fd0ff]" : "text-[color:var(--brand-accent-text)]"}>CMS</span>
     </span>
@@ -42,7 +42,7 @@ export function CmsWordmark({ className = "", tone = "color" }: { className?: st
 // withArs: the ARS Green Steel logo and a divider before the mark.
 export function BrandLockup({ size = "md", tone = "color", withArs = true, subtitle = true }: { size?: "sm" | "md" | "lg"; tone?: "color" | "white"; withArs?: boolean; subtitle?: boolean }) {
   const s = {
-    sm: { ars: "h-7", mark: "h-7 w-7", word: "text-[15px] leading-none", sub: "text-[9px]", gap: "gap-2", divider: "h-7" },
+    sm: { ars: "h-6", mark: "h-6 w-6", word: "text-[14px] leading-none", sub: "text-[9px]", gap: "gap-1.5", divider: "h-6" },
     md: { ars: "h-9", mark: "h-9 w-9", word: "text-[19px] leading-none", sub: "text-[10.5px]", gap: "gap-2.5", divider: "h-9" },
     lg: { ars: "h-14", mark: "h-14 w-14", word: "text-[32px] leading-none", sub: "text-[14px]", gap: "gap-4", divider: "h-14" },
   }[size];

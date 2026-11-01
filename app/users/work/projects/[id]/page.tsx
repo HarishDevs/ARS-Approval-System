@@ -218,6 +218,7 @@ export default async function ProjectPage({
               blockedBy: task.blockedBy,
               isMilestone: task.isMilestone,
               isPeriodic: task.isPeriodic,
+              approval: task.approval ?? null,
               tags: task.tags.map((tag) => ({ id: tag.id, name: tag.name })),
             }))}
             canEdit={can.edit}

@@ -299,10 +299,14 @@ export interface WorkTaskItem {
   tags: { id: number; name: string; color: string }[];
   projects: { id: number; name: string; color: string }[];
   summary?: string | null; // D-265: the description's start, for Home's task table
+  // v1.42.1 (owner: "task created from approval should be highlighted and mapped
+  // with approval unique number"): the request a task belongs to, and whether
+  // it's that request's work step (D-269).
+  approval?: { requestId: number; requestNo: string; workStep: boolean; linked?: boolean } | null;
 }
 
 const ITEM_SELECT = `SELECT t.id, t.task_no, t.title, t.status, t.priority, t.assignee_id, a.name AS assignee_name, t.created_by, c.name AS created_by_name, t.due_at, t.starts_on,
-    t.completed_at, t.created_at, t.is_milestone, t.parent_task_id, t.assigned_at, LEFT(t.description, 160) AS summary, (t.recurrence_json IS NOT NULL OR t.series_id IS NOT NULL) AS is_periodic,
+    t.completed_at, t.created_at, t.is_milestone, t.parent_task_id, t.assigned_at, LEFT(t.description, 160) AS summary, t.related_request_id, (SELECT rq.request_no FROM approval_requests rq WHERE rq.id = t.related_request_id) AS related_request_no, JSON_CONTAINS_PATH(t.form_data_json, 'one', '$.__approvalWork') AS from_approval, JSON_CONTAINS_PATH(t.form_data_json, 'one', '$.__approvalLink') AS linked_work, (t.recurrence_json IS NOT NULL OR t.series_id IS NOT NULL) AS is_periodic,
     (SELECT COUNT(*) FROM tasks s WHERE s.parent_task_id = t.id AND s.deleted_at IS NULL) AS subtasks,
     (SELECT COUNT(*) FROM tasks s WHERE s.parent_task_id = t.id AND s.deleted_at IS NULL AND s.status IN ('OPEN', 'IN_PROGRESS', 'BLOCKED')) AS subtasks_open,
     (SELECT COUNT(*) FROM task_comments cm WHERE cm.task_id = t.id AND cm.deleted_at IS NULL) AS comments,
@@ -345,6 +349,7 @@ async function decorate(rows: Row[], db: Queryable): Promise<WorkTaskItem[]> {
     comments: num(row.comments),
     likes: num(row.likes),
     summary: row.summary ? String(row.summary) : null,
+    approval: row.related_request_id && row.related_request_no ? { requestId: num(row.related_request_id), requestNo: String(row.related_request_no), workStep: Number(row.from_approval) === 1, linked: Number(row.linked_work) === 1 } : null,
     blockedBy: num(row.blocked_by),
     isPeriodic: Boolean(row.is_periodic),
     createdAt: row.created_at as Date,
@@ -362,6 +367,13 @@ export async function listProjectTasks(projectId: number, db: Queryable = getDbP
     [projectId],
   );
   return decorate(rows, db);
+}
+
+// QA-DB-01 (v1.42.1): a count alone, without listing and decorating rows.
+export async function countTaskItems(where: string[], params: unknown[], db: Queryable = getDbPool()): Promise<number> {
+  const clause = where.length ? `WHERE ${where.join(" AND ")}` : "";
+  const [rows] = await db.query<Row[]>(`SELECT COUNT(*) AS total FROM tasks t JOIN users a ON a.id = t.assignee_id ${clause}`, params);
+  return num(rows[0]?.total ?? 0);
 }
 
 export async function listTaskItems(where: string[], params: unknown[], orderBy: string, limit: number, offset = 0, db: Queryable = getDbPool()): Promise<{ items: WorkTaskItem[]; total: number }> {

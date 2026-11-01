@@ -92,6 +92,7 @@ export interface GridTask {
   position: number;
   canEdit: boolean; // may change its dates and fields here
   canComplete: boolean;
+  approval?: { requestId: number; requestNo: string; workStep: boolean; linked?: boolean } | null; // v1.42.1: from an approval request
 }
 
 const OPEN = new Set(["OPEN", "IN_PROGRESS", "BLOCKED"]);

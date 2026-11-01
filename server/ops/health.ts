@@ -15,8 +15,13 @@ export async function healthReport() {
   const started = Date.now();
   let database = false;
   let jobRunner: "OK" | "LATE" | "NEVER" | "UNKNOWN" = "UNKNOWN";
+  // QA-DB-02 (v1.42.1, audit T-1/Q-020): minutes between the database's own
+  // clock (used by column defaults) and UTC (what the app writes). Anything but
+  // 0 means some times are stored in two clocks; the owner checks it on live.
+  let dbClockOffsetMinutes: number | null = null;
   try {
-    await getDbPool().query("SELECT 1");
+    const [[clock]] = await getDbPool().query<import("mysql2/promise").RowDataPacket[]>("SELECT TIMESTAMPDIFF(MINUTE, UTC_TIMESTAMP(), NOW()) AS offset_minutes");
+    dbClockOffsetMinutes = Number(clock?.offset_minutes ?? 0);
     database = true;
     const heartbeat = await getRunnerHeartbeat();
     jobRunner = heartbeat === null ? "NEVER" : heartbeat.minutesAgo <= 15 ? "OK" : "LATE";
@@ -35,7 +40,7 @@ export async function healthReport() {
   }
   const degraded = !database || jobRunner !== "OK" || storage !== "ok" || backupAgeHours === null || backupAgeHours > BACKUP_MAX_AGE_HOURS;
   return {
-    body: { status: database ? "ok" : "error", version: packageJson.version, database: database ? "ok" : "down", jobRunner, storage, backupAgeHours, degraded, ms: Date.now() - started },
+    body: { status: database ? "ok" : "error", version: packageJson.version, database: database ? "ok" : "down", dbClockOffsetMinutes, jobRunner, storage, backupAgeHours, degraded, ms: Date.now() - started },
     database,
     degraded,
   };

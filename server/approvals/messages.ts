@@ -189,6 +189,31 @@ export function messagesForEvents(
           whatsappVariables: vars({ reason: event.reason ?? "" }),
         });
         break;
+      case "WORK_ASSIGNED": {
+        // D-273: background work: a task for each person (Task Management);
+        // the request doesn't wait for it.
+        for (const userId of event.userIds) {
+          out.push({
+            eventType: "WORK_TASK_ASSIGNED",
+            userId,
+            title: "Task for you",
+            message: `${event.label}: ${ref}. It's in your My Tasks.`,
+            deepLink: link,
+            email: {
+              subject: `Task for you: ${request.requestNo}`,
+              text: `You've been given a task from a request: ${event.label}.
+
+${ref}
+
+It's in My Tasks; tick it done there when it's finished. The request doesn't wait for it.
+
+${link}`,
+            },
+            whatsappVariables: vars({ step: event.label, note: "" }),
+          });
+        }
+        break;
+      }
       case "NOTIFIED": {
         const step = context.labelOf?.(event.nodeId) ?? event.nodeId;
         for (const userId of event.userIds) {

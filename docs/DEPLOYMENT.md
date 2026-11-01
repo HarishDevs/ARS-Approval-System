@@ -100,7 +100,7 @@ After the first deploy (D5), open **Runtime Logs**. You should see `Done. Applie
 ### B2. Connection details: automatic
 With the Hosted Database attached, GoDaddy sets **`DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` and `DB_PASSWORD` by itself**. They're listed in the Secrets card. These are exactly the names the app reads.
 - **Don't enter or override them.** If you imported a `.env` that contained `DB_…` lines (for example `CHANGE_ME` values), **delete those entries** in Settings → Secrets, so the hosted values apply.
-- The app keeps a small pool of at most 10 connections and returns each one after every query. **Confirm** that the hosted plan allows 10 connections; if it reports "too many connections", ask IT to lower the pool in `lib/db/client.ts`.
+- The app keeps a small pool of connections (10 by default) and returns each one after every query; a request waits at most 10 seconds to connect, and at most 500 queries queue (v1.43.0, QA-DB-01). **Confirm** the hosted plan's connection limit and set **`DB_POOL_SIZE`** in Settings → Secrets to fit it (for example 10–20; lower it if MySQL reports "too many connections").
 
 ### B3. If you use the cPanel MySQL instead (fallback)
 Create the database and an ALL PRIVILEGES user in cPanel → MySQL Databases. Import the same `.sql` file in phpMyAdmin → Import. Then put its details in the secrets as in B2. `npm run db:check` (from your PC, after allowing your IP in cPanel → Remote MySQL) confirms the user may create triggers.

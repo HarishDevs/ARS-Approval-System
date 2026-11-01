@@ -268,6 +268,16 @@ class Run {
       else this.block(node.id, "NO_ELIGIBLE_APPROVER");
       return;
     }
+    // D-273: work that doesn't hold the request up is handed out (as linked
+    // tasks, by the service) and the request moves on at once.
+    if (isWork(node) && node.background) {
+      nodeState.status = "APPROVED";
+      nodeState.completedAt = this.context.now;
+      nodeState.assigned = approvers;
+      this.events.push({ type: "WORK_ASSIGNED", nodeId: node.id, label: node.label, userIds: approvers, ...(node.slaHours ? { slaHours: node.slaHours } : {}) });
+      this.advanceFrom(node.id);
+      return;
+    }
     if (approvers.length < required(node.completion, approvers.length)) {
       this.block(node.id, "NOT_ENOUGH_APPROVERS");
       return;

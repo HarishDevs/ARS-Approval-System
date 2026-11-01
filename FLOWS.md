@@ -1055,6 +1055,40 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 2. They filter (search, status, type, department, person, waiting on, priority, overdue, dates) and sort by a column title; 50 rows a page.
 3. **Download CSV** gives every matching row (up to 10,000) for Excel; audited. A row number opens the record.
 
+## F-200 Background work (v1.44.0, D-273)
+1. In New request (or IT's workflow designer) a Work task level has the box **The request waits until it's done** (ticked by default).
+2. Unticked: when the request reaches that level, each person on it gets a task in Task Management (linked to the request, due after the level's response time) and a "Task for you" message; the request moves straight on.
+3. The task is an ordinary task (hand over, tick, reopen); finishing it decides nothing on the request. Its holder may open the request, read-only.
+4. The journey shows it as a Work task card ("Doesn't hold the request up"), never as a checkpoint.
+
+## F-199 The approval journey (v1.44.0, D-273)
+1. Submit: the request is sealed into an envelope and loaded into the ARS van, which drives to the first level and stops beside it; the document comes out for review (blue point, approver and "since" in the point's details).
+2. A level approves (confirmed by the server): green stamp → the point turns green → the document is folded back into the van → the van drives to the next level (it turns blue) → the document comes out again. Several levels approved meanwhile play in order.
+3. Rejected: red stamp, the point turns red, the van stops. Changes asked: orange stamp, the document is reloaded, the van reverses to the start; on resubmission it drives back to the level waiting.
+4. Last approval: the van drives to the flag, the road turns green, 100% with a tick.
+5. Beside the road: Work task cards (status, person, due or completed, whether the request waits) and Information (FYI) cards (step, people, Delivered / Pending / Failed).
+6. The page asks for news every 10 seconds while open and at once on return or reconnect ("Reconnecting…" while the network is down); a reload draws the current state without replaying.
+
+## F-198 Phone layout (v1.43.0, D-272)
+1. A screen below 768 px (phone, narrow window) opens the users area in the phone layout; the browser keeps the choice in the `ars_layout` cookie, and a phone's browser is known before that. Widening or turning the screen past 768 px switches layout without signing in again. Admin and Super Admin keep their layout.
+2. The bottom bar: **Home**, **Approvals** (count waiting), **Tasks**, **Inbox** (count unread), **More**. The top bar: ARS CMS, Search, bell, account.
+3. **Home:** the attention line (approvals waiting, overdue steps, returned requests, overdue tasks) → four counts (each opens its list) → quick actions (New request, New task, Search, Ask AI) → the first three approvals waiting (cards) → tasks due today → my requests in progress.
+4. **Approvals:** tabs Waiting for me / My requests / Approved / Drafts; a card opens the request; nothing is decided on a card.
+5. **Request:** the page stacks to one column; the decision bar (Approve, Return, Hold, Reject) stays above the bottom bar; each button opens a drawer with the comment box and that one action (Reject asks again); the same server action and checks as on a computer.
+6. **Tasks:** Today / Upcoming / Overdue / Completed / Assigned by me; a card opens the task; **+** opens Create task.
+7. **Inbox:** All / Approvals / Tasks / Information / Mentions; Bookmarks, Archive, System and Settings below. **More:** profile, the other pages the person may open, the Admin spaces they have, Sign out (asks first).
+8. On a computer, `/users/approvals` opens Waiting for me and `/users/more` opens Home.
+
+## F-197 A task from an approval (v1.42.1, D-270)
+1. Wherever a task made by an approval's work step is listed (My Tasks list and board, project boards and lists, task tables, Home), it is tinted and carries a badge with the request number (e.g. EAF-2026-000001) that opens the request.
+2. The task's side pane shows "From approval request …" with the same link. In task tables its fields can't be edited and only the person it's for can tick it (as F-196).
+
+## F-196 Work step as a task (v1.42.1, D-269)
+1. A request reaches a work step: each person on it gets the step on the request (Mark as done) and a task in Task Management (title "step: request", due as the step, linked to the request).
+2. Ticking the task done (by that person) records "done" on the request; the request moves on and the task is completed. Pressing Mark as done on the request completes the task too.
+3. Handed over on the request: the task moves to the new person. Withdrawn, rejected or otherwise closed: the task is cancelled. The task can't be handed over, cancelled, reopened or deleted on its own.
+4. An FYI step tells its people (Inbox, email, WhatsApp); they can open the request from the message, read only (no comments, files or links; confidential values hidden, QA-SEC-04, D-271).
+
 ## F-195 Home: Approvals or Task Management (v1.42.0, D-264)
 1. Home opens on **Approvals** for approvers and on **Task Management** for everyone else (D-265); the switch at the top changes it.
 2. **Approval Overview:** four cards (Waiting for me, Overdue for me, My open requests, Changes asked of me), each opening its list; Waiting for me (or "Nothing waiting for you"), Due soon, Returned, My recent requests, Finished; on the right Your drafts (open or delete), Recently viewed, Quick insights for a chosen period.
@@ -1085,7 +1119,7 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 
 ## F-191 Road tracker on a request (v1.41.0, D-253)
 1. The request page shows the road: "Request submitted", then one checkpoint per level of the route actually taken (a parallel level is one checkpoint; a choice shows only the path taken; FYI levels are left out), then the finish flag.
-2. While a level waits the van is on its way, halfway to it; it reaches the level's name only when that level approves (D-263). The finished road is green. The road sits at the top of the request page, centred, with Request details (the requester's details first) below it and the decision box at the top of the right column. Rejected: a red cross where it stopped. Changes asked, on hold or stuck: amber. Withdrawn: muted. Fully approved: the van at the flag with a large tick.
+2. While a level waits the van is on its way, halfway to it; it reaches the level's name only when that level approves (D-263). The finished road is green. The road runs across the top of the request page beside the title and number (D-268); Request details (the requester first) and then Approval levels (status, progress figures, level by level) follow on the left; the decision box (a grid of decision buttons) leads the right column, then Attachments. Rejected: a red cross where it stopped. Changes asked, on hold or stuck: amber. Withdrawn: muted. Fully approved: the van at the flag with a large tick.
 3. Tapping a checkpoint shows its approvers, their status, times and comments (as the page already shows them).
 4. While the page is open it checks for news every 20 seconds (only while visible); when a level finishes, the van drives to the next one. Old or repeated news never moves it back.
 

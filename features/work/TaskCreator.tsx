@@ -268,7 +268,7 @@ function CreateTaskDialog({
       }}
       className={`draft-task fixed bottom-4 right-4 z-50 flex max-h-[calc(100dvh-2rem)] w-[min(30rem,calc(100vw-2rem))] flex-col rounded-xl border border-line bg-raised text-ink shadow-overlay ${small ? "" : "h-[34rem] lg:bottom-auto lg:right-auto lg:left-1/2 lg:top-1/2 lg:h-auto lg:max-h-[min(44rem,calc(100dvh-4rem))] lg:w-[min(60rem,calc(100vw-4rem))] lg:-translate-x-1/2 lg:-translate-y-1/2"}`}
     >
-      <header className="flex items-center gap-2 border-b border-line px-4 py-2.5">
+      <header className="draft-head flex items-center gap-2 border-b border-line px-4 py-2.5">
         <h2 id="draft-task-title" className="flex-1 font-semibold">
           Create task <span className="text-caption font-normal text-ink-muted">· draft</span>
         </h2>
@@ -536,7 +536,7 @@ function CreateTaskDialog({
                 </p>
               )}
             </div>
-            <aside className="flex flex-col gap-3 lg:rounded-lg lg:border lg:border-line lg:bg-surface-muted lg:p-3" aria-label="Task settings">
+            <aside className="draft-settings flex flex-col gap-3 lg:rounded-lg lg:border lg:border-line lg:bg-surface-muted lg:p-3" aria-label="Task settings">
               <p className="hidden text-caption font-semibold uppercase tracking-wide text-ink-faint lg:block">Task settings</p>
               <div className={`${picking === "due" || due ? "flex" : "hidden lg:flex"} items-center gap-2 text-label lg:flex-col lg:items-stretch lg:gap-1`}>
                 <label htmlFor="create-due" className="text-ink-muted">
@@ -642,7 +642,7 @@ function CreateTaskDialog({
               event.target.value = "";
             }}
           />
-          <footer className="relative flex flex-wrap items-center gap-0.5 border-t border-line px-3 py-2" role="toolbar" aria-label="Task tools">
+          <footer className="draft-foot relative flex flex-wrap items-center gap-0.5 border-t border-line px-3 py-2" role="toolbar" aria-label="Task tools">
             {pop === "plus" && (
               <ul role="menu" aria-label="More" className={`${popover} left-0 w-56 py-1`}>
                 {[

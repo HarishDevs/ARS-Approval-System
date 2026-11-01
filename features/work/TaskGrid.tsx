@@ -1,5 +1,6 @@
 "use client";
 
+import { ApprovalBadge, approvalRowClass } from "@/features/work/ApprovalLink";
 import { ArrowUpDown, CalendarDays, ChevronDown, ChevronRight, Filter, GitBranch, Layers, Lock, MessageSquare, Plus, Repeat, Search, Settings2, Users, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -368,7 +369,7 @@ export function TaskGrid({
                         }}
                         data-testid="task-row"
                         data-task-id={task.id}
-                        className={`work-row group grid min-h-9 items-center border-b border-line text-label hover:bg-surface-muted ${isOpen ? "bg-primary-50 outline outline-1 -outline-offset-1 outline-primary-600" : ""} ${selected.includes(task.id) ? "bg-primary-50/60" : ""} ${dragging === task.id ? "opacity-50" : ""}`}
+                        className={`work-row group grid min-h-9 items-center border-b border-line text-label hover:bg-surface-muted ${approvalRowClass(task.approval)} ${isOpen ? "bg-primary-50 outline outline-1 -outline-offset-1 outline-primary-600" : ""} ${selected.includes(task.id) ? "bg-primary-50/60" : ""} ${dragging === task.id ? "opacity-50" : ""}`}
                       >
                         {bulk && (
                           <span role="cell" className="flex items-center justify-center">
@@ -389,6 +390,7 @@ export function TaskGrid({
                             {task.title}
                           </Link>
                           <span className="flex shrink-0 items-center gap-2 text-caption text-ink-muted">
+                            <ApprovalBadge approval={task.approval} size="sm" />
                             {task.isPeriodic && (
                               <span role="img" aria-label="Periodic" title="Periodic: repeats" className="text-info-600">
                                 <Repeat aria-hidden="true" className="h-3.5 w-3.5" />

@@ -1,4 +1,5 @@
 import "server-only";
+import { ApprovalBadge, approvalRowClass } from "@/features/work/ApprovalLink";
 import { paneLinks, paneTaskId, TaskPane, WithPane } from "@/features/work/TaskPane";
 import Link from "next/link";
 import { getDbPool } from "@/lib/db/client";
@@ -6,7 +7,7 @@ import type { RowDataPacket } from "mysql2/promise";
 import { Badge } from "@/features/ui/Display";
 import { CreateTaskButton, ProjectDot, TaskCheck } from "@/features/work/client";
 import { dueLabel, indiaDayOf, TONE_TEXT } from "@/features/work/format";
-import { homeProjects, listTaskItems, recentStatusUpdates, teamWorkload, type WorkTaskItem } from "@/lib/db/repositories/work.repository";
+import { countTaskItems, homeProjects, listTaskItems, recentStatusUpdates, teamWorkload, type WorkTaskItem } from "@/lib/db/repositories/work.repository";
 import { indiaDateTimeText } from "@/server/modules/settings";
 import { STATUS_KIND_LABEL, STATUS_KIND_TONE } from "@/server/work/access";
 import { addDays } from "@/server/work/rules";
@@ -58,18 +59,21 @@ export async function TaskHome({
         ? [[...base, "t.status = 'COMPLETED'"], [user.id, user.id], "t.completed_at DESC"]
         : [[...base, OPEN], [user.id, user.id], "t.due_at IS NULL, t.due_at"];
   };
+  // QA-DB-01 (v1.42.1): under Home's My Work overview (part "others") only
+  // the assigned-by-me and team parts are shown, so only their queries run;
+  // counts are counted, not listed.
+  const full = part === "all";
+  const count = (where: [string[], unknown[], string]) => countTaskItems(where[0], where[1]);
   const [mine, overdueCount, givenList, projects, statuses, team, doneWeek, givenCounts, collaborators] = await Promise.all([
-    listTaskItems(...mineWhere(tab), 12),
-    listTaskItems(...mineWhere("overdue"), 1).then((result) => result.total),
+    full ? listTaskItems(...mineWhere(tab), 12) : { items: [], total: 0 },
+    full ? count(mineWhere("overdue")) : 0,
     listTaskItems(...givenWhere(given), 8),
-    homeProjects(viewer, 8),
-    recentStatusUpdates(viewer, 5),
+    full ? homeProjects(viewer, 8) : [],
+    full ? recentStatusUpdates(viewer, 5) : [],
     teamWorkload(viewer.teamIds, user.id),
-    listTaskItems(["t.assignee_id = ?", "t.deleted_at IS NULL", "t.status = 'COMPLETED'", "t.completed_at >= ?"], [user.id, new Date(now.getTime() - 7 * 86_400_000)], "t.id", 1).then(
-      (result) => result.total,
-    ),
-    Promise.all((["week", "upcoming", "overdue"] as Tab[]).map((which) => listTaskItems(...givenWhere(which), 1).then((result) => result.total))),
-    getDbPool()
+    full ? countTaskItems(["t.assignee_id = ?", "t.deleted_at IS NULL", "t.status = 'COMPLETED'", "t.completed_at >= ?"], [user.id, new Date(now.getTime() - 7 * 86_400_000)]) : 0,
+    Promise.all((["week", "upcoming", "overdue"] as Tab[]).map((which) => count(givenWhere(which)))),
+    !full ? 0 : getDbPool()
       .query<RowDataPacket[]>(
         "SELECT COUNT(DISTINCT f.user_id) AS n FROM task_followers f JOIN tasks t ON t.id = f.task_id AND t.deleted_at IS NULL WHERE (t.assignee_id = ? OR t.created_by = ?) AND f.user_id <> ?",
         [user.id, user.id, user.id],
@@ -302,7 +306,7 @@ function TaskLines({
         const open = ["OPEN", "IN_PROGRESS", "BLOCKED"].includes(task.status);
         const due = dueLabel(task.dueAt, now, open);
         return (
-          <li key={task.id} className="work-row flex items-center gap-2 py-1.5" tabIndex={-1}>
+          <li key={task.id} className={`work-row flex items-center gap-2 py-1.5 ${approvalRowClass(task.approval)}`} tabIndex={-1}>
             <TaskCheck taskId={task.id} done={task.status === "COMPLETED"} disabled={task.assigneeId !== meId || task.status === "CANCELLED"} label={task.title} />
             <Link href={hrefFor(task.id)} scroll={false} className={`min-w-0 flex-1 truncate text-label hover:underline ${task.status === "COMPLETED" ? "text-ink-muted line-through" : ""}`}>
               {task.isPeriodic && (
@@ -312,6 +316,7 @@ function TaskLines({
               )}
               {task.title}
             </Link>
+            <ApprovalBadge approval={task.approval} size="sm" />
             {showAssignee && <span className="truncate text-caption text-ink-muted">{task.assigneeName}</span>}
             {showProject && task.projects[0] && (
               <span className="hidden items-center gap-1 text-caption text-ink-muted sm:inline-flex">

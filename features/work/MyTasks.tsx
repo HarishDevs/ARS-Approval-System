@@ -1,5 +1,6 @@
 "use client";
 
+import { ApprovalBadge, approvalRowClass } from "@/features/work/ApprovalLink";
 import { Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
@@ -32,6 +33,7 @@ export interface MyTaskRow {
   subtasksOpen: number;
   comments: number;
   isPeriodic: boolean; // D-219
+  approval?: { requestId: number; requestNo: string; workStep: boolean; linked?: boolean } | null; // v1.42.1
 }
 export interface MySectionRow {
   id: number;
@@ -94,7 +96,7 @@ export function MyTasks({ sections, tasks, layout, nowIso }: { sections: MySecti
         }}
         onKeyDown={(event) => keyMove(event, task)}
         data-testid="my-task"
-        className={`work-row ${card ? "kanban-card rounded-lg border border-line bg-surface p-3 shadow-card hover:border-line-strong" : "flex items-center gap-2 border-b border-line px-3 py-1.5 hover:bg-surface-muted"} ${dragging === task.id ? "opacity-50" : ""}`}
+        className={`work-row ${card ? "kanban-card rounded-lg border border-line bg-surface p-3 shadow-card hover:border-line-strong" : "flex items-center gap-2 border-b border-line px-3 py-1.5 hover:bg-surface-muted"} ${approvalRowClass(task.approval)} ${dragging === task.id ? "opacity-50" : ""}`}
       >
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <input
@@ -108,6 +110,7 @@ export function MyTasks({ sections, tasks, layout, nowIso }: { sections: MySecti
             {task.isPeriodic && <Repeat aria-label="Periodic" className="mr-1 inline h-3.5 w-3.5 text-info-600" />}
             {task.title}
           </Link>
+          <ApprovalBadge approval={task.approval} size="sm" />
         </div>
         <div className={`flex items-center gap-2 text-caption text-ink-muted ${card ? "mt-1.5 flex-wrap" : "shrink-0"}`}>
           {task.projects.slice(0, 2).map((project) => (

@@ -54,6 +54,8 @@ export function describeEvent(event: TimelineEvent, labelOf: (nodeId: string) =>
       return `Withdrawn by ${nameOf(event.actorId)}${event.reason ? `: ${event.reason}` : ""}`;
     case "REOPENED":
       return `Reopened by ${nameOf(event.actorId)} (round ${event.round}): ${event.reason}`;
+    case "WORK_ASSIGNED":
+      return `"${labelOf(event.nodeId)}": given to ${event.userIds.map(nameOf).join(", ")} as tasks (the request doesn't wait for them)`;
     case "NOTIFIED":
       return event.userIds.length ? `"${labelOf(event.nodeId)}": ${event.userIds.map(nameOf).join(", ")} told for information` : `"${labelOf(event.nodeId)}": nobody to tell`;
     case "BLOCK_RESOLVED": {

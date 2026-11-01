@@ -18,7 +18,13 @@ test("Classic entry forms: Label : value rows, Enter moves on, Ctrl+A accepts; C
     await expect(page.getByTestId("classic-keys")).toContainText("Ctrl+A: accept");
     const title = page.locator("main form").getByLabel("Title", { exact: true });
     // The label sits beside its field (a two-column row), followed by " :".
-    expect(await title.evaluate((element) => getComputedStyle(element.parentElement!).display)).toBe("grid");
+    // D-267: a wrapping row (it stacks only when there's no room); here they sit side by side.
+    const beside = await title.evaluate((element) => {
+      const label = element.parentElement!.firstElementChild!.getBoundingClientRect();
+      const field = element.getBoundingClientRect();
+      return label.right <= field.left && Math.abs(label.top + label.height / 2 - (field.top + field.height / 2)) < field.height;
+    });
+    expect(beside).toBe(true);
     expect(await page.locator("main form .field-label").first().evaluate((element) => getComputedStyle(element, "::after").content)).toContain(":");
     await title.fill(`Classic entry ${stamp}`);
     await page.keyboard.press("Enter");
@@ -34,7 +40,8 @@ test("Classic entry forms: Label : value rows, Enter moves on, Ctrl+A accepts; C
     await conn.query("DELETE FROM user_settings WHERE user_id = ? AND setting_key = 'ui.workspace_view'", [id]);
     await page.goto("/users/tasks/new");
     await expect(page.locator("[data-view=classic]")).toHaveCount(0);
-    expect(await page.locator("main form").getByLabel("Title", { exact: true }).evaluate((element) => getComputedStyle(element.parentElement!).display)).not.toBe("grid");
+    // Compact: the label sits above its field.
+    expect(await page.locator("main form").getByLabel("Title", { exact: true }).evaluate((element) => element.parentElement!.firstElementChild!.getBoundingClientRect().bottom <= element.getBoundingClientRect().top)).toBe(true);
   } finally {
     await conn.query("DELETE FROM user_settings WHERE user_id = ? AND setting_key = 'ui.workspace_view'", [id]);
     await conn.end();

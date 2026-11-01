@@ -1,5 +1,5 @@
 import { expect, test, type BrowserContext, type Page } from "@playwright/test";
-import { sessionCookie } from "./db";
+import { phoneLayoutCookie, sessionCookie } from "./db";
 
 // v1.10.0 website checks (SECURITY_WEBSITE_FIX_TRACKER.md, WEB-01 to WEB-20):
 // no sideways scrolling at five screen sizes, every navigation link answers,
@@ -137,9 +137,11 @@ test("WEB-17: the logo goes to the space's first page", async ({ page, context }
 });
 
 test("WEB-03: the phone menu takes focus, keeps Tab inside, closes on Escape and after choosing a page", async ({ page, context }) => {
-  await as(context, "E2E_REQ");
+  // v1.43.0: the users area on a phone has bottom tabs instead (below); the
+  // Admin space keeps the drawer menu.
+  await as(context, "E2E_ADMIN");
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/users");
+  await page.goto("/admin");
   const opener = page.getByRole("button", { name: "Open menu" });
   await opener.click();
   const dialog = page.getByRole("dialog", { name: "Menu" });
@@ -151,15 +153,19 @@ test("WEB-03: the phone menu takes focus, keeps Tab inside, closes on Escape and
   await expect(dialog).toBeHidden();
   await expect(opener).toBeFocused();
   await opener.click();
-  // D-236: no Search in the menu any more; Calendar is a top-level page.
-  await dialog.getByRole("link", { name: "Calendar" }).click();
-  await expect(page).toHaveURL(/\/users\/calendar/);
+  await dialog.getByRole("link", { name: /Users & roles/ }).first().click();
+  await expect(page).toHaveURL(/\/admin\/users/);
   await expect(page.getByRole("dialog", { name: "Menu" })).toBeHidden();
-  // WEB-15: the phone bar belongs to My approvals only.
-  await expect(page.getByRole("navigation", { name: "Quick" })).toBeVisible();
-  await as(context, "E2E_ADMIN");
-  await page.goto("/admin");
+  // WEB-15: the phone bar belongs to the users area only.
+  await expect(page.getByTestId("mobile-tabbar")).toHaveCount(0);
   await expect(page.getByRole("navigation", { name: "Quick" })).toHaveCount(0);
+  await as(context, "E2E_REQ");
+  await context.addCookies([phoneLayoutCookie()]);
+  await page.goto("/users/more");
+  await expect(page.getByTestId("mobile-tabbar")).toBeVisible();
+  await page.getByTestId("mobile-more").getByRole("link", { name: "Calendar" }).click();
+  await expect(page).toHaveURL(/\/users\/calendar/);
+  await expect(page.getByTestId("mobile-tabbar").getByRole("link", { name: "More" })).toHaveAttribute("aria-current", "page");
 });
 
 test("SEC-07/18: no CORS grant to other sites; signed-in answers aren't cached", async ({ page, context }) => {

@@ -11,7 +11,24 @@ import { db, sessionCookie } from "../e2e/db";
 test.describe.configure({ mode: "serial" });
 test.setTimeout(30 * 60_000);
 
-const WIDTHS = [320, 375, 768, 1024, 1440] as const;
+// QA pass (v1.42.1): QA_VIEWPORTS=all runs the ten sizes of the QA brief
+// (small phone to ultra-wide); CI keeps the five widths.
+const SIZES: readonly { width: number; height: number }[] =
+  process.env.QA_VIEWPORTS === "all"
+    ? [
+        { width: 320, height: 568 },
+        { width: 360, height: 800 },
+        { width: 375, height: 812 },
+        { width: 430, height: 932 },
+        { width: 768, height: 1024 },
+        { width: 1024, height: 768 },
+        { width: 1366, height: 768 },
+        { width: 1440, height: 900 },
+        { width: 1920, height: 1080 },
+        { width: 2560, height: 1440 },
+      ]
+    : [320, 375, 768, 1024, 1440].map((width) => ({ width, height: width < 768 ? 812 : 900 }));
+const WIDTHS = SIZES.map((size) => size.width);
 const USER_ROUTES = [
   "/users",
   "/users/inbox",
@@ -70,8 +87,8 @@ async function measure(page: Page): Promise<{ overflow: number; clipped: string[
 }
 
 async function sweep(page: Page, role: string, routes: readonly string[]) {
-  for (const width of WIDTHS) {
-    await page.setViewportSize({ width, height: width < 768 ? 812 : 900 });
+  for (const { width, height } of SIZES) {
+    await page.setViewportSize({ width, height });
     for (const route of routes) {
       const response = await page.goto(route, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle").catch(() => undefined);

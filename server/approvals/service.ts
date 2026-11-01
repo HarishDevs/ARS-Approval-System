@@ -57,6 +57,7 @@ import { loadCustomConfig } from "@/server/approvals/custom-config";
 import { applyStepPolicy, unavailableFeatures } from "@/server/workflows/step-policy";
 import type { RoleCode } from "@/types/auth";
 import { appBaseUrl } from "@/lib/http/app-url";
+import { mirrorWorkTasks } from "@/server/approvals/work-mirror";
 
 // The multi-level approval service (north star, S2-06, F-11 to F-13). The
 // engine decides; this layer loads, locks, saves and tells people.
@@ -530,6 +531,7 @@ export async function submitRequest(
       const id = await insertRequest({ requestNo, workflowVersionId: version.id, requesterId: actor.id, title, formData, state: result.state, submissionKey: input.submissionKey ?? null }, connection);
       await syncTasks(id, result.state, version.definition.nodes, connection, await loadWorkingCalendar(connection));
       await appendEvents(id, [{ type: "SUBMITTED", requestNo }, ...result.events], actor.id, connection);
+      await mirrorWorkTasks(id, connection); // D-269: work steps in Task Management; D-273: after the events (background work is read from them)
       await recordAudit({ actorUserId: actor.id, action: "REQUEST_SUBMITTED", entityType: "REQUEST", entityId: id, metadata: { requestNo, workflowVersionId: version.id } }, connection); // SEC-12 (v1.10.0)
       await insertRevision(id, result.state.round, title, formData, actor.id, connection);
       await insertSubmissionCheck(id, readiness, { acknowledged: confirmed, overrideReason: reason || null }, connection);
@@ -610,6 +612,8 @@ async function mutate(requestId: number, actor: Actor, step: Step, hooks: Mutate
         await insertRevision(request.id, result.state.round, request.title, result.formData ?? request.formData, actor.id, connection);
       }
       await afterChange(request.id, result.events, version.definition.nodes, actor, connection, calendar);
+      // D-269: work steps in Task Management, after afterChange has moved due times (QA-WF-02).
+      await mirrorWorkTasks(request.id, connection);
       const change = {
         request: { ...request, state: result.state, status: result.state.status, round: result.state.round, stateVersion: request.stateVersion + 1 },
         events: result.events,

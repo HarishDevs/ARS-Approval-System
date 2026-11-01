@@ -1,3 +1,4 @@
+import { workMirrorLink } from "@/server/approvals/work-mirror";
 import "server-only";
 import type { RowDataPacket } from "mysql2/promise";
 import { withTransaction } from "@/lib/db/transaction";
@@ -405,6 +406,8 @@ export async function addToProject(taskId: number, projectId: number, sectionId:
   const loaded = await taskFor(taskId, actor);
   if (!loaded) return fail(NOT_FOUND);
   if (!loaded.rights.edit && loaded.task.assigneeId !== actor.id) return fail("You can't change this task's projects.");
+  // QA-SEC-05 (v1.42.1): a work step stays private to its request (a project would show its title to members).
+  if (workMirrorLink(loaded.task.formData)) return fail(mirrorRefusal(loaded.task.relatedRequestNo));
   // D-222: each project the task is in says who may share its tasks with other projects.
   for (const link of await repo.listTaskProjects(taskId)) {
     if (link.projectId === projectId) continue;
@@ -535,12 +538,15 @@ export async function setTaskFields(taskId: number, change: { dueDay?: string; s
 export async function setParent(taskId: number, parentId: number | null, actor: TaskActor): Promise<WorkResult> {
   const loaded = await taskFor(taskId, actor);
   if (!loaded || !loaded.rights.edit) return fail(loaded ? "You can't move this task." : NOT_FOUND);
+  // QA-WF-03 (v1.42.1): a work step isn't moved under another task (a parent's delete or repeat would carry it along).
+  if (workMirrorLink(loaded.task.formData)) return fail(mirrorRefusal(loaded.task.relatedRequestNo));
   let parentDepth = -1;
   let rootId: number | null = null;
   if (parentId !== null) {
     const parent = await taskFor(parentId, actor);
     if (!parent) return fail("Choose a task you can see.");
     if (!parent.rights.edit) return fail("You can't add subtasks to that task.");
+    if (workMirrorLink(parent.task.formData)) return fail(mirrorRefusal(parent.task.relatedRequestNo));
     const chain = (await repo.ancestors(parentId)).map((item) => item.id);
     const below = await repo.descendants(taskId);
     const problem = subtaskProblem({ taskId, parentId, parentDepth: parent.task.depth, ancestorsOfParent: chain, subtreeHeight: Math.max(0, ...below.map((item) => item.level)) });
@@ -574,16 +580,23 @@ export async function moveSubtask(taskId: number, beforeId: number | null, after
   return { ok: true, value: undefined };
 }
 
+// QA-WF-03 / QA-SEC-05 (v1.42.1): what a work-step task refuses.
+const mirrorRefusal = (requestNo: string | null) => `This task is a work step of ${requestNo ?? "a request"}; it follows the request (it can't be put in a project, under another task, made to repeat or deleted on its own).`;
+
 // Delete keeps the task (and its subtasks) for 30 days; Restore brings them back.
 export async function deleteTask(taskId: number, actor: TaskActor): Promise<WorkResult> {
   const loaded = await taskFor(taskId, actor);
   if (!loaded) return fail(NOT_FOUND);
   if (!(loaded.rights.edit)) return fail("Only the task's creator, project editors and IT can delete it.");
+  // D-269: a request's work step closes with the request, not on its own.
+  if (workMirrorLink(loaded.task.formData) && OPEN_STATUSES.includes(loaded.task.status)) return fail(`This task is a work step of ${loaded.task.relatedRequestNo ?? "a request"}; it closes on the request.`);
   const now = new Date();
   await withTransaction(async (connection) => {
     for (const id of [taskId, ...(await repo.descendants(taskId, connection)).map((item) => item.id)]) {
       const task = await findTask(id, connection, true);
       if (!task || task.deletedAt) continue;
+      // QA-WF-03: a work step under the deleted task stays (it closes with its request).
+      if (id !== taskId && workMirrorLink(task.formData)) continue;
       await repo.setTaskWorkFields(id, { deleted_at: now, deleted_by: actor.id }, connection);
       // An open task is closed as cancelled, so counts, reminders, calendars
       // and analytics everywhere leave it out; Restore puts its status back.

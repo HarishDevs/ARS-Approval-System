@@ -15,7 +15,9 @@ import { sessionCookieLooksValid } from "@/lib/security/session-cookie-edge";
 // Next.js reads the nonce from the request's CSP header and adds it to its
 // own scripts, so every page is rendered per request (root layout is dynamic).
 // v1.12.2: "/" (the public home page), "/privacy" and "/terms" are public (Google OAuth verification).
-const PUBLIC_PREFIXES = ["/", "/try", "/privacy", "/terms", "/login", "/signed-out", "/set-password", "/forgot-password", "/security", "/api/auth", "/api/jobs", "/api/health", "/api/webhooks", "/api/push/resubscribe", "/sw.js", "/offline.html", "/_next", "/brand", "/icons", "/manifest.webmanifest", "/favicon.ico", "/icon.svg", "/robots.txt", "/sitemap.xml"];
+const PUBLIC_PREFIXES = ["/", "/try", "/privacy", "/terms", "/login", "/signed-out", "/set-password", "/forgot-password", "/security", "/api/auth", "/api/jobs", "/api/health", "/api/webhooks", "/api/push/resubscribe", "/sw.js", "/offline.html", "/_next", "/brand", "/animations", "/icons", "/manifest.webmanifest", "/favicon.ico", "/icon.svg", "/robots.txt", "/sitemap.xml"];
+// QA-SEC-02 (v1.42.1): GET routes that store something (OAuth connect and callback).
+const WRITING_GETS = ["/api/integrations/"];
 
 const CSP_OPTIONS = {
   dev: process.env.NODE_ENV !== "production",
@@ -139,7 +141,9 @@ export async function middleware(request: NextRequest) {
   // D-185: marks a request that may change something (see WRITE_HEADER).
   requestHeaders.delete(WRITE_HEADER);
   requestHeaders.set(NEXT_HEADER, `${pathname}${request.nextUrl.search}`.slice(0, 500));
-  if (UNSAFE_METHODS.has(request.method) || request.headers.has("next-action")) requestHeaders.set(WRITE_HEADER, "1");
+  // QA-SEC-02 (v1.42.1): the integrations' connect and callback steps are
+  // GETs that store a connection, so a view-only Try as session can't use them.
+  if (UNSAFE_METHODS.has(request.method) || request.headers.has("next-action") || WRITING_GETS.some((prefix) => pathname.startsWith(prefix))) requestHeaders.set(WRITE_HEADER, "1");
   requestHeaders.set("x-nonce", nonce);
   requestHeaders.set("Content-Security-Policy", csp);
   requestHeaders.set(REQUEST_ID_HEADER, requestId);

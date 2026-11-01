@@ -62,7 +62,8 @@ export function DecisionForm({ requestId, taskKey, label, work = false, only, id
         <textarea id={`${idPrefix}-${taskKey}`} name="comment" rows={3} maxLength={2000} data-autofocus={only ? true : undefined} className="field-input h-auto py-2.5" />
         <FieldError result={result} name="comment" />
       </div>
-      <div className="flex flex-wrap items-center gap-2">
+      {/* v1.42.1 (owner's sketch): the decisions as a grid of equal buttons; a single one keeps its own size. */}
+      <div className={only ? "flex flex-wrap items-center gap-2" : "grid grid-cols-2 gap-2 sm:grid-cols-3 [&>button]:h-auto [&>button]:min-h-9 [&>button]:w-full [&>button]:justify-center [&>button]:whitespace-normal [&>button]:leading-tight"} data-testid="decision-buttons">
         {shows("APPROVE") && (
           <button type="submit" name="decision" value="APPROVE" disabled={pending} className="btn-primary btn-compact">
             {working("APPROVE") ? "Working…" : work ? "Mark as done" : "Approve"}
@@ -84,7 +85,7 @@ export function DecisionForm({ requestId, taskKey, label, work = false, only, id
           </button>
         )}
         {!work && shows("REJECT") && (
-          <button ref={rejectButton} type="submit" name="decision" value="REJECT" disabled={pending} className={only ? "btn-danger btn-compact" : "btn-danger-quiet btn-compact sm:ml-auto"}>
+          <button ref={rejectButton} type="submit" name="decision" value="REJECT" disabled={pending} className={only ? "btn-danger btn-compact" : "btn-danger-quiet btn-compact"}>
             {working("REJECT") ? "Working…" : "Reject"}
           </button>
         )}
@@ -247,6 +248,8 @@ export function ReopenForm({ requestId }: { requestId: number }) {
 // RA-02: on phones, the actions the person may take stay at the bottom of
 // the screen. Each opens a drawer with the comment box and that one action,
 // which goes through the same server action (and checks) as the full form.
+// v1.43.0: "Return" (ask for changes), the mobile brief's word; in the
+// mobile layout the bar sits on the taller tab bar with 48 px buttons.
 export function MobileDecisionBar({ requestId, taskKey, label, work = false }: { requestId: number; taskKey: string; label: string; work?: boolean }) {
   const [open, setOpen] = useState<DecisionKind | null>(null);
   // D-234 (Fitts, Figure-ground): floating buttons (Pico Bot) move up while
@@ -259,14 +262,14 @@ export function MobileDecisionBar({ requestId, taskKey, label, work = false }: {
   }, []);
   const actions: { kind: DecisionKind; label: string; icon: React.ReactNode; style: string }[] = [
     { kind: "APPROVE", label: work ? "Done" : "Approve", icon: <Check aria-hidden="true" className="h-4 w-4" />, style: "btn-primary" },
-    { kind: "REQUEST_CHANGES", label: "Changes", icon: <MessageSquareWarning aria-hidden="true" className="h-4 w-4" />, style: "btn-secondary" },
+    { kind: "REQUEST_CHANGES", label: "Return", icon: <MessageSquareWarning aria-hidden="true" className="h-4 w-4" />, style: "btn-secondary" },
     { kind: "HOLD", label: "Hold", icon: <PauseCircle aria-hidden="true" className="h-4 w-4" />, style: "btn-secondary" },
     ...(work ? [] : [{ kind: "REJECT" as const, label: "Reject", icon: <XCircle aria-hidden="true" className="h-4 w-4" />, style: "btn-danger-quiet" }]),
   ];
   const titles: Record<DecisionKind, string> = { APPROVE: work ? "Mark as done" : "Approve", REQUEST_CHANGES: "Ask for changes", HOLD: "Put on hold", REJECT: "Reject", INFO: "Ask a question" };
   return (
     <>
-      <div role="region" aria-label="Your decision" className="fixed inset-x-0 bottom-[calc(56px+env(safe-area-inset-bottom))] z-sticky border-t border-line bg-surface px-3 py-2 shadow-overlay md:hidden">
+      <div role="region" aria-label="Your decision" className="mob-decision-bar fixed inset-x-0 bottom-[calc(56px+env(safe-area-inset-bottom))] z-sticky border-t border-line bg-surface px-3 py-2 shadow-overlay md:hidden">
         <div className={`grid gap-2 ${actions.length === 4 ? "grid-cols-4" : "grid-cols-3"}`}>
           {actions.map((action) => (
             <button key={action.kind} type="button" onClick={() => setOpen(action.kind)} className={`${action.style} btn-compact flex-col !gap-0.5 !px-1 !text-[length:calc(12px*var(--text-scale,1))]`}>

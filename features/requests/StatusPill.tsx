@@ -2,7 +2,7 @@ import type { InstanceStatus, NodeStatus, TaskStatus } from "@/server/engine/typ
 
 // One vocabulary for statuses everywhere (D-017). On Hold and Changes
 // Required never look complete (G-03); Rejected never looks approved (G-02).
-const REQUEST: Record<InstanceStatus, { label: string; style: string }> = {
+export const REQUEST_STATUS: Record<InstanceStatus, { label: string; style: string }> = {
   IN_PROGRESS: { label: "In progress", style: "bg-primary-50 text-primary-600" },
   ON_HOLD: { label: "On hold", style: "bg-warning-50 text-warning-600" },
   CHANGES_REQUIRED: { label: "Changes required", style: "bg-warning-50 text-warning-600" },
@@ -31,7 +31,7 @@ const TASK: Record<TaskStatus, { label: string; style: string }> = {
 };
 
 export function RequestStatusPill({ status }: { status: InstanceStatus }) {
-  const { label, style } = REQUEST[status];
+  const { label, style } = REQUEST_STATUS[status];
   return <span className={`badge ${style}`}>{label}</span>;
 }
 

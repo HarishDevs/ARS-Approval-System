@@ -15,7 +15,9 @@ export function visibleToSql(alias = "r"): { sql: string; params: (userId: numbe
                  WHERE vx.request_id = ${alias}.id AND vx.status = 'PENDING' AND vd.delegate_id = ? AND vd.ended_at IS NULL
                    AND ${INDIA_TODAY_SQL} BETWEEN vd.starts_on AND vd.ends_on)
       OR EXISTS (SELECT 1 FROM consultations vc WHERE vc.request_id = ${alias}.id AND vc.consultee_id = ?)
-      OR EXISTS (SELECT 1 FROM request_collaborators vk WHERE vk.request_id = ${alias}.id AND vk.user_id = ? AND vk.removed_at IS NULL))`,
-    params: (userId: number) => [userId, userId, userId, userId, userId, userId],
+      OR EXISTS (SELECT 1 FROM request_collaborators vk WHERE vk.request_id = ${alias}.id AND vk.user_id = ? AND vk.removed_at IS NULL)
+      OR EXISTS (SELECT 1 FROM approval_events ve WHERE ve.request_id = ${alias}.id AND ve.event_type = 'NOTIFIED' AND JSON_CONTAINS(JSON_EXTRACT(ve.payload_json, '$.userIds'), CAST(? AS JSON))))`,
+    // QA-DB-07 (v1.42.1): and the people an FYI step told (as canViewRequest).
+    params: (userId: number) => [userId, userId, userId, userId, userId, userId, String(userId)],
   };
 }

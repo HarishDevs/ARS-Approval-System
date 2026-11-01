@@ -1,3 +1,5 @@
+import { ApprovalBadge } from "@/features/work/ApprovalLink";
+import { WORK_LINK_KEY, workMirrorLink } from "@/server/approvals/work-mirror";
 import Link from "next/link";
 import { ExternalLink, X } from "lucide-react";
 import { Badge } from "@/features/ui/Display";
@@ -64,6 +66,19 @@ export async function TaskPane({ taskId, user, closeHref }: { taskId: number; us
         {visibilityText(view.links)}
       </p>
       <div className="space-y-3 px-4">
+        {/* v1.42.1 (owner): a task from an approval names the request and links to it. */}
+        {task.relatedRequestId && task.relatedRequestNo && (
+          <div className={`flex flex-wrap items-center gap-2 rounded-md px-3 py-2 text-label ${workMirrorLink(task.formData) || linkedWork(task.formData) ? "approval-task" : "bg-surface-muted"}`} data-testid="task-approval-link">
+            <ApprovalBadge approval={{ requestId: task.relatedRequestId, requestNo: task.relatedRequestNo, workStep: Boolean(workMirrorLink(task.formData)), linked: linkedWork(task.formData) }} />
+            <span className="text-ink-muted">
+              {workMirrorLink(task.formData)
+                ? "A work step of this approval request: tick it done here or press Mark as done on the request."
+                : linkedWork(task.formData)
+                  ? "Given out by this approval request. The request doesn't wait for it; finishing it doesn't decide anything there."
+                  : "Linked to this approval request."}
+            </span>
+          </div>
+        )}
         <p className="font-mono text-caption text-ink-muted">
           {task.taskNo} · {task.typeName}
         </p>
@@ -147,4 +162,9 @@ export function visibilityText(links: readonly { projectName: string }[]): strin
   return links.length
     ? `This task is visible to members of ${links.map((link) => link.projectName).join(", ")}, its people and followers.`
     : "This task is visible to its assignee, its creator, its followers and the managers above the assignee.";
+}
+
+// D-273: a task handed out by a background work step.
+function linkedWork(formData: unknown): boolean {
+  return Boolean(formData && typeof formData === "object" && (formData as Record<string, unknown>)[WORK_LINK_KEY]);
 }

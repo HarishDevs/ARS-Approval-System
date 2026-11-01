@@ -130,21 +130,24 @@ export interface WorkActivity {
 // The latest events on tasks I'm given, gave, or follow (task_events is
 // append-only). Bounded: the newest tasks of each kind, then their events.
 export async function workActivity(userId: number, limit: number, db: Queryable = getDbPool()): Promise<WorkActivity[]> {
+  // QA-DB-05 (v1.42.1): the task ids first (each list by its own index), then
+  // their events by (task_id, id), so MySQL never walks all events backwards.
+  const [idRows] = await db.query<RowDataPacket[]>(
+    `(SELECT id FROM tasks WHERE assignee_id = ? AND deleted_at IS NULL ORDER BY id DESC LIMIT 200)
+     UNION (SELECT id FROM tasks WHERE created_by = ? AND deleted_at IS NULL ORDER BY id DESC LIMIT 200)
+     UNION (SELECT task_id FROM task_followers WHERE user_id = ? ORDER BY task_id DESC LIMIT 200)`,
+    [userId, userId, userId],
+  );
+  const ids = idRows.map((row) => n(row.id));
+  if (ids.length === 0) return [];
   const [rows] = await db.query<RowDataPacket[]>(
     `SELECT e.id, e.event_type, e.task_id, e.actor_id, e.body, e.payload_json, e.created_at, t.task_no, t.title, u.name AS actor_name
-     FROM task_events e
+     FROM task_events e FORCE INDEX (idx_task_events_task)
      JOIN tasks t ON t.id = e.task_id AND t.deleted_at IS NULL
      LEFT JOIN users u ON u.id = e.actor_id
-     WHERE e.task_id IN (
-       SELECT id FROM (
-         (SELECT id FROM tasks WHERE assignee_id = ? AND deleted_at IS NULL ORDER BY id DESC LIMIT 200)
-         UNION (SELECT id FROM tasks WHERE created_by = ? AND deleted_at IS NULL ORDER BY id DESC LIMIT 200)
-         UNION (SELECT task_id FROM task_followers WHERE user_id = ? ORDER BY task_id DESC LIMIT 200)
-       ) mine
-     )
-     AND e.event_type NOT IN ('MOVED_SECTION', 'FIELD_SET', 'SUBTASK_ADDED', 'PARENT_CHANGED')
+     WHERE e.task_id IN (?) AND e.event_type NOT IN ('MOVED_SECTION', 'FIELD_SET', 'SUBTASK_ADDED', 'PARENT_CHANGED')
      ORDER BY e.id DESC LIMIT ?`,
-    [userId, userId, userId, limit],
+    [ids, limit],
   );
   return rows.map((row) => ({
     id: n(row.id),
@@ -178,4 +181,15 @@ export async function isApproverForHome(userId: number, db: Queryable = getDbPoo
     [userId, userId],
   );
   return n(row?.by_designation) === 1 || n(row?.has_waiting) === 1;
+}
+
+// QA-DB-06 (v1.42.1): the Approvals Home counts, counted (not taken from the
+// 200-row list): open (in progress or on hold) and sent back for changes.
+export async function myRequestCounts(userId: number, db: Queryable = getDbPool()): Promise<{ open: number; returned: number }> {
+  const [[row]] = await db.query<RowDataPacket[]>(
+    `SELECT COALESCE(SUM(status IN ('IN_PROGRESS', 'ON_HOLD')), 0) AS open_count, COALESCE(SUM(status = 'CHANGES_REQUIRED'), 0) AS returned
+     FROM approval_requests WHERE requester_id = ? AND deleted_at IS NULL`,
+    [userId],
+  );
+  return { open: n(row?.open_count), returned: n(row?.returned) };
 }

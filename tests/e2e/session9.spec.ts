@@ -18,14 +18,17 @@ test("the account menu shows the space and switches to another", async ({ page, 
   await expect(page.getByRole("link", { name: /Users & roles/ }).first()).toBeVisible();
 });
 
-test("on a phone the sidebar opens as a drawer", async ({ page, context }) => {
+test("on a phone the users area has the bottom tabs; Approvals holds My requests", async ({ page, context }) => {
+  // v1.43.0: the mobile layout (bottom tabs, More) replaced the phone drawer in the users area.
   await page.setViewportSize({ width: 375, height: 800 });
   await context.addCookies([await sessionCookie("E2E_STAFF")]);
   await page.goto("/users");
-  await page.getByRole("button", { name: "Open menu" }).click();
-  const drawer = page.getByRole("dialog", { name: "Menu" });
-  await drawer.getByRole("button", { name: "My Approvals" }).click();
-  await drawer.getByRole("link", { name: "My pending requests" }).click();
-  await expect(page).toHaveURL(/\/users\/requests$/);
-  await expect(drawer).toBeHidden();
+  const tabs = page.getByTestId("mobile-tabbar");
+  await expect(tabs).toBeVisible();
+  await expect(page.getByRole("button", { name: "Open menu" })).toHaveCount(0);
+  await tabs.getByRole("link", { name: /Approvals/ }).click();
+  await expect(page).toHaveURL(/\/users\/approvals/);
+  await page.getByRole("navigation", { name: "Approval lists" }).getByRole("link", { name: /My requests/ }).click();
+  await expect(page).toHaveURL(/tab=mine/);
+  await expect(page.getByRole("navigation", { name: "Approval lists" }).getByRole("link", { name: /My requests/ })).toHaveAttribute("aria-current", "page");
 });

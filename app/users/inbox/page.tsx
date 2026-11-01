@@ -8,6 +8,7 @@ import { countUnreadByCategory, listInbox, type InboxState } from "@/lib/db/repo
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 import { appPath, CATEGORY_LABEL, CATEGORY_SLUG, parseCategory, type NotificationCategory } from "@/server/notifications/categories";
 import { PendingLink } from "@/features/ui/PendingLink";
+import { isMobileLayout } from "@/server/ui/layout-mode";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
 export const metadata: Metadata = { title: "Inbox" };
@@ -39,17 +40,115 @@ const hrefFor = (category: NotificationCategory | null, state: InboxState = "act
 };
 const chip = (current: boolean) => `rounded-full border px-3 py-1 text-label ${current ? "border-primary-600 bg-primary-50 font-semibold text-primary-700" : "border-line text-ink-muted hover:bg-surface-muted"}`;
 
-export default async function InboxPage({ searchParams }: { searchParams: Promise<{ before?: string; type?: string; state?: string; unread?: string }> }) {
+export default async function InboxPage({ searchParams }: { searchParams: Promise<{ before?: string; type?: string; state?: string; unread?: string; mentions?: string }> }) {
   const { user } = await requireArea("users");
   const query = await searchParams;
   const beforeId = query.before && /^\d+$/.test(query.before) ? Number(query.before) : undefined;
   const category = parseCategory(query.type);
   const state: InboxState = query.state === "bookmarks" || query.state === "archive" ? query.state : "activity";
   const unreadOnly = query.unread === "1";
-  const [items, unread] = await Promise.all([listInbox(user.id, PAGE_SIZE, beforeId, undefined, category, state, unreadOnly), countUnreadByCategory(user.id)]);
+  // v1.43.0: on a phone, tabs All, Approvals, Tasks, Information, Mentions.
+  const mobile = await isMobileLayout();
+  const mentions = mobile && query.mentions === "1";
+  const [items, unread] = await Promise.all([listInbox(user.id, PAGE_SIZE, beforeId, undefined, mentions ? null : category, state, unreadOnly, mentions), countUnreadByCategory(user.id)]);
   const last = items.at(-1);
   const total = Object.values(unread).reduce((sum, count) => sum + count, 0);
   const stateLabel = STATES.find((entry) => entry.state === state)?.label;
+  const list =
+    items.length === 0 ? (
+      <EmptyState
+        title={state === "archive" ? "Nothing archived" : state === "bookmarks" ? "No bookmarks" : mentions ? "No mentions" : unreadOnly ? "You're all caught up" : "Nothing yet"}
+        body={
+          state !== "activity"
+            ? "Use the bookmark and archive buttons beside a notification."
+            : mentions
+              ? "When someone mentions you on a request or a task, it shows here."
+              : category
+                ? `No ${CATEGORY_LABEL[category].toLowerCase()} notifications.`
+                : "Approvals, tasks, information and comments will show up here."
+        }
+      />
+    ) : (
+      <NotificationList
+        showMarkAll={state === "activity" && !mentions}
+        manage
+        items={items.map((item) => ({
+          id: item.id,
+          title: item.title,
+          message: item.message,
+          when: formatIndiaTime(item.createdAt),
+          read: item.read,
+          path: appPath(item.deepLink),
+          type: category ? undefined : CATEGORY_LABEL[item.category],
+          bookmarked: item.bookmarked,
+          archived: item.archived,
+        }))}
+      />
+    );
+  const pages = (beforeId || (items.length === PAGE_SIZE && last)) && (
+    <nav aria-label="Pages" className="mt-4 flex items-center gap-3 text-label">
+      {beforeId ? (
+        <PendingLink href={mentions ? "/users/inbox?mentions=1" : hrefFor(category, state, undefined, unreadOnly)} className="btn-secondary btn-compact">
+          ← Newest
+        </PendingLink>
+      ) : null}
+      {items.length === PAGE_SIZE && last ? (
+        <PendingLink href={mentions ? `/users/inbox?mentions=1&before=${last.id}` : hrefFor(category, state, last.id, unreadOnly)} className="btn-secondary btn-compact">
+          Older →
+        </PendingLink>
+      ) : null}
+    </nav>
+  );
+
+  if (mobile) {
+    const tabs = [
+      ...VIEWS.filter((view) => view.category !== "SYSTEM").map((view) => ({
+        key: view.label,
+        label: view.label,
+        href: hrefFor(view.category),
+        count: view.category ? unread[view.category] : total,
+        current: state === "activity" && !mentions && view.category === category,
+      })),
+      { key: "mentions", label: "Mentions", href: "/users/inbox?mentions=1", count: 0, current: mentions },
+    ];
+    const extras = [
+      { href: hrefFor(null, "bookmarks"), label: "Bookmarks", current: state === "bookmarks" },
+      { href: hrefFor(null, "archive"), label: "Archive", current: state === "archive" },
+      { href: hrefFor("SYSTEM"), label: "System", current: state === "activity" && category === "SYSTEM" },
+      { href: "/users/notifications/settings", label: "Settings", current: false },
+    ];
+    return (
+      <div className="space-y-4" data-testid="mobile-inbox">
+        <h1 className="mob-screen-title">{stateLabel ?? "Inbox"}</h1>
+        <nav aria-label="Inbox views" className="mob-chips -mx-4 overflow-x-auto px-4">
+          <ul className="flex gap-2">
+            {tabs.map((tab) => (
+              <li key={tab.key} className="shrink-0">
+                <Link
+                  href={tab.href}
+                  aria-current={tab.current ? "page" : undefined}
+                  className={`inline-flex min-h-11 items-center gap-1.5 rounded-full border px-4 text-[14px] font-semibold ${tab.current ? "border-transparent bg-[color:var(--m-navy)] text-white" : "border-line bg-surface text-ink"}`}
+                >
+                  {tab.label}
+                  {tab.count > 0 && <span className={`rounded-full px-1.5 text-[12px] ${tab.current ? "bg-white/20" : "bg-danger-50 text-danger-600"}`}>{tab.count}<span className="sr-only"> unread</span></span>}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+        {list}
+        {pages}
+        <nav aria-label="More inbox views" className="flex flex-wrap gap-x-4 gap-y-1 px-1 text-[13px]">
+          {extras.map((extra) => (
+            <Link key={extra.label} href={extra.href} aria-current={extra.current ? "page" : undefined} className={`min-h-11 content-center font-semibold ${extra.current ? "text-[color:var(--m-navy-text)] underline" : "text-ink-muted"}`}>
+              {extra.label}
+            </Link>
+          ))}
+        </nav>
+      </div>
+    );
+  }
+
   return (
     <>
       <PageHeader
@@ -84,48 +183,8 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
           </Link>
         )}
       </nav>
-      {items.length === 0 ? (
-        <EmptyState
-          title={state === "archive" ? "Nothing archived" : state === "bookmarks" ? "No bookmarks" : unreadOnly ? "You're all caught up" : "Nothing yet"}
-          body={
-            state !== "activity"
-              ? "Use the bookmark and archive buttons beside a notification."
-              : category
-                ? `No ${CATEGORY_LABEL[category].toLowerCase()} notifications.`
-                : "Approvals, tasks, information and comments will show up here."
-          }
-        />
-      ) : (
-        <NotificationList
-          showMarkAll={state === "activity"}
-          manage
-          items={items.map((item) => ({
-            id: item.id,
-            title: item.title,
-            message: item.message,
-            when: formatIndiaTime(item.createdAt),
-            read: item.read,
-            path: appPath(item.deepLink),
-            type: category ? undefined : CATEGORY_LABEL[item.category],
-            bookmarked: item.bookmarked,
-            archived: item.archived,
-          }))}
-        />
-      )}
-      {(beforeId || (items.length === PAGE_SIZE && last)) && (
-        <nav aria-label="Pages" className="mt-4 flex items-center gap-3 text-label">
-          {beforeId ? (
-            <PendingLink href={hrefFor(category, state, undefined, unreadOnly)} className="btn-secondary btn-compact">
-              ← Newest
-            </PendingLink>
-          ) : null}
-          {items.length === PAGE_SIZE && last ? (
-            <PendingLink href={hrefFor(category, state, last.id, unreadOnly)} className="btn-secondary btn-compact">
-              Older →
-            </PendingLink>
-          ) : null}
-        </nav>
-      )}
+      {list}
+      {pages}
     </>
   );
 }

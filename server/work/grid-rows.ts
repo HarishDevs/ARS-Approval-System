@@ -30,7 +30,9 @@ export function toGridTask(item: WorkTaskItem, meId: number, canEdit: boolean, s
     sectionId,
     position,
     // D-222: an ad hoc task's details are its creator's; periodic: editors and the assignee too.
-    canEdit: item.isPeriodic ? canEdit || item.assigneeId === meId || item.createdBy === meId : item.createdBy === meId,
-    canComplete: (canEdit || item.assigneeId === meId) && (open || item.status === "COMPLETED"),
+    // D-269: a request's work step follows the request: only its person ticks it, its details aren't edited here.
+    canEdit: item.approval?.workStep ? false : item.isPeriodic ? canEdit || item.assigneeId === meId || item.createdBy === meId : item.createdBy === meId,
+    canComplete: item.approval?.workStep ? item.assigneeId === meId && open : (canEdit || item.assigneeId === meId) && (open || item.status === "COMPLETED"),
+    approval: item.approval ?? null,
   };
 }

@@ -17,6 +17,13 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (2 Nov 2026):** v1.44.0 (includes v1.43.0): the approval journey (D-273), background work steps, the phone layout (D-272), tasks from approvals highlighted (D-270), the QA pass fixes (D-271). No migration. **Owner:**
+  1. Publish v1.44.0 (`npm ci`).
+  2. Set `DB_POOL_SIZE` in Secrets to your MySQL plan's limit (default 10; see DEPLOYMENT B2).
+  3. Open `/api/health/deep` on live: `dbClockOffsetMinutes` should be 0 (QA-DB-02); tell IT if not.
+  4. Approve (or not) the optional index script `database/optional/v1421_qa_indexes.sql`; IT runs it in phpMyAdmin.
+  5. UAT on real phones (docs/mobile/PWA_VALIDATION_REPORT.md) and the journey (V144-08).
+- **Now (1 Nov 2026):** v1.42.1: the Classic view's Create task as a Tally-style floating window and every Classic layout checked and fixed (D-267). Publish it with v1.42.0 (no migration).
 - **Now (1 Nov 2026):** v1.42.0: the remaining screens, editable task tables, New request gating, the request page re-laid out, Home redesigned (Approval Overview / My Work, approvers start on Approvals), the ARS-CMS brand, loaders and animated outcomes (D-259 to D-266). No migration. **Owner:**
   1. Publish v1.42.0 (`npm ci` installs the new `lottie-web` package).
   2. On phones with the app installed, remove and install it again to get the new icon.
@@ -145,6 +152,40 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 
 ---
 
+## Session log — v1.44.0 (2 Nov 2026): the approval journey, planned before starting
+Owner: the "Approval Progress Tracker – Animation Storyboard" and the "Complete Approval Journey Animation Engine" brief ("build everything in one go"; event-driven, one engine for approvals, work tasks, FYI and many requests; never the source of truth).
+- [x] V144-01 (2 Nov 2026) Inspect: road model (D-253), progress API, approval_events, work mirror, FYI (NOTIFY) and notification deliveries; no WebSocket/SSE (polling)
+- [x] V144-02 (2 Nov 2026) Background work steps: builder `holdsUp`, engine `background` + WORK_ASSIGNED, validation, step map, road leaves them out, messages, timeline, linked tasks (`__approvalLink`), backfill, read access for holders, highlight and pane text
+- [x] V144-03 (2 Nov 2026) Journey model and API (`server/journey`), progress API returns it
+- [x] V144-04 (2 Nov 2026) Event controller (pure) and the `ARSApprovalJourney` component: van, door, wheels, envelope, document, stamp, flag, road, checkpoints, details, activities, live polling with back-off, reduced motion, hidden tab, scroll to the van
+- [x] V144-05 (2 Nov 2026) Placement: request page (full, collapsible, sealing after submit), task page (compact), list rows and mobile cards (small road); old road drawing removed
+- [x] V144-06 (2 Nov 2026) Tests: `tests/journey/journey.test.ts` (13), `tests/integration/journey.int.test.ts`, `tests/e2e/v144-journey.spec.ts` (3); scene screenshots checked (seal, drive, unload, stamp, reload, finish, phone)
+- [x] V144-07 (2 Nov 2026) Docs and general pages (D-273, F-199, F-200, `docs/journey/ARS_APPROVAL_JOURNEY.md`, guide, Help, tour, privacy, API reference, data model, release notes)
+- [ ] V144-08 Owner: try a request with a background work step and an FYI; watch the journey on a phone and a computer
+
+---
+
+## Session log — v1.43.0 (1 Nov 2026): QA pass, tasks from approvals, phone layout, planned before starting
+Owner: the QA master brief (22 phases, reports in `qa/`); "task created from approval should be highlighted and mapped with approval unique number"; "Fix all the problems in one Go and then … rebuild the Mobile application PWA" (desktop unchanged, one backend, no fake features, no schema change without approval, no deploy).
+- [x] V143-01 (1 Nov 2026) QA pass: route inventory (`scripts/qa/route-inventory.mjs`), security, workflow and database reviews; fixes QA-SEC-01 to 05, QA-WF-01 to 09, QA-DB-01 and 04 to 08 (QA-DB-03 unused; D-271; `qa/BUG_REGISTER.md`)
+- [x] V143-02 (1 Nov 2026) QA-DB-08 indexes moved out of the migrations into `database/optional/v1421_qa_indexes.sql` (no schema change without the owner's approval)
+- [x] V143-03 (1 Nov 2026) Tasks from approvals highlighted with the request number in every task list, board, table, Home and the pane (D-270, F-197)
+- [x] V143-04 (1 Nov 2026) Phone layout architecture: server-picked layout (`ars_layout` cookie, phone user agent), desktop path untouched (D-272; docs/mobile/MOBILE_REDESIGN_ARCHITECTURE.md)
+- [x] V143-05 (1 Nov 2026) Mobile shell: top bar, five bottom tabs with counts, More menu with Sign out confirmation, tokens and `mob-` classes
+- [x] V143-06 (1 Nov 2026) Mobile Home (attention line, counts, quick actions, waiting approvals, today's tasks, open requests)
+- [x] V143-07 (1 Nov 2026) Approvals hub `/users/approvals` (four tabs, cards with department, amount, approver, submitted, waited, Overdue/Due soon, status)
+- [x] V143-08 (1 Nov 2026) Request page on phones: decision bar Approve / Return / Hold / Reject above the tabs (48 px); Pico Bot clears it
+- [x] V143-09 (1 Nov 2026) Tasks tabs and cards with the + button (the one Create task window)
+- [x] V143-10 (1 Nov 2026) Inbox tabs with Mentions; More inbox views below
+- [x] V143-11 (1 Nov 2026) Manifest: splash colour, shortcuts (Approvals, Tasks, Inbox)
+- [x] V143-12 (1 Nov 2026) Tests: `tests/e2e/v143-mobile.spec.ts`, phone tests of session9 and WEB-03 rewritten for the new layout, `tests/mobile/layout.test.ts`
+- [x] V143-13 (1 Nov 2026) General pages: privacy (layout cookie), User Guide and Help ("On your phone"), tour step 1 target; terms, checklist, landing and menu checked (no change: no new rule, nothing they describe changed)
+- [x] V143-14 (1 Nov 2026) Mobile docs in `docs/mobile/` (architecture, inventory, design system, progress, test reports, desktop regression, PWA validation, security review, release notes)
+- [ ] V143-15 Owner UAT on real phones (iOS Safari installed app, Android Chrome): steps in docs/mobile/PWA_VALIDATION_REPORT.md
+- [ ] V143-16 Later phases (not in v1.43.0): dedicated phone screens for the task page, Information, Calendar, Analytics, AI chat and forms (they run in the mobile shell with their existing responsive layout)
+
+---
+
 ## Session log — v1.42.0 (1 Nov 2026): the remaining reference screens, planned before starting
 Owner: "finish the remaining screens: calendar, kanban, draft task, analytics boards" (V141-14's rest; Compact only, Classic stays Tally, light and dark).
 - [x] V142-01 (1 Nov 2026) Calendar (D-259): toolbar card (← title →, Today, Month / Week / Day / Agenda segmented), category chips filled when shown with a tick and their count, month cells with today's circle and coloured event pills with a left accent, week columns and the list with the same accents; Agenda = the period's list on every screen size
@@ -167,6 +208,9 @@ Owner: "finish the remaining screens: calendar, kanban, draft task, analytics bo
 - [x] V142-19 (1 Nov 2026) New request (owner): each column scrolls on its own on a computer (the page stays put); fixed step options aren't spelled out ("set by IT" lines removed; the server still applies them); levels show as small summary cards on top, one level open below, a new level opens itself
 - [x] V142-20 (1 Nov 2026) Brand (D-266, owner's brand sheet): the ARS-CMS mark (screen and gear on a hexagon over stacked layers) and lockup (ARS Green Steel | mark ARS-CMS, Central Management System) in the sidebar, top bar, phone menu, sign-in and public pages; app icon, favicon (16/32/48), PWA icons 64/96/192/512, maskable and Apple icon from one SVG; ARS Blue #0053A0 and Accent #0A84FF; sidebar icons in brand blue (Compact only)
 - [x] V142-21 (1 Nov 2026) Loaders (D-266, owner's loading sheet): full-screen loader (lockup, bar, wave), logo spinner, dots, button spinner, upload bar, circular progress, step loader, Loading data state; shimmering skeletons (tiles with icons, lists, tables, chart) [Home's own loading.tsx withdrawn: V6-D06, a route loading.tsx can drop the refresh after an action and Home has actions]; animated outcomes (success tick, task tick, failed cross, warning) on every form's result, the submitted and decision banners, and a task's checkbox
+- [x] V142-24 (1 Nov 2026) Work and FYI steps (D-269, owner): work steps create linked tasks in Task Management (both ways in step), FYI recipients can open the request, kind labels and readiness wording; e2e from submission to approved
+- [x] V142-23 (1 Nov 2026) Request page from the owner's sketch (D-268): road band beside the title at the top; Request details then Approval levels on the left; Needs your action (grid of decision buttons) then Attachments on the right
+- [x] V142-22 (1 Nov 2026) Classic view (D-267, owner): Create task as a centred Tally-style floating window; every Classic layout checked on a computer and a phone and the problems found fixed (Label : value rows wrap instead of squeezing; Analytics page bar on phones; sidebar logo on one line); v1.42.1
 - [x] V142-05 (1 Nov 2026) General pages (STRICT rule), tests, living files, v1.42.0, commit, push, CI
 
 ## Session log — v1.41.0 (1 Nov 2026): installable app, push, daily sessions, road tracker, responsive sweep, planned before starting

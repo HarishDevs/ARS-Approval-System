@@ -39,8 +39,9 @@ export interface Road {
 }
 
 // The route actually taken: a choice contributes the stages of its path
-// taken; while undecided, one checkpoint stands for it. FYI-only levels
-// are left out (they never hold a request up).
+// taken; while undecided, one checkpoint stands for it. FYI-only levels and
+// background work (D-273) are left out: they never hold a request up, and the
+// journey shows them as activities beside the road.
 function routeStages(stages: readonly MapStage[]): MapStage[] {
   const out: MapStage[] = [];
   for (const stage of stages) {
@@ -51,8 +52,9 @@ function routeStages(stages: readonly MapStage[]): MapStage[] {
       continue;
     }
     const steps = stage.steps.filter((step) => !step.notTaken);
-    if (steps.length > 0 && steps.every((step) => step.type === "NOTIFY")) continue;
-    out.push({ ...stage, steps: steps.filter((step) => step.type !== "NOTIFY") });
+    const holding = (step: MapStep) => step.type !== "NOTIFY" && !step.background;
+    if (steps.length > 0 && !steps.some(holding)) continue;
+    out.push({ ...stage, steps: steps.filter(holding) });
   }
   return out;
 }
@@ -79,7 +81,7 @@ export function buildRoad(stages: readonly MapStage[], input: { status: Instance
   route.forEach((stage, index) => {
     const steps = stage.steps;
     const people = steps.flatMap((step) =>
-      step.people.filter((person) => person.status !== "TOLD").map((person) => ({
+      step.people.filter((person) => person.status !== "TOLD" && person.status !== "ASSIGNED").map((person) => ({
         name: person.name,
         status: person.status,
         ...(person.decidedAt ? { decidedAt: person.decidedAt } : {}),

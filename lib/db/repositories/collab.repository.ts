@@ -177,9 +177,11 @@ export async function countUnreadByCategory(userId: number, db: Queryable = getD
 
 // Newest first (by id, so the order is stable), a page at a time: `beforeId`
 // continues after the last one shown. Only the person's own rows.
-export async function listInbox(userId: number, limit: number, beforeId?: number, db: Queryable = getDbPool(), category?: NotificationCategory | null, state: InboxState = "activity", unreadOnly = false): Promise<InboxItem[]> {
+export async function listInbox(userId: number, limit: number, beforeId?: number, db: Queryable = getDbPool(), category?: NotificationCategory | null, state: InboxState = "activity", unreadOnly = false, mentionsOnly = false): Promise<InboxItem[]> {
+  // v1.43.0: the mobile Inbox's Mentions tab (someone @-mentioned me).
   const where = ["n.user_id = ?", state === "archive" ? "n.archived_at IS NOT NULL" : state === "bookmarks" ? "n.bookmarked_at IS NOT NULL" : "n.archived_at IS NULL"];
   if (unreadOnly) where.push("n.read_at IS NULL");
+  if (mentionsOnly) where.push("n.event_type IN ('REQUEST_MENTION', 'WORK_TASK_MENTION')");
   const params: unknown[] = [userId];
   if (beforeId) {
     where.push("n.id < ?");

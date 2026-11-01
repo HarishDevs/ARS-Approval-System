@@ -14,6 +14,8 @@ import { listTaskEvents, listPeopleFacts, personFacts } from "@/lib/db/repositor
 import { loadFieldLookups, loadLookupNames } from "@/lib/db/repositories/lookups.repository";
 import { listRecordFiles } from "@/server/modules/files";
 import { isAdminActor, loadTaskFor, relatedRequestVisible } from "@/server/modules/tasks";
+import { loadJourney } from "@/server/journey/load";
+import { ARSApprovalJourney } from "@/features/journey/ARSApprovalJourney";
 import { COMPLETION_LABEL, indiaDateTimeText, PRIORITY_LABEL, utcToIndiaLocal } from "@/server/modules/settings";
 import { isOverdue, mayAssignTo, TASK_STATUS_LABEL } from "@/server/modules/task-rules";
 import { TaskWorkPanel, TaskWorkSide } from "@/features/work/TaskWorkPanel";
@@ -79,6 +81,8 @@ export default async function TaskPage({ params, searchParams }: { params: Promi
     personFacts(user.id),
     task.relatedRequestId ? relatedRequestVisible(task.relatedRequestId, user) : Promise.resolve(false),
   ]);
+  // D-273: the parent request's journey, small, for anyone who may see that request (its own check).
+  const parentJourney = task.relatedRequestId ? await loadJourney(task.relatedRequestId, { id: user.id, roles: user.roles }).catch(() => null) : null;
   const query = await searchParams;
   const created = query.created === "1";
   // D-215: projects, subtasks, dependencies, tags, followers, likes, comments (shared with the task panel, D-219).
@@ -132,6 +136,17 @@ export default async function TaskPage({ params, searchParams }: { params: Promi
         <Badge tone={panel.adhoc ? "neutral" : "info"}>{panel.adhoc ? "Ad hoc" : "Periodic"}</Badge>
         {task.deletedAt && <Badge tone="danger">Deleted</Badge>}
       </PageHeader>
+      {parentJourney && (
+        <section className="mb-4" aria-label={`Approval journey of ${parentJourney.requestNo}`} data-testid="task-parent-journey">
+          <p className="mb-1.5 text-label text-ink-muted">
+            From approval request{" "}
+            <Link href={`/users/requests/${parentJourney.requestId}`} className="link font-mono">
+              {parentJourney.requestNo}
+            </Link>
+          </p>
+          <ARSApprovalJourney journey={parentJourney} serverNow={new Date().toISOString()} variant="compact" />
+        </section>
+      )}
       {created && (
         <p role="status" className="mb-4 rounded-md bg-success-50 px-3 py-2 text-label text-success-600">
           Task {task.taskNo} created{task.assigneeId !== user.id ? ` and ${task.assigneeName} was told` : ""}.

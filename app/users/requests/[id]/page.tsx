@@ -9,8 +9,9 @@ import { PageHeader } from "@/features/shell/PageHeader";
 import { Hint } from "@/features/ui/Hint";
 import { RequestStatusPill } from "@/features/requests/StatusPill";
 import { StepMap, TrackerBanner } from "@/features/requests/StepMap";
-import { ApprovalRoad } from "@/features/requests/ApprovalRoad";
-import { loadRequestRoad } from "@/server/approvals/road-view";
+import { RoadSummaryCard } from "@/features/requests/ApprovalRoad";
+import { loadJourney } from "@/server/journey/load";
+import { ARSApprovalJourney } from "@/features/journey/ARSApprovalJourney";
 import {
   AnswerQuestionForm,
   BlockedStepForm,
@@ -68,7 +69,8 @@ export default async function RequestPage({
   const { id } = await params;
   if (!/^\d+$/.test(id)) notFound();
   const view = await loadRequestView(Number(id), { id: user.id, roles: user.roles });
-  const road = view ? await loadRequestRoad(view.id, { id: user.id, roles: user.roles }).catch(() => null) : null;
+  const journey = view ? await loadJourney(view.id, { id: user.id, roles: user.roles }).catch(() => null) : null;
+  const road = journey ? { road: journey.road } : null;
   if (!view) notFound();
   // WS-04: remember the visit (only after the access check passed).
   await recordView(user.id, view.id).catch(() => undefined);
@@ -135,19 +137,29 @@ export default async function RequestPage({
     <>
       {/* D-234 (Jakob): ← Back goes to the list the breadcrumb names. */}
       <Breadcrumbs items={[{ href: "/users", label: "Home" }, backTo, { label: view.requestNo }]} />
-      <PageHeader title={view.title} meta={`${view.requestNo} · ${view.workflowName} · raised by ${view.requesterName}${view.round > 1 ? ` · round ${view.round}` : ""}`}>
-        <div className="flex flex-wrap items-center gap-3">
-          <RequestStatusPill status={view.status} />
-          <ValidityBadge validUntil={view.validUntil} />
-          {/* #10: a plain download, not a page (no prefetch). */}
-          <a href={`/api/requests/${view.id}/summary.pdf`} className="link text-label" download>
-            Download PDF
-          </a>
-          <Link href={backTo.href} className="link text-label">
-            ← Back to {backTo.label}
-          </Link>
+      {/* v1.42.1 (owner's sketch): the title and number across the top; D-273: the approval journey below them, full width. */}
+      <div className="mb-6 grid items-center gap-4" data-testid="request-top">
+        <div className="min-w-0 [&>div]:mb-0">
+          <PageHeader title={view.title} meta={`${view.requestNo} · ${view.workflowName} · raised by ${view.requesterName}${view.round > 1 ? ` · round ${view.round}` : ""}`}>
+            <div className="flex flex-wrap items-center gap-3">
+              <RequestStatusPill status={view.status} />
+              <ValidityBadge validUntil={view.validUntil} />
+              {/* #10: a plain download, not a page (no prefetch). */}
+              <a href={`/api/requests/${view.id}/summary.pdf`} className="link text-label" download>
+                Download PDF
+              </a>
+              <Link href={backTo.href} className="link text-label">
+                ← Back to {backTo.label}
+              </Link>
+            </div>
+          </PageHeader>
         </div>
-      </PageHeader>
+        {journey && (
+          <section className="min-w-0" aria-label="Approval journey">
+            <ARSApprovalJourney journey={journey} serverNow={new Date().toISOString()} fresh={query.submitted === "1"} />
+          </section>
+        )}
+      </div>
       {afterDecision && (
         // D-234 (Peak-end, Parkinson): after a decision, the next thing waiting.
         <p role="status" data-testid="next-waiting" className="mb-4 flex flex-wrap items-center gap-2 rounded-md bg-success-50 px-3 py-2 text-label text-success-600">
@@ -221,14 +233,6 @@ export default async function RequestPage({
           )}
         </div>
         <div className="min-w-0 space-y-6 xl:col-start-1 xl:row-span-2 xl:row-start-1">
-          <section className="card px-5 py-4" aria-labelledby="levels">
-            <h2 id="levels" className="mb-2 text-center font-semibold">
-              Approval levels
-            </h2>
-            {/* D-253: the road, from the same level map as below. D-263 (owner): at the top, centred, smaller. */}
-            {road && <ApprovalRoad requestId={view.id} initial={road.road} initialUpdatedAt={road.updatedAt} serverNow={new Date().toISOString()} />}
-            <TrackerBanner summary={view.tracker} />
-          </section>
           <section className="card px-5 py-4" aria-labelledby="request-details">
             <h2 id="request-details" className="mb-3 flex items-center gap-1.5 font-semibold">
               Request details
@@ -319,11 +323,15 @@ export default async function RequestPage({
               </dl>
             )}
           </section>
-          <section className="card px-5 py-4" aria-labelledby="level-map">
-            <h2 id="level-map" className="mb-3 font-semibold">
-              Level by level
+          <section className="card px-5 py-4" aria-labelledby="levels">
+            <h2 id="levels" className="mb-3 font-semibold">
+              Approval levels
             </h2>
-            <StepMap stages={view.stages} />
+            <TrackerBanner summary={view.tracker} />
+            {road && <RoadSummaryCard road={road.road} serverNow={new Date().toISOString()} />}
+            <div className="mt-4">
+              <StepMap stages={view.stages} />
+            </div>
           </section>
           {view.blockedSteps.length > 0 && assignable && (
             <section className="card divide-y divide-line border-warning-600">

@@ -88,3 +88,10 @@ export async function dropCustomDraft(loginId: string): Promise<void> {
     await conn.end();
   }
 }
+
+// v1.43.0: the layout cookie a phone's first page sets (LayoutSync). Real
+// phones are known by their browser; the test browser is desktop Chrome at
+// phone size, so a test that opens a mobile-only address sets it first.
+export function phoneLayoutCookie(): { name: string; value: string; domain: string; path: string } {
+  return { name: "ars_layout", value: "mobile", domain: "localhost", path: "/" };
+}

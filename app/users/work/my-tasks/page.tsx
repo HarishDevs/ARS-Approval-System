@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { AlarmClock, CalendarClock, CalendarRange, CheckCircle2, ListTodo } from "lucide-react";
 import { paneLinks, paneTaskId, TaskPane, WithPane } from "@/features/work/TaskPane";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { MyTasks, MyTasksGrid } from "@/features/work/MyTasks";
 import { toGridTask } from "@/server/work/grid-rows";
 import { DEFAULT_GRID, parseGridConfig } from "@/server/work/grid";
@@ -17,6 +18,8 @@ import { ensureMySections, listTaskItems, listVisibleProjects, listWorkViews, my
 import { myTaskBucket, type MySystemSection } from "@/server/work/rules";
 import { workPage } from "@/server/work/page-context";
 import { calendarHolidays } from "@/server/work/holiday-store";
+import { isMobileLayout } from "@/server/ui/layout-mode";
+import { MobileTasks } from "@/features/mobile/MobileTasks";
 
 export const metadata: Metadata = { title: "My Tasks" };
 export const dynamic = "force-dynamic";
@@ -42,6 +45,12 @@ export default async function MyTasksPage({
 }) {
   const { user, viewer } = await workPage();
   const params = await searchParams;
+  // v1.43.0: phones get the mobile task lists (a task link still opens its page).
+  if (await isMobileLayout()) {
+    const paneTask = paneTaskId(params.task);
+    if (paneTask) redirect(`/users/tasks/${paneTask}`);
+    return <MobileTasks userId={user.id} tab={params.tab} />;
+  }
   const view = params.view === "board" || params.view === "calendar" ? params.view : "list";
   const showDone = params.done === "1" || view === "list";
   const now = new Date();
@@ -109,6 +118,7 @@ export default async function MyTasksPage({
       subtasksOpen: task.subtasksOpen,
       comments: task.comments,
       isPeriodic: task.isPeriodic,
+      approval: task.approval ?? null,
     };
   });
   // D-220: the List is the shared table, with the person's saved tabs.

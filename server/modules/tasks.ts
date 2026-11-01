@@ -1,3 +1,4 @@
+import { workMirrorLink } from "@/server/approvals/work-mirror";
 import "server-only";
 import { withTransaction } from "@/lib/db/transaction";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
@@ -139,6 +140,10 @@ export async function createTask(input: CreateTaskInput, actor: TaskActor): Prom
     }
 
     const outcome = await withTransaction(async (connection) => {
+      // QA-DB-04 (v1.42.1): the linked request first, then the task number,
+      // the same order as a decision on that request (which may make a work
+      // step's task), so the two never wait on each other.
+      if (relatedRequestId) await connection.query("SELECT id FROM approval_requests WHERE id = ? LOCK IN SHARE MODE", [relatedRequestId]);
       const taskNo = await nextRequestNumber("TSK", connection);
       const id = await insertTask(
         { taskNo, typeVersionId: type.versionId, title, description: description || null, priority, createdBy: actor.id, assigneeId: assignee!.id, dueAt, startsOn, formData: parsed.data, relatedRequestId, submissionKey: input.submissionKey },
@@ -222,6 +227,33 @@ export async function actOnTask(input: TaskActionInput, actor: TaskActor): Promi
       const current = await findTask(input.taskId);
       if (current && utcToIndiaLocalDay(current.dueAt) !== input.edit.due.slice(0, 10)) await holidayErrors(input.edit.due.slice(0, 10), Boolean(input.edit.holidayOk), errors, current.assigneeId);
       if (errors.due) return fail(errors.due, errors);
+    }
+
+    // D-269: a task that mirrors a request's work step follows the request.
+    // Ticking it done records "done" on the request (which completes the task);
+    // handing over, cancelling and reopening happen on the request.
+    const mirrored = await findTask(input.taskId);
+    const link = mirrored && !mirrored.deletedAt ? workMirrorLink(mirrored.formData) : null;
+    if (link && mirrored) {
+      const where = mirrored.relatedRequestNo ?? "its request";
+      if (input.action === "COMPLETE") {
+        if (mirrored.assigneeId !== actor.id) {
+          await discardStaged(input.files);
+          return fail(`Only ${mirrored.assigneeName} can mark this work done (a step of ${where}).`);
+        }
+        // QA-WF-05 (v1.42.1): files sent with "done" are kept as the task's evidence.
+        if (input.files.length) await withTransaction((connection) => insertRecordFiles("TASK", mirrored.id, input.files, actor.id, "EVIDENCE", connection));
+        const { decideTask } = await import("@/server/approvals/service");
+        const done = await decideTask({ requestId: link.requestId, taskKey: link.taskKey, decision: "APPROVE", comment: reason || "Done (ticked in Task Management)." }, { id: actor.id, roles: actor.roles as never });
+        if (!done.ok) return fail(done.message);
+        // The task is now completed (by the request); tasks waiting for it are told, as for any task.
+        await afterTaskCompleted(mirrored.id, actor);
+        return { ok: true, value: { message: `Done. ${where} moves on.` } };
+      }
+      if (input.action === "REASSIGN" || input.action === "CANCEL" || input.action === "REOPEN") {
+        await discardStaged(input.files);
+        return fail(`This task is a work step of ${where}: ${input.action === "REASSIGN" ? "hand it over" : input.action === "CANCEL" ? "close it" : "change it"} on the request.`);
+      }
     }
 
     const outcome = await withTransaction(async (connection) => {

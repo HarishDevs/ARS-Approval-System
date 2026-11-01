@@ -661,6 +661,33 @@ export async function isParticipant(requestId: number, userId: number, db: Query
   return rows.length > 0;
 }
 
+// D-269 / QA-SEC-04 (v1.42.1): someone an FYI step told may read the request
+// (its message links there) but not comment, add files or link it: a
+// read-only rule kept apart from isParticipant.
+export async function wasToldByFyi(requestId: number, userId: number, db: Queryable = getDbPool()): Promise<boolean> {
+  const [rows] = await db.query<RowDataPacket[]>(
+    "SELECT 1 AS found FROM approval_events e WHERE e.request_id = ? AND e.event_type = 'NOTIFIED' AND JSON_CONTAINS(JSON_EXTRACT(e.payload_json, '$.userIds'), CAST(? AS JSON)) LIMIT 1",
+    [requestId, String(userId)],
+  );
+  return rows.length > 0;
+}
+
+// D-273: someone given a task by a background work step may read the request
+// it came from (its context), read-only like an FYI recipient.
+export async function holdsLinkedTask(requestId: number, userId: number, db: Queryable = getDbPool()): Promise<boolean> {
+  const [rows] = await db.query<RowDataPacket[]>(
+    "SELECT 1 AS found FROM tasks WHERE related_request_id = ? AND assignee_id = ? AND deleted_at IS NULL AND JSON_CONTAINS_PATH(form_data_json, 'one', '$.__approvalLink') LIMIT 1",
+    [requestId, userId],
+  );
+  return rows.length > 0;
+}
+
+// Who may open (read) a request: participants, plus FYI recipients and the
+// people given its background work (both read-only).
+export async function canViewRequest(requestId: number, userId: number, db: Queryable = getDbPool()): Promise<boolean> {
+  return (await isParticipant(requestId, userId, db)) || (await wasToldByFyi(requestId, userId, db)) || (await holdsLinkedTask(requestId, userId, db));
+}
+
 export interface MyRequestItem {
   id: number;
   requestNo: string;

@@ -8,6 +8,7 @@ import { loadWorkingCalendar } from "@/lib/db/repositories/calendar.repository";
 import { cancelForDeletion } from "@/server/engine";
 import { deliverOutbox, queueMessages, type Actor, type Result } from "@/server/approvals/service";
 import { isHeld } from "@/server/ops/governance";
+import { mirrorWorkTasks } from "@/server/approvals/work-mirror";
 
 // Super Admin deletes a request (S11-08, D-086, F-73). Soft delete: hidden
 // from every screen, queue, job and report; the row, timeline and audit log
@@ -31,6 +32,7 @@ export async function deleteRequest(
     if (result.state !== request.state) {
       await saveRequestState(request.id, request.stateVersion, result.state, null, db);
       await syncTasks(request.id, result.state, version?.definition.nodes ?? [], db, await loadWorkingCalendar(db));
+      await mirrorWorkTasks(request.id, db);
     }
     await appendEvents(request.id, result.events, actor.id, db);
     await markRequestDeleted(request.id, actor.id, reason.slice(0, 500), db);

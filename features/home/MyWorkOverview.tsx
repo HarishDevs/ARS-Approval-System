@@ -1,4 +1,5 @@
 import "server-only";
+import { ApprovalBadge, approvalRowClass } from "@/features/work/ApprovalLink";
 import Link from "next/link";
 import {
   AlertTriangle,
@@ -272,7 +273,7 @@ export async function MyWorkOverview({
                   </thead>
                   <tbody className="divide-y divide-line">
                     {list.items.map((task) => (
-                      <tr key={task.id}>
+                      <tr key={task.id} className={approvalRowClass(task.approval)}>
                         <td className="py-2.5">
                           <TaskCheck taskId={task.id} done={task.status === "COMPLETED"} disabled={task.assigneeId !== user.id || task.status === "CANCELLED"} label={task.title} />
                         </td>
@@ -280,6 +281,11 @@ export async function MyWorkOverview({
                           <Link href={links.open(task.id)} scroll={false} className="block font-semibold hover:underline">
                             {task.title}
                           </Link>
+                          {task.approval && (
+                            <span className="mt-0.5 block">
+                              <ApprovalBadge approval={task.approval} size="sm" />
+                            </span>
+                          )}
                           {task.summary && <span className="line-clamp-1 text-caption text-ink-muted">{task.summary}</span>}
                         </td>
                         <td className="py-2.5 pr-3">
@@ -304,7 +310,7 @@ export async function MyWorkOverview({
                 {/* Phones: cards instead of a squeezed table. */}
                 <ul className="divide-y divide-line md:hidden" data-testid="mw-cards">
                   {list.items.map((task) => (
-                    <li key={task.id} className="flex gap-3 py-3">
+                    <li key={task.id} className={`flex gap-3 py-3 ${approvalRowClass(task.approval)}`}>
                       <TaskCheck taskId={task.id} done={task.status === "COMPLETED"} disabled={task.assigneeId !== user.id || task.status === "CANCELLED"} label={task.title} />
                       <div className="min-w-0 flex-1">
                         <Link href={links.open(task.id)} scroll={false} className="block font-semibold [overflow-wrap:anywhere] hover:underline">
@@ -312,6 +318,7 @@ export async function MyWorkOverview({
                         </Link>
                         {task.summary && <p className="line-clamp-2 text-caption text-ink-muted">{task.summary}</p>}
                         <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                          <ApprovalBadge approval={task.approval} size="sm" />
                           <ProjectChip task={task} />
                           <Due task={task} now={now} />
                           <Badge tone={PRIORITY[task.priority][1]}>{PRIORITY[task.priority][0]}</Badge>

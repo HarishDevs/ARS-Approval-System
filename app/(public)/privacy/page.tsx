@@ -18,8 +18,10 @@ export const metadata: Metadata = {
 // D-249 (owner, v1.40.0): also covers the AI Assistant, Salesforce, profile
 // photos, tasks and projects, notification choices, the weekly HOD email and
 // encrypted off-site backups. D-250 to D-252 (v1.41.0): the installed app,
-// phone and desktop notifications (push) and the daily session.
-const PRIVACY_EFFECTIVE = "1 November 2026";
+// phone and desktop notifications (push) and the daily session. v1.43.0: the
+// layout cookie of the phone layout. v1.44.0 (D-273): people given a task by a
+// request's background work step may read that request.
+const PRIVACY_EFFECTIVE = "2 November 2026";
 
 export default function PrivacyPage() {
   return (
@@ -122,11 +124,15 @@ export default function PrivacyPage() {
           On a phone, a tablet or the installed app, a sign-in lasts until midnight (India time), so people aren&apos;t asked to sign in again during the day; on a computer it ends after a period
           without activity. Keep your devices locked.
         </p>
+        <p>
+          On a screen narrower than 768 pixels ARS-CMS shows its phone layout. To pick the right layout, the browser keeps one small cookie, <code>ars_layout</code>, holding only the word
+          &ldquo;mobile&rdquo; or &ldquo;desktop&rdquo; for a year. It holds nothing about the person, and the app works the same without it.
+        </p>
 
         <h2>How information is shared</h2>
         <p>We do not sell personal information. Information is shared only:</p>
         <ul>
-          <li>inside ARS, with the colleagues a record involves (for example the approvers of a request), as the app&apos;s access rules allow;</li>
+          <li>inside ARS, with the colleagues a record involves (for example the approvers of a request, the people an FYI step tells, and the people given a task from it, who may read that request), as the app&apos;s access rules allow;</li>
           <li>
             with service providers that run parts of the app for us, under their terms: GoDaddy (hosting), Cloudflare (network and security), Google Firebase (Google sign-in), Resend (email),
             CEOITBox (WhatsApp messages), the browsers&apos; push services (to deliver phone and desktop notifications, encrypted), the AI providers above (for the AI Assistant only), Salesforce

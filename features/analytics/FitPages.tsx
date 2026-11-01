@@ -127,7 +127,8 @@ export function FitPages({ children, label = "Analytics" }: { children: React.Re
           <span className="text-caption text-ink-muted">
             Page {page + 1} of {pages.length}
           </span>
-          <span className="scroll-hint flex min-w-0 flex-1 gap-1 overflow-x-auto">
+          {/* On a phone the section names take their own row (they were squeezed out of sight). */}
+          <span className="scroll-hint order-last flex min-w-0 basis-full gap-1 overflow-x-auto sm:order-none sm:basis-auto sm:flex-1">
             {pages.map((_, index) => (
               <button
                 key={index}
@@ -141,7 +142,7 @@ export function FitPages({ children, label = "Analytics" }: { children: React.Re
               </button>
             ))}
           </span>
-          <span className="flex gap-1">
+          <span className="ml-auto flex gap-1 sm:ml-0">
             <button type="button" className="btn-ghost btn-compact" disabled={page === 0} onClick={() => go(page - 1)} aria-label="Previous page">
               ←
             </button>

@@ -1,5 +1,47 @@
 # Release notes
 
+## v1.44.0 (2 Nov 2026): the approval journey (owner)
+- **The approval journey** on every request: your request is sealed into an envelope and loaded into the red ARS van, which drives along the road of approval levels. It waits beside the level deciding now with the request out for review; each approval stamps it green, it goes back into the van and the van drives on to the next level; at the flag the road turns green and shows 100%.
+- A rejection shows a red stamp where it stopped; changes asked show an orange stamp and the van drives back to you, then sets off again when you resubmit.
+- **Work tasks** and **Information (FYI)** are shown beside the road, each with its own status: who has the task and whether the request waits for it; who was told and whether the message was delivered, is pending or failed.
+- It follows the request live (every 10 seconds while open, at once when you come back) and never replays on a reload. Hide it with the arrow at its top right. With "reduce motion" on, nothing moves.
+- **Work steps that don't hold the request up:** in New request, a Work task level now has **The request waits until it's done**. Untick it to give the work as tasks and let the request move straight on; finishing those tasks doesn't decide anything on the request, and the people given them can read the request.
+- A task from a request shows that request's journey (small) on its page; lists and phone cards show its progress in small.
+
+## v1.43.0 (2 Nov 2026, published with v1.44.0): the phone layout; tasks from approvals highlighted; QA fixes; Classic and request page layouts (owner)
+**On your phone** (screens below 768 px; a computer looks and works exactly as before):
+- A bar at the bottom with **Home**, **Approvals**, **Tasks**, **Inbox** and **More**, with the number waiting for you and unread.
+- **Home** says what needs you in one line, then four counts, quick actions (New request, New task, Search, Ask AI), the first approvals waiting, your tasks due today and your requests in progress.
+- **Approvals**: Waiting for me, My requests, Approved and Drafts as cards: number, title, who raised it and their department, the amount, who has it, when it was submitted, how long it has waited, Overdue or Due soon, and the status.
+- **On a request**, Approve, **Return** (ask for changes), Hold and Reject stay at the bottom, above the bar.
+- **Tasks**: Today, Upcoming, Overdue, Completed and Assigned by me as cards; the red **+** adds a task.
+- **Inbox**: All, Approvals, Tasks, Information and a new **Mentions** tab.
+- **More**: your profile and every other page you can open, and Sign out (it asks first).
+- The installed app's splash screen uses the new page colour; long-press its icon for Approvals, Tasks and Inbox.
+
+**Tasks from approvals:** a task made by an approval's work step is tinted and shows the request number (it opens the request) in every task list, board and table, on Home and in the task pane.
+
+**Fixes from the full QA pass** (`qa/BUG_REGISTER.md`):
+- files of a confidential field could be downloaded by people who may not see confidential values; their names now show as "a confidential file" in the history;
+- people told by an FYI step can read the request but not comment, add files or link it;
+- IT's and the Super Admin's sign-ins always end after the idle time, even on a phone;
+- "Try as" can no longer connect someone's Google Calendar or mark their notices read;
+- a work-step task can't be added to a project, moved under another task, repeated or deleted on its own;
+- a monthly repeating task due on the 31st keeps the 31st (or the month's last day);
+- Home loads with fewer database queries; two optional indexes speed up the Inbox and completed tasks (`database/optional/v1421_qa_indexes.sql`; IT runs it once approved, nothing runs by itself).
+
+**Classic view layouts:**
+- **Create task in the Classic view** is now the same centred, two-column floating window as in Compact, dressed like a Tally window: a solid blue title bar in capitals, square corners, a blue frame and a grey button bar. (The fields used to be drawn over one another.)
+- **Classic forms:** a field's box no longer shrinks to nothing next to its label in narrow spaces (Task search filters, Out of office dates, the step name in New request): it moves under its label instead.
+- **Analytics on phones:** the page bar puts its section names on their own row.
+- **Sidebar logo:** "ARS-CMS" stays on one line.
+- **Request page, laid out as the owner's sketch:** the title and request number with the approval road beside them across the top (each level's approver, then the finish flag); on the left Request details, then Approval levels (the status, the progress figures and level by level); on the right Needs your action, with the decisions as a grid of buttons (Approve, Ask for changes, Put on hold, Ask a question, Reject), then Attachments, Collaborators and the rest.
+- Every screen of the Classic view was checked on a computer and a phone.
+- **Work and FYI steps (owner's report):**
+  - a **Work task** step is now also a task in Task Management for each person on it (My Tasks, boards, calendar, Home), linked to the request. Ticking it done marks the work done on the request, which moves on; if the step closes on the request (done there, withdrawn, rejected), the task closes too. Only the person it's for can tick it; it's handed over on the request;
+  - people told by an **FYI** step can now open the request from their message (it said "Not found" before);
+  - the "Kind of step" box no longer cuts its words off (Approval, Work task, FYI), with a line saying what each does; the summary says "needs someone to do…" or "someone to tell…" for those steps.
+
 ## v1.42.0 (1 Nov 2026): the remaining screens in the new look; editable task tables (owner)
 - **Calendar:**
   - a clearer toolbar (round arrows, Today, and Month / Week / Day / **Agenda**);

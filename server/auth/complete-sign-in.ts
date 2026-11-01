@@ -108,7 +108,11 @@ export async function completeSignIn(
   // D-250: a phone, tablet or the installed app stays signed in until the
   // next midnight, India time (the server's clock), with no idle sign-out.
   const scope = deps.dailySessionScope ? await deps.dailySessionScope().catch(() => "OFF" as const) : "OFF";
-  const daily = dailySessionApplies(scope, context.userAgent, context.clientKind ?? null);
+  // QA-SEC-03 (v1.42.1): the device kind comes from the browser (a cookie and
+  // the user agent) and can't be trusted for privileged accounts: IT, the
+  // Super Admin and break-glass always keep the idle sign-out.
+  const privileged = user.isBreakGlass || user.roles.includes("IT_ADMIN") || user.roles.includes("SUPER_ADMIN");
+  const daily = !privileged && dailySessionApplies(scope, context.userAgent, context.clientKind ?? null);
   const ttlSeconds = daily ? secondsUntilIndiaMidnight(deps.now()) : SESSION_TTL_SECONDS;
   await deps.createSession({
     id: sessionId,

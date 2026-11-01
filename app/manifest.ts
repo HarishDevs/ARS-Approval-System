@@ -11,7 +11,8 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: "/users",
     scope: "/",
     display: "standalone",
-    background_color: "#ffffff",
+    // v1.43.0: the splash screen uses the mobile page colour (#F2F4F7).
+    background_color: "#f2f4f7",
     theme_color: "#0053A0",
     icons: [
       { src: "/icons/icon-64.png", sizes: "64x64", type: "image/png", purpose: "any" },
@@ -19,6 +20,12 @@ export default function manifest(): MetadataRoute.Manifest {
       { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
       { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
       { src: "/icons/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+    ],
+    // v1.43.0: long-press the app icon for the four main places.
+    shortcuts: [
+      { name: "Approvals waiting for me", short_name: "Approvals", url: "/users/approvals", icons: [{ src: "/icons/icon-96.png", sizes: "96x96" }] },
+      { name: "My tasks", short_name: "Tasks", url: "/users/work/my-tasks", icons: [{ src: "/icons/icon-96.png", sizes: "96x96" }] },
+      { name: "Inbox", short_name: "Inbox", url: "/users/inbox", icons: [{ src: "/icons/icon-96.png", sizes: "96x96" }] },
     ],
   };
 }

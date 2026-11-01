@@ -1,10 +1,11 @@
+import { canSeeConfidential, confidentialKeys } from "@/server/approvals/confidential";
 import "server-only";
 import { createHash, randomBytes } from "node:crypto";
 import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { withTransaction } from "@/lib/db/transaction";
 import type { RowDataPacket } from "mysql2/promise";
-import { appendEvents, findRequest, isParticipant, lockRequest, type RequestRecord } from "@/lib/db/repositories/approvals.repository";
+import { appendEvents, canViewRequest, findRequest, isParticipant, lockRequest, type RequestRecord } from "@/lib/db/repositories/approvals.repository";
 import { findAttachment, insertAttachment, type AttachmentRecord } from "@/lib/db/repositories/attachments.repository";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { getEnv } from "@/config/environment";
@@ -130,7 +131,11 @@ export async function openAttachment(id: number, viewer: Actor): Promise<{ recor
   const record = await findAttachment(id);
   const request = record ? await findRequest(record.requestId) : null;
   if (!record || !request) return null;
-  if (!(await canSeeRequest(request, viewer))) {
+  // QA-SEC-01 (v1.42.1): a confidential field's file only for those who see
+  // the request's confidential values (the request page's rule), not for
+  // every participant who could guess its id.
+  const hidden = record.fieldKey ? (await confidentialKeys(request.workflowVersionId)).has(record.fieldKey) && !(await canSeeConfidential(request, viewer)) : false;
+  if (hidden || !(request.requesterId === viewer.id || isAdmin(viewer) || (await canViewRequest(request.id, viewer.id)))) {
     await recordAudit({ actorUserId: viewer.id, action: "ATTACHMENT_ACCESS_DENIED", entityType: "ATTACHMENT", entityId: id, result: "FAILURE" });
     return null;
   }
