@@ -68,7 +68,7 @@ test("D-210: switch to Classic; Gateway, module menu, page tabs, letters and Esc
   await page.goto("/users");
   await expect(page.getByTestId("classic-gateway")).toBeVisible();
   await page.goto("/users?view=overview");
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Welcome back");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Overview");
 
   // D-211: in Classic, all text can be resized; it applies at once and is saved.
   await page.goto("/users");

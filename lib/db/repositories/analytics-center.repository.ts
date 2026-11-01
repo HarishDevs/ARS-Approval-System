@@ -34,6 +34,7 @@ export function peopleScopeSql(scope: Scope, viewer: Viewer, alias: string): { s
   switch (scope.kind) {
     case "MINE":
     case "APPROVALS":
+    case "TASKS":
       return { sql: `${alias}.id = ?`, params: [viewer.id] };
     case "TEAM":
       return { sql: `${alias}.reporting_manager_id = ?`, params: [viewer.id] };
@@ -47,6 +48,8 @@ export function peopleScopeSql(scope: Scope, viewer: Viewer, alias: string): { s
 // Tasks: in MINE the person's own (assigned to or created by them);
 // otherwise by the assignee.
 function taskScope(scope: Scope, viewer: Viewer): { join: string; sql: string; params: unknown[] } {
+  // D-262: My tasks = the tasks given to the person.
+  if (scope.kind === "TASKS") return { join: "JOIN users ta ON ta.id = t.assignee_id", sql: "t.assignee_id = ?", params: [viewer.id] };
   if (scope.kind === "MINE" || scope.kind === "APPROVALS") return { join: "JOIN users ta ON ta.id = t.assignee_id", sql: "(t.assignee_id = ? OR t.created_by = ?)", params: [viewer.id, viewer.id] };
   const people = peopleScopeSql(scope, viewer, "ta");
   return { join: "JOIN users ta ON ta.id = t.assignee_id", ...people };

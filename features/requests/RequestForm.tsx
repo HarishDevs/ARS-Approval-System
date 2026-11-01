@@ -170,8 +170,12 @@ export function RequestForm({
           <div>
             <label htmlFor="title" className="field-label">
               Title
+              <span className="text-danger-600" aria-hidden="true">
+                {" "}
+                *
+              </span>
             </label>
-            <input id="title" name="title" defaultValue={initialTitle ?? ""} placeholder="e.g. New motor for crane 3" className="field-input" />
+            <input id="title" name="title" defaultValue={initialTitle ?? ""} placeholder="e.g. New motor for crane 3" className="field-input" aria-required="true" />
             <FieldError result={result} name="title" />
           </div>
         )}

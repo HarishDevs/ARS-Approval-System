@@ -1,6 +1,6 @@
 import { expect, test, type BrowserContext } from "@playwright/test";
 import type { RowDataPacket } from "mysql2/promise";
-import { db, sessionCookie } from "./db";
+import { db, dropCustomDraft, sessionCookie, toWorkflowStep } from "./db";
 
 // v1.41.0 through the real screens: the folded sidebar's Create menu (owner's
 // report), App & devices, Admin → Notifications, the approval road, My
@@ -133,14 +133,17 @@ test("someone else's request road is not found", async ({ page, context }) => {
 
 test("New request in three steps: a title before going on, the summary follows, nothing is lost going back", async ({ page, context }) => {
   await as(context, "E2E_REQ");
+  await dropCustomDraft("E2E_REQ");
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/users/custom");
   const steps = page.getByTestId("request-steps");
   await expect(steps.getByRole("button", { name: /Request details/ })).toHaveAttribute("aria-current", "step");
   await page.getByTestId("step-next").click();
-  await expect(page.getByRole("alert").filter({ hasText: "Give the request a title first." })).toBeVisible();
+  // D-263: Next waits until the required details are filled in; each one says so beside it.
+  await expect(page.getByRole("alert").filter({ hasText: /Fill in the required fields first/ })).toBeVisible();
+  await expect(steps.getByRole("button", { name: /Request details/ })).toHaveAttribute("aria-current", "step");
   await page.getByLabel(/^Title/).fill("Temporary driver for plant visits");
-  await page.getByTestId("step-next").click();
+  await toWorkflowStep(page); // and any required field IT has set up
   await expect(steps.getByRole("button", { name: /Approval workflow/ })).toHaveAttribute("aria-current", "step");
   await expect(page.getByTestId("step-workflow")).toBeVisible();
   await page.getByRole("button", { name: "Back" }).click();

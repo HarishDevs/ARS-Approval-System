@@ -49,6 +49,7 @@ for (const role of ROLES) {
     await classicFor(role, true);
     await as(context, role);
     await page.goto("/users");
+    await expect(gatewayLinks(page).last()).toBeVisible(); // Home's loading skeleton comes first
     const labels = (await gatewayLinks(page).allTextContents()).map((text) => text.replace(/\s*\d+ (waiting|open|unread)$/, "").trim());
     expect(labels.at(-1)).toBe("Quit (sign out)");
     if (role === "E2E_REQ") expect(labels.some((label) => /space$/.test(label))).toBe(false);

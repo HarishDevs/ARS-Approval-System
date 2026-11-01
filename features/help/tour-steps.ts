@@ -34,10 +34,11 @@ export const TOUR_STEPS: readonly TourStep[] = [
     points: [
       "The tiles count what's waiting for you, what's overdue, your open requests and changes asked of you. Click one to open the list.",
       "Drafts you haven't submitted are listed here, so you can carry on where you left off.",
-      "Below them, My work: your tasks (upcoming, overdue, done), tasks you gave, your team and your projects.",
+      "At the top, switch between Approvals and Task Management (My Work: your tasks for a period, projects, latest updates and weekly workload). Approvers start on Approvals, everyone else on Task Management.",
     ],
     path: "/users",
-    target: '[data-tour="overview-tiles"]',
+    // D-265: approvers see the approval cards, everyone else My Work's.
+    target: '[data-tour="overview-tiles"], [data-testid="work-kpis"]',
   },
   {
     id: "inbox",
@@ -128,7 +129,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
     id: "new-task",
     section: "Tasks",
     title: "Give someone a task",
-    intro: "Create → Task opens a Draft task in the corner of any page.",
+    intro: "Create → Task opens Create task: details on the left, settings (due date, priority, repeat, collaborators) on the right.",
     points: [
       "Name it; it's for Myself, or choose Others (type part of a name). Pick a project if it belongs to one.",
       "In the description, type / for the menu, @ to mention someone (they follow the task), or paste a screenshot to attach it.",

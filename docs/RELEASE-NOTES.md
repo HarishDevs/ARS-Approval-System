@@ -1,5 +1,41 @@
 # Release notes
 
+## v1.42.0 (1 Nov 2026): the remaining screens in the new look; editable task tables (owner)
+- **Calendar:**
+  - a clearer toolbar (round arrows, Today, and Month / Week / Day / **Agenda**);
+  - category chips with a tick and how many entries each has;
+  - today circled, weekends shaded;
+  - each kind of entry has its own coloured stripe.
+- **Boards (My Tasks and projects):** columns have a coloured top edge and a count. Cards show who it's for (initials), the due date with an icon, the priority and the project.
+- **Create task:**
+  - on a computer, a card in the middle of the screen: task details on the left, task settings on the right (due date, **priority**, repeat, collaborators, Task with a form);
+  - on a phone, the bottom panel as before;
+  - the Classic view keeps the corner panel.
+- **Task tables:** due date, assignee, priority, **collaborators** and **tags** now change in their cells in every task table (projects, My Tasks, task search), wherever you may change the task. Created by can't be changed.
+- **Analytics:**
+  - People and Departments show completion and on-time bars in their tables;
+  - Departments add comparison charts;
+  - Data quality shows a card per check (green when clean);
+  - Trends opens with headline cards and the change against the comparison period.
+- **Analytics, "My tasks":** a new choice in Whose numbers for the tasks given to you, with the Overview and the Tasks dashboard.
+- **New request:** the Save as draft / Reset / Back / Next / Submit bar is at the top of the page, under the steps.
+- **New request:** **Next** only when every required field is filled in (a red star marks them; what's missing is shown beside it). The approval workflow can be changed only after Next. **Submit** is on the last step.
+- **The road:** while a level waits, the van is halfway to it; it reaches the approver's name once they approve.
+- **Request page:** the road is at the top, centred and smaller, with **Request details** below it, now including the requester's details (User ID, department, designation, email, reporting manager). On the right: your action box first (smaller), then Attachments, then Collaborators.
+- **Home, redesigned:**
+  - **Approval Overview:** cards for what's waiting, overdue, your open requests and changes asked; Waiting for me first; your drafts (open or delete), recently viewed and **Quick insights** (requests raised, approved, average approval time) for a period you choose.
+  - **My Work – Overview:** Total, Upcoming, Overdue and Completed for a period you choose (Today to a custom range); My Tasks with tabs; your projects with progress; the latest updates on your tasks and projects; your weekly workload.
+  - Approvers open on Approvals, everyone else on Task Management; switch at the top.
+- **New look for ARS-CMS:** a new ARS-CMS mark and logo beside ARS Green Steel, new app and browser icons (install the app again to see the new icon on your phone), ARS Blue throughout, and blue sidebar icons.
+- **Loading and results:** animated ticks, seals and crosses for done, approved and failed (from IconScout, in ARS colours); a new loading screen, shimmering placeholders while pages load, and an animated tick when something is saved, submitted, decided or a task is completed (a cross when it fails). With "reduce motion" turned on, nothing moves.
+- **New request:** on a computer each column scrolls on its own; each approval level is a small card on top (click to edit it); options IT has fixed aren't spelled out on every level.
+- **Request details** opens with the requester's name and department.
+- **Fixed:**
+  - Admin → Custom approval (and other long forms) asked "Leave without saving?" after Save;
+  - choosing a status in a project's header (Set status) now selects it in Post a status update and takes you there;
+  - in the dark theme, the open list of dropdowns (for example Share → Invite) was unreadable.
+- User Guide, Help and the tour cover the above. The privacy policy and terms are unchanged: no new data is collected or shared.
+
 ## v1.41.0 (1 Nov 2026): install the app, notifications on your phone, the approval road (owner)
 - **Install ARS-CMS as an app** on Android, iPhone, iPad, Windows and Mac. A card offers it on the first visit (on iPhone and iPad it shows the Share → Add to Home Screen steps). **Maybe later** is remembered. Profile → **App & devices** always has it.
 - **Phone and desktop notifications:** turn them on per device in Profile → App & devices.

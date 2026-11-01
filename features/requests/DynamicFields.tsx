@@ -120,6 +120,13 @@ export function DynamicFields({
             <div className="flex items-center gap-1">
               <label id={`f-${field.key}-label`} htmlFor={`f-${field.key}`} className="field-label">
                 {field.label}
+                {/* D-263 (owner): a field the form builder marks required shows a star (screen readers hear "required" from aria-required). */}
+                {required && field.type !== "CALC" && (
+                  <span className="text-danger-600" aria-hidden="true">
+                    {" "}
+                    *
+                  </span>
+                )}
                 {!required && field.type !== "CALC" && <span className="font-normal text-ink-faint"> (optional)</span>}
               </label>
               <Hint text={tipOf(field.help)} align="start" className="mb-1.5" />

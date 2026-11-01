@@ -13,7 +13,8 @@ test("a plain user gets a 404 for /admin and /superadmin, and lands on their own
   expect((await page.goto("/admin"))?.status()).toBe(404);
   expect((await page.goto("/superadmin"))?.status()).toBe(404);
   await page.goto("/users");
-  await expect(page.getByRole("heading", { name: /Welcome back, Sita/ })).toBeVisible();
+  // D-265: Home's heading names the overview; the welcome is beneath it.
+  await expect(page.getByText(/Welcome back, Sita/)).toBeVisible();
 });
 
 test("an IT Admin reaches /admin but not /superadmin", async ({ page, context }) => {

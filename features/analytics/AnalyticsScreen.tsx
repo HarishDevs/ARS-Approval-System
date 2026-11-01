@@ -51,9 +51,14 @@ export async function AnalyticsScreen({ searchParams, base }: { searchParams: Re
   const requested = query.board ? parseBoard(query.board) : APPROVAL_FILTERS.some((key) => query[key]) ? "approvals" : "overview";
   // D-206 (owner): only the dashboards this person needs, by module and role; a
   // dashboard they can't use (an old link or saved view) opens the overview.
-  const modules = { approval: hasModule(user, "APPROVAL"), task: hasModule(user, "TASK"), information: hasModule(user, "INFORMATION") };
-  const boards = boardsFor({ modules, scopes: scopes.map((item) => item.kind) });
-  const board = boards.includes(requested) ? requested : "overview";
+  const allModules = { approval: hasModule(user, "APPROVAL"), task: hasModule(user, "TASK"), information: hasModule(user, "INFORMATION") };
+  // D-262 (owner): "My tasks" is about the person's tasks only: the Overview
+  // (its Tasks part) and the Tasks dashboard; approval and information numbers
+  // don't apply to it, so they aren't shown as zeros.
+  const tasksOnly = scope.kind === "TASKS";
+  const modules = tasksOnly ? { approval: false, task: true, information: false } : allModules;
+  const boards = tasksOnly ? (["overview", "tasks"] as const).filter((key) => boardsFor({ modules: allModules, scopes: scopes.map((item) => item.kind) }).includes(key)) : boardsFor({ modules, scopes: scopes.map((item) => item.kind) });
+  const board = boards.includes(requested as (typeof boards)[number]) ? requested : tasksOnly ? "tasks" : "overview";
   if (board !== "approvals" && !limited) return <CenterScreen base={base} board={board} boards={boards} modules={modules} query={query} scope={scope} scopes={scopes} viewer={viewer} canExport={await canExport(user)} />;
   const now = new Date();
   const period = resolvePeriod({ key: query.period, from: query.from, to: query.to }, indiaToday(now));

@@ -17,6 +17,10 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (1 Nov 2026):** v1.42.0: the remaining screens, editable task tables, New request gating, the request page re-laid out, Home redesigned (Approval Overview / My Work, approvers start on Approvals), the ARS-CMS brand, loaders and animated outcomes (D-259 to D-266). No migration. **Owner:**
+  1. Publish v1.42.0 (`npm ci` installs the new `lottie-web` package).
+  2. On phones with the app installed, remove and install it again to get the new icon.
+  3. IconScout (MCP connected): the free daily limit stopped 4 downloads (Cloud uploading, Document Search, Document Checklist, Document Download); fetch them next session (docs/brand/ANIMATION-REFERENCES.md).
 - **Now (1 Nov 2026):** v1.41.0: installable app, phone and desktop notifications (Web Push), the daily session, the approval road, My requests and New request redesigned, tables and Analytics fit the window (D-250 to D-258). **Owner:**
   1. Publish v1.41.0; the migration runs on start.
   2. Super Admin → Settings → Phone & desktop notifications → **Generate keys**.
@@ -140,6 +144,30 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 - **Still open:** Q-015.
 
 ---
+
+## Session log — v1.42.0 (1 Nov 2026): the remaining reference screens, planned before starting
+Owner: "finish the remaining screens: calendar, kanban, draft task, analytics boards" (V141-14's rest; Compact only, Classic stays Tally, light and dark).
+- [x] V142-01 (1 Nov 2026) Calendar (D-259): toolbar card (← title →, Today, Month / Week / Day / Agenda segmented), category chips filled when shown with a tick and their count, month cells with today's circle and coloured event pills with a left accent, week columns and the list with the same accents; Agenda = the period's list on every screen size
+- [x] V142-02 (1 Nov 2026) Kanban (D-259): My Tasks and project boards: columns with a coloured top accent and a count pill, cards with the assignee's initials, due date with its tone, priority pill, project and badges; same drag, keys and add-task
+- [x] V142-03 (1 Nov 2026) Draft task (D-259): two-column panel on wide screens (Task details: name, Myself/Others, project, description; Task settings: due date, repeat, collaborators, task type), same fields and actions; one column on phones
+- [x] V142-04 (1 Nov 2026) Analytics boards (D-259): People: ranking with completion bars; Departments: comparison bars over the table; SLA / Data quality / Trends as headline cards plus bar lists; the same figures, no new calculations
+- [x] V142-06 (1 Nov 2026) Editable task tables (D-260, owner: "only task is typable"): in the project and My Tasks tables, Assignee, Due date, Priority, Collaborators and Tags are changed in the cell (the same actions and permissions as the task pane); keyboard reachable
+- [x] V142-07 (1 Nov 2026) Owner's report: project status from the header's Set status didn't select it in the form (the form kept its first state); the open list of some dropdowns was unreadable in the dark theme (pale options on white). Fix both everywhere
+- [x] V142-08 (1 Nov 2026) Analytics "My tasks" (D-262, owner): a Whose numbers choice for the tasks given to you (anyone with tasks); with it, the Overview (its Tasks part) and the Tasks dashboard only, approvals and information not shown as zeros
+- [x] V142-09 (1 Nov 2026) New request: the action bar at the top (under the steps), Submit's icon and words on one line (owner)
+- [x] V142-10 (1 Nov 2026) New request (D-263, owner): Next only when every required field is filled (the missing ones are named beside the field, the first is focused); the workflow can't be changed until Next; a red star on every required field; Submit on Review & submit only
+- [x] V142-11 (1 Nov 2026) Road (D-263, owner): while a level waits the van stands halfway to it; it drives onto the person's name only once they approve
+- [x] V142-12 (1 Nov 2026) Request page (D-263, owner): the road at the top, centred and smaller; Request details below it with the requester's details (name, User ID, department, designation, email, reporting manager, request no., type, raised on); the level map after; on the right, the action box (smaller) first, then Attachments, then Collaborators, then the rest
+- [x] V142-13 (1 Nov 2026) Owner's report: Admin → Custom approval asked "Leave without saving?" after Save. The form never heard it was saved (no form reference); fixed in the shared form hook for every form
+- [x] V142-14 (1 Nov 2026) Home (D-264, owner): a selector at the top, Approvals / Task Management; Approvals shows the approval overview (tiles, waiting, drafts, recent requests), Task Management shows My work. /users/work and task links open Task Management
+- [x] V142-15 (1 Nov 2026) Request page (owner): the requester's name and department lead the Request details box
+- [x] V142-16 (1 Nov 2026) Approval Overview (D-265, owner's brief): heading + New request; four KPI cards with icon and meaning (same counts and links as before); Waiting for me first with an illustrated empty state; Due soon, Returned, My recent requests, Finished on the left; Your drafts (open, delete with confirmation, View all), Recently viewed and Quick insights (This week / month / 30 / 90 days: raised, approved, average approval time, N/A when none) on the right; quiet refresh every minute
+- [x] V142-17 (1 Nov 2026) My Work overview (D-265, owner's brief): header with name, designation and department; period (Today / This week / This month / Last 30 days / Custom); KPI cards Total (open + done in period), Upcoming, Overdue (as My Tasks), Completed (period, vs previous); My Tasks table with tabs and counts, Create task, View all, actions, pages, cards on phones; Projects with progress; Latest status updates from task events and project status posts; My weekly workload (assigned_at and completed_at by day); quick actions; Tasks I've assigned and My team kept below
+- [x] V142-18 (1 Nov 2026) Home default (owner): approvers (designation ticked Approver, or something waiting for them) open on Approvals, everyone else on Task Management; switch at the top
+- [x] V142-19 (1 Nov 2026) New request (owner): each column scrolls on its own on a computer (the page stays put); fixed step options aren't spelled out ("set by IT" lines removed; the server still applies them); levels show as small summary cards on top, one level open below, a new level opens itself
+- [x] V142-20 (1 Nov 2026) Brand (D-266, owner's brand sheet): the ARS-CMS mark (screen and gear on a hexagon over stacked layers) and lockup (ARS Green Steel | mark ARS-CMS, Central Management System) in the sidebar, top bar, phone menu, sign-in and public pages; app icon, favicon (16/32/48), PWA icons 64/96/192/512, maskable and Apple icon from one SVG; ARS Blue #0053A0 and Accent #0A84FF; sidebar icons in brand blue (Compact only)
+- [x] V142-21 (1 Nov 2026) Loaders (D-266, owner's loading sheet): full-screen loader (lockup, bar, wave), logo spinner, dots, button spinner, upload bar, circular progress, step loader, Loading data state; shimmering skeletons (tiles with icons, lists, tables, chart) [Home's own loading.tsx withdrawn: V6-D06, a route loading.tsx can drop the refresh after an action and Home has actions]; animated outcomes (success tick, task tick, failed cross, warning) on every form's result, the submitted and decision banners, and a task's checkbox
+- [x] V142-05 (1 Nov 2026) General pages (STRICT rule), tests, living files, v1.42.0, commit, push, CI
 
 ## Session log — v1.41.0 (1 Nov 2026): installable app, push, daily sessions, road tracker, responsive sweep, planned before starting
 Owner's brief (sections 1–21): PWA install and Web Push (VAPID), the daily session ending at midnight India time, every page responsive, and the TMT road approval tracker with the ARS van.

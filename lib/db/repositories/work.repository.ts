@@ -298,10 +298,11 @@ export interface WorkTaskItem {
   followers: { id: number; name: string }[]; // D-220: collaborators
   tags: { id: number; name: string; color: string }[];
   projects: { id: number; name: string; color: string }[];
+  summary?: string | null; // D-265: the description's start, for Home's task table
 }
 
 const ITEM_SELECT = `SELECT t.id, t.task_no, t.title, t.status, t.priority, t.assignee_id, a.name AS assignee_name, t.created_by, c.name AS created_by_name, t.due_at, t.starts_on,
-    t.completed_at, t.created_at, t.is_milestone, t.parent_task_id, t.assigned_at, (t.recurrence_json IS NOT NULL OR t.series_id IS NOT NULL) AS is_periodic,
+    t.completed_at, t.created_at, t.is_milestone, t.parent_task_id, t.assigned_at, LEFT(t.description, 160) AS summary, (t.recurrence_json IS NOT NULL OR t.series_id IS NOT NULL) AS is_periodic,
     (SELECT COUNT(*) FROM tasks s WHERE s.parent_task_id = t.id AND s.deleted_at IS NULL) AS subtasks,
     (SELECT COUNT(*) FROM tasks s WHERE s.parent_task_id = t.id AND s.deleted_at IS NULL AND s.status IN ('OPEN', 'IN_PROGRESS', 'BLOCKED')) AS subtasks_open,
     (SELECT COUNT(*) FROM task_comments cm WHERE cm.task_id = t.id AND cm.deleted_at IS NULL) AS comments,
@@ -343,6 +344,7 @@ async function decorate(rows: Row[], db: Queryable): Promise<WorkTaskItem[]> {
     subtasksOpen: num(row.subtasks_open),
     comments: num(row.comments),
     likes: num(row.likes),
+    summary: row.summary ? String(row.summary) : null,
     blockedBy: num(row.blocked_by),
     isPeriodic: Boolean(row.is_periodic),
     createdAt: row.created_at as Date,

@@ -157,7 +157,9 @@ test("a requester fills every field type; values are checked, stored and shown b
 
   // Stored values shown readably; the department step skipped, the date step kept.
   await expect(page.getByText("01 Dec 2026")).toBeVisible();
-  await expect(page.getByText("E2E Department", { exact: true })).toBeVisible();
+  // (the requester's own department is in Request details too: the form's value is the second)
+  await expect(page.getByText("E2E Department", { exact: true }).last()).toBeVisible();
+  await expect(page.getByTestId("requester-details").getByText("E2E Department", { exact: true })).toBeVisible();
   await expect(page.getByText("Opex", { exact: true })).toBeVisible();
   await expect(page.getByText("75,000", { exact: true })).toBeVisible();
   await expect(page.getByText("Skipped: Department is E2E")).toBeVisible();

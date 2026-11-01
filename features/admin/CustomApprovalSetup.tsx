@@ -17,7 +17,7 @@ export function CustomApprovalSetup({ initialForm, initialPolicy, lookups = NO_L
   const [form, setForm] = useState<FormField[]>(initialForm);
   const [policy, setPolicy] = useState<StepPolicy>(initialPolicy);
   const [previewing, setPreviewing] = useState(false);
-  const { result, pending, onSubmit, confirmBar } = useActionForm(saveCustomApprovalAction, {
+  const { result, pending, formRef, onSubmit, confirmBar } = useActionForm(saveCustomApprovalAction, {
     confirm: "New custom approvals will use these fields and step options. Requests already raised keep their own fields.",
     confirmTitle: "Save the custom approval set-up?",
     confirmLabel: "Yes, save",
@@ -25,7 +25,7 @@ export function CustomApprovalSetup({ initialForm, initialPolicy, lookups = NO_L
   const set = <K extends keyof StepPolicy>(key: K, change: Partial<StepPolicy[K]>) => setPolicy((current) => ({ ...current, [key]: { ...current[key], ...change } }));
 
   return (
-    <form onSubmit={onSubmit} className="space-y-6">
+    <form ref={formRef} onSubmit={onSubmit} className="space-y-6">
       <UnsavedGuard />
       <input type="hidden" name="form" value={JSON.stringify(form)} />
       <input type="hidden" name="policy" value={JSON.stringify(policy)} />

@@ -1,5 +1,6 @@
 "use client";
 
+import { BrandAnimation } from "@/features/ui/BrandAnimation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ActionResult } from "@/lib/http/action-result";
@@ -181,6 +182,8 @@ export function useActionForm(action: Action, options: ConfirmOptions = {}) {
 
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    // A form that didn't pass formRef still hears it was saved (UnsavedGuard).
+    if (!formRef.current) formRef.current = event.currentTarget;
     // Include the pressed button's name/value (forms with several actions).
     const submitter = (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
     const formData = new FormData(event.currentTarget, submitter);
@@ -236,8 +239,10 @@ export function SubmitButton({ children, pending, variant = "primary", className
 export function ResultMessage({ result }: { result: ActionResult | null }) {
   if (!result?.message) return null;
   return (
-    <p role={result.ok ? "status" : "alert"} className={`rounded-md border px-3 py-2 text-label ${result.ok ? "border-transparent bg-success-50 text-success-600" : "border-danger-200 bg-danger-50 text-danger-600"}`}>
-      {result.message}
+    // v1.42.0 brand: the animated tick or cross beside the message.
+    <p role={result.ok ? "status" : "alert"} className={`flex items-start gap-2 rounded-md border px-3 py-2 text-label ${result.ok ? "border-transparent bg-success-50 text-success-600" : "border-danger-200 bg-danger-50 text-danger-600"}`}>
+      <BrandAnimation key={result.message} name={result.ok ? "success" : "failed"} className="mt-px h-4 w-4" />
+      <span className="min-w-0">{result.message}</span>
     </p>
   );
 }

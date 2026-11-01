@@ -62,7 +62,7 @@ export function OnboardingTour({ steps, autoStart }: { steps: TourStep[]; autoSt
   const target = useRef<HTMLElement | null>(null);
   const card = useRef<HTMLDivElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
-  const step = index === null ? null : steps[index] ?? null;
+  const step = index === null ? null : (steps[index] ?? null);
 
   const start = useCallback((at: number) => {
     write(SEEN_KEY, "1");
@@ -93,7 +93,12 @@ export function OnboardingTour({ steps, autoStart }: { steps: TourStep[]; autoSt
       handled.current = true;
       params.delete("tour");
       const rest = params.toString();
-      router.replace(rest ? `${pathname}?${rest}` : pathname, { scroll: false });
+      // Cleaned once the page has settled: a router.replace issued while the
+      // link's own navigation is still finishing can be dropped (?tour=1 stays).
+      const clean = rest ? `${pathname}?${rest}` : pathname;
+      window.setTimeout(() => {
+        if (new URLSearchParams(window.location.search).get("tour") === "1") router.replace(clean, { scroll: false });
+      }, 250);
       start(0);
       return;
     }

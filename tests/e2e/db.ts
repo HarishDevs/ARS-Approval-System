@@ -50,3 +50,41 @@ export async function sessionCookie(loginId: string, options: { tourDone?: boole
   const signature = crypto.createHmac("sha256", E2E_ENV.SESSION_SECRET).update(`session:${encoded}`).digest("base64url");
   return { name: "ars_session", value: `${encoded}.${signature}`, domain: "localhost", path: "/" };
 }
+
+// D-263: New request's workflow opens with Next, once the required details are
+// filled in. Fills a title and any required field Next points out (text "x",
+// the first choice, a date), then moves to the workflow step.
+export async function toWorkflowStep(page: import("@playwright/test").Page): Promise<void> {
+  const title = page.locator("#c-title");
+  if (!(await title.inputValue())) await title.fill("Workflow check");
+  for (let round = 0; round < 3; round += 1) {
+    await page.getByTestId("step-next").click();
+    // Moved on (the note about the locked workflow shows on wide screens only, so ask the steps).
+    if ((await page.getByTestId("request-steps").getByRole("button", { name: /Approval workflow/ }).getAttribute("aria-current")) === "step") return;
+    for (const field of await page.locator('[data-testid="step-details"] [aria-invalid="true"]').all()) {
+      const tag = await field.evaluate((element) => element.tagName);
+      const type = (await field.getAttribute("type")) ?? "";
+      if (tag === "SELECT") await field.selectOption({ index: 1 });
+      else if (type === "date") await field.fill("2031-01-15");
+      else if (type === "datetime-local") await field.fill("2031-01-15T10:00");
+      else await field.fill(type === "url" ? "https://example.com" : "1");
+    }
+  }
+}
+
+// Then on to Review & submit, where Submit is.
+export async function toReviewStep(page: import("@playwright/test").Page): Promise<void> {
+  await toWorkflowStep(page);
+  await page.getByTestId("step-next").click();
+}
+
+// The custom request's own draft, which toWorkflowStep's title leaves behind
+// (the form saves itself as you type): cleared so the next test starts empty.
+export async function dropCustomDraft(loginId: string): Promise<void> {
+  const conn = await db();
+  try {
+    await conn.query("DELETE d FROM request_drafts d JOIN users u ON u.id = d.user_id WHERE u.login_id = ? AND d.draft_key = 'CUSTOM'", [loginId]);
+  } finally {
+    await conn.end();
+  }
+}

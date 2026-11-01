@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertTriangle, CheckCircle2, Info, X, XCircle } from "lucide-react";
+import { BrandAnimation } from "@/features/ui/BrandAnimation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 
 // Toasts (FB-03). Polite announcements for success and info, assertive for
@@ -83,7 +84,8 @@ function ToastCard({ item, onDismiss }: { item: ToastItem; onDismiss: (id: numbe
       onBlur={() => setPaused(false)}
       className="pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-lg border border-line bg-raised px-4 py-3 text-label shadow-overlay motion-safe:animate-[toast-in_var(--motion-base)_var(--ease-standard)]"
     >
-      <Icon aria-hidden="true" className={`mt-0.5 h-5 w-5 shrink-0 ${STYLE[tone]}`} />
+      {/* v1.42.0: the animated tick (a task done, a save) or cross; the others keep their icon. */}
+      {tone === "success" ? <BrandAnimation name="task-done" className="mt-0.5 h-5 w-5" /> : tone === "error" ? <BrandAnimation name="failed" className="mt-0.5 h-5 w-5" /> : <Icon aria-hidden="true" className={`mt-0.5 h-5 w-5 shrink-0 ${STYLE[tone]}`} />}
       <div className="min-w-0 flex-1">
         <p className="font-semibold text-ink">{item.title}</p>
         {item.body && <p className="text-ink-muted">{item.body}</p>}

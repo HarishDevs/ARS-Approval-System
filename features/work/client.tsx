@@ -111,10 +111,17 @@ export function TaskCheck({ taskId, done, disabled, label, size = "md" }: { task
       // D-234 (Fitts): the circle stays small, but the area that takes the
       // click reaches 8px around it (about 36px), like Asana's.
       className={`relative flex ${box} shrink-0 items-center justify-center rounded-full border transition before:absolute before:-inset-2 before:rounded-full before:content-[''] ${
-        shown ? "border-success-600 bg-success-600 text-on-solid" : "border-line-strong text-transparent hover:border-success-600 hover:text-success-600"
+        shown ? `border-success-600 bg-success-600 text-on-solid ${optimistic !== null ? "brand-pop" : ""}` : "border-line-strong text-transparent hover:border-success-600 hover:text-success-600"
       } disabled:cursor-not-allowed disabled:opacity-60`}
     >
-      <Check aria-hidden="true" className="h-3 w-3" strokeWidth={3} />
+      {/* v1.42.0 brand: the tick draws itself when the task is completed here. */}
+      {shown && optimistic !== null ? (
+        <svg viewBox="0 0 24 24" className="h-3 w-3" aria-hidden="true" data-testid="task-done-tick">
+          <path d="m5 12.5 4.5 4.5L19 7.5" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" className="brand-draw-tick" />
+        </svg>
+      ) : (
+        <Check aria-hidden="true" className="h-3 w-3" strokeWidth={3} />
+      )}
     </button>
   );
 }

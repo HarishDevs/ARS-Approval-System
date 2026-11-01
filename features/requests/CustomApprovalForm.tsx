@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Check, ClipboardList, GitBranch, Info, ListChecks, RotateCcw, Save, Send, Workflow } from "lucide-react";
 import { DraftStatus, useDraftAutosave } from "@/features/requests/useDraftAutosave";
 import type { DraftInfo } from "@/features/requests/RequestForm";
@@ -83,6 +83,31 @@ function readForm(form: HTMLFormElement | null): Snapshot {
   return { values, files, collaborators: data.getAll("collaborator").length };
 }
 
+// D-263 (owner: "after filling all the required fields only allow the page
+// to move further"): step 1's required fields, checked before Next. A field
+// hidden by its rule doesn't count; the server checks everything again on submit.
+function missingRequired(form: HTMLFormElement | null, fields: readonly FormField[], title: string): Record<string, string> {
+  const missing: Record<string, string> = {};
+  if (!title.trim()) missing.title = "Give the request a title.";
+  if (!form) return missing;
+  const data = new FormData(form);
+  for (const field of fields) {
+    if (!field.required || field.type === "SECTION" || field.type === "CALC") continue;
+    const holder = form.querySelector(`#f-${CSS.escape(field.key)}`)?.closest("fieldset");
+    if (holder?.hidden || holder?.disabled) continue;
+    const filled =
+      field.type === "ATTACHMENT"
+        ? [...form.querySelectorAll<HTMLInputElement>(`input[name="file:${CSS.escape(field.key)}"]`)].some((input) => (input.files?.length ?? 0) > 0)
+        : field.type === "LINE_ITEMS"
+          ? !["", "[]"].includes(String(data.get(`${field.key}__lines`) ?? data.get(field.key) ?? "").trim())
+          : field.type === "MULTI_CHOICE"
+            ? data.getAll(field.key).some((value) => String(value).trim() !== "")
+            : String(data.get(field.key) ?? "").trim() !== "";
+    if (!filled) missing[field.key] = `${field.label} is required.`;
+  }
+  return missing;
+}
+
 const formatAmount = (text: string) => {
   const number = Number(text.replace(/[,\s₹]/g, ""));
   return Number.isFinite(number) && text.trim() !== "" ? `₹ ${number.toLocaleString("en-IN")}` : text;
@@ -111,7 +136,9 @@ export function CustomApprovalForm({
 }) {
   const [stages, setStages] = useState<BuilderStage[]>(
     () =>
-      restoredStages(initial?.fields.spec) ?? [{ kind: "STEP", step: { id: "s1", label: "First approval", approvers: { kind: "PEOPLE", userIds: defaultApproverId ? [defaultApproverId] : [] }, ...stepDefaults(policy) } }],
+      restoredStages(initial?.fields.spec) ?? [
+        { kind: "STEP", step: { id: "s1", label: "First approval", approvers: { kind: "PEOPLE", userIds: defaultApproverId ? [defaultApproverId] : [] }, ...stepDefaults(policy) } },
+      ],
   );
   const { result, pending, onSubmit } = useActionForm(submitCustomAction);
   const restoredAt = draft?.savedAt ? new Date(draft.savedAt) : null;
@@ -137,7 +164,31 @@ export function CustomApprovalForm({
   const [step, setStep] = useState<Step>(1);
   const [snapshot, setSnapshot] = useState<Snapshot>({ values: initial?.fields ?? {}, files: 0, collaborators: 0 });
   const [stepError, setStepError] = useState<string | null>(null);
+  // Owner (v1.42.0): on a computer the page stays still and each column
+  // (details, workflow, summary) scrolls on its own, down to the window's edge.
+  const columns = useRef<HTMLDivElement>(null);
+  const [columnsHeight, setColumnsHeight] = useState<number | null>(null);
+  useEffect(() => {
+    const fit = () => {
+      const box = columns.current;
+      if (!box || window.innerWidth < 1280) return setColumnsHeight(null);
+      // From the columns' top to the window's bottom, less whatever sits below them.
+      const top = box.getBoundingClientRect().top + window.scrollY;
+      const below = Math.max(0, document.documentElement.scrollHeight - (top + box.offsetHeight));
+      setColumnsHeight(Math.max(360, Math.floor(window.innerHeight - top - below - 4)));
+    };
+    fit();
+    window.addEventListener("resize", fit);
+    return () => window.removeEventListener("resize", fit);
+  }, []);
+  const [checked, setChecked] = useState<Record<string, string> | null>(null);
   const refresh = useCallback(() => setSnapshot(readForm(autosave.formRef.current)), [autosave.formRef]);
+  // Once Next has pointed out what's missing, each message goes as it's filled in.
+  useEffect(() => {
+    if (!checked) return;
+    const now = missingRequired(autosave.formRef.current, fields, snapshot.values.title ?? "");
+    if (Object.keys(now).length !== Object.keys(checked).length) setChecked(Object.keys(now).length ? now : null);
+  }, [snapshot, checked, fields, autosave.formRef]);
   useEffect(() => {
     refresh();
   }, [refresh, stages]);
@@ -155,9 +206,16 @@ export function CustomApprovalForm({
 
   const go = (next: Step) => {
     setStepError(null);
-    if (next > step && step === 1 && !title) {
-      setStepError("Give the request a title first.");
-      return;
+    if (next > 1 && step === 1) {
+      const missing = missingRequired(autosave.formRef.current, fields, title);
+      if (Object.keys(missing).length) {
+        setChecked(missing);
+        setStepError(`Fill in the required fields first (${Object.keys(missing).length} to go).`);
+        const first = Object.keys(missing)[0]!;
+        autosave.formRef.current?.querySelector<HTMLElement>(first === "title" ? "#c-title" : `#f-${CSS.escape(first)}`)?.focus();
+        return;
+      }
+      setChecked(null);
     }
     if (next === 3 && facts.empty.length) {
       setStep(2);
@@ -223,10 +281,11 @@ export function CustomApprovalForm({
   );
 
   return (
-    <form ref={autosave.formRef} onSubmit={onSubmit} onInput={refresh} onChange={refresh} className="space-y-5 pb-24" data-step={step}>
+    <form ref={autosave.formRef} onSubmit={onSubmit} onInput={refresh} onChange={refresh} className="space-y-5" data-step={step}>
       {draft && restoredAt && (
         <p role="status" className="rounded-md bg-primary-50/60 px-3 py-2 text-label text-primary-700">
-          Restored your draft from {restoredAt.toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kolkata" })}. Files aren&apos;t kept in drafts: add them again before submitting.
+          Restored your draft from {restoredAt.toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kolkata" })}. Files aren&apos;t kept in
+          drafts: add them again before submitting.
         </p>
       )}
       <input type="hidden" name="spec" value={JSON.stringify({ stages })} />
@@ -246,7 +305,9 @@ export function CustomApprovalForm({
                   aria-current={current ? "step" : undefined}
                   className={`flex w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors ${current ? "border-primary-600 bg-primary-solid text-on-solid shadow-button" : "border-line bg-surface hover:bg-surface-muted"}`}
                 >
-                  <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-full border-2 text-label font-semibold ${current ? "border-on-solid" : done ? "border-success-solid bg-success-solid text-on-solid" : "border-line-strong text-ink-muted"}`}>
+                  <span
+                    className={`grid h-8 w-8 shrink-0 place-items-center rounded-full border-2 text-label font-semibold ${current ? "border-on-solid" : done ? "border-success-solid bg-success-solid text-on-solid" : "border-line-strong text-ink-muted"}`}
+                  >
                     {done ? <Check className="h-4 w-4" strokeWidth={3} aria-hidden="true" /> : item.step}
                   </span>
                   <span className="min-w-0">
@@ -259,15 +320,56 @@ export function CustomApprovalForm({
           })}
         </ol>
       </nav>
+      {/* The action bar (owner: at the top of the page, under the steps). */}
+      <div className="action-bar flex flex-wrap items-center gap-2 rounded-lg border border-line bg-raised px-3 py-2.5 shadow-card" data-testid="action-bar">
+        {draft && (
+          <button type="button" className="btn-secondary btn-compact inline-flex items-center gap-1.5" onClick={() => nudge()}>
+            <Save className="h-4 w-4" aria-hidden="true" /> Save as draft
+          </button>
+        )}
+        <button
+          type="button"
+          className="btn-ghost btn-compact inline-flex items-center gap-1.5"
+          onClick={() => {
+            setDiscardError(null);
+            setConfirmDiscard(true);
+          }}
+        >
+          <RotateCcw className="h-4 w-4" aria-hidden="true" /> Reset
+        </button>
+        <span className="flex-1" />
+        {step > 1 && (
+          <button type="button" className="btn-secondary btn-compact inline-flex items-center gap-1.5" onClick={() => go((step - 1) as Step)}>
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back
+          </button>
+        )}
+        {step < 3 && (
+          <button type="button" className="btn-secondary btn-compact inline-flex items-center gap-1.5" onClick={() => go((step + 1) as Step)} data-testid="step-next">
+            {step === 1 ? "Next: Approval workflow" : "Next: Review & submit"} <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </button>
+        )}
+        {/* Submit on the last step only, after the checks of steps 1 and 2. */}
+        {step === 3 && (
+          <SubmitButton pending={pending} className="btn-compact">
+            <span className="inline-flex items-center gap-1.5">
+              <Send className="h-4 w-4" aria-hidden="true" /> Submit request
+            </span>
+          </SubmitButton>
+        )}
+      </div>
       {stepError && (
         <p role="alert" className="text-label text-danger-600">
           {stepError}
         </p>
       )}
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)_18rem]">
+      <div ref={columns} className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)_18rem]" style={columnsHeight ? { height: columnsHeight } : undefined} data-testid="request-columns">
         {/* Step 1: request details (beside the workflow on wide screens). */}
-        <section className={`card space-y-5 px-5 py-5 ${step === 1 ? "" : "hidden"} ${step === 3 ? "" : "xl:block"}`} aria-labelledby="req-info" data-testid="step-details">
+        <section
+          className={`card space-y-5 px-5 py-5 xl:min-h-0 xl:overflow-y-auto xl:overscroll-contain ${step === 1 ? "" : "hidden"} ${step === 3 ? "" : "xl:block"}`}
+          aria-labelledby="req-info"
+          data-testid="step-details"
+        >
           <header className="flex items-start gap-3">
             <span className="page-icon grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-primary-50 text-primary-700" aria-hidden="true">
               <ClipboardList className="h-5 w-5" />
@@ -281,12 +383,32 @@ export function CustomApprovalForm({
           </header>
           <div>
             <label htmlFor="c-title" className="field-label">
-              Title <span className="text-danger-600">*</span>
+              Title{" "}
+              <span className="text-danger-600" aria-hidden="true">
+                *
+              </span>
             </label>
-            <input id="c-title" name="title" defaultValue={initial?.title ?? ""} maxLength={200} placeholder="e.g. Approval to hire a temporary driver" className="field-input" aria-required="true" />
-            <FieldError result={result} name="title" />
+            <input
+              id="c-title"
+              name="title"
+              defaultValue={initial?.title ?? ""}
+              maxLength={200}
+              placeholder="e.g. Approval to hire a temporary driver"
+              className="field-input"
+              aria-required="true"
+              aria-invalid={checked?.title ? true : undefined}
+            />
+            <FieldError result={checked ? { ok: false, message: "", fieldErrors: checked } : result} name="title" />
           </div>
-          <DynamicFields fields={fields} mode="submit" people={people} lookups={lookups} initial={initial?.fields} result={result} onLinesChange={nudge} />
+          <DynamicFields
+            fields={fields}
+            mode="submit"
+            people={people}
+            lookups={lookups}
+            initial={initial?.fields}
+            result={checked ? { ok: false, message: "", fieldErrors: checked } : result}
+            onLinesChange={nudge}
+          />
           <div>
             <div className="flex items-center gap-1">
               <label htmlFor="c-attachments" className="field-label">
@@ -302,33 +424,51 @@ export function CustomApprovalForm({
               accept={ACCEPT_ATTRIBUTE}
               className="block w-full rounded-lg border-2 border-dashed border-line-strong bg-surface-muted/40 px-3 py-4 text-label file:mr-3 file:rounded-md file:border-0 file:bg-primary-solid file:px-3 file:py-2 file:text-on-solid hover:border-primary-600"
             />
-            {snapshot.files > 0 && <p className="mt-1 text-caption text-ink-muted">{snapshot.files} file{snapshot.files === 1 ? "" : "s"} chosen.</p>}
+            {snapshot.files > 0 && (
+              <p className="mt-1 text-caption text-ink-muted">
+                {snapshot.files} file{snapshot.files === 1 ? "" : "s"} chosen.
+              </p>
+            )}
             <FieldError result={result} name="attachments" />
           </div>
           <div>
-            <PeoplePicker name="collaborator" label="Collaborators (optional)" options={collaboratorOptions} help="Anyone in the organisation who should follow this request: they can see it, comment and add files, and are told how it goes. They don't approve anything." onChange={() => window.setTimeout(refresh, 0)} />
+            <PeoplePicker
+              name="collaborator"
+              label="Collaborators (optional)"
+              options={collaboratorOptions}
+              help="Anyone in the organisation who should follow this request: they can see it, comment and add files, and are told how it goes. They don't approve anything."
+              onChange={() => window.setTimeout(refresh, 0)}
+            />
             <FieldError result={result} name="collaborator" />
           </div>
         </section>
 
         {/* Step 2: the approval workflow. */}
-        <div className={`${step === 2 ? "" : "hidden"} ${step === 3 ? "" : "xl:block"}`} data-testid="step-workflow">
-          <StepPolicyContext.Provider value={policy}>
-            <LevelsEditor
-              stages={stages}
-              setStages={setStages}
-              options={options}
-              form={fields}
-              newId={newStepId}
-              title="Approval workflow"
-              hint="Pick anyone, in any order. Add parallel steps when several people should look at the same time. You can't approve your own request."
-            />
-          </StepPolicyContext.Provider>
+        <div className={`xl:min-h-0 xl:overflow-y-auto xl:overscroll-contain ${step === 2 ? "" : "hidden"} ${step === 3 ? "" : "xl:block"}`} data-testid="step-workflow">
+          {step === 1 && (
+            <p className="mb-2 rounded-md bg-surface-muted px-3 py-2 text-caption text-ink-muted" data-testid="workflow-locked">
+              Fill in the request details, then press <strong>Next</strong> to set who approves.
+            </p>
+          )}
+          <fieldset disabled={step === 1} className={`min-w-0 ${step === 1 ? "pointer-events-none opacity-60" : ""}`} aria-label="Approval workflow">
+            <StepPolicyContext.Provider value={policy}>
+              <LevelsEditor
+                stages={stages}
+                setStages={setStages}
+                options={options}
+                form={fields}
+                newId={newStepId}
+                title="Approval workflow"
+                cards
+                hint="Pick anyone, in any order. Add parallel steps when several people should look at the same time. You can't approve your own request."
+              />
+            </StepPolicyContext.Provider>
+          </fieldset>
         </div>
 
         {/* Step 3: review everything before sending. */}
         {step === 3 && (
-          <section className="card space-y-4 px-5 py-5 xl:col-span-2" aria-labelledby="review" data-testid="step-review">
+          <section className="card space-y-4 px-5 py-5 xl:col-span-2 xl:min-h-0 xl:overflow-y-auto xl:overscroll-contain" aria-labelledby="review" data-testid="step-review">
             <header className="flex items-start gap-3">
               <span className="page-icon grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-primary-50 text-primary-700" aria-hidden="true">
                 <ListChecks className="h-5 w-5" />
@@ -350,7 +490,13 @@ export function CustomApprovalForm({
                   <li key={index} className="flex items-start gap-2">
                     <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary-solid text-caption font-semibold text-on-solid">{index + 1}</span>
                     <span>
-                      {stage.kind === "STEP" ? stage.step.label : stage.kind === "PARALLEL" ? `${stage.label} (in parallel: ${stage.steps.map((item) => item.label).join(", ")})` : stage.kind === "BRANCH" ? `${stage.label} (a choice)` : "Approval authority (DoA)"}
+                      {stage.kind === "STEP"
+                        ? stage.step.label
+                        : stage.kind === "PARALLEL"
+                          ? `${stage.label} (in parallel: ${stage.steps.map((item) => item.label).join(", ")})`
+                          : stage.kind === "BRANCH"
+                            ? `${stage.label} (a choice)`
+                            : "Approval authority (DoA)"}
                     </span>
                   </li>
                 ))}
@@ -360,7 +506,7 @@ export function CustomApprovalForm({
         )}
 
         {/* The live summary: beside everything on wide screens, folded on phones. */}
-        <aside className={`${step === 3 ? "hidden xl:block" : ""} xl:sticky xl:top-20 xl:self-start`} aria-label="Request summary">
+        <aside className={`${step === 3 ? "hidden xl:block" : ""} xl:min-h-0 xl:overflow-y-auto xl:overscroll-contain`} aria-label="Request summary">
           <details className="card group xl:hidden" open={false}>
             <summary className="flex cursor-pointer items-center justify-between px-4 py-3 font-semibold">
               Request summary <span className="text-caption font-normal text-ink-muted">{missing.length ? "Not ready" : "Ready"}</span>
@@ -391,40 +537,6 @@ export function CustomApprovalForm({
           }}
         />
       )}
-
-      {/* The action bar. */}
-      <div className="action-bar sticky bottom-[calc(env(safe-area-inset-bottom)+64px)] z-[var(--z-sticky)] -mx-4 flex flex-wrap items-center gap-2 border-t border-line bg-raised/95 px-4 py-3 shadow-overlay backdrop-blur md:bottom-0 md:mx-0 md:rounded-lg md:border" data-testid="action-bar">
-        {draft && (
-          <button type="button" className="btn-secondary btn-compact inline-flex items-center gap-1.5" onClick={() => nudge()}>
-            <Save className="h-4 w-4" aria-hidden="true" /> Save as draft
-          </button>
-        )}
-        <button
-          type="button"
-          className="btn-ghost btn-compact inline-flex items-center gap-1.5"
-          onClick={() => {
-            setDiscardError(null);
-            setConfirmDiscard(true);
-          }}
-        >
-          <RotateCcw className="h-4 w-4" aria-hidden="true" /> Reset
-        </button>
-        <span className="flex-1" />
-        {step > 1 && (
-          <button type="button" className="btn-secondary btn-compact inline-flex items-center gap-1.5" onClick={() => go((step - 1) as Step)}>
-            <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back
-          </button>
-        )}
-        {step < 3 && (
-          <button type="button" className="btn-secondary btn-compact inline-flex items-center gap-1.5" onClick={() => go((step + 1) as Step)} data-testid="step-next">
-            {step === 1 ? "Next: Approval workflow" : "Next: Review & submit"} <ArrowRight className="h-4 w-4" aria-hidden="true" />
-          </button>
-        )}
-        {/* Submit is always there (it checks everything on the server); it leads on the last step. */}
-        <SubmitButton pending={pending} variant={step === 3 ? "primary" : "secondary"} className="btn-compact">
-          <Send className="h-4 w-4" aria-hidden="true" /> Submit request
-        </SubmitButton>
-      </div>
 
       {/* WEB-11 (v1.10.0): the app's own confirmation, not the browser's. */}
       <ConfirmDialog

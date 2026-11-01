@@ -4,7 +4,7 @@ import { AtSign, Bold, CalendarDays, ChevronDown, Italic, List, ListOrdered, Pap
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { followAction, quickAddAction, recurrenceAction } from "@/app/users/work/actions";
+import { followAction, quickAddAction, recurrenceAction, taskFieldsAction } from "@/app/users/work/actions";
 import { taskAction } from "@/app/users/tasks/actions";
 import { draftTaskTextAction } from "@/app/users/ai/actions";
 import { CREATE_TASK_EVENT, ProjectDot, useWorkCall } from "@/features/work/client";
@@ -66,7 +66,21 @@ const sizeText = (bytes: number) => (bytes < 1024 * 1024 ? `${Math.max(1, Math.r
 // people it answers), the due date and repeat; collaborators beside Create task;
 // "/" in the description opens the same commands. The panel is taller than wide
 // and grows a step at a time with the screen.
-function CreateTaskDialog({ onClose, projects, people, meId, defaultProject, ai }: { onClose: () => void; projects: RailProject[]; people: Person[]; meId: number; defaultProject: number | null; ai: boolean }) {
+function CreateTaskDialog({
+  onClose,
+  projects,
+  people,
+  meId,
+  defaultProject,
+  ai,
+}: {
+  onClose: () => void;
+  projects: RailProject[];
+  people: Person[];
+  meId: number;
+  defaultProject: number | null;
+  ai: boolean;
+}) {
   const router = useRouter();
   const { call, pending } = useWorkCall();
   const [title, setTitle] = useState("");
@@ -78,6 +92,8 @@ function CreateTaskDialog({ onClose, projects, people, meId, defaultProject, ai 
   const [project, setProject] = useState<number | "">(defaultProject ?? "");
   const [description, setDescription] = useState("");
   const [periodic, setPeriodic] = useState(false);
+  // D-259: priority, set on the new task(s) right after they are made.
+  const [priority, setPriority] = useState<"LOW" | "NORMAL" | "HIGH" | "URGENT">("NORMAL");
   const assignees = forWhom === "self" ? [meId] : periodic ? others.slice(0, 1) : others;
   const [kind, setKind] = useState<Recurrence["kind"]>("WEEKLY");
   const [every, setEvery] = useState(1);
@@ -213,6 +229,7 @@ function CreateTaskDialog({ onClose, projects, people, meId, defaultProject, ai 
     if (!result?.ok || !result.value) return;
     const id = result.value.id;
     if (periodic) await call(() => recurrenceAction(id, { kind, every, weekdays: kind === "WEEKLY" ? weekdays : [] }), { success: false });
+    if (priority !== "NORMAL") for (const one of (result.value as { ids?: number[] }).ids ?? [id]) await call(() => taskFieldsAction(one, { priority }), { success: false });
     // D-238: files and collaborators follow once the task exists (its own checks apply).
     if (files.length) {
       const data = new FormData();
@@ -249,11 +266,11 @@ function CreateTaskDialog({ onClose, projects, people, meId, defaultProject, ai 
         }
         if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) void submit();
       }}
-      className={`fixed bottom-4 right-4 z-50 flex max-h-[calc(100dvh-2rem)] w-[min(30rem,calc(100vw-2rem))] flex-col rounded-xl border border-line bg-raised text-ink shadow-overlay lg:w-[33rem] 2xl:w-[37rem] ${small ? "" : "h-[34rem] lg:h-[38rem] 2xl:h-[44rem]"}`}
+      className={`draft-task fixed bottom-4 right-4 z-50 flex max-h-[calc(100dvh-2rem)] w-[min(30rem,calc(100vw-2rem))] flex-col rounded-xl border border-line bg-raised text-ink shadow-overlay ${small ? "" : "h-[34rem] lg:bottom-auto lg:right-auto lg:left-1/2 lg:top-1/2 lg:h-auto lg:max-h-[min(44rem,calc(100dvh-4rem))] lg:w-[min(60rem,calc(100vw-4rem))] lg:-translate-x-1/2 lg:-translate-y-1/2"}`}
     >
       <header className="flex items-center gap-2 border-b border-line px-4 py-2.5">
-        <h2 id="draft-task-title" className="flex-1 text-label font-semibold text-ink-muted">
-          Draft task
+        <h2 id="draft-task-title" className="flex-1 font-semibold">
+          Create task <span className="text-caption font-normal text-ink-muted">· draft</span>
         </h2>
         <button type="button" aria-label={small ? "Expand" : "Minimise"} onClick={() => setSmall((value) => !value)} className="rounded p-1 text-ink-muted hover:bg-surface-muted">
           <ChevronDown aria-hidden="true" className={`h-4 w-4 ${small ? "rotate-180" : ""}`} />
@@ -270,294 +287,347 @@ function CreateTaskDialog({ onClose, projects, people, meId, defaultProject, ai 
             void submit();
           }}
         >
-          <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-5 py-4">
-            <label htmlFor="create-title" className="sr-only">
-              Task name
-            </label>
-            <input
-              ref={name}
-              id="create-title"
-              required
-              maxLength={200}
-              placeholder="Task name"
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              className="w-full bg-transparent text-title font-semibold placeholder:text-ink-faint focus:outline-none"
-            />
-            <div className="flex flex-wrap items-center gap-2 text-label">
-              <span className="text-ink-muted">For</span>
-              {/* D-224 (owner): a task is for myself (the default) or for others. */}
-              <span role="radiogroup" aria-label="Who is the task for" className="inline-flex rounded-full border border-line p-0.5">
-                {(["self", "others"] as const).map((value) => (
-                  <button
-                    key={value}
-                    type="button"
-                    role="radio"
-                    aria-checked={forWhom === value}
-                    onClick={() => {
-                      setForWhom(value);
-                      setPicking(value === "others" && others.length === 0 ? "assignee" : "");
-                    }}
-                    className={`rounded-full px-2.5 py-0.5 text-label ${forWhom === value ? "bg-primary-50 font-semibold text-primary-700" : "text-ink-muted hover:text-ink"}`}
-                  >
-                    {value === "self" ? "Myself" : "Others"}
-                  </button>
-                ))}
-              </span>
-              {forWhom === "others" &&
-                others.map((id) => (
-                  <span key={id} className={chip} data-testid="assignee-chip">
-                    {label(id)}
-                    <button type="button" aria-label={`Remove ${label(id)}`} onClick={() => setOthers((value) => value.filter((item) => item !== id))} className="text-ink-faint hover:text-danger-600">
-                      <X aria-hidden="true" className="h-3 w-3" />
-                    </button>
-                  </span>
-                ))}
-              {forWhom === "others" &&
-                (picking === "assignee" ? (
-                  <PersonSearch
-                    people={people.filter((item) => item.id !== meId && !others.includes(item.id))}
-                    onPick={(id) => {
-                      // Periodic: one person (the choice replaces); ad hoc: add people.
-                      setOthers((value) => (periodic ? [id] : [...value, id]));
-                      if (periodic) setPicking("");
-                    }}
-                    onDone={() => setPicking("")}
-                  />
-                ) : (
-                  <button type="button" className={`${chip} border-dashed text-ink-muted`} onClick={() => setPicking("assignee")} aria-label={periodic && others.length ? "Change the assignee" : "Add an assignee"}>
-                    {periodic && others.length ? "Change" : "+ Person"}
-                  </button>
-                ))}
-              <span className="text-ink-muted">in</span>
-              {picking === "project" ? (
-                <select
-                  autoFocus
-                  aria-label="Project"
-                  value={project}
-                  onChange={(event) => setProject(event.target.value ? Number(event.target.value) : "")}
-                  onBlur={() => setPicking("")}
-                  className="field-input h-8 w-56 py-0 text-label"
-                >
-                  <option value="">No project (My Tasks)</option>
-                  {projects.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.name}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <button type="button" className={`${chip} ${chosen ? "" : "border-dashed text-ink-muted"}`} onClick={() => setPicking("project")} aria-label={`Project: ${chosen?.name ?? "none"}. Change`}>
-                  {chosen ? (
-                    <>
-                      <ProjectDot color={chosen.color} /> {chosen.name}
-                    </>
-                  ) : (
-                    "Project"
-                  )}
-                </button>
-              )}
-            </div>
-            {formatting && (
-              <div role="toolbar" aria-label="Formatting" className="flex items-center gap-0.5 rounded-md border border-line px-1 py-0.5" data-testid="format-bar">
-                <button type="button" aria-label="Bold" title="Bold (**text**)" onClick={() => format("bold")} className={tool()}>
-                  <Bold aria-hidden="true" className="h-4 w-4" />
-                </button>
-                <button type="button" aria-label="Italic" title="Italic (_text_)" onClick={() => format("italic")} className={tool()}>
-                  <Italic aria-hidden="true" className="h-4 w-4" />
-                </button>
-                <button type="button" aria-label="Strikethrough" title="Strikethrough (~~text~~)" onClick={() => format("strike")} className={tool()}>
-                  <Strikethrough aria-hidden="true" className="h-4 w-4" />
-                </button>
-                <span aria-hidden="true" className="mx-1 h-5 w-px bg-line" />
-                <button type="button" aria-label="Bulleted list" title="Bulleted list" onClick={() => format("bullets")} className={tool()}>
-                  <List aria-hidden="true" className="h-4 w-4" />
-                </button>
-                <button type="button" aria-label="Numbered list" title="Numbered list" onClick={() => format("numbers")} className={tool()}>
-                  <ListOrdered aria-hidden="true" className="h-4 w-4" />
-                </button>
-              </div>
-            )}
-            <div className="relative flex min-h-[6rem] flex-1 flex-col">
-              <label htmlFor="create-description" className="sr-only">
-                Description
+          <div className="draft-body flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-5 py-4 lg:grid lg:grid-cols-[minmax(0,1fr)_16.5rem] lg:items-start lg:gap-6">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
+              <p className="hidden text-caption font-semibold uppercase tracking-wide text-ink-faint lg:block">Task details</p>
+              <label htmlFor="create-title" className="sr-only">
+                Task name
               </label>
-              <textarea
-                ref={text}
-                id="create-description"
-                maxLength={4000}
-                placeholder="Description. Type / for menu, @ to mention someone; paste an image to attach it."
-                value={description}
-                aria-describedby="create-description-help"
-                onChange={(event) => {
-                  const value = event.target.value;
-                  const caret = event.target.selectionStart ?? value.length;
-                  const typed = value.length === description.length + 1 ? value[caret - 1] : null;
-                  const before = caret >= 2 ? value[caret - 2] : "";
-                  setDescription(value);
-                  if (typed === "/" && (!before || /\s/.test(before))) {
-                    setSlash({ at: caret - 1, query: "", index: 0 });
-                    setPop("slash");
-                  } else if (typed === "@" && (!before || /\s/.test(before))) {
-                    setAtSign(caret - 1);
-                    setPop("mention");
-                  } else if (slash) {
-                    const query = value.slice(slash.at + 1, caret);
-                    if (value[slash.at] !== "/" || caret <= slash.at || /\s/.test(query) || query.length > 20) {
-                      setSlash(null);
-                      setPop("");
-                    } else setSlash({ ...slash, query, index: 0 });
-                  }
-                }}
-                onKeyDown={(event) => {
-                  if (!slash || pop !== "slash") return;
-                  if (event.key === "ArrowDown" || event.key === "ArrowUp") {
-                    event.preventDefault();
-                    setSlash({ ...slash, index: Math.max(0, Math.min(slashMatches.length - 1, slash.index + (event.key === "ArrowDown" ? 1 : -1))) });
-                  } else if (event.key === "Enter" && !(event.ctrlKey || event.metaKey)) {
-                    const item = slashMatches[slash.index];
-                    if (item) {
-                      event.preventDefault();
-                      runSlash(item.key);
-                    }
-                  }
-                }}
-                onPaste={(event) => {
-                  const pasted = Array.from(event.clipboardData.files);
-                  if (!pasted.length) return;
-                  event.preventDefault();
-                  addFiles(pasted.map((file) => (/^image\.\w+$/.test(file.name) ? new File([file], `pasted-image-${Date.now()}.${file.name.split(".").pop()}`, { type: file.type }) : file)));
-                }}
-                className="min-h-[6rem] w-full flex-1 resize-none bg-transparent text-body placeholder:text-ink-faint focus:outline-none"
+              <input
+                ref={name}
+                id="create-title"
+                required
+                maxLength={200}
+                placeholder="Task name"
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                className="w-full bg-transparent text-title font-semibold placeholder:text-ink-faint focus:outline-none lg:rounded-md lg:border lg:border-line lg:px-3 lg:py-2 lg:text-body lg:focus:border-primary-600"
               />
-              <p id="create-description-help" className="sr-only">
-                Type / for formatting and other commands, or @ to mention someone. Mentioned people become collaborators.
-              </p>
-              {pop === "slash" && slash && (
-                <ul role="listbox" aria-label="Commands" className="absolute left-0 top-8 z-20 max-h-64 w-64 overflow-y-auto rounded-md border border-line bg-raised py-1 shadow-overlay" data-testid="slash-menu">
-                  {slashMatches.length === 0 ? (
-                    <li className="px-3 py-1.5 text-label text-ink-muted">No command matches.</li>
-                  ) : (
-                    slashMatches.map((item, index) => (
-                      <li
-                        key={item.key}
-                        role="option"
-                        aria-selected={index === slash.index}
-                        onMouseDown={(event) => {
-                          event.preventDefault();
-                          runSlash(item.key);
-                        }}
-                        className={`flex cursor-pointer items-center justify-between gap-2 px-3 py-1.5 text-label ${index === slash.index ? "bg-primary-50 text-primary-700" : "text-ink hover:bg-surface-muted"}`}
+              <div className="flex flex-wrap items-center gap-2 text-label">
+                <span className="text-ink-muted">For</span>
+                {/* D-224 (owner): a task is for myself (the default) or for others. */}
+                <span role="radiogroup" aria-label="Who is the task for" className="inline-flex rounded-full border border-line p-0.5">
+                  {(["self", "others"] as const).map((value) => (
+                    <button
+                      key={value}
+                      type="button"
+                      role="radio"
+                      aria-checked={forWhom === value}
+                      onClick={() => {
+                        setForWhom(value);
+                        setPicking(value === "others" && others.length === 0 ? "assignee" : "");
+                      }}
+                      className={`rounded-full px-2.5 py-0.5 text-label ${forWhom === value ? "bg-primary-50 font-semibold text-primary-700" : "text-ink-muted hover:text-ink"}`}
+                    >
+                      {value === "self" ? "Myself" : "Others"}
+                    </button>
+                  ))}
+                </span>
+                {forWhom === "others" &&
+                  others.map((id) => (
+                    <span key={id} className={chip} data-testid="assignee-chip">
+                      {label(id)}
+                      <button
+                        type="button"
+                        aria-label={`Remove ${label(id)}`}
+                        onClick={() => setOthers((value) => value.filter((item) => item !== id))}
+                        className="text-ink-faint hover:text-danger-600"
                       >
-                        {item.label}
-                        <span className="text-caption text-ink-faint">{item.hint}</span>
-                      </li>
-                    ))
-                  )}
+                        <X aria-hidden="true" className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                {forWhom === "others" &&
+                  (picking === "assignee" ? (
+                    <PersonSearch
+                      people={people.filter((item) => item.id !== meId && !others.includes(item.id))}
+                      onPick={(id) => {
+                        // Periodic: one person (the choice replaces); ad hoc: add people.
+                        setOthers((value) => (periodic ? [id] : [...value, id]));
+                        if (periodic) setPicking("");
+                      }}
+                      onDone={() => setPicking("")}
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      className={`${chip} border-dashed text-ink-muted`}
+                      onClick={() => setPicking("assignee")}
+                      aria-label={periodic && others.length ? "Change the assignee" : "Add an assignee"}
+                    >
+                      {periodic && others.length ? "Change" : "+ Person"}
+                    </button>
+                  ))}
+                <span className="text-ink-muted">in</span>
+                {picking === "project" ? (
+                  <select
+                    autoFocus
+                    aria-label="Project"
+                    value={project}
+                    onChange={(event) => setProject(event.target.value ? Number(event.target.value) : "")}
+                    onBlur={() => setPicking("")}
+                    className="field-input h-8 w-56 py-0 text-label"
+                  >
+                    <option value="">No project (My Tasks)</option>
+                    {projects.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.name}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <button
+                    type="button"
+                    className={`${chip} ${chosen ? "" : "border-dashed text-ink-muted"}`}
+                    onClick={() => setPicking("project")}
+                    aria-label={`Project: ${chosen?.name ?? "none"}. Change`}
+                  >
+                    {chosen ? (
+                      <>
+                        <ProjectDot color={chosen.color} /> {chosen.name}
+                      </>
+                    ) : (
+                      "Project"
+                    )}
+                  </button>
+                )}
+              </div>
+              {formatting && (
+                <div role="toolbar" aria-label="Formatting" className="flex items-center gap-0.5 rounded-md border border-line px-1 py-0.5" data-testid="format-bar">
+                  <button type="button" aria-label="Bold" title="Bold (**text**)" onClick={() => format("bold")} className={tool()}>
+                    <Bold aria-hidden="true" className="h-4 w-4" />
+                  </button>
+                  <button type="button" aria-label="Italic" title="Italic (_text_)" onClick={() => format("italic")} className={tool()}>
+                    <Italic aria-hidden="true" className="h-4 w-4" />
+                  </button>
+                  <button type="button" aria-label="Strikethrough" title="Strikethrough (~~text~~)" onClick={() => format("strike")} className={tool()}>
+                    <Strikethrough aria-hidden="true" className="h-4 w-4" />
+                  </button>
+                  <span aria-hidden="true" className="mx-1 h-5 w-px bg-line" />
+                  <button type="button" aria-label="Bulleted list" title="Bulleted list" onClick={() => format("bullets")} className={tool()}>
+                    <List aria-hidden="true" className="h-4 w-4" />
+                  </button>
+                  <button type="button" aria-label="Numbered list" title="Numbered list" onClick={() => format("numbers")} className={tool()}>
+                    <ListOrdered aria-hidden="true" className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+              <div className="relative flex min-h-[6rem] flex-1 flex-col lg:min-h-[12rem] lg:rounded-md lg:border lg:border-line lg:px-3 lg:py-2">
+                <label htmlFor="create-description" className="sr-only">
+                  Description
+                </label>
+                <textarea
+                  ref={text}
+                  id="create-description"
+                  maxLength={4000}
+                  placeholder="Description. Type / for menu, @ to mention someone; paste an image to attach it."
+                  value={description}
+                  aria-describedby="create-description-help"
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    const caret = event.target.selectionStart ?? value.length;
+                    const typed = value.length === description.length + 1 ? value[caret - 1] : null;
+                    const before = caret >= 2 ? value[caret - 2] : "";
+                    setDescription(value);
+                    if (typed === "/" && (!before || /\s/.test(before))) {
+                      setSlash({ at: caret - 1, query: "", index: 0 });
+                      setPop("slash");
+                    } else if (typed === "@" && (!before || /\s/.test(before))) {
+                      setAtSign(caret - 1);
+                      setPop("mention");
+                    } else if (slash) {
+                      const query = value.slice(slash.at + 1, caret);
+                      if (value[slash.at] !== "/" || caret <= slash.at || /\s/.test(query) || query.length > 20) {
+                        setSlash(null);
+                        setPop("");
+                      } else setSlash({ ...slash, query, index: 0 });
+                    }
+                  }}
+                  onKeyDown={(event) => {
+                    if (!slash || pop !== "slash") return;
+                    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+                      event.preventDefault();
+                      setSlash({ ...slash, index: Math.max(0, Math.min(slashMatches.length - 1, slash.index + (event.key === "ArrowDown" ? 1 : -1))) });
+                    } else if (event.key === "Enter" && !(event.ctrlKey || event.metaKey)) {
+                      const item = slashMatches[slash.index];
+                      if (item) {
+                        event.preventDefault();
+                        runSlash(item.key);
+                      }
+                    }
+                  }}
+                  onPaste={(event) => {
+                    const pasted = Array.from(event.clipboardData.files);
+                    if (!pasted.length) return;
+                    event.preventDefault();
+                    addFiles(pasted.map((file) => (/^image\.\w+$/.test(file.name) ? new File([file], `pasted-image-${Date.now()}.${file.name.split(".").pop()}`, { type: file.type }) : file)));
+                  }}
+                  className="min-h-[6rem] w-full flex-1 resize-none bg-transparent text-body placeholder:text-ink-faint focus:outline-none"
+                />
+                <p id="create-description-help" className="sr-only">
+                  Type / for formatting and other commands, or @ to mention someone. Mentioned people become collaborators.
+                </p>
+                {pop === "slash" && slash && (
+                  <ul
+                    role="listbox"
+                    aria-label="Commands"
+                    className="absolute left-0 top-8 z-20 max-h-64 w-64 overflow-y-auto rounded-md border border-line bg-raised py-1 shadow-overlay"
+                    data-testid="slash-menu"
+                  >
+                    {slashMatches.length === 0 ? (
+                      <li className="px-3 py-1.5 text-label text-ink-muted">No command matches.</li>
+                    ) : (
+                      slashMatches.map((item, index) => (
+                        <li
+                          key={item.key}
+                          role="option"
+                          aria-selected={index === slash.index}
+                          onMouseDown={(event) => {
+                            event.preventDefault();
+                            runSlash(item.key);
+                          }}
+                          className={`flex cursor-pointer items-center justify-between gap-2 px-3 py-1.5 text-label ${index === slash.index ? "bg-primary-50 text-primary-700" : "text-ink hover:bg-surface-muted"}`}
+                        >
+                          {item.label}
+                          <span className="text-caption text-ink-faint">{item.hint}</span>
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                )}
+              </div>
+              {beforeAi !== null && (
+                <p role="status" className="flex items-center gap-2 text-caption text-ink-muted">
+                  <Sparkles aria-hidden="true" className="h-3.5 w-3.5 text-primary-700" /> Written by Pico Bot: check it before you create the task.
+                  <button
+                    type="button"
+                    className="link"
+                    onClick={() => {
+                      setDescription(beforeAi);
+                      setBeforeAi(null);
+                    }}
+                  >
+                    Undo
+                  </button>
+                </p>
+              )}
+              {files.length > 0 && (
+                <ul aria-label="Files to attach" className="flex flex-wrap gap-2" data-testid="draft-files">
+                  {files.map((file, index) => (
+                    <li key={`${file.name}-${index}`} className={chip}>
+                      <Paperclip aria-hidden="true" className="h-3 w-3" />
+                      <span className="max-w-[12rem] truncate">{file.name}</span>
+                      <span className="text-caption text-ink-faint">{sizeText(file.size)}</span>
+                      <button
+                        type="button"
+                        aria-label={`Remove ${file.name}`}
+                        onClick={() => setFiles((value) => value.filter((_, at) => at !== index))}
+                        className="text-ink-faint hover:text-danger-600"
+                      >
+                        <X aria-hidden="true" className="h-3 w-3" />
+                      </button>
+                    </li>
+                  ))}
                 </ul>
               )}
+              {fileProblem && (
+                <p role="alert" className="text-caption text-danger-600">
+                  {fileProblem}
+                </p>
+              )}
             </div>
-            {beforeAi !== null && (
-              <p role="status" className="flex items-center gap-2 text-caption text-ink-muted">
-                <Sparkles aria-hidden="true" className="h-3.5 w-3.5 text-primary-700" /> Written by Pico Bot: check it before you create the task.
-                <button
-                  type="button"
-                  className="link"
-                  onClick={() => {
-                    setDescription(beforeAi);
-                    setBeforeAi(null);
-                  }}
-                >
-                  Undo
-                </button>
-              </p>
-            )}
-            {files.length > 0 && (
-              <ul aria-label="Files to attach" className="flex flex-wrap gap-2" data-testid="draft-files">
-                {files.map((file, index) => (
-                  <li key={`${file.name}-${index}`} className={chip}>
-                    <Paperclip aria-hidden="true" className="h-3 w-3" />
-                    <span className="max-w-[12rem] truncate">{file.name}</span>
-                    <span className="text-caption text-ink-faint">{sizeText(file.size)}</span>
-                    <button type="button" aria-label={`Remove ${file.name}`} onClick={() => setFiles((value) => value.filter((_, at) => at !== index))} className="text-ink-faint hover:text-danger-600">
-                      <X aria-hidden="true" className="h-3 w-3" />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-            {fileProblem && (
-              <p role="alert" className="text-caption text-danger-600">
-                {fileProblem}
-              </p>
-            )}
-            {(picking === "due" || due) && (
-              <div className="flex items-center gap-2 text-label">
+            <aside className="flex flex-col gap-3 lg:rounded-lg lg:border lg:border-line lg:bg-surface-muted lg:p-3" aria-label="Task settings">
+              <p className="hidden text-caption font-semibold uppercase tracking-wide text-ink-faint lg:block">Task settings</p>
+              <div className={`${picking === "due" || due ? "flex" : "hidden lg:flex"} items-center gap-2 text-label lg:flex-col lg:items-stretch lg:gap-1`}>
                 <label htmlFor="create-due" className="text-ink-muted">
                   Due date
                 </label>
-                <input id="create-due" type="date" value={due} onChange={(event) => setDue(event.target.value)} className="field-input h-8 w-44 py-0 text-label" />
+                <input id="create-due" type="date" value={due} onChange={(event) => setDue(event.target.value)} className="field-input h-8 w-44 py-0 text-label lg:w-full" />
                 {due && (
-                  <button type="button" aria-label="Remove due date" onClick={() => setDue("")} className="rounded p-1 text-ink-muted hover:bg-surface-muted">
+                  <button type="button" aria-label="Remove due date" onClick={() => setDue("")} className="rounded p-1 text-ink-muted hover:bg-surface-muted lg:self-start">
                     <X aria-hidden="true" className="h-3.5 w-3.5" />
                   </button>
                 )}
               </div>
-            )}
-            <fieldset className={picking === "repeat" || periodic ? "space-y-2 rounded-md border border-line p-3" : "sr-only"}>
-              <legend className="px-1 text-label font-semibold">Ad hoc or periodic</legend>
-              <div className="flex flex-wrap gap-4 text-label">
-                <label className="flex items-center gap-2">
-                  <input type="radio" name="create-kind" checked={!periodic} onChange={() => setPeriodic(false)} /> Ad hoc (one time; you can give it to several people)
+              <div className="flex items-center gap-2 text-label lg:flex-col lg:items-stretch lg:gap-1">
+                <label htmlFor="create-priority" className="text-ink-muted">
+                  Priority
                 </label>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name="create-kind"
-                    checked={periodic}
-                    onChange={() => {
-                      setPeriodic(true);
-                      setOthers((value) => value.slice(0, 1));
-                    }}
-                  />{" "}
-                  Periodic (repeats)
-                </label>
+                <select id="create-priority" value={priority} onChange={(event) => setPriority(event.target.value as typeof priority)} className="field-input h-8 w-40 py-0 text-label lg:w-full">
+                  <option value="LOW">Low</option>
+                  <option value="NORMAL">Normal</option>
+                  <option value="HIGH">High</option>
+                  <option value="URGENT">Urgent</option>
+                </select>
               </div>
-              {periodic && (
-                <>
-                  <div className="flex flex-wrap items-center gap-2 text-label">
-                    Every
+              <fieldset
+                className={picking === "repeat" || periodic ? "space-y-2 rounded-md border border-line p-3" : "sr-only lg:not-sr-only lg:space-y-2 lg:rounded-md lg:border lg:border-line lg:p-3"}
+              >
+                <legend className="px-1 text-label font-semibold">Ad hoc or periodic</legend>
+                <div className="flex flex-wrap gap-4 text-label">
+                  <label className="flex items-center gap-2">
+                    <input type="radio" name="create-kind" checked={!periodic} onChange={() => setPeriodic(false)} /> Ad hoc (one time; you can give it to several people)
+                  </label>
+                  <label className="flex items-center gap-2">
                     <input
-                      type="number"
-                      min={1}
-                      max={365}
-                      value={every}
-                      onChange={(event) => setEvery(Math.max(1, Math.min(365, Number(event.target.value) || 1)))}
-                      aria-label="Every how many"
-                      className="field-input h-8 w-20 py-0"
-                    />
-                    <select value={kind} onChange={(event) => setKind(event.target.value as Recurrence["kind"])} aria-label="Repeat unit" className="field-input h-8 w-auto py-0">
-                      {RECURRENCE_KINDS.map((item) => (
-                        <option key={item} value={item}>
-                          {UNIT[item]}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  {kind === "WEEKLY" && (
-                    <fieldset className="flex flex-wrap gap-2 text-caption">
-                      <legend className="sr-only">On these days</legend>
-                      {DAYS.map((day, index) => (
-                        <label key={day} className="flex items-center gap-1">
-                          <input type="checkbox" checked={weekdays.includes(index)} onChange={(event) => setWeekdays((value) => (event.target.checked ? [...value, index] : value.filter((item) => item !== index)))} />{" "}
-                          {day}
-                        </label>
-                      ))}
-                    </fieldset>
-                  )}
-                </>
-              )}
-            </fieldset>
+                      type="radio"
+                      name="create-kind"
+                      checked={periodic}
+                      onChange={() => {
+                        setPeriodic(true);
+                        setOthers((value) => value.slice(0, 1));
+                      }}
+                    />{" "}
+                    Periodic (repeats)
+                  </label>
+                </div>
+                {periodic && (
+                  <>
+                    <div className="flex flex-wrap items-center gap-2 text-label">
+                      Every
+                      <input
+                        type="number"
+                        min={1}
+                        max={365}
+                        value={every}
+                        onChange={(event) => setEvery(Math.max(1, Math.min(365, Number(event.target.value) || 1)))}
+                        aria-label="Every how many"
+                        className="field-input h-8 w-20 py-0"
+                      />
+                      <select value={kind} onChange={(event) => setKind(event.target.value as Recurrence["kind"])} aria-label="Repeat unit" className="field-input h-8 w-auto py-0">
+                        {RECURRENCE_KINDS.map((item) => (
+                          <option key={item} value={item}>
+                            {UNIT[item]}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    {kind === "WEEKLY" && (
+                      <fieldset className="flex flex-wrap gap-2 text-caption">
+                        <legend className="sr-only">On these days</legend>
+                        {DAYS.map((day, index) => (
+                          <label key={day} className="flex items-center gap-1">
+                            <input
+                              type="checkbox"
+                              checked={weekdays.includes(index)}
+                              onChange={(event) => setWeekdays((value) => (event.target.checked ? [...value, index] : value.filter((item) => item !== index)))}
+                            />{" "}
+                            {day}
+                          </label>
+                        ))}
+                      </fieldset>
+                    )}
+                  </>
+                )}
+              </fieldset>
+              <div className="hidden text-label lg:block">
+                <p className="text-ink-muted">Collaborators</p>
+                {collaborators.length ? <p className="mt-1">{collaborators.map(label).join(", ")}</p> : <p className="mt-1 text-caption text-ink-faint">None yet: use the people button below.</p>}
+              </div>
+              <Link href="/users/tasks/new" onClick={onClose} className="link hidden text-label lg:inline">
+                Task with a form instead
+              </Link>
+            </aside>
           </div>
           <input
             ref={filePicker}
@@ -669,7 +739,15 @@ function CreateTaskDialog({ onClose, projects, people, meId, defaultProject, ai 
                 />
               </div>
             )}
-            <button type="button" aria-label="More" title="More" aria-haspopup="menu" aria-expanded={pop === "plus"} onClick={() => setPop(pop === "plus" ? "" : "plus")} className={tool(pop === "plus")}>
+            <button
+              type="button"
+              aria-label="More"
+              title="More"
+              aria-haspopup="menu"
+              aria-expanded={pop === "plus"}
+              onClick={() => setPop(pop === "plus" ? "" : "plus")}
+              className={tool(pop === "plus")}
+            >
               <Plus aria-hidden="true" className="h-4 w-4" />
             </button>
             <span aria-hidden="true" className="mx-0.5 h-5 w-px bg-line" />
@@ -740,7 +818,15 @@ function CreateTaskDialog({ onClose, projects, people, meId, defaultProject, ai 
                 </span>
                 {collaborators.length > 3 && <span>+{collaborators.length - 3}</span>}
               </button>
-              <button type="submit" disabled={pending || !title.trim() || assignees.length === 0} title={assignees.length === 0 ? "Choose who the task is for" : undefined} className="btn-primary btn-compact">
+              <button type="button" onClick={onClose} className="btn-ghost btn-compact hidden lg:inline-flex">
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={pending || !title.trim() || assignees.length === 0}
+                title={assignees.length === 0 ? "Choose who the task is for" : undefined}
+                className="btn-primary btn-compact"
+              >
                 Create task
               </button>
             </span>

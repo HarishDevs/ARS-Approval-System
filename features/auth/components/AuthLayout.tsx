@@ -1,3 +1,4 @@
+import { BrandLockup } from "@/features/ui/Brand";
 import { MailLink } from "@/features/ui/MailLink";
 
 // Split layout for the landing page, sign-in, set-password and forgot-password
@@ -50,8 +51,8 @@ export function AuthLayout({ children, landing = false }: { children: React.Reac
 
       <section className="flex items-center justify-center px-4 py-12 sm:px-8">
         <div className="w-full max-w-[440px]">
-          {/* eslint-disable-next-line @next/next/no-img-element -- static SVG logo */}
-          <img src="/brand/ars-green-steel.svg" alt="ARS Steels" className="h-16 w-auto" />
+          <span className="sr-only">ARS Steels · ARS-CMS</span>
+          <BrandLockup size="md" />
           <div className="auth-enter">{children}</div>
           {!landing && (
             <p className="mt-8 text-center text-body text-ink-muted">

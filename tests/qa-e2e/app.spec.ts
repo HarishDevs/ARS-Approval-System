@@ -93,14 +93,14 @@ test("QA-AUTH-01 sign out ends the session on the server; Back can't show protec
 test("QA-AUTH-02 a deactivated person is locked out at once", async ({ page, context }) => {
   await as(context, "E2E_HOD");
   await page.goto("/users");
-  await expect(page.getByRole("heading", { name: /Welcome back/ })).toBeVisible();
+  await expect(page.getByText(/Welcome back/).first()).toBeVisible();
   await sql("UPDATE users SET active = FALSE WHERE login_id = 'E2E_HOD'");
   try {
     const response = await page.goto("/users");
     note("QA-AUTH-02", { status: response?.status(), url: new URL(page.url()).pathname });
     expect(["/login", "/signed-out"].includes(new URL(page.url()).pathname) || response?.status() === 404).toBe(true);
     if (new URL(page.url()).pathname === "/signed-out") await expect(page.getByRole("heading", { name: "Your account isn't active" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: /Welcome back, Harini/ })).toHaveCount(0);
+    await expect(page.getByText(/Welcome back, Harini/)).toHaveCount(0);
   } finally {
     await sql("UPDATE users SET active = TRUE WHERE login_id = 'E2E_HOD'");
   }

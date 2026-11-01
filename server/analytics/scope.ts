@@ -9,7 +9,9 @@ import { getDbPool } from "@/lib/db/client";
 // - TEAM: requests raised by the person's direct reports (reporting manager).
 // - DEPARTMENT: requests raised by people in departments the person is HOD of.
 // - ORGANISATION: everything (IT team and Super Admin).
-export type ScopeKind = "MINE" | "APPROVALS" | "TEAM" | "DEPARTMENT" | "ORGANISATION";
+// - TASKS (D-262, owner): the tasks given to the person (Task Management);
+//   approval and information numbers don't apply to it.
+export type ScopeKind = "MINE" | "APPROVALS" | "TASKS" | "TEAM" | "DEPARTMENT" | "ORGANISATION";
 
 export interface Scope {
   kind: ScopeKind;
@@ -29,6 +31,8 @@ export async function availableScopes(viewer: Viewer): Promise<Scope[]> {
   const scopes: Scope[] = [{ kind: "MINE", label: "My requests" }];
   const [[tasks]] = await db.query<RowDataPacket[]>("SELECT EXISTS(SELECT 1 FROM approval_tasks WHERE approver_id = ? OR decided_by = ?) AS has_tasks", [viewer.id, viewer.id]);
   if (Number(tasks?.has_tasks)) scopes.push({ kind: "APPROVALS", label: "My approvals" });
+  const [[work]] = await db.query<RowDataPacket[]>("SELECT EXISTS(SELECT 1 FROM tasks WHERE assignee_id = ? AND deleted_at IS NULL) AS has_work", [viewer.id]);
+  if (Number(work?.has_work)) scopes.push({ kind: "TASKS", label: "My tasks" });
   const [[team]] = await db.query<RowDataPacket[]>("SELECT EXISTS(SELECT 1 FROM users WHERE reporting_manager_id = ? AND is_break_glass = FALSE) AS has_team", [viewer.id]);
   if (Number(team?.has_team)) scopes.push({ kind: "TEAM", label: "My team" });
   const [departments] = await db.query<(RowDataPacket & { id: number })[]>("SELECT id FROM departments WHERE hod_user_id = ? AND active = TRUE", [viewer.id]);
@@ -50,6 +54,8 @@ export function requestScopeSql(scope: Scope, viewer: Viewer): { sql: string; pa
       return scope.departmentIds?.length ? { sql: "rq.department_id IN (?)", params: [scope.departmentIds] } : { sql: "FALSE", params: [] };
     case "ORGANISATION":
       return { sql: "TRUE", params: [] };
+    case "TASKS":
+      return { sql: "FALSE", params: [] };
   }
 }
 

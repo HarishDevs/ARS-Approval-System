@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrandLockup } from "@/features/ui/Brand";
 import { InstallInviteAccountSync } from "@/features/pwa/InstallInvite";
 import { INSTALL_INVITE_FLAG } from "@/server/pwa/flags";
 import { Wrench } from "lucide-react";
@@ -193,9 +194,7 @@ export async function AppShell({
           {/* D-210: Classic has no sidebar, so the logo leads back to the Gateway from the top bar. */}
           {classic && (
             <Link href="/users" aria-label="ARS-CMS: Central Management System" className="hidden items-center gap-3 rounded-md md:flex" data-testid="classic-home">
-              {/* eslint-disable-next-line @next/next/no-img-element -- static SVG logo */}
-              <img src="/brand/ars-green-steel.svg" alt="" width={77} height={36} className="h-8 w-auto" />
-              <span className="text-label font-semibold uppercase tracking-wider text-ink-muted">Central Management System</span>
+              <BrandLockup size="md" />
             </Link>
           )}
           {/* D-232: the universal search sits in the middle of the top bar (Asana). */}

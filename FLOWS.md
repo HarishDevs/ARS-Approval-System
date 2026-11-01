@@ -1055,6 +1055,21 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 2. They filter (search, status, type, department, person, waiting on, priority, overdue, dates) and sort by a column title; 50 rows a page.
 3. **Download CSV** gives every matching row (up to 10,000) for Excel; audited. A row number opens the record.
 
+## F-195 Home: Approvals or Task Management (v1.42.0, D-264)
+1. Home opens on **Approvals** for approvers and on **Task Management** for everyone else (D-265); the switch at the top changes it.
+2. **Approval Overview:** four cards (Waiting for me, Overdue for me, My open requests, Changes asked of me), each opening its list; Waiting for me (or "Nothing waiting for you"), Due soon, Returned, My recent requests, Finished; on the right Your drafts (open or delete), Recently viewed, Quick insights for a chosen period.
+3. **My Work – Overview:** period (Today … Custom); cards Total, Upcoming, Overdue, Completed (each opens the matching task list); My Tasks with tabs (Upcoming, Overdue, Completed, All), tick to complete, open in the side pane to edit, reassign or change the due date; Projects with progress; Latest status updates; My weekly workload; then Tasks I've assigned and My team.
+4. The page refreshes its figures every minute while open. The selector shows only for people with both areas; /users/work and task links open Task Management.
+
+## F-194 Change a task in its table (v1.42.0, D-260)
+1. In a project's List, My Tasks or task search, click a cell of a task you may change:
+   - Name: type in place;
+   - Due date: pick a date;
+   - Assignee and Priority: choose from the list;
+   - Collaborators: add or remove people;
+   - Tags: add or remove tags.
+2. Each change is saved at once and checked on the server as in the task pane. Created by can't be changed.
+
 ## F-193 My requests (v1.41.0, D-256)
 1. My requests opens on **Raised by me** (Shared with me beside it, each with its total).
 2. A status card (All, Open, Waiting for approvers, Sent back, On hold, Approved, Rejected, Withdrawn, Overdue) filters the list; the counts follow the search and filters. Overdue requests are also counted under Waiting.
@@ -1063,14 +1078,14 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 5. Pages: numbered, 25, 50 or 100 a page; the table scrolls in its own box. On a phone each request is a card.
 
 ## F-192 New request in three steps (v1.41.0, D-255)
-1. **Request details:** title (required), IT's fields, files, collaborators. **Next** needs a title.
-2. **Approval workflow:** levels in order, parallel steps, choices; the reporting manager is the first approver. **Next: Review & submit** needs approvers on every step.
-3. **Review & submit:** the summary and the route; **Submit request** (the server checks everything again; a refused submit goes back to the step with the problem).
+1. **Request details:** title (required), IT's fields, files, collaborators. On a computer each column (details, workflow, summary) scrolls on its own. **Next** needs the title and every required field (marked with a red star); the missing ones are named beside them. The approval workflow can be seen but not changed until Next (D-263).
+2. **Approval workflow:** levels in order, parallel steps, choices; each level is a small summary card on top (click one to edit it; a new level opens itself); the reporting manager is the first approver. **Next: Review & submit** needs approvers on every step.
+3. **Review & submit:** the summary and the route; **Submit request** (shown on this step only) (the server checks everything again; a refused submit goes back to the step with the problem).
 4. All along: a live summary (sticky on wide screens, folded on phones); the draft saves itself (**Save as draft** saves at once); **Reset** asks first and clears the draft; Back keeps everything typed.
 
 ## F-191 Road tracker on a request (v1.41.0, D-253)
 1. The request page shows the road: "Request submitted", then one checkpoint per level of the route actually taken (a parallel level is one checkpoint; a choice shows only the path taken; FYI levels are left out), then the finish flag.
-2. The van stands at the level waiting now; the road behind it is green. Rejected: a red cross where it stopped. Changes asked, on hold or stuck: amber. Withdrawn: muted. Fully approved: the van at the flag with a large tick.
+2. While a level waits the van is on its way, halfway to it; it reaches the level's name only when that level approves (D-263). The finished road is green. The road sits at the top of the request page, centred, with Request details (the requester's details first) below it and the decision box at the top of the right column. Rejected: a red cross where it stopped. Changes asked, on hold or stuck: amber. Withdrawn: muted. Fully approved: the van at the flag with a large tick.
 3. Tapping a checkpoint shows its approvers, their status, times and comments (as the page already shows them).
 4. While the page is open it checks for news every 20 seconds (only while visible); when a level finishes, the van drives to the next one. Old or repeated news never moves it back.
 

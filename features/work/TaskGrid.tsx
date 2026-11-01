@@ -11,6 +11,7 @@ import { CREATE_TASK_EVENT, COLOR_HEX, TaskCheck, usePaneLink, useWorkCall } fro
 import { dueLabel, indiaDayOf, TONE_TEXT } from "@/features/work/format";
 import { BulkBar, FieldInput, type FieldView } from "@/features/work/MoreParts";
 import { AddTask } from "@/features/work/ProjectWorkspace";
+import { CollaboratorsCell, TagsCell } from "@/features/work/GridCellEditors";
 import {
   applyGrid,
   COLUMN_LABEL,
@@ -62,8 +63,10 @@ export function TaskGrid({
   view,
   testId = "task-grid",
   bulk = true,
-  editAssignee = false,
-  editPriority = false,
+  // D-260 (owner): cells are editable wherever the person may change the task
+  // (each task's canEdit, checked again on the server); a table can turn it off.
+  editAssignee = true,
+  editPriority = true,
   emptyText = "No tasks here.",
 }: {
   rows: GridTask[];
@@ -412,7 +415,7 @@ export function TaskGrid({
                                 <span className={due ? TONE_TEXT[due.tone] : "text-ink-faint"}>{due?.text ?? <CalendarDays aria-hidden="true" className="h-4 w-4" />}</span>
                               ))}
                             {column === "assignee" &&
-                              (editAssignee && task.canEdit && open ? (
+                              (editAssignee && people.length > 0 && task.canEdit && open ? (
                                 <span className="flex min-w-0 items-center gap-1.5">
                                   <PersonDot name={task.assigneeName} />
                                   <select
@@ -435,15 +438,12 @@ export function TaskGrid({
                                   <span className="truncate">{task.assigneeName}</span>
                                 </span>
                               ))}
-                            {column === "collaborators" && (
-                              <span className="flex -space-x-1.5">
-                                {task.followers.slice(0, 4).map((person) => (
-                                  <PersonDot key={person.id} name={person.name} ring />
-                                ))}
-                                {task.followers.length > 4 && <span className="ml-2 text-caption text-ink-muted">+{task.followers.length - 4}</span>}
+                            {column === "collaborators" && <CollaboratorsCell taskId={task.id} title={task.title} followers={task.followers} people={people} canEdit={task.canEdit && open && people.length > 0} />}
+                            {column === "createdBy" && (
+                              <span className="truncate text-ink-muted" title="Who made the task (can't be changed)">
+                                {task.createdByName}
                               </span>
                             )}
-                            {column === "createdBy" && <span className="truncate text-ink-muted">{task.createdByName}</span>}
                             {column === "projects" && (
                               <span className="flex min-w-0 gap-1">
                                 {task.projects.slice(0, 2).map((project) => (
@@ -480,7 +480,7 @@ export function TaskGrid({
                               ) : (
                                 <span className={`rounded-full px-2 py-0.5 text-caption ${PRIORITY_CLASS[task.priority]}`}>{task.priority.charAt(0) + task.priority.slice(1).toLowerCase()}</span>
                               ))}
-                            {column === "tags" && <span className="truncate text-caption text-ink-muted">{task.tags.map((tag) => `#${tag.name}`).join(" ")}</span>}
+                            {column === "tags" && <TagsCell taskId={task.id} title={task.title} tags={task.tags} canEdit={task.canEdit && open} />}
                           </span>
                         ))}
                         {fields.map((field) => (

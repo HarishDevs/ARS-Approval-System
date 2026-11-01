@@ -153,10 +153,13 @@ export function MyRequestsTable({ items }: { items: MyRequestItem[] }) {
               className="block px-4 py-3 active:bg-surface-muted"
             >
               <span className="flex items-start justify-between gap-2">
-                <span className="font-medium text-primary-700">
+                {/* A long title wraps (even one long word); the status stays whole. */}
+                <span className="min-w-0 font-medium text-primary-700 [overflow-wrap:anywhere]">
                   <SafeText text={item.title} />
                 </span>
-                <RequestStatusPill status={item.status} />
+                <span className="shrink-0">
+                  <RequestStatusPill status={item.status} />
+                </span>
               </span>
               <span className="block text-caption text-ink-muted">
                 {item.requestNo} · {item.workflowName} ·{" "}

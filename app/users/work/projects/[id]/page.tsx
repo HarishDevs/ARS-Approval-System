@@ -350,7 +350,8 @@ export default async function ProjectPage({
               {can.edit && (
                 <section className="card px-5 py-4" aria-label="Post a status update">
                   <h2 className="mb-3 font-semibold">Post a status update</h2>
-                  <StatusForm projectId={project.id} initial={typeof query.status === "string" ? query.status : undefined} />
+                  {/* Keyed by the status chosen in the header, so choosing another one there selects it here. */}
+                  <StatusForm key={typeof query.status === "string" ? query.status : "none"} projectId={project.id} initial={typeof query.status === "string" ? query.status : undefined} />
                 </section>
               )}
               <section className="card px-5 py-4" aria-labelledby="people">

@@ -12,7 +12,7 @@ import type { Checkpoint, CheckpointState, Road } from "@/server/approvals/road"
 // as below it), refreshed every 20 seconds while the page is visible; old or
 // repeated news never moves the van back.
 const POLL_MS = 20_000;
-const SPACING = 150; // px per checkpoint when the road needs to scroll
+const SPACING = 130; // px per checkpoint when the road needs to scroll
 
 // India time, written out by hand: the server and the browser must print the
 // very same text (their locale data can differ), or hydration fails.
@@ -158,15 +158,22 @@ export function ApprovalRoad({ requestId, initial, initialUpdatedAt, serverNow }
   useEffect(() => {
     const box = scroller.current;
     if (!box || box.scrollWidth <= box.clientWidth) return;
-    const target = (road.vanAt / Math.max(1, road.checkpoints.length - 1)) * (box.scrollWidth - 96) - box.clientWidth / 2 + 48;
+    const stop = road.outcome === "APPROVED" || road.vanAt === 0 ? road.vanAt : road.vanAt - 0.5;
+    const target = (stop / Math.max(1, road.checkpoints.length - 1)) * (box.scrollWidth - 96) - box.clientWidth / 2 + 48;
     box.scrollTo({ left: Math.max(0, target), behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
-  }, [road.vanAt, road.checkpoints.length]);
+  }, [road.vanAt, road.checkpoints.length, road.outcome]);
 
   const points = road.checkpoints;
   const last = points.length - 1;
   const at = (index: number) => (last === 0 ? 50 : (index / last) * 100);
-  const vanLeft = at(road.vanAt);
-  const greenTo = road.outcome === "APPROVED" ? 100 : at(road.vanAt);
+  // D-263 (owner): while a level waits, the van is on its way: halfway between
+  // the last finished point and the waiting one. It drives onto a point only
+  // once that level is approved; fully approved, it reaches the flag. The green
+  // road is only what is finished.
+  const arrived = road.outcome === "APPROVED" || road.vanAt === 0;
+  const vanStop = arrived ? road.vanAt : road.vanAt - 0.5;
+  const vanLeft = at(vanStop);
+  const greenTo = road.outcome === "APPROVED" ? 100 : at(Math.max(0, road.vanAt - 1));
   const approved = road.outcome === "APPROVED";
   const submitted = points[0]?.finishedAt;
   const closed = road.outcome ? (points.map((point) => point.finishedAt).filter(Boolean).sort().at(-1) ?? null) : null;
@@ -175,7 +182,7 @@ export function ApprovalRoad({ requestId, initial, initialUpdatedAt, serverNow }
   const headline = approved ? "Approved" : road.outcome === "REJECTED" ? "Rejected" : road.outcome === "CANCELLED" ? "Withdrawn" : `At ${points[road.vanAt]?.label ?? "the start"}`;
 
   return (
-    <div className="mb-5" data-testid="approval-road" data-van-at={road.vanAt} data-outcome={road.outcome ?? "OPEN"}>
+    <div className="mx-auto mb-4 max-w-4xl" data-testid="approval-road" data-van-at={road.vanAt} data-outcome={road.outcome ?? "OPEN"}>
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <p className="text-label font-semibold" aria-live="polite">
           {headline}
@@ -194,22 +201,22 @@ export function ApprovalRoad({ requestId, initial, initialUpdatedAt, serverNow }
       <div ref={scroller} className="scroll-hint -mx-2 overflow-x-auto px-2 pb-2" tabIndex={0} aria-label="Approval road">
         <div className="relative" style={{ minWidth: Math.max(points.length * SPACING + 60, 340) }}>
           {/* The road: 96px of sky for the van, the road, then the labels. */}
-          <div className="relative mx-[76px] h-[150px]">
+          <div className="relative mx-[64px] h-[124px]">
             {/* finish flag */}
-            <svg className="absolute bottom-[56px]" style={{ left: "calc(100% + 26px)" }} width="34" height="40" viewBox="0 0 34 40" aria-hidden="true">
+            <svg className="absolute bottom-[52px]" style={{ left: "calc(100% + 22px)" }} width="28" height="33" viewBox="0 0 34 40" aria-hidden="true">
               <line x1="4" y1="2" x2="4" y2="40" stroke="var(--color-text-primary)" strokeWidth="2.5" />
               {[0, 1, 2, 3].map((row) =>
                 [0, 1, 2, 3, 4].map((col) => <rect key={`${row}-${col}`} x={5 + col * 5.6} y={3 + row * 4.2} width="5.6" height="4.2" fill={(row + col) % 2 ? "#ffffff" : "#111827"} stroke="#111827" strokeWidth="0.3" />),
               )}
             </svg>
             {/* road surface */}
-            <div className="absolute inset-x-[-24px] bottom-[34px] h-[22px] overflow-hidden rounded-full border border-[color:var(--road-edge)] bg-[color:var(--road-surface)]">
+            <div className="absolute inset-x-[-24px] bottom-[34px] h-[18px] overflow-hidden rounded-full border border-[color:var(--road-edge)] bg-[color:var(--road-surface)]">
               <div className="absolute inset-y-0 left-0 rounded-full bg-[color:var(--road-done)] motion-safe:transition-[width] motion-safe:duration-[1200ms] motion-safe:ease-in-out" style={{ width: `calc(24px + (100% - 48px) * ${greenTo / 100})` }} />
               <div className="absolute inset-x-0 top-1/2 h-[3px] -translate-y-1/2 bg-[repeating-linear-gradient(90deg,var(--road-lane)_0_18px,transparent_18px_34px)]" />
             </div>
             {/* the van */}
             <div
-              className="absolute bottom-[50px] z-[2] -translate-x-1/2 motion-safe:transition-[left] motion-safe:duration-[1200ms] motion-safe:ease-in-out"
+              className="absolute bottom-[47px] z-[2] -translate-x-1/2 motion-safe:transition-[left] motion-safe:duration-[1200ms] motion-safe:ease-in-out"
               style={{ left: `${vanLeft}%` }}
               data-testid="road-van"
             >
@@ -218,7 +225,7 @@ export function ApprovalRoad({ requestId, initial, initialUpdatedAt, serverNow }
                   <Check className="h-5 w-5" strokeWidth={3.5} aria-hidden="true" />
                 </span>
               )}
-              <ArsVan width={92} moving={moving} />
+              <ArsVan width={72} moving={moving} />
             </div>
             {/* checkpoints */}
             {points.map((point, index) => (
@@ -228,7 +235,7 @@ export function ApprovalRoad({ requestId, initial, initialUpdatedAt, serverNow }
                 onClick={() => setOpen(open === index ? null : index)}
                 aria-expanded={open === index}
                 aria-label={`${point.label}: ${statusText(point, index).word}`}
-                className={`absolute bottom-[27px] z-[3] grid h-9 w-9 -translate-x-1/2 place-items-center rounded-full border-[3px] shadow-card outline-none focus-visible:ring-4 focus-visible:ring-primary-600/50 ${DOT[point.state]}`}
+                className={`absolute bottom-[27px] z-[3] grid h-8 w-8 -translate-x-1/2 place-items-center rounded-full border-[3px] shadow-card outline-none focus-visible:ring-4 focus-visible:ring-primary-600/50 ${DOT[point.state]}`}
                 style={{ left: `${at(index)}%` }}
                 data-testid="road-checkpoint"
                 data-state={point.state}
@@ -238,11 +245,11 @@ export function ApprovalRoad({ requestId, initial, initialUpdatedAt, serverNow }
             ))}
           </div>
           {/* labels */}
-          <ol className="relative mx-[76px] h-[86px]">
+          <ol className="relative mx-[64px] h-[80px]">
             {points.map((point, index) => {
               const status = statusText(point, index);
               return (
-                <li key={point.key} className="absolute top-0 w-[136px] -translate-x-1/2 text-center" style={{ left: `${at(index)}%` }}>
+                <li key={point.key} className="absolute top-0 w-[120px] -translate-x-1/2 text-center" style={{ left: `${at(index)}%` }}>
                   <button type="button" onClick={() => setOpen(open === index ? null : index)} className="w-full rounded-md px-1 py-0.5 hover:bg-surface-muted">
                     <span className="line-clamp-2 text-label font-semibold leading-tight">{point.label}</span>
                     {point.parallel && <span className="block text-caption text-ink-muted">{point.people.length} people</span>}

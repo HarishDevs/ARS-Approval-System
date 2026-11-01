@@ -1,5 +1,6 @@
 "use client";
 
+import { BrandLockup } from "@/features/ui/Brand";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -59,8 +60,7 @@ export function MobileNav({ items, spaceLabel, home, collapsible = false, chats 
           <div ref={panel} className="flex h-dvh w-72 max-w-[85vw] flex-col bg-surface shadow-xl">
             <div className="flex h-topbar shrink-0 items-center justify-between border-b border-line px-4">
               <Link href={home} aria-label={`ARS Green Steel: ${spaceLabel} home`} className="rounded-md">
-                {/* eslint-disable-next-line @next/next/no-img-element -- static SVG logo */}
-                <img src="/brand/ars-green-steel.svg" alt="" width={68} height={32} className="h-8 w-auto" />
+                <BrandLockup size="sm" subtitle={false} />
               </Link>
               <button ref={closeButton} type="button" onClick={() => setOpen(false)} aria-label="Close menu" className="flex h-11 w-11 items-center justify-center rounded-md text-ink-muted hover:bg-surface-muted">
                 ✕

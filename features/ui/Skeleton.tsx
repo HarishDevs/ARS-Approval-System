@@ -28,9 +28,12 @@ export function TilesSkeleton({ count = 4 }: { count?: number }) {
   return (
     <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {Array.from({ length: count }, (_, index) => (
-        <div key={index} className="card space-y-3 p-5">
-          <SkeletonBlock className="h-4 w-28" />
-          <SkeletonBlock className="h-8 w-16" />
+        <div key={index} className="card flex items-center gap-3 p-4">
+          <SkeletonBlock className="h-11 w-11 shrink-0 rounded-xl" />
+          <div className="min-w-0 flex-1 space-y-2">
+            <SkeletonBlock className="h-4 w-24" />
+            <SkeletonBlock className="h-3 w-16" />
+          </div>
         </div>
       ))}
     </div>
@@ -48,6 +51,7 @@ export function ListSkeleton({ rows = 5, title = true }: { rows?: number; title?
       <ul className="divide-y divide-line">
         {Array.from({ length: rows }, (_, index) => (
           <li key={index} className="flex items-center gap-4 px-5 py-4">
+            <SkeletonBlock className="h-9 w-9 shrink-0 rounded-lg" />
             <div className="min-w-0 flex-1 space-y-2">
               <SkeletonBlock className="h-4 w-2/3" />
               <SkeletonBlock className="h-3 w-1/3" />
@@ -79,6 +83,20 @@ export function TableSkeleton({ rows = 6, columns = 5 }: { rows?: number; column
   );
 }
 
+// Bars rising from a baseline, while a chart's numbers load (Analytics).
+export function ChartSkeleton({ bars = 7 }: { bars?: number }) {
+  return (
+    <div className="card p-5" data-testid="chart-skeleton">
+      <SkeletonBlock className="mb-4 h-4 w-40" />
+      <div className="flex h-40 items-end gap-3 border-b border-line">
+        {Array.from({ length: bars }, (_, index) => (
+          <SkeletonBlock key={index} className="flex-1 rounded-b-none" style={{ height: `${35 + ((index * 37) % 60)}%` }} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function FormSkeleton({ fields = 5 }: { fields?: number }) {
   return (
     <div className="card max-w-3xl space-y-5 p-5">
@@ -102,9 +120,9 @@ export function PageSkeleton({ kind = "list", label = "Loading…" }: { kind?: "
       {kind === "dashboard" && (
         <>
           <TilesSkeleton />
-          <div className="grid gap-6 xl:grid-cols-2">
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
             <ListSkeleton rows={4} />
-            <ListSkeleton rows={4} />
+            <ChartSkeleton />
           </div>
         </>
       )}

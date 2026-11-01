@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, ChevronRight, GitBranch, GripVertical, Heart, Lock, MessageSquare, Plus, Repeat, Trash2, Diamond } from "lucide-react";
+import { CalendarClock, ChevronDown, ChevronRight, GitBranch, GripVertical, Heart, Lock, MessageSquare, Plus, Repeat, Trash2, Diamond } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -8,6 +8,7 @@ import { useSearchParams } from "next/navigation";
 import { addSectionAction, moveTaskAction, quickAddAction, quickAddManyAction, sectionAction, taskFieldsAction } from "@/app/users/work/actions";
 import { TaskCheck, usePaneLink, useWorkCall } from "@/features/work/client";
 import { dueLabel, indiaDayOf, TONE_TEXT } from "@/features/work/format";
+import { columnAccent, initialsOf } from "@/features/work/kanban";
 import { BulkBar, FieldInput, type FieldView } from "@/features/work/MoreParts";
 import { TaskGrid, type GridView } from "@/features/work/TaskGrid";
 import type { GridConfig, GridTask } from "@/server/work/grid";
@@ -260,11 +261,11 @@ export function ProjectWorkspace({
       <div>
         {toolbar}
         <div className="scroll-hint flex gap-3 overflow-x-auto pb-4" data-testid="board">
-          {sections.map((section) => (
+          {sections.map((section, index) => (
             <section
               key={section.id}
               aria-label={section.name}
-              className="flex w-[304px] shrink-0 flex-col rounded-lg bg-surface-muted"
+              className={`kanban-col flex w-[304px] shrink-0 flex-col rounded-xl border border-t-4 border-line bg-surface-muted ${columnAccent(index)}`}
               onDragOver={(event) => canDrag && event.preventDefault()}
               onDrop={(event) => {
                 event.preventDefault();
@@ -288,7 +289,7 @@ export function ProjectWorkspace({
                       setDragging(null);
                     }}
                     onKeyDown={(event) => keyMove(event, task)}
-                    className={`rounded-lg border border-line bg-surface p-4 shadow-sm hover:border-line-strong ${dragging === task.id ? "opacity-50" : ""} ${openTask === String(task.id) ? "outline outline-2 outline-primary-600" : ""}`}
+                    className={`kanban-card rounded-lg border border-line bg-surface p-3.5 shadow-card hover:border-line-strong ${dragging === task.id ? "opacity-50" : ""} ${openTask === String(task.id) ? "outline outline-2 outline-primary-600" : ""}`}
                     data-testid="board-card"
                   >
                     <div className="flex items-start gap-2">
@@ -577,8 +578,18 @@ function TaskMeta({ task, now }: { task: BoardTask; now: Date }) {
   const due = dueLabel(task.dueAt, now, OPEN.has(task.status));
   return (
     <div className="mt-2 flex flex-wrap items-center gap-2 text-caption text-ink-muted">
-      <span className="truncate">{task.assigneeName}</span>
-      {due && <span className={TONE_TEXT[due.tone]}>{due.text}</span>}
+      <span className="inline-flex min-w-0 items-center gap-1.5">
+        <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary-solid text-[10px] font-semibold text-on-solid" aria-hidden="true">
+          {initialsOf(task.assigneeName)}
+        </span>
+        <span className="truncate">{task.assigneeName}</span>
+      </span>
+      {due && (
+        <span className={`inline-flex items-center gap-1 ${TONE_TEXT[due.tone]}`}>
+          <CalendarClock aria-hidden="true" className="h-3 w-3" />
+          {due.text}
+        </span>
+      )}
       {task.priority !== "NORMAL" && task.priority !== "LOW" && <span className={`rounded px-1.5 ${PRIORITY_CLASS[task.priority]}`}>{task.priority === "URGENT" ? "Urgent" : "High"}</span>}
       <RowBadges task={task} />
     </div>
@@ -605,7 +616,7 @@ function SectionHeader({ section, sections, count, canEdit, plain }: { section: 
       ) : (
         <h3 className="font-semibold">{section.name}</h3>
       )}
-      <span className="text-caption text-ink-muted">{count}</span>
+      <span className="rounded-full bg-surface px-2 py-0.5 text-caption font-semibold tabular-nums text-ink-muted">{count}</span>
       {canEdit && sections.length > 1 && (
         <button type="button" aria-label={`Delete section ${section.name}`} title="Delete section" onClick={() => setDeleting((value) => !value)} className="rounded p-1 text-ink-faint hover:bg-danger-50 hover:text-danger-600">
           <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />

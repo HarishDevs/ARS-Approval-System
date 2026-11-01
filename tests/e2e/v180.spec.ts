@@ -1,6 +1,6 @@
 import { expect, test, type BrowserContext } from "@playwright/test";
 import type { RowDataPacket } from "mysql2/promise";
-import { db, sessionCookie, userIdByLogin } from "./db";
+import { db, sessionCookie, userIdByLogin, toWorkflowStep } from "./db";
 
 // v1.8.0 through the real screens: My approved requests and Approved by me;
 // the custom approval set-up (fields and a fixed step option) used on the
@@ -66,7 +66,10 @@ test("IT sets up custom approvals; the custom approval page follows it", async (
   await as(context, "E2E_REQ");
   await page.goto("/users/custom");
   await expect(page.getByLabel(/Vendor name/)).toBeVisible();
-  await expect(page.getByTestId("fixed-sla").first()).toHaveText("Respond within 24 hours (set by IT)");
+  // Owner (v1.42.0): a fixed option isn't shown (the server applies 24 hours); it can't be changed.
+  await expect(page.getByLabel("Respond within hours")).toHaveCount(0);
+  await expect(page.getByText(/set by IT/)).toHaveCount(0);
+  await toWorkflowStep(page);
   // Specific people: search and pick. A work task can name anyone.
   await page.getByLabel("Kind of step").first().selectOption("WORK");
   const picker = page.getByRole("combobox", { name: /People \(search and pick anyone\)/ });
@@ -81,7 +84,7 @@ test("IT sets up custom approvals; the custom approval page follows it", async (
 test("D-206/D-235: choice and skip appear on New request only when IT switches them on; DoA never", async ({ page, context }) => {
   await as(context, "E2E_REQ");
   // The Overview button "New request" opens the page where people choose their own approvers.
-  await page.goto("/users");
+  await page.goto("/users?home=approvals"); // D-265: requesters open on My Work
   await page.getByRole("main").getByRole("link", { name: "New request", exact: true }).click();
   await expect(page).toHaveURL(/\/users\/custom$/);
   await expect(page.getByRole("heading", { level: 1, name: "New request" })).toBeVisible();

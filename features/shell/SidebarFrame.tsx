@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 import { useState } from "react";
 import { NavIcon, SectionIcon } from "@/features/shell/nav-icons";
+import { BrandLockup } from "@/features/ui/Brand";
 import { CreateMenu } from "@/features/shell/CreateMenu";
 import { SIDEBAR_COOKIE } from "@/features/shell/sidebar-cookie";
 
@@ -70,8 +71,7 @@ export function SidebarFrame({
         {!collapsed && (
           // WEB-17 (v1.10.0): the logo goes to this space's first page.
           <Link href={homeHref} aria-label={homeLabel} className="rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600">
-            {/* eslint-disable-next-line @next/next/no-img-element -- static SVG logo */}
-            <img src="/brand/ars-green-steel.svg" alt="" width={77} height={36} className="h-9 w-auto" />
+            <BrandLockup size="sm" subtitle={false} />
           </Link>
         )}
       </div>

@@ -1,6 +1,6 @@
 {
   "name": "ars-approval-system",
-  "version": "1.41.0",
+  "version": "1.42.0",
   "private": true,
   "description": "ARS Approval Platform — multi-level approvals in any custom manner",
   "engines": {
@@ -27,6 +27,7 @@
   "dependencies": {
     "firebase": "11.1.0",
     "firebase-admin": "14.5.0",
+    "lottie-web": "5.12.2",
     "lucide-react": "0.469.0",
     "mysql2": "3.24.3",
     "next": "15.5.28",

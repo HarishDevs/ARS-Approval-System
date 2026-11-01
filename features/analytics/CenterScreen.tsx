@@ -56,6 +56,25 @@ export function BoardPicker({ base, board, boards, query, scopes, scope }: { bas
 }
 
 const pct = (value: number | null) => (value === null ? "—" : `${value}%`);
+
+// D-259 (owner's Analytics reference): a number with a small bar showing its
+// share (e.g. tasks completed of tasks assigned). "—" when there is nothing to
+// compare against; the bar never stands in for the number.
+function Ratio({ value, of, text }: { value: number; of: number; text?: string }) {
+  if (of <= 0) return <span>{text ?? value}</span>;
+  const share = Math.max(0, Math.min(100, Math.round((value / of) * 100)));
+  return (
+    <span className="inline-flex min-w-[6.5rem] items-center justify-end gap-2">
+      <span className="tabular-nums">{text ?? value}</span>
+      <span className="h-1.5 w-12 overflow-hidden rounded-full bg-line" aria-hidden="true">
+        <span className="block h-full rounded-full bg-success-solid" style={{ width: `${share}%` }} />
+      </span>
+    </span>
+  );
+}
+function Rate({ value }: { value: number | null }) {
+  return value === null ? <span>—</span> : <Ratio value={value} of={100} text={`${value}%`} />;
+}
 const day = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
 
 function Section({ title, children, note }: { title: string; children: React.ReactNode; note?: string }) {
@@ -514,10 +533,10 @@ async function Employees({ base, carry, query, scope, viewer, period, exportHref
           row.pendingApprovals,
           row.overdueApprovals,
           row.tasksAssigned,
-          row.tasksCompleted,
+          <Ratio key="done" value={row.tasksCompleted} of={row.tasksAssigned} />,
           row.tasksOpen,
           row.tasksOverdue,
-          pct(row.onTimeRate),
+          <Rate key="on-time" value={row.onTimeRate} />,
           hoursText(row.medianTaskHours),
           row.infoPublished,
           row.acksPending,
@@ -556,11 +575,30 @@ async function Departments({ scope, period, exportHref }: { scope: Scope; period
           </a>
         </p>
       )}
+      <div className="mb-4 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <BarList title="Requests raised, by department" rows={rows.map((row) => ({ label: row.name, value: row.requestsRaised, note: `${row.requestsOpen} open` }))} empty="No requests in this period." />
+        <BarList title="Tasks completed, by department" rows={rows.map((row) => ({ label: row.name, value: row.tasksCompleted, note: `${row.tasksOpen} open` }))} empty="No tasks in this period." />
+      </div>
       <Table
         caption="Workload per department"
         testid="department-table"
         head={["Department", "People", "Requests raised", "Requests open", "Requests overdue", "Avg turnaround", "Tasks created", "Tasks completed", "Tasks open", "Tasks overdue", "Tasks on time", "Info published", "Ack rate", "Acks pending"]}
-        rows={rows.map((row) => [row.name, row.people, row.requestsRaised, row.requestsOpen, row.requestsOverdue, hoursText(row.avgCycleHours), row.tasksCreated, row.tasksCompleted, row.tasksOpen, row.tasksOverdue, pct(row.taskOnTimeRate), row.infoPublished, pct(row.ackRate), row.acksPending])}
+        rows={rows.map((row) => [
+          row.name,
+          row.people,
+          row.requestsRaised,
+          row.requestsOpen,
+          row.requestsOverdue,
+          hoursText(row.avgCycleHours),
+          row.tasksCreated,
+          <Ratio key="done" value={row.tasksCompleted} of={row.tasksCreated} />,
+          row.tasksOpen,
+          row.tasksOverdue,
+          <Rate key="on-time" value={row.taskOnTimeRate} />,
+          row.infoPublished,
+          <Rate key="ack" value={row.ackRate} />,
+          row.acksPending,
+        ])}
       />
     </Section>
   );
@@ -622,6 +660,22 @@ async function Trends({ scope, viewer, period, previous, compareLabel, today, ex
   return (
     <>
       <Section title={`This period against the ${compareLabel}`}>
+        <ul className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4" data-testid="trend-cards">
+          {[
+            { label: "Requests raised", now: approvals.created, then: approvalsBefore.created },
+            { label: "Requests completed", now: approvals.completed, then: approvalsBefore.completed },
+            { label: "Tasks completed", now: tasks.completed, then: tasksBefore.completed },
+            { label: "Information published", now: info.published, then: infoBefore.published },
+          ].map((card) => (
+            <li key={card.label} className="card px-4 py-3">
+              <p className="text-caption text-ink-muted">{card.label}</p>
+              <p className="mt-1 text-title font-semibold tabular-nums">{card.now.toLocaleString("en-IN")}</p>
+              <p className={`text-caption ${card.now > card.then ? "text-success-600" : card.now < card.then ? "text-danger-600" : "text-ink-muted"}`}>
+                {change(card.now, card.then)} against {card.then.toLocaleString("en-IN")}
+              </p>
+            </li>
+          ))}
+        </ul>
         <Table
           caption="Period comparison"
           head={["Measure", "This period", "Comparison", "Change"]}
@@ -681,6 +735,15 @@ async function Quality({ base, carry, scope, viewer, today }: { base: Base; carr
   const checks = await qualityChecks(scope, viewer, today);
   return (
     <Section title="Data quality" note="Records with missing or inconsistent data, and where to fix each. These are review indicators, not proof of a mistake.">
+      <ul className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4" data-testid="quality-cards">
+        {checks.map((check) => (
+          <li key={check.key} className={`card border-l-4 px-4 py-3 ${check.count > 0 ? "border-l-warning-600" : "border-l-success-600"}`}>
+            <p className="text-caption text-ink-muted">{check.module}</p>
+            <p className="mt-0.5 text-label font-medium">{check.label}</p>
+            <p className={`mt-1 text-title font-semibold tabular-nums ${check.count > 0 ? "text-warning-600" : "text-success-600"}`}>{check.count > 0 ? check.count.toLocaleString("en-IN") : "✓ 0"}</p>
+          </li>
+        ))}
+      </ul>
       <Table caption="Data quality checks" testid="quality-table" head={["Check", "Module", "Records", "Where to fix"]} rows={checks.map((check) => [check.label, check.module, check.count, <span key={check.key} className="whitespace-normal text-left">{check.fix}</span>])} />
       <p className="mt-3 text-label">
         Approval-specific checks (amendments, overrides, budget warnings, stuck requests) are on{" "}

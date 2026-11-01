@@ -20,7 +20,23 @@ type Tab = "upcoming" | "overdue" | "completed" | "week";
 // D-215: the day's start: my tasks (upcoming, overdue, completed), what I
 // gave others, my projects and their latest status, and (D-216) my team
 // through every level of the reporting line.
-export async function TaskHome({ user, viewer, params, basePath, greet = true }: { user: WorkPageUser; viewer: WorkViewer; params: { tab?: string; given?: string; task?: string }; basePath: string; greet?: boolean }) {
+// D-265: part="others" gives only "Tasks I've assigned" and My team, under
+// Home's My Work overview (which has my tasks, projects and updates itself).
+export async function TaskHome({
+  user,
+  viewer,
+  params,
+  basePath,
+  greet = true,
+  part = "all",
+}: {
+  user: WorkPageUser;
+  viewer: WorkViewer;
+  params: { tab?: string; given?: string; task?: string; home?: string };
+  basePath: string;
+  greet?: boolean;
+  part?: "all" | "others";
+}) {
   const tab: Tab = params.tab === "overdue" || params.tab === "completed" ? params.tab : "upcoming";
   const given: Tab = params.given === "overdue" || params.given === "completed" || params.given === "upcoming" ? params.given : "week";
   const now = new Date();
@@ -49,14 +65,15 @@ export async function TaskHome({ user, viewer, params, basePath, greet = true }:
     homeProjects(viewer, 8),
     recentStatusUpdates(viewer, 5),
     teamWorkload(viewer.teamIds, user.id),
-    listTaskItems(["t.assignee_id = ?", "t.deleted_at IS NULL", "t.status = 'COMPLETED'", "t.completed_at >= ?"], [user.id, new Date(now.getTime() - 7 * 86_400_000)], "t.id", 1).then((result) => result.total),
+    listTaskItems(["t.assignee_id = ?", "t.deleted_at IS NULL", "t.status = 'COMPLETED'", "t.completed_at >= ?"], [user.id, new Date(now.getTime() - 7 * 86_400_000)], "t.id", 1).then(
+      (result) => result.total,
+    ),
     Promise.all((["week", "upcoming", "overdue"] as Tab[]).map((which) => listTaskItems(...givenWhere(which), 1).then((result) => result.total))),
     getDbPool()
-      .query<RowDataPacket[]>("SELECT COUNT(DISTINCT f.user_id) AS n FROM task_followers f JOIN tasks t ON t.id = f.task_id AND t.deleted_at IS NULL WHERE (t.assignee_id = ? OR t.created_by = ?) AND f.user_id <> ?", [
-        user.id,
-        user.id,
-        user.id,
-      ])
+      .query<RowDataPacket[]>(
+        "SELECT COUNT(DISTINCT f.user_id) AS n FROM task_followers f JOIN tasks t ON t.id = f.task_id AND t.deleted_at IS NULL WHERE (t.assignee_id = ? OR t.created_by = ?) AND f.user_id <> ?",
+        [user.id, user.id, user.id],
+      )
       .then(([rows]) => Number(rows[0]?.n ?? 0)),
   ]);
   const hour = Number(new Date(now.getTime() + 330 * 60_000).toISOString().slice(11, 13));
@@ -64,7 +81,8 @@ export async function TaskHome({ user, viewer, params, basePath, greet = true }:
   const tabLink = (key: Tab, label: string, param: "tab" | "given", current: Tab, extra?: string) => (
     <Link
       key={key}
-      href={`${basePath}?${new URLSearchParams({ ...(param === "tab" ? { tab: key, given } : { tab, given: key }) })}`}
+      href={`${basePath}?${new URLSearchParams({ ...(params.home ? { home: params.home } : {}), ...(param === "tab" ? { tab: key, given } : { ...(part === "others" && params.tab ? { tab: params.tab } : { tab }), given: key }) })}`}
+      scroll={part === "others" ? false : undefined}
       aria-current={current === key ? "page" : undefined}
       className={`border-b-2 px-2 py-1 text-label ${current === key ? "border-primary-600 font-semibold text-primary-700" : "border-transparent text-ink-muted hover:text-ink"}`}
     >
@@ -76,6 +94,74 @@ export async function TaskHome({ user, viewer, params, basePath, greet = true }:
   const links = paneLinks(basePath, params);
   const paneId = paneTaskId(params.task);
   const pane = paneId ? <TaskPane taskId={paneId} user={user} closeHref={links.close} /> : null;
+  const givenAndTeam = (
+    <>
+      <section className="card px-5 py-4" aria-labelledby="home-given">
+        <div className="mb-2 flex items-center justify-between">
+          <h2 id="home-given" className="font-semibold">
+            Tasks I&apos;ve assigned
+          </h2>
+          <Link href="/users/work/search?created_by=me" className="link text-label">
+            See all
+          </Link>
+        </div>
+        <nav aria-label="Tasks I've assigned" className="mb-2 flex gap-1 overflow-x-auto border-b border-line">
+          {tabLink("week", "This week", "given", given, ` (${givenCounts[0]})`)}
+          {tabLink("upcoming", "Upcoming", "given", given, ` (${givenCounts[1]})`)}
+          {tabLink("overdue", "Overdue", "given", given, ` (${givenCounts[2]})`)}
+          {tabLink("completed", "Completed", "given", given)}
+        </nav>
+        <TaskLines hrefFor={links.open} items={givenList.items} now={now} meId={user.id} empty="Nothing here." showAssignee />
+      </section>
+      {team.length > 0 && (
+        <section className="card px-5 py-4 xl:col-span-2" aria-labelledby="home-team">
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <h2 id="home-team" className="font-semibold">
+              My team <span className="font-normal text-ink-muted">· everyone below you in the reporting line ({team.length})</span>
+            </h2>
+            <span className="flex gap-3 text-label">
+              <Link href="/users/work/search?team=1" className="link">
+                Their open tasks
+              </Link>
+              <Link href="/users/work/search?team=1&overdue=1" className="link">
+                Overdue
+              </Link>
+            </span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-label" data-testid="team-workload">
+              <thead className="text-left text-caption uppercase tracking-wide text-ink-faint">
+                <tr>
+                  <th className="py-1 pr-3">Person</th>
+                  <th className="py-1 pr-3">Reports to</th>
+                  <th className="py-1 pr-3 text-right">Open</th>
+                  <th className="py-1 pr-3 text-right">Overdue</th>
+                  <th className="py-1 text-right">Done (7 days)</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-line">
+                {team.slice(0, 25).map((person) => (
+                  <tr key={person.id}>
+                    <td className="py-1.5 pr-3">
+                      <Link href={`/users/work/search?assignee=${person.id}`} className="link">
+                        {person.name}
+                      </Link>
+                      {person.direct && <span className="ml-1 text-caption text-ink-muted">(direct)</span>}
+                    </td>
+                    <td className="py-1.5 pr-3 text-ink-muted">{person.managerName ?? "—"}</td>
+                    <td className="py-1.5 pr-3 text-right">{person.open}</td>
+                    <td className={`py-1.5 pr-3 text-right ${person.overdue ? "font-semibold text-danger-600" : ""}`}>{person.overdue}</td>
+                    <td className="py-1.5 text-right">{person.doneWeek}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+    </>
+  );
+  if (part === "others") return <div className="mt-6 grid gap-6 xl:grid-cols-2">{givenAndTeam}</div>;
   return (
     <>
       {/* D-219 (catalog S-02): date line, greeting, this week's numbers. */}
@@ -128,69 +214,7 @@ export async function TaskHome({ user, viewer, params, basePath, greet = true }:
               showProject
             />
           </section>
-          <section className="card px-5 py-4" aria-labelledby="home-given">
-            <div className="mb-2 flex items-center justify-between">
-              <h2 id="home-given" className="font-semibold">
-                Tasks I&apos;ve assigned
-              </h2>
-              <Link href="/users/work/search?created_by=me" className="link text-label">
-                See all
-              </Link>
-            </div>
-            <nav aria-label="Tasks I've assigned" className="mb-2 flex gap-1 overflow-x-auto border-b border-line">
-              {tabLink("week", "This week", "given", given, ` (${givenCounts[0]})`)}
-              {tabLink("upcoming", "Upcoming", "given", given, ` (${givenCounts[1]})`)}
-              {tabLink("overdue", "Overdue", "given", given, ` (${givenCounts[2]})`)}
-              {tabLink("completed", "Completed", "given", given)}
-            </nav>
-            <TaskLines hrefFor={links.open} items={givenList.items} now={now} meId={user.id} empty="Nothing here." showAssignee />
-          </section>
-          {team.length > 0 && (
-            <section className="card px-5 py-4 xl:col-span-2" aria-labelledby="home-team">
-              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                <h2 id="home-team" className="font-semibold">
-                  My team <span className="font-normal text-ink-muted">· everyone below you in the reporting line ({team.length})</span>
-                </h2>
-                <span className="flex gap-3 text-label">
-                  <Link href="/users/work/search?team=1" className="link">
-                    Their open tasks
-                  </Link>
-                  <Link href="/users/work/search?team=1&overdue=1" className="link">
-                    Overdue
-                  </Link>
-                </span>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-label" data-testid="team-workload">
-                  <thead className="text-left text-caption uppercase tracking-wide text-ink-faint">
-                    <tr>
-                      <th className="py-1 pr-3">Person</th>
-                      <th className="py-1 pr-3">Reports to</th>
-                      <th className="py-1 pr-3 text-right">Open</th>
-                      <th className="py-1 pr-3 text-right">Overdue</th>
-                      <th className="py-1 text-right">Done (7 days)</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-line">
-                    {team.slice(0, 25).map((person) => (
-                      <tr key={person.id}>
-                        <td className="py-1.5 pr-3">
-                          <Link href={`/users/work/search?assignee=${person.id}`} className="link">
-                            {person.name}
-                          </Link>
-                          {person.direct && <span className="ml-1 text-caption text-ink-muted">(direct)</span>}
-                        </td>
-                        <td className="py-1.5 pr-3 text-ink-muted">{person.managerName ?? "—"}</td>
-                        <td className="py-1.5 pr-3 text-right">{person.open}</td>
-                        <td className={`py-1.5 pr-3 text-right ${person.overdue ? "font-semibold text-danger-600" : ""}`}>{person.overdue}</td>
-                        <td className="py-1.5 text-right">{person.doneWeek}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
-          )}
+          {givenAndTeam}
           <section className="card px-5 py-4" aria-labelledby="home-projects">
             <div className="mb-2 flex items-center justify-between">
               <h2 id="home-projects" className="font-semibold">

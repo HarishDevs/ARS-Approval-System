@@ -22,11 +22,13 @@ export const metadata: Metadata = {
   title: { default: "ARS-CMS", template: "%s · ARS-CMS" },
   description: "ARS-CMS — the Central Management System of ARS Steels & Alloy International Pvt. Ltd.",
   robots: { index: false, follow: false },
-  // WEB-04 (v1.10.0): the ARS mark as SVG, with PNG and ICO fallbacks made
-  // from the same brand icon for browsers that don't take SVG.
+  // WEB-04 (v1.10.0), v1.42.0 brand: the ARS-CMS app icon as SVG, with PNG
+  // and ICO made from the same drawing (public/brand/ars-cms-app-icon.svg).
   icons: {
     icon: [
-      { url: "/brand/ars-mark.svg", type: "image/svg+xml" },
+      { url: "/brand/ars-cms-app-icon.svg", type: "image/svg+xml" },
+      { url: "/icons/icon-32.png", type: "image/png", sizes: "32x32" },
+      { url: "/icons/icon-16.png", type: "image/png", sizes: "16x16" },
       { url: "/icons/icon-192.png", type: "image/png", sizes: "192x192" },
       { url: "/favicon.ico", sizes: "48x48" },
     ],
@@ -38,7 +40,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#003B6E" },
+    { media: "(prefers-color-scheme: light)", color: "#0053A0" },
     { media: "(prefers-color-scheme: dark)", color: "#0e131b" },
   ],
 };

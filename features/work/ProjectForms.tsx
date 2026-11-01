@@ -1,7 +1,7 @@
 "use client";
 
 import { Star } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createProjectAction, memberAction, projectCommand, removeStatusAction, statusAction, updateProjectAction } from "@/app/users/work/actions";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import { COLOR_HEX, useWorkCall } from "@/features/work/client";
@@ -305,6 +305,13 @@ export function MembersPanel({
 
 export function StatusForm({ projectId, initial }: { projectId: number; initial?: string }) {
   const { result, pending, onSubmit, formRef } = useActionForm(statusAction, { resetOnSuccess: true });
+  // Chosen from the header's "Set status": bring the form into view, ready for the headline.
+  useEffect(() => {
+    if (!initial) return;
+    const form = formRef.current;
+    form?.scrollIntoView({ block: "center", behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    form?.querySelector<HTMLInputElement>("#status-title")?.focus({ preventScroll: true });
+  }, [initial, formRef]);
   return (
     <form ref={formRef} onSubmit={onSubmit} className="space-y-3" aria-label="Post a status update" id="post-status">
       <input type="hidden" name="projectId" value={projectId} />

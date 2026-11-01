@@ -1,5 +1,5 @@
 import { expect, test, type BrowserContext } from "@playwright/test";
-import { db, sessionCookie, userIdByLogin } from "./db";
+import { db, sessionCookie, userIdByLogin, toReviewStep } from "./db";
 
 // D-234 (UX laws): the workflow changes under real use. Default effect
 // (reporting manager first), Goal gradient (stepper), Fitts and Von
@@ -27,6 +27,7 @@ test("a custom request starts with the reporting manager as approver; the steppe
   await expect(page.locator("main form").getByText("Manoj Manager").first()).toBeVisible();
   await page.getByLabel("Title").fill(`UX laws chairs ${stamp}`);
   await page.getByLabel(/^Details/).fill("Four chairs for the meeting room.");
+  await toReviewStep(page);
   await page.getByRole("button", { name: "Submit request" }).click();
   await expect(page).toHaveURL(/\/users\/requests\/\d+\?submitted=1/);
   requestPath = new URL(page.url()).pathname;

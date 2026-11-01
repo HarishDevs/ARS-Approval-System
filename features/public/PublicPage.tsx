@@ -1,3 +1,4 @@
+import { BrandLockup } from "@/features/ui/Brand";
 import Link from "next/link";
 import { MailLink } from "@/features/ui/MailLink";
 
@@ -17,9 +18,8 @@ export function PublicPage({ children }: { children: React.ReactNode }) {
           {/* D-198: the app's name next to the company logo, so Google's review
               matches it to the consent screen's "ARS-CMS". */}
           <Link href="/" className="flex min-w-0 items-center gap-3 rounded-md">
-            {/* eslint-disable-next-line @next/next/no-img-element -- static SVG logo */}
-            <img src="/brand/ars-green-steel.svg" alt="ARS Steels" width={77} height={36} className="h-9 w-auto shrink-0" />
-            <span className="truncate text-body font-bold text-ink">ARS-CMS</span>
+            <span className="sr-only">ARS Steels</span>
+            <BrandLockup size="md" />
           </Link>
           <Link href="/login" className="btn-primary btn-compact">
             Sign in

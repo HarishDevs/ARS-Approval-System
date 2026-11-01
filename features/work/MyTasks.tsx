@@ -7,6 +7,7 @@ import { myPlaceAction, mySectionAction } from "@/app/users/work/actions";
 import { ProjectDot, TaskCheck, usePaneLink, useWorkCall } from "@/features/work/client";
 import { Repeat } from "lucide-react";
 import { dueLabel, TONE_TEXT } from "@/features/work/format";
+import { columnAccent } from "@/features/work/kanban";
 import { AddTask, useAutoRefresh } from "@/features/work/ProjectWorkspace";
 import { BulkBar } from "@/features/work/MoreParts";
 import { TaskGrid, type GridView } from "@/features/work/TaskGrid";
@@ -93,7 +94,7 @@ export function MyTasks({ sections, tasks, layout, nowIso }: { sections: MySecti
         }}
         onKeyDown={(event) => keyMove(event, task)}
         data-testid="my-task"
-        className={`work-row ${card ? "rounded-md border border-line bg-surface p-2.5 shadow-sm" : "flex items-center gap-2 border-b border-line px-3 py-1.5 hover:bg-surface-muted"} ${dragging === task.id ? "opacity-50" : ""}`}
+        className={`work-row ${card ? "kanban-card rounded-lg border border-line bg-surface p-3 shadow-card hover:border-line-strong" : "flex items-center gap-2 border-b border-line px-3 py-1.5 hover:bg-surface-muted"} ${dragging === task.id ? "opacity-50" : ""}`}
       >
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <input
@@ -153,11 +154,11 @@ export function MyTasks({ sections, tasks, layout, nowIso }: { sections: MySecti
       </span>
       {layout === "BOARD" ? (
         <div className="scroll-hint flex gap-3 overflow-x-auto pb-4" data-testid="my-board">
-          {sections.map((section) => (
+          {sections.map((section, index) => (
             <section
               key={section.id}
               aria-label={section.name}
-              className="flex w-72 shrink-0 flex-col rounded-lg border border-line bg-surface-muted"
+              className={`kanban-col flex w-72 shrink-0 flex-col rounded-xl border border-t-4 border-line bg-surface-muted ${columnAccent(index)}`}
               onDragOver={(event) => event.preventDefault()}
               onDrop={(event) => {
                 event.preventDefault();
@@ -221,7 +222,7 @@ function SectionTitle({ section, count }: { section: MySectionRow; count: number
   return (
     <div className="flex items-center gap-2">
       <h2 className="font-semibold">{section.name}</h2>
-      <span className="text-caption text-ink-muted">{count}</span>
+      <span className="rounded-full bg-surface px-2 py-0.5 text-caption font-semibold tabular-nums text-ink-muted">{count}</span>
       <button type="button" aria-label={`Rename ${section.name}`} onClick={() => setEditing(true)} className="rounded p-1 text-ink-faint hover:bg-surface-muted">
         <Pencil aria-hidden="true" className="h-3.5 w-3.5" />
       </button>

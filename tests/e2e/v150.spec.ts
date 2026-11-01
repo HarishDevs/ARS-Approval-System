@@ -1,5 +1,5 @@
 import { expect, test, type BrowserContext, type Page } from "@playwright/test";
-import { sessionCookie } from "./db";
+import { dropCustomDraft, sessionCookie } from "./db";
 
 // v1.5.0 (owner's development spec) through the real screens. Uses the
 // "E2E Purchase" type (manager → HOD) published by approval-flow.spec.ts.
@@ -34,7 +34,7 @@ test("#3 a draft is saved as you type, restored, and discarded", async ({ page, 
   await page.getByLabel("Title").fill("E2E draft: office chairs");
   await expect(page.getByText(/Draft saved/)).toBeVisible();
 
-  await page.goto("/users");
+  await page.goto("/users?home=approvals");
   await expect(page.getByRole("heading", { name: "Your drafts" })).toBeVisible();
   await page.getByRole("link", { name: /E2E draft: office chairs/ }).click();
   await expect(page.getByText(/Restored your draft/)).toBeVisible();
@@ -45,7 +45,7 @@ test("#3 a draft is saved as you type, restored, and discarded", async ({ page, 
   // The form reloads empty once the draft is gone.
   await expect(page.getByText(/Restored your draft/)).toHaveCount(0);
   await expect(page.getByLabel("Title")).toHaveValue("");
-  await page.goto("/users");
+  await page.goto("/users?home=approvals");
   await expect(page.getByRole("link", { name: /E2E draft: office chairs/ })).toHaveCount(0);
 });
 
@@ -58,8 +58,10 @@ test("#3 submitting removes the draft", async ({ page, context }) => {
   await page.getByRole("button", { name: "Submit request" }).click();
   await expect(page).toHaveURL(/\/users\/requests\/\d+\?submitted=1/);
   bulkPaths = [new URL(page.url()).pathname];
-  await page.goto("/users");
-  await expect(page.getByRole("heading", { name: "Your drafts" })).toHaveCount(0);
+  await dropCustomDraft("E2E_REQ"); // another file's New request draft isn't this one
+  await page.goto("/users?home=approvals");
+  // D-265: the Your drafts card is always there; the submitted one isn't in it.
+  await expect(page.getByRole("region", { name: "Your drafts" }).getByRole("link", { name: new RegExp(bulkTitles[0]!) })).toHaveCount(0);
   bulkPaths.push(await raise(page, bulkTitles[1]!));
 });
 

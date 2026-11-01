@@ -32,26 +32,32 @@ async function query<T>(sql: string, params: unknown[]): Promise<T[]> {
   }
 }
 
-test("the panel is taller than wide and steps up with the screen", async ({ page, context }) => {
+// D-259 supersedes D-238's shape on computers: below 1024 px the panel sits at
+// the bottom, taller than wide; on a computer it is a centred card with the
+// task details and the task settings side by side, inside the window.
+test("Create task: a tall panel on smaller screens, a centred two-column card on a computer", async ({ page, context }) => {
   await as(context, "E2E_REQ");
-  const sizes: { width: number; height: number }[] = [];
+  await page.setViewportSize({ width: 900, height: 800 });
+  await page.goto("/users/work/my-tasks");
+  const small = (await (await openDraft(page)).boundingBox())!;
+  expect(small.height).toBeGreaterThan(small.width);
+  expect(small.height).toBeLessThanOrEqual(800 - 32 + 1);
+  await page.getByTestId("create-dialog").getByRole("button", { name: "Close" }).click();
   for (const viewport of [
-    { width: 900, height: 800 },
     { width: 1366, height: 900 },
     { width: 1700, height: 1000 },
   ]) {
     await page.setViewportSize(viewport);
     await page.goto("/users/work/my-tasks");
-    const box = (await (await openDraft(page)).boundingBox())!;
-    expect(box.height).toBeGreaterThan(box.width);
-    expect(box.height).toBeLessThanOrEqual(viewport.height - 32 + 1);
-    sizes.push({ width: Math.round(box.width), height: Math.round(box.height) });
+    const dialog = await openDraft(page);
+    const box = (await dialog.boundingBox())!;
+    expect(box.width).toBeGreaterThan(box.height * 0.9);
+    expect(Math.abs(box.x + box.width / 2 - viewport.width / 2)).toBeLessThanOrEqual(2);
+    expect(box.y).toBeGreaterThanOrEqual(0);
+    expect(box.y + box.height).toBeLessThanOrEqual(viewport.height);
+    await expect(page.getByTestId("create-dialog").getByRole("complementary", { name: "Task settings" })).toBeVisible();
     await page.getByTestId("create-dialog").getByRole("button", { name: "Close" }).click();
   }
-  expect(sizes[0]!.width).toBeLessThan(sizes[1]!.width);
-  expect(sizes[1]!.width).toBeLessThan(sizes[2]!.width);
-  expect(sizes[0]!.height).toBeLessThan(sizes[2]!.height);
-  expect(sizes[2]!.width).toBeLessThanOrEqual(600);
 });
 
 test("formatting, / menu, emoji, @mention, a file and a collaborator reach the task", async ({ page, context }) => {

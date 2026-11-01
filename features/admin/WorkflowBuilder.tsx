@@ -10,7 +10,7 @@ import { WorkflowMap } from "@/features/admin/workflow-designer/WorkflowMap";
 import { ConditionRow } from "@/features/admin/conditions/ConditionRow";
 import { allProblems, duplicateStage, parseLocalDraft, stageName, stageProblems, stageSummary, type DesignContext, type LocalDraft } from "@/features/admin/workflow-designer/model";
 import { moveItem } from "@/features/admin/form-designer/model";
-import { NOBODY_TEXT, RULE_TEXT, stepDefaults, type StepPolicy } from "@/server/workflows/step-policy";
+import { stepDefaults, type StepPolicy } from "@/server/workflows/step-policy";
 import { createWorkflowAction, saveDraftAction } from "@/app/admin/workflows/actions";
 import { FieldError, guardAction, ResultMessage, SAVED_EVENT, SubmitButton, useActionForm } from "@/features/ui/form";
 import { useRouter } from "next/navigation";
@@ -18,7 +18,17 @@ import { NUMERIC_TYPES, type FieldLookups, type FormField } from "@/server/forms
 import { RequestForm } from "@/features/requests/RequestForm";
 import { Hint } from "@/features/ui/Hint";
 import { ConditionValueInput, FormFieldsEditor, freshCondition, needsValue, operatorsFor } from "@/features/admin/FormFieldsEditor";
-import { doaBandLabels, isConditionGroup, MAX_CHOICE_DEPTH, type ApproverPick, type BuilderCondition, type BuilderDoa, type BuilderInnerStage, type BuilderStage, type BuilderStep } from "@/server/workflows/builder";
+import {
+  doaBandLabels,
+  isConditionGroup,
+  MAX_CHOICE_DEPTH,
+  type ApproverPick,
+  type BuilderCondition,
+  type BuilderDoa,
+  type BuilderInnerStage,
+  type BuilderStage,
+  type BuilderStep,
+} from "@/server/workflows/builder";
 
 // Structured workflow builder (D-056, F-50). Stages run in order; a stage
 // is one step or several steps in parallel. The server compiles, validates
@@ -547,6 +557,7 @@ export function LevelsEditor({
   title = "Approval levels",
   hint = "Levels run top to bottom. Add as many as you need; a level can have several steps running in parallel, or a choice between paths.",
   allowChoice = true,
+  cards = false,
 }: {
   stages: BuilderStage[];
   setStages: React.Dispatch<React.SetStateAction<BuilderStage[]>>;
@@ -556,6 +567,7 @@ export function LevelsEditor({
   title?: string;
   hint?: string;
   allowChoice?: boolean;
+  cards?: boolean; // v1.42.0 (owner, New request): small summary cards on top, one level open below
 }) {
   return (
     <section className="card">
@@ -565,7 +577,7 @@ export function LevelsEditor({
           <Hint text={hint} align="start" />
         </div>
       </div>
-      <StageList stages={stages} onChange={(next) => setStages(next)} options={options} form={form} newId={newId} allowChoice={allowChoice} depth={0} />
+      <StageList stages={stages} onChange={(next) => setStages(next)} options={options} form={form} newId={newId} allowChoice={allowChoice} depth={0} cards={cards} />
     </section>
   );
 }
@@ -581,6 +593,7 @@ function StageList({
   allowChoice,
   nested = false,
   depth,
+  cards = false,
 }: {
   stages: BuilderStage[];
   onChange: (stages: BuilderStage[]) => void;
@@ -590,6 +603,7 @@ function StageList({
   allowChoice: boolean;
   nested?: boolean;
   depth: number; // choices this list is inside (D-099: up to MAX_CHOICE_DEPTH)
+  cards?: boolean;
 }) {
   const defaults = useNewStepDefaults();
   // D-239: the designer (workflow page) adds collapsing, problems and Undo.
@@ -597,6 +611,16 @@ function StageList({
   const [removing, setRemoving] = useState<number | null>(null);
   const [dragging, setDragging] = useState<number | null>(null);
   const [dropAt, setDropAt] = useState<number | null>(null);
+  const [active, setActive] = useState(0);
+  const known = useRef<string[]>(stages.map(stageKey));
+  useEffect(() => {
+    if (!cards) return;
+    const keys = stages.map(stageKey);
+    const added = keys.findIndex((key) => !known.current.includes(key));
+    known.current = keys;
+    if (added >= 0) setActive(added);
+    else setActive((current) => Math.min(current, Math.max(0, keys.length - 1)));
+  }, [cards, stages]);
   // D-206: on the custom approval page IT decides whether the choice is offered.
   // D-235: a DoA matrix is never offered there (approval types only, D-075).
   const features = useContext(StepPolicyContext)?.features;
@@ -624,6 +648,32 @@ function StageList({
 
   return (
     <>
+      {cards && stages.length > 0 && (
+        <ol className="sticky top-0 z-[2] grid grid-cols-2 gap-2 border-b border-line bg-surface px-4 py-3 sm:grid-cols-3" aria-label="Levels" data-testid="level-cards">
+          {stages.map((stage, index) => {
+            const problems = stageProblems(stage, { form });
+            return (
+              <li key={stageKey(stage)} className="min-w-0">
+                <button
+                  type="button"
+                  onClick={() => setActive(index)}
+                  aria-pressed={active === index}
+                  className={`block w-full rounded-lg border px-2.5 py-2 text-left transition-colors ${active === index ? "border-primary-600 bg-primary-50" : "border-line hover:bg-surface-muted"}`}
+                  data-testid="level-card"
+                >
+                  <span className="flex items-center gap-1.5 text-caption font-semibold uppercase tracking-wide text-ink-muted">
+                    <span className={`grid h-5 w-5 place-items-center rounded-full text-[10px] ${active === index ? "bg-primary-solid text-on-solid" : "bg-surface-muted text-ink"}`}>{index + 1}</span>
+                    Level {index + 1}
+                    {problems.length > 0 && <TriangleAlert aria-label="Needs attention" className="ml-auto h-3.5 w-3.5 text-warning-600" />}
+                  </span>
+                  <span className="mt-0.5 block truncate text-label font-semibold">{stageName(stage) || kindLabel(stage)}</span>
+                  <span className="block truncate text-caption text-ink-muted">{stageSummary(stage)}</span>
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+      )}
       <ol className={nested ? "space-y-3" : "divide-y divide-line"}>
         {stages.length === 0 && nested && <li className="text-label text-ink-muted">No levels on this path: it goes straight on.</li>}
         {stages.map((stage, index) => {
@@ -634,6 +684,7 @@ function StageList({
             <li
               key={key}
               id={`level-${key}`}
+              hidden={cards && index !== active}
               data-testid="workflow-level"
               onDragOver={(event) => {
                 if (dragging === null) return;
@@ -696,7 +747,11 @@ function StageList({
                     </p>
                   )}
                   {problems.length > 0 && (
-                    <span className="flex shrink-0 items-center gap-1 rounded-full bg-danger-50 px-2 py-0.5 text-caption font-semibold text-danger-600" title={problems.join("\n")} data-testid="level-problems">
+                    <span
+                      className="flex shrink-0 items-center gap-1 rounded-full bg-danger-50 px-2 py-0.5 text-caption font-semibold text-danger-600"
+                      title={problems.join("\n")}
+                      data-testid="level-problems"
+                    >
                       <TriangleAlert aria-hidden="true" className="h-3 w-3" />
                       {problems.length} to fix
                     </span>
@@ -733,7 +788,12 @@ function StageList({
                     <div className="space-y-3">
                       <div className="grid gap-3 md:grid-cols-[1fr_auto_auto]">
                         <input aria-label="Parallel level name" value={stage.label} onChange={(event) => setStage(index, { ...stage, label: event.target.value })} className="field-input" />
-                        <select aria-label="How many branches must finish" value={stage.join} onChange={(event) => setStage(index, { ...stage, join: event.target.value as Rule })} className="field-input">
+                        <select
+                          aria-label="How many branches must finish"
+                          value={stage.join}
+                          onChange={(event) => setStage(index, { ...stage, join: event.target.value as Rule })}
+                          className="field-input"
+                        >
                           <option value="ALL">All branches must finish</option>
                           <option value="ANY_ONE">Any one branch is enough</option>
                           <option value="ANY_N">Any N branches</option>
@@ -813,7 +873,11 @@ function StageList({
           setRemoving(null);
         }}
         title={removing !== null ? `Remove level ${removing + 1}?` : "Remove this level?"}
-        body={removing !== null && stages[removing] ? `“${stageName(stages[removing]!) || kindLabel(stages[removing]!)}” (${stageSummary(stages[removing]!)}) leaves the flow.${designer ? " You can undo it." : ""}` : ""}
+        body={
+          removing !== null && stages[removing]
+            ? `“${stageName(stages[removing]!) || kindLabel(stages[removing]!)}” (${stageSummary(stages[removing]!)}) leaves the flow.${designer ? " You can undo it." : ""}`
+            : ""
+        }
         confirmLabel="Remove level"
         tone="danger"
       />
@@ -955,7 +1019,13 @@ function DoaEditor({
         <div className="flex flex-wrap items-center gap-2">
           {stage.limits.map((limit, index) => (
             <span key={index} className="flex items-center gap-1">
-              <input aria-label={`Limit ${index + 1}`} inputMode="numeric" value={limit ? limit.toLocaleString("en-IN") : ""} onChange={(event) => setLimit(index, event.target.value)} className="field-input w-36" />
+              <input
+                aria-label={`Limit ${index + 1}`}
+                inputMode="numeric"
+                value={limit ? limit.toLocaleString("en-IN") : ""}
+                onChange={(event) => setLimit(index, event.target.value)}
+                className="field-input w-36"
+              />
               {stage.limits.length > 1 && (
                 <button type="button" onClick={() => removeLimit(index)} className="btn-secondary btn-compact h-11" aria-label={`Remove limit ${index + 1}`}>
                   ×
@@ -1083,7 +1153,13 @@ function RuleEditor({ form, value, onChange, prefix, options }: { form: FormFiel
       )}
       {rows.map((row, index) => (
         <div key={index} className="flex flex-wrap items-center gap-2">
-          <ConditionEditor form={form} value={row} onChange={(next) => save(rows.map((item, i) => (i === index ? next : item)))} prefix={index === 0 ? prefix : match === "ALL" ? "and" : "or"} options={options} />
+          <ConditionEditor
+            form={form}
+            value={row}
+            onChange={(next) => save(rows.map((item, i) => (i === index ? next : item)))}
+            prefix={index === 0 ? prefix : match === "ALL" ? "and" : "or"}
+            options={options}
+          />
           {rows.length > 1 && (
             <button type="button" onClick={() => save(rows.filter((_, i) => i !== index))} className="btn-secondary btn-compact" aria-label={`Remove condition ${index + 1}`}>
               ×
@@ -1102,7 +1178,19 @@ function RuleEditor({ form, value, onChange, prefix, options }: { form: FormFiel
 
 // One field-operator-value condition, used inside rules. The operators and
 // the value box follow the field's type (S12-04/05).
-function ConditionEditor({ form, value, onChange, prefix, options }: { form: FormField[]; value: SimpleCondition; onChange: (value: SimpleCondition) => void; prefix: string; options: BuilderOptions }) {
+function ConditionEditor({
+  form,
+  value,
+  onChange,
+  prefix,
+  options,
+}: {
+  form: FormField[];
+  value: SimpleCondition;
+  onChange: (value: SimpleCondition) => void;
+  prefix: string;
+  options: BuilderOptions;
+}) {
   const field = form.find((item) => item.key === value.field);
   // D-242: the shared condition row (the form designer's rules use it too).
   return (
@@ -1115,7 +1203,11 @@ function ConditionEditor({ form, value, onChange, prefix, options }: { form: For
       onOperator={(operator) => onChange({ ...value, operator: operator as SimpleCondition["operator"] })}
       prefix={prefix}
       labels={{ field: "Field", operator: "Condition" }}
-      value={needsValue(value.operator) ? <ConditionValueInput field={field} value={value.value} onChange={(next) => onChange({ ...value, value: next })} lookups={options.lookups} people={options.people} /> : undefined}
+      value={
+        needsValue(value.operator) ? (
+          <ConditionValueInput field={field} value={value.value} onChange={(next) => onChange({ ...value, value: next })} lookups={options.lookups} people={options.people} />
+        ) : undefined
+      }
     />
   );
 }
@@ -1166,7 +1258,12 @@ function StepEditor({
       </div>
       <div className="md:col-span-2">
         <label className="field-label">{WHO_LABEL[type]}</label>
-        <select aria-label="Who approves" value={pick.kind} onChange={(event) => onChange({ ...step, approvers: defaultPick(event.target.value as ApproverPick["kind"], options) })} className="field-input">
+        <select
+          aria-label="Who approves"
+          value={pick.kind}
+          onChange={(event) => onChange({ ...step, approvers: defaultPick(event.target.value as ApproverPick["kind"], options) })}
+          className="field-input"
+        >
           {(Object.keys(PICK_LABEL) as ApproverPick["kind"][]).map((kind) => (
             <option
               key={kind}
@@ -1231,7 +1328,12 @@ function StepEditor({
         </select>
       )}
       {pick.kind === "GROUP" && (
-        <select value={pick.groupId} onChange={(event) => onChange({ ...step, approvers: { kind: "GROUP", groupId: Number(event.target.value) } })} className="field-input md:col-span-2" aria-label="Group">
+        <select
+          value={pick.groupId}
+          onChange={(event) => onChange({ ...step, approvers: { kind: "GROUP", groupId: Number(event.target.value) } })}
+          className="field-input md:col-span-2"
+          aria-label="Group"
+        >
           {options.groups.map((group) => (
             <option key={group.id} value={group.id}>
               {group.label}
@@ -1241,7 +1343,12 @@ function StepEditor({
       )}
       {pick.kind === "DESIGNATION" && (
         <div className="flex flex-wrap items-center gap-3 md:col-span-2">
-          <select value={pick.designationId} onChange={(event) => onChange({ ...step, approvers: { ...pick, designationId: Number(event.target.value) } })} className="field-input w-auto" aria-label="Designation">
+          <select
+            value={pick.designationId}
+            onChange={(event) => onChange({ ...step, approvers: { ...pick, designationId: Number(event.target.value) } })}
+            className="field-input w-auto"
+            aria-label="Designation"
+          >
             {!designations.some((item) => item.id === pick.designationId) && <option value={pick.designationId}>Choose a designation…</option>}
             {designations.map((item) => (
               <option key={item.id} value={item.id}>
@@ -1256,7 +1363,12 @@ function StepEditor({
         </div>
       )}
       {pick.kind === "FORM_FIELD_USER" && (
-        <select value={pick.fieldKey} onChange={(event) => onChange({ ...step, approvers: { kind: "FORM_FIELD_USER", fieldKey: event.target.value } })} className="field-input md:col-span-2" aria-label="Person field">
+        <select
+          value={pick.fieldKey}
+          onChange={(event) => onChange({ ...step, approvers: { kind: "FORM_FIELD_USER", fieldKey: event.target.value } })}
+          className="field-input md:col-span-2"
+          aria-label="Person field"
+        >
           <option value="">Choose a person field…</option>
           {personFields.map((field) => (
             <option key={field.key} value={field.key}>
@@ -1265,27 +1377,22 @@ function StepEditor({
           ))}
         </select>
       )}
-      {type !== "NOTIFY" && (
+      {/* Owner (v1.42.0): an option IT has fixed isn't shown on the request; the server applies it. */}
+      {type !== "NOTIFY" && !(policy && !policy.rule.editable && !policy.slaHours.editable && !policy.onNoApprover.editable) && (
         <div className="flex flex-wrap items-center gap-2 md:col-span-2">
-          {policy && !policy.rule.editable ? (
-            <span className="text-label text-ink-muted" data-testid="fixed-rule">
-              {policy.rule.value === "ANY_N" ? `Any ${policy.rule.n} of them` : type === "WORK" && policy.rule.value === "ALL" ? "All of them must mark it done" : RULE_TEXT[policy.rule.value]} (set by IT)
-            </span>
-          ) : (
+          {policy && !policy.rule.editable ? null : (
             <>
               <select value={step.rule} onChange={(event) => onChange({ ...step, rule: event.target.value as Rule })} className="field-input w-auto" aria-label="How many must approve">
                 <option value="ALL">{type === "WORK" ? "All of them must mark it done" : "All of them must approve"}</option>
                 <option value="ANY_ONE">Any one of them</option>
                 <option value="ANY_N">Any N of them</option>
               </select>
-              {step.rule === "ANY_N" && <input aria-label="N" type="number" min={1} value={step.n ?? 1} onChange={(event) => onChange({ ...step, n: Number(event.target.value) })} className="field-input w-24" />}
+              {step.rule === "ANY_N" && (
+                <input aria-label="N" type="number" min={1} value={step.n ?? 1} onChange={(event) => onChange({ ...step, n: Number(event.target.value) })} className="field-input w-24" />
+              )}
             </>
           )}
-          {policy && !policy.slaHours.editable ? (
-            <span className="text-label text-ink-muted" data-testid="fixed-sla">
-              {policy.slaHours.value ? `Respond within ${policy.slaHours.value} hours` : "No response time"} (set by IT)
-            </span>
-          ) : (
+          {policy && !policy.slaHours.editable ? null : (
             <label className="flex items-center gap-2 text-label">
               Respond within
               <input
@@ -1301,12 +1408,13 @@ function StepEditor({
               hours
             </label>
           )}
-          {policy && !policy.onNoApprover.editable ? (
-            <span className="text-label text-ink-muted" data-testid="fixed-nobody">
-              {type === "WORK" ? "If nobody to do it" : "If nobody to approve"}: {NOBODY_TEXT[policy.onNoApprover.value].toLowerCase()} (set by IT)
-            </span>
-          ) : (
-            <select value={step.onNoApprover ?? "BLOCK"} onChange={(event) => onChange({ ...step, onNoApprover: event.target.value as "BLOCK" | "SKIP" })} className="field-input w-auto" aria-label="If nobody resolves">
+          {policy && !policy.onNoApprover.editable ? null : (
+            <select
+              value={step.onNoApprover ?? "BLOCK"}
+              onChange={(event) => onChange({ ...step, onNoApprover: event.target.value as "BLOCK" | "SKIP" })}
+              className="field-input w-auto"
+              aria-label="If nobody resolves"
+            >
               <option value="BLOCK">{type === "WORK" ? "If nobody to do it" : "If nobody to approve"}: stop and tell IT</option>
               <option value="SKIP">{type === "WORK" ? "If nobody to do it" : "If nobody to approve"}: skip this step</option>
             </select>

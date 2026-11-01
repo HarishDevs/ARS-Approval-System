@@ -350,7 +350,7 @@ export interface ApproverLoad {
 
 // Workload per approver (team, department and organisation scopes only).
 export async function loadApproverLoad(scope: Scope, viewer: Viewer, filter: AnalyticsFilter, db: Queryable = getDbPool()): Promise<ApproverLoad[]> {
-  if (scope.kind === "MINE" || scope.kind === "APPROVALS") return [];
+  if (scope.kind === "MINE" || scope.kind === "APPROVALS" || scope.kind === "TASKS") return [];
   const t = where(scope, viewer, filter, "task");
   const [rows] = await db.query<RowDataPacket[]>(
     `SELECT u.id, u.name,

@@ -1,4 +1,4 @@
-# ARS-CMS: user guide (v1.41.0)
+# ARS-CMS: user guide (v1.42.0)
 
 **Address:** https://approval.arssteels.net. Sign in with your company Google account, or with your User ID and password and a WhatsApp code, as IT set you up (or either way, if IT chose **Both**). Questions: IT (itadmin@arssteels.co.in).
 
@@ -48,6 +48,9 @@ ARS-CMS can be installed like an app: it opens in its own window from your home 
 The search bar in the middle of the top bar finds requests, tasks, projects, people, information and pages. It keeps your recent and saved searches; **Filters** opens the full search. A request number works without dashes or zeros (e.g. "pur 2026 123"). **Ctrl+K** jumps to any page.
 
 ### Home
+Approvers open on **Approvals**, everyone else on **Task Management**; switch at the top.
+- **Approval Overview:** cards for Waiting for me, Overdue for me, My open requests and Changes asked of me (click one for its list); Waiting for me; your recent requests; on the right your drafts (open or delete), recently viewed requests and **Quick insights** (requests raised, approved and the average approval time for the period you pick; N/A when nothing was approved).
+- **My Work – Overview:** pick a period (Today, This week, This month, Last 30 days or Custom). Total = open now plus completed in the period; Upcoming = open, due today or later; Overdue = open, past the due date; Completed = done in the period. My Tasks has tabs; tick a task to complete it, or open it to edit, reassign or change the date. Projects show their progress; Latest status updates lists what happened on your tasks and projects; My weekly workload shows tasks given to you and completed each day.
 The first page after signing in. Tiles show what is waiting for you, what is overdue, your open requests and what was sent back. Then, in order: **Due soon or overdue**, **Waiting for me**, **Returned to you for changes**, **Your drafts**, **Recently viewed**, **My recent requests** and **Finished in the last 30 days**, followed by your tasks, your team and your projects.
 
 ### Inbox
@@ -85,6 +88,7 @@ Every list has the same toolbar: **Filter**, **Sort**, **Group**, **Options** (r
 A line above the **level map** says who it's waiting for, since when, and what comes next. The level map shows every level, who approves, and where it is now. Levels that the amount (DoA) or a rule doesn't need show as *skipped*.
 
 ### New request (your own approvers)
+Three steps: Request details, Approval workflow, Review & submit (on a computer each column scrolls on its own; each approval level is a small card on top, click one to edit it); the bar with Save as draft, Reset, Back and Next is at the top, under the steps. Fields with a red **\*** are required: **Next** moves on only when they're all filled in, and shows what's missing. The approvers can be changed only after Next. **Submit request** is on Review & submit.
 For something without an approval type: **New request** → title, the fields IT has set up (Admin → Custom approval), files (optional) → pick who approves. It starts with your reporting manager as approver.
 - **in order:** add a level for each;
 - **at the same time:** use *Add parallel steps*;
@@ -97,8 +101,8 @@ You get a message. Open the request, change the fields or add files, then **Resu
 When you resubmit, the same checks as a new request run again (duplicates, unique values, budget): fix what they point out before it goes back to the approvers.
 
 ### The road (where your request is)
-At the top of **Approval levels** on a request, the road shows the journey: **Request submitted**, one point per level, and the finish flag.
-- The red **ARS van** stands at the level waiting now. The road behind it is green.
+At the top of a request page, the road shows the journey: **Request submitted**, one point per level, and the finish flag. Below it, **Request details** starts with who raised it (User ID, department, designation, email, reporting manager), then the form. On the right: your action box (approve, recall, withdraw), then Attachments, then Collaborators.
+- While a level waits, the red **ARS van** is on its way, halfway to it; it reaches the approver's name once they approve. The finished road is green.
 - When a level finishes, the van drives on by itself (the page checks every 20 seconds).
 - Fully approved: the van reaches the flag with a big tick.
 - A red cross marks where a request was rejected; amber means changes asked, on hold or stuck.
@@ -115,7 +119,7 @@ Comments on a request can't be edited or removed. To tell someone in particular,
 **Download PDF** at the top of a request: details, levels, who decided what, files and history.
 
 ### Tasks & projects
-- **Draft task:** **+ Create → Task** opens a panel beside the page.
+- **Create task:** **+ Create → Task** opens it. On a computer it is a card in the middle of the screen: task details on the left (name, who it's for, project, description), task settings on the right (due date, **priority**, repeat, collaborators, Task with a form). On a phone it is a panel at the bottom.
   - The task is for **Myself** by default; choose **Others** and type part of a name to find people.
   - The toolbar at the bottom: **More**, **Formatting** (bold, italic, strikethrough, lists), **Emoji**, **@mention** (people you mention become collaborators), **Attach a file or paste an image**, **Due date** and **Repeat**. If Pico Bot is on for you, **✨** writes the description from the task's name.
   - Type **/** in the description for the command menu.
@@ -123,6 +127,7 @@ Comments on a request can't be edited or removed. To tell someone in particular,
 - **Task with a type (form):** for task types IT set up with their own fields.
 - **Working on a task:** **Start**, then **Complete** (the type may ask for a note or a file), or tick it on any list. You can mark it **Blocked** with the reason, and add comments, files, subtasks and followers.
 - **My Tasks:** Overdue, Recently assigned, Today, Upcoming, Later and your own sections, as a list, board or calendar.
+- **Change a task in the table:** click a cell. Name, due date, assignee, priority, collaborators and tags change in place (where you may change the task). Created by can't be changed. On the board, columns have a coloured top edge and a count, and each card shows who it's for, the due date and the priority.
 - **Projects:** private, department or everyone; List, Board, Calendar, Timeline and Overview. Start blank or from a template; **Share** a project or a task.
 - **Periodic tasks** repeat (daily, weekly, monthly, yearly, or some days after completion) and are marked ↻.
 - **Managers** see the tasks of everyone below them.
@@ -138,11 +143,11 @@ Comments on a request can't be edited or removed. To tell someone in particular,
 Only if IT turned it on for you. Ask questions about your approvals, tasks and, if allowed, the ARS Salesforce. Your chats are listed under it in the sidebar. Pico Bot gives real numbers or says it can't; it never approves or changes anything. Your question and the data needed to answer it go to the AI provider IT chose; check important figures, and don't paste passwords or other people's personal details (see the privacy policy and terms).
 
 ### Calendar
-Month, week or day. Filter by Approvals, Tasks, Information, Needed by and Personal. **Add a personal entry** at the bottom; open an entry to edit or delete it. "From Google" marks entries from your Google Calendar.
+Month, week, day or **Agenda** (the period as a list). Filter by Approvals, Tasks, Information, Needed by and Personal: each chip shows how many entries it has, with a tick when shown; tap it to hide or show that kind. Each kind has its own coloured stripe beside its label. **Add a personal entry** at the bottom; open an entry to edit or delete it. "From Google" marks entries from your Google Calendar.
 
 ### Analytics
 One page with tabs. You see only the dashboards for your modules and role.
-- **Choosing what you see:** whose numbers (your own, your team, your department, or everyone for IT), the period and the comparison, then **Apply**.
+- **Choosing what you see:** whose numbers (your requests, your approvals, **your tasks**, your team, your department, or everyone for IT), the period and the comparison, then **Apply**.
 - **"How these are worked out"** explains every number.
 - **A figure shown as "not available"** isn't recorded by the app yet; it is never guessed.
 

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { TaskCheck } from "@/features/work/client";
 import { calendarKindAllowed } from "@/server/modules/modules";
 import Link from "next/link";
@@ -26,6 +26,14 @@ const KIND_STYLE: Record<Kind, string> = {
   needed: "bg-surface-muted text-ink",
   personal: "bg-info-50 text-info-600",
 };
+// D-259 (owner's Calendar reference): a coloured stripe per kind, beside its label.
+const KIND_ACCENT: Record<Kind, string> = {
+  approval: "border-l-primary-600",
+  task: "border-l-warning-600",
+  info: "border-l-success-600",
+  needed: "border-l-line-strong",
+  personal: "border-l-info-600",
+};
 const SYNC_TEXT = { synced: "Synced with Google", pending: "Waiting to sync", error: "Sync problem", conflict: "Conflict to review" } as const;
 
 // A2 + v1.11.0 (D-155): the calendar. Approvals waiting on me, my tasks,
@@ -34,7 +42,10 @@ const SYNC_TEXT = { synced: "Synced with Google", pending: "Waiting to sync", er
 // whether it is synced, and entries from Google are marked.
 export default async function CalendarPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const { user } = await requireArea("users");
-  const parsed = parseView(await searchParams);
+  const query = await searchParams;
+  const parsed = parseView(query);
+  // D-259: Agenda = the period as a list, on every screen size.
+  const agenda = query.layout === "agenda";
   // D-168: only the kinds of entry the person's modules cover.
   const allowedKinds = KINDS.filter((kind) => calendarKindAllowed(user, kind));
   const state = { ...parsed, kinds: parsed.kinds.filter((kind) => allowedKinds.includes(kind)) };
@@ -48,39 +59,58 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
   const unit = state.view === "month" ? "month" : state.view === "week" ? "week" : "day";
   const href = (change: Parameters<typeof viewHref>[1]) => viewHref(state, change, state.anchor);
   const dayLabel = (date: string) => new Date(`${date}T00:00:00Z`).toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
+  const countOf = (kind: Kind) => entries.filter((entry) => entry.kind === kind).length;
   const toggle = (kind: Kind) => (state.kinds.includes(kind) ? state.kinds.filter((item) => item !== kind) : [...state.kinds, kind]);
 
   return (
     <>
       <PageHeader title="Calendar" icon={CalendarDays} description="Your approvals, tasks, information and needed-by dates, and your own entries, in one place." />
 
-      <div className="card mb-3 flex flex-wrap items-center gap-3 px-4 py-3">
-        <Link href={href({ date: state.prev })} className="btn-secondary btn-compact" aria-label={`Previous ${unit}`}>
-          ←
+      <div className="card mb-3 flex flex-wrap items-center gap-2 px-4 py-3">
+        <Link href={href({ date: state.prev })} className="grid h-9 w-9 place-items-center rounded-full border border-line hover:bg-surface-muted" aria-label={`Previous ${unit}`}>
+          <ChevronLeft aria-hidden="true" className="h-4 w-4" />
         </Link>
-        <h2 className="min-w-40 text-center text-body font-semibold" aria-live="polite">
+        <h2 className="min-w-0 px-1 text-center text-body font-semibold sm:min-w-40 sm:text-title" aria-live="polite">
           {title}
         </h2>
-        <Link href={href({ date: state.next })} className="btn-secondary btn-compact" aria-label={`Next ${unit}`}>
-          →
+        <Link href={href({ date: state.next })} className="grid h-9 w-9 place-items-center rounded-full border border-line hover:bg-surface-muted" aria-label={`Next ${unit}`}>
+          <ChevronRight aria-hidden="true" className="h-4 w-4" />
         </Link>
         <Link href={href({ date: today })} className="btn-secondary btn-compact">
           Today
         </Link>
-        <nav aria-label="View" className="flex gap-1 sm:ml-auto">
+        <nav aria-label="View" className="inline-flex overflow-hidden rounded-lg border border-line sm:ml-auto">
           {(["month", "week", "day"] as CalendarView[]).map((view) => (
-            <Link key={view} href={href({ view })} aria-current={state.view === view ? "page" : undefined} className={`rounded-md px-3 py-1.5 text-label capitalize ${state.view === view ? "bg-primary-50 font-semibold text-primary-700" : "text-ink-muted hover:bg-surface-muted"}`}>
+            <Link
+              key={view}
+              href={href({ view })}
+              aria-current={state.view === view && !agenda ? "page" : undefined}
+              className={`border-l border-line px-3 py-1.5 text-label capitalize first:border-l-0 ${state.view === view && !agenda ? "bg-primary-solid font-semibold text-on-solid" : "text-ink-muted hover:bg-surface-muted"}`}
+            >
               {view}
             </Link>
           ))}
+          <Link
+            href={`${href({})}${href({}).includes("?") ? "&" : "?"}layout=agenda`}
+            aria-current={agenda ? "page" : undefined}
+            className={`border-l border-line px-3 py-1.5 text-label ${agenda ? "bg-primary-solid font-semibold text-on-solid" : "text-ink-muted hover:bg-surface-muted"}`}
+          >
+            Agenda
+          </Link>
         </nav>
       </div>
 
       <div className="mb-4 flex flex-wrap items-center gap-2 text-label">
         <span className="text-ink-muted">Show:</span>
         {allowedKinds.map((kind) => (
-          <Link key={kind} href={href({ kinds: toggle(kind) })} className={`rounded-full border px-3 py-1 ${state.kinds.includes(kind) ? `border-transparent ${KIND_STYLE[kind]} font-semibold` : "border-line text-ink-muted line-through"}`}>
+          <Link
+            key={kind}
+            href={href({ kinds: toggle(kind) })}
+            className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 ${state.kinds.includes(kind) ? `border-transparent ${KIND_STYLE[kind]} font-semibold` : "border-dashed border-line-strong text-ink-muted"}`}
+          >
+            {state.kinds.includes(kind) && <Check aria-hidden="true" className="h-3.5 w-3.5" />}
             {KIND_LABEL[kind]}
+            {state.kinds.includes(kind) && <span className="rounded-full bg-surface px-1.5 text-caption tabular-nums">{countOf(kind)}</span>}
             <span className="sr-only">{state.kinds.includes(kind) ? " (shown; select to hide)" : " (hidden; select to show)"}</span>
           </Link>
         ))}
@@ -113,7 +143,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
         )}
       </p>
 
-      {state.view === "month" && state.grid && (
+      {state.view === "month" && state.grid && !agenda && (
         <div className="card mb-6 hidden overflow-hidden md:block">
           <table className="w-full table-fixed border-collapse text-caption" aria-label={`Calendar for ${title}`}>
             <thead>
@@ -129,10 +159,14 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
               {state.grid.map((week, index) => (
                 <tr key={index}>
                   {week.map((date, cell) => (
-                    <td key={cell} className={`h-24 border-b border-r border-line p-1.5 align-top last:border-r-0 ${date ? "" : "bg-surface-muted"}`}>
+                    <td key={cell} className={`h-28 border-b border-r border-line p-1.5 align-top last:border-r-0 ${date ? (cell >= 5 ? "bg-surface-muted" : "") : "bg-page"}`}>
                       {date && (
                         <>
-                          <Link href={href({ view: "day", date })} className={`inline-block rounded px-1 ${date === today ? "bg-primary-solid font-semibold text-on-solid" : "text-ink-muted hover:underline"}`} aria-label={`${dayLabel(date)}: open the day`}>
+                          <Link
+                            href={href({ view: "day", date })}
+                            className={`grid h-7 w-7 place-items-center rounded-full text-label ${date === today ? "bg-primary-solid font-semibold text-on-solid" : "text-ink-muted hover:bg-surface-muted"}`}
+                            aria-label={`${dayLabel(date)}: open the day`}
+                          >
                             {Number(date.slice(8))}
                           </Link>
                           <ul className="mt-1 space-y-1">
@@ -160,7 +194,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
         </div>
       )}
 
-      {state.view === "week" && (
+      {state.view === "week" && !agenda && (
         <div className="mb-6 hidden grid-cols-7 gap-2 md:grid" aria-label={`Week of ${title}`}>
           {state.days.map((day) => (
             <section key={day} className="card min-w-0 p-2" aria-label={dayLabel(day)}>
@@ -187,9 +221,9 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
           Nothing on the calendar for this {unit}.
         </p>
       ) : (
-        <ul className={`card mb-6 divide-y divide-line ${state.view === "day" ? "" : "md:hidden"}`} data-testid="calendar-list">
+        <ul className={`card mb-6 divide-y divide-line ${state.view === "day" || agenda ? "" : "md:hidden"}`} data-testid="calendar-list">
           {entries.map((entry) => (
-            <li key={entry.key} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3">
+            <li key={entry.key} className={`flex flex-wrap items-center gap-x-4 gap-y-1 border-l-4 px-4 py-3 ${KIND_ACCENT[entry.kind]}`}>
               <span className="w-28 shrink-0 text-label font-semibold">
                 {state.view === "day" ? (entry.time ?? "All day") : dayLabel(entry.day)}
                 {state.view !== "day" && entry.time && <span className="block text-caption font-normal text-ink-muted">{entry.time}</span>}
@@ -221,7 +255,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
 
 function Chip({ entry }: { entry: CalendarEntry }) {
   return (
-    <Link href={entry.href} className={`block truncate rounded px-1.5 py-0.5 hover:underline ${KIND_STYLE[entry.kind]}`} title={`${KIND_LABEL[entry.kind]}: ${entry.ref ? `${entry.ref} · ` : ""}${entry.title}`}>
+    <Link href={entry.href} className={`block truncate rounded border-l-[3px] px-1.5 py-0.5 hover:underline ${KIND_STYLE[entry.kind]} ${KIND_ACCENT[entry.kind]}`} title={`${KIND_LABEL[entry.kind]}: ${entry.ref ? `${entry.ref} · ` : ""}${entry.title}`}>
       {entry.time && <span className="tabular-nums">{entry.time} </span>}
       {entry.ref ?? entry.title}
       {entry.source === "GOOGLE" && <span className="sr-only"> (from Google Calendar)</span>}

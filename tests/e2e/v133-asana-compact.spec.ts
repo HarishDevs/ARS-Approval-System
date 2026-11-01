@@ -122,7 +122,8 @@ test("D-222: an ad hoc task for two people; Project permissions", async ({ page,
   await draft.getByRole("radio", { name: "Others" }).click();
   const search = draft.getByRole("combobox", { name: "Search people" });
   await search.fill("sita");
-  await expect(draft.getByRole("option")).toHaveCount(1);
+  // The people found (the panel also has the Priority list).
+  await expect(draft.getByRole("listbox", { name: "People" }).getByRole("option")).toHaveCount(1);
   await search.press("Enter");
   await search.fill("manoj man");
   await draft.getByRole("option", { name: "Manoj Manager" }).click();
