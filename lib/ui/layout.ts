@@ -4,3 +4,5 @@ export const LAYOUT_COOKIE = "ars_layout";
 export const MOBILE_MAX_WIDTH = 767; // 0–767 px: the mobile layout
 // Phones only (tablets keep the desktop layout): Android phones say "Mobile".
 export const PHONE_UA = /iPhone|iPod|Android.*Mobile|Windows Phone|Mobile Safari(?!.*iPad)/i;
+// v1.45.0: phone Manage view → Compact mode (this device; a display choice).
+export const COMPACT_COOKIE = "ars_m_compact";

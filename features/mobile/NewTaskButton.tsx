@@ -2,6 +2,7 @@
 
 import { ListPlus, Plus } from "lucide-react";
 import { CREATE_TASK_EVENT } from "@/features/work/client";
+import { ADD_CLASS } from "@/features/mobile/dock";
 
 const open = () => window.dispatchEvent(new CustomEvent(CREATE_TASK_EVENT, { detail: { projectId: null } }));
 
@@ -16,16 +17,10 @@ export function QuickNewTask() {
   );
 }
 
-// The floating + on the Tasks screens, above the tab bar.
-export function TaskFab() {
+// v1.45.0: the red + in the Tasks screen's floating view switcher.
+export function TaskDockAdd() {
   return (
-    <button
-      type="button"
-      onClick={open}
-      aria-label="New task"
-      data-testid="m-task-fab"
-      className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-4 z-header grid h-14 w-14 place-items-center rounded-full bg-[color:var(--m-red)] text-white shadow-lg"
-    >
+    <button type="button" onClick={open} aria-label="New task" data-testid="m-task-fab" className={ADD_CLASS}>
       <Plus aria-hidden="true" className="h-6 w-6" strokeWidth={2.5} />
     </button>
   );

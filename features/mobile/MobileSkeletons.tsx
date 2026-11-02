@@ -30,8 +30,8 @@ export function MobileSkeleton({ screen, label = "Loading…" }: { screen: Mobil
         {label}
       </p>
       {screen === "home" && <HomeSkeleton />}
-      {screen === "approvals" && <ListScreen chips={4} action card={ApprovalCardSkeleton} />}
-      {screen === "tasks" && <ListScreen chips={5} card={TaskCardSkeleton} />}
+      {screen === "approvals" && <ListScreen card={ApprovalCardSkeleton} />}
+      {screen === "tasks" && <TasksSkeleton />}
       {screen === "inbox" && <InboxSkeleton />}
       {screen === "more" && <MoreSkeleton />}
       {screen === "request" && <RequestSkeleton />}
@@ -41,21 +41,20 @@ export function MobileSkeleton({ screen, label = "Loading…" }: { screen: Mobil
   );
 }
 
-function Title({ action = false }: { action?: boolean }) {
+function Title() {
   return (
-    <div className="flex items-center justify-between gap-3">
+    <div className="-mx-4 flex items-center justify-between gap-3 border-b border-line px-4 pb-3">
       <SkeletonBlock className="h-7 w-36" />
-      {action && <SkeletonBlock className="h-11 w-20 rounded-full" />}
+      <SkeletonBlock className="h-6 w-8 rounded-full" />
     </div>
   );
 }
 
-function Chips({ count }: { count: number }) {
+// The floating Choose view pill (v1.45.0).
+function Dock() {
   return (
-    <div className="-mx-4 flex gap-2 overflow-hidden px-4">
-      {Array.from({ length: count }, (_, index) => (
-        <SkeletonBlock key={index} className={`h-11 shrink-0 rounded-full ${index === 0 ? "w-28" : "w-24"}`} />
-      ))}
+    <div className="fixed inset-x-0 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] flex justify-center">
+      <SkeletonBlock className="h-14 w-64 rounded-full" />
     </div>
   );
 }
@@ -69,11 +68,10 @@ function SectionHead() {
   );
 }
 
-function ListScreen({ chips, action = false, card: Card }: { chips: number; action?: boolean; card: () => React.ReactElement }) {
+function ListScreen({ card: Card }: { card: () => React.ReactElement }) {
   return (
     <div className="space-y-4">
-      <Title action={action} />
-      <Chips count={chips} />
+      <Title />
       <ul className="space-y-3">
         {[0, 1, 2, 3].map((index) => (
           <li key={index}>
@@ -81,6 +79,35 @@ function ListScreen({ chips, action = false, card: Card }: { chips: number; acti
           </li>
         ))}
       </ul>
+      <Dock />
+    </div>
+  );
+}
+
+// My tasks: flat rows (circle, title and details, the date chip).
+function TasksSkeleton() {
+  return (
+    <div>
+      <Title />
+      <div className="-mx-4 flex min-h-[52px] items-center gap-3 px-4">
+        <SkeletonBlock className="h-4 w-4" />
+        <SkeletonBlock className="h-5 w-40" />
+      </div>
+      <ul className="-mx-4">
+        {[0, 1, 2, 3, 4, 5].map((index) => (
+          <li key={index} className="flex items-center gap-3 pl-4">
+            <SkeletonBlock className="h-5 w-5 shrink-0 rounded-full" />
+            <div className="flex min-h-[72px] flex-1 items-center gap-3 border-b border-line pr-4">
+              <div className="min-w-0 flex-1 space-y-1.5">
+                <SkeletonBlock className="h-4 w-4/5" />
+                <SkeletonBlock className="h-3 w-1/2" />
+              </div>
+              <SkeletonBlock className="h-7 w-16" />
+            </div>
+          </li>
+        ))}
+      </ul>
+      <Dock />
     </div>
   );
 }
@@ -107,20 +134,6 @@ function ApprovalCardSkeleton() {
       <div className="mt-3 flex gap-2">
         <SkeletonBlock className="h-6 w-20 rounded-full" />
         <SkeletonBlock className="h-6 w-14 rounded-full" />
-      </div>
-    </div>
-  );
-}
-
-function TaskCardSkeleton() {
-  return (
-    <div className="mob-card space-y-2 p-4">
-      <SkeletonBlock className="h-3 w-24" />
-      <SkeletonBlock className="h-5 w-3/4" />
-      <div className="flex gap-3">
-        <SkeletonBlock className="h-3.5 w-20" />
-        <SkeletonBlock className="h-3.5 w-16" />
-        <SkeletonBlock className="h-3.5 w-24" />
       </div>
     </div>
   );
@@ -180,26 +193,26 @@ function RowsCard({ rows, icon = true }: { rows: number; icon?: boolean }) {
 
 function InboxSkeleton() {
   return (
-    <div className="space-y-4">
+    <div>
       <Title />
-      <Chips count={5} />
-      <div className="flex gap-4 px-1">
-        {[0, 1, 2, 3].map((index) => (
-          <SkeletonBlock key={index} className="h-4 w-16" />
+      <div className="-mx-4">
+        <div className="border-b border-line bg-surface-muted px-4 py-2">
+          <SkeletonBlock className="h-4 w-14" />
+        </div>
+        {[0, 1, 2].map((index) => (
+          <div key={index} className="space-y-2.5 border-b border-line px-4 py-4">
+            <div className="flex items-center gap-2">
+              <SkeletonBlock className="h-7 w-24" />
+              <SkeletonBlock className="ml-auto h-7 w-16" />
+            </div>
+            <SkeletonBlock className="h-4 w-3/4" />
+            <SkeletonBlock className="h-3 w-11/12" />
+            <SkeletonBlock className="h-3 w-2/3" />
+            <SkeletonBlock className="h-3 w-28" />
+          </div>
         ))}
       </div>
-      <ul className="mob-card divide-y divide-line overflow-hidden">
-        {[0, 1, 2, 3, 4].map((index) => (
-          <li key={index} className="space-y-2 px-4 py-3">
-            <div className="flex items-center gap-2">
-              <SkeletonBlock className="h-5 w-16" />
-              <SkeletonBlock className="ml-auto h-3 w-24" />
-            </div>
-            <SkeletonBlock className="h-4 w-1/2" />
-            <SkeletonBlock className="h-3 w-11/12" />
-          </li>
-        ))}
-      </ul>
+      <Dock />
     </div>
   );
 }
@@ -207,18 +220,24 @@ function InboxSkeleton() {
 function MoreSkeleton() {
   return (
     <div className="space-y-5">
-      <Title />
-      <div className="mob-card flex items-center gap-3 p-4">
-        <SkeletonBlock className="h-12 w-12 shrink-0 rounded-full" />
-        <div className="min-w-0 flex-1 space-y-2">
-          <SkeletonBlock className="h-4 w-40" />
-          <SkeletonBlock className="h-3 w-52 max-w-full" />
-        </div>
+      <div className="flex flex-col items-center gap-2 pt-2">
+        <SkeletonBlock className="h-24 w-24 rounded-full" />
+        <SkeletonBlock className="h-6 w-40" />
+        <SkeletonBlock className="h-4 w-48" />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <SkeletonBlock className="h-24 rounded-[14px]" />
+        <SkeletonBlock className="h-24 rounded-[14px]" />
       </div>
       {[4, 3].map((rows, index) => (
-        <section key={index}>
-          <SkeletonBlock className="mb-2 ml-1 h-3 w-20" />
-          <RowsCard rows={rows} />
+        <section key={index} className="-mx-4 border-t-8 border-[color:var(--m-bg)] px-4 pt-4">
+          <SkeletonBlock className="mb-3 h-3 w-20" />
+          {Array.from({ length: rows }, (_, row) => (
+            <div key={row} className="flex min-h-[56px] items-center gap-4">
+              <SkeletonBlock className="h-6 w-6 rounded-md" />
+              <SkeletonBlock className="h-4 w-1/2" />
+            </div>
+          ))}
         </section>
       ))}
     </div>

@@ -41,6 +41,8 @@ export default async function MyTasksPage({
     month?: string;
     task?: string;
     tab?: string;
+    sort?: string;
+    group?: string;
   }>;
 }) {
   const { user, viewer } = await workPage();
@@ -49,7 +51,7 @@ export default async function MyTasksPage({
   if (await isMobileLayout()) {
     const paneTask = paneTaskId(params.task);
     if (paneTask) redirect(`/users/tasks/${paneTask}`);
-    return <MobileTasks userId={user.id} tab={params.tab} />;
+    return <MobileTasks userId={user.id} tab={params.tab} sort={params.sort} group={params.group} />;
   }
   const view = params.view === "board" || params.view === "calendar" ? params.view : "list";
   const showDone = params.done === "1" || view === "list";

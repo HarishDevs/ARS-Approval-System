@@ -16,7 +16,7 @@ test("a phone opens Home with the attention line, the counts and the bottom tabs
   await expect(page.getByTestId("m-attention")).toBeVisible();
   await expect(page.getByTestId("m-kpis").getByRole("link")).toHaveCount(4);
   const tabs = page.getByTestId("mobile-tabbar");
-  for (const name of ["Home", "Approvals", "Tasks", "Inbox", "More"]) await expect(tabs.getByRole("link", { name: new RegExp(`^${name}`) })).toBeVisible();
+  for (const name of ["Home", "Approvals", "My tasks", "Inbox", "More"]) await expect(tabs.getByRole("link", { name: new RegExp(`^${name}`) })).toBeVisible();
   await expect(tabs.getByRole("link", { name: /^Home/ })).toHaveAttribute("aria-current", "page");
   await expect(page.getByTestId("mobile-topbar")).toBeVisible();
   // Nothing sideways: the page fits the phone.
@@ -51,12 +51,21 @@ async function raiseForManager(page: Page, context: BrowserContext, title: strin
   await expect(page).toHaveURL(/\/users\/requests\/\d+\?submitted=1/);
 }
 
-test("Approvals: four tabs as cards; a card opens the request with the decision bar; Return opens its drawer", async ({ page, context }) => {
+// v1.45.0 (owner's Asana screens): a screen's lists are in the floating Choose view sheet.
+async function chooseView(page: Page, names: string[], pick?: string) {
+  await page.getByTestId("m-choose-view").click();
+  const sheet = page.getByRole("dialog", { name: "Choose view" });
+  for (const name of names) await expect(sheet.getByRole("link", { name: new RegExp(name) })).toBeVisible();
+  if (pick) await sheet.getByRole("link", { name: new RegExp(pick) }).click();
+  else await page.keyboard.press("Escape");
+  await expect(sheet).toBeHidden();
+}
+
+test("Approvals: four lists as cards; a card opens the request with the decision bar; Return opens its drawer", async ({ page, context }) => {
   await raiseForManager(page, context, "Mobile card check");
   await phone(context, page, "E2E_MGR");
   await page.goto("/users/approvals");
-  const lists = page.getByRole("navigation", { name: "Approval lists" });
-  for (const name of ["Waiting for me", "My requests", "Approved", "Drafts"]) await expect(lists.getByRole("link", { name: new RegExp(name) })).toBeVisible();
+  await chooseView(page, ["Waiting for me", "My requests", "Approved", "Drafts"]);
   const card = page.getByTestId("m-approval-card").filter({ hasText: "Mobile card check" }).first();
   await expect(card).toBeVisible();
   await expect(card).toContainText("Requested by");
@@ -78,29 +87,39 @@ test("Approvals: four tabs as cards; a card opens the request with the decision 
   await expect(drawer).toBeHidden();
 
   await page.goto("/users/approvals?tab=drafts");
-  await expect(lists.getByRole("link", { name: /Drafts/ })).toHaveAttribute("aria-current", "page");
+  await expect(page.getByTestId("m-choose-view")).toContainText("Drafts");
+  // Manage view → Compact mode: one line per card.
+  await page.goto("/users/approvals?tab=waiting");
+  await page.getByTestId("m-manage-view").click();
+  await page.getByTestId("m-compact").check();
+  await expect(page.getByTestId("m-approval-card").filter({ hasText: "Mobile card check" }).first()).not.toContainText("Requested by");
+  await page.getByTestId("m-compact").uncheck();
 });
 
-test("Tasks: tabs, cards and the + that opens the one Create task window", async ({ page, context }) => {
+test("My tasks: Choose view, Manage view (sort, group) and the + that opens the one Create task window", async ({ page, context }) => {
   await phone(context, page, "E2E_STAFF");
   await page.goto("/users/work/my-tasks");
   await expect(page.getByTestId("mobile-tasks")).toBeVisible();
-  const lists = page.getByRole("navigation", { name: "Task lists" });
-  for (const name of ["Today", "Upcoming", "Overdue", "Completed", "Assigned by me"]) await expect(lists.getByRole("link", { name: new RegExp(name) })).toBeVisible();
-  await lists.getByRole("link", { name: /Upcoming/ }).click();
+  await chooseView(page, ["Due today", "Upcoming", "Overdue", "Completed", "Assigned by me"], "Upcoming");
   await expect(page).toHaveURL(/tab=upcoming/);
+  await page.getByTestId("m-manage-view").click();
+  const manage = page.getByRole("dialog", { name: "Manage view" });
+  await manage.getByRole("list", { name: "Sort" }).getByRole("link", { name: "Priority" }).click();
+  await expect(page).toHaveURL(/sort=priority/);
   await page.getByTestId("m-task-fab").click();
   await expect(page.getByRole("dialog")).toBeVisible();
 });
 
-test("Inbox has All, Approvals, Tasks, Information and Mentions; More lists the rest and asks before signing out", async ({ page, context }) => {
+test("Inbox: All activity, Bookmarks, Archived; filters in Manage view; More lists the rest and asks before signing out", async ({ page, context }) => {
   await phone(context, page, "E2E_REQ");
   await page.goto("/users/inbox");
-  const views = page.getByRole("navigation", { name: "Inbox views" });
-  for (const name of ["All", "Approvals", "Tasks", "Information", "Mentions"]) await expect(views.getByRole("link", { name: new RegExp(`^${name}`) })).toBeVisible();
-  await views.getByRole("link", { name: /^Mentions/ }).click();
+  await chooseView(page, ["All activity", "Bookmarks", "Archived"]);
+  await page.getByTestId("m-manage-view").click();
+  const filters = page.getByRole("dialog", { name: "Manage view" }).getByRole("list", { name: "Show" });
+  for (const name of ["Everything", "Approvals", "Tasks", "Information", "@Mentioned"]) await expect(filters.getByRole("link", { name: new RegExp(`^${name}`) })).toBeVisible();
+  await filters.getByRole("link", { name: /^@Mentioned/ }).click();
   await expect(page).toHaveURL(/mentions=1/);
-  await expect(views.getByRole("link", { name: /^Mentions/ })).toHaveAttribute("aria-current", "page");
+  await expect(page.getByTestId("m-inbox-filter")).toContainText("@Mentioned");
 
   await page.getByTestId("mobile-tabbar").getByRole("link", { name: "More" }).click();
   await expect(page.getByTestId("mobile-more")).toBeVisible();

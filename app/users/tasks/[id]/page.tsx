@@ -24,6 +24,11 @@ import { taskWorkView } from "@/server/work/task-view";
 import { TaskCompleteButton } from "@/features/work/client";
 import { TaskShareButton } from "@/features/work/ShareDialogs";
 import { visibilityText } from "@/features/work/TaskPane";
+import { ArrowLeft, CalendarDays, MoreHorizontal } from "lucide-react";
+import { isMobileLayout } from "@/server/ui/layout-mode";
+import { SheetButton } from "@/features/mobile/BottomSheet";
+import { CopyLinkButton } from "@/features/work/client";
+import { initials } from "@/features/ui/Display";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
 export const metadata: Metadata = { title: "Task" };
@@ -113,8 +118,102 @@ export default async function TaskPage({ params, searchParams }: { params: Promi
     detail: event.body?.replace(/@\[([^\]\n]{1,80})\]\(user:\d{1,10}\)/g, "@$1") ?? null,
   }));
 
+  const actionsCard = (
+    <>
+          <section className="card space-y-3 px-5 py-4">
+            <h2 className="font-semibold">Actions</h2>
+            {[...actions].filter((action) => action !== "COMMENT").length === 0 && <p className="text-label text-ink-muted">Nothing for you to do on this task now.</p>}
+            <div className="flex flex-wrap gap-2">
+              {actions.has("START") && <TaskActionButton taskId={task.id} rowVersion={task.rowVersion} action="START" needsText={false} />}
+              {actions.has("UNBLOCK") && <TaskActionButton taskId={task.id} rowVersion={task.rowVersion} action="UNBLOCK" needsText={false} />}
+              {actions.has("COMPLETE") && (
+                <TaskActionButton
+                  taskId={task.id}
+                  rowVersion={task.rowVersion}
+                  action="COMPLETE"
+                  needsText={settings.completion === "NOTE" || settings.completion === "NOTE_AND_FILE"}
+                  allowFiles={settings.completion === "FILE" || settings.completion === "NOTE_AND_FILE"}
+                  textLabel={`Completion note${settings.completion === "NONE" || settings.completion === "FILE" ? " (optional)" : ""}`}
+                />
+              )}
+              {actions.has("BLOCK") && <TaskActionButton taskId={task.id} rowVersion={task.rowVersion} action="BLOCK" needsText textLabel="What is blocking it?" />}
+              {actions.has("REOPEN") && <TaskActionButton taskId={task.id} rowVersion={task.rowVersion} action="REOPEN" needsText textLabel="Why reopen it?" />}
+              {actions.has("CANCEL") && <TaskActionButton taskId={task.id} rowVersion={task.rowVersion} action="CANCEL" needsText textLabel="Why cancel it?" danger />}
+            </div>
+            {actions.has("COMPLETE") && settings.completion !== "NONE" && <p className="text-caption text-ink-muted">To complete: {COMPLETION_LABEL[settings.completion].toLowerCase()}.</p>}
+            {actions.has("REASSIGN") && <ReassignForm taskId={task.id} rowVersion={task.rowVersion} assignable={assignable.map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` }))} />}
+            {actions.has("EDIT") && (
+              <EditTaskForm
+                taskId={task.id}
+                rowVersion={task.rowVersion}
+                title={task.title}
+                description={task.description ?? ""}
+                priority={task.priority}
+                due={utcToIndiaLocal(task.dueAt)}
+                editable={editable}
+                values={values}
+                people={options}
+                lookups={lookups}
+              />
+            )}
+          </section>
+    </>
+  );
+  const canTick = (actions.has("COMPLETE") && settings.completion === "NONE") || actions.has("REOPEN") || task.status === "COMPLETED";
+  const mobile = await isMobileLayout();
+
   return (
     <>
+      {mobile && (
+        // v1.45.0 (owner's Asana task screen): back, Mark complete, copy link and … (the task's actions) stay at the top.
+        <div className="sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-sticky -mx-4 -mt-4 mb-3 flex items-center gap-2 border-b border-line bg-surface px-2 py-2" data-testid="m-task-bar">
+          <Link href={fromProject ? `/users/work/projects/${fromProject.projectId}` : "/users/work/my-tasks"} aria-label="Back to tasks" className="grid h-11 w-11 place-items-center rounded-full text-ink">
+            <ArrowLeft aria-hidden="true" className="h-6 w-6" />
+          </Link>
+          <span className="flex flex-1 justify-center">{canTick && <TaskCompleteButton taskId={task.id} done={task.status === "COMPLETED"} disabled={!(actions.has("COMPLETE") || actions.has("REOPEN"))} title={task.title} />}</span>
+          <span className="grid h-11 w-11 place-items-center">
+            <CopyLinkButton path={`/users/tasks/${task.id}`} />
+          </span>
+          <SheetButton label="Task actions" title="Task actions" content={<div className="space-y-4 pb-2 [&_.card]:border-0 [&_.card]:px-0 [&_.card]:shadow-none">{actionsCard}<TaskShareButton taskId={task.id} title={task.title} followers={panel.followers} people={panel.people} visibility={visibilityText(links)} canAdd={rights.comment} /></div>} testId="m-task-actions" className="grid h-11 w-11 place-items-center rounded-full text-ink-muted">
+            <MoreHorizontal aria-hidden="true" className="h-6 w-6" />
+          </SheetButton>
+        </div>
+      )}
+      {mobile ? (
+        <header className="mb-4 space-y-4">
+          <p className="font-mono text-[12px] text-ink-muted">
+            {task.taskNo} · {task.typeName}
+          </p>
+          <h1 className="text-[26px] font-semibold leading-tight">{task.title}</h1>
+          <div className="flex flex-wrap gap-2">
+            <Badge tone={STATUS_TONE[task.status]}>{TASK_STATUS_LABEL[task.status]}</Badge>
+            {task.priority !== "NORMAL" && <Badge tone={PRIORITY_TONE[task.priority]}>{PRIORITY_LABEL[task.priority]}</Badge>}
+            {late && <Badge tone="danger">Overdue</Badge>}
+            {task.deletedAt && <Badge tone="danger">Deleted</Badge>}
+          </div>
+          <dl className="grid grid-cols-2 gap-3 border-y border-line py-3" data-testid="m-task-facts">
+            <div className="flex items-center gap-3">
+              <span aria-hidden="true" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[color:var(--m-navy)] text-[14px] font-bold text-white">
+                {initials(task.assigneeName)}
+              </span>
+              <div className="min-w-0">
+                <dt className="text-[13px] text-ink-muted">Assigned to</dt>
+                <dd className="truncate text-[15px]">{task.assigneeName}</dd>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <span aria-hidden="true" className={`grid h-11 w-11 shrink-0 place-items-center rounded-full border-2 ${late ? "border-danger-600 text-danger-600" : "border-line text-ink-muted"}`}>
+                <CalendarDays className="h-5 w-5" />
+              </span>
+              <div className="min-w-0">
+                <dt className="text-[13px] text-ink-muted">Due date</dt>
+                <dd className={`truncate text-[15px] ${late ? "text-danger-600" : ""}`}>{task.dueAt ? DUE_DAY.format(new Date(task.dueAt)) : "None"}</dd>
+              </div>
+            </div>
+          </dl>
+        </header>
+      ) : (
+      <>
       <Breadcrumbs
         items={[
           fromProject ? { href: `/users/work/projects/${fromProject.projectId}`, label: fromProject.projectName } : { href: "/users/tasks", label: "Tasks" },
@@ -136,6 +235,8 @@ export default async function TaskPage({ params, searchParams }: { params: Promi
         <Badge tone={panel.adhoc ? "neutral" : "info"}>{panel.adhoc ? "Ad hoc" : "Periodic"}</Badge>
         {task.deletedAt && <Badge tone="danger">Deleted</Badge>}
       </PageHeader>
+      </>
+      )}
       {parentJourney && (
         <section className="mb-4" aria-label={`Approval journey of ${parentJourney.requestNo}`} data-testid="task-parent-journey">
           <p className="mb-1.5 text-label text-ink-muted">
@@ -216,49 +317,15 @@ export default async function TaskPage({ params, searchParams }: { params: Promi
           </section>
         </div>
         <aside className="space-y-4" aria-label="Task actions">
-          <section className="card space-y-3 px-5 py-4">
-            <h2 className="font-semibold">Actions</h2>
-            {[...actions].filter((action) => action !== "COMMENT").length === 0 && <p className="text-label text-ink-muted">Nothing for you to do on this task now.</p>}
-            <div className="flex flex-wrap gap-2">
-              {actions.has("START") && <TaskActionButton taskId={task.id} rowVersion={task.rowVersion} action="START" needsText={false} />}
-              {actions.has("UNBLOCK") && <TaskActionButton taskId={task.id} rowVersion={task.rowVersion} action="UNBLOCK" needsText={false} />}
-              {actions.has("COMPLETE") && (
-                <TaskActionButton
-                  taskId={task.id}
-                  rowVersion={task.rowVersion}
-                  action="COMPLETE"
-                  needsText={settings.completion === "NOTE" || settings.completion === "NOTE_AND_FILE"}
-                  allowFiles={settings.completion === "FILE" || settings.completion === "NOTE_AND_FILE"}
-                  textLabel={`Completion note${settings.completion === "NONE" || settings.completion === "FILE" ? " (optional)" : ""}`}
-                />
-              )}
-              {actions.has("BLOCK") && <TaskActionButton taskId={task.id} rowVersion={task.rowVersion} action="BLOCK" needsText textLabel="What is blocking it?" />}
-              {actions.has("REOPEN") && <TaskActionButton taskId={task.id} rowVersion={task.rowVersion} action="REOPEN" needsText textLabel="Why reopen it?" />}
-              {actions.has("CANCEL") && <TaskActionButton taskId={task.id} rowVersion={task.rowVersion} action="CANCEL" needsText textLabel="Why cancel it?" danger />}
-            </div>
-            {actions.has("COMPLETE") && settings.completion !== "NONE" && <p className="text-caption text-ink-muted">To complete: {COMPLETION_LABEL[settings.completion].toLowerCase()}.</p>}
-            {actions.has("REASSIGN") && <ReassignForm taskId={task.id} rowVersion={task.rowVersion} assignable={assignable.map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` }))} />}
-            {actions.has("EDIT") && (
-              <EditTaskForm
-                taskId={task.id}
-                rowVersion={task.rowVersion}
-                title={task.title}
-                description={task.description ?? ""}
-                priority={task.priority}
-                due={utcToIndiaLocal(task.dueAt)}
-                editable={editable}
-                values={values}
-                people={options}
-                lookups={lookups}
-              />
-            )}
-          </section>
+          {!mobile && actionsCard}
           <TaskWorkSide data={panel} />
         </aside>
       </div>
     </>
   );
 }
+
+const DUE_DAY = new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", hour12: true, timeZone: "Asia/Kolkata" });
 
 function Fact({ label, value }: { label: string; value: string }) {
   return (

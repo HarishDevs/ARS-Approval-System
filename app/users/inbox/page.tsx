@@ -9,6 +9,23 @@ import { formatIndiaTime } from "@/server/notifications/security-messages";
 import { appPath, CATEGORY_LABEL, CATEGORY_SLUG, parseCategory, type NotificationCategory } from "@/server/notifications/categories";
 import { PendingLink } from "@/features/ui/PendingLink";
 import { isMobileLayout } from "@/server/ui/layout-mode";
+import { Check, Settings, Smartphone } from "lucide-react";
+import { ScreenTitle, SheetChoices, SheetLink, ViewDock } from "@/features/mobile/BottomSheet";
+
+// v1.45.0: the phone's day groups and times ("Today", "Today at 12:45 am").
+const IST_DAY = (date: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(date);
+const IST_TIME = new Intl.DateTimeFormat("en-IN", { timeZone: "Asia/Kolkata", hour: "numeric", minute: "2-digit", hour12: true });
+const IST_DATE = new Intl.DateTimeFormat("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" });
+function phoneDay(date: Date, now = new Date()): string {
+  const day = IST_DAY(date);
+  if (day === IST_DAY(now)) return "Today";
+  if (day === IST_DAY(new Date(now.getTime() - 86_400_000))) return "Yesterday";
+  return IST_DATE.format(date);
+}
+function phoneWhen(date: Date): string {
+  const day = phoneDay(date);
+  return `${day === "Today" || day === "Yesterday" ? day : IST_DATE.format(date)} at ${IST_TIME.format(date)}`;
+}
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
 export const metadata: Metadata = { title: "Inbox" };
@@ -101,50 +118,94 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
   );
 
   if (mobile) {
-    const tabs = [
-      ...VIEWS.filter((view) => view.category !== "SYSTEM").map((view) => ({
-        key: view.label,
-        label: view.label,
-        href: hrefFor(view.category),
+    // v1.45.0 (owner's Asana screens): one list grouped by day; Choose view
+    // (All activity, Bookmarks, Archived) and Manage view (filters, read
+    // status, sort) in the floating switcher; settings in the … menu.
+    const mobileHref = (next: { category?: NotificationCategory | null; state?: InboxState; unread?: boolean; mentions?: boolean }) => {
+      if (next.mentions ?? mentions) return "/users/inbox?mentions=1";
+      return hrefFor(next.category === undefined ? category : next.category, next.state ?? state, undefined, next.unread ?? unreadOnly);
+    };
+    const filters = [
+      ...VIEWS.map((view) => ({
+        href: mobileHref({ category: view.category, mentions: false }),
+        label: view.category ? view.label : "Everything",
+        current: !mentions && view.category === category,
         count: view.category ? unread[view.category] : total,
-        current: state === "activity" && !mentions && view.category === category,
       })),
-      { key: "mentions", label: "Mentions", href: "/users/inbox?mentions=1", count: 0, current: mentions },
+      { href: "/users/inbox?mentions=1", label: "@Mentioned", current: mentions },
     ];
-    const extras = [
+    const manage = (
+      <div>
+        <p className="pt-2 text-[13px] font-semibold uppercase tracking-wide text-ink-muted">Filters</p>
+        <SheetChoices label="Show" items={filters} />
+        {!mentions && (
+          <>
+            <p className="pt-4 text-[13px] font-semibold uppercase tracking-wide text-ink-muted">Read status</p>
+            <SheetChoices
+              label="Read status"
+              items={[
+                { href: mobileHref({ unread: false }), label: "Read and unread", current: !unreadOnly },
+                { href: mobileHref({ unread: true }), label: "Unread only", current: unreadOnly },
+              ]}
+            />
+          </>
+        )}
+        <p className="pt-4 text-[13px] font-semibold uppercase tracking-wide text-ink-muted">Sort</p>
+        <p className="flex min-h-[56px] items-center gap-3 text-[16px]">
+          <span className="min-w-0 flex-1">
+            Newest
+            <span className="block text-[13px] text-ink-muted">See recent notifications first</span>
+          </span>
+          <Check aria-hidden="true" className="h-5 w-5 text-[color:var(--brand-accent-text)]" />
+        </p>
+      </div>
+    );
+    const menu = (
+      <nav aria-label="Inbox options">
+        <SheetLink href="/users/notifications/settings" icon={<Settings className="h-5 w-5" />} label="Notification settings" />
+        <SheetLink href="/users/profile/devices" icon={<Smartphone className="h-5 w-5" />} label="Phone notifications" />
+      </nav>
+    );
+    const views = [
+      { href: mobileHref({ state: "activity", mentions: false }), label: "All activity", current: state === "activity" },
       { href: hrefFor(null, "bookmarks"), label: "Bookmarks", current: state === "bookmarks" },
-      { href: hrefFor(null, "archive"), label: "Archive", current: state === "archive" },
-      { href: hrefFor("SYSTEM"), label: "System", current: state === "activity" && category === "SYSTEM" },
-      { href: "/users/notifications/settings", label: "Settings", current: false },
+      { href: hrefFor(null, "archive"), label: "Archived", current: state === "archive" },
     ];
+    const filterNote = mentions ? "@Mentioned" : [category ? VIEWS.find((view) => view.category === category)?.label : null, unreadOnly ? "Unread only" : null].filter(Boolean).join(" · ");
     return (
-      <div className="space-y-4" data-testid="mobile-inbox">
-        <h1 className="mob-screen-title">{stateLabel ?? "Inbox"}</h1>
-        <nav aria-label="Inbox views" className="mob-chips -mx-4 overflow-x-auto px-4">
-          <ul className="flex gap-2">
-            {tabs.map((tab) => (
-              <li key={tab.key} className="shrink-0">
-                <Link
-                  href={tab.href}
-                  aria-current={tab.current ? "page" : undefined}
-                  className={`inline-flex min-h-11 items-center gap-1.5 rounded-full border px-4 text-[14px] font-semibold ${tab.current ? "border-transparent bg-[color:var(--m-navy)] text-white" : "border-line bg-surface text-ink"}`}
-                >
-                  {tab.label}
-                  {tab.count > 0 && <span className={`rounded-full px-1.5 text-[12px] ${tab.current ? "bg-white/20" : "bg-danger-50 text-danger-600"}`}>{tab.count}<span className="sr-only"> unread</span></span>}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
-        {list}
-        {pages}
-        <nav aria-label="More inbox views" className="flex flex-wrap gap-x-4 gap-y-1 px-1 text-[13px]">
-          {extras.map((extra) => (
-            <Link key={extra.label} href={extra.href} aria-current={extra.current ? "page" : undefined} className={`min-h-11 content-center font-semibold ${extra.current ? "text-[color:var(--m-navy-text)] underline" : "text-ink-muted"}`}>
-              {extra.label}
+      <div className="pb-20" data-testid="mobile-inbox">
+        <ScreenTitle title={stateLabel === "Archive" ? "Archived" : (stateLabel ?? "Inbox")} menu={menu} menuLabel="Inbox options" />
+        {filterNote && (
+          <p className="pt-3 text-[14px] text-ink-muted" data-testid="m-inbox-filter">
+            Showing: {filterNote} ·{" "}
+            <Link href={state === "activity" ? "/users/inbox" : hrefFor(null, state)} className="font-semibold text-[color:var(--m-navy-text)]">
+              Clear
             </Link>
-          ))}
-        </nav>
+          </p>
+        )}
+        {items.length === 0 ? (
+          <div className="pt-4">{list}</div>
+        ) : (
+          <NotificationList
+            variant="mobile"
+            showMarkAll={state === "activity" && !mentions}
+            manage
+            items={items.map((item) => ({
+              id: item.id,
+              title: item.title,
+              message: item.message,
+              when: phoneWhen(item.createdAt),
+              day: phoneDay(item.createdAt),
+              read: item.read,
+              path: appPath(item.deepLink),
+              type: CATEGORY_LABEL[item.category],
+              bookmarked: item.bookmarked,
+              archived: item.archived,
+            }))}
+          />
+        )}
+        {pages}
+        <ViewDock label="Inbox views" views={views} manage={manage} />
       </div>
     );
   }

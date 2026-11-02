@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 // photos, tasks and projects, notification choices, the weekly HOD email and
 // encrypted off-site backups. D-250 to D-252 (v1.41.0): the installed app,
 // phone and desktop notifications (push) and the daily session. v1.43.0: the
-// layout cookie of the phone layout. v1.44.0 (D-273): people given a task by a
+// layout cookie of the phone layout (v1.45.0: and the Compact mode cookie). v1.44.0 (D-273): people given a task by a
 // request's background work step may read that request.
 const PRIVACY_EFFECTIVE = "2 November 2026";
 
@@ -126,7 +126,8 @@ export default function PrivacyPage() {
         </p>
         <p>
           On a screen narrower than 768 pixels ARS-CMS shows its phone layout. To pick the right layout, the browser keeps one small cookie, <code>ars_layout</code>, holding only the word
-          &ldquo;mobile&rdquo; or &ldquo;desktop&rdquo; for a year. It holds nothing about the person, and the app works the same without it.
+          &ldquo;mobile&rdquo; or &ldquo;desktop&rdquo; for a year. It holds nothing about the person, and the app works the same without it. If you turn on
+          Compact mode in a phone list, a second small cookie, <code>ars_m_compact</code>, keeps that choice (&ldquo;1&rdquo; or &ldquo;0&rdquo;) on that device for a year.
         </p>
 
         <h2>How information is shared</h2>

@@ -28,7 +28,9 @@ test("on a phone the users area has the bottom tabs; Approvals holds My requests
   await expect(page.getByRole("button", { name: "Open menu" })).toHaveCount(0);
   await tabs.getByRole("link", { name: /Approvals/ }).click();
   await expect(page).toHaveURL(/\/users\/approvals/);
-  await page.getByRole("navigation", { name: "Approval lists" }).getByRole("link", { name: /My requests/ }).click();
+  // v1.45.0: the lists are in the floating Choose view.
+  await page.getByTestId("m-choose-view").click();
+  await page.getByRole("dialog", { name: "Choose view" }).getByRole("link", { name: /My requests/ }).click();
   await expect(page).toHaveURL(/tab=mine/);
-  await expect(page.getByRole("navigation", { name: "Approval lists" }).getByRole("link", { name: /My requests/ })).toHaveAttribute("aria-current", "page");
+  await expect(page.getByTestId("m-choose-view")).toContainText("My requests");
 });

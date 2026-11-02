@@ -1061,6 +1061,16 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 3. The task is an ordinary task (hand over, tick, reopen); finishing it decides nothing on the request. Its holder may open the request, read-only.
 4. The journey shows it as a Work task card ("Doesn't hold the request up"), never as a checkpoint.
 
+## F-201 Phone screens, Asana pattern (v1.45.0, D-275)
+1. Any list screen (Approvals, My tasks, Inbox): big title; **…** opens a sheet of that screen's other pages.
+2. **Choose view** (floating pill) → sheet of the lists → tap one → the page opens on it (address `?tab=` or `?state=`).
+3. **Manage view** (sliders) → sheet: Compact mode (cookie `ars_m_compact`, this device; the server draws the list compact), Sort / Group by (tasks; address `sort=`, `group=`), filters and read status (inbox; `type=`, `mentions=1`, `unread=1`).
+4. **+**: Approvals → New request; My tasks → the one Create task window.
+5. Task row: tick the circle → completeAction (optimistic, Undo in the toast); tap the row → the task page.
+6. Task page: top bar back / Mark complete / copy link / **…** (the task's actions in a sheet: start, complete with note, block, reopen, cancel, reassign, edit, share).
+7. Search (top-bar magnifier, no filters yet): box + Requests (request search) or Tasks (task search); quick filters and shortcuts are existing searches' addresses.
+8. A sheet closes with Escape, the backdrop, the handle, or by tapping a link in it; focus returns to its button.
+
 ## F-199 The approval journey (v1.44.0, D-273)
 1. Submit: the request is sealed into an envelope and loaded into the ARS van, which drives to the first level and stops beside it; the document comes out for review (blue point, approver and "since" in the point's details).
 2. A level approves (confirmed by the server): green stamp → the point turns green → the document is folded back into the van → the van drives to the next level (it turns blue) → the document comes out again. Several levels approved meanwhile play in order.

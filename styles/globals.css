@@ -794,8 +794,8 @@ body[data-decision-bar] [data-layout="mobile"] .mob-main {
 [data-layout="mobile"] .picbot-launcher {
   bottom: calc(5rem + env(safe-area-inset-bottom));
 }
-body:has([data-testid="m-task-fab"]) [data-layout="mobile"] .picbot-launcher {
-  bottom: calc(5rem + 4.25rem + env(safe-area-inset-bottom));
+body:has([data-testid="m-view-dock"]) [data-layout="mobile"] .picbot-launcher {
+  bottom: calc(4.75rem + 4.75rem + env(safe-area-inset-bottom));
 }
 body[data-decision-bar] [data-layout="mobile"] .picbot-launcher {
   bottom: calc(4rem + 76px + 1rem + env(safe-area-inset-bottom));
@@ -814,6 +814,45 @@ body[data-decision-bar] [data-layout="mobile"] .picbot-launcher {
 /* While a page's skeleton covers the content, the old page's decision bar goes. */
 body:has([data-testid="nav-skeleton"]) .mob-decision-bar {
   display: none;
+}
+/* v1.45.0 (Asana reference): sheets rise from the bottom; switches; the
+   caret of a collapsible group turns when it is closed. */
+@keyframes mob-sheet-in { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes mob-fade-in { from { opacity: 0; } to { opacity: 1; } }
+.mob-sheet { animation: mob-sheet-in 0.22s ease-out both; }
+body:has([data-testid="m-sheet"]) .picbot-launcher { display: none; }
+.mob-sheet-backdrop { animation: mob-fade-in 0.2s ease-out both; }
+.mob-switch {
+  appearance: none;
+  position: relative;
+  width: 52px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--color-border-strong, #9ca3af);
+  transition: background-color 0.15s;
+  cursor: pointer;
+}
+.mob-switch::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: #fff;
+  transition: transform 0.15s;
+}
+.mob-switch:checked { background: #15803d; }
+.mob-switch:checked::after { transform: translateX(22px); }
+.mob-switch:focus-visible { outline: 2px solid var(--brand-accent); outline-offset: 2px; }
+.mob-section > summary::-webkit-details-marker { display: none; }
+.mob-section .mob-caret { display: inline-block; transition: transform 0.15s; }
+.mob-section:not([open]) .mob-caret { transform: rotate(-90deg); }
+@media (prefers-reduced-motion: reduce) {
+  .mob-sheet, .mob-sheet-backdrop { animation: none; }
+  .mob-switch, .mob-switch::after, .mob-section .mob-caret { transition: none; }
 }
 /* Sideways chip rows scroll by touch without a visible scrollbar. */
 [data-layout="mobile"] .mob-chips {

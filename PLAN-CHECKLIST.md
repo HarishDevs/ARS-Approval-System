@@ -17,6 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (2 Nov 2026):** v1.45.0: the phone app laid out like Asana (D-275), on top of v1.44.1. No migration. **Owner:** publish v1.45.0 (contains v1.44.1 and v1.44.0), then try it on a phone (V145-09).
 - **Now (2 Nov 2026):** v1.44.1: phone fixes: the notifications panel fits the screen; a skeleton for each phone screen while it loads (D-274). No migration. **Owner:** publish v1.44.1 instead of v1.44.0 (it contains it), then the v1.44.0 steps below.
 - **Now (2 Nov 2026):** v1.44.0 (includes v1.43.0): the approval journey (D-273), background work steps, the phone layout (D-272), tasks from approvals highlighted (D-270), the QA pass fixes (D-271). No migration. **Owner:**
   1. Publish v1.44.0 (`npm ci`).
@@ -152,6 +153,18 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 - **Still open:** Q-015.
 
 ---
+
+## Session log — v1.45.0 (2 Nov 2026): the phone app, Asana pattern, planned before starting
+Owner: 15 screenshots of the Asana phone app ("This is asana app, use this also as reference and build my mobile app"): My tasks, Choose view and Manage view sheets, Inbox, Search, Account, task page and its … sheet.
+- [x] V145-01 (2 Nov 2026) Shared parts: bottom sheet, sheet button, choices, floating view switcher with Manage view and +, big title with …, Compact mode switch (`features/mobile/BottomSheet.tsx`, `dock.ts`)
+- [x] V145-02 (2 Nov 2026) Tab bar: pill on the open tab, its name shown; "My tasks"
+- [x] V145-03 (2 Nov 2026) My tasks: flat rows with the tick circle, projects, priority dot, date chip; Choose view; Manage view (compact, sort, group by due/project); groups fold; … menu
+- [x] V145-04 (2 Nov 2026) Task page on a phone: top bar (back, Mark complete, copy link, … sheet with the actions), big title, Assigned to / Due date
+- [x] V145-05 (2 Nov 2026) Inbox: day groups, cards with See more, bookmark/archive; Choose view (All activity, Bookmarks, Archived); Manage view (filters, unread only, sort)
+- [x] V145-06 (2 Nov 2026) Approvals: Choose view, + New request, Compact mode; Search landing; More as Asana's Account (tiles, settings, support, version)
+- [x] V145-07 (2 Nov 2026) Skeletons follow the new screens; Pico Bot clears the switcher and hides under a sheet
+- [x] V145-08 (2 Nov 2026) Tests and docs: e2e specs moved to Choose view / Manage view; D-275, F-201; guide, Help, privacy (compact cookie), release notes, mobile screen inventory
+- [ ] V145-09 Owner: try the phone screens on a real phone (Android and iPhone)
 
 ## Session log — v1.44.1 (2 Nov 2026): phone fixes, planned before starting
 Owner: a phone screenshot (the bell's panel cut off on the left) "Check the Mobile app layout and Fix it"; then "add skeleton based loaders for each screens in Mobile application".

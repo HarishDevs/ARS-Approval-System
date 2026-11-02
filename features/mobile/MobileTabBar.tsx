@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CheckSquare, Home, Inbox, ListChecks, Menu } from "lucide-react";
+import { CheckSquare, CircleCheck, Home, Inbox, Menu } from "lucide-react";
 
 // v1.43.0 (owner's mobile brief §2): five places at the bottom, in thumb
 // reach: Home, Approvals, Tasks, Inbox, More. A tab the person can't open is
@@ -16,7 +16,7 @@ const TABS = [
     icon: CheckSquare,
     match: (path: string) => /^\/users\/(approvals|queue|requests|approved|approved-by-me|collaborating|new|custom|search)(\/|$)/.test(path),
   },
-  { key: "tasks", href: "/users/work/my-tasks", label: "Tasks", icon: ListChecks, match: (path: string) => /^\/users\/(work|tasks)(\/|$)/.test(path) },
+  { key: "tasks", href: "/users/work/my-tasks", label: "My tasks", icon: CircleCheck, match: (path: string) => /^\/users\/(work|tasks)(\/|$)/.test(path) },
   { key: "inbox", href: "/users/inbox", label: "Inbox", icon: Inbox, match: (path: string) => /^\/users\/(inbox|notifications)(\/|$)/.test(path) },
   { key: "more", href: "/users/more", label: "More", icon: Menu, match: (path: string) => /^\/users\/(more|menu|information|calendar|analytics|ai|reports|profile|help|delegation|security|people)(\/|$)/.test(path) },
 ] as const;
@@ -36,13 +36,15 @@ export function MobileTabBar({ waiting, unread, hidden }: { waiting: number; unr
               <Link
                 href={tab.href}
                 aria-current={active ? "page" : undefined}
-                className={`relative flex h-16 flex-col items-center justify-center gap-1 text-[11px] font-semibold ${active ? "text-[color:var(--m-navy-text)]" : "text-ink-muted"}`}
+                className={`relative flex h-16 flex-col items-center justify-center gap-0.5 text-[12px] font-medium ${active ? "text-ink" : "text-ink-muted"}`}
               >
-                {active && <span aria-hidden="true" className="absolute inset-x-5 top-0 h-[3px] rounded-b-full bg-[color:var(--m-red)]" />}
-                <Icon aria-hidden="true" className="h-[22px] w-[22px]" strokeWidth={active ? 2.4 : 1.9} />
-                {tab.label}
+                {/* v1.45.0 (Asana reference): the open tab sits in a pill and says its name. */}
+                <span aria-hidden="true" className={`grid h-8 place-items-center rounded-full transition-[width,background-color] ${active ? "w-14 bg-surface-muted" : "w-10"}`}>
+                  <Icon className="h-[22px] w-[22px]" strokeWidth={active ? 2.4 : 1.8} />
+                </span>
+                <span className={active ? "" : "sr-only"}>{tab.label}</span>
                 {count > 0 && (
-                  <span className="absolute left-1/2 top-2 ml-2 min-w-[18px] rounded-full bg-[color:var(--m-red)] px-1 text-center text-[10px] font-bold leading-[18px] text-white">
+                  <span className="absolute left-1/2 top-1.5 ml-2.5 min-w-[18px] rounded-full bg-[color:var(--m-red)] px-1 text-center text-[10px] font-bold leading-[18px] text-white">
                     {count > 99 ? "99+" : count}
                     <span className="sr-only"> {tab.key === "inbox" ? "unread" : "waiting"}</span>
                   </span>

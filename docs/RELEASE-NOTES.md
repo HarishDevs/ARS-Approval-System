@@ -1,5 +1,17 @@
 # Release notes
 
+## v1.45.0 (2 Nov 2026): the phone app, laid out like Asana (owner)
+On a phone (a computer is unchanged):
+- **The same pattern on every list:** a big title with **…** for that screen's other pages, flat lists, and a floating bar above the tabs: **Manage view**, **Choose view** (which list) and the red **+**. Choices open as sheets from the bottom.
+- **Tabs:** Home, Approvals, **My tasks**, Inbox, More; the open one sits in a pill and shows its name.
+- **My tasks:** one row per task: tick the circle to complete it (with Undo), the title, its projects, the priority dot (Important, Urgent) and the due date (red when overdue). Manage view: **Compact mode**, **Sort** (due date, priority, title, newest) and **Group by** (none, due date, project); groups fold.
+- **A task:** back, **Mark complete**, copy link and **…** (its actions) at the top; a big title with **Assigned to** and **Due date**.
+- **Inbox:** grouped by day, each notification as a card (kind, title, message with **See more**, time), bookmark and archive. Choose view: **All activity**, **Bookmarks**, **Archived**; Manage view: filters, unread only, newest first.
+- **Approvals:** the four lists in Choose view, **+** for a new request, **Compact mode** for one line per request.
+- **Search:** one box for requests or tasks, then quick filters and shortcuts.
+- **More:** your photo, name and email; **Out of office** (says whether it is on) and **Notifications** tiles; Settings (including colour mode), Support (Help centre, terms, privacy), Sign out and the app version.
+- Not copied from Asana because ARS-CMS doesn't have them: Do not disturb, likes on a task, a language choice, several accounts.
+
 ## v1.44.1 (2 Nov 2026): phone fixes (owner)
 - **On your phone, the notifications panel fits the screen.** It ran off the left edge; it now spans the screen under the top bar, stops above the bottom bar, and its filters (All, Approvals, Tasks, Information) scroll sideways if they don't fit. On a computer it is unchanged.
 - **Loading screens on your phone:** while a page loads, you see the shape of that screen (Home, Approvals, Tasks, Inbox, More, a request with its journey, a task, or a general list) instead of the old page. Pages that load at once show nothing extra. A computer is unchanged.

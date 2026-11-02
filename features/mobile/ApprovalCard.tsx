@@ -24,7 +24,27 @@ export interface ApprovalCardData {
 
 const TONE = { red: "bg-[color:var(--m-red)] text-white", amber: "bg-warning-50 text-warning-600" } as const;
 
-export function ApprovalCard({ card }: { card: ApprovalCardData }) {
+export function ApprovalCard({ card, compact = false }: { card: ApprovalCardData; compact?: boolean }) {
+  // v1.45.0 (Manage view → Compact mode): one row, as Asana's compact list.
+  if (compact)
+    return (
+      <Link href={card.href} className="flex min-h-[60px] items-center gap-3 border-b border-line px-4 py-2 active:bg-surface-muted" data-testid="m-approval-card">
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-[16px]">
+            <SafeText text={card.title} />
+          </span>
+          <span className="block truncate font-mono text-[12px] text-ink-muted">
+            {card.requestNo}
+            {card.requester ? ` · ${card.requester}` : ""}
+          </span>
+        </span>
+        {card.priority ? (
+          <span className={`shrink-0 rounded-md px-2 py-1 text-[12px] font-bold ${TONE[card.priority.tone]}`}>{card.priority.label}</span>
+        ) : (
+          <span className={`badge shrink-0 ${card.status.className}`}>{card.status.label}</span>
+        )}
+      </Link>
+    );
   const facts: [string, string | null | undefined][] = [
     ["Requested by", [card.requester, card.department].filter(Boolean).join(" · ") || null],
     ["Type", card.type],

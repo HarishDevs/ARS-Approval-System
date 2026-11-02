@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { CheckSquare, FilePen, Plus } from "lucide-react";
+import { cookies } from "next/headers";
+import { COMPACT_COOKIE } from "@/lib/ui/layout";
+import { CheckCheck, CheckSquare, FilePen, Plane, Plus, Search, Users } from "lucide-react";
+import { ADD_CLASS } from "@/features/mobile/dock";
+import { CompactToggle, ScreenTitle, SheetLink, ViewDock } from "@/features/mobile/BottomSheet";
 import { requireArea } from "@/server/authorization/guards";
 import { isHiddenHref, navAccess } from "@/server/authorization/page-access";
 import { isMobileLayout } from "@/server/ui/layout-mode";
@@ -97,36 +101,34 @@ export default async function ApprovalsHub({ searchParams }: { searchParams: Pro
     });
   }
 
+  const compact = (await cookies()).get(COMPACT_COOKIE)?.value === "1";
+  const views = tabs.map((item) => ({ href: `/users/approvals?tab=${item.key}`, label: item.label, current: item.key === tab, count: counts[item.key] ?? undefined }));
+  const menu = (
+    <nav aria-label="More approval pages">
+      {canQueue && <SheetLink href="/users/approved-by-me" icon={<CheckCheck className="h-5 w-5" />} label="Approved by me" />}
+      {!isHiddenHref("/users/collaborating", access.hidden) && <SheetLink href="/users/collaborating" icon={<Users className="h-5 w-5" />} label="Collaborating" />}
+      {!isHiddenHref("/users/search", access.hidden) && <SheetLink href="/users/search" icon={<Search className="h-5 w-5" />} label="Search requests" />}
+      {!isHiddenHref("/users/delegation", access.hidden) && <SheetLink href="/users/delegation" icon={<Plane className="h-5 w-5" />} label="Out of office" />}
+    </nav>
+  );
+
+  // v1.45.0 (owner's Asana screens): big title and … menu; the lists in the
+  // floating Choose view, Compact mode in Manage view, + for a new request.
   return (
-    <div className="space-y-4" data-testid="mobile-approvals">
-      <div className="flex items-center justify-between gap-3">
-        <h1 className="mob-screen-title">Approvals</h1>
-        {canMine && !isHiddenHref("/users/new", access.hidden) && (
-          <Link href="/users/new" className="inline-flex min-h-11 items-center gap-1.5 rounded-full bg-[color:var(--m-navy)] px-4 text-[14px] font-semibold text-white">
-            <Plus aria-hidden="true" className="h-4 w-4" /> New
-          </Link>
-        )}
-      </div>
-      <nav aria-label="Approval lists" className="mob-chips -mx-4 overflow-x-auto px-4">
-        <ul className="flex gap-2">
-          {tabs.map((item) => {
-            const active = item.key === tab;
-            const count = counts[item.key];
-            return (
-              <li key={item.key} className="shrink-0">
-                <Link
-                  href={`/users/approvals?tab=${item.key}`}
-                  aria-current={active ? "page" : undefined}
-                  className={`inline-flex min-h-11 items-center gap-1.5 rounded-full border px-4 text-[14px] font-semibold ${active ? "border-transparent bg-[color:var(--m-navy)] text-white" : "border-line bg-surface text-ink"}`}
-                >
-                  {item.label}
-                  {count ? <span className={`rounded-full px-1.5 text-[12px] ${active ? "bg-white/20" : "bg-surface-muted"}`}>{count}</span> : null}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
+    <div className="space-y-4 pb-20" data-testid="mobile-approvals">
+      <ScreenTitle title="Approvals" menu={menu} menuLabel="More approval pages" />
+      <ViewDock
+        label="Approval lists"
+        views={views}
+        manage={<CompactToggle on={compact} />}
+        add={
+          canMine && !isHiddenHref("/users/new", access.hidden) ? (
+            <Link href="/users/new" aria-label="New request" className={ADD_CLASS} data-testid="m-new-request">
+              <Plus aria-hidden="true" className="h-6 w-6" strokeWidth={2.5} />
+            </Link>
+          ) : undefined
+        }
+      />
 
       {tab === "drafts" ? (
         drafts.length === 0 ? (
@@ -153,10 +155,10 @@ export default async function ApprovalsHub({ searchParams }: { searchParams: Pro
           icon={<CheckSquare className="h-6 w-6" />}
         />
       ) : (
-        <ul className="space-y-3">
+        <ul className={compact ? "-mx-4 border-t border-line" : "space-y-3"}>
           {cards.map((card, index) => (
             <li key={`${card.href}-${index}`}>
-              <ApprovalCard card={card} />
+              <ApprovalCard card={card} compact={compact} />
             </li>
           ))}
         </ul>

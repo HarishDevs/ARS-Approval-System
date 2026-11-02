@@ -15,6 +15,10 @@ import { listSavedViews, searchRequests } from "@/lib/db/repositories/search.rep
 import { listWorkflows } from "@/lib/db/repositories/approvals.repository";
 import { listDepartments } from "@/lib/db/repositories/organisation.repository";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
+import { isMobileLayout } from "@/server/ui/layout-mode";
+import { isHiddenHref, navAccess } from "@/server/authorization/page-access";
+import { featureOn } from "@/server/settings/features";
+import { MobileSearch } from "@/features/mobile/MobileSearch";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
 export const metadata: Metadata = { title: "Search" };
@@ -31,6 +35,12 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   const defaultView = views.find((view) => view.isDefault);
   if (plain && defaultView && Object.keys(defaultView.query).length) redirect(`/users/search?${new URLSearchParams({ ...defaultView.query, v: String(defaultView.id) })}`);
 
+  // v1.45.0: a phone opens on the Asana-style search screen.
+  if (plain && (await isMobileLayout())) {
+    const access = await navAccess(user);
+    const tasks = await featureOn("tasks", user);
+    return <MobileSearch tasks={tasks && !isHiddenHref("/users/work/search", access.hidden)} projects={tasks && !isHiddenHref("/users/work/projects", access.hidden)} />;
+  }
   const filters = parseSearchFilters(params);
   const [result, types, departments] = await Promise.all([
     searchRequests({ id: user.id, isAdmin }, filters),

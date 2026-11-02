@@ -1,4 +1,4 @@
-# Mobile redesign: screen inventory (v1.43.0)
+# Mobile redesign: screen inventory (v1.43.0, Asana pattern from v1.45.0)
 
 Every users-area screen, what a phone (below 768 px) shows in v1.43.0, and where it
 comes from. "Mobile screen" = a dedicated mobile presentation built from the page's
@@ -31,6 +31,8 @@ work, done on a computer).
 | Install | `/users/profile/devices` | Existing install card and steps | |
 | Offline | any | Existing offline banner (SessionWatch) and `public/offline.html` | |
 | Empty states | hub, tasks, inbox | Per tab, with what will appear there | |
+
+**v1.45.0 (D-275, owner's Asana screenshots):** every list screen has a big title with …, flat rows and the floating Manage view / Choose view / + switcher (`features/mobile/BottomSheet.tsx`); the chip rows were replaced by Choose view. Tabs: Home, Approvals, My tasks, Inbox, More (pill on the open one). Task detail on a phone: top bar back / Mark complete / copy link / … sheet. Search (`/users/search` without filters): `features/mobile/MobileSearch.tsx`. More: Asana's Account layout.
 
 Not built in v1.43.0 (stated, not faked): a separate onboarding carousel (the existing
 tour and first-use checklist run on phones too), biometric sign-in (no WebAuthn in the
