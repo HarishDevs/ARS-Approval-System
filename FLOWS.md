@@ -1061,6 +1061,12 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 3. The task is an ordinary task (hand over, tick, reopen); finishing it decides nothing on the request. Its holder may open the request, read-only.
 4. The journey shows it as a Work task card ("Doesn't hold the request up"), never as a checkpoint.
 
+## F-211 Request page and journey (v1.48.0, D-283, D-284)
+1. Open a request → the journey card (refresh = check now; share = copy the link; tap a level for its details; Status guide explains the colours).
+2. Below: Request details and Approval levels (banner + tiles + levels); on the right the viewer's actions (decision, Recall & change, Withdraw), Attachments, Collaborators, Discussion.
+3. Timeline: the latest 3, newest first → Show more (N) → the rest in a scroll box → Show less.
+4. Footer: Raise again like this; the Super Admin also has Super Admin and Delete.
+
 ## F-210 Coloured choices and request priority (v1.47.0, D-281)
 1. IT → Form Designer → a Dropdown / Radio / Multi-select field → each option chip's colour select (or No colour) → Save (stored as `optionColors` in the form JSON).
 2. A field keyed `priority` of a choice type makes the request's priority: its value and colour (from the request's own form version).

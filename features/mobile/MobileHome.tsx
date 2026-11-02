@@ -8,7 +8,7 @@ import { miniRoads } from "@/server/approvals/road-view";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 import { ApprovalCard, waitedFor } from "@/features/mobile/ApprovalCard";
 import { RequestPriorityBadge } from "@/features/ui/ChoicePill";
-import { REQUEST_STATUS } from "@/features/requests/StatusPill";
+import { WAITING_STYLE, REQUEST_STATUS } from "@/features/requests/StatusPill";
 import { dueLabel, indiaDayOf, TONE_TEXT } from "@/features/work/format";
 import { addDays } from "@/server/work/rules";
 import { QuickNewTask } from "@/features/mobile/NewTaskButton";
@@ -146,7 +146,7 @@ export async function MobileHome({
                         priority: item.overdue ? { label: "Overdue", tone: "red" } : null,
                         requestPriority: fact?.priority ?? null, // v1.47.0
                         road: roads.get(item.requestId) ?? null,
-                        status: item.onHold ? { label: "On hold", className: REQUEST_STATUS.ON_HOLD.style } : { label: item.work ? "Work to do" : "Your decision", className: "bg-primary-50 text-primary-600" },
+                        status: item.onHold ? { label: "On hold", className: REQUEST_STATUS.ON_HOLD.style } : { label: item.work ? "Work to do" : "Your decision", className: WAITING_STYLE },
                       }}
                     />
                   </li>

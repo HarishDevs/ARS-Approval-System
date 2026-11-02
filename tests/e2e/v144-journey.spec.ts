@@ -54,6 +54,11 @@ test("submitted: the van carries it to the first approval; the background task a
   await expect(journey).toHaveAttribute("data-van-at", "1");
   await expect(journey.getByTestId("road-checkpoint").nth(1)).toHaveAttribute("data-state", "current");
   await expect(journey.getByTestId("road-percent")).toHaveText("0% Completed");
+  // v1.48 (owner's journey design): the header's status, the detailed levels list (one row per checkpoint), no outcome banner yet.
+  await expect(journey.getByTestId("journey-status")).toHaveText("In progress");
+  await expect(journey.getByTestId("journey-level")).toHaveCount(2);
+  await expect(journey.getByTestId("journey-level").nth(1)).toHaveAttribute("aria-current", "step");
+  await expect(journey.getByTestId("journey-outcome")).toHaveCount(0);
   // The sealing played once (just submitted), and the document is out for review.
   await expect(journey).toHaveAttribute("data-scene", "idle", { timeout: 15_000 });
   await expect(journey.getByTestId("journey-document")).toBeVisible();
@@ -110,6 +115,8 @@ test("the manager approves: the van reaches the flag and the road completes; the
   await expect(journey).toHaveAttribute("data-scene", "idle", { timeout: 15_000 });
   await expect(journey.getByTestId("road-percent")).toHaveText("100% Completed");
   await expect(journey.getByTestId("road-approved-tick")).toBeVisible();
+  await expect(journey.getByTestId("journey-outcome")).toHaveAttribute("data-kind", "approved");
+  await expect(journey.getByTestId("journey-outcome")).toContainText("All 1 level completed successfully");
   await expect(journey.getByTestId("road-checkpoint").nth(1)).toHaveAttribute("data-state", "done");
   // The van stands at the flag, right of the last checkpoint.
   const van = (await journey.getByTestId("road-van").boundingBox())!;

@@ -23,7 +23,7 @@ import { indiaDay, relativeTime, type TimelineKind } from "@/server/approvals/ti
 
 // RD-01 the request's history: only stored events, grouped by India day,
 // each with an icon, the sentence, how long ago, and the exact time.
-const ICON: Record<TimelineKind, { icon: LucideIcon; tone: string }> = {
+export const TIMELINE_ICON: Record<TimelineKind, { icon: LucideIcon; tone: string }> = {
   submit: { icon: Send, tone: "text-primary-600" },
   file: { icon: FileUp, tone: "text-ink-muted" },
   assign: { icon: UserPlus, tone: "text-ink-muted" },
@@ -60,7 +60,7 @@ export function Timeline({ entries, now = new Date() }: { entries: { id: number;
           <h3 className="mb-2 text-caption font-semibold uppercase tracking-wider text-ink-faint">{group.label}</h3>
           <ol className="space-y-3 border-l border-line pl-4">
             {group.items.map((entry) => {
-              const { icon: Icon, tone } = ICON[entry.kind];
+              const { icon: Icon, tone } = TIMELINE_ICON[entry.kind];
               return (
                 <li key={entry.id} className="relative text-label">
                   <span aria-hidden="true" className={`absolute -left-[25px] top-0.5 flex h-[18px] w-[18px] items-center justify-center rounded-full bg-surface ${tone}`}>

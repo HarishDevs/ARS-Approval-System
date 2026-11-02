@@ -110,7 +110,8 @@ test("#5 on a phone the HOD finds it as a card and approves it", async ({ page, 
   const drawer = page.getByRole("dialog", { name: "Approve" });
   await expect(drawer.getByLabel(/Comment/)).toBeFocused();
   await drawer.getByRole("button", { name: "Approve", exact: true }).click();
-  await expect(page.getByText(/Approved by Harini HOD/).first()).toBeVisible();
+  // v1.48.0: on a phone the journey's detailed-levels card is hidden; the level list shows the decision.
+  await expect(page.getByRole("listitem").filter({ hasText: /Harini HOD/ }).filter({ hasText: /Approved/ }).filter({ visible: true }).first()).toBeVisible();
   const width = await page.evaluate(() => document.documentElement.scrollWidth);
   expect(width).toBeLessThanOrEqual(392);
   await page.screenshot({ path: "test-results/v150-phone-decision.png", fullPage: true });

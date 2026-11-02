@@ -15,7 +15,7 @@ import { cardFacts } from "@/server/mobile/card-facts";
 import { miniRoads } from "@/server/approvals/road-view";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 import { ApprovalCard, waitedFor, type ApprovalCardData } from "@/features/mobile/ApprovalCard";
-import { REQUEST_STATUS, requestStatusDisplay } from "@/features/requests/StatusPill";
+import { WAITING_STYLE, REQUEST_STATUS, requestStatusDisplay } from "@/features/requests/StatusPill";
 import { EmptyState } from "@/features/ui/Display";
 import { SafeText } from "@/features/ui/SafeText";
 
@@ -77,7 +77,7 @@ export default async function ApprovalsHub({ searchParams }: { searchParams: Pro
         waiting: waitedFor(item.createdAt, now),
         priority: item.overdue ? { label: "Overdue", tone: "red" } : dueSoon ? { label: "Due soon", tone: "amber" } : null,
         requestPriority: fact?.priority ?? null, // v1.47.0
-        status: item.onHold ? { label: "On hold", className: REQUEST_STATUS.ON_HOLD.style } : { label: item.work ? "Work to do" : "Your decision", className: "bg-primary-50 text-primary-600" },
+        status: item.onHold ? { label: "On hold", className: REQUEST_STATUS.ON_HOLD.style } : { label: item.work ? "Work to do" : "Your decision", className: WAITING_STYLE },
         road: roads.get(item.requestId) ?? null,
       };
     });

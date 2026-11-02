@@ -228,6 +228,36 @@ test("the request page: the road on top, the requester's details below it, the a
   expect(levels.y).toBeGreaterThan(details.y);
   expect(actions.y).toBeLessThan(attachments.y);
   expect(attachments.y).toBeLessThan(collaborators.y);
+  // v1.49 (owner's layout): Discussion under Collaborators; the bottom row (Linked requests, Timeline) below both columns.
+  const discussion = (await page.getByRole("region", { name: "Discussion" }).boundingBox())!;
+  expect(discussion.y).toBeGreaterThan(collaborators.y);
+  const layout = (await page.getByTestId("request-layout").boundingBox())!;
+  const linked = (await page.getByRole("region", { name: "Linked requests" }).boundingBox())!;
+  const timeline = (await page.getByRole("region", { name: "Timeline" }).boundingBox())!;
+  expect(linked.y).toBeGreaterThanOrEqual(layout.y + layout.height - 1);
+  expect(timeline.x).toBeGreaterThan(linked.x);
+});
+
+test("the request page on a phone: one column, the journey, then Request details, then Approval levels, nothing sideways", async ({ page, context }) => {
+  await as(context, "E2E_REQ");
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/users/requests?tab=waiting");
+  const first = page.getByTestId("request-table").getByRole("link").first();
+  if (!(await first.count())) test.skip(true, "No request waiting in this run.");
+  const href = (await first.getAttribute("href"))!;
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(href);
+  const levels = (await page.getByRole("heading", { name: "Approval levels", exact: true }).boundingBox())!;
+  const details = (await page.getByTestId("requester-details").boundingBox())!;
+  const attachments = (await page.getByRole("heading", { name: "Attachments", exact: true }).boundingBox())!;
+  const timeline = (await page.getByRole("region", { name: "Timeline" }).boundingBox())!;
+  const linked = (await page.getByRole("region", { name: "Linked requests" }).boundingBox())!;
+  // Owner: the approval visual first, then the approval details, then the rest.
+  expect(details.y).toBeLessThan(levels.y);
+  expect(levels.y).toBeLessThan(attachments.y);
+  expect(attachments.y).toBeLessThan(timeline.y);
+  expect(timeline.y).toBeLessThan(linked.y);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0);
 });
 
 test("Admin → Custom approval: once saved, leaving doesn't ask about unsaved changes", async ({ page, context }) => {

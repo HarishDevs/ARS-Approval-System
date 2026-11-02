@@ -12,7 +12,7 @@ import type { Actor } from "@/server/approvals/service";
 // with a task on it, or IT. Light: no timeline, comments or files.
 const isAdmin = (actor: Actor) => actor.roles.includes("IT_ADMIN") || actor.roles.includes("SUPER_ADMIN");
 
-export async function loadRequestRoad(requestId: number, viewer: Actor): Promise<{ road: Road; updatedAt: string } | null> {
+export async function loadRequestRoad(requestId: number, viewer: Actor): Promise<{ road: Road; updatedAt: string; submittedAt: string | null; validUntil: string | null } | null> {
   const request = await findRequest(requestId);
   if (!request) return null;
   if (request.requesterId !== viewer.id && !isAdmin(viewer) && !(await canViewRequest(requestId, viewer.id))) return null;
@@ -23,8 +23,8 @@ export async function loadRequestRoad(requestId: number, viewer: Actor): Promise
     formData: request.formData as EngineFormData,
     fieldLabel: (key) => version.form.find((field) => field.key === key)?.label ?? key,
   });
-  const [rows] = await getDbPool().query<(RowDataPacket & { submitted_at: Date; closed_at: Date | null; updated_at: Date })[]>(
-    "SELECT submitted_at, closed_at, updated_at FROM approval_requests WHERE id = ? LIMIT 1",
+  const [rows] = await getDbPool().query<(RowDataPacket & { submitted_at: Date; closed_at: Date | null; updated_at: Date; valid_until: Date | null })[]>(
+    "SELECT submitted_at, closed_at, updated_at, valid_until FROM approval_requests WHERE id = ? LIMIT 1",
     [requestId],
   );
   const row = rows[0];
@@ -34,7 +34,12 @@ export async function loadRequestRoad(requestId: number, viewer: Actor): Promise
     closedAt: row?.closed_at?.toISOString() ?? null,
     holdSince: request.state.hold?.at ?? null,
   });
-  return { road, updatedAt: (row?.updated_at ?? new Date()).toISOString() };
+  return {
+    road,
+    updatedAt: (row?.updated_at ?? new Date()).toISOString(),
+    submittedAt: row?.submitted_at?.toISOString() ?? null,
+    validUntil: row?.valid_until ? new Date(row.valid_until).toISOString() : null,
+  };
 }
 
 // D-256: the small road for list rows. One query for the whole page of rows

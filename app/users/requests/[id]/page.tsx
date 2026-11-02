@@ -2,14 +2,16 @@ import { countPendingTasksFor, listPendingTasksFor } from "@/lib/db/repositories
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Breadcrumbs } from "@/features/ui/Display";
-import { formatPaise } from "@/server/forms/dynamic";
 import { notFound } from "next/navigation";
+import { MessagesSquare, Paperclip, Repeat2, ShieldCheck, Copy } from "lucide-react";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { Hint } from "@/features/ui/Hint";
 import { RequestStatusPill } from "@/features/requests/StatusPill";
-import { StepMap, TrackerBanner } from "@/features/requests/StepMap";
-import { RoadSummaryCard } from "@/features/requests/ApprovalRoad";
+import { ApprovalLevels } from "@/features/requests/ApprovalLevels";
+import { RequestDetails } from "@/features/requests/RequestDetails";
+import { RequestTimeline } from "@/features/requests/RequestTimeline";
+import { indiaDateTime, processFigures } from "@/features/requests/request-page";
 import { loadJourney } from "@/server/journey/load";
 import { ARSApprovalJourney } from "@/features/journey/ARSApprovalJourney";
 import {
@@ -32,7 +34,6 @@ import { RequestForm } from "@/features/requests/RequestForm";
 import { CommentForm } from "@/features/requests/Discussion";
 import { AddFilesForm } from "@/features/requests/Attachments";
 import { AttachmentList } from "@/features/requests/AttachmentList";
-import { Timeline } from "@/features/requests/Timeline";
 import { SubmissionChecks } from "@/features/requests/SubmissionChecks";
 import { SaveTemplateForm } from "@/features/requests/Templates";
 import { CollaboratorsCard } from "@/features/requests/CollaboratorsCard";
@@ -52,7 +53,7 @@ import { listMentionable } from "@/lib/db/repositories/collab.repository";
 import { expiryState } from "@/server/approvals/expiry-rules";
 import { personProfile } from "@/lib/db/repositories/profile.repository";
 import { BrandAnimation } from "@/features/ui/BrandAnimation";
-import { ChoicePills, RequestPriorityBadge } from "@/features/ui/ChoicePill";
+import { RequestPriorityBadge } from "@/features/ui/ChoicePill";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
 export const metadata: Metadata = { title: "Request" };
@@ -119,6 +120,19 @@ export default async function RequestPage({
   // D-263 (owner): the requester's details sit in the Details card.
   const requester = await personProfile(view.requesterId).catch(() => null);
   const raisedAt = road?.road.checkpoints[0]?.finishedAt ?? null;
+  // v1.49 (owner's layout): the Approval levels figures and the footer's actions.
+  const figures = processFigures({ status: view.status, road: road?.road ?? null, tracker: view.tracker, timeline: view.timeline, raisedAt });
+  const isAdmin = user.roles.includes("IT_ADMIN") || user.roles.includes("SUPER_ADMIN");
+  const isSuperAdmin = user.roles.includes("SUPER_ADMIN");
+  const raiseAgainHref =
+    view.requesterId === user.id
+      ? view.isCustom
+        ? `/users/custom?from=${view.id}` // D-234: a custom request can be raised again too (approvers included).
+        : templatesOn && view.workflowActive
+          ? `/users/new/${view.workflowId}?from=${view.id}`
+          : null
+      : null;
+  const reuse: "levels" | "template" | null = view.isCustom && isAdmin ? "levels" : templatesOn && view.requesterId === user.id && !view.isCustom && view.workflowActive ? "template" : null;
 
   const fileRows = view.attachments.map((file) => ({
     id: file.id,
@@ -208,9 +222,118 @@ export default async function RequestPage({
         </p>
       )}
 
-      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_380px] xl:grid-rows-[auto_1fr]">
-        {/* D-263 (owner): the decision and the request's actions lead the right column, smaller. */}
-        <div className="space-y-4 empty:hidden xl:col-start-2 xl:row-start-1">
+      {/* v1.49 (owner's layout, 2 Nov 2026): under the journey, the main
+          column (Request details, Approval levels) and the side column (the
+          decision first for approvers, then the request's actions,
+          Attachments, Collaborators, Discussion). On a phone everything
+          stacks in the owner's order: the approval visual (journey), then
+          Request details, then the rest (Approval levels, the side cards). */}
+      <div className="request-layout grid items-start gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]" data-testid="request-layout">
+        <div className="flex min-w-0 flex-col gap-6">
+          <div className="order-1 min-w-0">
+            <RequestDetails view={view} requester={requester} raisedOn={indiaDateTime(raisedAt ?? figures.startIso, true)} files={fileRows} />
+          </div>
+          <div className="order-2 min-w-0">
+            <ApprovalLevels status={view.status} tracker={view.tracker} stages={view.stages} figures={figures} />
+          </div>
+          <div className="order-3 min-w-0 space-y-6 empty:hidden">
+            {view.blockedSteps.length > 0 && assignable && (
+              <section className="card divide-y divide-line border-warning-600">
+                <h2 className="px-5 py-4 font-semibold">Stuck: needs IT</h2>
+                {view.blockedSteps.map((step) => (
+                  <BlockedStepForm key={step.nodeId} requestId={view.id} step={step} people={step.work ? assignable.anyone : assignable.approvers} />
+                ))}
+              </section>
+            )}
+            {view.canAnswerQuestion && view.question && (
+              <section className="card divide-y divide-line border-warning-600" aria-label="A question for you">
+                <h2 className="px-5 py-4 font-semibold">A question for you</h2>
+                <AnswerQuestionForm requestId={view.id} question={view.question.text} byName={view.question.byName} />
+              </section>
+            )}
+            {/* D-234 (Banner blindness, Proximity): an approver sees the budget
+                and submission warnings beside their decision, not far below it. */}
+            {view.myTasks.length > 0 && <SubmissionChecks check={view.submissionCheck} department={view.budgetDepartment} />}
+            {view.myTasks[0] && (
+              <MobileDecisionBar
+                requestId={view.id}
+                taskKey={view.myTasks[0].taskKey}
+                work={view.myTasks[0].work}
+                label={view.myTasks[0].forName ? `${view.myTasks[0].label} (for ${view.myTasks[0].forName})` : view.myTasks[0].label}
+              />
+            )}
+            {view.myTasks[0] && (
+              <DecisionShortcuts
+                requestId={view.id}
+                taskKey={view.myTasks[0].taskKey}
+                work={view.myTasks[0].work}
+                initial={query.act}
+                label={view.myTasks[0].forName ? `${view.myTasks[0].label} (for ${view.myTasks[0].forName})` : view.myTasks[0].label}
+              />
+            )}
+            {view.canResubmit && (
+              <section id="resubmit" className="scroll-mt-20">
+                <h2 className="mb-3 font-semibold">Update and resubmit</h2>
+                <RequestForm
+                  mode="resubmit"
+                  requestId={view.id}
+                  fields={view.form}
+                  people={people}
+                  initial={view.rawFields}
+                  lookups={lookups}
+                  existingFiles={Object.fromEntries(view.fields.filter((field) => field.files).map((field) => [field.key, field.files!.length]))}
+                />
+              </section>
+            )}
+            {view.changes === "unrecorded" && (
+              <p className="card px-5 py-3 text-label text-ink-muted">This request was resubmitted before changes were recorded, so what changed in round {view.round} can&apos;t be shown.</p>
+            )}
+            {view.changes && view.changes !== "unrecorded" && (
+              <section className="card px-5 py-4" aria-labelledby="changes">
+                <h2 id="changes" className="mb-1 font-semibold">
+                  What changed in round {view.changes.round}
+                </h2>
+                {view.changes.fields.length === 0 && view.changes.files.length === 0 ? (
+                  <p className="text-label text-ink-muted">Resubmitted without changing the details.</p>
+                ) : (
+                  <dl className="mt-2 divide-y divide-line text-label">
+                    {view.changes.fields.map((change) => (
+                      <div key={change.key} className="grid gap-1 py-2 sm:grid-cols-3 sm:gap-4">
+                        <dt className="text-ink-muted">
+                          {change.label} <span className="text-caption">({change.kind === "added" ? "added" : change.kind === "removed" ? "removed" : "changed"})</span>
+                        </dt>
+                        <dd className="sm:col-span-2">
+                          {change.kind !== "added" && (
+                            <del className="mr-2 text-ink-muted">
+                              <span className="sr-only">Before: </span>
+                              <SafeText text={change.before} />
+                            </del>
+                          )}
+                          {change.kind !== "removed" && (
+                            <ins className="font-medium no-underline">
+                              <span className="sr-only">Now: </span>
+                              <SafeText text={change.after} />
+                            </ins>
+                          )}
+                        </dd>
+                      </div>
+                    ))}
+                    {view.changes.files.length > 0 && (
+                      <div className="grid gap-1 py-2 sm:grid-cols-3 sm:gap-4">
+                        <dt className="text-ink-muted">Files added</dt>
+                        <dd className="break-all sm:col-span-2">{view.changes.files.join(", ")}</dd>
+                      </div>
+                    )}
+                  </dl>
+                )}
+              </section>
+            )}
+            {view.myTasks.length === 0 && <SubmissionChecks check={view.submissionCheck} department={view.budgetDepartment} />}
+          </div>
+        </div>
+
+        <div className="min-w-0 space-y-4">
+          {/* D-263: the decision leads the side column for approvers. */}
           {(view.myTasks.length > 0 || view.canResume) && (
             <section className="card action-compact divide-y divide-line border-primary-600" aria-labelledby="your-action">
               <h2 id="your-action" className="px-4 py-2.5 text-label font-semibold">
@@ -226,215 +349,30 @@ export default async function RequestPage({
             </section>
           )}
           {(view.canWithdraw || view.canReopen || view.canRecall) && (
-            <section id="request-actions" className="card action-compact scroll-mt-20 divide-y divide-line">
-              {view.canRecall && <RecallForm requestId={view.id} />}
-              {view.canWithdraw && <WithdrawForm requestId={view.id} />}
-              {view.canReopen && <ReopenForm requestId={view.id} />}
-            </section>
-          )}
-        </div>
-        <div className="min-w-0 space-y-6 xl:col-start-1 xl:row-span-2 xl:row-start-1">
-          <section className="card px-5 py-4" aria-labelledby="request-details">
-            <h2 id="request-details" className="mb-3 flex items-center gap-1.5 font-semibold">
-              Request details
-              {view.confidentialHidden && <Hint text="Some values are confidential: only the requester, the approvers and IT see them." align="start" />}
-            </h2>
-            <div className="mb-4 rounded-md bg-surface-muted/60 px-4 py-3" data-testid="requester-details">
-              {/* Owner: the requester's name and department first, side by side. */}
-              <dl className="flex min-w-0 flex-wrap gap-x-8 gap-y-3 border-b border-line pb-3" data-testid="requester-headline">
-                <RequesterItem label="Requested by">
-                  <Link href={`/users/people/${view.requesterId}`} className="link text-body font-semibold">
-                    {requester?.name ?? view.requesterName}
-                  </Link>
-                  {requester?.loginId && <span className="ml-1.5 text-caption font-normal text-ink-muted">({requester.loginId})</span>}
-                </RequesterItem>
-                <RequesterItem label="Department">
-                  <span className="text-body font-semibold">{requester?.departmentName ?? "—"}</span>
-                </RequesterItem>
-              </dl>
-              <dl className="mt-3 grid gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
-                <RequesterItem label="User ID">{requester?.loginId ?? "—"}</RequesterItem>
-                <RequesterItem label="Designation">{requester?.designationName ?? "—"}</RequesterItem>
-                <RequesterItem label="Email">{requester?.email ? <span className="break-all">{requester.email}</span> : "—"}</RequesterItem>
-                <RequesterItem label="Reporting manager">
-                  {requester?.managerName ? `${requester.managerName}${requester.managerDesignation ? ` (${requester.managerDesignation})` : ""}` : "—"}
-                </RequesterItem>
-                <RequesterItem label="Request no.">{view.requestNo}</RequesterItem>
-                <RequesterItem label="Approval type">{view.workflowName}</RequesterItem>
-                <RequesterItem label="Raised on">{raisedAt ? formatIndiaTime(new Date(raisedAt)) : "—"}</RequesterItem>
-              </dl>
-            </div>
-            {view.fields.length > 0 && (
-              <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
-                {view.fields.map((field) => (
-                  <div key={field.key} className={field.lines?.length || field.files?.length ? "sm:col-span-2" : undefined}>
-                    <dt className="text-caption text-ink-muted">{field.label}</dt>
-                    <dd className="whitespace-pre-wrap">
-                      {field.lines?.length ? (
-                        <div className="mt-1 overflow-x-auto rounded-md border border-line">
-                          <table className="data-table">
-                            <caption className="sr-only">{field.label}</caption>
-                            <thead>
-                              <tr>
-                                <th scope="col">Description</th>
-                                <th scope="col" className="text-right">
-                                  Qty
-                                </th>
-                                <th scope="col" className="text-right">
-                                  Rate
-                                </th>
-                                <th scope="col" className="text-right">
-                                  GST %
-                                </th>
-                                <th scope="col" className="text-right">
-                                  Total
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {field.lines.map((line, index) => (
-                                <tr key={index}>
-                                  <td>
-                                    <SafeText text={line.description} />
-                                  </td>
-                                  <td className="text-right tabular-nums">{line.quantity}</td>
-                                  <td className="text-right tabular-nums">{formatPaise(Math.round(Number(line.rate) * 100))}</td>
-                                  <td className="text-right tabular-nums">{line.gst}</td>
-                                  <td className="text-right tabular-nums">{formatPaise(line.totalPaise)}</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                          <p className="border-t border-line px-4 py-2 text-right font-semibold tabular-nums">Total {field.value}</p>
-                        </div>
-                      ) : field.files ? (
-                        field.files.length ? (
-                          <div className="mt-1 whitespace-normal">
-                            <AttachmentList files={fileRows.filter((file) => field.files!.includes(file.id))} />
-                          </div>
-                        ) : (
-                          <span className="text-ink-muted">No files</span>
-                        )
-                      ) : field.pills ? (
-                        <ChoicePills values={field.pills} />
-                      ) : (
-                        <SafeText text={field.value} />
-                      )}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-            )}
-          </section>
-          <section className="card px-5 py-4" aria-labelledby="levels">
-            <h2 id="levels" className="mb-3 font-semibold">
-              Approval levels
-            </h2>
-            <TrackerBanner summary={view.tracker} />
-            {road && <RoadSummaryCard road={road.road} serverNow={new Date().toISOString()} />}
-            <div className="mt-4">
-              <StepMap stages={view.stages} />
-            </div>
-          </section>
-          {view.blockedSteps.length > 0 && assignable && (
-            <section className="card divide-y divide-line border-warning-600">
-              <h2 className="px-5 py-4 font-semibold">Stuck: needs IT</h2>
-              {view.blockedSteps.map((step) => (
-                <BlockedStepForm key={step.nodeId} requestId={view.id} step={step} people={step.work ? assignable.anyone : assignable.approvers} />
-              ))}
-            </section>
-          )}
-          {view.canAnswerQuestion && view.question && (
-            <section className="card divide-y divide-line border-warning-600" aria-label="A question for you">
-              <h2 className="px-5 py-4 font-semibold">A question for you</h2>
-              <AnswerQuestionForm requestId={view.id} question={view.question.text} byName={view.question.byName} />
-            </section>
-          )}
-          {/* D-234 (Banner blindness, Proximity): an approver sees the budget
-              and submission warnings right above their decision, not below it. */}
-          {view.myTasks.length > 0 && <SubmissionChecks check={view.submissionCheck} department={view.budgetDepartment} />}
-          {view.myTasks[0] && (
-            <MobileDecisionBar
-              requestId={view.id}
-              taskKey={view.myTasks[0].taskKey}
-              work={view.myTasks[0].work}
-              label={view.myTasks[0].forName ? `${view.myTasks[0].label} (for ${view.myTasks[0].forName})` : view.myTasks[0].label}
-            />
-          )}
-          {view.myTasks[0] && (
-            <DecisionShortcuts
-              requestId={view.id}
-              taskKey={view.myTasks[0].taskKey}
-              work={view.myTasks[0].work}
-              initial={query.act}
-              label={view.myTasks[0].forName ? `${view.myTasks[0].label} (for ${view.myTasks[0].forName})` : view.myTasks[0].label}
-            />
-          )}
-          {/* Room for the phone decision bar, so it never covers the page's end. */}
-          {view.myTasks[0] && <div aria-hidden="true" className="h-16 md:hidden" />}
-          {view.canResubmit && (
-            <section id="resubmit" className="scroll-mt-20">
-              <h2 className="mb-3 font-semibold">Update and resubmit</h2>
-              <RequestForm
-                mode="resubmit"
-                requestId={view.id}
-                fields={view.form}
-                people={people}
-                initial={view.rawFields}
-                lookups={lookups}
-                existingFiles={Object.fromEntries(view.fields.filter((field) => field.files).map((field) => [field.key, field.files!.length]))}
-              />
-            </section>
-          )}
-          {view.changes === "unrecorded" && (
-            <p className="card px-5 py-3 text-label text-ink-muted">This request was resubmitted before changes were recorded, so what changed in round {view.round} can&apos;t be shown.</p>
-          )}
-          {view.changes && view.changes !== "unrecorded" && (
-            <section className="card px-5 py-4" aria-labelledby="changes">
-              <h2 id="changes" className="mb-1 font-semibold">
-                What changed in round {view.changes.round}
-              </h2>
-              {view.changes.fields.length === 0 && view.changes.files.length === 0 ? (
-                <p className="text-label text-ink-muted">Resubmitted without changing the details.</p>
-              ) : (
-                <dl className="mt-2 divide-y divide-line text-label">
-                  {view.changes.fields.map((change) => (
-                    <div key={change.key} className="grid gap-1 py-2 sm:grid-cols-3 sm:gap-4">
-                      <dt className="text-ink-muted">
-                        {change.label} <span className="text-caption">({change.kind === "added" ? "added" : change.kind === "removed" ? "removed" : "changed"})</span>
-                      </dt>
-                      <dd className="sm:col-span-2">
-                        {change.kind !== "added" && (
-                          <del className="mr-2 text-ink-muted">
-                            <span className="sr-only">Before: </span>
-                            <SafeText text={change.before} />
-                          </del>
-                        )}
-                        {change.kind !== "removed" && (
-                          <ins className="font-medium no-underline">
-                            <span className="sr-only">Now: </span>
-                            <SafeText text={change.after} />
-                          </ins>
-                        )}
-                      </dd>
-                    </div>
-                  ))}
-                  {view.changes.files.length > 0 && (
-                    <div className="grid gap-1 py-2 sm:grid-cols-3 sm:gap-4">
-                      <dt className="text-ink-muted">Files added</dt>
-                      <dd className="break-all sm:col-span-2">{view.changes.files.join(", ")}</dd>
-                    </div>
-                  )}
-                </dl>
+            <div id="request-actions" className="scroll-mt-20 space-y-4">
+              {view.canRecall && (
+                <section className="card" aria-labelledby="recall-title">
+                  <RecallForm requestId={view.id} />
+                </section>
               )}
-            </section>
+              {view.canWithdraw && (
+                <section className="card" aria-labelledby="withdraw-title">
+                  <WithdrawForm requestId={view.id} />
+                </section>
+              )}
+              {view.canReopen && (
+                <section className="card" aria-labelledby="reopen-title">
+                  <ReopenForm requestId={view.id} />
+                </section>
+              )}
+            </div>
           )}
-          {view.myTasks.length === 0 && <SubmissionChecks check={view.submissionCheck} department={view.budgetDepartment} />}
-        </div>
-        <div className="space-y-6 xl:col-start-2 xl:row-start-2">
           <SectionBoundary label="Attachments">
-            <section className="card px-5 py-4">
-              <h2 className="mb-3 font-semibold">Attachments</h2>
+            <section className="card px-5 py-4" aria-labelledby="attachments-title">
+              <h2 id="attachments-title" className="mb-3 flex items-center gap-2 font-semibold">
+                <Paperclip aria-hidden="true" className="h-4 w-4 shrink-0 text-primary-600" />
+                Attachments
+              </h2>
               {view.attachments.length === 0 ? <p className="mb-3 text-label text-ink-muted">No files attached.</p> : <AttachmentList files={fileRows} />}
               {view.canAddFiles && <AddFilesForm requestId={view.id} />}
             </section>
@@ -449,8 +387,11 @@ export default async function RequestPage({
             />
           </SectionBoundary>
           <SectionBoundary label="Discussion">
-            <section className="card px-5 py-4">
-              <h2 className="mb-3 font-semibold">Discussion</h2>
+            <section className="card px-5 py-4" aria-labelledby="discussion-title">
+              <h2 id="discussion-title" className="mb-3 flex items-center gap-2 font-semibold">
+                <MessagesSquare aria-hidden="true" className="h-4 w-4 shrink-0 text-primary-600" />
+                Discussion
+              </h2>
               {view.comments.length === 0 ? (
                 <p className="mb-3 text-label text-ink-muted">No comments yet.</p>
               ) : (
@@ -458,9 +399,9 @@ export default async function RequestPage({
                   {view.comments.map((comment) => (
                     <li key={comment.id} className="text-label">
                       <p>
-                        <span className="font-medium">{comment.authorName}</span> <span className="text-caption text-ink-faint">· {formatIndiaTime(comment.createdAt)}</span>
+                        <span className="font-medium">{comment.authorName}</span> <span className="text-caption text-ink-muted">· {formatIndiaTime(comment.createdAt)}</span>
                       </p>
-                      <p className="mt-0.5 whitespace-pre-wrap">
+                      <p className="mt-0.5 whitespace-pre-wrap break-words">
                         <SafeText text={comment.body} />
                       </p>
                     </li>
@@ -473,22 +414,6 @@ export default async function RequestPage({
           <SectionBoundary label="Amendments">
             <AmendmentsCard hideConfidential={view.confidentialHidden} requestId={view.id} form={view.form} canAmend={canAmend} />
           </SectionBoundary>
-          {templatesOn && view.requesterId === user.id && !view.isCustom && view.workflowActive && (
-            <section className="card space-y-2 px-5 py-4" aria-label="Reuse this request">
-              <Link href={`/users/new/${view.workflowId}?from=${view.id}`} className="link text-label">
-                Raise again like this
-              </Link>
-              <SaveTemplateForm requestId={view.id} />
-            </section>
-          )}
-          {/* D-234: a custom request can be raised again too (approvers included). */}
-          {view.requesterId === user.id && view.isCustom && (
-            <section className="card space-y-2 px-5 py-4" aria-label="Reuse this request">
-              <Link href={`/users/custom?from=${view.id}`} className="link text-label">
-                Raise again like this
-              </Link>
-            </section>
-          )}
           <SectionBoundary label="Advice">
             <Advice
               requestId={view.id}
@@ -506,6 +431,12 @@ export default async function RequestPage({
               }))}
             />
           </SectionBoundary>
+        </div>
+      </div>
+
+      {/* v1.49: the bottom row: Linked requests, Timeline, Reuse (a phone shows the Timeline first). */}
+      <div className="request-bottom mt-6 grid items-stretch gap-6 md:grid-cols-2 xl:grid-cols-3" data-testid="request-bottom">
+        <div className="order-2 min-w-0 xl:order-1">
           <SectionBoundary label="Linked requests">
             <Links
               requestId={view.id}
@@ -519,44 +450,64 @@ export default async function RequestPage({
               }))}
             />
           </SectionBoundary>
+        </div>
+        <div className="order-1 min-w-0 xl:order-2">
           <SectionBoundary label="History">
-            <section className="card h-fit px-5 py-4" aria-labelledby="history">
-              <h2 id="history" className="mb-3 font-semibold">
-                Timeline
-              </h2>
-              <Timeline entries={view.timeline} />
-            </section>
+            {/* Owner: the latest 3 events, newest first; "Show more" opens the rest in a scrolling box. */}
+            <RequestTimeline entries={view.timeline} />
           </SectionBoundary>
-          {view.isCustom && (user.roles.includes("IT_ADMIN") || user.roles.includes("SUPER_ADMIN")) && (
-            <section className="card h-fit px-5 py-4">
-              <h2 className="mb-3 flex items-center gap-1.5 font-semibold">
+        </div>
+        {reuse === "levels" && (
+          <div className="order-3 min-w-0 md:col-span-2 xl:col-span-1">
+            <section className="card h-full px-5 py-4" aria-labelledby="reuse-levels">
+              <h2 id="reuse-levels" className="mb-3 flex items-center gap-2 font-semibold">
+                <Copy aria-hidden="true" className="h-4 w-4 shrink-0 text-primary-600" />
                 Reuse these levels
                 <Hint text="Make this custom approval a predefined approval type. Its levels and form are copied into a draft you can change, test and publish." align="start" />
               </h2>
               <PromoteCustomForm requestId={view.id} title={view.title} />
             </section>
-          )}
-          {user.roles.includes("SUPER_ADMIN") && (
-            <section className="card h-fit px-5 py-4">
-              <h2 className="mb-3 flex items-center gap-1.5 font-semibold">
-                Super Admin
-                <Hint text="Remove this request from every screen, for example a test or a mistake." align="start" />
+          </div>
+        )}
+        {reuse === "template" && (
+          <div className="order-3 min-w-0 md:col-span-2 xl:col-span-1">
+            <section className="card h-full px-5 py-4" aria-labelledby="reuse-request">
+              <h2 id="reuse-request" className="mb-3 flex items-center gap-2 font-semibold">
+                <Copy aria-hidden="true" className="h-4 w-4 shrink-0 text-primary-600" />
+                Reuse this request
               </h2>
-              <DeleteRequestButton requestId={view.id} requestNo={view.requestNo} redirectTo="/superadmin/requests?tab=deleted" />
+              <SaveTemplateForm requestId={view.id} />
             </section>
+          </div>
+        )}
+      </div>
+
+      {/* v1.49: the footer: raise again on the left; the Super Admin's actions on the right. */}
+      {(raiseAgainHref || isSuperAdmin) && (
+        <div className="request-footer card mt-6 flex flex-wrap items-center justify-between gap-3 px-5 py-3" data-testid="request-footer" aria-label="Request actions" role="group">
+          {raiseAgainHref ? (
+            <Link href={raiseAgainHref} className="link inline-flex min-h-11 items-center gap-2 text-label">
+              <Repeat2 aria-hidden="true" className="h-4 w-4 shrink-0" />
+              Raise again like this
+            </Link>
+          ) : (
+            <span />
+          )}
+          {isSuperAdmin && (
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <Link href={`/superadmin/requests?q=${encodeURIComponent(view.requestNo)}`} className="btn-secondary btn-compact inline-flex items-center gap-1.5">
+                <ShieldCheck aria-hidden="true" className="h-4 w-4" />
+                Super Admin
+              </Link>
+              <Hint text="Remove this request from every screen, for example a test or a mistake." align="end" />
+              <DeleteRequestButton requestId={view.id} requestNo={view.requestNo} redirectTo="/superadmin/requests?tab=deleted" />
+            </div>
           )}
         </div>
-      </div>
+      )}
+      {/* Room for the phone decision bar, so it never covers the page's end. */}
+      {view.myTasks[0] && <div aria-hidden="true" className="h-16 md:hidden" />}
     </>
-  );
-}
-
-function RequesterItem({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="min-w-0">
-      <dt className="text-caption text-ink-muted">{label}</dt>
-      <dd className="font-medium">{children}</dd>
-    </div>
   );
 }
 

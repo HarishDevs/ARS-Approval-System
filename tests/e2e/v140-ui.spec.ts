@@ -118,6 +118,9 @@ test("IT moves stuck steps on: gives one to a person, skips another (D-098)", as
   await page.getByLabel(/Skip this step/).check();
   await page.getByLabel(/^Reason/).fill("No HOD for this request");
   await page.getByRole("button", { name: "Move it on" }).click();
+  // v1.48.0: the timeline shows the latest 3; older events are behind "Show more".
+  const more = page.getByRole("button", { name: /Show more/ });
+  if (await more.count()) await more.click();
   await expect(page.getByText(/"HOD" skipped by Elena Admin/)).toBeVisible();
 
   // The work task is Sita's now.

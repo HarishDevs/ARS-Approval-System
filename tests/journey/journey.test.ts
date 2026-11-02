@@ -6,6 +6,7 @@ import { validateWorkflow } from "@/server/engine/validate";
 import { compileBuilder } from "@/server/workflows/builder";
 import { arrivedPos, blendRoad, documentOut, planScenes, vanStop } from "@/features/journey/controller";
 import { deliveryOf, journeyVersion, overallDelivery } from "@/server/journey/types";
+import { levelSubline, statusText, whenDate, whenLong } from "@/features/journey/format";
 import { approval, chain, ctx, makeDirectory, user } from "../helpers/engine-fixtures";
 
 // D-273 (owner's journey brief): the journey engine. The engine side (a work
@@ -168,5 +169,35 @@ describe("FYI delivery and the journey version", () => {
     const road = roadOf(definition, startInstance(definition, ctx(), directory).state);
     const task = { id: 1, taskNo: "TSK-1", title: "t", assignee: "Dev", status: "OPEN" as const, createdAt: "2026-11-02T00:00:00Z", overdue: false, blocking: false };
     expect(journeyVersion(road, [task], [], 5)).not.toBe(journeyVersion(road, [{ ...task, status: "COMPLETED" }], [], 5));
+  });
+});
+
+// v1.48 (owner's journey design): the header and the Request Status card.
+describe("the journey's request facts", () => {
+  const road = roadOf(levels(2), startInstance(levels(2), ctx(), directory).state);
+
+  it("a change only in the title, the valid-until date or expiry is news (no request event for expiry)", () => {
+    const base = journeyVersion(road, [], [], 5, { title: "Laptops", validUntil: null, expired: false });
+    expect(journeyVersion(road, [], [], 5, { title: "Laptops", validUntil: null, expired: false })).toBe(base);
+    expect(journeyVersion(road, [], [], 5, { title: "Laptops (6)", validUntil: null, expired: false })).not.toBe(base);
+    expect(journeyVersion(road, [], [], 5, { title: "Laptops", validUntil: "2026-11-30T00:00:00.000Z", expired: false })).not.toBe(base);
+    expect(journeyVersion(road, [], [], 5, { title: "Laptops", validUntil: "2026-11-30T00:00:00.000Z", expired: true })).not.toBe(journeyVersion(road, [], [], 5, { title: "Laptops", validUntil: "2026-11-30T00:00:00.000Z", expired: false }));
+  });
+
+  it("dates read in India time, with the year on the card", () => {
+    expect(whenDate("2026-11-01T17:00:00.000Z")).toBe("01 Nov 2026");
+    expect(whenLong("2026-11-01T17:00:00.000Z")).toBe("01 Nov 2026, 10:30 pm");
+    expect(whenDate(null)).toBeNull();
+  });
+
+  it("each milestone says its status and who decided", () => {
+    expect(statusText(road.checkpoints[1]!, 1).word).toBe("Waiting for approval");
+    expect(statusText(road.checkpoints[2]!, 2).word).toBe("Pending");
+    expect(levelSubline(road.checkpoints[0]!, 0, "Harish Kumar")).toBe("by Harish Kumar");
+    expect(levelSubline(road.checkpoints[1]!, 1, "Harish Kumar")).toBe("Waiting for approval");
+    expect(levelSubline(road.checkpoints[2]!, 2, "Harish Kumar")).toBe("Pending");
+    const after = roadOf(levels(2), approveNext(levels(2), startInstance(levels(2), ctx(), directory).state));
+    expect(after.checkpoints[1]!.state).toBe("done");
+    expect(levelSubline(after.checkpoints[1]!, 1, "Harish Kumar")).toBe("Approved by Anil");
   });
 });

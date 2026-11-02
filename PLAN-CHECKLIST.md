@@ -17,6 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (2 Nov 2026):** v1.48.0: the new Approval Journey (computer and phone), the request page re-laid out, one colour per status (D-283, D-284). No migration of its own. **Owner:** publish v1.48.0 (contains everything since v1.46.0).
 - **Now (2 Nov 2026):** v1.47.1: priority colours everywhere (D-282). Publish v1.47.1 (it contains v1.47.0 and v1.46.0).
 - **Now (2 Nov 2026):** v1.47.0: request priority and coloured choices (D-281), on top of v1.46.0. No new migration (v1.46.0's one still runs on start). **Owner:** publish v1.47.0; in Admin → Custom approval give the Priority options their colours and save.
 - **Now (2 Nov 2026):** v1.46.0: everything still buildable is built, and the owner's 16 decisions of today are in (D-276 to D-280). **One migration** runs on start (form rules converted; backup table kept). **Owner:** publish v1.46.0 (`npm ci`); then the steps in `docs/GO_LIVE_READINESS_CHECKLIST.md` (v1.46.0 section): `DB_POOL_SIZE`, `/api/health/deep` clock offset, `ORIGIN_SECRET` (tile), `BACKUP_ENCRYPTION_KEY` + Google Drive backup + Test, WhatsApp templates (tile), Google Calendar consent screen External and published (Q-024), phone UAT.
@@ -156,6 +157,16 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 - **Still open:** Q-015.
 
 ---
+
+## Session log — v1.48.0 (2 Nov 2026): Approval Journey redesign, request page layout, status colours, planned before starting
+Owner: the "Approval Journey" image and reference folder (Downloads/ars-approval-journey) "redesign the Approval Journey based on this image"; "also apply the same journey design on the phone layout"; "change the layout for the Request as like the above" (screenshot); "Timeline should show last 3 in desc order; show more shows the rest with a scroll bar"; earlier "make the status colours match across all lists".
+- [x] V148-01 (2 Nov 2026) Journey: header (mark, number, title, status, route, refresh, share), scenic road, milestone labels, Request Status card, detailed levels, outcome banners, status guide; compact variant; phone layout
+- [x] V148-02 (2 Nov 2026) Journey data: title, requester, submitted, valid until, request status, expired
+- [x] V148-03 (2 Nov 2026) One colour per status (features/ui/status-tones.ts), AA in both themes; StatusPill and every status display
+- [x] V148-04 (2 Nov 2026) Request page: Request details (icon rows), Approval levels (banner, tiles, level cards), side cards, bottom row, footer; phone one column
+- [x] V148-05 (2 Nov 2026) Timeline: latest 3 newest first; Show more opens the rest in a scroll box
+- [x] V148-06 (2 Nov 2026) Tests and docs; checked in the browser (1440 light, 375 dark)
+- [ ] V148-07 Owner: try the journey and request page on live, computer and phone
 
 ## Session log — v1.47.1 (2 Nov 2026): priority colours everywhere, planned before starting
 Owner: "the colors should be reflected wherever the Priority is shown in tables or sub headings any where available".

@@ -125,3 +125,89 @@ export function JourneyFlag() {
     </svg>
   );
 }
+
+// v1.48 (owner's journey design): the scene behind the road: a dusk sky,
+// layered mountains, tree lines and hills. Decorative only (aria-hidden), a
+// few paths, no images. It covers the track and scrolls with the road.
+export function ScenicBackdrop({ id }: { id: string }) {
+  return (
+    <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 1000 180" preserveAspectRatio="xMidYMax slice" aria-hidden="true" focusable="false">
+      <defs>
+        <linearGradient id={`${id}-sky`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#0b1730" />
+          <stop offset="0.45" stopColor="#25315a" />
+          <stop offset="0.75" stopColor="#6b4a6b" />
+          <stop offset="1" stopColor="#c0704a" />
+        </linearGradient>
+        <radialGradient id={`${id}-sun`} cx="0.38" cy="0.78" r="0.35">
+          <stop offset="0" stopColor="#ffb36b" stopOpacity="0.55" />
+          <stop offset="1" stopColor="#ffb36b" stopOpacity="0" />
+        </radialGradient>
+        <linearGradient id={`${id}-ground`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#1d3a2c" />
+          <stop offset="1" stopColor="#0d1b2e" />
+        </linearGradient>
+      </defs>
+      <rect width="1000" height="180" fill={`url(#${id}-sky)`} />
+      <rect width="1000" height="180" fill={`url(#${id}-sun)`} />
+      {/* a few stars */}
+      <g fill="#e2e8f0" opacity="0.55">
+        <circle cx="70" cy="18" r="1" />
+        <circle cx="210" cy="34" r="0.8" />
+        <circle cx="330" cy="12" r="1.1" />
+        <circle cx="520" cy="26" r="0.8" />
+        <circle cx="660" cy="10" r="1" />
+        <circle cx="800" cy="30" r="0.9" />
+        <circle cx="930" cy="16" r="1" />
+      </g>
+      {/* far mountains */}
+      <path d="M0 112 L70 72 L130 96 L210 52 L290 92 L360 64 L450 100 L540 58 L620 90 L700 66 L790 98 L860 70 L940 94 L1000 80 V180 H0 Z" fill="#33406a" opacity="0.85" />
+      {/* near mountains */}
+      <path d="M0 128 L90 96 L170 118 L250 88 L340 122 L430 94 L520 124 L610 98 L700 126 L790 104 L880 128 L1000 100 V180 H0 Z" fill="#253154" />
+      {/* hills */}
+      <path d="M0 140 C120 122 220 134 330 128 S560 120 680 132 S880 124 1000 130 V180 H0 Z" fill={`url(#${id}-ground)`} />
+      {/* tree lines */}
+      <g fill="#10241c">
+        {[18, 40, 58, 150, 168, 300, 318, 336, 470, 488, 600, 618, 760, 778, 796].map((x, index) => (
+          <path key={x} d={`M${x} ${136 - (index % 3) * 3} l7 -${16 + (index % 3) * 4} l7 ${16 + (index % 3) * 4} z`} />
+        ))}
+        {[90, 230, 400, 540, 690, 840].map((x) => (
+          <circle key={x} cx={x} cy="132" r="8" />
+        ))}
+      </g>
+      <rect y="150" width="1000" height="30" fill="#0d1b2e" />
+    </svg>
+  );
+}
+
+// The ARS works at the end of the road (decorative).
+export function ArsFactory({ width = 150 }: { width?: number }) {
+  return (
+    <svg width={width} height={(width * 70) / 150} viewBox="0 0 150 70" aria-hidden="true" focusable="false">
+      <g fill="#1b2a44">
+        <rect x="18" y="14" width="7" height="34" />
+        <rect x="32" y="6" width="7" height="42" />
+        <rect x="108" y="10" width="6" height="38" />
+      </g>
+      <g fill="#94a3b8" opacity="0.35">
+        <circle cx="36" cy="2" r="4" />
+        <circle cx="42" cy="-3" r="3" />
+        <circle cx="111" cy="5" r="3.5" />
+      </g>
+      <path d="M8 48 V30 L28 22 V30 L48 22 V30 L68 22 V48 Z" fill="#22324f" />
+      <rect x="66" y="26" width="78" height="22" fill="#2a3b5c" />
+      <rect x="80" y="30" width="34" height="11" rx="2" fill="#d92d20" />
+      <text x="97" y="39" textAnchor="middle" fontFamily="Inter, Arial, sans-serif" fontWeight="900" fontStyle="italic" fontSize="9" fill="#ffffff">
+        ARS
+      </text>
+      <g fill="#fbbf24" opacity="0.8">
+        <rect x="14" y="36" width="5" height="4" />
+        <rect x="26" y="36" width="5" height="4" />
+        <rect x="38" y="36" width="5" height="4" />
+        <rect x="122" y="32" width="5" height="4" />
+        <rect x="132" y="32" width="5" height="4" />
+      </g>
+      <rect x="0" y="48" width="150" height="3" fill="#13213a" />
+    </svg>
+  );
+}

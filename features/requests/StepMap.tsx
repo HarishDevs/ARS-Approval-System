@@ -1,4 +1,4 @@
-import { StepStatusPill, taskStatusText } from "@/features/requests/StatusPill";
+import { PERSON_EXTRA, StepStatusPill, taskStatusText } from "@/features/requests/StatusPill";
 import type { MapStage, MapStep, TrackerSummary } from "@/server/approvals/step-map";
 import { SafeText } from "@/features/ui/SafeText";
 import { Check } from "lucide-react";
@@ -17,9 +17,10 @@ function StepCard({ step }: { step: MapStep }) {
     );
   }
   return (
-    <div className={`rounded-md border p-3 ${step.status === "ACTIVE" ? "border-primary-600 bg-primary-50/40" : "border-line bg-surface"}`}>
+    // v1.49 (owner's layout): the current level is outlined; each person wears their status as a pill.
+    <div className={`rounded-lg border p-3.5 ${step.status === "ACTIVE" ? "border-primary-600 bg-primary-50/40 shadow-sm ring-1 ring-primary-600" : "border-line bg-surface"}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="font-medium">
+        <p className="font-semibold">
           {step.type === "WORK" && <span className="mr-1.5 rounded-full bg-primary-50 px-2 py-px text-caption font-semibold text-primary-700">Work</span>}
           {step.type === "NOTIFY" && <span className="mr-1.5 rounded-full bg-surface-muted px-2 py-px text-caption font-semibold text-ink-muted">FYI</span>}
           {step.label}
@@ -31,10 +32,12 @@ function StepCard({ step }: { step: MapStep }) {
         <ul className="mt-2 space-y-1.5">
           {step.people.map((person) => {
             const status =
-              person.status === "TOLD" ? { label: "told", style: "text-ink-muted" } : person.status === "ASSIGNED" ? { label: "given the task", style: "text-ink-muted" } : step.type === "WORK" && person.status === "APPROVED" ? { label: "done", style: "text-success-600" } : taskStatusText(person.status);
+              person.status === "TOLD" ? PERSON_EXTRA.TOLD : person.status === "ASSIGNED" ? PERSON_EXTRA.ASSIGNED : step.type === "WORK" && person.status === "APPROVED" ? PERSON_EXTRA.DONE : taskStatusText(person.status);
             return (
               <li key={`${person.userId}-${person.status}`} className="text-label">
-                <span className="font-medium">{person.name}</span> <span className={status.style}>· {status.label}</span>
+                <span className="font-medium">{person.name}</span>
+                <span aria-hidden="true"> · </span>
+                <span className={`inline-flex items-center rounded-full border border-line bg-surface px-2 py-px text-caption font-semibold ${status.style}`}>{status.label}</span>
                 {person.decidedByName && <span className="text-ink-muted"> (by {person.decidedByName})</span>}
                 {person.comment && (
                   <p className="mt-0.5 rounded bg-surface-muted px-2 py-1 text-caption text-ink-muted">

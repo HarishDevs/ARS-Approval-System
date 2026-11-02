@@ -5,6 +5,7 @@ import { answerConsultAction, consultAction, linkAction } from "@/app/users/coll
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import { Hint } from "@/features/ui/Hint";
 import { SafeText } from "@/features/ui/SafeText";
+import { Lightbulb, Link2 } from "lucide-react";
 
 // EN-06 advice and EN-08 links on the request page.
 export interface ConsultRow {
@@ -22,7 +23,8 @@ export function Advice({ requestId, rows, canAsk, people }: { requestId: number;
   if (rows.length === 0 && !canAsk) return null;
   return (
     <section className="card px-5 py-4" aria-labelledby="advice">
-      <h2 id="advice" className="mb-3 flex items-center gap-1 font-semibold">
+      <h2 id="advice" className="mb-3 flex items-center gap-2 font-semibold">
+        <Lightbulb aria-hidden="true" className="h-4 w-4 shrink-0 text-primary-600" />
         Advice
         <Hint text="People asked for their view. They can read the request and answer; the decision stays with the approver." align="start" />
       </h2>
@@ -118,7 +120,8 @@ export function Links({ requestId, rows, followUpHref }: { requestId: number; ro
   const { result, pending, formRef, onSubmit } = useActionForm(linkAction, { resetOnSuccess: true });
   return (
     <section className="card px-5 py-4" aria-labelledby="links">
-      <h2 id="links" className="mb-3 font-semibold">
+      <h2 id="links" className="mb-3 flex items-center gap-2 font-semibold">
+        <Link2 aria-hidden="true" className="h-4 w-4 shrink-0 text-primary-600" />
         Linked requests
       </h2>
       {rows.length === 0 ? (
@@ -145,11 +148,11 @@ export function Links({ requestId, rows, followUpHref }: { requestId: number; ro
       )}
       <form ref={formRef} onSubmit={onSubmit} className="flex flex-wrap items-end gap-2">
         <input type="hidden" name="requestId" value={requestId} />
-        <div>
+        <div className="min-w-0 flex-1 basis-40">
           <label htmlFor="link-no" className="field-label">
             Link another request
           </label>
-          <input id="link-no" name="otherRequestNo" placeholder="e.g. PUR-2026-000123" className="field-input w-56" />
+          <input id="link-no" name="otherRequestNo" placeholder="e.g. PUR-2026-000123" className="field-input w-full" />
         </div>
         <SubmitButton pending={pending} variant="secondary" className="btn-compact h-11">
           Link

@@ -116,7 +116,15 @@ test("RD-01/RD-03 the history is grouped by day, and a resubmit shows what chang
   await expect(changes).toContainText("Amount");
   await expect(changes).toContainText("82,000");
   const history = page.getByRole("region", { name: "Timeline" });
-  await expect(history.getByText("Resubmitted (round 2)", { exact: true })).toBeVisible();
+  // v1.49 (owner): the latest 3 events, newest first; "Show more" opens the rest in a scrolling box.
+  await expect(history.getByRole("listitem")).toHaveCount(3);
+  await history.getByTestId("timeline-more").click();
+  await expect(history.getByTestId("timeline-more")).toHaveText(/Show less/);
+  const box = history.getByTestId("timeline-scroll");
+  await expect(box).toHaveAttribute("tabindex", "0");
+  await expect(box.getByText("Resubmitted (round 2)", { exact: true })).toBeVisible();
+  const times = await box.locator("time").evaluateAll((nodes) => nodes.map((node) => Date.parse(node.getAttribute("datetime") ?? "")));
+  expect(times).toEqual([...times].sort((a, b) => b - a));
   await expect(history.locator("time").first()).toHaveAttribute("datetime", /\d{4}-\d{2}-\d{2}T/);
 });
 

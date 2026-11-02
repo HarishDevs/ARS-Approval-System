@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { isTyping } from "@/features/shell/shortcuts";
-import { Check, MessageSquareWarning, PauseCircle, XCircle } from "lucide-react";
+import { Check, MessageSquareWarning, PauseCircle, PencilLine, Power, RotateCcw, Trash2, XCircle } from "lucide-react";
 import { ConfirmDialog, Dialog } from "@/features/ui/Dialog";
 import { answerInfoAction, decideAction, delegateTaskAction, recallAction, reopenAction, resolveBlockedAction, resumeAction, withdrawAction } from "@/app/users/actions";
 import { FieldError, ResultMessage, useActionForm } from "@/features/ui/form";
@@ -211,12 +211,14 @@ export function WithdrawForm({ requestId }: { requestId: number }) {
   return (
     <form onSubmit={onSubmit} className="space-y-2 px-5 py-4">
       <input type="hidden" name="requestId" value={requestId} />
-      <p className="flex items-center gap-1 font-medium">
+      <h2 id="withdraw-title" className="flex items-center gap-2 font-semibold">
+        <Power aria-hidden="true" className="h-4 w-4 shrink-0 text-danger-600" />
         Withdraw this request
         <Hint text="Closes it now. Anyone still to approve is told it's no longer needed." align="start" />
-      </p>
+      </h2>
       <input name="reason" maxLength={500} placeholder="Reason (optional)" aria-label="Reason for withdrawing" className="field-input" />
-      <button type="submit" disabled={pending} className="btn-danger-quiet btn-compact">
+      <button type="submit" disabled={pending} className="btn-danger-quiet btn-compact inline-flex items-center gap-1.5">
+        <Trash2 aria-hidden="true" className="h-4 w-4" />
         {pending ? "Working…" : "Withdraw"}
       </button>
       <ResultMessage result={result} />
@@ -230,10 +232,11 @@ export function ReopenForm({ requestId }: { requestId: number }) {
   return (
     <form onSubmit={onSubmit} className="space-y-2 px-5 py-4">
       <input type="hidden" name="requestId" value={requestId} />
-      <p className="flex items-center gap-1 font-medium">
+      <h2 id="reopen-title" className="flex items-center gap-2 font-semibold">
+        <RotateCcw aria-hidden="true" className="h-4 w-4 shrink-0 text-primary-600" />
         Reopen (Super Admin)
         <Hint text="Starts approval again from the first level, on the same number. The earlier approvals stay in the history." align="start" />
-      </p>
+      </h2>
       <input name="reason" maxLength={500} placeholder="Reason (required)" aria-label="Reason for reopening" className="field-input" />
       <FieldError result={result} name="reason" />
       <button type="submit" disabled={pending} className="btn-secondary btn-compact">
@@ -326,14 +329,19 @@ export function RecallForm({ requestId }: { requestId: number }) {
   return (
     <form onSubmit={onSubmit} className="space-y-2 px-5 py-4">
       <input type="hidden" name="requestId" value={requestId} />
-      <p className="font-medium">Need to change something?</p>
+      <h2 id="recall-title" className="flex items-center gap-2 font-semibold">
+        <PencilLine aria-hidden="true" className="h-4 w-4 shrink-0 text-primary-600" />
+        Need to change something?
+      </h2>
       <label htmlFor="recall-reason" className="field-label">
         Reason for recalling
       </label>
       <input id="recall-reason" name="reason" maxLength={500} className="field-input" placeholder="e.g. Wrong quote attached" />
       <FieldError result={result} name="reason" />
-      <button type="submit" disabled={pending} className="btn-secondary btn-compact">
-        {pending ? "Working…" : "Recall to change it"}
+      {/* v1.49 (owner's layout): "Recall & change". */}
+      <button type="submit" disabled={pending} className="btn-secondary btn-compact inline-flex items-center gap-1.5">
+        <RotateCcw aria-hidden="true" className="h-4 w-4" />
+        {pending ? "Working…" : "Recall & change"}
       </button>
       <ResultMessage result={result} />
       {confirmBar}

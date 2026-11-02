@@ -965,6 +965,11 @@ body:has([data-testid="m-comment-dock"][data-open="1"]) .picbot-launcher {
 @media (prefers-reduced-motion: reduce) {
   .picbot-in, .picbot-out { animation: none; }
 }
+/* v1.48.0 (owner): on a phone the journey shows the road and its banner only;
+   Request Status and Approval Levels (Detailed) are left out. */
+[data-layout="mobile"] .jr-side {
+  display: none;
+}
 /* Sideways chip rows scroll by touch without a visible scrollbar. */
 [data-layout="mobile"] .mob-chips {
   scrollbar-width: none;
@@ -1210,5 +1215,148 @@ body:has([data-testid="m-comment-dock"][data-open="1"]) .picbot-launcher {
   .choice-pill {
     background: var(--pill-bg) !important;
     color: var(--pill-fg) !important;
+  }
+}
+
+/* v1.48 (owner: "make the status colours match across all lists"): one
+   colour per status tone, light and dark, for every request, level and person
+   status (features/ui/status-tones.ts holds the same values; the unit test
+   tests/ui/status-tones.test.ts checks they match and pass AA). The journey
+   card is dark in both themes, so it always takes the dark pairs. */
+:root {
+  --tone-blue-fg: #1d4ed8;
+  --tone-blue-bg: #dbeafe;
+  --tone-amber-fg: #92400e;
+  --tone-amber-bg: #fef3c7;
+  --tone-orange-fg: #9a3412;
+  --tone-orange-bg: #ffedd5;
+  --tone-green-fg: #166534;
+  --tone-green-bg: #dcfce7;
+  --tone-red-fg: #b91c1c;
+  --tone-red-bg: #fee2e2;
+  --tone-orangered-fg: #b3360f;
+  --tone-orangered-bg: #ffe6dc;
+  --tone-purple-fg: #6d28d9;
+  --tone-purple-bg: #ede9fe;
+  --tone-grey-fg: #475569;
+  --tone-grey-bg: #f1f5f9;
+}
+:root[data-theme="dark"],
+.jr-panel,
+.st-dark {
+  --tone-blue-fg: #93c5fd;
+  --tone-blue-bg: #172a4a;
+  --tone-amber-fg: #fcd34d;
+  --tone-amber-bg: #36280c;
+  --tone-orange-fg: #fdba74;
+  --tone-orange-bg: #3b220e;
+  --tone-green-fg: #86efac;
+  --tone-green-bg: #0f2f1f;
+  --tone-red-fg: #fca5a5;
+  --tone-red-bg: #3d1518;
+  --tone-orangered-fg: #ffa284;
+  --tone-orangered-bg: #3d1c12;
+  --tone-purple-fg: #c4b5fd;
+  --tone-purple-bg: #2a1f4a;
+  --tone-grey-fg: #cbd5e1;
+  --tone-grey-bg: #1e293b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --tone-blue-fg: #93c5fd;
+    --tone-blue-bg: #172a4a;
+    --tone-amber-fg: #fcd34d;
+    --tone-amber-bg: #36280c;
+    --tone-orange-fg: #fdba74;
+    --tone-orange-bg: #3b220e;
+    --tone-green-fg: #86efac;
+    --tone-green-bg: #0f2f1f;
+    --tone-red-fg: #fca5a5;
+    --tone-red-bg: #3d1518;
+    --tone-orangered-fg: #ffa284;
+    --tone-orangered-bg: #3d1c12;
+    --tone-purple-fg: #c4b5fd;
+    --tone-purple-bg: #2a1f4a;
+    --tone-grey-fg: #cbd5e1;
+    --tone-grey-bg: #1e293b;
+  }
+}
+.st-blue { --st-fg: var(--tone-blue-fg); --st-bg: var(--tone-blue-bg); }
+.st-amber { --st-fg: var(--tone-amber-fg); --st-bg: var(--tone-amber-bg); }
+.st-orange { --st-fg: var(--tone-orange-fg); --st-bg: var(--tone-orange-bg); }
+.st-green { --st-fg: var(--tone-green-fg); --st-bg: var(--tone-green-bg); }
+.st-red { --st-fg: var(--tone-red-fg); --st-bg: var(--tone-red-bg); }
+.st-orangered { --st-fg: var(--tone-orangered-fg); --st-bg: var(--tone-orangered-bg); }
+.st-purple { --st-fg: var(--tone-purple-fg); --st-bg: var(--tone-purple-bg); }
+.st-grey { --st-fg: var(--tone-grey-fg); --st-bg: var(--tone-grey-bg); }
+.st-pill {
+  color: var(--st-fg);
+  background-color: var(--st-bg);
+}
+.st-text {
+  color: var(--st-fg);
+}
+@media print {
+  .st-pill {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
+
+/* v1.48 (owner's journey design): the done milestones' soft glow and the
+   approved banner's confetti (once; none with reduced motion, see the
+   .jr-panel reduced-motion rule above). */
+.jr-glow-green {
+  box-shadow: 0 0 0 4px rgb(34 197 94 / 0.18);
+}
+.jr-confetti i {
+  position: absolute;
+  top: -10px;
+  width: 7px;
+  height: 11px;
+  border-radius: 2px;
+  opacity: 0;
+  animation: jr-confetti 1.9s ease-in forwards;
+}
+@keyframes jr-confetti {
+  0% { opacity: 1; transform: translate(0, 0) rotate(0deg); }
+  100% { opacity: 0; transform: translate(var(--jr-drift, 0px), 110px) rotate(540deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .jr-confetti {
+    display: none;
+  }
+}
+
+/* ===== v1.49 request page layout (owner, 2 Nov 2026) =====
+   features/requests/{RequestDetails,ApprovalLevels,RequestTimeline}.tsx and
+   app/users/requests/[id]/page.tsx. Not part of the journey (jr-*) block. */
+.request-timeline-scroll {
+  scrollbar-width: thin;
+  overscroll-behavior: contain;
+}
+.request-timeline-scroll:focus-visible {
+  outline: 2px solid var(--color-primary-600);
+  outline-offset: 2px;
+  border-radius: 0.375rem;
+}
+/* Phones: one column, nothing sideways, fingers get 44 px targets. */
+[data-layout="mobile"] .request-layout,
+[data-layout="mobile"] .request-bottom {
+  min-width: 0;
+  max-width: 100%;
+}
+[data-layout="mobile"] :is(.request-layout, .request-bottom) form :is(button, summary),
+[data-layout="mobile"] .request-bottom :is(button, summary),
+[data-layout="mobile"] .request-footer :is(a, button) {
+  min-height: 44px;
+}
+[data-layout="mobile"] :is(.request-layout, .request-bottom) form button.badge {
+  min-width: 44px;
+  justify-content: center;
+}
+@media (max-width: 479px) {
+  .request-row:not(.sm\:col-span-2) {
+    grid-template-columns: minmax(0, 8.5rem) minmax(0, 1fr);
   }
 }

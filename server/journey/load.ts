@@ -3,6 +3,7 @@ import type { RowDataPacket } from "mysql2/promise";
 import { getDbPool } from "@/lib/db/client";
 import { findRequest, findWorkflowVersion, userNames } from "@/lib/db/repositories/approvals.repository";
 import { loadRequestRoad } from "@/server/approvals/road-view";
+import { isExpiredApproval } from "@/server/approvals/expiry-rules";
 import type { Actor } from "@/server/approvals/service";
 import { deliveryOf, journeyVersion, overallDelivery, type Journey, type JourneyFyi, type JourneyTask, type JourneyTaskStatus } from "@/server/journey/types";
 
@@ -19,7 +20,7 @@ export async function loadJourney(requestId: number, viewer: Actor): Promise<Jou
   const request = await findRequest(requestId);
   if (!request) return null;
   const db = getDbPool();
-  const [[cursorRows], [taskRows], [fyiRows]] = await Promise.all([
+  const [[cursorRows], [taskRows], [fyiRows], requesterNames] = await Promise.all([
     db.query<RowDataPacket[]>("SELECT COALESCE(MAX(id), 0) AS cursor_id FROM approval_events WHERE request_id = ?", [requestId]),
     db.query<RowDataPacket[]>(
       `SELECT t.id, t.task_no, t.title, t.status, t.created_at, t.due_at, t.completed_at, u.name AS assignee,
@@ -31,6 +32,7 @@ export async function loadJourney(requestId: number, viewer: Actor): Promise<Jou
       [requestId],
     ),
     db.query<RowDataPacket[]>("SELECT id, node_id, created_at, payload_json FROM approval_events WHERE request_id = ? AND event_type = 'NOTIFIED' ORDER BY id LIMIT 50", [requestId]),
+    userNames([request.requesterId]),
   ]);
   const now = Date.now();
   const tasks: JourneyTask[] = taskRows.map((row) => {
@@ -84,14 +86,21 @@ export async function loadJourney(requestId: number, viewer: Actor): Promise<Jou
   }
 
   const cursor = Number(cursorRows[0]?.cursor_id ?? 0);
+  const expired = isExpiredApproval(request.status, loaded.validUntil);
   return {
     requestId,
     requestNo: request.requestNo,
+    title: request.title,
+    requesterName: requesterNames.get(request.requesterId) ?? "",
+    submittedAt: loaded.submittedAt,
+    validUntil: loaded.validUntil,
+    requestStatus: request.status,
+    expired,
     road: loaded.road,
     tasks,
     fyi,
     cursor,
-    version: journeyVersion(loaded.road, tasks, fyi, cursor),
+    version: journeyVersion(loaded.road, tasks, fyi, cursor, { title: request.title, validUntil: loaded.validUntil, expired }),
     updatedAt: loaded.updatedAt,
   };
 }

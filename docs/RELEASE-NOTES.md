@@ -1,5 +1,22 @@
 # Release notes
 
+## v1.48.0 (2 Nov 2026): the new Approval Journey, request page and one colour per status (owner)
+**Approval Journey** (from the owner's design and reference folder), on computers and phones:
+- A header with the ARS mark, the request number and title, its status, the number of levels, **refresh** (checks for news now) and **share** (copies the link).
+- A scenic road (hills, trees, the ARS plant) with the van; each level shows its name, status and time; the flag at the finish.
+- **Request Status**: a ring with the percentage, "X of Y levels completed", request number, requester, submitted on, valid until.
+- **Approval Levels (Detailed)**: every level, who decided and when; the current one highlighted; tap one for its details.
+- When it ends, a banner: Request Approved (with confetti, once), Rejected at <level> by <name>, On hold, Changes required, Expired, Withdrawn.
+- A **Status guide** (closed by default) explains every status.
+
+**Request page**, laid out like the owner's picture:
+- **Request details** with an icon per row in two columns (Priority as its coloured pill); **Approval levels** with a "Waiting for … to decide" banner and tiles (Progress, Completed, Remaining, Time in process, Last update) above the level cards.
+- On the right: your decision (if it's yours to decide), Recall & change, Withdraw, Attachments, Collaborators, Discussion.
+- Below: Linked requests, **Timeline** (the latest 3, newest first; **Show more** opens the rest in a scrolling box), Reuse; then Raise again like this (and, for the Super Admin, Super Admin and Delete).
+- On a phone everything is one column, in the owner's order: the journey (the road and its banner; the Request Status and detailed-levels cards are left out, their facts are below), then Request details, then Approval levels and the rest.
+
+**One colour per status, everywhere** (lists, cards, the request page, the journey, phone cards): In progress / Waiting / Pending blue; On hold amber; Changes required / Asked for changes orange; Approved / Done green; Rejected red; **Withdrawn purple** (was grey); Skipped / Given the task / Told purple; **Expired grey**; Not started / Not needed / Closed grey; Blocked orange-red. Readable in light and dark themes.
+
 ## v1.47.1 (2 Nov 2026): priority colours everywhere (owner)
 - Every priority now shows in colour wherever it appears: tables (task lists, project lists and boards, My Work on Home, Analytics "Oldest open tasks", Records, the request lists), headings (the task page, the task pane, the request page, an information item) and the phone rows.
 - Built-in priorities: **Urgent** red, **High** orange, **Important** yellow, **Normal** blue, **Low** grey (Home → My Work used to say "Medium" for Normal; it now says Normal like everywhere else). Editable priority boxes in task tables wear the same colour.
