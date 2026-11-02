@@ -39,8 +39,8 @@ export async function sendTestEmail(user: AuthenticatedUser, sessionId: string):
       await getEmailConfig(),
       {
         to: user.email,
-        subject: "ARS-CMS: test email",
-        text: `Hello ${user.name},\n\nThis is a test from the ARS-CMS settings page. Email delivery is working.\n\nARS-CMS`,
+        subject: "ARS CMS: test email",
+        text: `Hello ${user.name},\n\nThis is a test from the ARS CMS settings page. Email delivery is working.\n\nARS CMS`,
       },
       { fetch },
     );

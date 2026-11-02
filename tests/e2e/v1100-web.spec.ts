@@ -115,7 +115,7 @@ test("WEB-08: an unknown address shows the 404 page with a way back", async ({ p
 });
 
 test("WEB-04/05: favicon files answer; each page has its own title", async ({ page, context }) => {
-  for (const path of ["/favicon.ico", "/brand/ars-mark.svg", "/icons/icon-192.png"]) {
+  for (const path of ["/favicon.ico", "/branding/ars-cms-icon-32.png", "/branding/ars-cms-icon-192.png", "/branding/ars-cms-logo-480.png"]) {
     expect((await page.request.get(path)).status(), path).toBe(200);
   }
   await as(context, "E2E_REQ");
@@ -124,7 +124,7 @@ test("WEB-04/05: favicon files answer; each page has its own title", async ({ pa
     await page.goto(path);
     titles.push(await page.title());
   }
-  expect(titles.every((title) => title.endsWith("· ARS-CMS"))).toBe(true);
+  expect(titles.every((title) => title.endsWith("· ARS CMS"))).toBe(true);
   expect(new Set(titles).size).toBe(titles.length);
   await expect(page.locator('link[rel="icon"][href="/favicon.ico"]')).toHaveCount(1);
 });

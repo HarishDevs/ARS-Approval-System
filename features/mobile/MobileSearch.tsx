@@ -29,8 +29,8 @@ export function MobileSearch({ tasks, projects }: { tasks: boolean; projects: bo
       <form method="get" action="/users/search" role="search" className="space-y-3">
         <label className="flex min-h-14 items-center gap-3 rounded-full bg-surface-muted px-5">
           <Search aria-hidden="true" className="h-5 w-5 text-ink-muted" />
-          <span className="sr-only">Search ARS-CMS</span>
-          <input name="q" type="search" maxLength={100} placeholder="Search ARS-CMS" enterKeyHint="search" className="min-w-0 flex-1 bg-transparent text-[16px] outline-none placeholder:text-ink-faint" />
+          <span className="sr-only">Search ARS CMS</span>
+          <input name="q" type="search" maxLength={100} placeholder="Search ARS CMS" enterKeyHint="search" className="min-w-0 flex-1 bg-transparent text-[16px] outline-none placeholder:text-ink-faint" />
         </label>
         <div className="mob-chips -mx-4 flex gap-2 overflow-x-auto px-4">
           <button type="submit" className={`${CHIP} shrink-0`}>

@@ -42,7 +42,7 @@ interface AiTool {
   run: (context: ToolContext, args: Record<string, unknown>) => Promise<{ result: unknown; source: string; links?: { label: string; href: string }[] }>;
 }
 
-const ARS = "ARS-CMS (live)";
+const ARS = "ARS CMS (live)";
 const SF = "Salesforce (live, read-only)";
 const empty = { type: "object", properties: {}, additionalProperties: false };
 // D-201: models write filters in a few shapes ({field, op, value},
@@ -257,7 +257,7 @@ const TOOLS: readonly AiTool[] = [
     args: z.object({ kind: z.enum(["REMINDER", "FOLLOW_UP", "REVIEW", "OTHER"]), title: z.string().trim().min(3).max(200), details: z.string().trim().min(10).max(2000) }).strict(),
     run: async (context, args) => {
       const proposal = await createProposal(context.person, { conversationId: context.conversationId, kind: args.kind as "REMINDER", title: String(args.title), details: String(args.details), evidence: context.evidence });
-      return { result: { proposalId: proposal.id, status: "PENDING", approver: proposal.approverLabel, note: "Recorded for a person to approve or reject. Nothing has been carried out." }, source: "ARS-CMS", links: [{ label: "Insights & Recommendations", href: "/users/ai/insights" }] };
+      return { result: { proposalId: proposal.id, status: "PENDING", approver: proposal.approverLabel, note: "Recorded for a person to approve or reject. Nothing has been carried out." }, source: "ARS CMS", links: [{ label: "Insights & Recommendations", href: "/users/ai/insights" }] };
     },
   },
 ];

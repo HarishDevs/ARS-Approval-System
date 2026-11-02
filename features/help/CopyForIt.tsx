@@ -7,7 +7,7 @@ import { useState } from "react";
 export function itDetails(input: { reference: string; digest?: string; version?: string; path: string; userAgent: string; screen: string; now: Date }): string {
   const time = new Intl.DateTimeFormat("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "medium" }).format(input.now);
   return [
-    "ARS-CMS: details for IT",
+    "ARS CMS: details for IT",
     `Time: ${time} (India)`,
     `Page: ${input.path}`,
     input.reference ? `Reference: ${input.reference}` : null,

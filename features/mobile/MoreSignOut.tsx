@@ -19,7 +19,7 @@ export function MoreSignOut() {
       <ConfirmDialog
         open={asking}
         title="Sign out?"
-        body="You'll need to sign in again to use ARS-CMS on this device. Phone notifications keep coming."
+        body="You'll need to sign in again to use ARS CMS on this device. Phone notifications keep coming."
         confirmLabel="Sign out"
         onCancel={() => setAsking(false)}
         onConfirm={async () => {

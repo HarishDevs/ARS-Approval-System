@@ -17,7 +17,7 @@ export interface SettingDefinition {
 }
 
 export const SETTING_DEFINITIONS: readonly SettingDefinition[] = [
-  { key: "general.app_name", group: "GENERAL", label: "Application name", valueType: "STRING", encrypted: false, schema: z.string().trim().min(1).max(150), defaultValue: "ARS-CMS" },
+  { key: "general.app_name", group: "GENERAL", label: "Application name", valueType: "STRING", encrypted: false, schema: z.string().trim().min(1).max(150), defaultValue: "ARS CMS" },
   { key: "general.escalation_levels", group: "GENERAL", label: "Escalation levels for late approvals (1 = manager, 2 = + manager's manager, 3 = one more)", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(1).max(3), defaultValue: "2" },
   // Unified prompt (BD-3): over-budget requests warn by default; BLOCK is an owner decision.
   { key: "general.budget_policy", group: "GENERAL", label: "Over-budget requests (Warn asks to confirm; Block refuses)", valueType: "STRING", encrypted: false, schema: z.enum(["WARN", "BLOCK"]), defaultValue: "WARN" },
@@ -43,7 +43,7 @@ export const SETTING_DEFINITIONS: readonly SettingDefinition[] = [
   { key: "push.vapid_public_key", group: "PUSH", label: "VAPID public key (made by Generate keys; shared with browsers)", valueType: "STRING", encrypted: false, schema: z.string().trim().regex(/^[A-Za-z0-9_-]{80,100}$/, "Use Generate keys.") },
   { key: "push.vapid_private_key", group: "PUSH", label: "VAPID private key (made by Generate keys)", valueType: "STRING", encrypted: true, schema: z.string().trim().regex(/^[A-Za-z0-9_-]{40,50}$/, "Use Generate keys.") },
   { key: "push.vapid_subject", group: "PUSH", label: "Contact for the push services (mailto: or https:)", valueType: "STRING", encrypted: false, schema: z.string().trim().regex(/^(mailto:\S+@\S+|https:\/\/\S+)$/, "Use mailto:address or an https:// address."), defaultValue: "mailto:itadmin@arssteels.co.in" },
-  { key: "push.lock_screen_detail", group: "PUSH", label: "What a notification shows on a lock screen: TITLE = the title and a short line without amounts or names of fields; FULL = the message as in the Inbox; GENERIC = only \"New in ARS-CMS\"", valueType: "STRING", encrypted: false, schema: z.enum(["TITLE", "FULL", "GENERIC"]), defaultValue: "TITLE" },
+  { key: "push.lock_screen_detail", group: "PUSH", label: "What a notification shows on a lock screen: TITLE = the title and a short line without amounts or names of fields; FULL = the message as in the Inbox; GENERIC = only \"New in ARS CMS\"", valueType: "STRING", encrypted: false, schema: z.enum(["TITLE", "FULL", "GENERIC"]), defaultValue: "TITLE" },
   // D-247 (audit FI-D01, BD-5): off until the Super Admin switches it on (it sends real email).
   { key: "general.hod_weekly_report", group: "GENERAL", label: "Weekly report to each head of department (Mondays from 9:00, by email: their department's requests in the last 7 days)", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF"]), defaultValue: "OFF" },
   { key: "general.stuck_idle_days", group: "GENERAL", label: "Days without activity before a request is listed as possibly stuck", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(1).max(90), defaultValue: "7" },
@@ -91,7 +91,7 @@ export const SETTING_DEFINITIONS: readonly SettingDefinition[] = [
   { key: "email.from_address", group: "EMAIL", label: "From address", valueType: "STRING", encrypted: false, schema: z.string().trim().email(), defaultValue: "no_reply@approval.arssteels.net" },
   // D-080: replies to a notification reach IT, not the no-reply sender.
   { key: "email.reply_to", group: "EMAIL", label: "Reply-to address", valueType: "STRING", encrypted: false, schema: z.string().trim().email(), defaultValue: "itadmin@arssteels.co.in" },
-  { key: "email.from_name", group: "EMAIL", label: "From name", valueType: "STRING", encrypted: false, schema: z.string().trim().min(1).max(100), defaultValue: "ARS-CMS" },
+  { key: "email.from_name", group: "EMAIL", label: "From name", valueType: "STRING", encrypted: false, schema: z.string().trim().min(1).max(100), defaultValue: "ARS CMS" },
 
   // WhatsApp via CEOITBox, the same number and API as the Power BI site (D-036).
   { key: "whatsapp.ceoitbox_base_url", group: "WHATSAPP", label: "CEOITBox base URL", valueType: "STRING", encrypted: false, schema: z.string().trim().url().refine((value) => value.startsWith("https://"), "Use an https:// address: the API key is sent with every call."), defaultValue: "https://official.ceoitbox.com" },

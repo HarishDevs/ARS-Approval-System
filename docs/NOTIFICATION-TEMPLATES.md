@@ -683,7 +683,7 @@ Please fix it here: https://approval.arssteels.net/users/requests/123
 - **Sent to:** The person who signed in
 - **Category / language:** Utility / English
 - **App event:** `NEW_LOGIN` (registry code `WA_NEW_LOGIN_V1`)
-- **Matching email subject:** New sign-in to your ARS-CMS account
+- **Matching email subject:** New sign-in to your ARS CMS account
 
 Body to paste into CEOITBox:
 ```
@@ -726,7 +726,7 @@ If this wasn't you, open this link to sign out everywhere and lock your account:
 - **Sent to:** The account holder
 - **Category / language:** Utility / English
 - **App event:** `ACCOUNT_LOCKED` (registry code `WA_ACCOUNT_LOCKED_V1`)
-- **Matching email subject:** Your ARS-CMS account was locked
+- **Matching email subject:** Your ARS CMS account was locked
 
 Body to paste into CEOITBox:
 ```
@@ -760,7 +760,7 @@ If this wasn't you, contact IT (itadmin@arssteels.co.in).
 - **Sent to:** The account holder
 - **Category / language:** Utility / English
 - **App event:** `ACCOUNT_SECURED` (registry code `WA_ACCOUNT_SECURED_V1`)
-- **Matching email subject:** Your ARS-CMS account was secured
+- **Matching email subject:** Your ARS CMS account was secured
 
 Body to paste into CEOITBox:
 ```
@@ -907,7 +907,7 @@ If this wasn't planned, act now.
 - **Sent to:** The account holder
 - **Category / language:** Utility / English
 - **App event:** `PASSWORD_CHANGED` (registry code `WA_PASSWORD_CHANGED_V1`)
-- **Matching email subject:** Your ARS-CMS password was changed
+- **Matching email subject:** Your ARS CMS password was changed
 
 Body to paste into CEOITBox:
 ```
@@ -974,7 +974,7 @@ If you didn't expect this, contact IT (itadmin@arssteels.co.in).
 - **Sent to:** The account holder
 - **Category / language:** Utility / English
 - **App event:** `SIGN_IN_METHOD_CHANGED` (registry code `WA_SIGN_IN_METHOD_CHANGED_V1`)
-- **Matching email subject:** How you sign in to ARS-CMS has changed
+- **Matching email subject:** How you sign in to ARS CMS has changed
 
 Body to paste into CEOITBox:
 ```
@@ -1007,9 +1007,9 @@ If you didn't expect this, contact IT (itadmin@arssteels.co.in).
 
 | App event | Email subject | Why no WhatsApp |
 |---|---|---|
-| `SET_PASSWORD_LINK` | Set your ARS-CMS password | The set-password link goes to the email on record; the WhatsApp code then confirms the number. |
-| `USER_INVITED` | You've been added to ARS-CMS | Owner choice (D-166): invitations go by email, with the set-password link for password users. |
-| `PASSWORD_RESET_LINK` | Reset your ARS-CMS password | Owner choice (D-166): the reset link goes to the email on record; the WhatsApp code then confirms it. |
+| `SET_PASSWORD_LINK` | Set your ARS CMS password | The set-password link goes to the email on record; the WhatsApp code then confirms the number. |
+| `USER_INVITED` | You've been added to ARS CMS | Owner choice (D-166): invitations go by email, with the set-password link for password users. |
+| `PASSWORD_RESET_LINK` | Reset your ARS CMS password | Owner choice (D-166): the reset link goes to the email on record; the WhatsApp code then confirms it. |
 
 ## Emails
 Every message above is also sent by email from itadmin@arssteels.co.in (through Resend), with the subject shown and the same details as plain text. Emails need no approval: they work as soon as the Resend key is entered in /superadmin/settings.

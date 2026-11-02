@@ -16,7 +16,8 @@ export function PublicPage({ children }: { children: React.ReactNode }) {
       <header className="border-b border-line bg-surface">
         <div className="mx-auto flex max-w-4xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
           {/* D-198: the app's name next to the company logo, so Google's review
-              matches it to the consent screen's "ARS-CMS". */}
+              matches it to the consent screen's app name (Nov 2026: "ARS CMS";
+              the Google Cloud consent screen must use the same name). */}
           <Link href="/" className="flex min-w-0 items-center gap-3 rounded-md">
             <span className="sr-only">ARS Steels</span>
             <BrandLockup size="md" />

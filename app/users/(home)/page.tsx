@@ -60,7 +60,7 @@ export default async function UsersHome({ searchParams }: { searchParams: Promis
         greeting={`${greetingFor(new Date())}, ${words.length <= 2 ? words.join(" ") : words[0]}`}
         approvals={hasModule(user, "APPROVAL") && (open("/users/queue") || open("/users/requests"))}
         tasks={(await featureOn("tasks", user).catch(() => false)) && open("/users/work")}
-        can={{ newRequest: open("/users/new"), search: open("/users/search"), ai: (await featureOn("ai", user).catch(() => false)) && open("/users/ai/assistant") }}
+        can={{ newRequest: open("/users/custom") || open("/users/new"), newRequestHref: open("/users/custom") ? "/users/custom" : "/users/new", search: open("/users/search"), ai: (await featureOn("ai", user).catch(() => false)) && open("/users/ai/assistant") }}
       />
     );
   }

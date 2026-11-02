@@ -33,6 +33,17 @@ describe("Classic modules", () => {
     expect(locate(modules, "/users/menu/approvals")).toMatchObject({ entry: { key: "approvals" }, page: null });
     expect(locate(modules, "/users/profile")).toEqual({ entry: null, page: null });
   });
+  it("v1.48.2: the older task lists keep the Tasks Management tabs (My tasks is under Tasks & projects)", () => {
+    const today = classicModules([
+      { href: "/users", label: "Overview" },
+      { href: "/users/tasks/new", label: "New task", section: "Tasks" },
+      { href: "/users/work/my-tasks", label: "My tasks", section: "Tasks" },
+      { href: "/users/work/projects", label: "Projects", section: "Tasks" },
+    ]);
+    expect(locate(today, "/users/tasks")).toMatchObject({ entry: { key: "tasks" }, page: { label: "My tasks" } });
+    expect(locate(today, "/users/tasks/7")).toMatchObject({ entry: { key: "tasks" } });
+    expect(locate(today, "/users/tasks/assigned")).toMatchObject({ entry: { key: "tasks" } });
+  });
   it("page letters don't repeat within a menu", () => {
     const keys = pageHotkeys(modules[0]!.pages);
     expect(keys).toEqual(["n", "m", "w"]);

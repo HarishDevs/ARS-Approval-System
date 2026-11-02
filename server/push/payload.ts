@@ -32,8 +32,8 @@ export function buildPushPayload(
   // IT's own notices are written to be read as they are.
   const broadcast = input.eventType.startsWith("ADMIN_") || input.eventType === "PUSH_TEST";
   const mode: LockScreenDetail = broadcast && detail !== "GENERIC" ? "FULL" : detail;
-  const title = mode === "GENERIC" ? "ARS-CMS" : clip(input.title, 80);
-  const body = mode === "GENERIC" ? "You have a new notification. Open ARS-CMS to see it." : mode === "FULL" ? clip(input.message, 180) : `${CATEGORY_LABEL[category]} · open ARS-CMS to see it`;
+  const title = mode === "GENERIC" ? "ARS CMS" : clip(input.title, 80);
+  const body = mode === "GENERIC" ? "You have a new notification. Open ARS CMS to see it." : mode === "FULL" ? clip(input.message, 180) : `${CATEGORY_LABEL[category]} · open ARS CMS to see it`;
   const url = appPath(input.deepLink) ?? "/users/inbox";
   return {
     title,

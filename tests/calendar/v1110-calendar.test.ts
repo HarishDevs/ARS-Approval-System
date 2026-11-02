@@ -43,7 +43,7 @@ describe("events written to Google", () => {
   it("carry the reference and a link, never the title or amounts by default; private", () => {
     const event = businessEvent(source, DEFAULT_CONFIG, "https://approval.test/");
     expect(event.body.summary).toBe("Approval due: PR-0042");
-    expect(event.body.description).toBe("Open in ARS-CMS: https://approval.test/users/requests/42");
+    expect(event.body.description).toBe("Open in ARS CMS: https://approval.test/users/requests/42");
     expect(JSON.stringify(event.body)).not.toMatch(/servers|9,00,000/);
     expect(event.body.visibility).toBe("private");
     expect(event.body.extendedProperties?.private).toEqual({ ars: "1", arsType: "APPROVAL_TASK", arsId: "9" });

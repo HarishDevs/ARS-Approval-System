@@ -28,6 +28,7 @@ import { STATE_DOT, STATE_TONE, statusText } from "@/features/journey/format";
 import { ArsFactory, JourneyDocument, JourneyEnvelope, JourneyFlag, JourneyStamp, JourneyVan, ScenicBackdrop } from "@/features/journey/JourneyArt";
 import { FyiActivity, WorkTaskActivity } from "@/features/journey/JourneyActivities";
 import { requestStatusDisplay } from "@/features/requests/StatusPill";
+import { APP_BRANDING } from "@/lib/branding";
 import { tonePill, toneText, type StatusTone } from "@/features/ui/status-tones";
 import { COPY_BLOCKED, copyText } from "@/features/ui/clipboard";
 import { useToast } from "@/features/ui/Toast";
@@ -470,8 +471,8 @@ export function ARSApprovalJourney({ journey: initial, serverNow, fresh = false,
     >
       {/* the header bar */}
       <div className={`jr-head flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-white/10 ${compact ? "px-3 py-2" : "px-3 py-3 sm:px-4"}`}>
-        {/* eslint-disable-next-line @next/next/no-img-element -- the static ARS logo */}
-        <img src="/brand/ars-mark-white.svg" alt="ARS" width={compact ? 44 : 62} height={compact ? 15 : 21} className="shrink-0" />
+        {/* eslint-disable-next-line @next/next/no-img-element -- the static ARS GREEN STEEL CMS logo (Nov 2026 branding) */}
+        <img src={APP_BRANDING.logoSmall} alt={APP_BRANDING.logoAlt} width={compact ? 36 : 54} height={compact ? 24 : 36} className={`shrink-0 rounded-[4px] ${compact ? "h-6 w-9" : "h-9 w-[54px]"}`} />
         <span aria-hidden="true" className={`w-px shrink-0 bg-white/20 ${compact ? "h-6" : "h-9"}`} />
         <div className={`jr-title min-w-0 ${!compact && collapsed ? "flex-none sm:max-w-[40%]" : "flex-1 basis-[180px]"}`}>
           <h2 className={`font-bold leading-tight ${compact ? "text-[14px]" : "text-[17px] sm:text-[19px]"}`}>Approval Journey</h2>

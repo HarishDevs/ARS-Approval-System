@@ -11,7 +11,7 @@ import { NavigationProgress } from "@/features/shell/NavigationProgress";
 import { SidebarFrame, type RailEntry } from "@/features/shell/SidebarFrame";
 import { SIDEBAR_COOKIE } from "@/features/shell/sidebar-cookie";
 import { cookies } from "next/headers";
-import { photoVersion } from "@/lib/db/repositories/profile.repository";
+import { isApproverDesignation, photoVersion } from "@/lib/db/repositories/profile.repository";
 import { photoUrl } from "@/server/profile/photo";
 import { MobileNav } from "@/features/shell/MobileNav";
 import { ProfileMenu } from "@/features/shell/ProfileMenu";
@@ -146,7 +146,6 @@ export async function AppShell({ area, user, nav, children }: { area: AppArea; u
     { href: "/users/work/periodic", label: "Periodic tasks" },
     { href: "/users/work/projects/new", label: "New project" },
     { href: "/users/work/projects?show=templates", label: "Templates" },
-    { href: "/users/tasks/new", label: "Task with a type (form)" },
   ].map((item) => ({ ...item, section: "Tasks & projects" }));
   const sideItems: NavItem[] =
     area === "users" ? items.flatMap((item, index) => (item.section !== "Tasks" ? [item] : items.findIndex((other) => other.section === "Tasks") === index ? workGroup : [])) : items;
@@ -161,7 +160,7 @@ export async function AppShell({ area, user, nav, children }: { area: AppArea; u
   // D-233: IT's maintenance notice, if any (a failed read shows none).
   const maintenance = await getSettingValue("general.maintenance_notice").catch(() => null);
   // D-230: the person's photo in the account menu.
-  const photo = await photoVersion(user.id).catch(() => null);
+  const [photo, approverPicture] = await Promise.all([photoVersion(user.id).catch(() => null), isApproverDesignation(user.id).catch(() => false)]);
 
   // v1.43.0 (owner's mobile brief): phones get the mobile layout in the users
   // area (docs/mobile/MOBILE_REDESIGN_ARCHITECTURE.md); everything else, and
@@ -207,7 +206,7 @@ export async function AppShell({ area, user, nav, children }: { area: AppArea; u
             className="mob-topbar sticky top-0 z-header flex h-14 items-center gap-2 border-b border-line bg-surface/95 px-3 pt-[env(safe-area-inset-top)] backdrop-blur"
             data-testid="mobile-topbar"
           >
-            <Link href="/users" aria-label="ARS-CMS home" className="flex min-w-0 flex-1 items-center gap-2">
+            <Link href="/users" aria-label="ARS CMS home" className="flex min-w-0 flex-1 items-center gap-2">
               <CmsMark className="h-8 w-8" />
               <span className="truncate text-[17px] font-extrabold tracking-tight text-[color:var(--m-navy-text)]">ARS CMS</span>
             </Link>
@@ -220,6 +219,7 @@ export async function AppShell({ area, user, nav, children }: { area: AppArea; u
               email={user.email}
               initials={initialsOf(user.name)}
               photo={photoUrl(user.id, photo)}
+              approver={approverPicture}
               spaceLabel={SPACE_LABEL[area]}
               otherSpaces={spaces.filter((other) => other !== area).map((other) => ({ href: `/${other}`, label: SPACE_LABEL[other] }))}
               unread={unread}
@@ -233,7 +233,7 @@ export async function AppShell({ area, user, nav, children }: { area: AppArea; u
             <MobileNav items={sideItems} spaceLabel={SPACE_LABEL[area]} home={`/${area}`} collapsible={area !== "admin"} chats={chats} />
             {/* D-210: Classic has no sidebar, so the logo leads back to the Gateway from the top bar. */}
             {classic && (
-              <Link href="/users" aria-label="ARS-CMS: Central Management System" className="hidden items-center gap-3 rounded-md md:flex" data-testid="classic-home">
+              <Link href="/users" aria-label="ARS CMS: Central Management System" className="hidden items-center gap-3 rounded-md md:flex" data-testid="classic-home">
                 <BrandLockup size="md" />
               </Link>
             )}
@@ -248,6 +248,7 @@ export async function AppShell({ area, user, nav, children }: { area: AppArea; u
                 email={user.email}
                 initials={initialsOf(user.name)}
                 photo={photoUrl(user.id, photo)}
+              approver={approverPicture}
                 spaceLabel={SPACE_LABEL[area]}
                 otherSpaces={spaces.filter((other) => other !== area).map((other) => ({ href: `/${other}`, label: SPACE_LABEL[other] }))}
                 unread={unread}

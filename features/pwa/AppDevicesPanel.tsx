@@ -44,10 +44,10 @@ async function sha256(text: string): Promise<string> {
 function UnblockSteps() {
   const where = platform();
   if (where === "ios")
-    return <p className="text-label text-ink-muted">iPhone/iPad: Settings → Notifications → ARS-CMS → Allow Notifications.</p>;
+    return <p className="text-label text-ink-muted">iPhone/iPad: Settings → Notifications → ARS CMS → Allow Notifications.</p>;
   if (where === "android")
     return <p className="text-label text-ink-muted">Android: tap the lock (or ⋮ → Settings → Site settings) beside the address → Notifications → Allow. In the installed app: long-press its icon → App info → Notifications.</p>;
-  if (isDesktopSafari()) return <p className="text-label text-ink-muted">Safari: Settings → Websites → Notifications → set ARS-CMS to Allow.</p>;
+  if (isDesktopSafari()) return <p className="text-label text-ink-muted">Safari: Settings → Websites → Notifications → set ARS CMS to Allow.</p>;
   return <p className="text-label text-ink-muted">Chrome or Edge: click the icon left of the address → Site settings (or Permissions) → Notifications → Allow, then reload this page.</p>;
 }
 
@@ -111,7 +111,7 @@ export function AppDevicesPanel({ devices, pushOn }: { devices: DeviceRow[]; pus
     setBusy("install");
     const outcome = await promptInstall();
     setBusy(null);
-    if (outcome === "accepted") toast.show("ARS-CMS is installed. Open it from your home screen or apps.", "success");
+    if (outcome === "accepted") toast.show("ARS CMS is installed. Open it from your home screen or apps.", "success");
   };
 
   return (
@@ -139,7 +139,7 @@ export function AppDevicesPanel({ devices, pushOn }: { devices: DeviceRow[]; pus
               <div className="mt-2 text-label text-ink-muted" data-testid="manual-install">
                 <p>If your browser doesn&apos;t offer it here:</p>
                 <ul className="mt-1 list-disc space-y-1 pl-5">
-                  <li>Chrome or Edge on a computer: the install icon at the right of the address bar, or ⋮ / … → Install ARS-CMS (Edge: Apps → Install this site as an app).</li>
+                  <li>Chrome or Edge on a computer: the install icon at the right of the address bar, or ⋮ / … → Install ARS CMS (Edge: Apps → Install this site as an app).</li>
                   <li>Android Chrome: ⋮ → Add to Home screen → Install.</li>
                   <li>Firefox can&apos;t install web apps; use Chrome or Edge.</li>
                 </ul>
@@ -154,13 +154,13 @@ export function AppDevicesPanel({ devices, pushOn }: { devices: DeviceRow[]; pus
           <BellRing className="h-4 w-4 text-ink-muted" aria-hidden="true" /> Notifications on this device
         </h2>
         <p className="mt-1 text-label text-ink-muted">
-          Approvals waiting for you, tasks, reminders, information and notices from IT, as alerts on this phone or computer, even when ARS-CMS is closed or you&apos;re signed out. Choose which kinds in Profile → Notifications.
+          Approvals waiting for you, tasks, reminders, information and notices from IT, as alerts on this phone or computer, even when ARS CMS is closed or you&apos;re signed out. Choose which kinds in Profile → Notifications.
         </p>
         {!pushOn ? (
           <p className="mt-3 text-label text-ink-muted" data-testid="push-off">IT hasn&apos;t switched on phone and desktop notifications yet. Everything still comes to your Inbox.</p>
         ) : support === "needs-install" ? (
           <p className="mt-3 text-label" data-testid="push-needs-install">
-            On iPhone and iPad, notifications work only in the installed app (iOS 16.4 or later). Add ARS-CMS to your Home Screen (left), open it from there, and come back to this page.
+            On iPhone and iPad, notifications work only in the installed app (iOS 16.4 or later). Add ARS CMS to your Home Screen (left), open it from there, and come back to this page.
           </p>
         ) : support === "unsupported" ? (
           <p className="mt-3 text-label text-ink-muted">This browser can&apos;t show notifications from websites. Try Chrome, Edge, Firefox or Safari.</p>
@@ -211,7 +211,7 @@ export function AppDevicesPanel({ devices, pushOn }: { devices: DeviceRow[]; pus
                     <p className="text-caption text-ink-muted">
                       Added {device.added}
                       {device.lastUsed ? ` · last notification ${device.lastUsed}` : ""}
-                      {device.status === "EXPIRED" ? " · expired: open ARS-CMS on that device to renew it" : ""}
+                      {device.status === "EXPIRED" ? " · expired: open ARS CMS on that device to renew it" : ""}
                     </p>
                   </div>
                   {device.status === "EXPIRED" ? <span className="badge bg-warning-50 text-warning-600">Expired</span> : <span className="badge bg-success-50 text-success-600">Active</span>}

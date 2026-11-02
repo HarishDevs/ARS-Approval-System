@@ -8,12 +8,12 @@ test("home, privacy policy and terms are public, link to each other, and describ
   expect(home?.status()).toBe(200);
   await expect(page).toHaveURL(/\/$/);
   // D-200: the split screen, Google-safe: the name, purpose, features and Google data use on the page itself.
-  await expect(page).toHaveTitle("ARS-CMS | ARS Steels");
-  await expect(page.getByRole("heading", { level: 1, name: "ARS-CMS" })).toBeVisible();
+  await expect(page).toHaveTitle("ARS CMS | ARS Steels");
+  await expect(page.getByRole("heading", { level: 1, name: "ARS CMS" })).toBeVisible();
   await expect(page.getByTestId("landing-purpose")).toContainText("raise and approve requests");
   await expect(page.getByRole("main").getByText(/Multi-level approvals/)).toBeVisible();
   await expect(page.getByRole("main").getByText(/Google data is never sold/)).toBeVisible();
-  await expect(page.getByRole("region", { name: "About ARS-CMS" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "About ARS CMS" })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
   await page.getByRole("main").getByRole("link", { name: "Sign in" }).click();
   await expect(page).toHaveURL(/\/login$/);

@@ -1,5 +1,21 @@
 # Release notes
 
+## v1.49.0 (2 Nov 2026): the ARS GREEN STEEL CMS brand, and New request / New task straight to the form (owner)
+**Branding** (the owner's approved ARS GREEN STEEL CMS logo and brand sheet):
+- The app is called **ARS CMS** everywhere: browser tab ("… · ARS CMS"), installed app, sign-in, emails' subjects, phone notifications, PDF summary and loading screens.
+- The approved logo is in the header, the sign-in and other sign-in pages, the phone top bar, the public pages and the approval journey; the square icon (from the same logo) is the browser tab icon, the phone/desktop app icon (Android, iPhone, maskable) and the install card. Colours: primary blue #004B8D, accent #0A72D9, ARS red #E30613.
+- **Sign-in and loading screens** (owner's phone references): sign-in pages have a pale background with a city skyline and the ARS swooshes; on a phone the logo sits large above "Welcome to ARS CMS". The loading screen is the splash: the logo on its own blue, with a bar and what is happening. New loaders: the ring round the mark, the dotted ring, and "Loading ARS CMS…" with a bar (Classic view's loading box uses the dotted ring and bar).
+- **Logo without a background** on the blue sign-in panel (the one-line ARS | GREEN STEEL CMS), on the loading screen and on the phone sign-in (navy lettering on light, white on dark).
+- **Round loaders** have the ARS lettering in the middle; each time one appears it is the ring or the dotted ring, at random.
+- **Default profile picture:** until someone uploads a photo, they show the ARS CMS round icon: **blue for approvers**, **white for other users** (header, account menu, More, Profile, people cards). Anyone can still upload their own photo.
+- **Phones with the app installed:** close and reopen it to pick up the new icon; some launchers need the app removed and installed again.
+
+**Shortcuts to the form:**
+- On a phone, the **+** on Approvals and Home's **New request** open the **custom approval form** (the templates list is still under More → Request templates).
+- **New task** and **Add task** everywhere open the **Create task** window directly; the old "choose a task type" page is gone from the menus (a task type IT set up with its own form still opens from its link).
+
+**Fixed:** in the Classic view, the Tasks Management tab bar now shows on every task page.
+
 ## v1.48.1 (2 Nov 2026): a slimmer Approval Journey (owner)
 - The journey is smaller: the road and the van take less height, and the side column (Request Status, Approval Levels (Detailed), Status guide) and the level details panel are gone; the request page below shows the same facts.
 - A level's details (name, status, time and **approver**) show when you **hover** over it (or reach it with the keyboard); tapping a level takes you to the page's Approval levels card.

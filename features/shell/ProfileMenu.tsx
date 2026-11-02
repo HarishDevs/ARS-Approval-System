@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { Email } from "@/features/ui/SafeText";
 import { ViewSwitch } from "@/features/shell/ViewSwitch";
 import type { TextSize, WorkspaceView } from "@/server/ui/workspace-view";
+import { defaultAvatar } from "@/features/ui/Avatar";
 
 // One user menu at the top right (S9-01..03): who you are, which space
 // you're in, switching space, Profile, Notifications, Sign-in and Help
@@ -21,6 +22,7 @@ export function ProfileMenu({
   email,
   initials,
   photo = null,
+  approver = false,
   spaceLabel,
   otherSpaces,
   unread,
@@ -31,6 +33,7 @@ export function ProfileMenu({
   email: string;
   initials: string;
   photo?: string | null; // D-230: the person's photo
+  approver?: boolean; // v1.49.0: the default picture (blue for approvers, white for users)
   spaceLabel: string;
   otherSpaces: SpaceLink[];
   unread: number;
@@ -84,9 +87,9 @@ export function ProfileMenu({
           // eslint-disable-next-line @next/next/no-img-element -- the person's own small photo
           <img src={photo} alt="" className="h-9 w-9 shrink-0 rounded-full object-cover" data-testid="menu-photo" />
         ) : (
-          <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-solid text-caption font-semibold text-on-solid">
-            {initials}
-          </span>
+          // v1.49.0 (owner): the brand's circular icon until a photo is uploaded.
+          // eslint-disable-next-line @next/next/no-img-element -- static brand image
+          <img src={defaultAvatar(approver)} alt="" className="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-line" data-testid="menu-photo-default" data-initials={initials} />
         )}
         <svg viewBox="0 0 20 20" className="hidden h-4 w-4 text-ink-faint sm:block" fill="currentColor" aria-hidden="true">
           <path d="M5.3 7.3a1 1 0 0 1 1.4 0L10 10.6l3.3-3.3a1 1 0 1 1 1.4 1.4l-4 4a1 1 0 0 1-1.4 0l-4-4a1 1 0 0 1 0-1.4Z" />

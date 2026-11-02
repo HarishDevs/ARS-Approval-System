@@ -162,7 +162,7 @@ function fit(text: string, font: PDFFont, size: number, width: number): string {
 export async function reportPdf(result: ReportResult, meta: ExportMeta): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
   doc.setTitle(printable(meta.title));
-  doc.setCreator("ARS-CMS");
+  doc.setCreator("ARS CMS");
   const regular = await doc.embedFont(StandardFonts.Helvetica);
   const bold = await doc.embedFont(StandardFonts.HelveticaBold);
   const [width, height] = [841.89, 595.28];

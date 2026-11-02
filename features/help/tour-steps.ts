@@ -22,7 +22,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
   {
     id: "welcome",
     section: "Start",
-    title: "Welcome to ARS-CMS",
+    title: "Welcome to ARS CMS",
     intro: "This is where ARS raises requests, approves them, runs tasks and projects, shares notices and keeps dates in one calendar. The tour takes about three minutes.",
     points: ["Next and Back move through the steps; each one opens the page it talks about.", "Skip ends the tour at any time. You can take it again from Help or your account menu."],
   },
@@ -231,7 +231,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
     id: "app-devices",
     section: "Everyday",
     title: "Install the app and get notifications",
-    intro: "Profile → App & devices: install ARS-CMS on your phone or computer, and turn on notifications on each device you use.",
+    intro: "Profile → App & devices: install ARS CMS on your phone or computer, and turn on notifications on each device you use.",
     points: [
       "Alerts arrive even when the app is closed; tap one to open the record.",
       "On iPhone and iPad: Share → Add to Home Screen first, then turn notifications on in the installed app.",

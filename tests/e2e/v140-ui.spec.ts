@@ -69,7 +69,8 @@ test("after approval the requester gets the work task and marks it done", async 
     await as(context, approver);
     await page.goto(requestPath);
     await page.getByRole("button", { name: "Approve", exact: true }).click();
-    await expect(page.getByText(new RegExp(`Approved by ${name}`)).first()).toBeVisible();
+    // v1.48.1: who approved is in the level's hover details (its button name).
+    await expect(page.getByRole("button", { name: new RegExp(`Approved.*${name}`) }).first()).toBeVisible();
   }
 
   await as(context, "E2E_REQ");

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { SquarePen } from "lucide-react";
 import { featureOn } from "@/server/settings/features";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { requireArea } from "@/server/authorization/guards";
 import { EmptyState, PageHeader } from "@/features/shell/PageHeader";
@@ -26,6 +26,10 @@ export default async function NewTaskPage({ searchParams }: { searchParams: Prom
   const { user } = await requireArea("users");
   if (!(await featureOn("tasks", user))) notFound();
   const query = await searchParams;
+  // v1.48.2 (owner: "drop this task-from-templates part"): New task opens the
+  // Create task window (My Tasks with ?create=task); a type's own form is
+  // still reached by its link (?type=…, e.g. from Admin → Task types).
+  if (!query.type) redirect("/users/work/my-tasks?create=task");
   const [types, me, team] = await Promise.all([listLiveTypes("TASK"), personFacts(user.id), teamOf(user.id)]);
   const allowed = types.filter((type) => mayCreate(parseTaskSettings(type.settings).access, { id: user.id, departmentId: me?.departmentId ?? null }));
   const chosen = query.type && /^\d+$/.test(query.type) ? allowed.find((type) => type.typeId === Number(query.type)) : allowed.length === 1 ? allowed[0] : undefined;

@@ -40,7 +40,7 @@ export async function alertSuperAdmin(kind: OpsAlertKind, reference: string | nu
         title: text.title,
         message: `${text.body}${ref}`,
         deepLink: `${base}/superadmin`,
-        email: { subject: `ARS-CMS: ${text.title.toLowerCase()}`, text: `${text.body}${ref}\n\nCheck System health in the Super Admin area and the server log.\n${base}/superadmin\n\nYou get this at most once a day.` },
+        email: { subject: `ARS CMS: ${text.title.toLowerCase()}`, text: `${text.body}${ref}\n\nCheck System health in the Super Admin area and the server log.\n${base}/superadmin\n\nYou get this at most once a day.` },
         whatsappVariables: null,
       });
     }

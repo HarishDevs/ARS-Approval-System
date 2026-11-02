@@ -140,7 +140,8 @@ test("the + menu and the file limits", async ({ page, context }) => {
   const dialog = await openDraft(page);
   await dialog.getByRole("button", { name: "More" }).click();
   const more = dialog.getByRole("menu", { name: "More" });
-  await expect(more.getByRole("menuitem", { name: "Task with a form" })).toBeVisible();
+  // v1.48.2 (owner): no "Task with a form" way out of the window any more.
+  await expect(more.getByRole("menuitem", { name: "Task with a form" })).toHaveCount(0);
   await more.getByRole("menuitem", { name: "Set a due date" }).click();
   await expect(dialog.getByRole("textbox", { name: "Due date", exact: true })).toBeVisible();
   const six = Array.from({ length: 6 }, (_, index) => ({ name: `f${index}-${stamp}.txt`, mimeType: "text/plain", buffer: Buffer.from(`file ${index}`) }));

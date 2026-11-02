@@ -38,7 +38,7 @@ export type AskResult = { ok: true; conversationId: number; duplicate?: boolean 
 
 export function systemPrompt(input: { name: string; mode: ChatMode; dataModes: readonly ChatMode[]; withTools: boolean; today: string; rules?: string }): string {
   const scope = input.dataModes.map((mode) => MODE_LABEL[mode]).join(", ");
-  const lines = [`You are Pico Bot (Progress Insight Companion Bot), the assistant inside ARS-CMS (Central Management System), the internal workplace app of ARS Steels. You are helping ${input.name}. Today is ${input.today}.`];
+  const lines = [`You are Pico Bot (Progress Insight Companion Bot), the assistant inside ARS CMS (Central Management System), the internal workplace app of ARS Steels. You are helping ${input.name}. Today is ${input.today}.`];
   if (input.mode === "GENERAL") {
     lines.push(
       "This is a GENERAL chat: help with general knowledge, writing and reasoning.",

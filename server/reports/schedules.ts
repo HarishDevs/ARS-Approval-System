@@ -233,7 +233,7 @@ export async function runDueSchedules(limit = 20): Promise<{ reportsSent: number
           await getEmailConfig(),
           {
             to: entry.person.email,
-            subject: `ARS-CMS: ${entry.ran.report.name} (${describeSchedule(row).toLowerCase()})`,
+            subject: `ARS CMS: ${entry.ran.report.name} (${describeSchedule(row).toLowerCase()})`,
             text: `${entry.ran.report.name}\n${meta.scopeLabel}${meta.periodLabel ? ` · ${meta.periodLabel}` : ""}\n${entry.ran.result.rows.length} row${entry.ran.result.rows.length === 1 ? "" : "s"}${entry.ran.result.truncated ? " (first rows only)" : ""}.\n\n${attach ? "The report is attached." : "The report is too large to attach."} Open it in the app:\n${link}\n\n${why} Manage schedules: ${base()}/admin/reports`,
             attachments: attach ? [{ filename: fileName(row.reportKey, row.format, now), content: file }] : undefined,
             // D-243: one email per run and person, even if the send is repeated.
@@ -421,7 +421,7 @@ export async function evaluateAlerts(limit = 200): Promise<{ alertsChecked: numb
           title: `${level}: a number crossed your line`,
           message,
           deepLink: `${base()}/admin/analytics?scope=${rule.scopeKind}`,
-          email: rule.channels === "INBOX" ? null : { subject: `ARS-CMS ${level.toLowerCase()}: ${label}`, text: `${message}\n\nOpen Analytics: ${base()}/admin/analytics?scope=${rule.scopeKind}\n\nYou get this at most once every ${rule.cooldownHours} hours while it stays over the line. Manage your alerts: ${base()}/admin/reports#alerts` },
+          email: rule.channels === "INBOX" ? null : { subject: `ARS CMS ${level.toLowerCase()}: ${label}`, text: `${message}\n\nOpen Analytics: ${base()}/admin/analytics?scope=${rule.scopeKind}\n\nYou get this at most once every ${rule.cooldownHours} hours while it stays over the line. Manage your alerts: ${base()}/admin/reports#alerts` },
           whatsappVariables: null,
         }).catch((error) => logError("alert notify failed", error, { ruleId: rule.id }));
         out.alertsFired += 1;

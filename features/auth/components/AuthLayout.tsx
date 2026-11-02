@@ -1,4 +1,5 @@
-import { BrandLockup } from "@/features/ui/Brand";
+import { BrandLockup, BrandLogoClear } from "@/features/ui/Brand";
+import { BlueBackdrop, SkylineBackdrop } from "@/features/ui/BrandBackdrops";
 import { MailLink } from "@/features/ui/MailLink";
 
 // Split layout for the landing page, sign-in, set-password and forgot-password
@@ -12,15 +13,15 @@ export function AuthLayout({ children, landing = false }: { children: React.Reac
     <main className="grid min-h-dvh lg:grid-cols-2">
       <section
         aria-hidden={landing ? undefined : true}
-        aria-label={landing ? "About ARS-CMS" : undefined}
-        className="relative hidden overflow-hidden bg-gradient-to-br from-primary-solid to-[#003B6E] px-16 py-14 text-white lg:flex lg:flex-col lg:justify-end"
+        aria-label={landing ? "About ARS CMS" : undefined}
+        className="relative hidden overflow-hidden px-16 py-14 text-white lg:flex lg:flex-col lg:justify-end"
       >
-        <div className="pointer-events-none absolute -right-40 -top-40 h-[560px] w-[560px] rounded-full border-[56px] border-white/10" />
-        <div className="pointer-events-none absolute -bottom-52 -left-24 h-[420px] w-[420px] rounded-full border-[48px] border-white/10" />
+        {/* v1.49.0: the splash background (owner's reference), shared with the loader. */}
+        <BlueBackdrop />
         <div className="relative max-w-lg">
-          <svg viewBox="0 0 120 30" className="mb-6 h-8 w-auto" aria-hidden="true">
-            <path d="M0 12 C30 30 80 28 118 0 C104 22 92 30 64 30 C36 30 14 22 0 12Z" fill="#ED1C25" />
-          </svg>
+          {/* Nov 2026 branding: the approved ARS GREEN STEEL CMS logo (was a drawn red swoosh). */}
+          {/* v1.49.0 (owner): the horizontal logo without its background. */}
+          <BrandLogoClear variant="horizontal" className="mb-8 h-[74px] w-auto" />
           <p className="text-label font-semibold uppercase tracking-[0.18em] text-white/80">ARS Steels · Central Management System</p>
           <h2 className="mt-4 text-[length:calc(52px*var(--text-scale,1))] font-bold leading-[1.05]">
             Every approval,
@@ -49,10 +50,18 @@ export function AuthLayout({ children, landing = false }: { children: React.Reac
         </div>
       </section>
 
-      <section className="flex items-center justify-center px-4 py-12 sm:px-8">
-        <div className="w-full max-w-[440px]">
-          <span className="sr-only">ARS Steels · ARS-CMS</span>
-          <BrandLockup size="md" />
+      {/* v1.49.0 (owner's phone sign-in reference): a pale page with the city skyline and the ARS swooshes; on a phone the logo sits large and centred above "Welcome to ARS CMS". */}
+      <section className="relative flex items-center justify-center overflow-hidden px-4 pb-44 pt-10 sm:px-8 sm:pb-52 lg:py-12 lg:pb-52">
+        <SkylineBackdrop />
+        <div className="relative w-full max-w-[440px]">
+          <span className="sr-only">ARS Steels · ARS CMS</span>
+          <div className="mb-6 flex flex-col items-center text-center lg:hidden" data-testid="auth-mobile-brand">
+            <BrandLogoClear variant="auto" className="h-36" />
+            <p className="mt-4 text-title font-bold text-[color:var(--brand-navy)]">Welcome to ARS CMS</p>
+          </div>
+          <span className="hidden lg:inline-flex">
+            <BrandLockup size="md" />
+          </span>
           <div className="auth-enter">{children}</div>
           {!landing && (
             <p className="mt-8 text-center text-body text-ink-muted">

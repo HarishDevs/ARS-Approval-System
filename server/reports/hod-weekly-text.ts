@@ -45,6 +45,6 @@ export function hodReportText(input: { department: string; hodName: string; week
     lines.push("", "Waiting longest:");
     for (const item of stats.oldest) lines.push(`- ${item.requestNo}: ${item.title} (since ${isoDay(item.submittedAt.getTime() + IST_MS)})`);
   }
-  lines.push("", `More in ARS-CMS: ${input.link}`, "", "You get this because you are the head of this department. IT can switch the weekly report off in Super Admin → Settings → General.");
+  lines.push("", `More in ARS CMS: ${input.link}`, "", "You get this because you are the head of this department. IT can switch the weekly report off in Super Admin → Settings → General.");
   return lines.join("\n");
 }

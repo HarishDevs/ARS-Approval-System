@@ -153,9 +153,9 @@ const sameKey = (subscription: PushSubscription, key: string) => {
 // registers this device. Never asks again once the person said no.
 export async function enablePush(): Promise<{ ok: boolean; message: string }> {
   const support = pushSupport();
-  if (support === "needs-install") return { ok: false, message: "On iPhone and iPad, notifications work in the installed app: add ARS-CMS to your Home Screen first, then open it from there." };
+  if (support === "needs-install") return { ok: false, message: "On iPhone and iPad, notifications work in the installed app: add ARS CMS to your Home Screen first, then open it from there." };
   if (support === "unsupported") return { ok: false, message: "This browser can't show notifications from websites." };
-  if (Notification.permission === "denied") return { ok: false, message: "Notifications are blocked for ARS-CMS in this browser. Allow them in the browser's site settings (see the steps below)." };
+  if (Notification.permission === "denied") return { ok: false, message: "Notifications are blocked for ARS CMS in this browser. Allow them in the browser's site settings (see the steps below)." };
   const key = await serverKey().catch(() => null);
   if (!key) return { ok: false, message: "Phone and desktop notifications aren't switched on yet. Ask IT." };
   const permission = Notification.permission === "granted" ? "granted" : await Notification.requestPermission();

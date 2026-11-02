@@ -14,6 +14,8 @@ export interface PersonProfile {
   departmentName: string | null;
   departmentHeadName: string | null;
   designationName: string | null;
+  /** v1.49.0: their designation is ticked Approver (the blue default picture). */
+  isApprover: boolean;
   managerId: number | null;
   managerName: string | null;
   managerDesignation: string | null;
@@ -24,7 +26,7 @@ export interface PersonProfile {
   lastLoginAt: Date | null;
   photoUpdatedAt: Date | null;
   aboutMe: string | null;
-  directReports: { id: number; name: string; designation: string | null; photoUpdatedAt: Date | null }[];
+  directReports: { id: number; name: string; designation: string | null; photoUpdatedAt: Date | null; isApprover: boolean }[];
   away: { until: string; delegateName: string } | null;
 }
 
@@ -32,7 +34,7 @@ export async function personProfile(userId: number, db: Queryable = getDbPool())
   const [rows] = await db.query<RowDataPacket[]>(
     `SELECT u.id, u.name, u.login_id, u.email, u.whatsapp_number, u.active, u.sign_in_method, u.module_access, u.created_at, u.last_login_at,
             u.photo_updated_at, u.about_me, u.reporting_manager_id,
-            d.name AS department_name, h.name AS hod_name, g.name AS designation_name, m.name AS manager_name, mg.name AS manager_designation
+            d.name AS department_name, h.name AS hod_name, g.name AS designation_name, COALESCE(g.is_approver, FALSE) AS designation_is_approver, m.name AS manager_name, mg.name AS manager_designation
      FROM users u
      LEFT JOIN departments d ON d.id = u.department_id
      LEFT JOIN users h ON h.id = d.hod_user_id
@@ -47,7 +49,7 @@ export async function personProfile(userId: number, db: Queryable = getDbPool())
   const [[roles], [reports], [away]] = await Promise.all([
     db.query<RowDataPacket[]>("SELECT r.code FROM user_roles ur JOIN roles r ON r.id = ur.role_id WHERE ur.user_id = ? ORDER BY r.code", [userId]),
     db.query<RowDataPacket[]>(
-      `SELECT u.id, u.name, g.name AS designation, u.photo_updated_at FROM users u LEFT JOIN designations g ON g.id = u.designation_id
+      `SELECT u.id, u.name, g.name AS designation, COALESCE(g.is_approver, FALSE) AS is_approver, u.photo_updated_at FROM users u LEFT JOIN designations g ON g.id = u.designation_id
        WHERE u.reporting_manager_id = ? AND u.active = TRUE ORDER BY u.name LIMIT 200`,
       [userId],
     ),
@@ -67,6 +69,7 @@ export async function personProfile(userId: number, db: Queryable = getDbPool())
     departmentName: row.department_name ?? null,
     departmentHeadName: row.hod_name ?? null,
     designationName: row.designation_name ?? null,
+    isApprover: Boolean(Number(row.designation_is_approver)) && Boolean(row.active),
     managerId: row.reporting_manager_id ? Number(row.reporting_manager_id) : null,
     managerName: row.manager_name ?? null,
     managerDesignation: row.manager_designation ?? null,
@@ -77,7 +80,7 @@ export async function personProfile(userId: number, db: Queryable = getDbPool())
     lastLoginAt: row.last_login_at ?? null,
     photoUpdatedAt: row.photo_updated_at ?? null,
     aboutMe: row.about_me ?? null,
-    directReports: reports.map((report) => ({ id: Number(report.id), name: String(report.name), designation: report.designation ?? null, photoUpdatedAt: report.photo_updated_at ?? null })),
+    directReports: reports.map((report) => ({ id: Number(report.id), name: String(report.name), designation: report.designation ?? null, photoUpdatedAt: report.photo_updated_at ?? null, isApprover: Boolean(Number(report.is_approver)) })),
     away: away[0] ? { until: String(away[0].ends_on), delegateName: String(away[0].delegate_name) } : null,
   };
 }
@@ -86,6 +89,16 @@ export async function photoOf(userId: number, db: Queryable = getDbPool()): Prom
   const [rows] = await db.query<RowDataPacket[]>("SELECT photo_path, photo_type, photo_updated_at FROM users WHERE id = ? AND active = TRUE AND photo_path IS NOT NULL LIMIT 1", [userId]);
   const row = rows[0];
   return row ? { path: String(row.photo_path), type: String(row.photo_type), updatedAt: row.photo_updated_at } : null;
+}
+
+// v1.49.0: whether the person's designation is ticked Approver (their default
+// profile picture is the blue icon, else the white one).
+export async function isApproverDesignation(userId: number, db: Queryable = getDbPool()): Promise<boolean> {
+  const [rows] = await db.query<RowDataPacket[]>(
+    "SELECT COALESCE(g.is_approver, FALSE) AS is_approver FROM users u LEFT JOIN designations g ON g.id = u.designation_id WHERE u.id = ? LIMIT 1",
+    [userId],
+  );
+  return Boolean(Number(rows[0]?.is_approver ?? 0));
 }
 
 export async function photoVersion(userId: number, db: Queryable = getDbPool()): Promise<Date | null> {

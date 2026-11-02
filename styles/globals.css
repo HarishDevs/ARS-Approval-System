@@ -66,7 +66,7 @@
   --brand-accent: #0a84ff; /* Accent Blue (fills, rings, bars) */
   --brand-accent-text: #0067d6; /* the accent as text: 4.9:1 on white */
   --brand-wave-1: #e6f2ff;
-  --brand-wave-2: #cfe5ff;
+  --brand-wave-2: #cfe5ff; --skyline-tower: #bcd7f4;
   --violet-bg: #ede9fe;
   --violet-fg: #6d28d9;
   --road-lane: rgba(255, 255, 255, 0.85);
@@ -123,7 +123,7 @@
   --brand-accent: #4da3ff;
   --brand-accent-text: #6cb4ff;
   --brand-wave-1: rgba(10, 132, 255, 0.1);
-  --brand-wave-2: rgba(10, 132, 255, 0.18);
+  --brand-wave-2: rgba(10, 132, 255, 0.18); --skyline-tower: rgba(77, 163, 255, 0.22);
   --violet-bg: rgba(139, 92, 246, 0.18);
   --violet-fg: #c4b5fd;
   --road-lane: rgba(255, 255, 255, 0.7);
@@ -179,7 +179,7 @@
   --brand-accent-text: #6cb4ff;
     --brand-accent-text: #6cb4ff;
     --brand-wave-1: rgba(10, 132, 255, 0.1);
-    --brand-wave-2: rgba(10, 132, 255, 0.18);
+    --brand-wave-2: rgba(10, 132, 255, 0.18); --skyline-tower: rgba(77, 163, 255, 0.22);
     --violet-bg: rgba(139, 92, 246, 0.18);
     --violet-fg: #c4b5fd;
     --road-lane: rgba(255, 255, 255, 0.7);
@@ -692,6 +692,9 @@ main {
 .brand-spin { transform-origin: 50% 50%; animation: brand-spin 1s linear infinite; }
 @keyframes brand-dot { 0%, 80%, 100% { transform: translateY(0); opacity: 0.45; } 40% { transform: translateY(-5px); opacity: 1; } }
 .brand-dot { animation: brand-dot 1s ease-in-out infinite; }
+/* v1.49.0: the dotted ring loader (each dot lights in turn). */
+@keyframes brand-dot-fade { 0% { opacity: 1; } 100% { opacity: 0.18; } }
+.brand-dot-fade { animation: brand-dot-fade 1.2s linear infinite; opacity: 0.18; }
 @keyframes brand-pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(0.6); opacity: 0.6; } }
 .brand-pulse { animation: brand-pulse 1.2s ease-in-out infinite; }
 @keyframes brand-rise { 0% { transform: translateY(3px); opacity: 0.3; } 60%, 100% { transform: translateY(0); opacity: 1; } }
@@ -715,7 +718,7 @@ main {
   animation: brand-shimmer 1.6s ease-in-out infinite;
 }
 @media (prefers-reduced-motion: reduce) {
-  .brand-spin, .brand-dot, .brand-pulse, .brand-rise, .brand-pop, .brand-shake, .brand-pulse-ring, .skeleton { animation: none; }
+  .brand-spin, .brand-dot, .brand-dot-fade, .brand-pulse, .brand-rise, .brand-pop, .brand-shake, .brand-pulse-ring, .skeleton { animation: none; }
   .brand-draw-circle, .brand-draw-tick, .brand-fill { animation: none; stroke-dasharray: none; opacity: 1; }
 }
 /* Sidebar icons in brand blue (Compact); the Classic view keeps its plain look. */
@@ -1372,4 +1375,13 @@ body:has([data-testid="m-comment-dock"][data-open="1"]) .picbot-launcher {
   .request-row:not(.sm\:col-span-2) {
     grid-template-columns: minmax(0, 8.5rem) minmax(0, 1fr);
   }
+}
+
+/* v1.49.0: the background-free logo picks its lettering by theme. */
+.brand-on-dark { display: none; }
+:root[data-theme="dark"] .brand-on-light { display: none; }
+:root[data-theme="dark"] .brand-on-dark { display: inline; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .brand-on-light { display: none; }
+  :root:not([data-theme]) .brand-on-dark { display: inline; }
 }

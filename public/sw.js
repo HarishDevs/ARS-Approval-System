@@ -1,4 +1,4 @@
-/* ARS-CMS service worker (v1.41.0, D-251, D-252).
+/* ARS CMS service worker (v1.41.0, D-251, D-252).
  *
  * What it does:
  *   - keeps the app's own static files (scripts, styles, fonts, icons) so the
@@ -10,9 +10,12 @@
  * Approvals, tasks and records always come fresh from the server.
  */
 const VERSION = new URL(self.location.href).searchParams.get("v") || "dev";
-const CACHE = `ars-static-${VERSION}`;
+// Nov 2026 branding: "-b2" so every installed app drops the old icons once.
+const BRAND_REV = "b2";
+const CACHE = `ars-static-${VERSION}-${BRAND_REV}`;
 const OFFLINE_URL = "/offline.html";
-const PRECACHE = [OFFLINE_URL, "/icons/icon-192.png", "/icons/icon-512.png", "/brand/ars-mark.svg", "/brand/ars-mark-white.svg"];
+// The ARS GREEN STEEL CMS icons (public/branding/, see lib/branding.ts).
+const PRECACHE = [OFFLINE_URL, "/branding/ars-cms-icon-192.png", "/branding/ars-cms-icon-512.png", "/branding/ars-cms-logo-480.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -34,7 +37,7 @@ self.addEventListener("activate", (event) => {
 
 // Only these are cached: build files (their names change with each build)
 // and the public brand assets.
-const STATIC = /^\/(_next\/static\/|icons\/|brand\/|favicon\.ico$)/;
+const STATIC = /^\/(_next\/static\/|icons\/|brand\/|branding\/|favicon\.ico$)/;
 
 self.addEventListener("fetch", (event) => {
   const request = event.request;
@@ -72,13 +75,13 @@ self.addEventListener("push", (event) => {
   try {
     data = event.data ? event.data.json() : {};
   } catch {
-    data = { title: "ARS-CMS", body: event.data ? event.data.text() : "" };
+    data = { title: "ARS CMS", body: event.data ? event.data.text() : "" };
   }
-  const title = typeof data.title === "string" && data.title ? data.title : "ARS-CMS";
+  const title = typeof data.title === "string" && data.title ? data.title : "ARS CMS";
   const options = {
     body: typeof data.body === "string" ? data.body : "",
-    icon: "/icons/icon-192.png",
-    badge: "/icons/icon-192.png",
+    icon: "/branding/ars-cms-icon-192.png",
+    badge: "/branding/ars-cms-icon-96.png",
     tag: typeof data.tag === "string" ? data.tag : undefined,
     renotify: Boolean(data.tag),
     timestamp: typeof data.timestamp === "number" ? data.timestamp : Date.now(),

@@ -21,7 +21,7 @@ describe("push payload", () => {
   it("FULL shows the message; GENERIC shows nothing about it", () => {
     expect(buildPushPayload(base, "FULL").body).toContain("2,40,000");
     const generic = buildPushPayload(base, "GENERIC");
-    expect(generic.title).toBe("ARS-CMS");
+    expect(generic.title).toBe("ARS CMS");
     expect(generic.body).not.toContain("ESM");
   });
 

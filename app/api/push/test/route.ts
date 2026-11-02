@@ -17,7 +17,7 @@ export async function POST() {
     eventType: "PUSH_TEST",
     userId: session.user.id,
     title: "Test notification",
-    message: "Notifications from ARS-CMS reach this device.",
+    message: "Notifications from ARS CMS reach this device.",
     deepLink: "/users/profile/devices",
     email: null,
     whatsappVariables: null,

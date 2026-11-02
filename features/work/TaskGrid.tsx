@@ -133,19 +133,17 @@ export function TaskGrid({
     <div data-testid={testId}>
       <div className="mb-2 flex flex-wrap items-center gap-2" role="toolbar" aria-label="View options">
         <span className="inline-flex">
-          <button type="button" onClick={() => window.dispatchEvent(new CustomEvent(CREATE_TASK_EVENT, { detail: { projectId: addTo?.projectId ?? null } }))} className="tb-split rounded-l-md">
+          <button type="button" onClick={() => window.dispatchEvent(new CustomEvent(CREATE_TASK_EVENT, { detail: { projectId: addTo?.projectId ?? null } }))} className={addTo?.projectId ? "tb-split rounded-l-md" : "tb-split rounded-md"}>
             <Plus aria-hidden="true" className="h-4 w-4" /> Add task
           </button>
-          <Drop label="More ways to add" icon={<ChevronDown aria-hidden="true" className="h-4 w-4" />} buttonClass="tb-split rounded-r-md border-l-0 px-1.5">
-            <Link href="/users/tasks/new" className="block rounded px-2 py-1.5 text-label hover:bg-surface-muted">
-              Task with a type (form)
-            </Link>
-            {addTo?.projectId && (
+          {/* v1.49.0 (owner: "drop this task-from-templates part"): Add task opens the Create task window; only a project's "Add section" stays here. */}
+          {addTo?.projectId && (
+            <Drop label="More ways to add" icon={<ChevronDown aria-hidden="true" className="h-4 w-4" />} buttonClass="tb-split rounded-r-md border-l-0 px-1.5">
               <button type="button" className="block w-full rounded px-2 py-1.5 text-left text-label hover:bg-surface-muted" onClick={() => document.querySelector<HTMLInputElement>("#add-section-l")?.focus()}>
                 Add section
               </button>
-            )}
-          </Drop>
+            </Drop>
+          )}
         </span>
         <span className="ml-auto flex flex-wrap items-center gap-0.5">
           <span className={count ? "tb-pill" : "inline-flex items-center"}>
@@ -325,8 +323,10 @@ export function TaskGrid({
                   setDragging(null);
                 }}
               >
+                {/* v1.49.0 (axe): the group heading is a row of its own, so the rowgroup holds only rows. */}
                 {group.name && (
-                  <div className="flex items-center gap-2 border-b border-line px-2 pb-2 pt-5">
+                  <div role="row" className="border-b border-line">
+                  <div role="cell" className="flex items-center gap-2 px-2 pb-2 pt-5">
                     <button
                       type="button"
                       aria-expanded={!closed}
@@ -344,6 +344,7 @@ export function TaskGrid({
                         {group.name} <span className="text-caption font-normal text-ink-muted">{group.rows.length}</span>
                       </h3>
                     )}
+                  </div>
                   </div>
                 )}
                 {!closed &&
@@ -494,8 +495,21 @@ export function TaskGrid({
                       </div>
                     );
                   })}
-                {!closed && section && addTo?.projectId && <AddTask projectId={addTo.projectId} sectionId={section.id} />}
-                {!closed && group.sectionId !== null && addTo?.mySections && <AddTask mySectionId={group.sectionId} placeholder={`Add a task to ${group.name}…`} />}
+                {/* v1.49.0 (axe): the inline add box is a row and cell of the table too. */}
+                {!closed && section && addTo?.projectId && (
+                  <div role="row">
+                    <div role="cell">
+                      <AddTask projectId={addTo.projectId} sectionId={section.id} />
+                    </div>
+                  </div>
+                )}
+                {!closed && group.sectionId !== null && addTo?.mySections && (
+                  <div role="row">
+                    <div role="cell">
+                      <AddTask mySectionId={group.sectionId} placeholder={`Add a task to ${group.name}…`} />
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}

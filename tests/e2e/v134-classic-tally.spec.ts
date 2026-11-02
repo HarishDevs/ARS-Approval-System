@@ -10,10 +10,13 @@ test("Classic entry forms: Label : value rows, Enter moves on, Ctrl+A accepts; C
   const id = await userIdByLogin("E2E_REQ");
   const conn = await db();
   await conn.query("INSERT INTO user_settings (user_id, setting_key, value) VALUES (?, 'ui.workspace_view', 'CLASSIC') ON DUPLICATE KEY UPDATE value = 'CLASSIC'", [id]);
+  const [types] = (await conn.query("SELECT t.id FROM module_types t JOIN module_type_versions v ON v.type_id = t.id AND v.status = 'PUBLISHED' WHERE t.module = 'TASK' AND t.active = TRUE ORDER BY t.name LIMIT 1")) as unknown as [{ id: number }[]];
+  const typeId = types[0]!.id;
   try {
     await page.setViewportSize({ width: 1366, height: 900 });
     await context.addCookies([await sessionCookie("E2E_REQ")]);
-    await page.goto("/users/tasks/new");
+    // v1.48.2: New task without a type opens the Create task window; the Classic entry form is a type's form.
+    await page.goto(`/users/tasks/new?type=${typeId}`);
     await expect(page.locator("[data-view=classic]")).toHaveCount(1);
     await expect(page.getByTestId("classic-keys")).toContainText("Ctrl+A: accept");
     const title = page.locator("main form").getByLabel("Title", { exact: true });
@@ -38,7 +41,8 @@ test("Classic entry forms: Label : value rows, Enter moves on, Ctrl+A accepts; C
 
     // Compact: no Classic look, Enter keeps the browser's own behaviour.
     await conn.query("DELETE FROM user_settings WHERE user_id = ? AND setting_key = 'ui.workspace_view'", [id]);
-    await page.goto("/users/tasks/new");
+    // v1.48.2: New task without a type opens the Create task window; the Classic entry form is a type's form.
+    await page.goto(`/users/tasks/new?type=${typeId}`);
     await expect(page.locator("[data-view=classic]")).toHaveCount(0);
     // Compact: the label sits above its field.
     expect(await page.locator("main form").getByLabel("Title", { exact: true }).evaluate((element) => element.parentElement!.firstElementChild!.getBoundingClientRect().bottom <= element.getBoundingClientRect().top)).toBe(true);

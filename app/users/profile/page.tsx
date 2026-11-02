@@ -67,7 +67,7 @@ export default async function ProfilePage() {
           {profile.directReports.map((report) => (
             <li key={report.id}>
               <Link href={`/users/people/${report.id}`} className="inline-flex items-center gap-1.5 rounded-full border border-line py-0.5 pl-0.5 pr-2.5 text-label hover:bg-surface-muted">
-                <Avatar name={report.name} src={photoUrl(report.id, report.photoUpdatedAt)} size="xs" />
+                <Avatar name={report.name} src={photoUrl(report.id, report.photoUpdatedAt)} size="xs" approver={report.isApprover} />
                 <SafeText text={report.name} />
               </Link>
             </li>
@@ -98,7 +98,7 @@ export default async function ProfilePage() {
       <ProfileTabs />
       <section className="card mb-6 max-w-4xl px-6 py-6" aria-label="You" data-testid="profile-card">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
-          <PhotoForm name={profile.name} src={photoUrl(profile.id, profile.photoUpdatedAt)} />
+          <PhotoForm name={profile.name} src={photoUrl(profile.id, profile.photoUpdatedAt)} approver={profile.isApprover} />
           <div className="min-w-0 flex-1 space-y-3">
             <div>
               <h2 className="text-title font-semibold">

@@ -20,7 +20,7 @@ export default async function AppDevicesPage() {
   const [devices, config, expiry] = await Promise.all([listDevicesForUser(user.id), getPushConfig(), sessionExpiry(sessionId)]);
   return (
     <>
-      <PageHeader title="App & devices" icon={Smartphone} description="Install ARS-CMS, get notifications on your phone or computer, and see which devices get them." />
+      <PageHeader title="App & devices" icon={Smartphone} description="Install ARS CMS, get notifications on your phone or computer, and see which devices get them." />
       <ProfileTabs />
       <div className="space-y-6">
         <AppDevicesPanel

@@ -12,7 +12,7 @@ const REASONS: Record<string, { title: string; body: (minutes: number) => string
   expired: { title: "Your sign-in expired", body: () => "For security a sign-in lasts at most 12 hours. Please sign in again." },
   // D-250: the daily session ends at midnight, India time.
   daily: { title: "Your daily session has expired", body: () => "Your daily session has expired. Please sign in again. Notifications keep coming to this device while you're signed out." },
-  signed_out: { title: "You signed out", body: () => "You signed out of ARS-CMS on this device." },
+  signed_out: { title: "You signed out", body: () => "You signed out of ARS CMS on this device." },
   revoked: { title: "Signed out from another device", body: () => "Your sign-in was ended, for example by \"Sign out everywhere\" or by IT. If that wasn't you, tell IT." },
   deactivated: { title: "Your account isn't active", body: () => "Your account has been switched off. Ask IT if you need access." },
   locked: { title: "Your account is locked for now", body: () => "Too many attempts, or a security lock. Try again later or ask IT." },

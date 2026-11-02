@@ -125,8 +125,9 @@ export default async function ApprovalsHub({ searchParams }: { searchParams: Pro
         views={views}
         manage={<CompactToggle on={compact} />}
         add={
-          canMine && !isHiddenHref("/users/new", access.hidden) ? (
-            <Link href="/users/new" aria-label="New request" className={ADD_CLASS} data-testid="m-new-request">
+          // v1.48.2 (owner): + opens the custom approval form, not the templates list.
+          canMine && (!isHiddenHref("/users/custom", access.hidden) || !isHiddenHref("/users/new", access.hidden)) ? (
+            <Link href={!isHiddenHref("/users/custom", access.hidden) ? "/users/custom" : "/users/new"} aria-label="New request" className={ADD_CLASS} data-testid="m-new-request">
               <Plus aria-hidden="true" className="h-6 w-6" strokeWidth={2.5} />
             </Link>
           ) : undefined

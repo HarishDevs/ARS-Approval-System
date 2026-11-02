@@ -7,6 +7,7 @@ import { REQUEST_ID_HEADER } from "@/lib/logging/request-id";
 import { PwaBoot } from "@/features/pwa/PwaBoot";
 import { ScrollRegions } from "@/features/ui/ScrollRegions";
 import { buildId } from "@/server/ops/build";
+import { APP_BRANDING, TITLE_TEMPLATE } from "@/lib/branding";
 import "../styles/globals.css";
 
 // Every page is rendered per request so Next.js can stamp this request's
@@ -18,29 +19,28 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "sw
 export const metadata: Metadata = {
   // D-246 (audit OPS-19): absolute canonical and preview links on the public pages.
   metadataBase: new URL(process.env.APP_BASE_URL ?? "https://approval.arssteels.net"),
-  // D-188 (owner): the visible name is ARS Internal Workspace.
-  title: { default: "ARS-CMS", template: "%s · ARS-CMS" },
-  description: "ARS-CMS — the Central Management System of ARS Steels & Alloy International Pvt. Ltd.",
+  // D-188 (owner): the visible name. Nov 2026 branding: ARS CMS (lib/branding.ts).
+  title: { default: APP_BRANDING.appName, template: TITLE_TEMPLATE },
+  description: `${APP_BRANDING.appName} — the Central Management System of ARS Steels & Alloy International Pvt. Ltd.`,
+  applicationName: APP_BRANDING.appName,
   robots: { index: false, follow: false },
-  // WEB-04 (v1.10.0), v1.42.0 brand: the ARS-CMS app icon as SVG, with PNG
-  // and ICO made from the same drawing (public/brand/ars-cms-app-icon.svg).
+  // WEB-04 (v1.10.0); Nov 2026: the ARS GREEN STEEL CMS app icon, made from the owner's master logo.
   icons: {
     icon: [
-      { url: "/brand/ars-cms-app-icon.svg", type: "image/svg+xml" },
-      { url: "/icons/icon-32.png", type: "image/png", sizes: "32x32" },
-      { url: "/icons/icon-16.png", type: "image/png", sizes: "16x16" },
-      { url: "/icons/icon-192.png", type: "image/png", sizes: "192x192" },
-      { url: "/favicon.ico", sizes: "48x48" },
+      { url: APP_BRANDING.favicon32, type: "image/png", sizes: "32x32" },
+      { url: APP_BRANDING.favicon16, type: "image/png", sizes: "16x16" },
+      { url: APP_BRANDING.icon, type: "image/png", sizes: "192x192" },
+      { url: APP_BRANDING.faviconIco, sizes: "48x48" },
     ],
-    shortcut: "/favicon.ico",
-    apple: "/icons/apple-touch-icon.png",
+    shortcut: APP_BRANDING.faviconIco,
+    apple: APP_BRANDING.appleTouchIcon,
   },
-  appleWebApp: { capable: true, title: "ARS-CMS", statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: APP_BRANDING.shortName, statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#0053A0" },
+    { media: "(prefers-color-scheme: light)", color: APP_BRANDING.themeColor },
     { media: "(prefers-color-scheme: dark)", color: "#0e131b" },
   ],
 };

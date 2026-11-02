@@ -1,7 +1,6 @@
 "use client";
 
 import { AtSign, Bold, CalendarDays, ChevronDown, Italic, List, ListOrdered, Paperclip, Plus, Repeat, Smile, Sparkles, Strikethrough, Type, UserPlus, X } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { followAction, quickAddAction, recurrenceAction, taskFieldsAction } from "@/app/users/work/actions";
@@ -22,6 +21,13 @@ export function TaskCreator({ projects, people, meId, ai = false }: { projects: 
   useEffect(() => {
     const onCreate = (event: Event) => setOpen({ projectId: (event as CustomEvent<{ projectId?: number | null } | null>).detail?.projectId ?? null });
     window.addEventListener(CREATE_TASK_EVENT, onCreate);
+    // v1.48.2: "New task" links (/users/tasks/new) arrive with ?create=task.
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("create") === "task") {
+      setOpen({ projectId: null });
+      url.searchParams.delete("create");
+      window.history.replaceState(window.history.state, "", url.pathname + (url.search ? url.search : "") + url.hash);
+    }
     return () => window.removeEventListener(CREATE_TASK_EVENT, onCreate);
   }, []);
   return open ? <CreateTaskDialog key={String(open.projectId)} onClose={() => setOpen(null)} projects={projects} people={people} meId={meId} defaultProject={open.projectId} ai={ai} /> : null;
@@ -565,7 +571,7 @@ function CreateTaskDialog({
               )}
             </div>
             <aside className="draft-settings flex flex-col gap-3 lg:rounded-lg lg:border lg:border-line lg:bg-surface-muted lg:p-3" aria-label="Task settings">
-              <p className="hidden text-caption font-semibold uppercase tracking-wide text-ink-faint lg:block">Task settings</p>
+              <p className="hidden text-caption font-semibold uppercase tracking-wide text-ink-muted lg:block">Task settings</p>
               <div className={`${picking === "due" || due ? "flex" : "hidden lg:flex"} items-center gap-2 text-label lg:flex-col lg:items-stretch lg:gap-1`}>
                 <label htmlFor="create-due" className="text-ink-muted">
                   Due date
@@ -651,11 +657,8 @@ function CreateTaskDialog({
               </fieldset>
               <div className="hidden text-label lg:block">
                 <p className="text-ink-muted">Collaborators</p>
-                {collaborators.length ? <p className="mt-1">{collaborators.map(label).join(", ")}</p> : <p className="mt-1 text-caption text-ink-faint">None yet: use the people button below.</p>}
+                {collaborators.length ? <p className="mt-1">{collaborators.map(label).join(", ")}</p> : <p className="mt-1 text-caption text-ink-muted">None yet: use the people button below.</p>}
               </div>
-              <Link href="/users/tasks/new" onClick={onClose} className="link hidden text-label lg:inline">
-                Task with a form instead
-              </Link>
             </aside>
           </div>
           <input
@@ -696,11 +699,6 @@ function CreateTaskDialog({
                     </button>
                   </li>
                 ))}
-                <li role="none">
-                  <Link href="/users/tasks/new" role="menuitem" onClick={onClose} className="block rounded px-3 py-1.5 text-label hover:bg-surface-muted">
-                    Task with a form
-                  </Link>
-                </li>
               </ul>
             )}
             {pop === "emoji" && (

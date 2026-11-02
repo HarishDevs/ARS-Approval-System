@@ -32,7 +32,7 @@ export async function MobileHome({
   greeting: string;
   approvals: boolean;
   tasks: boolean;
-  can: { newRequest: boolean; search: boolean; ai: boolean };
+  can: { newRequest: boolean; search: boolean; ai: boolean; newRequestHref?: string };
 }) {
   const now = new Date();
   const today = indiaDayOf(now);
@@ -69,7 +69,8 @@ export async function MobileHome({
   ].filter((item): item is Exclude<typeof item, false> => Boolean(item));
 
   const actions = [
-    approvals && can.newRequest && { href: "/users/new", label: "New request", icon: FilePlus2 },
+    // v1.48.2 (owner): the custom approval form (the templates list stays under More).
+    approvals && can.newRequest && { href: can.newRequestHref ?? "/users/custom", label: "New request", icon: FilePlus2 },
     tasks && { href: "#new-task", label: "New task", icon: ListPlus },
     can.search && { href: "/users/search", label: "Search", icon: Search },
     can.ai && { href: "/users/ai/assistant", label: "Ask AI", icon: MessagesSquare },

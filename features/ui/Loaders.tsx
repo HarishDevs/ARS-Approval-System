@@ -1,20 +1,69 @@
-import { CmsMark } from "@/features/ui/Brand";
-import { BrandAnimation } from "@/features/ui/BrandAnimation";
+import { APP_BRANDING } from "@/lib/branding";
+import { RoundLoader } from "@/features/ui/RoundLoader";
 
 // v1.42.0 (owner's "Application Loading & Skeleton System" sheet): the
 // loaders and the animated outcomes, in the brand's blues. Each one says
 // what is happening in words (screen readers hear it once); the motion is
 // decoration and stops for people who turn motion off (globals.css).
 
-// The logo spinner: a blue arc turning round the ARS-CMS mark.
+// v1.49.0 (owner's loader reference): the ring loader. A thick pale ring with
+// a turning blue arc round the ARS CMS mark.
 export function LogoSpinner({ size = 72, label = "Loading…" }: { size?: number; label?: string }) {
   return (
     <span role="status" aria-label={label} className="relative inline-grid shrink-0 place-items-center" style={{ width: size, height: size }} data-testid="logo-spinner">
       <svg viewBox="0 0 48 48" className="absolute inset-0 h-full w-full" aria-hidden="true">
-        <circle cx="24" cy="24" r="21" fill="none" stroke="var(--brand-wave-2)" strokeWidth="3" />
-        <circle cx="24" cy="24" r="21" fill="none" stroke="var(--brand-accent)" strokeWidth="3" strokeLinecap="round" strokeDasharray="44 132" className="brand-spin" />
+        <circle cx="24" cy="24" r="21" fill="none" stroke="var(--brand-wave-2)" strokeWidth="4.5" />
+        <circle cx="24" cy="24" r="21" fill="none" stroke="#004B8D" strokeWidth="4.5" strokeLinecap="round" strokeDasharray="62 132" className="brand-spin" />
       </svg>
-      <CmsMark className="h-[52%] w-[52%]" />
+      <ArsDisc />
+    </span>
+  );
+}
+
+// v1.49.0 (owner's loader reference): the round loaders' centre, the ARS
+// lettering on a white disc.
+function ArsDisc() {
+  return (
+    <span aria-hidden="true" className="grid h-[70%] w-[70%] place-items-center rounded-full bg-white shadow-sm">
+      {/* eslint-disable-next-line @next/next/no-img-element -- static brand image */}
+      <img src={APP_BRANDING.arsWordmark} alt="" width={573} height={195} draggable={false} className="w-[68%]" />
+    </span>
+  );
+}
+
+// v1.49.0: the dotted ring: twelve dots round the mark, lighting in turn.
+export function DotsRingLoader({ size = 72, label = "Loading…" }: { size?: number; label?: string }) {
+  return (
+    <span role="status" aria-label={label} className="relative inline-grid shrink-0 place-items-center" style={{ width: size, height: size }} data-testid="dots-ring-loader">
+      <svg viewBox="0 0 48 48" className="absolute inset-0 h-full w-full" aria-hidden="true">
+        {Array.from({ length: 12 }, (_, dot) => {
+          const angle = (dot / 12) * 2 * Math.PI - Math.PI / 2;
+          return (
+            <circle
+              key={dot}
+              cx={24 + 21 * Math.cos(angle)}
+              cy={24 + 21 * Math.sin(angle)}
+              r="2.4"
+              fill="var(--brand-accent)"
+              className="brand-dot-fade"
+              style={{ animationDelay: `${(dot - 12) * 0.1}s` }}
+            />
+          );
+        })}
+      </svg>
+      <ArsDisc />
+    </span>
+  );
+}
+
+// v1.49.0: "Loading ARS CMS…" over a sliding bar (the splash's bar).
+export function BarLoader({ label = "Loading ARS CMS…", tone = "color" }: { label?: string; tone?: "color" | "white" }) {
+  return (
+    <span role="status" className="flex w-full max-w-xs flex-col gap-2" data-testid="bar-loader">
+      <span className={`text-label font-semibold ${tone === "white" ? "text-white" : "text-ink"}`}>{label}</span>
+      <span aria-hidden="true" className={`relative block h-2 w-full overflow-hidden rounded-full ${tone === "white" ? "bg-white/25" : "border border-[color:var(--brand-wave-2)] bg-surface"}`}>
+        <span className={`loader-bar absolute inset-y-0 left-0 w-2/5 rounded-full ${tone === "white" ? "bg-[#EAF3FF]" : "bg-[linear-gradient(90deg,#0A72D9,#004B8D)]"}`} />
+      </span>
     </span>
   );
 }
@@ -109,18 +158,9 @@ export function StepLoader({ steps, current }: { steps: string[]; current: numbe
 export function LoadingState({ title = "Loading data…", body = "This won't take long." }: { title?: string; body?: string }) {
   return (
     <div role="status" className="flex flex-col items-center px-4 py-8 text-center" data-testid="loading-state">
-      <span className="relative mb-3 grid h-20 w-24 place-items-center" aria-hidden="true">
-        <span className="absolute inset-x-0 bottom-1 h-12 rounded-full bg-[color:var(--brand-wave-1)]" />
-        <span className="relative grid h-14 w-11 place-items-center rounded-md border border-line bg-surface shadow-card">
-          <span className="block space-y-1">
-            <span className="block h-1 w-6 rounded bg-[color:var(--brand-wave-2)]" />
-            <span className="block h-1 w-5 rounded bg-[color:var(--brand-wave-2)]" />
-            <span className="block h-1 w-6 rounded bg-[color:var(--brand-wave-2)]" />
-          </span>
-        </span>
-        <span className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-surface">
-          <BrandAnimation name="loading" className="h-8 w-8" />
-        </span>
+      {/* v1.49.0: a round loader, ring or dotted ring at random (owner). */}
+      <span aria-hidden="true" className="mb-3">
+        <RoundLoader size={64} label={title} />
       </span>
       <p className="font-semibold">{title}</p>
       <p className="text-label text-ink-muted">{body}</p>

@@ -1,4 +1,4 @@
-# ARS-CMS: user guide (v1.42.0)
+# ARS CMS: user guide (v1.42.0)
 
 **Address:** https://approval.arssteels.net. Sign in with your company Google account, or with your User ID and password and a WhatsApp code, as IT set you up (or either way, if IT chose **Both**). Questions: IT (itadmin@arssteels.co.in).
 
@@ -30,7 +30,7 @@ Groups open and close like a dropdown; the group of the page you're on opens by 
 There is **no Search in the sidebar**: use the search bar at the top. On a phone, see **On your phone** below.
 
 ### On your phone
-On a screen narrower than 768 pixels (a phone, or a narrow window) ARS-CMS uses its **phone layout**. On a computer nothing changes. Turning a tablet or widening a window switches over by itself.
+On a screen narrower than 768 pixels (a phone, or a narrow window) ARS CMS uses its **phone layout**. On a computer nothing changes. Turning a tablet or widening a window switches over by itself.
 The phone screens follow the familiar Asana app layout: a big title with **…** (more pages for that screen), flat lists, and a floating bar above the tabs with **Manage view** (the sliders), **Choose view** (the list you're looking at) and the red **+**.
 - **The bar at the bottom:** **Home**, **Approvals**, **My tasks**, **Inbox** and **More**. The open tab sits in a pill and shows its name. The numbers on Approvals and Inbox are what waits for you and what you haven't read.
 - **Home:** one line on what needs you (approvals waiting, overdue steps, requests returned to you, overdue tasks), four counts that open their lists, quick actions (New request, New task, Search, Ask AI), the first approvals waiting for you, your tasks due today and your requests in progress.
@@ -43,20 +43,21 @@ The phone screens follow the familiar Asana app layout: a big title with **…**
 - **Analytics:** the dashboard, whose numbers and period fold into one **Dashboard and filters** row above the numbers; open it to change them.
 - **Inbox:** grouped by day (Today, Yesterday, then dates); each card shows its kind, title, message (**See more** for a long one) and time, with bookmark and archive. **Choose view:** **All activity**, **Bookmarks**, **Archived**. **Manage view:** filters (Approvals, Tasks, Information, System, @Mentioned), read status (unread only) and sort (newest). **…** has notification settings.
 - **Search** (the magnifier at the top): one box that searches **Requests** or **Tasks**, **Projects**, then quick filters (requests I raised, I approve, in progress, approved) and shortcuts (tasks I've created, recently completed, assigned to others, overdue, I follow).
+- **Your picture:** until you upload a photo (Profile → Upload a photo), it is the ARS CMS round icon: blue for approvers (designation ticked Approver), white for everyone else.
 - **More:** your photo, name and email; **Out of office** (says if it is on) and **Notifications**; then Work, Intelligence, Tools, Settings (profile, notifications, push notifications, colour mode, sign-in & devices), Support (Help centre, terms, privacy), the Admin spaces you have, **Sign out** (it asks first) and the app version.
 - **While a page loads** you see the shape of that screen (grey blocks where its rows and cards will be) instead of the old page.
 - **The bell** opens your latest notifications across the screen, under the top bar.
 
 ### Install the app
-ARS-CMS can be installed like an app: it opens in its own window from your home screen, dock or start menu.
+ARS CMS can be installed like an app: it opens in its own window from your home screen, dock or start menu.
 - **Android, and Chrome or Edge on a computer:** the first time you visit, a card offers **Install app**; or use the browser's install icon.
-- **iPhone and iPad (Safari):** tap **Share** → **Add to Home Screen** → **Add**, then open ARS-CMS from the Home Screen.
+- **iPhone and iPad (Safari):** tap **Share** → **Add to Home Screen** → **Add**, then open ARS CMS from the Home Screen.
 - **Safari on a Mac:** File → Add to Dock.
 - **Maybe later** hides the card; **Profile → App & devices** always has the steps.
 
 ### Phone and desktop notifications
 **Profile → App & devices → Turn on notifications on this device.** Your browser asks once; choose Allow. Do it on each phone or computer you use.
-- Approvals waiting for you, tasks, reminders, information and IT's notices then appear as alerts, even when ARS-CMS is closed. Tapping one opens the record (after you sign in, if your daily session has ended).
+- Approvals waiting for you, tasks, reminders, information and IT's notices then appear as alerts, even when ARS CMS is closed. Tapping one opens the record (after you sign in, if your daily session has ended).
 - On iPhone and iPad they work only in the installed app (iOS 16.4 or later).
 - **Send a test** checks it. The list shows every device that gets your notifications; **Remove** one you no longer use.
 - Choose which kinds come in **Profile → Notifications → Phone & desktop**. Security alerts and work waiting for you always come.
@@ -255,7 +256,7 @@ Switch to it from the account menu → **Switch space**.
 ---
 
 ## 4. Super Admin
-- **Phone & desktop notifications:** Settings → **Generate keys** once (no outside account is needed); choose what a lock screen shows (title, full message or only "New in ARS-CMS"). **Daily session** (Sign-in security): phones and the app until midnight (default), everyone, or off.
+- **Phone & desktop notifications:** Settings → **Generate keys** once (no outside account is needed); choose what a lock screen shows (title, full message or only "New in ARS CMS"). **Daily session** (Sign-in security): phones and the app until midnight (default), everyone, or off.
 - **Providers & security:** the settings console: categories down the side, a search across every setting, a mark on anything not saved yet. Email (Resend), WhatsApp (CEOITBox, including the webhook secret), sign-in security, idle sign-out, escalation levels, the maintenance notice (General). Secret values are stored encrypted. **General → Weekly HOD report** switches the Monday email to heads of department on or off. **Backup:** off-site copies to an S3-compatible bucket (endpoint, region, bucket, keys); copies are always encrypted first.
 - **Integrations → Google Calendar:** set up the Google OAuth client, policies and modules; **Test configuration**, then **Enable**; watch health, failed syncs (**Retry**), connected people (**Revoke**, **Full resync**) and conflicts. Maintenance mode pauses syncing. Step by step: deployment guide, Part Q.
 - **AI settings, Salesforce Settings, AI Details** (data sources, reports, activity history).

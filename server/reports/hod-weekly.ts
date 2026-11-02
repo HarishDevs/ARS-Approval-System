@@ -33,7 +33,7 @@ export async function runHodWeekly(now = new Date()): Promise<Record<string, num
       const text = hodReportText({ department: String(department.name), hodName: String(department.hod_name), weekLabel: week.label, stats, link: `${appBaseUrl()}/admin/analytics` });
       await sendEmail(
         await getEmailConfig(),
-        { to: String(department.hod_email), subject: `ARS-CMS: ${department.name} weekly report (${week.label})`, text, idempotencyKey: `ars-hod-${week.weekStart}-d${department.id}` },
+        { to: String(department.hod_email), subject: `ARS CMS: ${department.name} weekly report (${week.label})`, text, idempotencyKey: `ars-hod-${week.weekStart}-d${department.id}` },
         { fetch },
       );
       await db.query("UPDATE hod_report_runs SET status = 'SENT' WHERE week_start = ? AND department_id = ?", [week.weekStart, department.id]);

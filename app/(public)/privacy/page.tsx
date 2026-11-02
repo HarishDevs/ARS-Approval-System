@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
+import { APP_BRANDING } from "@/lib/branding";
 import Link from "next/link";
 import { PublicPage, Prose, COMPANY, CONTACT_EMAIL } from "@/features/public/PublicPage";
 import { MailLink } from "@/features/ui/MailLink";
 
 export const metadata: Metadata = {
   title: "Privacy policy",
-  description: "How ARS-CMS collects, uses, stores and protects information, including data received from Google APIs.",
+  description: "How ARS CMS collects, uses, stores and protects information, including data received from Google APIs.",
   robots: { index: true, follow: true },
   alternates: { canonical: "/privacy" },
-  openGraph: { type: "website", siteName: "ARS-CMS", url: "/privacy", title: "Privacy policy · ARS-CMS", description: "How ARS-CMS collects, uses, stores and protects information.", images: [{ url: "/icons/icon-512.png", width: 512, height: 512, alt: "ARS" }] },
+  openGraph: { type: "website", siteName: "ARS CMS", url: "/privacy", title: "Privacy policy · ARS CMS", description: "How ARS CMS collects, uses, stores and protects information.", images: [{ url: APP_BRANDING.ogImage, width: 1200, height: 630, alt: APP_BRANDING.logoAlt }] },
 };
 
 // v1.12.2 (D-161): the privacy policy Google's OAuth verification checks.
@@ -32,7 +33,7 @@ export default function PrivacyPage() {
         <h1>Privacy policy</h1>
         <p className="text-label text-ink-muted">Effective {PRIVACY_EFFECTIVE} · approved by the head of IT, 2 November 2026</p>
         <p>
-          This policy explains how ARS-CMS (the &ldquo;app&rdquo;, at approval.arssteels.net), operated by {COMPANY} (&ldquo;ARS&rdquo;, &ldquo;we&rdquo;), handles information. The app is an
+          This policy explains how ARS CMS (the &ldquo;app&rdquo;, at approval.arssteels.net), operated by {COMPANY} (&ldquo;ARS&rdquo;, &ldquo;we&rdquo;), handles information. The app is an
           internal workplace tool for ARS employees. Accounts are created by ARS&apos;s IT team; there is no public sign-up.
         </p>
 
@@ -95,7 +96,7 @@ export default function PrivacyPage() {
 
         <h2>Limited Use disclosure</h2>
         <p>
-          ARS-CMS&apos; use and transfer to any other app of information received from Google APIs will adhere to the{" "}
+          ARS CMS&apos; use and transfer to any other app of information received from Google APIs will adhere to the{" "}
           <a href="https://developers.google.com/terms/api-services-user-data-policy" className="link" rel="noopener noreferrer">
             Google API Services User Data Policy
           </a>
@@ -116,7 +117,7 @@ export default function PrivacyPage() {
 
         <h2>The installed app and phone and desktop notifications</h2>
         <p>
-          ARS-CMS can be installed on a phone or computer. The installed app keeps only its own program files and images on the device, never pages, records or files: everything comes from the
+          ARS CMS can be installed on a phone or computer. The installed app keeps only its own program files and images on the device, never pages, records or files: everything comes from the
           server each time. When a person turns on notifications, ARS sends each notification through the push service of that device&apos;s browser maker (Google for Chrome and Android, Apple for
           Safari, Mozilla for Firefox, Microsoft for Edge). The message is encrypted so that only the device can read it. By default a notification shows its title and a plain line, without amounts
           or other details, because it can appear on a lock screen. A person can turn notifications off for a device, remove a device, or choose which kinds of message come, at any time
@@ -127,7 +128,7 @@ export default function PrivacyPage() {
           without activity. Keep your devices locked.
         </p>
         <p>
-          On a screen narrower than 768 pixels ARS-CMS shows its phone layout. To pick the right layout, the browser keeps one small cookie, <code>ars_layout</code>, holding only the word
+          On a screen narrower than 768 pixels ARS CMS shows its phone layout. To pick the right layout, the browser keeps one small cookie, <code>ars_layout</code>, holding only the word
           &ldquo;mobile&rdquo; or &ldquo;desktop&rdquo; for a year. It holds nothing about the person, and the app works the same without it. If you turn on
           Compact mode in a phone list, a second small cookie, <code>ars_m_compact</code>, keeps that choice (&ldquo;1&rdquo; or &ldquo;0&rdquo;) on that device for a year.
         </p>

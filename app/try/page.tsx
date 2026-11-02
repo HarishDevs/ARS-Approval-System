@@ -18,7 +18,7 @@ export default async function TryAsPage({ searchParams }: { searchParams: Promis
       <h1 className="text-title font-semibold">{text.title}</h1>
       <p className="text-ink-muted">{text.body}</p>
       <Link href="/" className="link">
-        ARS-CMS
+        ARS CMS
       </Link>
     </main>
   );

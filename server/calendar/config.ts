@@ -38,7 +38,7 @@ export const calendarConfigSchema = z.object({
     .prefault({}),
   privacy: z.enum(PRIVACY).default("PRIVATE"),
   titleTemplate: template(120).default("{kind}: {ref}"),
-  descriptionTemplate: template(500).default("Open in ARS-CMS: {link}"),
+  descriptionTemplate: template(500).default("Open in ARS CMS: {link}"),
   timezone: z.string().trim().min(1).max(64).default("Asia/Kolkata"),
   intervalMinutes: z.number().int().min(5).max(1440).default(15),
   retryMax: z.number().int().min(1).max(10).default(5),

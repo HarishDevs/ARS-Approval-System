@@ -1,3 +1,4 @@
+import { APP_BRANDING } from "@/lib/branding";
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 import { flatSteps, type MapStage } from "@/server/approvals/step-map";
 import { isOptionColor, OPTION_COLOR_SWATCH } from "@/server/forms/option-colors";
@@ -89,8 +90,8 @@ const MUTED = rgb(0.42, 0.45, 0.5);
 export async function buildRequestSummaryPdf(input: SummaryInput): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
   doc.setTitle(printable(`${input.requestNo} - ${input.title}`));
-  doc.setAuthor("ARS Approval Platform");
-  doc.setCreator("ARS Approval Platform");
+  doc.setAuthor(APP_BRANDING.appName);
+  doc.setCreator(APP_BRANDING.appName);
   const regular = await doc.embedFont(StandardFonts.Helvetica);
   const bold = await doc.embedFont(StandardFonts.HelveticaBold);
   const width = A4[0] - MARGIN * 2;
@@ -120,7 +121,7 @@ export async function buildRequestSummaryPdf(input: SummaryInput): Promise<Uint8
     y -= 6;
   };
 
-  text("ARS Approval Platform · Request summary", { size: 9, color: MUTED });
+  text(`${APP_BRANDING.appName} · Request summary`, { size: 9, color: MUTED });
   y -= 4;
   text(`${input.requestNo}: ${input.title}`, { size: 16, font: bold });
   text(`${input.workflowName} · raised by ${input.requesterName}`, { color: MUTED });

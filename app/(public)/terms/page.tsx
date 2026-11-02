@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
+import { APP_BRANDING } from "@/lib/branding";
 import Link from "next/link";
 import { PublicPage, Prose, COMPANY, CONTACT_EMAIL } from "@/features/public/PublicPage";
 import { MailLink } from "@/features/ui/MailLink";
 
 export const metadata: Metadata = {
   title: "Terms of use",
-  description: "Terms for using ARS-CMS, the internal approval, task and information platform of ARS.",
+  description: "Terms for using ARS CMS, the internal approval, task and information platform of ARS.",
   robots: { index: true, follow: true },
   alternates: { canonical: "/terms" },
-  openGraph: { type: "website", siteName: "ARS-CMS", url: "/terms", title: "Terms of use · ARS-CMS", description: "Terms for using ARS-CMS, the internal platform of ARS.", images: [{ url: "/icons/icon-512.png", width: 512, height: 512, alt: "ARS" }] },
+  openGraph: { type: "website", siteName: "ARS CMS", url: "/terms", title: "Terms of use · ARS CMS", description: "Terms for using ARS CMS, the internal platform of ARS.", images: [{ url: APP_BRANDING.ogImage, width: 1200, height: 630, alt: APP_BRANDING.logoAlt }] },
 };
 
 // v1.12.2 (D-161): terms of use, linked from the home page and the Google
@@ -20,7 +21,7 @@ export default function TermsPage() {
         <h1>Terms of use</h1>
         <p className="text-label text-ink-muted">Effective 2 November 2026 · approved by the head of IT, 2 November 2026</p>
         <p>
-          ARS-CMS (approval.arssteels.net) is provided by {COMPANY} (&ldquo;ARS&rdquo;) for its employees to carry out company work. By signing in you agree to these terms and to ARS&apos;s
+          ARS CMS (approval.arssteels.net) is provided by {COMPANY} (&ldquo;ARS&rdquo;) for its employees to carry out company work. By signing in you agree to these terms and to ARS&apos;s
           policies that apply to company systems.
         </p>
         <h2>Who may use it</h2>
@@ -46,7 +47,7 @@ export default function TermsPage() {
         </p>
         <h2>Google Calendar</h2>
         <p>
-          Connecting your Google Calendar is optional. You can disconnect it at any time from Profile → Calendar. A calendar event never approves, completes or acknowledges anything in ARS-CMS:
+          Connecting your Google Calendar is optional. You can disconnect it at any time from Profile → Calendar. A calendar event never approves, completes or acknowledges anything in ARS CMS:
           those actions are taken only in the app. How Google data is handled is described in the <Link href="/privacy" className="link">privacy policy</Link>.
         </p>
         <h2>Records and monitoring</h2>

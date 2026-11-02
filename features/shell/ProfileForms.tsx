@@ -8,7 +8,7 @@ import { ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import { PHOTO_ACCEPT } from "@/server/profile/photo";
 
 // D-230: change or remove your photo (Asana's "Upload new photo • Remove photo").
-export function PhotoForm({ name, src }: { name: string; src: string | null }) {
+export function PhotoForm({ name, src, approver }: { name: string; src: string | null; approver: boolean }) {
   const { result, pending, formRef, onSubmit } = useActionForm(uploadPhotoAction);
   const [preview, setPreview] = useState<string | null>(null);
   const [removing, setRemoving] = useState(false);
@@ -16,7 +16,7 @@ export function PhotoForm({ name, src }: { name: string; src: string | null }) {
   const input = useRef<HTMLInputElement>(null);
   return (
     <form ref={formRef} onSubmit={onSubmit} className="flex w-full shrink-0 flex-col items-center gap-2 text-center sm:w-48" data-testid="photo-form">
-      <Avatar name={name} src={preview ?? src} size="xl" />
+      <Avatar name={name} src={preview ?? src} size="xl" approver={approver} />
       <label htmlFor="profile-photo" className="sr-only">
         Your photo
       </label>

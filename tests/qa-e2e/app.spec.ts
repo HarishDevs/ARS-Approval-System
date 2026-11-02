@@ -51,7 +51,7 @@ test("QA-SETUP publish the default type (DoA: manager, HOD, senior above ₹10 l
 // ---- Smoke / build / operations ---------------------------------------------------------
 test("QA-SMOKE-01 sign-in page, brand assets and an unknown page answer correctly", async ({ request }) => {
   const login = await request.get("/login");
-  const logo = await request.get("/brand/ars-green-steel.svg");
+  const logo = await request.get("/branding/ars-cms-logo-480.png");
   const unknown = await request.get("/definitely-not-a-page", { maxRedirects: 0 });
   note("QA-SMOKE-01", { login: login.status(), logo: logo.status(), logoType: logo.headers()["content-type"], unknown: unknown.status() });
   expect(login.status()).toBe(200);

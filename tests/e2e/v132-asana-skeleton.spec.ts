@@ -22,7 +22,7 @@ test("the sidebar's Tasks & projects group; + Create → Task makes a periodic t
   // D-223 (owner): the Tasks bar's pages sit in the sidebar; no second bar.
   await expect(page.getByTestId("work-rail")).toHaveCount(0);
   const group = page.getByTestId("nav-group-Tasks & projects");
-  for (const label of ["My Tasks", "All projects", "Periodic tasks", "New project", "Templates", "Task with a type (form)"]) await expect(group.getByRole("link", { name: new RegExp(`^${label.replace(/[()]/g, "\\$&")}`) })).toBeVisible();
+  for (const label of ["My Tasks", "All projects", "Periodic tasks", "New project", "Templates"]) await expect(group.getByRole("link", { name: new RegExp(`^${label.replace(/[()]/g, "\\$&")}`) })).toBeVisible();
 
   const create = page.getByTestId("create-menu");
   await expect(async () => {

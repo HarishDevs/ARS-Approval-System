@@ -142,7 +142,7 @@ export function ClassicBar({ modules }: { modules: ClassicModule[] }) {
   // Pages outside the modules (Profile, Notifications, Help…) name themselves from their title.
   const [title, setTitle] = useState("");
   useEffect(() => {
-    const timer = window.setTimeout(() => setTitle(document.title.replace(/\s*·\s*ARS-CMS$/, "").trim()), 50);
+    const timer = window.setTimeout(() => setTitle(document.title.replace(/\s*·\s*ARS[- ]CMS$/, "").trim()), 50);
     return () => window.clearTimeout(timer);
   }, [pathname, search]);
   // D-214: the loader, shown after a short moment (fast pages don't flash) until the page changes.

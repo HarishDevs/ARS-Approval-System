@@ -1,7 +1,7 @@
-# ARS-CMS (ARS Approval Platform)
+# ARS CMS (ARS Approval Platform)
 
 ## What it is
-ARS-CMS, the Central Management System, is one web app for ARS Steels & Alloy International Pvt Ltd. **Its main purpose is multi-level approvals in any custom manner**: one configurable approval engine that replaces the 104 Asana approval projects. Around it sit Tasks & projects, Information, a shared Calendar (with Google Calendar sync), Analytics and the Pico Bot AI assistant (with Salesforce data).
+ARS CMS, the Central Management System, is one web app for ARS Steels & Alloy International Pvt Ltd. **Its main purpose is multi-level approvals in any custom manner**: one configurable approval engine that replaces the 104 Asana approval projects. Around it sit Tasks & projects, Information, a shared Calendar (with Google Calendar sync), Analytics and the Pico Bot AI assistant (with Salesforce data).
 
 - **Address:** https://approval.arssteels.net
   - `/users`: everyone. Home, Inbox, My Approvals (raise, approve, follow), Tasks & projects, Information, AI Assistant, Calendar, Analytics, Profile.

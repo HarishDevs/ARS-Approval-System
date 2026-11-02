@@ -59,10 +59,10 @@ test("a task is created, started and completed with its note; the assignee hears
   const staff = await userIdByLogin("E2E_STAFF");
   await as(context, "E2E_REQ");
   await page.goto("/users");
-  // D-223: the sidebar's "Tasks & projects" group holds Task with a type (form).
-  await page.locator("aside nav").getByRole("button", { name: "Tasks & projects" }).click();
-  await page.getByTestId("nav-group-Tasks & projects").getByRole("link", { name: "Task with a type (form)" }).click();
-  await expect(page.getByRole("heading", { level: 1, name: /New task/ })).toBeVisible();
+  // v1.48.2 (owner): New task without a type opens the Create task window; a type's form opens by its link.
+  await page.goto("/users/tasks/new");
+  await expect(page).toHaveURL(/\/users\/work\/my-tasks/);
+  await expect(page.getByTestId("create-dialog")).toBeVisible();
   await page.goto(`/users/tasks/new?type=${taskTypeUrl.split("/").pop()}`);
   await expect(page.getByRole("heading", { level: 1, name: `New task: E2E repair ${stamp}` })).toBeVisible();
   await page.getByLabel("Title").fill("Pump 3 leaks");

@@ -22,7 +22,7 @@ export default async function PersonPage({ params }: { params: Promise<{ id: str
   return (
     <section className="card max-w-4xl px-6 py-6" data-testid="person-card">
       <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
-        <Avatar name={profile.name} src={photoUrl(profile.id, profile.photoUpdatedAt)} size="xl" />
+        <Avatar name={profile.name} src={photoUrl(profile.id, profile.photoUpdatedAt)} size="xl" approver={profile.isApprover} />
         <div className="min-w-0 flex-1 space-y-3">
           <div>
             <h1 className="text-title font-semibold">
@@ -62,7 +62,7 @@ export default async function PersonPage({ params }: { params: Promise<{ id: str
                   {profile.directReports.map((report) => (
                     <li key={report.id}>
                       <Link href={`/users/people/${report.id}`} className="inline-flex items-center gap-1.5 rounded-full border border-line py-0.5 pl-0.5 pr-2.5 hover:bg-surface-muted">
-                        <Avatar name={report.name} src={photoUrl(report.id, report.photoUpdatedAt)} size="xs" />
+                        <Avatar name={report.name} src={photoUrl(report.id, report.photoUpdatedAt)} size="xs" approver={report.isApprover} />
                         <SafeText text={report.name} />
                       </Link>
                     </li>

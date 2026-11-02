@@ -291,13 +291,13 @@ export function CommandPalette({ pages }: { pages: PaletteLink[] }) {
         data-testid="search-bar"
       >
         <Search aria-hidden="true" className="h-4 w-4" />
-        <span className="flex-1 truncate text-left">Search ARS-CMS</span>
+        <span className="flex-1 truncate text-left">Search ARS CMS</span>
         <kbd className="rounded border border-line bg-surface px-1.5 text-[length:calc(11px*var(--text-scale,1))]">Ctrl K</kbd>
       </button>
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label="Search ARS-CMS"
+        aria-label="Search ARS CMS"
         data-tour="search"
         className="flex h-9 w-9 items-center justify-center rounded-full text-ink-muted hover:bg-surface-muted hover:text-ink sm:hidden"
       >
@@ -305,7 +305,7 @@ export function CommandPalette({ pages }: { pages: PaletteLink[] }) {
       </button>
       <dialog
         ref={dialog}
-        aria-label="Search ARS-CMS"
+        aria-label="Search ARS CMS"
         onClose={() => setOpen(false)}
         onClick={(event) => event.target === dialog.current && setOpen(false)}
         className="z-palette mt-2 w-[calc(100%-1rem)] max-w-2xl rounded-xl border border-line bg-raised p-0 text-ink shadow-overlay backdrop:bg-overlay/40"

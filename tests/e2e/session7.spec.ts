@@ -41,7 +41,8 @@ test("a ₹1,50,000 request needs only the manager; the map says why HOD is skip
   await page.getByRole("button", { name: "Submit request" }).click();
   await expect(page).toHaveURL(/\/users\/requests\/\d+\?submitted=1$/);
   await expect(page.getByText("Not needed at this amount (DoA)").first()).toBeVisible();
-  await expect(page.getByText("Manoj Manager").first()).toBeVisible();
+  // v1.48.1: the approver's name is in the level's hover details (its button name).
+  await expect(page.getByRole("button", { name: /Manoj Manager/ }).first()).toBeVisible();
 });
 
 test("QA fixes on screen: a negative amount is refused; a repeat title asks first", async ({ page, context }) => {

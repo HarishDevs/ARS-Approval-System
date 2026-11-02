@@ -86,7 +86,7 @@ test("the launcher shows the Pico Bot logo; the panel answers with evidence, min
   await panel.getByLabel("Message Pico Bot").press("Enter");
   const answer = page.getByTestId("picbot-answer");
   await expect(answer).toContainText(`Answer for Person PB_A_${tag}: 0 waiting.`);
-  await expect(answer.locator('[data-tip^="From ARS-CMS"]')).toHaveCount(1); // D-178: the source is in the hover hint
+  await expect(answer.locator('[data-tip^="From ARS CMS"]')).toHaveCount(1); // D-178: the source is in the hover hint
   await expect(answer.getByRole("button", { name: "Copy this answer" })).toBeVisible();
   await page.screenshot({ path: "test-results/picbot-panel.png" });
 

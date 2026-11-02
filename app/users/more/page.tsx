@@ -32,12 +32,12 @@ import { usersNav } from "@/features/shell/users-nav";
 import { isMobileLayout } from "@/server/ui/layout-mode";
 import { personProfile } from "@/lib/db/repositories/profile.repository";
 import { photoUrl } from "@/server/profile/photo";
-import { initials } from "@/features/ui/Display";
 import { MoreSignOut } from "@/features/mobile/MoreSignOut";
 import { getUserSetting } from "@/lib/db/repositories/user-settings.repository";
 import { listDelegationsInvolving } from "@/lib/db/repositories/collab.repository";
 import { THEME_SETTING, parseTheme } from "@/server/ui/theme";
 import packageJson from "@/package.json";
+import { defaultAvatar } from "@/features/ui/Avatar";
 
 export const metadata: Metadata = { title: "More" };
 
@@ -128,9 +128,9 @@ export default async function MorePage() {
           // eslint-disable-next-line @next/next/no-img-element -- the person's own photo (private, cached by version)
           <img src={photo} alt="" className="h-24 w-24 rounded-full object-cover" />
         ) : (
-          <span aria-hidden="true" className="grid h-24 w-24 place-items-center rounded-full bg-[color:var(--m-navy)] text-[28px] font-bold text-white">
-            {initials(user.name)}
-          </span>
+          // v1.49.0 (owner): the brand's circular icon (blue for approvers, white for users) until a photo is uploaded.
+          // eslint-disable-next-line @next/next/no-img-element -- static brand image
+          <img src={defaultAvatar(Boolean(profile?.isApprover))} alt="" className="h-24 w-24 rounded-full object-cover ring-1 ring-line" data-testid="more-default-photo" />
         )}
         <span className="flex items-center gap-1 text-[22px] font-semibold">
           {user.name}

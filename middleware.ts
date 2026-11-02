@@ -15,7 +15,7 @@ import { sessionCookieLooksValid } from "@/lib/security/session-cookie-edge";
 // Next.js reads the nonce from the request's CSP header and adds it to its
 // own scripts, so every page is rendered per request (root layout is dynamic).
 // v1.12.2: "/" (the public home page), "/privacy" and "/terms" are public (Google OAuth verification).
-const PUBLIC_PREFIXES = ["/", "/try", "/privacy", "/terms", "/login", "/signed-out", "/set-password", "/forgot-password", "/security", "/api/auth", "/api/jobs", "/api/health", "/api/webhooks", "/api/push/resubscribe", "/sw.js", "/offline.html", "/_next", "/brand", "/animations", "/icons", "/manifest.webmanifest", "/favicon.ico", "/icon.svg", "/robots.txt", "/sitemap.xml"];
+const PUBLIC_PREFIXES = ["/", "/try", "/privacy", "/terms", "/login", "/signed-out", "/set-password", "/forgot-password", "/security", "/api/auth", "/api/jobs", "/api/health", "/api/webhooks", "/api/push/resubscribe", "/sw.js", "/offline.html", "/_next", "/brand", "/branding", "/animations", "/icons", "/manifest.webmanifest", "/favicon.ico", "/icon.svg", "/robots.txt", "/sitemap.xml"];
 // QA-SEC-02 (v1.42.1): GET routes that store something (OAuth connect and callback).
 const WRITING_GETS = ["/api/integrations/"];
 
@@ -28,7 +28,7 @@ function isPublic(pathname: string): boolean {
   return PUBLIC_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
 
-const STATIC_PREFIXES = ["/_next/", "/brand/", "/icons/"];
+const STATIC_PREFIXES = ["/_next/", "/brand/", "/branding/", "/icons/"];
 const STATIC_FILES = new Set(["/manifest.webmanifest", "/favicon.ico", "/icon.svg", "/apple-icon.png", "/robots.txt"]);
 function isStaticAsset(pathname: string): boolean {
   return STATIC_FILES.has(pathname) || STATIC_PREFIXES.some((prefix) => pathname.startsWith(prefix));
@@ -161,6 +161,6 @@ export const config = {
   matcher: [
     // Skip static files. v1.8.0: prefetches go through too, so every page
     // request carries the signed page address (page access).
-    { source: "/((?!_next/static|_next/image|favicon.ico|brand/).*)" },
+    { source: "/((?!_next/static|_next/image|favicon.ico|brand/|branding/).*)" },
   ],
 };

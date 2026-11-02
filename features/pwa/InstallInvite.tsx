@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Download, PlusSquare, Share, X } from "lucide-react";
 import { canPromptInstall, inviteState, isDesktopSafari, isStandalone, platform, promptInstall, rememberInvite, subscribeInstall } from "@/features/pwa/browser";
 import { dismissInstallInviteAction } from "@/app/users/pwa-actions";
+import { APP_BRANDING } from "@/lib/branding";
 
 // D-251 (owner): the first-visit invitation to install the app. Shown once
 // per device (and once per account when signed in), a few seconds after the
@@ -24,7 +25,7 @@ export function InstallSteps({ mode }: { mode: "ios" | "mac-safari" }) {
           In Safari&apos;s menu bar choose <strong>File</strong> → <strong>Add to Dock</strong>.
         </li>
         <li>
-          Press <strong>Add</strong>. ARS-CMS opens from the Dock in its own window.
+          Press <strong>Add</strong>. ARS CMS opens from the Dock in its own window.
         </li>
       </ol>
     );
@@ -46,7 +47,7 @@ export function InstallSteps({ mode }: { mode: "ios" | "mac-safari" }) {
       <li className="flex items-center gap-2">
         <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary-50 text-caption font-semibold text-primary-700">3</span>
         <span>
-          Tap <strong>Add</strong>, then open ARS-CMS from your Home Screen.
+          Tap <strong>Add</strong>, then open ARS CMS from your Home Screen.
         </span>
       </li>
     </ol>
@@ -99,10 +100,10 @@ export function InstallInvite() {
     >
       <div className="flex items-start gap-3">
         {/* eslint-disable-next-line @next/next/no-img-element -- small static app icon */}
-        <img src="/icons/icon-192.png" alt="" width={44} height={44} className="h-11 w-11 shrink-0 rounded-lg" />
+        <img src={APP_BRANDING.icon} alt="" width={44} height={44} className="h-11 w-11 shrink-0 rounded-lg" />
         <div className="min-w-0 flex-1">
           <h2 id="install-invite-title" className="font-semibold">
-            Install ARS-CMS
+            Install ARS CMS
           </h2>
           <p className="mt-0.5 text-label text-ink-muted">Get faster access to your workplace app. Install it on this device for an app-like experience and notifications.</p>
           {mode !== "prompt" && <InstallSteps mode={mode} />}

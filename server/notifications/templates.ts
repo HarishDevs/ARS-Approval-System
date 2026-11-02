@@ -268,7 +268,7 @@ export const WHATSAPP_TEMPLATES: readonly TemplateEntry[] = [
   },
   {
     code: "WA_NEW_LOGIN_V1",
-    emailSubject: "New sign-in to your ARS-CMS account",
+    emailSubject: "New sign-in to your ARS CMS account",
     eventType: "NEW_LOGIN",
     name: "ars_new_login_v1",
     group: "Security",
@@ -279,7 +279,7 @@ export const WHATSAPP_TEMPLATES: readonly TemplateEntry[] = [
   },
   {
     code: "WA_ACCOUNT_LOCKED_V1",
-    emailSubject: "Your ARS-CMS account was locked",
+    emailSubject: "Your ARS CMS account was locked",
     eventType: "ACCOUNT_LOCKED",
     name: "ars_account_locked_v1",
     group: "Security",
@@ -290,7 +290,7 @@ export const WHATSAPP_TEMPLATES: readonly TemplateEntry[] = [
   },
   {
     code: "WA_ACCOUNT_SECURED_V1",
-    emailSubject: "Your ARS-CMS account was secured",
+    emailSubject: "Your ARS CMS account was secured",
     eventType: "ACCOUNT_SECURED",
     name: "ars_account_secured_v1",
     group: "Security",
@@ -334,7 +334,7 @@ export const WHATSAPP_TEMPLATES: readonly TemplateEntry[] = [
   },
   {
     code: "WA_PASSWORD_CHANGED_V1",
-    emailSubject: "Your ARS-CMS password was changed",
+    emailSubject: "Your ARS CMS password was changed",
     eventType: "PASSWORD_CHANGED",
     name: "ars_password_changed_v1",
     group: "Security",
@@ -356,7 +356,7 @@ export const WHATSAPP_TEMPLATES: readonly TemplateEntry[] = [
   },
   {
     code: "WA_SIGN_IN_METHOD_CHANGED_V1",
-    emailSubject: "How you sign in to ARS-CMS has changed",
+    emailSubject: "How you sign in to ARS CMS has changed",
     eventType: "SIGN_IN_METHOD_CHANGED",
     name: "ars_signin_method_changed_v1",
     group: "Security",
@@ -372,9 +372,9 @@ export const EXISTING_OTP_TEMPLATE = { code: "WA_LOGIN_OTP_V1", eventType: "OTP_
 
 // Sent by email and in-app only, on purpose.
 export const EMAIL_ONLY_EVENTS: readonly { eventType: string; emailSubject: string; why: string }[] = [
-  { eventType: "SET_PASSWORD_LINK", emailSubject: "Set your ARS-CMS password", why: "The set-password link goes to the email on record; the WhatsApp code then confirms the number." },
-  { eventType: "USER_INVITED", emailSubject: "You've been added to ARS-CMS", why: "Owner choice (D-166): invitations go by email, with the set-password link for password users." },
-  { eventType: "PASSWORD_RESET_LINK", emailSubject: "Reset your ARS-CMS password", why: "Owner choice (D-166): the reset link goes to the email on record; the WhatsApp code then confirms it." },
+  { eventType: "SET_PASSWORD_LINK", emailSubject: "Set your ARS CMS password", why: "The set-password link goes to the email on record; the WhatsApp code then confirms the number." },
+  { eventType: "USER_INVITED", emailSubject: "You've been added to ARS CMS", why: "Owner choice (D-166): invitations go by email, with the set-password link for password users." },
+  { eventType: "PASSWORD_RESET_LINK", emailSubject: "Reset your ARS CMS password", why: "Owner choice (D-166): the reset link goes to the email on record; the WhatsApp code then confirms it." },
 ];
 
 export function findTemplateEntry(code: string): TemplateEntry | undefined {

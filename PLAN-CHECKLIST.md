@@ -17,6 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (2 Nov 2026):** v1.49.0: the ARS GREEN STEEL CMS brand (D-287), New request / New task straight to the form, Classic tab bar fix (D-288). **Owner:** publish v1.49.0; rename the OAuth consent screen app to "ARS CMS" in Google Cloud (Q-027); reopen or reinstall the phone app for the new icon.
 - **Now (2 Nov 2026):** v1.48.1: slimmer journey, hover details with the approver, the folded header road (D-285). Publish v1.48.1.
 - **Now (2 Nov 2026):** v1.48.0: the new Approval Journey (computer and phone), the request page re-laid out, one colour per status (D-283, D-284). No migration of its own. **Owner:** publish v1.48.0 (contains everything since v1.46.0).
 - **Now (2 Nov 2026):** v1.47.1: priority colours everywhere (D-282). Publish v1.47.1 (it contains v1.47.0 and v1.46.0).
@@ -158,6 +159,18 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 - **Still open:** Q-015.
 
 ---
+
+## Session log — v1.49.0 (2 Nov 2026): branding and shortcuts, planned before starting
+Owner: "ARS CMS – Complete Application Branding Replacement" brief with the approved logo (Downloads/ARS Green Steel CMS Logo.png) and the brand sheet; "if I click add in the mobile app to create an approval request it navigates to templates; I want the custom approval form"; "in compact mode Add task / New task navigate to templates; drop this task-from-templates part"; "the header navigation is missing" (Classic, /users/tasks).
+- [x] V149-01 (2 Nov 2026) Central branding config (lib/branding.ts), assets in public/branding/ generated only from the master (resize, background crop/extension; no redraw)
+- [x] V149-02 (2 Nov 2026) Every brand location: headers, sidebar, phone top bar, sign-in pages, public pages, loaders, journey, install card, offline page, PDF, manifest, favicon, Apple/maskable icons, OG image, service worker cache bump; name ARS CMS in UI and server text (WhatsApp template wording unchanged)
+- [x] V149-02b (2 Nov 2026) Owner's phone references: sign-in skyline background, splash loader on the logo's blue, ring / dotted-ring / bar loaders (features/ui/BrandBackdrops.tsx, Loaders.tsx, BrandLoader.tsx); the sign-in brand panel now shows the approved logo (live site's white ARS mark was missing)
+- [x] V149-02c (2 Nov 2026) Owner: logo without background (sign-in panel horizontal, splash, phone sign-in light/dark); ARS lettering in the round loaders; default profile picture by role (blue approver, white user)
+- [x] V149-03 (2 Nov 2026) Phone + and Home New request → custom approval form
+- [x] V149-04 (2 Nov 2026) New task / Add task → Create task window (/users/tasks/new redirects; type forms by link only); picker entries removed
+- [x] V149-05 (2 Nov 2026) Classic: Tasks Management tab bar on /users/tasks pages
+- [x] V149-06 (2 Nov 2026) Tests and docs; checked in the browser (sign-in, Home, Classic, phone; icons and manifest served)
+- [ ] V149-07 Owner: Google OAuth consent screen app name "ARS CMS" (Q-027); reinstall the phone app if the old icon stays
 
 ## Session log — v1.48.1 (2 Nov 2026): slimmer journey, planned before starting
 Owner: "remove these (Request Status, Approval Levels (Detailed), the level details panel) and reduce the animation size"; "add approver name"; "instead of showing details directly show when hover"; "I need the journey shown here (the folded header)"; "realign the progress bar to the marked extent"; "within this space can we bring the van and road concept"; "those options (refresh, share, fold) bring there (top right) on mobile".

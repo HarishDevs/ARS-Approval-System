@@ -91,7 +91,15 @@ export function locate(modules: readonly ClassicModule[], pathname: string): { e
       if (!best || length > best.length) best = { entry, page, length };
     }
   }
-  return best ? { entry: best.entry, page: best.page } : { entry: null, page: null };
+  if (best) return { entry: best.entry, page: best.page };
+  // v1.48.2 (owner: "the header navigation is missing"): the older task lists
+  // (/users/tasks, a task's own page) belong to Tasks Management too, so its
+  // tab bar shows there; the table list counts as My tasks.
+  if (pathname === "/users/tasks" || pathname.startsWith("/users/tasks/")) {
+    const tasks = modules.find((entry) => entry.key === "tasks");
+    if (tasks) return { entry: tasks, page: pathname === "/users/tasks" ? (tasks.pages.find((page) => page.href.split("?")[0] === "/users/work/my-tasks") ?? null) : null };
+  }
+  return { entry: null, page: null };
 }
 
 // Letters for extra Gateway entries (other spaces, Quit), avoiding those in use.
