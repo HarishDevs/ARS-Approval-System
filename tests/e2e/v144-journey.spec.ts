@@ -56,8 +56,9 @@ test("submitted: the van carries it to the first approval; the background task a
   await expect(journey.getByTestId("road-percent")).toHaveText("0% Completed");
   // v1.48 (owner's journey design): the header's status, the detailed levels list (one row per checkpoint), no outcome banner yet.
   await expect(journey.getByTestId("journey-status")).toHaveText("In progress");
-  await expect(journey.getByTestId("journey-level")).toHaveCount(2);
-  await expect(journey.getByTestId("journey-level").nth(1)).toHaveAttribute("aria-current", "step");
+  // v1.48.1 (owner): no side column; a level's details show on hover, with its approver.
+  await journey.getByTestId("road-checkpoint").nth(1).hover();
+  await expect(journey.getByTestId("journey-tip").filter({ visible: true })).toContainText("Waiting for approval");
   await expect(journey.getByTestId("journey-outcome")).toHaveCount(0);
   // The sealing played once (just submitted), and the document is out for review.
   await expect(journey).toHaveAttribute("data-scene", "idle", { timeout: 15_000 });

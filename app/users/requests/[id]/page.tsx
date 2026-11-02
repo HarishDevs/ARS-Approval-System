@@ -24,6 +24,7 @@ import {
   RecallForm,
   ReopenForm,
   ResumeForm,
+  MobileResumeBar,
   WithdrawForm,
 } from "@/features/requests/ActionPanel";
 import { Advice, Links } from "@/features/requests/Collaboration";
@@ -254,7 +255,9 @@ export default async function RequestPage({
             {/* D-234 (Banner blindness, Proximity): an approver sees the budget
                 and submission warnings beside their decision, not far below it. */}
             {view.myTasks.length > 0 && <SubmissionChecks check={view.submissionCheck} department={view.budgetDepartment} />}
-            {view.myTasks[0] && (
+            {/* v1.48.1: on hold, the phone bar is Resume (nothing can be decided until then). */}
+            {view.status === "ON_HOLD" && view.canResume && <MobileResumeBar requestId={view.id} />}
+            {view.status !== "ON_HOLD" && view.myTasks[0] && (
               <MobileDecisionBar
                 requestId={view.id}
                 taskKey={view.myTasks[0].taskKey}
@@ -262,7 +265,7 @@ export default async function RequestPage({
                 label={view.myTasks[0].forName ? `${view.myTasks[0].label} (for ${view.myTasks[0].forName})` : view.myTasks[0].label}
               />
             )}
-            {view.myTasks[0] && (
+            {view.status !== "ON_HOLD" && view.myTasks[0] && (
               <DecisionShortcuts
                 requestId={view.id}
                 taskKey={view.myTasks[0].taskKey}
@@ -339,13 +342,17 @@ export default async function RequestPage({
               <h2 id="your-action" className="px-4 py-2.5 text-label font-semibold">
                 Needs your action
               </h2>
-              {view.myTasks.map((task) => (
+              {/* v1.48.1 (owner): on hold, Resume comes first and the decisions wait for it. */}
+              {view.canResume && <ResumeForm requestId={view.id} reason={view.holdReason} />}
+              {view.status === "ON_HOLD" && !view.canResume && view.myTasks.length > 0 && (
+                <p className="px-5 py-4 text-label text-ink-muted">This request is on hold. You can decide once it is resumed.</p>
+              )}
+              {view.status !== "ON_HOLD" && view.myTasks.map((task) => (
                 <div key={task.taskKey}>
                   <DecisionForm requestId={view.id} taskKey={task.taskKey} work={task.work} label={task.forName ? `${task.label} (for ${task.forName}, as their delegate)` : task.label} />
                   {colleagues && <DelegateTaskForm requestId={view.id} taskKey={task.taskKey} people={task.work ? colleagues.anyone : colleagues.approvers} />}
                 </div>
               ))}
-              {view.canResume && <ResumeForm requestId={view.id} />}
             </section>
           )}
           {(view.canWithdraw || view.canReopen || view.canRecall) && (

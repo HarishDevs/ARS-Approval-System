@@ -17,6 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (2 Nov 2026):** v1.48.1: slimmer journey, hover details with the approver, the folded header road (D-285). Publish v1.48.1.
 - **Now (2 Nov 2026):** v1.48.0: the new Approval Journey (computer and phone), the request page re-laid out, one colour per status (D-283, D-284). No migration of its own. **Owner:** publish v1.48.0 (contains everything since v1.46.0).
 - **Now (2 Nov 2026):** v1.47.1: priority colours everywhere (D-282). Publish v1.47.1 (it contains v1.47.0 and v1.46.0).
 - **Now (2 Nov 2026):** v1.47.0: request priority and coloured choices (D-281), on top of v1.46.0. No new migration (v1.46.0's one still runs on start). **Owner:** publish v1.47.0; in Admin → Custom approval give the Priority options their colours and save.
@@ -157,6 +158,16 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 - **Still open:** Q-015.
 
 ---
+
+## Session log — v1.48.1 (2 Nov 2026): slimmer journey, planned before starting
+Owner: "remove these (Request Status, Approval Levels (Detailed), the level details panel) and reduce the animation size"; "add approver name"; "instead of showing details directly show when hover"; "I need the journey shown here (the folded header)"; "realign the progress bar to the marked extent"; "within this space can we bring the van and road concept"; "those options (refresh, share, fold) bring there (top right) on mobile".
+- [x] V1481-01 (2 Nov 2026) Side column and details panel removed; road and van smaller
+- [x] V1481-02 (2 Nov 2026) Hover/focus tooltip per level with name, status, time and approver; a level scrolls to the Approval levels card
+- [x] V1481-03 (2 Nov 2026) Folded header: a small road with the dots, the van and the flag across the free space; the percentage always in the header
+- [x] V1481-04 (2 Nov 2026) Phone: header buttons in the top-right corner
+- [x] V1481-05 (2 Nov 2026) Tests (unit; affected e2e) and docs; checked in the browser (1440 light, 375 dark)
+- [x] V1481-06 (2 Nov 2026) Fix: Work task / FYI could not be chosen (onInput reset controlled selects) (D-286); reproduced in the browser with a real key, fixed, e2e added
+- [x] V1481-07 (2 Nov 2026) On hold: Resume first for the approver; phone Resume bar (D-286); e2e added
 
 ## Session log — v1.48.0 (2 Nov 2026): Approval Journey redesign, request page layout, status colours, planned before starting
 Owner: the "Approval Journey" image and reference folder (Downloads/ars-approval-journey) "redesign the Approval Journey based on this image"; "also apply the same journey design on the phone layout"; "change the layout for the Request as like the above" (screenshot); "Timeline should show last 3 in desc order; show more shows the rest with a scroll bar"; earlier "make the status colours match across all lists".

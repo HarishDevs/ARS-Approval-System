@@ -970,6 +970,19 @@ body:has([data-testid="m-comment-dock"][data-open="1"]) .picbot-launcher {
 [data-layout="mobile"] .jr-side {
   display: none;
 }
+/* v1.48.1 (owner): on a phone the refresh, share and fold buttons sit in the
+   header's top-right corner, on the ARS mark's row; the title takes its own row. */
+[data-layout="mobile"] .jr-head {
+  position: relative;
+}
+[data-layout="mobile"] .jr-head .jr-tools {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+}
+[data-layout="mobile"] .jr-head .jr-title {
+  flex-basis: 100%;
+}
 /* Sideways chip rows scroll by touch without a visible scrollbar. */
 [data-layout="mobile"] .mob-chips {
   scrollbar-width: none;

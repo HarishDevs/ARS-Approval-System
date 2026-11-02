@@ -137,7 +137,6 @@ export function RequestForm({
           : onSubmit
       }
       aria-label={preview ? "Form preview" : undefined}
-      onInput={(event) => setSignature(signatureOf(event.currentTarget))}
       onChange={(event) => setSignature(signatureOf(event.currentTarget))}
       className="card request-form"
     >

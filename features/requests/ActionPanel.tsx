@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { isTyping } from "@/features/shell/shortcuts";
-import { Check, MessageSquareWarning, PauseCircle, PencilLine, Power, RotateCcw, Trash2, XCircle } from "lucide-react";
+import { Check, MessageSquareWarning, PauseCircle, PencilLine, PlayCircle, Power, RotateCcw, Trash2, XCircle } from "lucide-react";
 import { ConfirmDialog, Dialog } from "@/features/ui/Dialog";
 import { answerInfoAction, decideAction, delegateTaskAction, recallAction, reopenAction, resolveBlockedAction, resumeAction, withdrawAction } from "@/app/users/actions";
 import { FieldError, ResultMessage, useActionForm } from "@/features/ui/form";
@@ -187,14 +187,48 @@ export function BlockedStepForm({ requestId, step, people }: { requestId: number
   );
 }
 
-export function ResumeForm({ requestId }: { requestId: number }) {
+// v1.48.1 (owner: "if it is put on hold the approver should have the option to
+// resume"): while a request is on hold nothing can be decided (the engine
+// refuses), so the approver sees why it is paused and Resume first.
+export function ResumeForm({ requestId, reason }: { requestId: number; reason?: string | null }) {
   const { result, pending, onSubmit } = useActionForm(resumeAction);
   return (
-    <form onSubmit={onSubmit} className="space-y-2 px-5 py-4">
+    <form onSubmit={onSubmit} className="space-y-2 px-5 py-4" data-testid="resume-form">
       <input type="hidden" name="requestId" value={requestId} />
-      <p className="text-label text-ink-muted">This request is on hold.</p>
-      <button type="submit" disabled={pending} className="btn-secondary btn-compact">
-        {pending ? "Working…" : "Resume"}
+      <p className="flex items-center gap-2 text-label font-semibold text-warning-600">
+        <PauseCircle aria-hidden="true" className="h-4 w-4" /> Paused: on hold
+      </p>
+      {reason && <p className="text-label text-ink-muted">“{reason}”</p>}
+      <p className="text-caption text-ink-muted">Resume it to approve, return or reject it.</p>
+      <button type="submit" disabled={pending} className="btn-primary btn-compact">
+        <PlayCircle aria-hidden="true" className="h-4 w-4" /> {pending ? "Working…" : "Resume"}
+      </button>
+      <ResultMessage result={result} />
+    </form>
+  );
+}
+
+// v1.48.1: on a phone, while the request is on hold the decision bar is one
+// Resume button (the approve/return/hold/reject bar comes back after it).
+export function MobileResumeBar({ requestId }: { requestId: number }) {
+  const { result, pending, onSubmit } = useActionForm(resumeAction);
+  useEffect(() => {
+    document.body.dataset.decisionBar = "1";
+    return () => {
+      delete document.body.dataset.decisionBar;
+    };
+  }, []);
+  return (
+    <form
+      onSubmit={onSubmit}
+      role="region"
+      aria-label="Your decision"
+      className="mob-decision-bar fixed inset-x-0 bottom-[calc(56px+env(safe-area-inset-bottom))] z-sticky border-t border-line bg-surface px-3 py-2 shadow-overlay md:hidden"
+      data-testid="resume-bar"
+    >
+      <input type="hidden" name="requestId" value={requestId} />
+      <button type="submit" disabled={pending} className="btn-primary w-full">
+        <PlayCircle aria-hidden="true" className="h-4 w-4" /> {pending ? "Working…" : "Resume (on hold)"}
       </button>
       <ResultMessage result={result} />
     </form>

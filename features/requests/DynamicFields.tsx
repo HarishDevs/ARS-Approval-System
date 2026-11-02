@@ -98,7 +98,8 @@ export function DynamicFields({
   const labelOf = (key: string) => fields.find((field) => field.key === key)?.label ?? key;
 
   return (
-    <div className="space-y-5" onInput={(event) => read(event.currentTarget)} onChange={(event) => read(event.currentTarget)}>
+    // v1.48.1: onChange only (an onInput re-render reset controlled dropdowns before their change ran).
+    <div className="space-y-5" onChange={(event) => read(event.currentTarget)}>
       {fields.map((field) => {
         const visible = shown.has(field.key);
         const error = result && !result.ok ? result.fieldErrors?.[field.key] : undefined;

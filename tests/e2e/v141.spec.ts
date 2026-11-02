@@ -118,8 +118,9 @@ test("the road on a request: checkpoints, the van, and a checkpoint's details", 
   const points = road.getByTestId("road-checkpoint");
   expect(await points.count()).toBeGreaterThanOrEqual(2);
   await expect(points.first()).toHaveAttribute("data-state", "done");
-  await points.nth(1).click();
-  await expect(page.getByTestId("road-detail")).toBeVisible();
+  // v1.48.1 (owner): a level's details show on hover (no panel under the road).
+  await points.nth(1).hover();
+  await expect(road.getByTestId("journey-tip").filter({ visible: true })).toBeVisible();
   await expect(page.getByTestId("road-summary")).toContainText("Completed");
   const progress = await page.request.get(`/api/requests/${(await myRequestPath("E2E_REQ")).split("/").pop()}/progress`);
   expect(progress.status()).toBe(200);

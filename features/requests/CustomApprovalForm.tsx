@@ -292,7 +292,8 @@ export function CustomApprovalForm({
   );
 
   return (
-    <form ref={autosave.formRef} onSubmit={onSubmit} onInput={refresh} onChange={refresh} className="space-y-5" data-step={step}>
+    /* v1.48.1 (owner: "Work task or FYI can't be selected"): onChange only. React's change event already fires on every keystroke; an onInput here re-rendered the form on the select's native input event, which reset a controlled dropdown (Kind of step, Who approves…) before its own change ran. */
+    <form ref={autosave.formRef} onSubmit={onSubmit} onChange={refresh} className="space-y-5" data-step={step}>
       {draft && restoredAt && (
         <p role="status" className="rounded-md bg-primary-50/60 px-3 py-2 text-label text-primary-700">
           Restored your draft from {restoredAt.toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kolkata" })}. Files aren&apos;t kept in

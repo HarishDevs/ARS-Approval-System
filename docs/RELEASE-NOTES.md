@@ -1,5 +1,14 @@
 # Release notes
 
+## v1.48.1 (2 Nov 2026): a slimmer Approval Journey (owner)
+- The journey is smaller: the road and the van take less height, and the side column (Request Status, Approval Levels (Detailed), Status guide) and the level details panel are gone; the request page below shows the same facts.
+- A level's details (name, status, time and **approver**) show when you **hover** over it (or reach it with the keyboard); tapping a level takes you to the page's Approval levels card.
+- Folded, the journey keeps a **small road with the van** in its header, from the title to the status, so you still see where the request is.
+- The percentage (e.g. "100% Completed") always shows in the header.
+- On a phone the refresh, share and fold buttons sit in the header's top-right corner, beside the ARS mark.
+- **Fixed:** in New request, choosing **Work task** or **FYI** for a step (and other dropdowns in the form) now sticks; the form used to put the old choice back.
+- **On hold:** the approver who put a request on hold sees **Resume** first, with the reason, and the decisions return after it; on a phone the bottom bar is one **Resume** button while it is on hold.
+
 ## v1.48.0 (2 Nov 2026): the new Approval Journey, request page and one colour per status (owner)
 **Approval Journey** (from the owner's design and reference folder), on computers and phones:
 - A header with the ARS mark, the request number and title, its status, the number of levels, **refresh** (checks for news now) and **share** (copies the link).
