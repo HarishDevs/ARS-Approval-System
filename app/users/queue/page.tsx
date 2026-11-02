@@ -5,6 +5,7 @@ import { Hourglass, X } from "lucide-react";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { QueueTable } from "@/features/requests/lists";
+import { priorityRecord } from "@/server/approvals/priority-lookup";
 import { PendingLink } from "@/features/ui/PendingLink";
 import { BulkApprove } from "@/features/requests/BulkApprove";
 import { QueueKeyboard } from "@/features/requests/QueueKeyboard";
@@ -40,6 +41,8 @@ export default async function QueuePage({ searchParams }: { searchParams: Promis
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const page = Math.min(Math.max(1, Number(params.page) || 1), pages);
   const queue = await listPendingTasksFor(user.id, { limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE }, undefined, filter);
+  // v1.47.0: each request's Priority (one query for the page).
+  const priority = await priorityRecord(queue.map((item) => item.requestId), user);
   const filtered = queueFiltered(filter);
   const typeName = types.find((type) => type.id === filter.typeId)?.name;
   const nameOf = (list: { id: number; name: string }[], id: number | null | undefined) => list.find((item) => item.id === id)?.name ?? "chosen";
@@ -241,7 +244,7 @@ export default async function QueuePage({ searchParams }: { searchParams: Promis
         <NoResults what="items waiting" query={filter.q} clearSearchHref={without({ q: "" })} resetHref="/users/queue" />
       ) : (
         <QueueKeyboard>
-          <QueueTable items={queue} />
+          <QueueTable items={queue} priority={priority} />
         </QueueKeyboard>
       )}
       {pages > 1 && (

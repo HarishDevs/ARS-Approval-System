@@ -11,7 +11,9 @@ import { listActiveUserOptions } from "@/lib/db/repositories/admin-users.reposit
 import { parseTaskFilters, PAGE_SIZES, TASK_SORT_LABEL, TASK_SORTS, TASK_TAB_LABEL, TASK_TABS, taskListSql, taskQuery, type TaskBase } from "@/server/modules/task-lists";
 import { isOverdue, TASK_STATUS_LABEL, TASK_STATUSES, type TaskStatus } from "@/server/modules/task-rules";
 import { indiaDateTimeText, PRIORITY_LABEL, TASK_PRIORITIES, type TaskPriority } from "@/server/modules/settings";
-import { displayValue, type FormField } from "@/server/forms/fields";
+import { displayValue, OPTION_TYPES, type FormField } from "@/server/forms/fields";
+import { ChoicePills, TaskPriorityPill } from "@/features/ui/ChoicePill";
+import { choiceValues } from "@/features/modules/RecordParts";
 import { isAdminActor } from "@/server/modules/tasks";
 import { TaskCheck } from "@/features/work/client";
 import { teamOf } from "@/server/work/task-access";
@@ -210,7 +212,7 @@ export async function TaskListScreen({ base, query }: { base: TaskBase; query: R
                         <td className="text-label">{task.typeName}</td>
                         <td className="text-label">{base === "MINE" ? task.createdByName : task.assigneeName}</td>
                         <td>
-                          <Badge tone={PRIORITY_TONE[task.priority]}>{PRIORITY_LABEL[task.priority]}</Badge>
+                          <TaskPriorityPill priority={task.priority} showNormal /> {/* v1.47.0: the one priority pill */}
                         </td>
                         <td>
                           <Badge tone={STATUS_TONE[task.status]}>{TASK_STATUS_LABEL[task.status]}</Badge>
@@ -221,7 +223,8 @@ export async function TaskListScreen({ base, query }: { base: TaskBase; query: R
                         </td>
                         {columns.map((field) => (
                           <td key={field.key} className="text-label">
-                            {displayValue(field, task.formData[field.key], names)}
+                            {/* v1.47.0: coloured choice values. */}
+                            {OPTION_TYPES.includes(field.type) && field.optionColors ? <ChoicePills values={choiceValues(field, task.formData[field.key])} /> : displayValue(field, task.formData[field.key], names)}
                           </td>
                         ))}
                       </tr>

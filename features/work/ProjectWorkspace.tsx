@@ -12,6 +12,7 @@ import { dueLabel, indiaDayOf, TONE_TEXT } from "@/features/work/format";
 import { columnAccent, initialsOf } from "@/features/work/kanban";
 import { BulkBar, FieldInput, type FieldView } from "@/features/work/MoreParts";
 import { TaskGrid, type GridView } from "@/features/work/TaskGrid";
+import { TaskPriorityPill } from "@/features/ui/ChoicePill";
 import type { GridConfig, GridTask } from "@/server/work/grid";
 
 // D-215: a project's List and Board. Sections hold tasks in the order the
@@ -593,7 +594,8 @@ function TaskMeta({ task, now }: { task: BoardTask; now: Date }) {
           {due.text}
         </span>
       )}
-      {task.priority !== "NORMAL" && task.priority !== "LOW" && <span className={`rounded px-1.5 ${PRIORITY_CLASS[task.priority]}`}>{task.priority === "URGENT" ? "Urgent" : "High"}</span>}
+      {/* v1.47.0: the same priority pill as every task table (Low too). */}
+      <TaskPriorityPill priority={task.priority} />
       <RowBadges task={task} />
     </div>
   );

@@ -40,7 +40,9 @@ test("IT builds a form with every field type; the dropdown creator and keys work
   await page.getByLabel("New option for Purchase type").pressSequentially("Services");
   await page.getByRole("button", { name: "Add option" }).click();
   const options = page.getByRole("list", { name: "Options for Purchase type" }).getByRole("listitem");
-  await expect(options).toHaveText(["Capex✕", "Opex✕", "Services✕"]);
+  // v1.47.0: each option chip also holds its colour select, so check the names.
+  await expect(options).toHaveCount(3);
+  for (const [index, name] of ["Capex", "Opex", "Services"].entries()) await expect(options.nth(index)).toContainText(name);
   await page.getByRole("button", { name: "Remove option Services" }).click();
   await expect(options).toHaveCount(2);
   await page.getByLabel("Required: Purchase type").check();

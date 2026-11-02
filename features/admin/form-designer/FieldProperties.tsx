@@ -6,6 +6,8 @@ import { NUMERIC_TYPES, OPTION_TYPES, type FieldType, type FormField, type Looku
 import type { FieldRule } from "@/server/forms/dynamic";
 import type { StoredRule } from "@/server/conditions/rule";
 import { Hint } from "@/features/ui/Hint";
+import { choicePillStyle } from "@/features/ui/ChoicePill";
+import { isOptionColor, OPTION_COLOR_LABEL, OPTION_COLORS, reconcileOptionColors, type OptionColor } from "@/server/forms/option-colors";
 import { formulaProblem, slugKey, TYPE_CHOICES, typeValue } from "@/features/admin/form-designer/model";
 
 // D-235 (Form Designer): the selected field's properties, in tabs, showing
@@ -145,7 +147,23 @@ export function FieldProperties({
               <ChoiceListEditor
                 label={name}
                 options={field.options ?? []}
-                onChange={(options) => onChange((item) => ({ ...item, options, ...(item.defaultValue && !options.includes(item.defaultValue) ? { defaultValue: undefined } : {}) }), "options")}
+                onChange={(options) =>
+                  onChange((item) => {
+                    // v1.47.0: a kept or renamed option keeps its colour; a removed one drops it.
+                    const optionColors = reconcileOptionColors(item.options ?? [], options, item.optionColors);
+                    const next: FormField = { ...item, options, optionColors, ...(item.defaultValue && !options.includes(item.defaultValue) ? { defaultValue: undefined } : {}) };
+                    if (!optionColors) delete next.optionColors;
+                    return next;
+                  }, "options")
+                }
+                colors={field.optionColors}
+                onColorsChange={(colors) =>
+                  onChange((item) => {
+                    const next: FormField = { ...item, optionColors: colors };
+                    if (!Object.keys(colors).length) delete next.optionColors;
+                    return next;
+                  }, "options")
+                }
               />
             </div>
           )}
@@ -406,7 +424,19 @@ export function NumberDraftInput({
 
 // Dropdown options: type one and press Add or Enter; paste several
 // separated by commas, semicolons or new lines.
-export function ChoiceListEditor({ options, onChange, label }: { options: string[]; onChange: (options: string[]) => void; label: string }) {
+export function ChoiceListEditor({
+  options,
+  onChange,
+  label,
+  colors,
+  onColorsChange,
+}: {
+  options: string[];
+  onChange: (options: string[]) => void;
+  label: string;
+  colors?: Readonly<Record<string, OptionColor>>; // v1.47.0: the options' pill colours
+  onColorsChange?: (colors: Record<string, OptionColor>) => void; // given → each chip has a colour picker
+}) {
   const [draft, setDraft] = useState("");
   const [note, setNote] = useState<string | null>(null);
   function add(text: string) {
@@ -429,8 +459,34 @@ export function ChoiceListEditor({ options, onChange, label }: { options: string
     <div className="space-y-2">
       <ul aria-label={`Options for ${label}`} className="flex flex-wrap gap-2">
         {options.map((option, index) => (
-          <li key={option} className="inline-flex items-center gap-1 rounded-full border border-line bg-surface-muted py-1 pl-3 pr-1 text-label">
+          <li
+            key={option}
+            className={`inline-flex items-center gap-1 rounded-full border border-line py-1 pl-3 pr-1 text-label ${colors?.[option] ? "choice-pill font-normal" : "bg-surface-muted"}`}
+            style={colors?.[option] ? choicePillStyle(colors[option]) : undefined}
+          >
             {option}
+            {onColorsChange && (
+              // v1.47.0 (owner: "add Color selector in the Dropdown"): a plain select, so it works with the keyboard and screen readers.
+              <select
+                aria-label={`Colour for option ${option}`}
+                value={colors?.[option] ?? ""}
+                onChange={(event) => {
+                  const next: Record<string, OptionColor> = { ...(colors ?? {}) };
+                  if (isOptionColor(event.target.value)) next[option] = event.target.value;
+                  else delete next[option];
+                  onColorsChange(next);
+                }}
+                className="h-7 max-w-[6.5rem] cursor-pointer rounded-full border border-line bg-surface px-1.5 text-caption text-ink"
+                data-testid="option-colour"
+              >
+                <option value="">No colour</option>
+                {OPTION_COLORS.map((color) => (
+                  <option key={color} value={color}>
+                    {OPTION_COLOR_LABEL[color]}
+                  </option>
+                ))}
+              </select>
+            )}
             <button
               type="button"
               aria-label={`Remove option ${option}`}
@@ -467,7 +523,7 @@ export function ChoiceListEditor({ options, onChange, label }: { options: string
         <button type="button" onClick={() => add(draft)} className="btn-secondary btn-compact h-11">
           Add option
         </button>
-        <Hint text="Press Enter to add. Paste a list separated by commas or new lines to add many at once." align="end" className="self-center" />
+        <Hint text={`Press Enter to add. Paste a list separated by commas or new lines to add many at once.${onColorsChange ? " Pick a colour on an option to show it as a coloured pill in lists and on the record." : ""}`} align="end" className="self-center" />
       </div>
       {note && <p className="text-caption text-ink-faint">{note}</p>}
     </div>

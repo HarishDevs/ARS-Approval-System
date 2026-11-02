@@ -178,7 +178,7 @@ export default async function WorkSearchPage({ searchParams }: { searchParams: P
               <TaskGrid
                 rows={result.items.map((task) => toGridTask(task, user.id, false))}
                 initial={{ ...DEFAULT_GRID, completed: "all" }}
-                columns={["assignee", "due", "projects", "tags", "createdBy", "collaborators"]}
+                columns={["assignee", "due", "priority", "projects", "tags", "createdBy", "collaborators"]} // v1.47.0: + Priority
                 groupsAllowed={["assignee", "createdBy", "project", "due", "priority", "kind"]}
                 people={people}
                 projects={projects.map((project) => ({ id: project.id, name: project.name }))}

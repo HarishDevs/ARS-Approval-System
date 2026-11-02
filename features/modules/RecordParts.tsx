@@ -1,4 +1,6 @@
-import { displayValue, type FormField } from "@/server/forms/fields";
+import { displayValue, OPTION_TYPES, type FormField } from "@/server/forms/fields";
+import { optionColor } from "@/server/forms/option-colors";
+import { ChoicePills } from "@/features/ui/ChoicePill";
 import { formatSize } from "@/server/attachments/files";
 import { indiaDateTimeText } from "@/server/modules/settings";
 import type { RecordFile } from "@/server/modules/files";
@@ -17,6 +19,9 @@ export function FieldValues({ form, data, names, lookupNames }: { form: readonly
               <a href={String(data[field.key])} target="_blank" rel="noopener noreferrer nofollow" className="link">
                 {String(data[field.key])}
               </a>
+            ) : OPTION_TYPES.includes(field.type) && field.optionColors ? (
+              // v1.47.0: coloured choice values (Form Designer option colours).
+              <ChoicePills values={choiceValues(field, data[field.key])} />
             ) : (
               <span className="whitespace-pre-wrap">{displayValue(field, data[field.key], names, lookupNames)}</span>
             )}
@@ -25,6 +30,11 @@ export function FieldValues({ form, data, names, lookupNames }: { form: readonly
       ))}
     </dl>
   );
+}
+
+// v1.47.0: a choice field's stored value(s) with each option's colour.
+export function choiceValues(field: FormField, value: unknown): { label: string; color: string | null }[] {
+  return (Array.isArray(value) ? value : [value]).filter((item): item is string => typeof item === "string" && item !== "").map((item) => ({ label: item, color: optionColor(field, item) }));
 }
 
 export function FileLinks({ files, label = "Files" }: { files: readonly RecordFile[]; label?: string }) {

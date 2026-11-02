@@ -24,7 +24,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
   if (defaultView) redirect(`/users/approved?${new URLSearchParams(defaultView.query).toString()}`);
   const filters = parseListFilters(params, "APPROVED_MINE");
   const [result, counts, choices] = await Promise.all([listRequests("APPROVED_MINE", user.id, filters), tabCounts("APPROVED_MINE", user.id, filters), listChoices("APPROVED_MINE", user.id)]);
-  const extras = await listExtras(VIEW_TARGET.APPROVED_MINE, columnsFor("APPROVED_MINE"), user.id, result.items);
+  const extras = await listExtras(VIEW_TARGET.APPROVED_MINE, columnsFor("APPROVED_MINE"), user.id, result.items, user.roles);
   return (
     <>
       <PageHeader title="My approved requests" description="Requests you raised that were fully approved: when, by whom, and whether the approval is still valid." icon={BadgeCheck} />
@@ -39,6 +39,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
         empty="None of your requests has been approved yet."
         userId={user.id}
         progress={extras.progress}
+        priority={extras.priority}
         columns={extras.columns}
       />
     </>

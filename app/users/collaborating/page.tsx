@@ -26,7 +26,7 @@ export default async function CollaboratingPage({ searchParams }: { searchParams
   if (defaultView) redirect(`/users/collaborating?${new URLSearchParams(defaultView.query).toString()}`);
   const filters = parseListFilters(params, "COLLAB");
   const [result, counts, choices, mineTotal, sharedTotal] = await Promise.all([listRequests("COLLAB", user.id, filters), tabCounts("COLLAB", user.id, filters), listChoices("COLLAB", user.id), baseTotal("MINE", user.id), baseTotal("COLLAB", user.id)]);
-  const extras = await listExtras(VIEW_TARGET.COLLAB, columnsFor("COLLAB"), user.id, result.items);
+  const extras = await listExtras(VIEW_TARGET.COLLAB, columnsFor("COLLAB"), user.id, result.items, user.roles);
   return (
     <>
       <PageHeader title="Collaborating" meta="Requests shared with you: follow them, comment and add files." description="Requests other people added you to follow. You can see them, comment and add files; you don't approve them." icon={UsersRound} />
@@ -42,6 +42,7 @@ export default async function CollaboratingPage({ searchParams }: { searchParams
         empty="Nobody has added you to a request yet. When they do, it appears here."
         userId={user.id}
         progress={extras.progress}
+        priority={extras.priority}
         columns={extras.columns}
       />
     </>

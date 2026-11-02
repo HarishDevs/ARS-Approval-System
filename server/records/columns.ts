@@ -1,6 +1,8 @@
 import type { InfoRecord, RequestRecord, TaskRecord } from "@/lib/db/repositories/records.repository";
 import type { RecordKind } from "@/server/records/filters";
 import { amountText } from "@/server/records/amount";
+import { priorityText, shownPriority } from "@/server/approvals/priority";
+import { BUILT_IN_PRIORITY_COLOR } from "@/server/forms/option-colors";
 
 // D-191: the columns of each register, shared by the table and the CSV, so
 // both always say the same. `sort` names a key in SORTS (filters.ts).
@@ -10,6 +12,7 @@ export interface RecordColumn<Row> {
   sort?: string;
   value: (row: Row) => string;
   wide?: boolean;
+  color?: (row: Row) => string | null; // v1.47.0: shown as a coloured pill (the CSV keeps the text)
 }
 
 export const STATUS_LABEL: Record<string, string> = {
@@ -42,6 +45,8 @@ export function requestColumns(seeConfidential: boolean): RecordColumn<RequestRe
     { key: "title", label: "Title", sort: "title", value: (row) => row.title, wide: true },
     { key: "type", label: "Approval type", sort: "type", value: (row) => row.type },
     { key: "amount", label: "Amount", value: (row) => amountText(row.amount, seeConfidential) },
+    // v1.47.0: the request's Priority field (confidential → "Hidden", as Amount).
+    { key: "priority", label: "Priority", value: (row) => priorityText(shownPriority(row.priority, seeConfidential)), color: (row) => shownPriority(row.priority, seeConfidential)?.color ?? null },
     { key: "raisedBy", label: "Raised by", sort: "raisedBy", value: (row) => row.raisedBy },
     { key: "department", label: "Department", sort: "department", value: (row) => row.department ?? "" },
     { key: "status", label: "Status", sort: "status", value: (row) => STATUS_LABEL[row.status] ?? row.status },
@@ -62,7 +67,7 @@ export const TASK_COLUMNS: RecordColumn<TaskRecord>[] = [
   { key: "no", label: "Task no.", sort: "no", value: (row) => row.no },
   { key: "title", label: "Title", sort: "title", value: (row) => row.title, wide: true },
   { key: "type", label: "Task type", sort: "type", value: (row) => row.type },
-  { key: "priority", label: "Priority", sort: "priority", value: (row) => PRIORITY_LABEL[row.priority] ?? row.priority },
+  { key: "priority", label: "Priority", sort: "priority", value: (row) => PRIORITY_LABEL[row.priority] ?? row.priority, color: (row) => BUILT_IN_PRIORITY_COLOR[row.priority] ?? null },
   { key: "status", label: "Status", sort: "status", value: (row) => taskStatus(row.status) },
   { key: "overdue", label: "Overdue", value: (row) => (row.overdue ? "Yes" : "") },
   { key: "assignee", label: "Assignee", sort: "assignee", value: (row) => row.assignee },
@@ -78,7 +83,7 @@ export const INFO_COLUMNS: RecordColumn<InfoRecord>[] = [
   { key: "no", label: "Info no.", sort: "no", value: (row) => row.no },
   { key: "title", label: "Title", sort: "title", value: (row) => row.title, wide: true },
   { key: "type", label: "Information type", sort: "type", value: (row) => row.type },
-  { key: "priority", label: "Priority", sort: "priority", value: (row) => PRIORITY_LABEL[row.priority] ?? row.priority },
+  { key: "priority", label: "Priority", sort: "priority", value: (row) => PRIORITY_LABEL[row.priority] ?? row.priority, color: (row) => BUILT_IN_PRIORITY_COLOR[row.priority] ?? null },
   { key: "status", label: "Status", sort: "status", value: (row) => STATUS_LABEL[row.status] ?? row.status },
   { key: "createdBy", label: "Created by", sort: "createdBy", value: (row) => row.createdBy },
   { key: "department", label: "Department", sort: "department", value: (row) => row.department ?? "" },

@@ -17,6 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (2 Nov 2026):** v1.47.0: request priority and coloured choices (D-281), on top of v1.46.0. No new migration (v1.46.0's one still runs on start). **Owner:** publish v1.47.0; in Admin → Custom approval give the Priority options their colours and save.
 - **Now (2 Nov 2026):** v1.46.0: everything still buildable is built, and the owner's 16 decisions of today are in (D-276 to D-280). **One migration** runs on start (form rules converted; backup table kept). **Owner:** publish v1.46.0 (`npm ci`); then the steps in `docs/GO_LIVE_READINESS_CHECKLIST.md` (v1.46.0 section): `DB_POOL_SIZE`, `/api/health/deep` clock offset, `ORIGIN_SECRET` (tile), `BACKUP_ENCRYPTION_KEY` + Google Drive backup + Test, WhatsApp templates (tile), Google Calendar consent screen External and published (Q-024), phone UAT.
 - **Now (2 Nov 2026):** v1.45.0: the phone app laid out like Asana (D-275), on top of v1.44.1. No migration. **Owner:** publish v1.45.0 (contains v1.44.1 and v1.44.0), then try it on a phone (V145-09).
 - **Now (2 Nov 2026):** v1.44.1: phone fixes: the notifications panel fits the screen; a skeleton for each phone screen while it loads (D-274). No migration. **Owner:** publish v1.44.1 instead of v1.44.0 (it contains it), then the v1.44.0 steps below.
@@ -154,6 +155,16 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 - **Still open:** Q-015.
 
 ---
+
+## Session log — v1.47.0 (2 Nov 2026): priority and coloured choices, planned before starting
+Owner: "add priority here (request page header), add a colour selector in the dropdown so that dropdowns can be highlighted in the tables, and add priority in all possible tables"; "custom approvals will have priority" (a Dropdown keyed priority); then the request lists and the Home widgets.
+- [x] V147-01 (2 Nov 2026) Option colours in the Form Designer (9 colours + none), schema `optionColors`, ChoicePill (AA in both themes)
+- [x] V147-02 (2 Nov 2026) Request priority = the choice field keyed priority; request page header, PDF
+- [x] V147-03 (2 Nov 2026) Priority column (after Status), sort and group in option order: My requests, Collaborating, My approved requests, Approved by me, Waiting for me; search; Super Admin requests; Admin Records + CSV
+- [x] V147-04 (2 Nov 2026) Home widgets (My recent requests, Waiting for me, Due soon, Returned, Finished, Recently viewed) and phone cards
+- [x] V147-05 (2 Nov 2026) Task priority pill in every task list, board and table
+- [x] V147-06 (2 Nov 2026) Tests (unit; e2e full run) and docs
+- [ ] V147-07 Owner: colour the Priority options in Custom approval; check the lists on live
 
 ## Session log — v1.46.0 (2 Nov 2026): all pending build and the owner's decisions, planned before starting
 Owner: "Asana keeps a comment box fixed at the bottom of a task; implement this and complete all the pending build and changes in one go"; then "what are all decision blocked, ask and we will decide now" (16 answers, D-277); then the calendar Show dropdown, the compact New request on a phone, and Pico Bot at 75% with a grow/shrink animation.

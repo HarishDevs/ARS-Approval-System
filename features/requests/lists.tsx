@@ -7,8 +7,12 @@ import type {
   QueueItem,
 } from "@/lib/db/repositories/approvals.repository";
 import { SafeText } from "@/features/ui/SafeText";
+import { PriorityPill } from "@/features/ui/ChoicePill";
+import type { ShownPriority } from "@/server/approvals/priority";
 
-export function QueueTable({ items }: { items: QueueItem[] }) {
+// v1.47.0: `priority` (the request's Priority field, by request id) adds a
+// Priority column; pages that don't pass it show the table as before.
+export function QueueTable({ items, priority }: { items: QueueItem[]; priority?: Record<number, ShownPriority> }) {
   if (items.length === 0)
     return (
       <EmptyState
@@ -30,6 +34,11 @@ export function QueueTable({ items }: { items: QueueItem[] }) {
               <p className="font-medium text-primary-700">
                 <SafeText text={item.title} />
               </p>
+              {priority?.[item.requestId] && (
+                <p className="mt-0.5">
+                  <PriorityPill priority={priority[item.requestId]} />
+                </p>
+              )}
               <p className="text-caption text-ink-muted">
                 {item.requestNo} · from {item.requesterName}
                 {item.typeName ? ` · ${item.typeName}` : ""}
@@ -67,6 +76,7 @@ export function QueueTable({ items }: { items: QueueItem[] }) {
           <thead>
             <tr>
               <th>Request</th>
+              {priority && <th>Priority</th>}
               <th>From</th>
               <th>Your step</th>
               <th>Waiting since</th>
@@ -89,6 +99,11 @@ export function QueueTable({ items }: { items: QueueItem[] }) {
                     {item.typeName ? ` · ${item.typeName}` : ""}
                   </p>
                 </td>
+                {priority && (
+                  <td data-testid="queue-priority">
+                    <PriorityPill priority={priority[item.requestId]} />
+                  </td>
+                )}
                 <td>{item.requesterName}</td>
                 <td>
                   {item.work && (
@@ -134,7 +149,7 @@ export function QueueTable({ items }: { items: QueueItem[] }) {
   );
 }
 
-export function MyRequestsTable({ items }: { items: MyRequestItem[] }) {
+export function MyRequestsTable({ items, priority }: { items: MyRequestItem[]; priority?: Record<number, ShownPriority> }) {
   if (items.length === 0) {
     return (
       <EmptyState
@@ -157,8 +172,9 @@ export function MyRequestsTable({ items }: { items: MyRequestItem[] }) {
                 <span className="min-w-0 font-medium text-primary-700 [overflow-wrap:anywhere]">
                   <SafeText text={item.title} />
                 </span>
-                <span className="shrink-0">
+                <span className="flex shrink-0 flex-col items-end gap-1">
                   <RequestStatusPill status={item.status} validUntil={item.validUntil} />
+                  {priority?.[item.id] && <PriorityPill priority={priority[item.id]} />}
                 </span>
               </span>
               <span className="block text-caption text-ink-muted">
@@ -182,6 +198,7 @@ export function MyRequestsTable({ items }: { items: MyRequestItem[] }) {
               <th>Request</th>
               <th>Type</th>
               <th>Status</th>
+              {priority && <th>Priority</th>}
               <th>Waiting for</th>
               <th>Raised</th>
             </tr>
@@ -201,6 +218,11 @@ export function MyRequestsTable({ items }: { items: MyRequestItem[] }) {
                 <td>
                   <RequestStatusPill status={item.status} validUntil={item.validUntil} />
                 </td>
+                {priority && (
+                  <td data-testid="my-request-priority">
+                    <PriorityPill priority={priority[item.id]} />
+                  </td>
+                )}
                 <td className="text-ink-muted">
                   {item.status === "IN_PROGRESS" || item.status === "ON_HOLD"
                     ? (item.pendingWith ?? "—")

@@ -52,6 +52,7 @@ import { listMentionable } from "@/lib/db/repositories/collab.repository";
 import { expiryState } from "@/server/approvals/expiry-rules";
 import { personProfile } from "@/lib/db/repositories/profile.repository";
 import { BrandAnimation } from "@/features/ui/BrandAnimation";
+import { ChoicePills, RequestPriorityBadge } from "@/features/ui/ChoicePill";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
 export const metadata: Metadata = { title: "Request" };
@@ -140,7 +141,7 @@ export default async function RequestPage({
       {/* v1.42.1 (owner's sketch): the title and number across the top; D-273: the approval journey below them, full width. */}
       <div className="mb-6 grid items-center gap-4" data-testid="request-top">
         <div className="min-w-0 [&>div]:mb-0">
-          <PageHeader title={view.title} meta={`${view.requestNo} · ${view.workflowName} · raised by ${view.requesterName}${view.round > 1 ? ` · round ${view.round}` : ""}`}>
+          <PageHeader title={view.title} badge={view.priority && !view.priority.hidden ? <RequestPriorityBadge priority={view.priority} /> : undefined} meta={`${view.requestNo} · ${view.workflowName} · raised by ${view.requesterName}${view.round > 1 ? ` · round ${view.round}` : ""}`}>
             <div className="flex flex-wrap items-center gap-3">
               <RequestStatusPill status={view.status} validUntil={view.validUntil} />
               <ValidityBadge validUntil={view.validUntil} />
@@ -314,6 +315,8 @@ export default async function RequestPage({
                         ) : (
                           <span className="text-ink-muted">No files</span>
                         )
+                      ) : field.pills ? (
+                        <ChoicePills values={field.pills} />
                       ) : (
                         <SafeText text={field.value} />
                       )}

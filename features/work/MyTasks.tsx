@@ -14,6 +14,7 @@ import { BulkBar } from "@/features/work/MoreParts";
 import { TaskGrid, type GridView } from "@/features/work/TaskGrid";
 import type { GridConfig, GridTask } from "@/server/work/grid";
 import { ConfirmButton } from "@/features/ui/ConfirmButton";
+import { TaskPriorityPill } from "@/features/ui/ChoicePill";
 
 // D-215: My Tasks. The person's own sections: Recently assigned, Today,
 // Upcoming, Later (built in) and any they add. Drag a task between sections
@@ -33,6 +34,7 @@ export interface MyTaskRow {
   subtasksOpen: number;
   comments: number;
   isPeriodic: boolean; // D-219
+  priority?: string; // v1.47.0: LOW / NORMAL / HIGH / URGENT
   approval?: { requestId: number; requestNo: string; workStep: boolean; linked?: boolean } | null; // v1.42.1
 }
 export interface MySectionRow {
@@ -126,6 +128,7 @@ export function MyTasks({ sections, tasks, layout, nowIso }: { sections: MySecti
             </span>
           )}
           {due && <span className={TONE_TEXT[due.tone]}>{due.text}</span>}
+          {task.priority && <TaskPriorityPill priority={task.priority} />}
         </div>
       </li>
     );

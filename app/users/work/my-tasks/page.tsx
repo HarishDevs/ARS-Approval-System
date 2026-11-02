@@ -120,6 +120,7 @@ export default async function MyTasksPage({
       subtasksOpen: task.subtasksOpen,
       comments: task.comments,
       isPeriodic: task.isPeriodic,
+      priority: task.priority, // v1.47.0
       approval: task.approval ?? null,
     };
   });

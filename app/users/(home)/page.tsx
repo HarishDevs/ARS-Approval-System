@@ -5,6 +5,8 @@ import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { displayName } from "@/features/shell/AppShell";
 import { MyRequestsTable, QueueTable } from "@/features/requests/lists";
+import { PriorityPill } from "@/features/ui/ChoicePill";
+import { priorityRecord } from "@/server/approvals/priority-lookup";
 import { countPendingTasksFor, listAttentionTasksFor, listMyRequests, listPendingTasksFor } from "@/lib/db/repositories/approvals.repository";
 import { listRecent } from "@/lib/db/repositories/recent.repository";
 import { ErrorState } from "@/features/ui/States";
@@ -129,6 +131,8 @@ export default async function UsersHome({ searchParams }: { searchParams: Promis
   const returned = mine.filter((item) => item.status === "CHANGES_REQUIRED");
   const since = Date.now() - RECENT_DAYS * 86_400_000;
   const completed = mine.filter((item) => (item.status === "APPROVED" || item.status === "REJECTED") && item.closedAt && item.closedAt.getTime() >= since).slice(0, 5);
+  // v1.47.0 (owner): the Priority pill on every Home widget, one query for them all.
+  const priority = await priorityRecord([...queue.map((item) => item.requestId), ...attention.items.map((item) => item.requestId), ...[...returned.slice(0, 5), ...mine.slice(0, 5), ...completed].map((item) => item.id), ...(recent ?? []).map((item) => item.id)], user);
   // D-265: icon, label, what it counts; each opens the page with that list.
   const tiles = [
     { label: "Waiting for me", note: "Requests awaiting your approval", value: waiting, href: "/users/queue", icon: Inbox, tone: "bg-primary-50 text-primary-700", alert: waiting > 0 },
@@ -226,7 +230,7 @@ export default async function UsersHome({ searchParams }: { searchParams: Promis
                 <p className="mt-1 text-label text-ink-muted">Requests that need your approval, and work given to you, appear here.</p>
               </div>
             ) : (
-              <QueueTable items={queue} />
+              <QueueTable items={queue} priority={priority} />
             )}
           </section>
 
@@ -240,7 +244,7 @@ export default async function UsersHome({ searchParams }: { searchParams: Promis
                   {attention.overdue} overdue · {attention.dueSoon} due within 24 hours
                 </span>
               </div>
-              <QueueTable items={attention.items} />
+              <QueueTable items={attention.items} priority={priority} />
             </section>
           )}
 
@@ -249,7 +253,7 @@ export default async function UsersHome({ searchParams }: { searchParams: Promis
               <h2 id="returned" className="mb-3 text-[calc(17px*var(--text-scale,1))] font-semibold">
                 Returned to you for changes
               </h2>
-              <MyRequestsTable items={returned.slice(0, 5)} />
+              <MyRequestsTable items={returned.slice(0, 5)} priority={priority} />
             </section>
           )}
 
@@ -264,7 +268,7 @@ export default async function UsersHome({ searchParams }: { searchParams: Promis
                 </Link>
               )}
             </div>
-            <MyRequestsTable items={mine.slice(0, 5)} />
+            <MyRequestsTable items={mine.slice(0, 5)} priority={priority} />
           </section>
 
           {completed.length > 0 && (
@@ -272,7 +276,7 @@ export default async function UsersHome({ searchParams }: { searchParams: Promis
               <h2 id="completed" className="mb-3 text-[calc(17px*var(--text-scale,1))] font-semibold">
                 Finished in the last {RECENT_DAYS} days
               </h2>
-              <MyRequestsTable items={completed} />
+              <MyRequestsTable items={completed} priority={priority} />
             </section>
           )}
         </div>
@@ -330,7 +334,15 @@ export default async function UsersHome({ searchParams }: { searchParams: Promis
                       <Link href={`/users/requests/${item.id}`} className="link block truncate font-medium">
                         <SafeText text={item.title} />
                       </Link>
-                      <span className="block text-caption text-ink-muted">{item.requestNo}</span>
+                      <span className="flex flex-wrap items-center gap-1.5 text-caption text-ink-muted">
+                        {item.requestNo}
+                        {priority[item.id] && (
+                          <>
+                            <span aria-hidden="true">·</span>
+                            <PriorityPill priority={priority[item.id]} />
+                          </>
+                        )}
+                      </span>
                     </span>
                     <span className="shrink-0 text-right text-caption text-ink-muted">opened {formatIndiaTime(item.viewedAt)}</span>
                   </li>

@@ -81,6 +81,7 @@ Everything the app has told you, in one place: **All**, **Approvals**, **Tasks**
 The **bell** at the top still shows your latest notices; **Read more** opens the Inbox.
 
 ### My requests
+If the form has a Priority field, the **Priority** column (after Status) shows it in its colour; **Sort → Priority** puts the most important first and **Group → Priority** groups by it. Hide the column in **Columns** if you don't need it.
 - **Raised by me / Shared with me** at the top, each with how many requests it holds.
 - The **status cards** (All, Open, Waiting for approvers, Sent back, On hold, Approved, Rejected, Withdrawn, Overdue) filter the list. Overdue requests are also counted under Waiting for approvers.
 - **Search** finds a request by number, title, approval type or the person it is waiting on.
@@ -225,7 +226,7 @@ Switch to it from the account menu → **Switch space**.
 - **Departments:** departments (with HOD) and designations. Tick **Approver** on designations of Manager and above. Only approver designations can be chosen to approve.
 - **Approver groups:** e.g. Finance team, for "any one of the group".
 - **Approval types & workflows:** each approval type has:
-  - **the form**, built in the Form Designer: add fields from a library, drag them into order (or ↑/↓), duplicate, remove (with Undo). Fields can show "only when" a rule is true;
+  - **the form**, built in the Form Designer: add fields from a library, drag them into order (or ↑/↓), duplicate, remove (with Undo). Fields can show "only when" a rule is true. Each option of a Dropdown, Radio buttons or Multi-select field can have a **colour**; the value then shows as a coloured pill everywhere. A choice field with the key **`priority`** becomes the request's **Priority** (shown beside the title, in the lists' Priority column, sortable and groupable in your option order);
   - **the levels**, built in the Workflow Designer: a map of the flow above the levels (click a box to open that level); levels fold, move (drag or Alt+↑/↓), duplicate and remove (with Undo). Each level says what needs fixing before you save.
     - one step, parallel steps, or a **DoA matrix** (amount bands, with the levels each band needs);
     - for parallel steps where **any one** or **any N** is enough, **If one branch rejects**: end the request (the default), or end it only when the required number can no longer be reached;

@@ -79,6 +79,7 @@ export function withType(field: FormField, value: string): FormField {
     ...(field.help ? { help: field.help } : {}),
     type,
     ...(OPTION_TYPES.includes(type) ? { options: field.options ?? [] } : {}),
+    ...(OPTION_TYPES.includes(type) && field.optionColors ? { optionColors: field.optionColors } : {}), // v1.47.0
     ...((type === "NUMBER" || type === "CURRENCY") && field.min !== undefined ? { min: field.min } : {}),
     ...(type === "LOOKUP" ? { source: source && (LOOKUP_SOURCES as readonly string[]).includes(source) ? source : "DEPARTMENT" } : {}),
     ...(type === "CALC" ? { formula: field.formula ?? "", ...(field.decimals !== undefined ? { decimals: field.decimals } : {}) } : {}),

@@ -8,6 +8,8 @@ import type { MiniRoad } from "@/server/approvals/road";
 import { RequestStatusPill } from "@/features/requests/StatusPill";
 import { PendingLink } from "@/features/ui/PendingLink";
 import { SafeText } from "@/features/ui/SafeText";
+import { PriorityPill } from "@/features/ui/ChoicePill";
+import type { ShownPriority } from "@/server/approvals/priority";
 import { SavedViews, SaveViewForm, type ViewChip } from "@/features/analytics/ReportForms";
 import { ListToolbar } from "@/features/ui/ListToolbar";
 import { EmptyState, NoResults } from "@/features/ui/Display";
@@ -44,7 +46,7 @@ export const VIEW_TARGET: Record<ListBase, string> = { MINE: "my_requests", COLL
 // D-256: the columns each list can show (the request itself always shows).
 export function columnsFor(base: ListBase): ListColumn[] {
   const showRaiser = base === "COLLAB" || base === "APPROVED_BY_ME";
-  return ["status", "waiting", ...(showRaiser ? (["raiser"] as const) : []), "raised", "activity", "progress", ...(base === "COLLAB" ? (["added"] as const) : []), "actions"];
+  return ["status", "priority", "waiting", ...(showRaiser ? (["raiser"] as const) : []), "raised", "activity", "progress", ...(base === "COLLAB" ? (["added"] as const) : []), "actions"];
 }
 
 // D-256 (owner's My Requests design): each quick filter as a status card.
@@ -123,6 +125,7 @@ export function RequestListScreen({
   views,
   empty,
   progress = {},
+  priority = {},
   columns,
   userId,
 }: {
@@ -135,6 +138,7 @@ export function RequestListScreen({
   views: ViewChip[];
   empty: string;
   progress?: Record<number, MiniRoad>; // D-256: the small road per row
+  priority?: Record<number, ShownPriority>; // v1.47.0: the request's Priority field, per row
   columns?: ListColumn[]; // D-256: the person's chosen columns
   userId: number;
 }) {
@@ -226,13 +230,20 @@ export function RequestListScreen({
           ? [month(item.submittedAt), month(item.submittedAt)]
           : filters.group === "raiser"
             ? [item.requesterName, item.requesterName]
-            : ["all", ""];
+            : filters.group === "priority"
+              ? [priority[item.id]?.label ?? "", priority[item.id]?.label ?? "No priority"]
+              : ["all", ""];
   const grouped: { key: string; label: string; items: ListedRequest[] }[] = [];
   for (const item of result.items) {
     const [key, label] = groupOf(item);
     const found = grouped.find((group) => group.key === key);
     if (found) found.items.push(item);
     else grouped.push({ key, label, items: [item] });
+  }
+  // v1.47.0: priority groups in the option order (Critical first), then Hidden, then none.
+  if (filters.group === "priority") {
+    const rankOf = (group: { items: ListedRequest[] }) => priority[group.items[0]!.id]?.rank ?? Number.POSITIVE_INFINITY;
+    grouped.sort((a, b) => rankOf(a) - rankOf(b));
   }
   const columnCount = 1 + available.filter((column) => show(column)).length;
   const sortChoices = can.sorts.map((value) => ({ label: SORT_LABEL[value], href: href({ sort: value, page: 1 }), active: filters.sort === value }));
@@ -452,6 +463,7 @@ export function RequestListScreen({
                     </p>
                     <div className="mt-1 flex flex-wrap items-center gap-2 text-caption">
                       <RequestStatusPill status={item.status} validUntil={item.validUntil} />
+                      {show("priority") && priority[item.id] && <PriorityPill priority={priority[item.id]} />}
                       {byMe && item.myApprovedAt && <span className="text-ink-muted">You approved {day(item.myApprovedAt)}</span>}
                       {approvedMine && item.closedAt && <span className="text-ink-muted">Approved {day(item.closedAt)}</span>}
                       {item.pendingWith && <span className="text-ink-muted">With {item.pendingWith}</span>}
@@ -475,6 +487,7 @@ export function RequestListScreen({
                 <tr>
                   <th scope="col">Request</th>
                   {show("status") && <th scope="col">Status</th>}
+                  {show("priority") && <th scope="col">Priority</th>}
                   {show("waiting") && (approvedMine ? <th scope="col">Approved</th> : byMe ? <th scope="col">Your approval</th> : <th scope="col">Waiting on</th>)}
                   {showRaiser && <th scope="col">Raised by</th>}
                   {show("raised") && <th scope="col">Raised</th>}
@@ -529,6 +542,11 @@ export function RequestListScreen({
                           <RequestStatusPill status={item.status} validUntil={item.validUntil} />
                           {item.overdue && <span className="mt-1 block text-caption font-semibold text-danger-600">Overdue</span>}
                           {item.validUntil && item.status === "APPROVED" && <span className="block text-caption text-ink-muted">valid until {day(item.validUntil)}</span>}
+                        </td>
+                      )}
+                      {show("priority") && (
+                        <td data-testid="list-priority">
+                          <PriorityPill priority={priority[item.id]} />
                         </td>
                       )}
                       {!show("waiting") ? null : approvedMine ? (

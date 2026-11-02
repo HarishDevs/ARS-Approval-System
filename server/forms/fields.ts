@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { FormData as EngineFormData } from "@/server/engine/types";
 import { conditionSpecSchema, operatorNeedsValue, ruleComparisons, upgradeRule } from "@/server/conditions/rule";
+import { cleanOptionColors, type OptionColor } from "@/server/forms/option-colors";
 import { computeLines, dependencyOrder, evaluateFormula, formatPaise, formulaFields, paiseToRupees, parseFormula, roundTo, ruleHolds, visibleFields, type FieldRule, type Line, type LineInput } from "@/server/forms/dynamic";
 
 // Form fields belong to a workflow version (D-055, S3-01a): a running
@@ -44,6 +45,7 @@ export interface FormField {
   type: FieldType;
   required: boolean;
   options?: string[]; // CHOICE only
+  optionColors?: Record<string, OptionColor>; // v1.47.0: option → pill colour (choice types only)
   source?: LookupSource; // LOOKUP only
   help?: string;
   min?: number; // NUMBER only: the smallest value allowed (e.g. 0 for amounts, D-QA-04)
@@ -92,6 +94,12 @@ export const formFieldSchema = z.object({
   listed: z.boolean().optional(),
   searchable: z.boolean().optional(),
   editable: z.boolean().optional(),
+  optionColors: z.record(z.string(), z.unknown()).optional(),
+}).transform(({ optionColors, ...field }) => {
+  // v1.47.0: colours only for a choice field's own options, only palette
+  // colours; anything else is dropped (never refused, so older data loads).
+  const colors = OPTION_TYPES.includes(field.type) ? cleanOptionColors(field.options, optionColors) : undefined;
+  return { ...field, ...(colors ? { optionColors: colors } : {}) };
 });
 
 export const formSchema = z.array(formFieldSchema).max(40);

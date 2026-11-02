@@ -1061,6 +1061,12 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 3. The task is an ordinary task (hand over, tick, reopen); finishing it decides nothing on the request. Its holder may open the request, read-only.
 4. The journey shows it as a Work task card ("Doesn't hold the request up"), never as a checkpoint.
 
+## F-210 Coloured choices and request priority (v1.47.0, D-281)
+1. IT → Form Designer → a Dropdown / Radio / Multi-select field → each option chip's colour select (or No colour) → Save (stored as `optionColors` in the form JSON).
+2. A field keyed `priority` of a choice type makes the request's priority: its value and colour (from the request's own form version).
+3. Shown as a pill: request page header, PDF, request lists (Priority column, sort and group in option order), Home widgets, search, Super Admin requests, Admin Records + CSV, phone cards; other choice values as pills in details and task tables.
+4. A confidential priority field: "Hidden" for people who may not see confidential values; never ranked by the sort.
+
 ## F-202 Comment at the bottom of a task, phone (v1.46.0, D-276)
 1. A task page on a phone shows **Add a comment** fixed above the tab bar.
 2. Tap → the box opens (text, Mention someone, "Let people I mention see this task", Send); Pico Bot steps aside.

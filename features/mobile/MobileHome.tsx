@@ -7,6 +7,7 @@ import { cardFacts } from "@/server/mobile/card-facts";
 import { miniRoads } from "@/server/approvals/road-view";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 import { ApprovalCard, waitedFor } from "@/features/mobile/ApprovalCard";
+import { RequestPriorityBadge } from "@/features/ui/ChoicePill";
 import { REQUEST_STATUS } from "@/features/requests/StatusPill";
 import { dueLabel, indiaDayOf, TONE_TEXT } from "@/features/work/format";
 import { addDays } from "@/server/work/rules";
@@ -46,9 +47,10 @@ export async function MobileHome({
     tasks ? listTaskItems(["t.assignee_id = ?", "t.deleted_at IS NULL", OPEN, "t.due_at < ?"], [user.id, tomorrow], "t.due_at", 5) : none,
     tasks ? countTaskItems(["t.assignee_id = ?", "t.deleted_at IS NULL", OPEN, "t.due_at < ?"], [user.id, now]) : none,
   ]);
-  const ids = (queue ?? []).map((item) => item.requestId);
-  const [facts, roads] = await Promise.all([cardFacts(ids), miniRoads(ids)]);
   const openMine = (mine ?? []).filter((item) => item.status === "IN_PROGRESS" || item.status === "ON_HOLD" || item.status === "CHANGES_REQUIRED").slice(0, 3);
+  // v1.47.0: the facts (and Priority) of the cards and of My requests in progress, in one query.
+  const ids = [...(queue ?? []).map((item) => item.requestId), ...openMine.map((item) => item.id)];
+  const [facts, roads] = await Promise.all([cardFacts(ids), miniRoads((queue ?? []).map((item) => item.requestId))]);
 
   const attentionParts = [
     waiting ? `${waiting} approval${waiting === 1 ? "" : "s"} waiting` : null,
@@ -142,6 +144,7 @@ export async function MobileHome({
                         amount: fact?.amount,
                         waiting: waitedFor(item.createdAt, now.getTime()),
                         priority: item.overdue ? { label: "Overdue", tone: "red" } : null,
+                        requestPriority: fact?.priority ?? null, // v1.47.0
                         road: roads.get(item.requestId) ?? null,
                         status: item.onHold ? { label: "On hold", className: REQUEST_STATUS.ON_HOLD.style } : { label: item.work ? "Work to do" : "Your decision", className: "bg-primary-50 text-primary-600" },
                       }}
@@ -195,7 +198,10 @@ export async function MobileHome({
                 <Link href={`/users/requests/${item.id}`} className="block px-4 py-3">
                   <span className="flex items-center justify-between gap-2">
                     <span className="font-mono text-[12px] font-semibold text-ink-muted">{item.requestNo}</span>
-                    <span className={`badge ${REQUEST_STATUS[item.status].style}`}>{REQUEST_STATUS[item.status].label}</span>
+                    <span className="flex shrink-0 items-center gap-1.5">
+                      {facts.get(item.id)?.priority && <RequestPriorityBadge priority={facts.get(item.id)!.priority!} />}
+                      <span className={`badge ${REQUEST_STATUS[item.status].style}`}>{REQUEST_STATUS[item.status].label}</span>
+                    </span>
                   </span>
                   <span className="mt-0.5 block truncate text-[15px] font-semibold">
                     <SafeText text={item.title} />

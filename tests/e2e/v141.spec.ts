@@ -93,6 +93,8 @@ test("My requests: status cards, columns kept on the account, the progress cell 
   await expect(page).toHaveURL(/tab=waiting/);
   await page.goto("/users/requests");
   await expect(page.getByTestId("request-table").getByTestId("road-mini").first()).toBeVisible();
+  // v1.47.0: Priority is a column by default, right after Status.
+  await expect(page.getByTestId("request-table").getByRole("columnheader", { name: "Priority" })).toHaveCount(1);
   // Hide a column; it stays hidden after a reload.
   await page.getByTestId("column-picker").click();
   await page.getByRole("group", { name: "Columns" }).getByLabel("Last activity").uncheck();

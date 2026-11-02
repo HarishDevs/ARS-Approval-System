@@ -1,5 +1,6 @@
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 import { flatSteps, type MapStage } from "@/server/approvals/step-map";
+import { isOptionColor, OPTION_COLOR_SWATCH } from "@/server/forms/option-colors";
 
 // #10 one-page-or-more PDF summary of a request: details, levels with who
 // decided what, and the history. Built from the same view the request page
@@ -13,6 +14,7 @@ export interface SummaryInput {
   statusLabel: string;
   requesterName: string;
   progress: string;
+  priority?: { label: string; color: string | null } | null; // v1.47.0: the Priority field (text in the option's colour)
   fields: { label: string; value: string }[];
   stages: MapStage[];
   timeline: { at: string; text: string }[];
@@ -123,6 +125,10 @@ export async function buildRequestSummaryPdf(input: SummaryInput): Promise<Uint8
   text(`${input.requestNo}: ${input.title}`, { size: 16, font: bold });
   text(`${input.workflowName} · raised by ${input.requesterName}`, { color: MUTED });
   text(`Status: ${input.statusLabel} · ${input.progress}`, { font: bold });
+  if (input.priority) {
+    const hex = isOptionColor(input.priority.color) ? OPTION_COLOR_SWATCH[input.priority.color].light.fg : null;
+    text(`Priority: ${input.priority.label}`, { font: bold, color: hex ? rgb(parseInt(hex.slice(1, 3), 16) / 255, parseInt(hex.slice(3, 5), 16) / 255, parseInt(hex.slice(5, 7), 16) / 255) : INK });
+  }
 
   if (input.fields.length > 0) {
     heading("Details");

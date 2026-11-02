@@ -5,7 +5,9 @@ import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { activeDelegatorsFor, listComments, type CommentItem } from "@/lib/db/repositories/collab.repository";
 import { buildStepMap, peopleInState, summarizeTracker, type MapStage, type TrackerSummary } from "@/server/approvals/step-map";
 import { describeEvent, eventKind, type TimelineKind } from "@/server/approvals/timeline";
-import { CONFIDENTIAL_TEXT, displayValue, isConfidential, storedLines, type FormField } from "@/server/forms/fields";
+import { CONFIDENTIAL_TEXT, displayValue, isConfidential, OPTION_TYPES, storedLines, type FormField } from "@/server/forms/fields";
+import { optionColor } from "@/server/forms/option-colors";
+import { requestPriority, shownPriority, type ShownPriority } from "@/server/approvals/priority";
 import type { Line } from "@/server/forms/dynamic";
 import type { FormData as EngineFormData, InstanceStatus } from "@/server/engine/types";
 import type { Actor } from "@/server/approvals/service";
@@ -38,7 +40,8 @@ export interface RequestView {
   requesterName: string;
   form: FormField[];
   rawFields: Record<string, string>; // for the resubmit form
-  fields: { key: string; label: string; value: string; lines?: Line[]; files?: number[] }[]; // files: attachment ids (ATTACHMENT fields)
+  fields: { key: string; label: string; value: string; lines?: Line[]; files?: number[]; pills?: { label: string; color: string | null }[] }[]; // files: attachment ids (ATTACHMENT fields); pills: coloured choice values (v1.47.0)
+  priority: ShownPriority | null; // v1.47.0: the Priority field, shown beside the title
   stages: MapStage[];
   tracker: TrackerSummary;
   timeline: { id: number; at: Date; text: string; kind: TimelineKind }[];
@@ -183,6 +186,7 @@ export async function loadRequestView(requestId: number, viewer: Actor): Promise
         value: displayValue(field, request.formData[field.key], names, lookupNames),
         ...(field.type === "LINE_ITEMS" ? { lines: storedLines(request.formData, field.key) } : {}),
         ...(field.type === "ATTACHMENT" ? { files: attachmentRows.filter((file) => file.fieldKey === field.key).map((file) => file.id) } : {}),
+        ...choicePills(field, request.formData[field.key]),
             },
       ),
     stages,
@@ -229,7 +233,17 @@ export async function loadRequestView(requestId: number, viewer: Actor): Promise
     holdReason: state.status === "ON_HOLD" ? (state.hold?.reason ?? null) : null,
     validUntil: state.status === "APPROVED" ? await findValidity(requestId) : null,
     confidentialHidden: hiddenKeys.size > 0,
+    priority: shownPriority(requestPriority(version.form, request.formData), canSeeConfidential),
   };
+}
+
+// v1.47.0: a choice value with colours set in the Form Designer is shown as
+// coloured pills (nothing extra when its options have no colours).
+function choicePills(field: FormField, value: unknown): { pills?: { label: string; color: string | null }[] } {
+  if (!OPTION_TYPES.includes(field.type) || !field.optionColors) return {};
+  const values = (Array.isArray(value) ? value : [value]).filter((item): item is string => typeof item === "string" && item !== "");
+  if (values.length === 0) return {};
+  return { pills: values.map((item) => ({ label: item, color: optionColor(field, item) })) };
 }
 
 async function departmentNameOf(id: number): Promise<string | null> {

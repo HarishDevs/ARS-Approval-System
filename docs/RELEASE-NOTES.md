@@ -1,5 +1,10 @@
 # Release notes
 
+## v1.47.0 (2 Nov 2026): priority and coloured choices (owner)
+- **Colours for choices:** in the Form Designer, each option of a Dropdown, Radio buttons or Multi-select field can have a colour (red, orange, yellow, green, teal, blue, purple, pink, grey, or none). Wherever that value shows (request and task details, task tables, the New request summary) it is a coloured pill, readable in light and dark mode.
+- **Request priority:** if a request's form has a choice field with the key `priority` (as in Custom approval), its value is the request's priority, in its colour: beside the title on the request page and in the PDF; a **Priority** column (after Status) in My requests, Collaborating, My approved requests, Approved by me and Waiting for me, with **Sort: Priority (highest first)** and **Group: Priority** in your option order; in search, Super Admin requests, Admin Records (and its CSV), the Home widgets (My recent requests, Waiting for me, Due soon, Returned, Finished, Recently viewed) and the phone cards. Requests without one show "—". A confidential priority field shows *Hidden* to people who may not see confidential values.
+- **Task priority** shows as the same kind of pill in every task list, board and table (Urgent red, High orange, Low grey).
+
 ## v1.46.0 (2 Nov 2026): the remaining build, and the owner's decisions (owner)
 **On your phone**
 - A task keeps **Add a comment** at the bottom of the screen, as in Asana: tap it, write, @mention, **Send**.

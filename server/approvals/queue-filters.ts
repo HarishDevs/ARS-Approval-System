@@ -2,8 +2,10 @@
 // v1.7.2: the full filter set (search, raised by, department, step, mine or
 // covering, due within N days, files, raised and waiting-since dates, rows
 // per page). Filters only narrow what already waits for the person.
+import { priorityRankSql } from "@/server/approvals/priority";
+
 export const QUEUE_SHOWS = ["all", "overdue", "soon", "approvals", "work", "held"] as const;
-export const QUEUE_SORTS = ["oldest", "newest", "due", "raised", "number"] as const;
+export const QUEUE_SORTS = ["oldest", "newest", "due", "raised", "number", "priority"] as const; // v1.47.0: + priority
 export const QUEUE_SIZES = [25, 50, 100] as const;
 export const QUEUE_FOR = ["me", "covering"] as const;
 export type QueueShow = (typeof QUEUE_SHOWS)[number];
@@ -35,7 +37,7 @@ export const QUEUE_SHOW_LABEL: Record<QueueShow, string> = {
   work: "Work tasks (To do)",
   held: "On hold",
 };
-export const QUEUE_SORT_LABEL: Record<QueueSort, string> = { oldest: "Oldest first", newest: "Newest first", due: "Due soonest", raised: "Raised most recently", number: "Request number" };
+export const QUEUE_SORT_LABEL: Record<QueueSort, string> = { oldest: "Oldest first", newest: "Newest first", due: "Due soonest", raised: "Raised most recently", number: "Request number", priority: "Priority (highest first)" };
 
 const pick = <T extends string>(allowed: readonly T[], value: unknown, fallback: T): T => (typeof value === "string" && (allowed as readonly string[]).includes(value) ? (value as T) : fallback);
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -137,6 +139,8 @@ export function queueFilterSql(filter: QueueFilter, userId?: number): { where: s
           ? "r.submitted_at DESC, t.id DESC"
           : filter.sort === "number"
             ? "r.request_no, t.id"
+            : filter.sort === "priority"
+              ? `${priorityRankSql("r", "v")} IS NULL, ${priorityRankSql("r", "v")}, t.created_at, t.id`
             : "t.created_at, t.id";
   return { where: where.length ? ` AND ${where.join(" AND ")}` : "", params, orderBy };
 }

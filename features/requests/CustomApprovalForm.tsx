@@ -10,6 +10,7 @@ import { DynamicFields } from "@/features/requests/DynamicFields";
 import { DEFAULT_STEP_POLICY, stepDefaults, type StepPolicy } from "@/server/workflows/step-policy";
 import { actionErrorMessage, FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import { Hint } from "@/features/ui/Hint";
+import { ChoicePills } from "@/features/ui/ChoicePill";
 import type { BuilderInnerStage, BuilderStage } from "@/server/workflows/builder";
 import { NO_LOOKUPS, type FieldLookups, type FormField } from "@/server/forms/fields";
 import { PeoplePicker, type PersonOption } from "@/features/ui/PeoplePicker";
@@ -234,9 +235,14 @@ export function CustomApprovalForm({
   // A field shown in the summary: IT's fields with a value, in their order.
   const summaryFields = fields
     .filter((field) => !["ATTACHMENT", "SECTION", "LINE_ITEMS"].includes(field.type))
-    .map((field) => ({ label: field.label, value: snapshot.values[field.key] ?? "", type: field.type, options: (field as { options?: { value: string; label: string }[] }).options }))
+    .map((field) => ({ label: field.label, value: snapshot.values[field.key] ?? "", type: field.type, options: (field as { options?: { value: string; label: string }[] }).options, colors: field.optionColors }))
     .filter((field) => field.value.trim() !== "")
-    .map((field) => ({ label: field.label, value: field.type === "CURRENCY" ? formatAmount(field.value) : (field.options?.find((option) => option.value === field.value)?.label ?? field.value) }));
+    .map((field) => ({
+      label: field.label,
+      value: field.type === "CURRENCY" ? formatAmount(field.value) : (field.options?.find((option) => option.value === field.value)?.label ?? field.value),
+      // v1.47.0: a choice with option colours shows as coloured pills.
+      pills: field.colors ? summaryChoices(field.type, field.value).map((item) => ({ label: item, color: field.colors?.[item] ?? null })) : null,
+    }));
 
   const summary = (
     <dl className="space-y-3 text-label" data-testid="request-summary">
@@ -247,7 +253,7 @@ export function CustomApprovalForm({
       {summaryFields.slice(0, 8).map((field) => (
         <div key={field.label}>
           <dt className="text-caption text-ink-muted">{field.label}</dt>
-          <dd className="break-words font-medium">{field.value}</dd>
+          <dd className="break-words font-medium">{field.pills?.length ? <ChoicePills values={field.pills} /> : field.value}</dd>
         </div>
       ))}
       <div className="grid grid-cols-2 gap-3">
@@ -584,4 +590,16 @@ export function CustomApprovalForm({
       )}
     </form>
   );
+}
+
+// v1.47.0: the picked option(s) of a choice field as typed in the form (a
+// multi-select sends its picks as a JSON list).
+function summaryChoices(type: string, value: string): string[] {
+  if (type !== "MULTI_CHOICE") return [value];
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [value];
+  } catch {
+    return [value];
+  }
 }

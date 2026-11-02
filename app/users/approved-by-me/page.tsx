@@ -24,7 +24,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
   if (defaultView) redirect(`/users/approved-by-me?${new URLSearchParams(defaultView.query).toString()}`);
   const filters = parseListFilters(params, "APPROVED_BY_ME");
   const [result, counts, choices] = await Promise.all([listRequests("APPROVED_BY_ME", user.id, filters), tabCounts("APPROVED_BY_ME", user.id, filters), listChoices("APPROVED_BY_ME", user.id)]);
-  const extras = await listExtras(VIEW_TARGET.APPROVED_BY_ME, columnsFor("APPROVED_BY_ME"), user.id, result.items);
+  const extras = await listExtras(VIEW_TARGET.APPROVED_BY_ME, columnsFor("APPROVED_BY_ME"), user.id, result.items, user.roles);
   return (
     <>
       <PageHeader title="Approved by me" description="Every request where you approved a step, yourself or for someone you cover, and what happened to it after." icon={CheckCheck} />
@@ -39,6 +39,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
         empty="You haven't approved anything yet."
         userId={user.id}
         progress={extras.progress}
+        priority={extras.priority}
         columns={extras.columns}
       />
     </>

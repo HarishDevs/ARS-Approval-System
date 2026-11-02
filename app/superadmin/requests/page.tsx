@@ -5,6 +5,8 @@ import { PendingLink } from "@/features/ui/PendingLink";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { RequestStatusPill } from "@/features/requests/StatusPill";
+import { PriorityPill } from "@/features/ui/ChoicePill";
+import { priorityRecord } from "@/server/approvals/priority-lookup";
 import { DeleteRequestButton } from "@/features/superadmin/DeleteRequestButton";
 import { listAllRequests } from "@/lib/db/repositories/request-admin.repository";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
@@ -19,12 +21,14 @@ const STATUS_OPTIONS = REQUEST_STATUS_OPTIONS;
 // Super Admin → Requests (S11-10, D-086, F-73): every request, searchable,
 // with Delete; the Deleted tab lists what was deleted, by whom and why.
 export default async function SuperAdminRequestsPage({ searchParams }: { searchParams: Promise<{ q?: string; status?: string; page?: string; tab?: string }> }) {
-  await requireArea("superadmin");
+  const { user } = await requireArea("superadmin");
   const params = await searchParams;
   const deleted = params.tab === "deleted";
   const q = (params.q ?? "").slice(0, 100);
   const status = params.status ?? "";
   const result = await listAllRequests({ q, status, deleted, page: Number(params.page) || 1 });
+  // v1.47.0: each request's Priority (the Super Admin sees confidential values).
+  const priority = await priorityRecord(result.items.map((item) => item.id), user);
   const link = (changes: { page?: number; tab?: string }) => {
     const query = new URLSearchParams();
     const tab = changes.tab ?? (deleted ? "deleted" : "");
@@ -88,6 +92,7 @@ export default async function SuperAdminRequestsPage({ searchParams }: { searchP
                 <th>Raised by</th>
                 <th>Approval type</th>
                 <th>Status</th>
+                <th>Priority</th>
                 <th>{deleted ? "Deleted" : "Raised"}</th>
                 <th className="text-right">{deleted ? "Reason" : <span className="sr-only">Action</span>}</th>
               </tr>
@@ -114,6 +119,9 @@ export default async function SuperAdminRequestsPage({ searchParams }: { searchP
                   <td>{item.workflowName}</td>
                   <td>
                     <RequestStatusPill status={item.status} validUntil={item.validUntil} />
+                  </td>
+                  <td>
+                    <PriorityPill priority={priority[item.id]} />
                   </td>
                   <td className="whitespace-nowrap text-label text-ink-muted">
                     {deleted && item.deletedAt ? (

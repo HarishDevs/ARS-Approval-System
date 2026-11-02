@@ -8,6 +8,7 @@ import { canExport } from "@/server/settings/features";
 import { listRecords, recordChoices, RECORDS_EXPORT_MAX, RECORDS_PAGE_SIZE } from "@/lib/db/repositories/records.repository";
 import { INFO_PRIORITIES, INFO_STATUSES, readRecordFilter, recordQuery, REQUEST_STATUSES, TASK_PRIORITIES, TASK_STATUSES, type RecordFilter, type RecordKind } from "@/server/records/filters";
 import { rolesSeeConfidential } from "@/server/approvals/confidential";
+import { ChoicePill } from "@/features/ui/ChoicePill";
 import { columnsFor, PRIORITY_LABEL, RECORD_HREF, RECORD_TITLE, STATUS_LABEL, type RecordColumn } from "@/server/records/columns";
 
 // D-191 (owner): Admin → Records. Every approval request, task and
@@ -148,6 +149,8 @@ export async function RecordsRegister({ kind, searchParams }: { kind: RecordKind
                           </Link>
                         ) : column.key === "overdue" && column.value(row) ? (
                           <span className="font-medium text-danger-600">{column.value(row)}</span>
+                        ) : column.color && column.value(row) ? (
+                          <ChoicePill label={column.value(row)} color={column.color(row)} className="text-caption" />
                         ) : (
                           column.value(row)
                         )}

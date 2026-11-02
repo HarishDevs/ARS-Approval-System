@@ -1182,3 +1182,33 @@ body:has([data-testid="m-comment-dock"][data-open="1"]) .picbot-launcher {
     min-width: max(var(--jr-min), 300px) !important;
   }
 }
+
+/* v1.47.0 (owner, 2 Nov 2026): coloured choice values (ChoicePill). The
+   colours are set per pill as variables from server/forms/option-colors.ts. */
+.choice-pill {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  border-radius: 9999px;
+  padding: 1px 8px;
+  font-weight: 600;
+  line-height: 1.4;
+  background: var(--pill-bg);
+  color: var(--pill-fg);
+}
+:root[data-theme="dark"] .choice-pill {
+  background: var(--pill-bg-dark);
+  color: var(--pill-fg-dark);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .choice-pill {
+    background: var(--pill-bg-dark);
+    color: var(--pill-fg-dark);
+  }
+}
+@media print {
+  .choice-pill {
+    background: var(--pill-bg) !important;
+    color: var(--pill-fg) !important;
+  }
+}

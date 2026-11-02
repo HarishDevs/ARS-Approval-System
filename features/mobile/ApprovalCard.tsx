@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { SafeText } from "@/features/ui/SafeText";
 import { RoadMini } from "@/features/requests/RoadMini";
+import { RequestPriorityBadge } from "@/features/ui/ChoicePill";
 import type { MiniRoad } from "@/server/approvals/road";
 
 // v1.43.0 (owner's mobile brief §4): one approval as a card. The whole card
@@ -17,7 +18,8 @@ export interface ApprovalCardData {
   approver?: string | null;
   submitted?: string | null;
   waiting?: string | null;
-  priority?: { label: string; tone: "red" | "amber" } | null;
+  priority?: { label: string; tone: "red" | "amber" } | null; // how urgent the step is (Overdue, Due soon)
+  requestPriority?: { label: string; color: string | null } | null; // v1.47.0: the request's Priority field
   status: { label: string; className: string };
   road?: MiniRoad | null; // D-273: the request's journey in small
 }
@@ -38,6 +40,7 @@ export function ApprovalCard({ card, compact = false }: { card: ApprovalCardData
             {card.requester ? ` · ${card.requester}` : ""}
           </span>
         </span>
+        {card.requestPriority && <RequestPriorityBadge priority={card.requestPriority} />}
         {card.priority ? (
           <span className={`shrink-0 rounded-md px-2 py-1 text-[12px] font-bold ${TONE[card.priority.tone]}`}>{card.priority.label}</span>
         ) : (
@@ -81,6 +84,7 @@ export function ApprovalCard({ card, compact = false }: { card: ApprovalCardData
       )}
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <span className={`badge ${card.status.className}`}>{card.status.label}</span>
+        {card.requestPriority && <RequestPriorityBadge priority={card.requestPriority} />}
         {card.priority && <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${TONE[card.priority.tone]}`}>{card.priority.label}</span>}
       </div>
     </Link>

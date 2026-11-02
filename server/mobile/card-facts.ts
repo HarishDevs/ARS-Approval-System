@@ -4,11 +4,14 @@ import { getDbPool } from "@/lib/db/client";
 import { isConfidential, type FormField } from "@/server/forms/fields";
 import { parseTypeSettings } from "@/server/workflows/type-settings";
 import { formatPaise } from "@/server/forms/dynamic";
+import { requestPriority } from "@/server/approvals/priority";
+import type { OptionColor } from "@/server/forms/option-colors";
 
 export interface CardFacts {
   department: string | null;
   amount: string | null;
   submittedAt: Date | null;
+  priority: { label: string; color: OptionColor | null } | null; // v1.47.0: the Priority field (never a confidential one)
 }
 
 function json<T>(value: unknown): T | null {
@@ -48,7 +51,13 @@ export async function cardFacts(requestIds: number[]): Promise<Map<number, CardF
     const money = form.filter((field) => (field.type === "CURRENCY" || field.type === "LINE_ITEMS") && !isConfidential(field));
     const field = (settings.budget.enabled ? money.find((item) => item.key === settings.budget.amountField) : undefined) ?? money[0];
     const value = field ? data[field.key] : undefined;
-    facts.set(row.id, { department: row.department, amount: typeof value === "number" && Number.isFinite(value) ? formatPaise(Math.round(value * 100)) : null, submittedAt: row.submitted_at });
+    const priority = requestPriority(form, data);
+    facts.set(row.id, {
+      department: row.department,
+      amount: typeof value === "number" && Number.isFinite(value) ? formatPaise(Math.round(value * 100)) : null,
+      submittedAt: row.submitted_at,
+      priority: priority && !priority.confidential ? { label: priority.label, color: priority.color } : null,
+    });
   }
   return facts;
 }

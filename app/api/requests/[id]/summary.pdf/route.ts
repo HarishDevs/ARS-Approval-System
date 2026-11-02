@@ -46,6 +46,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       statusLabel: isExpiredApproval(view.status, view.validUntil) ? `${EXPIRED_LABEL} (approved; valid until ${formatIndiaTime(view.validUntil!)})` : (STATUS[view.status] ?? view.status),
       requesterName: view.requesterName,
       progress: view.tracker.headline,
+      priority: view.priority && !view.priority.hidden ? { label: view.priority.label, color: view.priority.color } : null, // v1.47.0
       // Line items are written out row by row under their total.
       fields: view.fields.map((field) => ({
         label: field.label,

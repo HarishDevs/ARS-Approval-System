@@ -36,7 +36,7 @@ export default async function MyRequestsPage({ searchParams }: { searchParams: P
     baseTotal("MINE", user.id),
     baseTotal("COLLAB", user.id),
   ]);
-  const extras = await listExtras(VIEW_TARGET.MINE, columnsFor("MINE"), user.id, result.items);
+  const extras = await listExtras(VIEW_TARGET.MINE, columnsFor("MINE"), user.id, result.items, user.roles);
   return (
     <>
       <PageHeader title="My requests" meta="Track and manage your approval requests in one place." description="Everything you've raised, with where it is now." icon={ClipboardList}>
@@ -57,6 +57,7 @@ export default async function MyRequestsPage({ searchParams }: { searchParams: P
         empty="You haven't raised any requests yet."
         userId={user.id}
         progress={extras.progress}
+        priority={extras.priority}
         columns={extras.columns}
       />
     </>

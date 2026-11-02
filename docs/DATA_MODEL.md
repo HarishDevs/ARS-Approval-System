@@ -998,3 +998,7 @@ JSON is used for engine and form data that changes shape between versions, not f
 
 ### Times
 Times are stored in UTC (`DATETIME`, set by `CURRENT_TIMESTAMP` or the app). India dates are plain `DATE` columns: `holidays.holiday_on`, `department_holidays.holiday_on`, `delegations.starts_on` / `ends_on`, `work_digest_sends.day`. Event and audit tables use `DATETIME(3)` (milliseconds) so their order is stable.
+
+## v1.47.0: coloured choices and request priority (no schema change)
+- Form JSON (`workflow_versions.form_json`, `module_type_versions.form_json`, `custom_approval_settings.form_json`): choice fields (CHOICE, RADIO, MULTI_CHOICE) may carry `optionColors`: `{ "<option>": "red" | "orange" | "yellow" | "green" | "teal" | "blue" | "purple" | "pink" | "grey" }`.
+- A request's priority is read from `approval_requests.form_data_json` at the key `priority` (case-insensitive) when its form version has a choice field with that key; nothing is stored separately.

@@ -4,15 +4,18 @@
 // the address back. Anything unexpected is dropped, never passed on. The
 // base condition (whose requests these are) is always added by the caller
 // and can't be widened by any filter.
+import { priorityRankSql } from "@/server/approvals/priority";
+
 export const LIST_STATUSES = ["IN_PROGRESS", "ON_HOLD", "CHANGES_REQUIRED", "APPROVED", "REJECTED", "CANCELLED"] as const;
 export type ListStatus = (typeof LIST_STATUSES)[number];
-export const LIST_SORTS = ["newest", "oldest", "activity", "due", "number", "added", "approved", "mine"] as const;
+// v1.47.0: "priority" = the request's Priority field, in its option order.
+export const LIST_SORTS = ["newest", "oldest", "activity", "due", "number", "added", "approved", "mine", "priority"] as const;
 export type ListSort = (typeof LIST_SORTS)[number];
 export const LIST_SIZES = [25, 50, 100] as const;
 // D-226: the list's rows in groups (the page shown).
-export const LIST_GROUPS = ["status", "type", "month", "raiser"] as const;
+export const LIST_GROUPS = ["status", "type", "month", "raiser", "priority"] as const;
 export type ListGroup = (typeof LIST_GROUPS)[number];
-export const GROUP_LABEL: Record<ListGroup, string> = { status: "Status", type: "Approval type", month: "Month raised", raiser: "Raised by" };
+export const GROUP_LABEL: Record<ListGroup, string> = { status: "Status", type: "Approval type", month: "Month raised", raiser: "Raised by", priority: "Priority" };
 export const groupsFor = (base: ListBase): ListGroup[] => LIST_GROUPS.filter((group) => group !== "raiser" || BASE_FEATURES[base].people);
 export const VALIDITY = ["valid", "expiring", "expired"] as const;
 // MINE: raised by me. COLLAB: I'm a collaborator. APPROVED_MINE: raised by me
@@ -36,15 +39,16 @@ export const SORT_LABEL: Record<ListSort, string> = {
   added: "Latest added first",
   approved: "Latest approved first",
   mine: "My latest approval first",
+  priority: "Priority (highest first)",
 };
 export const VALIDITY_LABEL: Record<(typeof VALIDITY)[number], string> = { valid: "Approval still valid", expiring: "Expires within 7 days", expired: "Approval expired" };
 
 // What each list may filter or sort by, beyond the common filters.
 export const BASE_FEATURES: Record<ListBase, { people: boolean; collab: boolean; approvedBy: boolean; mine: boolean; amended: boolean; status: boolean; waiting: boolean; sorts: readonly ListSort[] }> = {
-  MINE: { people: false, collab: false, approvedBy: false, mine: false, amended: false, status: true, waiting: true, sorts: ["newest", "oldest", "activity", "due", "number"] },
-  COLLAB: { people: true, collab: true, approvedBy: false, mine: false, amended: false, status: true, waiting: true, sorts: ["newest", "oldest", "activity", "due", "number", "added"] },
-  APPROVED_MINE: { people: false, collab: false, approvedBy: true, mine: false, amended: true, status: false, waiting: false, sorts: ["approved", "newest", "oldest", "activity", "number"] },
-  APPROVED_BY_ME: { people: true, collab: false, approvedBy: false, mine: true, amended: false, status: true, waiting: true, sorts: ["mine", "newest", "oldest", "activity", "approved", "due", "number"] },
+  MINE: { people: false, collab: false, approvedBy: false, mine: false, amended: false, status: true, waiting: true, sorts: ["newest", "oldest", "activity", "due", "number", "priority"] },
+  COLLAB: { people: true, collab: true, approvedBy: false, mine: false, amended: false, status: true, waiting: true, sorts: ["newest", "oldest", "activity", "due", "number", "added", "priority"] },
+  APPROVED_MINE: { people: false, collab: false, approvedBy: true, mine: false, amended: true, status: false, waiting: false, sorts: ["approved", "newest", "oldest", "activity", "number", "priority"] },
+  APPROVED_BY_ME: { people: true, collab: false, approvedBy: false, mine: true, amended: false, status: true, waiting: true, sorts: ["mine", "newest", "oldest", "activity", "approved", "due", "number", "priority"] },
 };
 
 // Quick tabs: a named condition, per list.
@@ -380,6 +384,7 @@ export function listFilterSql(f: ListFilters, base: ListBase, userId = 0): { whe
   }
   const due = "(SELECT MIN(d.due_at) FROM approval_tasks d WHERE d.request_id = r.id AND d.status = 'PENDING')";
   const mine = `(SELECT MAX(md.decided_at) FROM approval_tasks md WHERE md.request_id = r.id AND md.task_type = 'APPROVAL' AND md.status = 'APPROVED' AND md.decided_by = ${Number(userId) | 0})`;
+  const rank = priorityRankSql("r", "v");
   const orderBy =
     f.sort === "oldest"
       ? "r.submitted_at ASC, r.id ASC"
@@ -395,6 +400,8 @@ export function listFilterSql(f: ListFilters, base: ListBase, userId = 0): { whe
                 ? "r.closed_at IS NULL, r.closed_at DESC, r.id DESC"
                 : f.sort === "mine" && base === "APPROVED_BY_ME"
                   ? `${mine} DESC, r.id DESC`
+                  : f.sort === "priority"
+                    ? `${rank} IS NULL, ${rank}, r.submitted_at DESC, r.id DESC`
                   : "r.submitted_at DESC, r.id DESC";
   return { where, params, orderBy };
 }

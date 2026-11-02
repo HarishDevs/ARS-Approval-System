@@ -76,6 +76,7 @@ export default async function ApprovalsHub({ searchParams }: { searchParams: Pro
         submitted: fact?.submittedAt ? formatIndiaTime(fact.submittedAt) : null,
         waiting: waitedFor(item.createdAt, now),
         priority: item.overdue ? { label: "Overdue", tone: "red" } : dueSoon ? { label: "Due soon", tone: "amber" } : null,
+        requestPriority: fact?.priority ?? null, // v1.47.0
         status: item.onHold ? { label: "On hold", className: REQUEST_STATUS.ON_HOLD.style } : { label: item.work ? "Work to do" : "Your decision", className: "bg-primary-50 text-primary-600" },
         road: roads.get(item.requestId) ?? null,
       };
@@ -95,6 +96,7 @@ export default async function ApprovalsHub({ searchParams }: { searchParams: Pro
         approver: open ? item.pendingWith : null,
         submitted: formatIndiaTime(item.submittedAt),
         waiting: open ? waitedFor(item.submittedAt, now) : null,
+        requestPriority: fact?.priority ?? null, // v1.47.0
         // DR-05: an approval past its valid-until date shows as Expired.
         status: { label: requestStatusDisplay(item.status, item.validUntil).label, className: requestStatusDisplay(item.status, item.validUntil).style },
         road: roads.get(item.id) ?? null,

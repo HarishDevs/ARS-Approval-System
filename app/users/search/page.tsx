@@ -7,6 +7,8 @@ import { PageHeader } from "@/features/shell/PageHeader";
 import { NoResults } from "@/features/ui/Display";
 import { PendingLink } from "@/features/ui/PendingLink";
 import { RequestStatusPill } from "@/features/requests/StatusPill";
+import { PriorityPill } from "@/features/ui/ChoicePill";
+import { priorityRecord } from "@/server/approvals/priority-lookup";
 import { SaveViewForm, SavedViewList } from "@/features/requests/SavedViews";
 import { SafeText } from "@/features/ui/SafeText";
 import { REQUEST_STATUS_OPTIONS } from "@/features/ui/labels";
@@ -48,6 +50,8 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
     isAdmin ? listDepartments() : Promise.resolve([]),
   ]);
   const pages = Math.max(1, Math.ceil(result.total / SEARCH_PAGE_SIZE));
+  // v1.47.0: each result's Priority (one query for the page).
+  const priority = await priorityRecord(result.items.map((item) => item.id), user);
   const link = (page: number) => `/users/search?${new URLSearchParams(searchQuery({ ...filters, page }))}`;
   const query = searchQuery({ ...filters, page: 1 });
 
@@ -171,6 +175,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
                 )}
               </div>
               <div className="flex items-center gap-2">
+                {priority[item.id] && <PriorityPill priority={priority[item.id]} />}
                 {item.overdue && <span className="badge bg-danger-50 text-danger-600">Overdue</span>}
                 <RequestStatusPill status={item.status} validUntil={item.validUntil} />
               </div>
