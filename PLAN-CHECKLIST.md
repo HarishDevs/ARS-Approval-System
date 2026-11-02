@@ -17,6 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (2 Nov 2026):** v1.47.1: priority colours everywhere (D-282). Publish v1.47.1 (it contains v1.47.0 and v1.46.0).
 - **Now (2 Nov 2026):** v1.47.0: request priority and coloured choices (D-281), on top of v1.46.0. No new migration (v1.46.0's one still runs on start). **Owner:** publish v1.47.0; in Admin → Custom approval give the Priority options their colours and save.
 - **Now (2 Nov 2026):** v1.46.0: everything still buildable is built, and the owner's 16 decisions of today are in (D-276 to D-280). **One migration** runs on start (form rules converted; backup table kept). **Owner:** publish v1.46.0 (`npm ci`); then the steps in `docs/GO_LIVE_READINESS_CHECKLIST.md` (v1.46.0 section): `DB_POOL_SIZE`, `/api/health/deep` clock offset, `ORIGIN_SECRET` (tile), `BACKUP_ENCRYPTION_KEY` + Google Drive backup + Test, WhatsApp templates (tile), Google Calendar consent screen External and published (Q-024), phone UAT.
 - **Now (2 Nov 2026):** v1.45.0: the phone app laid out like Asana (D-275), on top of v1.44.1. No migration. **Owner:** publish v1.45.0 (contains v1.44.1 and v1.44.0), then try it on a phone (V145-09).
@@ -155,6 +156,12 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 - **Still open:** Q-015.
 
 ---
+
+## Session log — v1.47.1 (2 Nov 2026): priority colours everywhere, planned before starting
+Owner: "the colors should be reflected wherever the Priority is shown in tables or sub headings any where available".
+- [x] V1471-01 (2 Nov 2026) Inventory of every place a priority shows; each now uses the coloured pill (task page, task pane, My Work, information list and page, task grid and project list (read-only and editable), Analytics oldest tasks, Admin notifications, phone task and information rows)
+- [x] V1471-02 (2 Nov 2026) Built-in colours for every priority (Normal blue, Important yellow); uncoloured request priority options coloured by name
+- [x] V1471-03 (2 Nov 2026) Tests and docs
 
 ## Session log — v1.47.0 (2 Nov 2026): priority and coloured choices, planned before starting
 Owner: "add priority here (request page header), add a colour selector in the dropdown so that dropdowns can be highlighted in the tables, and add priority in all possible tables"; "custom approvals will have priority" (a Dropdown keyed priority); then the request lists and the Home widgets.

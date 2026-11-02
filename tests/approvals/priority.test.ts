@@ -13,7 +13,8 @@ const form: FormField[] = [
 describe("requestPriority", () => {
   it("is the value of the choice field keyed priority, with its colour and option order", () => {
     expect(requestPriority(form, { priority: "Critical" })).toEqual({ label: "Critical", color: "red", rank: 0, confidential: false });
-    expect(requestPriority(form, { priority: "Low" })).toEqual({ label: "Low", color: null, rank: 4, confidential: false });
+    // v1.47.1: an uncoloured option takes its colour from its name.
+    expect(requestPriority(form, { priority: "Low" })).toEqual({ label: "Low", color: "grey", rank: 4, confidential: false });
     expect(requestPriority(form, { priority: "Important" })?.color).toBe("yellow");
   });
 
@@ -63,5 +64,23 @@ describe("requestPriority", () => {
     expect(sql).toContain("JSON_EXTRACT(r.form_data_json, '$.priority')");
     expect(sql).toContain("CAST('true' AS JSON)");
     expect(sql).not.toContain("?");
+  });
+});
+
+// v1.47.1 (owner: the colours wherever priority shows): an uncoloured
+// priority option takes a colour from its name; a chosen colour wins.
+import { priorityNameColor } from "@/server/forms/option-colors";
+describe("priority colours by name", () => {
+  it("colours the owner's options even before IT picks colours", () => {
+    expect(["Critical", "Most important", "Important", "High", "Normal", "Medium", "Low", "Something else"].map(priorityNameColor)).toEqual([
+      "red",
+      "orange",
+      "yellow",
+      "orange",
+      "blue",
+      "blue",
+      "grey",
+      null,
+    ]);
   });
 });

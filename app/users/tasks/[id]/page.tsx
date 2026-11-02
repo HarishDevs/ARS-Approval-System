@@ -1,3 +1,4 @@
+import { TaskPriorityPill } from "@/features/ui/ChoicePill";
 import type { Metadata } from "next";
 import { RichText } from "@/features/work/RichText";
 import { featureOn } from "@/server/settings/features";
@@ -9,14 +10,14 @@ import { Hint } from "@/features/ui/Hint";
 import { Badge, Breadcrumbs } from "@/features/ui/Display";
 import { CommentForm, EditTaskForm, ReassignForm, TaskActionButton } from "@/features/modules/TaskForms";
 import { FieldValues, FileLinks, HistoryList, type HistoryEntry } from "@/features/modules/RecordParts";
-import { PRIORITY_TONE, STATUS_TONE } from "@/features/modules/TaskListScreen";
+import { STATUS_TONE } from "@/features/modules/TaskListScreen";
 import { listTaskEvents, listPeopleFacts, personFacts } from "@/lib/db/repositories/tasks.repository";
 import { loadFieldLookups, loadLookupNames } from "@/lib/db/repositories/lookups.repository";
 import { listRecordFiles } from "@/server/modules/files";
 import { isAdminActor, loadTaskFor, relatedRequestVisible } from "@/server/modules/tasks";
 import { loadJourney } from "@/server/journey/load";
 import { ARSApprovalJourney } from "@/features/journey/ARSApprovalJourney";
-import { COMPLETION_LABEL, indiaDateTimeText, PRIORITY_LABEL, utcToIndiaLocal } from "@/server/modules/settings";
+import { COMPLETION_LABEL, indiaDateTimeText, utcToIndiaLocal } from "@/server/modules/settings";
 import { isOverdue, mayAssignTo, TASK_STATUS_LABEL } from "@/server/modules/task-rules";
 import { TaskWorkPanel, TaskWorkSide } from "@/features/work/TaskWorkPanel";
 import { CommentThread } from "@/features/work/CommentThread";
@@ -187,7 +188,7 @@ export default async function TaskPage({ params, searchParams }: { params: Promi
           <h1 className="text-[26px] font-semibold leading-tight">{task.title}</h1>
           <div className="flex flex-wrap gap-2">
             <Badge tone={STATUS_TONE[task.status]}>{TASK_STATUS_LABEL[task.status]}</Badge>
-            {task.priority !== "NORMAL" && <Badge tone={PRIORITY_TONE[task.priority]}>{PRIORITY_LABEL[task.priority]}</Badge>}
+            <TaskPriorityPill priority={task.priority} showNormal />
             {late && <Badge tone="danger">Overdue</Badge>}
             {task.deletedAt && <Badge tone="danger">Deleted</Badge>}
           </div>
@@ -228,7 +229,7 @@ export default async function TaskPage({ params, searchParams }: { params: Promi
           <TaskCompleteButton taskId={task.id} done={task.status === "COMPLETED"} disabled={!(actions.has("COMPLETE") || actions.has("REOPEN"))} title={task.title} />
         )}
         <Badge tone={STATUS_TONE[task.status]}>{TASK_STATUS_LABEL[task.status]}</Badge>
-        <Badge tone={PRIORITY_TONE[task.priority]}>{PRIORITY_LABEL[task.priority]}</Badge>
+        <TaskPriorityPill priority={task.priority} showNormal />
         {late && <Badge tone="danger">Overdue</Badge>}
         {task.isMilestone && <Badge tone="primary">Milestone</Badge>}
         {/* D-222: the two kinds of task. */}

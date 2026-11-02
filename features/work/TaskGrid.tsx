@@ -1,5 +1,6 @@
 "use client";
 
+import { TaskPriorityPill, priorityControlProps } from "@/features/ui/ChoicePill";
 import { ApprovalBadge, approvalRowClass } from "@/features/work/ApprovalLink";
 import { ArrowUpDown, CalendarDays, ChevronDown, ChevronRight, Filter, GitBranch, Layers, Lock, MessageSquare, Plus, Repeat, Search, Settings2, Users, X } from "lucide-react";
 import Link from "next/link";
@@ -42,7 +43,6 @@ export interface GridView {
   current: { id: number; name: string } | null;
 }
 
-const PRIORITY_CLASS = { URGENT: "bg-danger-50 text-danger-600", HIGH: "bg-warning-50 text-warning-600", NORMAL: "bg-surface-muted text-ink-muted", LOW: "bg-surface-muted text-ink-muted" } as const;
 const COMPLETED_LABEL: Record<(typeof COMPLETED_RANGES)[number], string> = { none: "Hide", all: "All completed", today: "Completed today", week: "Past 7 days", month: "Past 30 days" };
 const WIDTH: Record<GridColumn, string> = { due: "130px", assignee: "190px", collaborators: "150px", createdBy: "160px", projects: "210px", visibility: "180px", priority: "110px", tags: "150px" };
 
@@ -472,7 +472,8 @@ export function TaskGrid({
                                   aria-label={`Priority of ${task.title}`}
                                   value={task.priority}
                                   onChange={(event) => void call(() => taskFieldsAction(task.id, { priority: event.target.value }), { success: false })}
-                                  className={`rounded-full border-0 px-2 py-0.5 text-caption ${PRIORITY_CLASS[task.priority]}`}
+                                  {...priorityControlProps(task.priority)}
+                                  className={`rounded-full border-0 px-2 py-0.5 text-caption ${priorityControlProps(task.priority).className}`}
                                 >
                                   <option value="LOW">Low</option>
                                   <option value="NORMAL">Normal</option>
@@ -480,7 +481,7 @@ export function TaskGrid({
                                   <option value="URGENT">Urgent</option>
                                 </select>
                               ) : (
-                                <span className={`rounded-full px-2 py-0.5 text-caption ${PRIORITY_CLASS[task.priority]}`}>{task.priority.charAt(0) + task.priority.slice(1).toLowerCase()}</span>
+                                <TaskPriorityPill priority={task.priority} showNormal />
                               ))}
                             {column === "tags" && <TagsCell taskId={task.id} title={task.title} tags={task.tags} canEdit={task.canEdit && open} />}
                           </span>

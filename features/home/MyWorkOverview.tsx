@@ -1,3 +1,4 @@
+import { TaskPriorityPill } from "@/features/ui/ChoicePill";
 import "server-only";
 import { ApprovalBadge, approvalRowClass } from "@/features/work/ApprovalLink";
 import Link from "next/link";
@@ -45,7 +46,6 @@ const OPEN = "t.status IN ('OPEN', 'IN_PROGRESS', 'BLOCKED')";
 const IST_DAY = "DATE(DATE_ADD(t.due_at, INTERVAL 330 MINUTE))";
 const PAGE = 6;
 type Tab = "upcoming" | "overdue" | "completed" | "all";
-const PRIORITY: Record<WorkTaskItem["priority"], [string, Tone]> = { URGENT: ["Urgent", "danger"], HIGH: ["High", "danger"], NORMAL: ["Medium", "warning"], LOW: ["Low", "success"] };
 const STATUS: Record<WorkTaskItem["status"], [string, Tone]> = {
   OPEN: ["Open", "info"],
   IN_PROGRESS: ["In progress", "primary"],
@@ -295,7 +295,7 @@ export async function MyWorkOverview({
                           <Due task={task} now={now} />
                         </td>
                         <td className="py-2.5 pr-3">
-                          <Badge tone={PRIORITY[task.priority][1]}>{PRIORITY[task.priority][0]}</Badge>
+                          <TaskPriorityPill priority={task.priority} showNormal />
                         </td>
                         <td className="py-2.5 pr-3">
                           <StatusBadge task={task} today={today} />
@@ -321,7 +321,7 @@ export async function MyWorkOverview({
                           <ApprovalBadge approval={task.approval} size="sm" />
                           <ProjectChip task={task} />
                           <Due task={task} now={now} />
-                          <Badge tone={PRIORITY[task.priority][1]}>{PRIORITY[task.priority][0]}</Badge>
+                          <TaskPriorityPill priority={task.priority} showNormal />
                           <StatusBadge task={task} today={today} />
                         </div>
                       </div>

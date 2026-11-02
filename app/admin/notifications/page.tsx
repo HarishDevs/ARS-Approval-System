@@ -1,3 +1,4 @@
+import { TaskPriorityPill } from "@/features/ui/ChoicePill";
 import type { Metadata } from "next";
 import { PagedRows } from "@/features/ui/PagedRows";
 import { Send } from "lucide-react";
@@ -111,7 +112,12 @@ async function HistoryTab() {
                 <p className="font-medium">{row.title}</p>
                 <p className="text-caption text-ink-muted">
                   {CATEGORY_TEXT[row.category]}
-                  {row.priority === "HIGH" ? " · High" : ""}
+                  {row.priority === "HIGH" && (
+                    <>
+                      {" · "}
+                      <TaskPriorityPill priority="HIGH" />
+                    </>
+                  )}
                 </p>
               </td>
               <td className="px-4 py-3 text-ink-muted">{row.audienceText}</td>

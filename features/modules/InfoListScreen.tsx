@@ -1,3 +1,4 @@
+import { TaskPriorityPill } from "@/features/ui/ChoicePill";
 import { featureOn } from "@/server/settings/features";
 import { Megaphone } from "lucide-react";
 import { notFound } from "next/navigation";
@@ -220,7 +221,7 @@ export async function InfoListScreen({ base, query }: { base: InfoBase; query: R
                     <td className="text-label">{item.typeName}</td>
                     <td className="text-label">{base === "INBOX" ? item.createdByName : item.status === "DRAFT" ? "—" : item.recipients}</td>
                     <td>
-                      <Badge tone={INFO_PRIORITY_TONE[item.priority]}>{INFO_PRIORITY_LABEL[item.priority]}</Badge>
+                      <TaskPriorityPill priority={item.priority} showNormal />
                     </td>
                     <td className="text-label">
                       {base === "INBOX"

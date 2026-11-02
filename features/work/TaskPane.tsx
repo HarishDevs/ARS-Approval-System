@@ -1,3 +1,4 @@
+import { TaskPriorityPill } from "@/features/ui/ChoicePill";
 import { ApprovalBadge } from "@/features/work/ApprovalLink";
 import { WORK_LINK_KEY, workMirrorLink } from "@/server/approvals/work-mirror";
 import Link from "next/link";
@@ -9,9 +10,9 @@ import { CopyLinkButton, TaskCompleteButton } from "@/features/work/client";
 import { TaskShareButton } from "@/features/work/ShareDialogs";
 import { TaskWorkPanel, TaskWorkSide } from "@/features/work/TaskWorkPanel";
 import { CommentThread } from "@/features/work/CommentThread";
-import { PRIORITY_TONE, STATUS_TONE } from "@/features/modules/TaskListScreen";
+import { STATUS_TONE } from "@/features/modules/TaskListScreen";
 import { loadTaskFor } from "@/server/modules/tasks";
-import { indiaDateTimeText, PRIORITY_LABEL } from "@/server/modules/settings";
+import { indiaDateTimeText } from "@/server/modules/settings";
 import { isOverdue, TASK_STATUS_LABEL } from "@/server/modules/task-rules";
 import { taskWorkView } from "@/server/work/task-view";
 import { recurrenceLabel } from "@/server/work/more-rules";
@@ -87,7 +88,7 @@ export async function TaskPane({ taskId, user, closeHref }: { taskId: number; us
         </h2>
         <div className="flex flex-wrap gap-2">
           <Badge tone={STATUS_TONE[task.status]}>{TASK_STATUS_LABEL[task.status]}</Badge>
-          <Badge tone={PRIORITY_TONE[task.priority]}>{PRIORITY_LABEL[task.priority]}</Badge>
+          <TaskPriorityPill priority={task.priority} showNormal />
           {late && <Badge tone="danger">Overdue</Badge>}
           <Badge tone={view.panel.recurrence ? "info" : "neutral"}>{view.panel.recurrence ? `Periodic: ${recurrenceLabel(view.panel.recurrence)}` : "Ad hoc"}</Badge>
         </div>

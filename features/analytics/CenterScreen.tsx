@@ -1,3 +1,4 @@
+import { TaskPriorityPill } from "@/features/ui/ChoicePill";
 import Link from "next/link";
 import { PhoneFold } from "@/features/analytics/PhoneFold";
 import { isMobileLayout } from "@/server/ui/layout-mode";
@@ -431,7 +432,7 @@ async function Tasks({ scope, viewer, period, previous, compareLabel, buckets }:
             <Link key={row.id} href={`/users/tasks/${row.id}`} className="link">
               {row.taskNo}
             </Link>,
-            row.priority.toLowerCase(),
+            <TaskPriorityPill key={`p-${row.id}`} priority={row.priority} showNormal />,
             row.assignee,
             `${row.ageDays} days`,
             row.overdue ? "Yes" : "No",

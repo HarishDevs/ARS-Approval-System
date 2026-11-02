@@ -1,5 +1,10 @@
 # Release notes
 
+## v1.47.1 (2 Nov 2026): priority colours everywhere (owner)
+- Every priority now shows in colour wherever it appears: tables (task lists, project lists and boards, My Work on Home, Analytics "Oldest open tasks", Records, the request lists), headings (the task page, the task pane, the request page, an information item) and the phone rows.
+- Built-in priorities: **Urgent** red, **High** orange, **Important** yellow, **Normal** blue, **Low** grey (Home → My Work used to say "Medium" for Normal; it now says Normal like everywhere else). Editable priority boxes in task tables wear the same colour.
+- A request priority option IT hasn't coloured yet takes a colour from its name (Critical red, Most important and High orange, Important yellow, Normal/Medium blue, Low grey); a colour chosen in the Form Designer always wins.
+
 ## v1.47.0 (2 Nov 2026): priority and coloured choices (owner)
 - **Colours for choices:** in the Form Designer, each option of a Dropdown, Radio buttons or Multi-select field can have a colour (red, orange, yellow, green, teal, blue, purple, pink, grey, or none). Wherever that value shows (request and task details, task tables, the New request summary) it is a coloured pill, readable in light and dark mode.
 - **Request priority:** if a request's form has a choice field with the key `priority` (as in Custom approval), its value is the request's priority, in its colour: beside the title on the request page and in the PDF; a **Priority** column (after Status) in My requests, Collaborating, My approved requests, Approved by me and Waiting for me, with **Sort: Priority (highest first)** and **Group: Priority** in your option order; in search, Super Admin requests, Admin Records (and its CSV), the Home widgets (My recent requests, Waiting for me, Due soon, Returned, Finished, Recently viewed) and the phone cards. Requests without one show "—". A confidential priority field shows *Hidden* to people who may not see confidential values.

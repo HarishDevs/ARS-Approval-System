@@ -12,7 +12,7 @@ import { dueLabel, indiaDayOf, TONE_TEXT } from "@/features/work/format";
 import { columnAccent, initialsOf } from "@/features/work/kanban";
 import { BulkBar, FieldInput, type FieldView } from "@/features/work/MoreParts";
 import { TaskGrid, type GridView } from "@/features/work/TaskGrid";
-import { TaskPriorityPill } from "@/features/ui/ChoicePill";
+import { TaskPriorityPill, priorityControlProps } from "@/features/ui/ChoicePill";
 import type { GridConfig, GridTask } from "@/server/work/grid";
 
 // D-215: a project's List and Board. Sections hold tasks in the order the
@@ -55,7 +55,6 @@ const shiftDay = (day: string, days: number) => {
 };
 const OPEN = new Set(["OPEN", "IN_PROGRESS", "BLOCKED"]);
 const PRIORITY_RANK = { URGENT: 0, HIGH: 1, NORMAL: 2, LOW: 3 } as const;
-const PRIORITY_CLASS = { URGENT: "bg-danger-50 text-danger-600", HIGH: "bg-warning-50 text-warning-600", NORMAL: "", LOW: "" } as const;
 
 export function ProjectWorkspace({
   projectId,
@@ -506,7 +505,8 @@ export function ProjectWorkspace({
                             value={task.priority}
                             disabled={!OPEN.has(task.status)}
                             onChange={(event) => void call(() => taskFieldsAction(task.id, { priority: event.target.value }), { success: false })}
-                            className={`field-input h-8 w-[100px] py-0 text-label ${PRIORITY_CLASS[task.priority]}`}
+                            {...priorityControlProps(task.priority)}
+                            className={`field-input h-8 w-[100px] py-0 text-label ${priorityControlProps(task.priority).className}`}
                           >
                             <option value="LOW">Low</option>
                             <option value="NORMAL">Normal</option>
@@ -514,7 +514,7 @@ export function ProjectWorkspace({
                             <option value="URGENT">Urgent</option>
                           </select>
                         ) : (
-                          <span className="text-label">{task.priority.charAt(0) + task.priority.slice(1).toLowerCase()}</span>
+                          <TaskPriorityPill priority={task.priority} showNormal />
                         )}
                       </div>
                       {fields.map((field) => (

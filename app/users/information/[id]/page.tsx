@@ -1,3 +1,4 @@
+import { TaskPriorityPill } from "@/features/ui/ChoicePill";
 import type { Metadata } from "next";
 import { featureOn } from "@/server/settings/features";
 import Link from "next/link";
@@ -7,14 +8,14 @@ import { PageHeader } from "@/features/shell/PageHeader";
 import { Badge, Breadcrumbs } from "@/features/ui/Display";
 import { EditPublishedForm, InfoActionButton } from "@/features/modules/InfoForms";
 import { FieldValues, FileLinks, HistoryList } from "@/features/modules/RecordParts";
-import { INFO_PRIORITY_TONE, INFO_STATE_TONE } from "@/features/modules/InfoListScreen";
+import { INFO_STATE_TONE } from "@/features/modules/InfoListScreen";
 import { listInfoEvents, listRecipients, markInfoRead } from "@/lib/db/repositories/info.repository";
 import { listPeopleFacts } from "@/lib/db/repositories/tasks.repository";
 import { loadFieldLookups, loadLookupNames } from "@/lib/db/repositories/lookups.repository";
 import { listRecordFiles } from "@/server/modules/files";
 import { indiaToday, loadInfoFor } from "@/server/modules/information";
 import { infoState, INFO_STATE_LABEL } from "@/server/modules/info-rules";
-import { indiaDateTimeText, INFO_PRIORITY_LABEL } from "@/server/modules/settings";
+import { indiaDateTimeText } from "@/server/modules/settings";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
 export const metadata: Metadata = { title: "Information" };
@@ -58,7 +59,7 @@ export default async function InformationPage({ params, searchParams }: { params
       <Breadcrumbs items={[{ href: viewer.recipient ? "/users/information" : "/users/information/sent", label: "Information" }, { label: item.infoNo }]} />
       <PageHeader title={item.title} meta={`${item.infoNo} · ${item.typeName} (version ${versionNo}) · from ${item.createdByName}`}>
         <Badge tone={INFO_STATE_TONE[state]}>{INFO_STATE_LABEL[state]}</Badge>
-        <Badge tone={INFO_PRIORITY_TONE[item.priority]}>{INFO_PRIORITY_LABEL[item.priority]}</Badge>
+        <TaskPriorityPill priority={item.priority} showNormal />
       </PageHeader>
       {query.published && (
         <p role="status" className="mb-4 rounded-md bg-success-50 px-3 py-2 text-label text-success-600">

@@ -81,7 +81,7 @@ Everything the app has told you, in one place: **All**, **Approvals**, **Tasks**
 The **bell** at the top still shows your latest notices; **Read more** opens the Inbox.
 
 ### My requests
-If the form has a Priority field, the **Priority** column (after Status) shows it in its colour; **Sort → Priority** puts the most important first and **Group → Priority** groups by it. Hide the column in **Columns** if you don't need it.
+If the form has a Priority field, the **Priority** column (after Status) shows it in its colour (until IT picks colours, Critical shows red, Most important and High orange, Important yellow, Normal blue, Low grey; tasks use the same colours); **Sort → Priority** puts the most important first and **Group → Priority** groups by it. Hide the column in **Columns** if you don't need it.
 - **Raised by me / Shared with me** at the top, each with how many requests it holds.
 - The **status cards** (All, Open, Waiting for approvers, Sent back, On hold, Approved, Rejected, Withdrawn, Overdue) filter the list. Overdue requests are also counted under Waiting for approvers.
 - **Search** finds a request by number, title, approval type or the person it is waiting on.

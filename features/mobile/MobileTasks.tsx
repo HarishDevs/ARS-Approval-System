@@ -10,6 +10,7 @@ import { SafeText } from "@/features/ui/SafeText";
 import { TaskCheck } from "@/features/work/client";
 import { CompactToggle, ScreenTitle, SheetChoices, SheetLink, ViewDock } from "@/features/mobile/BottomSheet";
 import { TaskDockAdd } from "@/features/mobile/NewTaskButton";
+import { TaskPriorityPill } from "@/features/ui/ChoicePill";
 
 const OPEN = "t.status IN ('OPEN', 'IN_PROGRESS', 'BLOCKED')";
 const TABS = [
@@ -211,9 +212,8 @@ function TaskRow({ task, now, compact, showAssignee }: { task: WorkTaskItem; now
                 </span>
               )}
               {priority && (
-                <span className="flex items-center gap-1.5 text-[13px] text-ink-muted">
-                  <span aria-hidden="true" className={`h-2.5 w-2.5 rounded-full ${priority.dot}`} />
-                  {priority.label}
+                <span className="mt-0.5 block">
+                  <TaskPriorityPill priority={task.priority} />
                 </span>
               )}
             </>

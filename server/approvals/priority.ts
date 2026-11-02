@@ -1,5 +1,5 @@
 import { isConfidential, OPTION_TYPES, type FormField } from "@/server/forms/fields";
-import { optionColor, type OptionColor } from "@/server/forms/option-colors";
+import { optionColor, priorityNameColor, type OptionColor } from "@/server/forms/option-colors";
 
 // v1.47.0 (owner, 2 Nov 2026: "custom approvals will have priority", "add
 // Priority in all possible tables"): a request's priority is the value of
@@ -37,7 +37,7 @@ export function requestPriority(form: readonly FormField[] | null | undefined, f
   if (values.length === 0) return null;
   const first = values[0]!;
   const index = (field.options ?? []).indexOf(first);
-  return { label: values.join(", "), color: optionColor(field, first), rank: index >= 0 ? index : Number.MAX_SAFE_INTEGER, confidential: isConfidential(field) };
+  return { label: values.join(", "), color: optionColor(field, first) ?? priorityNameColor(first), rank: index >= 0 ? index : Number.MAX_SAFE_INTEGER, confidential: isConfidential(field) };
 }
 
 const json = <T,>(value: unknown): T | null => {

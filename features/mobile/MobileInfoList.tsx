@@ -1,3 +1,4 @@
+import { TaskPriorityPill } from "@/features/ui/ChoicePill";
 import Link from "next/link";
 import { Megaphone, Plus, Search, Send, Inbox } from "lucide-react";
 import { EmptyState } from "@/features/ui/Display";
@@ -19,8 +20,6 @@ export interface MobileInfoRow {
   chip: { text: string; tone: "danger" | "warning" | "success" | "neutral" };
 }
 
-const DOT = { URGENT: "bg-[color:var(--m-red)]", IMPORTANT: "bg-warning-solid", NORMAL: "" } as const;
-const PRIORITY_TEXT = { URGENT: "Urgent", IMPORTANT: "Important", NORMAL: "" } as const;
 const CHIP = {
   danger: "bg-danger-50 text-danger-600",
   warning: "bg-warning-50 text-warning-600",
@@ -100,9 +99,8 @@ export function MobileInfoList({
                     <span className="font-mono">{row.infoNo}</span> · {row.detail}
                   </span>
                   {row.priority !== "NORMAL" && (
-                    <span className="flex items-center gap-1.5 text-[13px] text-ink-muted">
-                      <span aria-hidden="true" className={`h-2.5 w-2.5 rounded-full ${DOT[row.priority]}`} />
-                      {PRIORITY_TEXT[row.priority]}
+                    <span className="mt-0.5 block">
+                      <TaskPriorityPill priority={row.priority} />
                     </span>
                   )}
                 </span>

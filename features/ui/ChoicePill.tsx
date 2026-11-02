@@ -61,6 +61,14 @@ export function RequestPriorityBadge({ priority }: { priority: { label: string; 
 export function TaskPriorityPill({ priority, showNormal = false }: { priority: string; showNormal?: boolean }) {
   const label = priority.charAt(0) + priority.slice(1).toLowerCase();
   const color = BUILT_IN_PRIORITY_COLOR[priority] ?? null;
-  if (!color && !showNormal) return null;
+  // Normal is left out of busy rows unless asked for (tables and headers ask).
+  if (priority === "NORMAL" && !showNormal) return null;
   return <ChoicePill label={label} color={color} className="whitespace-nowrap text-caption" title={`Priority: ${label}`} />;
+}
+
+// v1.47.1: an editable priority (a select in a task table) wears the same
+// colours as the pill.
+export function priorityControlProps(priority: string): { className: string; style?: CSSProperties; "data-color"?: string } {
+  const color = BUILT_IN_PRIORITY_COLOR[priority] ?? null;
+  return color ? { className: "choice-pill", style: choicePillStyle(color), "data-color": color } : { className: "" };
 }

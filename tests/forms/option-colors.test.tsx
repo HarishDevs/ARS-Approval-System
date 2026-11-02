@@ -83,12 +83,13 @@ describe("ChoicePill", () => {
     expect(renderToStaticMarkup(<RequestPriorityBadge priority={{ label: "Critical", color: "red" }} />)).toContain("Priority: ");
   });
 
-  it("task priorities: Urgent red, High orange, Low grey, Normal plain (or nothing)", () => {
+  it("task priorities: Urgent red, High orange, Important yellow, Normal blue (or left out), Low grey", () => {
     expect(renderToStaticMarkup(<TaskPriorityPill priority="URGENT" />)).toContain('data-color="red"');
     expect(renderToStaticMarkup(<TaskPriorityPill priority="HIGH" />)).toContain('data-color="orange"');
     expect(renderToStaticMarkup(<TaskPriorityPill priority="LOW" />)).toContain('data-color="grey"');
     expect(renderToStaticMarkup(<TaskPriorityPill priority="NORMAL" />)).toBe("");
-    expect(renderToStaticMarkup(<TaskPriorityPill priority="NORMAL" showNormal />)).toContain("Normal");
+    expect(renderToStaticMarkup(<TaskPriorityPill priority="NORMAL" showNormal />)).toContain('data-color="blue"');
+    expect(renderToStaticMarkup(<TaskPriorityPill priority="IMPORTANT" />)).toContain('data-color="yellow"');
   });
 });
 

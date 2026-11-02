@@ -75,6 +75,20 @@ export function optionColor(field: { optionColors?: Readonly<Record<string, stri
   return isOptionColor(color) ? color : null;
 }
 
+// v1.47.1 (owner: priority colours everywhere): a priority option IT has not
+// coloured gets a colour from its name, so priority is never plain text.
+// A colour chosen in the Form Designer always wins.
+export function priorityNameColor(label: unknown): OptionColor | null {
+  if (typeof label !== "string") return null;
+  const name = label.trim().toLowerCase();
+  if (/\b(critical|urgent|highest|blocker|emergency)\b/.test(name)) return "red";
+  if (/\b(most|very) important\b|\bhigh\b/.test(name)) return "orange";
+  if (/\bimportant\b/.test(name)) return "yellow";
+  if (/\b(medium|normal|moderate|routine)\b/.test(name)) return "blue";
+  if (/\b(low|lowest|minor)\b/.test(name)) return "grey";
+  return null;
+}
+
 // WCAG relative-luminance contrast of two #rrggbb colours (tests, docs).
 export function contrastRatio(a: string, b: string): number {
   const lum = (hex: string) => {
@@ -91,4 +105,6 @@ export function contrastRatio(a: string, b: string): number {
 // v1.47.0 (owner: "add Priority in all possible tables"): the built-in task
 // and information priorities use the same pills everywhere: Urgent red,
 // High / Important orange, Normal plain, Low grey.
-export const BUILT_IN_PRIORITY_COLOR: Record<string, OptionColor | null> = { URGENT: "red", HIGH: "orange", IMPORTANT: "orange", NORMAL: null, LOW: "grey" };
+// v1.47.1 (owner: "the colours should be reflected wherever the priority is
+// shown"): every built-in priority has a colour, Normal included.
+export const BUILT_IN_PRIORITY_COLOR: Record<string, OptionColor | null> = { URGENT: "red", HIGH: "orange", IMPORTANT: "yellow", NORMAL: "blue", LOW: "grey" };
