@@ -1,5 +1,5 @@
-import { PageSkeleton } from "@/features/ui/Skeleton";
+import { ScreenLoading } from "@/features/mobile/MobileSkeletons";
 
 export default function Loading() {
-  return <PageSkeleton kind="form" label="Loading your profile…" />;
+  return <ScreenLoading screen="page" desktop="form" label="Loading your profile…" />;
 }

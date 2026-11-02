@@ -148,7 +148,7 @@ export function NotificationBell({ initialUnread }: { initialUnread: number }) {
           id={panelId}
           role="dialog"
           aria-label="Latest notifications"
-          className="absolute right-0 top-11 z-dialog flex max-h-[min(80vh,560px)] w-[min(92vw,380px)] flex-col overflow-hidden rounded-lg border border-line bg-surface shadow-overlay"
+          className="fixed inset-x-3 top-[calc(3.5rem+env(safe-area-inset-top)+0.25rem)] z-dialog flex max-h-[calc(100dvh-3.5rem-4rem-env(safe-area-inset-top)-env(safe-area-inset-bottom)-1rem)] flex-col overflow-hidden rounded-lg border border-line bg-surface shadow-overlay sm:absolute sm:inset-x-auto sm:right-0 sm:top-11 sm:max-h-[min(80vh,560px)] sm:w-[380px]"
           data-testid="notification-dropdown"
         >
           <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
@@ -159,7 +159,7 @@ export function NotificationBell({ initialUnread }: { initialUnread: number }) {
               </button>
             )}
           </div>
-          <div role="tablist" aria-label="Show" className="flex gap-1 border-b border-line px-2 py-1.5">
+          <div role="tablist" aria-label="Show" className="mob-chips flex gap-1 overflow-x-auto whitespace-nowrap border-b border-line px-2 py-1.5">
             {FILTERS.map((entry) => (
               <button
                 key={entry.key}
@@ -167,7 +167,7 @@ export function NotificationBell({ initialUnread }: { initialUnread: number }) {
                 role="tab"
                 aria-selected={filter === entry.key}
                 onClick={() => setFilter(entry.key)}
-                className={`rounded-full px-2.5 py-1 text-caption ${filter === entry.key ? "bg-primary-50 font-semibold text-primary-700" : "text-ink-muted hover:bg-surface-muted"}`}
+                className={`shrink-0 rounded-full px-2.5 py-1 text-caption ${filter === entry.key ? "bg-primary-50 font-semibold text-primary-700" : "text-ink-muted hover:bg-surface-muted"}`}
               >
                 {entry.label}
                 {(unread[entry.key] ?? 0) > 0 && <span className="ml-1 tabular-nums">({unread[entry.key]})</span>}

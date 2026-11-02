@@ -17,6 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (2 Nov 2026):** v1.44.1: phone fixes: the notifications panel fits the screen; a skeleton for each phone screen while it loads (D-274). No migration. **Owner:** publish v1.44.1 instead of v1.44.0 (it contains it), then the v1.44.0 steps below.
 - **Now (2 Nov 2026):** v1.44.0 (includes v1.43.0): the approval journey (D-273), background work steps, the phone layout (D-272), tasks from approvals highlighted (D-270), the QA pass fixes (D-271). No migration. **Owner:**
   1. Publish v1.44.0 (`npm ci`).
   2. Set `DB_POOL_SIZE` in Secrets to your MySQL plan's limit (default 10; see DEPLOYMENT B2).
@@ -151,6 +152,15 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 - **Still open:** Q-015.
 
 ---
+
+## Session log — v1.44.1 (2 Nov 2026): phone fixes, planned before starting
+Owner: a phone screenshot (the bell's panel cut off on the left) "Check the Mobile app layout and Fix it"; then "add skeleton based loaders for each screens in Mobile application".
+- [x] V1441-01 (2 Nov 2026) Bell panel: fixed across the screen under the top bar below 640 px, above the bottom bar; filter row scrolls; computer unchanged (checked at 375 and 1280 px)
+- [x] V1441-02 (2 Nov 2026) Skeletons shaped like each phone screen (`features/mobile/MobileSkeletons.tsx`): Home, Approvals, Tasks, Inbox, More, request (with the journey road), task, general
+- [x] V1441-03 (2 Nov 2026) Shown by NavigationProgress on a page change (phones only), not by new route loading.tsx files (V6-D06: they break the 404 and the refresh after an action); Help, Profile and New keep their reviewed loaders, now with the phone version
+- [x] V1441-04 (2 Nov 2026) Tests: `tests/mobile/skeletons.test.ts`; unit 894/894, typecheck and lint clean; checked in the local browser (phone, dark)
+- [x] V1441-05 (2 Nov 2026) Docs: D-274, F-198, release notes, User Guide, Help
+- [ ] V1441-06 Owner: on a real phone, open the bell and move between screens
 
 ## Session log — v1.44.0 (2 Nov 2026): the approval journey, planned before starting
 Owner: the "Approval Progress Tracker – Animation Storyboard" and the "Complete Approval Journey Animation Engine" brief ("build everything in one go"; event-driven, one engine for approvals, work tasks, FYI and many requests; never the source of truth).

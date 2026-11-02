@@ -275,7 +275,7 @@ export async function AppShell({ area, user, nav, children }: { area: AppArea; u
         <SlowNetworkNotice />
         {(!classic || mobile) && (
           <Suspense fallback={null}>
-            <NavigationProgress />
+            <NavigationProgress mobile={mobile} />
           </Suspense>
         )}
         <UpdateNotice />

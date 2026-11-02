@@ -38,6 +38,8 @@ On a screen narrower than 768 pixels (a phone, or a narrow window) ARS-CMS uses 
 - **Tasks:** **Today**, **Upcoming**, **Overdue**, **Completed** and **Assigned by me**, as cards; a task from an approval shows its request number. The red **+** opens Create task.
 - **Inbox:** **All**, **Approvals**, **Tasks**, **Information** and **Mentions** (someone @-mentioned you); Bookmarks, Archive, System and Settings are below the list.
 - **More:** your profile, then Information, Projects, Periodic tasks, Calendar, AI Assistant, Analytics, Search, templates, Notifications, App & devices, Out of office, Sign-in & devices, Help, the Admin spaces you have, and **Sign out** (it asks first).
+- **While a page loads** you see the shape of that screen (grey blocks where its cards and lists will be) instead of the old page.
+- **The bell** opens your latest notifications across the screen, under the top bar.
 
 ### Install the app
 ARS-CMS can be installed like an app: it opens in its own window from your home screen, dock or start menu.

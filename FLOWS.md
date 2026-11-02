@@ -1078,6 +1078,7 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 6. **Tasks:** Today / Upcoming / Overdue / Completed / Assigned by me; a card opens the task; **+** opens Create task.
 7. **Inbox:** All / Approvals / Tasks / Information / Mentions; Bookmarks, Archive, System and Settings below. **More:** profile, the other pages the person may open, the Admin spaces they have, Sign out (asks first).
 8. On a computer, `/users/approvals` opens Waiting for me and `/users/more` opens Home.
+- v1.44.1: moving to another page shows that screen's skeleton over the content until it arrives (after 150 ms; drawn by NavigationProgress, never by a route loading.tsx, D-274). The bell panel spans the screen under the top bar.
 
 ## F-197 A task from an approval (v1.42.1, D-270)
 1. Wherever a task made by an approval's work step is listed (My Tasks list and board, project boards and lists, task tables, Home), it is tinted and carries a badge with the request number (e.g. EAF-2026-000001) that opens the request.

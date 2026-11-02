@@ -800,6 +800,21 @@ body:has([data-testid="m-task-fab"]) [data-layout="mobile"] .picbot-launcher {
 body[data-decision-bar] [data-layout="mobile"] .picbot-launcher {
   bottom: calc(4rem + 76px + 1rem + env(safe-area-inset-bottom));
 }
+/* Loading skeletons (features/mobile/MobileSkeletons.tsx): the phone one on
+   phones, the computer one everywhere else. */
+.mob-skel {
+  display: none;
+}
+[data-layout="mobile"] .mob-skel {
+  display: block;
+}
+[data-layout="mobile"] .desk-skel {
+  display: none;
+}
+/* While a page's skeleton covers the content, the old page's decision bar goes. */
+body:has([data-testid="nav-skeleton"]) .mob-decision-bar {
+  display: none;
+}
 /* Sideways chip rows scroll by touch without a visible scrollbar. */
 [data-layout="mobile"] .mob-chips {
   scrollbar-width: none;

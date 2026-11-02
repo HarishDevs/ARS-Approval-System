@@ -1,5 +1,5 @@
-import { PageSkeleton } from "@/features/ui/Skeleton";
+import { ScreenLoading } from "@/features/mobile/MobileSkeletons";
 
 export default function Loading() {
-  return <PageSkeleton kind="list" label="Loading help…" />;
+  return <ScreenLoading screen="page" desktop="list" label="Loading help…" />;
 }

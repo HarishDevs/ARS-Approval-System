@@ -1,5 +1,9 @@
 # Release notes
 
+## v1.44.1 (2 Nov 2026): phone fixes (owner)
+- **On your phone, the notifications panel fits the screen.** It ran off the left edge; it now spans the screen under the top bar, stops above the bottom bar, and its filters (All, Approvals, Tasks, Information) scroll sideways if they don't fit. On a computer it is unchanged.
+- **Loading screens on your phone:** while a page loads, you see the shape of that screen (Home, Approvals, Tasks, Inbox, More, a request with its journey, a task, or a general list) instead of the old page. Pages that load at once show nothing extra. A computer is unchanged.
+
 ## v1.44.0 (2 Nov 2026): the approval journey (owner)
 - **The approval journey** on every request: your request is sealed into an envelope and loaded into the red ARS van, which drives along the road of approval levels. It waits beside the level deciding now with the request out for review; each approval stamps it green, it goes back into the van and the van drives on to the next level; at the flag the road turns green and shows 100%.
 - A rejection shows a red stamp where it stopped; changes asked show an orange stamp and the van drives back to you, then sets off again when you resubmit.
