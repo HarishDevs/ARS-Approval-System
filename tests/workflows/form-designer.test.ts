@@ -6,7 +6,7 @@ import type { FormField } from "@/server/forms/fields";
 const amount: FormField = { key: "amount", label: "Amount", type: "NUMBER", required: true, min: 0 };
 const kind: FormField = { key: "kind", label: "Kind", type: "CHOICE", required: true, options: ["Capex", "Opex"], defaultValue: "Opex" };
 const total: FormField = { key: "total", label: "Total", type: "CALC", required: false, formula: "amount * 1.18", decimals: 2 };
-const note: FormField = { key: "note", label: "Note", type: "TEXT", required: false, showIf: { field: "kind", op: "EQ", value: "Capex" } };
+const note: FormField = { key: "note", label: "Note", type: "TEXT", required: false, showIf: { field: "kind", operator: "EQ", value: "Capex" } };
 
 describe("Form Designer", () => {
   it("moves a field without losing or duplicating any", () => {

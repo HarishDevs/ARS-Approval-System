@@ -1,4 +1,5 @@
 import type { InstanceStatus, NodeStatus, TaskStatus } from "@/server/engine/types";
+import { EXPIRED_LABEL, isExpiredApproval } from "@/server/approvals/expiry-rules";
 
 // One vocabulary for statuses everywhere (D-017). On Hold and Changes
 // Required never look complete (G-03); Rejected never looks approved (G-02).
@@ -30,8 +31,16 @@ const TASK: Record<TaskStatus, { label: string; style: string }> = {
   CANCELLED: { label: "Closed", style: "text-ink-faint" },
 };
 
-export function RequestStatusPill({ status }: { status: InstanceStatus }) {
-  const { label, style } = REQUEST_STATUS[status];
+// DR-05 (owner, 2 Nov 2026): an approved request past its valid-until date
+// shows as Expired (derived; the stored status stays Approved).
+export const EXPIRED_STATUS = { label: EXPIRED_LABEL, style: "bg-danger-50 text-danger-600" };
+
+export function requestStatusDisplay(status: InstanceStatus, validUntil?: Date | string | null): { label: string; style: string } {
+  return isExpiredApproval(status, validUntil) ? EXPIRED_STATUS : REQUEST_STATUS[status];
+}
+
+export function RequestStatusPill({ status, validUntil }: { status: InstanceStatus; validUntil?: Date | string | null }) {
+  const { label, style } = requestStatusDisplay(status, validUntil);
   return <span className={`badge ${style}`}>{label}</span>;
 }
 

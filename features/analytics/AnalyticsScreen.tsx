@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { PhoneFold } from "@/features/analytics/PhoneFold";
+import { isMobileLayout } from "@/server/ui/layout-mode";
 import { BarChart3 } from "lucide-react";
 import { FitPages } from "@/features/analytics/FitPages";
 import { notFound, redirect } from "next/navigation";
@@ -120,6 +122,7 @@ export async function AnalyticsScreen({ searchParams, base }: { searchParams: Re
           How these are worked out
         </Link>
       </PageHeader>
+      <PhoneFold mobile={await isMobileLayout()} summary={`${scope.label} · ${period.label}`}>
       <BoardPicker base={base} board="approvals" boards={boards} query={{ ...query, period: period.key }} scopes={scopes} scope={scope} />
 
       <form method="get" className="card mb-6 space-y-3 px-4 py-3" aria-label="Filters">
@@ -268,6 +271,7 @@ export async function AnalyticsScreen({ searchParams, base }: { searchParams: Re
           </Link>
         </div>
       </form>
+      </PhoneFold>
 
       {/* D-258: the board in pages that each fit the window. */}
       <FitPages label="Analytics">

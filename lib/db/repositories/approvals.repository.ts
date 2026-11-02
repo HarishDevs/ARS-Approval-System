@@ -496,7 +496,10 @@ export type TimelineEvent =
   | { type: "VERSION_MIGRATED"; actorId: number; fromVersionNo: number; toVersionNo: number; migrationId: number }
   // v1.6.1: people added to follow the request, or removed.
   | { type: "COLLABORATORS_ADDED"; actorId: number; userIds: number[] }
-  | { type: "COLLABORATOR_REMOVED"; actorId: number; userId: number };
+  | { type: "COLLABORATOR_REMOVED"; actorId: number; userId: number }
+  // DR-05 (owner, 2 Nov 2026): an expired approval was amended or followed
+  // up; the reason the person gave is kept on the expired request's history.
+  | { type: "EXPIRED_REUSED"; actorId: number; kind: "AMENDMENT" | "FOLLOW_UP"; reason: string; newRequestId: number; newRequestNo: string };
 
 export async function appendEvents(requestId: number, events: readonly TimelineEvent[], actorId: number | null, db: Queryable): Promise<void> {
   if (events.length === 0) return;
@@ -697,13 +700,14 @@ export interface MyRequestItem {
   submittedAt: Date;
   closedAt: Date | null;
   pendingWith: string | null;
+  validUntil?: Date | null; // DR-05: shown as Expired once past
 }
 
 export async function listMyRequests(userId: number, db: Queryable = getDbPool()): Promise<MyRequestItem[]> {
   const [rows] = await db.query<
-    (RowDataPacket & { id: number; request_no: string; title: string; workflow_name: string; status: InstanceStatus; submitted_at: Date; closed_at: Date | null; pending_with: string | null })[]
+    (RowDataPacket & { id: number; request_no: string; title: string; workflow_name: string; status: InstanceStatus; submitted_at: Date; closed_at: Date | null; pending_with: string | null; valid_until: Date | null })[]
   >(
-    `SELECT r.id, r.request_no, r.title, w.name AS workflow_name, r.status, r.submitted_at, r.closed_at,
+    `SELECT r.id, r.request_no, r.title, w.name AS workflow_name, r.status, r.submitted_at, r.closed_at, r.valid_until,
             (SELECT GROUP_CONCAT(DISTINCT u.name ORDER BY u.name SEPARATOR ', ')
                FROM approval_tasks t JOIN users u ON u.id = t.approver_id
               WHERE t.request_id = r.id AND t.status = 'PENDING') AS pending_with
@@ -723,6 +727,7 @@ export async function listMyRequests(userId: number, db: Queryable = getDbPool()
     submittedAt: row.submitted_at,
     closedAt: row.closed_at,
     pendingWith: row.pending_with,
+    validUntil: row.valid_until ?? null,
   }));
 }
 
@@ -754,9 +759,9 @@ export async function searchMyRequests(
   const pages = Math.max(1, Math.ceil(total / MY_REQUESTS_PAGE_SIZE));
   const page = Math.min(Math.max(1, Math.floor(filter.page ?? 1)), pages);
   const [rows] = await db.query<
-    (RowDataPacket & { id: number; request_no: string; title: string; workflow_name: string; status: InstanceStatus; submitted_at: Date; closed_at: Date | null; pending_with: string | null })[]
+    (RowDataPacket & { id: number; request_no: string; title: string; workflow_name: string; status: InstanceStatus; submitted_at: Date; closed_at: Date | null; pending_with: string | null; valid_until: Date | null })[]
   >(
-    `SELECT r.id, r.request_no, r.title, w.name AS workflow_name, r.status, r.submitted_at, r.closed_at,
+    `SELECT r.id, r.request_no, r.title, w.name AS workflow_name, r.status, r.submitted_at, r.closed_at, r.valid_until,
             (SELECT GROUP_CONCAT(DISTINCT u.name ORDER BY u.name SEPARATOR ', ')
                FROM approval_tasks t JOIN users u ON u.id = t.approver_id
               WHERE t.request_id = r.id AND t.status = 'PENDING') AS pending_with
@@ -777,6 +782,7 @@ export async function searchMyRequests(
       submittedAt: row.submitted_at,
       closedAt: row.closed_at,
       pendingWith: row.pending_with,
+      validUntil: row.valid_until ?? null,
     })),
     total,
     page,

@@ -9,6 +9,7 @@ import { LIMITS, overLimit, tooManyResponse } from "@/server/security/limits";
 import { apiError } from "@/lib/http/api-response";
 import { logError } from "@/lib/logging/logger";
 import type { MapStage } from "@/server/approvals/step-map";
+import { EXPIRED_LABEL, isExpiredApproval } from "@/server/approvals/expiry-rules";
 
 // #10 PDF summary. The same record-level check as the request page
 // (loadRequestView, D-057): anyone else gets the same plain 404. Audited.
@@ -41,7 +42,8 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       requestNo: view.requestNo,
       title: view.title,
       workflowName: view.workflowName,
-      statusLabel: STATUS[view.status] ?? view.status,
+      // DR-05 (owner, 2 Nov 2026): an approval past its valid-until date reads Expired.
+      statusLabel: isExpiredApproval(view.status, view.validUntil) ? `${EXPIRED_LABEL} (approved; valid until ${formatIndiaTime(view.validUntil!)})` : (STATUS[view.status] ?? view.status),
       requesterName: view.requesterName,
       progress: view.tracker.headline,
       // Line items are written out row by row under their total.

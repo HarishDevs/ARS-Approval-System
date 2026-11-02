@@ -805,6 +805,96 @@ body[data-decision-bar] [data-layout="mobile"] .picbot-launcher {
 .mob-skel {
   display: none;
 }
+/* v1.46.0 (owner): short labels on phones, long ones elsewhere. */
+.mob-short {
+  display: none;
+}
+[data-layout="mobile"] .mob-short:not(.sr-only) {
+  display: inline;
+}
+[data-layout="mobile"] .mob-long {
+  display: none;
+}
+/* Hidden on phones but still read out (the step names). */
+[data-layout="mobile"] .mob-long-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+/* New request on a phone: the steps and the action bar are one slim row
+   each, so most of the form fits on the first screen. */
+[data-layout="mobile"] .request-steps {
+  margin-inline: 0;
+  padding-inline: 0;
+  overflow: visible;
+}
+[data-layout="mobile"] .request-steps ol {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+[data-layout="mobile"] .request-steps button {
+  min-height: 40px;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 4px 8px;
+  box-shadow: none;
+}
+[data-layout="mobile"] .request-steps button > span:first-child {
+  height: 22px;
+  width: 22px;
+  border-width: 1.5px;
+  font-size: 12px;
+}
+[data-layout="mobile"] .request-steps button > span:last-child > span:last-child {
+  display: none; /* the hint line */
+}
+[data-layout="mobile"] .request-steps button > span:last-child > span:first-child {
+  font-size: 13px;
+  white-space: nowrap;
+}
+[data-layout="mobile"] .action-bar {
+  flex-wrap: nowrap;
+  gap: 6px;
+  padding: 6px;
+  box-shadow: none;
+}
+[data-layout="mobile"] .action-bar button {
+  height: 36px;
+  min-height: 36px;
+  padding-inline: 10px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+[data-layout="mobile"] [data-testid="step-details"],
+[data-layout="mobile"] [data-testid="step-review"] {
+  padding: 14px 12px;
+}
+[data-layout="mobile"] [data-testid="step-details"] > * + * {
+  margin-top: 14px;
+}
+[data-layout="mobile"] [data-testid="step-details"] > header .page-icon,
+[data-layout="mobile"] [data-testid="step-details"] > header p {
+  display: none;
+}
+[data-layout="mobile"] [data-testid="step-details"] textarea {
+  min-height: 88px;
+}
+/* The predefined-type form (RequestForm) on a phone: the same tighter spacing. */
+[data-layout="mobile"] .request-form-body {
+  padding: 14px 12px;
+}
+[data-layout="mobile"] .request-form-body > * + * {
+  margin-top: 14px;
+}
+[data-layout="mobile"] .request-form-body textarea {
+  min-height: 88px;
+}
 [data-layout="mobile"] .mob-skel {
   display: block;
 }
@@ -821,6 +911,17 @@ body:has([data-testid="nav-skeleton"]) .mob-decision-bar {
 @keyframes mob-fade-in { from { opacity: 0; } to { opacity: 1; } }
 .mob-sheet { animation: mob-sheet-in 0.22s ease-out both; }
 body:has([data-testid="m-sheet"]) .picbot-launcher { display: none; }
+/* v1.46.0: the task's comment box rests on the tab bar; the page keeps room
+   for it and Pico Bot moves above it. */
+body:has([data-testid="m-comment-dock"]) [data-layout="mobile"] .mob-main {
+  padding-bottom: calc(10rem + env(safe-area-inset-bottom));
+}
+body:has([data-testid="m-comment-dock"]) [data-layout="mobile"] .picbot-launcher {
+  bottom: calc(4rem + 4.5rem + 1rem + env(safe-area-inset-bottom));
+}
+body:has([data-testid="m-comment-dock"][data-open="1"]) .picbot-launcher {
+  display: none;
+}
 .mob-sheet-backdrop { animation: mob-fade-in 0.2s ease-out both; }
 .mob-switch {
   appearance: none;
@@ -853,6 +954,16 @@ body:has([data-testid="m-sheet"]) .picbot-launcher { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .mob-sheet, .mob-sheet-backdrop { animation: none; }
   .mob-switch, .mob-switch::after, .mob-section .mob-caret { transition: none; }
+}
+/* v1.46.0 (owner): Pico Bot's panel (75% of the screen) grows out of the bot
+   and shrinks back into it; the origin is set from the bot's position. */
+@keyframes picbot-grow { from { transform: scale(0.06); opacity: 0; border-radius: 40px; } to { transform: scale(1); opacity: 1; } }
+@keyframes picbot-shrink { from { transform: scale(1); opacity: 1; } to { transform: scale(0.06); opacity: 0; border-radius: 40px; } }
+.picbot-panel { transform-origin: 100% 100%; }
+.picbot-in { animation: picbot-grow 0.26s cubic-bezier(0.2, 0.9, 0.3, 1.05) both; }
+.picbot-out { animation: picbot-shrink 0.22s cubic-bezier(0.5, 0, 0.75, 0) both; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) {
+  .picbot-in, .picbot-out { animation: none; }
 }
 /* Sideways chip rows scroll by touch without a visible scrollbar. */
 [data-layout="mobile"] .mob-chips {

@@ -271,6 +271,8 @@ export async function updateTypeSettingsAction(_previous: ActionResult | null, f
       departmentIds: formData.getAll("raiserDept").map(String).filter((value) => /^\d{1,10}$/.test(value)).map(Number),
       userIds: formData.getAll("raiserPerson").map(String).filter((value) => /^\d{1,10}$/.test(value)).map(Number),
     },
+    // DR-02: predefined types only (this action refuses custom ones above).
+    mayFinishWithoutApprover: formData.get("mayFinishWithoutApprover") === "on",
   };
   const parsed = typeSettingsSchema.safeParse(candidate);
   if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Check the values." };

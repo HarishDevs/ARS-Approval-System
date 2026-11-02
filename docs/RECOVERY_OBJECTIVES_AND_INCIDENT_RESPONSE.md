@@ -1,10 +1,12 @@
 # Recovery objectives and incident response
 
-> **DRAFT for the owner's approval.** Nothing on this page is agreed yet. The recovery targets in §2 are **proposals** worked out from how backups run today; the owner confirms or changes them (register BE-03, audit OPS-10). Once approved, replace this box with "Approved by the owner on <date>" and record the decision in DEVELOPMENT-MEMORY.
+> **Approved by the owner on 2 Nov 2026** (audit OPS-10, register BE-03, decision DR-08; DEVELOPMENT-MEMORY D-277): **RPO 24 hours, RTO 4 hours**, with an encrypted daily off-site copy to an ARS Google Drive folder and the backup encryption key held by the owner, off the server. The approved targets are in §2.0. The draft proposals of 31 Oct 2026 are kept below them as history.
+>
+> *(Superseded box, 31 Oct 2026: "DRAFT for the owner's approval. Nothing on this page is agreed yet. The recovery targets in §2 are proposals …")*
 
 | | |
 |---|---|
-| Applies to | ARS-CMS v1.39.0 (31 Oct 2026) |
+| Applies to | ARS-CMS v1.46.0 (2 Nov 2026); first written for v1.39.0 (31 Oct 2026) |
 | Fixes | Audit OPS-10 (no RPO/RTO, no incident procedure); supports OPS-07 (restore drill) |
 | Builds on | `docs/BACKUP_RESTORE_AND_ROLLBACK.md`, `docs/DEPLOYMENT.md` (Parts M, N, P), `docs/AUTOMATION_INVENTORY_AND_RECOVERY.md` (Recovery runbook) |
 
@@ -12,7 +14,7 @@ Words used: **RPO** (recovery point objective) is how much recent data we accept
 
 ## 1. What the recovery targets are based on
 
-Checked against the code at v1.39.0:
+Checked against the code at v1.39.0, with the v1.40.0 and v1.46.0 changes added:
 
 | Fact | Where |
 |---|---|
@@ -21,14 +23,30 @@ Checked against the code at v1.39.0:
 | The backup is one consistent snapshot (one read-only transaction) of every table, data and trigger, gzipped SQL | `server/ops/backup.ts` |
 | New attachment files are copied to `BACKUP_DIR/attachments` on the same run | same |
 | Backups stay on the server for `BACKUP_KEEP_DAYS` (default **14**) days, in `/private/backups` on the same GoDaddy account | `config/environment.ts`; DEPLOYMENT P1 |
-| The **off-site copy is a manual download, weekly** (audit OPS-08: not automated) | DEPLOYMENT P1 step 4 |
+| ~~The **off-site copy is a manual download, weekly** (audit OPS-08: not automated)~~ Superseded: v1.40.0 added an automatic encrypted copy to S3-compatible storage, and **v1.46.0 an automatic encrypted copy to Google Drive** (job step `driveBackup`, right after `backup`; keeps the newest 14 by default). Both need `BACKUP_ENCRYPTION_KEY` and the owner's set-up | DEPLOYMENT P1 step 4, Part U, Part W (W3); `server/ops/gdrive-backup.ts` |
+| Every backup has a `.sha256`; with `BACKUP_ENCRYPTION_KEY` it is AES-256-GCM encrypted (`.sql.gz.enc`). Without the key, an encrypted backup can't be restored, so the owner keeps a copy off the server | `server/ops/backup.ts`; `scripts/database/restore.js` |
 | A failed backup alerts the Super Admin once a day; a stopped runner shows `jobRunner: LATE` on `/api/health` and alerts the Super Admin | `server/ops/alerts.ts`; `app/api/health/route.ts` |
 | **Super Admin → Back up now** makes an extra backup at any time | `features/superadmin/BackupNowButton.tsx` |
 | Migrations only add, so a code rollback never needs a database rollback | DEPLOYMENT Part M |
 | Restore always goes into a new, empty database first (`restore.js --confirm-database`, `verify-backup.js`) | BACKUP_RESTORE §2 |
 | A restore of a **real production** backup has never been recorded (GL-04 open) | audit OPS-07 |
 
-## 2. Proposed recovery targets (for the owner to approve)
+## 2. Recovery targets
+
+### 2.0 Approved targets (owner, 2 Nov 2026)
+
+| Target | Value | Applies to |
+|---|---|---|
+| **RPO** | **24 hours** | Every scenario, A to D. The daily backup, and for scenario D its encrypted copy in Google Drive |
+| **RTO** | **4 hours** | Every scenario, from the incident being declared to the app working again |
+
+Conditions the owner accepted with these targets:
+1. **Off-site copy:** each encrypted daily backup is copied to an ARS Google Drive folder (shared drive, service account as Content manager; DEPLOYMENT Part W). Until that is set up and Automation shows **Google Drive backup copy** OK, scenario D's real RPO is the age of the last manual download.
+2. **The key:** `BACKUP_ENCRYPTION_KEY` is held by the owner **off the server** (password manager). Losing it makes every encrypted backup unreadable. A Drive copy alone, without the key, is useless to anyone else.
+3. **The RTO must be proved** by the restore drill (§5), including one restore from a Drive copy. If the drill takes longer than 4 hours, the owner is told and the target or the procedure changes.
+4. Review once a year and after any real incident (unchanged).
+
+### 2.1 Proposed targets, 31 Oct 2026 (history; superseded by §2.0)
 
 | Scenario | Proposed RPO | Proposed RTO | Why |
 |---|---|---|---|
@@ -74,9 +92,9 @@ Only the owner may approve restoring over production data. Nobody restores the l
 Do this **once now**, then **every quarter**, and after any change to how backups work. It follows DEPLOYMENT P2 and BACKUP_RESTORE §2. It never touches the live database.
 
 **Before**
-- [ ] Book 1 hour with the Super Admin and one IT Admin. Note the start time (it measures the RTO for scenario C).
+- [ ] Book 1 hour with the Super Admin and one IT Admin. Note the start time (it measures the RTO for scenario C; the approved target is 4 hours).
 - [ ] Pick the **newest production backup** (`ars-db-YYYYMMDD-HHMMSS.sql.gz`) from Private Storage → `backups`, and note its name, size and time.
-- [ ] Also take one file from the **off-site copy** at least once a year, to prove the off-site copies are readable.
+- [ ] Also take one file from the **off-site copy** (the Google Drive folder, v1.46.0) at least once a year, to prove the off-site copies are readable. Download the `.enc` and its `.sha256` together; the PC running the check needs `BACKUP_ENCRYPTION_KEY`.
 
 **Restore**
 - [ ] cPanel → MySQL Databases: create an **empty** database `…_restoretest` and give the app's user all rights on it.

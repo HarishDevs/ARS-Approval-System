@@ -89,7 +89,7 @@ describe("dependencies", () => {
 
 const FORM: FormField[] = [
   { key: "kind", label: "Kind", type: "CHOICE", required: true, options: ["Capex", "Opex"] },
-  { key: "gst_no", label: "GSTIN", type: "TEXT", required: false, showIf: { field: "kind", op: "EQ", value: "Capex" }, requiredIf: { field: "kind", op: "EQ", value: "Capex" } },
+  { key: "gst_no", label: "GSTIN", type: "TEXT", required: false, showIf: { field: "kind", operator: "EQ", value: "Capex" }, requiredIf: { field: "kind", operator: "EQ", value: "Capex" } },
   { key: "items", label: "Items", type: "LINE_ITEMS", required: true },
   { key: "freight", label: "Freight", type: "NUMBER", required: false },
   { key: "amount", label: "Amount", type: "CALC", required: false, formula: "items + freight", decimals: 2 },
@@ -132,11 +132,11 @@ describe("form check (builder side)", () => {
   it("refuses unknown references, non-number maths, cycles and self rules", () => {
     expect(checkFormDefinition([{ key: "a", label: "A", type: "CALC", required: false, formula: "nope * 2" }])[0]).toMatch(/isn't a field/);
     expect(checkFormDefinition([{ key: "t", label: "T", type: "TEXT", required: false }, { key: "a", label: "A", type: "CALC", required: false, formula: "t * 2" }])[0]).toMatch(/isn't a number/);
-    expect(checkFormDefinition([{ key: "a", label: "A", type: "TEXT", required: false, showIf: { field: "a", op: "FILLED" } }])[0]).toMatch(/itself/);
+    expect(checkFormDefinition([{ key: "a", label: "A", type: "TEXT", required: false, showIf: { field: "a", operator: "IS_NOT_EMPTY" } }])[0]).toMatch(/itself/);
     expect(
       checkFormDefinition([
-        { key: "a", label: "A", type: "TEXT", required: false, showIf: { field: "b", op: "FILLED" } },
-        { key: "b", label: "B", type: "TEXT", required: false, showIf: { field: "a", op: "FILLED" } },
+        { key: "a", label: "A", type: "TEXT", required: false, showIf: { field: "b", operator: "IS_NOT_EMPTY" } },
+        { key: "b", label: "B", type: "TEXT", required: false, showIf: { field: "a", operator: "IS_NOT_EMPTY" } },
       ]),
     ).toEqual([expect.stringMatching(/circle/)]);
   });

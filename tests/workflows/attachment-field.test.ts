@@ -6,7 +6,7 @@ import { messagesForEvents } from "@/server/approvals/messages";
 const form: FormField[] = [
   { key: "kind", label: "Kind", type: "CHOICE", required: true, options: ["Capex", "Opex"] },
   { key: "quotes", label: "Quotes", type: "ATTACHMENT", required: true, maxFiles: 3 },
-  { key: "drawings", label: "Drawings", type: "ATTACHMENT", required: false, requiredIf: { field: "kind", op: "EQ", value: "Capex" } },
+  { key: "drawings", label: "Drawings", type: "ATTACHMENT", required: false, requiredIf: { field: "kind", operator: "EQ", value: "Capex" } },
 ];
 const parse = (raw: Record<string, string>) => parseFormSubmission(form, raw, new Set());
 
@@ -22,10 +22,10 @@ describe("attachment field", () => {
     expect(checkFormDefinition([{ key: "a", label: "A", type: "ATTACHMENT", required: false, defaultValue: "1" }])[0]).toMatch(/default value/);
     const rule: FormField[] = [
       { key: "a", label: "A", type: "ATTACHMENT", required: false },
-      { key: "b", label: "B", type: "TEXT", required: false, showIf: { field: "a", op: "EQ", value: "2" } },
+      { key: "b", label: "B", type: "TEXT", required: false, showIf: { field: "a", operator: "EQ", value: 2 } },
     ];
     expect(checkFormDefinition(rule).join(" ")).toMatch(/only check whether files were added/);
-    expect(checkFormDefinition([rule[0]!, { ...rule[1]!, showIf: { field: "a", op: "FILLED" } }])).toEqual([]);
+    expect(checkFormDefinition([rule[0]!, { ...rule[1]!, showIf: { field: "a", operator: "IS_NOT_EMPTY" } }])).toEqual([]);
   });
 
   it("required means at least one file; the count is the value; the limit applies", () => {

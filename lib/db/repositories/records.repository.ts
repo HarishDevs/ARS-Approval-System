@@ -1,6 +1,7 @@
 import "server-only";
 import type { RowDataPacket } from "mysql2/promise";
 import { getDbPool, type Queryable } from "@/lib/db/client";
+import { requestAmount, type RecordAmount } from "@/server/records/amount";
 import { indiaDayStartUtc, likeOf, nextIndiaDayStartUtc, SORTS, type RecordFilter, type RecordKind } from "@/server/records/filters";
 
 // D-191 (owner): the Admin registers. Read-only; every request, task and
@@ -24,6 +25,7 @@ export interface RequestRecord {
   approvals: number;
   submitted: Date;
   closed: Date | null;
+  amount: RecordAmount; // PB-34: shown by the viewer's confidential rule (columns.ts)
 }
 
 export interface TaskRecord {
@@ -96,6 +98,7 @@ function sql(kind: RecordKind, filter: RecordFilter): { select: string; from: st
     dates("r.submitted_at", filter, where, params);
     return {
       select: `SELECT r.id, r.request_no, r.title, w.name AS type_name, u.name AS requester_name, d.name AS department_name, r.status, r.round, r.submitted_at, r.closed_at,
+        v.form_json, r.form_data_json, w.settings_json,
         (SELECT GROUP_CONCAT(DISTINCT p.node_label ORDER BY p.node_label SEPARATOR ', ') FROM approval_tasks p WHERE p.request_id = r.id AND p.status = 'PENDING') AS current_step,
         (SELECT GROUP_CONCAT(DISTINCT a.name ORDER BY a.name SEPARATOR ', ') FROM approval_tasks p JOIN users a ON a.id = p.approver_id WHERE p.request_id = r.id AND p.status = 'PENDING') AS waiting_on,
         (SELECT COUNT(*) FROM approval_tasks p WHERE p.request_id = r.id AND p.status = 'APPROVED') AS approvals`,
@@ -163,7 +166,7 @@ function sql(kind: RecordKind, filter: RecordFilter): { select: string; from: st
 
 function mapRow(kind: RecordKind, row: RowDataPacket): RequestRecord | TaskRecord | InfoRecord {
   if (kind === "requests")
-    return { id: row.id, no: row.request_no, title: row.title, type: row.type_name, raisedBy: row.requester_name, department: row.department_name, status: row.status, round: Number(row.round), currentStep: row.current_step, waitingOn: row.waiting_on, approvals: Number(row.approvals), submitted: row.submitted_at, closed: row.closed_at };
+    return { id: row.id, no: row.request_no, title: row.title, type: row.type_name, raisedBy: row.requester_name, department: row.department_name, status: row.status, round: Number(row.round), currentStep: row.current_step, waitingOn: row.waiting_on, approvals: Number(row.approvals), submitted: row.submitted_at, closed: row.closed_at, amount: requestAmount(row.form_json, row.form_data_json, row.settings_json) };
   if (kind === "tasks")
     return { id: row.id, no: row.task_no, title: row.title, type: row.type_name, priority: row.priority, status: row.status, assignee: row.assignee_name, department: row.department_name, assignedBy: row.assigned_by_name, created: row.created_at, due: row.due_at, completed: row.completed_at, overdue: Boolean(Number(row.overdue)), relatedRequest: row.related_request };
   return { id: row.id, no: row.info_no, title: row.title, type: row.type_name, priority: row.priority, status: row.status, createdBy: row.creator_name, department: row.department_name, ackRequired: Boolean(row.ack_required), created: row.created_at, published: row.published_at, effectiveOn: row.effective_on, expiresOn: row.expires_on, recipients: Number(row.recipients), read: Number(row.read_count), acknowledged: Number(row.ack_count) };

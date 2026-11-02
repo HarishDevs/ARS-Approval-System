@@ -45,7 +45,8 @@ export function stageSummary(stage: AnyStage): string {
     case "STEP":
       return stepSummary(stage.step);
     case "PARALLEL":
-      return `${stage.steps.length} at once · ${stage.join === "ANY_N" ? `any ${stage.n ?? 1} finish` : stage.join === "ANY_ONE" ? "any one finishes" : "all finish"}`;
+      // DR-01: say when a branch's rejection doesn't end the request.
+      return `${stage.steps.length} at once · ${stage.join === "ANY_N" ? `any ${stage.n ?? 1} finish` : stage.join === "ANY_ONE" ? "any one finishes" : "all finish"}${stage.join !== "ALL" && stage.onReject === "WHEN_UNREACHABLE" ? " · a rejection ends only its branch" : ""}`;
     case "BRANCH":
       return `If … then ${stage.then.length} level${stage.then.length === 1 ? "" : "s"}, otherwise ${stage.otherwise.length}`;
     case "DOA":

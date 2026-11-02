@@ -23,7 +23,7 @@ export default async function RetentionPage() {
 
   return (
     <>
-      <PageHeader title="Retention & legal holds" description="Holds keep records from being deleted while a matter is open. Retention shows what a policy would affect; nothing is deleted automatically." />
+      <PageHeader title="Retention & legal holds" description="Holds keep records from being deleted while a matter is open. Retention shows what a policy would affect; these policies delete nothing by themselves. Separately, security records (sign-in attempts, WhatsApp codes, ended sessions, used links) are deleted after 90 days (DR-06)." />
 
       <section aria-labelledby="holds-title" className="card mb-6 px-5 py-4">
         <div className="mb-3 flex items-center gap-1.5">

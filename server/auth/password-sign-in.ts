@@ -17,12 +17,16 @@ import { getAuthSecurityConfig, getWhatsAppConfig, type AuthSecurityConfig } fro
 import { notify, type NotifyInput } from "@/server/notifications/notify";
 import { accountLockedMessage } from "@/server/notifications/security-messages";
 import { AuthError, GENERIC_SIGN_IN_FAILED } from "@/server/auth/errors";
-import { checkSignInAllowed } from "@/server/auth/sign-in-rules";
+import { checkSignInAllowed, skipsWhatsAppCode } from "@/server/auth/sign-in-rules";
 import { consumeOtpCode, issueOtp, loadOpenChallenge, type OtpChallengeResult, type OtpDeps } from "@/server/auth/otp-flow";
 import { completeSignIn, defaultCompleteSignInDeps, type CompleteSignInDeps, type CompleteSignInResult } from "@/server/auth/complete-sign-in";
 import { allowsPassword, type RequestContext } from "@/types/auth";
 
 export type { OtpChallengeResult } from "@/server/auth/otp-flow";
+
+// Q-015: step 1 normally returns the WhatsApp challenge; the break-glass
+// account inside its window is signed in straight away instead.
+export type PasswordStartResult = OtpChallengeResult | { signedIn: CompleteSignInResult };
 
 // F-02: User ID + password, then a WhatsApp-only OTP (D-025).
 export interface PasswordSignInDeps extends OtpDeps {
@@ -79,7 +83,7 @@ export async function startPasswordSignInWithDeps(
   password: string,
   context: RequestContext,
   deps: PasswordSignInDeps,
-): Promise<OtpChallengeResult> {
+): Promise<PasswordStartResult> {
   const config = await deps.getConfig();
   const logFailure = (userId: number | null, reason: string) =>
     deps.recordLogin({ userId, authMethod: "PASSWORD_OTP", step: "PASSWORD", success: false, failureReason: reason, ipAddress: context.ipAddress, userAgent: context.userAgent });
@@ -121,6 +125,13 @@ export async function startPasswordSignInWithDeps(
     throw new AuthError("AUTH_INVALID_CREDENTIALS", GENERIC_SIGN_IN_FAILED);
   }
   await deps.resetFailedLogins(user.id);
+
+  // Q-015: break-glass inside its window: password alone. completeSignIn
+  // audits it as BREAK_GLASS_SIGNIN_NO_OTP and alerts the Super Admins.
+  if (skipsWhatsAppCode(user)) {
+    await deps.recordLogin({ userId: user.id, authMethod: "PASSWORD_OTP", step: "PASSWORD", success: true, ipAddress: context.ipAddress, userAgent: context.userAgent });
+    return { signedIn: await completeSignIn(user, "PASSWORD_OTP", context, deps.complete, { otpSkipped: true }) };
+  }
 
   if (!user.whatsappNumber) {
     await logFailure(user.id, "NO_WHATSAPP_NUMBER");

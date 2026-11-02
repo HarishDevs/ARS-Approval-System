@@ -1,9 +1,10 @@
 "use client";
 
-import { ConditionRow } from "@/features/admin/conditions/ConditionRow";
+import { RuleEditor as SharedRuleEditor } from "@/features/admin/conditions/RuleEditor";
 import { useEffect, useState } from "react";
 import { NUMERIC_TYPES, OPTION_TYPES, type FieldType, type FormField, type LookupSource } from "@/server/forms/fields";
-import { RULE_OPERATORS, RULE_WORDS, type FieldRule } from "@/server/forms/dynamic";
+import type { FieldRule } from "@/server/forms/dynamic";
+import type { StoredRule } from "@/server/conditions/rule";
 import { Hint } from "@/features/ui/Hint";
 import { formulaProblem, slugKey, TYPE_CHOICES, typeValue } from "@/features/admin/form-designer/model";
 
@@ -334,18 +335,17 @@ function FormulaFieldChips({ form, self, onInsert }: { form: readonly FormField[
   );
 }
 
-// The rule editor for "show only when" / "required when" (EN-01).
-export function RuleEditor({ label, rule, others, onChange }: { label: string; rule: FieldRule | undefined; others: readonly FormField[]; onChange: (rule: FieldRule | undefined) => void }) {
+// "Show only when" / "required when" (EN-01). Since 2 Nov 2026 the same
+// editor and the same saved shape as the workflow's rules (one condition, or
+// several joined by all / any); an older saved rule opens converted.
+export function RuleEditor({ label, rule, others, onChange }: { label: string; rule: StoredRule | undefined; others: readonly FormField[]; onChange: (rule: FieldRule | undefined) => void }) {
   if (!rule) {
     return (
-      <button type="button" className="link block text-label" disabled={others.length === 0} onClick={() => onChange({ field: others[0]!.key, op: "FILLED" })}>
+      <button type="button" className="link block text-label" disabled={others.length === 0} onClick={() => onChange({ field: others[0]!.key, operator: "IS_NOT_EMPTY" })}>
         + {label}
       </button>
     );
   }
-  const target = others.find((other) => other.key === rule.field);
-  const numeric = target ? NUMERIC_TYPES.includes(target.type) : false;
-  const operators = RULE_OPERATORS.filter((op) => numeric || !["GT", "GTE", "LT", "LTE"].includes(op));
   return (
     <div className="space-y-2 rounded-md border border-line bg-surface-muted px-3 py-2 text-label">
       <div className="flex items-center justify-between">
@@ -354,36 +354,7 @@ export function RuleEditor({ label, rule, others, onChange }: { label: string; r
           Remove
         </button>
       </div>
-      {/* D-242: the shared condition row (the workflow's rules use it too). */}
-      <ConditionRow
-        fields={others}
-        fieldKey={rule.field}
-        onField={(key) => onChange({ ...rule, field: key })}
-        operators={operators.map((op) => [op, RULE_WORDS[op]] as const)}
-        operator={rule.op}
-        onOperator={(op) => onChange({ ...rule, op: op as FieldRule["op"] })}
-        labels={{ field: `${label}: field`, operator: `${label}: test` }}
-        value={
-          rule.op !== "FILLED" && rule.op !== "EMPTY" ? (
-            target && OPTION_TYPES.includes(target.type) ? (
-              <select aria-label={`${label}: value`} value={rule.value ?? ""} onChange={(event) => onChange({ ...rule, value: event.target.value })} className="field-input w-auto">
-                <option value="">Choose…</option>
-                {(target.options ?? []).map((option) => (
-                  <option key={option}>{option}</option>
-                ))}
-              </select>
-            ) : (
-              <input
-                aria-label={`${label}: value`}
-                value={rule.value ?? ""}
-                onChange={(event) => onChange({ ...rule, value: event.target.value.slice(0, 100) })}
-                inputMode={numeric ? "decimal" : undefined}
-                className="field-input w-32"
-              />
-            )
-          ) : undefined
-        }
-      />
+      <SharedRuleEditor fields={others} value={rule} onChange={onChange} labels={{ field: `${label}: field`, operator: `${label}: test`, value: `${label}: value` }} />
     </div>
   );
 }

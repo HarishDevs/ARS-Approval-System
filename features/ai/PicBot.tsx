@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Copy, History, Minus, Plus, RotateCcw, Square, Trash2, X } from "lucide-react";
 import { ConfirmDialog } from "@/features/ui/Dialog";
@@ -71,6 +71,24 @@ export function PicBot({ initialModes }: { initialModes: ModeOption[] }) {
   const list = useRef<HTMLOListElement>(null);
   // The launcher isn't on the page while the panel is open; focus returns to it once it is.
   const returnFocus = useRef(false);
+  // v1.46.0 (owner): the panel grows out of the bot and shrinks back into it.
+  // The launcher's last position is the animation's anchor; closing plays
+  // the shrink first, then removes the panel (at once with reduced motion).
+  const panel = useRef<HTMLElement>(null);
+  const anchor = useRef<DOMRect | null>(null);
+  const [leaving, setLeaving] = useState(false);
+  const leave = useCallback((then: () => void) => {
+    const still = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (still || !panel.current) {
+      then();
+      return;
+    }
+    setLeaving(true);
+    window.setTimeout(() => {
+      setLeaving(false);
+      then();
+    }, 220);
+  }, []);
 
   const refresh = useCallback(async () => {
     const result = await api<{ stopped: boolean; modes: ModeOption[]; conversations: Conversation[] }>("/api/ai/conversations");
@@ -98,9 +116,20 @@ export function PicBot({ initialModes }: { initialModes: ModeOption[] }) {
   const close = useCallback(() => {
     abort.current?.abort();
     returnFocus.current = true;
-    setOpen(false);
-    setMinimised(false);
-  }, []);
+    leave(() => {
+      setOpen(false);
+      setMinimised(false);
+    });
+  }, [leave]);
+
+  // The grow and shrink start and end at the bot's centre.
+  useLayoutEffect(() => {
+    const node = panel.current;
+    const from = anchor.current;
+    if (!open || minimised || !node || !from) return;
+    // offsetLeft/Top ignore the running scale (a fixed panel measures from the viewport).
+    node.style.transformOrigin = `${from.left + from.width / 2 - node.offsetLeft}px ${from.top + from.height / 2 - node.offsetTop}px`;
+  }, [open, minimised]);
 
   useEffect(() => {
     if ((!open || minimised) && returnFocus.current) {
@@ -192,7 +221,8 @@ export function PicBot({ initialModes }: { initialModes: ModeOption[] }) {
         <button
           ref={launcher}
           type="button"
-          onClick={() => {
+          onClick={(event) => {
+            anchor.current = event.currentTarget.getBoundingClientRect();
             setOpen(true);
             setMinimised(false);
           }}
@@ -209,17 +239,19 @@ export function PicBot({ initialModes }: { initialModes: ModeOption[] }) {
 
       {open && !minimised && (
         <section
+          ref={panel}
           role="dialog"
           aria-modal="false"
           aria-label="Pico Bot"
           data-testid="picbot-panel"
+          data-leaving={leaving ? "1" : undefined}
           onKeyDown={(event) => {
             if (event.key === "Escape") {
               event.stopPropagation();
               close();
             }
           }}
-          className="card fixed inset-x-2 bottom-2 z-50 flex max-h-[calc(100dvh-1rem)] flex-col overflow-hidden shadow-xl sm:inset-x-auto sm:bottom-6 sm:right-6 sm:h-[min(680px,calc(100dvh-3rem))] sm:w-[440px]"
+          className={`picbot-panel card fixed inset-x-2 bottom-2 z-50 flex h-[75dvh] flex-col overflow-hidden shadow-xl sm:inset-x-auto sm:bottom-6 sm:right-6 sm:h-[75dvh] sm:w-[75vw] ${leaving ? "picbot-out" : "picbot-in"}`}
           style={{ marginBottom: "env(safe-area-inset-bottom)" }}
         >
           <header className="flex items-center gap-2 border-b border-line px-3 py-2">
@@ -241,7 +273,7 @@ export function PicBot({ initialModes }: { initialModes: ModeOption[] }) {
               type="button"
               onClick={() => {
                 returnFocus.current = true;
-                setMinimised(true);
+                leave(() => setMinimised(true));
               }}
               aria-label="Minimise Pico Bot"
               className="rounded-md p-1.5 text-ink-muted hover:bg-surface-muted hover:text-ink">

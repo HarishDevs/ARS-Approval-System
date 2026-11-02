@@ -76,7 +76,10 @@ export async function completeSignIn(
   authMethod: AuthMethod,
   context: RequestContext,
   deps: CompleteSignInDeps,
+  // Q-015: break-glass signed in inside its window without the WhatsApp code.
+  options: { otpSkipped?: boolean } = {},
 ): Promise<CompleteSignInResult> {
+  const otpSkipped = Boolean(options.otpSkipped && user.isBreakGlass);
   const trustedDays = await deps.getTrustedDeviceDays();
 
   // Device check (F-03). A browser without a valid device cookie gets one.
@@ -128,7 +131,7 @@ export async function completeSignIn(
   await deps.recordLogin({
     userId: user.id,
     authMethod,
-    step: authMethod === "GOOGLE" ? "GOOGLE" : "OTP",
+    step: authMethod === "GOOGLE" ? "GOOGLE" : otpSkipped ? "PASSWORD" : "OTP",
     success: true,
     ipAddress: context.ipAddress,
     userAgent: context.userAgent,
@@ -143,8 +146,20 @@ export async function completeSignIn(
     entityId: user.id,
     ipAddress: context.ipAddress,
     sessionId,
-    metadata: { authMethod, newDevice: isNewDevice, breakGlass: user.isBreakGlass, dailySession: daily },
+    metadata: { authMethod, newDevice: isNewDevice, breakGlass: user.isBreakGlass, dailySession: daily, ...(otpSkipped ? { otpSkipped: true } : {}) },
   });
+  // Q-015: a distinct audit entry for every break-glass sign-in without the code.
+  if (otpSkipped) {
+    await deps.recordAudit({
+      actorUserId: user.id,
+      action: "BREAK_GLASS_SIGNIN_NO_OTP",
+      entityType: "USER",
+      entityId: user.id,
+      ipAddress: context.ipAddress,
+      sessionId,
+      metadata: { newDevice: isNewDevice, windowSecondsLeft: user.breakGlassSecondsRemaining },
+    });
+  }
 
   const details = { userName: user.name, when: deps.now(), userAgent: context.userAgent, ipAddress: context.ipAddress };
 
@@ -162,7 +177,16 @@ export async function completeSignIn(
   // Every Super Admin or break-glass sign-in alerts the Super Admins (N-04, N-05).
   if (user.roles.includes("SUPER_ADMIN") || user.isBreakGlass) {
     const eventType = user.isBreakGlass ? "BREAK_GLASS_USED" : "SUPER_ADMIN_SIGNIN";
-    const message = superAdminSignInMessage(user.name, details);
+    const base = superAdminSignInMessage(user.name, details);
+    // Q-015: the alert says plainly that no WhatsApp code was asked for.
+    const message = otpSkipped
+      ? {
+          ...base,
+          title: "Break-glass sign-in without a WhatsApp code",
+          message: `${base.message} No WhatsApp code was asked for (break-glass window open).`,
+          email: { subject: "Break-glass sign-in without a WhatsApp code", text: `${base.email.text}\nNo WhatsApp code was asked for: the break-glass window is open.` },
+        }
+      : base;
     deps.dispatch(async () => {
       const adminIds = await deps.listSuperAdminIds();
       for (const adminId of adminIds) {

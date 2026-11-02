@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { PhoneFold } from "@/features/analytics/PhoneFold";
+import { isMobileLayout } from "@/server/ui/layout-mode";
 import { BarChart3 } from "lucide-react";
 import { FitPages } from "@/features/analytics/FitPages";
 import { PageHeader } from "@/features/shell/PageHeader";
@@ -179,6 +181,7 @@ export async function CenterScreen({ base, board, boards, modules, query, scope,
           How these are worked out
         </Link>
       </PageHeader>
+      <PhoneFold mobile={await isMobileLayout()} summary={`${scope.label} · ${period.label}`}>
       <BoardPicker base={base} board={board} boards={boards} query={query} scopes={scopes} scope={scope} />
 
       <form method="get" className="card mb-6 flex flex-wrap items-end gap-3 px-4 py-3" aria-label="Filters">
@@ -247,6 +250,7 @@ export async function CenterScreen({ base, board, boards, modules, query, scope,
           Clear filters
         </Link>
       </form>
+      </PhoneFold>
 
       {/* D-258: the board in pages that each fit the window. */}
       <FitPages label="Analytics">

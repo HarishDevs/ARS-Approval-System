@@ -7,7 +7,7 @@ import { ConfirmDialog } from "@/features/ui/Dialog";
 import { useToast } from "@/features/ui/Toast";
 import { UnsavedGuard } from "@/features/ui/UnsavedGuard";
 import { WorkflowMap } from "@/features/admin/workflow-designer/WorkflowMap";
-import { ConditionRow } from "@/features/admin/conditions/ConditionRow";
+import { freshCondition, RuleEditor as SharedRuleEditor } from "@/features/admin/conditions/RuleEditor";
 import { allProblems, duplicateStage, parseLocalDraft, stageName, stageProblems, stageSummary, type DesignContext, type LocalDraft } from "@/features/admin/workflow-designer/model";
 import { moveItem } from "@/features/admin/form-designer/model";
 import { stepDefaults, type StepPolicy } from "@/server/workflows/step-policy";
@@ -17,10 +17,9 @@ import { useRouter } from "next/navigation";
 import { NUMERIC_TYPES, type FieldLookups, type FormField } from "@/server/forms/fields";
 import { RequestForm } from "@/features/requests/RequestForm";
 import { Hint } from "@/features/ui/Hint";
-import { ConditionValueInput, FormFieldsEditor, freshCondition, needsValue, operatorsFor } from "@/features/admin/FormFieldsEditor";
+import { FormFieldsEditor } from "@/features/admin/FormFieldsEditor";
 import {
   doaBandLabels,
-  isConditionGroup,
   MAX_CHOICE_DEPTH,
   type ApproverPick,
   type BuilderCondition,
@@ -817,6 +816,18 @@ function StageList({
                           />
                         )}
                       </div>
+                      {/* DR-01 (owner, 2 Nov 2026): what one branch's rejection does, for any one / any N only. */}
+                      {stage.join !== "ALL" && (
+                        <select
+                          aria-label="If one branch rejects"
+                          value={stage.onReject ?? "END"}
+                          onChange={(event) => setStage(index, { ...stage, onReject: event.target.value === "WHEN_UNREACHABLE" ? "WHEN_UNREACHABLE" : "END" })}
+                          className="field-input"
+                        >
+                          <option value="END">If one branch rejects, the request is rejected</option>
+                          <option value="WHEN_UNREACHABLE">If one branch rejects, the others carry on (rejected only when too few can still finish)</option>
+                        </select>
+                      )}
                       <div className="grid gap-3 lg:grid-cols-2">
                         {stage.steps.map((step, stepIndex) => (
                           <div key={step.id} className="rounded-md border border-dashed border-line p-3">
@@ -1142,81 +1153,10 @@ function DoaEditor({
   );
 }
 
-type SimpleCondition = Exclude<BuilderCondition, { match: string }>;
-
 // A rule (D-099): one or more conditions, all or any of which must hold.
-// One row is saved as a plain condition, so older specs stay as they were.
+// Since 2 Nov 2026 the one editor every rule uses (form rules too).
 function RuleEditor({ form, value, onChange, prefix, options }: { form: FormField[]; value: BuilderCondition; onChange: (value: BuilderCondition) => void; prefix: string; options: BuilderOptions }) {
-  const rows: SimpleCondition[] = isConditionGroup(value) ? (value.conditions as SimpleCondition[]) : [value as SimpleCondition];
-  const match = isConditionGroup(value) ? value.match : "ALL";
-  const save = (next: SimpleCondition[], nextMatch: "ALL" | "ANY" = match) => onChange(next.length === 1 ? next[0]! : { match: nextMatch, conditions: next });
-  return (
-    <div className="space-y-2">
-      {rows.length > 1 && (
-        <select aria-label="Which conditions must hold" value={match} onChange={(event) => save(rows, event.target.value as "ALL" | "ANY")} className="field-input w-auto text-label">
-          <option value="ALL">All of these are true</option>
-          <option value="ANY">Any one of these is true</option>
-        </select>
-      )}
-      {rows.map((row, index) => (
-        <div key={index} className="flex flex-wrap items-center gap-2">
-          <ConditionEditor
-            form={form}
-            value={row}
-            onChange={(next) => save(rows.map((item, i) => (i === index ? next : item)))}
-            prefix={index === 0 ? prefix : match === "ALL" ? "and" : "or"}
-            options={options}
-          />
-          {rows.length > 1 && (
-            <button type="button" onClick={() => save(rows.filter((_, i) => i !== index))} className="btn-secondary btn-compact" aria-label={`Remove condition ${index + 1}`}>
-              ×
-            </button>
-          )}
-        </div>
-      ))}
-      {rows.length < 10 && (
-        <button type="button" onClick={() => save([...rows, freshCondition(form[0])])} className="link text-label">
-          + Add another condition
-        </button>
-      )}
-    </div>
-  );
-}
-
-// One field-operator-value condition, used inside rules. The operators and
-// the value box follow the field's type (S12-04/05).
-function ConditionEditor({
-  form,
-  value,
-  onChange,
-  prefix,
-  options,
-}: {
-  form: FormField[];
-  value: SimpleCondition;
-  onChange: (value: SimpleCondition) => void;
-  prefix: string;
-  options: BuilderOptions;
-}) {
-  const field = form.find((item) => item.key === value.field);
-  // D-242: the shared condition row (the form designer's rules use it too).
-  return (
-    <ConditionRow
-      fields={form}
-      fieldKey={value.field}
-      onField={(key) => onChange(freshCondition(form.find((item) => item.key === key)))}
-      operators={operatorsFor(field)}
-      operator={value.operator}
-      onOperator={(operator) => onChange({ ...value, operator: operator as SimpleCondition["operator"] })}
-      prefix={prefix}
-      labels={{ field: "Field", operator: "Condition" }}
-      value={
-        needsValue(value.operator) ? (
-          <ConditionValueInput field={field} value={value.value} onChange={(next) => onChange({ ...value, value: next })} lookups={options.lookups} people={options.people} />
-        ) : undefined
-      }
-    />
-  );
+  return <SharedRuleEditor fields={form} value={value} onChange={onChange} prefix={prefix} lookups={options.lookups} people={options.people} />;
 }
 
 function StepEditor({

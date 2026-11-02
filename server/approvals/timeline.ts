@@ -36,6 +36,29 @@ export function describeEvent(event: TimelineEvent, labelOf: (nodeId: string) =>
       return `Resumed by ${nameOf(event.actorId)}`;
     case "RESUBMITTED":
       return `Resubmitted (round ${event.round})`;
+    case "ROUTE_CHANGED": {
+      // DR-09 (owner, 2 Nov 2026): approvers see what the new details changed.
+      const quoted = (ids: readonly string[]) => ids.map((id) => `"${labelOf(id)}"`).join(", ");
+      const parts = [
+        event.added.length ? `now needs ${quoted(event.added)}` : "",
+        event.removed.length ? `no longer needs ${quoted(event.removed)}` : "",
+        event.approverChanged.length ? `has a new approver for ${quoted(event.approverChanged)}` : "",
+      ].filter(Boolean);
+      const what = parts.length ? parts.join("; ") : "takes a different path";
+      const from = event.fromBeginning ? "it starts again from the beginning" : event.restartNodeIds.length ? `it starts again from ${quoted(event.restartNodeIds)}; earlier approvals stand` : "earlier approvals stand";
+      return `Route changed by the new details: it ${what}. ${from.charAt(0).toUpperCase()}${from.slice(1)}.`;
+    }
+    case "BRANCH_ENDED":
+      // DR-01: a branch rejected under a join whose other branches carry on.
+      return `"${labelOf(event.nodeId)}" was rejected; the other branches of "${labelOf(event.joinId)}" carry on`;
+    case "HUMAN_APPROVAL_ROUTED":
+      // DR-02: every level was skipped, so a person still has to approve.
+      return event.to === "HOD"
+        ? `No level needed an approval, so it was sent to ${event.userIds.map(nameOf).join(", ")} (head of department) to approve`
+        : "No level needed an approval and no head of department was found, so IT has been asked to choose who approves";
+    case "EXPIRED_REUSED":
+      // DR-05: an expired approval amended or followed up, with the reason.
+      return `${nameOf(event.actorId)} raised ${event.kind === "AMENDMENT" ? "an amendment" : "a follow-up"} (${event.newRequestNo}) from this expired approval: ${event.reason}`;
     case "TASK_REASSIGNED":
       return event.byApprover
         ? `${nameOf(event.actorId)} passed "${labelOf(event.nodeId)}" to ${nameOf(event.toId)}${event.reason ? `: ${event.reason}` : ""}`
@@ -111,7 +134,14 @@ export function eventKind(event: TimelineEvent): TimelineKind {
       return "resume";
     case "RESUBMITTED":
     case "REOPENED":
+    case "ROUTE_CHANGED":
       return "resubmit";
+    case "BRANCH_ENDED":
+      return "reject";
+    case "HUMAN_APPROVAL_ROUTED":
+      return "assign";
+    case "EXPIRED_REUSED":
+      return "info";
     case "TASK_REASSIGNED":
       return "handover";
     case "RECALLED":

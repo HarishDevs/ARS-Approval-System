@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| Applies to | **Applies to v1.39.0 (31 Oct 2026)** |
-| Source | Every `app/api/**/route.ts` file (39 routes at this version) |
+| Applies to | **Applies to v1.46.0 (2 Nov 2026)** (earlier: v1.39.0, 31 Oct 2026) |
+| Source | Every `app/api/**/route.ts` file (48 routes at v1.46.0; 39 at v1.39.0). v1.46.0 adds no route; it changes `/api/auth/password/start`, `/api/admin/records/[kind]` and `/api/requests/[id]/summary.pdf` |
 | Fixes | Audit defect OPS-17 ("39 API routes have no reference") |
 | Keep up to date | **Refresh this list at every release.** Run a search for `app/api/**/route.ts`, compare with the summary table, and update the version line above. |
 
@@ -57,7 +57,7 @@ Routes that answer differently are noted below.
 | Path | Methods | Auth | Purpose |
 |---|---|---|---|
 | `/api/auth/google` | POST | Public, rate-limited | Sign in with a Firebase Google ID token |
-| `/api/auth/password/start` | POST | Public, rate-limited | User ID + password check, send WhatsApp code |
+| `/api/auth/password/start` | POST | Public, rate-limited | User ID + password check, send WhatsApp code (break-glass inside its window: signed in at once, v1.46.0) |
 | `/api/auth/password/resend` | POST | Public, rate-limited | Resend the WhatsApp sign-in code |
 | `/api/auth/password/verify` | POST | Public, rate-limited | Check the code and start a session |
 | `/api/auth/set-password/start` | POST | Public, rate-limited, set-password link token | Check link and new password, send code |
@@ -129,6 +129,7 @@ Where a step sends a WhatsApp code, the answer is `200 { success: true, data: { 
 ### POST `/api/auth/password/start`
 - Body: `{ loginId (1–100), password (1–200) }`. Bad body: `400 AUTH_INVALID_CREDENTIALS` with the generic "user ID or password is incorrect" message.
 - Checks the password, then sends the WhatsApp code. Returns the challenge shape above.
+- **v1.46.0 (Q-015):** for the break-glass account while its window is open, no code is sent: the answer is `{ redirectTo }` and the session cookie is set at once, as `/password/verify` does. The client follows `redirectTo` when it is present. Audited `BREAK_GLASS_SIGNIN_NO_OTP`; every Super Admin is alerted. Every other account still gets the challenge.
 
 ### POST `/api/auth/password/resend`
 - Body: `{ challengeToken (20–200) }`. Bad body: `400 AUTH_CHALLENGE_EXPIRED`.
@@ -216,6 +217,7 @@ All answer a file with `Content-Disposition: attachment` (or `inline` where note
 ### GET `/api/requests/[id]/summary.pdf`
 - Auth: `requireApiArea("users")`, then `loadRequestView` (same check as the request page). 20 a minute per person. Audited (`REQUEST_SUMMARY_DOWNLOADED`).
 - `200 application/pdf` with `Content-Security-Policy: default-src 'none'; sandbox`; `404`; `429`.
+- v1.46.0 (DR-05): an approved request past its valid-until date shows the status "Expired (approved; valid until …)".
 
 ### GET `/api/exports/[id]`
 - Auth: `requireApiArea("users")`, then `canUseReports` (IT_ADMIN or SUPER_ADMIN, Reports feature on) and `canExport`. Owner only, while kept (7 days). Audited (`EXPORT_DOWNLOADED`).
@@ -247,6 +249,7 @@ All answer a file with `Content-Disposition: attachment` (or `inline` where note
 
 ### GET `/api/admin/records/[kind]`
 - Auth: `requireApiArea("admin", { page: "admin.records" })` and `canExport`. 20 a minute. Audited (`RECORDS_EXPORTED`).
+- v1.46.0 (PB-34): the requests CSV has an **Amount** column after Approval type. A confidential amount reads `Hidden` unless the caller's roles may see confidential values (`rolesSeeConfidential`), the same rule as on screen (`server/records/columns.ts`, `server/records/amount.ts`).
 - `kind`: `requests` | `tasks` | `information`. Query: the register's filters (`readRecordFilter`).
 - `200` CSV with a UTF-8 byte-order mark (for Excel); header `X-Rows-Truncated: 1` when cut short; `404`; `429`.
 

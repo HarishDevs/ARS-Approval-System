@@ -7,6 +7,7 @@ import { requireArea } from "@/server/authorization/guards";
 import { canExport } from "@/server/settings/features";
 import { listRecords, recordChoices, RECORDS_EXPORT_MAX, RECORDS_PAGE_SIZE } from "@/lib/db/repositories/records.repository";
 import { INFO_PRIORITIES, INFO_STATUSES, readRecordFilter, recordQuery, REQUEST_STATUSES, TASK_PRIORITIES, TASK_STATUSES, type RecordFilter, type RecordKind } from "@/server/records/filters";
+import { rolesSeeConfidential } from "@/server/approvals/confidential";
 import { columnsFor, PRIORITY_LABEL, RECORD_HREF, RECORD_TITLE, STATUS_LABEL, type RecordColumn } from "@/server/records/columns";
 
 // D-191 (owner): Admin → Records. Every approval request, task and
@@ -21,7 +22,8 @@ export async function RecordsRegister({ kind, searchParams }: { kind: RecordKind
   const { user } = await requireArea("admin");
   const filter = readRecordFilter(kind, searchParams);
   const [result, choices, mayExport] = await Promise.all([listRecords(kind, filter), recordChoices(kind), canExport(user)]);
-  const columns = columnsFor(kind) as RecordColumn<(typeof result.rows)[number]>[];
+  // PB-34: confidential amounts by the viewer's rule (QA-SEC-01).
+  const columns = columnsFor(kind, { seeConfidential: rolesSeeConfidential(user.roles) }) as RecordColumn<(typeof result.rows)[number]>[];
   const statuses = kind === "requests" ? REQUEST_STATUSES : kind === "tasks" ? TASK_STATUSES : INFO_STATUSES;
   const priorities = kind === "tasks" ? TASK_PRIORITIES : kind === "information" ? INFO_PRIORITIES : [];
   const base = BASE[kind];

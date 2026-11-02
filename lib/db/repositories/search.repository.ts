@@ -19,6 +19,7 @@ export interface SearchItem {
   submittedAt: Date;
   pendingWith: string | null;
   overdue: boolean;
+  validUntil: Date | null; // DR-05: an approved request past it shows as Expired
 }
 
 const INDIA_DATE = (column: string) => `DATE(DATE_ADD(${column}, INTERVAL 330 MINUTE))`;
@@ -80,9 +81,9 @@ export async function searchRequests(viewer: { id: number; isAdmin: boolean }, f
         : "r.submitted_at DESC, r.id DESC";
   const [[count]] = await db.query<RowDataPacket[]>(`SELECT COUNT(*) AS total ${from}`, params);
   const [rows] = await db.query<
-    (RowDataPacket & { id: number; request_no: string; title: string; type_name: string; requester_name: string; status: InstanceStatus; submitted_at: Date; pending_with: string | null; overdue: number })[]
+    (RowDataPacket & { id: number; request_no: string; title: string; type_name: string; requester_name: string; status: InstanceStatus; submitted_at: Date; pending_with: string | null; overdue: number; valid_until: Date | null })[]
   >(
-    `SELECT r.id, r.request_no, r.title, w.name AS type_name, u.name AS requester_name, r.status, r.submitted_at,
+    `SELECT r.id, r.request_no, r.title, w.name AS type_name, u.name AS requester_name, r.status, r.submitted_at, r.valid_until,
             (SELECT GROUP_CONCAT(DISTINCT p.name ORDER BY p.name SEPARATOR ', ') FROM approval_tasks t JOIN users p ON p.id = t.approver_id
               WHERE t.request_id = r.id AND t.status = 'PENDING') AS pending_with,
             (r.status = 'IN_PROGRESS' AND ${overdueSql}) AS overdue
@@ -103,6 +104,7 @@ export async function searchRequests(viewer: { id: number; isAdmin: boolean }, f
       submittedAt: row.submitted_at,
       pendingWith: row.pending_with,
       overdue: Number(row.overdue) === 1,
+      validUntil: row.valid_until ?? null,
     })),
   };
 }

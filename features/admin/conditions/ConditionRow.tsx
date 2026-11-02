@@ -2,11 +2,11 @@
 
 import type { FormField } from "@/server/forms/fields";
 
-// D-242 (Configuration Studio: one condition builder): the row both rule
-// editors use: a workflow's skip and choice rules, and a form field's "show
-// only when" / "required when". Field, test, then the value box (each editor
-// passes the box that fits its field type). Each editor keeps the shape it
-// saves (a builder condition, a field rule), so no stored JSON changes.
+// D-242 (Configuration Studio: one condition builder): one row of a rule:
+// field, test, then the value box that fits the field's type. Used by the
+// one rule editor (features/admin/conditions/RuleEditor.tsx), which since
+// 2 Nov 2026 serves a workflow's skip and choice rules and a form field's
+// "show only when" / "required when", all saved in one shape.
 export function ConditionRow({
   fields,
   fieldKey,

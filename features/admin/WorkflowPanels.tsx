@@ -211,7 +211,20 @@ export function DetailsForm({
   active: boolean;
   resubmitPolicy?: "REQUESTING_STEP" | "BEGINNING";
 }) {
-  const { result, pending, onSubmit } = useActionForm(updateDetailsAction);
+  // V181-A8 (AUD-25, REC-21): closing an open approval type asks first.
+  const [openTicked, setOpenTicked] = useState(true);
+  const closing = active && !openTicked;
+  const { result, pending, onSubmit, confirmBar } = useActionForm(
+    updateDetailsAction,
+    closing
+      ? {
+          confirmTitle: `Close ${name} for new requests?`,
+          confirmLabel: "Yes, close it",
+          confirmTone: "danger",
+          confirm: "Nobody will be able to raise a new request of this type (it leaves Request templates). Requests already running continue to the end. You can open it again later.",
+        }
+      : {},
+  );
   return (
     <form onSubmit={onSubmit} className="card space-y-3 px-5 py-4">
       <input type="hidden" name="workflowId" value={workflowId} />
@@ -240,7 +253,7 @@ export function DetailsForm({
       </div>
       <div className="flex items-center gap-1.5">
         <label className="flex items-center gap-2 text-label">
-          <input type="checkbox" name="active" defaultChecked={active} /> Open for new requests
+          <input type="checkbox" name="active" defaultChecked={active} onChange={(event) => setOpenTicked(event.target.checked)} /> Open for new requests
         </label>
         <Hint text="Untick to archive." align="start" />
       </div>
@@ -248,6 +261,7 @@ export function DetailsForm({
         Save details
       </SubmitButton>
       <ResultMessage result={result} />
+      {confirmBar}
     </form>
   );
 }
@@ -422,6 +436,15 @@ export function TypeSettingsForm({
           <input id="validityDays" name="validityDays" type="number" min={1} max={3650} defaultValue={settings.validityDays ?? ""} className="field-input w-28" />
         </div>
       </div>
+      {/* DR-02 (owner, 2 Nov 2026): off by default; then a request whose levels are all skipped goes to the requester's HOD (else IT). */}
+      <label className="flex items-center gap-2 text-label">
+        <input type="checkbox" name="mayFinishWithoutApprover" defaultChecked={settings.mayFinishWithoutApprover} />
+        May finish without an approver (all levels skipped)
+        <Hint
+          text="Off: a request of this type that no level needs (every level skipped by its rules) goes to the requester's HOD for one approval, or to IT if there is no HOD. On: it is approved straight away, with nobody approving."
+          align="start"
+        />
+      </label>
       <fieldset className="space-y-2">
         <legend className="field-label">Amendments after approval</legend>
         <label className="flex items-center gap-2 text-label">

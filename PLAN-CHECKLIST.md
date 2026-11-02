@@ -17,6 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (2 Nov 2026):** v1.46.0: everything still buildable is built, and the owner's 16 decisions of today are in (D-276 to D-280). **One migration** runs on start (form rules converted; backup table kept). **Owner:** publish v1.46.0 (`npm ci`); then the steps in `docs/GO_LIVE_READINESS_CHECKLIST.md` (v1.46.0 section): `DB_POOL_SIZE`, `/api/health/deep` clock offset, `ORIGIN_SECRET` (tile), `BACKUP_ENCRYPTION_KEY` + Google Drive backup + Test, WhatsApp templates (tile), Google Calendar consent screen External and published (Q-024), phone UAT.
 - **Now (2 Nov 2026):** v1.45.0: the phone app laid out like Asana (D-275), on top of v1.44.1. No migration. **Owner:** publish v1.45.0 (contains v1.44.1 and v1.44.0), then try it on a phone (V145-09).
 - **Now (2 Nov 2026):** v1.44.1: phone fixes: the notifications panel fits the screen; a skeleton for each phone screen while it loads (D-274). No migration. **Owner:** publish v1.44.1 instead of v1.44.0 (it contains it), then the v1.44.0 steps below.
 - **Now (2 Nov 2026):** v1.44.0 (includes v1.43.0): the approval journey (D-273), background work steps, the phone layout (D-272), tasks from approvals highlighted (D-270), the QA pass fixes (D-271). No migration. **Owner:**
@@ -154,6 +155,18 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 
 ---
 
+## Session log — v1.46.0 (2 Nov 2026): all pending build and the owner's decisions, planned before starting
+Owner: "Asana keeps a comment box fixed at the bottom of a task; implement this and complete all the pending build and changes in one go"; then "what are all decision blocked, ask and we will decide now" (16 answers, D-277); then the calendar Show dropdown, the compact New request on a phone, and Pico Bot at 75% with a grow/shrink animation.
+- [x] V146-01 (2 Nov 2026) Comment box fixed at the bottom of a task on a phone (CommentThread `docked`)
+- [x] V146-02 (2 Nov 2026) V143-16: Information phone list; Analytics filters folded; New request steps and buttons slim; AI chat and forms checked at 375 px (no change needed); calendar Show dropdown; Pico Bot 75% with grow/shrink
+- [x] V146-03 (2 Nov 2026) V181-A7 page access fails closed on unknown pages for restricted people; V181-A8 confirmations and the demo guard
+- [x] V146-04 (2 Nov 2026) Owner decisions, security and ops: break-glass without code in its window (Q-015); origin lock tile (Q-021); security records 90 days (DR-06); Google Drive backup (DR-08); template reminder (Q-013); Records amount (PB-34)
+- [x] V146-05 (2 Nov 2026) Owner decisions, engine: earliest affected step on re-route (Q-022/DR-09); join onReject (DR-01); no approval by nobody unless ticked (DR-02); Expired everywhere (DR-05)
+- [x] V146-06 (2 Nov 2026) One rule editor and the converting migration (shared condition builder)
+- [x] V146-07 (2 Nov 2026) Docs: V181-A9 (KNOWN_ISSUES, security review, go-live checklist, DEPLOYMENT), automation inventory, data model, API reference, recovery objectives; privacy and terms (approved by the head of IT); User Guide; Help; release notes
+- [x] V146-08 (2 Nov 2026) Tests: unit, integration, full e2e (results in the work log)
+- [ ] V146-09 Owner: publish and the go-live checklist steps above; check `dbClockOffsetMinutes` (decides V181-A4)
+
 ## Session log — v1.45.0 (2 Nov 2026): the phone app, Asana pattern, planned before starting
 Owner: 15 screenshots of the Asana phone app ("This is asana app, use this also as reference and build my mobile app"): My tasks, Choose view and Manage view sheets, Inbox, Search, Account, task page and its … sheet.
 - [x] V145-01 (2 Nov 2026) Shared parts: bottom sheet, sheet button, choices, floating view switcher with Manage view and +, big title with …, Compact mode switch (`features/mobile/BottomSheet.tsx`, `dock.ts`)
@@ -205,7 +218,7 @@ Owner: the QA master brief (22 phases, reports in `qa/`); "task created from app
 - [x] V143-13 (1 Nov 2026) General pages: privacy (layout cookie), User Guide and Help ("On your phone"), tour step 1 target; terms, checklist, landing and menu checked (no change: no new rule, nothing they describe changed)
 - [x] V143-14 (1 Nov 2026) Mobile docs in `docs/mobile/` (architecture, inventory, design system, progress, test reports, desktop regression, PWA validation, security review, release notes)
 - [ ] V143-15 Owner UAT on real phones (iOS Safari installed app, Android Chrome): steps in docs/mobile/PWA_VALIDATION_REPORT.md
-- [ ] V143-16 Later phases (not in v1.43.0): dedicated phone screens for the task page, Information, Calendar, Analytics, AI chat and forms (they run in the mobile shell with their existing responsive layout)
+- [x] V143-16 Later phases (not in v1.43.0): dedicated phone screens for the task page, Information, Calendar, Analytics, AI chat and forms (they run in the mobile shell with their existing responsive layout) (2 Nov 2026: done in v1.45.0 and v1.46.0: task page, Information, Analytics, New request; Calendar and AI chat already fit (checked at 375 px))
 
 ---
 
@@ -264,7 +277,7 @@ Owner's brief (sections 1–21): PWA install and Web Push (VAPID), the daily ses
 - [x] FI-D01 weekly HOD report (D-247) — 1 Nov 2026
 - [x] OPS-12 to OPS-17, FI-D04, FI-D05 docs (helper agent) — 1 Nov 2026
 - [~] OPS-07 restore drill: tools ready (`npm run db:verify-backup`, checklist); needs the owner's production backup (1 Nov 2026)
-- [~] OPS-10 RPO/RTO and incident response: drafted; needs the owner's approval (1 Nov 2026)
+- [x] OPS-10 RPO/RTO and incident response: drafted; needs the owner's approval (1 Nov 2026) (2 Nov 2026: owner approved: RPO 24 h, RTO 4 h, encrypted copy to Google Drive, key with the owner (D-277))
 - [x] V181-A1 (resubmit skips readiness checks, AUD-11) and V181-A6 (failed template sync recorded OK, AUD-17): done 1 Nov 2026 (D-248)
 - [x] General pages brought up to date with every module (privacy, terms, User Guide, Help, tour, first-use checklist, landing page) and the STRICT general-pages rule added to CLAUDE.md: done 1 Nov 2026 (D-249)
 
@@ -281,7 +294,7 @@ Owner's brief (sections 1–21): PWA install and Web Push (VAPID), the daily ses
 - [x] Workflow Designer: map + structured list, fold, drag, duplicate, remove with Undo, Undo/Redo, problems by level, browser copy of unsaved work, Test mode inputs (D-239) — 31 Oct 2026
 - [~] Server-side working-draft autosave: needs an additive column and changes version numbering; put to the owner as Q-026 (31 Oct 2026)
 - [x] Server-side working draft (Q-026 answered: go ahead): migration, saveWorkingDraft with revision guard, editor autosave, Save draft (D-241) — 31 Oct 2026
-- [~] Shared condition builder: the two rule editors store different shapes; merging changes saved JSON; waits for a decision (31 Oct 2026)
+- [x] Shared condition builder: the two rule editors store different shapes; merging changes saved JSON; waits for a decision (31 Oct 2026) (2 Nov 2026: owner: merge and convert; done in v1.46.0, D-280)
 - [x] Shared condition builder without changing saved JSON: one ConditionRow for both editors (D-242) — 31 Oct 2026
 - [x] Settings console: categories, search, unsaved marks, leave guard, one Save per category; AI one form (D-240) — 31 Oct 2026
 - [x] Studio docs: IMPLEMENTATION_LOG, ARCHITECTURE, TEST_REPORT, DEPLOYMENT — 31 Oct 2026
@@ -573,7 +586,7 @@ Plan: `docs/CHATBOT_IMPLEMENTATION_PLAN.md`; audit: `docs/CHATBOT_ARCHITECTURE_A
 - [x] PB-93 Universal search like Asana: chips, recents, saved searches, people, Filters (31 Oct 2026, D-232)
 - [x] PB-89 Asana's toolbar look (pills with ×, Search icon, line before Options) on every list incl. Admin → Records (31 Oct 2026, D-228)
 - [x] PB-88 Classic view like Tally for every form, entry screen and report (31 Oct 2026, D-227)
-- [~] PB-81 (toolbar done in PB-87; the numbered, editable table stays for tasks) Same table and toolbar for the Approval and Information lists, if the owner wants the whole app in this style
+- [~] PB-81 (toolbar done in PB-87; the numbered, editable table stays for tasks) Same table and toolbar for the Approval and Information lists, if the owner wants the whole app in this style (2 Nov 2026: owner: keep the current Approval and Information lists; closed)
 - [ ] PB-78 Not planned unless asked (Asana spec §5): portfolios, goals, workload, rules builder, forms, guests, integrations, saved view tabs
 - [x] PB-69 Custom loaders: sign-in to main page, every Classic page change (29 Oct 2026, D-214)
 - [x] PB-70 Classic navigation in and out for every role: Overview back, page titles, Esc out of text boxes, spaces and Quit (29 Oct 2026, D-214)
@@ -603,7 +616,7 @@ Plan: `docs/CHATBOT_IMPLEMENTATION_PLAN.md`; audit: `docs/CHATBOT_ARCHITECTURE_A
 - [ ] PB-47 Owner: cron URL and CEOITBox webhook to arssteels.net; reconnect approval.arssteels.net to the app (LEGACY_HOSTS redirect)
 - [ ] PB-45 Owner: Google OAuth verification resubmit (Search Console TXT for arssteels.net, Branding name ARS-CMS, logo, links) after the move
 - [ ] PB-43 Owner, optional: resubmit WhatsApp templates with "ARS-CMS"; verify arssteels.net in Resend and switch the From address
-- [ ] PB-34 Owner choice: show the request amount in Records (needs a rule for confidential amount fields)
+- [x] PB-34 Owner choice: show the request amount in Records (needs a rule for confidential amount fields) (2 Nov 2026: owner: show it, hide confidential; done in v1.46.0, D-278)
 - [ ] PB-31 Owner: Google OAuth consent screen app name and home page to match "ARS Internal Workspace"; re-check verification status (Q-025)
 - [ ] PB-15 Owner: allowed Salesforce objects and fields; then a Salesforce chat test (V-12); production Connected App with the production callback; rotate the UAT consumer secret (it was shared in chat)
 
@@ -613,7 +626,7 @@ Design: `docs/ai-module/architecture.md` (decisions §1), `discovery-report.md`,
 - [x] AI-02 Owner decisions recorded: API-based models only, one application, same repository (branch + worktree), four switchable providers (done 24 Oct 2026)
 - [x] AI-03 Phase 3 module access: `users.module_access` SET column, default Approval + Task + Information (existing people and every way of creating one keep today's access; AI for nobody). A column default instead of a grants table, so no creation path can be missed (done 24 Oct 2026)
 - [x] AI-04 Pages name their module; page access refuses a missing module (pages, Server Actions, APIs); sidebar, Ctrl K, bottom bar and tour follow; Overview and Calendar follow; Super Admin exempt (done 24 Oct 2026)
-- [ ] AI-04b Shared pages, the rest: Analytics boards (Tasks / Information / mixed) and Google Calendar sync should leave out modules the person lacks
+- [x] AI-04b Shared pages, the rest: Analytics boards (Tasks / Information / mixed) and Google Calendar sync should leave out modules the person lacks (2 Nov 2026: found done in v1.40.0 (D-246): Analytics boards by module (D-206) and Google Calendar sync by module (calendarKindAllowed))
 - [x] AI-05 Add user / Edit user "Module access" check boxes; saved only when sent and changed; rules (no self-change; another IT Admin's: Super Admin only); audited before/after (done 24 Oct 2026)
 - [x] AI-06 Users list shows modules and filters by module; user page shows them; import keeps the default (done 24 Oct 2026)
 - [x] AI-07 Tests: `tests/modules/module-access.test.ts`, `tests/integration/ai-modules.int.test.ts`, `tests/e2e/ai-modules.spec.ts` (done 24 Oct 2026)
@@ -757,9 +770,9 @@ Phase A of the roadmap, planned here and not started (details in `application-au
 - [ ] V181-A4 Pin the DB session time zone to UTC; health reports it (AUD-04; after Q-020)
 - [x] V181-A5 One person, one vote per step (AUD-05) (done 16 Oct 2026 as V190-06, v1.9.0, D-147: `server/engine/engine.ts`; ticked 31 Oct 2026)
 - [x] V181-A6 Outbox honours notify's result; job steps report soft failures (AUD-08, AUD-17) (checked 31 Oct 2026 against v1.39.0: the outbox half (AUD-08) was done in v1.9.0, `deliverOutbox` retries when nothing was recorded; the job-step half (AUD-17) is still open: `runAutomations` treats only a backup "FAILED" value as a failure, so a template sync that returns "failed: …" was recorded OK; done 1 Nov 2026 under D-248: `softFailure` records any FAILED / "failed…" step value as an error)
-- [ ] V181-A7 Page access bound to actions; fail closed on unknown pages; security page exempt (AUD-14)
-- [ ] V181-A8 Confirmations on high-impact admin actions; demo-data guard (AUD-25)
-- [ ] V181-A9 Bring KNOWN_ISSUES, SECURITY review, GO_LIVE checklist and DEPLOYMENT up to date (AUD-29)
+- [x] V181-A7 Page access bound to actions; fail closed on unknown pages; security page exempt (AUD-14) (2 Nov 2026: done in v1.46.0, D-278)
+- [x] V181-A8 Confirmations on high-impact admin actions; demo-data guard (AUD-25) (2 Nov 2026: done in v1.46.0, D-278)
+- [x] V181-A9 Bring KNOWN_ISSUES, SECURITY review, GO_LIVE checklist and DEPLOYMENT up to date (AUD-29) (2 Nov 2026: done in v1.46.0)
 - [ ] V181-A10 Origin lock required in production (AUD-15; after Q-021)
 
 ## Session log — v1.8.0: approved lists, configurable custom approvals, page access, session timeout (15 Oct 2026), planned before starting
@@ -846,10 +859,10 @@ Plan: `docs/IMPLEMENTATION_PLAN.md`. Acceptance criteria: `docs/FEATURE_ACCEPTAN
 - [x] V160-03 Phase 3: bottom navigation with counts, sticky actions with a drawer, skip link, axe in E2E (done 10 Oct 2026, 934d8a9)
 - [x] V160-04 Phase 4: queue filters, shortcuts, command palette, recently viewed, breadcrumbs, instant read state (done 10 Oct 2026, 78715cb)
 - [x] V160-05 Phase 5: timeline, file preview, resubmission diff (request_revisions) (done 10 Oct 2026, 324ef40)
-- [~] V160-06 Phase 6 (recall, ask for info, consultation, delegation, links done 076a3bc; smart forms 491a012; budgets 8809552; expiry still open): conditional and calculated fields, line items, recall, ask for info, consultation, request delegation, links and follow-ups, budgets, expiry
-- [~] V160-07 Phase 7 (templates done 8809552; watchers, calendar, builder sections and preview open): templates, watchers, calendar, builder sections and preview
-- [~] V160-08 Phase 8: version diff and restore, analytics, weekly HOD report (off), bulk reassignment (checked 31 Oct 2026: version diff and restore done under U-04, analytics under U-05/U-06 and v1.12.0, bulk reassignment under U-09; the weekly HOD report was never built: no job step, setting or template, audit FI-D01)
-- [ ] V160-09 Phases 9–12: standardise routes, performance, security review, full tests, IMPLEMENTATION_REPORT, go-live checklist, living files, push
+- [x] V160-06 Phase 6 (recall, ask for info, consultation, delegation, links done 076a3bc; smart forms 491a012; budgets 8809552; expiry still open): conditional and calculated fields, line items, recall, ask for info, consultation, request delegation, links and follow-ups, budgets, expiry (2 Nov 2026: checked: expiry with a 7-day notice is built (job step expiry); nothing left)
+- [x] V160-07 Phase 7 (templates done 8809552; watchers, calendar, builder sections and preview open): templates, watchers, calendar, builder sections and preview (2 Nov 2026: checked: needed-by calendar, form sections (SECTION fields) and preview built; watchers not needed (P6-04, FYI steps))
+- [x] V160-08 Phase 8: version diff and restore, analytics, weekly HOD report (off), bulk reassignment (checked 31 Oct 2026: version diff and restore done under U-04, analytics under U-05/U-06 and v1.12.0, bulk reassignment under U-09; the weekly HOD report was never built: no job step, setting or template, audit FI-D01) (2 Nov 2026: checked: bulk move of pending tasks built; nothing left)
+- [x] V160-09 Phases 9–12: standardise routes, performance, security review, full tests, IMPLEMENTATION_REPORT, go-live checklist, living files, push (2 Nov 2026: covered by the QA pass (qa/), the go-live checklist and the v1.46.0 docs)
 
 ## Session log — v1.5.0: owner's development spec (9 Oct 2026), planned before starting
 Plan and feature map: `docs/development/ENHANCEMENT_IMPLEMENTATION_PLAN.md`.

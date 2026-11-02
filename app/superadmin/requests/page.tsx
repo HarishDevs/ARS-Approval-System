@@ -113,7 +113,7 @@ export default async function SuperAdminRequestsPage({ searchParams }: { searchP
                   </td>
                   <td>{item.workflowName}</td>
                   <td>
-                    <RequestStatusPill status={item.status} />
+                    <RequestStatusPill status={item.status} validUntil={item.validUntil} />
                   </td>
                   <td className="whitespace-nowrap text-label text-ink-muted">
                     {deleted && item.deletedAt ? (

@@ -35,11 +35,15 @@ const pdf = (name: string) => new File([`%PDF-1.4\n${name}\n%%EOF`], name, { typ
 
 describe("demo data (S6-02a, D-071)", () => {
   it("only the Super Admin can load it", async () => {
-    await expect(loadDemoData(itAdmin(adminId))).rejects.toThrow("FORBIDDEN");
+    await expect(loadDemoData(itAdmin(adminId), { confirmText: "LOAD DEMO" })).rejects.toThrow("FORBIDDEN");
+  });
+
+  it("V181-A8 (AUD-25): without the typed confirmation nothing is loaded", async () => {
+    await expect(loadDemoData(superAdmin(adminId), { confirmText: "" })).rejects.toThrow("NOT_CONFIRMED");
   });
 
   it("loads people, groups and 12 published approval types; loading again changes nothing", async () => {
-    const first = await loadDemoData(superAdmin(adminId));
+    const first = await loadDemoData(superAdmin(adminId), { confirmText: "LOAD DEMO" });
     expect(first.problems).toEqual([]);
     expect(first.people).toBe(20);
     expect(first.groups).toBe(8);
@@ -50,7 +54,7 @@ describe("demo data (S6-02a, D-071)", () => {
     );
     expect(Number(published[0]!.total)).toBe(5);
 
-    const again = await loadDemoData(superAdmin(adminId));
+    const again = await loadDemoData(superAdmin(adminId), { confirmText: "LOAD DEMO" });
     expect(again).toMatchObject({ people: 0, groups: 0, departments: 0, workflows: [], problems: [] });
     expect(again.skippedWorkflows).toHaveLength(12);
   });

@@ -56,6 +56,8 @@ describe("Admin records registers (D-191)", () => {
     const result = await listRecords("requests", readRecordFilter("requests", { q: requestNo }));
     expect(result.total).toBe(1);
     expect(result.rows[0]).toMatchObject({ no: requestNo, title: "Records gearbox", type: "Records type", raisedBy: "Records Raiser", status: "IN_PROGRESS", currentStep: "Manager check", waitingOn: "Records Approver", approvals: 0 });
+    // PB-34: a type with no currency field has no amount.
+    expect(result.rows[0]!.amount).toEqual({ value: null, confidential: false });
     expect((await listRecords("requests", readRecordFilter("requests", { waiting: String(approver), type: String(workflowId), department: String(department), person: String(raiser) }))).rows.map((row) => row.no)).toEqual([requestNo]);
     expect((await listRecords("requests", readRecordFilter("requests", { q: requestNo, waiting: String(raiser) }))).total).toBe(0);
   });

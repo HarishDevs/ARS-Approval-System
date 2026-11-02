@@ -266,3 +266,42 @@ describe("complete sign-in: new-login alerts (F-03, N-02, N-04)", () => {
     await expect(completeSignIn(userRecord(), "GOOGLE", context, deps)).resolves.toMatchObject({ redirectTo: "/users" });
   });
 });
+
+// Q-015 (owner, 2 Nov 2026): break-glass inside its window signs in with the
+// password alone; outside the window, and for everyone else, nothing changes.
+describe("break-glass without the WhatsApp code (Q-015)", () => {
+  it("inside the window: no code is sent, the session starts, a distinct audit entry and an alert", async () => {
+    const glass = userRecord({ isBreakGlass: true, breakGlassSecondsRemaining: 600, whatsappNumber: null });
+    const { deps, sentCodes, challenges, notified } = passwordDeps(glass);
+    const started = await startPasswordSignInWithDeps("EMP005", "Correct123", context, deps);
+    expect("signedIn" in started && started.signedIn.sessionId).toBe("session-uuid");
+    expect(sentCodes).toEqual([]);
+    expect(challenges).toHaveLength(0);
+    const actions = (deps.complete.recordAudit as unknown as { mock: { calls: [{ action: string }][] } }).mock.calls.map(([entry]) => entry.action);
+    expect(actions).toEqual(["LOGIN_SUCCESS", "BREAK_GLASS_SIGNIN_NO_OTP"]);
+    const steps = (deps.complete.recordLogin as unknown as { mock: { calls: [{ step: string; success: boolean }][] } }).mock.calls.map(([entry]) => entry.step);
+    expect(steps).toEqual(["PASSWORD"]);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(notified.filter((n) => n.eventType === "BREAK_GLASS_USED").map((n) => n.title)).toEqual(["Break-glass sign-in without a WhatsApp code"]);
+  });
+
+  it("a wrong password still fails and counts towards the lockout", async () => {
+    const { deps, sentCodes } = passwordDeps(userRecord({ isBreakGlass: true, breakGlassSecondsRemaining: 600 }));
+    await expectAuthError(startPasswordSignInWithDeps("EMP005", "Wrong1234", context, deps), "AUTH_INVALID_CREDENTIALS");
+    expect(deps.recordFailedPassword).toHaveBeenCalled();
+    expect(sentCodes).toEqual([]);
+  });
+
+  it("outside the window the account can't sign in at all", async () => {
+    const { deps, sentCodes } = passwordDeps(userRecord({ isBreakGlass: true, breakGlassSecondsRemaining: 0 }));
+    await expectAuthError(startPasswordSignInWithDeps("EMP005", "Correct123", context, deps), "AUTH_INVALID_CREDENTIALS");
+    expect(sentCodes).toEqual([]);
+  });
+
+  it("an ordinary account still gets the WhatsApp code", async () => {
+    const { deps, sentCodes } = passwordDeps(userRecord());
+    const started = await startPasswordSignInWithDeps("EMP005", "Correct123", context, deps);
+    expect("signedIn" in started).toBe(false);
+    expect(sentCodes).toEqual(["482913"]);
+  });
+});

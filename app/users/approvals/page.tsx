@@ -15,7 +15,7 @@ import { cardFacts } from "@/server/mobile/card-facts";
 import { miniRoads } from "@/server/approvals/road-view";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 import { ApprovalCard, waitedFor, type ApprovalCardData } from "@/features/mobile/ApprovalCard";
-import { REQUEST_STATUS } from "@/features/requests/StatusPill";
+import { REQUEST_STATUS, requestStatusDisplay } from "@/features/requests/StatusPill";
 import { EmptyState } from "@/features/ui/Display";
 import { SafeText } from "@/features/ui/SafeText";
 
@@ -95,7 +95,8 @@ export default async function ApprovalsHub({ searchParams }: { searchParams: Pro
         approver: open ? item.pendingWith : null,
         submitted: formatIndiaTime(item.submittedAt),
         waiting: open ? waitedFor(item.submittedAt, now) : null,
-        status: { label: REQUEST_STATUS[item.status].label, className: REQUEST_STATUS[item.status].style },
+        // DR-05: an approval past its valid-until date shows as Expired.
+        status: { label: requestStatusDisplay(item.status, item.validUntil).label, className: requestStatusDisplay(item.status, item.validUntil).style },
         road: roads.get(item.id) ?? null,
       };
     });

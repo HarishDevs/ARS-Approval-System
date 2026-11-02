@@ -172,7 +172,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
               </div>
               <div className="flex items-center gap-2">
                 {item.overdue && <span className="badge bg-danger-50 text-danger-600">Overdue</span>}
-                <RequestStatusPill status={item.status} />
+                <RequestStatusPill status={item.status} validUntil={item.validUntil} />
               </div>
             </li>
           ))}

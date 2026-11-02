@@ -99,11 +99,16 @@ export async function linkRequests(input: { requestId: number; otherRequestNo: s
   return { ok: true, value: null };
 }
 
-export async function linkFollowUp(input: { sourceId: number; followUpId: number }, actor: Actor): Promise<boolean> {
+// DR-05 (owner, 2 Nov 2026): a follow-up from an expired approval carries the
+// reason the person gave (checked before the submit), kept on its history.
+export async function linkFollowUp(input: { sourceId: number; followUpId: number; followUpNo?: string; expiredReason?: string }, actor: Actor): Promise<boolean> {
   const source = await findRequest(input.sourceId);
   if (!source || source.state.status !== "APPROVED" || !(await canSee(source.id, source.requesterId, actor))) return false;
   await insertLink({ fromId: source.id, toId: input.followUpId, kind: "FOLLOW_UP", userId: actor.id });
-  await recordAudit({ actorUserId: actor.id, action: "REQUEST_FOLLOW_UP_RAISED", entityType: "REQUEST", entityId: source.id, metadata: { followUp: input.followUpId } });
+  await recordAudit({ actorUserId: actor.id, action: "REQUEST_FOLLOW_UP_RAISED", entityType: "REQUEST", entityId: source.id, metadata: { followUp: input.followUpId, ...(input.expiredReason ? { expiredReason: input.expiredReason } : {}) } });
+  if (input.expiredReason) {
+    await appendEvents(source.id, [{ type: "EXPIRED_REUSED", actorId: actor.id, kind: "FOLLOW_UP", reason: input.expiredReason, newRequestId: input.followUpId, newRequestNo: input.followUpNo ?? `#${input.followUpId}` }], actor.id, getDbPool());
+  }
   return true;
 }
 

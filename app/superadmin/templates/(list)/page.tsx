@@ -8,6 +8,7 @@ import { EMAIL_ONLY_EVENTS, EXISTING_OTP_TEMPLATE, templateLabel } from "@/serve
 import { SyncTemplatesButton } from "@/features/superadmin/TemplateForm";
 import { StatusBadge } from "@/features/superadmin/template-status";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
+import { templatesNeedingAttention } from "@/server/notifications/template-reminder";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
 export const metadata: Metadata = { title: "Message templates" };
@@ -20,6 +21,8 @@ export default async function TemplatesPage() {
   await requireArea("superadmin");
   const board = await loadTemplateBoard();
   const live = board.filter((item) => item.live).length;
+  // Q-013 (owner, 2 Nov 2026): the checklist of templates still to switch on.
+  const pending = templatesNeedingAttention(board);
   const percent = board.length ? Math.round((live / board.length) * 100) : 0;
   const lastSync = board
     .flatMap((item) => item.versions.map((version) => version.syncedAt))
@@ -48,6 +51,25 @@ export default async function TemplatesPage() {
         </div>
         <SyncTemplatesButton />
       </section>
+      {pending.length > 0 && (
+        <section className="card mb-6" id="templates-to-switch-on" data-testid="templates-to-switch-on">
+          <h2 className="border-b border-line px-5 py-3 font-semibold">Still to switch on ({pending.length})</h2>
+          <p className="px-5 pt-3 text-label text-ink-muted">Until each goes live, its message goes by email and in-app only. Open one to create, submit or check it.</p>
+          <ul className="grid gap-2 px-5 py-4 sm:grid-cols-2">
+            {pending.map((item) => (
+              <li key={item.code} className="flex items-center justify-between gap-2 rounded-md border border-line px-3 py-2 text-label">
+                <span className="flex items-center gap-2">
+                  <input type="checkbox" disabled aria-label={`${item.label}: not live`} className="h-4 w-4" />
+                  <Link href={item.href} className="link">
+                    {item.label}
+                  </Link>
+                </span>
+                <span className="text-ink-muted">{item.state}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       <section className="card overflow-x-auto">
         <table className="data-table">
           <thead>

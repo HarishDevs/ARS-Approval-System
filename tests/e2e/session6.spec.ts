@@ -18,11 +18,16 @@ let downloadPath = "";
 test("the Super Admin loads the demo staff and approval types", async ({ page, context }) => {
   await as(context, "E2E_SUPER");
   await page.goto("/superadmin/demo");
+  // V181-A8: the typed word, then the confirmation.
+  await page.getByLabel(/Type LOAD DEMO to confirm/).fill("LOAD DEMO");
   await page.getByRole("button", { name: "Load demo data" }).click();
+  await page.getByRole("button", { name: "Yes, load demo data" }).click();
   await expect(page.getByRole("status").filter({ hasText: "Loaded 20 people" })).toBeVisible();
   await page.reload();
   await expect(page.getByText("Demo people (20 active)")).toBeVisible();
+  await page.getByLabel(/Type LOAD DEMO to confirm/).fill("LOAD DEMO");
   await page.getByRole("button", { name: "Load demo data" }).click();
+  await page.getByRole("button", { name: "Yes, load demo data" }).click();
   await expect(page.getByText("Everything was already loaded; nothing changed.")).toBeVisible();
 
   await page.goto("/admin/doa");

@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireApiArea } from "@/server/authorization/guards";
 import { getActionContext } from "@/lib/http/request-context";
-import { loadDemoData, retireDemoStaff, startDemoSession } from "@/server/demo/service";
+import { DEMO_CONFIRM_WORD, demoConfirmed, demoLoadRefusal, loadDemoData, retireDemoStaff, startDemoSession } from "@/server/demo/service";
 import { SESSION_COOKIE_NAME, SESSION_TTL_SECONDS } from "@/lib/session/constants";
 import { logError } from "@/lib/logging/logger";
 import type { ActionResult } from "@/lib/http/action-result";
@@ -22,11 +22,15 @@ async function superAdmin() {
   }
 }
 
-export async function loadDemoAction(): Promise<ActionResult> {
+export async function loadDemoAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
   const actor = await superAdmin();
   if (!actor) return NOT_FOUND;
+  const confirmText = String(formData.get("confirmText") ?? "");
   try {
-    const report = await loadDemoData(actor);
+    // V181-A8 (AUD-25): typed confirmation, and never on a database in real use.
+    const refusal = await demoLoadRefusal(confirmText);
+    if (refusal) return { ok: false, message: refusal, fieldErrors: demoConfirmed(confirmText) ? undefined : { confirmText: `Type ${DEMO_CONFIRM_WORD}.` } };
+    const report = await loadDemoData(actor, { confirmText });
     revalidatePath("/superadmin/demo");
     const made = [
       report.people && `${report.people} people`,

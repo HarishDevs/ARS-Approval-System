@@ -8,8 +8,12 @@ import { isConfidential } from "@/server/forms/fields";
 // holds or decided a step on it (or covers a pending one today). Collaborators,
 // people asked for advice and FYI recipients see the request without them.
 // One rule for the request page, the file download and the timeline.
+// The part of the rule that holds for every request: IT and the Super Admin
+// (PB-34: the Records register uses it, as it lists every request).
+export const rolesSeeConfidential = (roles: readonly string[]) => roles.includes("IT_ADMIN") || roles.includes("SUPER_ADMIN");
+
 export async function canSeeConfidential(request: Pick<RequestRecord, "requesterId" | "state">, viewer: { id: number; roles: readonly string[] }): Promise<boolean> {
-  if (request.requesterId === viewer.id || viewer.roles.includes("IT_ADMIN") || viewer.roles.includes("SUPER_ADMIN")) return true;
+  if (request.requesterId === viewer.id || rolesSeeConfidential(viewer.roles)) return true;
   const tasks = request.state.tasks;
   if (tasks.some((task) => task.approverId === viewer.id || task.decidedBy === viewer.id)) return true;
   const delegators = await activeDelegatorsFor(viewer.id);

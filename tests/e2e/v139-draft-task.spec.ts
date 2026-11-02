@@ -109,8 +109,8 @@ test("formatting, / menu, emoji, @mention, a file and a collaborator reach the t
   await dialog.getByRole("button", { name: "Add collaborators" }).click();
   await dialog.getByRole("combobox", { name: "Search people to add as collaborators" }).fill("Sam");
   await dialog.getByRole("option", { name: /Sam Super/ }).click();
-  await expect(dialog.getByTestId("collaborator-chip")).toContainText("Sam Super");
-  await page.keyboard.press("Escape");
+  // v1.46.0 (owner): choosing a person closes the list.
+  await expect(dialog.getByTestId("collaborators-editor")).toHaveCount(0);
   await expect(dialog.getByRole("button", { name: "Edit collaborators (1)" })).toBeVisible();
   await page.screenshot({ path: "test-results/draft-task-toolbar.png" });
 

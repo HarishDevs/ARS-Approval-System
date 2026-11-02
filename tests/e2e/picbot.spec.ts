@@ -111,7 +111,10 @@ test("on a phone the panel fits the screen and the page never scrolls sideways",
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto("/users");
   await page.getByTestId("picbot-launcher").click();
+  // v1.46.0: the panel grows out of the bot; measure it once it has (75% of the screen's height).
+  await page.waitForFunction(() => document.querySelector('[data-testid="picbot-panel"]')?.getAnimations().every((animation) => animation.playState === "finished"));
   const box = (await page.getByTestId("picbot-panel").boundingBox())!;
+  expect(box.height).toBeGreaterThanOrEqual(812 * 0.74);
   expect(box.x).toBeGreaterThanOrEqual(0);
   expect(box.x + box.width).toBeLessThanOrEqual(375);
   expect(box.y + box.height).toBeLessThanOrEqual(812);

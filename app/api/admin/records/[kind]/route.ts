@@ -3,6 +3,7 @@ import { requireApiArea } from "@/server/authorization/guards";
 import { canExport } from "@/server/settings/features";
 import { exportRecords } from "@/lib/db/repositories/records.repository";
 import { readRecordFilter, type RecordKind } from "@/server/records/filters";
+import { rolesSeeConfidential } from "@/server/approvals/confidential";
 import { columnsFor, type RecordColumn } from "@/server/records/columns";
 import { CSV_MIME, toCsv } from "@/server/import/csv";
 import { apiError } from "@/lib/http/api-response";
@@ -23,9 +24,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     if (await overLimit(`report-export:${session.user.id}`, 20)) return tooManyResponse("Too many downloads. Wait a minute and try again.");
     const filter = readRecordFilter(kind as RecordKind, Object.fromEntries(request.nextUrl.searchParams));
     const { rows, truncated } = await exportRecords(kind as RecordKind, filter);
-    const columns = columnsFor(kind as RecordKind) as RecordColumn<(typeof rows)[number]>[];
-    // A byte-order mark, so Excel opens the file as UTF-8 (names, ₹).
-    const body = `\uFEFF${toCsv(columns.map((column) => column.label), rows.map((row) => columns.map((column) => column.value(row))))}`;
+    // PB-34: the same confidential rule for the Amount column as on screen.
+    const columns = columnsFor(kind as RecordKind, { seeConfidential: rolesSeeConfidential(session.user.roles) }) as RecordColumn<(typeof rows)[number]>[];
+    // toCsv already starts with the byte-order mark Excel needs (UTF-8: names, ₹).
+    const body = toCsv(columns.map((column) => column.label), rows.map((row) => columns.map((column) => column.value(row))));
     await recordAudit({ actorUserId: session.user.id, action: "RECORDS_EXPORTED", entityType: "RECORDS", entityId: kind, sessionId: session.sessionId, metadata: { rows: rows.length, truncated } });
     const day = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
     return new Response(body, {

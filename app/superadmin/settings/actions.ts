@@ -10,11 +10,13 @@ import { logError } from "@/lib/logging/logger";
 import type { ActionResult } from "@/lib/http/action-result";
 import { clearPushConfigCache, generateVapidKeys } from "@/server/push/service";
 import { getSettingValue } from "@/server/settings/values";
+import { testDriveAccess } from "@/server/ops/gdrive-backup";
+import { recordAudit } from "@/lib/db/repositories/audit.repository";
 
 // Server Actions for /superadmin/settings (F-52). Each re-checks the Super
 // Admin area on the server; Next.js also rejects cross-site calls by
 // comparing Origin and Host (D-048).
-const GROUPS = new Set<SettingDefinition["group"]>(["GENERAL", "AUTHENTICATION", "EMAIL", "WHATSAPP", "FEATURES", "RETENTION", "AI", "AI_DATA", "BACKUP", "PUSH"]);
+const GROUPS = new Set<SettingDefinition["group"]>(["GENERAL", "AUTHENTICATION", "EMAIL", "WHATSAPP", "FEATURES", "RETENTION", "AI", "AI_DATA", "BACKUP", "GDRIVE_BACKUP", "PUSH"]);
 const NOT_FOUND: ActionResult = { ok: false, message: "Not found." };
 
 export async function saveSettingsAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
@@ -96,5 +98,25 @@ export async function generatePushKeysAction(_previous: ActionResult | null, for
   } catch (error) {
     logError("generatePushKeysAction failed", error);
     return { ok: false, message: "Couldn't make the keys. Please try again." };
+  }
+}
+
+// DR-08: check the saved Google Drive backup settings (sign-in as the
+// service account, then the folder's details). Uploads nothing; audited.
+export async function testDriveBackupAction(): Promise<ActionResult> {
+  let session;
+  try {
+    session = await requireApiArea("superadmin");
+  } catch {
+    return NOT_FOUND;
+  }
+  try {
+    const result = await testDriveAccess();
+    const { ipAddress } = await getActionContext();
+    await recordAudit({ actorUserId: session.user.id, action: "GDRIVE_BACKUP_TESTED", entityType: "SETTINGS", entityId: "GDRIVE_BACKUP", result: result.ok ? "SUCCESS" : "FAILURE", ipAddress, sessionId: session.sessionId });
+    return { ok: result.ok, message: result.message };
+  } catch (error) {
+    logError("testDriveBackupAction failed", error);
+    return { ok: false, message: "Couldn't run the test. Please try again." };
   }
 }

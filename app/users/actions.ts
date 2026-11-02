@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { requireApiArea } from "@/server/authorization/guards";
 import { answerInfo, askForInfo, decideTask, delegateTask, holdTask, recallRequest, reopenRequest, resolveBlockedStep, resubmitRequest, resumeRequest, submitRequest, withdrawRequest, type Actor } from "@/server/approvals/service";
 import { linkFollowUp } from "@/server/approvals/consult";
+import { followUpSource } from "@/server/approvals/follow-up";
+import { cleanExpiredReason, expiredReasonError } from "@/server/approvals/expiry-rules";
 import { assessReadiness } from "@/server/approvals/readiness";
 import { amendmentPlan, amendmentTitle, mergeAmendmentFields, submitAmendment } from "@/server/approvals/amendments";
 import { findPublishedVersion, findWorkflow } from "@/lib/db/repositories/approvals.repository";
@@ -22,7 +24,7 @@ import type { ActionResult } from "@/lib/http/action-result";
 // Server Actions for requests (F-14). Every one re-checks the session; the
 // service then enforces who may do what on the record (F-12, D-057).
 const NOT_FOUND: ActionResult = { ok: false, message: "Not found." };
-const RESERVED = new Set(["workflowId", "requestId", "title", "taskKey", "decision", "comment", "attachments", "submissionKey", "allowDuplicate", "acknowledged", "overrideReason", "followUpOf", "attachmentCount", "templateName", "amendmentOf", "amendReason", "amendment", "collaborator"]);
+const RESERVED = new Set(["workflowId", "requestId", "title", "taskKey", "decision", "comment", "attachments", "submissionKey", "allowDuplicate", "acknowledged", "overrideReason", "followUpOf", "attachmentCount", "templateName", "amendmentOf", "amendReason", "amendment", "collaborator", "expiredReason"]);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // D-QA-01: the form's one-time key (anything else is ignored).
@@ -65,6 +67,13 @@ export async function submitRequestAction(_previous: ActionResult | null, formDa
   const liveVersion = workflowRecord ? await findPublishedVersion(workflowRecord.id) : null;
   const fieldFiles = await prepareFieldFiles(formData, liveVersion?.form ?? []);
   if (!fieldFiles.ok) return { ok: false, message: fieldFiles.message, fieldErrors: { [fieldFiles.field]: fieldFiles.message } };
+  // DR-05 (owner, 2 Nov 2026): a follow-up from an expired approval isn't
+  // blocked, but needs a reason, recorded on the expired request's history.
+  const followUpOf = num(formData.get("followUpOf"));
+  const followUpFrom = followUpOf !== null ? await followUpSource(followUpOf, me) : null;
+  const expiredReason = followUpFrom?.expired ? cleanExpiredReason(String(formData.get("expiredReason") ?? "")) : "";
+  const expiredProblem = followUpFrom?.expired ? expiredReasonError(expiredReason) : null;
+  if (expiredProblem) return { ok: false, message: expiredProblem, fieldErrors: { expiredReason: expiredProblem } };
   let requestId: number;
   let filesSaved = true;
   try {
@@ -85,8 +94,9 @@ export async function submitRequestAction(_previous: ActionResult | null, formDa
     if (!result.ok) return { ok: false, message: result.message, fieldErrors: result.fieldErrors, data: result.readiness ? { readiness: result.readiness } : undefined };
     requestId = result.value.requestId;
     // EN-08: raised as a follow-up of an approved request the person can see.
-    const followUpOf = num(formData.get("followUpOf"));
-    if (followUpOf !== null && !result.value.repeated) await linkFollowUp({ sourceId: followUpOf, followUpId: requestId }, me).catch((error) => logError("follow-up link failed", error));
+    if (followUpOf !== null && !result.value.repeated) {
+      await linkFollowUp({ sourceId: followUpOf, followUpId: requestId, followUpNo: result.value.requestNo, ...(expiredReason ? { expiredReason } : {}) }, me).catch((error) => logError("follow-up link failed", error));
+    }
     // A repeated submit already has its files from the first time.
     if (result.value.repeated) {
       files.files.length = 0;
@@ -128,6 +138,7 @@ export async function submitAmendmentAction(_previous: ActionResult | null, form
         originalId,
         fields: fieldsFrom(formData),
         reason: String(formData.get("amendReason") ?? ""),
+        expiredReason: String(formData.get("expiredReason") ?? ""), // DR-05: required when the approval has expired
         submissionKey: submissionKeyOf(formData),
         acknowledged: formData.get("acknowledged") === "on",
         overrideReason: String(formData.get("overrideReason") ?? "").slice(0, 500),

@@ -10,7 +10,7 @@ import { getSettingValue } from "@/server/settings/values";
 import { parseFormSubmission, type FormField } from "@/server/forms/fields";
 import { checkDoaAmount } from "@/server/workflows/builder";
 import { simulate, validateWorkflow, type FormData as EngineFormData } from "@/server/engine";
-import { budgetPosition, financialYear, fyLabel, parseTypeSettings, type BudgetState } from "@/server/workflows/type-settings";
+import { budgetPosition, financialYear, fyLabel, mayFinishWithoutApprover, parseTypeSettings, type BudgetState } from "@/server/workflows/type-settings";
 import { formatPaise } from "@/server/forms/dynamic";
 
 // Submission readiness (unified prompt FN1). One service for the "Check
@@ -118,7 +118,8 @@ export async function assessReadiness(
   // 2. Routing: who would be asked, with these values. A step that finds
   //    nobody is a warning: the request waits there until IT assigns someone.
   if (parsed.ok && validation.valid) {
-    const route = simulate(input.version.definition, { requesterId: input.requester.id, formData: parsed.data, now: new Date().toISOString() }, toDirectory(snapshot));
+    // DR-02: with the type's "may finish without an approver" setting, as the submit will run.
+    const route = simulate(input.version.definition, { requesterId: input.requester.id, formData: parsed.data, now: new Date().toISOString(), mayFinishWithoutApprover: mayFinishWithoutApprover(input.workflow) }, toDirectory(snapshot));
     const labels = new Map(input.version.definition.nodes.map((node) => [node.id, node.label]));
     for (const blocked of route.blocked) items.push({ code: "ROUTING", severity: "WARNING", message: `Nobody is set up to approve "${labels.get(blocked.nodeId) ?? blocked.nodeId}" for these details. You can still submit; IT will be asked to choose someone.` });
     // D-245 (audit DB-005): a step skipped for having nobody is said too.

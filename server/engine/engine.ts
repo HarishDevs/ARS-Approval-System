@@ -1,4 +1,5 @@
 import { evaluateCondition } from "@/server/engine/conditions";
+import { planReroute } from "@/server/engine/reroute";
 import { validateWorkflow } from "@/server/engine/validate";
 import {
   EngineError,
@@ -225,7 +226,7 @@ class Run {
         this.advanceFrom(node.id);
         return;
       case "END":
-        if (this.blockIfNobodyDecided()) return;
+        if (this.needsHumanApproval(node.id)) return;
         nodeState.status = "APPROVED";
         nodeState.activatedAt = this.context.now;
         nodeState.completedAt = this.context.now;
@@ -350,6 +351,60 @@ class Run {
     return true;
   }
 
+  // DR-02 (owner, 2 Nov 2026): a request never ends Approved without at
+  // least one human approval, unless it is of a predefined type IT ticked
+  // "May finish without an approver" (stamped on the state at submit; those
+  // keep the D-245 rule above). Otherwise, at End with nobody having
+  // approved, an approval step is given to the requester's HOD; with no HOD
+  // it blocks, so IT is told and chooses who decides (the existing fallback
+  // for steps nobody can approve, D-098). Approving it finishes the request.
+  private needsHumanApproval(endNodeId: string): boolean {
+    if (this.state.mayFinishWithoutApprover) return this.blockIfNobodyDecided();
+    if (this.hasHumanApproval()) return false;
+    this.routeToHuman(endNodeId);
+    return true;
+  }
+
+  // An approval (not work) approved by a person, on a step whose outcome
+  // still stands (a reopen or a restart doesn't count older approvals).
+  private hasHumanApproval(): boolean {
+    return this.state.tasks.some((task) => {
+      const node = this.graph.nodes.get(task.nodeId);
+      return task.status === "APPROVED" && node?.kind === "APPROVAL" && !isWork(node) && this.state.nodes[task.nodeId]?.status === "APPROVED";
+    });
+  }
+
+  routeToHuman(endNodeId: string): void {
+    const approvals = [...this.graph.nodes.values()].filter((node): node is ApprovalNode => node.kind === "APPROVAL" && !isWork(node));
+    const status = (node: ApprovalNode) => this.state.nodes[node.id]?.status;
+    // The step that stands for "the approval": the last one skipped on the
+    // way, else the last one not used (validation guarantees one exists).
+    const anchor =
+      approvals.filter((node) => status(node) === "SKIPPED").at(-1) ??
+      approvals.filter((node) => status(node) === "WAITING" || status(node) === "CANCELLED").at(-1) ??
+      approvals.at(-1);
+    if (!anchor) throw new EngineError("INVALID_WORKFLOW", "Workflow has no approval step.");
+    const hod = resolveApprovers([{ type: "REQUESTER_DEPARTMENT_HOD" }], this.context, this.directory);
+    this.state.humanCheck = { nodeId: anchor.id, endNodeId };
+    const nodeState = (this.state.nodes[anchor.id] ??= { status: "WAITING" });
+    nodeState.completedAt = undefined;
+    this.events.push({ type: "HUMAN_APPROVAL_ROUTED", nodeId: anchor.id, to: hod.length ? "HOD" : "IT", userIds: hod });
+    if (hod.length) this.openTasks(anchor, hod);
+    else {
+      nodeState.activatedAt = this.context.now;
+      this.block(anchor.id, "NO_ELIGIBLE_APPROVER");
+    }
+  }
+
+  isHumanCheck(nodeId: string): boolean {
+    return this.state.humanCheck?.nodeId === nodeId;
+  }
+
+  // How many approvals a step needs; the DR-02 human check needs one.
+  need(node: ApprovalNode, total: number): number {
+    return this.isHumanCheck(node.id) ? 1 : required(node.completion, total);
+  }
+
   private finishApproved(): void {
     this.state.status = "APPROVED";
     for (const [id, nodeState] of Object.entries(this.state.nodes)) {
@@ -380,17 +435,74 @@ class Run {
     );
     const approved = tasks.filter((task) => task.status === "APPROVED").length;
     const pending = tasks.filter((task) => task.status === "PENDING").length;
-    const need = required(node.completion, tasks.length);
+    const need = this.need(node, tasks.length);
     if (approved >= need) {
       nodeState.status = "APPROVED";
       nodeState.completedAt = this.context.now;
       this.closeTasks(node.id, "NOT_REQUIRED");
       this.events.push({ type: "NODE_APPROVED", nodeId: node.id });
+      const check = this.state.humanCheck;
+      if (check?.nodeId === node.id) {
+        // DR-02: the human approval was given; the request finishes.
+        delete this.state.humanCheck;
+        this.activate(this.graph.node(check.endNodeId));
+        return;
+      }
       this.advanceFrom(node.id);
     } else if (approved + pending < need) {
       // Not enough people left who could still approve.
-      this.rejectInstance(node.id);
+      this.failNode(node.id);
     }
+  }
+
+  // DR-01 (owner, 2 Nov 2026): a rejected step ends the request, unless it
+  // sits in a branch of a join set to WHEN_UNREACHABLE (any-one / any-N)
+  // that the remaining branches can still meet: then only its branch ends.
+  // A join that can no longer be met fails in turn (an ALL join always does
+  // when a branch fails), which may end an outer branch the same way.
+  failNode(nodeId: string): void {
+    const target = this.isHumanCheck(nodeId) ? null : this.branchJoin(nodeId);
+    if (!target || (target.join.completion.type !== "ALL" && target.join.onReject !== "WHEN_UNREACHABLE")) {
+      this.rejectInstance(nodeId); // END (default): today's behaviour
+      return;
+    }
+    const { join, edgeIds } = target;
+    const nodeState = this.state.nodes[nodeId]!;
+    nodeState.status = "REJECTED";
+    nodeState.completedAt = this.context.now;
+    this.closeTasks(nodeId, "CANCELLED");
+    const failed = ((this.state.failedJoinEdges ??= {})[join.id] ??= []);
+    for (const edgeId of edgeIds) if (!failed.includes(edgeId)) failed.push(edgeId);
+    const incoming = this.graph.incoming.get(join.id) ?? [];
+    const arrived = this.state.joins[join.id] ?? [];
+    const stillPossible = incoming.filter((edge) => arrived.includes(edge.id) || !failed.includes(edge.id)).length;
+    if (stillPossible >= required(join.completion, incoming.length)) {
+      this.events.push({ type: "BRANCH_ENDED", nodeId, joinId: join.id });
+      return;
+    }
+    this.failNode(join.id);
+  }
+
+  // The one join a step's branch leads into (null when it reaches End
+  // first, or more than one join: then a rejection ends the request).
+  private branchJoin(nodeId: string): { join: JoinNode; edgeIds: string[] } | null {
+    const joins = new Map<string, string[]>();
+    const seen = new Set<string>();
+    const stack = [nodeId];
+    while (stack.length) {
+      const id = stack.pop()!;
+      if (seen.has(id)) continue;
+      seen.add(id);
+      for (const edge of this.graph.outgoing.get(id) ?? []) {
+        const to = this.graph.nodes.get(edge.to);
+        if (!to || to.kind === "END") return null;
+        if (to.kind === "JOIN") joins.set(to.id, [...(joins.get(to.id) ?? []), edge.id]);
+        else stack.push(to.id);
+      }
+    }
+    if (joins.size !== 1) return null;
+    const [joinId, edgeIds] = [...joins.entries()][0]!;
+    return { join: this.graph.node(joinId) as JoinNode, edgeIds };
   }
 
   rejectInstance(nodeId: string): void {
@@ -403,10 +515,11 @@ class Run {
   }
 }
 
-function freshState(definition: WorkflowDefinition, round: number, seq: number): InstanceState {
+// DR-02: the type's "may finish without an approver" stays with the request.
+function freshState(definition: WorkflowDefinition, round: number, seq: number, previous?: InstanceState): InstanceState {
   const nodes: InstanceState["nodes"] = {};
   for (const node of definition.nodes) nodes[node.id] = { status: "WAITING" };
-  return { status: "IN_PROGRESS", round, nodes, tasks: [], joins: {}, seq };
+  return { status: "IN_PROGRESS", round, nodes, tasks: [], joins: {}, seq, ...(previous?.mayFinishWithoutApprover ? { mayFinishWithoutApprover: true } : {}) };
 }
 
 // ------------------------------------------------------------ public API --
@@ -418,6 +531,7 @@ export function startInstance(definition: WorkflowDefinition, context: EngineCon
   }
   const graph = new Graph(definition);
   const state = freshState(definition, 1, 0);
+  if (context.mayFinishWithoutApprover) state.mayFinishWithoutApprover = true; // DR-02
   const run = new Run(graph, state, context, directory);
   run.activate(graph.start());
   return { state, events: run.events };
@@ -487,8 +601,9 @@ export function decide(
   } else if (input.decision === "REJECT") {
     task.status = "REJECTED";
     // ALL: one rejection ends it. ANY_ONE / ANY_N: only when the rule can no
-    // longer be met by the people still to decide.
-    if (node.completion.type === "ALL") run.rejectInstance(node.id);
+    // longer be met by the people still to decide. (DR-01: inside a branch
+    // of a WHEN_UNREACHABLE join, "ends it" may end only that branch.)
+    if (node.completion.type === "ALL") run.failNode(node.id);
     else run.evaluateApprovalNode(node);
     if (state.status === "REJECTED") {
       run.events.push({ type: "INSTANCE_REJECTED", nodeId: node.id, actorId: input.actorId, comment: comment! });
@@ -552,39 +667,40 @@ export function resubmit(
   policy: RestartPolicy,
   context: EngineContext,
   directory: Directory,
+  // DR-09: the values before this resubmit, when the requester changed them.
+  options: { previousFormData?: EngineContext["formData"] } = {},
 ): EngineResult {
   if (previous.status !== "CHANGES_REQUIRED" || !previous.changesRequested) {
     throw new EngineError("NOT_CHANGES_REQUIRED", "This request is not waiting for changes.");
   }
   const graph = new Graph(definition);
-  const state = freshState(definition, previous.round + 1, previous.seq);
+  // DR-09 (owner, 2 Nov 2026; supersedes D-147's restart from the beginning):
+  // new values that change the route restart it from the earliest step whose
+  // routing outcome differs; the steps before it keep their approvals.
+  const reroute = options.previousFormData ? planReroute(definition, options.previousFormData, context.formData) : null;
+  if (reroute?.changed && policy === "REQUESTING_STEP") return resubmitFromAffected(definition, graph, previous, reroute, context, directory);
+
+  const state = freshState(definition, previous.round + 1, previous.seq, previous);
   state.tasks = previous.tasks.map((task) => ({ ...task }));
   const run = new Run(graph, state, context, directory);
   const restartNodeId = policy === "REQUESTING_STEP" ? previous.changesRequested.nodeId : graph.start().id;
 
   if (policy === "REQUESTING_STEP") {
-    // Earlier steps keep their outcome from the previous round.
+    // Earlier steps keep their outcome from the previous round (DR-01: and a
+    // branch already rejected under a WHEN_UNREACHABLE join stays ended).
     for (const [id, nodeState] of Object.entries(previous.nodes)) {
-      if (id !== restartNodeId && (nodeState.status === "APPROVED" || nodeState.status === "SKIPPED")) {
+      if (id !== restartNodeId && (nodeState.status === "APPROVED" || nodeState.status === "SKIPPED" || nodeState.status === "REJECTED")) {
         state.nodes[id] = { ...nodeState };
       }
     }
-    // Keep join arrivals from branches that stay finished, so a join isn't
-    // left waiting for a branch that already completed.
-    const edgesById = new Map(definition.edges.map((edge) => [edge.id, edge]));
-    for (const [joinId, arrived] of Object.entries(previous.joins)) {
-      const kept = arrived.filter((edgeId) => {
-        const from = edgesById.get(edgeId)?.from;
-        const status = from ? state.nodes[from]?.status : undefined;
-        return status === "APPROVED" || status === "SKIPPED";
-      });
-      if (kept.length) {
-        state.joins[joinId] = kept;
-        if (state.nodes[joinId]?.status !== "APPROVED") state.nodes[joinId] = { status: "ACTIVE", activatedAt: previous.nodes[joinId]?.activatedAt };
-      }
-    }
+    if (previous.failedJoinEdges) state.failedJoinEdges = JSON.parse(JSON.stringify(previous.failedJoinEdges)) as Record<string, string[]>;
+    keepJoinArrivals(definition, previous, state);
   }
   run.events.push({ type: "RESUBMITTED", round: state.round, restartNodeId, changesAskedBy: previous.changesRequested.by });
+  // DR-09: the type restarts from the beginning anyway; say what changed.
+  if (reroute?.changed) {
+    run.events.push({ type: "ROUTE_CHANGED", added: reroute.added, removed: reroute.removed, approverChanged: reroute.approverChanged, restartNodeIds: [restartNodeId], fromBeginning: true });
+  }
   if (policy === "REQUESTING_STEP") {
     const restartIds = [...new Set([restartNodeId, ...previous.changesRequested.openNodeIds])];
     for (const id of restartIds) {
@@ -595,6 +711,93 @@ export function resubmit(
     run.activate(graph.node(restartNodeId));
   }
   return { state, events: run.events };
+}
+
+// Keep join arrivals from branches that stay finished, so a join isn't left
+// waiting for a branch that already completed.
+function keepJoinArrivals(definition: WorkflowDefinition, previous: InstanceState, state: InstanceState): void {
+  const edgesById = new Map(definition.edges.map((edge) => [edge.id, edge]));
+  for (const [joinId, arrived] of Object.entries(previous.joins)) {
+    const kept = arrived.filter((edgeId) => {
+      const from = edgesById.get(edgeId)?.from;
+      const status = from ? state.nodes[from]?.status : undefined;
+      return status === "APPROVED" || status === "SKIPPED";
+    });
+    if (kept.length) {
+      state.joins[joinId] = kept;
+      if (state.nodes[joinId]?.status !== "APPROVED") state.nodes[joinId] = { status: "ACTIVE", activatedAt: previous.nodes[joinId]?.activatedAt };
+    }
+  }
+}
+
+// DR-09: restart points are the step that asked for changes, every step open
+// then, and every affected step that already produced an outcome (approved,
+// skipped, or a choice taken). Everything downstream of a restart point runs
+// again; everything else keeps its outcome. Only the earliest points (not
+// downstream of another) are started, in route order.
+function resubmitFromAffected(
+  definition: WorkflowDefinition,
+  graph: Graph,
+  previous: InstanceState,
+  reroute: ReturnType<typeof planReroute>,
+  context: EngineContext,
+  directory: Directory,
+): EngineResult {
+  const asked = previous.changesRequested!;
+  const decided = (id: string) => previous.nodes[id]?.status === "APPROVED" || previous.nodes[id]?.status === "SKIPPED";
+  const points = [...new Set([asked.nodeId, ...asked.openNodeIds, ...reroute.affectedNodeIds.filter(decided)])].filter((id) => graph.nodes.has(id));
+  const downstream = (id: string): Set<string> => {
+    const seen = new Set<string>();
+    const stack = (graph.outgoing.get(id) ?? []).map((edge) => edge.to);
+    while (stack.length) {
+      const next = stack.pop()!;
+      if (seen.has(next)) continue;
+      seen.add(next);
+      for (const edge of graph.outgoing.get(next) ?? []) stack.push(edge.to);
+    }
+    return seen;
+  };
+  const below = new Map(points.map((id) => [id, downstream(id)]));
+  const reset = new Set(points);
+  for (const set of below.values()) set.forEach((id) => reset.add(id));
+  const depth = routeDepth(graph);
+  const earliest = points.filter((id) => !points.some((other) => other !== id && below.get(other)!.has(id))).sort((a, b) => (depth.get(a) ?? 0) - (depth.get(b) ?? 0));
+
+  const state = freshState(definition, previous.round + 1, previous.seq, previous);
+  state.tasks = previous.tasks.map((task) => ({ ...task }));
+  for (const [id, nodeState] of Object.entries(previous.nodes)) {
+    if (!reset.has(id) && (nodeState.status === "APPROVED" || nodeState.status === "SKIPPED" || nodeState.status === "REJECTED")) state.nodes[id] = { ...nodeState };
+  }
+  const edgesById = new Map(definition.edges.map((edge) => [edge.id, edge]));
+  for (const [joinId, edgeIds] of Object.entries(previous.failedJoinEdges ?? {})) {
+    const kept = edgeIds.filter((edgeId) => {
+      const from = edgesById.get(edgeId)?.from;
+      return from !== undefined && !reset.has(from);
+    });
+    if (kept.length) (state.failedJoinEdges ??= {})[joinId] = kept;
+  }
+  keepJoinArrivals(definition, previous, state);
+
+  const run = new Run(graph, state, context, directory);
+  run.events.push({ type: "RESUBMITTED", round: state.round, restartNodeId: earliest[0] ?? asked.nodeId, changesAskedBy: asked.by });
+  run.events.push({ type: "ROUTE_CHANGED", added: reroute.added, removed: reroute.removed, approverChanged: reroute.approverChanged, restartNodeIds: earliest, fromBeginning: false });
+  for (const id of earliest) {
+    if (state.status !== "IN_PROGRESS") break;
+    run.activate(graph.node(id));
+  }
+  return { state, events: run.events };
+}
+
+// Longest distance from Start, to start restart points in route order.
+function routeDepth(graph: Graph): Map<string, number> {
+  const depth = new Map<string, number>();
+  const visit = (id: string, at: number) => {
+    if ((depth.get(id) ?? -1) >= at) return;
+    depth.set(id, at);
+    for (const edge of graph.outgoing.get(id) ?? []) visit(edge.to, at + 1);
+  };
+  visit(graph.start().id, 0);
+  return depth;
 }
 
 // Open tasks for one person (their "Waiting for me" list).
@@ -653,7 +856,7 @@ export function reopen(
   const reason = input.reason.trim();
   if (!reason) throw new EngineError("COMMENT_REQUIRED", "Please give a reason.");
   const graph = new Graph(definition);
-  const state = freshState(definition, previous.round + 1, previous.seq);
+  const state = freshState(definition, previous.round + 1, previous.seq, previous);
   state.tasks = previous.tasks.map((task) => ({ ...task }));
   const run = new Run(graph, state, context, directory);
   run.events.push({ type: "REOPENED", actorId: input.actorId, reason, round: state.round });
@@ -743,19 +946,26 @@ export function resolveBlocked(
     ...(input.action === "ASSIGN" ? { userIds: input.userIds } : {}),
   });
   if (node.kind === "APPROVAL") {
+    // DR-02: the human approval a request needs can be given to someone, or
+    // looked for again (the HOD), but never skipped.
+    const humanCheck = state.humanCheck?.nodeId === node.id ? state.humanCheck : null;
     if (input.action === "ASSIGN") {
       const work = node.mode === "WORK";
       const people = [...new Set(input.userIds)];
       if (people.length === 0) throw new EngineError("INVALID_ACTION", "Choose at least one person.");
       if (people.some((id) => !directory.isActive(id))) throw new EngineError("INVALID_ACTION", "Everyone chosen must be an active person.");
       if (!work && people.includes(context.requesterId)) throw new EngineError("INVALID_ACTION", "The requester can't approve their own request.");
-      const need = required(node.completion, people.length);
+      const need = run.need(node, people.length);
       if (people.length < need) throw new EngineError("INVALID_ACTION", `This step needs at least ${need} people.`);
       run.openTasks(node, people);
     } else if (input.action === "SKIP") {
+      if (humanCheck) throw new EngineError("INVALID_ACTION", "This request needs at least one person's approval, so this step can't be skipped. Choose who approves it.");
       run.skip(node.id, "SKIPPED_BY_IT");
     } else if (input.action === "RETRY") {
-      run.activate(node);
+      if (humanCheck) {
+        delete state.humanCheck;
+        run.routeToHuman(humanCheck.endNodeId);
+      } else run.activate(node);
     } else {
       throw new EngineError("INVALID_ACTION", "A path can only be chosen on a choice step.");
     }

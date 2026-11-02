@@ -1,10 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { decide, resolveBlocked, startInstance } from "@/server/engine/engine";
 import type { InstanceState } from "@/server/engine/types";
-import { approval, chain, ctx, makeDirectory, user } from "../helpers/engine-fixtures";
+import { approval, chain, ctx as baseCtx, makeDirectory, user } from "../helpers/engine-fixtures";
 
 // D-245 (audit DB-004, DB-005): no request is approved without an
 // independent decision.
+// DR-02 (owner, 2 Nov 2026): D-245's rules now apply to a predefined type IT
+// ticked "May finish without an approver"; every other request is routed to
+// a human instead (tests/engine/dr02-human-approval.test.ts).
+const ctx = (...args: Parameters<typeof baseCtx>) => ({ ...baseCtx(...args), mayFinishWithoutApprover: true });
 const dir = makeDirectory();
 const pending = (state: InstanceState, nodeId: string) => state.tasks.filter((task) => task.nodeId === nodeId && task.status === "PENDING");
 

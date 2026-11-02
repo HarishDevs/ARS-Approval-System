@@ -111,6 +111,11 @@ export interface SplitNode extends BaseNode {
 export interface JoinNode extends BaseNode {
   kind: "JOIN";
   completion: CompletionRule;
+  // DR-01 (owner, 2 Nov 2026): what a rejection in one branch does, for an
+  // ANY_ONE / ANY_N join. END (default, also when absent) ends the request;
+  // WHEN_UNREACHABLE ends it only when the branches still able to finish
+  // can no longer meet the join, otherwise the others keep deciding.
+  onReject?: "END" | "WHEN_UNREACHABLE";
 }
 
 export interface ConditionNode extends BaseNode {
@@ -153,6 +158,10 @@ export interface EngineContext {
   requesterId: number;
   formData: FormData;
   now: string; // ISO timestamp, supplied by the caller
+  // DR-02 (owner, 2 Nov 2026): only a predefined type IT ticked "May finish
+  // without an approver" may end Approved with no human approval. Read by
+  // startInstance only; it is kept on the request's state from then on.
+  mayFinishWithoutApprover?: boolean;
 }
 
 // ---- runtime state (JSON-serialisable, persisted by the caller) -----------
@@ -199,6 +208,14 @@ export interface InstanceState {
   // openNodeIds: every step that was still open when changes were asked, so
   // a restart "at the requesting step" also restarts parallel branches.
   changesRequested?: { nodeId: string; by: number; at: string; comment: string; openNodeIds: string[] };
+  // DR-01: join id → incoming edges whose branch was rejected (WHEN_UNREACHABLE joins).
+  failedJoinEdges?: Record<string, string[]>;
+  // DR-02: stamped at submit from the type's setting (absent = a human must approve).
+  mayFinishWithoutApprover?: boolean;
+  // DR-02: the request reached End with no human approval, so this approval
+  // step was given to the requester's HOD (or blocked for IT). Approving it
+  // finishes the request at endNodeId.
+  humanCheck?: { nodeId: string; endNodeId: string };
   seq: number;
 }
 
@@ -218,6 +235,14 @@ export type EngineEvent =
   | { type: "PUT_ON_HOLD"; nodeId: string; actorId: number; reason?: string }
   | { type: "RESUMED"; actorId: number; heldSince?: string; pendingApproverIds?: number[] }
   | { type: "RESUBMITTED"; round: number; restartNodeId: string; changesAskedBy?: number }
+  // DR-09 (owner, 2 Nov 2026): the new values changed the route. Node ids of
+  // the approval steps now on / no longer on the route, those whose approver
+  // (a person field) changed, and where the request restarted.
+  | { type: "ROUTE_CHANGED"; added: string[]; removed: string[]; approverChanged: string[]; restartNodeIds: string[]; fromBeginning: boolean }
+  // DR-01: a branch was rejected but its join can still be met; the others carry on.
+  | { type: "BRANCH_ENDED"; nodeId: string; joinId: string }
+  // DR-02: nobody approved anything, so a human approval was asked for.
+  | { type: "HUMAN_APPROVAL_ROUTED"; nodeId: string; to: "HOD" | "IT"; userIds: number[] }
   | { type: "NOTIFIED"; nodeId: string; userIds: number[]; note?: string }
   | { type: "WORK_ASSIGNED"; nodeId: string; label: string; userIds: number[]; slaHours?: number }
   | { type: "BLOCK_RESOLVED"; nodeId: string; actorId: number; action: BlockAction["action"]; userIds?: number[]; reason: string }

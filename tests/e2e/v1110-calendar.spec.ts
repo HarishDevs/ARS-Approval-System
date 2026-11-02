@@ -85,9 +85,13 @@ test("calendar: add a personal entry, see it by day, week and month, edit and de
   await expect(page).not.toHaveURL(/view=week/);
   await expect(page.getByRole("heading", { level: 2, name: "May 2031", exact: true })).toBeVisible();
   // Filters: hiding Personal hides it.
-  await page.getByRole("link", { name: /^Personal/ }).click();
+  // v1.46.0: the kinds are in the Show dropdown.
+  await page.getByTestId("calendar-show").locator("summary").click();
+  await page.getByTestId("calendar-show").getByRole("link", { name: /^Personal/ }).click();
   await expect(page.locator("main")).not.toContainText("E2E site visit");
-  await page.getByRole("link", { name: /^Personal/ }).click();
+  // It stays open after a choice (several kinds can be changed in a row).
+  if ((await page.getByTestId("calendar-show").getAttribute("open")) === null) await page.getByTestId("calendar-show").locator("summary").click();
+  await page.getByTestId("calendar-show").getByRole("link", { name: /^Personal/ }).click();
   await page.goto("/users/calendar?view=day&date=2031-05-14");
   await page.getByTestId("calendar-list").getByRole("link", { name: "E2E site visit" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "E2E site visit" })).toBeVisible();

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { FormData as EngineFormData } from "@/server/engine/types";
-import { RULE_OPERATORS, computeLines, dependencyOrder, evaluateFormula, formatPaise, formulaFields, paiseToRupees, parseFormula, roundTo, ruleHolds, visibleFields, type FieldRule, type Line, type LineInput } from "@/server/forms/dynamic";
+import { conditionSpecSchema, operatorNeedsValue, ruleComparisons, upgradeRule } from "@/server/conditions/rule";
+import { computeLines, dependencyOrder, evaluateFormula, formatPaise, formulaFields, paiseToRupees, parseFormula, roundTo, ruleHolds, visibleFields, type FieldRule, type Line, type LineInput } from "@/server/forms/dynamic";
 
 // Form fields belong to a workflow version (D-055, S3-01a): a running
 // request keeps the fields it was raised with. Pure and unit-tested.
@@ -66,7 +67,10 @@ export interface FormField {
 export const CONFIDENTIAL_TEXT = "Confidential";
 export const isConfidential = (field: Pick<FormField, "confidential" | "type">) => Boolean(field.confidential) && field.type !== "SECTION";
 
-const ruleSchema = z.object({ field: z.string().regex(/^[a-z][a-z0-9_]{0,49}$/), op: z.enum(RULE_OPERATORS), value: z.string().trim().max(100).optional() });
+// 2 Nov 2026: a field rule is the one condition shape (server/conditions/rule.ts).
+// An older { field, op, value } rule read from the database is converted
+// first, so a database the migration hasn't reached yet still loads.
+const ruleSchema = z.preprocess((rule) => upgradeRule(rule), conditionSpecSchema);
 
 export const formFieldSchema = z.object({
   key: z.string().regex(/^[a-z][a-z0-9_]{0,49}$/, "Field keys use lowercase letters, numbers and _ (e.g. amount)."),
@@ -133,13 +137,28 @@ export function checkFormDefinition(fields: readonly FormField[]): string[] {
     if (field.type === "ATTACHMENT" && field.defaultValue) problems.push(`"${field.label}" is an attachment field; it can't have a default value.`);
     for (const [name, rule] of [["show", field.showIf], ["require", field.requiredIf]] as const) {
       if (!rule) continue;
-      const target = fields.find((other) => other.key === rule.field);
-      if (!target) problems.push(`"${field.label}": the ${name} rule uses "${rule.field}", which isn't a field on this form.`);
-      else if (target.key === field.key) problems.push(`"${field.label}": a rule can't depend on the field itself.`);
-      else if (target.type === "SECTION") problems.push(`"${field.label}": a rule can't use a heading.`);
-      else if (["GT", "GTE", "LT", "LTE"].includes(rule.op) && !NUMERIC_TYPES.includes(target.type)) problems.push(`"${field.label}": "more/less than" needs a number field.`);
-      else if (target.type === "ATTACHMENT" && !["FILLED", "EMPTY"].includes(rule.op)) problems.push(`"${field.label}": a rule on an attachment field can only check whether files were added.`);
-      else if (!["FILLED", "EMPTY"].includes(rule.op) && !rule.value) problems.push(`"${field.label}": the ${name} rule needs a value.`);
+      // 2 Nov 2026: one rule shape (server/conditions/rule.ts); each of its
+      // conditions is checked. An older saved rule is read as converted.
+      for (const condition of ruleComparisons(upgradeRule(rule))) {
+        const target = fields.find((other) => other.key === condition.field);
+        const problem = !target
+          ? `the ${name} rule uses "${condition.field}", which isn't a field on this form.`
+          : target.key === field.key
+            ? "a rule can't depend on the field itself."
+            : target.type === "SECTION"
+              ? "a rule can't use a heading."
+              : ["GT", "GTE", "LT", "LTE"].includes(condition.operator) && !NUMERIC_TYPES.includes(target.type) && target.type !== "DATE"
+                ? '"more/less than" needs a number or date field.'
+                : target.type === "ATTACHMENT" && operatorNeedsValue(condition.operator)
+                  ? "a rule on an attachment field can only check whether files were added."
+                  : operatorNeedsValue(condition.operator) && (condition.value === undefined || condition.value === "" || (Array.isArray(condition.value) && condition.value.length === 0))
+                    ? `the ${name} rule needs a value.`
+                    : null;
+        if (problem) {
+          problems.push(`"${field.label}": ${problem}`);
+          break;
+        }
+      }
     }
   }
   if (problems.length === 0 && dependencyOrder(fields) === null) problems.push("Some fields depend on each other in a circle (their rules or formulas). Remove one of the links.");

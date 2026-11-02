@@ -111,6 +111,15 @@ export function validateWorkflow(definition: WorkflowDefinition, context: Valida
             errors.push({ code: "JOIN_N_TOO_HIGH", message: `"${node.label}" waits for ${node.completion.n} branches but only ${ins.length} lead into it.`, ...where });
           }
         }
+        // DR-01 (owner, 2 Nov 2026): what a branch rejection does is a choice
+        // for an any-one / any-N join only (under ALL every branch is needed).
+        if (node.onReject !== undefined) {
+          if (node.onReject !== "END" && node.onReject !== "WHEN_UNREACHABLE") {
+            errors.push({ code: "JOIN_ON_REJECT_INVALID", message: `"${node.label}": a rejection in a branch either ends the request or ends it only when the rest can't finish.`, ...where });
+          } else if (node.onReject === "WHEN_UNREACHABLE" && node.completion.type === "ALL") {
+            errors.push({ code: "JOIN_ON_REJECT_ALL", message: `"${node.label}" needs every branch, so a rejection in any branch ends the request. Choose "any one" or "any N" to let the other branches carry on.`, ...where });
+          }
+        }
         break;
       }
       case "CONDITION": {

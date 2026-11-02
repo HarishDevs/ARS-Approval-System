@@ -18,7 +18,7 @@ export default function TermsPage() {
     <PublicPage>
       <Prose>
         <h1>Terms of use</h1>
-        <p className="text-label text-ink-muted">Effective 1 November 2026</p>
+        <p className="text-label text-ink-muted">Effective 2 November 2026 · approved by the head of IT, 2 November 2026</p>
         <p>
           ARS-CMS (approval.arssteels.net) is provided by {COMPANY} (&ldquo;ARS&rdquo;) for its employees to carry out company work. By signing in you agree to these terms and to ARS&apos;s
           policies that apply to company systems.
@@ -51,6 +51,10 @@ export default function TermsPage() {
         </p>
         <h2>Records and monitoring</h2>
         <p>Work records and an audit log of actions are kept as company records and may be reviewed by authorised ARS staff, as described in the privacy policy.</p>
+        <p>
+          The emergency (break-glass) account may sign in with its password alone, without the WhatsApp code, only while IT has opened its emergency window from the server. Every such sign-in is
+          recorded and the Super Admins are told at once.
+        </p>
         <h2>Availability and changes</h2>
         <p>ARS may change, suspend or end the service, or these terms, at any time. The current terms are always on this page.</p>
         <h2>Contact</h2>

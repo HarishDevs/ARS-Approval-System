@@ -18,7 +18,7 @@ test("IT sees every approval request, task and information item, filters them an
   const download = await page.request.get("/api/admin/records/requests?status=APPROVED");
   expect(download.status()).toBe(200);
   expect(download.headers()["content-type"]).toContain("text/csv");
-  expect((await download.text()).split("\r\n")[0]).toContain("Request no.,Title,Approval type,Raised by");
+  expect((await download.text()).split("\r\n")[0]).toContain("Request no.,Title,Approval type,Amount,Raised by");
   for (const [tab, heading] of [["tasks", "Tasks"], ["information", "Information"]]) {
     await page.goto(`/admin/records/${tab}`);
     await expect(page.getByRole("heading", { level: 1, name: heading })).toBeVisible();

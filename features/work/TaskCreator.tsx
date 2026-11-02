@@ -109,6 +109,34 @@ function CreateTaskDialog({
   const [files, setFiles] = useState<File[]>([]);
   const [fileProblem, setFileProblem] = useState("");
   const [collaborators, setCollaborators] = useState<number[]>([]);
+  // v1.46.0 (owner: the calendar and repeat buttons did nothing on a wide
+  // window, where both settings are always shown): the calendar button opens
+  // the due date's picker; the repeat button makes the task periodic and
+  // takes you to its repeat settings.
+  const openDue = () => {
+    setPicking("due");
+    window.requestAnimationFrame(() => {
+      const input = document.getElementById("create-due") as HTMLInputElement | null;
+      input?.focus();
+      try {
+        input?.showPicker?.();
+      } catch {
+        // Some browsers allow the picker only from a direct click; the box has focus.
+      }
+    });
+  };
+  const openRepeat = () => {
+    if (!periodic) {
+      setPeriodic(true);
+      setOthers((value) => value.slice(0, 1));
+    }
+    setPicking("repeat");
+    window.requestAnimationFrame(() => {
+      const every = document.getElementById("create-every") as HTMLInputElement | null;
+      every?.scrollIntoView({ block: "nearest" });
+      every?.focus();
+    });
+  };
   const [aiBusy, setAiBusy] = useState(false);
   const [beforeAi, setBeforeAi] = useState<string | null>(null);
   const name = useRef<HTMLInputElement>(null);
@@ -591,6 +619,7 @@ function CreateTaskDialog({
                         max={365}
                         value={every}
                         onChange={(event) => setEvery(Math.max(1, Math.min(365, Number(event.target.value) || 1)))}
+                        id="create-every"
                         aria-label="Every how many"
                         className="field-input h-8 w-20 py-0"
                       />
@@ -647,8 +676,8 @@ function CreateTaskDialog({
               <ul role="menu" aria-label="More" className={`${popover} left-0 w-56 py-1`}>
                 {[
                   { label: "Add to a project", run: () => setPicking("project") },
-                  { label: "Set a due date", run: () => setPicking("due") },
-                  { label: "Repeat (periodic)", run: () => setPicking("repeat") },
+                  { label: "Set a due date", run: openDue },
+                  { label: "Repeat (periodic)", run: openRepeat },
                   { label: "Attach a file", run: () => filePicker.current?.click() },
                   { label: "Mention someone", run: () => setPop("mention") },
                   { label: "Add collaborators", run: () => setPop("collab") },
@@ -733,7 +762,11 @@ function CreateTaskDialog({
                   label="Search people to add as collaborators"
                   listId="collab-search-list"
                   people={people.filter((item) => item.id !== meId && !collaborators.includes(item.id))}
-                  onPick={(id) => setCollaborators((value) => [...value, id])}
+                  // v1.46.0 (owner): choosing a person closes the list (the people button adds more).
+                  onPick={(id) => {
+                    setCollaborators((value) => [...value, id]);
+                    setPop("");
+                  }}
                   onDone={() => setPop("")}
                   closeOnBlur={false}
                 />
@@ -785,10 +818,10 @@ function CreateTaskDialog({
                 <Sparkles aria-hidden="true" className={`h-4 w-4 ${aiBusy ? "animate-pulse text-primary-700" : ""}`} />
               </button>
             )}
-            <button type="button" aria-label="Set a due date" title="Due date" onClick={() => setPicking(picking === "due" ? "" : "due")} className={tool(Boolean(due))}>
+            <button type="button" aria-label="Set a due date" title="Due date" onClick={openDue} className={tool(Boolean(due))}>
               <CalendarDays aria-hidden="true" className="h-4 w-4" />
             </button>
-            <button type="button" aria-label="Repeat (periodic)" title="Repeat" onClick={() => setPicking(picking === "repeat" ? "" : "repeat")} className={tool(periodic)}>
+            <button type="button" aria-label="Repeat (periodic)" title="Repeat" onClick={openRepeat} className={tool(periodic)}>
               <Repeat aria-hidden="true" className="h-4 w-4" />
             </button>
             <span className="ml-auto flex items-center gap-2">

@@ -99,7 +99,9 @@ export function collectFields(condition: Condition, into: Set<string> = new Set(
 // differently? True when any skip rule (incl. DoA bands, compiled as skipIf)
 // or branch condition gives a different answer for the old and new values.
 // Then a resubmit restarts from the beginning, so no level that the new
-// values need stays skipped.
+// values need stays skipped. DR-09 (owner, 2 Nov 2026): the resubmit now
+// uses planReroute (server/engine/reroute.ts) to restart at the earliest
+// affected step instead; this stays as the yes/no answer.
 export function routeChanged(definition: WorkflowDefinition, before: FormData, after: FormData): boolean {
   const conditions: Condition[] = [
     ...definition.nodes.flatMap((node) => (node.kind === "APPROVAL" && node.skipIf ? [node.skipIf] : [])),

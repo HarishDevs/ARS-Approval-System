@@ -142,7 +142,7 @@ export default async function RequestPage({
         <div className="min-w-0 [&>div]:mb-0">
           <PageHeader title={view.title} meta={`${view.requestNo} · ${view.workflowName} · raised by ${view.requesterName}${view.round > 1 ? ` · round ${view.round}` : ""}`}>
             <div className="flex flex-wrap items-center gap-3">
-              <RequestStatusPill status={view.status} />
+              <RequestStatusPill status={view.status} validUntil={view.validUntil} />
               <ValidityBadge validUntil={view.validUntil} />
               {/* #10: a plain download, not a page (no prefetch). */}
               <a href={`/api/requests/${view.id}/summary.pdf`} className="link text-label" download>

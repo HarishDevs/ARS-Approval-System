@@ -451,7 +451,7 @@ export function RequestListScreen({
                       {showRaiser ? ` · from ${item.requesterName}` : ""}
                     </p>
                     <div className="mt-1 flex flex-wrap items-center gap-2 text-caption">
-                      <RequestStatusPill status={item.status} />
+                      <RequestStatusPill status={item.status} validUntil={item.validUntil} />
                       {byMe && item.myApprovedAt && <span className="text-ink-muted">You approved {day(item.myApprovedAt)}</span>}
                       {approvedMine && item.closedAt && <span className="text-ink-muted">Approved {day(item.closedAt)}</span>}
                       {item.pendingWith && <span className="text-ink-muted">With {item.pendingWith}</span>}
@@ -526,7 +526,7 @@ export function RequestListScreen({
                       </td>
                       {show("status") && (
                         <td>
-                          <RequestStatusPill status={item.status} />
+                          <RequestStatusPill status={item.status} validUntil={item.validUntil} />
                           {item.overdue && <span className="mt-1 block text-caption font-semibold text-danger-600">Overdue</span>}
                           {item.validUntil && item.status === "APPROVED" && <span className="block text-caption text-ink-muted">valid until {day(item.validUntil)}</span>}
                         </td>

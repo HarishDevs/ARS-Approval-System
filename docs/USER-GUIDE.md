@@ -37,7 +37,10 @@ The phone screens follow the familiar Asana app layout: a big title with **…**
 - **Approvals:** **Choose view** picks **Waiting for me**, **My requests**, **Approved** or **Drafts**. Each request is a card: number and title, who raised it and their department, the amount (when the form has one and it isn't confidential), who has it now, when it was submitted, how long it has waited, **Overdue** or **Due soon**, and the status. **Manage view → Compact mode** shows one line per request. **+** starts a new request; **…** has Approved by me, Collaborating, Search requests and Out of office.
 - **Deciding on a request:** the buttons stay at the bottom of the request: **Approve**, **Return** (ask for changes), **Hold** and **Reject**. Each opens a panel with the comment box and that one action; Reject asks once more.
 - **My tasks:** **Choose view** picks **Due today**, **Upcoming**, **Overdue**, **Completed** or **Assigned by me**. Each task is one row: tick the circle to complete it (Undo is offered), then the title, its projects, the priority (Important, Urgent) and the due date (red when overdue). **Manage view** has **Compact mode**, **Sort** (due date, priority, title, newest) and **Group by** (none, due date, project); groups fold with the arrow. **+** opens Create task; **…** has Projects, Periodic tasks, Calendar, Search tasks and Deleted tasks.
-- **A task:** the top bar has back, **Mark complete**, copy link and **…** (start, block, reassign, edit, cancel, share). Below: the title, **Assigned to** and **Due date**, then details, subtasks, comments and history.
+- **A task:** the top bar has back, **Mark complete**, copy link and **…** (start, block, reassign, edit, cancel, share). Below: the title, **Assigned to** and **Due date**, then details, subtasks, comments and history. **Add a comment** stays at the bottom of the screen; tap it to write, @mention someone and **Send**.
+- **Information:** the same pattern: **Choose view** for the lists, **Manage view** to search and sort, **+** for new information, **…** for Received and Sent by me.
+- **New request:** the steps (Details, Workflow, Review) and the buttons (Draft, Reset, Next) are one slim row each, so most of the form fits on the first screen.
+- **Analytics:** the dashboard, whose numbers and period fold into one **Dashboard and filters** row above the numbers; open it to change them.
 - **Inbox:** grouped by day (Today, Yesterday, then dates); each card shows its kind, title, message (**See more** for a long one) and time, with bookmark and archive. **Choose view:** **All activity**, **Bookmarks**, **Archived**. **Manage view:** filters (Approvals, Tasks, Information, System, @Mentioned), read status (unread only) and sort (newest). **…** has notification settings.
 - **Search** (the magnifier at the top): one box that searches **Requests** or **Tasks**, **Projects**, then quick filters (requests I raised, I approve, in progress, approved) and shortcuts (tasks I've created, recently completed, assigned to others, overdue, I follow).
 - **More:** your photo, name and email; **Out of office** (says if it is on) and **Notifications**; then Work, Intelligence, Tools, Settings (profile, notifications, push notifications, colour mode, sign-in & devices), Support (Help centre, terms, privacy), the Admin spaces you have, **Sign out** (it asks first) and the app version.
@@ -113,6 +116,8 @@ You can't approve your own request, but you can give yourself a **work task** (e
 
 ### When an approver asks for changes
 You get a message. Open the request, change the fields or add files, then **Resubmit**. It goes back to the level that asked, or to the first level if the approval type is set that way.
+If your changes alter who must approve (for example a higher amount now needs another level), it restarts from the **first level the change affects**; levels before it keep their approvals. The history says which levels were added or removed and where it restarted.
+An **Expired** approval (past its valid-until date) still counts as approved; to amend it or raise a follow-up, give a short reason, which is kept in its history.
 When you resubmit, the same checks as a new request run again (duplicates, unique values, budget): fix what they point out before it goes back to the approvers.
 
 ### The road (where your request is)
@@ -158,10 +163,10 @@ Comments on a request can't be edited or removed. To tell someone in particular,
 - **Sent by me:** shows who read and who acknowledged.
 
 ### AI Assistant (Pico Bot)
-Only if IT turned it on for you. Ask questions about your approvals, tasks and, if allowed, the ARS Salesforce. Your chats are listed under it in the sidebar. Pico Bot gives real numbers or says it can't; it never approves or changes anything. Your question and the data needed to answer it go to the AI provider IT chose; check important figures, and don't paste passwords or other people's personal details (see the privacy policy and terms).
+Only if IT turned it on for you. Tap the round Pico Bot button: its window grows out of the button and fills about three quarters of the screen; close or minimise it and it shrinks back into the button. Ask questions about your approvals, tasks and, if allowed, the ARS Salesforce. Your chats are listed under it in the sidebar. Pico Bot gives real numbers or says it can't; it never approves or changes anything. Your question and the data needed to answer it go to the AI provider IT chose; check important figures, and don't paste passwords or other people's personal details (see the privacy policy and terms).
 
 ### Calendar
-Month, week, day or **Agenda** (the period as a list). Filter by Approvals, Tasks, Information, Needed by and Personal: each chip shows how many entries it has, with a tick when shown; tap it to hide or show that kind. Each kind has its own coloured stripe beside its label. **Add a personal entry** at the bottom; open an entry to edit or delete it. "From Google" marks entries from your Google Calendar.
+Month, week, day or **Agenda** (the period as a list). The **Show** dropdown picks what is on the calendar: Approvals, Tasks, Information, Needed by and Personal, each ticked when shown, with how many entries it has; choose one to hide or show it. Each kind has its own coloured stripe beside its label. **Add a personal entry** at the bottom; open an entry to edit or delete it. "From Google" marks entries from your Google Calendar.
 
 ### Analytics
 One page with tabs. You see only the dashboards for your modules and role.
@@ -215,7 +220,7 @@ If you don't act in time: you get a **due soon** heads-up first, then reminders 
 ## 3. IT team (Admin space)
 Switch to it from the account menu → **Switch space**.
 - **Overview, Needs attention, Analytics, Reports, Insights, Dashboards, Workload:** how approvals are flowing; CSV downloads.
-- **Records:** every approval request, task and information item, with filters.
+- **Records:** every approval request, task and information item, with filters; requests show their **Amount** (also in the CSV), or *Hidden* when the amount field is confidential and you may not see it.
 - **Users & roles:** add people, set department, designation, reporting manager, roles, modules and sign-in method (Google, User ID and password, or Both). **Re-invite** emails their User ID and a set-password link. Deactivate leavers: *Deactivate user* asks to confirm, then signs them out everywhere. *Hand over* moves someone's pending approvals to another person.
 - **Departments:** departments (with HOD) and designations. Tick **Approver** on designations of Manager and above. Only approver designations can be chosen to approve.
 - **Approver groups:** e.g. Finance team, for "any one of the group".
@@ -223,13 +228,16 @@ Switch to it from the account menu → **Switch space**.
   - **the form**, built in the Form Designer: add fields from a library, drag them into order (or ↑/↓), duplicate, remove (with Undo). Fields can show "only when" a rule is true;
   - **the levels**, built in the Workflow Designer: a map of the flow above the levels (click a box to open that level); levels fold, move (drag or Alt+↑/↓), duplicate and remove (with Undo). Each level says what needs fixing before you save.
     - one step, parallel steps, or a **DoA matrix** (amount bands, with the levels each band needs);
-    - **choices** (if / otherwise), whose rules use the same row as the form rules (field, test, value);
+    - for parallel steps where **any one** or **any N** is enough, **If one branch rejects**: end the request (the default), or end it only when the required number can no longer be reached;
+    - **choices** (if / otherwise), whose rules use the same editor as the form rules (field, test, value; **all** or **any** of several rows; dates compare as dates);
   - **who approves:** specific people, the requester's manager or manager's manager, a department HOD, a group, a role, a person picked on the form, **everyone with a designation** (optionally only in the requester's department), or, for work and FYI only, **the requester**;
   - **the kind of step:** *Approval*, *Work task* or *FYI*;
   - **per step:** a response time, and what to do if nobody resolves (stop and tell IT, or skip).
 
   Changes **save into the draft by themselves** a few seconds after you stop; **Save draft** saves at once. Nothing is live until you **Publish**. If a colleague saved or published in the meantime, you're told and nothing of theirs is overwritten. Check a draft with **Test mode** before publishing. Untick *Open for new requests* to archive a type. **Remove approval type** works only if it was never used.
 - **Custom approval:** the fields and options for **New request**.
+- **May finish without an approver** (approval type settings, predefined types only): if every level of a request is skipped by its rules, a ticked type may end Approved; otherwise the request goes to the requester's HOD (or to IT if there is no HOD). A request never ends approved by nobody unless IT ticked this.
+- **Asks first:** deactivating a group, department or designation, closing a type for new requests and saving working days each ask you to confirm.
 - **Approval authority (DoA)** and **Budgets.**
 - **Task set-up:** Task types and **Task settings** (department holidays, morning summary, repeating tasks). **Information types.**
 - **Reminders & escalations:** rules for pending approvals and open tasks, escalation levels and wording. **Test** sends nothing.
@@ -253,7 +261,12 @@ Switch to it from the account menu → **Switch space**.
 - **WhatsApp templates:** write, submit to Meta, sync status.
 - **Requests:** every request; **Delete** with a reason (the people waiting are told).
 - **Automation:** every background job and its last run. A step that partly failed (for example a template sync) shows as failed, not OK; an unconfirmed send shows *may have been sent*. See `docs/AUTOMATION_INVENTORY_AND_RECOVERY.md`.
-- **Retention & holds**, **Import data**, **Demo data.**
+- **Retention & holds**, **Import data**, **Demo data** (type **LOAD DEMO** to load it; it is refused on a database that already has many real people).
+- **Home tiles:** **Origin lock** (on when `ORIGIN_SECRET` is set on the host) and **WhatsApp templates still to switch on**.
+- **Google Drive backup** (Settings): a service-account key and a shared-drive folder; **Test** checks access without uploading. Each day the encrypted backup is copied there and the newest copies are kept.
+- **Security records** (sign-in attempts, WhatsApp codes, ended sessions, used links) are deleted after 90 days by a background step; the audit log is kept.
+- **Break-glass:** while the emergency window is open from the server, the break-glass account signs in with its password alone; you are alerted each time.
+- **Asks first:** removing a provider key and hiding a page for everyone ask you to confirm.
 - **Message deliveries:** every email and WhatsApp, with retries and (with the webhook) DELIVERED and READ.
 - **Audit log:** every change; **Download CSV** for a date range.
 - **Sign-in history:** every sign-in attempt, with the reason it failed.

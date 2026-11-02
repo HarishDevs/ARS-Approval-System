@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { groupMemberAction, saveGroupAction } from "@/app/admin/groups/actions";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import type { Option } from "@/features/admin/UserForm";
@@ -29,7 +30,21 @@ export function NewGroupForm() {
 }
 
 export function GroupEditor({ group, people }: { group: { id: number; code: string; name: string; active: boolean; members: { id: number; name: string; active: boolean }[] }; people: Option[] }) {
-  const details = useActionForm(saveGroupAction);
+  // V181-A8 (AUD-25, REC-21): making an active group inactive asks first.
+  const [activeTicked, setActiveTicked] = useState(true);
+  const deactivating = group.active && !activeTicked;
+  const details = useActionForm(
+    saveGroupAction,
+    deactivating
+      ? {
+          confirmTitle: `Make ${group.name} inactive?`,
+          confirmLabel: "Yes, make it inactive",
+          confirmTone: "danger",
+          confirm:
+            "Approval steps that go to this group will find no approver, so those requests can stop with nobody to approve, and it can't be chosen in new approval types. Its members stay active. You can make it active again later.",
+        }
+      : {},
+  );
   const add = useActionForm(groupMemberAction, { resetOnSuccess: true });
   const remove = useActionForm(groupMemberAction, { confirm: "Approvals already sent to them stay with them.", confirmTitle: "Remove this person from the group?", confirmLabel: "Yes, remove", confirmTone: "danger" });
   const memberIds = new Set(group.members.map((member) => member.id));
@@ -41,12 +56,13 @@ export function GroupEditor({ group, people }: { group: { id: number; code: stri
         <span className="badge bg-surface-muted text-ink-muted">{group.code}</span>
         <input aria-label="Group name" name="name" defaultValue={group.name} className="field-input max-w-sm" />
         <label className="flex items-center gap-2 text-label">
-          <input type="checkbox" name="active" defaultChecked={group.active} /> Active
+          <input type="checkbox" name="active" defaultChecked={group.active} onChange={(event) => setActiveTicked(event.target.checked)} /> Active
         </label>
         <SubmitButton pending={details.pending} variant="secondary" className="btn-compact">
           Save
         </SubmitButton>
         <ResultMessage result={details.result} />
+        {details.confirmBar}
       </form>
       <ul className="flex flex-wrap gap-2">
         {group.members.length === 0 && <li className="text-label text-ink-muted">No members yet.</li>}

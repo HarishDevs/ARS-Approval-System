@@ -15,6 +15,8 @@ import { findDraft } from "@/lib/db/repositories/drafts.repository";
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
 export const metadata: Metadata = { title: "Amend request" };
 
+const indiaDate = (at: Date) => at.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" });
+
 // FN5: amend an approved request (D-120). Only the fields the approval type
 // allows can change; the amendment is approved through the steps again.
 export default async function AmendRequestPage({ params }: { params: Promise<{ id: string }> }) {
@@ -79,6 +81,8 @@ export default async function AmendRequestPage({ params }: { params: Promise<{ i
             initial={initial}
             draft={{ key: draftKey, version: draft?.version ?? null, savedAt: draft ? draft.updatedAt.toISOString() : null }}
             amendment={{ originalId: plan.original.id, originalNo: plan.original.requestNo, title: plan.original.title, amendable: plan.amendable.map((field) => field.key) }}
+            // DR-05: an expired approval can still be amended, with a reason.
+            expiredSource={plan.expired && plan.validUntil ? { requestNo: plan.original.requestNo, expiredOn: indiaDate(plan.validUntil) } : undefined}
           />
         </div>
       )}

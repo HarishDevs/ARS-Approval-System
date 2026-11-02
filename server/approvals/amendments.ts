@@ -1,7 +1,8 @@
 import "server-only";
 import type { RowDataPacket } from "mysql2/promise";
 import { getDbPool, type Queryable } from "@/lib/db/client";
-import { findPublishedVersion, findRequest, findWorkflow, findWorkflowVersion, type RequestRecord, type WorkflowRecord, type WorkflowVersionRecord } from "@/lib/db/repositories/approvals.repository";
+import { findPublishedVersion, findRequest, findValidity, findWorkflow, findWorkflowVersion, type RequestRecord, type WorkflowRecord, type WorkflowVersionRecord } from "@/lib/db/repositories/approvals.repository";
+import { cleanExpiredReason, expiredReasonError, isExpiredApproval } from "@/server/approvals/expiry-rules";
 import { submitRequest, type Actor, type AmendmentChange, type Result } from "@/server/approvals/service";
 import type { FormField } from "@/server/forms/fields";
 import { featureOn } from "@/server/settings/features";
@@ -73,6 +74,9 @@ export interface AmendmentPlan {
   effective: EngineFormData;
   basePaise: number | null;
   inProgress: AmendmentRecord | null;
+  // DR-05 (owner, 2 Nov 2026): amending an expired approval needs a reason.
+  expired: boolean;
+  validUntil: Date | null;
 }
 
 // Whether this person may amend this request now, and with what. Returns a
@@ -94,7 +98,9 @@ export async function amendmentPlan(requestId: number, actor: Actor): Promise<{ 
   const amountField = workflow.settings?.budget.enabled ? workflow.settings.budget.amountField : null;
   const amount = amountField ? effective[amountField] : undefined;
   const inProgress = (await listAmendments(original.id)).find((amendment) => OPEN.has(amendment.status)) ?? null;
-  return { ok: true, plan: { original, workflow, version, amendable, effective, basePaise: typeof amount === "number" ? Math.round(amount * 100) : null, inProgress } };
+  const validUntil = await findValidity(original.id);
+  const expired = isExpiredApproval(original.status, validUntil);
+  return { ok: true, plan: { original, workflow, version, amendable, effective, basePaise: typeof amount === "number" ? Math.round(amount * 100) : null, inProgress, expired, validUntil } };
 }
 
 // The form values for an amendment: the effective values, with only the
@@ -119,7 +125,7 @@ export const amendmentTitle = (original: RequestRecord) => `Amendment: ${origina
 // scope can change. The service locks the original, refuses a second open
 // amendment and a no-change amendment, and records the changes.
 export async function submitAmendment(
-  input: { originalId: number; fields: Record<string, string>; reason: string; submissionKey?: string | null; acknowledged?: boolean; overrideReason?: string; attachmentCount?: number },
+  input: { originalId: number; fields: Record<string, string>; reason: string; expiredReason?: string; submissionKey?: string | null; acknowledged?: boolean; overrideReason?: string; attachmentCount?: number },
   actor: Actor,
 ): Promise<Result<{ requestId: number; requestNo: string; status: string; repeated?: boolean }>> {
   const planned = await amendmentPlan(input.originalId, actor);
@@ -127,6 +133,10 @@ export async function submitAmendment(
   const reason = input.reason.replace(/\s+/g, " ").trim().slice(0, 1000);
   if (reason.length < 10) return { ok: false, code: "VALIDATION", message: "Say why it needs amending.", fieldErrors: { amendReason: "Say why it needs amending (at least 10 characters)." } };
   const { plan } = planned;
+  // DR-05: not blocked, but an expired approval needs a reason, kept on its history.
+  const expiredReason = plan.expired ? cleanExpiredReason(input.expiredReason) : "";
+  const expiredProblem = plan.expired ? expiredReasonError(expiredReason) : null;
+  if (expiredProblem) return { ok: false, code: "VALIDATION", message: expiredProblem, fieldErrors: { expiredReason: expiredProblem } };
   const merged = mergeAmendmentFields(plan, input.fields);
   return submitRequest(
     {
@@ -137,7 +147,7 @@ export async function submitAmendment(
       acknowledged: input.acknowledged,
       overrideReason: input.overrideReason,
       attachmentCount: input.attachmentCount,
-      amendment: { originalId: plan.original.id, reason, basePaise: plan.basePaise, effective: plan.effective },
+      amendment: { originalId: plan.original.id, reason, basePaise: plan.basePaise, effective: plan.effective, ...(expiredReason ? { expiredReason } : {}) },
     },
     actor,
   );

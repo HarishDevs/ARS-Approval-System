@@ -1,12 +1,12 @@
 # Data model: ARS-CMS database (tables and relationships)
 
-Applies to v1.39.0 (31 Oct 2026)
+Applies to v1.46.0 (2 Nov 2026). Earlier: v1.39.0 (31 Oct 2026).
 
 | | |
 |---|---|
 | Database | MySQL 8.0 (`docker-compose.yml` uses `mysql:8.0`; GoDaddy's Hosted Database is MySQL 8). Every table is InnoDB, `utf8mb4` / `utf8mb4_unicode_ci` |
-| Source of truth | `database/migrations/*.sql`, **48 files**, from `202609281200_create_organisation.sql` to `202610311400_workflow_draft_revision.sql` |
-| Tables | **110** made by the migrations, plus **2** made by the migration runner itself (`schema_migrations`, `schema_migration_progress`) = 112 |
+| Source of truth | `database/migrations/*.sql`, **52 files**, from `202609281200_create_organisation.sql` to `202611021000_unify_condition_rules.sql` (48 at v1.39.0; v1.40.0 added 2, v1.41.0 1, v1.46.0 1) |
+| Tables | **114** made by the migrations, plus **2** made by the migration runner itself (`schema_migrations`, `schema_migration_progress`) = 116 (v1.39.0: 110 + 2; since then `hod_report_runs`, `push_subscriptions`, `admin_broadcasts`, `condition_rules_backup`) |
 | Fixes | Audit defect OPS-17 ("No ERD covers the 48 migrations") |
 
 This page is a map, not a copy of the SQL. When the two differ, the SQL wins. Update this page in the same change as any new migration.
@@ -29,7 +29,7 @@ This page is a map, not a copy of the SQL. When the two differ, the SQL wins. Up
 - **Not migrations:** `database/optional/reporting_views.sql` (two read-only Power BI views, `reporting_requests` and `reporting_tasks`), `database/optional/v190_append_only_triggers.sql` and `database/optional/v1421_qa_indexes.sql` (v1.43.0: two additive indexes, `notifications (user_id, archived_at, id)` and `tasks (assignee_id, status, completed_at)`, run once the owner approves; only speed). IT runs them by hand.
 - **Work-step tasks (D-269):** a `tasks` row made for an approval work step has `related_request_id` set and `form_data_json.__approvalWork = { requestId, taskKey }`; no column was added.
 - **Background work (D-273, v1.44.0):** a work step with `background: true` (builder `holdsUp: false`) records the event `WORK_ASSIGNED` (`approval_events.payload_json = { nodeId, label, userIds, slaHours? }`) and the node state `assigned`; each person gets a `tasks` row with `related_request_id` and `form_data_json.__approvalLink = { requestId, key: "<event id>:<user id>", nodeId }`. No column was added.
-- **The rule: migrations only add.** New tables, new nullable or defaulted columns, new indexes, new enum values. Older code keeps working on a newer database, so a rollback is "redeploy the previous release". Never edit a migration that has shipped; add a new one. The few `MODIFY COLUMN` statements only widen (more enum values, a longer `VARCHAR`, `request_submission_checks.request_paise` made signed). One data fix exists: `202610081400_super_admin_google_email.sql` changes the bootstrap Super Admin's email once.
+- **The rule: migrations only add.** New tables, new nullable or defaulted columns, new indexes, new enum values. Older code keeps working on a newer database, so a rollback is "redeploy the previous release". Never edit a migration that has shipped; add a new one. The few `MODIFY COLUMN` statements only widen (more enum values, a longer `VARCHAR`, `request_submission_checks.request_paise` made signed). Two data changes exist: `202610081400_super_admin_google_email.sql` changes the bootstrap Super Admin's email once, and **`202611021000_unify_condition_rules.sql` (v1.46.0)** rewrites saved form rules into the one rule shape (§4, "v1.46.0"). The second is the one exception to "older code keeps working": v1.45.0 can't read the new shape, so its rollback statements (in the file header) must be run when going back.
 
 ---
 
@@ -848,6 +848,9 @@ Migration names are shortened to their date-time prefix; the full file is `datab
 | `holidays` | Calendar | Organisation holidays for the working calendar | 202610011300 |
 | `request_attachments` | Approvals | Files on requests (bytes on disk in UPLOAD_DIR) | 202610071200 |
 | `notification_outbox` | Notifications | Messages written with the action, sent after commit; `claim_token` (v1.40.0, D-243) marks one claimed send | 202610081300, 202611010900 |
+| `push_subscriptions` | Notifications | One row per browser push endpoint; keys encrypted (v1.41.0, §4) | 202611011200 |
+| `admin_broadcasts` | Notifications | Notices IT sent from Admin → Notifications (v1.41.0, §4) | 202611011200 |
+| `condition_rules_backup` | Runner | Each row's `form_json` as it was before the v1.46.0 rule conversion (`table_name`, `row_id` primary key); only for rollback; may be dropped once the release has settled | 202611021000 |
 | `hod_report_runs` | Reports | The weekly HOD report: one row per department and week (claimed before sending; SENDING, SENT or FAILED) | 202611011000 |
 | `used_security_links` | Security | "This wasn't me" links already used | 202610091000 |
 | `request_drafts` | Approvals | Autosaved request drafts, one per person and form | 202610100900 |
@@ -958,6 +961,18 @@ These tables reject every `UPDATE` and `DELETE` with `SIGNAL SQLSTATE '45000'`:
 - **`admin_broadcasts`:** what IT sent from Admin → Notifications (title, message, category, priority, link, the audience as chosen and in words, recipients). `notifications.broadcast_id` links each Inbox message to it; `notifications.priority` is NORMAL or HIGH.
 - **`user_sessions.session_policy`:** IDLE (the idle limit and 12 hours) or DAILY (ends at the next midnight IST, no idle limit).
 
+### v1.46.0 (D-278 to D-280): rules, engine decisions, settings
+Only one schema change: the table `condition_rules_backup` (above). Everything else lives in existing JSON columns:
+- **Form rules** (`workflow_versions.form_json`, `module_type_versions.form_json`, `custom_approval_settings.form_json`, each field's `showIf` / `requiredIf`): one shape everywhere, `{ field, operator, value? }` or `{ match: "ALL" | "ANY", conditions: [...] }` (`server/conditions/rule.ts`; operators EQ, NEQ, GT, GTE, LT, LTE, IN, NOT_IN, CONTAINS, IS_EMPTY, IS_NOT_EMPTY). The older `{ field, op, value }` (FILLED, EMPTY …) is converted by the migration and, until then, on every read.
+- **Join option** (`workflow_versions.definition_json`, a JOIN node with ANY_ONE / ANY_N): `onReject: "END" | "WHEN_UNREACHABLE"` (absent = END). WHEN_UNREACHABLE ends only the rejected branch until the join can no longer be met; refused on ALL joins.
+- **Request state** (`approval_requests.state_json`): `failedJoinEdges` (join id → incoming edges whose branch was rejected), `mayFinishWithoutApprover` (stamped at submit), `humanCheck: { nodeId, endNodeId }` (the step given to the HOD when nobody approved).
+- **Type setting** (`workflow_definitions.settings_json`): `mayFinishWithoutApprover` (boolean, default false; honoured for PREDEFINED types only).
+- **New event types** (`approval_events.event_type`, details in `payload_json`): `ROUTE_CHANGED` (`added`, `removed`, `approverChanged`, `restartNodeIds`, `fromBeginning`), `BRANCH_ENDED` (`nodeId`, `joinId`), `HUMAN_APPROVAL_ROUTED` (`nodeId`, `to`: HOD or IT, `userIds`), `EXPIRED_REUSED` (`kind`: AMENDMENT or FOLLOW_UP, `reason`, `newRequestId`, `newRequestNo`).
+- **Expired** is derived from `approval_requests.valid_until` (status APPROVED and the date passed); the stored status stays `APPROVED`.
+- **Settings** (`system_settings`, group GDRIVE_BACKUP): `backup.gdrive_enabled` (ON/OFF, default OFF), `backup.gdrive_service_account_json` (**encrypted**), `backup.gdrive_folder_id` (**encrypted**), `backup.gdrive_keep` (1–90, default 14).
+- **Audit actions** (`audit_logs.action`): `SECURITY_RECORDS_PURGED`, `BACKUP_COPIED_TO_DRIVE`, `GDRIVE_BACKUP_TESTED`, `BREAK_GLASS_SIGNIN_NO_OTP`. `login_logs.step` may be `PASSWORD` for a break-glass sign-in without the code.
+- **Job runs** (`job_runs.job_key`): `securityRetention`, `driveBackup`.
+
 ### Encrypted and hashed columns
 - **AES-256-GCM with `ENCRYPTION_KEY`** (`lib/security/encryption.ts`): `system_settings.value` when `encrypted = TRUE` (API keys, webhook secret, Salesforce app keys); `gcal_settings.client_secret_enc`; `gcal_connections.refresh_token_enc`, `access_token_enc`; `ai_salesforce_connection.access_token_enc`, `refresh_token_enc`, `pending_verifier_enc`. Changing `ENCRYPTION_KEY` makes these unreadable; they must be entered again.
 - **Sealed in code:** `notification_deliveries.payload_json` is stored as `{"sealed": "<encrypted>"}` since v1.3.6 (`lib/security/delivery-payload.ts`), because it can hold a set-password link. The column type is still plain JSON.
@@ -967,7 +982,7 @@ These tables reject every `UPDATE` and `DELETE` with `SIGNAL SQLSTATE '45000'`:
 ### Soft deletes and "never deleted"
 - **`deleted_at` soft delete:** `approval_requests` (with `deleted_by`, `delete_reason`; every screen, queue, job and report ignores it), `tasks`, `projects`, `project_sections`, `project_fields`, `task_comments`, `project_status_updates`, `calendar_items`.
 - **Ended, not deleted:** `users.active` (people are never deleted), `departments`, `designations`, `roles`, `approver_groups`, `module_types` (`active`); `delegations.ended_at`; `request_collaborators.removed_at`; `legal_holds.released_at`; `info_items` (WITHDRAWN, ARCHIVED); `workflow_versions` (ARCHIVED).
-- **Rows that are hard-deleted on purpose:** `rate_limit_hits` (older than a day), `request_drafts` (on submit, discard or after 30 days), `notification_outbox` (sent rows after 30 days), `job_runs` (after 90 days). Export files are removed from disk after 7 days; their `export_jobs` row stays as EXPIRED. Legal holds stop pruning of what they cover.
+- **Rows that are hard-deleted on purpose:** `rate_limit_hits` (older than a day), `request_drafts` (on submit, discard or after 30 days), `notification_outbox` (sent rows after 30 days), `job_runs` (after 90 days), and since v1.46.0 (DR-06) `login_logs`, `otp_challenges`, ended `user_sessions`, `used_security_links` and used or expired `password_tokens` after 90 days (job step `securityRetention`; a person under an active legal hold keeps theirs). Export files are removed from disk after 7 days; their `export_jobs` row stays as EXPIRED. Legal holds stop pruning of what they cover.
 - **Cascades:** only two. `notification_rule_sends` → `notification_rules` and `my_task_placements` → `my_task_sections` are `ON DELETE CASCADE`. Every other FK has no `ON DELETE` action, so a parent with children can't be deleted.
 
 ### JSON columns

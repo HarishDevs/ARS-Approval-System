@@ -113,6 +113,8 @@ test("the Super Admin hides a page and makes another view-only", async ({ page, 
   await page.goto("/superadmin/pages");
   await page.getByLabel("Calendar: for everyone", { exact: true }).selectOption("HIDDEN");
   await page.getByLabel("Calendar: for everyone", { exact: true }).locator("xpath=ancestor::form").getByRole("button", { name: "Save" }).click();
+  // V181-A8 (AUD-25): hiding a page from everyone asks first.
+  await page.getByRole("button", { name: "Yes, hide it" }).click();
   await expect(page.getByText(/Saved\. It applies from the person's next page/).first()).toBeVisible();
   const requester = await userIdByLogin("E2E_REQ");
   await sql("INSERT INTO page_access_rules (page_key, scope, scope_id, level) VALUES ('users.collaborating', 'USER', ?, 'VIEW')", [requester]);

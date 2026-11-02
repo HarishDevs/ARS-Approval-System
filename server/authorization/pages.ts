@@ -104,6 +104,31 @@ export function pageForPath(path: string): PageDef | null {
   return best?.page ?? null;
 }
 
+// V181-A7 (AUD-14, REC-06): addresses of My approvals and the Admin space
+// that are deliberately not configurable pages, so they stay open to
+// everyone with the area even when the person has page restrictions.
+// "Sign-in & devices" is one (SEC-17: a personal security control). Any
+// other address that is no configured page is refused for a restricted
+// person (fail closed); tests/security/page-guards keeps this list complete.
+export const OPEN_PATHS: readonly RegExp[] = [
+  under("/users/security"), // SEC-17: signing out a lost device always works
+  exact("/users/approvals"), // phone hub of the approval lists (each list keeps its own page rule)
+  exact("/users/more"), // phone "More" menu (links already filtered by page access)
+  under("/users/people"), // a person's contact card
+  under("/admin/notifications"), // broadcast notifications (not yet a configurable page)
+];
+
+// May a restricted person use an address that is no configured page?
+// API routes keep their own rules (`apis` on a page, or `requireApiArea`'s
+// `page` option); Super Admin addresses never (G-3); listed open addresses
+// yes; anything else no.
+export function isOpenAddress(path: string): boolean {
+  const clean = path.split("?")[0]!.split("#")[0]!;
+  if (/^\/superadmin(\/|$)/.test(clean)) return false;
+  if (/^\/api\//.test(clean)) return true;
+  return OPEN_PATHS.some((pattern) => pattern.test(clean));
+}
+
 // Most specific rule wins: the person, then their department, then everyone.
 // No rule = Full. A landing page is never hidden (at most view-only).
 export interface AccessRule {

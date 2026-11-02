@@ -1,5 +1,4 @@
 import "server-only";
-import { routeChanged } from "@/server/engine/conditions";
 import { departmentOfUser, mayRaise } from "@/server/approvals/raisers";
 import type { PoolConnection, RowDataPacket } from "mysql2/promise";
 import { withTransaction } from "@/lib/db/transaction";
@@ -55,6 +54,7 @@ import type { NotifyInput } from "@/server/notifications/notify";
 import { logError } from "@/lib/logging/logger";
 import { loadCustomConfig } from "@/server/approvals/custom-config";
 import { applyStepPolicy, unavailableFeatures } from "@/server/workflows/step-policy";
+import { mayFinishWithoutApprover } from "@/server/workflows/type-settings";
 import type { RoleCode } from "@/types/auth";
 import { appBaseUrl } from "@/lib/http/app-url";
 import { mirrorWorkTasks } from "@/server/approvals/work-mirror";
@@ -309,8 +309,9 @@ export interface SimulationView {
 
 type RouteView = Omit<SimulationView, "formErrors" | "comparison" | "impact">;
 
-async function simulateDefinition(definition: WorkflowDefinition, requesterId: number, formData: EngineFormData, directory: ReturnType<typeof toDirectory>): Promise<RouteView> {
-  const result = simulate(definition, { requesterId, formData, now: now() }, directory);
+async function simulateDefinition(definition: WorkflowDefinition, requesterId: number, formData: EngineFormData, directory: ReturnType<typeof toDirectory>, mayFinish = false): Promise<RouteView> {
+  // DR-02: test mode shows the HOD step a request with every level skipped gets.
+  const result = simulate(definition, { requesterId, formData, now: now(), mayFinishWithoutApprover: mayFinish }, directory);
   const names = await userNames([...new Set(result.stages.flat().flatMap((step) => step.approverIds))]);
   const nodes = new Map(definition.nodes.map((node) => [node.id, node.label]));
   const edges = new Map(definition.edges.map((edge) => [edge.id, edge]));
@@ -342,11 +343,13 @@ export async function simulateVersion(versionId: number, input: { requesterId: n
   const parsed = parseFormSubmission(version.form, input.fields, active, lookups);
   // Test mode still runs with the values that are fine, so the IT team sees the effect of each field.
   const directory = toDirectory(snapshot);
-  const route = await simulateDefinition(version.definition, input.requesterId, parsed.data, directory);
+  const workflow = await findWorkflow(version.workflowId);
+  const mayFinish = workflow ? mayFinishWithoutApprover(workflow) : false;
+  const route = await simulateDefinition(version.definition, input.requesterId, parsed.data, directory, mayFinish);
   const live = await findPublishedVersion(version.workflowId);
   let comparison: SimulationView["comparison"] = null;
   if (live && live.id !== version.id) {
-    const liveRoute = await simulateDefinition(live.definition, input.requesterId, parseFormSubmission(live.form, input.fields, active, lookups).data, directory);
+    const liveRoute = await simulateDefinition(live.definition, input.requesterId, parseFormSubmission(live.form, input.fields, active, lookups).data, directory, mayFinish);
     comparison = { liveVersionNo: live.versionNo, ...compareRoutes(route, liveRoute) };
   }
   const impact = { versionNo: version.versionNo, isLive: live?.id === version.id, openRequests: await countOpenRequests(version.workflowId) };
@@ -421,6 +424,8 @@ export interface AmendmentInput {
   reason: string;
   basePaise: number | null;
   effective: EngineFormData; // the values being amended (typed)
+  // DR-05 (owner, 2 Nov 2026): why an expired approval is being amended (required then).
+  expiredReason?: string;
 }
 export interface AmendmentChange {
   key: string;
@@ -526,7 +531,8 @@ export async function submitRequest(
       const snapshot = await loadDirectorySnapshot(connection);
       const parsed = { data: assessed.data };
       const formData = parsed.data;
-      const result = startInstance(version.definition, { requesterId: actor.id, formData, now: now() }, toDirectory(snapshot));
+      // DR-02: only a predefined type IT ticked may finish with no human approval.
+      const result = startInstance(version.definition, { requesterId: actor.id, formData, now: now(), mayFinishWithoutApprover: mayFinishWithoutApprover(workflow) }, toDirectory(snapshot));
       const requestNo = await nextRequestNumber(workflow.requestPrefix, connection);
       const id = await insertRequest({ requestNo, workflowVersionId: version.id, requesterId: actor.id, title, formData, state: result.state, submissionKey: input.submissionKey ?? null }, connection);
       await syncTasks(id, result.state, version.definition.nodes, connection, await loadWorkingCalendar(connection));
@@ -546,6 +552,11 @@ export async function submitRequest(
           actor.id,
         ]);
         await recordAudit({ actorUserId: actor.id, action: "AMENDMENT_SUBMITTED", entityType: "REQUEST", entityId: input.amendment.originalId, metadata: { amendmentId: id, requestNo, fields: changes.map((change) => change.key) } }, connection);
+        // DR-05: the reason for amending an expired approval goes on its history.
+        if (input.amendment.expiredReason) {
+          await appendEvents(input.amendment.originalId, [{ type: "EXPIRED_REUSED", actorId: actor.id, kind: "AMENDMENT", reason: input.amendment.expiredReason, newRequestId: id, newRequestNo: requestNo }], actor.id, connection);
+          await recordAudit({ actorUserId: actor.id, action: "EXPIRED_APPROVAL_AMENDED", entityType: "REQUEST", entityId: input.amendment.originalId, metadata: { amendmentId: id, requestNo, reason: input.amendment.expiredReason } }, connection);
+        }
       }
       const request: RequestRecord = {
         id,
@@ -713,10 +724,12 @@ export async function resubmitRequest(input: { requestId: number; fields?: Recor
       if (Object.keys(doaErrors).length) throw new FormError(doaErrors);
       formData = parsed.data;
     }
-    // v1.9.0 (audit AUD-02, D-147): new values that change the route restart
-    // it from the beginning, so a level they now need can't stay skipped.
-    const effectivePolicy = input.fields && routeChanged(definition, request.formData as EngineFormData, formData) ? "BEGINNING" : policy;
-    const result = resubmit(definition, request.state, effectivePolicy, { requesterId: request.requesterId, formData, now: now() }, directory);
+    // DR-09 (owner, 2 Nov 2026; supersedes D-147's restart from the
+    // beginning): new values that change the route restart it from the
+    // earliest step whose routing outcome differs (the engine works it out
+    // and records ROUTE_CHANGED on the history), so a level they now need
+    // can't stay skipped and earlier approvals that still stand are kept.
+    const result = resubmit(definition, request.state, policy, { requesterId: request.requesterId, formData, now: now() }, directory, input.fields ? { previousFormData: request.formData as EngineFormData } : {});
     return { ...result, formData: input.fields ? formData : undefined };
   }, input.fields ? { check: (request, version, connection) => resubmitChecks(request, version, input.fields!, actor, connection), afterSave: (request, connection) => syncBudgetAmount(request.id, connection) } : {});
   return result;

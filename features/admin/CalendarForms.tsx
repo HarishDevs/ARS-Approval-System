@@ -6,7 +6,13 @@ import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/featur
 const DAY_LABEL: Record<string, string> = { SUN: "Sunday", MON: "Monday", TUE: "Tuesday", WED: "Wednesday", THU: "Thursday", FRI: "Friday", SAT: "Saturday" };
 
 export function WorkingDaysForm({ days, selected }: { days: readonly string[]; selected: readonly string[] }) {
-  const { result, pending, onSubmit } = useActionForm(saveWorkingDaysAction);
+  // V181-A8 (AUD-25, REC-21): changing the working week asks first.
+  const { result, pending, onSubmit, confirmBar } = useActionForm(saveWorkingDaysAction, {
+    confirmTitle: "Change the working days?",
+    confirmLabel: "Yes, change them",
+    confirm:
+      "Due times, reminders and escalations of every approval that starts from now on will count only the ticked days. Approvals already running keep the due times they have.",
+  });
   return (
     <form onSubmit={onSubmit} className="space-y-3 px-5 py-4">
       <div className="flex flex-wrap gap-3">
@@ -22,6 +28,7 @@ export function WorkingDaysForm({ days, selected }: { days: readonly string[]; s
         </SubmitButton>
         <ResultMessage result={result} />
       </div>
+      {confirmBar}
     </form>
   );
 }

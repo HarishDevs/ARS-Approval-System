@@ -125,8 +125,23 @@ export function SettingsGroupForm({
   testId?: string;
   id?: string;
 }) {
+  // V181-A8 (AUD-25, REC-21): removing a stored key asks first, naming it.
+  const [clearing, setClearing] = useState<string[]>([]);
+  const all = [...settings, ...(parts ?? []).flatMap(partSettings)];
+  const clearingNames = clearing.map((key) => splitLabel(all.find((setting) => setting.key === key)?.label ?? key).name);
   // Cleared after a save so a typed key never lingers in the field.
-  const { result, pending, formRef, onSubmit } = useActionForm(saveSettingsAction, { resetOnSuccess: true });
+  const { result, pending, formRef, onSubmit, confirmBar } = useActionForm(
+    saveSettingsAction,
+    clearing.length > 0
+      ? {
+          resetOnSuccess: true,
+          confirmTitle: clearing.length === 1 ? "Remove this key?" : `Remove ${clearing.length} keys?`,
+          confirmLabel: clearing.length === 1 ? "Yes, remove it" : "Yes, remove them",
+          confirmTone: "danger",
+          confirm: `${clearingNames.join(", ")} will be deleted from the encrypted settings. Whatever uses ${clearing.length === 1 ? "it" : "them"} stops working until a new key is pasted, and the old key can't be shown or brought back.`,
+        }
+      : { resetOnSuccess: true },
+  );
   const settingsConsole = useSettingsConsole();
   const query = settingsConsole?.query ?? "";
   const [dirty, setDirty] = useState(false);
@@ -134,8 +149,15 @@ export function SettingsGroupForm({
   useEffect(() => {
     const form = formRef.current;
     if (!form) return;
-    const changed = () => setDirty(true);
-    const clean = () => setDirty(false);
+    const readClearing = () => setClearing([...form.querySelectorAll<HTMLInputElement>('input[type="checkbox"][name$="__clear"]:checked')].map((box) => box.name.slice(0, -"__clear".length)));
+    const changed = () => {
+      setDirty(true);
+      readClearing();
+    };
+    const clean = () => {
+      setDirty(false);
+      setClearing([]);
+    };
     form.addEventListener("input", changed);
     form.addEventListener("change", changed);
     form.addEventListener(SAVED_EVENT, clean);
@@ -150,7 +172,6 @@ export function SettingsGroupForm({
   useEffect(() => {
     settingsConsole?.setDirty(sectionId, dirty);
   }, [settingsConsole, sectionId, dirty]);
-  const all = [...settings, ...(parts ?? []).flatMap(partSettings)];
   const matches = (setting: DisplaySetting) => {
     const { name, hint } = splitLabel(setting.label);
     return settingMatches(query, name, hint, setting.key, title);
@@ -181,6 +202,7 @@ export function SettingsGroupForm({
           <ResultMessage result={result} />
         </div>
       </div>
+      {confirmBar}
     </form>
   );
 }

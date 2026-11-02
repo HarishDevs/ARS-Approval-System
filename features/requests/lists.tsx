@@ -158,7 +158,7 @@ export function MyRequestsTable({ items }: { items: MyRequestItem[] }) {
                   <SafeText text={item.title} />
                 </span>
                 <span className="shrink-0">
-                  <RequestStatusPill status={item.status} />
+                  <RequestStatusPill status={item.status} validUntil={item.validUntil} />
                 </span>
               </span>
               <span className="block text-caption text-ink-muted">
@@ -199,7 +199,7 @@ export function MyRequestsTable({ items }: { items: MyRequestItem[] }) {
                 </td>
                 <td>{item.workflowName}</td>
                 <td>
-                  <RequestStatusPill status={item.status} />
+                  <RequestStatusPill status={item.status} validUntil={item.validUntil} />
                 </td>
                 <td className="text-ink-muted">
                   {item.status === "IN_PROGRESS" || item.status === "ON_HOLD"

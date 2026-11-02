@@ -21,6 +21,10 @@ import { runAiStep } from "@/server/ai/jobs";
 import { runHodWeekly } from "@/server/reports/hod-weekly";
 import { drainPushQueue } from "@/server/push/service";
 import { prunePushSubscriptions } from "@/lib/db/repositories/push.repository";
+import { getDbPool } from "@/lib/db/client";
+import { recordAudit } from "@/lib/db/repositories/audit.repository";
+import { runSecurityRetentionWith, securityRetentionDoneRecently, SECURITY_RETENTION_DAYS } from "@/server/ops/security-retention";
+import { runDriveBackupStep } from "@/server/ops/gdrive-backup";
 
 // Automation inventory (unified prompt FN11, Addendum B). Every background
 // job the platform runs, what it does, how it is retried and how IT
@@ -115,6 +119,19 @@ export const AUTOMATIONS: readonly Automation[] = [
     recovery: "None needed.",
     owner: "Super Admin",
   },
+  // DR-06 (owner, 2 Nov 2026): security and sign-in records kept 90 days.
+  {
+    key: "securityRetention",
+    name: "Security records clean-up",
+    what: "Deletes sign-in attempts, WhatsApp code records, ended sessions, used security links and used or expired set-password links older than 90 days, in batches. Requests, their history, the audit log and notifications are never touched; a person under a legal hold keeps theirs.",
+    trigger: "Once a day, inside the job run (continues on the next runs if there is a lot to delete).",
+    everyMinutes: 24 * 60,
+    retry: "The next run continues where it stopped.",
+    idempotency: "Deletes only what is past 90 days; running twice deletes nothing more.",
+    onFailure: "Recorded here; nothing is lost, the records are just kept a little longer.",
+    recovery: "None needed. The counts deleted are in the audit log (SECURITY_RECORDS_PURGED).",
+    owner: "Super Admin",
+  },
   {
     key: "delegations",
     name: "Delegation start and end",
@@ -137,6 +154,19 @@ export const AUTOMATIONS: readonly Automation[] = [
     idempotency: "Makes at most one backup a day; never overwrites an existing backup.",
     onFailure: "The Super Admin is alerted (once a day).",
     recovery: "Back up now on the Super Admin home page.",
+    owner: "Super Admin",
+  },
+  // DR-08 (owner, 2 Nov 2026): the encrypted daily backup copied to Google Drive.
+  {
+    key: "driveBackup",
+    name: "Google Drive backup copy",
+    what: "Uploads the newest encrypted daily backup (and its .sha256) to the ARS Google Drive folder with a service account, and keeps only the newest copies it made there.",
+    trigger: "Daily, inside the job run, after the daily backup.",
+    everyMinutes: 24 * 60,
+    retry: "Each run tries again until the newest backup is in the folder.",
+    idempotency: "A backup already in the folder (same name) is never uploaded again; only files this job made are deleted.",
+    onFailure: "Recorded here and the Super Admin is told; the local backup stays.",
+    recovery: "Check Super Admin → Settings → Google Drive backup (Test), then Run now on Automation.",
     owner: "Super Admin",
   },
   {
@@ -299,6 +329,13 @@ const STEPS: Record<string, () => Promise<StepResult>> = {
   housekeeping: async () => ({ ...(await runHousekeeping()), outboxPruned: await pruneOutbox(), jobRunsPruned: await pruneJobRuns(), abandonedRunsClosed: await closeAbandonedRuns(), pushDevicesPruned: await prunePushSubscriptions() }),
   delegations: () => auditDelegationDates(),
   backup: () => runDailyBackup(),
+  driveBackup: () => runDriveBackupStep(),
+  securityRetention: () =>
+    runSecurityRetentionWith({
+      db: getDbPool(),
+      doneRecently: () => securityRetentionDoneRecently(getDbPool()),
+      audit: (counts) => recordAudit({ actorUserId: null, action: "SECURITY_RECORDS_PURGED", entityType: "RETENTION", entityId: "security", metadata: { olderThanDays: SECURITY_RETENTION_DAYS, ...counts } }),
+    }),
   reports: async () => ({ ...(await runDueSchedules()) }),
   alerts: async () => ({ ...(await evaluateAlerts()) }),
   expiry: async () => ({ ...(await runExpiryNotices()) }),

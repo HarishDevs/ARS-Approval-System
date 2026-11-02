@@ -21,6 +21,8 @@ export const metadata: Metadata = {
 // phone and desktop notifications (push) and the daily session. v1.43.0: the
 // layout cookie of the phone layout (v1.45.0: and the Compact mode cookie). v1.44.0 (D-273): people given a task by a
 // request's background work step may read that request.
+// v1.46.0 (D-277, D-278): the encrypted backup copy may go to an ARS Google
+// Drive folder; security records are deleted after 90 days.
 const PRIVACY_EFFECTIVE = "2 November 2026";
 
 export default function PrivacyPage() {
@@ -28,7 +30,7 @@ export default function PrivacyPage() {
     <PublicPage>
       <Prose>
         <h1>Privacy policy</h1>
-        <p className="text-label text-ink-muted">Effective {PRIVACY_EFFECTIVE}</p>
+        <p className="text-label text-ink-muted">Effective {PRIVACY_EFFECTIVE} · approved by the head of IT, 2 November 2026</p>
         <p>
           This policy explains how ARS-CMS (the &ldquo;app&rdquo;, at approval.arssteels.net), operated by {COMPANY} (&ldquo;ARS&rdquo;, &ldquo;we&rdquo;), handles information. The app is an
           internal workplace tool for ARS employees. Accounts are created by ARS&apos;s IT team; there is no public sign-up.
@@ -138,7 +140,7 @@ export default function PrivacyPage() {
             with service providers that run parts of the app for us, under their terms: GoDaddy (hosting), Cloudflare (network and security), Google Firebase (Google sign-in), Resend (email),
             CEOITBox (WhatsApp messages), the browsers&apos; push services (to deliver phone and desktop notifications, encrypted), the AI providers above (for the AI Assistant only), Salesforce
             (only when ARS connects it) and, when IT switches it on, an S3-compatible storage
-            provider that keeps an <strong>encrypted</strong> copy of the daily backup outside the hosting account. Google Calendar data is not shared with any of them beyond the hosting,
+            provider, or a Google Drive folder belonging to ARS, that keeps an <strong>encrypted</strong> copy of the daily backup outside the hosting account (only ARS holds the key). Google Calendar data is not shared with any of them beyond the hosting,
             network and encrypted backups that carry it;
           </li>
           <li>where the law requires it.</li>
@@ -163,6 +165,10 @@ export default function PrivacyPage() {
           </li>
           <li>
             <strong>AI conversations</strong> are removed after the period IT sets (unless a legal hold applies). <strong>Backups</strong> are kept for a limited number of days, then deleted.
+          </li>
+          <li>
+            <strong>Security records</strong> (sign-in attempts, WhatsApp code records, ended sessions and used security or set-password links) are deleted automatically after 90 days, unless a
+            legal hold applies. The audit log is kept. Requests and their history are never deleted automatically.
           </li>
           <li>
             <strong>Profile photo and About me</strong> can be changed or removed by the person at any time from Profile.

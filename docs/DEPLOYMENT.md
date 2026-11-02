@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| App | ARS-CMS **v1.39.0** (31 Oct 2026). The current version is always the top entry of `docs/RELEASE-NOTES.md`. |
+| App | ARS-CMS **v1.46.0** (2 Nov 2026). **This release runs one migration on start** (Part W). Earlier: v1.39.0 (31 Oct 2026). The current version is always the top entry of `docs/RELEASE-NOTES.md`. |
 | Address | **https://approval.arssteels.net** (one app: `/users`, `/admin`, `/superadmin`) |
 | Hosting | GoDaddy **Node.js Hosting** ("Deploy your Node.js app"), from GitHub `HarishDevs/ARS-Approval-System`, branch `main` |
 | Database | MySQL 8 in GoDaddy cPanel |
@@ -34,6 +34,7 @@ Work through the parts **in order**. Tick each box as you go. Anything marked **
 - **Part T:** v1.19.0 to v1.20.0 (analyst chat, Try as, AI Rules, clean screens)
 - **Part U:** v1.21.0 to v1.39.0 (Tasks & projects, notification rules, Configuration Studio)
 - **Part V:** v1.41.0 (installable app, phone and desktop notifications, daily session, road tracker)
+- **Part W:** v1.42.0 to v1.46.0 (rule migration, Google Drive backup, security records clean-up, break-glass, origin lock tile)
 
 Related: `docs/BACKUP_RESTORE_AND_ROLLBACK.md`, `docs/AUTOMATION_INVENTORY_AND_RECOVERY.md`, `docs/RECOVERY_OBJECTIVES_AND_INCIDENT_RESPONSE.md` (draft), `docs/ARCHITECTURE.md`, `docs/DATA_MODEL.md`, `docs/API_REFERENCE.md`.
 
@@ -43,7 +44,7 @@ Related: `docs/BACKUP_RESTORE_AND_ROLLBACK.md`, `docs/AUTOMATION_INVENTORY_AND_R
 
 ### A1. Check the release is green
 - [ ] Open https://github.com/HarishDevs/ARS-Approval-System/actions. The latest run on `main` must show **3 green jobs**: checks, integration and end-to-end. If any is red, stop; don't deploy.
-- [ ] GoDaddy deploys the **`main` branch**. Each release has a tag (`v1.0.0` … `v1.39.0`) that marks what was released; `git tag --sort=-v:refname` lists the newest first.
+- [ ] GoDaddy deploys the **`main` branch**. Each release has a tag (`v1.0.0` … `v1.46.0`) that marks what was released; `git tag --sort=-v:refname` lists the newest first.
 
 ### A2. The secrets file (already created)
 The file `D:\Omniroute\deploy-secrets\ars-approvals.production.env` was generated for you. It's outside the repository. It already holds fresh values for `SESSION_SECRET`, `ENCRYPTION_KEY` and `JOB_RUNNER_SECRET`.
@@ -189,6 +190,7 @@ Stops anyone reaching the GoDaddy server directly, around Cloudflare (and faking
 3. GoDaddy → the app → secrets → add `ORIGIN_SECRET` = the same secret → **Publish** / restart.
 4. Check: https://approval.arssteels.net works as before. The cron test (Part I, I2) still works, because it goes through Cloudflare.
 5. To undo: remove `ORIGIN_SECRET` and publish (then delete the Cloudflare rule).
+6. From v1.46.0 the **Super Admin home** has an **Origin lock** tile: "on" when `ORIGIN_SECRET` is set, "off" otherwise. It never shows the value. The lock is still optional: the app starts without it (V181-A10 waits for the owner to confirm it is set, Q-021).
 
 ---
 
@@ -340,7 +342,7 @@ node scripts/admin/break-glass.js set-password
 node scripts/admin/break-glass.js status
 ```
 - Write the password down and seal it offline. Leave the account **disabled**. `enable --minutes 60` opens it only in an emergency, and alerts every Super Admin.
-- Signing in still needs the WhatsApp code (Q-015, open).
+- ~~Signing in still needs the WhatsApp code (Q-015, open).~~ Superseded in v1.46.0 (Q-015, owner decision 2 Nov 2026): **while the window is open, the break-glass account signs in with the password alone**, with no WhatsApp code, because WhatsApp may be what is down. Each such sign-in is audited `BREAK_GLASS_SIGNIN_NO_OTP` and every Super Admin is alerted ("Break-glass sign-in without a WhatsApp code"). Outside the window it can't sign in at all. Every other password account still needs the code.
 
 ---
 
@@ -412,7 +414,7 @@ To rebuild a full import file for a brand-new environment: apply the migrations 
 1. Changes are pushed to `main` → GitHub Actions must be **green on all 3 jobs**.
 2. Tag it with the version in `package.json` (e.g. `v1.39.0`).
 3. GoDaddy redeploys from `main`: automatically, or press **Redeploy** (**confirm** which).
-4. The start command applies any new migrations by itself. Migrations only ever **add**, so older code keeps working on a newer database.
+4. The start command applies any new migrations by itself. Migrations only ever **add**, so older code keeps working on a newer database. **Exception: v1.46.0's `202611021000_unify_condition_rules.sql` converts saved form rules** (Part W); going back from v1.46.0 needs its rollback statements.
 5. Run the Smoke suite (Part L, short version).
 
 ### v1.5.0 notes
@@ -484,7 +486,7 @@ These limits date from v1.5.0 and still hold unless noted. For issues found sinc
 1. The app runs in a container (`/app`) and can only write, persistently, to **Private Storage (`/private`)**. A cPanel home path such as `/home/<cpanel-user>/…` does **not** exist inside the app and fails with `ENOENT … mkdir` (found on live, 10 Oct 2026).
 2. GoDaddy → the app → secrets → `BACKUP_DIR` = **`/private/backups`** → **Publish**. From v1.6.2, leaving `BACKUP_DIR` unset also works: backups go to a `backups` folder beside `UPLOAD_DIR` (i.e. `/private/backups`).
 3. **Super Admin → Overview → Backups → Back up now**. The line turns green, showing the time and size.
-4. Every week or so, download the newest file from File Manager → **Private Storage** → `backups` to a safe place off GoDaddy (e.g. the IT Google Drive). The server copy alone doesn't protect against losing the hosting account.
+4. Every week or so, download the newest file from File Manager → **Private Storage** → `backups` to a safe place off GoDaddy (e.g. the IT Google Drive). The server copy alone doesn't protect against losing the hosting account. From v1.46.0 the app can copy each encrypted daily backup to a Google Drive folder by itself (Part W, W3); once that runs, the weekly download is a spare, not the only off-site copy.
 
 ### P2. Restore drill (do it once now, then every quarter)
 Restore into a **new, empty** database, never straight over the live one.
@@ -663,3 +665,70 @@ The middleware lets these through without a session. The CSP adds `worker-src 's
 - A push service may drop messages for a device that has been off for weeks; the message is always in the Inbox.
 
 **Rollback:** redeploy v1.40.0 (Part M). Browsers keep the service worker until it updates; v1.40.0 doesn't register one, so it stays inert apart from showing pushes. To remove it, open DevTools → Application → Service workers → Unregister.
+
+## Part W: v1.42.0 to v1.46.0 (rule migration, Google Drive backup, security records clean-up, break-glass, origin lock tile)
+
+### W1. What changed for IT, release by release
+- **v1.42.0 to v1.45.0:** no migration and no new environment variable. v1.43.0 added the `DB_POOL_SIZE` setting (B2) and `dbClockOffsetMinutes` on `/api/health/deep`, and the optional index script `database/optional/v1421_qa_indexes.sql` (run by hand once the owner approves; not a migration). The phone screens (v1.43.0 to v1.45.0) need nothing on the server; a phone list's Compact mode is kept in the small cookie `ars_m_compact` (privacy policy says so).
+- **v1.46.0 (2 Nov 2026):**
+  - one migration (W2);
+  - two new job steps: `securityRetention` and `driveBackup` (W3, W4); still the same cron call, no new cron job;
+  - four new Super Admin settings for the Google Drive backup (W3);
+  - break-glass signs in without the WhatsApp code while its window is open (Part J);
+  - two tiles on the Super Admin home: **Origin lock** (on/off, Part E2) and **WhatsApp templates** (the templates not yet live, each linking to its page, Part H);
+  - Admin → Records → Requests: an **Amount** column (confidential amounts show "Hidden" to anyone who may not see confidential values), on screen and in the CSV;
+  - page access: a person with any page restriction is refused an address that is no configured page (V181-A7). If a restricted person reports a 404 on a page that used to open, check Super Admin → Page access for that person;
+  - "Load demo data" needs the typed word `LOAD DEMO` and is refused when more than 25 active real people exist;
+  - phone screens (no server impact): the comment box stays at the bottom of a task, Information, Analytics and New request phone layouts, Pico Bot opens at 75% of the screen, the calendar's Show is one dropdown.
+  - No new environment variable is **required**. `BACKUP_ENCRYPTION_KEY` (v1.40.0) is needed for the Drive copy.
+
+### W2. The v1.46.0 migration (runs on start)
+`database/migrations/202611021000_unify_condition_rules.sql`. **This time a migration runs on start**, and it changes data, not only the schema:
+- It moves every saved form rule ("show only when", "required when") from the older shape `{ field, op, value }` to the one shape the workflow rules use, `{ field, operator, value? }` or `{ match, conditions }` (`server/conditions/rule.ts`).
+- Tables: `form_json` in `workflow_versions`, `module_type_versions` and `custom_approval_settings`.
+- Before changing a row, it copies that row's `form_json` once into the new table **`condition_rules_backup`** (table name, row id, form, time).
+- It is idempotent: only rows that still hold an older rule are touched; a second run finds nothing. `updated_at` is kept.
+- The app also converts older rules when it reads them, so the order of deploy and migration doesn't matter.
+
+**Rollback.** v1.45.0 and earlier can't read the new shape (their loaders would fall back to an empty or default form). To go back to v1.45.0:
+1. Redeploy `v1.45.0` (Part M).
+2. In phpMyAdmin, run the rollback statements in the **header of the migration file** (three `UPDATE … JOIN condition_rules_backup` statements and one `DELETE FROM schema_migrations`).
+3. Rules saved after the migration are lost by this rollback (the backup holds the forms as they were before it).
+
+Drop `condition_rules_backup` once the release has settled; nothing reads it.
+
+After publishing: runtime log `Done. Applied 1 migration(s).`; then open a workflow with "show only when" rules and check they show and behave as before.
+
+### W3. Google Drive backup (DR-08, owner decision 2 Nov 2026)
+What it does: after the daily backup (job step `backup`), the job step `driveBackup` uploads the newest **encrypted** backup (`ars-db-….sql.gz.enc`) and its `.sha256` to an ARS Google Drive folder, using a Google **service account**. It keeps the newest N copies there (default 14) and deletes older ones, but only files it uploaded itself (they carry a private tag). An unencrypted backup is never uploaded. Code: `server/ops/gdrive.ts`, `server/ops/gdrive-backup.ts`.
+
+Set it up once:
+1. **`BACKUP_ENCRYPTION_KEY`** must be set on the server (Part U, "v1.40.0 server settings"). The owner keeps a copy **off the server** (password manager): without it no backup can be restored. Without the key the backups are `.sql.gz` and the Drive step fails with "Only encrypted backups go to Google Drive: set BACKUP_ENCRYPTION_KEY first."
+2. **Google Cloud Console** → the ARS project → APIs & Services → Library → **Google Drive API** → **Enable**.
+3. IAM & Admin → **Service accounts** → **Create service account** (e.g. `ars-cms-backup`; no project role needed) → its **Keys** → **Add key** → **JSON**. A `.json` file downloads.
+4. **Google Drive** → **Shared drives** → create or open one (e.g. "ARS-CMS backups") → a folder inside it → **Manage members** → add the service account's email (`…@….iam.gserviceaccount.com`) as **Content manager**. Use a **shared drive**: a service account has no storage of its own, so uploads to a folder in someone's My Drive may be refused.
+5. Copy the **folder id**: the part after `/folders/` in the folder's address.
+6. **Super Admin → Settings → Google Drive backup:**
+   - **Copy each encrypted daily backup to Google Drive:** ON;
+   - **Service-account key:** paste the whole JSON file (stored encrypted, never shown again);
+   - **Drive folder id:** the id from step 5 (stored encrypted);
+   - **Copies to keep:** 14 (1–90);
+   - **Save**, then **Test** (right-hand panel). It signs in as the service account and reads the folder; it uploads nothing. Expect "Connected as … It can add files to "…"". The test is audited `GDRIVE_BACKUP_TESTED`.
+7. Delete the downloaded JSON key from the PC.
+8. Next day: Super Admin → **Automation** → **Google Drive backup copy** is OK, and the folder holds the night's `.enc` and `.sha256`. Each copy is audited `BACKUP_COPIED_TO_DRIVE`.
+
+If it fails: Automation shows the step failed with Google's message, and the Super Admin is alerted (once a day). The local backup is unaffected. Fix the cause (key, folder sharing, the encryption key), press **Test**, then **Run now** on Automation. Copies beyond the number kept are moved to the shared drive's **trash** (a Content manager may do that; Google empties it after 30 days), so no extra role is needed.
+
+To restore from a Drive copy: download the `.enc` and its `.sha256` into the same folder on a PC, set `BACKUP_ENCRYPTION_KEY` there, and follow Part P2 (`restore.js` and `verify-backup.js` check the `.sha256` and decrypt).
+
+The S3-compatible off-site copy (Part U) still works and can run alongside.
+
+### W4. Security records clean-up (DR-06, owner decision 2 Nov 2026)
+Job step `securityRetention`, once a day. Deletes sign-in attempts, WhatsApp code records, ended sessions, used security links, and used or expired set-password links **older than 90 days**, in batches. Requests, their history, the audit log, devices and notifications are never touched; a person under an active legal hold keeps theirs. Each run that deletes anything writes one audit entry, `SECURITY_RECORDS_PURGED`, with the counts. There is no switch and nothing to set. See `docs/AUTOMATION_INVENTORY_AND_RECOVERY.md`.
+
+### W5. After publishing v1.46.0
+1. Runtime log: `Applied 1 migration(s)`, then `Ready`. `/api/health` shows 1.46.0.
+2. `/api/health/deep`: `dbClockOffsetMinutes` = 0 (QA-DB-02).
+3. Super Admin home: **Origin lock** and **WhatsApp templates** tiles.
+4. Super Admin → Automation: 21 automations, including **Security records clean-up** and **Google Drive backup copy** ("OFF" until set up is normal).
+5. The go-live list for this release is `docs/GO_LIVE_READINESS_CHECKLIST.md` (top section).

@@ -19,6 +19,8 @@ export const dynamic = "force-dynamic";
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 // Kinds are told apart by their label as well as their colour.
+// v1.46.0: the Show dropdown's colour dot per kind (solid, readable in both themes).
+const KIND_DOT: Record<Kind, string> = { approval: "bg-primary-solid", task: "bg-warning-solid", info: "bg-success-solid", needed: "bg-ink-muted", personal: "bg-info-600" };
 const KIND_STYLE: Record<Kind, string> = {
   approval: "bg-primary-50 text-primary-700",
   task: "bg-warning-50 text-warning-600",
@@ -62,6 +64,8 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
   const countOf = (kind: Kind) => entries.filter((entry) => entry.kind === kind).length;
   const toggle = (kind: Kind) => (state.kinds.includes(kind) ? state.kinds.filter((item) => item !== kind) : [...state.kinds, kind]);
 
+  const shownKinds = allowedKinds.filter((kind) => state.kinds.includes(kind)).map((kind) => KIND_LABEL[kind]);
+  const shownLabel = shownKinds.length === 0 ? "nothing" : shownKinds.length === allowedKinds.length ? "everything" : shownKinds.length <= 2 ? shownKinds.join(", ") : `${shownKinds.slice(0, 2).join(", ")} +${shownKinds.length - 2}`;
   return (
     <>
       <PageHeader title="Calendar" icon={CalendarDays} description="Your approvals, tasks, information and needed-by dates, and your own entries, in one place." />
@@ -101,19 +105,35 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
       </div>
 
       <div className="mb-4 flex flex-wrap items-center gap-2 text-label">
-        <span className="text-ink-muted">Show:</span>
-        {allowedKinds.map((kind) => (
-          <Link
-            key={kind}
-            href={href({ kinds: toggle(kind) })}
-            className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 ${state.kinds.includes(kind) ? `border-transparent ${KIND_STYLE[kind]} font-semibold` : "border-dashed border-line-strong text-ink-muted"}`}
-          >
-            {state.kinds.includes(kind) && <Check aria-hidden="true" className="h-3.5 w-3.5" />}
-            {KIND_LABEL[kind]}
-            {state.kinds.includes(kind) && <span className="rounded-full bg-surface px-1.5 text-caption tabular-nums">{countOf(kind)}</span>}
-            <span className="sr-only">{state.kinds.includes(kind) ? " (shown; select to hide)" : " (hidden; select to show)"}</span>
-          </Link>
-        ))}
+        {/* v1.46.0 (owner): "Show" is one dropdown: what is shown, ticked, with counts; choosing one shows or hides it. */}
+        <details className="mob-section relative" data-testid="calendar-show">
+          <summary className="inline-flex min-h-10 cursor-pointer list-none items-center gap-2 rounded-full border border-line bg-surface px-4 font-semibold">
+            Show: {shownLabel}
+            <span aria-hidden="true" className="mob-caret text-ink-muted">
+              ▾
+            </span>
+          </summary>
+          <ul className="absolute left-0 top-full z-header mt-1 w-64 overflow-hidden rounded-lg border border-line bg-surface py-1 shadow-overlay" aria-label="Show on the calendar">
+            {allowedKinds.map((kind) => {
+              const on = state.kinds.includes(kind);
+              return (
+                <li key={kind}>
+                  <Link href={href({ kinds: toggle(kind) })} data-on={on ? "1" : "0"} className="flex min-h-11 items-center gap-3 px-3 hover:bg-surface-muted">
+                    <span aria-hidden="true" className={`grid h-5 w-5 place-items-center rounded border ${on ? "border-transparent bg-primary-solid text-on-solid" : "border-line-strong"}`}>
+                      {on && <Check className="h-3.5 w-3.5" />}
+                    </span>
+                    <span className={`h-2.5 w-2.5 rounded-full ${KIND_DOT[kind]}`} aria-hidden="true" />
+                    <span className="min-w-0 flex-1">
+                      {KIND_LABEL[kind]}
+                      <span className="sr-only">{on ? " (shown; select to hide)" : " (hidden; select to show)"}</span>
+                    </span>
+                    {on && <span className="rounded-full bg-surface-muted px-1.5 text-caption tabular-nums">{countOf(kind)}</span>}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </details>
         {state.kinds.includes("needed") && (
           <nav aria-label="Which requests" className="flex gap-1 sm:ml-auto">
             <Link href={href({ showAll: false })} aria-current={!state.showAll ? "page" : undefined} className={`rounded-md px-3 py-1 ${!state.showAll ? "bg-primary-50 font-semibold text-primary-700" : "text-ink-muted hover:bg-surface-muted"}`}>

@@ -307,7 +307,7 @@ export default async function TaskPage({ params, searchParams }: { params: Promi
             </p>
           )}
           <TaskWorkPanel data={panel} />
-          <CommentThread taskId={task.id} meId={user.id} canComment={rights.comment && !task.deletedAt} canPin={rights.edit} isAdmin={viewer.isAdmin} people={panel.people} comments={view.comments} />
+          <CommentThread taskId={task.id} meId={user.id} canComment={rights.comment && !task.deletedAt} canPin={rights.edit} isAdmin={viewer.isAdmin} people={panel.people} comments={view.comments} docked={mobile} />
           <section className="card space-y-4 px-5 py-4" aria-labelledby="history">
             <h2 id="history" className="font-semibold">
               History

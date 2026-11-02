@@ -43,6 +43,7 @@ export function RequestForm({
   existingFiles = NO_FILES,
   collaboratorOptions,
   preview = false,
+  expiredSource,
 }: {
   mode: "submit" | "resubmit";
   workflowId?: number;
@@ -67,6 +68,8 @@ export function RequestForm({
   collaboratorOptions?: PersonOption[];
   // v1.7.0 (A4): the form builder's preview. Rules and formulas work; nothing is sent.
   preview?: boolean;
+  // DR-05 (owner, 2 Nov 2026): amending or following up an expired approval asks why.
+  expiredSource?: { requestNo: string; expiredOn: string };
 }) {
   const { result, pending, onSubmit } = useActionForm(amendment ? submitAmendmentAction : mode === "submit" ? submitRequestAction : resubmitAction);
   const locked = (key: string) => Boolean(amendment && !amendment.amendable.includes(key));
@@ -118,7 +121,7 @@ export function RequestForm({
   const possibleDuplicate = Boolean(result && !result.ok && result.fieldErrors?.allowDuplicate && (!readiness || onlyRecentDuplicate));
   // FB-06: every field problem listed at the top, linked to the field.
   const summaryErrors = result && !result.ok && result.fieldErrors ? Object.fromEntries(Object.entries(result.fieldErrors).filter(([key]) => key !== "allowDuplicate").map(([key, message]) => [key === "title" || key === "attachments" ? key : `f-${key}`, message])) : undefined;
-  const summaryLabels: Record<string, string> = { title: "Title", attachments: "Attachments", "f-amendReason": "Why it needs amending", "f-amendment": "Amendment", ...Object.fromEntries(fields.map((field) => [`f-${field.key}`, field.label])) };
+  const summaryLabels: Record<string, string> = { title: "Title", attachments: "Attachments", "f-amendReason": "Why it needs amending", "f-amendment": "Amendment", "f-expiredReason": "Why use an expired approval", ...Object.fromEntries(fields.map((field) => [`f-${field.key}`, field.label])) };
 
   const nudge = autosave.nudge;
 
@@ -136,7 +139,7 @@ export function RequestForm({
       aria-label={preview ? "Form preview" : undefined}
       onInput={(event) => setSignature(signatureOf(event.currentTarget))}
       onChange={(event) => setSignature(signatureOf(event.currentTarget))}
-      className="card"
+      className="card request-form"
     >
       {draft && restoredAt && (
         <p role="status" className="border-b border-line bg-primary-50/50 px-5 py-2 text-label text-primary-700">
@@ -148,7 +151,7 @@ export function RequestForm({
       {mode === "submit" && <input type="hidden" name="submissionKey" value={submissionKey} />}
       {followUpOf && <input type="hidden" name="followUpOf" value={followUpOf} />}
       {amendment && <input type="hidden" name="amendmentOf" value={amendment.originalId} />}
-      <div className="space-y-5 px-5 py-5">
+      <div className="request-form-body space-y-5 px-5 py-5">
         <ErrorSummary errors={summaryErrors} labels={summaryLabels} />
         {amendment && (
           <div id="f-amendment" tabIndex={-1} className="space-y-3">
@@ -164,6 +167,27 @@ export function RequestForm({
               <FieldError result={result} name="amendReason" />
               <FieldError result={result} name="amendment" />
             </div>
+          </div>
+        )}
+        {expiredSource && (
+          <div className="rounded-md bg-danger-50 px-3 py-3">
+            <label htmlFor="f-expiredReason" className="field-label text-danger-600">
+              {expiredSource.requestNo} expired on {expiredSource.expiredOn}. Why are you using it?
+              <span aria-hidden="true"> *</span>
+            </label>
+            <textarea
+              id="f-expiredReason"
+              name="expiredReason"
+              rows={2}
+              maxLength={1000}
+              required
+              aria-required="true"
+              aria-invalid={result && !result.ok && result.fieldErrors?.expiredReason ? true : undefined}
+              className="field-input h-auto py-2.5"
+              placeholder="e.g. The work is still going on; renewing the approval"
+            />
+            <p className="mt-1 text-caption text-ink-muted">Kept on the expired request&apos;s history.</p>
+            <FieldError result={result} name="expiredReason" />
           </div>
         )}
         {mode === "submit" && !amendment && (

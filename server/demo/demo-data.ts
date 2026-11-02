@@ -7,6 +7,10 @@ import type { FormField } from "@/server/forms/fields";
 // picked through groups and department HODs, so the real people can be put
 // in later (group members, HOD on the department) without editing any
 // workflow.
+// V181-A8 (AUD-25): the word typed to confirm loading demo data (shown by
+// the form, checked by the server).
+export const DEMO_CONFIRM_WORD = "LOAD DEMO";
+
 export interface DemoPerson {
   key: string;
   name: string;

@@ -48,10 +48,12 @@ function PasswordStep({ onChallenge, onDone }: { onChallenge: (c: Challenge) => 
     event.preventDefault();
     setError(null);
     setBusy(true);
-    const body = await post<Challenge>("/api/auth/password/start", { loginId, password });
+    // Q-015: the break-glass account inside its window is signed in at once.
+    const body = await post<Challenge | { redirectTo: string }>("/api/auth/password/start", { loginId, password });
     setBusy(false);
-    if (body.success) onChallenge(body.data);
-    else setError(body.error.message);
+    if (!body.success) setError(body.error.message);
+    else if ("redirectTo" in body.data) onDone(body.data.redirectTo);
+    else onChallenge(body.data);
   }
 
   return (

@@ -30,18 +30,17 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
-import { NUMERIC_TYPES, type FieldLookups, type FormField } from "@/server/forms/fields";
-import type { Comparison } from "@/server/engine/types";
+import type { FormField } from "@/server/forms/fields";
 import { Hint } from "@/features/ui/Hint";
 import { ConfirmDialog } from "@/features/ui/Dialog";
 import { useToast } from "@/features/ui/Toast";
-import { FieldProperties, NumberDraftInput } from "@/features/admin/form-designer/FieldProperties";
+import { FieldProperties } from "@/features/admin/form-designer/FieldProperties";
 import { conversionLosses, dependentsOf, duplicateField, fieldProblems, formulaProblem, GROUP_LABEL, moveItem, newField, TYPE_CHOICES, typeChoice, withType, type FieldGroup } from "@/features/admin/form-designer/model";
 
 export { slugKey } from "@/features/admin/form-designer/model";
 export { ChoiceListEditor, NumberDraftInput, SOURCE_LABEL } from "@/features/admin/form-designer/FieldProperties";
-
-type ConditionValue = string | number;
+// The condition editor moved to features/admin/conditions/RuleEditor.tsx (one editor for every rule, 2 Nov 2026).
+export { ConditionValueInput, freshCondition, needsValue, operatorsFor } from "@/features/admin/conditions/RuleEditor";
 
 // D-235 (owner: "Build all of it, start with the form fields editor";
 // "Fields can't be reordered, and removals don't ask first"): the Form
@@ -523,101 +522,4 @@ function Problems({ problems, field, form }: { problems: string[]; field: FormFi
       ))}
     </ul>
   );
-}
-
-// ---- conditions (the workflow builder's step and choice conditions) ---------------------
-type Operator = Comparison["operator"];
-const ALL: Record<string, [Operator, string][]> = {
-  NUMBER: [
-    ["GT", "is more than"],
-    ["GTE", "is at least"],
-    ["LT", "is less than"],
-    ["LTE", "is at most"],
-    ["EQ", "is"],
-    ["NEQ", "is not"],
-    ["IS_EMPTY", "is empty"],
-    ["IS_NOT_EMPTY", "is filled in"],
-  ],
-  DATE: [
-    ["LT", "is before"],
-    ["LTE", "is on or before"],
-    ["GT", "is after"],
-    ["GTE", "is on or after"],
-    ["EQ", "is"],
-    ["IS_EMPTY", "is empty"],
-    ["IS_NOT_EMPTY", "is filled in"],
-  ],
-  OTHER: [
-    ["EQ", "is"],
-    ["NEQ", "is not"],
-    ["IS_EMPTY", "is empty"],
-    ["IS_NOT_EMPTY", "is filled in"],
-  ],
-};
-
-export function operatorsFor(field: FormField | undefined): [Operator, string][] {
-  if (!field) return ALL.NUMBER!;
-  return ALL[NUMERIC_TYPES.includes(field.type) ? "NUMBER" : field.type === "DATE" ? "DATE" : "OTHER"]!;
-}
-
-export function needsValue(operator: Operator): boolean {
-  return operator !== "IS_EMPTY" && operator !== "IS_NOT_EMPTY";
-}
-
-// A starting condition for a field: its first operator and no value yet.
-export function freshCondition(field: FormField | undefined): { field: string; operator: Operator; value: ConditionValue } {
-  return { field: field?.key ?? "", operator: operatorsFor(field)[0]![0], value: "" };
-}
-
-export function ConditionValueInput({
-  field,
-  value,
-  onChange,
-  lookups,
-  people,
-}: {
-  field: FormField | undefined;
-  value: string | number | boolean | (string | number)[] | undefined;
-  onChange: (value: ConditionValue) => void;
-  lookups: FieldLookups;
-  people: { id: number; label: string }[];
-}) {
-  const current = Array.isArray(value) ? value[0] : value;
-  const select = (items: { value: string; label: string }[], numeric = false) => (
-    <select
-      aria-label="Value"
-      value={current === undefined || current === null ? "" : String(current)}
-      onChange={(event) => onChange(numeric ? Number(event.target.value) : event.target.value)}
-      className="field-input w-auto min-w-40"
-    >
-      <option value="">Choose…</option>
-      {items.map((item) => (
-        <option key={item.value} value={item.value}>
-          {item.label}
-        </option>
-      ))}
-    </select>
-  );
-  switch (field?.type) {
-    case "CALC":
-    case "LINE_ITEMS":
-    case "CURRENCY":
-    case "NUMBER":
-      return <NumberDraftInput label="Value" value={typeof current === "number" ? current : undefined} onChange={(next) => onChange(next ?? "")} placeholder="e.g. 500000" className="field-input w-40" />;
-    case "DATE":
-      return <input aria-label="Value" type="date" value={typeof current === "string" ? current : ""} onChange={(event) => onChange(event.target.value)} className="field-input w-auto" />;
-    case "CHOICE":
-    case "RADIO":
-    case "MULTI_CHOICE":
-      return select((field.options ?? []).map((option) => ({ value: option, label: option })));
-    case "LOOKUP":
-      return select((field.source ? lookups[field.source] : []).map((option) => ({ value: option.code, label: `${option.name} (${option.code})` })));
-    case "PERSON":
-      return select(
-        people.map((person) => ({ value: String(person.id), label: person.label })),
-        true,
-      );
-    default:
-      return <input aria-label="Value" value={current === undefined || current === null ? "" : String(current)} onChange={(event) => onChange(event.target.value)} className="field-input w-48" />;
-  }
 }

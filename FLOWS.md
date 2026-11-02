@@ -1061,6 +1061,45 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 3. The task is an ordinary task (hand over, tick, reopen); finishing it decides nothing on the request. Its holder may open the request, read-only.
 4. The journey shows it as a Work task card ("Doesn't hold the request up"), never as a checkpoint.
 
+## F-202 Comment at the bottom of a task, phone (v1.46.0, D-276)
+1. A task page on a phone shows **Add a comment** fixed above the tab bar.
+2. Tap → the box opens (text, Mention someone, "Let people I mention see this task", Send); Pico Bot steps aside.
+3. Send → the same comment action as on a computer → the thread updates, the box closes. Escape or leaving it empty closes it.
+
+## F-203 Break-glass sign-in without the WhatsApp code (v1.46.0, D-278; Q-015)
+1. IT opens the break-glass window from the server console (as before).
+2. The break-glass account enters its password → no code is sent → signed in at once.
+3. Audit `LOGIN_SUCCESS` (otpSkipped) + `BREAK_GLASS_SIGNIN_NO_OTP`; Super Admins get the break-glass alert.
+4. Outside the window the break-glass account can't sign in at all (as before); everyone else is unchanged.
+
+## F-204 Encrypted backup to Google Drive (v1.46.0, D-278; DR-08)
+1. Super Admin → Settings → Google Drive backup: service-account JSON key, shared-drive folder id, how many to keep → **Test** (reads the folder only).
+2. Daily: job step `backup` writes the encrypted file → step `driveBackup` uploads only `.enc` files (and their `.sha256`), skips ones already there, deletes the oldest beyond the number kept, audits each copy.
+3. A failure is a failed step (Super Admin told); the local backup stays.
+
+## F-205 Resubmit after a route-changing edit (v1.46.0, D-279; Q-022/DR-09)
+1. Approver asks for changes → requester edits → **Resubmit**.
+2. The engine compares the route under the old and new values (skip rules, DoA bands, choices, approver fields).
+3. Route changed → restart from the earliest affected step (or the beginning if the type says so); earlier approvals stay; history `ROUTE_CHANGED` names the steps added or removed. No change → as before.
+
+## F-206 One branch rejects in an any-one / any-N stage (v1.46.0, D-279; DR-01)
+1. A branch rejects.
+2. Join setting END (default) → the request is rejected (as before).
+3. WHEN_UNREACHABLE → that branch ends (`BRANCH_ENDED`); the others keep deciding; only when the required count can't be met does the join fail (and the request, or an outer join, follow).
+
+## F-207 Every level skipped (v1.46.0, D-279; DR-02)
+1. A request reaches the end with no human approval.
+2. Predefined type ticked *May finish without an approver* → Approved (as before, D-245 rule).
+3. Otherwise → one approval step for the requester's HOD (`HUMAN_APPROVAL_ROUTED`); no HOD → the step blocks and IT is told (existing fallback).
+
+## F-208 Reusing an expired approval (v1.46.0, D-279; DR-05)
+1. An approved request past `valid_until` shows **Expired** everywhere (status stays APPROVED).
+2. Amend or follow-up → a reason (5+ characters) is required → `EXPIRED_REUSED` on its history + audit → continues as usual.
+
+## F-209 One rule editor (v1.46.0, D-280)
+1. Form rules (show/required when) and workflow rules (skip, choice) use the same editor and save `{ field, operator, value }` or `{ match: ALL|ANY, conditions }`.
+2. On start of v1.46.0 the migration converts saved form rules (backup in `condition_rules_backup`); any old rule still read is converted on the fly.
+
 ## F-201 Phone screens, Asana pattern (v1.45.0, D-275)
 1. Any list screen (Approvals, My tasks, Inbox): big title; **…** opens a sheet of that screen's other pages.
 2. **Choose view** (floating pill) → sheet of the lists → tap one → the page opens on it (address `?tab=` or `?state=`).

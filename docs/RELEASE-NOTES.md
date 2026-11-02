@@ -1,5 +1,34 @@
 # Release notes
 
+## v1.46.0 (2 Nov 2026): the remaining build, and the owner's decisions (owner)
+**On your phone**
+- A task keeps **Add a comment** at the bottom of the screen, as in Asana: tap it, write, @mention, **Send**.
+- **Information** uses the phone pattern (Choose view, Manage view with search and sort, **+**, **…** for Received and Sent by me).
+- **New request:** the steps and the buttons are one slim row each (Details, Workflow, Review; Draft, Reset, Next), so most of the form fits on the first screen.
+- **Analytics:** the dashboard, whose numbers and period fold into one row above the numbers.
+- **Calendar:** **Show** is one dropdown (ticked kinds with their counts), on a computer too.
+- **Pico Bot** opens to about three quarters of the screen; it grows out of its button and shrinks back into it.
+
+**Approvals (owner's decisions)**
+- **Resubmitting after a change that alters the route** (for example a higher amount needing another level) restarts from the first level the change affects; earlier levels keep their approvals. The history shows what changed.
+- **Parallel levels where any one or any N is enough:** a new setting, *If one branch rejects*: end the request (default, as before) or only when the required number can no longer be reached.
+- **No request ends approved by nobody:** if every level is skipped, it goes to the requester's HOD (or IT), unless IT ticked *May finish without an approver* on that predefined type.
+- **Expired** approvals show as Expired in lists, search, the request page, phone cards and the PDF; amending one or raising a follow-up asks for a reason.
+- **Rules:** form rules and workflow rules now use one editor (all or any of several rows; dates compare as dates). Saved rules are converted once when this version starts (the one migration in this release).
+
+**IT and Super Admin**
+- Confirmations before high-impact admin actions (deactivating groups, departments, designations; closing a type; saving working days; removing a provider key; hiding a page for everyone). Loading demo data needs **LOAD DEMO** typed and is refused on a database with many real people.
+- Page restrictions can no longer be side-stepped through an address that isn't a configured page.
+- Break-glass signs in with its password alone while its emergency window is open; every such sign-in is recorded and alerted.
+- Super Admin home: **Origin lock** on/off and **WhatsApp templates still to switch on**.
+- **Google Drive backup:** the encrypted daily backup can be copied to an ARS shared-drive folder (settings, Test, newest copies kept).
+- **Security records** (sign-in attempts, WhatsApp codes, ended sessions, used links) are deleted after 90 days.
+- **Records:** requests show their **Amount** (Hidden when confidential and you may not see it), in the CSV too.
+
+**Fixes**
+- Create task: choosing a collaborator closes the list; the calendar and repeat buttons now work on a wide window (they open the due date and the repeat settings).
+- Records CSV: a stray character before the first heading (two byte-order marks) is gone.
+
 ## v1.45.0 (2 Nov 2026): the phone app, laid out like Asana (owner)
 On a phone (a computer is unchanged):
 - **The same pattern on every list:** a big title with **…** for that screen's other pages, flat lists, and a floating bar above the tabs: **Manage view**, **Choose view** (which list) and the red **+**. Choices open as sheets from the bottom.

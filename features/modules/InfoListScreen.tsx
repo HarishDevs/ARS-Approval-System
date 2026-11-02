@@ -15,6 +15,8 @@ import { PAGE_SIZES } from "@/server/modules/task-lists";
 import { indiaToday } from "@/server/modules/information";
 import { ListToolbar } from "@/features/ui/ListToolbar";
 import { NoResults } from "@/features/ui/Display";
+import { isMobileLayout } from "@/server/ui/layout-mode";
+import { MobileInfoList, type MobileInfoRow } from "@/features/mobile/MobileInfoList";
 
 // D-226: the sorts offered in the toolbar.
 const INFO_SORTS = ["newest", "oldest", "expiry"] as const;
@@ -46,6 +48,53 @@ export async function InfoListScreen({ base, query }: { base: InfoBase; query: R
   ]);
   const pages = Math.max(1, Math.ceil(list.total / filters.size));
   const path = PATH[base];
+  // v1.46.0 (V143-16): phones get the Asana-pattern list (features/mobile/MobileInfoList).
+  if (await isMobileLayout()) {
+    const rows: MobileInfoRow[] = list.rows.map((item) => {
+      const state = infoState(item, today);
+      const chip: MobileInfoRow["chip"] =
+        base === "INBOX"
+          ? state !== "PUBLISHED"
+            ? { text: INFO_STATE_LABEL[state], tone: "neutral" }
+            : item.ackRequired
+              ? item.acknowledgedAt
+                ? { text: "Acknowledged", tone: "success" }
+                : { text: "To acknowledge", tone: "warning" }
+              : { text: item.readAt ? "Read" : "Unread", tone: "neutral" }
+          : { text: INFO_STATE_LABEL[state], tone: state === "DRAFT" ? "warning" : state === "PUBLISHED" ? "success" : "neutral" };
+      return {
+        id: item.id,
+        title: item.title,
+        infoNo: item.infoNo,
+        detail: [item.typeName, base === "INBOX" ? item.createdByName : item.status === "DRAFT" ? "Draft" : item.recipients].filter(Boolean).join(" · "),
+        priority: item.priority,
+        unread: base === "INBOX" && !item.readAt,
+        chip,
+      };
+    });
+    const keep: Record<string, string> = { tab: filters.tab };
+    if (filters.sort !== "newest") keep.sort = filters.sort;
+    return (
+      <MobileInfoList
+        title={base === "INBOX" ? "Information" : "Sent by me"}
+        sent={base === "SENT"}
+        rows={rows}
+        views={counts.map(([tab, count]) => ({ href: `${path}${infoQuery(filters, base, { tab, page: 1 })}`, label: INFO_TAB_LABEL[tab], current: filters.tab === tab, count }))}
+        sorts={INFO_SORTS.map((sort) => ({ href: `${path}${infoQuery({ ...filters, sort }, base, { page: 1 })}`, label: INFO_SORT_LABEL[sort], current: filters.sort === sort }))}
+        search={{ action: path, value: filters.q, keep }}
+        canNew
+        pages={
+          pages > 1
+            ? {
+                prev: filters.page > 1 ? `${path}${infoQuery(filters, base, { page: filters.page - 1 })}` : null,
+                next: filters.page < pages ? `${path}${infoQuery(filters, base, { page: filters.page + 1 })}` : null,
+                text: `Page ${filters.page} of ${pages}`,
+              }
+            : null
+        }
+      />
+    );
+  }
   return (
     <>
       <PageHeader

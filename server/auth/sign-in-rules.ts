@@ -16,6 +16,14 @@ export function checkSignInAllowed(user: UserRecord, method: SignInAttempt): Sig
   return { allowed: true };
 }
 
+// Q-015 (owner, 2 Nov 2026): while its window is open, the break-glass
+// account signs in with the password alone (WhatsApp may be the very thing
+// that is down). Every other account, and break-glass outside the window,
+// keeps the WhatsApp code (D-025).
+export function skipsWhatsAppCode(user: Pick<UserRecord, "isBreakGlass" | "breakGlassSecondsRemaining">): boolean {
+  return Boolean(user.isBreakGlass) && user.breakGlassSecondsRemaining > 0;
+}
+
 // "91XXXXXXXX34" style mask for showing where a code was sent.
 export function maskWhatsAppNumber(number: string): string {
   const digits = number.replace(/\D/g, "");

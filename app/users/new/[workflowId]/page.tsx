@@ -104,6 +104,8 @@ export default async function RaiseRequestPage({ params, searchParams }: { param
           // the editors take their starting values only once.
           key={`${query.template ?? ""}:${query.from ?? ""}:${query.followUp ?? ""}:${query.refresh ?? ""}`}
           followUpOf={source?.id}
+          // DR-05: a follow-up from an expired approval asks why.
+          expiredSource={source?.expired && source.validUntil ? { requestNo: source.requestNo, expiredOn: source.validUntil.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" }) } : undefined}
           mode="submit"
           workflowId={workflow.id}
           fields={version.form}

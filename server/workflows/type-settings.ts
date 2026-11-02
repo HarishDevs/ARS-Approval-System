@@ -26,8 +26,17 @@ export const typeSettingsSchema = z.object({
   amendableFields: z.array(z.string().regex(/^[a-z][a-z0-9_]{0,49}$/)).max(40).nullable().default(null), // null = none allowed
   // v1.9.0 (owner brief §5.3, D-147): who may raise this type. Everyone by default.
   raisers: accessSchema.default({ mode: "EVERYONE", departmentIds: [], userIds: [] }),
+  // DR-02 (owner, 2 Nov 2026): "May finish without an approver (all levels
+  // skipped)". Off by default: such a request goes to the requester's HOD
+  // (else IT) for one human approval. Predefined types only; custom never.
+  mayFinishWithoutApprover: z.boolean().default(false),
 });
 export type TypeSettings = z.infer<typeof typeSettingsSchema>;
+
+// DR-02: whether requests of this type may end Approved with no human approval.
+export function mayFinishWithoutApprover(workflow: { kind: string; settings?: Pick<TypeSettings, "mayFinishWithoutApprover"> | null }): boolean {
+  return workflow.kind === "PREDEFINED" && workflow.settings?.mayFinishWithoutApprover === true;
+}
 
 export const DEFAULT_TYPE_SETTINGS: TypeSettings = typeSettingsSchema.parse({});
 

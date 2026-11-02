@@ -34,10 +34,11 @@ function restoredStages(spec: string | undefined): BuilderStage[] | null {
 }
 
 type Step = 1 | 2 | 3;
-const STEPS: { step: Step; title: string; hint: string; icon: typeof ClipboardList }[] = [
-  { step: 1, title: "Request details", hint: "What it is about", icon: ClipboardList },
-  { step: 2, title: "Approval workflow", hint: "Who approves, in what order", icon: Workflow },
-  { step: 3, title: "Review & submit", hint: "Check, then send", icon: ListChecks },
+// v1.46.0 (owner): phones show the short names, so the steps fit one slim row.
+const STEPS: { step: Step; title: string; short: string; hint: string; icon: typeof ClipboardList }[] = [
+  { step: 1, title: "Request details", short: "Details", hint: "What it is about", icon: ClipboardList },
+  { step: 2, title: "Approval workflow", short: "Workflow", hint: "Who approves, in what order", icon: Workflow },
+  { step: 3, title: "Review & submit", short: "Review", hint: "Check, then send", icon: ListChecks },
 ];
 
 // What the levels add up to, for the summary and the checks.
@@ -315,7 +316,13 @@ export function CustomApprovalForm({
                     {done ? <Check className="h-4 w-4" strokeWidth={3} aria-hidden="true" /> : item.step}
                   </span>
                   <span className="min-w-0">
-                    <span className="block text-label font-semibold">{item.title}</span>
+                    <span className="block text-label font-semibold">
+                      {/* v1.46.0: phones show the short name; the full one stays for screen readers. */}
+                      <span className="mob-long-sr">{item.title}</span>
+                      <span className="mob-short" aria-hidden="true">
+                        {item.short}
+                      </span>
+                    </span>
                     <span className={`block text-caption ${current ? "opacity-85" : "text-ink-muted"}`}>{item.hint}</span>
                   </span>
                 </button>
@@ -328,7 +335,8 @@ export function CustomApprovalForm({
       <div className="action-bar flex flex-wrap items-center gap-2 rounded-lg border border-line bg-raised px-3 py-2.5 shadow-card" data-testid="action-bar">
         {draft && (
           <button type="button" className="btn-secondary btn-compact inline-flex items-center gap-1.5" onClick={() => nudge()}>
-            <Save className="h-4 w-4" aria-hidden="true" /> Save as draft
+            <Save className="h-4 w-4" aria-hidden="true" /> <span className="mob-long">Save as draft</span>
+            <span className="mob-short">Draft</span>
           </button>
         )}
         <button
@@ -339,7 +347,8 @@ export function CustomApprovalForm({
             setConfirmDiscard(true);
           }}
         >
-          <RotateCcw className="h-4 w-4" aria-hidden="true" /> Reset
+          <RotateCcw className="h-4 w-4" aria-hidden="true" /> <span className="mob-long">Reset</span>
+          <span className="mob-short sr-only">Reset</span>
         </button>
         <span className="flex-1" />
         {step > 1 && (
@@ -349,7 +358,8 @@ export function CustomApprovalForm({
         )}
         {step < 3 && (
           <button type="button" className="btn-secondary btn-compact inline-flex items-center gap-1.5" onClick={() => go((step + 1) as Step)} data-testid="step-next">
-            {step === 1 ? "Next: Approval workflow" : "Next: Review & submit"} <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            <span className="mob-long">{step === 1 ? "Next: Approval workflow" : "Next: Review & submit"}</span>
+            <span className="mob-short">Next</span> <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </button>
         )}
         {/* Submit on the last step only, after the checks of steps 1 and 2. */}

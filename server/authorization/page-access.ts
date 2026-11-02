@@ -3,7 +3,7 @@ import { cache } from "react";
 import { headers } from "next/headers";
 import { departmentOf, rulesForPerson } from "@/lib/db/repositories/page-access.repository";
 import { PATH_HEADER, PATH_SIGNATURE_HEADER, verifyPath } from "@/lib/security/path-signature";
-import { effectiveLevel, pageForPath, PAGES, type PageDef, type PageLevel } from "@/server/authorization/pages";
+import { effectiveLevel, isOpenAddress, pageForPath, PAGES, type PageDef, type PageLevel } from "@/server/authorization/pages";
 import { logError } from "@/lib/logging/logger";
 import { hasModule, MODULES } from "@/server/modules/modules";
 import type { ModuleCode } from "@/types/auth";
@@ -47,8 +47,16 @@ export async function checkPageAccess(person: Person, change: boolean): Promise<
     if (!known) return restricted ? { ok: false, reason: "UNKNOWN_PAGE", pageKey: null } : { ok: true, level: null };
     // G-3 (v1.10.0): Super Admin pages are never a way in for anyone else
     // (an admin action posted to /superadmin/import skipped the rules).
-    if (!page && (await requestPath())?.startsWith("/superadmin")) return { ok: false, reason: "UNKNOWN_PAGE", pageKey: null };
-    if (!page) return { ok: true, level: null };
+    if (!page) {
+      const path = await requestPath();
+      if (path?.startsWith("/superadmin")) return { ok: false, reason: "UNKNOWN_PAGE", pageKey: null };
+      // V181-A7 (AUD-14): for a person with any restriction, an address that
+      // is no configured page and not a listed open one fails closed (it
+      // could carry a shared action past a Hidden or View-only rule).
+      // People without restrictions are unaffected.
+      if (restricted && !(path && isOpenAddress(path))) return { ok: false, reason: "UNKNOWN_PAGE", pageKey: null };
+      return { ok: true, level: null };
+    }
     if (lacksModule(person, page)) return { ok: false, reason: "MODULE", pageKey: page.key };
     const level = access.get(page.key) ?? "FULL";
     if (level === "HIDDEN") return { ok: false, reason: "HIDDEN", pageKey: page.key };

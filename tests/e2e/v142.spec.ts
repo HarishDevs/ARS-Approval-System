@@ -22,6 +22,13 @@ test("calendar: the chips count and toggle; Agenda lists the period on any scree
   await expect(page).toHaveURL(/layout=agenda/);
   await expect(views.getByRole("link", { name: "Agenda" })).toHaveAttribute("aria-current", "page");
   await expect(page.getByTestId("calendar-list").or(page.getByText(/Nothing on the calendar/))).toBeVisible();
+  // v1.46.0 (owner): "Show" is a dropdown; choosing a ticked kind hides it.
+  const show = page.getByTestId("calendar-show");
+  await show.locator("summary").click();
+  const first = show.locator('a[data-on="1"]').first();
+  const hidden = await show.locator('a[data-on="0"]').count();
+  await first.click();
+  await expect(page.getByTestId("calendar-show").locator('a[data-on="0"]')).toHaveCount(hidden + 1);
 });
 
 test("Create task: two columns on a computer, with a priority that is saved", async ({ page, context }) => {

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { saveDepartmentAction, saveDesignationAction } from "@/app/admin/organisation/actions";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import type { Option } from "@/features/admin/UserForm";
@@ -12,8 +13,23 @@ export function DepartmentForm({
   department?: { id: number; code: string; name: string; hodUserId: number | null; active: boolean };
   people: Option[];
 }) {
+  // V181-A8 (AUD-25, REC-21): making an active department inactive asks first.
+  const [activeTicked, setActiveTicked] = useState(true);
+  const deactivating = Boolean(department?.active) && !activeTicked;
   // The empty "add" row clears after a save; existing rows keep their values.
-  const { result, pending, formRef, onSubmit } = useActionForm(saveDepartmentAction, { resetOnSuccess: !department });
+  const { result, pending, formRef, onSubmit, confirmBar } = useActionForm(
+    saveDepartmentAction,
+    deactivating
+      ? {
+          resetOnSuccess: !department,
+          confirmTitle: `Make ${department?.name ?? "this department"} inactive?`,
+          confirmLabel: "Yes, make it inactive",
+          confirmTone: "danger",
+          confirm:
+            "Approval steps that go to this department's head will find nobody, so those requests can stop with no approver, and it can't be chosen in new approval types. Its people stay active. You can make it active again later.",
+        }
+      : { resetOnSuccess: !department },
+  );
   const key = department?.id ?? "new";
   return (
     <form ref={formRef} onSubmit={onSubmit} className="grid items-start gap-3 px-5 py-4 md:grid-cols-[120px_minmax(0,1fr)_minmax(0,1fr)_auto_auto]">
@@ -36,7 +52,7 @@ export function DepartmentForm({
       </select>
       {department ? (
         <label className="flex h-11 items-center gap-2 text-label">
-          <input type="checkbox" name="active" defaultChecked={department.active} id={`active-${key}`} /> Active
+          <input type="checkbox" name="active" defaultChecked={department.active} id={`active-${key}`} onChange={(event) => setActiveTicked(event.target.checked)} /> Active
         </label>
       ) : (
         <span />
@@ -49,13 +65,29 @@ export function DepartmentForm({
           <ResultMessage result={result} />
         </div>
       )}
+      {confirmBar}
     </form>
   );
 }
 
 // D-085: "Approver" = people with this designation can be chosen as approvers.
 export function DesignationForm({ designation }: { designation?: { id: number; code: string; name: string; isApprover: boolean; active: boolean } }) {
-  const { result, pending, formRef, onSubmit } = useActionForm(saveDesignationAction, { resetOnSuccess: !designation });
+  // V181-A8 (AUD-25, REC-21): making an active designation inactive asks first.
+  const [activeTicked, setActiveTicked] = useState(true);
+  const deactivating = Boolean(designation?.active) && !activeTicked;
+  const { result, pending, formRef, onSubmit, confirmBar } = useActionForm(
+    saveDesignationAction,
+    deactivating
+      ? {
+          resetOnSuccess: !designation,
+          confirmTitle: `Make ${designation?.name ?? "this designation"} inactive?`,
+          confirmLabel: "Yes, make it inactive",
+          confirmTone: "danger",
+          confirm:
+            "Approval steps that pick approvers by this designation will find nobody, so those requests can stop with no approver, and it can't be chosen in new approval types. People who hold it stay active. You can make it active again later.",
+        }
+      : { resetOnSuccess: !designation },
+  );
   return (
     <form ref={formRef} onSubmit={onSubmit} className="grid items-start gap-3 px-5 py-4 md:grid-cols-[120px_minmax(0,1fr)_auto_auto_auto]">
       {designation && <input type="hidden" name="id" value={designation.id} />}
@@ -72,7 +104,7 @@ export function DesignationForm({ designation }: { designation?: { id: number; c
       </label>
       {designation ? (
         <label className="flex h-11 items-center gap-2 text-label">
-          <input type="checkbox" name="active" defaultChecked={designation.active} /> Active
+          <input type="checkbox" name="active" defaultChecked={designation.active} onChange={(event) => setActiveTicked(event.target.checked)} /> Active
         </label>
       ) : (
         <span />
@@ -85,6 +117,7 @@ export function DesignationForm({ designation }: { designation?: { id: number; c
           <ResultMessage result={result} />
         </div>
       )}
+      {confirmBar}
     </form>
   );
 }

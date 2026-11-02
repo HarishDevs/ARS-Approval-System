@@ -1,6 +1,6 @@
 # Automation inventory and recovery
 
-Applies to v1.39.0 (31 Oct 2026).
+Applies to v1.46.0 (2 Nov 2026). Earlier: v1.39.0 (31 Oct 2026).
 
 Unified prompt FN2, FN8, FN11 and Addendum B (monitoring). The live version of this table is **Super Admin → Automation** (`/superadmin/automation`), built from `server/ops/automation.ts`. That page also shows each job's health, its last run, its 24-hour failures and its run history.
 
@@ -32,7 +32,7 @@ Unified prompt FN2, FN8, FN11 and Addendum B (monitoring). The live version of t
 
 ## Inventory
 
-Applies to v1.41.0 (1 Nov 2026): **18 automations**, all in `AUTOMATIONS` in `server/ops/automation.ts`, run in this order by `runAutomations()`. Every one runs on the same cron call (`POST /api/jobs/run`, every 5 minutes); `server/jobs/` holds the code for three of them (`sla`, `deliveries` and `housekeeping`, `delegations`), the rest live with their module. There is no other scheduled entry point. If this table and the Automation page ever differ, the page is right; update this table.
+Applies to v1.46.0 (2 Nov 2026): **21 automations** (v1.41.0 had 18; v1.42.1 added `workTasks`; v1.46.0 added `securityRetention` and `driveBackup`), all in `AUTOMATIONS` in `server/ops/automation.ts`, run in this order by `runAutomations()`. Every one runs on the same cron call (`POST /api/jobs/run`, every 5 minutes); `server/jobs/` holds the code for three of them (`sla`, `deliveries` and `housekeeping`, `delegations`), the rest live with their module. There is no other scheduled entry point. If this table and the Automation page ever differ, the page is right; update this table.
 
 | Key | Automation | Trigger | Retry | Idempotency | On failure | Recovery | Owner |
 |---|---|---|---|---|---|---|---|
@@ -41,8 +41,10 @@ Applies to v1.41.0 (1 Nov 2026): **18 automations**, all in `AUTOMATIONS` in `se
 | sla | Reminders and escalations (built-in) | Every run | The next run picks up anything missed | Each reminder or escalation level is recorded once per task (`task_reminders`) | Recorded; the next run tries again | Run now | IT team |
 | templates | WhatsApp template status sync | Daily, inside the run | Next day's run | Read and store only | Templates keep their last status | **Sync now** on Templates | Super Admin |
 | housekeeping | Housekeeping: expired drafts, rate limits, old payloads, old sent queue rows, job history over 90 days, abandoned runs | Every run | Next run continues | Deletes only data past its retention | Data kept a little longer; nothing lost | None needed | Super Admin |
+| securityRetention | Security records clean-up (v1.46.0, DR-06): deletes sign-in attempts (`login_logs`), WhatsApp code records (`otp_challenges`), ended sessions (`user_sessions` revoked or expired), `used_security_links` and used or expired `password_tokens` older than **90 days**. Never requests, their history, `audit_logs`, `users`, `user_devices` or notifications; a person under an active legal hold (REQUESTER scope) keeps theirs | Once a day, inside the run (skipped as NOT_DUE when a complete run finished in the last 23 hours) | Batches of 1,000, at most 20 per table per run; a PARTIAL run continues on the next runs (every 5 minutes) until DONE | Deletes only what is past 90 days; a second run deletes nothing more | Recorded here; the records are just kept a little longer; nothing is lost | None needed. Counts in the audit log (`SECURITY_RECORDS_PURGED`, one entry per run that deleted anything) | Super Admin |
 | delegations | Delegation start and end audit | Every run | Next run | Each start and end recorded once | Delegations still apply by date | None needed | IT team |
 | backup | Daily backup | Daily, inside the run | Each run tries until today's backup exists | At most one a day; never overwrites | Super Admin alerted (once a day) | **Back up now** (Super Admin home) | Super Admin |
+| driveBackup | Google Drive backup copy (v1.46.0, DR-08; off until set up): uploads the newest **encrypted** backup (`.sql.gz.enc`) and its `.sha256` to the ARS shared-drive folder with a service account, then keeps the newest `backup.gdrive_keep` copies (default 14), deleting only files it uploaded | Every run, right after `backup`; does work once per new backup | Each run tries again until the newest backup is in the folder | A file already in the folder (same name) is never uploaded again; a backup counts as done once a run recorded it OK | Recorded as failed with Google's message (or "set BACKUP_ENCRYPTION_KEY first"); Super Admin alerted (once a day); the local backup stays | Super Admin → Settings → Google Drive backup → **Test**; fix the key, folder sharing or encryption key; then **Run now** | Super Admin |
 | reports | Scheduled reports (v1.7.0) | Every run (reports due since the last run) | A failed delivery is retried at its next slot; three failures in a row pause the schedule | Each slot is claimed once (unique schedule + due time) | Shown in the schedule's run history under Reports | Fix the cause (usually email settings), then switch the schedule on again | The report's owner; Super Admin for email |
 | alerts | Alert rules (v1.7.0) | Every run | Next run checks again | Each firing is claimed on the rule; at most once per cool-down while over the line | Recorded; checked again next run | None needed | Each rule's owner |
 | expiry | Approval expiry notices (v1.7.0) | Every run | Next run | Each request claimed before its notice | Recorded; next run | None needed | IT team |
@@ -66,7 +68,7 @@ Applies to v1.41.0 (1 Nov 2026): **18 automations**, all in `AUTOMATIONS` in `se
 **Gaps (register: Yet to do):**
 
 - Imports have no background run or recovery of their own; a failed import is simply run again.
-- `/api/health` reports the runner heartbeat only (OK within 15 minutes, LATE, NEVER), not each job or the age of the last backup (audit OPS-11).
+- `/api/health` reports the runner heartbeat only (OK within 15 minutes, LATE, NEVER), not each job or the age of the last backup (audit OPS-11). **Fixed in v1.40.0:** `/api/health` also reports `backupAgeHours`, `storage` and `degraded`, and `/api/health/deep` answers 503 when the runner is late or the newest backup is over 26 hours old.
 
 ## Stuck-request detection (FN2)
 
@@ -118,3 +120,5 @@ A healthy pending request is never listed. This is covered by `tests/integration
 | A job is FAILING | Automation | Read the error and the run reference; find the reference in the server log; fix the cause; **Run now** |
 | Messages not sent | Automation; Needs attention | Check provider settings (Super Admin → Providers), then **Resend** |
 | Backup failed | Alert; Automation | Check disk space and the backup folder; **Back up now** |
+| Google Drive backup copy FAILING (v1.46.0) | Alert; Automation (error text) | "Only encrypted backups…": set `BACKUP_ENCRYPTION_KEY` and wait for the next backup. "folder wasn't found" or "can't add files": share the shared-drive folder with the service account as Content manager. "couldn't delete an old backup": the upload worked; check the service account's role. Then **Test** and **Run now**. Meanwhile download the newest backup by hand (DEPLOYMENT P1) |
+| Security records clean-up FAILING (v1.46.0) | Automation | Read the error (usually a lock timeout on a busy table); **Run now** later. Nothing is lost; records are kept longer |

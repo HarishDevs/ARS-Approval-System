@@ -1,7 +1,7 @@
 "use client";
 
-import { AtSign, Heart, Pin } from "lucide-react";
-import { useRef, useState } from "react";
+import { AtSign, Heart, Pin, SendHorizontal } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { commentAction, commentChangeAction, likeAction } from "@/app/users/work/actions";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import { useWorkCall } from "@/features/work/client";
@@ -25,7 +25,7 @@ export interface CommentView {
   likedByMe: boolean;
 }
 
-export function CommentThread({ taskId, comments, meId, canComment, canPin, people, isAdmin }: { taskId: number; comments: CommentView[]; meId: number; canComment: boolean; canPin: boolean; people: { id: number; label: string }[]; isAdmin: boolean }) {
+export function CommentThread({ taskId, comments, meId, canComment, canPin, people, isAdmin, docked = false }: { taskId: number; comments: CommentView[]; meId: number; canComment: boolean; canPin: boolean; people: { id: number; label: string }[]; isAdmin: boolean; docked?: boolean }) {
   const roots = comments.filter((comment) => comment.parentCommentId === null).sort((a, b) => Number(b.isPinned) - Number(a.isPinned) || a.id - b.id);
   const replies = (id: number) => comments.filter((comment) => comment.parentCommentId === id);
   return (
@@ -49,7 +49,8 @@ export function CommentThread({ taskId, comments, meId, canComment, canPin, peop
           </li>
         ))}
       </ol>
-      {canComment ? <Composer taskId={taskId} people={people} /> : <p className="text-caption text-ink-muted">You can read this task but not comment on it.</p>}
+      {/* v1.46.0 (owner, Asana): on a phone the comment box stays at the bottom of the screen. */}
+      {canComment ? docked ? <DockedComposer taskId={taskId} people={people} /> : <Composer taskId={taskId} people={people} /> : <p className="text-caption text-ink-muted">You can read this task but not comment on it.</p>}
     </section>
   );
 }
@@ -209,6 +210,82 @@ function Composer({ taskId, people }: { taskId: number; people: { id: number; la
           Comment
         </SubmitButton>
       </div>
+      <ResultMessage result={result} />
+    </form>
+  );
+}
+
+// v1.46.0 (owner: "Asana keeps a comment box fixed at the bottom of a task"):
+// a slim bar above the tab bar; tapping it opens the full box (mention,
+// "let people I mention see", send). It closes after sending, on Escape, or
+// when left empty. The same comment action as the inline box.
+function DockedComposer({ taskId, people }: { taskId: number; people: { id: number; label: string }[] }) {
+  const { result, pending, onSubmit, formRef } = useActionForm(commentAction, { resetOnSuccess: true });
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    if (result?.ok) setOpen(false);
+  }, [result]);
+  useEffect(() => {
+    if (open) box.current?.focus();
+  }, [open]);
+  const insert = (person: { id: number; label: string }) => {
+    const node = box.current;
+    if (!node) return;
+    const token = `@[${person.label.replace(/[\]\n]/g, "")}](user:${person.id}) `;
+    const at = node.selectionStart ?? node.value.length;
+    node.value = `${node.value.slice(0, at)}${token}${node.value.slice(node.selectionEnd ?? at)}`;
+    node.focus();
+    node.selectionStart = node.selectionEnd = at + token.length;
+  };
+  return (
+    <form
+      ref={formRef}
+      onSubmit={onSubmit}
+      aria-label="Add a comment"
+      data-testid="m-comment-dock"
+      data-open={open ? "1" : undefined}
+      className="mob-comment-dock fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-sticky border-t border-line bg-surface px-3 py-2 shadow-overlay"
+      onKeyDown={(event) => {
+        if (event.key === "Escape" && !box.current?.value) setOpen(false);
+      }}
+    >
+      <input type="hidden" name="taskId" value={taskId} />
+      {open ? (
+        <div className="space-y-2">
+          <label htmlFor="comment-dock-body" className="sr-only">
+            Add a comment
+          </label>
+          <textarea
+            id="comment-dock-body"
+            ref={box}
+            name="body"
+            rows={3}
+            maxLength={4000}
+            placeholder="Add a comment or @mention a teammate"
+            className="field-input h-auto max-h-[40dvh] py-2 text-[16px]"
+            onBlur={(event) => {
+              const next = event.relatedTarget as HTMLElement | null;
+              if (!event.currentTarget.value && !event.currentTarget.form?.contains(next)) setOpen(false);
+            }}
+          />
+          <FieldError result={result} name="body" />
+          <div className="flex items-center gap-2">
+            <MentionPicker people={people} onPick={insert} />
+            <SubmitButton pending={pending} className="btn-compact ml-auto h-10 px-4">
+              <SendHorizontal aria-hidden="true" className="h-4 w-4" /> Send
+            </SubmitButton>
+          </div>
+          <label className="flex items-center gap-1.5 text-caption text-ink-muted">
+            <input type="checkbox" name="mentionAccess" value="yes" defaultChecked />
+            Let people I mention see this task
+          </label>
+        </div>
+      ) : (
+        <button type="button" onClick={() => setOpen(true)} className="flex min-h-11 w-full items-center rounded-full bg-surface-muted px-4 text-left text-[15px] text-ink-faint" data-testid="m-comment-open">
+          Add a comment
+        </button>
+      )}
       <ResultMessage result={result} />
     </form>
   );

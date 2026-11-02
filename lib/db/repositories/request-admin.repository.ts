@@ -19,6 +19,7 @@ export interface AdminRequestItem {
   deletedAt: Date | null;
   deletedByName: string | null;
   deleteReason: string | null;
+  validUntil: Date | null; // DR-05: shown as Expired once past
 }
 
 export async function listAllRequests(
@@ -61,10 +62,11 @@ export async function listAllRequests(
       deleted_at: Date | null;
       deleted_by_name: string | null;
       delete_reason: string | null;
+      valid_until: Date | null;
     })[]
   >(
     `SELECT r.id, r.request_no, r.title, w.name AS workflow_name, u.name AS requester_name, d.name AS department_name, r.status, r.submitted_at,
-            r.deleted_at, x.name AS deleted_by_name, r.delete_reason
+            r.deleted_at, x.name AS deleted_by_name, r.delete_reason, r.valid_until
      ${from}
      ORDER BY ${filter.deleted ? "r.deleted_at" : "r.id"} DESC LIMIT ? OFFSET ?`,
     [...params, ALL_REQUESTS_PAGE_SIZE, (page - 1) * ALL_REQUESTS_PAGE_SIZE],
@@ -82,6 +84,7 @@ export async function listAllRequests(
       deletedAt: row.deleted_at,
       deletedByName: row.deleted_by_name,
       deleteReason: row.delete_reason,
+      validUntil: row.valid_until ?? null,
     })),
     total,
     page,

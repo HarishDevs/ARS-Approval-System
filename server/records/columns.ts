@@ -1,5 +1,6 @@
 import type { InfoRecord, RequestRecord, TaskRecord } from "@/lib/db/repositories/records.repository";
 import type { RecordKind } from "@/server/records/filters";
+import { amountText } from "@/server/records/amount";
 
 // D-191: the columns of each register, shared by the table and the CSV, so
 // both always say the same. `sort` names a key in SORTS (filters.ts).
@@ -33,21 +34,29 @@ const daysBetween = (start: Date, end: Date | null) => Math.max(0, Math.floor(((
 // A cancelled task reads "Cancelled" (a withdrawn request reads "Withdrawn").
 const taskStatus = (status: string) => (status === "CANCELLED" ? "Cancelled" : STATUS_LABEL[status] ?? status);
 
-export const REQUEST_COLUMNS: RecordColumn<RequestRecord>[] = [
-  { key: "no", label: "Request no.", sort: "no", value: (row) => row.no },
-  { key: "title", label: "Title", sort: "title", value: (row) => row.title, wide: true },
-  { key: "type", label: "Approval type", sort: "type", value: (row) => row.type },
-  { key: "raisedBy", label: "Raised by", sort: "raisedBy", value: (row) => row.raisedBy },
-  { key: "department", label: "Department", sort: "department", value: (row) => row.department ?? "" },
-  { key: "status", label: "Status", sort: "status", value: (row) => STATUS_LABEL[row.status] ?? row.status },
-  { key: "step", label: "Current step", value: (row) => row.currentStep ?? "" },
-  { key: "waiting", label: "Waiting on", value: (row) => row.waitingOn ?? "", wide: true },
-  { key: "approvals", label: "Approvals given", value: (row) => String(row.approvals) },
-  { key: "round", label: "Round", value: (row) => String(row.round) },
-  { key: "submitted", label: "Submitted", sort: "submitted", value: (row) => dateTime(row.submitted) },
-  { key: "closed", label: "Closed", sort: "closed", value: (row) => dateTime(row.closed) },
-  { key: "age", label: "Days open", value: (row) => String(daysBetween(row.submitted, row.closed)) },
-];
+// PB-34: the Amount column follows the viewer's confidential rule, so the
+// request columns are made per viewer (the table and the CSV alike).
+export function requestColumns(seeConfidential: boolean): RecordColumn<RequestRecord>[] {
+  return [
+    { key: "no", label: "Request no.", sort: "no", value: (row) => row.no },
+    { key: "title", label: "Title", sort: "title", value: (row) => row.title, wide: true },
+    { key: "type", label: "Approval type", sort: "type", value: (row) => row.type },
+    { key: "amount", label: "Amount", value: (row) => amountText(row.amount, seeConfidential) },
+    { key: "raisedBy", label: "Raised by", sort: "raisedBy", value: (row) => row.raisedBy },
+    { key: "department", label: "Department", sort: "department", value: (row) => row.department ?? "" },
+    { key: "status", label: "Status", sort: "status", value: (row) => STATUS_LABEL[row.status] ?? row.status },
+    { key: "step", label: "Current step", value: (row) => row.currentStep ?? "" },
+    { key: "waiting", label: "Waiting on", value: (row) => row.waitingOn ?? "", wide: true },
+    { key: "approvals", label: "Approvals given", value: (row) => String(row.approvals) },
+    { key: "round", label: "Round", value: (row) => String(row.round) },
+    { key: "submitted", label: "Submitted", sort: "submitted", value: (row) => dateTime(row.submitted) },
+    { key: "closed", label: "Closed", sort: "closed", value: (row) => dateTime(row.closed) },
+    { key: "age", label: "Days open", value: (row) => String(daysBetween(row.submitted, row.closed)) },
+  ];
+}
+
+// The safe default: confidential amounts hidden.
+export const REQUEST_COLUMNS: RecordColumn<RequestRecord>[] = requestColumns(false);
 
 export const TASK_COLUMNS: RecordColumn<TaskRecord>[] = [
   { key: "no", label: "Task no.", sort: "no", value: (row) => row.no },
@@ -82,8 +91,8 @@ export const INFO_COLUMNS: RecordColumn<InfoRecord>[] = [
   { key: "ack", label: "Acknowledged", value: (row) => (row.ackRequired ? String(row.acknowledged) : "Not asked") },
 ];
 
-export function columnsFor(kind: RecordKind): RecordColumn<RequestRecord>[] | RecordColumn<TaskRecord>[] | RecordColumn<InfoRecord>[] {
-  return kind === "requests" ? REQUEST_COLUMNS : kind === "tasks" ? TASK_COLUMNS : INFO_COLUMNS;
+export function columnsFor(kind: RecordKind, viewer: { seeConfidential: boolean } = { seeConfidential: false }): RecordColumn<RequestRecord>[] | RecordColumn<TaskRecord>[] | RecordColumn<InfoRecord>[] {
+  return kind === "requests" ? requestColumns(viewer.seeConfidential) : kind === "tasks" ? TASK_COLUMNS : INFO_COLUMNS;
 }
 
 export const RECORD_HREF: Record<RecordKind, (id: number) => string> = {

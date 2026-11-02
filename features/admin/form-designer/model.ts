@@ -1,5 +1,6 @@
 import { LOOKUP_SOURCES, NUMERIC_TYPES, OPTION_TYPES, type FieldType, type FormField, type LookupSource } from "@/server/forms/fields";
 import { formulaFields, parseFormula } from "@/server/forms/dynamic";
+import { ruleFields } from "@/server/conditions/rule";
 
 // D-235 (Form Designer): the pure rules behind the designer, kept apart from
 // the screens so they can be unit-tested. The server still checks the whole
@@ -135,7 +136,7 @@ export function dependentsOf(form: readonly FormField[], key: string): string[] 
   if (!key) return [];
   return form
     .filter((field) => field.key !== key)
-    .filter((field) => field.showIf?.field === key || field.requiredIf?.field === key || formulaRefs(field.formula).includes(key))
+    .filter((field) => ruleFields(field.showIf).includes(key) || ruleFields(field.requiredIf).includes(key) || formulaRefs(field.formula).includes(key))
     .map((field) => field.label || field.key);
 }
 

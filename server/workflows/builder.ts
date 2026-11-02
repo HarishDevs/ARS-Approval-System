@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { ApproverSource, Comparison, CompletionRule, Condition, WorkflowDefinition, WorkflowEdge, WorkflowNode } from "@/server/engine/types";
+import { conditionSpecSchema, isConditionGroup, toCondition, type RuleCondition, type RuleGroup } from "@/server/conditions/rule";
 import { NUMERIC_TYPES, type FormField } from "@/server/forms/fields";
 
 // Structured workflow builder (D-056, S3-05a, F-50). The IT team describes a
@@ -7,30 +8,13 @@ import { NUMERIC_TYPES, type FormField } from "@/server/forms/fields";
 // in parallel. compileBuilder turns that into the engine's node graph.
 // Pure and unit-tested. The spec is saved with the version so it can be
 // edited again.
-const comparisonSchema = z.object({
-  field: z.string().min(1).max(50),
-  operator: z.enum(["EQ", "NEQ", "GT", "GTE", "LT", "LTE", "IN", "NOT_IN", "CONTAINS", "IS_EMPTY", "IS_NOT_EMPTY"]),
-  value: z.union([z.string(), z.number(), z.boolean(), z.array(z.union([z.string(), z.number()]))]).optional(),
-});
-
-// A rule is one comparison, or several joined by "all of" / "any of"
-// (D-099). Old specs hold a single comparison and stay valid.
-const conditionGroupSchema = z.object({
-  match: z.enum(["ALL", "ANY"]),
-  conditions: z.array(comparisonSchema).min(1, "Add at least one condition.").max(10),
-});
-const conditionSpecSchema = z.union([comparisonSchema, conditionGroupSchema]);
-export type BuilderCondition = z.infer<typeof conditionSpecSchema>;
-export type BuilderConditionGroup = z.infer<typeof conditionGroupSchema>;
-
-export const isConditionGroup = (condition: BuilderCondition): condition is BuilderConditionGroup => "match" in condition;
-
-// Builder rule → engine condition.
-export function toCondition(condition: BuilderCondition): Condition {
-  if (!isConditionGroup(condition)) return condition as Comparison;
-  if (condition.conditions.length === 1) return condition.conditions[0] as Comparison;
-  return { op: condition.match === "ALL" ? "AND" : "OR", conditions: condition.conditions as Comparison[] };
-}
+// Conditions (D-099): one comparison, or several joined by "all of" / "any
+// of". Since 2 Nov 2026 this is the one rule shape for the whole platform
+// (form fields' show/required rules too); it lives in
+// server/conditions/rule.ts and is re-exported here under its builder names.
+export { isConditionGroup, toCondition };
+export type BuilderCondition = RuleCondition;
+export type BuilderConditionGroup = RuleGroup;
 
 const approverPickSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("PEOPLE"), userIds: z.array(z.number().int().positive()).min(1, "Pick at least one person.").max(50) }),
@@ -74,6 +58,9 @@ const plainStageSchemas = [
     steps: z.array(stepSchema).min(2, "A parallel stage needs at least two steps.").max(10),
     join: ruleSchema,
     n: z.number().int().min(1).max(10).optional(),
+    // DR-01 (owner, 2 Nov 2026): for "any one" / "any N" only. Absent = END
+    // (a rejection in a branch ends the request, as before).
+    onReject: z.enum(["END", "WHEN_UNREACHABLE"]).optional(),
   }),
 ] as const;
 
@@ -250,7 +237,9 @@ export function compileBuilder(spec: BuilderSpec): CompileResult {
           connectAll([{ from: splitId }], stepNodeId(step));
           connectAll([{ from: stepNodeId(step) }], joinId);
         }
-        nodes.push({ id: joinId, kind: "JOIN", label: `${stage.label} complete`, completion: toRule(stage.join, stage.n) });
+        // DR-01: only an any-one / any-N join carries the choice; END is the default and isn't written.
+        const onReject = stage.join !== "ALL" && stage.onReject === "WHEN_UNREACHABLE" ? { onReject: "WHEN_UNREACHABLE" as const } : {};
+        nodes.push({ id: joinId, kind: "JOIN", label: `${stage.label} complete`, completion: toRule(stage.join, stage.n), ...onReject });
         ends = [{ from: joinId }];
       } else if (stage.kind === "DOA") {
         claim(stage.id);

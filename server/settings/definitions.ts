@@ -7,7 +7,7 @@ export type SettingValueType = "STRING" | "NUMBER" | "BOOLEAN";
 
 export interface SettingDefinition {
   key: string;
-  group: "GENERAL" | "AUTHENTICATION" | "EMAIL" | "WHATSAPP" | "FEATURES" | "RETENTION" | "AI" | "AI_DATA" | "BACKUP" | "PUSH";
+  group: "GENERAL" | "AUTHENTICATION" | "EMAIL" | "WHATSAPP" | "FEATURES" | "RETENTION" | "AI" | "AI_DATA" | "BACKUP" | "GDRIVE_BACKUP" | "PUSH";
   label: string;
   valueType: SettingValueType;
   encrypted: boolean;
@@ -34,6 +34,11 @@ export const SETTING_DEFINITIONS: readonly SettingDefinition[] = [
   { key: "backup.s3_secret_access_key", group: "BACKUP", label: "Secret access key", valueType: "STRING", encrypted: true, schema: z.string().trim().min(1).max(200) },
   // D-252: phone and desktop notifications (Web Push with VAPID). The keys are made by
   // "Generate keys" on this page; the private key is stored encrypted and never leaves the server.
+  // DR-08 (owner, 2 Nov 2026): the encrypted daily backup copied to an ARS Google Drive folder by a service account.
+  { key: "backup.gdrive_enabled", group: "GDRIVE_BACKUP", label: "Copy each encrypted daily backup to Google Drive (needs BACKUP_ENCRYPTION_KEY on the server)", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF"]), defaultValue: "OFF" },
+  { key: "backup.gdrive_service_account_json", group: "GDRIVE_BACKUP", label: "Service-account key (paste the whole JSON key file from Google Cloud)", valueType: "STRING", encrypted: true, schema: z.string().trim().max(10_000).refine((value) => { try { const key = JSON.parse(value) as { type?: unknown; client_email?: unknown; private_key?: unknown }; return key.type === "service_account" && typeof key.client_email === "string" && typeof key.private_key === "string"; } catch { return false; } }, "Paste the whole service-account JSON key file.") },
+  { key: "backup.gdrive_folder_id", group: "GDRIVE_BACKUP", label: "Drive folder id (the part after /folders/ in the folder's address; a folder in a shared drive, with the service account as Content manager)", valueType: "STRING", encrypted: true, schema: z.string().trim().regex(/^[A-Za-z0-9_-]{10,200}$/, "Use the folder id: the part after /folders/ in its address.") },
+  { key: "backup.gdrive_keep", group: "GDRIVE_BACKUP", label: "Copies to keep in the folder (older copies this app made are deleted)", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(1).max(90), defaultValue: "14" },
   { key: "push.enabled", group: "PUSH", label: "Phone and desktop notifications (Web Push)", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF"]), defaultValue: "ON" },
   { key: "push.vapid_public_key", group: "PUSH", label: "VAPID public key (made by Generate keys; shared with browsers)", valueType: "STRING", encrypted: false, schema: z.string().trim().regex(/^[A-Za-z0-9_-]{80,100}$/, "Use Generate keys.") },
   { key: "push.vapid_private_key", group: "PUSH", label: "VAPID private key (made by Generate keys)", valueType: "STRING", encrypted: true, schema: z.string().trim().regex(/^[A-Za-z0-9_-]{40,50}$/, "Use Generate keys.") },

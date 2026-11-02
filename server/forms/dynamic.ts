@@ -8,28 +8,16 @@
 //  - LINE_ITEMS: description, quantity, rate and GST %. Money is integer
 //    paise (BigInt multiplication), so no floating-point error reaches a total.
 
-export const RULE_OPERATORS = ["EQ", "NEQ", "GT", "GTE", "LT", "LTE", "FILLED", "EMPTY"] as const;
-export type RuleOperator = (typeof RULE_OPERATORS)[number];
-export interface FieldRule {
-  field: string;
-  op: RuleOperator;
-  value?: string;
-}
+import { describeRule, ruleFields, ruleHolds, type RuleCondition, type StoredRule } from "@/server/conditions/rule";
 
-export const RULE_WORDS: Record<RuleOperator, string> = {
-  EQ: "is",
-  NEQ: "is not",
-  GT: "is more than",
-  GTE: "is at least",
-  LT: "is less than",
-  LTE: "is at most",
-  FILLED: "is filled in",
-  EMPTY: "is empty",
-};
+// 2 Nov 2026 (owner): one rule shape everywhere. A field's showIf/requiredIf
+// is the workflow builder's condition (server/conditions/rule.ts); older
+// saved rules are converted by migration and, until then, on every read.
+export { describeRule, ruleHolds };
+export type FieldRule = RuleCondition;
 
 type Value = string | number | boolean | null | undefined | readonly (string | number)[];
 
-const isEmpty = (value: Value) => value === undefined || value === null || value === "" || (Array.isArray(value) && value.length === 0);
 const asNumber = (value: Value): number | null => {
   if (typeof value === "number") return Number.isFinite(value) ? value : null;
   if (typeof value !== "string") return null;
@@ -38,35 +26,6 @@ const asNumber = (value: Value): number | null => {
   const number = Number(cleaned);
   return Number.isFinite(number) ? number : null;
 };
-
-export function ruleHolds(rule: FieldRule, values: Record<string, Value>): boolean {
-  const value = values[rule.field];
-  if (rule.op === "FILLED") return !isEmpty(value);
-  if (rule.op === "EMPTY") return isEmpty(value);
-  if (isEmpty(value)) return false;
-  const expected = rule.value ?? "";
-  if (Array.isArray(value)) {
-    const has = value.some((item) => String(item).trim().toLowerCase() === expected.trim().toLowerCase());
-    return rule.op === "EQ" ? has : rule.op === "NEQ" ? !has : false;
-  }
-  if (rule.op === "EQ" || rule.op === "NEQ") {
-    const left = asNumber(value);
-    const right = asNumber(expected);
-    const same = left !== null && right !== null ? left === right : String(value).trim().toLowerCase() === expected.trim().toLowerCase();
-    return rule.op === "EQ" ? same : !same;
-  }
-  const left = asNumber(value);
-  const right = asNumber(expected);
-  if (left === null || right === null) return false;
-  if (rule.op === "GT") return left > right;
-  if (rule.op === "GTE") return left >= right;
-  if (rule.op === "LT") return left < right;
-  return left <= right;
-}
-
-export function describeRule(rule: FieldRule, labelOf: (key: string) => string): string {
-  return `${labelOf(rule.field)} ${RULE_WORDS[rule.op]}${rule.op === "FILLED" || rule.op === "EMPTY" ? "" : ` ${rule.value ?? ""}`}`.trim();
-}
 
 // ---- formulas -----------------------------------------------------------------
 export type Expr =
@@ -251,16 +210,15 @@ export const formatPaise = (paise: number) => `₹${(paise / 100).toLocaleString
 export interface DynamicField {
   key: string;
   type: string;
-  showIf?: FieldRule;
-  requiredIf?: FieldRule;
+  showIf?: StoredRule;
+  requiredIf?: StoredRule;
   formula?: string;
 }
 
 // Keys each field depends on (its rules and its formula).
 export function dependencies(field: DynamicField): string[] {
   const keys = new Set<string>();
-  if (field.showIf) keys.add(field.showIf.field);
-  if (field.requiredIf) keys.add(field.requiredIf.field);
+  for (const key of [...ruleFields(field.showIf), ...ruleFields(field.requiredIf)]) keys.add(key);
   if (field.type === "CALC" && field.formula) {
     try {
       formulaFields(parseFormula(field.formula), keys);

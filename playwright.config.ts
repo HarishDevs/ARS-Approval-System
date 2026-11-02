@@ -8,6 +8,8 @@ import { defineConfig, devices } from "@playwright/test";
 const PORT = 3100;
 export const E2E_ENV = {
   NODE_ENV: "production",
+  // V181-A8: the demo load's "real people" limit, raised for the shared e2e database only.
+  DEMO_MAX_REAL_USERS: "100000",
   APP_BASE_URL: `http://localhost:${PORT}`,
   DB_HOST: process.env.TEST_DB_HOST ?? "127.0.0.1",
   DB_PORT: process.env.TEST_DB_PORT ?? "3307",

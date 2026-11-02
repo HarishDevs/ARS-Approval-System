@@ -10,6 +10,7 @@ import { createSessionToken } from "@/lib/session/token";
 import { SESSION_TTL_SECONDS } from "@/lib/session/constants";
 import { createWorkflow, publishVersion, type Actor } from "@/server/approvals/service";
 import {
+  DEMO_CONFIRM_WORD,
   DEMO_DEPARTMENTS,
   DEMO_DESIGNATIONS,
   DEMO_GROUPS,
@@ -21,6 +22,8 @@ import {
   type DemoDepartmentCode,
   type DemoGroupCode,
 } from "@/server/demo/demo-data";
+
+export { DEMO_CONFIRM_WORD };
 
 // Demo data (S6-02a, F-57, D-071). Super Admin only (checked by the
 // callers and again here). Loading is safe to repeat: anything that
@@ -42,8 +45,36 @@ async function idByCode(table: "departments" | "designations" | "approver_groups
   return rows[0]?.id ?? null;
 }
 
-export async function loadDemoData(actor: Actor): Promise<DemoReport> {
+// V181-A8 (AUD-25, REC-21): loading demo data needs a typed confirmation
+// and is refused on a database that is already in real use. 25 is well above
+// a fresh install (the Super Admin, the break-glass account and a few IT
+// testers) and well below the live company (hundreds of staff), so a live
+// database is never filled with demo people, groups and approval types.
+export const DEMO_REAL_USER_LIMIT = 25;
+
+export const demoConfirmed = (confirmText: unknown) => typeof confirmText === "string" && confirmText.trim().toUpperCase() === DEMO_CONFIRM_WORD;
+
+// Active people who are not demo people (the break-glass account not counted).
+export async function countActiveRealUsers(db: Queryable = getDbPool()): Promise<number> {
+  const [rows] = await db.query<(RowDataPacket & { total: number })[]>("SELECT COUNT(*) AS total FROM users WHERE active = TRUE AND is_demo = FALSE AND is_break_glass = FALSE");
+  return Number(rows[0]?.total ?? 0);
+}
+
+// Why the demo load is refused, in plain words (null: it may go ahead).
+export async function demoLoadRefusal(confirmText: unknown, db: Queryable = getDbPool()): Promise<string | null> {
+  if (!demoConfirmed(confirmText)) return `Type ${DEMO_CONFIRM_WORD} to confirm. Nothing was loaded.`;
+  const real = await countActiveRealUsers(db);
+  // The end-to-end test database raises the limit (DEMO_MAX_REAL_USERS); production never sets it.
+  const limit = Number(process.env.DEMO_MAX_REAL_USERS) || DEMO_REAL_USER_LIMIT;
+  if (real > limit)
+    return `This database already has ${real} active real people (more than ${limit}), so it looks like a live system. Demo data is only for a new or test installation. Nothing was loaded.`;
+  return null;
+}
+
+export async function loadDemoData(actor: Actor, options: { confirmText: string }): Promise<DemoReport> {
   if (!isSuperAdmin(actor)) throw new Error("FORBIDDEN");
+  // V181-A8 (AUD-25): the typed confirmation is checked here too, so no caller can skip it.
+  if (!demoConfirmed(options.confirmText)) throw new Error("NOT_CONFIRMED");
   const report: DemoReport = { people: 0, departments: 0, designations: 0, groups: 0, workflows: [], skippedWorkflows: [], problems: [] };
 
   const ids = await withTransaction(async (db) => {
