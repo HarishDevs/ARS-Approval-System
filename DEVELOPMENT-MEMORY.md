@@ -710,6 +710,9 @@
 
 ## 5. Work log (newest first)
 
+### 3 Nov 2026 (v1.49.4: notifications panel)
+- The bell panel is a column (max height) where the list is flex-1; the header, filter row and footer could shrink, so with a long list the filter row was squeezed (clipped, and its overflow-x-auto showed a vertical scrollbar). All three are shrink-0 now; the filter row hides its scrollbar. General pages: no change (layout only).
+
 ### 3 Nov 2026 (v1.49.3: users list actions, dropdowns)
 - CI for v1.49.3: the QA suite's QA-SEC-01 failed once on CI (a late refresh cancelled a page load, net::ERR_ABORTED; the retry then stuck). Full QA suite passes locally (32/32); the load is now retried once on ERR_ABORTED.
 - D-291. e2e: v149-user-row-menu (new), user-commands, session10, v160-ui axe, a picker check (list background white, was transparent). General pages checked: User Guide (users list), release notes; Help, tour, checklist, privacy, terms: no change (same admin actions as the user page, no new data).

@@ -1385,3 +1385,7 @@ body:has([data-testid="m-comment-dock"][data-open="1"]) .picbot-launcher {
   :root:not([data-theme]) .brand-on-light { display: none; }
   :root:not([data-theme]) .brand-on-dark { display: inline; }
 }
+
+/* v1.49.4: a row that scrolls sideways (chips, filters) without a visible scrollbar. */
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }

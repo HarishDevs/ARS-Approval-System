@@ -17,7 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
-- **Now (3 Nov 2026):** v1.49.3: users list ⋮ actions and Department filter; see-through dropdowns fixed. v1.49.2: module access in the users import; v1.49.1: import with Excel templates and uploads (and tab CSV). **Owner:** publish; import ars-1-departments-no-hod.xlsx → ars-2-users-with-modules.xlsx (fill modules) → ars-3-departments-with-hod.xlsx (designations HOD, EXEC, DMGR, SEXE must exist).
+- **Now (3 Nov 2026):** v1.49.4: notifications panel layout. v1.49.3: users list ⋮ actions and Department filter; see-through dropdowns fixed. v1.49.2: module access in the users import; v1.49.1: import with Excel templates and uploads (and tab CSV). **Owner:** publish; import ars-1-departments-no-hod.xlsx → ars-2-users-with-modules.xlsx (fill modules) → ars-3-departments-with-hod.xlsx (designations HOD, EXEC, DMGR, SEXE must exist).
 - **Before (2 Nov 2026):** v1.49.0: the ARS GREEN STEEL CMS brand (D-287), New request / New task straight to the form, Classic tab bar fix (D-288). **Owner:** publish v1.49.0; rename the OAuth consent screen app to "ARS CMS" in Google Cloud (Q-027); reopen or reinstall the phone app for the new icon.
 - **Now (2 Nov 2026):** v1.48.1: slimmer journey, hover details with the approver, the folded header road (D-285). Publish v1.48.1.
 - **Now (2 Nov 2026):** v1.48.0: the new Approval Journey (computer and phone), the request page re-laid out, one colour per status (D-283, D-284). No migration of its own. **Owner:** publish v1.48.0 (contains everything since v1.46.0).
@@ -160,6 +160,10 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 - **Still open:** Q-015.
 
 ---
+
+## Session log — v1.49.4 (3 Nov 2026): notifications panel
+Owner: notification panel screenshot, "layout issue, correct it".
+- [x] V1494-01 (3 Nov 2026) Header, filter row and footer shrink-0 (only the list scrolls); filter row overflow-y hidden, no visible scrollbar (.no-scrollbar); wider tabs. Measured in the browser: desktop row 36 px tall, nothing to scroll; phone 56 px, nothing to scroll
 
 ## Session log — v1.49.3 (3 Nov 2026): users list actions, department filter, dropdown backgrounds
 Owner: "actions in a 3-dot dropdown: Re-invite, Send set-password link, Deactivate / Activate user in the last column"; "department filter in the table"; "it overlaps; clear this kind of issue in all the dropdowns" (people search list).
