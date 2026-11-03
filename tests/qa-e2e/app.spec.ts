@@ -313,7 +313,11 @@ test("QA-SEC-01 stored XSS in a title and a comment is shown as text, never run"
   // (on a slow CI machine it could cancel the next navigation).
   await page.waitForLoadState("networkidle");
   await as(context, "E2E_MGR");
-  await page.goto(path);
+  // v1.49.3 (CI): a late refresh can still cancel this load (net::ERR_ABORTED); load it again then.
+  await page.goto(path).catch(async (error: Error) => {
+    if (!/ERR_ABORTED/.test(error.message)) throw error;
+    await page.goto(path);
+  });
   await page.goto("/users/queue");
   const fired = await page.evaluate(() => (window as unknown as { __xss?: number }).__xss ?? null);
   await page.goto(path);
