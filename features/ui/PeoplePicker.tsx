@@ -138,7 +138,7 @@ export function PeoplePicker({
           className="field-input"
         />
         {showList && (
-          <ul id={listId} role="listbox" aria-label={`${label}: matches`} className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-md border border-line bg-surface-raised py-1 shadow-card">
+          <ul id={listId} role="listbox" aria-label={`${label}: matches`} className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-md border border-line bg-raised py-1 shadow-card">
             {matches.length === 0 ? (
               <li className="px-3 py-2 text-label text-ink-muted">Nobody matches.</li>
             ) : (

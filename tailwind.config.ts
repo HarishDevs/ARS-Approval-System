@@ -2,6 +2,19 @@ import type { Config } from "tailwindcss";
 
 // ARS brand tokens from D:\Omniroute\assets\tokens (D-022). Colours are CSS
 // variables defined in styles/globals.css so a dark theme can override them.
+
+// v1.49.3 (owner: "it overlaps; clear this kind of issue in all the
+// dropdowns"): Tailwind can't fade a CSS-variable colour by itself, so
+// classes like bg-surface/95 or border-warning-600/30 made no CSS at all (a
+// see-through bar or panel). Each token is a function: plain, it is the
+// variable; with an opacity modifier it is mixed with transparent.
+type ColorFn = (options: { opacityValue?: string }) => string;
+// (Tailwind accepts a function colour; its types only list strings.)
+const token = (name: string): string => {
+  const color: ColorFn = ({ opacityValue }) =>
+    opacityValue === undefined || opacityValue.startsWith("var(") || opacityValue === "1" ? `var(${name})` : `color-mix(in srgb, var(${name}) calc(${opacityValue} * 100%), transparent)`;
+  return color as unknown as string;
+};
 const config: Config = {
   // Relative to this file, not the working directory (cPanel may start the
   // app from elsewhere).
@@ -10,31 +23,31 @@ const config: Config = {
     extend: {
       colors: {
         primary: {
-          50: "var(--color-primary-50)",
-          100: "var(--color-primary-100)",
-          600: "var(--color-primary-600)",
-          700: "var(--color-primary-700)",
-          solid: "var(--color-primary-solid)",
-          "solid-hover": "var(--color-primary-solid-hover)",
-          "solid-disabled": "var(--color-primary-solid-disabled)",
+          50: token("--color-primary-50"),
+          100: token("--color-primary-100"),
+          600: token("--color-primary-600"),
+          700: token("--color-primary-700"),
+          solid: token("--color-primary-solid"),
+          "solid-hover": token("--color-primary-solid-hover"),
+          "solid-disabled": token("--color-primary-solid-disabled"),
         },
-        "accent-red": "var(--color-accent-red)",
-        ink: "var(--color-text-primary)",
-        "ink-muted": "var(--color-text-secondary)",
-        "ink-faint": "var(--color-text-placeholder)",
-        "on-solid": "var(--color-text-on-solid)",
-        line: "var(--color-border-default)",
-        "line-strong": "var(--color-border-strong)",
-        raised: "var(--color-surface-raised)",
-        overlay: "var(--color-overlay)",
-        surface: "var(--color-surface-white)",
-        "surface-muted": "var(--color-surface-muted)",
-        page: "var(--color-surface-page)",
-        success: { 50: "var(--color-success-50)", 600: "var(--color-success-600)", solid: "var(--color-success-solid)" },
-        warning: { 50: "var(--color-warning-50)", 600: "var(--color-warning-600)", solid: "var(--color-warning-solid)" },
-        danger: { 50: "var(--color-error-50)", 200: "var(--color-error-200)", 600: "var(--color-error-600)", solid: "var(--color-error-solid)", "solid-hover": "var(--color-error-solid-hover)" },
-        info: { 50: "var(--color-info-50)", 600: "var(--color-info-600)" },
-        focus: "var(--color-focus)",
+        "accent-red": token("--color-accent-red"),
+        ink: token("--color-text-primary"),
+        "ink-muted": token("--color-text-secondary"),
+        "ink-faint": token("--color-text-placeholder"),
+        "on-solid": token("--color-text-on-solid"),
+        line: token("--color-border-default"),
+        "line-strong": token("--color-border-strong"),
+        raised: token("--color-surface-raised"),
+        overlay: token("--color-overlay"),
+        surface: token("--color-surface-white"),
+        "surface-muted": token("--color-surface-muted"),
+        page: token("--color-surface-page"),
+        success: { 50: token("--color-success-50"), 600: token("--color-success-600"), solid: token("--color-success-solid") },
+        warning: { 50: token("--color-warning-50"), 600: token("--color-warning-600"), solid: token("--color-warning-solid") },
+        danger: { 50: token("--color-error-50"), 200: token("--color-error-200"), 600: token("--color-error-600"), solid: token("--color-error-solid"), "solid-hover": token("--color-error-solid-hover") },
+        info: { 50: token("--color-info-50"), 600: token("--color-info-600") },
+        focus: token("--color-focus"),
       },
       fontFamily: {
         sans: ["var(--font-inter)", "Inter", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],

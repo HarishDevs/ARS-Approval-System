@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { db, sessionCookie } from "./db";
 
 // v1.13.0 (D-166, owner): invite a user and reset a password by email, from
-// Add user and the user's page (v1.14.0, owner: not on the users list).
+// Add user and the user's page (v1.14.0); v1.49.3 (owner): also in the users list row menu.
 // Email isn't set up in the test environment, so each send reports that
 // plainly (and nothing breaks).
 const unique = (prefix: string) => `${prefix}_${Date.now().toString(36).toUpperCase()}`;
@@ -23,7 +23,7 @@ async function addUser(page: Page, loginId: string, options: { password?: boolea
   await page.getByRole("button", { name: "Create user" }).click();
 }
 
-test("Add user emails an invitation; Re-invite is on the user page, not the users list", async ({ page, context }) => {
+test("Add user emails an invitation; Re-invite is on the user page and in the users list menu", async ({ page, context }) => {
   await context.addCookies([await sessionCookie("E2E_ADMIN")]);
   const loginId = unique("E2E_INV");
   await addUser(page, loginId, { invite: true });
@@ -35,11 +35,14 @@ test("Add user emails an invitation; Re-invite is on the user page, not the user
   await page.getByRole("button", { name: "Re-invite" }).click();
   await expect(page.getByText(NOT_SENT)).toBeVisible();
 
-  // The users list has no account actions.
+  // v1.49.3 (owner): the users list has the account actions in a row menu.
   await page.goto(`/admin/users?q=${loginId}`);
   const row = page.getByRole("row").filter({ hasText: loginId });
   await expect(row).toHaveCount(1);
-  await expect(row.getByRole("button")).toHaveCount(0);
+  await row.getByTestId("user-row-menu").click();
+  await page.getByRole("menuitem", { name: "Re-invite" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Yes, send" }).click();
+  await expect(page.getByText(NOT_SENT).first()).toBeVisible();
 });
 
 test("a password user with a password gets Reset password on their page", async ({ page, context }) => {

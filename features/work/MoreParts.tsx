@@ -325,7 +325,7 @@ export function BulkBar({ ids, clear, people, sections, projectId }: { ids: numb
   };
   const needsValue = op !== "COMPLETE" && op !== "DELETE";
   return (
-    <div role="region" aria-label="Selected tasks" className="sticky bottom-3 z-20 mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-primary-200 bg-raised px-3 py-2 shadow-lg" data-testid="bulk-bar">
+    <div role="region" aria-label="Selected tasks" className="sticky bottom-3 z-20 mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-primary-600/30 bg-raised px-3 py-2 shadow-lg" data-testid="bulk-bar">
       <span className="text-label font-semibold">{ids.length} selected</span>
       <select
         aria-label="Do"

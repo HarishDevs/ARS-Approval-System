@@ -1,5 +1,9 @@
 # Release notes
 
+## v1.49.3 (3 Nov 2026): users list actions and Department filter; see-through dropdowns fixed (owner)
+- **Admin → Users & roles:** a **Department** filter (or "No department") next to Status and Module, and an **Actions** column with a three-dot menu on each row: **Re-invite**, **Send set-password link** (or **Send reset-password link** when they already have a password), **Deactivate user** / **Activate user**, and **Open user**. Each asks first, naming the person, and the answer shows as a message. People you can't change (yourself, or another IT Admin unless you are the Super Admin) only offer Open user.
+- **Fixed:** the people search list ("Nobody matches.", the names) was see-through, so the text under it showed through. Checked every dropdown and panel: faded colours (the phone top bar and tab bar, highlighted rows, coloured borders) also didn't show and now do.
+
 ## v1.49.2 (3 Nov 2026): module access in the users import (owner)
 - The users file has a **modules** column (before roles): **APPROVAL**, **TASK**, **INFORMATION**, **AI** separated by ; or **ALL**. Empty: a new person gets Approval, Task and Information; an existing person keeps what they have.
 - The same rule as the user page: nobody changes their own module access, and only the Super Admin changes another IT Admin's.

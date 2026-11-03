@@ -78,7 +78,7 @@ function CommentItem({ comment, meId, canPin, isAdmin }: { comment: CommentView;
   if (comment.deleted) return <p className="text-label italic text-ink-muted">This comment was deleted.</p>;
   const mine = comment.authorId === meId;
   return (
-    <div className={`rounded-md ${comment.isPinned ? "border border-primary-200 bg-primary-50/40 p-2" : ""}`} data-testid="comment">
+    <div className={`rounded-md ${comment.isPinned ? "border border-primary-600/30 bg-primary-50/40 p-2" : ""}`} data-testid="comment">
       <div className="flex flex-wrap items-center gap-2 text-caption text-ink-muted">
         {comment.isPinned && (
           <span className="inline-flex items-center gap-0.5 text-primary-700">

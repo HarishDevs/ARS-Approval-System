@@ -6,6 +6,9 @@ import { DataTable } from "@/features/ui/DataTable";
 import { Badge } from "@/features/ui/Display";
 import { requireArea } from "@/server/authorization/guards";
 import { listUsersForAdmin } from "@/lib/db/repositories/admin-users.repository";
+import { listDepartments } from "@/lib/db/repositories/organisation.repository";
+import { checkCanEdit } from "@/server/admin/user-rules";
+import { UserRowMenu } from "@/features/admin/UserRowMenu";
 import { ROLE_LABEL } from "@/features/ui/labels";
 import { MODULE_LABEL, MODULES, type ModuleCode } from "@/server/modules/modules";
 import { SIGN_IN_LABEL } from "@/types/auth";
@@ -16,17 +19,21 @@ export const metadata: Metadata = { title: "Users & roles" };
 const PAGE_SIZE = 50;
 
 // F-06 user list. Search and filter are plain GET parameters.
-export default async function UsersPage({ searchParams }: { searchParams: Promise<{ q?: string; status?: string; page?: string; module?: string }> }) {
-  await requireArea("admin");
+export default async function UsersPage({ searchParams }: { searchParams: Promise<{ q?: string; status?: string; page?: string; module?: string; dept?: string }> }) {
+  const { user: actor } = await requireArea("admin");
   const params = await searchParams;
   const search = (params.q ?? "").trim().slice(0, 100);
   const status = params.status === "inactive" || params.status === "all" ? params.status : "active";
   const page = Math.max(1, Number(params.page) || 1);
   // D-168: filter by module (anything else is ignored).
   const moduleFilter = (MODULES as readonly string[]).includes(params.module ?? "") ? (params.module as ModuleCode) : undefined;
-  const { items, total } = await listUsersForAdmin({ search: search || undefined, status, module: moduleFilter }, { limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE });
+  // v1.49.3 (owner): by department ("none": people without one).
+  const departments = await listDepartments();
+  const deptParam = params.dept ?? "";
+  const departmentFilter = deptParam === "none" ? null : departments.some((item) => String(item.id) === deptParam) ? Number(deptParam) : undefined;
+  const { items, total } = await listUsersForAdmin({ search: search || undefined, status, module: moduleFilter, departmentId: departmentFilter }, { limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE });
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const link = (next: number) => `/admin/users?${new URLSearchParams({ ...(search ? { q: search } : {}), status, ...(moduleFilter ? { module: moduleFilter } : {}), page: String(next) })}`;
+  const link = (next: number) => `/admin/users?${new URLSearchParams({ ...(search ? { q: search } : {}), status, ...(moduleFilter ? { module: moduleFilter } : {}), ...(departmentFilter !== undefined ? { dept: deptParam } : {}), page: String(next) })}`;
 
   return (
     <>
@@ -69,6 +76,21 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
             ))}
           </select>
         </div>
+        <div>
+          <label htmlFor="dept" className="field-label">
+            Department
+          </label>
+          <select id="dept" name="dept" defaultValue={departmentFilter === undefined ? "" : deptParam} className="field-input w-52">
+            <option value="">Any</option>
+            {departments.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name}
+                {item.active ? "" : " (inactive)"}
+              </option>
+            ))}
+            <option value="none">No department</option>
+          </select>
+        </div>
         <button type="submit" className="btn-secondary btn-compact h-11">
           Apply
         </button>
@@ -87,6 +109,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
           { key: "roles", header: "Roles", optional: true },
           { key: "modules", header: "Modules", optional: true },
           { key: "status", header: "Status", sortable: true },
+          { key: "actions", header: "Actions" },
         ]}
         rows={items.map((user) => ({
           id: user.id,
@@ -113,6 +136,17 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
                 {user.locked && <Badge tone="danger">Locked</Badge>}
                 {user.isBreakGlass && <Badge tone="warning">Break-glass</Badge>}
               </span>
+            ),
+            // v1.49.3 (owner): Re-invite, set-password link, Deactivate / Activate in a three-dot menu.
+            actions: (
+              <UserRowMenu
+                id={user.id}
+                name={user.name}
+                active={user.active}
+                signInMethod={user.signInMethod}
+                hasPassword={user.hasPassword}
+                canEdit={user.id !== actor.id && checkCanEdit(actor, { id: user.id, roles: user.roles, active: user.active, isBreakGlass: user.isBreakGlass }).ok}
+              />
             ),
           },
         }))}

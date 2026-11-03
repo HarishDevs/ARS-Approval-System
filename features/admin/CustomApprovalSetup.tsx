@@ -135,7 +135,7 @@ export function CustomApprovalSetup({ initialForm, initialPolicy, lookups = NO_L
       </div>
       {confirmBar}
       {previewing && (
-        <section aria-label="Preview of the custom approval fields" className="rounded-lg border-2 border-dashed border-primary-200 p-4">
+        <section aria-label="Preview of the custom approval fields" className="rounded-lg border-2 border-dashed border-primary-600/30 p-4">
           <h2 className="mb-3 font-semibold">
             Preview <Hint text="Unsaved changes included; nothing is sent." align="start" />
           </h2>

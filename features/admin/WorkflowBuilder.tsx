@@ -278,7 +278,7 @@ export function WorkflowBuilder({
   return (
     <>
       {offered && (
-        <div role="status" className="mb-4 flex flex-wrap items-center gap-3 rounded-md border border-info-200 bg-info-50 px-4 py-3 text-label" data-testid="local-draft">
+        <div role="status" className="mb-4 flex flex-wrap items-center gap-3 rounded-md border border-info-600/30 bg-info-50 px-4 py-3 text-label" data-testid="local-draft">
           <span className="min-w-0 flex-1">Changes you hadn&apos;t saved ({formatLocalTime(offered.savedAt)}) were kept in this browser.</span>
           <button
             type="button"
@@ -453,7 +453,7 @@ export function WorkflowBuilder({
         )}
       </form>
       {previewing && (
-        <section id="form-preview" aria-labelledby="form-preview-title" className="mt-6 rounded-lg border-2 border-dashed border-primary-200 p-3">
+        <section id="form-preview" aria-labelledby="form-preview-title" className="mt-6 rounded-lg border-2 border-dashed border-primary-600/30 p-3">
           <h2 id="form-preview-title" className="mb-3 px-2 font-semibold">
             Form preview <Hint text="Unsaved changes included." align="start" />
           </h2>

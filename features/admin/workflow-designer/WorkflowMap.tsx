@@ -52,7 +52,7 @@ function StageNode({ stage, context, index, onSelect, selected }: { stage: AnySt
       <User aria-hidden="true" className="h-3.5 w-3.5" />
     );
   return (
-    <div className={`w-[min(36rem,calc(100vw-4rem))] rounded-lg border bg-raised ${selected ? "border-primary-600 ring-2 ring-primary-200" : problems.length ? "border-danger-200" : "border-line"}`}>
+    <div className={`w-[min(36rem,calc(100vw-4rem))] rounded-lg border bg-raised ${selected ? "border-primary-600 ring-2 ring-primary-600/30" : problems.length ? "border-danger-200" : "border-line"}`}>
       <button
         type="button"
         onClick={() => onSelect(index)}

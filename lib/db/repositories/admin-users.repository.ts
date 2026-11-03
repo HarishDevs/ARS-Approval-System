@@ -20,6 +20,7 @@ export interface AdminUserListItem {
   isBreakGlass: boolean;
   lastLoginAt: Date | null;
   modules: ModuleCode[]; // D-168
+  hasPassword: boolean; // v1.49.3: the row menu's set/reset-password link
 }
 
 export interface AdminUserDetail extends AdminUserListItem {
@@ -45,7 +46,7 @@ function roleList(value: string | null): RoleCode[] {
 }
 
 export async function listUsersForAdmin(
-  filter: { search?: string; status?: "active" | "inactive" | "all"; module?: ModuleCode },
+  filter: { search?: string; status?: "active" | "inactive" | "all"; module?: ModuleCode; departmentId?: number | null },
   page: { limit: number; offset: number },
   db: Queryable = getDbPool(),
 ): Promise<{ items: AdminUserListItem[]; total: number }> {
@@ -62,6 +63,14 @@ export async function listUsersForAdmin(
   if (filter.module) {
     where.push("FIND_IN_SET(?, u.module_access) > 0");
     params.push(filter.module);
+  }
+  // v1.49.3 (owner): by department (null: people with no department).
+  if (filter.departmentId !== undefined) {
+    if (filter.departmentId === null) where.push("u.department_id IS NULL");
+    else {
+      where.push("u.department_id = ?");
+      params.push(filter.departmentId);
+    }
   }
   const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
 
@@ -80,10 +89,12 @@ export async function listUsersForAdmin(
       is_break_glass: number;
       last_login_at: Date | null;
       module_access: string | null;
+      has_password: number;
     })[]
   >(
     `SELECT u.id, u.login_id, u.name, u.email, d.name AS department_name, u.sign_in_method, ${ROLE_CODES_SQL} AS role_codes,
-            u.active, (u.locked_until IS NOT NULL AND u.locked_until > CURRENT_TIMESTAMP) AS locked, u.is_break_glass, u.last_login_at, u.module_access
+            u.active, (u.locked_until IS NOT NULL AND u.locked_until > CURRENT_TIMESTAMP) AS locked, u.is_break_glass, u.last_login_at, u.module_access,
+            (u.password_hash IS NOT NULL) AS has_password
      FROM users u LEFT JOIN departments d ON d.id = u.department_id
      ${whereSql}
      ORDER BY u.active DESC, u.name
@@ -105,6 +116,7 @@ export async function listUsersForAdmin(
       isBreakGlass: row.is_break_glass === 1,
       lastLoginAt: row.last_login_at,
       modules: parseModuleSet(row.module_access),
+      hasPassword: Number(row.has_password) === 1,
     })),
   };
 }

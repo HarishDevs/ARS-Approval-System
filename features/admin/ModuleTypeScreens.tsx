@@ -142,7 +142,7 @@ export async function ModuleTypeDetailScreen({ module, id, view }: { module: Mod
 
       {draft && (
         <section aria-labelledby="draft-heading" className="mb-10">
-          <h2 id="draft-heading" className="mb-3 text-heading font-semibold">
+          <h2 id="draft-heading" className="mb-3 text-title font-semibold">
             Draft version {draft.versionNo}
           </h2>
           <ModuleTypeEditor
@@ -161,7 +161,7 @@ export async function ModuleTypeDetailScreen({ module, id, view }: { module: Mod
       )}
 
       <section aria-labelledby="versions-heading" className="mb-10">
-        <h2 id="versions-heading" className="mb-3 text-heading font-semibold">
+        <h2 id="versions-heading" className="mb-3 text-title font-semibold">
           Versions
         </h2>
         <div className="card overflow-x-auto">
@@ -203,7 +203,7 @@ export async function ModuleTypeDetailScreen({ module, id, view }: { module: Mod
       </section>
 
       <section aria-labelledby="history-heading">
-        <h2 id="history-heading" className="mb-3 text-heading font-semibold">
+        <h2 id="history-heading" className="mb-3 text-title font-semibold">
           Change history
         </h2>
         {history.length === 0 ? (
