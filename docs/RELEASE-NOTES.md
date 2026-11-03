@@ -1,5 +1,11 @@
 # Release notes
 
+## v1.49.1 (3 Nov 2026): import with Excel files (owner)
+- **Admin → Import** works with **Excel**: **Download template** and **Download current …** give an Excel workbook (.xlsx) with the sheet to fill (columns set to Text, so User IDs and WhatsApp numbers stay as typed) and a **How to fill** sheet. Upload the filled workbook as it is; dates, numbers and TRUE/FALSE are read correctly. The problem list downloads as Excel too.
+- CSV files still work, with commas, semicolons or tabs (Excel's "Text (Tab delimited)" too; before, a tab file showed every column as missing).
+- An old .xls file asks to be saved as Excel Workbook (.xlsx).
+- The users file's roles column lists EXPORTER (may download reports) with USER, IT_ADMIN and SUPER_ADMIN.
+
 ## v1.49.0 (2 Nov 2026): the ARS GREEN STEEL CMS brand, and New request / New task straight to the form (owner)
 **Branding** (the owner's approved ARS GREEN STEEL CMS logo and brand sheet):
 - The app is called **ARS CMS** everywhere: browser tab ("… · ARS CMS"), installed app, sign-in, emails' subjects, phone notifications, PDF summary and loading screens.

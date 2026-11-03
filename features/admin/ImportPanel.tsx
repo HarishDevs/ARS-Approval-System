@@ -3,14 +3,14 @@
 import { useRef, useState, useTransition } from "react";
 import { checkImportAction, runImportAction, type ImportActionResult, type ImportPreview } from "@/app/admin/import/actions";
 import { IMPORT_KINDS, IMPORT_LIMITS, IMPORT_SPECS, type ImportKind } from "@/server/import/kinds";
-import { toCsv } from "@/server/import/csv";
+import { XLSX_MIME, buildWorkbook } from "@/server/import/xlsx";
 import type { PlannedRow, RowAction } from "@/server/import/plan";
 import { Spinner } from "@/features/ui/Spinner";
 import { SafeText } from "@/features/ui/SafeText";
 import { Hint } from "@/features/ui/Hint";
 
 // Bulk import screen (S10-05/06, F-59): choose what, download the template
-// or the current data, upload a CSV, check it (nothing saved), then import
+// or the current data (Excel, v1.49.1), upload an Excel or CSV file, check it (nothing saved), then import
 // every row or none. Every wait shows a spinner and locks the controls.
 type Busy = null | "checking" | "importing" | "template" | "data";
 type Filter = "all" | "problems" | "changes";
@@ -79,7 +79,7 @@ export function ImportPanel({ initialKind }: { initialKind: ImportKind }) {
       const response = await fetch(`/api/admin/import/${kind}?type=${type}`, { cache: "no-store" });
       if (!response.ok) throw new Error(String(response.status));
       const today = new Date().toISOString().slice(0, 10);
-      saveFile(type === "template" ? `ars-${kind}-template.csv` : `ars-${kind}-${today}.csv`, await response.blob());
+      saveFile(type === "template" ? `ars-${kind}-template.xlsx` : `ars-${kind}-${today}.xlsx`, await response.blob());
     } catch {
       setDownloadError("The download didn't work. Please try again.");
     } finally {
@@ -113,7 +113,7 @@ export function ImportPanel({ initialKind }: { initialKind: ImportKind }) {
     if (!checked) return;
     const rows = checked.rows.filter((row) => row.action === "error").flatMap((row) => row.problems.map((problem) => [row.line, row.key, problem.column, problem.message]));
     const fileRows = checked.fileProblems.map((problem) => ["", "", "file", problem]);
-    saveFile(`ars-${kind}-problems.csv`, new Blob([toCsv(["row", spec.columns[0]!.name, "column", "problem"], [...fileRows, ...rows])], { type: "text/csv" }));
+    saveFile(`ars-${kind}-problems.xlsx`, new Blob([buildWorkbook([{ name: "Problems", header: ["row", spec.columns[0]!.name, "column", "problem"], rows: [...fileRows, ...rows], widths: [8, 20, 20, 90] }])], { type: XLSX_MIME }));
   }
 
   const summary = checked?.summary;
@@ -190,7 +190,7 @@ export function ImportPanel({ initialKind }: { initialKind: ImportKind }) {
             </table>
           </div>
           <p className="border-t border-line px-4 py-2.5 text-caption text-ink-muted">
-            Matched by {spec.matchBy}. Keep the header row and every column. In Excel, save with <strong>File → Save As → CSV UTF-8</strong>. Up to {IMPORT_LIMITS.maxRows.toLocaleString("en-IN")} rows and 2 MB per file.
+            Matched by {spec.matchBy}. Keep the header row and every column. Fill the <strong>Excel template</strong> and upload it as it is (.xlsx); a CSV with commas, semicolons or tabs also works. The first sheet is read. Up to {IMPORT_LIMITS.maxRows.toLocaleString("en-IN")} rows and 2 MB per file.
           </p>
         </details>
       </section>
@@ -211,16 +211,16 @@ export function ImportPanel({ initialKind }: { initialKind: ImportKind }) {
             if (!locked) chooseFile(event.dataTransfer.files[0] ?? null);
           }}
         >
-          <span className="text-label font-semibold text-primary-700">{file ? "Choose a different file" : "Choose a CSV file"}</span>
+          <span className="text-label font-semibold text-primary-700">{file ? "Choose a different file" : "Choose an Excel or CSV file"}</span>
           <span className="text-caption text-ink-muted">or drop it here</span>
           <input
             ref={input}
             type="file"
             name="file"
-            accept=".csv,text/csv"
+            accept=".xlsx,.xlsm,.csv,.tsv,.txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv"
             disabled={locked}
             className="sr-only"
-            aria-label={`${spec.label} CSV file`}
+            aria-label={`${spec.label} file (Excel or CSV)`}
             onChange={(event) => chooseFile(event.target.files?.[0] ?? null)}
           />
         </label>

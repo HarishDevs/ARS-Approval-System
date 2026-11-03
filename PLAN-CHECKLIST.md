@@ -17,7 +17,8 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
-- **Now (2 Nov 2026):** v1.49.0: the ARS GREEN STEEL CMS brand (D-287), New request / New task straight to the form, Classic tab bar fix (D-288). **Owner:** publish v1.49.0; rename the OAuth consent screen app to "ARS CMS" in Google Cloud (Q-027); reopen or reinstall the phone app for the new icon.
+- **Now (3 Nov 2026):** v1.49.1: import with Excel templates and uploads (and tab CSV). **Owner:** publish; import ars-1-departments-no-hod.xlsx → ars-2-users.xlsx → ars-3-departments-with-hod.xlsx (designations HOD, EXEC, DMGR, SEXE must exist).
+- **Before (2 Nov 2026):** v1.49.0: the ARS GREEN STEEL CMS brand (D-287), New request / New task straight to the form, Classic tab bar fix (D-288). **Owner:** publish v1.49.0; rename the OAuth consent screen app to "ARS CMS" in Google Cloud (Q-027); reopen or reinstall the phone app for the new icon.
 - **Now (2 Nov 2026):** v1.48.1: slimmer journey, hover details with the approver, the folded header road (D-285). Publish v1.48.1.
 - **Now (2 Nov 2026):** v1.48.0: the new Approval Journey (computer and phone), the request page re-laid out, one colour per status (D-283, D-284). No migration of its own. **Owner:** publish v1.48.0 (contains everything since v1.46.0).
 - **Now (2 Nov 2026):** v1.47.1: priority colours everywhere (D-282). Publish v1.47.1 (it contains v1.47.0 and v1.46.0).
@@ -159,6 +160,12 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 - **Still open:** Q-015.
 
 ---
+
+## Session log — v1.49.1 (3 Nov 2026): import with Excel files
+Owner: departments and users files from Excel came out tab-separated ("Missing columns … Unknown column: login_id name email …").
+- [x] V1491-01 (3 Nov 2026) detectDelimiter reads a tab too; unit test; import help text and User Guide; roles help lists EXPORTER
+- [x] V1491-02 (3 Nov 2026) Owner: "instead of CSV give an Excel file, any format accepted, template in Excel": xlsx writer (server/import/xlsx.ts, stored zip, Text columns, How to fill sheet) for template/current data/problem list; xlsx reader (server/import/xlsx-read.ts: shared/inline strings, numbers as typed, date styles, booleans) for uploads; .xls refused with a hint; unit tests; session10 e2e uses the xlsx template and an xlsx upload; opened and re-saved with real Excel and read back
+- [x] V1491-03 (3 Nov 2026) Owner's files as Excel in Downloads: ars-1-departments-no-hod.xlsx, ars-2-users.xlsx, ars-3-departments-with-hod.xlsx (import in that order)
 
 ## Session log — v1.49.0 (2 Nov 2026): branding and shortcuts, planned before starting
 Owner: "ARS CMS – Complete Application Branding Replacement" brief with the approved logo (Downloads/ARS Green Steel CMS Logo.png) and the brand sheet; "if I click add in the mobile app to create an approval request it navigates to templates; I want the custom approval form"; "in compact mode Add task / New task navigate to templates; drop this task-from-templates part"; "the header navigation is missing" (Classic, /users/tasks).

@@ -1,15 +1,16 @@
 import type { NextRequest } from "next/server";
 import { requireApiArea } from "@/server/authorization/guards";
-import { currentDataCsv, templateCsv } from "@/server/import/service";
+import { currentDataWorkbook, templateWorkbook } from "@/server/import/service";
 import { isImportKind } from "@/server/import/kinds";
-import { CSV_MIME } from "@/server/import/csv";
+import { XLSX_MIME } from "@/server/import/xlsx";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { getRequestContext } from "@/lib/http/request-context";
 import { apiError } from "@/lib/http/api-response";
 import { logError } from "@/lib/logging/logger";
 
 // Import downloads (S10-04, F-59): ?type=template (header row only) or
-// ?type=data (the current records in the same columns). Admin space only;
+// ?type=data (the current records in the same columns). v1.49.1: Excel
+// workbooks (owner). Admin space only;
 // anything else gets the same plain 404.
 export async function GET(request: NextRequest, { params }: { params: Promise<{ kind: string }> }) {
   try {
@@ -18,7 +19,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const type = request.nextUrl.searchParams.get("type");
     if (!isImportKind(kind) || (type !== "template" && type !== "data")) return apiError("NOT_FOUND", "Not found.", 404);
     const today = new Date().toISOString().slice(0, 10);
-    const body = type === "template" ? templateCsv(kind) : await currentDataCsv(kind);
+    const body = type === "template" ? templateWorkbook(kind) : await currentDataWorkbook(kind);
     if (type === "data") {
       // A copy of the people list leaves the app: keep a record of it.
       await recordAudit({
@@ -30,11 +31,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         ipAddress: getRequestContext(request).ipAddress,
       });
     }
-    const name = type === "template" ? `ars-${kind}-template.csv` : `ars-${kind}-${today}.csv`;
-    return new Response(body, {
+    const name = type === "template" ? `ars-${kind}-template.xlsx` : `ars-${kind}-${today}.xlsx`;
+    return new Response(new Blob([body], { type: XLSX_MIME }), {
       status: 200,
       headers: {
-        "Content-Type": CSV_MIME,
+        "Content-Type": XLSX_MIME,
         "Content-Disposition": `attachment; filename="${name}"`,
         "Cache-Control": "private, no-store",
         "X-Content-Type-Options": "nosniff",

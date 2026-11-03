@@ -80,7 +80,7 @@ Routes that answer differently are noted below.
 | `/api/reports/[key]` | GET | `requireApiArea("users")` + reports + export permission | Export a catalogue report (CSV/XLSX/PDF) |
 | `/api/analytics/export` | GET | `requireApiArea("users"` or `"admin")` + analytics + export permission | CSV of an analytics board |
 | `/api/admin/dashboards/[slug]` | GET | `requireApiArea("admin", page admin.dashboards)` | CSV of an admin dashboard |
-| `/api/admin/import/[kind]` | GET | `requireApiArea("admin")` | Import template or current data as CSV |
+| `/api/admin/import/[kind]` | GET | `requireApiArea("admin")` | Import template or current data as an Excel workbook (.xlsx: the sheet and "How to fill") |
 | `/api/admin/records/[kind]` | GET | `requireApiArea("admin", page admin.records)` + export permission | CSV of an Admin register |
 | `/api/admin/workflows/[id]/export` | GET | `requireApiArea("admin", page admin.workflows)` | Approval type configuration as JSON |
 | `/api/superadmin/audit` | GET | `requireApiArea("superadmin")` | Audit log CSV export |

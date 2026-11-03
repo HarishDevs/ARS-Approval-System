@@ -250,7 +250,7 @@ Switch to it from the account menu → **Switch space**.
   - **Count who it reaches** first; **Send** asks to confirm. It goes to their Inbox and their registered devices, and is in the audit log.
   - **History** shows how many were accepted by the push services, are still waiting or failed. **Devices** lists every registered device; the push address is never shown.
 - **Working calendar:** working days and holidays (used for due times).
-- **Import data:** CSV templates for users, departments, designations, groups and holidays. Check first, then import.
+- **Import data:** Excel templates (.xlsx) for users, departments, designations, groups and holidays: fill the first sheet (every column is Text, so IDs and phone numbers stay as typed; the "How to fill" sheet explains each column) and upload it as it is. A CSV with commas, semicolons or tabs also works. Check first, then import; the problem list downloads as Excel too. Order for a new setup: designations, departments (leave HOD empty the first time), users, then departments again with the HODs.
 - **Stuck requests:** if a level finds nobody (e.g. a department has no HOD), IT gets a message and the request shows **Stuck: needs IT**. You can give the step to people, skip it, or **Try again** after fixing the master data. Your reason is shown on the timeline and to the requester. Nobody can skip or route a step of their **own** request (ask another IT person), and a request is never approved when every approval level was skipped for want of an approver: it stops as Stuck instead.
 
 ---

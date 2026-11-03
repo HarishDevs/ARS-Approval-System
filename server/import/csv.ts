@@ -12,10 +12,14 @@ export interface ParsedCsv {
   rows: { line: number; cells: string[] }[];
 }
 
-export function detectDelimiter(firstLine: string): "," | ";" {
+// v1.49.1: also a tab, which Excel writes for "Text (Tab delimited)" even
+// when the file name ends .csv.
+export function detectDelimiter(firstLine: string): "," | ";" | "\t" {
   const outsideQuotes = firstLine.replace(/"[^"]*"/g, "");
   const commas = (outsideQuotes.match(/,/g) ?? []).length;
   const semicolons = (outsideQuotes.match(/;/g) ?? []).length;
+  const tabs = (outsideQuotes.match(/\t/g) ?? []).length;
+  if (tabs > commas && tabs > semicolons) return "\t";
   return semicolons > commas ? ";" : ",";
 }
 

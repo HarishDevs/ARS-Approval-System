@@ -326,7 +326,7 @@ function planUsers(rows: Row[], snapshot: Snapshot): { planned: PlannedRow[]; op
     if (!signInMethod) check.add("sign_in_method", "Write GOOGLE, PASSWORD or BOTH.");
     if (signInMethod && allowsPassword(signInMethod) && whatsappNumber === null) check.add("whatsapp_number", "Password sign-in needs a WhatsApp number for the sign-in code.");
     const { roles, unknown } = parseRoles(row.get("roles"));
-    if (unknown.length) check.add("roles", `Unknown role${unknown.length === 1 ? "" : "s"}: ${unknown.join(", ")}. Use USER, IT_ADMIN or SUPER_ADMIN.`);
+    if (unknown.length) check.add("roles", `Unknown role${unknown.length === 1 ? "" : "s"}: ${unknown.join(", ")}. Use USER, EXPORTER, IT_ADMIN or SUPER_ADMIN.`);
 
     const value: UserValue = {
       loginId,

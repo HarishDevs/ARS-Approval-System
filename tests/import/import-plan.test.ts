@@ -19,6 +19,13 @@ describe("CSV", () => {
     expect(parseCsv("Code;Name\nFIN;Finance").rows[0]!.cells).toEqual(["FIN", "Finance"]);
   });
 
+  // v1.49.1 (owner's files): Excel's "Text (Tab delimited)" saved with a .csv name.
+  it("reads tab-separated files, and a comma inside a tab file stays in its cell", () => {
+    const parsed = parseCsv("code\tname\thod_login_id\tactive\r\nHA\tHR, Admin\t5518\tYes\r\n");
+    expect(parsed.header).toEqual(["code", "name", "hod_login_id", "active"]);
+    expect(parsed.rows[0]!.cells).toEqual(["HA", "HR, Admin", "5518", "Yes"]);
+  });
+
   it("writes a BOM and quotes, and guards formula-looking cells both ways", () => {
     const csv = toCsv(["a", "b"], [["=1+1", 'say "hi", ok']]);
     expect(csv.startsWith("﻿")).toBe(true);

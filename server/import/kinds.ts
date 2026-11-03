@@ -37,7 +37,7 @@ export const IMPORT_SPECS: Record<ImportKind, ImportKindSpec> = {
       { name: "designation_code", required: false, help: "Code of an existing active designation.", example: "MGR" },
       { name: "manager_login_id", required: false, help: "User ID of the reporting manager: an existing person or another row of this file.", example: "anbu" },
       { name: "sign_in_method", required: false, help: "GOOGLE, PASSWORD or BOTH (either). Empty means GOOGLE.", example: "GOOGLE" },
-      { name: "roles", required: false, help: "USER, IT_ADMIN, SUPER_ADMIN separated by ; (USER is always included). Only a Super Admin can grant or remove SUPER_ADMIN.", example: "USER" },
+      { name: "roles", required: false, help: "USER, EXPORTER, IT_ADMIN, SUPER_ADMIN separated by ; (USER is always included; EXPORTER may download reports). Only a Super Admin can grant or remove SUPER_ADMIN.", example: "USER" },
     ],
   },
   departments: {

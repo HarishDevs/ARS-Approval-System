@@ -11,6 +11,8 @@ import { signInMethodChangedMessage, whatsappChangedMessage } from "@/server/not
 import { planImport, type ImportOp, type ImportPlan, type Snapshot } from "@/server/import/plan";
 import { IMPORT_LIMITS, IMPORT_SPECS, type ImportKind } from "@/server/import/kinds";
 import { toCsv } from "@/server/import/csv";
+import { buildWorkbook } from "@/server/import/xlsx";
+import { XlsxError, readXlsxRows, rowsToCsvText } from "@/server/import/xlsx-read";
 import { logError } from "@/lib/logging/logger";
 import type { AdminActor } from "@/server/admin/users";
 import type { PoolConnection } from "mysql2/promise";
@@ -19,12 +21,27 @@ import type { PoolConnection } from "mysql2/promise";
 // inside one transaction and write every row, or none.
 export type ImportOutcome = { ok: true; plan: ImportPlan } | { ok: false; message: string; plan?: ImportPlan };
 
-// The uploaded file: CSV text, within the size limit.
+// The uploaded file as CSV text, within the size limit. v1.49.1 (owner): an
+// Excel workbook (.xlsx/.xlsm, first sheet) or a CSV/TSV/text file with
+// commas, semicolons or tabs.
+export const UPLOAD_ACCEPT = ".xlsx,.xlsm,.csv,.tsv,.txt";
+
 export async function readUpload(file: FormDataEntryValue | null): Promise<{ ok: true; text: string; name: string } | { ok: false; message: string }> {
-  if (!file || typeof file === "string" || file.size === 0) return { ok: false, message: "Choose a CSV file to upload." };
+  if (!file || typeof file === "string" || file.size === 0) return { ok: false, message: "Choose an Excel or CSV file to upload." };
   if (file.size > IMPORT_LIMITS.maxBytes) return { ok: false, message: "The file is larger than 2 MB. Split it into smaller files." };
-  if (!/\.csv$/i.test(file.name)) return { ok: false, message: "Upload a .csv file. In Excel: File → Save As → CSV UTF-8 (Comma delimited)." };
+  if (/\.(xls|xlsb|ods|numbers)$/i.test(file.name)) return { ok: false, message: "Save the sheet as an Excel Workbook (.xlsx) or CSV and upload that. In Excel: File → Save As → Excel Workbook." };
+  if (!/\.(xlsx|xlsm|csv|tsv|txt)$/i.test(file.name)) return { ok: false, message: "Upload an Excel file (.xlsx) or a CSV file." };
   const bytes = new Uint8Array(await file.arrayBuffer());
+  if (/\.(xlsx|xlsm)$/i.test(file.name)) {
+    try {
+      const rows = readXlsxRows(bytes);
+      if (!rows.length) return { ok: false, message: "The first sheet of this workbook is empty. Put the header row and the data on the first sheet." };
+      return { ok: true, text: rowsToCsvText(rows), name: file.name.slice(0, 200) };
+    } catch (error) {
+      if (!(error instanceof XlsxError)) logError("import: xlsx read failed", error);
+      return { ok: false, message: "This Excel file can't be read. Open it in Excel, save it again as Excel Workbook (.xlsx) and try again." };
+    }
+  }
   let text: string;
   try {
     text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
@@ -32,7 +49,7 @@ export async function readUpload(file: FormDataEntryValue | null): Promise<{ ok:
     // Older Excel saves "CSV (Comma delimited)" in Windows-1252.
     text = new TextDecoder("windows-1252").decode(bytes);
   }
-  if (text.includes("\u0000")) return { ok: false, message: "This doesn't look like a CSV file. Save the sheet as CSV UTF-8 and try again." };
+  if (text.includes("\u0000")) return { ok: false, message: "This doesn't look like an Excel or CSV file. Save the sheet as Excel Workbook (.xlsx) and try again." };
   return { ok: true, text, name: file.name.slice(0, 200) };
 }
 
@@ -179,18 +196,45 @@ export function templateCsv(kind: ImportKind): string {
   );
 }
 
+// v1.49.1 (owner): the downloads are Excel workbooks: the sheet to fill (the
+// header row, and the current records for "data") and a "How to fill" sheet
+// with each column's rule and an example.
+function guideSheet(kind: ImportKind) {
+  const spec = IMPORT_SPECS[kind];
+  return {
+    name: "How to fill",
+    header: ["column", "required", "what to enter", "example"],
+    rows: [...spec.columns.map((column) => [column.name, column.required ? "Yes" : "No", column.help, column.example]), [], ["", "", `Matched by ${spec.matchBy}. ${spec.note ?? ""}`.trim(), ""]],
+    widths: [22, 10, 90, 22],
+  };
+}
+
+export function templateWorkbook(kind: ImportKind): Uint8Array {
+  const spec = IMPORT_SPECS[kind];
+  return buildWorkbook([{ name: spec.label, header: spec.columns.map((column) => column.name), rows: [] }, guideSheet(kind)]);
+}
+
+export async function currentDataWorkbook(kind: ImportKind): Promise<Uint8Array> {
+  const spec = IMPORT_SPECS[kind];
+  return buildWorkbook([{ name: spec.label, header: spec.columns.map((column) => column.name), rows: await currentDataRows(kind) }, guideSheet(kind)]);
+}
+
 export async function currentDataCsv(kind: ImportKind): Promise<string> {
+  return toCsv(
+    IMPORT_SPECS[kind].columns.map((column) => column.name),
+    await currentDataRows(kind),
+  );
+}
+
+async function currentDataRows(kind: ImportKind): Promise<(string | number | null | undefined)[][]> {
   const data = await loadImportSnapshot();
-  const header = IMPORT_SPECS[kind].columns.map((column) => column.name);
   const yesNo = (value: boolean) => (value ? "Yes" : "No");
   const loginOf = new Map(data.users.map((user) => [user.id, user.loginId]));
   switch (kind) {
     case "users": {
       const departments = new Map(data.departments.map((item) => [item.id, item.code]));
       const designations = new Map(data.designations.map((item) => [item.id, item.code]));
-      return toCsv(
-        header,
-        data.users
+      return data.users
           .filter((user) => !user.isBreakGlass && !user.isDemo)
           .map((user) => [
             user.loginId,
@@ -202,28 +246,15 @@ export async function currentDataCsv(kind: ImportKind): Promise<string> {
             user.reportingManagerId ? loginOf.get(user.reportingManagerId) : "",
             user.signInMethod,
             user.roles.join(";"),
-          ]),
-      );
+          ]);
     }
     case "departments":
-      return toCsv(
-        header,
-        data.departments.map((item) => [item.code, item.name, item.hodUserId ? loginOf.get(item.hodUserId) : "", yesNo(item.active)]),
-      );
+      return data.departments.map((item) => [item.code, item.name, item.hodUserId ? loginOf.get(item.hodUserId) : "", yesNo(item.active)]);
     case "designations":
-      return toCsv(
-        header,
-        data.designations.map((item) => [item.code, item.name, yesNo(item.isApprover), yesNo(item.active)]),
-      );
+      return data.designations.map((item) => [item.code, item.name, yesNo(item.isApprover), yesNo(item.active)]);
     case "groups":
-      return toCsv(
-        header,
-        data.groups.map((item) => [item.code, item.name, item.memberIds.map((id) => loginOf.get(id) ?? "").filter(Boolean).join(";"), yesNo(item.active)]),
-      );
+      return data.groups.map((item) => [item.code, item.name, item.memberIds.map((id) => loginOf.get(id) ?? "").filter(Boolean).join(";"), yesNo(item.active)]);
     case "holidays":
-      return toCsv(
-        header,
-        data.holidays.map((item) => [item.date, item.name]),
-      );
+      return data.holidays.map((item) => [item.date, item.name]);
   }
 }
