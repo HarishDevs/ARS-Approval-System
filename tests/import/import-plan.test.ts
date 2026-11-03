@@ -72,6 +72,7 @@ const user = (over: Partial<SnapshotUser>): SnapshotUser => ({
   approver: true,
   googleLinked: false,
   hasPassword: false,
+  modules: ["APPROVAL", "TASK", "INFORMATION"],
   ...over,
 });
 
@@ -98,7 +99,9 @@ function snapshot(actorRoles: Snapshot["actor"]["roles"] = ["USER", "IT_ADMIN"])
   };
 }
 
-const USERS_HEADER = IMPORT_SPECS.users.columns.map((column) => column.name).join(",");
+// The users file as it was before the optional modules column (v1.49.2): it still works.
+const USERS_HEADER = IMPORT_SPECS.users.columns.filter((column) => !column.optional).map((column) => column.name).join(",");
+const WITH_MODULES = "login_id,name,email,whatsapp_number,department_code,designation_code,manager_login_id,sign_in_method,modules,roles";
 const usersFile = (...rows: string[]) => [USERS_HEADER, ...rows].join("\n");
 
 describe("planImport: file checks", () => {
@@ -115,6 +118,41 @@ describe("planImport: file checks", () => {
     expect(plan.fileProblems.join(" ")).toMatch(/Missing columns: email/);
     expect(plan.fileProblems.join(" ")).toMatch(/Unknown column: emial/);
     expect(plan.ops).toEqual([]);
+  });
+});
+
+describe("planImport: users' module access (v1.49.2)", () => {
+  it("sets modules for new people (ALL, a list, or the default when empty) and refuses unknown ones", () => {
+    const plan = planImport(
+      "users",
+      [
+        WITH_MODULES,
+        "new1,New One,new1@example.com,,,,,GOOGLE,ALL,USER",
+        "new2,New Two,new2@example.com,,,,,GOOGLE,approval; ai,USER",
+        "new3,New Three,new3@example.com,,,,,GOOGLE,,USER",
+      ].join("\n"),
+      snapshot(),
+    );
+    const created = plan.ops.filter((op) => op.kind === "user-create");
+    expect(created.map((op) => (op.kind === "user-create" ? op.modules : null))).toEqual([
+      ["APPROVAL", "TASK", "INFORMATION", "AI"],
+      ["APPROVAL", "AI"],
+      ["APPROVAL", "TASK", "INFORMATION"],
+    ]);
+    const bad = planImport("users", [WITH_MODULES, "new4,New Four,new4@example.com,,,,,GOOGLE,TASK;CRM,USER"].join("\n"), snapshot());
+    expect(bad.rows[0]!.problems[0]).toMatchObject({ column: "modules", message: expect.stringMatching(/Unknown module: CRM/) });
+  });
+
+  it("changes an existing person's modules only when the cell is filled, by the user page's rules", () => {
+    const keep = planImport("users", [WITH_MODULES, "ravi,Ravi Kumar,ravi@example.com,,FIN,,oldmgr,GOOGLE,,USER"].join("\n"), snapshot());
+    expect(keep.summary.update).toBe(0);
+    const change = planImport("users", [WITH_MODULES, "ravi,Ravi Kumar,ravi@example.com,,FIN,,oldmgr,GOOGLE,APPROVAL;TASK;INFORMATION;AI,USER"].join("\n"), snapshot());
+    const op = change.ops[0];
+    expect(op?.kind === "user-update" ? op.modules : null).toEqual(["APPROVAL", "TASK", "INFORMATION", "AI"]);
+    expect(change.rows[0]!.changes).toContain("modules");
+    // Not your own (the actor is elena), and another IT Admin's only by the Super Admin.
+    const own = planImport("users", [WITH_MODULES, "elena,Elena Admin,elena@example.com,919000000002,,,,GOOGLE,ALL,USER;IT_ADMIN"].join("\n"), snapshot());
+    expect(own.rows[0]!.problems[0]!.message).toMatch(/your own module access/);
   });
 });
 

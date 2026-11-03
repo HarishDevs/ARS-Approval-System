@@ -24,7 +24,7 @@ const one = async <T extends RowDataPacket>(sql: string, params: unknown[]) => (
 
 describe("bulk import (F-59)", () => {
   it("templates are the header row only", () => {
-    expect(parseCsv(templateCsv("users")).header).toEqual(["login_id", "name", "email", "whatsapp_number", "department_code", "designation_code", "manager_login_id", "sign_in_method", "roles"]);
+    expect(parseCsv(templateCsv("users")).header).toEqual(["login_id", "name", "email", "whatsapp_number", "department_code", "designation_code", "manager_login_id", "sign_in_method", "modules", "roles"]);
     expect(parseCsv(templateCsv("holidays")).rows).toEqual([]);
   });
 
@@ -33,9 +33,10 @@ describe("bulk import (F-59)", () => {
     expect((await runImport("departments", `code,name,hod_login_id,active\nP${tag},Plant ${tag},,Yes`, "p.csv", itAdmin)).ok).toBe(true);
 
     const users = [
-      "login_id,name,email,whatsapp_number,department_code,designation_code,manager_login_id,sign_in_method,roles",
-      `emp-${tag},Employee ${tag},emp-${tag}@example.test,,P${tag},D${tag},boss-${tag},GOOGLE,USER`,
-      `boss-${tag},Boss ${tag},boss-${tag}@example.test,9${String(Date.now()).slice(-9)},P${tag},D${tag},,PASSWORD,USER;IT_ADMIN`,
+      // v1.49.2: module access in the same file (empty = the default).
+      "login_id,name,email,whatsapp_number,department_code,designation_code,manager_login_id,sign_in_method,modules,roles",
+      `emp-${tag},Employee ${tag},emp-${tag}@example.test,,P${tag},D${tag},boss-${tag},GOOGLE,TASK;AI,USER`,
+      `boss-${tag},Boss ${tag},boss-${tag}@example.test,9${String(Date.now()).slice(-9)},P${tag},D${tag},,PASSWORD,,USER;IT_ADMIN`,
     ].join("\n");
     const check = await checkImport("users", users, itAdmin);
     expect(check.summary).toMatchObject({ create: 2, error: 0 });
@@ -54,6 +55,11 @@ describe("bulk import (F-59)", () => {
       [`boss-${tag}`],
     );
     expect(roles?.roles).toBe("IT_ADMIN,USER");
+    const modules = await one<RowDataPacket & { emp: string; boss: string }>(
+      "SELECT (SELECT module_access FROM users WHERE login_id = ?) AS emp, (SELECT module_access FROM users WHERE login_id = ?) AS boss",
+      [`emp-${tag}`, `boss-${tag}`],
+    );
+    expect(modules).toMatchObject({ emp: "TASK,AI", boss: "APPROVAL,TASK,INFORMATION" });
     const audit = await one<RowDataPacket & { n: number }>("SELECT COUNT(*) AS n FROM audit_logs WHERE action = 'USER_CREATED' AND actor_user_id = ? AND JSON_EXTRACT(metadata_json, '$.source') = 'IMPORT'", [itAdmin.id]);
     expect(Number(audit?.n)).toBe(2);
     const summary = await one<RowDataPacket & { metadata_json: string }>("SELECT metadata_json FROM audit_logs WHERE action = 'IMPORT_COMPLETED' AND entity_id = 'users' AND actor_user_id = ? ORDER BY id DESC LIMIT 1", [itAdmin.id]);

@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { parseCsv, unguardCell } from "@/server/import/csv";
 import { IMPORT_LIMITS, IMPORT_SPECS, type ImportKind } from "@/server/import/kinds";
-import { checkCanEdit, checkContactChange, checkRoleChange, isValidWhatsAppNumber, normaliseRoles, normaliseWhatsAppNumber, ASSIGNABLE_ROLES } from "@/server/admin/user-rules";
+import { checkCanEdit, checkContactChange, checkModuleChange, checkRoleChange, isValidWhatsAppNumber, normaliseRoles, normaliseWhatsAppNumber, ASSIGNABLE_ROLES } from "@/server/admin/user-rules";
+import { DEFAULT_MODULES, MODULES, normaliseModules, sameModules, type ModuleCode } from "@/server/modules/modules";
 import { allowsGoogle, allowsPassword, type RoleCode, type SignInMethod } from "@/types/auth";
 
 // Bulk import planner (S10-03, F-59). Pure: given the file and a snapshot
@@ -26,6 +27,7 @@ export interface SnapshotUser {
   approver: boolean; // designation ticked as Approver (D-085)
   googleLinked: boolean;
   hasPassword: boolean;
+  modules: ModuleCode[]; // D-168 module access
 }
 
 export interface Snapshot {
@@ -66,7 +68,7 @@ export interface UserValue {
 export type ManagerRef = { id: number } | { loginId: string } | null;
 
 export type ImportOp =
-  | { kind: "user-create"; line: number; value: UserValue; manager: ManagerRef; roles: RoleCode[] }
+  | { kind: "user-create"; line: number; value: UserValue; manager: ManagerRef; roles: RoleCode[]; modules: ModuleCode[] }
   | {
       kind: "user-update";
       line: number;
@@ -75,6 +77,8 @@ export type ImportOp =
       manager: ManagerRef;
       roles: RoleCode[];
       rolesChanged: boolean;
+      /** v1.49.2: the new module access, or null to keep it. */
+      modules: ModuleCode[] | null;
       changes: Record<string, { before: unknown; after: unknown }>;
       effects: { unlinkGoogle: boolean; clearPassword: boolean };
       endSessions: boolean;
@@ -128,6 +132,16 @@ export function splitList(raw: string): string[] {
     .filter(Boolean);
 }
 
+// v1.49.2 (owner: "give module access while uploading users"): "APPROVAL;TASK",
+// "all", empty (null: the default for new people, unchanged for existing).
+function parseModules(raw: string): { modules: ModuleCode[] | null; unknown: string[] } {
+  const items = raw.split(/[;,]/).map((item) => item.trim().toUpperCase()).filter(Boolean);
+  if (!items.length) return { modules: null, unknown: [] };
+  if (items.includes("ALL")) return { modules: [...MODULES], unknown: items.filter((item) => item !== "ALL" && !(MODULES as readonly string[]).includes(item)) };
+  const result = normaliseModules(items);
+  return result.ok ? { modules: result.value, unknown: [] } : { modules: null, unknown: result.invalid };
+}
+
 function parseRoles(raw: string): { roles: RoleCode[]; unknown: string[] } {
   const items = splitList(raw).map((item) => item.toUpperCase().replace(/[\s-]+/g, "_"));
   const unknown = items.filter((item) => !(ASSIGNABLE_ROLES as readonly string[]).includes(item));
@@ -162,7 +176,7 @@ function readFile(kind: ImportKind, text: string): { rows: Row[]; problems: stri
   const problems: string[] = [];
   if (header.length === 0) return { rows: [], problems: ["The file is empty. Download the template and fill it in."] };
   const expected = spec.columns.map((column) => column.name);
-  const missing = expected.filter((name) => !header.includes(name));
+  const missing = spec.columns.filter((column) => !column.optional && !header.includes(column.name)).map((column) => column.name);
   const unknown = header.filter((name) => name !== "" && !expected.includes(name));
   if (missing.length) problems.push(`Missing column${missing.length === 1 ? "" : "s"}: ${missing.join(", ")}. Use the ${spec.label} template; keep every column, even if empty.`);
   if (unknown.length) problems.push(`Unknown column${unknown.length === 1 ? "" : "s"}: ${unknown.join(", ")}. Is this the ${spec.label} file?`);
@@ -328,6 +342,9 @@ function planUsers(rows: Row[], snapshot: Snapshot): { planned: PlannedRow[]; op
     const { roles, unknown } = parseRoles(row.get("roles"));
     if (unknown.length) check.add("roles", `Unknown role${unknown.length === 1 ? "" : "s"}: ${unknown.join(", ")}. Use USER, EXPORTER, IT_ADMIN or SUPER_ADMIN.`);
 
+    const { modules, unknown: unknownModules } = parseModules(row.get("modules"));
+    if (unknownModules.length) check.add("modules", `Unknown module${unknownModules.length === 1 ? "" : "s"}: ${unknownModules.join(", ")}. Use APPROVAL, TASK, INFORMATION, AI or ALL, separated by ;.`);
+
     const value: UserValue = {
       loginId,
       name,
@@ -343,7 +360,7 @@ function planUsers(rows: Row[], snapshot: Snapshot): { planned: PlannedRow[]; op
       const roleCheck = checkRoleChange(snapshot.actor, null, roles, superAdmins);
       if (!roleCheck.ok) check.add("roles", roleCheck.message);
       plannedRows.push(planned(row.line, loginId, check, true, []));
-      if (!check.problems.length) ops.push({ kind: "user-create", line: row.line, value, manager, roles });
+      if (!check.problems.length) ops.push({ kind: "user-create", line: row.line, value, manager, roles, modules: modules ?? [...DEFAULT_MODULES] });
       continue;
     }
 
@@ -361,6 +378,12 @@ function planUsers(rows: Row[], snapshot: Snapshot): { planned: PlannedRow[]; op
     const after = { ...value, loginId: existing.loginId, manager: managerLoginAfter };
     const changes = diff(before, after);
     const rolesChanged = [...existing.roles].sort().join(",") !== [...roles].sort().join(",");
+    const modulesChanged = modules !== null && !sameModules(existing.modules, modules);
+    if (modulesChanged) {
+      // The user page's rule (D-168): not your own, and another IT Admin's only by the Super Admin.
+      const moduleCheck = checkModuleChange(snapshot.actor, { id: existing.id, roles: existing.roles, active: existing.active, isBreakGlass: existing.isBreakGlass });
+      if (!moduleCheck.ok) check.add("modules", moduleCheck.message);
+    }
     if (Object.keys(changes).length || rolesChanged) {
       const target = { id: existing.id, roles: existing.roles, active: existing.active, isBreakGlass: existing.isBreakGlass };
       const edit = checkCanEdit(snapshot.actor, target);
@@ -375,7 +398,7 @@ function planUsers(rows: Row[], snapshot: Snapshot): { planned: PlannedRow[]; op
         if (!contact.ok) check.add(changes.email ? "email" : changes.whatsappNumber ? "whatsapp_number" : "sign_in_method", contact.message);
       }
     }
-    const changeNames = [...Object.keys(changes), ...(rolesChanged ? ["roles"] : [])];
+    const changeNames = [...Object.keys(changes), ...(rolesChanged ? ["roles"] : []), ...(modulesChanged ? ["modules"] : [])];
     plannedRows.push(planned(row.line, existing.loginId, check, false, changeNames));
     if (!check.problems.length && changeNames.length) {
       const emailChanged = Boolean(changes.email);
@@ -388,6 +411,7 @@ function planUsers(rows: Row[], snapshot: Snapshot): { planned: PlannedRow[]; op
         manager,
         roles,
         rolesChanged,
+        modules: modulesChanged ? modules : null,
         changes,
         effects: {
           unlinkGoogle: existing.googleLinked && (emailChanged || !allowsGoogle(value.signInMethod)),

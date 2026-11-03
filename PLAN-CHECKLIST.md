@@ -17,7 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
-- **Now (3 Nov 2026):** v1.49.1: import with Excel templates and uploads (and tab CSV). **Owner:** publish; import ars-1-departments-no-hod.xlsx → ars-2-users.xlsx → ars-3-departments-with-hod.xlsx (designations HOD, EXEC, DMGR, SEXE must exist).
+- **Now (3 Nov 2026):** v1.49.2: module access in the users import; v1.49.1: import with Excel templates and uploads (and tab CSV). **Owner:** publish; import ars-1-departments-no-hod.xlsx → ars-2-users-with-modules.xlsx (fill modules) → ars-3-departments-with-hod.xlsx (designations HOD, EXEC, DMGR, SEXE must exist).
 - **Before (2 Nov 2026):** v1.49.0: the ARS GREEN STEEL CMS brand (D-287), New request / New task straight to the form, Classic tab bar fix (D-288). **Owner:** publish v1.49.0; rename the OAuth consent screen app to "ARS CMS" in Google Cloud (Q-027); reopen or reinstall the phone app for the new icon.
 - **Now (2 Nov 2026):** v1.48.1: slimmer journey, hover details with the approver, the folded header road (D-285). Publish v1.48.1.
 - **Now (2 Nov 2026):** v1.48.0: the new Approval Journey (computer and phone), the request page re-laid out, one colour per status (D-283, D-284). No migration of its own. **Owner:** publish v1.48.0 (contains everything since v1.46.0).
@@ -160,6 +160,11 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 - **Still open:** Q-015.
 
 ---
+
+## Session log — v1.49.2 (3 Nov 2026): module access in the users import
+Owner: "I should be able to give module access while uploading users itself".
+- [x] V1492-01 (3 Nov 2026) Optional `modules` column (kinds optional flag; header may omit it); planner parses ALL / list / empty (new → default, existing → keep), unknown refused, checkModuleChange for changes; ops carry modules; service writes setUserModules and audits; current-data export includes modules
+- [x] V1492-02 (3 Nov 2026) Unit tests (create/keep/change/own/unknown), integration (module_access saved), User Guide, release notes; owner's file Downloads/ars-2-users-with-modules.xlsx
 
 ## Session log — v1.49.1 (3 Nov 2026): import with Excel files
 Owner: departments and users files from Excel came out tab-separated ("Missing columns … Unknown column: login_id name email …").

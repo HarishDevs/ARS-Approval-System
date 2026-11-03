@@ -1,7 +1,7 @@
 import "server-only";
 import { withTransaction } from "@/lib/db/transaction";
 import { loadImportSnapshot, setReportingManager, upsertHoliday } from "@/lib/db/repositories/import.repository";
-import { insertUser, replaceUserRoles, updateUserRecord } from "@/lib/db/repositories/admin-users.repository";
+import { insertUser, replaceUserRoles, setUserModules, updateUserRecord } from "@/lib/db/repositories/admin-users.repository";
 import { insertDepartment, insertDesignation, updateDepartment, updateDesignation } from "@/lib/db/repositories/organisation.repository";
 import { addGroupMember, insertGroup, removeGroupMember, updateGroup } from "@/lib/db/repositories/groups.repository";
 import { revokeAllSessionsForUser } from "@/lib/db/repositories/sessions.repository";
@@ -80,13 +80,15 @@ async function applyOps(ops: ImportOp[], actor: AdminActor, db: PoolConnection):
       const managerId = op.manager && "id" in op.manager ? op.manager.id : null;
       const id = await insertUser({ ...op.value, reportingManagerId: managerId }, actor.id, db);
       await replaceUserRoles(id, op.roles, actor.id, db);
+      await setUserModules(id, op.modules, actor.id, db);
       idByLogin.set(op.value.loginId.toLowerCase(), id);
       if (op.manager && "loginId" in op.manager) laterManagers.push({ userId: id, managerLogin: op.manager.loginId });
-      await audit(actor, "USER_CREATED", "USER", id, { line: op.line, after: { ...op.value, manager: op.manager, roles: op.roles } }, db);
+      await audit(actor, "USER_CREATED", "USER", id, { line: op.line, after: { ...op.value, manager: op.manager, roles: op.roles, modules: op.modules } }, db);
     } else if (op.kind === "user-update") {
       const managerId = op.manager && "id" in op.manager ? op.manager.id : null;
       await updateUserRecord(op.id, { ...op.value, reportingManagerId: managerId }, op.effects, actor.id, db);
       if (op.rolesChanged) await replaceUserRoles(op.id, op.roles, actor.id, db);
+      if (op.modules) await setUserModules(op.id, op.modules, actor.id, db);
       if (op.endSessions) await revokeAllSessionsForUser(op.id, "ACCOUNT_CHANGED_BY_ADMIN", db);
       if (op.manager && "loginId" in op.manager) laterManagers.push({ userId: op.id, managerLogin: op.manager.loginId });
       await audit(
@@ -98,6 +100,7 @@ async function applyOps(ops: ImportOp[], actor: AdminActor, db: PoolConnection):
           line: op.line,
           changes: op.changes,
           ...(op.rolesChanged ? { roles: op.roles } : {}),
+          ...(op.modules ? { modules: op.modules } : {}),
           ...(op.effects.unlinkGoogle ? { googleUnlinked: true } : {}),
           ...(op.effects.clearPassword ? { passwordRemoved: true } : {}),
           ...(op.endSessions ? { sessionsEnded: true } : {}),
@@ -245,6 +248,7 @@ async function currentDataRows(kind: ImportKind): Promise<(string | number | nul
             user.designationId ? designations.get(user.designationId) : "",
             user.reportingManagerId ? loginOf.get(user.reportingManagerId) : "",
             user.signInMethod,
+            user.modules.join(";"),
             user.roles.join(";"),
           ]);
     }

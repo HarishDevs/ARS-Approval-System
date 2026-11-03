@@ -3,6 +3,7 @@ import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { getDbPool, type Queryable } from "@/lib/db/client";
 import type { Snapshot, SnapshotUser } from "@/server/import/plan";
 import type { RoleCode, SignInMethod } from "@/types/auth";
+import { parseModuleSet } from "@/server/modules/modules";
 
 // Reads for bulk import (S10, F-59): everything the planner compares a file
 // against, in a few queries. Password hashes and Google ids are never
@@ -26,10 +27,11 @@ export async function loadImportSnapshot(db: Queryable = getDbPool()): Promise<O
       google_linked: number;
       has_password: number;
       roles: string | null;
+      module_access: string | null;
     })[]
   >(
     `SELECT u.id, u.login_id, u.name, u.email, u.whatsapp_number, u.department_id, u.designation_id, u.reporting_manager_id,
-            u.sign_in_method, u.active, u.is_break_glass, u.is_demo,
+            u.sign_in_method, u.active, u.is_break_glass, u.is_demo, u.module_access,
             COALESCE((SELECT d.is_approver FROM designations d WHERE d.id = u.designation_id), FALSE) AS approver,
             (u.firebase_uid IS NOT NULL) AS google_linked, (u.password_hash IS NOT NULL) AS has_password,
             (SELECT GROUP_CONCAT(r.code ORDER BY r.id) FROM user_roles ur JOIN roles r ON r.id = ur.role_id AND r.active = TRUE WHERE ur.user_id = u.id) AS roles
@@ -70,6 +72,7 @@ export async function loadImportSnapshot(db: Queryable = getDbPool()): Promise<O
         approver: Number(row.approver) === 1,
         googleLinked: Number(row.google_linked) === 1,
         hasPassword: Number(row.has_password) === 1,
+        modules: parseModuleSet(row.module_access),
       }),
     ),
     departments: departments.map((row) => ({ id: row.id, code: row.code, name: row.name, hodUserId: row.hod_user_id, active: Number(row.active) === 1 })),

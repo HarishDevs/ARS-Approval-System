@@ -1,5 +1,10 @@
 # Release notes
 
+## v1.49.2 (3 Nov 2026): module access in the users import (owner)
+- The users file has a **modules** column (before roles): **APPROVAL**, **TASK**, **INFORMATION**, **AI** separated by ; or **ALL**. Empty: a new person gets Approval, Task and Information; an existing person keeps what they have.
+- The same rule as the user page: nobody changes their own module access, and only the Super Admin changes another IT Admin's.
+- Files made before this column still import (the column can be left out).
+
 ## v1.49.1 (3 Nov 2026): import with Excel files (owner)
 - **Admin → Import** works with **Excel**: **Download template** and **Download current …** give an Excel workbook (.xlsx) with the sheet to fill (columns set to Text, so User IDs and WhatsApp numbers stay as typed) and a **How to fill** sheet. Upload the filled workbook as it is; dates, numbers and TRUE/FALSE are read correctly. The problem list downloads as Excel too.
 - CSV files still work, with commas, semicolons or tabs (Excel's "Text (Tab delimited)" too; before, a tab file showed every column as missing).
