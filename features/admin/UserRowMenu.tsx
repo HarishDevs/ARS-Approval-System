@@ -57,7 +57,7 @@ export function UserRowMenu({
               {
                 command: "invite" as const,
                 label: "Re-invite",
-                confirm: signInMethod !== "GOOGLE" ? `Email ${name} a welcome with their User ID and a link (valid 72 hours) to set their password? Older links stop working.` : `Email ${name} a welcome telling them to sign in with Google?`,
+                confirm: signInMethod !== "GOOGLE" ? `Email ${name} a welcome with their User ID and a link (valid 12 hours) to set their password? Older links stop working.` : `Email ${name} a welcome telling them to sign in with Google?`,
                 confirmLabel: "Yes, send",
               },
             ]
@@ -65,8 +65,8 @@ export function UserRowMenu({
         ...(active && signInMethod !== "GOOGLE"
           ? [
               hasPassword
-                ? { command: "reset-password" as const, label: "Send reset-password link", confirm: `Email ${name} a link (valid 72 hours) to choose a new password? Their current password keeps working until then.`, confirmLabel: "Yes, send" }
-                : { command: "set-password-link" as const, label: "Send set-password link", confirm: `Email ${name} a link (valid 72 hours) to set a password, confirmed by a WhatsApp code? Older links stop working.`, confirmLabel: "Yes, send" },
+                ? { command: "reset-password" as const, label: "Send reset-password link", confirm: `Email ${name} a link (valid 12 hours) to choose a new password? Their current password keeps working until then.`, confirmLabel: "Yes, send" }
+                : { command: "set-password-link" as const, label: "Send set-password link", confirm: `Email ${name} a link (valid 12 hours) to set a password, confirmed by a WhatsApp code? Older links stop working.`, confirmLabel: "Yes, send" },
             ]
           : []),
         active

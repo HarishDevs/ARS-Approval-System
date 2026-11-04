@@ -17,7 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
-- **Now (4 Nov 2026):** v1.49.5: My Approvals pages by designation (requesters see four), request highlights its own list, no Open card, no cards on My approved requests, Super Admin Delete selected. v1.49.4: notifications panel layout. v1.49.3: users list ⋮ actions and Department filter; see-through dropdowns fixed. v1.49.2: module access in the users import; v1.49.1: import with Excel templates and uploads (and tab CSV). **Owner:** publish; import ars-1-departments-no-hod.xlsx → ars-2-users-with-modules.xlsx (fill modules) → ars-3-departments-with-hod.xlsx (designations HOD, EXEC, DMGR, SEXE must exist).
+- **Now (4 Nov 2026):** v1.49.6: welcome email on create and import (links 12 h), users bulk actions, Home tidy-up, Due date column. Next: Q2–Q5 (linked-request search, work-task priority/due date into Task Management, linked items on the request page, PDF like the screen) as v1.50.0. v1.49.5: My Approvals pages by designation (requesters see four), request highlights its own list, no Open card, no cards on My approved requests, Super Admin Delete selected. v1.49.4: notifications panel layout. v1.49.3: users list ⋮ actions and Department filter; see-through dropdowns fixed. v1.49.2: module access in the users import; v1.49.1: import with Excel templates and uploads (and tab CSV). **Owner:** publish; import ars-1-departments-no-hod.xlsx → ars-2-users-with-modules.xlsx (fill modules) → ars-3-departments-with-hod.xlsx (designations HOD, EXEC, DMGR, SEXE must exist).
 - **Before (2 Nov 2026):** v1.49.0: the ARS GREEN STEEL CMS brand (D-287), New request / New task straight to the form, Classic tab bar fix (D-288). **Owner:** publish v1.49.0; rename the OAuth consent screen app to "ARS CMS" in Google Cloud (Q-027); reopen or reinstall the phone app for the new icon.
 - **Now (2 Nov 2026):** v1.48.1: slimmer journey, hover details with the approver, the folded header road (D-285). Publish v1.48.1.
 - **Now (2 Nov 2026):** v1.48.0: the new Approval Journey (computer and phone), the request page re-laid out, one colour per status (D-283, D-284). No migration of its own. **Owner:** publish v1.48.0 (contains everything since v1.46.0).
@@ -162,12 +162,15 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 ---
 
 ## Queued (owner, 4 Nov 2026) — next release, planned before building
-- [ ] Q1 New and imported users get a welcome email with a set-password link valid 12 hours
+- [x] Q1 (4 Nov 2026, v1.49.6) New and imported users get a welcome email with a set-password link valid 12 hours
 - [ ] Q2 Linked requests: search by number or title among requests the person may see, then link (not only a typed number)
 - [ ] Q3 Work task steps: choose Priority and Due date; once the request is fully approved the task appears in the assignee's Task Management
 - [ ] Q4 The request page shows work tasks raised from it and linked approvals
 - [ ] Q5 PDF download in the same layout as the request screen
-- [ ] Q6 Admin → Users & roles: tick several users and act on them together (multi-select + bulk actions)
+- [x] Q6 (4 Nov 2026, v1.49.6) Admin → Users & roles: tick several users and act on them together (multi-select + bulk actions)
+- [x] Q7 (4 Nov 2026, v1.49.6) Home: drop Recently viewed and Finished in the last 30 days
+- [x] Q8 (4 Nov 2026, v1.49.6) Home: My recent requests 8 per page with pagination
+- [x] Q9 (4 Nov 2026, v1.49.6) Waiting for me: column "Due date"; "No due date" when the step has no response time
 
 ## Session log — v1.49.5 (4 Nov 2026): approvals pages by role, highlighted list, Delete selected
 Owner: "the opened approval is from Waiting for me but it highlights My pending requests, correct it and check all the visual issues for both Compact and Classic view"; "based on the designation approver or not show only New Request, My pending request, My approved request, Collaborating for all the requestors; approvers get all the screens"; "remove the Open card"; "drop all the cards from My approved request screen"; "add select and Delete option in this Super admin" (Requests).

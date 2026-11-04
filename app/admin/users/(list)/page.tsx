@@ -9,6 +9,8 @@ import { listUsersForAdmin } from "@/lib/db/repositories/admin-users.repository"
 import { listDepartments } from "@/lib/db/repositories/organisation.repository";
 import { checkCanEdit } from "@/server/admin/user-rules";
 import { UserRowMenu } from "@/features/admin/UserRowMenu";
+import { USERS_BULK_FORM, UsersBulkActions } from "@/features/admin/UsersBulkActions";
+import { RowSelectBox } from "@/features/ui/BulkSelect";
 import { ROLE_LABEL } from "@/features/ui/labels";
 import { MODULE_LABEL, MODULES, type ModuleCode } from "@/server/modules/modules";
 import { SIGN_IN_LABEL } from "@/types/auth";
@@ -96,6 +98,8 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
         </button>
       </form>
 
+      {/* v1.49.6 (owner): tick users, then one action for all of them. */}
+      {items.length > 0 && <UsersBulkActions />}
       <DataTable
         caption="Users"
         storageKey="admin-users"
@@ -111,15 +115,21 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
           { key: "status", header: "Status", sortable: true },
           { key: "actions", header: "Actions" },
         ]}
-        rows={items.map((user) => ({
+        rows={items.map((user) => {
+          const canEdit = user.id !== actor.id && checkCanEdit(actor, { id: user.id, roles: user.roles, active: user.active, isBreakGlass: user.isBreakGlass }).ok;
+          return {
           id: user.id,
           sort: { name: user.name, login: user.loginId, department: user.departmentName, status: user.active ? 0 : 1 },
           cells: {
             name: (
               <>
-                <Link href={`/admin/users/${user.id}`} className="link">
-                  {user.name}
-                </Link>
+                <span className="flex items-center gap-2">
+                  {/* Only people you may change can be ticked (not yourself; another IT Admin only by the Super Admin). */}
+                  {canEdit && <RowSelectBox formId={USERS_BULK_FORM} value={user.id} label={`Select ${user.name}`} testId="select-user" />}
+                  <Link href={`/admin/users/${user.id}`} className="link">
+                    {user.name}
+                  </Link>
+                </span>
                 <span className="block text-caption text-ink-muted">
                   <Email address={user.email} />
                 </span>
@@ -145,11 +155,12 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
                 active={user.active}
                 signInMethod={user.signInMethod}
                 hasPassword={user.hasPassword}
-                canEdit={user.id !== actor.id && checkCanEdit(actor, { id: user.id, roles: user.roles, active: user.active, isBreakGlass: user.isBreakGlass }).ok}
+                canEdit={canEdit}
               />
             ),
           },
-        }))}
+          };
+        })}
       />
 
       {pages > 1 && (

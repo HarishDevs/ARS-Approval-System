@@ -42,10 +42,11 @@ export async function createUserAction(_previous: ActionResult | null, formData:
     logError("createUserAction failed", error);
     return { ok: false, message: "Couldn't create the user. Please try again." };
   }
-  // v1.13.0 (D-166): "Email an invitation now" (ticked by default). The
-  // user exists either way; the page says whether the email went.
+  // v1.13.0 (D-166); v1.49.6 (owner): every new user gets the welcome email
+  // (set-password link valid 12 hours). The user exists either way; the page
+  // says whether the email went.
   let invite = "";
-  if (formData.get("invite") === "on") {
+  {
     const sent = await sendInvitation(newId, actor).catch((error) => {
       logError("createUserAction: invitation failed", error, { userId: newId });
       return { ok: false as const, message: "" };
@@ -130,6 +131,38 @@ export async function userCommandAction(_previous: ActionResult | null, formData
     logError("userCommandAction failed", error, { command });
     return { ok: false, message: "Something went wrong. Please try again." };
   }
+}
+
+// v1.49.6 (owner: "multiselect and action should be needed in user page as
+// well"): the ticked users of the list, one action for all of them. Each goes
+// through runCommand, so the same checks apply per person (yourself, another
+// IT Admin, Google-only for links); the answer counts what was done and says
+// why the rest weren't.
+const BULK_COMMANDS = ["invite", "set-password-link", "deactivate", "reactivate"] as const;
+const BULK_LIMIT = 100;
+export async function bulkUserCommandAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const actor = await getAdminActor("admin.users");
+  if (!actor) return NOT_FOUND;
+  const command = String(formData.get("command") ?? "") as (typeof BULK_COMMANDS)[number];
+  if (!BULK_COMMANDS.includes(command)) return NOT_FOUND;
+  const ids = [...new Set(formData.getAll("ids").map((value) => parseId(value)))].filter((id): id is number => id !== null);
+  if (ids.length === 0) return { ok: false, message: "Tick at least one user." };
+  if (ids.length > BULK_LIMIT) return { ok: false, message: `Act on up to ${BULK_LIMIT} users at a time.` };
+  let done = 0;
+  const reasons = new Map<string, number>();
+  for (const id of ids) {
+    const result = await runCommand(command, id, actor).catch((error: unknown) => {
+      logError("bulkUserCommandAction: one user failed", error, { command, userId: id });
+      return { ok: false as const, message: "Something went wrong." };
+    });
+    if (result.ok) done += 1;
+    else reasons.set(result.message, (reasons.get(result.message) ?? 0) + 1);
+  }
+  revalidatePath("/admin/users");
+  const verb = { invite: "Invited", "set-password-link": "Set-password link sent to", deactivate: "Deactivated", reactivate: "Activated" }[command];
+  const head = `${verb} ${done} of ${ids.length} user${ids.length === 1 ? "" : "s"}.`;
+  const tail = [...reasons].map(([message, count]) => `${count} not done: ${message}`).join(" ");
+  return { ok: done > 0, message: tail ? `${head} ${tail}` : head, data: { done } };
 }
 
 // F-16: move every pending approval of a person to someone else.

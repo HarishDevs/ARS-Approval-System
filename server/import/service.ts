@@ -16,10 +16,12 @@ import { XlsxError, readXlsxRows, rowsToCsvText } from "@/server/import/xlsx-rea
 import { logError } from "@/lib/logging/logger";
 import type { AdminActor } from "@/server/admin/users";
 import type { PoolConnection } from "mysql2/promise";
+import { after } from "next/server";
+import { sendInvitation } from "@/server/auth/set-password";
 
 // Bulk import (S10-03, F-59, D-084). Check = plan only. Import = plan again
 // inside one transaction and write every row, or none.
-export type ImportOutcome = { ok: true; plan: ImportPlan } | { ok: false; message: string; plan?: ImportPlan };
+export type ImportOutcome = { ok: true; plan: ImportPlan; invited: number } | { ok: false; message: string; plan?: ImportPlan };
 
 // The uploaded file as CSV text, within the size limit. v1.49.1 (owner): an
 // Excel workbook (.xlsx/.xlsm, first sheet) or a CSV/TSV/text file with
@@ -70,7 +72,7 @@ class PlanRejected extends Error {
 const audit = (actor: AdminActor, action: string, entityType: string, entityId: number | string, metadata: Record<string, unknown>, db: PoolConnection) =>
   recordAudit({ actorUserId: actor.id, action, entityType, entityId, sessionId: actor.sessionId, ipAddress: actor.ipAddress, metadata: { source: "IMPORT", ...metadata } }, db);
 
-async function applyOps(ops: ImportOp[], actor: AdminActor, db: PoolConnection): Promise<void> {
+async function applyOps(ops: ImportOp[], actor: AdminActor, db: PoolConnection): Promise<number[]> {
   // Users: everyone first, then reporting lines that point at people
   // created by this same file.
   const idByLogin = new Map<string, number>();
@@ -145,15 +147,17 @@ async function applyOps(ops: ImportOp[], actor: AdminActor, db: PoolConnection):
     if (managerId === undefined) throw new Error("IMPORT_MANAGER_MISSING");
     await setReportingManager(userId, managerId, actor.id, db);
   }
+  return [...idByLogin.values()];
 }
 
 export async function runImport(kind: ImportKind, text: string, fileName: string, actor: AdminActor): Promise<ImportOutcome> {
   let plan: ImportPlan;
+  let created: number[] = [];
   try {
     plan = await withTransaction(async (db) => {
       const current = planImport(kind, text, await snapshotFor(actor, db));
       if (current.fileProblems.length || current.summary.error > 0) throw new PlanRejected(current);
-      await applyOps(current.ops, actor, db);
+      created = await applyOps(current.ops, actor, db);
       await recordAudit(
         {
           actorUserId: actor.id,
@@ -187,7 +191,22 @@ export async function runImport(kind: ImportKind, text: string, fileName: string
       logError("runImport: alert failed", error, { userId: op.id });
     }
   }
-  return { ok: true, plan };
+  // v1.49.6 (owner): everyone created by an import gets the welcome email
+  // with a set-password link (12 hours), as from Add user. Sent after the
+  // response, one by one, so a long file doesn't hold the page; a failure is
+  // logged and IT can Re-invite from the user's row.
+  if (created.length) {
+    after(async () => {
+      for (const userId of created) {
+        const sent = await sendInvitation(userId, actor).catch((error: unknown) => {
+          logError("runImport: invitation failed", error, { userId });
+          return null;
+        });
+        if (sent && !sent.ok) logError("runImport: invitation not sent", new Error(sent.message), { userId });
+      }
+    });
+  }
+  return { ok: true, plan, invited: created.length };
 }
 
 // Downloads (S10-04): the empty template, or the current data in the same

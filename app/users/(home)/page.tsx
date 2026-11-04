@@ -5,10 +5,8 @@ import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { displayName } from "@/features/shell/AppShell";
 import { MyRequestsTable, QueueTable } from "@/features/requests/lists";
-import { PriorityPill } from "@/features/ui/ChoicePill";
 import { priorityRecord } from "@/server/approvals/priority-lookup";
 import { countPendingTasksFor, listAttentionTasksFor, listMyRequests, listPendingTasksFor } from "@/lib/db/repositories/approvals.repository";
-import { listRecent } from "@/lib/db/repositories/recent.repository";
 import { ErrorState } from "@/features/ui/States";
 import { listDrafts } from "@/lib/db/repositories/drafts.repository";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
@@ -38,11 +36,12 @@ export const metadata: Metadata = { title: "Home" };
 // My Work (S9-11, spec #1): the next thing to do first. Every list uses the
 // same access rules as its full page (Waiting for me, My requests) and is
 // bounded; each section links to that page.
-const RECENT_DAYS = 30;
 // D-264 (owner): Home shows one area at a time, Approvals or Task Management,
 // chosen at the top (?home=). D-265 (owner): approvers start on Approvals,
 // everyone else on Task Management; either can switch.
 type HomeFocus = "approvals" | "tasks";
+
+const RECENT_PAGE_SIZE = 8;
 
 export default async function UsersHome({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const { user } = await requireArea("users");
@@ -117,22 +116,24 @@ export default async function UsersHome({ searchParams }: { searchParams: Promis
 
   const today = indiaDayOf(new Date());
   const period = parsePeriod({ period: query.period, from: query.from, to: query.to }, today, "month");
-  const [queue, waiting, attention, mine, drafts, onboarded, recent, insights, counts] = await Promise.all([
+  // v1.49.6 (owner): no Recently viewed and no Finished in the last 30 days on Home.
+  const [queue, waiting, attention, mine, drafts, onboarded, insights, counts] = await Promise.all([
     listPendingTasksFor(user.id, { limit: 5, offset: 0 }),
     countPendingTasksFor(user.id),
     listAttentionTasksFor(user.id, 10),
     listMyRequests(user.id),
     listDrafts(user.id, query.drafts === "all" ? 20 : 5),
     hasFlag(user.id, "ONBOARDING_DONE"),
-    listRecent({ id: user.id, isAdmin: user.roles.includes("IT_ADMIN") || user.roles.includes("SUPER_ADMIN") }, 5).catch(() => null), // D-233: a failure says so, it isn't "nothing viewed"
     approvalInsights(user.id, period).catch(() => null),
     myRequestCounts(user.id),
   ]);
   const returned = mine.filter((item) => item.status === "CHANGES_REQUIRED");
-  const since = Date.now() - RECENT_DAYS * 86_400_000;
-  const completed = mine.filter((item) => (item.status === "APPROVED" || item.status === "REJECTED") && item.closedAt && item.closedAt.getTime() >= since).slice(0, 5);
+  // v1.49.6 (owner): My recent requests shows 8 at a time, the rest on pages (?recent=N).
+  const recentPages = Math.max(1, Math.ceil(mine.length / RECENT_PAGE_SIZE));
+  const recentPage = Math.min(recentPages, Math.max(1, Math.floor(Number(query.recent)) || 1));
+  const recentItems = mine.slice((recentPage - 1) * RECENT_PAGE_SIZE, recentPage * RECENT_PAGE_SIZE);
   // v1.47.0 (owner): the Priority pill on every Home widget, one query for them all.
-  const priority = await priorityRecord([...queue.map((item) => item.requestId), ...attention.items.map((item) => item.requestId), ...[...returned.slice(0, 5), ...mine.slice(0, 5), ...completed].map((item) => item.id), ...(recent ?? []).map((item) => item.id)], user);
+  const priority = await priorityRecord([...queue.map((item) => item.requestId), ...attention.items.map((item) => item.requestId), ...[...returned.slice(0, 5), ...recentItems].map((item) => item.id)], user);
   // D-265: icon, label, what it counts; each opens the page with that list.
   const tiles = [
     { label: "Waiting for me", note: "Requests awaiting your approval", value: waiting, href: "/users/queue", icon: Inbox, tone: "bg-primary-50 text-primary-700", alert: waiting > 0 },
@@ -268,17 +269,39 @@ export default async function UsersHome({ searchParams }: { searchParams: Promis
                 </Link>
               )}
             </div>
-            <MyRequestsTable items={mine.slice(0, 5)} priority={priority} />
+            <MyRequestsTable items={recentItems} priority={priority} />
+            {recentPages > 1 && (
+              <nav aria-label="My recent requests pages" className="mt-3 flex flex-wrap items-center justify-between gap-2 text-label" data-testid="recent-pages">
+                <span className="text-ink-muted">
+                  {(recentPage - 1) * RECENT_PAGE_SIZE + 1}–{(recentPage - 1) * RECENT_PAGE_SIZE + recentItems.length} of {mine.length}
+                </span>
+                <span className="flex items-center gap-1">
+                  {recentPage > 1 && (
+                    <Link href={`/users?${new URLSearchParams({ ...keep, recent: String(recentPage - 1) })}`} scroll={false} className="btn-secondary btn-compact" aria-label="Previous page">
+                      ←
+                    </Link>
+                  )}
+                  {Array.from({ length: recentPages }, (_, index) => index + 1).map((value) =>
+                    value === recentPage ? (
+                      <span key={value} aria-current="page" className="grid h-8 min-w-8 place-items-center rounded-md bg-primary-solid px-2 font-semibold text-on-solid">
+                        {value}
+                      </span>
+                    ) : (
+                      <Link key={value} href={`/users?${new URLSearchParams({ ...keep, recent: String(value) })}`} scroll={false} className="grid h-8 min-w-8 place-items-center rounded-md px-2 hover:bg-surface-muted" aria-label={`Page ${value}`}>
+                        {value}
+                      </Link>
+                    ),
+                  )}
+                  {recentPage < recentPages && (
+                    <Link href={`/users?${new URLSearchParams({ ...keep, recent: String(recentPage + 1) })}`} scroll={false} className="btn-secondary btn-compact" aria-label="Next page">
+                      →
+                    </Link>
+                  )}
+                </span>
+              </nav>
+            )}
           </section>
 
-          {completed.length > 0 && (
-            <section className="card min-w-0 px-4 py-4 sm:px-5" aria-labelledby="completed">
-              <h2 id="completed" className="mb-3 text-[calc(17px*var(--text-scale,1))] font-semibold">
-                Finished in the last {RECENT_DAYS} days
-              </h2>
-              <MyRequestsTable items={completed} priority={priority} />
-            </section>
-          )}
         </div>
 
         <div className="min-w-0 space-y-6">
@@ -309,42 +332,6 @@ export default async function UsersHome({ searchParams }: { searchParams: Promis
                       </span>
                     </span>
                     <DeleteDraftButton draftKey={draft.key} title={draft.title} />
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-
-          <section className="card min-w-0 px-4 py-4 sm:px-5" aria-labelledby="recently-viewed">
-            <div className="mb-3 flex items-baseline justify-between">
-              <h2 id="recently-viewed" className="text-[calc(17px*var(--text-scale,1))] font-semibold">
-                Recently viewed
-              </h2>
-            </div>
-            {recent === null ? (
-              <ErrorState variant="inline" body="Recently viewed couldn't be loaded just now. Reload the page to try again." />
-            ) : recent.length === 0 ? (
-              <p className="py-3 text-label text-ink-muted">Requests you open are listed here.</p>
-            ) : (
-              <ul className="divide-y divide-line">
-                {recent.map((item) => (
-                  <li key={item.id} className="flex items-center gap-3 py-2">
-                    <FileText aria-hidden="true" className="h-5 w-5 shrink-0 text-primary-700" />
-                    <span className="min-w-0 flex-1">
-                      <Link href={`/users/requests/${item.id}`} className="link block truncate font-medium">
-                        <SafeText text={item.title} />
-                      </Link>
-                      <span className="flex flex-wrap items-center gap-1.5 text-caption text-ink-muted">
-                        {item.requestNo}
-                        {priority[item.id] && (
-                          <>
-                            <span aria-hidden="true">·</span>
-                            <PriorityPill priority={priority[item.id]} />
-                          </>
-                        )}
-                      </span>
-                    </span>
-                    <span className="shrink-0 text-right text-caption text-ink-muted">opened {formatIndiaTime(item.viewedAt)}</span>
                   </li>
                 ))}
               </ul>

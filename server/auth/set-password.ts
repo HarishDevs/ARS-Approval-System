@@ -22,7 +22,8 @@ import { appBaseUrl } from "@/lib/http/app-url";
 // F-04: set password (first sign-in, P1-13) and forgot password (P1-14).
 // Both end with a WhatsApp code to the number on file (D-025), then set the
 // password, end every other session, alert the user and sign them in.
-export const SET_PASSWORD_LINK_HOURS = 72;
+// v1.49.6 (owner): set-password and invitation links work for 12 hours.
+export const SET_PASSWORD_LINK_HOURS = 12;
 const SECURITY_LOCK_SECONDS = 365 * 24 * 60 * 60;
 
 export interface PasswordFlowDeps extends OtpDeps {

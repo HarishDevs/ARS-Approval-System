@@ -68,9 +68,9 @@ The search bar in the middle of the top bar finds requests, tasks, projects, peo
 
 ### Home
 Approvers open on **Approvals**, everyone else on **Task Management**; switch at the top.
-- **Approval Overview:** cards for Waiting for me, Overdue for me, My open requests and Changes asked of me (click one for its list); Waiting for me; your recent requests; on the right your drafts (open or delete), recently viewed requests and **Quick insights** (requests raised, approved and the average approval time for the period you pick; N/A when nothing was approved).
+- **Approval Overview:** cards for Waiting for me, Overdue for me, My open requests and Changes asked of me (click one for its list); Waiting for me; your recent requests (8 per page); on the right your drafts (open or delete) and **Quick insights** (requests raised, approved and the average approval time for the period you pick; N/A when nothing was approved).
 - **My Work – Overview:** pick a period (Today, This week, This month, Last 30 days or Custom). Total = open now plus completed in the period; Upcoming = open, due today or later; Overdue = open, past the due date; Completed = done in the period. My Tasks has tabs; tick a task to complete it, or open it to edit, reassign or change the date. Projects show their progress; Latest status updates lists what happened on your tasks and projects; My weekly workload shows tasks given to you and completed each day.
-The first page after signing in. Tiles show what is waiting for you, what is overdue, your open requests and what was sent back. Then, in order: **Due soon or overdue**, **Waiting for me**, **Returned to you for changes**, **Your drafts**, **Recently viewed**, **My recent requests** and **Finished in the last 30 days**, followed by your tasks, your team and your projects.
+The first page after signing in. Tiles show what is waiting for you, what is overdue, your open requests and what was sent back. Then, in order: **Due soon or overdue**, **Waiting for me**, **Returned to you for changes**, **Your drafts** and **My recent requests** (8 at a time, with page numbers for the rest), followed by your tasks, your team and your projects.
 
 ### Inbox
 Everything the app has told you, in one place: **All**, **Approvals**, **Tasks**, **Information** and **System**, each with its unread count, and an unread-only switch.
@@ -224,7 +224,7 @@ If you don't act in time: you get a **due soon** heads-up first, then reminders 
 Switch to it from the account menu → **Switch space**.
 - **Overview, Needs attention, Analytics, Reports, Insights, Dashboards, Workload:** how approvals are flowing; CSV downloads.
 - **Records:** every approval request, task and information item, with filters; requests show their **Amount** (also in the CSV), or *Hidden* when the amount field is confidential and you may not see it.
-- **Users & roles:** add people, set department, designation, reporting manager, roles, modules and sign-in method (Google, User ID and password, or Both). **Re-invite** emails their User ID and a set-password link. Deactivate leavers: *Deactivate user* asks to confirm, then signs them out everywhere. *Hand over* moves someone's pending approvals to another person.
+- **Users & roles:** tick several people (or Select all on this page) to Re-invite, Send set-password link, Deactivate or Activate them together. Every new person, added here or by import, is emailed a welcome with a set-password link valid 12 hours. Add people, set department, designation, reporting manager, roles, modules and sign-in method (Google, User ID and password, or Both). **Re-invite** emails their User ID and a set-password link. Deactivate leavers: *Deactivate user* asks to confirm, then signs them out everywhere. *Hand over* moves someone's pending approvals to another person.
 - **Departments:** departments (with HOD) and designations. Tick **Approver** on designations of Manager and above. Only approver designations can be chosen to approve.
 - **Approver groups:** e.g. Finance team, for "any one of the group".
 - **Approval types & workflows:** each approval type has:

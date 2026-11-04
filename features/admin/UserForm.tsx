@@ -195,12 +195,10 @@ export function UserForm({
       </fieldset>
       {mode === "create" && (
         <div className="flex items-center gap-1.5 border-t border-line px-5 py-4">
-          <label className="flex items-center gap-2 text-label">
-            <input type="checkbox" name="invite" defaultChecked />
-            <span className="font-medium">Email an invitation now</span>
-          </label>
+          {/* v1.49.6 (owner): every new user is emailed; no opt-out. */}
+          <p className="text-label font-medium">A welcome email goes to this address when you create the user.</p>
           <Hint
-            text={method === "GOOGLE" ? "Tells them they've been added and to sign in with Google as this email." : method === "BOTH" ? "Sends their User ID and a link to set their password (confirmed by a WhatsApp code); they can also sign in with Google as this email." : "Sends their User ID and a link to set their password (confirmed by a WhatsApp code)."}
+            text={method === "GOOGLE" ? "Tells them they've been added and to sign in with Google as this email." : method === "BOTH" ? "It has their User ID and a link, valid 12 hours, to set their password (confirmed by a WhatsApp code); they can also sign in with Google as this email." : "It has their User ID and a link, valid 12 hours, to set their password (confirmed by a WhatsApp code)."}
             align="start"
           />
         </div>

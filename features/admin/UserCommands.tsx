@@ -60,7 +60,7 @@ export function UserCommands({
           id={id}
           command="invite"
           label="Re-invite"
-          body={signInMethod !== "GOOGLE" ? "Emails a welcome with their User ID and a link (valid 72 hours) to set their password, confirmed by a WhatsApp code. Older links stop working." : "Emails a welcome telling them to sign in with Google as their email on record."}
+          body={signInMethod !== "GOOGLE" ? "Emails a welcome with their User ID and a link (valid 12 hours) to set their password, confirmed by a WhatsApp code. Older links stop working." : "Emails a welcome telling them to sign in with Google as their email on record."}
         />
       )}
       {active && signInMethod !== "GOOGLE" &&
@@ -69,12 +69,12 @@ export function UserCommands({
             id={id}
             command="reset-password"
             label="Reset password"
-            body="Emails a link (valid 72 hours) to choose a new password, confirmed by a WhatsApp code. Their current password keeps working until then. Older links stop working."
+            body="Emails a link (valid 12 hours) to choose a new password, confirmed by a WhatsApp code. Their current password keeps working until then. Older links stop working."
             confirm={`Email ${name} a link to reset their password?`}
             confirmLabel="Yes, send"
           />
         ) : (
-          <Command id={id} command="set-password-link" label="Send set-password link" body="Emails a link (valid 72 hours) to set a password, confirmed by a WhatsApp code. Older links stop working." />
+          <Command id={id} command="set-password-link" label="Send set-password link" body="Emails a link (valid 12 hours) to set a password, confirmed by a WhatsApp code. Older links stop working." />
         ))}
       {locked && <Command id={id} command="unlock" label="Unlock account" body="Clears a lock from wrong passwords or from “This wasn't me”." />}
       {active && (

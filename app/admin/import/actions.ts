@@ -66,7 +66,7 @@ export async function runImportAction(formData: FormData): Promise<ImportActionR
   const { create, update, unchanged } = outcome.plan.summary;
   return {
     ok: true,
-    message: `Imported: ${create} created, ${update} updated${unchanged ? `, ${unchanged} already up to date` : ""}.`,
+    message: `Imported: ${create} created, ${update} updated${unchanged ? `, ${unchanged} already up to date` : ""}.${outcome.invited ? ` Welcome emails with a set-password link (valid 12 hours) are on their way to the ${outcome.invited} new ${outcome.invited === 1 ? "person" : "people"}.` : ""}`,
     preview: preview(outcome.plan),
   };
 }

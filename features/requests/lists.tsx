@@ -80,7 +80,8 @@ export function QueueTable({ items, priority }: { items: QueueItem[]; priority?:
               <th>From</th>
               <th>Your step</th>
               <th>Waiting since</th>
-              <th>Due</th>
+              {/* v1.49.6 (owner): "Due date", and said in words when the step has no response time. */}
+              <th>Due date</th>
             </tr>
           </thead>
           <tbody>
@@ -137,7 +138,7 @@ export function QueueTable({ items, priority }: { items: QueueItem[]; priority?:
                       {formatIndiaTime(item.dueAt)}
                     </span>
                   ) : (
-                    <span className="text-ink-faint">—</span>
+                    <span className="text-ink-muted">No due date</span>
                   )}
                 </td>
               </tr>

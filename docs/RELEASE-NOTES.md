@@ -1,5 +1,12 @@
 # Release notes
 
+## v1.49.6 (4 Nov 2026): welcome emails, users bulk actions, Home tidy-up (owner)
+- **New users get a welcome email:** every user added with **Add user** or created by an **import** is emailed their User ID and a link to set their password (Google users are told to sign in with Google). There is no tick box any more. After an import the message says how many emails are on their way.
+- **Set-password and invitation links now work for 12 hours** (they were 72).
+- **Admin → Users & roles:** tick users (or **Select all on this page**) and **Re-invite**, **Send set-password link**, **Deactivate** or **Activate** them together. Each asks first; the answer says how many were done and why any weren't. Only people you may change can be ticked.
+- **Home:** **Recently viewed** and **Finished in the last 30 days** are gone. **My recent requests** shows 8 at a time, with page numbers for the rest.
+- **Waiting for me:** the last column is **Due date**; a step without a response time says **No due date**.
+
 ## v1.49.5 (4 Nov 2026): approvals pages by role, the right tab for each request, Delete selected (owner)
 - **Pages by role:** people whose designation isn't ticked **Approver** now see only **New request**, **My pending requests**, **My approved requests** and **Collaborating** under My Approvals (sidebar, Classic tabs, search and the phone bar). Approvers see every page. Anyone with something waiting for them still sees Waiting for me.
 - **Fixed:** a request opened from **Waiting for me** highlighted **My pending requests**. The highlighted page, the breadcrumb and **← Back** now name the list the request belongs to for you: Waiting for me, My pending requests, My approved requests, Approved by me or Collaborating. Same in the Compact and Classic views.

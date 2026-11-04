@@ -8,7 +8,7 @@ import { db, sessionCookie } from "./db";
 const unique = (prefix: string) => `${prefix}_${Date.now().toString(36).toUpperCase()}`;
 const NOT_SENT = /couldn't be sent \(EMAIL_NOT_CONFIGURED\)/;
 
-async function addUser(page: Page, loginId: string, options: { password?: boolean; invite: boolean }) {
+async function addUser(page: Page, loginId: string, options: { password?: boolean } = {}) {
   await page.goto("/admin/users/new");
   await page.getByLabel("Full name", { exact: true }).fill(`Invitee ${loginId}`);
   await page.getByLabel("User ID", { exact: true }).fill(loginId);
@@ -17,16 +17,16 @@ async function addUser(page: Page, loginId: string, options: { password?: boolea
     await page.getByRole("radio", { name: /User ID \+ password/ }).check();
     await page.getByLabel("WhatsApp number", { exact: true }).fill(`98${String(Date.now()).slice(-8)}`);
   }
-  const invite = page.getByRole("checkbox", { name: /Email an invitation now/ });
-  await expect(invite).toBeChecked();
-  if (!options.invite) await invite.uncheck();
+  // v1.49.6 (owner): the welcome email always goes; no tick box.
+  await expect(page.getByText("A welcome email goes to this address when you create the user.")).toBeVisible();
+  await expect(page.getByRole("checkbox", { name: /Email an invitation now/ })).toHaveCount(0);
   await page.getByRole("button", { name: "Create user" }).click();
 }
 
 test("Add user emails an invitation; Re-invite is on the user page and in the users list menu", async ({ page, context }) => {
   await context.addCookies([await sessionCookie("E2E_ADMIN")]);
   const loginId = unique("E2E_INV");
-  await addUser(page, loginId, { invite: true });
+  await addUser(page, loginId);
   await expect(page).toHaveURL(/\/admin\/users\/\d+\?created=1&invite=failed$/);
   await expect(page.getByTestId("invite-failed")).toContainText("The invitation email couldn't be sent");
 
@@ -48,8 +48,8 @@ test("Add user emails an invitation; Re-invite is on the user page and in the us
 test("a password user with a password gets Reset password on their page", async ({ page, context }) => {
   await context.addCookies([await sessionCookie("E2E_ADMIN")]);
   const loginId = unique("E2E_RST");
-  await addUser(page, loginId, { password: true, invite: false });
-  await expect(page).toHaveURL(/\/admin\/users\/\d+\?created=1$/);
+  await addUser(page, loginId, { password: true });
+  await expect(page).toHaveURL(/\/admin\/users\/\d+\?created=1&invite=failed$/);
   // Before a first password there is nothing to reset.
   await expect(page.getByRole("button", { name: "Reset password" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Send set-password link" })).toBeVisible();
@@ -76,7 +76,6 @@ test("D-208: a person can be set to sign in with Google or password (Both)", asy
   await page.getByLabel("Email", { exact: true }).fill(`${loginId.toLowerCase()}@example.com`);
   await page.getByRole("radio", { name: /^Both/ }).check();
   // Both includes password sign-in, so the WhatsApp number is required.
-  await page.getByRole("checkbox", { name: /Email an invitation now/ }).uncheck();
   await page.getByRole("button", { name: "Create user" }).click();
   await expect(page.getByText("Password sign-in needs a WhatsApp number for the sign-in code.")).toBeVisible();
   await page.getByLabel("WhatsApp number", { exact: true }).fill(`98${String(Date.now()).slice(-8)}`);

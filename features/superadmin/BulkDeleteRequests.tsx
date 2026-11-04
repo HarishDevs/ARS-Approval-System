@@ -5,67 +5,34 @@ import { useEffect, useState } from "react";
 import { deleteRequestsAction } from "@/app/superadmin/requests/actions";
 import { FieldError, ResultMessage, useActionForm } from "@/features/ui/form";
 import { Spinner } from "@/features/ui/Spinner";
+import { clearTicks, RowSelectBox, SelectAllBox, useTickedCount } from "@/features/ui/BulkSelect";
 
 // v1.49.5 (owner: "add select and Delete option in this Super admin"):
 // a tick box on each row of Super Admin → Requests and one Delete for the
 // ticked ones, with a reason, confirmed in place like the row's own Delete.
 // The row boxes are server-rendered and join this form by its id.
 export const BULK_FORM = "bulk-delete-requests";
-const boxes = () => [...document.querySelectorAll<HTMLInputElement>(`input[form="${BULK_FORM}"][name="ids"]`)];
 
 // The header's "select all on this page" box.
 export function SelectAllRequests() {
-  const [state, setState] = useState<"none" | "some" | "all">("none");
-  useEffect(() => {
-    const sync = () => {
-      const list = boxes();
-      const ticked = list.filter((box) => box.checked).length;
-      setState(ticked === 0 ? "none" : ticked === list.length ? "all" : "some");
-    };
-    sync();
-    document.addEventListener("change", sync);
-    return () => document.removeEventListener("change", sync);
-  }, []);
-  return (
-    <input
-      type="checkbox"
-      aria-label="Select all requests on this page"
-      data-testid="select-all-requests"
-      className="h-4 w-4 accent-[color:var(--color-primary-600)]"
-      checked={state === "all"}
-      ref={(element) => {
-        if (element) element.indeterminate = state === "some";
-      }}
-      onChange={(event) => {
-        for (const box of boxes()) box.checked = event.target.checked;
-        document.dispatchEvent(new Event("change"));
-      }}
-    />
-  );
+  return <SelectAllBox formId={BULK_FORM} label="Select all requests on this page" testId="select-all-requests" />;
 }
 
 export function RequestRowCheckbox({ requestId, requestNo }: { requestId: number; requestNo: string }) {
-  return <input type="checkbox" name="ids" value={requestId} form={BULK_FORM} aria-label={`Select ${requestNo}`} className="h-4 w-4 accent-[color:var(--color-primary-600)]" data-testid="select-request" />;
+  return <RowSelectBox formId={BULK_FORM} value={requestId} label={`Select ${requestNo}`} testId="select-request" />;
 }
 
 export function BulkDeleteRequests() {
-  const [count, setCount] = useState(0);
+  const count = useTickedCount(BULK_FORM);
   const [open, setOpen] = useState(false);
   const { result, pending, onSubmit } = useActionForm(deleteRequestsAction);
   const router = useRouter();
 
-  useEffect(() => {
-    const sync = () => setCount(boxes().filter((box) => box.checked).length);
-    sync();
-    document.addEventListener("change", sync);
-    return () => document.removeEventListener("change", sync);
-  }, []);
   // After a delete the rows that went are gone; untick the rest so the count starts again.
   useEffect(() => {
     if (result?.data?.deleted) {
       setOpen(false);
-      for (const box of boxes()) box.checked = false;
-      document.dispatchEvent(new Event("change"));
+      clearTicks(BULK_FORM);
       router.refresh();
     }
   }, [result, router]);
@@ -73,10 +40,7 @@ export function BulkDeleteRequests() {
     if (count === 0) setOpen(false);
   }, [count]);
 
-  const clear = () => {
-    for (const box of boxes()) box.checked = false;
-    document.dispatchEvent(new Event("change"));
-  };
+  const clear = () => clearTicks(BULK_FORM);
 
   return (
     <form id={BULK_FORM} onSubmit={onSubmit} aria-label="Delete selected requests" className="mb-3 space-y-2" data-testid="bulk-delete">
