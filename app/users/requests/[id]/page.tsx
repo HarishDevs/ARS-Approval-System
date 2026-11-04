@@ -2,6 +2,7 @@ import { countPendingTasksFor, listPendingTasksFor } from "@/lib/db/repositories
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Breadcrumbs } from "@/features/ui/Display";
+import { NavOwner } from "@/features/shell/nav-owner";
 import { notFound } from "next/navigation";
 import { MessagesSquare, Paperclip, Repeat2, ShieldCheck, Copy } from "lucide-react";
 import { requireArea } from "@/server/authorization/guards";
@@ -143,16 +144,26 @@ export default async function RequestPage({
     meta: `${file.fieldLabel ? `${file.fieldLabel} · ` : ""}${file.uploaderName} · ${formatIndiaTime(file.createdAt)}${view.round > 1 ? ` · round ${file.round}` : ""}`,
   }));
 
+  // v1.49.5 (owner: "opened from Waiting for me but it highlights My pending
+  // requests"): the list this request belongs to for this person. The
+  // breadcrumb, Back and the highlighted tab (NavOwner) all follow it.
   const backTo =
     view.myTasks.length > 0
       ? { href: "/users/queue", label: "Waiting for me" }
       : view.requesterId === user.id
-        ? { href: "/users/requests", label: "My requests" }
-        : { href: "/users/search", label: "Search" };
+        ? view.status === "APPROVED"
+          ? { href: "/users/approved", label: "My approved requests" }
+          : { href: "/users/requests", label: "My pending requests" }
+        : view.approvedByMe
+          ? { href: "/users/approved-by-me", label: "Approved by me" }
+          : collaborators.some((row) => row.userId === user.id)
+            ? { href: "/users/collaborating", label: "Collaborating" }
+            : { href: "/users/search", label: "Search" };
   return (
     <>
       {/* D-234 (Jakob): ← Back goes to the list the breadcrumb names. */}
       <Breadcrumbs items={[{ href: "/users", label: "Home" }, backTo, { label: view.requestNo }]} />
+      <NavOwner href={backTo.href} />
       {/* v1.42.1 (owner's sketch): the title and number across the top; D-273: the approval journey below them, full width. */}
       <div className="mb-6 grid items-center gap-4" data-testid="request-top">
         <div className="min-w-0 [&>div]:mb-0">

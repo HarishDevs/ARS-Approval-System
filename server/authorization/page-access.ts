@@ -7,6 +7,8 @@ import { effectiveLevel, isOpenAddress, pageForPath, PAGES, type PageDef, type P
 import { logError } from "@/lib/logging/logger";
 import { hasModule, MODULES } from "@/server/modules/modules";
 import type { ModuleCode } from "@/types/auth";
+import { isApproverDesignation } from "@/lib/db/repositories/profile.repository";
+import { countPendingTasksFor } from "@/lib/db/repositories/approvals.repository";
 
 // v1.8.0 (owner): page access set by the Super Admin, checked on the server
 // for every page view, Server Action and API call of My approvals and the
@@ -96,6 +98,12 @@ export async function navAccess(person: Person): Promise<{ hidden: Set<string>; 
   try {
     const access = await accessFor(person.id);
     const hidden = new Set(PAGES.filter((page) => access.get(page.key) === "HIDDEN" || lacksModule(person, page)).map((page) => page.key));
+    // v1.49.5 (owner): a requester (designation not ticked Approver) sees
+    // only New request, My pending requests, My approved requests and
+    // Collaborating; approvers see every My Approvals page. Anyone with a
+    // step waiting for them keeps the approver pages, so nothing is stranded.
+    // Navigation only: the pages themselves still open by address.
+    if (!(await approverPages(person.id))) for (const key of APPROVER_PAGES) hidden.add(key);
     const viewOnly = PAGES.filter((page) => access.get(page.key) === "VIEW").flatMap((page) => page.paths.map((pattern) => pattern.source));
     return { hidden, viewOnly };
   } catch (error) {
@@ -103,6 +111,13 @@ export async function navAccess(person: Person): Promise<{ hidden: Set<string>; 
     return { hidden: new Set(), viewOnly: [] };
   }
 }
+
+// The My Approvals pages only approvers see in the navigation.
+export const APPROVER_PAGES = ["users.queue", "users.approved_by_me", "users.new"] as const;
+const approverPages = cache(async (userId: number): Promise<boolean> => {
+  const [approver, waiting] = await Promise.all([isApproverDesignation(userId).catch(() => true), countPendingTasksFor(userId).catch(() => 1)]);
+  return approver || waiting > 0;
+});
 
 // Is a link (sidebar, palette) to a hidden page?
 export function isHiddenHref(href: string, hidden: Set<string>): boolean {

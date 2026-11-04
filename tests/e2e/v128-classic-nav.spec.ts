@@ -155,7 +155,7 @@ test("signing in shows the ARS loader until the main page is ready", async ({ pa
     if (route.request().headers()["rsc"] === "1") await new Promise((resolve) => setTimeout(resolve, 1500));
     return route.fallback();
   });
-  await page.getByLabel("User ID", { exact: true }).fill("e2e_req");
+  await page.getByLabel("User ID, mobile number or email", { exact: true }).fill("e2e_req");
   await page.getByLabel("Password", { exact: true }).fill("not-used");
   await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page.getByLabel("WhatsApp code").fill("123456");

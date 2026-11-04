@@ -8,6 +8,7 @@ import { RequestStatusPill } from "@/features/requests/StatusPill";
 import { PriorityPill } from "@/features/ui/ChoicePill";
 import { priorityRecord } from "@/server/approvals/priority-lookup";
 import { DeleteRequestButton } from "@/features/superadmin/DeleteRequestButton";
+import { BulkDeleteRequests, RequestRowCheckbox, SelectAllRequests } from "@/features/superadmin/BulkDeleteRequests";
 import { listAllRequests } from "@/lib/db/repositories/request-admin.repository";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 import { SafeText } from "@/features/ui/SafeText";
@@ -83,11 +84,18 @@ export default async function SuperAdminRequestsPage({ searchParams }: { searchP
       {result.items.length === 0 && (q || status) && (
         <NoResults what="requests" query={q} clearSearchHref={`/superadmin/requests?${new URLSearchParams({ ...(deleted ? { tab: "deleted" } : {}), ...(status ? { status } : {}) })}`} resetHref={deleted ? "/superadmin/requests?tab=deleted" : "/superadmin/requests"} />
       )}
+      {/* v1.49.5 (owner): tick requests, then Delete selected. */}
+      {result.items.length > 0 && !deleted && <BulkDeleteRequests />}
       {result.items.length > 0 && (
         <section className="card overflow-x-auto">
           <table className="data-table">
             <thead>
               <tr>
+                {!deleted && (
+                  <th className="w-10">
+                    <SelectAllRequests />
+                  </th>
+                )}
                 <th>Request</th>
                 <th>Raised by</th>
                 <th>Approval type</th>
@@ -100,6 +108,11 @@ export default async function SuperAdminRequestsPage({ searchParams }: { searchP
             <tbody>
               {result.items.map((item) => (
                 <tr key={item.id}>
+                  {!deleted && (
+                    <td className="w-10">
+                      <RequestRowCheckbox requestId={item.id} requestNo={item.requestNo} />
+                    </td>
+                  )}
                   <td>
                     {deleted ? (
                       <span className="font-mono text-label">{item.requestNo}</span>

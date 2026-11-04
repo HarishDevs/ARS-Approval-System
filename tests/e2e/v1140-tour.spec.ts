@@ -21,7 +21,8 @@ async function tourDone(loginId: string): Promise<boolean> {
 
 test("opens by itself once on Overview; Next walks every step on its page; Finish saves it", async ({ page, context }) => {
   test.setTimeout(120_000);
-  await context.addCookies([await sessionCookie("E2E_STAFF", { tourDone: false })]);
+  // v1.49.5: an approver, so every step's page is offered (a requester's tour leaves out Waiting for me and the other approver pages).
+  await context.addCookies([await sessionCookie("E2E_MGR", { tourDone: false })]);
   await page.goto("/users");
   const tour = page.getByRole("dialog", { name: TOUR_STEPS[0]!.title });
   await expect(tour).toBeVisible();
@@ -44,7 +45,7 @@ test("opens by itself once on Overview; Next walks every step on its page; Finis
     await card.getByRole("button", { name: index === TOUR_STEPS.length - 1 ? "Finish" : "Next" }).click();
   }
   await expect(page.getByTestId("tour")).toHaveCount(0);
-  await expect.poll(() => tourDone("E2E_STAFF")).toBe(true);
+  await expect.poll(() => tourDone("E2E_MGR")).toBe(true);
 
   // Done: it doesn't open by itself again, even in a new tab.
   const fresh = await context.newPage();

@@ -309,7 +309,7 @@ export async function AppShell({ area, user, nav, children }: { area: AppArea; u
         </main>
         {/* WEB-15 (v1.10.0): the phone bar holds My approvals destinations, so it
             shows in that space only; Admin and Super Admin use the menu. */}
-        {area === "users" && !mobile && <BottomNav waiting={waiting} hidden={["/users", "/users/queue", "/users/new", "/users/search", "/users/profile"].filter((href) => !visible(href))} />}
+        {area === "users" && !mobile && <BottomNav waiting={waiting} hidden={["/users", "/users/queue", "/users/custom", "/users/search", "/users/profile"].filter((href) => !visible(href))} />}
         {mobile && (
           <MobileTabBar
             waiting={waiting}

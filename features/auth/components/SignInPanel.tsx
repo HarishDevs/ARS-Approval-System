@@ -63,8 +63,9 @@ function PasswordStep({ onChallenge, onDone }: { onChallenge: (c: Challenge) => 
 
       <form onSubmit={submit} className="mt-8 space-y-5" noValidate>
         <div>
+          {/* v1.49.5 (owner): the User ID, the mobile number or the email; the password and WhatsApp code are still asked. */}
           <label htmlFor="loginId" className="field-label">
-            User ID
+            User ID, mobile number or email
           </label>
           <input
             id="loginId"
@@ -73,7 +74,7 @@ function PasswordStep({ onChallenge, onDone }: { onChallenge: (c: Challenge) => 
             required
             value={loginId}
             onChange={(event) => setLoginId(event.target.value)}
-            placeholder="Your user ID"
+            placeholder="e.g. RAVI01, 98765 43210 or name@arssteels.co.in"
             className="field-input"
           />
         </div>

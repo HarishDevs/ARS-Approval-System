@@ -17,7 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
-- **Now (3 Nov 2026):** v1.49.4: notifications panel layout. v1.49.3: users list ⋮ actions and Department filter; see-through dropdowns fixed. v1.49.2: module access in the users import; v1.49.1: import with Excel templates and uploads (and tab CSV). **Owner:** publish; import ars-1-departments-no-hod.xlsx → ars-2-users-with-modules.xlsx (fill modules) → ars-3-departments-with-hod.xlsx (designations HOD, EXEC, DMGR, SEXE must exist).
+- **Now (4 Nov 2026):** v1.49.5: My Approvals pages by designation (requesters see four), request highlights its own list, no Open card, no cards on My approved requests, Super Admin Delete selected. v1.49.4: notifications panel layout. v1.49.3: users list ⋮ actions and Department filter; see-through dropdowns fixed. v1.49.2: module access in the users import; v1.49.1: import with Excel templates and uploads (and tab CSV). **Owner:** publish; import ars-1-departments-no-hod.xlsx → ars-2-users-with-modules.xlsx (fill modules) → ars-3-departments-with-hod.xlsx (designations HOD, EXEC, DMGR, SEXE must exist).
 - **Before (2 Nov 2026):** v1.49.0: the ARS GREEN STEEL CMS brand (D-287), New request / New task straight to the form, Classic tab bar fix (D-288). **Owner:** publish v1.49.0; rename the OAuth consent screen app to "ARS CMS" in Google Cloud (Q-027); reopen or reinstall the phone app for the new icon.
 - **Now (2 Nov 2026):** v1.48.1: slimmer journey, hover details with the approver, the folded header road (D-285). Publish v1.48.1.
 - **Now (2 Nov 2026):** v1.48.0: the new Approval Journey (computer and phone), the request page re-laid out, one colour per status (D-283, D-284). No migration of its own. **Owner:** publish v1.48.0 (contains everything since v1.46.0).
@@ -160,6 +160,25 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 - **Still open:** Q-015.
 
 ---
+
+## Queued (owner, 4 Nov 2026) — next release, planned before building
+- [ ] Q1 New and imported users get a welcome email with a set-password link valid 12 hours
+- [ ] Q2 Linked requests: search by number or title among requests the person may see, then link (not only a typed number)
+- [ ] Q3 Work task steps: choose Priority and Due date; once the request is fully approved the task appears in the assignee's Task Management
+- [ ] Q4 The request page shows work tasks raised from it and linked approvals
+- [ ] Q5 PDF download in the same layout as the request screen
+- [ ] Q6 Admin → Users & roles: tick several users and act on them together (multi-select + bulk actions)
+
+## Session log — v1.49.5 (4 Nov 2026): approvals pages by role, highlighted list, Delete selected
+Owner: "the opened approval is from Waiting for me but it highlights My pending requests, correct it and check all the visual issues for both Compact and Classic view"; "based on the designation approver or not show only New Request, My pending request, My approved request, Collaborating for all the requestors; approvers get all the screens"; "remove the Open card"; "drop all the cards from My approved request screen"; "add select and Delete option in this Super admin" (Requests).
+- [x] V1495-01 (4 Nov 2026) navAccess hides Waiting for me, Approved by me, Request templates (APPROVER_PAGES) unless the designation is Approver or something is waiting for the person; navigation only (pages still open by address)
+- [x] V1495-02 (4 Nov 2026) NavOwner: the request page names its list (queue / requests / approved / approved-by-me / collaborating / search); SideNav and ClassicBar light it; breadcrumb and Back follow (view.approvedByMe added)
+- [x] V1495-03 (4 Nov 2026) Open card hidden (card: false; tab=open still parses); My approved requests without status cards; Classic module box Waiting for me only for approvers
+- [x] V1495-04 (4 Nov 2026) Visual check, Compact and Classic, requester and approver (local): no page overflow; decision buttons auto-fit (labels one line); phone bar New → New request
+- [x] V1495-05 (4 Nov 2026) Super Admin → Requests: row tick boxes, select-all, Delete selected (deleteRequestsAction, ≤100, one reason, each through deleteRequest)
+- [x] V1495-06 (4 Nov 2026) e2e v1495-nav-roles; unit 1034 pass; lint, typecheck
+- [x] V1495-07 (4 Nov 2026) Owner: "user id can be their mobile number or email id or the user id for login, but it should verify the password and OTP": findUserForSignIn (User ID, then email, then WhatsApp number; 10 digits → 91 prefix) in password sign-in and forgot password; labels "User ID, mobile number or email"; integration test sign-in-identifier
+- [x] V1495-08 (4 Nov 2026) First-use checklist: first step links New request; Waiting for me and Out of office steps only for approvers
 
 ## Session log — v1.49.4 (3 Nov 2026): notifications panel
 Owner: notification panel screenshot, "layout issue, correct it".

@@ -152,6 +152,8 @@ export function RequestListScreen({
   const showRaiser = (collab || byMe) && show("raiser");
   const tabs = tabsFor(base);
   const currentTab = tabs.find((tab) => tab.key === filters.tab);
+  // v1.49.5 (owner): My approved requests has no status cards; elsewhere a tab marked card: false (Open) has none.
+  const cards = approvedMine ? [] : tabs.filter((tab) => tab.card !== false);
   const used = activeCount(filters, base);
   const href = (changes: Partial<ListFilters>) => listHref(path, filters, changes, base);
   const nameOf = (list: { id: number; name: string }[], id: number | null) => list.find((item) => item.id === id)?.name ?? "chosen";
@@ -250,9 +252,10 @@ export function RequestListScreen({
 
   return (
     <>
+      {cards.length > 0 && (
       <nav aria-label="Quick filters" className="status-cards scroll-hint -mx-4 mb-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0" data-testid="status-cards">
         <ul className="flex min-w-max gap-2 xl:grid xl:min-w-0 xl:grid-flow-col xl:auto-cols-fr">
-          {tabs.map((tab) => {
+          {cards.map((tab) => {
             const Icon = CARD_ICON[tab.key] ?? ClipboardList;
             const active = filters.tab === tab.key;
             return (
@@ -278,6 +281,7 @@ export function RequestListScreen({
           })}
         </ul>
       </nav>
+      )}
 
       <ListToolbar
         id="request-filters"

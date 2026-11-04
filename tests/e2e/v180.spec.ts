@@ -34,7 +34,8 @@ test("My approved requests and Approved by me are in the sidebar, with their fil
   await page.locator("aside nav").getByRole("button", { name: "My Approvals" }).click();
   await page.locator("aside nav").getByRole("link", { name: "My approved requests" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "My approved requests" })).toBeVisible();
-  for (const tab of ["Still valid", "Expired", "No expiry", "Amended"]) await expect(page.getByRole("navigation", { name: "Quick filters" }).getByRole("link", { name: new RegExp(`^${tab} \\(`) })).toBeVisible();
+  // v1.49.5 (owner): no status cards on My approved requests; the filters stay.
+  await expect(page.getByRole("navigation", { name: "Quick filters" })).toHaveCount(0);
   await page.getByTestId("list-toolbar").getByTestId("filter-menu").locator("summary").click();
   await expect(page.getByLabel("Approved by")).toBeVisible();
   await expect(page.getByLabel("Approved on from")).toBeVisible();

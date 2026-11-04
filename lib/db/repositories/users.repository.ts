@@ -99,6 +99,30 @@ export function findUserByLoginId(loginId: string, db: Queryable = getDbPool()) 
   return findOne("LOWER(u.login_id) = LOWER(?)", [loginId.trim()], db);
 }
 
+// v1.49.5 (owner: "user id can be their mobile number, their email id or the
+// user id"): the sign-in name may be any of the three. The User ID wins, then
+// the email, then the WhatsApp number (stored as digits with the country code;
+// a 10-digit Indian number may be typed without 91, with spaces, + or dashes).
+// Each is unique, so at most one person matches each way.
+export function signInPhoneDigits(value: string): string[] {
+  const digits = value.replace(/[\s()+-]/g, "");
+  if (!/^\d{10,15}$/.test(digits)) return [];
+  return digits.length === 10 ? [`91${digits}`, digits] : [digits];
+}
+
+export async function findUserForSignIn(identifier: string, db: Queryable = getDbPool()) {
+  const value = identifier.trim();
+  if (!value) return null;
+  const byId = await findUserByLoginId(value, db);
+  if (byId) return byId;
+  if (value.includes("@")) {
+    const byEmail = await findOne("LOWER(u.email) = LOWER(?)", [value], db);
+    if (byEmail) return byEmail;
+  }
+  const phones = signInPhoneDigits(value);
+  return phones.length ? findOne(`u.whatsapp_number IN (${phones.map(() => "?").join(", ")})`, phones, db) : null;
+}
+
 export function findUserByFirebaseUid(uid: string, db: Queryable = getDbPool()) {
   return findOne("u.firebase_uid = ?", [uid], db);
 }

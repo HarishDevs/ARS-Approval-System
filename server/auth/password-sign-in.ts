@@ -1,5 +1,5 @@
 import "server-only";
-import { findUserById, findUserByLoginId, recordFailedPassword, resetFailedLogins, type UserRecord } from "@/lib/db/repositories/users.repository";
+import { findUserById, findUserForSignIn, recordFailedPassword, resetFailedLogins, type UserRecord } from "@/lib/db/repositories/users.repository";
 import {
   consumeChallenge,
   createChallenge,
@@ -65,7 +65,8 @@ export const defaultOtpDeps: OtpDeps = {
 
 const defaultDeps: PasswordSignInDeps = {
   ...defaultOtpDeps,
-  findUserByLoginId: (loginId) => findUserByLoginId(loginId),
+  // v1.49.5: User ID, email or mobile number.
+  findUserByLoginId: (loginId) => findUserForSignIn(loginId),
   findUserById: (id) => findUserById(id),
   verifyPassword,
   burnPasswordCheck,

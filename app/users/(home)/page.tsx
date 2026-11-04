@@ -189,7 +189,7 @@ export default async function UsersHome({ searchParams }: { searchParams: Promis
           </Link>
         </div>
       </header>
-      {!onboarded && <FirstUseChecklist />}
+      {!onboarded && <FirstUseChecklist hidden={(await navAccess(user)).hidden.has("users.queue") ? ["/users/queue", "/users/delegation"] : []} />}
       <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 xl:grid-cols-4" data-tour="overview-tiles">
         {tiles.map((tile) => (
           <Link key={tile.label} href={tile.href} className="card-link status-card flex items-center gap-3 px-4 py-3">

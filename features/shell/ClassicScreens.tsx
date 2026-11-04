@@ -18,10 +18,11 @@ interface Box {
   alert?: boolean;
 }
 
-function boxesFor(key: string, counts: ClassicCounts): Box[] {
+function boxesFor(key: string, counts: ClassicCounts, approver: boolean): Box[] {
   if (key === "approvals")
     return [
-      { label: "Waiting for me", value: counts.waiting, href: "/users/queue", alert: counts.waiting > 0 },
+      // v1.49.5: a requester has no Waiting for me page in the navigation, so no box either.
+      ...(approver ? [{ label: "Waiting for me", value: counts.waiting, href: "/users/queue", alert: counts.waiting > 0 }] : []),
       { label: "My pending requests", value: counts.myOpenRequests, href: "/users/requests?status=IN_PROGRESS" },
       { label: "Changes asked of me", value: counts.changesAsked, href: "/users/requests?status=CHANGES_REQUIRED", alert: counts.changesAsked > 0 },
     ];
@@ -55,11 +56,11 @@ function Boxes({ boxes }: { boxes: Box[] }) {
   );
 }
 
-async function load(user: AuthenticatedUser): Promise<{ modules: ClassicModule[]; counts: ClassicCounts }> {
+async function load(user: AuthenticatedUser): Promise<{ modules: ClassicModule[]; counts: ClassicCounts; approver: boolean }> {
   // As in the sidebar: pages this person may not open (their modules, page access) are left out.
   const [nav, counts, access] = await Promise.all([usersNav(user), classicCounts(user.id), navAccess(user)]);
   const visible = nav.filter((item) => !isHiddenHref(item.href, access.hidden));
-  return { modules: classicModules(visible.map((item) => (item.href === "/users/queue" ? { ...item, count: counts.waiting } : item))), counts };
+  return { modules: classicModules(visible.map((item) => (item.href === "/users/queue" ? { ...item, count: counts.waiting } : item))), counts, approver: !isHiddenHref("/users/queue", access.hidden) };
 }
 
 const noteFor = (entry: ClassicModule, counts: ClassicCounts) =>
@@ -91,13 +92,13 @@ export async function ClassicGateway({ user }: { user: AuthenticatedUser }) {
 // Page 3 of the sketch: the module (its pages are the tabs above, from
 // ClassicBar) and its boxes.
 export async function ClassicModuleMenu({ user, moduleKey }: { user: AuthenticatedUser; moduleKey: string }) {
-  const { modules, counts } = await load(user);
+  const { modules, counts, approver } = await load(user);
   const entry = modules.find((item) => item.key === moduleKey && item.pages.length > 1);
   if (!entry) return null;
   return (
     <div className="space-y-6" data-testid="classic-module">
       <h1 className="text-title font-semibold">{entry.label}</h1>
-      <Boxes boxes={boxesFor(entry.key, counts)} />
+      <Boxes boxes={boxesFor(entry.key, counts, approver)} />
       <p className="text-caption text-ink-faint">Choose a page above, or press its highlighted letter. Esc goes back.</p>
     </div>
   );

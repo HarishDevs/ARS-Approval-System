@@ -46,6 +46,7 @@ export interface RequestView {
   tracker: TrackerSummary;
   timeline: { id: number; at: Date; text: string; kind: TimelineKind }[];
   myTasks: { taskKey: string; label: string; forName: string | null; work: boolean }[];
+  approvedByMe: boolean; // v1.49.5: a step of it was approved by the viewer (which list it belongs to)
   // IT only (D-098): steps that found nobody / no path, with what can be done.
   blockedSteps: { nodeId: string; label: string; kind: "APPROVAL" | "CONDITION"; work: boolean; reason: string; paths: { edgeId: string; label: string }[] }[];
   comments: CommentItem[];
@@ -197,6 +198,7 @@ export async function loadRequestView(requestId: number, viewer: Actor): Promise
         return { id: row.id, at: row.createdAt, text: describeEvent(payload, labelOf, nameOf, (nodeId) => workNodes.has(nodeId)), kind: eventKind(payload) };
       })
       .filter((row): row is { id: number; at: Date; text: string; kind: TimelineKind } => row.text !== null),
+    approvedByMe: state.tasks.some((task) => task.status === "APPROVED" && task.approverId === viewer.id),
     myTasks:
       state.status === "IN_PROGRESS"
         ? myPending.map((task) => ({ taskKey: task.id, label: labelOf(task.nodeId), forName: task.approverId === viewer.id ? null : nameOf(task.approverId), work: workNodes.has(task.nodeId) }))

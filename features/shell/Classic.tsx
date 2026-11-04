@@ -6,6 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { BrandLoader } from "@/features/ui/BrandLoader";
 import { navigationHeld } from "@/features/ui/UnsavedGuard";
 import { ChevronRight } from "lucide-react";
+import { useNavOwner } from "@/features/shell/nav-owner";
 import { GATEWAY, locate, MENU_BASE, pageHotkeys, type ClassicModule } from "@/features/shell/classic-modules";
 
 // D-210 (owner): the Classic (Tally-style) view.
@@ -135,7 +136,8 @@ export function ClassicBar({ modules }: { modules: ClassicModule[] }) {
   // D-214: the Home dashboard (/users?view=overview; "Overview" until D-249) is a page of its own, with a way back.
   const overview = pathname === GATEWAY && search.get("view") === "overview";
   const atGateway = pathname === GATEWAY && !overview;
-  const located = locate(modules, pathname);
+  const owner = useNavOwner(pathname); // v1.49.5: a request lights its list
+  const located = locate(modules, owner);
   const entry = overview ? (modules.find((item) => item.key === "overview") ?? null) : located.entry;
   const page = overview ? null : located.page;
   const up = !entry ? null : page && entry.pages.length > 1 ? entry.href : GATEWAY;

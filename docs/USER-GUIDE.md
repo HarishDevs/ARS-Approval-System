@@ -1,6 +1,6 @@
 # ARS CMS: user guide (v1.42.0)
 
-**Address:** https://approval.arssteels.net. Sign in with your company Google account, or with your User ID and password and a WhatsApp code, as IT set you up (or either way, if IT chose **Both**). Questions: IT (itadmin@arssteels.co.in).
+**Address:** https://approval.arssteels.net. Sign in with your company Google account, or with your User ID (or your mobile number or email) and password and a WhatsApp code, as IT set you up (or either way, if IT chose **Both**). Questions: IT (itadmin@arssteels.co.in).
 
 **On a phone, a tablet or the installed app** you stay signed in until **midnight (India time)**, even if you close the app or lock the screen; then you sign in again. **On a computer** you are signed out after **30 minutes without activity** (IT can change this), and always 12 hours after signing in. Anything you were typing in a form is kept; sign in again and carry on. Notifications keep coming while you're signed out.
 
@@ -19,7 +19,7 @@ The space you work in is called **Central Management System**. There are two vie
 From the top:
 - **+ Create:** a new approval request, task, project or information (only what you can create).
 - **Home** and **Inbox**.
-- **My Approvals:** New request, My pending requests, My approved requests, Waiting for me, Approved by me, Collaborating, Request templates.
+- **My Approvals:** New request, My pending requests, My approved requests, Waiting for me, Approved by me, Collaborating, Request templates. If your designation isn't an approver designation you see only New request, My pending requests, My approved requests and Collaborating (Request templates is still reached from New request). A request you open highlights the list it belongs to for you (for example Waiting for me when it needs your decision).
 - **Tasks & projects:** My Tasks, All projects, Periodic tasks, New project, Templates, Task with a type (form).
 - **Information:** Information inbox, Sent by me, New information.
 - **AI Assistant** (if Pico Bot is on for you), with your chats.
@@ -263,7 +263,7 @@ Switch to it from the account menu → **Switch space**.
 - **AI settings, Salesforce Settings, AI Details** (data sources, reports, activity history).
 - **Page access:** hide pages, or make them view-only, for everyone, a department or a person (the most specific rule wins).
 - **WhatsApp templates:** write, submit to Meta, sync status.
-- **Requests:** every request; **Delete** with a reason (the people waiting are told).
+- **Requests:** every request; **Delete** with a reason (the people waiting are told). Tick several (or the header box for the page) and **Delete selected** to delete them with one reason; each is logged on its own, and one under a legal hold is skipped.
 - **Automation:** every background job and its last run. A step that partly failed (for example a template sync) shows as failed, not OK; an unconfirmed send shows *may have been sent*. See `docs/AUTOMATION_INVENTORY_AND_RECOVERY.md`.
 - **Retention & holds**, **Import data**, **Demo data** (type **LOAD DEMO** to load it; it is refused on a database that already has many real people).
 - **Home tiles:** **Origin lock** (on when `ORIGIN_SECRET` is set on the host) and **WhatsApp templates still to switch on**.

@@ -74,8 +74,8 @@ test("Collaborating is its own screen in the sidebar, with quick tabs and the fu
 test("My requests has the same filters", async ({ page, context }) => {
   await as(context, "E2E_REQ");
   await page.goto("/users/requests");
-  await page.getByRole("navigation", { name: "Quick filters" }).getByRole("link", { name: /^Open \(/ }).click();
-  await expect(page).toHaveURL(/tab=open/);
+  await page.getByRole("navigation", { name: "Quick filters" }).getByRole("link", { name: /^Waiting for approvers \(/ }).click();
+  await expect(page).toHaveURL(/tab=waiting/);
   await page.getByTestId("list-toolbar").getByTestId("filter-menu").locator("summary").click();
   await expect(page.getByLabel("Waiting at step")).toBeVisible();
   await expect(page.getByLabel("Raised by", { exact: true })).toHaveCount(0); // they're all yours
@@ -83,7 +83,7 @@ test("My requests has the same filters", async ({ page, context }) => {
   await page.getByTestId("sort-menu").locator("summary").click();
   await page.getByTestId("sort-menu").getByRole("link", { name: "Request number" }).click();
   await expect(page).toHaveURL(/sort=number/);
-  await expect(page).toHaveURL(/tab=open/);
+  await expect(page).toHaveURL(/tab=waiting/);
   await page.getByTestId("options-menu").getByLabel("Options", { exact: true }).click();
   await page.getByTestId("options-menu").getByRole("link", { name: "50 per page" }).click();
   await expect(page).toHaveURL(/size=50/);

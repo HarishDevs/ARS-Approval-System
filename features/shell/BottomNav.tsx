@@ -9,7 +9,8 @@ import { usePathname } from "next/navigation";
 const ITEMS = [
   { href: "/users", label: "Home", icon: Home, exact: true },
   { href: "/users/queue", label: "Waiting", icon: Inbox },
-  { href: "/users/new", label: "New", icon: FilePlus2 },
+  // v1.49.5: New request (it links to the templates), since a requester has no Request templates entry.
+  { href: "/users/custom", label: "New", icon: FilePlus2, also: ["/users/new"] },
   { href: "/users/search", label: "Search", icon: FileSearch },
   { href: "/users/profile", label: "Profile", icon: User, also: ["/users/notifications", "/users/delegation", "/users/security"] },
 ];

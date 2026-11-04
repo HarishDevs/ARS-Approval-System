@@ -40,7 +40,7 @@ test("a custom request starts with the reporting manager as approver; the steppe
     )?.match(/[A-Z]{2,6}-\d{4}-\d{6}/)?.[0] ?? "";
   expect(requestNo).not.toBe("");
   await expect(page.getByTestId("step-map").locator('[data-level-state="current"]')).toHaveCount(1);
-  await expect(page.getByRole("link", { name: "← Back to My requests" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "← Back to My pending requests" })).toBeVisible();
 });
 
 test("Postel: the number typed without dashes or leading zeros still finds it", async ({ page, context }) => {

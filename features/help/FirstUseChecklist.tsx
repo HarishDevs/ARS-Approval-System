@@ -6,7 +6,7 @@ import { ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 
 // First-use checklist (#13) on My Work until the person hides it.
 const STEPS: { text: string; href: string; link: string }[] = [
-  { text: "Raise a request: pick a type, fill in the form, add files. Your typing is saved as a draft as you go.", href: "/users/new", link: "Request templates" },
+  { text: "Raise a request: pick a type, fill in the form, add files. Your typing is saved as a draft as you go.", href: "/users/custom", link: "New request" },
   { text: "Approve from Waiting for me: open a request and choose Approve, Ask for changes, Put on hold or Reject.", href: "/users/queue", link: "Waiting for me" },
   { text: "Going on leave? Name someone to approve for you.", href: "/users/delegation", link: "Out of office" },
   { text: "Give a task: Create → Task. Type / in the description for the menu, @ to mention someone.", href: "/users/work/my-tasks", link: "My Tasks" },
@@ -15,15 +15,19 @@ const STEPS: { text: string; href: string; link: string }[] = [
   { text: "What does each screen and status mean? Find anything with the search bar at the top.", href: "/users/help", link: "Help" },
 ];
 
-export function FirstUseChecklist() {
+const COUNT = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven"];
+
+// v1.49.5: steps for pages the person doesn't have (a requester has no Waiting for me) are left out.
+export function FirstUseChecklist({ hidden = [] }: { hidden?: readonly string[] }) {
   const { result, pending, onSubmit } = useActionForm(dismissOnboardingAction);
+  const steps = STEPS.filter((step) => !hidden.includes(step.href));
   return (
     <section aria-labelledby="first-use" className="card mb-6 border-primary-600/40 px-5 py-4">
       <h2 id="first-use" className="font-semibold">
-        New here? Seven things to know
+        New here? {COUNT[steps.length] ?? steps.length} things to know
       </h2>
       <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-label">
-        {STEPS.map((step) => (
+        {steps.map((step) => (
           <li key={step.href}>
             {step.text}{" "}
             <Link href={step.href} className="link">

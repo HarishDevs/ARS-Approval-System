@@ -7,6 +7,7 @@ import { Spinner } from "@/features/ui/Spinner";
 import { usePathname, useRouter } from "next/navigation";
 import { NavIcon, SectionIcon } from "@/features/shell/nav-icons";
 import { ChatList, type ChatSummary } from "@/features/shell/ChatList";
+import { useNavOwner } from "@/features/shell/nav-owner";
 
 export interface NavItem {
   href: string;
@@ -47,7 +48,8 @@ function readStored(): Record<string, boolean> {
 }
 
 export function SideNav({ items, collapsible = false, chats = [] }: { items: NavItem[]; collapsible?: boolean; chats?: ChatSummary[] }) {
-  const pathname = usePathname();
+  // v1.49.5: a request lights the list it was reached from (NavOwner).
+  const pathname = useNavOwner(usePathname());
   // Only the most specific entry is highlighted (My tasks vs Assigned by me
   // under /users/tasks/assigned).
   const matches = (href: string) => !href.includes("?") && (pathname === href || (href.split("/").length > 2 && pathname.startsWith(`${href}/`)));

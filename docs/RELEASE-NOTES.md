@@ -1,5 +1,14 @@
 # Release notes
 
+## v1.49.5 (4 Nov 2026): approvals pages by role, the right tab for each request, Delete selected (owner)
+- **Pages by role:** people whose designation isn't ticked **Approver** now see only **New request**, **My pending requests**, **My approved requests** and **Collaborating** under My Approvals (sidebar, Classic tabs, search and the phone bar). Approvers see every page. Anyone with something waiting for them still sees Waiting for me.
+- **Fixed:** a request opened from **Waiting for me** highlighted **My pending requests**. The highlighted page, the breadcrumb and **← Back** now name the list the request belongs to for you: Waiting for me, My pending requests, My approved requests, Approved by me or Collaborating. Same in the Compact and Classic views.
+- **My pending requests:** the **Open** card is gone (Waiting for approvers, Sent back and On hold cover it). **My approved requests:** no cards; use Filter.
+- **Request page:** the decision buttons keep each label on one line ("Ask for changes", "Ask a question").
+- **Super Admin → Requests:** tick requests (or the box in the header for the whole page) and **Delete selected**, with one reason. Each request is deleted and logged on its own; one under a legal hold is skipped and named.
+- The phone bar's **New** opens New request.
+- **Sign in:** in the User ID box you can type your **User ID**, your **mobile number** (with or without +91, spaces allowed) or your **email**. The password and the WhatsApp code are still asked every time. Forgot password takes the same.
+
 ## v1.49.4 (3 Nov 2026): notifications panel layout (owner)
 - **Fixed:** in the bell's panel, the All / Approvals / Tasks / Information row was squeezed when the list was long (cut off, with a small scrollbar). It now keeps its height on every screen; only the list scrolls.
 

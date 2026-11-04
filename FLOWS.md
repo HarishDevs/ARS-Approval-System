@@ -130,7 +130,8 @@ flowchart TD
 ## F-02 User ID + password + OTP
 ```mermaid
 flowchart TD
-  A([Login page]) --> B[User ID + password]
+  A([Login page]) --> B[User ID, mobile number or email + password
+v1.49.5: looked up in that order; a 10-digit mobile may omit 91]
   B --> C{Active user, method = password,\npassword correct?}
   C -- "No (count failure)" --> L{5 failures?}
   L -- Yes --> LK[F-05 lock]
@@ -728,10 +729,14 @@ flowchart TD
 ```mermaid
 flowchart TD
   A[Super Admin → Requests (all requests, search) or a request page] --> B[Delete → reason (required) → Yes, delete]
+  A --> M[v1.49.5: tick requests (or the header box for the page) → Delete selected → one reason → Yes, delete N]
+  M --> B2[Each ticked request deleted on its own, as B; one on a legal hold is skipped and named in the message]
+  B2 --> T
   B --> T[One transaction: request marked deleted (who, when, why) · pending tasks CANCELLED · audit REQUEST_DELETED]
   T --> H[Gone from: every list and queue, request page (404), reminders and escalation, Insights, Dashboards, Admin counts]
   T --> K[Kept: the database row, timeline and audit log (D-012); Super Admin → Requests → Deleted shows it read-only]
 ```
+- v1.49.5 (owner): **Delete selected** deletes up to 100 ticked requests with one reason; each gets its own audit record.
 - Only the Super Admin can delete. There is no undo; raise the request again if it was deleted by mistake.
 - People with a pending approval on it are not messaged (the request simply disappears from their queue).
 

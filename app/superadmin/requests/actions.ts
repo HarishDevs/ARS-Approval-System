@@ -40,3 +40,45 @@ export async function deleteRequestAction(_previous: ActionResult | null, formDa
   if (next === "/superadmin/requests?tab=deleted") redirect(next);
   return { ok: true, message: `${deletedNo} deleted.`, data: { requestNo: deletedNo } };
 }
+
+// v1.49.5 (owner: "add select and Delete"): delete the ticked requests with
+// one reason. Each one goes through deleteRequest (its own transaction, legal
+// hold check and audit record), so one that can't be deleted doesn't stop the rest.
+const BULK_DELETE_LIMIT = 100; // a "use server" file exports only actions
+export async function deleteRequestsAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  let session;
+  try {
+    session = await requireApiArea("superadmin");
+  } catch {
+    return { ok: false, message: "Not found." };
+  }
+  const ids = [...new Set(formData.getAll("ids").map(String))].filter((id) => /^\d+$/.test(id)).map(Number);
+  if (ids.length === 0) return { ok: false, message: "Tick at least one request." };
+  if (ids.length > BULK_DELETE_LIMIT) return { ok: false, message: `Delete up to ${BULK_DELETE_LIMIT} requests at a time.` };
+  const reason = String(formData.get("reason") ?? "");
+  if (reason.trim().length < 5) return { ok: false, message: "Give a reason of at least 5 characters.", fieldErrors: { reason: "Give a reason of at least 5 characters." } };
+  const deleted: string[] = [];
+  const failed: string[] = [];
+  try {
+    const { ipAddress } = await getActionContext();
+    for (const requestId of ids) {
+      const result = await deleteRequest({ requestId, reason }, { id: session.user.id, roles: session.user.roles, sessionId: session.sessionId, ipAddress }).catch((error: unknown) => {
+        logError("bulk delete: one request failed", error);
+        return { ok: false as const, message: "Couldn't delete." };
+      });
+      if (result.ok) deleted.push(result.value.requestNo);
+      else failed.push(result.message);
+    }
+  } catch (error) {
+    logError("deleteRequestsAction failed", error);
+    return { ok: false, message: "Couldn't delete. Please try again." };
+  }
+  if (deleted.length) {
+    revalidatePath("/superadmin/requests");
+    revalidatePath("/admin");
+  }
+  const done = `${deleted.length} request${deleted.length === 1 ? "" : "s"} deleted.`;
+  if (!failed.length) return { ok: true, message: done, data: { deleted: deleted.length } };
+  const why = [...new Set(failed)].join(" ");
+  return { ok: deleted.length > 0, message: `${deleted.length ? `${done} ` : ""}${failed.length} couldn't be deleted: ${why}`, data: { deleted: deleted.length } };
+}

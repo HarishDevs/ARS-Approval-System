@@ -52,10 +52,11 @@ export const BASE_FEATURES: Record<ListBase, { people: boolean; collab: boolean;
 };
 
 // Quick tabs: a named condition, per list.
-type TabDef = { key: string; label: string; statuses?: ListStatus[]; overdue?: boolean; validity?: (typeof VALIDITY)[number] | "none"; amended?: boolean; onBehalf?: boolean };
+type TabDef = { key: string; label: string; card?: false; statuses?: ListStatus[]; overdue?: boolean; validity?: (typeof VALIDITY)[number] | "none"; amended?: boolean; onBehalf?: boolean };
 const STATUS_TABS: TabDef[] = [
   { key: "all", label: "All" },
-  { key: "open", label: "Open", statuses: ["IN_PROGRESS", "ON_HOLD", "CHANGES_REQUIRED"] },
+  // v1.49.5 (owner): no Open card; the filter still works from older links.
+  { key: "open", label: "Open", statuses: ["IN_PROGRESS", "ON_HOLD", "CHANGES_REQUIRED"], card: false },
   { key: "waiting", label: "Waiting for approvers", statuses: ["IN_PROGRESS"] },
   { key: "sentback", label: "Sent back", statuses: ["CHANGES_REQUIRED"] },
   { key: "hold", label: "On hold", statuses: ["ON_HOLD"] },

@@ -13,14 +13,15 @@ async function as(context: BrowserContext, loginId: string) {
 test.afterAll(async () => {
   const conn = await db();
   try {
-    await conn.query("DELETE FROM user_settings WHERE setting_key IN ('ui.workspace_view', 'ui.text_size') AND user_id = ?", [await userIdByLogin("E2E_REQ")]);
+    await conn.query("DELETE FROM user_settings WHERE setting_key IN ('ui.workspace_view', 'ui.text_size') AND user_id IN (?, ?)", [await userIdByLogin("E2E_REQ"), await userIdByLogin("E2E_MGR")]);
   } finally {
     await conn.end();
   }
 });
 
 test("D-210: switch to Classic; Gateway, module menu, page tabs, letters and Esc; switch back", async ({ page, context }) => {
-  await as(context, "E2E_REQ");
+  // v1.49.5: an approver, who has every Approval Management page (a requester has four; see v1495-nav-roles).
+  await as(context, "E2E_MGR");
   await page.goto("/users");
   await expect(page.getByTestId("sidebar")).toBeVisible();
   await page.getByRole("button", { name: /open your menu|profile menu|account/i }).first().click();

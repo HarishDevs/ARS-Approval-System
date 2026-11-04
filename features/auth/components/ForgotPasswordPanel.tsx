@@ -83,11 +83,12 @@ export function ForgotPasswordPanel({ minLength }: { minLength: number }) {
   return (
     <div className="mt-8">
       <h1 className="text-display font-bold">Forgot password</h1>
-      <p className="mt-2 text-[length:calc(15px*var(--text-scale,1))] text-ink-muted">Enter your User ID. We&apos;ll send a code to the WhatsApp number IT has on file.</p>
+      <p className="mt-2 text-[length:calc(15px*var(--text-scale,1))] text-ink-muted">Enter your User ID, mobile number or email. We&apos;ll send a code to the WhatsApp number IT has on file.</p>
       <form onSubmit={start} className="mt-8 space-y-5" noValidate>
         <div>
+          {/* v1.49.5 (owner): the User ID, the mobile number or the email; the password and WhatsApp code are still asked. */}
           <label htmlFor="loginId" className="field-label">
-            User ID
+            User ID, mobile number or email
           </label>
           <input
             id="loginId"
@@ -96,7 +97,7 @@ export function ForgotPasswordPanel({ minLength }: { minLength: number }) {
             required
             value={loginId}
             onChange={(event) => setLoginId(event.target.value)}
-            placeholder="Your user ID"
+            placeholder="e.g. RAVI01, 98765 43210 or name@arssteels.co.in"
             className="field-input"
           />
         </div>

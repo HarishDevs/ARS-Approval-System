@@ -1,6 +1,6 @@
 import "server-only";
 import { after } from "next/server";
-import { findUserById, findUserByLoginId, type UserRecord } from "@/lib/db/repositories/users.repository";
+import { findUserById, findUserForSignIn, type UserRecord } from "@/lib/db/repositories/users.repository";
 import { createPasswordToken, findPasswordToken, markPasswordTokenUsed, setPasswordHash, type PasswordTokenRecord } from "@/lib/db/repositories/password-tokens.repository";
 import { revokeAllSessionsForUser } from "@/lib/db/repositories/sessions.repository";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
@@ -44,7 +44,8 @@ export interface PasswordFlowDeps extends OtpDeps {
 const defaultDeps: PasswordFlowDeps = {
   ...defaultOtpDeps,
   findUserById: (id) => findUserById(id),
-  findUserByLoginId: (loginId) => findUserByLoginId(loginId),
+  // v1.49.5: Forgot password takes the User ID, email or mobile number too.
+  findUserByLoginId: (loginId) => findUserForSignIn(loginId),
   createPasswordToken,
   findPasswordToken: (hash) => findPasswordToken(hash),
   hashPassword,
