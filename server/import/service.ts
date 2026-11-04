@@ -196,7 +196,7 @@ export async function runImport(kind: ImportKind, text: string, fileName: string
   // response, one by one, so a long file doesn't hold the page; a failure is
   // logged and IT can Re-invite from the user's row.
   if (created.length) {
-    after(async () => {
+    const invite = async () => {
       for (const userId of created) {
         const sent = await sendInvitation(userId, actor).catch((error: unknown) => {
           logError("runImport: invitation failed", error, { userId });
@@ -204,7 +204,13 @@ export async function runImport(kind: ImportKind, text: string, fileName: string
         });
         if (sent && !sent.ok) logError("runImport: invitation not sent", new Error(sent.message), { userId });
       }
-    });
+    };
+    // Outside a request (scripts, tests) there is no "after the response": send in the background.
+    try {
+      after(invite);
+    } catch {
+      void invite();
+    }
   }
   return { ok: true, plan, invited: created.length };
 }
