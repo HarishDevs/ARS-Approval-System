@@ -40,7 +40,7 @@ export default async function MigratePage({ params, searchParams }: { params: Pr
   return (
     <>
       <Breadcrumbs items={[{ href: "/admin/workflows", label: "Approval types" }, { href: `/admin/workflows/${plan.workflow.id}`, label: plan.workflow.name }, { label: "Move open requests" }]} />
-      <PageHeader title={`Move open requests to version ${plan.target.versionNo}`} description={`Requests raised on version ${plan.source.versionNo} keep that version until you move them. This page checks each one first and changes nothing until you press Move.`}>
+      <PageHeader title={`Move open requests to version ${plan.target.versionNo}`} description={`Each request on version ${plan.source.versionNo} is checked first; nothing changes until you press Move.`}>
         <Link href={`/admin/workflows/${plan.workflow.id}/compare?from=${plan.source.versionNo}&to=${plan.target.versionNo}`} className="link text-label">
           What changed between the versions
         </Link>
@@ -102,7 +102,7 @@ export default async function MigratePage({ params, searchParams }: { params: Pr
       <section aria-label="Earlier moves" className="card px-5 py-4">
         <div className="flex items-center gap-1.5">
           <h2 className="font-semibold">Earlier moves</h2>
-          <Hint text="To undo a move: restore the earlier version as a draft (it keeps the same steps), publish it, and move the same requests to it. Each one is checked the same way." align="start" />
+          <Hint text="To undo: restore the old version, publish it, and move the requests back." align="start" />
         </div>
         {runItems.length === 0 ? (
           <p className="mt-1 text-label text-ink-muted">None yet.</p>

@@ -4,7 +4,8 @@ import Link from "next/link";
 import { Breadcrumbs } from "@/features/ui/Display";
 import { NavOwner } from "@/features/shell/nav-owner";
 import { notFound } from "next/navigation";
-import { MessagesSquare, Paperclip, Repeat2, ShieldCheck, Copy } from "lucide-react";
+import { MessagesSquare, Paperclip, Repeat2, ShieldCheck, Copy, ListChecks } from "lucide-react";
+import { TASK_STATUS_LABEL } from "@/server/modules/task-rules";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { Hint } from "@/features/ui/Hint";
@@ -454,7 +455,35 @@ export default async function RequestPage({
 
       {/* v1.49: the bottom row: Linked requests, Timeline, Reuse (a phone shows the Timeline first). */}
       <div className="request-bottom mt-6 grid items-stretch gap-6 md:grid-cols-2 xl:grid-cols-3" data-testid="request-bottom">
-        <div className="order-2 min-w-0 xl:order-1">
+        <div className="order-2 min-w-0 space-y-6 xl:order-1">
+          {/* v1.50.0 (owner): work tasks raised from this request (work steps and linked work) show here too. */}
+          {journey && journey.tasks.length > 0 && (
+            <section className="card px-5 py-4" aria-labelledby="request-tasks" data-testid="request-tasks">
+              <h2 id="request-tasks" className="mb-3 flex items-center gap-2 font-semibold">
+                <ListChecks aria-hidden="true" className="h-4 w-4 shrink-0 text-primary-600" />
+                Work tasks
+              </h2>
+              <ul className="space-y-2 text-label">
+                {journey.tasks.map((task) => (
+                  <li key={task.id} className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+                    <span className="min-w-0">
+                      <Link href={`/users/tasks/${task.id}`} className="link font-mono text-caption">
+                        {task.taskNo}
+                      </Link>{" "}
+                      <SafeText text={task.title} />
+                      <span className="block text-caption text-ink-muted">
+                        {task.assignee}
+                        {task.dueAt ? ` · due ${formatIndiaTime(new Date(task.dueAt))}` : ""}
+                      </span>
+                    </span>
+                    <span className={`shrink-0 text-caption font-semibold ${task.overdue ? "text-danger-600" : task.status === "COMPLETED" ? "text-success-600" : "text-ink-muted"}`}>
+                      {task.overdue ? "Overdue" : TASK_STATUS_LABEL[task.status]}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
           <SectionBoundary label="Linked requests">
             <Links
               requestId={view.id}
@@ -481,7 +510,7 @@ export default async function RequestPage({
               <h2 id="reuse-levels" className="mb-3 flex items-center gap-2 font-semibold">
                 <Copy aria-hidden="true" className="h-4 w-4 shrink-0 text-primary-600" />
                 Reuse these levels
-                <Hint text="Make this custom approval a predefined approval type. Its levels and form are copied into a draft you can change, test and publish." align="start" />
+                <Hint text="Copy these levels and form into a new draft approval type." align="start" />
               </h2>
               <PromoteCustomForm requestId={view.id} title={view.title} />
             </section>
@@ -517,7 +546,7 @@ export default async function RequestPage({
                 <ShieldCheck aria-hidden="true" className="h-4 w-4" />
                 Super Admin
               </Link>
-              <Hint text="Remove this request from every screen, for example a test or a mistake." align="end" />
+              <Hint text="Remove this request from every screen." align="end" />
               <DeleteRequestButton requestId={view.id} requestNo={view.requestNo} redirectTo="/superadmin/requests?tab=deleted" />
             </div>
           )}

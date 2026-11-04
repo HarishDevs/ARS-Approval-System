@@ -275,7 +275,7 @@ class Run {
       nodeState.status = "APPROVED";
       nodeState.completedAt = this.context.now;
       nodeState.assigned = approvers;
-      this.events.push({ type: "WORK_ASSIGNED", nodeId: node.id, label: node.label, userIds: approvers, ...(node.slaHours ? { slaHours: node.slaHours } : {}) });
+      this.events.push({ type: "WORK_ASSIGNED", nodeId: node.id, label: node.label, userIds: approvers, ...(node.slaHours ? { slaHours: node.slaHours } : {}), ...(node.workPriority ? { workPriority: node.workPriority } : {}), ...(node.workDueOn ? { workDueOn: node.workDueOn } : {}) });
       this.advanceFrom(node.id);
       return;
     }

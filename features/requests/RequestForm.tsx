@@ -228,7 +228,7 @@ export function RequestForm({
         </div>
         {mode === "submit" && !amendment && collaboratorOptions && (
           <div>
-            <PeoplePicker name="collaborator" label="Collaborators (optional)" options={collaboratorOptions} help="Anyone in the organisation who should follow this request: they can see it, comment and add files, and are told how it goes. They don't approve anything." invalid={Boolean(result && !result.ok && result.fieldErrors?.collaborator)} />
+            <PeoplePicker name="collaborator" label="Collaborators (optional)" options={collaboratorOptions} help="Followers can view, comment and add files, but don't approve." invalid={Boolean(result && !result.ok && result.fieldErrors?.collaborator)} />
             <FieldError result={result} name="collaborator" />
           </div>
         )}

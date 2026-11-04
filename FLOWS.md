@@ -756,6 +756,7 @@ flowchart LR
   F --> E[Approved]
 ```
 - A work task shows as **To do** in Waiting for me. It can't be rejected, and it may be the requester's own.
+- v1.50.0 (owner): a work step has **Task priority** and an optional **Task due date** (end of that day, India time). When the step starts, the task reaches the assignee's Task Management with them (put the work level after the approval levels so it starts once they approve); the step's due date shows in Waiting for me, and the request page lists the tasks in its **Work tasks** card.
 - FYI recipients get "For your information". The level map lists who was told.
 
 ## F-80 Stuck step: IT moves it on (v1.4.0, D-098)

@@ -409,7 +409,7 @@ export function AnswerQuestionForm({ requestId, question, byName }: { requestId:
 export function DelegateTaskForm({ requestId, taskKey, people }: { requestId: number; taskKey: string; people: { id: number; label: string }[] }) {
   const { result, pending, onSubmit, confirmBar } = useActionForm(delegateTaskAction, {
     confirmTitle: "Pass this approval on?",
-    confirm: "It moves to the colleague you chose straight away, with a fresh response time. You won't be able to decide it unless it comes back.",
+    confirm: "Pass it on now? You can't decide it unless it comes back.",
     confirmLabel: "Yes, pass it on",
   });
   return (

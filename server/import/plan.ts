@@ -283,6 +283,7 @@ function planUsers(rows: Row[], snapshot: Snapshot): { planned: PlannedRow[]; op
     const loginId = check.required(row, "login_id", "User ID");
     const login = lower(loginId);
     if (loginId && !LOGIN_ID.test(loginId)) check.add("login_id", "Use 2–100 letters, numbers, dot, dash or underscore.");
+    else if (loginId && /^\d{10,15}$/.test(loginId)) check.add("login_id", "A User ID can't be 10 to 15 digits (it would look like a mobile number).");
     if (login && dupLogin.has(login)) check.add("login_id", "This User ID appears more than once in the file.");
     const existing = login ? byLogin.get(login) : undefined;
     if (existing?.isBreakGlass) check.add("login_id", "The break-glass account can't be changed by import.");

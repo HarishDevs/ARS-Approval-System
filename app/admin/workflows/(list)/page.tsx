@@ -14,13 +14,13 @@ export default async function WorkflowsPage({ searchParams }: { searchParams: Pr
   const removed = (await searchParams).removed === "1";
   return (
     <>
-      <PageHeader title="Workflows" description="Predefined approval types: the form people fill in and the levels it goes through.">
+      <PageHeader title="Approval types" description="The forms people fill in and the levels they go through.">
         <div className="flex flex-wrap gap-2">
           <Link href="/admin/workflows/import" className="btn-secondary btn-compact">
             Import
           </Link>
           <Link href="/admin/workflows/new" className="btn-primary btn-compact">
-            New workflow
+            New approval type
           </Link>
         </div>
       </PageHeader>
@@ -30,7 +30,7 @@ export default async function WorkflowsPage({ searchParams }: { searchParams: Pr
         </p>
       )}
       {workflows.length === 0 ? (
-        <EmptyState title="No workflows yet" body="Create the first approval type, e.g. Purchase & SCM Approval." />
+        <EmptyState title="No approval types yet" body="Create the first one, e.g. Purchase approval." />
       ) : (
         <div className="card overflow-x-auto">
           <table className="data-table">

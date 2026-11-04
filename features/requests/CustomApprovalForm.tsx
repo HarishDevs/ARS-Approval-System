@@ -457,7 +457,7 @@ export function CustomApprovalForm({
               name="collaborator"
               label="Collaborators (optional)"
               options={collaboratorOptions}
-              help="Anyone in the organisation who should follow this request: they can see it, comment and add files, and are told how it goes. They don't approve anything."
+              help="Followers can view, comment and add files, but don't approve."
               onChange={() => window.setTimeout(refresh, 0)}
             />
             <FieldError result={result} name="collaborator" />

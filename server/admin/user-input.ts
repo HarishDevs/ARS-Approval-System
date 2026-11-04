@@ -33,7 +33,9 @@ const schema = z.object({
     .trim()
     .min(2, "Use at least 2 characters.")
     .max(100)
-    .regex(/^[A-Za-z0-9._-]+$/, "Use letters, numbers, dot, dash or underscore only."),
+    .regex(/^[A-Za-z0-9._-]+$/, "Use letters, numbers, dot, dash or underscore only.")
+    // v1.50.0: sign-in also accepts a mobile number, so a User ID can't look like one.
+    .refine((value) => !/^\d{10,15}$/.test(value), "A User ID can't be 10 to 15 digits (it would look like a mobile number)."),
   name: z.string().trim().min(2, "Enter the full name.").max(200),
   email: z.string().trim().toLowerCase().email("Enter a valid email address.").max(255),
   whatsappNumber: z.string().optional(),

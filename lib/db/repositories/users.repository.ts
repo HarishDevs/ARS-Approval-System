@@ -159,8 +159,11 @@ export async function recordFailedPassword(
   await db.query<ResultSetHeader>(
     // MySQL applies SET assignments left to right, so locked_until must be
     // computed before failed_login_count is incremented.
+    // v1.50.0 (security review): once a lock has run out the count starts
+    // again, so one wrong password after an expired lock doesn't lock again.
     `UPDATE users SET
-       locked_until = IF(failed_login_count + 1 >= ?, DATE_ADD(CURRENT_TIMESTAMP, INTERVAL ? MINUTE), locked_until),
+       failed_login_count = IF(locked_until IS NOT NULL AND locked_until < CURRENT_TIMESTAMP, 0, failed_login_count),
+       locked_until = IF(failed_login_count + 1 >= ?, DATE_ADD(CURRENT_TIMESTAMP, INTERVAL ? MINUTE), IF(locked_until < CURRENT_TIMESTAMP, NULL, locked_until)),
        failed_login_count = failed_login_count + 1
      WHERE id = ?`,
     [threshold, lockMinutes, userId],

@@ -362,7 +362,7 @@ export function WorkflowBuilder({
             <div className="flex flex-wrap items-center gap-2 border-b border-line px-5 py-3" role="toolbar" aria-label="Workflow tools">
               <h2 id="flow-title" className="mr-auto flex items-center gap-1.5 font-semibold">
                 The flow
-                <Hint text="The map shows the levels from submission to decision; click a box to open it below. Undo / Redo with Ctrl+Z / Ctrl+Y outside text boxes." align="start" />
+                <Hint text="Click a level to edit it. Ctrl+Z / Ctrl+Y undo and redo." align="start" />
               </h2>
               {problemCount > 0 ? (
                 <button
@@ -1186,7 +1186,7 @@ function StepEditor({
       type: next === "APPROVE" ? undefined : next,
       approvers: next === "APPROVE" && pick.kind === "REQUESTER" ? { kind: "REQUESTER_MANAGER" } : pick,
       ...(next === "NOTIFY" ? { skipWhen: null } : {}),
-      ...(next !== "WORK" ? { holdsUp: undefined } : {}),
+      ...(next !== "WORK" ? { holdsUp: undefined, workPriority: undefined, workDueOn: undefined } : {}),
     });
   return (
     <div className="grid gap-3 md:grid-cols-2">
@@ -1222,6 +1222,40 @@ function StepEditor({
             <span className="block text-caption text-ink-muted">Untick to give the work as tasks and let the request move on at once; finishing them won&apos;t decide anything on the request.</span>
           </span>
         </label>
+      )}
+      {/* v1.50.0 (owner): the task's priority and due date; it reaches the person's Task Management when this step starts. */}
+      {type === "WORK" && (
+        <div className="grid gap-3 sm:grid-cols-2 md:col-span-2" data-testid="work-task-options">
+          <div>
+            <label className="field-label" htmlFor={`work-priority-${step.id}`}>
+              Task priority
+            </label>
+            <select
+              id={`work-priority-${step.id}`}
+              value={step.workPriority ?? "NORMAL"}
+              onChange={(event) => onChange({ ...step, workPriority: event.target.value === "NORMAL" ? undefined : (event.target.value as "LOW" | "HIGH" | "URGENT") })}
+              className="field-input"
+            >
+              <option value="LOW">Low</option>
+              <option value="NORMAL">Normal</option>
+              <option value="HIGH">High</option>
+              <option value="URGENT">Urgent</option>
+            </select>
+          </div>
+          <div>
+            <label className="field-label" htmlFor={`work-due-${step.id}`}>
+              Task due date <span className="font-normal text-ink-muted">(optional)</span>
+            </label>
+            <input
+              id={`work-due-${step.id}`}
+              type="date"
+              min={new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" })}
+              value={step.workDueOn ?? ""}
+              onChange={(event) => onChange({ ...step, workDueOn: event.target.value || undefined })}
+              className="field-input"
+            />
+          </div>
+        </div>
       )}
       <div className="md:col-span-2">
         <label className="field-label">{WHO_LABEL[type]}</label>

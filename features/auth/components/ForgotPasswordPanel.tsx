@@ -97,7 +97,7 @@ export function ForgotPasswordPanel({ minLength }: { minLength: number }) {
             required
             value={loginId}
             onChange={(event) => setLoginId(event.target.value)}
-            placeholder="e.g. RAVI01, 98765 43210 or name@arssteels.co.in"
+            placeholder="User ID, mobile number or email"
             className="field-input"
           />
         </div>

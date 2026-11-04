@@ -28,12 +28,21 @@ export const RATE_RULES: Record<LimitedAction, Rule[]> = {
   GOOGLE: [{ scope: "ip", limit: 30, windowSeconds: 900 }],
 };
 
+// v1.50.0 (security review): one bucket for one mobile number however it is
+// typed (spaces, dashes, +91), and for a User ID or email in any case.
+export function limitKey(identifier: string): string {
+  const value = identifier.trim().toLowerCase();
+  const digits = value.replace(/[\s()+-]/g, "");
+  if (!/^\d{10,15}$/.test(digits)) return value;
+  return digits.length === 12 && digits.startsWith("91") ? digits.slice(2) : digits;
+}
+
 export function bucketsFor(action: LimitedAction, context: Pick<RequestContext, "ipAddress">, loginId?: string): { bucket: string; rule: Rule }[] {
   return RATE_RULES[action]
     .filter((rule) => rule.scope === "ip" || loginId)
     .map((rule) => ({
       rule,
-      bucket: `${action.toLowerCase()}:${rule.scope}:${rule.scope === "ip" ? (context.ipAddress ?? "unknown") : loginId!.trim().toLowerCase()}`,
+      bucket: `${action.toLowerCase()}:${rule.scope}:${rule.scope === "ip" ? (context.ipAddress ?? "unknown") : limitKey(loginId!)}`,
     }));
 }
 

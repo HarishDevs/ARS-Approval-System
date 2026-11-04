@@ -29,10 +29,10 @@ export default async function DoaPage() {
     <>
       <PageHeader
         title="Approval authority (DoA)"
-        description="Who must approve at each amount, read from the live workflows. To change a limit, edit the workflow step (Skip this step when amount is at most …) and publish a new version."
+        description="Approvers by amount, from live approval types. Edit the type to change a limit."
       />
       {tables.length === 0 ? (
-        <EmptyState title="No live workflows" body="Publish a workflow with an amount field to see its limits here." />
+        <EmptyState title="No live approval types" body="Publish one with an amount field to see its limits." />
       ) : (
         <div className="space-y-6">
           {tables.map(({ id, name, versionNo, table }) => (

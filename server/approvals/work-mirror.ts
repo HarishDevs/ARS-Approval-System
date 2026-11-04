@@ -2,7 +2,7 @@ import "server-only";
 import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { getDbPool, type Queryable } from "@/lib/db/client";
 import { withTransaction } from "@/lib/db/transaction";
-import { lockRequest, nextRequestNumber } from "@/lib/db/repositories/approvals.repository";
+import { endOfIndiaDay, findWorkflowVersion, lockRequest, nextRequestNumber } from "@/lib/db/repositories/approvals.repository";
 import { appendTaskEvent, insertTask } from "@/lib/db/repositories/tasks.repository";
 import { addFollower, generalTypeVersion } from "@/lib/db/repositories/work.repository";
 
@@ -32,7 +32,7 @@ export function workMirrorLink(formData: unknown): WorkMirrorLink | null {
 export async function mirrorWorkTasks(requestId: number, db: Queryable): Promise<void> {
   await linkBackgroundWork(requestId, db);
   const [steps] = await db.query<RowDataPacket[]>(
-    `SELECT t.task_key, t.node_label, t.approver_id, t.status, t.due_at, t.decided_by, r.title, r.request_no, r.requester_id, r.deleted_at
+    `SELECT t.task_key, t.node_id, t.node_label, t.approver_id, t.status, t.due_at, t.decided_by, r.title, r.request_no, r.requester_id, r.deleted_at, r.workflow_version_id
      FROM approval_tasks t JOIN approval_requests r ON r.id = t.request_id
      WHERE t.request_id = ? AND t.task_type = 'WORK'`,
     [requestId],
@@ -44,6 +44,12 @@ export async function mirrorWorkTasks(requestId: number, db: Queryable): Promise
     [requestId],
   );
   const byKey = new Map(mirrors.map((row) => [String(row.task_key), row]));
+  // v1.50.0 (owner): the work step's priority (its due date is already the step's due time).
+  const version = await findWorkflowVersion(Number(steps[0]!.workflow_version_id), db);
+  const priorityOf = (nodeId: string) => {
+    const node = version?.definition.nodes.find((item) => item.id === nodeId);
+    return node?.kind === "APPROVAL" && node.workPriority ? node.workPriority : "NORMAL";
+  };
   let general: Awaited<ReturnType<typeof generalTypeVersion>> | undefined;
   for (const step of steps) {
     const key = String(step.task_key);
@@ -59,7 +65,7 @@ export async function mirrorWorkTasks(requestId: number, db: Queryable): Promise
           typeVersionId: general.versionId,
           title: `${String(step.node_label)}: ${String(step.title)}`.slice(0, 200),
           description: `A work step of request ${String(step.request_no)}. Do the work, then tick this task done (or press Mark as done on the request); the request then moves on.`,
-          priority: "NORMAL",
+          priority: priorityOf(String(step.node_id)),
           createdBy: Number(step.requester_id),
           assigneeId: Number(step.approver_id),
           dueAt: (step.due_at as Date | null) ?? null,
@@ -121,13 +127,13 @@ async function linkBackgroundWork(requestId: number, db: Queryable): Promise<voi
   const have = new Set(made.map((row) => String(row.link_key)));
   let general: Awaited<ReturnType<typeof generalTypeVersion>> | undefined;
   for (const event of events) {
-    const payload = (typeof event.payload_json === "string" ? JSON.parse(event.payload_json) : event.payload_json) as { nodeId: string; label: string; userIds: number[]; slaHours?: number };
+    const payload = (typeof event.payload_json === "string" ? JSON.parse(event.payload_json) : event.payload_json) as { nodeId: string; label: string; userIds: number[]; slaHours?: number; workPriority?: "LOW" | "NORMAL" | "HIGH" | "URGENT"; workDueOn?: string };
     for (const userId of payload.userIds ?? []) {
       const key = `${String(event.id)}:${userId}`;
       if (have.has(key)) continue;
       general ??= await generalTypeVersion(db);
       if (!general) return;
-      const dueAt = payload.slaHours ? new Date((event.created_at as Date).getTime() + payload.slaHours * 3_600_000) : null;
+      const dueAt = payload.workDueOn ? endOfIndiaDay(payload.workDueOn) : payload.slaHours ? new Date((event.created_at as Date).getTime() + payload.slaHours * 3_600_000) : null;
       const taskNo = await nextRequestNumber("TSK", db);
       const id = await insertTask(
         {
@@ -135,7 +141,7 @@ async function linkBackgroundWork(requestId: number, db: Queryable): Promise<voi
           typeVersionId: general.versionId,
           title: `${payload.label}: ${String(event.title)}`.slice(0, 200),
           description: `A task from request ${String(event.request_no)}. The request doesn't wait for it, and finishing it doesn't decide anything on the request.`,
-          priority: "NORMAL",
+          priority: payload.workPriority ?? "NORMAL",
           createdBy: Number(event.requester_id),
           assigneeId: userId,
           dueAt,

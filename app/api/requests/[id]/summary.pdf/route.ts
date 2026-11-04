@@ -10,6 +10,16 @@ import { apiError } from "@/lib/http/api-response";
 import { logError } from "@/lib/logging/logger";
 import type { MapStage } from "@/server/approvals/step-map";
 import { EXPIRED_LABEL, isExpiredApproval } from "@/server/approvals/expiry-rules";
+import { personProfile } from "@/lib/db/repositories/profile.repository";
+import { loadJourney } from "@/server/journey/load";
+import { TASK_STATUS_LABEL } from "@/server/modules/task-rules";
+import { STATUS_WORD } from "@/features/ui/labels";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+
+// v1.50.0: the ARS logo for the PDF header (read once; the PDF works without it).
+let logoBytes: Promise<Uint8Array | null> | null = null;
+const logo = () => (logoBytes ??= readFile(path.join(process.cwd(), "public", "branding", "ars-cms-logo-light-clear.png")).then((bytes) => new Uint8Array(bytes)).catch(() => null));
 
 // #10 PDF summary. The same record-level check as the request page
 // (loadRequestView, D-057): anyone else gets the same plain 404. Audited.
@@ -38,12 +48,27 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     if (!/^\d+$/.test(id)) return apiError("NOT_FOUND", "Not found.", 404);
     const view = await loadRequestView(Number(id), { id: session.user.id, roles: session.user.roles });
     if (!view) return apiError("NOT_FOUND", "Not found.", 404);
+    // v1.50.0 (owner): the same cards as the request page.
+    const [requester, journey, logoPng] = await Promise.all([
+      personProfile(view.requesterId).catch(() => null),
+      loadJourney(view.id, { id: session.user.id, roles: session.user.roles }).catch(() => null),
+      logo(),
+    ]);
+    const expired = isExpiredApproval(view.status, view.validUntil);
     const bytes = await buildRequestSummaryPdf({
+      statusKey: expired ? "EXPIRED" : view.status,
+      requester: requester
+        ? { loginId: requester.loginId, department: requester.departmentName, designation: requester.designationName, email: requester.email, manager: requester.managerName }
+        : null,
+      raisedOn: view.timeline.length ? formatIndiaTime(view.timeline[0]!.at) : null, // the timeline is oldest first
+      tasks: (journey?.tasks ?? []).map((task) => ({ taskNo: task.taskNo, title: task.title, assignee: task.assignee, due: task.dueAt ? formatIndiaTime(new Date(task.dueAt)) : null, status: task.overdue ? "Overdue" : TASK_STATUS_LABEL[task.status] })),
+      links: view.links.map((link) => ({ requestNo: link.requestNo, title: link.title, status: STATUS_WORD[link.status] ?? link.status, relation: link.kind === "RELATED" ? "Related" : link.direction === "to" ? "Follow-up" : "Follow-up of" })),
+      logo: logoPng,
       requestNo: view.requestNo,
       title: view.title,
       workflowName: view.workflowName,
       // DR-05 (owner, 2 Nov 2026): an approval past its valid-until date reads Expired.
-      statusLabel: isExpiredApproval(view.status, view.validUntil) ? `${EXPIRED_LABEL} (approved; valid until ${formatIndiaTime(view.validUntil!)})` : (STATUS[view.status] ?? view.status),
+      statusLabel: expired ? `${EXPIRED_LABEL} (approved; valid until ${formatIndiaTime(view.validUntil!)})` : (STATUS[view.status] ?? view.status),
       requesterName: view.requesterName,
       progress: view.tracker.headline,
       priority: view.priority && !view.priority.hidden ? { label: view.priority.label, color: view.priority.color } : null, // v1.47.0

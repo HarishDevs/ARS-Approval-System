@@ -19,9 +19,9 @@ const TYPE_HELP: Partial<Record<FieldType, string>> = {
   DATETIME: "A date and a time of day, in India time.",
   CHECKBOX: 'One tick box. Required means it must be ticked (e.g. "I confirm the details are correct").',
   URL: "A web link starting with https:// or http://. Shown as a link that opens in a new tab.",
-  LINE_ITEMS: "The requester adds rows of description, quantity, rate (₹) and GST %. The total (worked out in paise on the server) is this field's value, so it can be the DoA amount or used in a formula.",
+  LINE_ITEMS: "Rows of item, quantity, rate (₹) and GST %. The total can be the DoA amount.",
   SECTION: "A heading that groups the fields below it. It holds no value.",
-  ATTACHMENT: "The requester attaches files here (PDF, images, Word, Excel, PowerPoint, CSV or text; 10 MB each). Required means at least one file. The files are listed under this field on the request.",
+  ATTACHMENT: "Files, 10 MB each. Required means at least one file.",
 };
 export function typeHelp(field: FormField): string | undefined {
   if (field.type === "LOOKUP" && field.source) return `The requester picks from the active ${SOURCE_LABEL[field.source].toLowerCase()} kept in Admin → Departments. New ones appear by themselves.`;

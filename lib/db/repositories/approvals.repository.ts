@@ -9,6 +9,10 @@ import { queueFilterSql, type QueueFilter } from "@/server/approvals/queue-filte
 import { parseTypeSettings, type TypeSettings } from "@/server/workflows/type-settings";
 import { addWorkingHours, type WorkingCalendar } from "@/server/workflows/calendar";
 
+// v1.50.0 (owner): a work step with a due date is due at the end of that day in India.
+export const endOfIndiaDay = (day: string) => new Date(`${day}T23:59:59+05:30`);
+const workDueOf = (nodes: readonly WorkflowNode[]) => new Map(nodes.flatMap((node) => (node.kind === "APPROVAL" && node.mode === "WORK" && node.workDueOn ? [[node.id, endOfIndiaDay(node.workDueOn)] as const] : [])));
+
 function dueTimes(createdAt: Date, hours: number | null, calendar?: WorkingCalendar): [Date | null, Date | null] {
   if (!hours) return [null, null];
   if (!calendar) return [new Date(createdAt.getTime() + hours * 3600_000), new Date(createdAt.getTime() + 2 * hours * 3600_000)];
@@ -430,6 +434,7 @@ export async function syncTasks(requestId: number, state: InstanceState, nodes: 
   const labels = new Map(nodes.map((node) => [node.id, node.label]));
   const sla = new Map(nodes.map((node) => [node.id, node.kind === "APPROVAL" ? (node.slaHours ?? null) : null]));
   const work = new Set(nodes.filter((node) => node.kind === "APPROVAL" && node.mode === "WORK").map((node) => node.id));
+  const fixedDue = workDueOf(nodes);
   const rows = state.tasks.map((task) => [
     requestId,
     task.id,
@@ -443,7 +448,7 @@ export async function syncTasks(requestId: number, state: InstanceState, nodes: 
     task.onBehalfOf ?? null,
     task.comment?.slice(0, 2000) ?? null,
     new Date(task.createdAt),
-    ...dueTimes(new Date(task.createdAt), sla.get(task.nodeId) ?? null, calendar),
+    ...(fixedDue.has(task.nodeId) ? [fixedDue.get(task.nodeId)!, null] : dueTimes(new Date(task.createdAt), sla.get(task.nodeId) ?? null, calendar)),
     task.decidedAt ? new Date(task.decidedAt) : null,
   ]);
   // approver_id is updated too: a handover (F-16) moves a pending task.
@@ -467,7 +472,8 @@ export async function restartTaskClock(requestId: number, taskKeys: readonly str
   );
   const now = new Date();
   for (const row of rows) {
-    const [due, escalate] = dueTimes(now, sla.get(row.node_id) ?? null, calendar);
+    const fixed = workDueOf(nodes).get(row.node_id);
+    const [due, escalate] = fixed ? [fixed, null] : dueTimes(now, sla.get(row.node_id) ?? null, calendar);
     await db.query<ResultSetHeader>("UPDATE approval_tasks SET due_at = ?, escalate_at = ? WHERE id = ?", [due, escalate, row.id]);
     await db.query<ResultSetHeader>("DELETE FROM task_reminders WHERE task_id = ?", [row.id]);
   }

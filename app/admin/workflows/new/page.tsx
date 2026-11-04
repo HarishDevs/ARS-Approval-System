@@ -13,9 +13,9 @@ export default async function NewWorkflowPage() {
   const options = await loadBuilderOptions();
   return (
     <>
-      <PageHeader title="New workflow" description="Set the form, then the approval authority (DoA): amount limits across, levels down, tick who is needed in each band. It's saved as a draft; test it, then publish it.">
+      <PageHeader title="New approval type" description="Build the form and DoA limits, then test and publish. Saved as a draft.">
         <Link href="/admin/workflows" className="link text-label">
-          ← All workflows
+          ← Approval types
         </Link>
       </PageHeader>
       <WorkflowBuilder

@@ -69,7 +69,7 @@ export function UserCommands({
             id={id}
             command="reset-password"
             label="Reset password"
-            body="Emails a link (valid 12 hours) to choose a new password, confirmed by a WhatsApp code. Their current password keeps working until then. Older links stop working."
+            body="Emails a 12-hour reset link. The current password works until then."
             confirm={`Email ${name} a link to reset their password?`}
             confirmLabel="Yes, send"
           />

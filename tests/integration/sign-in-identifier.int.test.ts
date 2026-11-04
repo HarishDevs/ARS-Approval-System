@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { ResultSetHeader } from "mysql2/promise";
 import { getDbPool } from "@/lib/db/client";
-import { findUserForSignIn, signInPhoneDigits } from "@/lib/db/repositories/users.repository";
+import { findUserForSignIn, recordFailedPassword, signInPhoneDigits } from "@/lib/db/repositories/users.repository";
 
 // v1.49.5 (owner): the sign-in name may be the User ID, the email or the
 // mobile (WhatsApp) number; the password and the WhatsApp code still follow.
@@ -52,5 +52,16 @@ describe("sign-in name: User ID, email or mobile number", () => {
     expect(signInPhoneDigits("+91 98765-43210")).toEqual(["919876543210"]);
     expect(signInPhoneDigits("RAVI01")).toEqual([]);
     expect(signInPhoneDigits("12345")).toEqual([]);
+  });
+});
+
+// v1.50.0 (security review): after a lock runs out, the count starts again,
+// so one wrong password doesn't lock the account straight away.
+describe("wrong-password lock", () => {
+  it("starts counting again once an earlier lock has expired", async () => {
+    await getDbPool().query("UPDATE users SET failed_login_count = 5, locked_until = DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 1 MINUTE) WHERE id = ?", [id]);
+    expect(await recordFailedPassword(id, 5, 15)).toEqual({ failedCount: 1, locked: false });
+    for (let attempt = 2; attempt <= 4; attempt += 1) await recordFailedPassword(id, 5, 15);
+    expect(await recordFailedPassword(id, 5, 15)).toEqual({ failedCount: 5, locked: true });
   });
 });

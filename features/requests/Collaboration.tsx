@@ -6,6 +6,7 @@ import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/featur
 import { Hint } from "@/features/ui/Hint";
 import { SafeText } from "@/features/ui/SafeText";
 import { Lightbulb, Link2 } from "lucide-react";
+import { RequestLinkPicker } from "@/features/requests/RequestLinkPicker";
 
 // EN-06 advice and EN-08 links on the request page.
 export interface ConsultRow {
@@ -152,7 +153,8 @@ export function Links({ requestId, rows, followUpHref }: { requestId: number; ro
           <label htmlFor="link-no" className="field-label">
             Link another request
           </label>
-          <input id="link-no" name="otherRequestNo" placeholder="e.g. PUR-2026-000123" className="field-input w-full" />
+          {/* key: a new link adds a row, which starts the search box afresh. */}
+          <RequestLinkPicker key={rows.length} name="otherRequestNo" excludeId={requestId} />
         </div>
         <SubmitButton pending={pending} variant="secondary" className="btn-compact h-11">
           Link

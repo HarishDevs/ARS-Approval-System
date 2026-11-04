@@ -165,7 +165,7 @@ export function UserForm({
         <fieldset className="sm:col-span-2" data-testid="chat-access" disabled={Boolean(moduleLock)}>
           <legend className="field-label">
             Pico Bot: what this person may ask about{" "}
-            <Hint text="Needs the AI module above. A module chat also needs that module. General, Salesforce and Combined chat must also be switched on in AI settings." align="start" />
+            <Hint text="Needs the AI module; each chat must also be on in AI settings." align="start" />
           </legend>
           {!moduleLock && <input type="hidden" name="chatShown" value="1" />}
           <div className="grid gap-2 sm:grid-cols-2">
@@ -198,7 +198,7 @@ export function UserForm({
           {/* v1.49.6 (owner): every new user is emailed; no opt-out. */}
           <p className="text-label font-medium">A welcome email goes to this address when you create the user.</p>
           <Hint
-            text={method === "GOOGLE" ? "Tells them they've been added and to sign in with Google as this email." : method === "BOTH" ? "It has their User ID and a link, valid 12 hours, to set their password (confirmed by a WhatsApp code); they can also sign in with Google as this email." : "It has their User ID and a link, valid 12 hours, to set their password (confirmed by a WhatsApp code)."}
+            text={method === "GOOGLE" ? "Tells them they've been added and to sign in with Google as this email." : method === "BOTH" ? "Includes their User ID and a 12-hour set-password link; Google sign-in also works." : "Includes their User ID and a 12-hour set-password link."}
             align="start"
           />
         </div>

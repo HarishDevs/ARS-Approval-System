@@ -52,6 +52,7 @@ export async function keepSessionAlive(): Promise<boolean> {
   return true;
 }
 
+const SECURITY_LOCK_SECONDS = 30 * 24 * 60 * 60; // the "This wasn't me" lock lasts until 9999; wrong-password locks last minutes
 async function loadCurrentSession(touch: true): Promise<CurrentSession | null>;
 async function loadCurrentSession(touch: false): Promise<{ session: CurrentSession; idleSecondsLeft: number | null } | null>;
 async function loadCurrentSession(touch: boolean): Promise<CurrentSession | { session: CurrentSession; idleSecondsLeft: number | null } | null> {
@@ -62,7 +63,11 @@ async function loadCurrentSession(touch: boolean): Promise<CurrentSession | { se
   if (live === null) return null;
   const idleSeconds = live.idleSeconds;
   const user = await findUserById(payload.uid);
-  if (!user || !user.active || user.lockedSecondsRemaining > 0) return null;
+  // v1.50.0 (security review): a lock from wrong passwords stops new sign-ins
+  // only; it doesn't end sessions already open (anyone who knows a colleague's
+  // email or mobile could otherwise sign them out). "This wasn't me" (the
+  // year-long security lock) still ends them.
+  if (!user || !user.active || user.lockedSecondsRemaining > SECURITY_LOCK_SECONDS) return null;
   if (user.isBreakGlass && user.breakGlassSecondsRemaining <= 0) return null;
   // D-250: a daily session has no idle limit; it ends at midnight (its expiry).
   const limitSeconds = live.daily ? null : (await idleLimitMinutes()) * 60;

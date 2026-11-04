@@ -44,7 +44,7 @@ export default async function WorkflowPage({ params, searchParams }: { params: P
       <Breadcrumbs items={[{ href: "/admin", label: "Admin" }, { href: "/admin/workflows", label: "Approval types" }, { label: workflow.name }]} />
       <PageHeader title={workflow.name} meta={`${workflow.code} · numbers ${workflow.requestPrefix}-YYYY-000001 · ${published ? `version ${published.versionNo} is live` : "not published yet"}`}>
         <Link href="/admin/workflows" className="link text-label">
-          ← All workflows
+          ← Approval types
         </Link>
       </PageHeader>
       {created && (

@@ -14,7 +14,7 @@ import Link from "next/link";
 export const metadata: Metadata = { title: "Out of office" };
 
 const HOW_IT_WORKS =
-  "While it's active, your delegate sees and can decide the approvals already waiting for you and any new ones that arrive. Dates are India time: it starts at the beginning of the start day and ends at the end of the end day; you can end it early at any time. You keep your own access, and requests you raised are never decided by your delegate. Your delegate must be able to approve (Manager and above).";
+  "Your delegate (Manager or above) decides your approvals between these dates, India time. Never your own requests. End it early any time.";
 
 // F-30 out of office: the delegate sees and decides your approvals while
 // it's active; every decision records both names.
@@ -28,7 +28,7 @@ export default async function DelegationPage() {
     <>
       <PageHeader
         title="Out of office"
-        description="Name someone to approve for you while you're away (up to 90 days). They act on your behalf and both names are recorded. They can't approve their own requests."
+        description="Pick someone to approve for you while you're away (up to 90 days)."
       />
       <ProfileTabs />
       <section className="card mb-6 px-5 py-4 text-label" aria-labelledby="ooo-how">

@@ -221,7 +221,7 @@ export function DetailsForm({
           confirmTitle: `Close ${name} for new requests?`,
           confirmLabel: "Yes, close it",
           confirmTone: "danger",
-          confirm: "Nobody will be able to raise a new request of this type (it leaves Request templates). Requests already running continue to the end. You can open it again later.",
+          confirm: "Close to new requests? Running requests carry on. You can reopen it later.",
         }
       : {},
   );
@@ -378,7 +378,7 @@ export function TypeSettingsForm({
         <legend className="field-label">
           Must be unique{" "}
           <Hint
-            text="Never repeated on an open or approved request of this type. For identifiers such as an invoice or PO number. A repeat is refused for everyone, at any date; a rejected or withdrawn request frees the value."
+            text="Must be unique (e.g. invoice or PO number) unless the earlier request was rejected or withdrawn."
             align="start"
           />
         </legend>
@@ -441,7 +441,7 @@ export function TypeSettingsForm({
         <input type="checkbox" name="mayFinishWithoutApprover" defaultChecked={settings.mayFinishWithoutApprover} />
         May finish without an approver (all levels skipped)
         <Hint
-          text="Off: a request of this type that no level needs (every level skipped by its rules) goes to the requester's HOD for one approval, or to IT if there is no HOD. On: it is approved straight away, with nobody approving."
+          text="When every level is skipped. On: approved at once. Off: sent to the HOD (or IT if none)."
           align="start"
         />
       </label>

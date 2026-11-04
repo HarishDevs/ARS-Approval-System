@@ -1,8 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
-import { getEnv } from "@/config/environment";
+import { appBaseUrl } from "@/lib/http/app-url";
 import { createTryAsLink } from "@/server/auth/try-as";
 import { redirect } from "next/navigation";
 import { formFields, getAdminActor, parseId } from "@/server/admin/actor";
@@ -193,9 +192,8 @@ export async function tryAsLinkAction(_previous: ActionResult | null, formData: 
   const id = parseId(formData.get("id"));
   if (id === null) return NOT_FOUND;
   try {
-    const list = await headers();
-    const base = getEnv().APP_BASE_URL ?? `${list.get("x-forwarded-proto") ?? "https"}://${list.get("host") ?? "localhost"}`;
-    const result = await createTryAsLink(actor, id, base);
+    // v1.50.0 (security review): the configured address, never the request's Host header.
+    const result = await createTryAsLink(actor, id, appBaseUrl());
     if (!result.ok) return { ok: false, message: result.message };
     return { ok: true, data: { url: result.url, name: result.name } };
   } catch (error) {

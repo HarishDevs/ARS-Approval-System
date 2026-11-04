@@ -266,7 +266,7 @@ export async function linkAction(_previous: ActionResult | null, formData: FormD
   const requestId = num(formData.get("requestId"));
   const otherNo = String(formData.get("otherRequestNo") ?? "").trim();
   if (!me || requestId === null) return NOT_FOUND;
-  if (!/^[A-Za-z0-9-]{4,40}$/.test(otherNo)) return { ok: false, message: "Enter a request number.", fieldErrors: { otherRequestNo: "e.g. PUR-2026-000123" } };
+  if (!/^[A-Za-z0-9-]{4,40}$/.test(otherNo)) return { ok: false, message: "Search and pick a request.", fieldErrors: { otherRequestNo: "Type a number or title, then pick from the list." } };
   try {
     const result = await linkRequests({ requestId, otherRequestNo: otherNo }, me);
     if (!result.ok) return { ok: false, message: result.message, fieldErrors: { otherRequestNo: result.message } };

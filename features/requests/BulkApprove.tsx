@@ -36,7 +36,7 @@ export function BulkApprove({ items }: { items: QueueItem[] }) {
     <section className="card mb-6 px-5 py-4" aria-labelledby="bulk">
       <h2 id="bulk" className="flex items-center gap-1 font-semibold">
         Approve several at once
-        <Hint text={`Only straightforward approvals are listed: work tasks and requests on hold are done one by one. Open a request first if you need to read it. Up to ${MAX} at a time.`} align="start" />
+        <Hint text={`Simple approvals only, up to ${MAX} at a time. Work tasks and requests on hold are done one by one.`} align="start" />
       </h2>
       <form onSubmit={onSubmit} className="mt-3 space-y-3">
         <div className="flex flex-wrap gap-3 text-label">

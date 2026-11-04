@@ -1,5 +1,13 @@
 # Release notes
 
+## v1.50.0 (5 Nov 2026): go-live release: work task options, linked items, PDF like the screen, security fixes (owner)
+- **Work task steps:** a level set to **Work task** now has **Task priority** (Low, Normal, High, Urgent) and an optional **Task due date**. The task reaches the person's Task Management with that priority and due date when the step starts (put the work level after the approval levels to have it start once they approve). The due date also shows in **Waiting for me**.
+- **Request page:** a **Work tasks** card lists the tasks raised from the request (number, title, who, due date, status), next to **Linked requests**.
+- **Linked requests:** type a number or words of the title and pick from the list; only requests you can see are offered.
+- **PDF download** now looks like the request screen: the ARS header, title with status and priority, Request details in two columns, Approval levels, Work tasks, Linked requests, Attachments and History, with page numbers.
+- **Security:** a lock from wrong passwords no longer signs someone out of sessions already open, and the count starts again after a lock runs out (so nobody can keep a colleague locked out using their email or mobile number). A User ID can't be 10 to 15 digits (it would look like a mobile number). Sign-in limits count one mobile number once however it is typed.
+- **Shorter wording** on many screens (Out of office, bulk approve, collaborators, admin approval types, DoA, form fields). Admin calls them **Approval types** everywhere.
+
 ## v1.49.6 (4 Nov 2026): welcome emails, users bulk actions, Home tidy-up (owner)
 - **New users get a welcome email:** every user added with **Add user** or created by an **import** is emailed their User ID and a link to set their password (Google users are told to sign in with Google). There is no tick box any more. After an import the message says how many emails are on their way.
 - **Set-password and invitation links now work for 12 hours** (they were 72).

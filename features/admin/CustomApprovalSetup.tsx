@@ -36,7 +36,7 @@ export function CustomApprovalSetup({ initialForm, initialPolicy, lookups = NO_L
           <h2 id="step-options" className="font-semibold">
             Step options
           </h2>
-          <Hint text="The default for every new step, and whether people may change it. A fixed option is shown to people but can't be changed, and the server applies it." align="start" />
+          <Hint text="Default for new steps. Fixed options can't be changed by users." align="start" />
         </div>
         <div className="grid gap-4 md:grid-cols-3">
           <fieldset className="space-y-2">
@@ -104,7 +104,7 @@ export function CustomApprovalSetup({ initialForm, initialPolicy, lookups = NO_L
           <h2 id="builder-options" className="font-semibold">
             What people may add
           </h2>
-          <Hint text="Levels and parallel steps are always available. Switch on the advanced options people may use on a custom approval; IT's approval types are not affected." align="start" />
+          <Hint text="Advanced options for custom approvals only; approval types aren't affected." align="start" />
         </div>
         <div className="flex flex-wrap gap-x-6 gap-y-2">
           {(

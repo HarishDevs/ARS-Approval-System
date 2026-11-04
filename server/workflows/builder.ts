@@ -47,6 +47,9 @@ const stepSchema = z.object({
   skipWhen: conditionSpecSchema.nullish(),
   onNoApprover: z.enum(["BLOCK", "SKIP"]).optional(),
   slaHours: z.number().int().min(1, "Use at least 1 hour.").max(720, "Use at most 720 hours (30 days).").nullish(),
+  // v1.50.0 (owner): a work step's task priority and due date.
+  workPriority: z.enum(["LOW", "NORMAL", "HIGH", "URGENT"]).nullish(),
+  workDueOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a due date.").nullish(),
 });
 
 const plainStageSchemas = [
@@ -178,6 +181,8 @@ function stepNode(step: BuilderStep): WorkflowNode {
     ...(step.skipWhen ? { skipIf: toCondition(step.skipWhen) } : {}),
     ...(step.onNoApprover ? { onNoApprover: step.onNoApprover } : {}),
     ...(step.slaHours ? { slaHours: step.slaHours } : {}),
+    ...(step.type === "WORK" && step.workPriority ? { workPriority: step.workPriority } : {}),
+    ...(step.type === "WORK" && step.workDueOn ? { workDueOn: step.workDueOn } : {}),
   };
 }
 

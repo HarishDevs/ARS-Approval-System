@@ -15,7 +15,7 @@ export default async function ImportTypePage() {
   return (
     <>
       <Breadcrumbs items={[{ href: "/admin/workflows", label: "Approval types" }, { label: "Import" }]} />
-      <PageHeader title="Import an approval type" description="Bring in an approval type exported from another copy of the app (for example the test site). It arrives as a draft: nothing goes live until you check it and publish it.">
+      <PageHeader title="Import an approval type" description="Import an exported approval type. It arrives as a draft.">
         <Link href="/admin/workflows" className="link text-label">
           ← Approval types
         </Link>
