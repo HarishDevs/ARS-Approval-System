@@ -169,7 +169,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 - [x] Q5 (5 Nov 2026, v1.50.0) PDF download in the same layout as the request screen
 - [x] Q10 (5 Nov 2026, v1.50.0) Security review fixes: lock doesn't end open sessions, count resets after a lock, no all-digit User IDs, rate key per mobile number, Try-as link from APP_BASE_URL
 - [x] Q11 (5 Nov 2026, v1.50.0) Copy audit: long explanations shortened; admin "Approval types" naming
-- [ ] Q12 Go-live: full local end-to-end run and visual sweep (Compact and Classic) before 9:00 AM
+- [x] Q12 (5 Nov 2026) Go-live: full local end-to-end run and visual sweep (Compact, Classic, phone)
 - [x] Q6 (4 Nov 2026, v1.49.6) Admin → Users & roles: tick several users and act on them together (multi-select + bulk actions)
 - [x] Q7 (4 Nov 2026, v1.49.6) Home: drop Recently viewed and Finished in the last 30 days
 - [x] Q8 (4 Nov 2026, v1.49.6) Home: My recent requests 8 per page with pagination

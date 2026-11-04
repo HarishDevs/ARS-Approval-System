@@ -1,5 +1,5 @@
 import { expect, test, type BrowserContext } from "@playwright/test";
-import type { RowDataPacket } from "mysql2/promise";
+import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { db, dropCustomDraft, sessionCookie, toWorkflowStep } from "./db";
 
 // v1.49.5 (owner): a requester (designation not ticked Approver) sees only New
@@ -19,7 +19,20 @@ const REQUESTER_PAGES = ["New request", "My pending requests", "My approved requ
 let requestPath = "";
 
 test("a requester sees only the four requester pages; no Open card, no cards on My approved requests", async ({ page, context }) => {
-  await as(context, "E2E_STAFF");
+  // A new requester (Executive, not an approver) with nothing waiting for them:
+  // earlier test files may give E2E_STAFF a step, which keeps the approver pages.
+  const connection = await db();
+  const loginId = `E2E_RQ_${Date.now().toString(36).toUpperCase()}`;
+  try {
+    const [created] = await connection.query<ResultSetHeader>(
+      "INSERT INTO users (login_id, name, email, sign_in_method, designation_id, active) SELECT ?, 'Rita Requester', ?, 'GOOGLE', id, TRUE FROM designations WHERE code = 'E2E_EXEC'",
+      [loginId, `${loginId.toLowerCase()}@example.test`],
+    );
+    await connection.query("INSERT INTO user_roles (user_id, role_id) SELECT ?, id FROM roles WHERE code = 'USER'", [created.insertId]);
+  } finally {
+    await connection.end();
+  }
+  await as(context, loginId);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/users/requests");
   const sidebar = page.getByTestId("sidebar-scroll");

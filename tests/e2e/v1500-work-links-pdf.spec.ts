@@ -25,10 +25,14 @@ test("a work step offers Task priority and Task due date", async ({ page, contex
 test("Linked requests: search instead of typing a number; the PDF downloads", async ({ page, context }) => {
   await context.addCookies([await sessionCookie("E2E_REQ")]);
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto("/users/requests");
-  const first = page.getByTestId("request-table").getByRole("link").first();
-  await first.click();
-  await expect(page).toHaveURL(/\/users\/requests\/\d+/);
+  // Its own request (the custom request starts with the reporting manager as approver).
+  await dropCustomDraft("E2E_REQ");
+  await page.goto("/users/custom");
+  await page.locator("#c-title").fill(`Link search ${Date.now().toString(36)}`);
+  await toWorkflowStep(page);
+  await page.getByTestId("step-next").click();
+  await page.getByRole("button", { name: "Submit request" }).click();
+  await expect(page).toHaveURL(/\/users\/requests\/\d+\?submitted=1/);
   const search = page.getByTestId("link-search");
   await expect(search).toHaveAttribute("placeholder", "Number or title");
   await search.fill("zz-no-such-request");

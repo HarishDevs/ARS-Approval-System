@@ -86,7 +86,8 @@ test("D-206/D-235: choice and skip appear on New request only when IT switches t
   await as(context, "E2E_REQ");
   // The Overview button "New request" opens the page where people choose their own approvers.
   await page.goto("/users?home=approvals"); // D-265: requesters open on My Work
-  await page.getByRole("main").getByRole("link", { name: "New request", exact: true }).click();
+  // The first-use checklist links New request too; the Overview's own button is the one with the btn-primary style.
+  await page.getByRole("main").locator("a.btn-primary", { hasText: "New request" }).first().click();
   await expect(page).toHaveURL(/\/users\/custom$/);
   await expect(page.getByRole("heading", { level: 1, name: "New request" })).toBeVisible();
   for (const name of ["Add a level", "Add parallel steps"]) await expect(page.getByRole("button", { name })).toBeVisible();

@@ -715,6 +715,7 @@
 ## 5. Work log (newest first)
 
 ### 5 Nov 2026 (v1.50.0: go-live release)
+- D-295. Go-live checks (5 Nov 2026): full local e2e 239 passed; the 2 failures were test data (a requester given a step by an earlier file; a second "New request" link from the first-use checklist), fixed and re-run green. Visual sweep of ~25 screens in Compact, Classic and phone width: no overflow, clipped text, broken images or stray values; "My requests" heading renamed "My pending requests" to match the menu.
 - D-295. Tests: unit v150-work-options (builder, limitKey), integration sign-in-identifier (lock reset), e2e v1500-work-links-pdf; PDF rendered and checked by eye. General pages checked: release notes, User Guide (work task options, PDF), FLOWS (work step options); privacy: no change (no new data); terms, tour, checklist: no change.
 
 ### 4 Nov 2026 (v1.49.6: welcome emails, users bulk actions, Home)
