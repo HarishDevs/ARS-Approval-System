@@ -6,7 +6,7 @@ import { withTransaction } from "@/lib/db/transaction";
 import { getDbPool } from "@/lib/db/client";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { insertOutbox } from "@/lib/db/repositories/outbox.repository";
-import { nextRequestNumber } from "@/lib/db/repositories/approvals.repository";
+import { canViewRequest, findRequest, nextRequestNumber } from "@/lib/db/repositories/approvals.repository";
 import { appendTaskEvent, findTask, insertTask, personFacts, updateTask, type TaskRecord } from "@/lib/db/repositories/tasks.repository";
 import * as repo from "@/lib/db/repositories/work.repository";
 import { versionWithType } from "@/lib/db/repositories/module-types.repository";
@@ -289,7 +289,13 @@ export interface QuickTaskInput {
   description?: string;
   priority?: string;
   holidayOk?: boolean; // D-217: keep a due date that falls on a holiday
+  // v1.50.3 (owner: follow-up tasks from a request): linked to this request,
+  // which the person must be able to see; listed in its Work tasks card.
+  relatedRequestId?: number | null;
 }
+
+// The form_data marker of a follow-up task raised from a request page.
+export const REQUEST_FOLLOW_UP_KEY = "__requestFollowUp";
 
 export async function quickAddTask(input: QuickTaskInput, actor: TaskActor): Promise<WorkResult<{ id: number; taskNo: string }>> {
   const title = clean(input.title, 200);
@@ -333,11 +339,17 @@ export async function quickAddTask(input: QuickTaskInput, actor: TaskActor): Pro
   }
   const priority = (TASK_PRIORITIES as readonly string[]).includes(input.priority ?? "") ? (input.priority as TaskPriority) : settings.defaultPriority;
   const description = (input.description ?? "").trim().slice(0, 4000) || null;
+  const relatedRequestId = input.relatedRequestId ?? null;
+  if (relatedRequestId !== null) {
+    const request = await findRequest(relatedRequestId);
+    const visible = request && (request.requesterId === actor.id || isAdminRoles(actor.roles) || (await canViewRequest(relatedRequestId, actor.id)));
+    if (!visible) return fail(NOT_FOUND);
+  }
 
   const outcome = await withTransaction(async (connection) => {
     const taskNo = await nextRequestNumber("TSK", connection);
     const id = await insertTask(
-      { taskNo, typeVersionId: general.versionId, title, description, priority, createdBy: actor.id, assigneeId, dueAt, startsOn: null, formData: {}, relatedRequestId: null, submissionKey: null },
+      { taskNo, typeVersionId: general.versionId, title, description, priority, createdBy: actor.id, assigneeId, dueAt, startsOn: null, formData: relatedRequestId !== null ? { [REQUEST_FOLLOW_UP_KEY]: true } : {}, relatedRequestId, submissionKey: null },
       connection,
     );
     if (parent) {
@@ -353,7 +365,7 @@ export async function quickAddTask(input: QuickTaskInput, actor: TaskActor): Pro
       const sections = await repo.ensureMySections(actor.id, connection);
       if (sections.some((section) => section.id === input.mySectionId)) await repo.placeMyTask(actor.id, id, input.mySectionId, Date.now() / 1000, connection);
     }
-    await appendTaskEvent(id, { actorId: actor.id, type: "CREATED", to: "OPEN", payload: { assigneeId, dueAt: dueAt?.toISOString() ?? null, priority, projectId: input.projectId, parentId: input.parentId } }, connection);
+    await appendTaskEvent(id, { actorId: actor.id, type: "CREATED", to: "OPEN", payload: { assigneeId, dueAt: dueAt?.toISOString() ?? null, priority, projectId: input.projectId, parentId: input.parentId, ...(relatedRequestId !== null ? { requestId: relatedRequestId } : {}) } }, connection);
     await repo.addFollower(id, actor.id, "CREATOR", actor.id, connection);
     if (assigneeId !== actor.id) await repo.addFollower(id, assigneeId, "ASSIGNEE", actor.id, connection);
     await recordAudit({ actorUserId: actor.id, action: "TASK_CREATED", entityType: "TASK", entityId: id, sessionId: actor.sessionId, ipAddress: actor.ipAddress ?? null, metadata: { taskNo, projectId: input.projectId, parentId: input.parentId } }, connection);

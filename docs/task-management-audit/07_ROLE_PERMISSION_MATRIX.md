@@ -10,7 +10,7 @@ ARS-CMS has four role codes: `SUPER_ADMIN`, `IT_ADMIN`, `USER`, `EXPORTER` (`dat
 | Admin | `IT_ADMIN` (Admin space) | Exists | Keep |
 | Department HOD | `departments.hod_user_id` | Partial: HOD analytics scope only | Give HODs department-wide task visibility, department queue, DWR and report access |
 | Manager | `users.reporting_manager_id` chain (`teamOf`, `managesAssignee`) | Exists (derived) | Keep derived; acknowledging completion = the assignee's manager (or the assigner) |
-| Team Leader | No distinct construct (reporting line or `groups`) | Needs decision | Option A: anyone with direct reports is a team leader (no change). Option B: a group with a leader |
+| Team Leader | Reporting line | Decided (10 Nov 2026) | **Anyone with direct reports** is a team leader; no new role or structure |
 | Employee | `USER` + `module_access` (TASK) | Exists | Keep |
 
 ## 2. Proposed permission matrix (✔ allowed, ◐ own team/department only, ✖ not allowed)
@@ -24,7 +24,7 @@ ARS-CMS has four role codes: `SUPER_ADMIN`, `IT_ADMIN`, `USER`, `EXPORTER` (`dat
 | Assign to a department | ✔ | ✔ | ◐ own | ✖ | ✖ | ✖ | **new** |
 | Reassign / reallocate | ✔ | ✔ | ◐ | ◐ | ◐ | creator only | `allowReassign` (existing) |
 | Delegate own task | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ (if type allows) | **new** |
-| Approve delegation | ✔ | ✔ | ◐ | ◐ | ✖ | ✖ | **new** |
+| Approve delegation | — | — | — | — | — | — | not needed (owner, 10 Nov 2026) |
 | Submit completion | — | — | own | own | own | own | COMPLETE (existing) → SUBMIT (**new**) |
 | Acknowledge / reject completion | ✔ | ✔ | ◐ | ◐ (assignee's manager or assigner) | ◐ if chosen | ✖ | **new** |
 | Create IDM meeting | ✔ | ✔ | ✔ | ✔ | ✔ | per setting | **new** page key |

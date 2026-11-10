@@ -178,6 +178,37 @@ export async function quickAddAction(input: { title: string; projectId?: number 
   );
 }
 
+// v1.50.3 (owner: "follow-up management from the linked tasks"): a follow-up
+// task from a request page, linked to the request (Task module required).
+export async function requestTaskAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const me = await actor();
+  if (!me || !(me.modules ?? []).includes("TASK") && !me.roles.includes("SUPER_ADMIN")) return { ok: false, message: "Not found." };
+  const requestId = id(text(formData, "requestId"));
+  if (requestId === null) return { ok: false, message: "Not found." };
+  const result = await run("requestTask", me, (who) =>
+    work.quickAddTask(
+      {
+        title: text(formData, "title"),
+        projectId: null,
+        sectionId: null,
+        parentId: null,
+        assigneeId: id(text(formData, "assigneeId")),
+        dueDay: text(formData, "dueDay"),
+        mySectionId: null,
+        priority: text(formData, "priority"),
+        holidayOk: formData.get("holidayOk") === "on",
+        relatedRequestId: requestId,
+      },
+      who,
+    ),
+  );
+  if (result.ok) {
+    revalidatePath(`/users/requests/${requestId}`);
+    return { ok: true, message: "Follow-up task added." };
+  }
+  return result;
+}
+
 // Several lines pasted at once: one task per line (at most 50).
 export async function quickAddManyAction(input: { titles: string[]; projectId?: number | null; sectionId?: number | null; parentId?: number | null; mySectionId?: number | null }): Promise<ActionResult> {
   if (!(await actor())) return NOT_FOUND;

@@ -27,7 +27,7 @@ export async function loadJourney(requestId: number, viewer: Actor): Promise<Jou
               JSON_CONTAINS_PATH(t.form_data_json, 'one', '$.__approvalWork') AS blocking
        FROM tasks t JOIN users u ON u.id = t.assignee_id
        WHERE t.related_request_id = ? AND t.deleted_at IS NULL
-         AND JSON_CONTAINS_PATH(t.form_data_json, 'one', '$.__approvalWork', '$.__approvalLink')
+         AND JSON_CONTAINS_PATH(t.form_data_json, 'one', '$.__approvalWork', '$.__approvalLink', '$.__requestFollowUp')
        ORDER BY t.id LIMIT 50`,
       [requestId],
     ),

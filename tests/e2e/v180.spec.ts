@@ -128,7 +128,10 @@ test("the Super Admin hides a page and makes another view-only", async ({ page, 
   await as(context, "E2E_REQ");
   await page.goto("/users");
   await expect(page.locator("aside nav").getByRole("link", { name: "Calendar" })).toHaveCount(0);
-  expect((await page.request.get("/users/calendar")).status()).toBe(404);
+  // v1.50.3: a hidden page opens the "You don't have access" screen.
+  await page.goto("/users/calendar");
+  await expect(page).toHaveURL(/\/users\/no-access\?page=users\.calendar&why=HIDDEN/);
+  await expect(page.getByTestId("no-access")).toContainText("IT has turned this page off for you.");
   await page.goto("/users/collaborating");
   await expect(page.getByTestId("view-only")).toBeVisible();
   // A change on a view-only page is refused by the server.

@@ -709,6 +709,18 @@ export interface MyRequestItem {
   validUntil?: Date | null; // DR-05: shown as Expired once past
 }
 
+// v1.50.3: who has each request now (the Follow-ups panel).
+export async function pendingWithFor(requestIds: readonly number[], db: Queryable = getDbPool()): Promise<Map<number, string>> {
+  if (requestIds.length === 0) return new Map();
+  const [rows] = await db.query<(RowDataPacket & { request_id: number; names: string })[]>(
+    `SELECT t.request_id, GROUP_CONCAT(DISTINCT u.name ORDER BY u.name SEPARATOR ', ') AS names
+     FROM approval_tasks t JOIN users u ON u.id = t.approver_id
+     WHERE t.request_id IN (?) AND t.status = 'PENDING' GROUP BY t.request_id`,
+    [requestIds],
+  );
+  return new Map(rows.map((row) => [Number(row.request_id), String(row.names)]));
+}
+
 export async function listMyRequests(userId: number, db: Queryable = getDbPool()): Promise<MyRequestItem[]> {
   const [rows] = await db.query<
     (RowDataPacket & { id: number; request_no: string; title: string; workflow_name: string; status: InstanceStatus; submitted_at: Date; closed_at: Date | null; pending_with: string | null; valid_until: Date | null })[]

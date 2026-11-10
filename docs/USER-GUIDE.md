@@ -216,6 +216,10 @@ After a decision, **Next waiting for you** opens the next one. Budget warnings s
 
 **Work task levels** (in New request or an approval type): choose **Work task**, then **Task priority** and an optional **Task due date**. The task reaches the person's Task Management with them when the level starts; tasks raised from a request are listed in its **Work tasks** card. **Linked requests**: type a number or title and pick a request you can see. **Download PDF** gives the request as it looks on screen.
 
+**Follow-ups card** (request page): every follow-up raised from the request with its status and who has it. **Add a follow-up task** in the Work tasks card gives someone a task linked to the request (Task module needed).
+
+**Raise a follow-up** (on an approved request): for a New request one, it opens New request with the details copied and links the new request to the old one; for a template one, choose the type first. A page you don't have access to says so and names it; ask IT if you need it.
+
 **Approve several at once:** on Waiting for me, tick the straightforward approvals (up to 25), press **Review**, check the list, add a comment if you like, and **Yes, approve**. Each one is approved on its own and you see the result for each. Work tasks and requests on hold aren't offered; open them one by one.
 
 **Heads of department:** if IT switches it on, a short email every Monday morning sums up your department's requests from the past week (raised, approved, rejected, still waiting, overdue).

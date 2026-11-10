@@ -61,12 +61,15 @@ Overall: roughly **8–12 weeks** of focused work, delivered phase by phase so e
 - **Permissions** for HODs and team leaders must be decided clearly before building.
 - **Hosting**: the planned VPS move should happen before heavy new features, so performance is tested on the real server.
 
-## Decisions needed from management
-1. Priority names: the current Critical / Most Important / Important / Normal, or Critical / High / Medium / Low.
-2. Acknowledgement window: 3 **working** days or 3 calendar days; who acknowledges (assigner, reporting manager or HOD).
-3. Team Leader: anyone with direct reports, or a named team with a leader.
-4. DWR: daily cut-off time, and whether it is mandatory for all staff.
-5. Whether delegation needs manager approval.
+## Management decisions (10 Nov 2026)
+| # | Question | Decision |
+|---|---|---|
+| 1 | Priority names | **Critical / Most Important / Important / Normal** (as today; no change) |
+| 2 | Acknowledgement window | **3 working days** (working calendar: working days, organisation and department holidays) |
+| 3 | Who acknowledges | *Not yet answered*: provisional default = the person who assigned the task; if self-assigned, the reporting manager; then the HOD; then IT |
+| 4 | Team Leader | **Anyone with direct reports** (the existing reporting line; no new role or team structure) |
+| 5 | Daily Work Report | Cut-off **11:59 PM** India time; **mandatory for all staff** |
+| 6 | Delegation approval | **No approval needed**: a person can delegate their task directly (recorded and notified) |
 
 ## Recommended approach
 Extend the existing Task Management module in ten phases (see `09_IMPLEMENTATION_ROADMAP.md`), starting with access controls and the acknowledgement rule, then IDM and DWR. Each phase is released with full automated tests and without changing existing approval workflows.

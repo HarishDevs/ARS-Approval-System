@@ -120,6 +120,8 @@ export const OPEN_PATHS: readonly RegExp[] = [
   exact("/users/more"), // phone "More" menu (links already filtered by page access)
   under("/users/people"), // a person's contact card
   under("/admin/notifications"), // broadcast notifications (not yet a configurable page)
+  exact("/users/no-access"), // v1.50.3: the "you don't have access" screen itself
+  exact("/admin/no-access"),
 ];
 
 // May a restricted person use an address that is no configured page?

@@ -15,9 +15,9 @@ Rules marked **(existing)** are in the code today; **(proposed)** need building 
 
 ## 2. Completion acknowledgement (owner's rule)
 When an employee submits a task as completed, the responsible manager must acknowledge within **three days**. Proposed rules:
-1. Acknowledger = the person who assigned the task; if that is the assignee themself, the assignee's reporting manager; if none, the HOD of the assignee's department; if none, IT. (Owner to confirm.)
+1. Acknowledger = the person who assigned the task; if that is the assignee themself, the assignee's reporting manager; if none, the HOD of the assignee's department; if none, IT. (Provisional: not yet confirmed by the owner.)
 2. Recorded: submission time, acknowledgement deadline, decision time, decision (accepted/rejected), rejection remarks (required, ≥10 characters), who decided.
-3. Deadline = submission + **3 working days** (proposed: working days, end of day India time; owner to confirm calendar vs working days).
+3. Deadline = submission + **3 working days**, end of day India time (owner decision, 10 Nov 2026).
 4. Reminders to the acknowledger: on submission, then daily; on the deadline, escalation to the acknowledger's manager and the HOD (configurable via the existing reminder rules).
 5. A submitted task is **not** counted as completed in analytics until accepted; on-time is measured on the submission time against the due date applying at submission.
 6. Rejection returns the task to In progress, increments the revision number and notifies the employee with the remarks.
@@ -29,7 +29,7 @@ When an employee submits a task as completed, the responsible manager must ackno
 | Who may assign whom: per type `assignScope` (anyone / same department / my team / groups / people) | existing |
 | Reassignment requires a reason; history keeps from/to | existing (reason is fixed text in list/bulk edits: to fix) |
 | Original assignee is kept permanently on the task | proposed |
-| Delegation: the delegate does the work, the original assignee stays accountable; optional manager approval per type | proposed |
+| Delegation: the delegate does the work, the original assignee stays accountable; **no approval needed** (owner, 10 Nov 2026), but recorded in history and notified to the delegate and the assigner | proposed |
 | Bulk allocation creates one task per person (grouped), all-or-nothing | proposed (today one by one) |
 | Department allocation: task goes to a department queue; the HOD (or anyone they allow) picks it up | proposed |
 
@@ -59,7 +59,7 @@ When an employee submits a task as completed, the responsible manager must ackno
 
 ## 7. Daily Work Report (proposed)
 - Generated automatically at end of each working day per employee: completed, pending, overdue, new tasks received, tomorrow's plan.
-- Employee adds remarks and submits by a cut-off time (e.g. 7 pm, configurable); reminder before cut-off.
+- Employee adds remarks and submits by **11:59 PM** India time (owner, 10 Nov 2026); the report is **mandatory for all staff**; reminders in the evening before the cut-off; a missed report is flagged to the reporting manager.
 - Manager (or HOD) reviews and may comment; reports are kept for history and exportable to Excel/PDF.
 - No report on holidays, non-working days or approved leave.
 

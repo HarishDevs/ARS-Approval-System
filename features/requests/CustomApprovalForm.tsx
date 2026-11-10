@@ -129,6 +129,8 @@ export function CustomApprovalForm({
   lookups = NO_LOOKUPS,
   people = [],
   defaultApproverId = null,
+  followUpOf,
+  expiredSource,
 }: {
   options: BuilderOptions;
   draft?: DraftInfo;
@@ -139,6 +141,8 @@ export function CustomApprovalForm({
   lookups?: FieldLookups;
   people?: PersonOption[];
   defaultApproverId?: number | null; // D-234: the reporting manager, when they may approve
+  followUpOf?: number; // v1.50.3: linked to this approved request on submit
+  expiredSource?: { requestNo: string; expiredOn: string }; // DR-05: asks why
 }) {
   const [stages, setStages] = useState<BuilderStage[]>(
     () =>
@@ -302,6 +306,7 @@ export function CustomApprovalForm({
       )}
       <input type="hidden" name="spec" value={JSON.stringify({ stages })} />
       <input type="hidden" name="submissionKey" value={submissionKey} />
+      {followUpOf && <input type="hidden" name="followUpOf" value={followUpOf} />}
 
       {/* The three steps. */}
       <nav aria-label="Steps" className="request-steps scroll-hint -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0" data-testid="request-steps">
@@ -421,6 +426,16 @@ export function CustomApprovalForm({
             />
             <FieldError result={checked ? { ok: false, message: "", fieldErrors: checked } : result} name="title" />
           </div>
+          {expiredSource && (
+            <div className="rounded-md bg-danger-50 px-3 py-3">
+              <label htmlFor="c-expiredReason" className="field-label text-danger-600">
+                {expiredSource.requestNo} expired on {expiredSource.expiredOn}. Why are you using it?
+                <span aria-hidden="true"> *</span>
+              </label>
+              <textarea id="c-expiredReason" name="expiredReason" rows={2} maxLength={1000} aria-required="true" className="field-input h-auto py-2.5" placeholder="e.g. The work is still going on; renewing the approval" />
+              <FieldError result={result} name="expiredReason" />
+            </div>
+          )}
           <DynamicFields
             fields={fields}
             mode="submit"

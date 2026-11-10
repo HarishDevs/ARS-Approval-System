@@ -5,7 +5,9 @@ import { redirect } from "next/navigation";
 import { requireApiArea } from "@/server/authorization/guards";
 import { submitCustomRequest, type Actor } from "@/server/approvals/service";
 import { addComment, createDelegation, stopDelegation } from "@/server/approvals/collab";
-import { answerConsultation, consult, linkRequests } from "@/server/approvals/consult";
+import { answerConsultation, consult, linkFollowUp, linkRequests } from "@/server/approvals/consult";
+import { followUpSource } from "@/server/approvals/follow-up";
+import { cleanExpiredReason, expiredReasonError } from "@/server/approvals/expiry-rules";
 import { markAllReadReturningIds, markRead, markUnread } from "@/lib/db/repositories/collab.repository";
 import { INBOX_COMMANDS, setInbox } from "@/lib/db/repositories/work.repository";
 import { builderSpecSchema } from "@/server/workflows/builder";
@@ -57,6 +59,14 @@ export async function submitCustomAction(_previous: ActionResult | null, formDat
       if (typeof value === "string") fields[key] = value;
     }
   }
+  // v1.50.3 (owner: "raise a follow-up is not working"): a follow-up raised as
+  // a new (custom) request is linked to the approved request, like a template
+  // one; an expired approval needs a reason (DR-05).
+  const followUpOf = num(formData.get("followUpOf"));
+  const followUpFrom = followUpOf !== null ? await followUpSource(followUpOf, me) : null;
+  const expiredReason = followUpFrom?.expired ? cleanExpiredReason(String(formData.get("expiredReason") ?? "")) : "";
+  const expiredProblem = followUpFrom?.expired ? expiredReasonError(expiredReason) : null;
+  if (expiredProblem) return { ok: false, message: expiredProblem, fieldErrors: { expiredReason: expiredProblem } };
   let requestId: number;
   let filesSaved = true;
   try {
@@ -82,6 +92,9 @@ export async function submitCustomAction(_previous: ActionResult | null, formDat
     // v1.6.1: people the requester chose to follow it.
     const collaborators = collaboratorIdsFrom(formData);
     if (collaborators.length && !result.value.repeated) await addCollaborators(requestId, collaborators, me).catch((error) => logError("custom: collaborators failed", error, { requestId }));
+    if (followUpFrom && !result.value.repeated) {
+      await linkFollowUp({ sourceId: followUpFrom.id, followUpId: requestId, followUpNo: result.value.requestNo, ...(expiredReason ? { expiredReason } : {}) }, me).catch((error) => logError("custom follow-up link failed", error));
+    }
     await deleteDraft(me.id, "CUSTOM").catch((error) => logError("submitCustomAction: draft cleanup failed", error));
   } catch (error) {
     logError("submitCustomAction failed", error);

@@ -23,7 +23,7 @@ export default async function NewRequestPage({ searchParams }: { searchParams: P
   return (
     <>
       <PageHeader title="Request templates" icon={LayoutTemplate} description="Choose the kind of approval you need.">
-        <Link href="/users/custom" className="btn-secondary btn-compact">
+        <Link href={`/users/custom${suffix}`} className="btn-secondary btn-compact">
           Something else? New request
         </Link>
       </PageHeader>

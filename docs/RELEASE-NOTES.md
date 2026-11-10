@@ -1,5 +1,12 @@
 # Release notes
 
+## v1.50.3 (10 Nov 2026): follow-ups from New request; a clear "no access" screen (owner)
+- **Fixed: Raise a follow-up.** On a request raised with **New request** (CUS-…), the button sent you to Request templates, which only lists IT's approval types (and can be turned off for some people), so the follow-up couldn't be raised. It now opens **New request** with the title and matching details copied and a note "Raising a follow-up to …"; on submit the new request is linked to the approved one (an expired approval asks why, as before). Requests raised from a template still go to Request templates to choose the type; its "Something else? New request" link keeps the follow-up too.
+- **Follow-up management on the request page** (custom and template requests):
+  - A **Follow-ups** card lists every follow-up raised from the request, with its status and who has it now, and holds **Raise a follow-up**.
+  - The **Work tasks** card has **Add a follow-up task** (task, assign to, priority, optional due date). The task is linked to the request, listed in the card and in the person's Task Management, without raising a new approval. Needs the Task module; assignment follows the General task type's rules.
+- **No-access screen.** A page you can't open (turned off for you by IT, or part of a module you don't have) now says **"You don't have access to this page"**, names the page and why, and offers Go to Home. A request or task that isn't shared with you still shows "This page isn't available", so nothing private is confirmed.
+
 ## v1.50.2 (10 Nov 2026): no more false failure messages (owner)
 - **Fixed:** creating a user could first show a failure message although the user was created. The welcome email (and WhatsApp) was sent while the page waited, and a slow provider ran past the page's time limit. The user page now opens at once and says **"A welcome email is on its way"**; the email follows a moment later.
 - The same fix everywhere messages are sent while you wait: approval submits and decisions, comments and mentions, collaborators, task changes, information notices and Super Admin request deletes. Messages are saved first and sent just after the screen answers; anything that can't be sent is retried by the background job every 5 minutes, as before.

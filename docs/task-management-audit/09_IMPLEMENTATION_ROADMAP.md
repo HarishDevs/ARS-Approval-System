@@ -20,4 +20,4 @@ Order follows the requested phases, adjusted for dependencies (acknowledgement b
 - Phase 4 (leave) before leave notifications in Phase 9.
 - Phase 2 (category, department) before category/department reporting in Phase 8.
 - WhatsApp templates (Phase 9) should be submitted to Meta early; approval takes time.
-- Owner decisions needed before Phase 2: priority labels; acknowledgement days (calendar vs working); who acknowledges; Team Leader construct; DWR cut-off time.
+- Owner decisions (10 Nov 2026): priorities stay Critical / Most Important / Important / Normal; acknowledgement within 3 working days; Team Leader = anyone with direct reports; DWR cut-off 11:59 PM, mandatory for all; delegation without approval (C6 and the delegation-approval items drop out of Phase 3). Still open: who acknowledges (provisional default in 08).

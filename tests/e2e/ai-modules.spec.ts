@@ -52,17 +52,22 @@ test("an admin can't change their own module access (the boxes are locked and sa
   await expect(access.getByRole("checkbox", { name: /^AI/ })).toBeDisabled();
 });
 
-test("without the Task module: no Tasks in the sidebar, and typed task addresses are a plain 404", async ({ page, context }) => {
+// v1.50.3 (owner): a page refused by modules or page access opens the "You don't have access" screen.
+async function expectNoAccess(page: import("@playwright/test").Page, path: string) {
+  await page.goto(path);
+  await expect(page, path).toHaveURL(/\/(users|admin)\/no-access\?/);
+  await expect(page.getByTestId("no-access")).toBeVisible();
+}
+
+test("without the Task module: no Tasks in the sidebar, and typed task addresses show the no-access screen", async ({ page, context }) => {
   await addPerson(`MOD_B_${tag}`, "APPROVAL,INFORMATION");
   await context.addCookies([await sessionCookie(`MOD_B_${tag}`)]);
   await page.goto("/users");
   const sidebar = page.getByTestId("sidebar");
   await expect(sidebar.getByTestId("nav-group-My Approvals")).toBeVisible();
   await expect(sidebar.getByTestId("nav-group-Tasks & projects")).toHaveCount(0);
-  for (const path of ["/users/tasks", "/users/tasks/new", "/users/tasks/assigned"]) {
-    const response = await page.goto(path);
-    expect(response?.status(), path).toBe(404);
-  }
+  for (const path of ["/users/tasks", "/users/tasks/new", "/users/tasks/assigned"]) await expectNoAccess(page, path);
+  await expect(page.getByTestId("no-access")).toContainText("Task module");
   // The calendar offers no task kind.
   await page.goto("/users/calendar");
   await expect(page.getByRole("link", { name: /^Tasks/ })).toHaveCount(0);
@@ -75,10 +80,7 @@ test("AI alone doesn't open Approval, Task or Information: pages, sidebar, quick
   await expect(page.getByTestId("modules-home")).toBeVisible();
   const sidebar = page.getByTestId("sidebar");
   for (const group of ["My Approvals", "Tasks", "Information"]) await expect(sidebar.getByTestId(`nav-group-${group}`)).toHaveCount(0);
-  for (const path of ["/users/queue", "/users/new", "/users/requests", "/users/search", "/users/information", "/users/tasks"]) {
-    const response = await page.goto(path);
-    expect(response?.status(), path).toBe(404);
-  }
+  for (const path of ["/users/queue", "/users/new", "/users/requests", "/users/search", "/users/information", "/users/tasks"]) await expectNoAccess(page, path);
   // A direct API call of the Approval module (quick search) is refused too.
   const api = await page.request.get("/api/me/quick?q=PR");
   expect(api.status()).toBeGreaterThanOrEqual(400);
@@ -117,7 +119,9 @@ test("without the AI module: no AI group, every AI address is a 404, and the AI 
   await context.addCookies([await sessionCookie("E2E_ADMIN")]); // IT Admin, default modules (no AI)
   await page.goto("/users");
   await expect(page.getByTestId("sidebar").getByTestId("nav-group-AI Assistant")).toHaveCount(0);
-  for (const path of [...AI_PAGES, "/superadmin/ai", "/superadmin/salesforce", "/superadmin/ai/reports", "/superadmin/ai/data-sources", "/superadmin/ai/history"]) {
+  for (const path of AI_PAGES) await expectNoAccess(page, path);
+  // Super Admin pages stay a plain 404 for everyone else (D-016).
+  for (const path of ["/superadmin/ai", "/superadmin/salesforce", "/superadmin/ai/reports", "/superadmin/ai/data-sources", "/superadmin/ai/history"]) {
     const response = await page.goto(path);
     expect(response?.status(), path).toBe(404);
   }

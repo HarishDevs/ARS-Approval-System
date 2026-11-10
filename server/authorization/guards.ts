@@ -25,10 +25,12 @@ export async function requireArea(area: AppArea): Promise<CurrentSession> {
   const result = evaluateAreaAccess(session?.user ?? null, area);
   if (result.allowed && session) {
     // v1.8.0: the page itself may be hidden from this person (Super Admin's
-    // page access). Same plain 404 as a page that doesn't exist.
+    // page access). v1.50.3 (owner): it says so on a "You don't have access"
+    // screen (a page, never a record, so nothing private is confirmed).
     const page = await checkPageAccess(session.user, false);
     if (page.ok) return session;
     await recordAudit({ actorUserId: session.user.id, action: "PAGE_ACCESS_DENIED", entityType: "PAGE", entityId: page.pageKey ?? "unknown", result: "FAILURE", sessionId: session.sessionId, metadata: { reason: page.reason } });
+    if (area === "users" || area === "admin") redirect(`/${area}/no-access?${new URLSearchParams({ ...(page.pageKey ? { page: page.pageKey } : {}), why: page.reason })}`);
     notFound();
   }
   if (!session) {

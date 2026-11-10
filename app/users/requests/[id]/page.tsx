@@ -3,8 +3,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Breadcrumbs } from "@/features/ui/Display";
 import { NavOwner } from "@/features/shell/nav-owner";
+import { RequestTaskForm } from "@/features/requests/RequestTaskForm";
+import { pendingWithFor } from "@/lib/db/repositories/approvals.repository";
+import { hasModule } from "@/server/modules/modules";
 import { notFound } from "next/navigation";
-import { MessagesSquare, Paperclip, Repeat2, ShieldCheck, Copy, ListChecks } from "lucide-react";
+import { MessagesSquare, Paperclip, Repeat2, ShieldCheck, Copy, ListChecks, CornerDownRight } from "lucide-react";
 import { TASK_STATUS_LABEL } from "@/server/modules/task-rules";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
@@ -148,6 +151,14 @@ export default async function RequestPage({
   // v1.49.5 (owner: "opened from Waiting for me but it highlights My pending
   // requests"): the list this request belongs to for this person. The
   // breadcrumb, Back and the highlighted tab (NavOwner) all follow it.
+  // v1.50.3 (owner: follow-up management): follow-ups raised from this request
+  // (with who has them now), and follow-up tasks from the Work tasks card for
+  // people with the Task module.
+  const followUps = view.links.filter((link) => link.kind === "FOLLOW_UP" && link.direction === "to");
+  const followUpWith = await pendingWithFor(followUps.map((link) => link.id)).catch(() => new Map<number, string>());
+  const followUpHref = view.canFollowUp ? (view.isCustom ? `/users/custom?followUp=${view.id}` : `/users/new?followUp=${view.id}`) : null;
+  const canAddTask = view.status !== "CANCELLED" && hasModule(user, "TASK") && (await featureOn("tasks", user).catch(() => false));
+  const taskPeople = canAddTask ? (await listActiveUserOptions()).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` })) : [];
   const backTo =
     view.myTasks.length > 0
       ? { href: "/users/queue", label: "Waiting for me" }
@@ -457,7 +468,38 @@ export default async function RequestPage({
       <div className="request-bottom mt-6 grid items-stretch gap-6 md:grid-cols-2 xl:grid-cols-3" data-testid="request-bottom">
         <div className="order-2 min-w-0 space-y-6 xl:order-1">
           {/* v1.50.0 (owner): work tasks raised from this request (work steps and linked work) show here too. */}
-          {journey && journey.tasks.length > 0 && (
+          {(followUpHref || followUps.length > 0) && (
+            <section className="card px-5 py-4" aria-labelledby="follow-ups" data-testid="follow-ups">
+              <h2 id="follow-ups" className="mb-3 flex items-center gap-2 font-semibold">
+                <CornerDownRight aria-hidden="true" className="h-4 w-4 shrink-0 text-primary-600" />
+                Follow-ups{followUps.length > 0 ? ` (${followUps.length})` : ""}
+              </h2>
+              {followUps.length === 0 ? (
+                <p className="text-label text-ink-muted">None yet. A follow-up is a new request linked to this one.</p>
+              ) : (
+                <ul className="space-y-2 text-label">
+                  {followUps.map((link) => (
+                    <li key={link.id} className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+                      <span className="min-w-0">
+                        <Link href={`/users/requests/${link.id}`} className="link font-mono text-caption">
+                          {link.requestNo}
+                        </Link>{" "}
+                        <SafeText text={link.title} />
+                        {followUpWith.get(link.id) && <span className="block text-caption text-ink-muted">With {followUpWith.get(link.id)}</span>}
+                      </span>
+                      <span className="shrink-0"><RequestStatusPill status={link.status as Parameters<typeof RequestStatusPill>[0]["status"]} /></span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {followUpHref && (
+                <Link href={followUpHref} className="btn-secondary btn-compact mt-3 inline-flex" data-testid="raise-follow-up">
+                  Raise a follow-up
+                </Link>
+              )}
+            </section>
+          )}
+          {journey && (journey.tasks.length > 0 || canAddTask) && (
             <section className="card px-5 py-4" aria-labelledby="request-tasks" data-testid="request-tasks">
               <h2 id="request-tasks" className="mb-3 flex items-center gap-2 font-semibold">
                 <ListChecks aria-hidden="true" className="h-4 w-4 shrink-0 text-primary-600" />
@@ -482,13 +524,15 @@ export default async function RequestPage({
                   </li>
                 ))}
               </ul>
+              {journey.tasks.length === 0 && <p className="text-label text-ink-muted">No tasks yet. Add one to follow this request up.</p>}
+              {canAddTask && <RequestTaskForm requestId={view.id} people={taskPeople} meId={user.id} />}
             </section>
           )}
           <SectionBoundary label="Linked requests">
             <Links
               requestId={view.id}
-              followUpHref={view.canFollowUp ? `/users/new?followUp=${view.id}` : null}
-              rows={view.links.map((link) => ({
+              followUpHref={null}
+              rows={view.links.filter((link) => !(link.kind === "FOLLOW_UP" && link.direction === "to")).map((link) => ({
                 id: link.id,
                 requestNo: link.requestNo,
                 title: link.title,
