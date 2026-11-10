@@ -1,5 +1,6 @@
 import "server-only";
 import type { RowDataPacket } from "mysql2/promise";
+import { afterResponse } from "@/lib/http/after-response";
 import { getDbPool } from "@/lib/db/client";
 import { checkChosenApprover } from "@/server/approvals/approver-check";
 import { findRequest, isParticipant } from "@/lib/db/repositories/approvals.repository";
@@ -57,6 +58,9 @@ export async function addComment(requestId: number, body: string, actor: Actor):
   const id = await insertComment(requestId, actor.id, text);
   const mentions = await resolveMentions(text, request, actor.id);
   await recordAudit({ actorUserId: actor.id, action: "REQUEST_COMMENTED", entityType: "REQUEST", entityId: requestId, metadata: { commentId: id, mentioned: mentions.visible } });
+  // v1.50.2: everyone on the request is told just after the answer (one email
+  // each could keep the person waiting past the page's time limit).
+  await afterResponse("comment messages", async () => {
   try {
     const author = (await findUserById(actor.id))?.name ?? "Someone";
     const link = requestLink(baseUrl(), requestId);
@@ -88,6 +92,7 @@ export async function addComment(requestId: number, body: string, actor: Actor):
   } catch (error) {
     logError("addComment: notify failed", error, { requestId });
   }
+  });
   return { ok: true, value: { id, notVisible: mentions.notVisible } };
 }
 

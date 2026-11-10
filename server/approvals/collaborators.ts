@@ -1,5 +1,6 @@
 import "server-only";
 import type { RowDataPacket } from "mysql2/promise";
+import { afterResponse } from "@/lib/http/after-response";
 import { getDbPool, type Queryable } from "@/lib/db/client";
 import { withTransaction } from "@/lib/db/transaction";
 import { appendEvents, findRequest, isParticipant } from "@/lib/db/repositories/approvals.repository";
@@ -102,7 +103,7 @@ export async function addCollaborators(requestId: number, userIds: readonly numb
     return { ok: true as const, added: fresh, outboxIds };
   });
   if (!result.ok) return result;
-  await deliverOutbox(result.outboxIds);
+  await afterResponse("collaborator messages", () => deliverOutbox(result.outboxIds));
   return { ok: true, added: result.added, skipped };
 }
 

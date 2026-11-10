@@ -52,7 +52,9 @@ export default async function UserDetailPage({ params, searchParams }: { params:
       {created && (
         <p role="status" className="mb-4 rounded-md bg-success-50 px-3 py-2 text-label text-success-600">
           User created.
-          {query.invite === "sent"
+          {query.invite === "queued"
+            ? ` A welcome email is on its way to ${user.email}.`
+            : query.invite === "sent"
             ? ` Invitation emailed to ${user.email}.`
             : query.invite === "failed"
               ? null

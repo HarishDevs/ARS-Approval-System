@@ -27,8 +27,10 @@ test("Add user emails an invitation; Re-invite is on the user page and in the us
   await context.addCookies([await sessionCookie("E2E_ADMIN")]);
   const loginId = unique("E2E_INV");
   await addUser(page, loginId);
-  await expect(page).toHaveURL(/\/admin\/users\/\d+\?created=1&invite=failed$/);
-  await expect(page.getByTestId("invite-failed")).toContainText("The invitation email couldn't be sent");
+  // v1.50.2: the welcome email goes out just after the page answers, so the page never waits for it.
+  await expect(page).toHaveURL(/\/admin\/users\/\d+\?created=1&invite=queued$/);
+  await expect(page.getByRole("status").filter({ hasText: "A welcome email is on its way" })).toBeVisible();
+  await expect(page.getByTestId("invite-failed")).toHaveCount(0);
 
   // The user page: Re-invite (a Google user has no password to reset).
   await expect(page.getByRole("button", { name: "Reset password" })).toHaveCount(0);
@@ -49,7 +51,7 @@ test("a password user with a password gets Reset password on their page", async 
   await context.addCookies([await sessionCookie("E2E_ADMIN")]);
   const loginId = unique("E2E_RST");
   await addUser(page, loginId, { password: true });
-  await expect(page).toHaveURL(/\/admin\/users\/\d+\?created=1&invite=failed$/);
+  await expect(page).toHaveURL(/\/admin\/users\/\d+\?created=1&invite=queued$/);
   // Before a first password there is nothing to reset.
   await expect(page.getByRole("button", { name: "Reset password" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Send set-password link" })).toBeVisible();

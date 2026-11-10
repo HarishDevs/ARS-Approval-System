@@ -1,5 +1,6 @@
 import "server-only";
 import { withTransaction } from "@/lib/db/transaction";
+import { afterResponse } from "@/lib/http/after-response";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { insertOutbox } from "@/lib/db/repositories/outbox.repository";
 import { nextRequestNumber } from "@/lib/db/repositories/approvals.repository";
@@ -29,7 +30,7 @@ const addDays = (dayText: string, days: number) => new Date(Date.parse(`${dayTex
 const SEND_NOW = 25;
 
 async function send(ids: number[]) {
-  if (ids.length) await deliverOutbox(ids.slice(0, SEND_NOW)).catch(() => undefined);
+  if (ids.length) await afterResponse("information messages", () => deliverOutbox(ids.slice(0, SEND_NOW)));
 }
 
 export async function loadInfoFor(id: number, actor: { id: number; roles: readonly string[] }) {

@@ -1,5 +1,11 @@
 # Release notes
 
+## v1.50.2 (10 Nov 2026): no more false failure messages (owner)
+- **Fixed:** creating a user could first show a failure message although the user was created. The welcome email (and WhatsApp) was sent while the page waited, and a slow provider ran past the page's time limit. The user page now opens at once and says **"A welcome email is on its way"**; the email follows a moment later.
+- The same fix everywhere messages are sent while you wait: approval submits and decisions, comments and mentions, collaborators, task changes, information notices and Super Admin request deletes. Messages are saved first and sent just after the screen answers; anything that can't be sent is retried by the background job every 5 minutes, as before.
+- **Bulk Re-invite / Send set-password link** (Users & roles) now answers at once and sends the emails in the background.
+- **Task Management audit:** a full gap analysis against the 145-point Task Management checklist is in `docs/task-management-audit/` (11 reports). No application changes were made for it.
+
 ## v1.50.1 (10 Nov 2026): task links open for everyone on the task; new task priorities (owner)
 - **Fixed:** the link in a "Task for you" email showed "This page isn't available" for someone without the Task module (for example an approval-only user given a task). Anyone a task is assigned to, assigned by or created by can now open that task and work on it; the Task module still controls Task Management (lists, creating tasks, projects).
 - **Task priorities** are now **Critical**, **Most Important**, **Important** and **Normal** (in that order), in Create task, task lists, search, bulk "Set priority", work-task levels and task pages. Existing tasks keep their meaning (Urgent shows as Critical, High as Most Important, Normal stays Normal).

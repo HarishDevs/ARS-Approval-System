@@ -1,5 +1,6 @@
 import "server-only";
 import { departmentOfUser, mayRaise } from "@/server/approvals/raisers";
+import { afterResponse } from "@/lib/http/after-response";
 import type { PoolConnection, RowDataPacket } from "mysql2/promise";
 import { withTransaction } from "@/lib/db/transaction";
 import { getDbPool, type Queryable } from "@/lib/db/client";
@@ -414,8 +415,10 @@ export async function runOutbox(): Promise<{ outboxSent: number; outboxDropped: 
   return { outboxSent: await deliverOutbox(await listStaleOutbox(200)), outboxDropped };
 }
 
+// v1.50.2: sent just after the answer, so a slow provider can't make a saved
+// decision look failed (the job runner retries anything unsent).
 async function announce(changed: Changed): Promise<void> {
-  await deliverOutbox(changed.outboxIds);
+  await afterResponse("approval messages", () => deliverOutbox(changed.outboxIds));
 }
 
 // FN5 amendment of an approved request (see server/approvals/amendments.ts).

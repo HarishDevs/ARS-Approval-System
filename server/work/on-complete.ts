@@ -1,5 +1,6 @@
 import "server-only";
 import { workMirrorLink, WORK_MIRROR_KEY } from "@/server/approvals/work-mirror";
+import { afterResponse } from "@/lib/http/after-response";
 
 import type { RowDataPacket } from "mysql2/promise";
 import { getDbPool, type Queryable } from "@/lib/db/client";
@@ -54,7 +55,7 @@ async function tellUnblocked(taskId: number): Promise<void> {
   }
   if (messages.length) {
     const ids = await insertOutbox(null, messages, getDbPool());
-    await deliverOutbox(ids).catch(() => undefined);
+    await afterResponse("task completion messages", () => deliverOutbox(ids));
   }
 }
 
@@ -89,7 +90,7 @@ export async function createNextOccurrence(taskId: number, actor: { id: number; 
     return { newId, outbox: await insertOutbox(null, messages, connection) };
   });
   if (!outcome) return null;
-  if (outcome.outbox.length) await deliverOutbox(outcome.outbox).catch(() => undefined);
+  if (outcome.outbox.length) await afterResponse("next occurrence messages", () => deliverOutbox(outcome.outbox));
   return outcome.newId;
 }
 

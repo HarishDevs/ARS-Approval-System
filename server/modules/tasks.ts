@@ -1,5 +1,6 @@
 import { workMirrorLink } from "@/server/approvals/work-mirror";
 import "server-only";
+import { afterResponse } from "@/lib/http/after-response";
 import { withTransaction } from "@/lib/db/transaction";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { insertOutbox } from "@/lib/db/repositories/outbox.repository";
@@ -78,7 +79,7 @@ export async function loadTaskFor(id: number, actor: ModuleActor) {
 }
 
 async function send(ids: number[]) {
-  if (ids.length) await deliverOutbox(ids).catch(() => undefined);
+  if (ids.length) await afterResponse("task messages", () => deliverOutbox(ids));
 }
 
 // ---- create -------------------------------------------------------------------------

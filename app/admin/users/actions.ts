@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { afterResponse } from "@/lib/http/after-response";
 import { appBaseUrl } from "@/lib/http/app-url";
 import { createTryAsLink } from "@/server/auth/try-as";
 import { redirect } from "next/navigation";
@@ -42,19 +43,19 @@ export async function createUserAction(_previous: ActionResult | null, formData:
     return { ok: false, message: "Couldn't create the user. Please try again." };
   }
   // v1.13.0 (D-166); v1.49.6 (owner): every new user gets the welcome email
-  // (set-password link valid 12 hours). The user exists either way; the page
-  // says whether the email went.
-  let invite = "";
-  {
-    const sent = await sendInvitation(newId, actor).catch((error) => {
-      logError("createUserAction: invitation failed", error, { userId: newId });
-      return { ok: false as const, message: "" };
-    });
-    invite = sent.ok ? "&invite=sent" : "&invite=failed";
-  }
+  // (set-password link valid 12 hours). v1.50.2 (owner: "it first shows a
+  // failure message but creates the user"): the email went out while the page
+  // waited, and a slow mail or WhatsApp provider ran past the page's time
+  // limit. It is now sent just after the answer; a failure is logged and shows
+  // in Super Admin → Message deliveries, and Re-invite sends it again.
+  const userId = newId;
+  await afterResponse("welcome email", async () => {
+    const sent = await sendInvitation(userId, actor);
+    if (!sent.ok) logError("createUserAction: invitation not sent", new Error(sent.message), { userId });
+  });
   revalidatePath("/admin/users");
   // redirect() throws on purpose, so it stays outside the try/catch.
-  redirect(`/admin/users/${newId}?created=1${invite}`);
+  redirect(`/admin/users/${newId}?created=1&invite=queued`);
 }
 
 export async function updateUserAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
@@ -147,6 +148,19 @@ export async function bulkUserCommandAction(_previous: ActionResult | null, form
   const ids = [...new Set(formData.getAll("ids").map((value) => parseId(value)))].filter((id): id is number => id !== null);
   if (ids.length === 0) return { ok: false, message: "Tick at least one user." };
   if (ids.length > BULK_LIMIT) return { ok: false, message: `Act on up to ${BULK_LIMIT} users at a time.` };
+  // v1.50.2: emails to many people would keep the page waiting past its time
+  // limit, so Re-invite and set-password links go out just after the answer.
+  if (command === "invite" || command === "set-password-link") {
+    await afterResponse("bulk user emails", async () => {
+      for (const id of ids) {
+        const result = await runCommand(command, id, actor).catch((error: unknown) => ({ ok: false as const, message: String((error as Error)?.message ?? error) }));
+        if (!result.ok) logError("bulkUserCommandAction: one user not sent", new Error(result.message), { command, userId: id });
+      }
+    });
+    revalidatePath("/admin/users");
+    const what = command === "invite" ? "Welcome emails" : "Set-password links";
+    return { ok: true, message: `${what} are being sent to ${ids.length} user${ids.length === 1 ? "" : "s"}. Anyone who can't get one (for example a Google-only user for a password link) is skipped; see Super Admin → Message deliveries.`, data: { done: ids.length } };
+  }
   let done = 0;
   const reasons = new Map<string, number>();
   for (const id of ids) {

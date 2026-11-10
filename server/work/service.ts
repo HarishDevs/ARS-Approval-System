@@ -1,5 +1,6 @@
 import { workMirrorLink } from "@/server/approvals/work-mirror";
 import "server-only";
+import { afterResponse } from "@/lib/http/after-response";
 import type { RowDataPacket } from "mysql2/promise";
 import { withTransaction } from "@/lib/db/transaction";
 import { getDbPool } from "@/lib/db/client";
@@ -48,7 +49,7 @@ const holidayFail = (hit: HolidayHit): { ok: false; message: string; holiday: Ho
 const NOT_FOUND = "Not found.";
 
 async function send(ids: number[]) {
-  if (ids.length) await deliverOutbox(ids).catch(() => undefined);
+  if (ids.length) await afterResponse("task messages", () => deliverOutbox(ids));
 }
 const clean = (value: string, max: number) => value.replace(/\s+/g, " ").trim().slice(0, max);
 const info = (task: Pick<TaskRecord, "id" | "taskNo" | "title" | "dueAt">) => ({ id: task.id, taskNo: task.taskNo, title: task.title, dueAt: task.dueAt });

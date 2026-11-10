@@ -1,5 +1,6 @@
 import "server-only";
 import type { RowDataPacket } from "mysql2/promise";
+import { afterResponse } from "@/lib/http/after-response";
 import { withTransaction } from "@/lib/db/transaction";
 import { appendEvents, findWorkflowVersion, lockRequest, saveRequestState, syncTasks } from "@/lib/db/repositories/approvals.repository";
 import { markRequestDeleted } from "@/lib/db/repositories/request-admin.repository";
@@ -57,6 +58,6 @@ export async function deleteRequest(
     return { ok: true, value: { requestNo: request.requestNo, cancelledTasks: event.closedTaskIds.length }, outboxIds } as const;
   });
   if (!done.ok) return done;
-  await deliverOutbox(done.outboxIds);
+  await afterResponse("request deleted messages", () => deliverOutbox(done.outboxIds));
   return { ok: true, value: done.value };
 }
