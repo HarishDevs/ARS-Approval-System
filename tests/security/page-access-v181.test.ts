@@ -25,7 +25,7 @@ vi.mock("@/lib/logging/logger", () => ({ logError: () => undefined }));
 const { checkPageAccess, checkPageKey } = await import("@/server/authorization/page-access");
 const { isOpenAddress, OPEN_PATHS, pageForPath, PAGES } = await import("@/server/authorization/pages");
 
-const ALL = ["APPROVAL", "TASK", "INFORMATION", "AI"] as const;
+const ALL = ["APPROVAL", "TASK", "INFORMATION", "AI", "MEETING"] as const;
 const admin = { id: 9, roles: ["USER", "IT_ADMIN"], modules: [...ALL] };
 const hide = (pageKey: string, level: AccessRule["level"] = "HIDDEN"): AccessRule => ({ pageKey, scope: "USER", scopeId: 9, level });
 

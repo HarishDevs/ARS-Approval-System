@@ -68,6 +68,15 @@ export const EVENT_GROUPS: readonly EventGroup[] = [
     mandatory: false,
     events: ["WORK_TASK_UPDATED", "WORK_TASK_COMMENT", "WORK_TASK_COMPLETED", "WORK_TASK_REOPENED", "WORK_TASK_CANCELLED", "WORK_TASK_DUE_SOON", "WORK_TASK_OVERDUE", "WORK_TASK_MENTION", "WORK_PROJECT_MEMBER", "WORK_PROJECT_STATUS", "WORK_TASK_DIGEST"],
   },
+  // v1.51.0 (D-300): meetings. Invitations and approvals for the Meeting
+  // Owner are not listed, so they are always sent.
+  {
+    key: "MEETINGS",
+    label: "Meeting updates",
+    help: "Changes and cancellations, approved points and MOM, answers from participants, deadline reminders and action follow-ups.",
+    mandatory: false,
+    events: ["MEETING_UPDATED", "MEETING_CANCELLED", "MEETING_DECIDED", "MEETING_PUBLISHED", "MEETING_REMINDER", "MEETING_ACTION"],
+  },
   // D-252: notifications IT sends from Admin → Notifications.
   {
     key: "IMPORTANT",
@@ -159,6 +168,14 @@ export const EVENT_LABEL: Record<string, string> = {
   WORK_PROJECT_MEMBER: "You're added to a project",
   WORK_PROJECT_STATUS: "Project status updates",
   WORK_TASK_DIGEST: "Morning summary of your tasks",
+  MEETING_INVITED: "You're added to a meeting",
+  MEETING_UPDATED: "A meeting changes",
+  MEETING_CANCELLED: "A meeting is cancelled",
+  MEETING_APPROVAL: "Meeting points or MOM to approve",
+  MEETING_DECIDED: "Your meeting points or MOM are decided",
+  MEETING_PUBLISHED: "Meeting points or MOM are ready",
+  MEETING_REMINDER: "Meeting deadline reminders",
+  MEETING_ACTION: "Meeting action follow-ups",
   INFO_PUBLISHED: "New information for you",
   INFO_UPDATED: "Information you got is updated",
   INFO_WITHDRAWN: "Information you got is withdrawn",

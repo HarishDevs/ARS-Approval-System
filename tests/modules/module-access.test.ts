@@ -17,8 +17,8 @@ describe("modules", () => {
     expect(normaliseModules(["APPROVAL", "ADMIN"])).toEqual({ ok: false, invalid: ["ADMIN"] });
     expect(normaliseModules([])).toEqual({ ok: true, value: [] });
   });
-  it("defaults to what everyone could use before: Approval, Task, Information; never AI", () => {
-    expect(DEFAULT_MODULES).toEqual(["APPROVAL", "TASK", "INFORMATION"]);
+  it("defaults to Approval, Task, Information and (v1.51.0) Meeting; never AI", () => {
+    expect(DEFAULT_MODULES).toEqual(["APPROVAL", "TASK", "INFORMATION", "MEETING"]);
     expect(DEFAULT_MODULES).not.toContain("AI");
   });
   it("each module is separate; only the Super Admin is exempt", () => {

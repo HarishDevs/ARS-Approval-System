@@ -135,9 +135,9 @@ describe("planImport: users' module access (v1.49.2)", () => {
     );
     const created = plan.ops.filter((op) => op.kind === "user-create");
     expect(created.map((op) => (op.kind === "user-create" ? op.modules : null))).toEqual([
-      ["APPROVAL", "TASK", "INFORMATION", "AI"],
+      ["APPROVAL", "TASK", "INFORMATION", "AI", "MEETING"],
       ["APPROVAL", "AI"],
-      ["APPROVAL", "TASK", "INFORMATION"],
+      ["APPROVAL", "TASK", "INFORMATION", "MEETING"],
     ]);
     const bad = planImport("users", [WITH_MODULES, "new4,New Four,new4@example.com,,,,,GOOGLE,TASK;CRM,USER"].join("\n"), snapshot());
     expect(bad.rows[0]!.problems[0]).toMatchObject({ column: "modules", message: expect.stringMatching(/Unknown module: CRM/) });

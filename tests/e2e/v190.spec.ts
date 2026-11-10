@@ -178,7 +178,7 @@ test("the sidebar stays put and scrolls only when its entries don't fit", async 
   await expect(page.locator("aside nav").getByRole("link", { name: "New information" })).toBeInViewport();
 });
 
-test("the user sidebar: Home, Inbox, collapsible My Approvals, Tasks & projects, Information, then Calendar, Analytics", async ({ page, context }) => {
+test("the user sidebar: Home, Inbox, collapsible My Approvals, Tasks & projects, Information, Meetings, then Calendar, Analytics", async ({ page, context }) => {
   await as(context, "E2E_REQ");
   await page.goto("/users");
   const nav = page.locator("aside nav");
@@ -186,7 +186,7 @@ test("the user sidebar: Home, Inbox, collapsible My Approvals, Tasks & projects,
   const top = await nav.evaluate((element) =>
     Array.from(element.children).map((child) => (child.querySelector(":scope > button") ?? child).textContent?.trim().replace(/\s+/g, " ") ?? ""),
   );
-  expect(top.map((text) => text.replace(/\s*\d+( waiting)?$/, ""))).toEqual(["Home", "Inbox", "My Approvals", "Tasks & projects", "Information", "Calendar", "Analytics"]);
+  expect(top.map((text) => text.replace(/\s*\d+( waiting)?$/, ""))).toEqual(["Home", "Inbox", "My Approvals", "Tasks & projects", "Information", "Meetings", "Calendar", "Analytics"]);
   // A group opens like a dropdown, with its pages in the owner's order.
   const approvals = nav.getByRole("button", { name: "My Approvals" });
   await expect(approvals).toHaveAttribute("aria-expanded", "false");

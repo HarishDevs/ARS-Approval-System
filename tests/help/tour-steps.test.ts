@@ -7,7 +7,7 @@ describe("onboarding tour steps", () => {
     const ids = TOUR_STEPS.map((step) => step.id);
     expect(ids[0]).toBe("welcome");
     expect(ids.at(-1)).toBe("finish");
-    for (const id of ["overview", "inbox", "create", "new-request", "custom", "queue", "my-requests", "tasks", "new-task", "projects", "calendar", "google-calendar", "notifications", "search", "profile", "out-of-office"]) expect(ids).toContain(id);
+    for (const id of ["overview", "inbox", "create", "new-request", "custom", "queue", "my-requests", "tasks", "new-task", "projects", "calendar", "google-calendar", "notifications", "search", "profile", "out-of-office", "meetings"]) expect(ids).toContain(id);
     expect(new Set(ids).size).toBe(ids.length);
     for (const section of ["Approvals", "Tasks", "Calendar"]) expect(TOUR_STEPS.some((step) => step.section === section)).toBe(true);
   });

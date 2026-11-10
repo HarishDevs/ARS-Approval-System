@@ -25,6 +25,7 @@ import {
   Smartphone,
   User,
   UserCog,
+  CalendarClock,
 } from "lucide-react";
 import { requireArea } from "@/server/authorization/guards";
 import { isHiddenHref, navAccess } from "@/server/authorization/page-access";
@@ -69,6 +70,7 @@ export default async function MorePage() {
       title: "Work",
       entries: pick([
         has("/users/information") && { href: "/users/information", label: "Information", icon: Newspaper, hint: "Received, sent by me, new" },
+        has("/users/meetings") && { href: "/users/meetings", label: "Meetings", icon: CalendarClock, hint: "Schedule, MOM, follow-ups" },
         has("/users/work/projects") && { href: "/users/work/projects", label: "Projects", icon: FolderKanban },
         has("/users/work/periodic") && { href: "/users/work/periodic", label: "Periodic tasks", icon: RefreshCw },
         has("/users/calendar") && { href: "/users/calendar", label: "Calendar", icon: CalendarDays },

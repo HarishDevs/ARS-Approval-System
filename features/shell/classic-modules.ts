@@ -26,6 +26,7 @@ const MODULE_NAME: Record<string, { key: string; label: string }> = {
   "My Approvals": { key: "approvals", label: "Approval Management" },
   Tasks: { key: "tasks", label: "Tasks Management" },
   Information: { key: "information", label: "Information Management" },
+  Meetings: { key: "meetings", label: "Meeting Management" },
   "AI Assistant": { key: "ai", label: "Pico Bot (AI Assistant)" },
 };
 

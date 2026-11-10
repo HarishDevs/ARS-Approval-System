@@ -43,6 +43,11 @@ export async function usersNav(user: { roles: readonly string[] }): Promise<NavI
           { href: "/users/information/new", label: "New information", section: "Information" },
         ]
       : []),
+    // v1.51.0 (D-300): Meeting Management (the MEETING module; page access hides it otherwise).
+    { href: "/users/meetings/new", label: "Schedule meeting", section: "Meetings" },
+    { href: "/users/meetings", label: "Meetings", section: "Meetings" },
+    { href: "/users/meetings/follow-ups", label: "Follow-ups", section: "Meetings" },
+    { href: "/users/meetings/dashboard", label: "Meeting dashboard", section: "Meetings" },
     // D-168: the fourth module. D-180 (owner): the assistant only; its
     // group lists the person's chats with a search (SideNav).
     ...(features.ai ? [{ href: "/users/ai/assistant", label: "AI Assistant", section: "AI Assistant", chats: true }] : []),

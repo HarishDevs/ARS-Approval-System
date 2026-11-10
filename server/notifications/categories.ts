@@ -23,6 +23,15 @@ export const TASK_EVENTS: readonly string[] = [
   "WORK_TASK_MENTION",
   "WORK_PROJECT_MEMBER",
   "WORK_PROJECT_STATUS",
+  // v1.51.0 (D-300): Meeting Management messages sit with Tasks.
+  "MEETING_INVITED",
+  "MEETING_UPDATED",
+  "MEETING_CANCELLED",
+  "MEETING_APPROVAL",
+  "MEETING_DECIDED",
+  "MEETING_PUBLISHED",
+  "MEETING_REMINDER",
+  "MEETING_ACTION",
   "WORK_TASK_DIGEST", // D-218
 ];
 // D-252: IT's announcements and management notices sit with Information; its

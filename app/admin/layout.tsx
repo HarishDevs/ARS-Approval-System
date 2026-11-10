@@ -41,6 +41,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         // D-217: what tasks do on holidays.
         { href: "/admin/task-holidays", label: "Task settings", section: "Task set-up" },
         { href: "/admin/information-types", label: "Information types", section: "Information set-up" },
+        // v1.51.0 (D-300): meeting types and the Management group.
+        { href: "/admin/meetings", label: "Meeting settings", section: "Meeting set-up" },
         // D-187, D-193 (owner): AI usage and the AI training module.
         // D-209: reminders and escalations for approvals and tasks.
         { href: "/admin/reminders", label: "Reminders & escalations", section: "Automation" },

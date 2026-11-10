@@ -159,6 +159,17 @@ Comments on a request can't be edited or removed. To tell someone in particular,
 - **Managers** see the tasks of everyone below them.
 - **Separate from approvals:** completing a task never approves a request.
 
+### Meetings
+- **Who does what:** each meeting has one **Meeting Owner** (approves the points and the MOM) and one **Coordinator** (schedules it, adds the points, marks attendance, writes the MOM). They can be the same person; then sending counts as approved.
+- **Schedule a meeting:** Meetings → **Schedule a meeting**. Choose the type, date and times, the Owner, Coordinator, participants and departments by typing names. Optional: **Points due by** and **MOM due by** (the Coordinator is reminded), and what happens if the points aren't approved in time.
+- **Points:** the Coordinator presses **Send to Meeting Owner**; the Owner presses **Approve points** or **Return** with what to change. Approved points go to every participant.
+- **Invitees** answer **Attend**, **Maybe** or **Can't attend** (with a reason).
+- **During or after the meeting:** **Start meeting** (or **Record as held** with the real times), mark attendance, note the discussion point by point, the decisions, the **action items** (one responsible person, priority, due date) and **open points**, then **Send MOM to Meeting Owner**.
+- **When the Owner approves the MOM** each action item becomes a task for its owner, linked to the meeting.
+- **Follow-ups:** the Owner or Coordinator presses **Confirm done** on a completed action, or **Send back** with what is still needed (the task reopens). **Schedule follow-up meeting** carries open actions and open points into the next meeting. **Close meeting** once every action is confirmed or carried forward.
+- **Dashboard:** on-time figures, attendance and actions for a period, by type and department.
+- **Who sees a meeting:** the people on it, heads of its departments (not Management-only meetings), the Management group (ED, MD) and IT.
+
 ### Information
 - **New information:** choose the type, write the subject and message, choose recipients, then **Publish** (or **Save draft**).
 - **Recipients are fixed at publishing:** people who join a department later don't receive it.
@@ -250,7 +261,7 @@ Switch to it from the account menu → **Switch space**.
 - **May finish without an approver** (approval type settings, predefined types only): if every level of a request is skipped by its rules, a ticked type may end Approved; otherwise the request goes to the requester's HOD (or to IT if there is no HOD). A request never ends approved by nobody unless IT ticked this.
 - **Asks first:** deactivating a group, department or designation, closing a type for new requests and saving working days each ask you to confirm.
 - **Approval authority (DoA)** and **Budgets.**
-- **Task set-up:** Task types and **Task settings** (department holidays, morning summary, repeating tasks). **Information types.**
+- **Task set-up:** Task types and **Task settings** (department holidays, morning summary, repeating tasks). **Information types.** **Meeting settings:** meeting types with default points, and the Management group (ED, MD) who see every meeting.
 - **Reminders & escalations:** rules for pending approvals and open tasks, escalation levels and wording. **Test** sends nothing.
 - **AI Analytics** and **AI Rules** (what Pico Bot may answer).
 - **Notifications:** send a notification to people, departments, roles, heads of department, managers or everyone active.

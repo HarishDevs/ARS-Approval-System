@@ -57,6 +57,9 @@ import {
   Layers,
   FilePenLine,
   FileCheck2,
+  CalendarClock,
+  CalendarPlus,
+  CalendarCog,
   type LucideIcon,
 } from "lucide-react";
 
@@ -92,6 +95,12 @@ const ICONS: Record<string, LucideIcon> = {
   "/users/information": FileText,
   "/users/information/sent": Send,
   "/users/information/new": MailPlus,
+  // v1.51.0 (D-300): Meeting Management
+  "/users/meetings": CalendarClock,
+  "/users/meetings/new": CalendarPlus,
+  "/users/meetings/follow-ups": ListChecks,
+  "/users/meetings/dashboard": BarChart3,
+  "/admin/meetings": CalendarCog,
   // D-168: the AI module
   "/users/ai": Sparkles,
   "/users/ai/assistant": MessagesSquare,
@@ -146,7 +155,7 @@ const ICONS: Record<string, LucideIcon> = {
 };
 
 // v1.9.2: the collapsible groups of the user sidebar.
-const SECTION_ICONS: Record<string, LucideIcon> = { "My Approvals": ClipboardCheck, Tasks: ListTodo, "Tasks & projects": ListTodo, Information: Newspaper, AI: Sparkles, "AI Assistant": MessagesSquare, "AI Details": Sparkles };
+const SECTION_ICONS: Record<string, LucideIcon> = { "My Approvals": ClipboardCheck, Tasks: ListTodo, "Tasks & projects": ListTodo, Information: Newspaper, Meetings: CalendarClock, AI: Sparkles, "AI Assistant": MessagesSquare, "AI Details": Sparkles };
 
 export function SectionIcon({ section, className = "h-4 w-4" }: { section: string; className?: string }) {
   const Icon = SECTION_ICONS[section];

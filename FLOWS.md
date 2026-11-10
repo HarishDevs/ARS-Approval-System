@@ -18,6 +18,7 @@ The number of levels and how they combine is unlimited. There are no fixed "Leve
 | ID | Flow | Status |
 |---|---|---|
 | A-01…A-12 | Asana reference flows | Reference |
+| F-212 | Meeting Management: schedule, points and MOM approval, action tasks, follow-ups | Built 10 Nov 2026 (v1.51.0) |
 | F-01 | Google sign-in | Built 28 Sep 2026 (live test pending Firebase Admin values) |
 | F-02 | User ID + password + OTP | Built 28 Sep 2026 (live send pending the CEOITBox key) |
 | F-03 | New-login detection and alert | Built 28 Sep 2026 (device cookie; location later) |
@@ -1066,6 +1067,20 @@ After 28 minutes without activity (default 30): "Still there?" → **Stay signed
 2. Unticked: when the request reaches that level, each person on it gets a task in Task Management (linked to the request, due after the level's response time) and a "Task for you" message; the request moves straight on.
 3. The task is an ordinary task (hand over, tick, reopen); finishing it decides nothing on the request. Its holder may open the request, read-only.
 4. The journey shows it as a Work task card ("Doesn't hold the request up"), never as a checkpoint.
+
+## F-212 Meeting Management (v1.51.0, D-300, D-301)
+Roles: one **Meeting Owner** (approves the points and the MOM) and one **Coordinator** (runs the meeting); the same person may be both. People are always chosen by search (one for Owner, Coordinator, presenter and action owner; several for participants and departments).
+1. **Schedule** (Meetings → Schedule a meeting): title, type (one general format; the type suggests default points), date and times, Owner, Coordinator (defaults to the scheduler), participants, organising and involved departments, mode/venue/link, priority, visibility (General or Management only), external guests, optional "Points due by" and "MOM due by" deadlines, and the Owner's choice if points aren't approved in time (hold anyway / don't start). Owner and Coordinator are added as participants. Everyone is told (MEETING_INVITED).
+2. **Points:** the Coordinator edits and sends them; the Owner approves or returns them with remarks. If the Coordinator is the Owner, sending approves them. Approved points are shared with the participants (MEETING_PUBLISHED). Changing approved points before the meeting sends them back to draft.
+3. **Answers:** invitees (not the Owner or Coordinator) answer Attend / Maybe / Can't attend before the meeting; Can't attend needs a reason and tells the Coordinator.
+4. **Run:** the Coordinator starts it (refused under "don't start" until the points are approved) or records it as held with the real times; marks attendance; writes the MOM: discussion per point, decisions, action items (title, one responsible person, priority, due date), open points.
+5. **MOM approval:** sent to the Owner; returned with remarks, or approved. On approval each action item becomes a **General task** (assigned by the Coordinator; the Owner follows it) with `tasks.meeting_id` set; the task page links back to the meeting. Participants are told.
+6. **Follow-up:** the register (Meetings → Follow-ups) shows each action's state from its task (in progress, overdue, done to confirm, confirmed, cancelled). The Owner or Coordinator **confirms** a completed task, **sends it back** with a note (the task reopens) or adds a note. Open points are closed with a note.
+7. **Follow-up meeting:** carries every unconfirmed action (a new row pointing to the same task) and every open point into the next meeting of the series.
+8. **Close:** only when every action is confirmed, cancelled or carried forward.
+9. **Visibility:** the people on the meeting; HODs of its departments (General meetings only); the Management group (ED, MD, set in Admin → Meeting settings) and IT see all.
+10. **Reminders:** the job runner reminds the Coordinator once per deadline when the points or MOM are due within a day.
+11. **Dashboard:** compliance from timestamps (points in time, started/ended on time with 5 minutes' grace, MOM in time), attendance, actions done/overdue, by type and department.
 
 ## F-211 Request page and journey (v1.48.0, D-283, D-284)
 1. Open a request → the journey card (refresh = check now; share = copy the link; tap a level for its details; Status guide explains the colours).

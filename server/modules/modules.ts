@@ -3,16 +3,17 @@ import type { ModuleCode } from "@/types/auth";
 // AI module branch (D-168): the four modules of ARS Approvals and the rules
 // for who may use them. Pure and unit-tested.
 export type { ModuleCode };
-export const MODULES: readonly ModuleCode[] = ["APPROVAL", "TASK", "INFORMATION", "AI"];
-export const MODULE_LABEL: Record<ModuleCode, string> = { APPROVAL: "Approval", TASK: "Task", INFORMATION: "Information", AI: "AI" };
+export const MODULES: readonly ModuleCode[] = ["APPROVAL", "TASK", "INFORMATION", "AI", "MEETING"];
+export const MODULE_LABEL: Record<ModuleCode, string> = { APPROVAL: "Approval", TASK: "Task", INFORMATION: "Information", AI: "AI", MEETING: "Meeting" };
 export const MODULE_HELP: Record<ModuleCode, string> = {
   APPROVAL: "Raise requests, custom approvals, approve what is assigned, search requests.",
   TASK: "My tasks, tasks given to others, team tasks.",
   INFORMATION: "The information inbox and sending information.",
   AI: "The AI dashboard, assistant, business intelligence and reports.",
+  MEETING: "Meetings: schedule, meeting points, MOM, action items and follow-ups.",
 };
 // What everyone could use before modules existed; new people start here too.
-export const DEFAULT_MODULES: readonly ModuleCode[] = ["APPROVAL", "TASK", "INFORMATION"];
+export const DEFAULT_MODULES: readonly ModuleCode[] = ["APPROVAL", "TASK", "INFORMATION", "MEETING"];
 
 const isModule = (value: string): value is ModuleCode => (MODULES as readonly string[]).includes(value);
 

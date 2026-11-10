@@ -15,6 +15,7 @@ import { listTaskEvents, listPeopleFacts, personFacts } from "@/lib/db/repositor
 import { loadFieldLookups, loadLookupNames } from "@/lib/db/repositories/lookups.repository";
 import { listRecordFiles } from "@/server/modules/files";
 import { isAdminActor, loadTaskFor, relatedRequestVisible } from "@/server/modules/tasks";
+import { meetingOfTask } from "@/lib/db/repositories/meetings.repository";
 import { loadJourney } from "@/server/journey/load";
 import { ARSApprovalJourney } from "@/features/journey/ARSApprovalJourney";
 import { COMPLETION_LABEL, indiaDateTimeText, utcToIndiaLocal } from "@/server/modules/settings";
@@ -87,6 +88,8 @@ export default async function TaskPage({ params, searchParams }: { params: Promi
     personFacts(user.id),
     task.relatedRequestId ? relatedRequestVisible(task.relatedRequestId, user) : Promise.resolve(false),
   ]);
+  // v1.51.0 (D-300): the meeting an action-item task came from (like projects).
+  const fromMeeting = await meetingOfTask(task.id).catch(() => null);
   // D-273: the parent request's journey, small, for anyone who may see that request (its own check).
   const parentJourney = task.relatedRequestId ? await loadJourney(task.relatedRequestId, { id: user.id, roles: user.roles }).catch(() => null) : null;
   const query = await searchParams;
@@ -280,6 +283,16 @@ export default async function TaskPage({ params, searchParams }: { params: Promi
                       <span className="font-mono">{task.relatedRequestNo}</span>
                     )}{" "}
                     <Hint text="Separate from this task: completing it doesn't approve the request." align="start" />
+                  </dd>
+                </div>
+              )}
+              {fromMeeting && (
+                <div>
+                  <dt className="text-caption font-semibold uppercase tracking-wide text-ink-faint">Meeting</dt>
+                  <dd>
+                    <Link href={`/users/meetings/${fromMeeting.id}`} className="link">
+                      <span className="font-mono">{fromMeeting.meetingNo}</span> {fromMeeting.title}
+                    </Link>
                   </dd>
                 </div>
               )}

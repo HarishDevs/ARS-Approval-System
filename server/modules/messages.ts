@@ -74,3 +74,27 @@ export const infoMessages = {
   withdrawn: (info: InfoSummary, to: number, by: string) => message("INFO_WITHDRAWN", to, `Withdrawn: ${info.title}`, `${by} withdrew "${info.title}" (${info.infoNo}). You don't need to act on it.`, infoPath(info), { type: "INFO", id: info.id }),
   ackReminder: (info: InfoSummary, to: number) => message("INFO_ACK_REMINDER", to, `Reminder: please acknowledge ${info.title}`, `You haven't acknowledged "${info.title}" (${info.infoNo}) yet.`, infoPath(info), { type: "INFO", id: info.id }),
 };
+
+// v1.51.0 (D-300): Meeting Management. Everything the Coordinator enters
+// reaches the participants; approvals reach the Meeting Owner.
+export interface MeetingInfo {
+  id: number;
+  meetingNo: string;
+  title: string;
+  start?: Date | null;
+}
+const meetingPath = (meeting: MeetingInfo) => `/users/meetings/${meeting.id}`;
+const when = (meeting: MeetingInfo) => (meeting.start ? ` On ${indiaDateTimeText(meeting.start)}.` : "");
+export const meetingMessages = {
+  invited: (meeting: MeetingInfo, to: number, by: string) => message("MEETING_INVITED", to, `Meeting: ${meeting.title}`, `${by} added you to the meeting "${meeting.title}" (${meeting.meetingNo}).${when(meeting)}`, meetingPath(meeting), null),
+  updated: (meeting: MeetingInfo, to: number, what: string) => message("MEETING_UPDATED", to, `Meeting ${meeting.meetingNo}: ${what}`, `"${meeting.title}" (${meeting.meetingNo}): ${what}.${when(meeting)}`, meetingPath(meeting), null),
+  cancelled: (meeting: MeetingInfo, to: number, by: string, reason: string) => message("MEETING_CANCELLED", to, `Meeting cancelled: ${meeting.title}`, `${by} cancelled "${meeting.title}" (${meeting.meetingNo}). Reason: ${reason}`, meetingPath(meeting), null),
+  toApprove: (meeting: MeetingInfo, to: number, by: string, what: "meeting points" | "MOM") => message("MEETING_APPROVAL", to, `To approve: ${what} of ${meeting.meetingNo}`, `${by} sent the ${what} of "${meeting.title}" (${meeting.meetingNo}) for your approval.`, meetingPath(meeting), null),
+  decided: (meeting: MeetingInfo, to: number, by: string, what: "meeting points" | "MOM", approved: boolean, remarks: string) =>
+    message("MEETING_DECIDED", to, `${what === "MOM" ? "MOM" : "Meeting points"} ${approved ? "approved" : "returned"}: ${meeting.meetingNo}`, `${by} ${approved ? "approved" : "returned"} the ${what} of "${meeting.title}" (${meeting.meetingNo}).${remarks ? ` Remarks: ${remarks}` : ""}`, meetingPath(meeting), null),
+  published: (meeting: MeetingInfo, to: number, what: "meeting points" | "MOM") => message("MEETING_PUBLISHED", to, `${what === "MOM" ? "MOM" : "Meeting points"} ready: ${meeting.title}`, `The ${what} of "${meeting.title}" (${meeting.meetingNo}) are ready to read.${when(meeting)}`, meetingPath(meeting), null),
+  reminder: (meeting: MeetingInfo, to: number, what: "meeting points" | "MOM", due: Date) => message("MEETING_REMINDER", to, `Due soon: ${what} of ${meeting.meetingNo}`, `The ${what} of "${meeting.title}" (${meeting.meetingNo}) are due by ${indiaDateTimeText(due)}.`, meetingPath(meeting), null),
+  responded: (meeting: MeetingInfo, to: number, by: string, answer: string) => message("MEETING_UPDATED", to, `${by}: ${answer.toLowerCase()} for ${meeting.meetingNo}`, `${by} answered "${answer}" for "${meeting.title}" (${meeting.meetingNo}).`, meetingPath(meeting), null),
+  actionReview: (meeting: MeetingInfo, to: number, by: string, confirmed: boolean, title: string, note: string) =>
+    message("MEETING_ACTION", to, `Action ${confirmed ? "confirmed" : "sent back"}: ${title.slice(0, 80)}`, `${by} ${confirmed ? "confirmed as done" : "sent back"} the action "${title}" from "${meeting.title}" (${meeting.meetingNo}).${note ? ` Note: ${note}` : ""}`, meetingPath(meeting), null),
+};

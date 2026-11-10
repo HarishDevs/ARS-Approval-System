@@ -54,13 +54,13 @@ afterAll(async () => {
 
 describe("module access in the database", () => {
   it("anyone created without a choice has Approval, Task and Information, never AI (the safe default for every path)", async () => {
-    expect((await findUserById(staffId))!.modules).toEqual(["APPROVAL", "TASK", "INFORMATION"]);
+    expect((await findUserById(staffId))!.modules).toEqual(["APPROVAL", "TASK", "INFORMATION", "MEETING"]);
     const created = await createUserService(
       { loginId: `m-${tag}`.toLowerCase(), name: "Module default", email: `m-${tag}@example.test`.toLowerCase(), whatsappNumber: null, departmentId: null, designationId: null, reportingManagerId: null, signInMethod: "GOOGLE", roles: ["USER"] },
       itAdmin(adminId),
     );
     if (!created.ok) throw new Error(created.message);
-    expect((await findUserById(created.value))!.modules).toEqual(["APPROVAL", "TASK", "INFORMATION"]);
+    expect((await findUserById(created.value))!.modules).toEqual(["APPROVAL", "TASK", "INFORMATION", "MEETING"]);
   });
 
   it("a chosen set is saved at creation, including AI alone, and audited", async () => {
@@ -77,7 +77,7 @@ describe("module access in the database", () => {
     expect(await updateUser(staffId, await input(staffId, { modules: ["APPROVAL", "AI"] }), itAdmin(adminId))).toEqual({ ok: true, value: undefined });
     expect((await getUserForAdmin(staffId))!.modules).toEqual(["APPROVAL", "AI"]);
     const entry = (await auditsFor(staffId)).filter((item) => item.action === "USER_UPDATED").at(-1)!;
-    expect(entry.metadata).toMatchObject({ modules: { before: ["APPROVAL", "TASK", "INFORMATION"], after: ["APPROVAL", "AI"] } });
+    expect(entry.metadata).toMatchObject({ modules: { before: ["APPROVAL", "TASK", "INFORMATION", "MEETING"], after: ["APPROVAL", "AI"] } });
   });
 
   it("editing other details never changes modules (the form didn't send them)", async () => {

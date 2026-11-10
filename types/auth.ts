@@ -7,7 +7,7 @@ export const allowsGoogle = (method: SignInMethod) => method === "GOOGLE" || met
 export const allowsPassword = (method: SignInMethod) => method === "PASSWORD" || method === "BOTH";
 export const SIGN_IN_LABEL: Record<SignInMethod, string> = { GOOGLE: "Google", PASSWORD: "Password + WhatsApp", BOTH: "Google or password + WhatsApp" };
 // D-168 (AI module branch): the four modules a person may be given.
-export type ModuleCode = "APPROVAL" | "TASK" | "INFORMATION" | "AI";
+export type ModuleCode = "APPROVAL" | "TASK" | "INFORMATION" | "AI" | "MEETING"; // v1.51.0: MEETING
 export type AuthMethod = "GOOGLE" | "PASSWORD_OTP" | "DEMO" | "TRY_AS";
 export type AppArea = "users" | "admin" | "superadmin";
 

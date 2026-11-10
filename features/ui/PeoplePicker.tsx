@@ -92,7 +92,12 @@ export function PeoplePicker({
                 {initialsOf(byId.get(personId)?.label ?? "?")}
               </span>
               {byId.get(personId)?.label ?? `#${personId}`}
-              <button type="button" onClick={() => remove(personId)} aria-label={`Remove ${byId.get(personId)?.label ?? personId}`} className="flex h-7 w-7 items-center justify-center rounded-full text-ink-muted hover:text-danger-600">
+              <button
+                type="button"
+                onClick={() => remove(personId)}
+                aria-label={`Remove ${byId.get(personId)?.label ?? personId}`}
+                className="flex h-7 w-7 items-center justify-center rounded-full text-ink-muted hover:text-danger-600"
+              >
                 <X aria-hidden="true" className="h-3.5 w-3.5" />
               </button>
               {name && <input type="hidden" name={name} value={personId} />}
@@ -100,78 +105,91 @@ export function PeoplePicker({
           ))}
         </ul>
       )}
-      <div className="relative">
-        <input
-          ref={input}
-          id={`${id}-input`}
-          role="combobox"
-          aria-expanded={showList}
-          aria-controls={listId}
-          aria-autocomplete="list"
-          aria-activedescendant={showList && matches[active] ? `${id}-opt-${matches[active].id}` : undefined}
-          aria-describedby={`${id}-help`}
-          aria-invalid={invalid || undefined}
-          value={query}
-          disabled={full}
-          placeholder={full ? `${max} people chosen (the most allowed)` : "Type a name or user id"}
-          onChange={(event) => {
-            setQuery(event.target.value);
-            setOpen(true);
-            setActive(0);
-          }}
-          onFocus={() => setOpen(true)}
-          onBlur={() => window.setTimeout(() => setOpen(false), 150)}
-          onKeyDown={(event) => {
-            if (event.key === "ArrowDown") {
-              event.preventDefault();
-              setActive((value) => Math.min(value + 1, Math.max(matches.length - 1, 0)));
-            } else if (event.key === "ArrowUp") {
-              event.preventDefault();
-              setActive((value) => Math.max(value - 1, 0));
-            } else if (event.key === "Enter") {
-              // Never submit the form from the search box.
-              event.preventDefault();
-              if (showList && matches[active]) add(matches[active]);
-            } else if (event.key === "Escape") setOpen(false);
-            else if (event.key === "Backspace" && !query && chosen.length) remove(chosen[chosen.length - 1]!);
-          }}
-          className="field-input"
-        />
-        {showList && (
-          <ul id={listId} role="listbox" aria-label={`${label}: matches`} className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-md border border-line bg-raised py-1 shadow-card">
-            {matches.length === 0 ? (
-              <li className="px-3 py-2 text-label text-ink-muted">Nobody matches.</li>
-            ) : (
-              matches.map((option, index) => (
-                <li
-                  key={option.id}
-                  id={`${id}-opt-${option.id}`}
-                  role="option"
-                  aria-selected={index === active}
-                  onMouseDown={(event) => {
-                    event.preventDefault();
-                    add(option);
-                  }}
-                  onMouseEnter={() => setActive(index)}
-                  className={`flex cursor-pointer items-center gap-2 px-3 py-2 text-label ${index === active ? "bg-primary-50 text-primary-700" : ""}`}
-                >
-                  <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary-50 text-[11px] font-semibold text-primary-700" aria-hidden="true">
-                    {initialsOf(option.label)}
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block">{option.label}</span>
-                    {option.detail && <span className="block truncate text-caption text-ink-muted">{option.detail}</span>}
-                  </span>
-                </li>
-              ))
-            )}
-          </ul>
-        )}
-      </div>
+      {/* v1.51.0: a one-person picker that is filled shows just the chosen chip (remove it to choose again). */}
+      {!(max === 1 && full) && (
+        <div className="relative">
+          <input
+            ref={input}
+            id={`${id}-input`}
+            role="combobox"
+            aria-expanded={showList}
+            aria-controls={listId}
+            aria-autocomplete="list"
+            aria-activedescendant={showList && matches[active] ? `${id}-opt-${matches[active].id}` : undefined}
+            aria-describedby={`${id}-help`}
+            aria-invalid={invalid || undefined}
+            value={query}
+            disabled={full}
+            placeholder={full ? `${max} people chosen (the most allowed)` : "Type a name or user id"}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setOpen(true);
+              setActive(0);
+            }}
+            onFocus={() => setOpen(true)}
+            onBlur={() => window.setTimeout(() => setOpen(false), 150)}
+            onKeyDown={(event) => {
+              if (event.key === "ArrowDown") {
+                event.preventDefault();
+                setActive((value) => Math.min(value + 1, Math.max(matches.length - 1, 0)));
+              } else if (event.key === "ArrowUp") {
+                event.preventDefault();
+                setActive((value) => Math.max(value - 1, 0));
+              } else if (event.key === "Enter") {
+                // Never submit the form from the search box.
+                event.preventDefault();
+                if (showList && matches[active]) add(matches[active]);
+              } else if (event.key === "Escape") setOpen(false);
+              else if (event.key === "Backspace" && !query && chosen.length) remove(chosen[chosen.length - 1]!);
+            }}
+            className="field-input"
+          />
+          {showList && (
+            <ul id={listId} role="listbox" aria-label={`${label}: matches`} className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-md border border-line bg-raised py-1 shadow-card">
+              {matches.length === 0 ? (
+                <li className="px-3 py-2 text-label text-ink-muted">Nobody matches.</li>
+              ) : (
+                matches.map((option, index) => (
+                  <li
+                    key={option.id}
+                    id={`${id}-opt-${option.id}`}
+                    role="option"
+                    aria-selected={index === active}
+                    onMouseDown={(event) => {
+                      event.preventDefault();
+                      add(option);
+                    }}
+                    onMouseEnter={() => setActive(index)}
+                    className={`flex cursor-pointer items-center gap-2 px-3 py-2 text-label ${index === active ? "bg-primary-50 text-primary-700" : ""}`}
+                  >
+                    <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary-50 text-[11px] font-semibold text-primary-700" aria-hidden="true">
+                      {initialsOf(option.label)}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block">{option.label}</span>
+                      {option.detail && <span className="block truncate text-caption text-ink-muted">{option.detail}</span>}
+                    </span>
+                  </li>
+                ))
+              )}
+            </ul>
+          )}
+        </div>
+      )}
       {/* D-179: the caller's explanation is a hover hint; the limit and the count stay visible. */}
       <p className="mt-1 flex items-center gap-1.5 text-caption text-ink-muted">
         <span id={`${id}-help`}>
-          Up to {max} {max === 1 ? "person" : "people"}.{chosen.length > 0 && ` ${chosen.length} chosen.`}
+          {max === 1 ? (
+            full ? (
+              "Remove to choose someone else."
+            ) : (
+              "Choose one person."
+            )
+          ) : (
+            <>
+              Up to {max} people.{chosen.length > 0 && ` ${chosen.length} chosen.`}
+            </>
+          )}
         </span>
         <Hint text={help} align="start" />
       </p>

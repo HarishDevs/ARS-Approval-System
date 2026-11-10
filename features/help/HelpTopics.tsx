@@ -6,7 +6,7 @@ import { useMemo, useState } from "react";
 // #13 help: short how-tos and what each status means, searchable on the page.
 export interface HelpTopic {
   id: string;
-  group: "Getting around" | "How to" | "Tasks & projects" | "Inbox, information and calendar" | "Your account" | "Statuses" | "Approval steps";
+  group: "Getting around" | "How to" | "Tasks & projects" | "Meetings" | "Inbox, information and calendar" | "Your account" | "Statuses" | "Approval steps";
   title: string;
   body: string;
   link?: { href: string; label: string };

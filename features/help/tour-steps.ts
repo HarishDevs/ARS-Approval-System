@@ -159,6 +159,19 @@ export const TOUR_STEPS: readonly TourStep[] = [
     path: "/users/information",
     target: HEADER,
   },
+  // v1.51.0 (D-300): Meeting Management.
+  {
+    id: "meetings",
+    section: "Tasks",
+    title: "Meetings",
+    intro: "Schedule meetings, approve the points and MOM, and follow up every action.",
+    points: [
+      "The Coordinator adds the points and writes the MOM; only the Meeting Owner approves them.",
+      "Approved action items become tasks; Follow-ups tracks them until they are confirmed done.",
+    ],
+    path: "/users/meetings",
+    target: HEADER,
+  },
   {
     id: "ai",
     section: "Tasks",

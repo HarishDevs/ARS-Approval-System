@@ -1,5 +1,18 @@
 # Release notes
 
+## v1.51.0 (10 Nov 2026): Meeting Management (owner)
+- **New module: Meetings** (sidebar → Meetings; Classic → Meeting Management). Everyone has it; IT can switch it off per person (module access).
+- **One Meeting Owner and one Coordinator per meeting** (they can be the same person). The Coordinator schedules the meeting, adds the meeting points, marks attendance and writes the MOM. **Only the Meeting Owner approves the points and the MOM.** Everything approved is sent to the participants.
+- **Schedule a meeting:** type (IDM, Intra Department, MD, ED, Management, Production and Despatch, Project Review, Review, Critical, External, Other), date and times, Owner, Coordinator, participants and departments (all chosen by typing a name), mode, venue or link, priority, General or Management-only, guests, and optional deadlines for the points and the MOM. The Owner chooses what happens if the points aren't approved in time.
+- **The meeting page:** points (reorder, presenter), Approve / Return for the Owner, Attend / Maybe / Can't attend for invitees, Start meeting or Record as held, attendance, the MOM (discussion per point, decisions, action items, open points), history, and an "On time?" panel.
+- **Action items become tasks** when the Owner approves the MOM: a General task for the responsible person with its priority and due date, linked to the meeting (the task page shows the meeting).
+- **Follow-ups:** a register of every action and open point. The Owner or Coordinator confirms a completed action, or sends it back (the task reopens). **Schedule follow-up meeting** carries the open actions and open points forward. A meeting closes once every action is confirmed or carried forward.
+- **Meeting dashboard:** meetings held, points and MOM in time, started on time, attendance and actions, by type and department, worked out from the recorded times.
+- **Admin → Meeting settings:** meeting types with default points, and the Management group (ED, MD) who see every meeting.
+- **Reminders:** the Coordinator is reminded when the points or the MOM are due within a day.
+- **Picker tidy-up everywhere:** a one-person picker that is filled now shows just the chosen name (remove it to choose someone else).
+- This release runs one database change on start (the meeting tables, a meeting link on tasks, and the Meeting module for every user). Rollback steps are in the migration file.
+
 ## v1.50.3 (10 Nov 2026): follow-ups from New request; a clear "no access" screen (owner)
 - **Fixed: Raise a follow-up.** On a request raised with **New request** (CUS-…), the button sent you to Request templates, which only lists IT's approval types (and can be turned off for some people), so the follow-up couldn't be raised. It now opens **New request** with the title and matching details copied and a note "Raising a follow-up to …"; on submit the new request is linked to the approved one (an expired approval asks why, as before). Requests raised from a template still go to Request templates to choose the type; its "Something else? New request" link keeps the follow-up too.
 - **Follow-up management on the request page** (custom and template requests):

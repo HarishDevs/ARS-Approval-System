@@ -10,13 +10,14 @@ import { departmentOf, holidayContext } from "@/server/work/holiday-store";
 import type { RowDataPacket } from "mysql2/promise";
 import { holidayName } from "@/server/work/holidays";
 import { runWorkDigest } from "@/server/work/service-more";
+import { sendMeetingReminders } from "@/server/meetings/service";
 import { indiaDate } from "@/server/workflows/calendar";
 
 // v1.9.0: reminders of the Task and Information modules (job runner step
 // "modules"). Each reminder is claimed first (a unique key per task, kind
 // and due time; a timestamp per recipient), so overlapping runs never send
 // the same one twice. A new due time gives a new reminder.
-export async function runModuleReminders(now = new Date()): Promise<{ taskDueSoon: number; taskOverdue: number; infoAckReminders: number; taskDigests: number }> {
+export async function runModuleReminders(now = new Date()): Promise<{ taskDueSoon: number; taskOverdue: number; infoAckReminders: number; taskDigests: number; meetingReminders: number }> {
   let taskDueSoon = 0;
   let taskOverdue = 0;
   let infoAckReminders = 0;
@@ -66,5 +67,7 @@ export async function runModuleReminders(now = new Date()): Promise<{ taskDueSoo
   if (queued.length) await deliverOutbox(queued.slice(0, 50)).catch(() => undefined);
   // D-218: the morning task summary (Admin → Task settings).
   const taskDigests = (await runWorkDigest(now).catch(() => ({ digests: 0 }))).digests;
-  return { taskDueSoon, taskOverdue, infoAckReminders, taskDigests };
+  // v1.51.0 (D-300): meeting points and MOM deadline reminders to the Coordinator (once per deadline).
+  const meetingReminders = await sendMeetingReminders().catch(() => 0);
+  return { taskDueSoon, taskOverdue, infoAckReminders, taskDigests, meetingReminders };
 }

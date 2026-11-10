@@ -10,6 +10,7 @@ const STEPS: { text: string; href: string; link: string }[] = [
   { text: "Approve from Waiting for me: open a request and choose Approve, Ask for changes, Put on hold or Reject.", href: "/users/queue", link: "Waiting for me" },
   { text: "Going on leave? Name someone to approve for you.", href: "/users/delegation", link: "Out of office" },
   { text: "Give a task: Create → Task. Type / in the description for the menu, @ to mention someone.", href: "/users/work/my-tasks", link: "My Tasks" },
+  { text: "Run a meeting: schedule it, send the points to the Meeting Owner, then the MOM. Action items become tasks.", href: "/users/meetings", link: "Meetings" },
   { text: "Choose which messages also come by email or WhatsApp (Profile → Notifications). Everything is in your Inbox.", href: "/users/notifications/settings", link: "Notifications" },
   { text: "Install the app and turn on notifications on your phone (Profile → App & devices).", href: "/users/profile/devices", link: "App & devices" },
   { text: "What does each screen and status mean? Find anything with the search bar at the top.", href: "/users/help", link: "Help" },

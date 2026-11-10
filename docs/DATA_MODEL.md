@@ -1002,3 +1002,12 @@ Times are stored in UTC (`DATETIME`, set by `CURRENT_TIMESTAMP` or the app). Ind
 ## v1.47.0: coloured choices and request priority (no schema change)
 - Form JSON (`workflow_versions.form_json`, `module_type_versions.form_json`, `custom_approval_settings.form_json`): choice fields (CHOICE, RADIO, MULTI_CHOICE) may carry `optionColors`: `{ "<option>": "red" | "orange" | "yellow" | "green" | "teal" | "blue" | "purple" | "pink" | "grey" }`.
 - A request's priority is read from `approval_requests.form_data_json` at the key `priority` (case-insensitive) when its form version has a choice field with that key; nothing is stored separately.
+
+## v1.51.0: Meeting Management (migration 202611110900_meetings)
+- `users.module_access` gains `MEETING` (default and every existing user).
+- `meeting_types` (code, name, default points `template`, position, active; 11 seeded) and `meeting_management_members` (the Management group: ED, MD).
+- `meetings`: `meeting_no` (MTG-YYYY-NNNNNN), title, description, type, organising department, `owner_id` (Meeting Owner), `coordinator_id`, mode/venue/link, priority (NORMAL, IMPORTANT, HIGH, URGENT as tasks), confidentiality (GENERAL, MANAGEMENT), guests, status (SCHEDULED → IN_PROGRESS → AWAITING_MOM → MOM_SUBMITTED / MOM_RETURNED → MOM_APPROVED → CLOSED; CANCELLED), scheduled and actual start/end (UTC), `agenda_due_at`, `mom_due_at`, points approval (`points_status`, `points_policy` BLOCK / LAST_APPROVED, times, remarks), MOM approval (times, remarks), `series_id` and `parent_meeting_id` (follow-up chain), `row_version`.
+- `meeting_departments`, `meeting_participants` (response, response note, attendance), `meeting_points` (position, title, presenter, discussion), `meeting_decisions`.
+- `meeting_actions`: title, description, `owner_id` (task assignee), priority, `due_on`, `task_id` (set on MOM approval), `carried_from_id` (the same task carried into a follow-up meeting), `confirmed_by` / `confirmed_at`, `review_note`; UNIQUE (meeting_id, task_id).
+- `meeting_open_points` (text, owner, review date, OPEN/CLOSED with note, `carried_from_id`) and `meeting_events` (history, reminders).
+- `tasks.meeting_id`: the meeting an action-item task came from (FK, indexed).
