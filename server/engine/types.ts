@@ -95,7 +95,7 @@ export interface ApprovalNode extends BaseNode {
   background?: boolean;
   // v1.50.0 (owner): a WORK step's task priority and due date (YYYY-MM-DD,
   // end of that day in India). The due date replaces the respond-within time.
-  workPriority?: "LOW" | "NORMAL" | "HIGH" | "URGENT";
+  workPriority?: "LOW" | "NORMAL" | "IMPORTANT" | "HIGH" | "URGENT";
   workDueOn?: string;
 }
 
@@ -248,7 +248,7 @@ export type EngineEvent =
   // DR-02: nobody approved anything, so a human approval was asked for.
   | { type: "HUMAN_APPROVAL_ROUTED"; nodeId: string; to: "HOD" | "IT"; userIds: number[] }
   | { type: "NOTIFIED"; nodeId: string; userIds: number[]; note?: string }
-  | { type: "WORK_ASSIGNED"; nodeId: string; label: string; userIds: number[]; slaHours?: number; workPriority?: "LOW" | "NORMAL" | "HIGH" | "URGENT"; workDueOn?: string }
+  | { type: "WORK_ASSIGNED"; nodeId: string; label: string; userIds: number[]; slaHours?: number; workPriority?: "LOW" | "NORMAL" | "IMPORTANT" | "HIGH" | "URGENT"; workDueOn?: string }
   | { type: "BLOCK_RESOLVED"; nodeId: string; actorId: number; action: BlockAction["action"]; userIds?: number[]; reason: string }
   | { type: "TASK_REASSIGNED"; taskId: string; nodeId: string; fromId: number; toId: number; actorId: number; reason?: string; byApprover?: boolean }
   | { type: "WITHDRAWN"; actorId: number; reason?: string; closedTaskIds: string[]; approverIds: number[] }

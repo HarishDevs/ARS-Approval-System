@@ -1,5 +1,10 @@
 # Release notes
 
+## v1.50.1 (10 Nov 2026): task links open for everyone on the task; new task priorities (owner)
+- **Fixed:** the link in a "Task for you" email showed "This page isn't available" for someone without the Task module (for example an approval-only user given a task). Anyone a task is assigned to, assigned by or created by can now open that task and work on it; the Task module still controls Task Management (lists, creating tasks, projects).
+- **Task priorities** are now **Critical**, **Most Important**, **Important** and **Normal** (in that order), in Create task, task lists, search, bulk "Set priority", work-task levels and task pages. Existing tasks keep their meaning (Urgent shows as Critical, High as Most Important, Normal stays Normal).
+- This release runs one small database change on start (adds the Important priority). Nothing else to do.
+
 ## v1.50.0 (5 Nov 2026): go-live release: work task options, linked items, PDF like the screen, security fixes (owner)
 - **Work task steps:** a level set to **Work task** now has **Task priority** (Low, Normal, High, Urgent) and an optional **Task due date**. The task reaches the person's Task Management with that priority and due date when the step starts (put the work level after the approval levels to have it start once they approve). The due date also shows in **Waiting for me**.
 - **Request page:** a **Work tasks** card lists the tasks raised from the request (number, title, who, due date, status), next to **Linked requests**.

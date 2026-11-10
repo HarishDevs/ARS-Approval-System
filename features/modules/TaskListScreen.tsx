@@ -30,7 +30,7 @@ const DESCRIPTION: Record<TaskBase, string> = {
   TEAM: "Tasks of everyone below you in the reporting line, at every level (IT sees everyone's).",
 };
 export const STATUS_TONE: Record<TaskStatus, Tone> = { OPEN: "info", IN_PROGRESS: "primary", BLOCKED: "warning", COMPLETED: "success", CANCELLED: "neutral" };
-export const PRIORITY_TONE: Record<TaskPriority, Tone> = { LOW: "neutral", NORMAL: "neutral", HIGH: "warning", URGENT: "danger" };
+export const PRIORITY_TONE: Record<TaskPriority, Tone> = { LOW: "neutral", NORMAL: "neutral", IMPORTANT: "warning", HIGH: "warning", URGENT: "danger" };
 
 export async function TaskListScreen({ base, query }: { base: TaskBase; query: Record<string, string | string[] | undefined> }) {
   const { user } = await requireArea("users");

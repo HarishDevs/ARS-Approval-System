@@ -7,13 +7,13 @@ export type RecordKind = "requests" | "tasks" | "information";
 export const REQUEST_STATUSES = ["IN_PROGRESS", "ON_HOLD", "CHANGES_REQUIRED", "APPROVED", "REJECTED", "CANCELLED"] as const;
 export const TASK_STATUSES = ["OPEN", "IN_PROGRESS", "BLOCKED", "COMPLETED", "CANCELLED"] as const;
 export const INFO_STATUSES = ["DRAFT", "PUBLISHED", "WITHDRAWN", "ARCHIVED"] as const;
-export const TASK_PRIORITIES = ["LOW", "NORMAL", "HIGH", "URGENT"] as const;
+export const TASK_PRIORITIES = ["URGENT", "HIGH", "IMPORTANT", "NORMAL", "LOW"] as const; // v1.50.1: IMPORTANT added
 export const INFO_PRIORITIES = ["NORMAL", "IMPORTANT", "URGENT"] as const;
 
 // The sortable columns of each register (column key → SQL expression).
 export const SORTS: Record<RecordKind, Record<string, string>> = {
   requests: { no: "r.id", title: "r.title", type: "type_name", raisedBy: "requester_name", department: "department_name", status: "r.status", submitted: "r.submitted_at", closed: "r.closed_at" },
-  tasks: { no: "t.id", title: "t.title", type: "type_name", priority: "FIELD(t.priority, 'LOW', 'NORMAL', 'HIGH', 'URGENT')", status: "t.status", assignee: "assignee_name", department: "department_name", created: "t.created_at", due: "t.due_at", completed: "t.completed_at" },
+  tasks: { no: "t.id", title: "t.title", type: "type_name", priority: "FIELD(t.priority, 'LOW', 'NORMAL', 'IMPORTANT', 'HIGH', 'URGENT')", status: "t.status", assignee: "assignee_name", department: "department_name", created: "t.created_at", due: "t.due_at", completed: "t.completed_at" },
   information: { no: "i.id", title: "i.title", type: "type_name", priority: "FIELD(i.priority, 'NORMAL', 'IMPORTANT', 'URGENT')", status: "i.status", createdBy: "creator_name", department: "department_name", created: "i.created_at", published: "i.published_at" },
 };
 

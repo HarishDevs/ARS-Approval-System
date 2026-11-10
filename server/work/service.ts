@@ -12,7 +12,7 @@ import { versionWithType } from "@/lib/db/repositories/module-types.repository";
 import { deliverOutbox } from "@/server/approvals/service";
 import { projectMessages, taskMessages } from "@/server/modules/messages";
 import { actOnTask, type TaskActor } from "@/server/modules/tasks";
-import { indiaLocalToUtc, mayCreate, parseTaskSettings, TASK_PRIORITIES, type TaskPriority } from "@/server/modules/settings";
+import { indiaLocalToUtc, mayCreate, parseTaskSettings, PRIORITY_LABEL, TASK_PRIORITIES, type TaskPriority } from "@/server/modules/settings";
 import { mayAssignTo, OPEN_STATUSES } from "@/server/modules/task-rules";
 import {
   mayShareTasks,
@@ -498,7 +498,7 @@ export async function setTaskFields(taskId: number, change: { dueDay?: string; s
     if (!rights.details) return fail(rights.adhoc ? "Only its creator can change an ad hoc task's details." : "Only the task's owners and project editors can change its priority.");
     if (!(TASK_PRIORITIES as readonly string[]).includes(change.priority)) return fail("Choose a priority.");
     changes.priority = change.priority;
-    notes.push(`Priority set to ${change.priority.toLowerCase()}`);
+    notes.push(`Priority set to ${PRIORITY_LABEL[change.priority as TaskPriority] ?? change.priority}`);
   }
   if (change.title !== undefined) {
     if (!rights.details) return fail(rights.adhoc ? "Only its creator can change an ad hoc task's details." : "You can't rename this task.");

@@ -23,6 +23,10 @@ export interface PageDef {
   // module the page, its actions and its APIs are refused like a hidden page.
   // No module: shared by every module (Overview, Calendar, Profile...).
   module?: ModuleCode;
+  // v1.50.1 (owner: a task emailed to someone without the Task module
+  // wouldn't open): the page still opens without the module; the page itself
+  // then shows only records the person is on (server/modules/tasks.ts).
+  partyOpen?: boolean;
 }
 
 const exact = (path: string) => new RegExp(`^${path.replace(/[/]/g, "\\/")}\\/?$`);
@@ -45,7 +49,7 @@ export const PAGES: readonly PageDef[] = [
   // v1.9.0 (D-143): Task and Information modules.
   { key: "users.tasks", module: "TASK", area: "users", label: "Tasks: lists", what: "My tasks, Assigned by me and Team tasks.", paths: [exact("/users/tasks"), under("/users/tasks/assigned"), under("/users/tasks/team")] },
   { key: "users.task_new", module: "TASK", area: "users", label: "Tasks: new task", what: "Creating a task.", paths: [under("/users/tasks/new")] },
-  { key: "users.task", module: "TASK", area: "users", label: "Tasks: task page", what: "Opening a task: details, progress, comments, files. View only = can read, not act.", paths: [/^\/users\/tasks\/\d+(\/.*)?$/] },
+  { key: "users.task", module: "TASK", partyOpen: true, area: "users", label: "Tasks: task page", what: "Opening a task: details, progress, comments, files. View only = can read, not act.", paths: [/^\/users\/tasks\/\d+(\/.*)?$/] },
   // D-215: Task & Project Management.
   { key: "users.work", module: "TASK", area: "users", label: "Tasks: home, My Tasks, search", what: "Task home, My Tasks with its sections and board, task search and saved searches, deleted tasks.", paths: [exact("/users/work"), under("/users/work/my-tasks"), under("/users/work/search"), under("/users/work/deleted"), under("/users/work/inbox"), under("/users/work/periodic")] },
   { key: "users.projects", module: "TASK", area: "users", label: "Tasks: projects", what: "Projects: list, board, calendar, timeline, overview and status updates, members and settings.", paths: [under("/users/work/projects")] },

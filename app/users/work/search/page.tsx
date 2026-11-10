@@ -123,10 +123,10 @@ export default async function WorkSearchPage({ searchParams }: { searchParams: P
                 value={search.priority ?? ""}
                 options={[
                   ["", "Any"],
-                  ["URGENT", "Urgent"],
-                  ["HIGH", "High"],
+                  ["URGENT", "Critical"],
+                  ["HIGH", "Most Important"],
+                  ["IMPORTANT", "Important"],
                   ["NORMAL", "Normal"],
-                  ["LOW", "Low"],
                 ]}
               />
               <Select id="ws-tag" name="tag" label="Tag" value={search.tag === null ? "" : String(search.tag)} options={[["", "Any"], ...tags.map((tag) => [String(tag.id), `#${tag.name}`] as [string, string])]} />

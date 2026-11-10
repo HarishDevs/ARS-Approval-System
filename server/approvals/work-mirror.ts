@@ -127,7 +127,7 @@ async function linkBackgroundWork(requestId: number, db: Queryable): Promise<voi
   const have = new Set(made.map((row) => String(row.link_key)));
   let general: Awaited<ReturnType<typeof generalTypeVersion>> | undefined;
   for (const event of events) {
-    const payload = (typeof event.payload_json === "string" ? JSON.parse(event.payload_json) : event.payload_json) as { nodeId: string; label: string; userIds: number[]; slaHours?: number; workPriority?: "LOW" | "NORMAL" | "HIGH" | "URGENT"; workDueOn?: string };
+    const payload = (typeof event.payload_json === "string" ? JSON.parse(event.payload_json) : event.payload_json) as { nodeId: string; label: string; userIds: number[]; slaHours?: number; workPriority?: "LOW" | "NORMAL" | "IMPORTANT" | "HIGH" | "URGENT"; workDueOn?: string };
     for (const userId of payload.userIds ?? []) {
       const key = `${String(event.id)}:${userId}`;
       if (have.has(key)) continue;

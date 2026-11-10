@@ -136,7 +136,7 @@ const templateTask: z.ZodType<TemplateTask> = z.lazy(() =>
   z.object({
     title: z.string().min(1).max(200),
     description: z.string().max(4000).nullable(),
-    priority: z.enum(["LOW", "NORMAL", "HIGH", "URGENT"]),
+    priority: z.enum(["LOW", "NORMAL", "IMPORTANT", "HIGH", "URGENT"]),
     section: z.number().int().min(0).max(99),
     dueOffset: z.number().int().min(-3650).max(3650).nullable(), // days from the project's start
     startOffset: z.number().int().min(-3650).max(3650).nullable(),
@@ -149,7 +149,7 @@ const templateTask: z.ZodType<TemplateTask> = z.lazy(() =>
 export interface TemplateTask {
   title: string;
   description: string | null;
-  priority: "LOW" | "NORMAL" | "HIGH" | "URGENT";
+  priority: "LOW" | "NORMAL" | "IMPORTANT" | "HIGH" | "URGENT";
   section: number; // index into sections
   dueOffset: number | null;
   startOffset: number | null;

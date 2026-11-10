@@ -120,7 +120,7 @@ export interface WorkSearch {
   assignee: number | "me" | null;
   createdBy: number | "me" | null;
   project: number | null;
-  priority: "LOW" | "NORMAL" | "HIGH" | "URGENT" | null;
+  priority: "LOW" | "NORMAL" | "IMPORTANT" | "HIGH" | "URGENT" | null;
   tag: number | null;
   dueFrom: string | null;
   dueTo: string | null;
@@ -137,7 +137,7 @@ export function parseWorkSearch(raw: Record<string, unknown>): WorkSearch {
   const status = (SEARCH_STATUSES as readonly string[]).includes(String(raw.status)) ? (raw.status as WorkSearch["status"]) : "open";
   const assignee = raw.assignee === "me" ? "me" : id(raw.assignee);
   const createdBy = raw.created_by === "me" ? "me" : id(raw.created_by);
-  const priority = ["LOW", "NORMAL", "HIGH", "URGENT"].includes(String(raw.priority)) ? (raw.priority as WorkSearch["priority"]) : null;
+  const priority = ["LOW", "NORMAL", "IMPORTANT", "HIGH", "URGENT"].includes(String(raw.priority)) ? (raw.priority as WorkSearch["priority"]) : null;
   const page = Math.min(500, Math.max(1, id(raw.page) ?? 1));
   return { q: text, status, assignee, createdBy, project: id(raw.project), priority, tag: id(raw.tag), dueFrom: day(raw.due_from), dueTo: day(raw.due_to), followed: raw.followed === "1", overdue: raw.overdue === "1", team: raw.team === "1", kind: raw.kind === "periodic" || raw.kind === "adhoc" ? raw.kind : null, page };
 }

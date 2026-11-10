@@ -403,10 +403,10 @@ export function CommandPalette({ pages }: { pages: PaletteLink[] }) {
                         "Priority",
                         <select id="sf-priority" className={select} value={filters.priority} onChange={(event) => set("priority", event.target.value)}>
                           <option value="">Any</option>
-                          <option value="URGENT">Urgent</option>
-                          <option value="HIGH">High</option>
+                          <option value="URGENT">Critical</option>
+                          <option value="HIGH">Most Important</option>
+                          <option value="IMPORTANT">Important</option>
                           <option value="NORMAL">Normal</option>
-                          <option value="LOW">Low</option>
                         </select>,
                         "sf-priority",
                       )}

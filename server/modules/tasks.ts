@@ -11,7 +11,9 @@ import { appendTaskEvent, findTask, findTaskBySubmissionKey, insertTask, personF
 import { countEvidence, discardStaged, insertRecordFiles, RecordFileError, type StagedFile } from "@/server/modules/files";
 import { taskMessages } from "@/server/modules/messages";
 import { indiaLocalToUtc, mayCreate, parseTaskSettings, TASK_PRIORITIES, type TaskPriority, type TaskSettings } from "@/server/modules/settings";
-import { allowedTaskActions, canSeeTask, completionProblems, mayAssignTo, NEXT_STATUS, needsReason, type TaskAction } from "@/server/modules/task-rules";
+import { allowedTaskActions, canSeeTask, completionProblems, isParty, mayAssignTo, NEXT_STATUS, needsReason, type TaskAction } from "@/server/modules/task-rules";
+import { hasModule } from "@/server/modules/modules";
+import type { ModuleCode } from "@/types/auth";
 import { parseFormSubmission, type FormField } from "@/server/forms/fields";
 import { canSeeRequest } from "@/server/attachments/service";
 import { deliverOutbox } from "@/server/approvals/service";
@@ -46,6 +48,7 @@ export interface TaskActor {
   roles: readonly string[];
   sessionId?: string;
   ipAddress?: string | null;
+  modules?: readonly ModuleCode[]; // v1.50.1: without TASK, only tasks the person is on
 }
 export type TaskResult<T = undefined> = { ok: true; value: T } | { ok: false; message: string; fieldErrors?: Record<string, string> };
 
@@ -54,7 +57,14 @@ export const isAdminActor = (actor: { roles: readonly string[] }) => actor.roles
 // The task and its settings, if this person may see it (else null: a 404).
 // D-215: projects, followers and the top task count too (taskViewerFor); a
 // deleted task is shown only to its creator, its deleter and IT (to restore).
-export async function loadTaskFor(id: number, actor: { id: number; roles: readonly string[] }) {
+// v1.50.1 (owner): someone without the Task module still opens a task they
+// are on (assigned to them, by them, or created by them: the email links it),
+// but no other task (team, project or IT views need the module).
+type ModuleActor = { id: number; roles: readonly string[]; modules?: readonly ModuleCode[] };
+const outsideModule = (actor: ModuleActor, task: Parameters<typeof isParty>[0], viewer: Parameters<typeof isParty>[1]) =>
+  Boolean(actor.modules) && !hasModule({ roles: actor.roles, modules: actor.modules ?? [] }, "TASK") && !isParty(task, viewer);
+
+export async function loadTaskFor(id: number, actor: ModuleActor) {
   const task = await findTask(id);
   if (!task) return null;
   if (task.deletedAt && !(task.createdBy === actor.id || task.deletedBy === actor.id || isAdminActor(actor))) return null;
@@ -62,7 +72,7 @@ export async function loadTaskFor(id: number, actor: { id: number; roles: readon
   const ctx = await versionWithType(task.typeVersionId);
   if (!ctx) return null;
   const settings = parseTaskSettings(ctx.version.settings);
-  if (!canSeeTask(task, viewer)) return null;
+  if (!canSeeTask(task, viewer) || outsideModule(actor, task, viewer)) return null;
   const actions = task.deletedAt ? new Set<TaskAction>() : allowedTaskActions(task, viewer, settings);
   return { task, settings, form: ctx.version.form, versionNo: ctx.version.versionNo, actions, viewer };
 }
@@ -262,7 +272,9 @@ export async function actOnTask(input: TaskActionInput, actor: TaskActor): Promi
       const ctx = await versionWithType(task.typeVersionId, connection);
       if (!ctx) return { error: "Not found." } as const;
       const settings = parseTaskSettings(ctx.version.settings);
-      const allowed = allowedTaskActions(task, await taskViewerFor(task, actor, connection), settings);
+      const viewer = await taskViewerFor(task, actor, connection);
+      if (outsideModule(actor, task, viewer)) return { error: "Not found." } as const;
+      const allowed = allowedTaskActions(task, viewer, settings);
       if (!allowed.has(input.action)) return { error: allowed.size ? "That can't be done to this task now. Reload to see its latest state." : "Not found." } as const;
       if (input.rowVersion !== null && input.rowVersion !== task.rowVersion && input.action !== "COMMENT") return { error: "Someone changed this task while you were looking. Reload and try again." } as const;
 

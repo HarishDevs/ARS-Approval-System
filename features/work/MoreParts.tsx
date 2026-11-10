@@ -358,10 +358,10 @@ export function BulkBar({ ids, clear, people, sections, projectId }: { ids: numb
       {op === "PRIORITY" && (
         <select aria-label="Priority" value={value} onChange={(event) => setValue(event.target.value)} className="field-input h-8 w-32 py-0 text-label">
           <option value="">Choose…</option>
-          <option value="LOW">Low</option>
+          <option value="URGENT">Critical</option>
+          <option value="HIGH">Most Important</option>
+          <option value="IMPORTANT">Important</option>
           <option value="NORMAL">Normal</option>
-          <option value="HIGH">High</option>
-          <option value="URGENT">Urgent</option>
         </select>
       )}
       {op === "SECTION" && (

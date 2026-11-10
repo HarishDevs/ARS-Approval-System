@@ -30,7 +30,7 @@ export const STATUS_LABEL: Record<string, string> = {
   WITHDRAWN: "Withdrawn",
   ARCHIVED: "Archived",
 };
-export const PRIORITY_LABEL: Record<string, string> = { LOW: "Low", NORMAL: "Normal", HIGH: "High", URGENT: "Urgent", IMPORTANT: "Important" };
+export const PRIORITY_LABEL: Record<string, string> = { LOW: "Low", NORMAL: "Normal", IMPORTANT: "Important", HIGH: "Most Important", URGENT: "Critical" };
 
 const dateTime = (value: Date | null) => (value ? new Date(value).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: false }) : "");
 const daysBetween = (start: Date, end: Date | null) => Math.max(0, Math.floor(((end ? new Date(end) : new Date()).getTime() - new Date(start).getTime()) / 86_400_000));

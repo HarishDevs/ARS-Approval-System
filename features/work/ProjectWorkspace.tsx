@@ -25,7 +25,7 @@ export interface BoardTask {
   taskNo: string;
   title: string;
   status: "OPEN" | "IN_PROGRESS" | "BLOCKED" | "COMPLETED" | "CANCELLED";
-  priority: "LOW" | "NORMAL" | "HIGH" | "URGENT";
+  priority: "LOW" | "NORMAL" | "IMPORTANT" | "HIGH" | "URGENT";
   assigneeId: number;
   assigneeName: string;
   dueAt: string | null;
@@ -47,14 +47,14 @@ export interface BoardSection {
 }
 type Sort = "manual" | "due" | "priority" | "title" | "assignee";
 type GroupBy = "section" | "assignee" | "due" | "priority";
-const PRIORITY_NAME = { URGENT: "Urgent", HIGH: "High", NORMAL: "Normal", LOW: "Low" } as const;
+const PRIORITY_NAME = { URGENT: "Critical", HIGH: "Most Important", IMPORTANT: "Important", NORMAL: "Normal", LOW: "Low" } as const;
 const shiftDay = (day: string, days: number) => {
   const date = new Date(`${day}T00:00:00Z`);
   date.setUTCDate(date.getUTCDate() + days);
   return date.toISOString().slice(0, 10);
 };
 const OPEN = new Set(["OPEN", "IN_PROGRESS", "BLOCKED"]);
-const PRIORITY_RANK = { URGENT: 0, HIGH: 1, NORMAL: 2, LOW: 3 } as const;
+const PRIORITY_RANK = { URGENT: 0, HIGH: 1, IMPORTANT: 2, NORMAL: 3, LOW: 4 } as const;
 
 export function ProjectWorkspace({
   projectId,
@@ -508,10 +508,10 @@ export function ProjectWorkspace({
                             {...priorityControlProps(task.priority)}
                             className={`field-input h-8 w-[100px] py-0 text-label ${priorityControlProps(task.priority).className}`}
                           >
-                            <option value="LOW">Low</option>
+                            <option value="URGENT">Critical</option>
+                            <option value="HIGH">Most Important</option>
+                            <option value="IMPORTANT">Important</option>
                             <option value="NORMAL">Normal</option>
-                            <option value="HIGH">High</option>
-                            <option value="URGENT">Urgent</option>
                           </select>
                         ) : (
                           <TaskPriorityPill priority={task.priority} showNormal />

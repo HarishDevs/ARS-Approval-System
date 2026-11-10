@@ -476,10 +476,10 @@ export function TaskGrid({
                                   {...priorityControlProps(task.priority)}
                                   className={`rounded-full border-0 px-2 py-0.5 text-caption ${priorityControlProps(task.priority).className}`}
                                 >
-                                  <option value="LOW">Low</option>
+                                  <option value="URGENT">Critical</option>
+                                  <option value="HIGH">Most Important</option>
+                                  <option value="IMPORTANT">Important</option>
                                   <option value="NORMAL">Normal</option>
-                                  <option value="HIGH">High</option>
-                                  <option value="URGENT">Urgent</option>
                                 </select>
                               ) : (
                                 <TaskPriorityPill priority={task.priority} showNormal />
@@ -545,10 +545,10 @@ function FilterPanel({ config, set, people, projects }: { config: GridConfig; se
         return [["none", "No project"], ...projects.map((project) => [String(project.id), project.name] as [string, string])];
       case "priority":
         return [
-          ["URGENT", "Urgent"],
-          ["HIGH", "High"],
+          ["URGENT", "Critical"],
+          ["HIGH", "Most Important"],
+          ["IMPORTANT", "Important"],
           ["NORMAL", "Normal"],
-          ["LOW", "Low"],
         ];
       case "kind":
         return [

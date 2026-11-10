@@ -49,7 +49,7 @@ test("Create task: two columns on a computer, with a priority that is saved", as
   await dialog.getByLabel("Priority").selectOption("HIGH");
   await dialog.getByRole("button", { name: "Create task" }).click();
   await expect(page.getByTestId("task-pane")).toContainText(title);
-  await expect(page.getByTestId("task-pane")).toContainText(/High/);
+  await expect(page.getByTestId("task-pane")).toContainText(/Most Important/); // v1.50.1: HIGH reads "Most Important"
 });
 
 test("the task table: tags and collaborators change in their cells (a project's List)", async ({ page, context }) => {

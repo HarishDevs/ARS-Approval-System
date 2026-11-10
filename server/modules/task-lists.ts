@@ -1,4 +1,4 @@
-import { TASK_PRIORITIES, type TaskPriority } from "@/server/modules/settings";
+import { ALL_TASK_PRIORITIES, type TaskPriority } from "@/server/modules/settings";
 import { TASK_STATUSES, type TaskStatus } from "@/server/modules/task-rules";
 
 // v1.9.0: the task lists (My tasks, Assigned by me, Team tasks): quick tabs,
@@ -47,7 +47,7 @@ export function parseTaskFilters(query: Record<string, string | string[] | undef
     tab: (TASK_TABS as readonly string[]).includes(tab) ? tab : "open",
     q: one(query.q).trim().slice(0, 100),
     typeId: id(one(query.type)),
-    priorities: many(query.priority).filter((value): value is TaskPriority => (TASK_PRIORITIES as readonly string[]).includes(value)),
+    priorities: many(query.priority).filter((value): value is TaskPriority => (ALL_TASK_PRIORITIES as readonly string[]).includes(value)),
     statuses: many(query.status).filter((value): value is TaskStatus => (TASK_STATUSES as readonly string[]).includes(value)),
     personId: id(one(query.person)),
     dueFrom,
@@ -180,7 +180,7 @@ export function taskListSql(
       : f.sort === "oldest"
         ? "t.id ASC"
         : f.sort === "priority"
-          ? "FIELD(t.priority, 'URGENT', 'HIGH', 'NORMAL', 'LOW'), t.due_at IS NULL, t.due_at, t.id"
+          ? "FIELD(t.priority, 'URGENT', 'HIGH', 'IMPORTANT', 'NORMAL', 'LOW'), t.due_at IS NULL, t.due_at, t.id"
           : f.sort === "updated"
             ? "t.updated_at DESC, t.id DESC"
             : "t.due_at IS NULL, t.due_at, t.id";

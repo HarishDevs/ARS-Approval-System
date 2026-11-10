@@ -71,7 +71,7 @@ export interface GridTask {
   taskNo: string;
   title: string;
   status: string;
-  priority: "LOW" | "NORMAL" | "HIGH" | "URGENT";
+  priority: "LOW" | "NORMAL" | "IMPORTANT" | "HIGH" | "URGENT";
   assigneeId: number;
   assigneeName: string;
   createdBy: number;
@@ -96,8 +96,8 @@ export interface GridTask {
 }
 
 const OPEN = new Set(["OPEN", "IN_PROGRESS", "BLOCKED"]);
-const PRIORITY_RANK = { URGENT: 0, HIGH: 1, NORMAL: 2, LOW: 3 } as const;
-const PRIORITY_NAME = { URGENT: "Urgent", HIGH: "High", NORMAL: "Normal", LOW: "Low" } as const;
+const PRIORITY_RANK = { URGENT: 0, HIGH: 1, IMPORTANT: 2, NORMAL: 3, LOW: 4 } as const;
+const PRIORITY_NAME = { URGENT: "Critical", HIGH: "Most Important", IMPORTANT: "Important", NORMAL: "Normal", LOW: "Low" } as const;
 export const indiaDay = (iso: string) => new Date(new Date(iso).getTime() + 330 * 60_000).toISOString().slice(0, 10);
 const shift = (day: string, days: number) => {
   const date = new Date(`${day}T00:00:00Z`);

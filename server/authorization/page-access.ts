@@ -17,7 +17,7 @@ import { countPendingTasksFor } from "@/lib/db/repositories/approvals.repository
 type Person = { id: number; roles: readonly string[]; modules: readonly ModuleCode[] };
 
 // D-168: a page of a module the person doesn't have is refused like a hidden one.
-const lacksModule = (person: Person, page: PageDef | null | undefined) => Boolean(page?.module && !hasModule(person, page.module));
+const lacksModule = (person: Person, page: PageDef | null | undefined) => Boolean(page?.module && !page.partyOpen && !hasModule(person, page.module));
 export const isPageExempt = (person: Pick<Person, "roles">) => person.roles.includes("SUPER_ADMIN");
 
 // Every page's level for this person (once per request).

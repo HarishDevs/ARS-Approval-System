@@ -20,7 +20,7 @@ async function actor(): Promise<TaskActor | null> {
     const session = await requireApiArea("users");
     if (!(await featureOn("tasks", session.user))) return null;
     const { ipAddress } = await getActionContext();
-    return { id: session.user.id, name: session.user.name, roles: session.user.roles, sessionId: session.sessionId, ipAddress };
+    return { id: session.user.id, name: session.user.name, roles: session.user.roles, modules: session.user.modules, sessionId: session.sessionId, ipAddress };
   } catch {
     return null;
   }

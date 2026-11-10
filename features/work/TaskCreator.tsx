@@ -99,7 +99,7 @@ function CreateTaskDialog({
   const [description, setDescription] = useState("");
   const [periodic, setPeriodic] = useState(false);
   // D-259: priority, set on the new task(s) right after they are made.
-  const [priority, setPriority] = useState<"LOW" | "NORMAL" | "HIGH" | "URGENT">("NORMAL");
+  const [priority, setPriority] = useState<"LOW" | "NORMAL" | "IMPORTANT" | "HIGH" | "URGENT">("NORMAL");
   const assignees = forWhom === "self" ? [meId] : periodic ? others.slice(0, 1) : others;
   const [kind, setKind] = useState<Recurrence["kind"]>("WEEKLY");
   const [every, setEvery] = useState(1);
@@ -588,10 +588,10 @@ function CreateTaskDialog({
                   Priority
                 </label>
                 <select id="create-priority" value={priority} onChange={(event) => setPriority(event.target.value as typeof priority)} className="field-input h-8 w-40 py-0 text-label lg:w-full">
-                  <option value="LOW">Low</option>
+                  <option value="URGENT">Critical</option>
+                  <option value="HIGH">Most Important</option>
+                  <option value="IMPORTANT">Important</option>
                   <option value="NORMAL">Normal</option>
-                  <option value="HIGH">High</option>
-                  <option value="URGENT">Urgent</option>
                 </select>
               </div>
               <fieldset

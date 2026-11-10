@@ -18,9 +18,12 @@ export const accessSchema = z.object({
 export type CreateAccess = z.infer<typeof accessSchema>;
 export const OPEN_ACCESS: CreateAccess = { mode: "EVERYONE", departmentIds: [], userIds: [] };
 
-export const TASK_PRIORITIES = ["LOW", "NORMAL", "HIGH", "URGENT"] as const;
-export type TaskPriority = (typeof TASK_PRIORITIES)[number];
-export const PRIORITY_LABEL: Record<TaskPriority, string> = { LOW: "Low", NORMAL: "Normal", HIGH: "High", URGENT: "Urgent" };
+// v1.50.1 (owner): Critical, Most Important, Important, Normal (highest first).
+// LOW stays valid for older tasks but is no longer offered.
+export const ALL_TASK_PRIORITIES = ["LOW", "NORMAL", "IMPORTANT", "HIGH", "URGENT"] as const;
+export type TaskPriority = (typeof ALL_TASK_PRIORITIES)[number];
+export const TASK_PRIORITIES = ["URGENT", "HIGH", "IMPORTANT", "NORMAL"] as const satisfies readonly TaskPriority[];
+export const PRIORITY_LABEL: Record<TaskPriority, string> = { LOW: "Low", NORMAL: "Normal", IMPORTANT: "Important", HIGH: "Most Important", URGENT: "Critical" };
 
 // Whom a task may be assigned to.
 export const ASSIGN_SCOPES = ["ANYONE", "SAME_DEPARTMENT", "MY_TEAM", "GROUPS", "PEOPLE"] as const;
@@ -52,7 +55,7 @@ export const taskSettingsSchema = z.object({
   allowReassign: z.boolean(),
   assigneeMayCancel: z.boolean(),
   completion: z.enum(COMPLETION_RULES),
-  defaultPriority: z.enum(TASK_PRIORITIES),
+  defaultPriority: z.enum(ALL_TASK_PRIORITIES),
   requireDueDate: z.boolean(),
   defaultDueDays: z.number().int().min(0).max(365).nullable(),
   reminderHoursBefore: z.number().int().min(1).max(168).nullable(),

@@ -107,7 +107,9 @@ describe("module access in the database", () => {
 
   it("a page of a module the person lacks is refused, actions included; the Super Admin is exempt", async () => {
     const staff = (await findUserById(staffId))!; // Approval + AI
-    expect(await checkPageKey(staff, "users.task", true)).toEqual({ ok: false, reason: "MODULE", pageKey: "users.task" });
+    expect(await checkPageKey(staff, "users.tasks", true)).toEqual({ ok: false, reason: "MODULE", pageKey: "users.tasks" });
+    // v1.50.1: one task's page opens without the module; the page shows only tasks the person is on.
+    expect(await checkPageKey(staff, "users.task", true)).toMatchObject({ ok: true });
     expect(await checkPageKey(staff, "users.information", false)).toMatchObject({ ok: false, reason: "MODULE" });
     expect(await checkPageKey(staff, "users.request", true)).toMatchObject({ ok: true });
     expect(await checkPageKey(staff, "users.calendar", false)).toMatchObject({ ok: true }); // shared
