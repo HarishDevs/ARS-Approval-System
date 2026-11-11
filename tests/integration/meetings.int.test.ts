@@ -83,6 +83,9 @@ describe("Meeting Management (D-300)", () => {
     expect((await repo.listPoints(meetingId)).map((point) => point.title)).toEqual(["Production review", "Despatch plan"]);
     expect(await notices(member, "MEETING_INVITED")).toBe(1);
     expect(await notices(owner, "MEETING_INVITED")).toBe(1);
+    // v1.51.1: meeting messages are in the Inbox under Meetings, linked to the meeting.
+    const [rows] = await getDbPool().query<RowDataPacket[]>("SELECT category, entity_type, entity_id FROM notifications WHERE user_id = ? AND event_type = 'MEETING_INVITED'", [member]);
+    expect(rows[0]).toMatchObject({ category: "MEETING", entity_type: "MEETING", entity_id: meetingId });
   });
 
   it("refuses a meeting without an Owner, or ending before it starts", async () => {

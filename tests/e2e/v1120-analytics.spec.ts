@@ -48,8 +48,10 @@ test("IT opens every dashboard from the one Analytics page; the period carries o
   await seeOnSomePage(page, "Tasks created");
   await seeOnSomePage(page, /Overdue acknowledgements: not available/);
   await expect(page.getByTestId("center-refreshed")).toContainText("As of");
+  // v1.51.1: the filters are in the toolbar's Filter dropdown.
+  await page.getByTestId("filter-menu").locator("summary").click();
   await page.getByLabel("Period").selectOption("last_quarter");
-  await page.getByRole("button", { name: "Apply" }).click();
+  await page.getByTestId("filter-menu").getByRole("button", { name: "Apply" }).click();
   await expect(page).toHaveURL(/period=last_quarter/);
   await seeOnSomePage(page, /Previous quarter/);
   for (const [tab, check] of BOARD_CHECKS) {
@@ -77,9 +79,10 @@ test("employees: search, sort and a CSV with the same scope and period", async (
   await as(context, "E2E_ADMIN");
   await page.goto("/users/analytics?board=employees&scope=ORGANISATION&period=90d");
   await expect(page.getByTestId("employee-table")).toBeVisible();
+  await page.getByTestId("filter-menu").locator("summary").click();
   await page.getByLabel("Person").fill("E2E");
   await page.getByLabel("Sort by").selectOption("tasks_open");
-  await page.getByRole("button", { name: "Apply" }).click();
+  await page.getByTestId("filter-menu").getByRole("button", { name: "Apply" }).click();
   await expect(page).toHaveURL(/q=E2E/);
   await expect(page).toHaveURL(/sort=tasks_open/);
   const href = await page.getByRole("link", { name: "Download as CSV" }).getAttribute("href");

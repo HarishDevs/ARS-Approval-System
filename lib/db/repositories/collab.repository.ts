@@ -170,7 +170,7 @@ export async function countUnreadByCategory(userId: number, db: Queryable = getD
     `SELECT ${CATEGORY_SQL} AS category, COUNT(*) AS total FROM notifications n WHERE n.user_id = ? AND n.read_at IS NULL AND n.archived_at IS NULL GROUP BY 1`,
     [userId],
   );
-  const counts: Record<NotificationCategory, number> = { APPROVAL: 0, TASK: 0, INFORMATION: 0, SYSTEM: 0 };
+  const counts: Record<NotificationCategory, number> = { APPROVAL: 0, TASK: 0, MEETING: 0, INFORMATION: 0, SYSTEM: 0 };
   for (const row of rows) counts[row.category] = Number(row.total);
   return counts;
 }

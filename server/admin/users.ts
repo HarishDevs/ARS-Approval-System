@@ -18,7 +18,7 @@ import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { notify } from "@/server/notifications/notify";
 import { signInMethodChangedMessage, whatsappChangedMessage } from "@/server/notifications/security-messages";
 import { checkCanEdit, checkContactChange, checkDeactivate, checkManager, checkModuleChange, checkRoleChange, type Actor, type TargetUser } from "@/server/admin/user-rules";
-import { sameModules } from "@/server/modules/modules";
+import { applyModuleChange, sameModules, type ModuleChange, type ModuleCode } from "@/server/modules/modules";
 import { diffFields, type ParsedUserInput } from "@/server/admin/user-input";
 import { logError } from "@/lib/logging/logger";
 import { countPendingTasks } from "@/server/approvals/service";
@@ -261,4 +261,41 @@ export async function forceSignOut(id: number, actor: AdminActor): Promise<Servi
     return ended;
   });
   return { ok: true, value: count };
+}
+
+// v1.51.1 (owner): module access for several people at once (Users & roles,
+// ticked rows). Each person goes through the same rule as the user page
+// (checkModuleChange: not yourself, another IT Admin only by the Super Admin)
+// and gets an audit entry; people whose modules don't change are skipped.
+export async function bulkChangeModules(ids: readonly number[], change: ModuleChange, chosen: readonly ModuleCode[], actor: AdminActor): Promise<{ changed: number; unchanged: number; refused: Map<string, number> }> {
+  let changed = 0;
+  let unchanged = 0;
+  const refused = new Map<string, number>();
+  const refuse = (message: string) => refused.set(message, (refused.get(message) ?? 0) + 1);
+  for (const id of ids) {
+    const existing = await getUserForAdmin(id);
+    if (!existing) {
+      refuse("User not found.");
+      continue;
+    }
+    const check = checkModuleChange(actor, toTarget(existing));
+    if (!check.ok) {
+      refuse(check.message);
+      continue;
+    }
+    const after = applyModuleChange(existing.modules, change, chosen);
+    if (sameModules(existing.modules, after)) {
+      unchanged += 1;
+      continue;
+    }
+    await withTransaction(async (connection) => {
+      await setUserModules(id, after, actor.id, connection);
+      await recordAudit(
+        { actorUserId: actor.id, action: "USER_UPDATED", entityType: "USER", entityId: id, sessionId: actor.sessionId, ipAddress: actor.ipAddress, metadata: { source: "BULK_MODULES", change, modules: { before: existing.modules, after } } },
+        connection,
+      );
+    });
+    changed += 1;
+  }
+  return { changed, unchanged, refused };
 }

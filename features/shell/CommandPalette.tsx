@@ -64,7 +64,13 @@ function readRecents(): Option[] {
 
 const indiaDay = (offset = 0) => new Date(Date.now() + 330 * 60_000 + offset * 86_400_000).toISOString().slice(0, 10);
 
-export function CommandPalette({ pages }: { pages: PaletteLink[] }) {
+// v1.51.1 (owner: searches start from this bar, and everything follows access):
+// the saved searches offered are worked out on the server for the person.
+export type PaletteSaved = { label: string; href: string; kind: "task" | "request" | "meeting" | "mine" };
+const SAVED_ICON: Record<PaletteSaved["kind"], typeof Search> = { task: CheckCircle2, request: FileText, meeting: History, mine: Search };
+
+export function CommandPalette({ pages, saved }: { pages: PaletteLink[]; saved?: PaletteSaved[] }) {
+  const savedList = saved ? saved.map((item) => ({ label: item.label, href: item.href, icon: SAVED_ICON[item.kind] })) : SAVED;
   const [open, setOpen] = useState(false);
   const [help, setHelp] = useState(false);
   const [query, setQuery] = useState("");
@@ -582,11 +588,11 @@ export function CommandPalette({ pages }: { pages: PaletteLink[] }) {
                     );
                   })}
                 </ul>
-                {!query.trim() && chip === "all" && (
+                {!query.trim() && chip === "all" && savedList.length > 0 && (
                   <div className="border-t border-line px-4 py-3" data-testid="saved-searches">
                     <p className="mb-2 text-caption font-semibold text-ink-faint">Saved searches</p>
                     <div className="flex flex-wrap gap-1.5">
-                      {SAVED.map((item) => (
+                      {savedList.map((item) => (
                         <button key={item.href} type="button" onClick={() => go(item.href)} className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1 text-label hover:bg-surface-muted">
                           <item.icon aria-hidden="true" className="h-3.5 w-3.5 text-ink-muted" /> {item.label}
                         </button>

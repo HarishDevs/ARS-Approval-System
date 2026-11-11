@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ListToolbar } from "@/features/ui/ListToolbar";
 import { PhoneFold } from "@/features/analytics/PhoneFold";
 import { isMobileLayout } from "@/server/ui/layout-mode";
 import { BarChart3 } from "lucide-react";
@@ -113,7 +114,6 @@ export async function AnalyticsScreen({ searchParams, base }: { searchParams: Re
   const onTimeBefore = share(before.onTimeDecisions, before.timedDecisions);
   const departmentId = (name: string) => choices.departments.find((department) => department.name === name)?.id ?? null;
   const historyLabels = history.points.map((point) => bucketLabel(point.key, history.grain));
-  const narrowed = ["status", "approver", "step", "sla", "aging"].some((key) => carried[key]);
 
   return (
     <>
@@ -125,15 +125,21 @@ export async function AnalyticsScreen({ searchParams, base }: { searchParams: Re
       <PhoneFold mobile={await isMobileLayout()} summary={`${scope.label} · ${period.label}`}>
       <BoardPicker base={base} board="approvals" boards={boards} query={{ ...query, period: period.key }} scopes={scopes} scope={scope} />
 
-      <form method="get" className="card mb-6 space-y-3 px-4 py-3" aria-label="Filters">
-        <input type="hidden" name="scope" value={scope.kind} />
-        <input type="hidden" name="board" value="approvals" />
-        <div className="flex flex-wrap items-end gap-3">
+      {/* v1.51.1 (owner): toolbar filters instead of a filter form. */}
+      <ListToolbar
+        id="analytics-filters"
+        path={base}
+        label="Filter analytics"
+        keep={{ scope: scope.kind, board: "approvals" }}
+        filterCount={[period.key !== "30d", compare !== "PREVIOUS", carried.type, carried.department, carried.status, carried.approver, carried.step, carried.sla, carried.aging].filter(Boolean).length}
+        clearHref={`${base}?board=approvals&scope=${scope.kind}`}
+        filters={
+          <>
           <div>
             <label htmlFor="period" className="field-label">
               Period
             </label>
-            <select id="period" name="period" defaultValue={period.key} className="field-input h-9 w-48">
+            <select id="period" name="period" defaultValue={period.key} className="field-input h-10">
               {(Object.keys(PERIOD_LABEL) as PeriodKey[]).map((key) => (
                 <option key={key} value={key}>
                   {PERIOD_LABEL[key]}
@@ -145,19 +151,19 @@ export async function AnalyticsScreen({ searchParams, base }: { searchParams: Re
             <label htmlFor="from" className="field-label">
               From <span className="font-normal text-ink-faint">(custom)</span>
             </label>
-            <input id="from" name="from" type="date" defaultValue={period.from} className="field-input h-9" />
+            <input id="from" name="from" type="date" defaultValue={period.from} className="field-input h-10" />
           </div>
           <div>
             <label htmlFor="to" className="field-label">
               To <span className="font-normal text-ink-faint">(custom)</span>
             </label>
-            <input id="to" name="to" type="date" defaultValue={period.to} className="field-input h-9" />
+            <input id="to" name="to" type="date" defaultValue={period.to} className="field-input h-10" />
           </div>
           <div>
             <label htmlFor="compare" className="field-label">
               Compare with
             </label>
-            <select id="compare" name="compare" defaultValue={compare} className="field-input h-9 w-52">
+            <select id="compare" name="compare" defaultValue={compare} className="field-input h-10">
               <option value="PREVIOUS">{period.key === "this_month" || period.key === "last_month" ? "Previous month" : "Previous period"}</option>
               <option value="LAST_YEAR">Same period last year</option>
             </select>
@@ -166,7 +172,7 @@ export async function AnalyticsScreen({ searchParams, base }: { searchParams: Re
             <label htmlFor="type" className="field-label">
               Approval type
             </label>
-            <select id="type" name="type" defaultValue={carried.type ?? ""} className="field-input h-9 w-56">
+            <select id="type" name="type" defaultValue={carried.type ?? ""} className="field-input h-10">
               <option value="">All types</option>
               <option value="-1">Custom approvals</option>
               {choices.types.map((type) => (
@@ -181,7 +187,7 @@ export async function AnalyticsScreen({ searchParams, base }: { searchParams: Re
               <label htmlFor="department" className="field-label">
                 Raiser&apos;s department
               </label>
-              <select id="department" name="department" defaultValue={carried.department ?? ""} className="field-input h-9 w-56">
+              <select id="department" name="department" defaultValue={carried.department ?? ""} className="field-input h-10">
                 <option value="">All departments</option>
                 {choices.departments.map((department) => (
                   <option key={department.id} value={department.id}>
@@ -191,15 +197,11 @@ export async function AnalyticsScreen({ searchParams, base }: { searchParams: Re
               </select>
             </div>
           )}
-        </div>
-        <details open={narrowed} className="text-label">
-          <summary className="cursor-pointer font-semibold text-primary-600">More filters{narrowed ? " (in use)" : ""}</summary>
-          <div className="mt-2 flex flex-wrap items-end gap-3">
             <div>
               <label htmlFor="status" className="field-label">
                 Status now
               </label>
-              <select id="status" name="status" defaultValue={carried.status ?? ""} className="field-input h-9 w-44">
+              <select id="status" name="status" defaultValue={carried.status ?? ""} className="field-input h-10">
                 <option value="">Any</option>
                 {Object.entries(STATUS_FILTER_LABEL).map(([value, label]) => (
                   <option key={value} value={value}>
@@ -212,7 +214,7 @@ export async function AnalyticsScreen({ searchParams, base }: { searchParams: Re
               <label htmlFor="approver" className="field-label">
                 Approver
               </label>
-              <select id="approver" name="approver" defaultValue={carried.approver ?? ""} className="field-input h-9 w-52">
+              <select id="approver" name="approver" defaultValue={carried.approver ?? ""} className="field-input h-10">
                 <option value="">Anyone</option>
                 {filterChoices.approvers.map((person) => (
                   <option key={person.id} value={person.id}>
@@ -225,7 +227,7 @@ export async function AnalyticsScreen({ searchParams, base }: { searchParams: Re
               <label htmlFor="step" className="field-label">
                 Step
               </label>
-              <select id="step" name="step" defaultValue={carried.step ?? ""} className="field-input h-9 w-52">
+              <select id="step" name="step" defaultValue={carried.step ?? ""} className="field-input h-10">
                 <option value="">Any</option>
                 {filterChoices.steps.map((step) => (
                   <option key={step} value={step}>
@@ -238,7 +240,7 @@ export async function AnalyticsScreen({ searchParams, base }: { searchParams: Re
               <label htmlFor="sla" className="field-label">
                 Response time
               </label>
-              <select id="sla" name="sla" defaultValue={carried.sla ?? ""} className="field-input h-9 w-64">
+              <select id="sla" name="sla" defaultValue={carried.sla ?? ""} className="field-input h-10">
                 <option value="">Any</option>
                 {Object.entries(SLA_FILTER_LABEL).map(([value, label]) => (
                   <option key={value} value={value}>
@@ -251,7 +253,7 @@ export async function AnalyticsScreen({ searchParams, base }: { searchParams: Re
               <label htmlFor="aging" className="field-label">
                 Open for
               </label>
-              <select id="aging" name="aging" defaultValue={carried.aging ?? ""} className="field-input h-9 w-40">
+              <select id="aging" name="aging" defaultValue={carried.aging ?? ""} className="field-input h-10">
                 <option value="">Any age</option>
                 {AGING_BUCKETS.map((bucket) => (
                   <option key={bucket.key} value={bucket.key}>
@@ -260,17 +262,9 @@ export async function AnalyticsScreen({ searchParams, base }: { searchParams: Re
                 ))}
               </select>
             </div>
-          </div>
-        </details>
-        <div className="flex flex-wrap items-center gap-3">
-          <button type="submit" className="btn-primary btn-compact">
-            Apply
-          </button>
-          <Link href={`${base}?board=approvals&scope=${scope.kind}`} className="link text-label">
-            Reset
-          </Link>
-        </div>
-      </form>
+          </>
+        }
+      />
       </PhoneFold>
 
       {/* D-258: the board in pages that each fit the window. */}

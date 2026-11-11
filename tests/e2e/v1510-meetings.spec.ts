@@ -107,8 +107,13 @@ test("the Owner approves the MOM; the action item becomes a task linked to the m
 test("someone not on the meeting gets not found; the dashboard and phone view render", async ({ page, context }) => {
   await as(context, "E2E_ADMIN");
   await page.setViewportSize({ width: 1440, height: 900 });
+  // v1.51.1 (owner): the dashboard is Home → Meetings; the old address opens it.
   await page.goto("/users/meetings/dashboard");
-  await expect(page.getByRole("heading", { name: "Meeting dashboard" })).toBeVisible();
+  await expect(page).toHaveURL(/\/users\?home=meetings/);
+  await expect(page.getByRole("heading", { name: "Meeting Overview" })).toBeVisible();
+  await expect(page.getByTestId("home-focus").getByRole("link", { name: "Meetings" })).toHaveAttribute("aria-current", "page");
+  for (const part of ["meeting-tiles", "meeting-attention", "meeting-insights", "meeting-figures", "meeting-kpis"]) await expect(page.getByTestId(part)).toBeVisible();
+  await expect(page.getByTestId("sidebar").getByRole("link", { name: "Meeting dashboard" })).toHaveCount(0);
   await page.screenshot({ path: "test-results/v1510-dashboard.png", fullPage: true });
   await page.goto("/admin/meetings");
   await expect(page.getByRole("heading", { name: "Meeting settings" })).toBeVisible();
@@ -123,4 +128,39 @@ test("someone not on the meeting gets not found; the dashboard and phone view re
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(1);
   await page.screenshot({ path: "test-results/v1510-phone.png", fullPage: true });
+});
+
+test("Users & roles: tick several people and give them a module at once", async ({ page, context }) => {
+  const connection = await db();
+  const ids: number[] = [];
+  try {
+    const tag = Date.now().toString(36);
+    for (const n of [1, 2]) {
+      const [row] = await connection.query<RowDataPacket[] & { insertId: number }>(
+        "INSERT INTO users (login_id, name, email, sign_in_method, active, module_access) VALUES (?, ?, ?, 'GOOGLE', TRUE, 'APPROVAL')",
+        [`BULKMOD${n}${tag}`, `Bulk Module ${n} ${tag}`, `bulkmod${n}${tag}@example.test`],
+      );
+      ids.push(Number((row as unknown as { insertId: number }).insertId));
+    }
+    await connection.query("INSERT INTO user_roles (user_id, role_id) SELECT u.id, r.id FROM users u JOIN roles r ON r.code = 'USER' WHERE u.id IN (?)", [ids]);
+    await as(context, "E2E_ADMIN");
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(`/admin/users?q=Bulk+Module&status=all`);
+    for (const id of ids) await page.locator(`input[name="ids"][value="${id}"]`).check();
+    await page.getByTestId("bulk-modules").click();
+    await page.getByRole("group", { name: "Modules for the selected users" }).getByLabel("Meeting").check();
+    await page.getByRole("group", { name: "Modules for the selected users" }).getByLabel("Task").check();
+    await page.screenshot({ path: "test-results/v1511-bulk-modules.png", fullPage: true });
+    await page.getByRole("button", { name: "Apply to 2" }).click();
+    await expect(page.getByText(/Modules changed for 2 of 2 users/)).toBeVisible();
+    const [rows] = await connection.query<RowDataPacket[]>("SELECT module_access FROM users WHERE id IN (?) ORDER BY id", [ids]);
+    expect(rows.map((row) => row.module_access)).toEqual(["APPROVAL,TASK,MEETING", "APPROVAL,TASK,MEETING"]);
+  } finally {
+    if (ids.length) {
+      await connection.query("DELETE FROM user_roles WHERE user_id IN (?)", [ids]);
+      await connection.query("DELETE FROM audit_logs WHERE entity_type = 'USER' AND entity_id IN (?)", [ids.map(String)]).catch(() => undefined);
+      await connection.query("UPDATE users SET active = FALSE WHERE id IN (?)", [ids]);
+    }
+    await connection.end();
+  }
 });

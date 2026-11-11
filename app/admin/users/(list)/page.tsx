@@ -9,10 +9,11 @@ import { listUsersForAdmin } from "@/lib/db/repositories/admin-users.repository"
 import { listDepartments } from "@/lib/db/repositories/organisation.repository";
 import { checkCanEdit } from "@/server/admin/user-rules";
 import { UserRowMenu } from "@/features/admin/UserRowMenu";
+import { ListToolbar } from "@/features/ui/ListToolbar";
 import { USERS_BULK_FORM, UsersBulkActions } from "@/features/admin/UsersBulkActions";
 import { RowSelectBox } from "@/features/ui/BulkSelect";
 import { ROLE_LABEL } from "@/features/ui/labels";
-import { MODULE_LABEL, MODULES, type ModuleCode } from "@/server/modules/modules";
+import { MODULE_HELP, MODULE_LABEL, MODULES, type ModuleCode } from "@/server/modules/modules";
 import { SIGN_IN_LABEL } from "@/types/auth";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
@@ -48,58 +49,61 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
         </Link>
       </PageHeader>
 
-      <form method="get" className="mb-4 flex flex-wrap items-end gap-3">
-        <div className="w-full max-w-sm">
-          <label htmlFor="q" className="field-label">
-            Search
-          </label>
-          <input id="q" name="q" defaultValue={search} placeholder="Name, email or User ID" className="field-input" />
-        </div>
-        <div>
-          <label htmlFor="status" className="field-label">
-            Status
-          </label>
-          <select id="status" name="status" defaultValue={status} className="field-input w-40">
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-            <option value="all">All</option>
-          </select>
-        </div>
-        <div>
-          <label htmlFor="module" className="field-label">
-            Module
-          </label>
-          <select id="module" name="module" defaultValue={moduleFilter ?? ""} className="field-input w-40">
-            <option value="">Any</option>
-            {MODULES.map((module) => (
-              <option key={module} value={module}>
-                {MODULE_LABEL[module]}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label htmlFor="dept" className="field-label">
-            Department
-          </label>
-          <select id="dept" name="dept" defaultValue={departmentFilter === undefined ? "" : deptParam} className="field-input w-52">
-            <option value="">Any</option>
-            {departments.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.name}
-                {item.active ? "" : " (inactive)"}
-              </option>
-            ))}
-            <option value="none">No department</option>
-          </select>
-        </div>
-        <button type="submit" className="btn-secondary btn-compact h-11">
-          Apply
-        </button>
-      </form>
+      {/* v1.51.1 (owner): the toolbar filters only (Filter, Search icon), like the task lists. */}
+      <ListToolbar
+        id="users-filters"
+        path="/admin/users"
+        label="Filter users"
+        keep={{}}
+        search={{ name: "q", value: search, placeholder: "Name, email or User ID" }}
+        filterCount={[status !== "active", moduleFilter, departmentFilter !== undefined].filter(Boolean).length}
+        clearHref={search || status !== "active" || moduleFilter || departmentFilter !== undefined ? "/admin/users" : null}
+        filters={
+          <>
+            <div>
+              <label htmlFor="status" className="field-label">
+                Status
+              </label>
+              <select id="status" name="status" defaultValue={status} className="field-input h-10">
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="all">All</option>
+              </select>
+            </div>
+            <div>
+              <label htmlFor="module" className="field-label">
+                Module
+              </label>
+              <select id="module" name="module" defaultValue={moduleFilter ?? ""} className="field-input h-10">
+                <option value="">Any</option>
+                {MODULES.map((module) => (
+                  <option key={module} value={module}>
+                    {MODULE_LABEL[module]}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="dept" className="field-label">
+                Department
+              </label>
+              <select id="dept" name="dept" defaultValue={departmentFilter === undefined ? "" : deptParam} className="field-input h-10">
+                <option value="">Any</option>
+                {departments.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                    {item.active ? "" : " (inactive)"}
+                  </option>
+                ))}
+                <option value="none">No department</option>
+              </select>
+            </div>
+          </>
+        }
+      />
 
       {/* v1.49.6 (owner): tick users, then one action for all of them. */}
-      {items.length > 0 && <UsersBulkActions />}
+      {items.length > 0 && <UsersBulkActions modules={MODULES.map((code) => ({ code, label: MODULE_LABEL[code], help: MODULE_HELP[code] }))} />}
       <DataTable
         caption="Users"
         storageKey="admin-users"

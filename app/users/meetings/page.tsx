@@ -4,6 +4,7 @@ import { CalendarClock } from "lucide-react";
 import { requireArea } from "@/server/authorization/guards";
 import { EmptyState, PageHeader } from "@/features/shell/PageHeader";
 import { NoResults, Pagination } from "@/features/ui/Display";
+import { ListToolbar } from "@/features/ui/ListToolbar";
 import { MeetingSections, MeetingStatusBadge, PointsBadge, whenText } from "@/features/meetings/MeetingParts";
 import { listMeetings, listMeetingTypes, type MeetingListFilter } from "@/lib/db/repositories/meetings.repository";
 import { scopeFor } from "@/server/meetings/service";
@@ -71,38 +72,46 @@ export default async function MeetingsPage({ searchParams }: { searchParams: Pro
           </Link>
         ))}
       </nav>
-      <form action="/users/meetings" method="get" className="mb-4 flex flex-wrap items-end gap-2" role="search" aria-label="Find meetings">
-        {tab !== "upcoming" && <input type="hidden" name="tab" value={tab} />}
-        <label className="min-w-[200px] flex-1 text-label">
-          <span className="sr-only">Search</span>
-          <input name="q" defaultValue={q} placeholder="Title or meeting number" className="field-input" />
-        </label>
-        <label className="text-label">
-          <span className="sr-only">Type</span>
-          <select name="type" defaultValue={typeId ?? ""} className="field-input">
-            <option value="">Any type</option>
-            {types.map((type) => (
-              <option key={type.id} value={type.id}>
-                {type.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="text-label">
-          <span className="sr-only">Status</span>
-          <select name="status" defaultValue={status ?? ""} className="field-input">
-            <option value="">Any status</option>
-            {MEETING_STATUSES.map((value) => (
-              <option key={value} value={value}>
-                {STATUS_LABEL[value]}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button type="submit" className="btn-secondary w-auto">
-          Find
-        </button>
-      </form>
+      {/* v1.51.1 (owner): toolbar filters only (Filter, Search icon). */}
+      <ListToolbar
+        id="meeting-filters"
+        path="/users/meetings"
+        label="Filter meetings"
+        keep={{ tab: tab !== "upcoming" ? tab : undefined }}
+        search={{ name: "q", value: q, placeholder: "Title or meeting number" }}
+        filterCount={[typeId, status].filter(Boolean).length}
+        clearHref={filtered ? href({ q: "", type: null, status: null, page: 1 }) : null}
+        filters={
+          <>
+            <div>
+              <label htmlFor="mf-type" className="field-label">
+                Type
+              </label>
+              <select id="mf-type" name="type" defaultValue={typeId ?? ""} className="field-input h-10">
+                <option value="">Any type</option>
+                {types.map((type) => (
+                  <option key={type.id} value={type.id}>
+                    {type.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="mf-status" className="field-label">
+                Status
+              </label>
+              <select id="mf-status" name="status" defaultValue={status ?? ""} className="field-input h-10">
+                <option value="">Any status</option>
+                {MEETING_STATUSES.map((value) => (
+                  <option key={value} value={value}>
+                    {STATUS_LABEL[value]}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </>
+        }
+      />
       {list.rows.length === 0 ? (
         filtered ? (
           <NoResults query={q || null} resetHref={href({ q: "", type: null, status: null, page: 1 })} what="meetings" />

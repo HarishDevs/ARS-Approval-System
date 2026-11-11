@@ -24,6 +24,7 @@ import { isHiddenHref, navAccess } from "@/server/authorization/page-access";
 import { workViewer } from "@/server/work/task-access";
 import { TaskHome } from "@/features/work/TaskHome";
 import { MyWorkOverview } from "@/features/home/MyWorkOverview";
+import { MeetingHome } from "@/features/meetings/MeetingHome";
 import { DeleteDraftButton, PeriodPicker, QuietRefresh } from "@/features/home/HomeClient";
 import { approvalInsights, isApproverForHome, myRequestCounts } from "@/lib/db/repositories/overview.repository";
 import { indiaDayOf } from "@/features/work/format";
@@ -39,7 +40,7 @@ export const metadata: Metadata = { title: "Home" };
 // D-264 (owner): Home shows one area at a time, Approvals or Task Management,
 // chosen at the top (?home=). D-265 (owner): approvers start on Approvals,
 // everyone else on Task Management; either can switch.
-type HomeFocus = "approvals" | "tasks";
+type HomeFocus = "approvals" | "tasks" | "meetings";
 
 const RECENT_PAGE_SIZE = 8;
 
@@ -84,12 +85,21 @@ export default async function UsersHome({ searchParams }: { searchParams: Promis
   }
   // A task link (a task, or a tab of the task lists) opens Task Management.
   const asked = query.home === "tasks" || query.home === "approvals" ? query.home : query.task || query.tab || query.given ? "tasks" : null;
+  // v1.51.1 (owner): Meetings is the third choice, for people with the Meeting module and its pages.
+  const meetingsOn = hasModule(user, "MEETING") && !isHiddenHref("/users/meetings", (await navAccess(user)).hidden);
+  const choices: HomeFocus[] = ["approvals", ...(tasksOn ? (["tasks"] as const) : []), ...(meetingsOn ? (["meetings"] as const) : [])];
   // The tour points at the approval tiles, so it always opens on Approvals.
-  const focus: HomeFocus = !tasksOn || query.tour ? "approvals" : (asked ?? ((await isApproverForHome(user.id).catch(() => true)) ? "approvals" : "tasks"));
+  const focus: HomeFocus =
+    query.tour ? "approvals" : query.home === "meetings" && meetingsOn ? "meetings" : !tasksOn ? "approvals" : (asked ?? ((await isApproverForHome(user.id).catch(() => true)) ? "approvals" : "tasks"));
   const overview = query.view === "overview";
   const name = displayName(user.name);
   const words = name.split(/\s+/);
   const greetingName = words.length <= 2 ? name : words[0];
+
+  if (focus === "meetings") {
+    const base: Record<string, string> = { home: "meetings", ...(overview ? { view: "overview" } : {}) };
+    return <MeetingHome user={user} greetingName={greetingName ?? name} query={query} base={base} figures={!isHiddenHref("/users/meetings/dashboard", (await navAccess(user)).hidden)} switcher={<HomeFocusSwitch focus={focus} overview={overview} choices={choices} />} />;
+  }
 
   if (focus === "tasks") {
     const viewer = await workViewer(user);
@@ -98,7 +108,7 @@ export default async function UsersHome({ searchParams }: { searchParams: Promis
         user={user}
         viewer={viewer}
         query={query}
-        switcher={<HomeFocusSwitch focus={focus} overview={overview} />}
+        switcher={<HomeFocusSwitch focus={focus} overview={overview} choices={choices} />}
         others={
           <Suspense
             fallback={
@@ -183,7 +193,7 @@ export default async function UsersHome({ searchParams }: { searchParams: Promis
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          {tasksOn && <HomeFocusSwitch focus={focus} overview={overview} />}
+          {choices.length > 1 && <HomeFocusSwitch focus={focus} overview={overview} choices={choices} />}
           {/* D-206 (owner): New request opens the page where people choose their own approvers. */}
           <Link href="/users/custom" className="btn-primary btn-compact inline-flex items-center gap-1.5">
             <FilePlus2 aria-hidden="true" className="h-4 w-4" /> New request
@@ -400,11 +410,9 @@ function Insight({ icon, tone, label, value }: { icon: React.ReactNode; tone: st
 
 // D-264: the Approvals / Task Management choice at the top of Home.
 // overview: keeps ?view=overview (the Classic view's Overview, not its Gateway).
-function HomeFocusSwitch({ focus, overview }: { focus: HomeFocus; overview: boolean }) {
-  const options: [HomeFocus, string][] = [
-    ["approvals", "Approvals"],
-    ["tasks", "Task Management"],
-  ];
+function HomeFocusSwitch({ focus, overview, choices }: { focus: HomeFocus; overview: boolean; choices: readonly HomeFocus[] }) {
+  const LABEL: Record<HomeFocus, string> = { approvals: "Approvals", tasks: "Task Management", meetings: "Meetings" };
+  const options: [HomeFocus, string][] = choices.map((key) => [key, LABEL[key]]);
   return (
     <nav aria-label="Show on Home" className="inline-flex rounded-lg border border-line bg-surface-muted p-0.5" data-testid="home-focus">
       {options.map(([key, label]) => (
@@ -425,6 +433,7 @@ function HomeFocusSwitch({ focus, overview }: { focus: HomeFocus; overview: bool
 function ModulesHome({ name, user, tasks }: { name: string; user: Parameters<typeof hasModule>[0]; tasks: React.ReactNode }) {
   const links = [
     hasModule(user, "TASK") && { href: "/users/tasks", label: "My tasks", body: "Tasks given to you, and tasks you give others." },
+    hasModule(user, "MEETING") && { href: "/users/meetings", label: "Meetings", body: "Your meetings, approvals and action items." },
     hasModule(user, "INFORMATION") && { href: "/users/information", label: "Information inbox", body: "Notices and circulars for you." },
     hasModule(user, "AI") && { href: "/users/ai/assistant", label: "AI Assistant", body: "Ask your business analyst." },
     { href: "/users/calendar", label: "Calendar", body: "Your dates and personal entries." },

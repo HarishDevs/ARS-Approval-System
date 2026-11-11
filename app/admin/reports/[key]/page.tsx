@@ -7,6 +7,7 @@ import { requireArea } from "@/server/authorization/guards";
 import { canUseReports } from "@/server/settings/features";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { Breadcrumbs } from "@/features/ui/Display";
+import { ListToolbar } from "@/features/ui/ListToolbar";
 import { BackgroundExportForm, SavedViews, SaveViewForm, ScheduleForm } from "@/features/analytics/ReportForms";
 import { listActiveUserOptions } from "@/lib/db/repositories/admin-users.repository";
 import { cleanQuery, runReport } from "@/server/reports/run";
@@ -51,6 +52,11 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
   const people = scheduling ? (await listActiveUserOptions()).filter((person) => person.id !== user.id).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` })) : [];
   const effective: Record<string, string> = { ...(query as Record<string, string>), scope: scope.kind, period: filter.period.key };
   if (filter.period.key === "custom") Object.assign(effective, { from: filter.period.from, to: filter.period.to });
+  // v1.51.1: filters in use (whose, other than the default; a period other than the last 30 days; a type; a department).
+  const defaultScope = (scopes.find((item) => item.kind === "ORGANISATION") ?? scopes[scopes.length - 1])!.kind;
+  const filterCount = [scope.kind !== defaultScope, report.usesPeriod && filter.period.key !== "30d", filter.workflowId !== null, filter.departmentId !== null].filter(Boolean).length;
+  // Clear keeps the default scope in the address, so B07's default view does not re-apply its filters.
+  const clearHref = `/admin/reports/${key}?${new URLSearchParams({ scope: defaultScope }).toString()}`;
   const download = (format: string) => `/api/reports/${key}?${new URLSearchParams({ ...effective, format }).toString()}`;
 
   return (
@@ -71,82 +77,90 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
         )}
       </PageHeader>
 
-      <form method="get" className="card mb-4 flex flex-wrap items-end gap-3 px-4 py-3" aria-label="Filters">
-        {scopes.length > 1 && (
-          <div>
-            <label htmlFor="scope" className="field-label">
-              Whose
-            </label>
-            <select id="scope" name="scope" defaultValue={scope.kind} className="field-input h-9 w-48">
-              {scopes.map((item) => (
-                <option key={item.kind} value={item.kind}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-        {report.usesPeriod && (
+      {/* v1.51.1 (owner): toolbar filters instead of a filter form. */}
+      <ListToolbar
+        id="report-filters"
+        path={`/admin/reports/${key}`}
+        label="Filters"
+        keep={{}}
+        filterCount={filterCount}
+        clearHref={filterCount ? clearHref : null}
+        filters={
           <>
+            {scopes.length > 1 && (
+              <div>
+                <label htmlFor="scope" className="field-label">
+                  Whose
+                </label>
+                <select id="scope" name="scope" defaultValue={scope.kind} className="field-input h-10">
+                  {scopes.map((item) => (
+                    <option key={item.kind} value={item.kind}>
+                      {item.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            {report.usesPeriod && (
+              <>
+                <div>
+                  <label htmlFor="period" className="field-label">
+                    Period
+                  </label>
+                  <select id="period" name="period" defaultValue={filter.period.key} className="field-input h-10">
+                    {(Object.keys(PERIOD_LABEL) as PeriodKey[]).map((item) => (
+                      <option key={item} value={item}>
+                        {PERIOD_LABEL[item]}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="from" className="field-label">
+                    From <span className="font-normal text-ink-faint">(custom)</span>
+                  </label>
+                  <input id="from" name="from" type="date" defaultValue={filter.period.from} className="field-input h-10" />
+                </div>
+                <div>
+                  <label htmlFor="to" className="field-label">
+                    To <span className="font-normal text-ink-faint">(custom)</span>
+                  </label>
+                  <input id="to" name="to" type="date" defaultValue={filter.period.to} className="field-input h-10" />
+                </div>
+              </>
+            )}
             <div>
-              <label htmlFor="period" className="field-label">
-                Period
+              <label htmlFor="type" className="field-label">
+                Approval type
               </label>
-              <select id="period" name="period" defaultValue={filter.period.key} className="field-input h-9 w-48">
-                {(Object.keys(PERIOD_LABEL) as PeriodKey[]).map((item) => (
-                  <option key={item} value={item}>
-                    {PERIOD_LABEL[item]}
+              <select id="type" name="type" defaultValue={query.type ?? ""} className="field-input h-10">
+                <option value="">All types</option>
+                <option value="-1">Custom approvals</option>
+                {choices.types.map((type) => (
+                  <option key={type.id} value={type.id}>
+                    {type.name}
                   </option>
                 ))}
               </select>
             </div>
-            <div>
-              <label htmlFor="from" className="field-label">
-                From <span className="font-normal text-ink-faint">(custom)</span>
-              </label>
-              <input id="from" name="from" type="date" defaultValue={filter.period.from} className="field-input h-9" />
-            </div>
-            <div>
-              <label htmlFor="to" className="field-label">
-                To <span className="font-normal text-ink-faint">(custom)</span>
-              </label>
-              <input id="to" name="to" type="date" defaultValue={filter.period.to} className="field-input h-9" />
-            </div>
+            {scope.kind === "ORGANISATION" && (
+              <div>
+                <label htmlFor="department" className="field-label">
+                  Raiser&apos;s department
+                </label>
+                <select id="department" name="department" defaultValue={query.department ?? ""} className="field-input h-10">
+                  <option value="">All departments</option>
+                  {choices.departments.map((department) => (
+                    <option key={department.id} value={department.id}>
+                      {department.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </>
-        )}
-        <div>
-          <label htmlFor="type" className="field-label">
-            Approval type
-          </label>
-          <select id="type" name="type" defaultValue={query.type ?? ""} className="field-input h-9 w-52">
-            <option value="">All types</option>
-            <option value="-1">Custom approvals</option>
-            {choices.types.map((type) => (
-              <option key={type.id} value={type.id}>
-                {type.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        {scope.kind === "ORGANISATION" && (
-          <div>
-            <label htmlFor="department" className="field-label">
-              Raiser&apos;s department
-            </label>
-            <select id="department" name="department" defaultValue={query.department ?? ""} className="field-input h-9 w-52">
-              <option value="">All departments</option>
-              {choices.departments.map((department) => (
-                <option key={department.id} value={department.id}>
-                  {department.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-        <button type="submit" className="btn-primary btn-compact">
-          Apply
-        </button>
-      </form>
+        }
+      />
 
       <div className="mb-4 flex flex-wrap items-start gap-6">
         <SavedViews views={views.map((view) => ({ id: view.id, name: view.name, href: `/admin/reports/${key}?${new URLSearchParams(view.query).toString()}`, mine: view.mine, shared: view.shared, isDefault: view.isDefault, ownerName: view.ownerName }))} />

@@ -15,8 +15,10 @@ test("IT opens a report, downloads Excel, CSV and PDF, saves the view, schedules
   await page.getByRole("link", { name: /Request register/ }).click();
   await expect(page.getByRole("heading", { name: "Request register" })).toBeVisible();
   await expect(page.getByRole("table", { name: "Request register" })).toBeVisible();
-  await page.getByLabel("Period").selectOption("90d");
-  await page.getByRole("button", { name: "Apply" }).click();
+  // v1.51.1: the filters are in the toolbar's Filter dropdown.
+  await page.getByTestId("filter-menu").locator("summary").click();
+  await page.getByTestId("filter-menu").getByLabel("Period", { exact: true }).selectOption("90d");
+  await page.getByTestId("filter-menu").getByRole("button", { name: "Apply" }).click();
   await expect(page).toHaveURL(/period=90d/);
 
   for (const [format, type, magic] of [

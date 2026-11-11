@@ -32,7 +32,10 @@ import { BottomNav } from "@/features/shell/BottomNav";
 import { MobileTabBar } from "@/features/mobile/MobileTabBar";
 import { LayoutSync } from "@/features/mobile/LayoutSync";
 import { layoutMode } from "@/server/ui/layout-mode";
-import { CommandPalette, type PaletteLink } from "@/features/shell/CommandPalette";
+import { CommandPalette, type PaletteLink, type PaletteSaved } from "@/features/shell/CommandPalette";
+import { hasModule } from "@/server/modules/modules";
+import { teamOf } from "@/server/work/task-access";
+import { listSavedSearches } from "@/lib/db/repositories/work.repository";
 import { countPendingTasksFor } from "@/lib/db/repositories/approvals.repository";
 import { THEME_SETTING, parseTheme } from "@/server/ui/theme";
 import { parseTextSize, parseWorkspaceView, TEXT_SCALE, TEXT_SIZE_SETTING, WORKSPACE_VIEW_SETTING } from "@/server/ui/workspace-view";
@@ -123,7 +126,7 @@ export async function AppShell({ area, user, nav, children }: { area: AppArea; u
     { href: "/users/meetings", label: "Meetings", group: "Meetings" },
     { href: "/users/meetings/new", label: "Schedule a meeting", group: "Meetings" },
     { href: "/users/meetings/follow-ups", label: "Meeting follow-ups", group: "Meetings" },
-    { href: "/users/meetings/dashboard", label: "Meeting dashboard", group: "Meetings" },
+    { href: "/users?home=meetings", label: "Meeting overview (dashboard)", group: "Meetings" },
     { href: "/users/inbox", label: "Inbox", group: "My approvals" },
     { href: "/users/notifications/settings", label: "Notifications (settings)", group: "Profile" },
     { href: "/users/delegation", label: "Out of office", group: "Profile" },
@@ -137,6 +140,33 @@ export async function AppShell({ area, user, nav, children }: { area: AppArea; u
     ...userPages.filter((item) => visible(item.href)),
     ...spaces.filter((other) => other !== area && other !== "users").map((other) => ({ href: `/${other}`, label: `${SPACE_LABEL[other]} space`, group: "Spaces" })),
   ];
+  // v1.51.1 (owner): the global search's saved searches, only what this person may open.
+  const tasksAllowed = area === "users" && hasModule(user, "TASK") && visible("/users/work/search");
+  const [teamIds, ownSaved] = tasksAllowed ? await Promise.all([teamOf(user.id).catch(() => []), listSavedSearches(user.id).catch(() => [])]) : [[], []];
+  const paletteSaved: PaletteSaved[] =
+    area !== "users"
+      ? []
+      : [
+          ...(tasksAllowed
+            ? ([
+                { label: "Tasks I've created", href: "/users/work/search?created_by=me&status=all", kind: "task" },
+                { label: "Overdue tasks", href: "/users/work/search?overdue=1", kind: "task" },
+                { label: "Tasks I follow", href: "/users/work/search?followed=1", kind: "task" },
+                { label: "Periodic tasks", href: "/users/work/search?kind=periodic", kind: "task" },
+                { label: "Recently completed tasks", href: "/users/work/search?status=completed", kind: "task" },
+                ...(teamIds.length ? [{ label: "My team's tasks", href: "/users/work/search?team=1", kind: "task" }, { label: "My team: overdue", href: "/users/work/search?team=1&overdue=1", kind: "task" }] : []),
+              ] as PaletteSaved[])
+            : []),
+          ...(hasModule(user, "APPROVAL") && visible("/users/requests") ? [{ label: "My pending requests", href: "/users/requests?tab=open", kind: "request" } as PaletteSaved] : []),
+          ...(hasModule(user, "APPROVAL") && visible("/users/queue") && waiting > 0 ? [{ label: "Waiting for me", href: "/users/queue", kind: "request" } as PaletteSaved] : []),
+          ...(hasModule(user, "MEETING") && visible("/users/meetings")
+            ? ([
+                { label: "Meetings to approve", href: "/users/meetings?tab=approve", kind: "meeting" },
+                { label: "My meeting actions", href: "/users/meetings/follow-ups?view=mine", kind: "meeting" },
+              ] as PaletteSaved[])
+            : []),
+          ...ownSaved.slice(0, 8).map((item) => ({ label: item.name, href: `/users/work/search?${item.query}`, kind: "mine" }) as PaletteSaved),
+        ];
   // The "Waiting for me" entry shows the real count (RA-01).
   const items = nav.filter((item) => visible(item.href)).map((item) => (item.href === "/users/queue" ? { ...item, count: waiting } : item.href === "/users/inbox" ? { ...item, count: unread } : item));
   // D-221 / D-223 (owner): in the Compact view the Tasks pages become one
@@ -243,7 +273,7 @@ export async function AppShell({ area, user, nav, children }: { area: AppArea; u
             )}
             {/* D-232: the universal search sits in the middle of the top bar (Asana). */}
             <div className="flex min-w-0 flex-1 justify-end sm:justify-center">
-              <CommandPalette pages={palettePages} />
+              <CommandPalette pages={palettePages} saved={paletteSaved} />
             </div>
             <div className="flex items-center gap-2">
               <NotificationBell initialUnread={unread} />

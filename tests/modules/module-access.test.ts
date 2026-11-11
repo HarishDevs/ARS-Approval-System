@@ -87,3 +87,14 @@ describe("every page of the user space has a module decision", () => {
     expect(PAGES.filter((page) => page.area === "admin").every((page) => page.module === undefined)).toBe(true); // admin is by role
   });
 });
+
+// v1.51.1 (owner): modules for several people at once.
+describe("applyModuleChange", () => {
+  it("adds, removes or sets, always in the fixed module order", async () => {
+    const { applyModuleChange } = await import("@/server/modules/modules");
+    expect(applyModuleChange(["APPROVAL"], "ADD", ["MEETING", "TASK"])).toEqual(["APPROVAL", "TASK", "MEETING"]);
+    expect(applyModuleChange(["APPROVAL", "TASK", "AI"], "REMOVE", ["AI", "MEETING"])).toEqual(["APPROVAL", "TASK"]);
+    expect(applyModuleChange(["APPROVAL", "TASK"], "SET", ["INFORMATION"])).toEqual(["INFORMATION"]);
+    expect(applyModuleChange(["APPROVAL"], "SET", [])).toEqual([]);
+  });
+});

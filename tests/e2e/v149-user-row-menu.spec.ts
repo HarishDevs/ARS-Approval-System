@@ -20,8 +20,9 @@ test("users list: filter by department, then deactivate and activate someone fro
     await context.addCookies([await sessionCookie("E2E_ADMIN")]);
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/admin/users");
+    await page.getByTestId("filter-menu").locator("summary").click();
     await page.getByLabel("Department").selectOption({ label: `Row Menu Dept ${tag}` });
-    await page.getByRole("button", { name: "Apply" }).click();
+    await page.getByTestId("filter-menu").getByRole("button", { name: "Apply" }).click();
     await expect(page).toHaveURL(new RegExp(`dept=${dept.insertId}`));
     const table = page.getByRole("table", { name: "Users" });
     await expect(table.getByRole("link", { name: "Rowan Menu" })).toBeVisible();

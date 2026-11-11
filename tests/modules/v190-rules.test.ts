@@ -181,6 +181,8 @@ describe("notification categories", () => {
     expect(categoryOf("TASK_ASSIGNED")).toBe("APPROVAL"); // the approval engine's work step
     expect(categoryOf("INFO_PUBLISHED")).toBe("INFORMATION");
     expect(categoryOf("NEW_LOGIN")).toBe("SYSTEM");
+    expect(categoryOf("MEETING_INVITED")).toBe("MEETING"); // v1.51.1: its own Inbox category
+    expect(categoryOf("MEETING_ACTION")).toBe("MEETING");
     expect(categoryOf("APPROVAL_NEEDED")).toBe("APPROVAL");
     expect(parseCategory("tasks")).toBe("TASK");
     expect(parseCategory("INFORMATION")).toBe("INFORMATION");

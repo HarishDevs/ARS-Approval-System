@@ -44,3 +44,15 @@ export function calendarKindAllowed(person: { roles: readonly string[]; modules:
 }
 
 export const sameModules = (a: readonly ModuleCode[], b: readonly ModuleCode[]) => MODULES.every((module) => a.includes(module) === b.includes(module));
+
+// v1.51.1 (owner: "multi select the employees and assign modules"): the
+// modules a person ends with after a bulk change. ADD gives the chosen ones,
+// REMOVE takes them away, SET makes them exactly the chosen ones.
+export type ModuleChange = "ADD" | "REMOVE" | "SET";
+export function applyModuleChange(current: readonly ModuleCode[], change: ModuleChange, chosen: readonly ModuleCode[]): ModuleCode[] {
+  const pick = new Set(chosen);
+  const have = new Set(current);
+  if (change === "SET") return MODULES.filter((module) => pick.has(module));
+  if (change === "ADD") return MODULES.filter((module) => have.has(module) || pick.has(module));
+  return MODULES.filter((module) => have.has(module) && !pick.has(module));
+}

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ListChecks } from "lucide-react";
 import { requireArea } from "@/server/authorization/guards";
 import { EmptyState, PageHeader } from "@/features/shell/PageHeader";
+import { ListToolbar } from "@/features/ui/ListToolbar";
 import { ActionReviewForm, CloseOpenPointForm } from "@/features/meetings/MeetingForms";
 import { FollowUpBadge, MeetingSections } from "@/features/meetings/MeetingParts";
 import { listFollowUps, listOpenPointRegister } from "@/lib/db/repositories/meetings.repository";
@@ -67,16 +68,16 @@ export default async function FollowUpsPage({ searchParams }: { searchParams: Pr
             </Link>
           ))}
         </nav>
-        <form action="/users/meetings/follow-ups" method="get" role="search" aria-label="Find follow-ups" className="flex gap-2">
-          <input type="hidden" name="view" value={view} />
-          <label className="sr-only" htmlFor="fu-q">
-            Search
-          </label>
-          <input id="fu-q" name="q" defaultValue={q} placeholder="Action or meeting" className="field-input" />
-          <button type="submit" className="btn-secondary w-auto">
-            Find
-          </button>
-        </form>
+        {/* v1.51.1 (owner): the toolbar search icon instead of a search box. */}
+        <ListToolbar
+          id="follow-up-filters"
+          path="/users/meetings/follow-ups"
+          label="Find follow-ups"
+          keep={{ view }}
+          search={{ name: "q", value: q, placeholder: "Action or meeting" }}
+          filterCount={0}
+          clearHref={q ? `/users/meetings/follow-ups?view=${view}` : null}
+        />
       </div>
       {shown.length === 0 ? (
         <EmptyState title="Nothing to follow up here" body="Action items appear once the Meeting Owner approves the MOM." />

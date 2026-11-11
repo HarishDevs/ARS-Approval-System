@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { PagedRows } from "@/features/ui/PagedRows";
 import { PageHeader, EmptyState } from "@/features/shell/PageHeader";
 import { NoResults } from "@/features/ui/Display";
+import { ListToolbar } from "@/features/ui/ListToolbar";
 import { PendingLink } from "@/features/ui/PendingLink";
 import { requireArea } from "@/server/authorization/guards";
 import { listLoginHistory } from "@/lib/db/repositories/audit.repository";
@@ -26,21 +27,27 @@ export default async function LoginHistoryPage({ searchParams }: { searchParams:
   return (
     <>
       <PageHeader title="Sign-in history" description="Every sign-in attempt: who, how, from where, and why it failed. Newest first." />
-      <form className="mb-4 flex flex-wrap items-end gap-3" method="get">
-        <div>
-          <label htmlFor="outcome" className="field-label">
-            Outcome
-          </label>
-          <select id="outcome" name="outcome" defaultValue={outcome ?? ""} className="field-input w-56">
-            <option value="">All</option>
-            <option value="SUCCESS">Signed in</option>
-            <option value="FAILURE">Failed</option>
-          </select>
-        </div>
-        <button type="submit" className="btn-secondary btn-compact h-11">
-          Filter
-        </button>
-      </form>
+      {/* v1.51.1 (owner): toolbar filters instead of a filter form. */}
+      <ListToolbar
+        id="login-filters"
+        path="/superadmin/logins"
+        label="Filter sign-ins"
+        keep={{}}
+        filterCount={outcome ? 1 : 0}
+        clearHref={outcome ? "/superadmin/logins" : null}
+        filters={
+          <div>
+            <label htmlFor="outcome" className="field-label">
+              Outcome
+            </label>
+            <select id="outcome" name="outcome" defaultValue={outcome ?? ""} className="field-input h-10">
+              <option value="">All</option>
+              <option value="SUCCESS">Signed in</option>
+              <option value="FAILURE">Failed</option>
+            </select>
+          </div>
+        }
+      />
       {items.length === 0 ? (
         outcome ? (
           <NoResults what="sign-ins" resetHref="/superadmin/logins" hint={`No ${outcome === "SUCCESS" ? "successful" : "failed"} sign-ins${beforeId ? " before this point" : ""}.`} />

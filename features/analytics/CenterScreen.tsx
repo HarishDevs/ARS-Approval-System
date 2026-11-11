@@ -1,5 +1,6 @@
 import { TaskPriorityPill } from "@/features/ui/ChoicePill";
 import Link from "next/link";
+import { ListToolbar } from "@/features/ui/ListToolbar";
 import { PhoneFold } from "@/features/analytics/PhoneFold";
 import { isMobileLayout } from "@/server/ui/layout-mode";
 import { BarChart3 } from "lucide-react";
@@ -185,14 +186,21 @@ export async function CenterScreen({ base, board, boards, modules, query, scope,
       <PhoneFold mobile={await isMobileLayout()} summary={`${scope.label} · ${period.label}`}>
       <BoardPicker base={base} board={board} boards={boards} query={query} scopes={scopes} scope={scope} />
 
-      <form method="get" className="card mb-6 flex flex-wrap items-end gap-3 px-4 py-3" aria-label="Filters">
-        <input type="hidden" name="board" value={board} />
-        <input type="hidden" name="scope" value={scope.kind} />
+      {/* v1.51.1 (owner): toolbar filters instead of a filter form. */}
+      <ListToolbar
+        id="center-filters"
+        path={base}
+        label="Filter analytics"
+        keep={{ board, scope: scope.kind }}
+        filterCount={[period.key !== "30d", compare !== "PREVIOUS", board === "employees" && query.q, board === "employees" && query.sort && query.sort !== "name"].filter(Boolean).length}
+        clearHref={boardHref(base, { board, scope: scope.kind }, {})}
+        filters={
+          <>
         <div>
           <label htmlFor="period" className="field-label">
             Period
           </label>
-          <select id="period" name="period" defaultValue={period.key} className="field-input h-9 w-48">
+          <select id="period" name="period" defaultValue={period.key} className="field-input h-10">
             {(Object.keys(PERIOD_LABEL) as PeriodKey[]).map((key) => (
               <option key={key} value={key}>
                 {PERIOD_LABEL[key]}
@@ -204,19 +212,19 @@ export async function CenterScreen({ base, board, boards, modules, query, scope,
           <label htmlFor="from" className="field-label">
             From <span className="font-normal text-ink-faint">(custom)</span>
           </label>
-          <input id="from" name="from" type="date" defaultValue={period.from} className="field-input h-9" />
+          <input id="from" name="from" type="date" defaultValue={period.from} className="field-input h-10" />
         </div>
         <div>
           <label htmlFor="to" className="field-label">
             To <span className="font-normal text-ink-faint">(custom)</span>
           </label>
-          <input id="to" name="to" type="date" defaultValue={period.to} className="field-input h-9" />
+          <input id="to" name="to" type="date" defaultValue={period.to} className="field-input h-10" />
         </div>
         <div>
           <label htmlFor="compare" className="field-label">
             Compare with
           </label>
-          <select id="compare" name="compare" defaultValue={compare} className="field-input h-9 w-48">
+          <select id="compare" name="compare" defaultValue={compare} className="field-input h-10">
             <option value="PREVIOUS">Previous period</option>
             <option value="LAST_YEAR">Same period last year</option>
           </select>
@@ -227,13 +235,13 @@ export async function CenterScreen({ base, board, boards, modules, query, scope,
               <label htmlFor="q" className="field-label">
                 Person
               </label>
-              <input id="q" name="q" type="search" defaultValue={query.q ?? ""} maxLength={60} placeholder="Name or User ID" className="field-input h-9 w-44" />
+              <input id="q" name="q" type="search" defaultValue={query.q ?? ""} maxLength={60} placeholder="Name or User ID" className="field-input h-10" />
             </div>
             <div>
               <label htmlFor="sort" className="field-label">
                 Sort by
               </label>
-              <select id="sort" name="sort" defaultValue={query.sort ?? "name"} className="field-input h-9 w-48">
+              <select id="sort" name="sort" defaultValue={query.sort ?? "name"} className="field-input h-10">
                 <option value="name">Name</option>
                 <option value="pending">Approvals waiting</option>
                 <option value="overdue">Approvals overdue</option>
@@ -244,13 +252,9 @@ export async function CenterScreen({ base, board, boards, modules, query, scope,
             </div>
           </>
         )}
-        <button type="submit" className="btn-primary btn-compact">
-          Apply
-        </button>
-        <Link href={boardHref(base, { board, scope: scope.kind }, {})} className="link text-label">
-          Clear filters
-        </Link>
-      </form>
+          </>
+        }
+      />
       </PhoneFold>
 
       {/* D-258: the board in pages that each fit the window. */}

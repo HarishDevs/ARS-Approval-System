@@ -34,10 +34,10 @@ export function ListToolbar({
   path: string;
   label: string;
   keep: Record<string, string | undefined>;
-  search: { name: string; value: string; placeholder: string };
+  search?: { name: string; value: string; placeholder: string }; // v1.51.1: optional (period-only screens)
   filterCount: number;
   clearHref: string | null;
-  filters: React.ReactNode;
+  filters?: React.ReactNode; // v1.51.1: optional (search-only lists)
   sort?: { label: string; changed: boolean; choices: ToolbarChoice[]; clearHref?: string };
   group?: { label: string | null; clearHref: string; choices: ToolbarChoice[] };
   sizes?: ToolbarChoice[];
@@ -66,40 +66,44 @@ export function ListToolbar({
       <span className="ml-auto flex flex-wrap items-center gap-0.5">
         <form id={id} method="get" action={path} role="search" aria-label={label} className="contents">
           {Object.entries(keep).map(([name, value]) => (value ? <input key={name} type="hidden" name={name} value={value} /> : null))}
-          <span className={filterCount ? "tb-pill" : "inline-flex items-center"}>
-            <Drop
-              label={filterCount ? `Filters: ${filterCount}` : "Filter"}
-              icon={
-                <>
-                  <Filter aria-hidden="true" className="h-4 w-4" /> {filterCount ? `Filters: ${filterCount}` : "Filter"}
-                </>
-              }
-              buttonClass="tb-btn"
-              panelClass="right-0 w-[min(640px,calc(100vw-2rem))] max-h-[70vh] overflow-y-auto"
-              testId="filter-menu"
-            >
-              <p className="mb-3 text-label font-semibold">Filters</p>
-              <div className="grid gap-4 sm:grid-cols-2">{filters}</div>
-              <div className="mt-4 flex items-center gap-3 border-t border-line pt-3">
-                <button type="submit" className="btn-primary btn-compact w-auto">
-                  Apply
-                </button>
-                {clearHref && (
-                  <Link href={clearHref} className="link text-label">
-                    Clear all
-                  </Link>
-                )}
-              </div>
-            </Drop>
-            {filterCount > 0 && clearHref && (
-              <Link href={clearHref} aria-label="Clear filters" className="tb-x">
-                {X_ICON}
-              </Link>
-            )}
-          </span>
-          <span className="order-last inline-flex items-center">
-            <ToolbarSearch id={`${id}-q`} name={search.name} defaultValue={search.value} placeholder={search.placeholder} />
-          </span>
+          {filters && (
+            <span className={filterCount ? "tb-pill" : "inline-flex items-center"}>
+              <Drop
+                label={filterCount ? `Filters: ${filterCount}` : "Filter"}
+                icon={
+                  <>
+                    <Filter aria-hidden="true" className="h-4 w-4" /> {filterCount ? `Filters: ${filterCount}` : "Filter"}
+                  </>
+                }
+                buttonClass="tb-btn"
+                panelClass="right-0 w-[min(640px,calc(100vw-2rem))] max-h-[70vh] overflow-y-auto"
+                testId="filter-menu"
+              >
+                <p className="mb-3 text-label font-semibold">Filters</p>
+                <div className="grid gap-4 sm:grid-cols-2">{filters}</div>
+                <div className="mt-4 flex items-center gap-3 border-t border-line pt-3">
+                  <button type="submit" className="btn-primary btn-compact w-auto">
+                    Apply
+                  </button>
+                  {clearHref && (
+                    <Link href={clearHref} className="link text-label">
+                      Clear all
+                    </Link>
+                  )}
+                </div>
+              </Drop>
+              {filterCount > 0 && clearHref && (
+                <Link href={clearHref} aria-label="Clear filters" className="tb-x">
+                  {X_ICON}
+                </Link>
+              )}
+            </span>
+          )}
+          {search && (
+            <span className="order-last inline-flex items-center">
+              <ToolbarSearch id={`${id}-q`} name={search.name} defaultValue={search.value} placeholder={search.placeholder} />
+            </span>
+          )}
         </form>
         {sort && (
           <span className={sort.changed ? "tb-pill" : "inline-flex items-center"}>

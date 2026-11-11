@@ -23,10 +23,9 @@ export const FollowUpBadge = ({ state }: { state: FollowUpState }) => <Badge ton
 const SECTIONS = [
   { href: "/users/meetings", label: "Meetings" },
   { href: "/users/meetings/follow-ups", label: "Follow-ups" },
-  { href: "/users/meetings/dashboard", label: "Dashboard" },
 ] as const;
 
-// The three Meeting pages, as tabs under the header.
+// The Meeting pages, as tabs under the header (the dashboard is on Home, v1.51.1).
 export function MeetingSections({ current }: { current: (typeof SECTIONS)[number]["href"] }) {
   return (
     <nav aria-label="Meeting pages" className="mb-4 flex flex-wrap gap-x-1 border-b border-line">

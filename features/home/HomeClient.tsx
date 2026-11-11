@@ -25,6 +25,7 @@ export function PeriodPicker({
   base,
   options = OPTIONS,
   label = "Period",
+  path = "/users",
 }: {
   value: string;
   from: string;
@@ -32,10 +33,11 @@ export function PeriodPicker({
   base: Record<string, string>;
   options?: [string, string][];
   label?: string;
+  path?: string; // v1.51.1: the page the period belongs to (Home by default)
 }) {
   const router = useRouter();
   const [custom, setCustom] = useState(value === "custom");
-  const go = (query: Record<string, string>) => router.push(`/users?${new URLSearchParams({ ...base, ...query })}`, { scroll: false });
+  const go = (query: Record<string, string>) => router.push(`${path}?${new URLSearchParams({ ...base, ...query })}`, { scroll: false });
   return (
     <div className="flex flex-wrap items-center gap-2" data-testid="period-picker">
       <label className="relative inline-flex items-center">

@@ -20,8 +20,9 @@ test("IT sees the organisation; filters and periods apply; every chart has a tab
   await page.getByText("Show as a table").first().click();
   await expect(page.getByRole("table", { name: "Raised and decided over time" })).toBeVisible();
   await expect(page.getByRole("region", { name: "Response-time status" })).toBeVisible();
+  await page.getByTestId("filter-menu").locator("summary").click();
   await page.getByLabel("Period").selectOption("90d");
-  await page.getByRole("button", { name: "Apply" }).click();
+  await page.getByTestId("filter-menu").getByRole("button", { name: "Apply" }).click();
   await expect(page).toHaveURL(/period=90d/);
   await expect(page.getByText(/Last 90 days/).first()).toBeVisible();
   await page.screenshot({ path: "test-results/v160-analytics-org.png", fullPage: true });

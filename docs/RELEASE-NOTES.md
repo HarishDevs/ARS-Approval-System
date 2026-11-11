@@ -1,5 +1,13 @@
 # Release notes
 
+## v1.51.1 (11 Nov 2026): Meeting Overview on Home, modules for many users, toolbar filters everywhere (owner)
+- **Home → Meetings:** a third choice beside Approvals and Task Management. It has the cards (upcoming, to approve, MOM to write, my open actions), **Needs attention** (points or MOM late or due soon, meetings not started or still running, overdue actions, completed actions to confirm), Coming up, Waiting for my approval, Done to confirm, **Insights**, and for a period the on-time figures, by type, by department and the register. The separate Meeting dashboard page and its menu entry are gone (old links open Home → Meetings). The figures follow page access ("Meetings: dashboard figures").
+- **Users & roles:** tick several people and press **Modules** to give modules, take them away, or set exactly which ones they have. Each person is checked as on the user page and recorded in the audit log.
+- **One kind of filter on every list:** the big search and filter forms are gone (task search, request search, users, meetings, analytics, admin dashboards, AI analytics, reports, Super Admin audit, sign-ins and requests). Each page has the toolbar instead: **Filter** (a dropdown with Apply), Sort, Group, Options and a small search icon.
+- **Searches start from the bar at the top (Ctrl K).** Its Saved searches now show only what you can open (task searches with the Task module, team searches if people report to you, requests with the Approval module, meetings with the Meeting module) and your own saved task searches. The Task search page shows what was searched as chips you can remove.
+- **Meetings in the Inbox:** meeting messages (invitations, points and MOM to approve or ready, cancellations, reminders, action follow-ups) have their own **Meetings** view in the Inbox and the bell, instead of sitting under Tasks. Each is linked to its meeting.
+- One small database change on start: the Inbox category gains Meeting, and meeting messages already sent move to it.
+
 ## v1.51.0 (10 Nov 2026): Meeting Management (owner)
 - **New module: Meetings** (sidebar → Meetings; Classic → Meeting Management). Everyone has it; IT can switch it off per person (module access).
 - **One Meeting Owner and one Coordinator per meeting** (they can be the same person). The Coordinator schedules the meeting, adds the meeting points, marks attendance and writes the MOM. **Only the Meeting Owner approves the points and the MOM.** Everything approved is sent to the participants.

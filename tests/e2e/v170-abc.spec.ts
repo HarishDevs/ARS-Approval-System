@@ -55,13 +55,15 @@ test("B analytics: new KPIs, comparison, more filters, charts and drill-down", a
   await expect(page.getByText("Approved first time", { exact: true }).first()).toBeVisible();
   await expect(page.getByRole("region", { name: "Where tasks wait, by department and step" })).toBeVisible();
   await expect(page.getByText("Backlog and overdue", { exact: true }).first()).toBeVisible();
+  // v1.51.1: the filters are in the toolbar's Filter dropdown (no "More filters" fold).
+  await page.getByTestId("filter-menu").locator("summary").click();
   await page.getByLabel("Compare with").selectOption("LAST_YEAR");
-  await page.getByRole("button", { name: "Apply" }).click();
+  await page.getByTestId("filter-menu").getByRole("button", { name: "Apply" }).click();
   await expect(page).toHaveURL(/compare=LAST_YEAR/);
   await expect(page.getByText(/vs same period last year|No earlier figure to compare/).first()).toBeVisible();
-  await page.getByText("More filters").click();
+  await page.getByTestId("filter-menu").locator("summary").click();
   await page.getByLabel("Status now").selectOption("IN_PROGRESS");
-  await page.getByRole("button", { name: "Apply" }).click();
+  await page.getByTestId("filter-menu").getByRole("button", { name: "Apply" }).click();
   await expect(page).toHaveURL(/status=IN_PROGRESS/);
   // A card opens the list behind it, with the filters carried.
   await page.getByRole("link", { name: /Open requests/ }).first().click();

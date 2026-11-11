@@ -95,7 +95,11 @@ test("My Tasks, Task home and Task search show the work", async ({ page, context
   await expect(page.getByTestId("work-search-results")).toContainText(`Survey the site ${stamp}`);
   await page.getByLabel("Save this search as").fill(`E2E search ${stamp}`);
   await page.getByRole("button", { name: "Save" }).click();
-  await expect(page.getByRole("link", { name: `E2E search ${stamp}` })).toBeVisible();
+  // v1.51.1: saved searches are offered in the search bar at the top (Ctrl K).
+  await expect(page.getByText(/saved/i).first()).toBeVisible();
+  await page.reload();
+  await page.keyboard.press("Control+k");
+  await expect(page.getByTestId("saved-searches")).toContainText(`E2E search ${stamp}`);
 });
 
 test("a due date on a holiday: the warning offers to keep it or move it", async ({ page, context }) => {

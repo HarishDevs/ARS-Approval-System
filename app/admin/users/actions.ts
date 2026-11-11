@@ -7,7 +7,8 @@ import { createTryAsLink } from "@/server/auth/try-as";
 import { redirect } from "next/navigation";
 import { formFields, getAdminActor, parseId } from "@/server/admin/actor";
 import { parseUserForm } from "@/server/admin/user-input";
-import { createUser, forceSignOut, setActive, unlock, updateUser } from "@/server/admin/users";
+import { bulkChangeModules, createUser, forceSignOut, setActive, unlock, updateUser } from "@/server/admin/users";
+import { normaliseModules } from "@/server/modules/modules";
 import { sendInvitation, sendSetPasswordLink } from "@/server/auth/set-password";
 import { handOverPendingTasks } from "@/server/approvals/service";
 import { logError } from "@/lib/logging/logger";
@@ -143,6 +144,8 @@ const BULK_LIMIT = 100;
 export async function bulkUserCommandAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
   const actor = await getAdminActor("admin.users");
   if (!actor) return NOT_FOUND;
+  // v1.51.1: "Modules" shares the ticked rows of the same form.
+  if (formData.get("command") === "modules") return bulkModulesAction(_previous, formData);
   const command = String(formData.get("command") ?? "") as (typeof BULK_COMMANDS)[number];
   if (!BULK_COMMANDS.includes(command)) return NOT_FOUND;
   const ids = [...new Set(formData.getAll("ids").map((value) => parseId(value)))].filter((id): id is number => id !== null);
@@ -176,6 +179,32 @@ export async function bulkUserCommandAction(_previous: ActionResult | null, form
   const head = `${verb} ${done} of ${ids.length} user${ids.length === 1 ? "" : "s"}.`;
   const tail = [...reasons].map(([message, count]) => `${count} not done: ${message}`).join(" ");
   return { ok: done > 0, message: tail ? `${head} ${tail}` : head, data: { done } };
+}
+
+// v1.51.1 (owner: "multi select the employees and assign modules"): Add,
+// Remove or Set modules for the ticked users; every person is checked as on
+// the user page (bulkChangeModules) and audited.
+export async function bulkModulesAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const actor = await getAdminActor("admin.users");
+  if (!actor) return NOT_FOUND;
+  const change = String(formData.get("change") ?? "");
+  if (change !== "ADD" && change !== "REMOVE" && change !== "SET") return NOT_FOUND;
+  const ids = [...new Set(formData.getAll("ids").map((value) => parseId(value)))].filter((id): id is number => id !== null);
+  if (ids.length === 0) return { ok: false, message: "Tick at least one user." };
+  if (ids.length > BULK_LIMIT) return { ok: false, message: `Act on up to ${BULK_LIMIT} users at a time.` };
+  const modules = normaliseModules(formData.getAll("modules").map(String));
+  if (!modules.ok) return NOT_FOUND;
+  if (modules.value.length === 0 && change !== "SET") return { ok: false, message: "Choose at least one module." };
+  try {
+    const result = await bulkChangeModules(ids, change, modules.value, actor);
+    revalidatePath("/admin/users");
+    const head = `Modules changed for ${result.changed} of ${ids.length} user${ids.length === 1 ? "" : "s"}.${result.unchanged ? ` ${result.unchanged} already had them.` : ""}`;
+    const tail = [...result.refused].map(([message, count]) => `${count} not changed: ${message}`).join(" ");
+    return { ok: result.changed > 0 || result.unchanged > 0, message: tail ? `${head} ${tail}` : head, data: { done: result.changed + result.unchanged } };
+  } catch (error) {
+    logError("bulkModulesAction failed", error);
+    return { ok: false, message: "Something went wrong. Please try again." };
+  }
 }
 
 // F-16: move every pending approval of a person to someone else.

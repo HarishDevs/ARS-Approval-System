@@ -4,6 +4,7 @@ import Link from "next/link";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { BarList, Heatmap, LineChart } from "@/features/analytics/Charts";
 import { Hint } from "@/features/ui/Hint";
+import { ListToolbar } from "@/features/ui/ListToolbar";
 import { requireArea } from "@/server/authorization/guards";
 import { getSettingValue } from "@/server/settings/values";
 import { bucketKey, bucketLabel, buckets, grainFor, indiaToday, PERIOD_LABEL, previousPeriod, resolvePeriod, type Period } from "@/server/analytics/periods";
@@ -72,36 +73,44 @@ export default async function AiAnalyticsPage({ searchParams }: { searchParams: 
         meta={`${period.label}: ${period.from} to ${period.to} · compared with ${before.from} to ${before.to}`}
       />
 
-      <form method="get" className="card mb-6 flex flex-wrap items-end gap-3 px-4 py-3" data-testid="ai-analytics-period">
-        <div>
-          <label htmlFor="ai-period" className="field-label">
-            Period
-          </label>
-          <select id="ai-period" name="period" defaultValue={period.key} className="field-input h-10 w-48">
-            {PERIODS.map((key) => (
-              <option key={key} value={key}>
-                {PERIOD_LABEL[key]}
-              </option>
-            ))}
-            <option value="custom">Custom dates</option>
-          </select>
-        </div>
-        <div>
-          <label htmlFor="ai-from" className="field-label">
-            From
-          </label>
-          <input id="ai-from" type="date" name="from" defaultValue={period.key === "custom" ? period.from : ""} className="field-input h-10" />
-        </div>
-        <div>
-          <label htmlFor="ai-to" className="field-label">
-            To
-          </label>
-          <input id="ai-to" type="date" name="to" defaultValue={period.key === "custom" ? period.to : ""} className="field-input h-10" />
-        </div>
-        <button type="submit" className="btn-primary btn-compact w-auto">
-          Apply
-        </button>
-      </form>
+      {/* v1.51.1 (owner): toolbar filters instead of a filter form. */}
+      <ListToolbar
+        id="ai-analytics-period"
+        path="/admin/ai-analytics"
+        label="Filter AI analytics period"
+        keep={{}}
+        filterCount={period.key !== "30d" ? 1 : 0}
+        clearHref={period.key !== "30d" ? "/admin/ai-analytics" : null}
+        filters={
+          <>
+            <div className="sm:col-span-2">
+              <label htmlFor="ai-period" className="field-label">
+                Period
+              </label>
+              <select id="ai-period" name="period" defaultValue={period.key} className="field-input h-10">
+                {PERIODS.map((key) => (
+                  <option key={key} value={key}>
+                    {PERIOD_LABEL[key]}
+                  </option>
+                ))}
+                <option value="custom">Custom dates</option>
+              </select>
+            </div>
+            <div>
+              <label htmlFor="ai-from" className="field-label">
+                From
+              </label>
+              <input id="ai-from" type="date" name="from" defaultValue={period.key === "custom" ? period.from : ""} className="field-input h-10" />
+            </div>
+            <div>
+              <label htmlFor="ai-to" className="field-label">
+                To
+              </label>
+              <input id="ai-to" type="date" name="to" defaultValue={period.key === "custom" ? period.to : ""} className="field-input h-10" />
+            </div>
+          </>
+        }
+      />
 
       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4" data-testid="ai-kpis">
         <Tile label="Questions asked" value={compact(totals.questions)} delta={change(totals.questions, previous.questions)} hint="Questions people sent to Pico Bot in this period." />

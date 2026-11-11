@@ -39,6 +39,7 @@ const VIEWS: { category: NotificationCategory | null; label: string }[] = [
   { category: null, label: "All" },
   { category: "APPROVAL", label: "Approvals" },
   { category: "TASK", label: "Tasks" },
+  { category: "MEETING", label: "Meetings" },
   { category: "INFORMATION", label: "Information" },
   { category: "SYSTEM", label: "System" },
 ];

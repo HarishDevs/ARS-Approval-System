@@ -2,7 +2,8 @@ import Link from "next/link";
 import { PendingLink } from "@/features/ui/PendingLink";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { Hint } from "@/features/ui/Hint";
-import { CUSTOM_TYPE, filterQuery, presets, type DashboardFilter } from "@/server/dashboards/filters";
+import { ListToolbar } from "@/features/ui/ListToolbar";
+import { CUSTOM_TYPE, filterQuery, financialYearStart, presets, type DashboardFilter } from "@/server/dashboards/filters";
 
 // Shared frame of the four admin dashboards (S11-12, F-74): tabs, one filter
 // bar (GET, so every view is a link that can be shared), period presets and
@@ -32,6 +33,8 @@ export function DashboardFrame({
 }) {
   const current = DASHBOARDS.find((item) => item.slug === slug)!;
   const query = filterQuery(filter);
+  // Filters in use: a period other than this financial year to date, a type, a department.
+  const filterCount = [filter.from !== financialYearStart(today) || filter.to !== today, filter.workflowId !== null, filter.departmentId !== null].filter(Boolean).length;
   return (
     <>
       <PageHeader title={current.title} description={current.description}>
@@ -53,50 +56,58 @@ export function DashboardFrame({
           </Link>
         ))}
       </nav>
-      <form method="get" action={`/admin/dashboards/${slug}`} className="card mb-2 flex flex-wrap items-end gap-3 px-4 py-3" aria-label="Filters">
-        <div>
-          <label htmlFor="from" className="field-label">
-            From
-          </label>
-          <input id="from" name="from" type="date" defaultValue={filter.from} max={today} className="field-input" />
-        </div>
-        <div>
-          <label htmlFor="to" className="field-label">
-            To
-          </label>
-          <input id="to" name="to" type="date" defaultValue={filter.to} max={today} className="field-input" />
-        </div>
-        <div className="min-w-[180px] flex-1">
-          <label htmlFor="type" className="field-label">
-            Approval type
-          </label>
-          <select id="type" name="type" defaultValue={filter.workflowId ?? ""} className="field-input">
-            <option value="">All types</option>
-            {choices.types.map((type) => (
-              <option key={type.id} value={type.id}>
-                {type.name}
-              </option>
-            ))}
-            <option value={CUSTOM_TYPE}>Custom approvals</option>
-          </select>
-        </div>
-        <div className="min-w-[180px] flex-1">
-          <label htmlFor="dept" className="field-label">
-            Department
-          </label>
-          <select id="dept" name="dept" defaultValue={filter.departmentId ?? ""} className="field-input">
-            <option value="">All departments</option>
-            {choices.departments.map((department) => (
-              <option key={department.id} value={department.id}>
-                {department.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <button type="submit" className="btn-primary btn-compact h-11">
-          Apply
-        </button>
-      </form>
+      {/* v1.51.1 (owner): toolbar filters instead of a filter form. */}
+      <ListToolbar
+        id="dashboard-filters"
+        path={`/admin/dashboards/${slug}`}
+        label="Filters"
+        keep={{}}
+        filterCount={filterCount}
+        clearHref={filterCount ? `/admin/dashboards/${slug}` : null}
+        filters={
+          <>
+            <div>
+              <label htmlFor="from" className="field-label">
+                From
+              </label>
+              <input id="from" name="from" type="date" defaultValue={filter.from} max={today} className="field-input h-10" />
+            </div>
+            <div>
+              <label htmlFor="to" className="field-label">
+                To
+              </label>
+              <input id="to" name="to" type="date" defaultValue={filter.to} max={today} className="field-input h-10" />
+            </div>
+            <div>
+              <label htmlFor="type" className="field-label">
+                Approval type
+              </label>
+              <select id="type" name="type" defaultValue={filter.workflowId ?? ""} className="field-input h-10">
+                <option value="">All types</option>
+                {choices.types.map((type) => (
+                  <option key={type.id} value={type.id}>
+                    {type.name}
+                  </option>
+                ))}
+                <option value={CUSTOM_TYPE}>Custom approvals</option>
+              </select>
+            </div>
+            <div>
+              <label htmlFor="dept" className="field-label">
+                Department
+              </label>
+              <select id="dept" name="dept" defaultValue={filter.departmentId ?? ""} className="field-input h-10">
+                <option value="">All departments</option>
+                {choices.departments.map((department) => (
+                  <option key={department.id} value={department.id}>
+                    {department.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </>
+        }
+      />
       <p className="mb-6 flex flex-wrap items-center gap-x-3 gap-y-1 text-caption text-ink-muted">
         <span>Quick:</span>
         {/* Plain links with a pending spinner: the last click always wins (QA DEF-04). */}

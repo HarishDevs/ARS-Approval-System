@@ -3,6 +3,7 @@ import { PagedRows } from "@/features/ui/PagedRows";
 import Link from "next/link";
 import { PageHeader, EmptyState } from "@/features/shell/PageHeader";
 import { NoResults } from "@/features/ui/Display";
+import { ListToolbar } from "@/features/ui/ListToolbar";
 import { requireArea } from "@/server/authorization/guards";
 import { listAuditActions, listAuditEntries } from "@/lib/db/repositories/audit.repository";
 import { SafeText } from "@/features/ui/SafeText";
@@ -30,24 +31,30 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
   return (
     <>
       <PageHeader title="Audit log" description="Every sign-in, access denial and admin change. Entries can't be edited or deleted by anyone." />
-      <form className="mb-4 flex flex-wrap items-end gap-3" method="get">
-        <div>
-          <label htmlFor="action" className="field-label">
-            Action
-          </label>
-          <select id="action" name="action" defaultValue={action ?? ""} className="field-input w-72">
-            <option value="">All actions</option>
-            {actions.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
-        </div>
-        <button type="submit" className="btn-secondary btn-compact h-11">
-          Filter
-        </button>
-      </form>
+      {/* v1.51.1 (owner): toolbar filters instead of a filter form. */}
+      <ListToolbar
+        id="audit-filters"
+        path="/superadmin/audit"
+        label="Filter the audit log"
+        keep={{}}
+        filterCount={action ? 1 : 0}
+        clearHref={action ? "/superadmin/audit" : null}
+        filters={
+          <div className="sm:col-span-2">
+            <label htmlFor="action" className="field-label">
+              Action
+            </label>
+            <select id="action" name="action" defaultValue={action ?? ""} className="field-input h-10">
+              <option value="">All actions</option>
+              {actions.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </div>
+        }
+      />
       <form className="mb-6 flex flex-wrap items-end gap-3 rounded-md border border-line bg-surface p-3" method="get" action="/api/superadmin/audit">
         <p className="w-full text-label font-semibold">Download as CSV (up to 50,000 entries)</p>
         <div>

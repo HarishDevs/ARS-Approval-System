@@ -27,7 +27,7 @@ From the top:
 
 Groups open and close like a dropdown; the group of the page you're on opens by itself and the app remembers the rest. **☰** folds the sidebar into a narrow row of icons. You only see the modules IT gave you.
 
-There is **no Search in the sidebar**: use the search bar at the top. On a phone, see **On your phone** below.
+There is **no Search in the sidebar**: use the search bar at the top. **Every search starts there** (Ctrl K): its **Filters** opens a full search of requests or tasks, and **Saved searches** lists ready-made searches you can open plus your own. Lists and dashboards have no filter forms: their toolbar has **Filter** (a dropdown with Apply), Sort, Group, Options and a small search icon. On a phone, see **On your phone** below.
 
 ### On your phone
 On a screen narrower than 768 pixels (a phone, or a narrow window) ARS CMS uses its **phone layout**. On a computer nothing changes. Turning a tablet or widening a window switches over by itself.
@@ -160,6 +160,8 @@ Comments on a request can't be edited or removed. To tell someone in particular,
 - **Separate from approvals:** completing a task never approves a request.
 
 ### Meetings
+- **Notifications:** every meeting message is in your **Inbox** (and the bell) under **Meetings**: invitations, points and MOM sent to you to approve or ready to read, changes and cancellations, deadline reminders and action follow-ups.
+- **Meeting Overview on Home:** Home has **Approvals**, **Task Management** and **Meetings** at the top. Meetings shows the cards (upcoming, to approve, MOM to write, your open actions), **Needs attention** (points or MOM late or due soon, meetings not started or still running, overdue actions, actions to confirm), Coming up, Waiting for my approval, Done to confirm, **Insights**, and for a period the on-time figures, by type and department, and the register. (There is no separate Meeting dashboard page any more.)
 - **Who does what:** each meeting has one **Meeting Owner** (approves the points and the MOM) and one **Coordinator** (schedules it, adds the points, marks attendance, writes the MOM). They can be the same person; then sending counts as approved.
 - **Schedule a meeting:** Meetings → **Schedule a meeting**. Choose the type, date and times, the Owner, Coordinator, participants and departments by typing names. Optional: **Points due by** and **MOM due by** (the Coordinator is reminded), and what happens if the points aren't approved in time.
 - **Points:** the Coordinator presses **Send to Meeting Owner**; the Owner presses **Approve points** or **Return** with what to change. Approved points go to every participant.
@@ -243,7 +245,7 @@ If you don't act in time: you get a **due soon** heads-up first, then reminders 
 Switch to it from the account menu → **Switch space**.
 - **Overview, Needs attention, Analytics, Reports, Insights, Dashboards, Workload:** how approvals are flowing; CSV downloads.
 - **Records:** every approval request, task and information item, with filters; requests show their **Amount** (also in the CSV), or *Hidden* when the amount field is confidential and you may not see it.
-- **Users & roles:** tick several people (or Select all on this page) to Re-invite, Send set-password link, Deactivate or Activate them together. Every new person, added here or by import, is emailed a welcome with a set-password link valid 12 hours. Add people, set department, designation, reporting manager, roles, modules and sign-in method (Google, User ID and password, or Both). **Re-invite** emails their User ID and a set-password link. Deactivate leavers: *Deactivate user* asks to confirm, then signs them out everywhere. *Hand over* moves someone's pending approvals to another person.
+- **Users & roles:** tick several people (or Select all on this page) to Re-invite, Send set-password link, Deactivate or Activate them together, or press **Modules** to give modules, take them away, or make the chosen ones their only modules (your own access and other IT Admins' are left as they are, unless you are the Super Admin). Every new person, added here or by import, is emailed a welcome with a set-password link valid 12 hours. Add people, set department, designation, reporting manager, roles, modules and sign-in method (Google, User ID and password, or Both). **Re-invite** emails their User ID and a set-password link. Deactivate leavers: *Deactivate user* asks to confirm, then signs them out everywhere. *Hand over* moves someone's pending approvals to another person.
 - **Departments:** departments (with HOD) and designations. Tick **Approver** on designations of Manager and above. Only approver designations can be chosen to approve.
 - **Approver groups:** e.g. Finance team, for "any one of the group".
 - **Approval types & workflows:** each approval type has:

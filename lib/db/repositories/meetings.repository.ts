@@ -656,6 +656,11 @@ export interface MeetingListRow {
   scheduledEnd: Date;
   openActions: number;
   participants: number;
+  // v1.51.1: for "Needs attention" on Home.
+  ownerId: number;
+  coordinatorId: number;
+  agendaDueAt: Date | null;
+  momDueAt: Date | null;
 }
 
 export async function listMeetings(scope: MeetingScope, filter: MeetingListFilter, db: Queryable = getDbPool()): Promise<{ rows: MeetingListRow[]; total: number }> {
@@ -700,7 +705,7 @@ export async function listMeetings(scope: MeetingScope, filter: MeetingListFilte
   const [countRows] = await db.query<Row[]>(`SELECT COUNT(*) AS total FROM meetings m WHERE ${whereSql}`, params);
   const order = filter.tab === "upcoming" ? "m.scheduled_start ASC" : "m.scheduled_start DESC";
   const [rows] = await db.query<Row[]>(
-    `SELECT m.id, m.meeting_no, m.title, t.name AS type_name, d.name AS department_name, o.name AS owner_name, c.name AS coordinator_name, m.status, m.points_status, m.mode, m.priority, m.scheduled_start, m.scheduled_end,
+    `SELECT m.id, m.meeting_no, m.title, t.name AS type_name, d.name AS department_name, o.name AS owner_name, c.name AS coordinator_name, m.status, m.points_status, m.mode, m.priority, m.scheduled_start, m.scheduled_end, m.owner_id, m.coordinator_id, m.agenda_due_at, m.mom_due_at,
             (SELECT COUNT(*) FROM meeting_actions a LEFT JOIN tasks tk ON tk.id = a.task_id WHERE a.meeting_id = m.id AND a.confirmed_at IS NULL AND (tk.status IS NULL OR tk.status <> 'CANCELLED')) AS open_actions,
             (SELECT COUNT(*) FROM meeting_participants p WHERE p.meeting_id = m.id) AS participants
        FROM meetings m JOIN meeting_types t ON t.id = m.type_id JOIN users o ON o.id = m.owner_id JOIN users c ON c.id = m.coordinator_id LEFT JOIN departments d ON d.id = m.department_id
@@ -723,6 +728,10 @@ export async function listMeetings(scope: MeetingScope, filter: MeetingListFilte
       priority: str(row.priority) as MeetingPriority,
       scheduledStart: dateOrNull(row.scheduled_start)!,
       scheduledEnd: dateOrNull(row.scheduled_end)!,
+      ownerId: num(row.owner_id),
+      coordinatorId: num(row.coordinator_id),
+      agendaDueAt: dateOrNull(row.agenda_due_at),
+      momDueAt: dateOrNull(row.mom_due_at),
       openActions: num(row.open_actions),
       participants: num(row.participants),
     })),

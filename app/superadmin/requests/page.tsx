@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { NoResults } from "@/features/ui/Display";
+import { ListToolbar } from "@/features/ui/ListToolbar";
 import Link from "next/link";
 import { PendingLink } from "@/features/ui/PendingLink";
 import { requireArea } from "@/server/authorization/guards";
@@ -54,30 +55,30 @@ export default async function SuperAdminRequestsPage({ searchParams }: { searchP
           Deleted
         </Link>
       </nav>
-      <form method="get" className="card mb-4 flex flex-wrap items-end gap-3 px-4 py-3" role="search">
-        {deleted && <input type="hidden" name="tab" value="deleted" />}
-        <div className="min-w-0 flex-1">
-          <label htmlFor="q" className="field-label">
-            Search
-          </label>
-          <input id="q" name="q" defaultValue={q} placeholder="Request number, title or raised by" className="field-input" />
-        </div>
-        <div>
-          <label htmlFor="status" className="field-label">
-            Status
-          </label>
-          <select id="status" name="status" defaultValue={status} className="field-input">
-            {STATUS_OPTIONS.map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <button type="submit" className="btn-secondary btn-compact h-11">
-          Search
-        </button>
-      </form>
+      {/* v1.51.1 (owner): toolbar filters instead of a filter form. */}
+      <ListToolbar
+        id="superadmin-requests-filters"
+        path="/superadmin/requests"
+        label="Search requests"
+        keep={{ tab: deleted ? "deleted" : undefined }}
+        search={{ name: "q", value: q, placeholder: "Request number, title or raised by" }}
+        filterCount={status ? 1 : 0}
+        clearHref={q || status ? (deleted ? "/superadmin/requests?tab=deleted" : "/superadmin/requests") : null}
+        filters={
+          <div>
+            <label htmlFor="status" className="field-label">
+              Status
+            </label>
+            <select id="status" name="status" defaultValue={status} className="field-input h-10">
+              {STATUS_OPTIONS.map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </div>
+        }
+      />
       <p className="mb-2 text-caption text-ink-muted" role="status">
         {result.total === 0 ? "No requests match." : `${result.total.toLocaleString("en-IN")} request${result.total === 1 ? "" : "s"}${result.pages > 1 ? ` · page ${result.page} of ${result.pages}` : ""}`}
       </p>
@@ -85,7 +86,8 @@ export default async function SuperAdminRequestsPage({ searchParams }: { searchP
         <NoResults what="requests" query={q} clearSearchHref={`/superadmin/requests?${new URLSearchParams({ ...(deleted ? { tab: "deleted" } : {}), ...(status ? { status } : {}) })}`} resetHref={deleted ? "/superadmin/requests?tab=deleted" : "/superadmin/requests"} />
       )}
       {/* v1.49.5 (owner): tick requests, then Delete selected. */}
-      {result.items.length > 0 && !deleted && <BulkDeleteRequests />}
+      {/* v1.51.1: kept after the last match is deleted, so its "deleted" message stays on screen. */}
+      {!deleted && (result.items.length > 0 || Boolean(q)) && <BulkDeleteRequests />}
       {result.items.length > 0 && (
         <section className="card overflow-x-auto">
           <table className="data-table">

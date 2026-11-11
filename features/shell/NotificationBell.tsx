@@ -11,7 +11,7 @@ import { Spinner } from "@/features/ui/Spinner";
 // Information. Opening one marks only that one read and opens its record;
 // "Read more" opens the Inbox with the same filter and marks
 // nothing. Data comes from /api/me/notifications (the signed-in person only).
-type Category = "APPROVAL" | "TASK" | "INFORMATION" | "SYSTEM";
+type Category = "APPROVAL" | "TASK" | "MEETING" | "INFORMATION" | "SYSTEM";
 interface Item {
   id: number;
   title: string;
@@ -21,17 +21,19 @@ interface Item {
   read: boolean;
   path: string | null;
 }
-type Filter = "ALL" | "APPROVAL" | "TASK" | "INFORMATION";
+type Filter = "ALL" | "APPROVAL" | "TASK" | "MEETING" | "INFORMATION";
 const FILTERS: { key: Filter; label: string; slug: string }[] = [
   { key: "ALL", label: "All", slug: "" },
   { key: "APPROVAL", label: "Approvals", slug: "approvals" },
   { key: "TASK", label: "Tasks", slug: "tasks" },
+  { key: "MEETING", label: "Meetings", slug: "meetings" },
   { key: "INFORMATION", label: "Information", slug: "information" },
 ];
-const TYPE_LABEL: Record<Category, string> = { APPROVAL: "Approval", TASK: "Task", INFORMATION: "Information", SYSTEM: "System" };
+const TYPE_LABEL: Record<Category, string> = { APPROVAL: "Approval", TASK: "Task", MEETING: "Meeting", INFORMATION: "Information", SYSTEM: "System" };
 const TYPE_CLASS: Record<Category, string> = {
   APPROVAL: "bg-primary-50 text-primary-700",
   TASK: "bg-warning-50 text-warning-600",
+  MEETING: "bg-[color:var(--violet-bg)] text-[color:var(--violet-fg)]",
   INFORMATION: "bg-success-50 text-success-600",
   SYSTEM: "bg-surface-muted text-ink-muted",
 };
