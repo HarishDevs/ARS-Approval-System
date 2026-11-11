@@ -46,7 +46,7 @@ const PAGES: { who: string; paths: string[] }[] = [
       "/users/help",
     ],
   },
-  { who: "E2E_ADMIN", paths: ["/admin", "/admin/users", "/admin/workflows", "/admin/task-types", "/admin/reports", "/admin/analytics", "/admin/dashboards", "/admin/import"] },
+  { who: "E2E_ADMIN", paths: ["/admin", "/admin/users", "/admin/task-types", "/admin/reports", "/admin/analytics", "/admin/dashboards", "/admin/import"] },
   { who: "E2E_SUPER", paths: ["/superadmin", "/superadmin/integrations/google-calendar", "/superadmin/settings", "/superadmin/audit", "/superadmin/pages"] },
 ];
 

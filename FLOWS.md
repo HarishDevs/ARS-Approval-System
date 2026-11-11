@@ -1480,6 +1480,22 @@ flowchart TD
 ```
 - Existing users keep exactly what they had: Approval, Task and Information; nobody gets AI until it is ticked.
 
+## F-153 Approval templates (the requester's own) and New request (v1.54.0, D-309)
+```mermaid
+flowchart TD
+  NR[New request] --> S1[1 Request details: title, fields, files, collaborators]
+  S1 -->|Next: required fields checked| S2[2 Approval workflow: levels; new level = Specific people]
+  S2 -->|Next: every level has someone| S3[3 Review & submit: all details + every approver by name]
+  S3 --> SUB[Submit: request number, first level told]
+  S2 -. Save these levels as a template .-> T[(approval_templates: name + levels, private)]
+  RQ[A custom request I raised] -. Save as an approval template .-> T
+  T --> AT[Approval templates: my templates, who approves each level; rename, delete]
+  AT -->|Use this template| NR2[New request with those levels, all editable; form empty, no draft]
+  NR2 --> S1
+  SUB --> RP[Request page: every level names its approver, upcoming ones too; journey shows level + approver]
+```
+- IT's predefined approval types are removed from the screens; requests already raised from them finish as set up.
+
 ## F-152 Main modules, staged release and "Coming soon" (v1.53.0, D-307)
 ```mermaid
 flowchart TD

@@ -15,12 +15,13 @@ import { loadRequestView } from "@/server/approvals/view";
 import { followUpSource, followUpValues } from "@/server/approvals/follow-up";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 import { personLabel } from "@/lib/people/label";
+import { findApprovalTemplate } from "@/lib/db/repositories/approval-templates.repository";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
 export const metadata: Metadata = { title: "New request" };
 
 // F-33: any user, whenever needed (D-026, D-040).
-export default async function CustomApprovalPage({ searchParams }: { searchParams: Promise<{ from?: string; followUp?: string }> }) {
+export default async function CustomApprovalPage({ searchParams }: { searchParams: Promise<{ from?: string; followUp?: string; template?: string }> }) {
   const { user } = await requireArea("users");
   const query = await searchParams;
   const options = await loadBuilderOptions();
@@ -47,6 +48,10 @@ export default async function CustomApprovalPage({ searchParams }: { searchParam
       }
     }
   }
+  // v1.54.0 (owner, D-309): an approval template brings its levels and
+  // approvers exactly as saved (all editable); the form starts empty.
+  const templateId = /^\d{1,10}$/.test(query.template ?? "") ? Number(query.template) : null;
+  const template = templateId ? await findApprovalTemplate(user.id, templateId) : null;
   // v1.50.3 (owner: "raise a follow-up is not working"): a follow-up can be
   // raised as a new request: matching details are copied in, and on submit it
   // is linked to the approved request (the server checks access again).
@@ -59,11 +64,16 @@ export default async function CustomApprovalPage({ searchParams }: { searchParam
   const defaultApproverId = managerId && managerId !== user.id && options.people.some((person) => person.id === managerId) ? managerId : null;
   return (
     <>
-      <PageHeader title="New request" icon={FilePlus2} description="You choose who approves and in what order. For a standard approval type, use Request templates.">
+      <PageHeader title="New request" icon={FilePlus2} description="You choose who approves and in what order. Start from one of your Approval templates to reuse saved levels.">
         <Link href="/users/new" className="link text-label">
-          Request templates
+          Approval templates
         </Link>
       </PageHeader>
+      {template && (
+        <p role="status" className="mb-4 rounded-md bg-primary-50 px-4 py-2 text-label text-primary-700" data-testid="from-template">
+          Started from your template &ldquo;{template.name}&rdquo;: its approval levels and approvers are set. Fill in the details; you can change the levels too.
+        </p>
+      )}
       {again && (
         <p role="status" className="mb-4 rounded-md bg-primary-50 px-4 py-2 text-label text-primary-700" data-testid="raised-again">
           Started from your request {again.requestNo}: the title, details and approvers were copied. Check them, and add any files again, before you submit.
@@ -75,7 +85,7 @@ export default async function CustomApprovalPage({ searchParams }: { searchParam
         </p>
       )}
       <CustomApprovalForm
-        key={followUp ? `follow-${followUp.id}` : again ? `again-${fromId}` : "new"}
+        key={followUp ? `follow-${followUp.id}` : again ? `again-${fromId}` : template ? `template-${template.id}` : "new"}
         followUpOf={followUp?.id}
         expiredSource={followUp?.expired && followUp.validUntil ? { requestNo: followUp.requestNo, expiredOn: formatIndiaTime(followUp.validUntil) } : undefined}
         defaultApproverId={defaultApproverId}
@@ -85,8 +95,8 @@ export default async function CustomApprovalPage({ searchParams }: { searchParam
         policy={config.policy}
         lookups={lookups}
         people={everyone}
-        initial={followUpInitial ?? (again ? { title: again.title, fields: again.fields } : draft ? { title: draft.title, fields: draft.fields } : undefined)}
-        draft={followUp ? undefined : { key: "CUSTOM", version: draft?.version ?? null, savedAt: draft ? draft.updatedAt.toISOString() : null }}
+        initial={followUpInitial ?? (again ? { title: again.title, fields: again.fields } : template ? { title: "", fields: { spec: JSON.stringify({ stages: template.stages }) } } : draft ? { title: draft.title, fields: draft.fields } : undefined)}
+        draft={followUp || template ? undefined : { key: "CUSTOM", version: draft?.version ?? null, savedAt: draft ? draft.updatedAt.toISOString() : null }}
       />
     </>
   );

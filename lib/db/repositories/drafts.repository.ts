@@ -80,7 +80,7 @@ export async function listDrafts(userId: number, limit = 20, db: Queryable = get
       key: row.draft_key,
       title: amendment ? (row.amend_title ?? "(amendment)") : row.title?.trim() || "(no title yet)",
       typeName: row.draft_key === "CUSTOM" ? "New request" : amendment ? `Amendment of ${row.amend_no ?? "a request"}` : (row.type_name ?? "Approval"),
-      href: row.draft_key === "CUSTOM" ? "/users/custom" : amendment ? `/users/requests/${row.draft_key.slice(3)}/amend` : `/users/new/${row.draft_key.slice(3)}`,
+      href: row.draft_key === "CUSTOM" ? "/users/custom" : amendment ? `/users/requests/${row.draft_key.slice(3)}/amend` : "/users/new" /* v1.54.0: IT approval types are gone */,
       updatedAt: row.updated_at,
     };
   });

@@ -97,7 +97,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      # v1.54.0: when the runner's package mirror fails (apt exit 100), fall back to the browser alone (the image already has its libraries).
+      - run: npx playwright install --with-deps chromium || npx playwright install chromium
       - run: npm run test:e2e
       # Owner's master-prompt QA suite (QA session 14) on the same build.
       - run: npx playwright test -c playwright.qa.config.ts

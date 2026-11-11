@@ -19,7 +19,7 @@ The space you work in is called **Central Management System**. There are two vie
 From the top:
 - **+ Create:** a new approval request, task, project or information (only what you can create).
 - **Home** and **Inbox**.
-- **My Approvals:** New request, My pending requests, My approved requests, Waiting for me, Approved by me, Collaborating, Request templates. If your designation isn't an approver designation you see only New request, My pending requests, My approved requests and Collaborating (Request templates is still reached from New request). A request you open highlights the list it belongs to for you (for example Waiting for me when it needs your decision).
+- **My Approvals:** New request, My pending requests, My approved requests, Waiting for me, Approved by me, Collaborating, Approval templates. If your designation isn't an approver designation you see only New request, My pending requests, My approved requests and Collaborating (Approval templates is still reached from New request). A request you open highlights the list it belongs to for you (for example Waiting for me when it needs your decision).
 - **Tasks:** My Tasks, Assigned by me, Team tasks, Periodic tasks, Task search, New task.
 - **Projects:** All projects, New project, Templates (only if the Projects module is switched on for you).
 - **Information:** Information inbox, Sent by me, New information.
@@ -108,17 +108,21 @@ If the form has a Priority field, the **Priority** column (after Status) shows i
 Every list has the same toolbar: **Filter**, **Sort**, **Group**, **Options** (rows per page, save the view) and **Search**. Filters in use show as pills with **×**. A saved view can be shared or made your default.
 
 ### Raise a request
-1. **Request templates** → pick the approval type IT set up (e.g. *Purchase & SCM Approval*).
-2. Fill in the form. Add files if needed: up to 5 at a time, 10 MB each (PDF, images, Word, Excel, PowerPoint, CSV, text).
-3. **Submit request.** You see its number (e.g. `PUR-2026-000123`), and the first approvers are told by email and WhatsApp.
+1. **New request** (or **Approval templates → Use this template** to start with levels you saved).
+2. **Request details:** the title and the fields, files if needed (drag them onto the box or choose them: up to 5, 10 MB each: PDF, images, Word, Excel, PowerPoint, CSV, text) and any collaborators. **Next**.
+3. **Approval workflow:** who approves, in what order. **Next**.
+4. **Review & submit:** everything you entered and **every approver by name**. **Submit request.** You see its number (e.g. `CUS-2026-000123`), and the first approvers are told by email and WhatsApp.
+
+### Approval templates (your own)
+Save the approval levels of a request to reuse them: on the **Approval workflow** step (**Save these levels as a template**) or on a request you raised (**Save as an approval template**). Only the levels and approvers are kept, never the details or files. **Approval templates** lists yours with who approves each level; **Use this template** opens New request with those levels (change anything), **✎** renames, the bin deletes. Saving under a name you already use updates that template. Only you see your templates; IT's old approval types are gone.
 
 **Drafts:** what you type is saved as a draft as you go ("Draft saved 10:42"). If you leave, open it again from **Home → Your drafts**. **Discard draft** clears it. Files aren't kept in drafts, so add them again before submitting. Drafts are removed when you submit, or after 30 days.
 
 A line above the **level map** says who it's waiting for, since when, and what comes next. The level map shows every level, who approves, and where it is now. Levels that the amount (DoA) or a rule doesn't need show as *skipped*.
 
 ### New request (your own approvers)
-Three steps: Request details, Approval workflow, Review & submit (on a computer each column scrolls on its own; each approval level is a small card on top, click one to edit it); the bar with Save as draft, Reset, Back and Next is at the top, under the steps. Each level is **Approval** (they approve or reject), **Work task** (they do the work and mark it done; it also appears in their My Tasks, and ticking it there marks it done on the request; untick **The request waits until it's done** to give the work as tasks and let the request move straight on, in which case finishing the tasks decides nothing on the request, and the people can read the request) or **FYI** (they're told and the request moves on; they can open it from the message; put it after the last approval to tell people only once it's fully approved). Fields with a red **\*** are required: **Next** moves on only when they're all filled in, and shows what's missing. The approvers can be changed only after Next. **Submit request** is on Review & submit.
-For something without an approval type: **New request** → title, the fields IT has set up (Admin → Custom approval), files (optional) → pick who approves. It starts with your reporting manager as approver.
+Three steps, one page each: Request details, Approval workflow, Review & submit (each approval level is a small card on top, click one to edit it). The step bar with Save as draft, Reset, Back and Next / Submit stays at the top while you scroll. Every new level starts as **Specific people**. Each level is **Approval** (they approve or reject), **Work task** (they do the work and mark it done; it also appears in their My Tasks, and ticking it there marks it done on the request; untick **The request waits until it's done** to give the work as tasks and let the request move straight on, in which case finishing the tasks decides nothing on the request, and the people can read the request) or **FYI** (they're told and the request moves on; they can open it from the message; put it after the last approval to tell people only once it's fully approved). Fields with a red **\*** are required: **Next** moves on only when they're all filled in, and shows what's missing. The approvers can be changed only after Next. **Submit request** is on Review & submit.
+**New request** → title, the fields IT has set up (Admin → Custom approval), files (optional) → pick who approves. It starts with your reporting manager as the first approver.
 - **in order:** add a level for each;
 - **at the same time:** use *Add parallel steps*;
 - **depending on something:** *Add a choice*, only if IT switched choices on.
@@ -266,19 +270,9 @@ Switch to it from the account menu → **Switch space**.
 - **Users & roles:** tick several people (or Select all on this page) to Re-invite, Send set-password link, Deactivate or Activate them together, or press **Modules** to give modules, take them away, or make the chosen ones their only modules (your own access and other IT Admins' are left as they are, unless you are the Super Admin). Every new person, added here or by import, is emailed a welcome with a set-password link valid 12 hours. Add people, set department, designation, reporting manager, roles, modules and sign-in method (Google, User ID and password, or Both). **Re-invite** emails their User ID and a set-password link. Deactivate leavers: *Deactivate user* asks to confirm, then signs them out everywhere. *Hand over* moves someone's pending approvals to another person.
 - **Departments:** departments (with HOD) and designations. Tick **Approver** on designations of Manager and above. Only approver designations can be chosen to approve.
 - **Approver groups:** e.g. Finance team, for "any one of the group".
-- **Approval types & workflows:** each approval type has:
-  - **the form**, built in the Form Designer: add fields from a library, drag them into order (or ↑/↓), duplicate, remove (with Undo). Fields can show "only when" a rule is true. Each option of a Dropdown, Radio buttons or Multi-select field can have a **colour**; the value then shows as a coloured pill everywhere. A choice field with the key **`priority`** becomes the request's **Priority** (shown beside the title, in the lists' Priority column, sortable and groupable in your option order);
-  - **the levels**, built in the Workflow Designer: a map of the flow above the levels (click a box to open that level); levels fold, move (drag or Alt+↑/↓), duplicate and remove (with Undo). Each level says what needs fixing before you save.
-    - one step, parallel steps, or a **DoA matrix** (amount bands, with the levels each band needs);
-    - for parallel steps where **any one** or **any N** is enough, **If one branch rejects**: end the request (the default), or end it only when the required number can no longer be reached;
-    - **choices** (if / otherwise), whose rules use the same editor as the form rules (field, test, value; **all** or **any** of several rows; dates compare as dates);
-  - **who approves:** specific people, the requester's manager or manager's manager, a department HOD, a group, a role, a person picked on the form, **everyone with a designation** (optionally only in the requester's department), or, for work and FYI only, **the requester**;
-  - **the kind of step:** *Approval*, *Work task* or *FYI*;
-  - **per step:** a response time, and what to do if nobody resolves (stop and tell IT, or skip).
-
-  Changes **save into the draft by themselves** a few seconds after you stop; **Save draft** saves at once. Nothing is live until you **Publish**. If a colleague saved or published in the meantime, you're told and nothing of theirs is overwritten. Check a draft with **Test mode** before publishing. Untick *Open for new requests* to archive a type. **Remove approval type** works only if it was never used.
+- **Approval types & workflows** was removed in v1.54.0: requests use New request with the requester's own approval templates. Requests raised earlier from an approval type still finish as they were set up.
 - **Custom approval:** the fields and options for **New request**.
-- **May finish without an approver** (approval type settings, predefined types only): if every level of a request is skipped by its rules, a ticked type may end Approved; otherwise the request goes to the requester's HOD (or to IT if there is no HOD). A request never ends approved by nobody unless IT ticked this.
+- **May finish without an approver** (old approval types only, for requests already raised from them): if every level of a request is skipped by its rules, a ticked type may end Approved; otherwise the request goes to the requester's HOD (or to IT if there is no HOD). A request never ends approved by nobody unless IT ticked this.
 - **Asks first:** deactivating a group, department or designation, closing a type for new requests and saving working days each ask you to confirm.
 - **Approval authority (DoA)** and **Budgets.**
 - **Task set-up:** Task types and **Task settings** (department holidays, morning summary, repeating tasks). **Information types.** **Meeting settings:** meeting types with default points, and the Management group (ED, MD) who see every meeting.

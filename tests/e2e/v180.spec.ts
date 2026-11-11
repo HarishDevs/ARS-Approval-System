@@ -90,6 +90,7 @@ test("D-206/D-235: choice and skip appear on New request only when IT switches t
   await page.getByRole("main").locator("a.btn-primary", { hasText: "New request" }).first().click();
   await expect(page).toHaveURL(/\/users\/custom$/);
   await expect(page.getByRole("heading", { level: 1, name: "New request" })).toBeVisible();
+  await toWorkflowStep(page); // v1.54.0: the workflow is its own page (step 2)
   for (const name of ["Add a level", "Add parallel steps"]) await expect(page.getByRole("button", { name })).toBeVisible();
   for (const name of ["Add a DoA matrix", "Add a choice (if / otherwise)"]) await expect(page.getByRole("button", { name })).toHaveCount(0);
   await expect(page.getByText("Skip this step when…")).toHaveCount(0);
@@ -105,6 +106,7 @@ test("D-206/D-235: choice and skip appear on New request only when IT switches t
 
   await as(context, "E2E_REQ");
   await page.goto("/users/custom");
+  await toWorkflowStep(page);
   await expect(page.getByRole("button", { name: "Add a choice (if / otherwise)" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Add a DoA matrix" })).toHaveCount(0);
   await expect(page.getByText("Skip this step when…").first()).toBeVisible();

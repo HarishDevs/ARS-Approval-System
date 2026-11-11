@@ -19,7 +19,6 @@ const ALLOWED = [
   "app/admin/import/loading.tsx", // results come back in the action's answer, not a refresh
   "app/admin/insights/loading.tsx",
   "app/admin/users/(list)/loading.tsx",
-  "app/admin/workflows/(list)/loading.tsx",
   "app/admin/workload/loading.tsx",
   "app/superadmin/audit/loading.tsx",
   "app/superadmin/import/loading.tsx",

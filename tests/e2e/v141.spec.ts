@@ -151,7 +151,9 @@ test("New request in three steps: a title before going on, the summary follows, 
   await expect(page.getByTestId("step-workflow")).toBeVisible();
   await page.getByRole("button", { name: "Back" }).click();
   await expect(page.getByLabel(/^Title/)).toHaveValue("Temporary driver for plant visits");
-  await page.locator("summary").filter({ hasText: "Request summary" }).click();
+  // v1.54.0: no summary column; the review shows what was typed.
+  await toWorkflowStep(page);
+  await page.getByTestId("step-next").click();
   await expect(page.getByTestId("request-summary").first()).toContainText("Temporary driver for plant visits");
   // No horizontal scrolling on a phone.
   expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0);

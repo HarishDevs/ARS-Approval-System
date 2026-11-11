@@ -606,6 +606,32 @@ export function ARSApprovalJourney({ journey: initial, serverNow, fresh = false,
                       ))}
                     </div>
                   </div>
+                  {/* v1.54.0 (owner): every level's name and its approver, always shown under the road. */}
+                  <div className={`relative border-t border-white/10 bg-[#0b1726] ${compact ? "h-[46px]" : "h-[52px]"}`} data-testid="journey-labels">
+                    <div className="absolute inset-y-0 left-[104px] right-[56px]">
+                      {points.map((point, index) => {
+                        const who = approverLine(point, index, shown.requesterName);
+                        return (
+                          <div
+                            key={point.key}
+                            className="absolute top-1.5 -translate-x-1/2 text-center"
+                            style={{ left: left(index), width: compact ? 100 : 136 }}
+                            data-testid="journey-level-label"
+                            aria-hidden="true"
+                          >
+                            <span className={`block truncate font-semibold leading-tight text-white ${compact ? "text-[11px]" : "text-[12px]"}`} title={point.label}>
+                              {point.label}
+                            </span>
+                            {who && (
+                              <span className={`mt-0.5 block truncate leading-tight ${compact ? "text-[10px]" : "text-[11px]"} ${toneText(STATE_TONE[point.state])}`} title={who}>
+                                {who}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

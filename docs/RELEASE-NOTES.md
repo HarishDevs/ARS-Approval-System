@@ -1,5 +1,13 @@
 # Release notes
 
+## v1.54.0 (12 Nov 2026): your own approval templates; a new New request; every approver named (owner)
+- **Approval templates are yours:** the approval types IT used to set up are gone (requests already raised from them still finish). Save the approval levels of a request as a template: on the workflow step of New request, or from a request you raised (Save as an approval template). **Approval templates** lists yours with who approves each level; **Use this template** opens New request with exactly those levels and approvers (change anything) and an empty form: no details or files are kept. Rename or delete them there. Only you see your templates.
+- **New request, one step at a time:** Request details, then Approval workflow, then Review & submit, each a page of its own; no summary column. A slim step bar with Save as draft, Reset, Back and Next / Submit stays at the top while you scroll. Clearer fields (blue outline when active, red when something is missing), a drag-and-drop file area with each file's type, size and a ready mark, and small notices you can close.
+- **Every new level starts as Specific people** (change it to a manager, HOD or group if you like).
+- **Every approver named:** the review shows who each level goes to (the people chosen, or the reporting manager / HOD by name); the request page's Approval levels name who each upcoming level will go to; the journey road shows each level's name and approver under it.
+- **Admin:** Approval types & workflows (and its export) is removed; Custom approval set-up (the New request form and step options) stays. Approval authority (DoA) has no matrices to read any more.
+- One small database change on start (approval templates).
+
 ## v1.53.0 (11 Nov 2026): Projects is its own module; "Coming soon" for modules not given (owner)
 - **Main modules:** Approvals, Tasks, Projects, Information, Meeting Management (then the AI Assistant), released one at a time. Home, Inbox, Calendar and Analytics are common to all.
 - **Projects separated from Tasks:** the project pages, + Create → Project, the Projects sidebar group and every project change need the new **Projects** module. Nobody has it yet: IT switches it on per person or in bulk (Admin → Users) when Projects is released. The Super Admin is never limited.

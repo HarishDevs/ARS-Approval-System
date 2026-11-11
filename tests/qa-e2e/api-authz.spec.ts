@@ -81,7 +81,7 @@ test("QA-API-04 an employee who is on nothing can't open requests, files, export
   const nobody = await playwright.request.newContext({ baseURL: test.info().project.use.baseURL, storageState: await asState("E2E_QA_NOBODY") });
   const leaks: string[] = [];
   for (let id = 1; id <= 60; id += 1) {
-    for (const url of [`/api/requests/${id}/progress`, `/api/requests/${id}/summary.pdf`, `/api/attachments/${id}`, `/api/files/${id}`, `/api/exports/${id}`, `/api/ai/conversations/${id}`, `/api/push/subscriptions/${id}`, `/api/admin/workflows/${id}/export`]) {
+    for (const url of [`/api/requests/${id}/progress`, `/api/requests/${id}/summary.pdf`, `/api/attachments/${id}`, `/api/files/${id}`, `/api/exports/${id}`, `/api/ai/conversations/${id}`, `/api/push/subscriptions/${id}`]) {
       const response = await nobody.fetch(url, { maxRedirects: 0, failOnStatusCode: false });
       if (response.status() >= 200 && response.status() < 300) leaks.push(`GET ${url} → ${response.status()}`);
     }

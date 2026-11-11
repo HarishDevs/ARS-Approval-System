@@ -11,21 +11,6 @@ async function as(context: BrowserContext, loginId: string) {
   await context.addCookies([await sessionCookie(loginId)]);
 }
 
-test("A4 the form builder previews the form, rules working, nothing sent", async ({ page, context }) => {
-  await as(context, "E2E_ADMIN");
-  await page.goto("/admin/workflows/new");
-  await page.getByRole("button", { name: "Add field" }).click();
-  await page.getByLabel("Field label").last().fill("Vendor name");
-  await page.getByRole("button", { name: "Preview the form" }).click();
-  const preview = page.getByRole("region", { name: /Form preview/ });
-  await expect(preview).toBeVisible();
-  await expect(preview.getByLabel(/Vendor name/)).toBeVisible();
-  await preview.getByRole("button", { name: "Submit request" }).click();
-  await expect(preview.getByText(/Preview only: nothing was submitted/)).toBeVisible();
-  await page.getByRole("button", { name: "Hide form preview" }).click();
-  await expect(preview).toBeHidden();
-});
-
 test("A2 the needed-by calendar opens and moves between months", async ({ page, context }) => {
   await as(context, "E2E_REQ");
   await page.goto("/users/calendar?month=2031-03");

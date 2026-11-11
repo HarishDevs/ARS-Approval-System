@@ -17,6 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (12 Nov 2026):** v1.54.0: approval templates are each requester's own (IT approval types removed), New request one page per step with a sticky action bar, every approver named on review, the request page and the journey (D-309). One small migration on start. **Owner:** publish (v1.52.3 to v1.54.0 are all unpublished: the live site still shows "Tasks & projects").
 - **Now (11 Nov 2026, night):** v1.53.0: **Projects is its own module**; modules not switched on show as blurred, locked **Coming soon** cards (Home, Classic menu, Analytics); new people start with Approvals and Tasks (D-307). One small migration on start. **Owner:** publish; switch Projects on (Admin → Users → Modules → Add → Projects, with Tasks) when it is released. Interlinks decided (D-308). Before: v1.52.3 columns arranged by drag, request files deletable until the first approval (D-306).
 - **Next:** release order: Tasks now, then Projects, Meeting Management, Information, AI Assistant.
 - **Before (11 Nov 2026, evening):** v1.52.1: tasks open in a popup with all actions, Comments / All activity tabs, Priority in My Tasks, people shown as Name - Employee code with department, dropdowns that fit the screen and close with × or outside click (D-304). No migration. **Owner:** publish.
@@ -166,6 +167,16 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 - **Still open:** Q-015.
 
 ---
+
+## Session log — v1.54.0 (12 Nov 2026): own approval templates, New request redesign, approvers named
+Owner: "drop the current approval template completely… a requester captures the request's levels as a template, shown in Approval templates; using it keeps all the levels, everything editable; no data stored in the form… show the approvers (specific people, HOD…) on review… on the request page every level with who approves… on the journey cards the level name and the approver"; plus the New request redesign (one page per step, no summary column, smaller step bar, floating fixed buttons, spacing, focus, attachments, compact notices). Answers: remove IT types completely; levels only; private; Specific people by default.
+- [x] V1540-01 (12 Nov 2026) FLOWS F-153; D-309
+- [x] V1540-02 (12 Nov 2026) Migration 202611111400_approval_templates; repository; save (from request / from form) / rename / delete actions; Approval templates page with who approves each level; ?template= opens New request with the levels, form empty
+- [x] V1540-03 (12 Nov 2026) Removed: users' raise-from-type page, Admin Approval types & workflows (+ export API, panels, version tools, import, promote), FN4 personal templates on types; menus, Admin home tile, page access keys; drafts of old types point to Approval templates
+- [x] V1540-04 (12 Nov 2026) New levels default to Specific people; review names every approver (previewRouteAction / route-preview.ts); request page names expected approvers; journey shows level name + approver under the road
+- [x] V1540-05 (12 Nov 2026) New request redesign: one page per step, sticky step/action bar, compact dismissible notices, drag-and-drop file cards, field focus/invalid states, review shows every field in two columns and the levels with approvers, Save these levels as a template on steps 2 and 3
+- [x] V1540-06 (12 Nov 2026) Tests: integration approval-templates; e2e approval-flow / v150 / session11 / QA suite on the requester's template; removed type-only specs; CI browser install falls back when the runner's package mirror fails
+- [x] V1540-07 (12 Nov 2026) General pages: privacy (templates), Help, User Guide, tour, release notes, DATA_MODEL, DEPLOYMENT; terms and checklist: no change
 
 ## Session log — v1.53.0 (11 Nov 2026): main modules, Projects separate, "Coming soon"
 Owner: "module wise page wise access: Approvals, Tasks, Projects, Information, Meeting Management; separate Projects and Tasks; Hidden page not visible; modules not given shown as a blurred card, not accessible, Coming soon; released module by module (Approvals live, then Tasks, Projects, Meetings, Information, AI); Home, Inbox, Calendar, Analytics are common; everything interlinked, tell me what breaks". Owner answers: Projects off for everyone; a task's project as name only, no link; new people get Approvals + Tasks.

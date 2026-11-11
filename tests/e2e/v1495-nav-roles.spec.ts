@@ -14,7 +14,7 @@ async function as(context: BrowserContext, loginId: string) {
   await context.addCookies([await sessionCookie(loginId)]);
 }
 
-const APPROVER_PAGES = ["Waiting for me", "Approved by me", "Request templates"];
+const APPROVER_PAGES = ["Waiting for me", "Approved by me", "Approval templates"];
 const REQUESTER_PAGES = ["New request", "My pending requests", "My approved requests", "Collaborating"];
 let requestPath = "";
 
@@ -69,7 +69,7 @@ test("an approver sees every page; a request opened from Waiting for me highligh
   await as(context, "E2E_MGR");
   await page.goto("/users/queue");
   const sidebar = page.getByTestId("sidebar-scroll");
-  for (const name of [...REQUESTER_PAGES, "Approved by me", "Request templates"]) await expect(sidebar.getByRole("link", { name, exact: true })).toBeVisible();
+  for (const name of [...REQUESTER_PAGES, "Approved by me", "Approval templates"]) await expect(sidebar.getByRole("link", { name, exact: true })).toBeVisible();
   await page.goto(requestPath);
   await expect(page.getByRole("link", { name: "← Back to Waiting for me" })).toBeVisible();
   await expect(sidebar.getByRole("link", { name: /^Waiting for me/ })).toHaveAttribute("aria-current", "page");

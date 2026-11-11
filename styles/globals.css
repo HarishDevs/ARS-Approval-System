@@ -218,8 +218,11 @@ body {
   .field-label {
     @apply mb-1.5 block text-label font-medium text-ink;
   }
+  /* v1.54.0 (owner's reference): a clear blue border and a soft glow on the
+     active field, its background lifting; entered text stays high-contrast,
+     placeholders stay readable; an invalid field shows red right away. */
   .field-input {
-    @apply h-11 w-full rounded-md border border-line bg-surface-muted px-3.5 text-body text-ink placeholder:text-ink-faint focus:border-primary-600 focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary-100;
+    @apply h-11 w-full rounded-md border border-line bg-surface-muted px-3.5 text-body text-ink transition-[border-color,box-shadow,background-color] duration-150 placeholder:text-ink-muted/70 hover:border-line-strong focus:border-primary-600 focus:bg-surface focus:outline-none focus:ring-[3px] focus:ring-primary-600/25 aria-[invalid=true]:border-danger-600 aria-[invalid=true]:focus:ring-danger-600/20;
   }
   /* Disabled/busy: a muted blue that keeps white text at 4.72:1 (QA DEF-06). */
   .btn-primary {
@@ -1389,3 +1392,12 @@ body:has([data-testid="m-comment-dock"][data-open="1"]) .picbot-launcher {
 /* v1.49.4: a row that scrolls sideways (chips, filters) without a visible scrollbar. */
 .no-scrollbar { scrollbar-width: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* v1.54.0 (owner): the New request bar stays put under the top bar while the page scrolls. */
+.request-sticky {
+  top: calc(64px + 0.5rem);
+}
+[data-layout="mobile"] .request-sticky {
+  top: calc(3.5rem + env(safe-area-inset-top) + 0.25rem);
+}
+

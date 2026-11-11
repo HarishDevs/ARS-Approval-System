@@ -19,7 +19,7 @@ describe("pageForPath", () => {
     expect(pageForPath("/api/requests/42/summary.pdf")?.key).toBe("users.request");
     expect(pageForPath("/api/reports/request_register")?.key).toBe("admin.reports");
     expect(pageForPath("/users/reports/x")?.key).toBe("admin.reports");
-    expect(pageForPath("/admin/workflows/7/compare")?.key).toBe("admin.workflows");
+    expect(pageForPath("/admin/workflows/7/compare")).toBeNull(); // v1.54.0 (D-309): IT approval types are gone
     expect(pageForPath("/superadmin/settings")).toBeNull();
     expect(pageForPath("/users/requestsX")).toBeNull();
   });

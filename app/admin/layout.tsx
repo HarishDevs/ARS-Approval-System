@@ -31,7 +31,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         { href: "/admin/records/requests", label: "Approval requests", section: "Records" },
         { href: "/admin/records/tasks", label: "Tasks", section: "Records" },
         { href: "/admin/records/information", label: "Information", section: "Records" },
-        { href: "/admin/workflows", label: "Approval types & workflows", section: "Approval set-up" },
         { href: "/admin/custom-approval", label: "Custom approval", section: "Approval set-up" },
         { href: "/admin/groups", label: "Approver groups", section: "Approval set-up" },
         { href: "/admin/doa", label: "Approval authority (DoA)", section: "Approval set-up" },

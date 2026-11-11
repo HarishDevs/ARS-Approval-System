@@ -1,5 +1,5 @@
 import { expect, test, type BrowserContext } from "@playwright/test";
-import { db, sessionCookie, userIdByLogin, toReviewStep } from "./db";
+import { db, sessionCookie, userIdByLogin, toWorkflowStep } from "./db";
 
 // D-234 (UX laws): the workflow changes under real use. Default effect
 // (reporting manager first), Goal gradient (stepper), Fitts and Von
@@ -24,10 +24,12 @@ test("a custom request starts with the reporting manager as approver; the steppe
   }
   await as(context, "E2E_REQ");
   await page.goto("/users/custom");
-  await expect(page.locator("main form").getByText("Manoj Manager").first()).toBeVisible();
   await page.getByLabel("Title").fill(`UX laws chairs ${stamp}`);
   await page.getByLabel(/^Details/).fill("Four chairs for the meeting room.");
-  await toReviewStep(page);
+  // v1.54.0: the workflow is its own page (step 2).
+  await toWorkflowStep(page);
+  await expect(page.locator("main form").getByText("Manoj Manager").first()).toBeVisible();
+  await page.getByTestId("step-next").click();
   await page.getByRole("button", { name: "Submit request" }).click();
   await expect(page).toHaveURL(/\/users\/requests\/\d+\?submitted=1/);
   requestPath = new URL(page.url()).pathname;
@@ -77,6 +79,7 @@ test("Tesler: the requester raises the custom request again, approvers and detai
   await expect(page).toHaveURL(/\/users\/custom\?from=\d+/);
   await expect(page.getByTestId("raised-again")).toContainText(requestNo);
   await expect(page.getByLabel("Title")).toHaveValue(`UX laws chairs ${stamp}`);
+  await page.getByTestId("step-next").click(); // v1.54.0: the approvers are on step 2
   await expect(page.locator("main form").getByText("Manoj Manager").first()).toBeVisible();
   // The page autosaves a draft of what it was given; leave no draft behind for other tests.
   await page.goto("/users");

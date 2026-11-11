@@ -205,8 +205,8 @@ test("New request: the workflow is locked until Next; required fields show a sta
   await dropCustomDraft("E2E_REQ");
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/users/custom");
-  await expect(page.getByTestId("workflow-locked")).toBeVisible();
-  await expect(page.getByTestId("step-workflow").getByRole("button", { name: "Add a level" })).toBeDisabled();
+  // v1.54.0 (owner): one page per step: the workflow isn't shown until Next.
+  await expect(page.getByTestId("step-workflow")).toBeHidden();
   // The title's star; required fields of the form builder have one too.
   await expect(page.locator('label[for="c-title"]')).toContainText("*");
   await page.getByTestId("step-next").click();
@@ -351,9 +351,8 @@ test("New request: each level shows as a small card on top; the fixed options ar
   await cards.nth(0).click();
   await expect(page.getByTestId("workflow-level").nth(0)).toBeVisible();
   await expect(page.getByText(/set by IT/)).toHaveCount(0);
-  // Each column scrolls on its own; the page itself stays put.
-  const scrolls = await page.getByTestId("step-workflow").evaluate((element) => getComputedStyle(element).overflowY);
-  expect(scrolls).toBe("auto");
+  // v1.54.0 (owner): the steps and actions stay put while the page scrolls.
+  expect(await page.getByTestId("request-bar").evaluate((element) => getComputedStyle(element).position)).toBe("sticky");
   await dropCustomDraft("E2E_REQ");
 });
 

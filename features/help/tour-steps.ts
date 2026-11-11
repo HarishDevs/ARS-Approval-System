@@ -64,10 +64,10 @@ export const TOUR_STEPS: readonly TourStep[] = [
     id: "new-request",
     section: "Approvals",
     title: "Raise a request",
-    intro: "Request templates lists the approval types IT has set up, such as purchases or payments.",
+    intro: "Approval templates holds the approval levels you saved, so a repeat request starts with the same approvers.",
     points: [
-      "Pick a type, give it a title, fill in the form and attach files (quotes, bills, photos).",
-      "What you type is saved as a draft as you go.",
+      "New request: fill in the details, then set who approves (every level starts as Specific people), then review: it names every approver.",
+      "Save the levels of any request as a template: on the workflow step, or from a request you raised.",
       "Submit: the request gets a number and goes to its first approvers. You're told at each step.",
     ],
     path: "/users/new",

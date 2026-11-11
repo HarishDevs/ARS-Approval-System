@@ -35,7 +35,7 @@ Work through the parts **in order**. Tick each box as you go. Anything marked **
 - **Part U:** v1.21.0 to v1.39.0 (Tasks & projects, notification rules, Configuration Studio)
 - **Part V:** v1.41.0 (installable app, phone and desktop notifications, daily session, road tracker)
 - **Part W:** v1.42.0 to v1.46.0 (rule migration, Google Drive backup, security records clean-up, break-glass, origin lock tile)
-- **Part X:** v1.47.0 to v1.53.0 (meetings, deleting request files, the Projects module)
+- **Part X:** v1.47.0 to v1.54.0 (meetings, deleting request files, the Projects module, approval templates)
 
 Related: `docs/BACKUP_RESTORE_AND_ROLLBACK.md`, `docs/AUTOMATION_INVENTORY_AND_RECOVERY.md`, `docs/RECOVERY_OBJECTIVES_AND_INCIDENT_RESPONSE.md` (draft), `docs/ARCHITECTURE.md`, `docs/DATA_MODEL.md`, `docs/API_REFERENCE.md`.
 
@@ -734,7 +734,7 @@ Job step `securityRetention`, once a day. Deletes sign-in attempts, WhatsApp cod
 4. Super Admin → Automation: 21 automations, including **Security records clean-up** and **Google Drive backup copy** ("OFF" until set up is normal).
 5. The go-live list for this release is `docs/GO_LIVE_READINESS_CHECKLIST.md` (top section).
 
-## Part X: v1.47.0 to v1.53.0 (meetings, deleting request files, the Projects module)
+## Part X: v1.47.0 to v1.54.0 (meetings, deleting request files, the Projects module, approval templates)
 
 ### X1. Migrations (all run by themselves on start, in this order; additive)
 - `202611101200_task_priority_important.sql`: task priority gains IMPORTANT.
@@ -742,6 +742,7 @@ Job step `securityRetention`, once a day. Deletes sign-in attempts, WhatsApp cod
 - `202611111000_meeting_notifications.sql`: the inbox category MEETING.
 - `202611111100_meeting_on_time_ticks.sql`: the Coordinator's on-time ticks.
 - `202611111200_attachment_delete.sql` (v1.52.3): `request_attachments.deleted_at` / `deleted_by` (deleted files are kept, hidden).
+- `202611111400_approval_templates.sql` (v1.54.0): the requester's own approval templates (new table).
 - `202611111300_project_module.sql` (v1.53.0): `users.module_access` gains PROJECT; nobody gets it; new people default to `APPROVAL,TASK`.
 Each file has its rollback SQL at the top. No new environment variable, cron job or provider setting.
 

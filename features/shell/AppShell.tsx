@@ -110,7 +110,7 @@ export async function AppShell({ area, user, nav, children }: { area: AppArea; u
     { href: "/users/queue", label: "Waiting for me", group: "My approvals" },
     { href: "/users/approved-by-me", label: "Approved by me", group: "My approvals" },
     { href: "/users/collaborating", label: "Collaborating", group: "My approvals" },
-    { href: "/users/new", label: "Request templates", group: "My approvals" },
+    { href: "/users/new", label: "Approval templates", group: "My approvals" },
     { href: "/users/search", label: "Search requests", group: "My approvals" },
     { href: "/users/analytics", label: "Analytics", group: "My approvals" },
     { href: "/users/tasks/new", label: "New task", group: "Tasks" },

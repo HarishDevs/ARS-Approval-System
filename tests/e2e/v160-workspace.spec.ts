@@ -4,7 +4,7 @@ import { sessionCookie } from "./db";
 // v1.6.0 Phase 4 through the real screens: keyboard in Waiting for me,
 // the command palette, queue filters, instant read state with Undo, saved
 // view removal with Undo, and breadcrumbs. Uses the requests left waiting
-// for Harini HOD by v150.spec.ts ("E2E bulk desks").
+// for Harini HOD by v150.spec.ts ("E2E bulk lamps").
 test.describe.configure({ mode: "serial" });
 
 async function as(context: BrowserContext, loginId: string) {
@@ -48,9 +48,10 @@ test("WS-03 Ctrl+K finds a request by number and pages by name", async ({ page, 
     await page.keyboard.press("Control+k");
     await expect(box).toBeFocused({ timeout: 1000 });
   }).toPass({ timeout: 15000 });
-  await box.fill("EPR-");
-  const option = page.getByRole("option", { name: /EPR-\d{4}-000001/ });
+  await box.fill("CUS-"); // v1.54.0: every request is a custom one now
+  const option = page.getByRole("option", { name: /CUS-\d{4}-\d{6}/ }).first();
   await expect(option).toBeVisible();
+  const number = ((await option.textContent()) ?? "").match(/CUS-\d{4}-\d{6}/)?.[0] ?? "";
   await page.keyboard.press("Enter");
   await expect(page).toHaveURL(/\/users\/requests\/\d+$/);
 
@@ -64,7 +65,7 @@ test("WS-03 Ctrl+K finds a request by number and pages by name", async ({ page, 
 
   // A stranger finds nothing for the same number.
   await as(context, "E2E_STAFF");
-  const response = await page.request.get("/api/me/quick?q=EPR-");
+  const response = await page.request.get(`/api/me/quick?q=${number}`);
   expect((await response.json()).items).toEqual([]);
 });
 
@@ -74,7 +75,7 @@ test("WS-01 queue filters show as chips that can be removed", async ({ page, con
   await expect(page.getByTestId("no-results")).toContainText("No items waiting match these filters");
   await page.getByRole("link", { name: "Remove filter: Overdue" }).click();
   await expect(page).toHaveURL(/\/users\/queue$/);
-  await expect(page.getByRole("link", { name: /E2E bulk desks/ }).first()).toBeVisible();
+  await expect(page.getByRole("link", { name: /E2E bulk lamps/ }).first()).toBeVisible();
 });
 
 test("FB-03 mark all as read is instant and can be undone", async ({ page, context }) => {
@@ -114,7 +115,7 @@ test("RD-01/RD-03 the history is grouped by day, and a resubmit shows what chang
   const changes = page.getByRole("region", { name: "What changed in round 2" });
   await expect(changes).toBeVisible();
   await expect(changes).toContainText("Amount");
-  await expect(changes).toContainText("82,000");
+  await expect(changes).toContainText(/82,?000/);
   const history = page.getByRole("region", { name: "Timeline" });
   // v1.49 (owner): the latest 3 events, newest first; "Show more" opens the rest in a scrolling box.
   await expect(history.getByRole("listitem")).toHaveCount(3);
@@ -130,8 +131,8 @@ test("RD-01/RD-03 the history is grouped by day, and a resubmit shows what chang
 
 test("RD-02 an image previews inside the page; other files only download", async ({ page, context }) => {
   await as(context, "E2E_REQ");
-  await page.goto("/users/requests?q=desks");
-  await page.getByRole("link", { name: "E2E bulk desks" }).first().click();
+  await page.goto("/users/requests?q=lamps");
+  await page.getByRole("link", { name: "E2E bulk lamps" }).first().click();
   await page.getByLabel("Choose files to attach").setInputFiles([
     { name: "site-photo.png", mimeType: "image/png", buffer: PNG },
     { name: "notes.txt", mimeType: "text/plain", buffer: Buffer.from("plain notes") },

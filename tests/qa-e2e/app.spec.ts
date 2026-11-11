@@ -2,7 +2,7 @@ import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { expect, test, type Page } from "@playwright/test";
 import { E2E_ENV } from "../../playwright.config";
 import { as, count, sql } from "../qa-loaders/helpers";
-import { sessionCookie } from "../e2e/db";
+import { purchaseTemplateId, raisePurchase, sessionCookie } from "../e2e/db";
 
 // End-to-end QA suite (QA session 14). Every title starts with its test id;
 // every test asserts the required behaviour. Measurements go to
@@ -17,14 +17,10 @@ test.beforeEach(({}, info) => {
   if (!info.title.startsWith("QA-SETUP")) stamp = JSON.parse(readFileSync(STATE, "utf8")).stamp;
 });
 
-async function raise(page: Page, title: string, amount = "50,000"): Promise<{ path: string; id: number }> {
-  await page.goto("/users/new");
-  await page.getByRole("link", { name: /QA E2E Type/ }).click();
-  await page.getByLabel("Title").fill(title);
-  await page.getByLabel(/Amount/).fill(amount);
-  await page.getByRole("button", { name: "Submit request" }).click();
-  await expect(page).toHaveURL(/\/users\/requests\/\d+\?submitted=1/, { timeout: 15_000 });
-  const path = new URL(page.url()).pathname;
+// v1.54.0 (D-309): IT approval types are gone; requests are raised from the
+// requester's own approval template (manager, then HOD).
+async function raise(page: Page, title: string): Promise<{ path: string; id: number }> {
+  const path = await raisePurchase(page, title);
   return { path, id: Number(path.split("/").pop()) };
 }
 
@@ -34,17 +30,8 @@ async function decide(page: Page, path: string, button: string, comment?: string
   await page.getByRole("button", { name: button, exact: true }).click();
 }
 
-test("QA-SETUP publish the default type (DoA: manager, HOD, senior above ₹10 lakh)", async ({ page, context }) => {
-  await as(context, "E2E_ADMIN");
-  await page.goto("/admin/workflows/new");
-  await page.getByLabel("Name", { exact: true }).fill("QA E2E Type");
-  await page.getByLabel("Code").fill("QA_E2E");
-  await page.getByLabel("Number prefix").fill("QAE");
-  await page.getByRole("button", { name: "Create workflow (as draft)" }).click();
-  await expect(page).toHaveURL(/\/admin\/workflows\/\d+\?created=1/);
-  await page.getByRole("button", { name: "Publish version 1" }).click();
-  await page.getByRole("button", { name: "Yes, publish" }).click();
-  await expect(page.getByText("Live", { exact: true })).toBeVisible();
+test("QA-SETUP the requester's approval template (manager, then HOD)", async () => {
+  await purchaseTemplateId();
   writeFileSync(STATE, JSON.stringify({ stamp }));
 });
 
@@ -221,16 +208,7 @@ test("QA-AZ-03 a decision replayed by someone who isn't the approver is refused"
 });
 
 // ---- Business rules -------------------------------------------------------------------------
-test("QA-BL-01 DoA routing: ₹50,000 needs manager + HOD; ₹15,00,000 adds the senior level", async ({ page, context }) => {
-  await as(context, "E2E_REQ");
-  const small = await raise(page, `QA DoA small ${stamp}`, "50,000");
-  const smallText = await page.locator("main").innerText();
-  const large = await raise(page, `QA DoA large ${stamp}`, "15,00,000");
-  const largeText = await page.locator("main").innerText();
-  note("QA-BL-01", { smallSeniorSkipped: /Senior approval[\s\S]{0,80}Not needed at this amount/.test(smallText), largeSeniorNeeded: !/Senior approval[\s\S]{0,80}Not needed at this amount/.test(largeText), small: small.id, large: large.id });
-  expect(smallText).toMatch(/Senior approval[\s\S]{0,80}Not needed at this amount \(DoA\)/);
-  expect(largeText).not.toMatch(/Senior approval[\s\S]{0,80}Not needed at this amount/);
-});
+// QA-BL-01 (DoA routing by amount) was removed in v1.54.0: DoA matrices belonged to IT approval types (D-309).
 
 test("QA-BL-02 hold → resume → approve by both levels → Approved; audit and timeline recorded", async ({ page, context }) => {
   await as(context, "E2E_REQ");
@@ -489,7 +467,7 @@ test("QA-A11Y-01 every form control has a name; one h1; page language set; image
   await page.goto("/login");
   await check("/login");
   await as(context, "E2E_ADMIN");
-  for (const url of ["/users", "/users/new", "/users/custom", "/admin/workflows/new", "/admin/import", "/admin/dashboards/utilisation", "/admin/organisation"]) {
+  for (const url of ["/users", "/users/new", "/users/custom", "/admin/import", "/admin/dashboards/utilisation", "/admin/organisation"]) {
     await page.goto(url);
     await check(url);
   }
@@ -526,7 +504,7 @@ test("QA-UI-01 phone width: key pages have no sideways scrolling", async ({ page
   await page.setViewportSize({ width: 375, height: 800 });
   await as(context, "E2E_ADMIN");
   const results: Record<string, boolean> = {};
-  for (const url of ["/users", "/users/new", "/users/requests", "/admin", "/admin/dashboards/utilisation", "/admin/import", "/admin/workflows/new"]) {
+  for (const url of ["/users", "/users/new", "/users/requests", "/admin", "/admin/dashboards/utilisation", "/admin/import"]) {
     await page.goto(url);
     results[url] = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
   }

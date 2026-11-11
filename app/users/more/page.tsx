@@ -87,7 +87,7 @@ export default async function MorePage() {
       title: "Tools",
       entries: pick([
         open("/users/search") && { href: "/users/search", label: "Search", icon: Search },
-        has("/users/new") && { href: "/users/new", label: "Request templates", icon: FileStack },
+        has("/users/new") && { href: "/users/new", label: "Approval templates", icon: FileStack },
         has("/users/work/projects") && { href: "/users/work/projects?show=templates", label: "Project templates", icon: Layers },
         has("/users/information/sent") && { href: "/users/information/sent", label: "Information sent by me", icon: Send },
       ]),

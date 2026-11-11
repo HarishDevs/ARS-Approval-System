@@ -19,7 +19,6 @@ export default async function AdminHome() {
   const [c, taskTypes, infoTypes] = await Promise.all([counts(), listModuleTypes("TASK"), listModuleTypes("INFO")]);
   const live = (types: { active: boolean; liveVersion: number | null }[]) => types.filter((type) => type.active && type.liveVersion !== null).length;
   const modules = [
-    { title: "Approval types & workflows", href: "/admin/workflows", stat: `${n(c.live_types)} live`, extra: Number(c.drafts) ? `${n(c.drafts)} with a draft` : null, body: "Forms and levels for each predefined approval: sequential, parallel, any-one, any-N and choices, tested before publishing." },
     { title: "Approval authority (DoA)", href: "/admin/doa", stat: "Matrix view", extra: null, body: "Which levels each amount needs, read straight from every live approval type's DoA matrix." },
     { title: "Task types", href: "/admin/task-types", stat: `${n(live(taskTypes))} live`, extra: null, body: "The kinds of task people can create: form, who may create and be assigned, steps, completion evidence and reminders." },
     { title: "Information types", href: "/admin/information-types", stat: `${n(live(infoTypes))} live`, extra: null, body: "The kinds of information people can send: form, recipients, acknowledgement, expiry and reminders." },

@@ -1,8 +1,9 @@
 import { expect, test, type BrowserContext, type Page } from "@playwright/test";
-import { dropCustomDraft, sessionCookie } from "./db";
+import { dropCustomDraft, raisePurchase, sessionCookie, toReviewStep } from "./db";
 
-// v1.5.0 (owner's development spec) through the real screens. Uses the
-// "E2E Purchase" type (manager → HOD) published by approval-flow.spec.ts.
+// v1.5.0 (owner's development spec) through the real screens. v1.54.0
+// (D-309): requests are raised from the requester's "E2E Purchase" approval
+// template (manager → HOD); drafts belong to New request.
 test.describe.configure({ mode: "serial" });
 
 async function as(context: BrowserContext, loginId: string) {
@@ -11,21 +12,15 @@ async function as(context: BrowserContext, loginId: string) {
 }
 
 async function openPurchaseForm(page: Page) {
-  await page.goto("/users/new");
-  await page.getByRole("link", { name: /E2E Purchase/ }).click();
+  await dropCustomDraft("E2E_REQ");
+  await page.goto("/users/custom");
   await expect(page.getByLabel("Title")).toBeVisible();
 }
 
-async function raise(page: Page, title: string): Promise<string> {
-  await openPurchaseForm(page);
-  await page.getByLabel("Title").fill(title);
-  await page.getByLabel(/Amount/).fill("12,000");
-  await page.getByRole("button", { name: "Submit request" }).click();
-  await expect(page).toHaveURL(/\/users\/requests\/\d+\?submitted=1/);
-  return new URL(page.url()).pathname;
-}
+const raise = raisePurchase;
 
-const bulkTitles = ["E2E bulk chairs", "E2E bulk desks"];
+// v1.54.0: the third (from the two-level template) stays waiting for the HOD for later files (v160-workspace, the workload).
+const bulkTitles = ["E2E bulk chairs", "E2E bulk desks", "E2E bulk lamps"];
 let bulkPaths: string[] = [];
 
 test("#3 a draft is saved as you type, restored, and discarded", async ({ page, context }) => {
@@ -41,7 +36,7 @@ test("#3 a draft is saved as you type, restored, and discarded", async ({ page, 
   await expect(page.getByLabel("Title")).toHaveValue("E2E draft: office chairs");
 
   await page.getByRole("button", { name: "Discard draft" }).click();
-  await page.getByRole("button", { name: "Yes, discard" }).click();
+  await page.getByRole("button", { name: "Yes, reset" }).click();
   // The form reloads empty once the draft is gone.
   await expect(page.getByText(/Restored your draft/)).toHaveCount(0);
   await expect(page.getByLabel("Title")).toHaveValue("");
@@ -54,21 +49,21 @@ test("#3 submitting removes the draft", async ({ page, context }) => {
   await openPurchaseForm(page);
   await page.getByLabel("Title").fill(bulkTitles[0]!);
   await expect(page.getByText(/Draft saved/)).toBeVisible();
-  await page.getByLabel(/Amount/).fill("12,000");
-  await page.getByRole("button", { name: "Submit request" }).click();
+  await toReviewStep(page);
+  await page.getByTestId("action-bar").getByRole("button", { name: "Submit request" }).click();
   await expect(page).toHaveURL(/\/users\/requests\/\d+\?submitted=1/);
   bulkPaths = [new URL(page.url()).pathname];
-  await dropCustomDraft("E2E_REQ"); // another file's New request draft isn't this one
   await page.goto("/users?home=approvals");
   // D-265: the Your drafts card is always there; the submitted one isn't in it.
   await expect(page.getByRole("region", { name: "Your drafts" }).getByRole("link", { name: new RegExp(bulkTitles[0]!) })).toHaveCount(0);
   bulkPaths.push(await raise(page, bulkTitles[1]!));
+  bulkPaths.push(await raise(page, bulkTitles[2]!));
 });
 
 test("#4 search finds what you can see, not what you can't", async ({ page, context }) => {
   await as(context, "E2E_REQ");
   await page.goto("/users/search?q=E2E+bulk");
-  await expect(page.getByText("2 requests")).toBeVisible();
+  await expect(page.getByText("3 requests")).toBeVisible();
   await as(context, "E2E_STAFF");
   await page.goto("/users/search?q=E2E+bulk");
   await expect(page.getByText("No requests match.")).toBeVisible();
@@ -92,19 +87,20 @@ test("#7 the manager approves two at once after reviewing them", async ({ page, 
   await page.goto("/users/queue");
   const bulk = page.getByRole("region", { name: "Approve several at once" });
   for (const title of bulkTitles) await bulk.getByRole("checkbox", { name: new RegExp(title) }).check();
-  await bulk.getByRole("button", { name: /Review 2 approvals/ }).click();
+  await bulk.getByRole("button", { name: /Review 3 approvals/ }).click();
   await expect(page.getByRole("alertdialog", { name: "Confirm approvals" })).toContainText(bulkTitles[0]!);
-  await page.getByRole("button", { name: "Yes, approve 2" }).click();
-  await expect(page.getByText("Approved 2.")).toBeVisible();
-  await expect(page.getByRole("list", { name: "Results" }).getByText(/approved/)).toHaveCount(2);
+  await page.getByRole("button", { name: "Yes, approve 3" }).click();
+  await expect(page.getByText("Approved 3.")).toBeVisible();
+  await expect(page.getByRole("list", { name: "Results" }).getByText(/approved/)).toHaveCount(3);
 });
 
 test("#5 on a phone the HOD finds it as a card and approves it", async ({ page, context }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await as(context, "E2E_HOD");
   await page.goto("/users/queue");
-  await page.getByRole("link", { name: bulkTitles[0]! }).first().click();
-  await expect(page).toHaveURL(new RegExp(`${bulkPaths[0]}$`));
+  // v1.54.0: the second one came from the two-level template (the first, from plain New request, ended with the manager).
+  await page.getByRole("link", { name: bulkTitles[1]! }).first().click();
+  await expect(page).toHaveURL(new RegExp(`${bulkPaths[1]}$`));
   // RA-02: the phone decision bar opens a drawer with the comment and that one action.
   await page.getByRole("region", { name: "Your decision" }).getByRole("button", { name: "Approve" }).click();
   const drawer = page.getByRole("dialog", { name: "Approve" });

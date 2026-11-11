@@ -1003,6 +1003,9 @@ Times are stored in UTC (`DATETIME`, set by `CURRENT_TIMESTAMP` or the app). Ind
 - Form JSON (`workflow_versions.form_json`, `module_type_versions.form_json`, `custom_approval_settings.form_json`): choice fields (CHOICE, RADIO, MULTI_CHOICE) may carry `optionColors`: `{ "<option>": "red" | "orange" | "yellow" | "green" | "teal" | "blue" | "purple" | "pink" | "grey" }`.
 - A request's priority is read from `approval_requests.form_data_json` at the key `priority` (case-insensitive) when its form version has a choice field with that key; nothing is stored separately.
 
+## v1.54.0: approval templates (migration 202611111400_approval_templates)
+- `approval_templates` (user_id, name unique per person, `spec_json` = `{"stages": [...]}` the levels as New request builds them, timestamps). Private to the person; at most 100 each. Never holds form values or files. The old `request_templates` (personal templates of IT approval types) is no longer used and is left in place.
+
 ## v1.53.0: the Projects module (migration 202611111300_project_module)
 - `users.module_access` gains `PROJECT` (separate from `TASK`); nobody gets it (released later). The column default becomes `APPROVAL,TASK` (new people).
 

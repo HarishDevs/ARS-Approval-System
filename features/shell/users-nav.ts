@@ -20,7 +20,7 @@ export async function usersNav(user: { roles: readonly string[] }): Promise<NavI
     { href: "/users/queue", label: "Waiting for me", section: "My Approvals" },
     { href: "/users/approved-by-me", label: "Approved by me", section: "My Approvals" },
     { href: "/users/collaborating", label: "Collaborating", section: "My Approvals" },
-    { href: "/users/new", label: "Request templates", section: "My Approvals" },
+    { href: "/users/new", label: "Approval templates", section: "My Approvals" },
     ...(features.tasks
       ? [
           // D-206 (owner): New task first. D-215: My tasks opens My Tasks (its

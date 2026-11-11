@@ -100,3 +100,38 @@ export async function dropCustomDraft(loginId: string): Promise<void> {
 export function phoneLayoutCookie(): { name: string; value: string; domain: string; path: string } {
   return { name: "ars_layout", value: "mobile", domain: "localhost", path: "/" };
 }
+
+// v1.54.0 (D-309): IT approval types are gone; the scenarios raise their
+// two-level purchase (the requester's manager, then the department HOD) from
+// an approval template the requester saved, as a person would.
+export async function purchaseTemplateId(loginId = "E2E_REQ"): Promise<number> {
+  const conn = await db();
+  try {
+    const [rows] = await conn.query<import("mysql2/promise").RowDataPacket[]>("SELECT id, login_id FROM users WHERE login_id IN (?, 'E2E_MGR', 'E2E_HOD')", [loginId]);
+    const idOf = (login: string) => Number(rows.find((row) => row.login_id === login)?.id);
+    const stages = [
+      { kind: "STEP", step: { id: "mgr", label: "Manager", approvers: { kind: "PEOPLE", userIds: [idOf("E2E_MGR")] }, rule: "ALL" } },
+      { kind: "STEP", step: { id: "hod", label: "HOD", approvers: { kind: "PEOPLE", userIds: [idOf("E2E_HOD")] }, rule: "ALL" } },
+    ];
+    await conn.query(
+      "INSERT INTO approval_templates (user_id, name, spec_json) VALUES (?, 'E2E Purchase', ?) ON DUPLICATE KEY UPDATE spec_json = VALUES(spec_json)",
+      [idOf(loginId), JSON.stringify({ stages })],
+    );
+    const [found] = await conn.query<import("mysql2/promise").RowDataPacket[]>("SELECT id FROM approval_templates WHERE user_id = ? AND name = 'E2E Purchase'", [idOf(loginId)]);
+    return Number(found[0]!.id);
+  } finally {
+    await conn.end();
+  }
+}
+
+// Raises the two-level purchase from the template: title, any required
+// field, the levels as saved, then Submit. Returns the request's address.
+export async function raisePurchase(page: import("@playwright/test").Page, title: string, amount?: string): Promise<string> {
+  await page.goto(`/users/custom?template=${await purchaseTemplateId()}`);
+  await page.locator("#c-title").fill(title);
+  if (amount) await page.getByTestId("step-details").getByLabel(/Amount/).fill(amount);
+  await toReviewStep(page);
+  await page.getByTestId("action-bar").getByRole("button", { name: "Submit request" }).click();
+  await page.waitForURL(/\/users\/requests\/\d+\?submitted=1/);
+  return new URL(page.url()).pathname;
+}

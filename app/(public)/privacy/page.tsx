@@ -24,7 +24,7 @@ export const metadata: Metadata = {
 // request's background work step may read that request.
 // v1.46.0 (D-277, D-278): the encrypted backup copy may go to an ARS Google
 // Drive folder; security records are deleted after 90 days.
-const PRIVACY_EFFECTIVE = "11 November 2026";
+const PRIVACY_EFFECTIVE = "12 November 2026";
 
 export default function PrivacyPage() {
   return (
@@ -54,7 +54,7 @@ export default function PrivacyPage() {
             <strong>Profile</strong> details people add themselves: a profile photo and a short &ldquo;About me&rdquo;, shown to colleagues on their profile card.
           </li>
           <li>
-            <strong>Preferences</strong>: which notifications reach a person in the app, by email and on WhatsApp, quiet hours (Do not disturb), the screen theme and view, saved searches and views.
+            <strong>Preferences</strong>: which notifications reach a person in the app, by email and on WhatsApp, quiet hours (Do not disturb), the screen theme and view, saved searches and views, and the approval templates a person saves (a name and the approval levels and approvers they chose; never the request&apos;s details or files), seen only by that person.
           </li>
           <li>
             <strong>AI Assistant (Pico Bot) conversations</strong>, only for people IT has given access: the questions they ask and the answers, kept for the period IT sets.

@@ -8,12 +8,15 @@ import { linkFollowUp } from "@/server/approvals/consult";
 import { followUpSource } from "@/server/approvals/follow-up";
 import { cleanExpiredReason, expiredReasonError } from "@/server/approvals/expiry-rules";
 import { assessReadiness } from "@/server/approvals/readiness";
+import { previewRoute, type StepPreview } from "@/server/approvals/route-preview";
+import { loadDirectorySnapshot, toDirectory } from "@/lib/db/repositories/directory.repository";
+import type { BuilderStage } from "@/server/workflows/builder";
 import { amendmentPlan, amendmentTitle, mergeAmendmentFields, submitAmendment } from "@/server/approvals/amendments";
 import { findPublishedVersion, findWorkflow } from "@/lib/db/repositories/approvals.repository";
 import { addAttachments, deleteAttachment, filesFrom, prepareFiles } from "@/server/attachments/service";
 import { existingFieldCounts, prepareFieldFiles, reportedFieldCounts, saveFieldFiles } from "@/server/attachments/field-files";
 import { addCollaborators, collaboratorIdsFrom } from "@/server/approvals/collaborators";
-import { findRequest, findWorkflowVersion } from "@/lib/db/repositories/approvals.repository";
+import { findRequest, findWorkflowVersion, userNames } from "@/lib/db/repositories/approvals.repository";
 import { logError } from "@/lib/logging/logger";
 import { isStorageError, reportStorageFailure, STORAGE_USER_MESSAGE } from "@/server/attachments/storage";
 import { deleteDraft } from "@/lib/db/repositories/drafts.repository";
@@ -488,3 +491,29 @@ export async function checkReadinessAction(_previous: ActionResult | null, formD
     return { ok: false, message: "The check couldn't run. You can still submit; the server checks everything again." };
   }
 }
+
+// v1.54.0 (owner): the review step names who each level goes to. Read only;
+// the server resolves again on submit.
+export async function previewRouteAction(specJson: string): Promise<{ ok: true; steps: Record<string, StepPreview> } | { ok: false }> {
+  const me = await actor();
+  if (!me) return { ok: false };
+  if ((await hitRateLimit(`route-preview:${me.id}`, 60).catch(() => 0)) > 60) return { ok: false };
+  try {
+    const raw = JSON.parse(String(specJson ?? "").slice(0, 200_000)) as { stages?: unknown };
+    const stages = Array.isArray(raw?.stages) ? (raw.stages as BuilderStage[]) : [];
+    const snapshot = await loadDirectorySnapshot();
+    const directory = toDirectory(snapshot);
+    const ids = new Set<number>();
+    const first = previewRoute(stages, me.id, directory, (id) => {
+      ids.add(id);
+      return String(id);
+    });
+    const names = await userNames([...ids]);
+    const named = Object.fromEntries(Object.entries(first).map(([key, value]) => [key, { ...value, names: value.names.map((id) => names.get(Number(id)) ?? `User #${id}`) }]));
+    return { ok: true, steps: named };
+  } catch (error) {
+    logError("previewRouteAction failed", error);
+    return { ok: false };
+  }
+}
+

@@ -45,7 +45,7 @@ test("D-210: switch to Classic; Gateway, module menu, page tabs, letters and Esc
   await expect(page).toHaveURL(/\/users\/menu\/approvals$/);
   // Page 3 of the sketch: the module name, its pages as tabs, its boxes.
   await expect(page.getByRole("heading", { level: 1, name: "Approval Management" })).toBeVisible();
-  await expect(page.getByTestId("classic-tabs").getByRole("link")).toHaveText([/New request/, /My pending requests/, /My approved requests/, /Waiting for me/, /Approved by me/, /Collaborating/, /Request templates/]);
+  await expect(page.getByTestId("classic-tabs").getByRole("link")).toHaveText([/New request/, /My pending requests/, /My approved requests/, /Waiting for me/, /Approved by me/, /Collaborating/, /Approval templates/]);
   await expect(page.getByTestId("module-menu")).toHaveCount(0);
   await expect(page.getByTestId("classic-boxes")).toContainText("Waiting for me");
   await page.screenshot({ path: "test-results/classic-module.png", fullPage: true });

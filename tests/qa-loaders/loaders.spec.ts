@@ -1,5 +1,6 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
+import { purchaseTemplateId, raisePurchase, toReviewStep } from "../e2e/db";
 import { as, busySeen, clearIntercepts, watchBusy, contrast, count, crashed, delayNavigations, interceptActions, record, sql } from "./helpers";
 
 // Loader and loading-state audit (QA session 13), against a production build
@@ -18,30 +19,14 @@ test.beforeEach(({}, testInfo) => {
   ({ requestPath, stamp } = state());
 });
 
-async function raise(page: Page, title: string, amount = "50,000"): Promise<string> {
-  await page.goto("/users/new");
-  await page.getByRole("link", { name: /QA Loader Type/ }).click();
-  await page.getByLabel("Title").fill(title);
-  await page.getByLabel(/Amount/).fill(amount);
-  await page.getByRole("button", { name: "Submit request" }).click();
-  await expect(page).toHaveURL(/\/users\/requests\/\d+\?submitted=1/);
-  return new URL(page.url()).pathname;
-}
+// v1.54.0 (D-309): raised from the requester's approval template.
+const raise = (page: Page, title: string) => raisePurchase(page, title);
 
 const commentBox = (page: Page) => page.getByLabel("Add a comment");
 const postButton = (page: Page) => page.getByRole("button", { name: /Post comment|Working…/ });
 
-test("setup: IT publishes a type; a requester raises one request", async ({ page, context }) => {
-  await as(context, "E2E_ADMIN");
-  await page.goto("/admin/workflows/new");
-  await page.getByLabel("Name", { exact: true }).fill("QA Loader Type");
-  await page.getByLabel("Code").fill("QA_LOADER");
-  await page.getByLabel("Number prefix").fill("QAL");
-  await page.getByRole("button", { name: "Create workflow (as draft)" }).click();
-  await expect(page).toHaveURL(/\/admin\/workflows\/\d+\?created=1/);
-  await page.getByRole("button", { name: "Publish version 1" }).click();
-  await page.getByRole("button", { name: "Yes, publish" }).click();
-  await expect(page.getByText("Live", { exact: true })).toBeVisible();
+test("setup: the requester raises one request from their approval template", async ({ page, context }) => {
+  await purchaseTemplateId();
   await as(context, "E2E_REQ");
   requestPath = await raise(page, `QA base ${stamp}`);
   writeFileSync(STATE, JSON.stringify({ requestPath, stamp }));
@@ -221,11 +206,10 @@ test("TC-011 TC-016 TC-077 Save shows its own loader, then Saved; other Save but
 
 test("TC-012 TC-013 TC-014 double and triple clicks on Submit create one request", async ({ page, context }) => {
   await as(context, "E2E_REQ");
-  await page.goto("/users/new");
-  await page.getByRole("link", { name: /QA Loader Type/ }).click();
+  await page.goto(`/users/custom?template=${await purchaseTemplateId()}`);
   const title = `QA double ${stamp}`;
   await page.getByLabel("Title").fill(title);
-  await page.getByLabel(/Amount/).fill("10,000");
+  await toReviewStep(page);
   let posts = 0;
   page.on("request", (request) => {
     if (request.method() === "POST" && request.headers()["next-action"]) posts += 1;
@@ -242,16 +226,16 @@ test("TC-012 TC-013 TC-014 double and triple clicks on Submit create one request
 
 test("TC-015 an invalid form shows field errors and ends its loader", async ({ page, context }) => {
   await as(context, "E2E_REQ");
-  await page.goto("/users/new");
-  await page.getByRole("link", { name: /QA Loader Type/ }).click();
+  await page.goto(`/users/custom?template=${await purchaseTemplateId()}`);
   let posts = 0;
   page.on("request", (request) => {
     if (request.method() === "POST" && request.headers()["next-action"]) posts += 1;
   });
-  await page.getByRole("button", { name: "Submit request" }).click();
-  await expect(page.getByText(/Give the request a title|is required/).first()).toBeVisible();
-  await expect(page.getByRole("button", { name: "Submit request" })).toBeEnabled();
-  record("TC-015", { roundTrips: posts, note: "Validation runs on the server (one round trip, brief loader); no client-side pre-check" });
+  // v1.54.0: the form checks the required fields before it moves on.
+  await page.getByTestId("step-next").click();
+  await expect(page.getByText(/Fill in the required fields first|Give the request a title/).first()).toBeVisible();
+  await expect(page.getByTestId("step-next")).toBeEnabled();
+  record("TC-015", { roundTrips: posts, note: "Required fields are checked in the page before Next; the server checks everything again on submit" });
 });
 
 test("TC-017 TC-029 a server error stops the loader and shows an error", async ({ page, context }) => {
@@ -754,11 +738,10 @@ test("TC-072 TC-073 closing or refreshing during a submit never makes two reques
   const results: Record<string, number> = {};
   for (const how of ["refresh", "close"] as const) {
     const work = how === "close" ? await context.newPage() : page;
-    await work.goto("/users/new");
-    await work.getByRole("link", { name: /QA Loader Type/ }).click();
+    await work.goto(`/users/custom?template=${await purchaseTemplateId()}`);
     const title = `QA ${how} ${stamp}`;
     await work.getByLabel("Title").fill(title);
-    await work.getByLabel(/Amount/).fill("5,000");
+    await toReviewStep(work);
     await interceptActions(work, { delayMs: 1500, times: 1 });
     await work.getByRole("button", { name: "Submit request" }).click();
     await work.waitForTimeout(300);

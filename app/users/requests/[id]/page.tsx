@@ -34,7 +34,6 @@ import {
 } from "@/features/requests/ActionPanel";
 import { Advice, Links } from "@/features/requests/Collaboration";
 import { STATUS_WORD } from "@/features/ui/labels";
-import { PromoteCustomForm } from "@/features/admin/PromoteCustomForm";
 import { listApproverOptions } from "@/lib/db/repositories/approvers.repository";
 import { RequestForm } from "@/features/requests/RequestForm";
 import { CommentForm } from "@/features/requests/Discussion";
@@ -132,17 +131,12 @@ export default async function RequestPage({
   const raisedAt = road?.road.checkpoints[0]?.finishedAt ?? null;
   // v1.49 (owner's layout): the Approval levels figures and the footer's actions.
   const figures = processFigures({ status: view.status, road: road?.road ?? null, tracker: view.tracker, timeline: view.timeline, raisedAt });
-  const isAdmin = user.roles.includes("IT_ADMIN") || user.roles.includes("SUPER_ADMIN");
   const isSuperAdmin = user.roles.includes("SUPER_ADMIN");
-  const raiseAgainHref =
-    view.requesterId === user.id
-      ? view.isCustom
-        ? `/users/custom?from=${view.id}` // D-234: a custom request can be raised again too (approvers included).
-        : templatesOn && view.workflowActive
-          ? `/users/new/${view.workflowId}?from=${view.id}`
-          : null
-      : null;
-  const reuse: "levels" | "template" | null = view.isCustom && isAdmin ? "levels" : templatesOn && view.requesterId === user.id && !view.isCustom && view.workflowActive ? "template" : null;
+  // D-234: a custom request can be raised again (approvers included). v1.54.0
+  // (D-309): IT's approval types are gone, so only custom requests offer it.
+  const raiseAgainHref = view.requesterId === user.id && view.isCustom ? `/users/custom?from=${view.id}` : null;
+  // v1.54.0 (D-309): the requester saves this request's levels as their own approval template.
+  const reuse: "template" | null = templatesOn && view.requesterId === user.id && view.isCustom ? "template" : null;
 
   // v1.52.3 (owner): a file can be deleted until the first approval, or while changes are asked for.
   const anyApproval = await hasAnyApproval(view.id).catch(() => true);
@@ -554,24 +548,12 @@ export default async function RequestPage({
             <RequestTimeline entries={view.timeline} />
           </SectionBoundary>
         </div>
-        {reuse === "levels" && (
-          <div className="order-3 min-w-0 md:col-span-2 xl:col-span-1">
-            <section className="card h-full px-5 py-4" aria-labelledby="reuse-levels">
-              <h2 id="reuse-levels" className="mb-3 flex items-center gap-2 font-semibold">
-                <Copy aria-hidden="true" className="h-4 w-4 shrink-0 text-primary-600" />
-                Reuse these levels
-                <Hint text="Copy these levels and form into a new draft approval type." align="start" />
-              </h2>
-              <PromoteCustomForm requestId={view.id} title={view.title} />
-            </section>
-          </div>
-        )}
         {reuse === "template" && (
           <div className="order-3 min-w-0 md:col-span-2 xl:col-span-1">
             <section className="card h-full px-5 py-4" aria-labelledby="reuse-request">
               <h2 id="reuse-request" className="mb-3 flex items-center gap-2 font-semibold">
                 <Copy aria-hidden="true" className="h-4 w-4 shrink-0 text-primary-600" />
-                Reuse this request
+                Save as an approval template
               </h2>
               <SaveTemplateForm requestId={view.id} />
             </section>
