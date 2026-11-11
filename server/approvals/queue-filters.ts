@@ -119,7 +119,7 @@ export function queueFilterSql(filter: QueueFilter, userId?: number): { where: s
     where.push("t.due_at IS NOT NULL AND t.due_at >= CURRENT_TIMESTAMP AND t.due_at < DATE_ADD(CURRENT_TIMESTAMP, INTERVAL ? DAY)");
     params.push(filter.dueWithinDays);
   }
-  if (filter.hasFiles === true || filter.hasFiles === false) where.push(`${filter.hasFiles ? "" : "NOT "}EXISTS (SELECT 1 FROM request_attachments qa WHERE qa.request_id = r.id)`);
+  if (filter.hasFiles === true || filter.hasFiles === false) where.push(`${filter.hasFiles ? "" : "NOT "}EXISTS (SELECT 1 FROM request_attachments qa WHERE qa.deleted_at IS NULL AND qa.request_id = r.id)`);
   for (const [value, sql] of [
     [filter.raisedFrom, `${INDIA("r.submitted_at")} >= ?`],
     [filter.raisedTo, `${INDIA("r.submitted_at")} <= ?`],

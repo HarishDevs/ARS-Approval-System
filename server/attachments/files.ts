@@ -143,3 +143,16 @@ export function formatSize(bytes: number): string {
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
+
+// v1.52.3 (owner): "attachments can be deleted until the first approval;
+// after the first approval not, unless an approver asks for changes".
+// The person who added the file or the requester may delete it while the
+// request is open and either no approver has approved any level yet, or the
+// request is back with the requester for changes.
+export type AttachmentDeleteFacts = { requestStatus: string; anyApproval: boolean; actorId: number; uploadedBy: number; requesterId: number };
+export function attachmentDeleteBlock(facts: AttachmentDeleteFacts): string | null {
+  if (facts.actorId !== facts.uploadedBy && facts.actorId !== facts.requesterId) return "Only the requester or the person who added the file can delete it.";
+  if (facts.requestStatus === "CHANGES_REQUIRED") return null;
+  if (facts.requestStatus !== "IN_PROGRESS" && facts.requestStatus !== "ON_HOLD") return "Files of a closed request can't be deleted.";
+  return facts.anyApproval ? "An approver has already approved this request, so its files can't be deleted (unless changes are asked for)." : null;
+}

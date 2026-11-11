@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Fragment } from "react";
+import { ReorderHeader, type HeaderColumn } from "@/features/requests/ReorderHeader";
 import { RequestStatusPill } from "@/features/requests/StatusPill";
 import { EmptyState } from "@/features/shell/PageHeader";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
@@ -12,7 +14,55 @@ import type { ShownPriority } from "@/server/approvals/priority";
 
 // v1.47.0: `priority` (the request's Priority field, by request id) adds a
 // Priority column; pages that don't pass it show the table as before.
-export function QueueTable({ items, priority }: { items: QueueItem[]; priority?: Record<number, ShownPriority> }) {
+// v1.52.3 (owner): with `order` the columns follow the person's saved order
+// and their titles can be dragged to move them (Waiting for me).
+type QueueColumn = "priority" | "from" | "step" | "since" | "due";
+const QUEUE_HEADER: Record<QueueColumn, HeaderColumn> = {
+  priority: { key: "priority", label: "Priority" },
+  from: { key: "from", label: "From" },
+  step: { key: "step", label: "Your step" },
+  since: { key: "since", label: "Waiting since" },
+  due: { key: "due", label: "Due date" },
+};
+export function QueueTable({ items, priority, order: savedOrder }: { items: QueueItem[]; priority?: Record<number, ShownPriority>; order?: string[] }) {
+  const all: QueueColumn[] = priority ? ["priority", "from", "step", "since", "due"] : ["from", "step", "since", "due"];
+  const order: QueueColumn[] = savedOrder ? (savedOrder.filter((key): key is QueueColumn => (all as string[]).includes(key))) : all;
+  const cellFor = (item: QueueItem, column: QueueColumn): React.ReactNode => {
+    switch (column) {
+      case "priority":
+        return (
+          <td data-testid="queue-priority">
+            <PriorityPill priority={priority?.[item.requestId]} />
+          </td>
+        );
+      case "from":
+        return <td>{item.requesterName}</td>;
+      case "step":
+        return (
+          <td>
+            {item.work && <span className="mr-1.5 rounded-full bg-primary-50 px-2 py-px text-caption font-semibold text-primary-700">To do</span>}
+            {item.onHold && <span className="mr-1.5 rounded-full bg-warning-50 px-2 py-px text-caption font-semibold text-warning-600">On hold</span>}
+            {item.nodeLabel}
+            {item.forName && <p className="text-caption text-ink-muted">for {item.forName} (you&apos;re covering)</p>}
+          </td>
+        );
+      case "since":
+        return <td className="whitespace-nowrap">{formatIndiaTime(item.createdAt)}</td>;
+      case "due":
+        return (
+          <td className="whitespace-nowrap">
+            {item.dueAt ? (
+              <span className={item.overdue ? "font-semibold text-danger-600" : ""}>
+                {item.overdue ? "Overdue · " : ""}
+                {formatIndiaTime(item.dueAt)}
+              </span>
+            ) : (
+              <span className="text-ink-muted">No due date</span>
+            )}
+          </td>
+        );
+    }
+  };
   if (items.length === 0)
     return (
       <EmptyState
@@ -74,15 +124,16 @@ export function QueueTable({ items, priority }: { items: QueueItem[]; priority?:
       <div className="card hidden overflow-x-auto sm:block">
         <table className="data-table">
           <thead>
-            <tr>
-              <th>Request</th>
-              {priority && <th>Priority</th>}
-              <th>From</th>
-              <th>Your step</th>
-              <th>Waiting since</th>
-              {/* v1.49.6 (owner): "Due date", and said in words when the step has no response time. */}
-              <th>Due date</th>
-            </tr>
+            {savedOrder ? (
+              <ReorderHeader list="queue" lead="Request" columns={order.map((column) => QUEUE_HEADER[column])} />
+            ) : (
+              <tr>
+                <th>Request</th>
+                {order.map((column) => (
+                  <th key={column}>{QUEUE_HEADER[column].label}</th>
+                ))}
+              </tr>
+            )}
           </thead>
           <tbody>
             {items.map((item) => (
@@ -100,47 +151,9 @@ export function QueueTable({ items, priority }: { items: QueueItem[]; priority?:
                     {item.typeName ? ` · ${item.typeName}` : ""}
                   </p>
                 </td>
-                {priority && (
-                  <td data-testid="queue-priority">
-                    <PriorityPill priority={priority[item.requestId]} />
-                  </td>
-                )}
-                <td>{item.requesterName}</td>
-                <td>
-                  {item.work && (
-                    <span className="mr-1.5 rounded-full bg-primary-50 px-2 py-px text-caption font-semibold text-primary-700">
-                      To do
-                    </span>
-                  )}
-                  {item.onHold && (
-                    <span className="mr-1.5 rounded-full bg-warning-50 px-2 py-px text-caption font-semibold text-warning-600">
-                      On hold
-                    </span>
-                  )}
-                  {item.nodeLabel}
-                  {item.forName && (
-                    <p className="text-caption text-ink-muted">
-                      for {item.forName} (you&apos;re covering)
-                    </p>
-                  )}
-                </td>
-                <td className="whitespace-nowrap">
-                  {formatIndiaTime(item.createdAt)}
-                </td>
-                <td className="whitespace-nowrap">
-                  {item.dueAt ? (
-                    <span
-                      className={
-                        item.overdue ? "font-semibold text-danger-600" : ""
-                      }
-                    >
-                      {item.overdue ? "Overdue · " : ""}
-                      {formatIndiaTime(item.dueAt)}
-                    </span>
-                  ) : (
-                    <span className="text-ink-muted">No due date</span>
-                  )}
-                </td>
+                {order.map((column) => (
+                  <Fragment key={column}>{cellFor(item, column)}</Fragment>
+                ))}
               </tr>
             ))}
           </tbody>

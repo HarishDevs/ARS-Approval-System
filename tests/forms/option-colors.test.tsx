@@ -102,3 +102,26 @@ describe("the Priority list column", () => {
     expect(parseColumns(JSON.stringify(columnsToSave(["status", "priority"])), available)).toEqual(["status", "priority"]);
   });
 });
+
+// v1.52.3 (owner): a person's column order is kept.
+describe("column order", () => {
+  it("keeps the saved order and puts an unseen late column in its usual place", () => {
+    const available = ["status", "priority", "raised", "actions"] as const;
+    expect(parseColumns(JSON.stringify(["raised", "status", "!priority", "actions"]), available)).toEqual(["raised", "status", "actions"]);
+    expect(parseColumns(JSON.stringify(["actions", "status", "raised"]), available)).toEqual(["actions", "status", "priority", "raised"]);
+  });
+});
+
+// v1.52.3 (owner): deleting a request's files.
+describe("attachmentDeleteBlock", () => {
+  it("allows the requester or uploader before any approval, or while changes are asked; never on a closed request", async () => {
+    const { attachmentDeleteBlock } = await import("@/server/attachments/files");
+    const base = { requestStatus: "IN_PROGRESS", anyApproval: false, actorId: 1, uploadedBy: 1, requesterId: 2 };
+    expect(attachmentDeleteBlock(base)).toBeNull();
+    expect(attachmentDeleteBlock({ ...base, actorId: 2 })).toBeNull();
+    expect(attachmentDeleteBlock({ ...base, actorId: 3 })).toMatch(/requester or the person/);
+    expect(attachmentDeleteBlock({ ...base, anyApproval: true })).toMatch(/already approved/);
+    expect(attachmentDeleteBlock({ ...base, anyApproval: true, requestStatus: "CHANGES_REQUIRED" })).toBeNull();
+    expect(attachmentDeleteBlock({ ...base, requestStatus: "APPROVED" })).toMatch(/closed/);
+  });
+});

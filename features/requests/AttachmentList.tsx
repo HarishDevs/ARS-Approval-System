@@ -1,6 +1,8 @@
 "use client";
 
-import { Download, Eye, ExternalLink, FileText, Image as ImageIcon } from "lucide-react";
+import { Download, Eye, ExternalLink, FileText, Image as ImageIcon, Trash2 } from "lucide-react";
+import { deleteAttachmentAction } from "@/app/users/actions";
+import { ResultMessage, useActionForm } from "@/features/ui/form";
 import { useState } from "react";
 import { Dialog } from "@/features/ui/Dialog";
 
@@ -13,6 +15,7 @@ export interface AttachmentRow {
   size: string;
   meta: string;
   preview: "image" | "pdf" | null;
+  deletable?: boolean; // v1.52.3: until the first approval, or while changes are asked for
 }
 
 export function AttachmentList({ files }: { files: AttachmentRow[] }) {
@@ -56,6 +59,7 @@ export function AttachmentList({ files }: { files: AttachmentRow[] }) {
                   <Download aria-hidden="true" className="h-3.5 w-3.5" />
                   Download
                 </a>
+                {file.deletable && <DeleteFileButton id={file.id} name={file.name} />}
               </p>
             </div>
           </li>
@@ -71,5 +75,27 @@ export function AttachmentList({ files }: { files: AttachmentRow[] }) {
           ))}
       </Dialog>
     </>
+  );
+}
+
+// v1.52.3 (owner): delete a file before the first approval (or while the
+// request is back for changes); it asks first. The server checks the rule.
+function DeleteFileButton({ id, name }: { id: number; name: string }) {
+  const { result, pending, onSubmit, confirmBar } = useActionForm(deleteAttachmentAction, {
+    confirm: `${name} will be removed from this request. You can attach a new file afterwards.`,
+    confirmTitle: "Delete this file?",
+    confirmLabel: "Delete file",
+    confirmTone: "danger",
+  });
+  return (
+    <form onSubmit={onSubmit} className="inline">
+      <input type="hidden" name="attachmentId" value={id} />
+      <button type="submit" disabled={pending} className="inline-flex items-center gap-1 text-danger-600 hover:underline disabled:opacity-60" aria-label={`Delete ${name}`}>
+        <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
+        Delete
+      </button>
+      {result && !result.ok && <ResultMessage result={result} />}
+      {confirmBar}
+    </form>
   );
 }

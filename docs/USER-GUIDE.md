@@ -172,6 +172,10 @@ Comments on a request can't be edited or removed. To tell someone in particular,
 - **Meeting analytics** (Analytics → Meeting analytics): on time, attendance, approvals and action follow-up for the meetings your scope covers: yours, your whole team below you, the departments you head, or everything (IT; ED and MD can switch to all meetings).
 - **Who sees a meeting:** the people on it, heads of its departments (not Management-only meetings), the Management group (ED, MD) and IT.
 
+### Arranging lists and deleting files
+- **Columns:** on the request lists and Waiting for me, drag a column title to move it (or Alt+arrow on a focused title); **Columns** hides or shows them and has ↑ ↓. Saved for you.
+- **Deleting a file on a request:** possible for the requester or whoever added it until the first approval; after that only if an approver asks for changes.
+
 ### Tasks: the popup and activity
 - **Opening a task** from a list shows it in a popup with all its actions; × , Esc or a click outside closes it, **Open full page** opens its page.
 - **Comments / All activity:** Comments is the thread (reply, like, pin); All activity is the full history, oldest or newest first.

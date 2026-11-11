@@ -369,7 +369,7 @@ export function listFilterSql(f: ListFilters, base: ListBase, userId = 0): { whe
     where.push(`r.status = 'IN_PROGRESS' AND ${PENDING} AND pt.due_at >= CURRENT_TIMESTAMP AND pt.due_at < DATE_ADD(CURRENT_TIMESTAMP, INTERVAL ? DAY))`);
     params.push(f.dueWithinDays);
   }
-  if (f.hasFiles !== null) where.push(`${f.hasFiles ? "" : "NOT "}EXISTS (SELECT 1 FROM request_attachments ra WHERE ra.request_id = r.id)`);
+  if (f.hasFiles !== null) where.push(`${f.hasFiles ? "" : "NOT "}EXISTS (SELECT 1 FROM request_attachments ra WHERE ra.request_id = r.id AND ra.deleted_at IS NULL)`);
   if (f.validity) where.push(VALIDITY_SQL[f.validity]);
   for (const [value, sql] of [
     [f.raisedFrom, `${INDIA("r.submitted_at")} >= ?`],

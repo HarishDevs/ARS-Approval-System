@@ -6,10 +6,10 @@ import path from "node:path";
 import { withTransaction } from "@/lib/db/transaction";
 import type { RowDataPacket } from "mysql2/promise";
 import { appendEvents, canViewRequest, findRequest, isParticipant, lockRequest, type RequestRecord } from "@/lib/db/repositories/approvals.repository";
-import { findAttachment, insertAttachment, type AttachmentRecord } from "@/lib/db/repositories/attachments.repository";
+import { findAttachment, hasAnyApproval, insertAttachment, markAttachmentDeleted, type AttachmentRecord } from "@/lib/db/repositories/attachments.repository";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { getEnv } from "@/config/environment";
-import { checkCount, checkFile, SNIFF_BYTES } from "@/server/attachments/files";
+import { attachmentDeleteBlock, checkCount, checkFile, SNIFF_BYTES } from "@/server/attachments/files";
 import type { Actor, Result } from "@/server/approvals/service";
 
 // Attachments on requests (S6-05, F-18, D-072). Files are checked before
@@ -88,7 +88,7 @@ export async function addAttachments(
     const outcome = await withTransaction(async (connection) => {
       const locked = await lockRequest(requestId, connection);
       if (!locked || !OPEN.has(locked.status)) throw new AttachError("CLOSED", "Files can only be added while the request is open.");
-      const [existing] = await connection.query<(RowDataPacket & { sha256: string })[]>("SELECT sha256 FROM request_attachments WHERE request_id = ?", [requestId]);
+      const [existing] = await connection.query<(RowDataPacket & { sha256: string })[]>("SELECT sha256 FROM request_attachments WHERE request_id = ? AND deleted_at IS NULL", [requestId]);
       const known = new Set(existing.map((row) => row.sha256));
       const fresh: typeof hashed = [];
       const duplicates: string[] = [];
@@ -143,4 +143,24 @@ export async function openAttachment(id: number, viewer: Actor): Promise<{ recor
   const file = path.resolve(root, record.storedPath);
   if (!file.startsWith(root + path.sep)) return null;
   return { record, bytes: await readFile(file) };
+}
+
+// v1.52.3 (owner): delete a file from a request until its first approval, or
+// while the request is back with the requester for changes. The file is
+// hidden everywhere but kept, with who deleted it and when (audit).
+export async function deleteAttachment(attachmentId: number, actor: Actor): Promise<{ ok: true; value: { requestId: number; name: string } } | { ok: false; message: string }> {
+  const file = await findAttachment(attachmentId);
+  if (!file) return { ok: false, message: "Not found." };
+  const request = await findRequest(file.requestId);
+  if (!request || !(await canSeeRequest(request, actor))) return { ok: false, message: "Not found." };
+  return withTransaction(async (connection) => {
+    const locked = await lockRequest(file.requestId, connection);
+    if (!locked) return { ok: false as const, message: "Not found." };
+    const block = attachmentDeleteBlock({ requestStatus: locked.status, anyApproval: await hasAnyApproval(locked.id, connection), actorId: actor.id, uploadedBy: file.uploadedBy, requesterId: locked.requesterId });
+    if (block) return { ok: false as const, message: block };
+    if (!(await markAttachmentDeleted(file.id, actor.id, connection))) return { ok: false as const, message: "That file was already deleted." };
+    await appendEvents(locked.id, [{ type: "ATTACHMENT_DELETED", actorId: actor.id, name: file.name }], actor.id, connection);
+    await recordAudit({ actorUserId: actor.id, action: "REQUEST_FILE_DELETED", entityType: "REQUEST", entityId: locked.id, metadata: { attachmentId: file.id, name: file.name, sha256: file.sha256 } }, connection);
+    return { ok: true as const, value: { requestId: locked.id, name: file.name } };
+  });
 }

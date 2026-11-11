@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { Fragment } from "react";
 import { AlarmClock, Ban, CheckCircle2, ClipboardList, FileText, FolderOpen, Hourglass, Layers, PauseCircle, ShieldCheck, Undo2, UserCheck, X, XCircle, type LucideIcon } from "lucide-react";
 import { RoadMini } from "@/features/requests/RoadMini";
 import { RequestRowMenu, type RowAction } from "@/features/requests/RequestRowMenu";
 import { ColumnPicker } from "@/features/requests/ColumnPicker";
+import { ReorderHeader, type HeaderColumn } from "@/features/requests/ReorderHeader";
 import { COLUMN_LABEL, type ListColumn } from "@/server/requests/list-columns";
 import type { MiniRoad } from "@/server/approvals/road";
 import { RequestStatusPill } from "@/features/requests/StatusPill";
@@ -152,6 +154,109 @@ export function RequestListScreen({
   const shown = new Set(columns ?? available);
   const show = (column: ListColumn) => shown.has(column) && available.includes(column);
   const showRaiser = (collab || byMe) && show("raiser");
+  // v1.52.3 (owner): the shown columns in the person's own order.
+  const order: ListColumn[] = (columns ?? available).filter((column) => show(column) && (column !== "raiser" || showRaiser) && (column !== "added" || collab));
+  const HEADER: Record<ListColumn, HeaderColumn> = {
+    status: { key: "status", label: "Status" },
+    priority: { key: "priority", label: "Priority" },
+    waiting: { key: "waiting", label: approvedMine ? "Approved" : byMe ? "Your approval" : "Waiting on" },
+    raiser: { key: "raiser", label: "Raised by" },
+    raised: { key: "raised", label: "Raised" },
+    activity: { key: "activity", label: "Last activity", className: "hidden lg:table-cell" },
+    progress: { key: "progress", label: "Progress" },
+    added: { key: "added", label: "Added", className: "hidden xl:table-cell" },
+    actions: { key: "actions", label: "Actions", srOnly: true, className: "w-12" },
+    from: { key: "from", label: "From" },
+    step: { key: "step", label: "Your step" },
+    since: { key: "since", label: "Waiting since" },
+    due: { key: "due", label: "Due date" },
+  };
+  const cellFor = (item: ListedRequest, column: ListColumn): React.ReactNode => {
+    switch (column) {
+      case "status":
+        return (
+          <td>
+            <RequestStatusPill status={item.status} validUntil={item.validUntil} />
+            {item.overdue && <span className="mt-1 block text-caption font-semibold text-danger-600">Overdue</span>}
+            {item.validUntil && item.status === "APPROVED" && <span className="block text-caption text-ink-muted">valid until {day(item.validUntil)}</span>}
+          </td>
+        );
+      case "priority":
+        return (
+          <td data-testid="list-priority">
+            <PriorityPill priority={priority[item.id]} />
+          </td>
+        );
+      case "waiting":
+        return approvedMine ? (
+          <td className="text-label">
+            {item.closedAt ? day(item.closedAt) : "—"}
+            {item.approvedBy && <span className="block text-caption text-ink-muted">by {item.approvedBy}</span>}
+          </td>
+        ) : byMe ? (
+          <td className="text-label">
+            {item.myApprovedAt ? formatIndiaTime(item.myApprovedAt) : "—"}
+            {item.myStep && <span className="block text-caption text-ink-muted">{item.myStep}</span>}
+            {item.myForName && <span className="block text-caption text-ink-muted">for {item.myForName}</span>}
+          </td>
+        ) : (
+          <td className="text-label">
+            {item.pendingStep ? (
+              <>
+                {item.pendingWith && (
+                  <span className="mb-1 flex -space-x-1.5" aria-hidden="true">
+                    {item.pendingWith
+                      .split(", ")
+                      .slice(0, 3)
+                      .map((name) => (
+                        <span key={name} className="grid h-6 w-6 place-items-center rounded-full bg-primary-solid text-[10px] font-semibold text-on-solid ring-2 ring-surface">
+                          {initialsOf(name)}
+                        </span>
+                      ))}
+                  </span>
+                )}
+                {item.pendingStep}
+                <span className="block text-caption text-ink-muted">{item.pendingWith}</span>
+                {item.nextDue && (
+                  <span className={`block text-caption ${item.overdue ? "font-semibold text-danger-600" : "text-ink-muted"}`}>
+                    {item.overdue ? "Overdue since" : "Due"} {formatIndiaTime(item.nextDue)}
+                  </span>
+                )}
+              </>
+            ) : (
+              <span className="text-ink-faint">—</span>
+            )}
+          </td>
+        );
+      case "raiser":
+        return <td>{item.requesterName}</td>;
+      case "raised":
+        return (
+          <td className="whitespace-nowrap" title={formatIndiaTime(item.submittedAt)}>
+            {day(item.submittedAt)}
+          </td>
+        );
+      case "activity":
+        return <td className="hidden whitespace-nowrap lg:table-cell">{formatIndiaTime(item.updatedAt)}</td>;
+      case "progress":
+        return <td>{progress[item.id] ? <RoadMini road={progress[item.id]!} href={`/users/requests/${item.id}#levels`} /> : <span className="text-ink-faint">—</span>}</td>;
+      case "added":
+        return (
+          <td className="hidden whitespace-nowrap xl:table-cell">
+            {item.addedAt ? day(item.addedAt) : "—"}
+            <span className="block text-caption text-ink-muted">by {item.addedByName}</span>
+          </td>
+        );
+      case "actions":
+        return (
+          <td className="text-right">
+            <RequestRowMenu title={item.title} actions={rowActions(item, userId)} />
+          </td>
+        );
+      default:
+        return null;
+    }
+  };
   const tabs = tabsFor(base);
   const currentTab = tabs.find((tab) => tab.key === filters.tab);
   // v1.49.5 (owner): My approved requests has no status cards; elsewhere a tab marked card: false (Open) has none.
@@ -428,7 +533,7 @@ export function RequestListScreen({
 
       <div className="mb-3 flex flex-wrap items-center gap-2 text-label">
         <div className="order-last ml-auto">
-          <ColumnPicker list={VIEW_TARGET[base]} available={available.map((column) => ({ key: column, label: COLUMN_LABEL[column] }))} shown={available.filter((column) => show(column))} />
+          <ColumnPicker list={VIEW_TARGET[base]} available={available.map((column) => ({ key: column, label: COLUMN_LABEL[column] }))} shown={order} />
         </div>
         <p className="text-ink-muted" role="status">
           {result.total === 0 ? "No requests match." : `${result.total.toLocaleString("en-IN")} request${result.total === 1 ? "" : "s"}${result.pages > 1 ? ` · page ${result.page} of ${result.pages}` : ""}`}
@@ -505,30 +610,8 @@ export function RequestListScreen({
             <table className="data-table" data-testid="request-table">
               <caption className="sr-only">Requests</caption>
               <thead>
-                <tr>
-                  <th scope="col">Request</th>
-                  {show("status") && <th scope="col">Status</th>}
-                  {show("priority") && <th scope="col">Priority</th>}
-                  {show("waiting") && (approvedMine ? <th scope="col">Approved</th> : byMe ? <th scope="col">Your approval</th> : <th scope="col">Waiting on</th>)}
-                  {showRaiser && <th scope="col">Raised by</th>}
-                  {show("raised") && <th scope="col">Raised</th>}
-                  {show("activity") && (
-                    <th scope="col" className="hidden lg:table-cell">
-                      Last activity
-                    </th>
-                  )}
-                  {show("progress") && <th scope="col">Progress</th>}
-                  {collab && show("added") && (
-                    <th scope="col" className="hidden xl:table-cell">
-                      Added
-                    </th>
-                  )}
-                  {show("actions") && (
-                    <th scope="col" className="w-12">
-                      <span className="sr-only">Actions</span>
-                    </th>
-                  )}
-                </tr>
+                {/* v1.52.3 (owner): drag a column title to move it; the order is saved for the person. */}
+                <ReorderHeader list={VIEW_TARGET[base]} lead="Request" columns={order.map((column) => HEADER[column])} />
               </thead>
               {grouped.map((group) => (
                 <tbody key={group.key}>
@@ -558,77 +641,9 @@ export function RequestListScreen({
                           </span>
                         </div>
                       </td>
-                      {show("status") && (
-                        <td>
-                          <RequestStatusPill status={item.status} validUntil={item.validUntil} />
-                          {item.overdue && <span className="mt-1 block text-caption font-semibold text-danger-600">Overdue</span>}
-                          {item.validUntil && item.status === "APPROVED" && <span className="block text-caption text-ink-muted">valid until {day(item.validUntil)}</span>}
-                        </td>
-                      )}
-                      {show("priority") && (
-                        <td data-testid="list-priority">
-                          <PriorityPill priority={priority[item.id]} />
-                        </td>
-                      )}
-                      {!show("waiting") ? null : approvedMine ? (
-                        <td className="text-label">
-                          {item.closedAt ? day(item.closedAt) : "—"}
-                          {item.approvedBy && <span className="block text-caption text-ink-muted">by {item.approvedBy}</span>}
-                        </td>
-                      ) : byMe ? (
-                        <td className="text-label">
-                          {item.myApprovedAt ? formatIndiaTime(item.myApprovedAt) : "—"}
-                          {item.myStep && <span className="block text-caption text-ink-muted">{item.myStep}</span>}
-                          {item.myForName && <span className="block text-caption text-ink-muted">for {item.myForName}</span>}
-                        </td>
-                      ) : (
-                        <td className="text-label">
-                          {item.pendingStep ? (
-                            <>
-                              {item.pendingWith && (
-                                <span className="mb-1 flex -space-x-1.5" aria-hidden="true">
-                                  {item.pendingWith
-                                    .split(", ")
-                                    .slice(0, 3)
-                                    .map((name) => (
-                                      <span key={name} className="grid h-6 w-6 place-items-center rounded-full bg-primary-solid text-[10px] font-semibold text-on-solid ring-2 ring-surface">
-                                        {initialsOf(name)}
-                                      </span>
-                                    ))}
-                                </span>
-                              )}
-                              {item.pendingStep}
-                              <span className="block text-caption text-ink-muted">{item.pendingWith}</span>
-                              {item.nextDue && (
-                                <span className={`block text-caption ${item.overdue ? "font-semibold text-danger-600" : "text-ink-muted"}`}>
-                                  {item.overdue ? "Overdue since" : "Due"} {formatIndiaTime(item.nextDue)}
-                                </span>
-                              )}
-                            </>
-                          ) : (
-                            <span className="text-ink-faint">—</span>
-                          )}
-                        </td>
-                      )}
-                      {showRaiser && <td>{item.requesterName}</td>}
-                      {show("raised") && (
-                        <td className="whitespace-nowrap" title={formatIndiaTime(item.submittedAt)}>
-                          {day(item.submittedAt)}
-                        </td>
-                      )}
-                      {show("activity") && <td className="hidden whitespace-nowrap lg:table-cell">{formatIndiaTime(item.updatedAt)}</td>}
-                      {show("progress") && <td>{progress[item.id] ? <RoadMini road={progress[item.id]!} href={`/users/requests/${item.id}#levels`} /> : <span className="text-ink-faint">—</span>}</td>}
-                      {collab && show("added") && (
-                        <td className="hidden whitespace-nowrap xl:table-cell">
-                          {item.addedAt ? day(item.addedAt) : "—"}
-                          <span className="block text-caption text-ink-muted">by {item.addedByName}</span>
-                        </td>
-                      )}
-                      {show("actions") && (
-                        <td className="text-right">
-                          <RequestRowMenu title={item.title} actions={rowActions(item, userId)} />
-                        </td>
-                      )}
+                      {order.map((column) => (
+                        <Fragment key={column}>{cellFor(item, column)}</Fragment>
+                      ))}
                     </tr>
                   ))}
                 </tbody>

@@ -13,7 +13,7 @@ export const fileInputName = (key: string) => `file:${key}`;
 
 export async function existingFieldCounts(requestId: number): Promise<Record<string, number>> {
   const [rows] = await getDbPool().query<(RowDataPacket & { field_key: string; n: number })[]>(
-    "SELECT field_key, COUNT(*) AS n FROM request_attachments WHERE request_id = ? AND field_key IS NOT NULL GROUP BY field_key",
+    "SELECT field_key, COUNT(*) AS n FROM request_attachments WHERE request_id = ? AND field_key IS NOT NULL AND deleted_at IS NULL GROUP BY field_key",
     [requestId],
   );
   return Object.fromEntries(rows.map((row) => [row.field_key, Number(row.n)]));

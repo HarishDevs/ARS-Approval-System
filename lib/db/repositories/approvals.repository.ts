@@ -495,6 +495,8 @@ export type TimelineEvent =
   | EngineEvent
   | { type: "SUBMITTED"; requestNo: string }
   | { type: "ATTACHMENTS_ADDED"; actorId: number; names: string[] }
+  // v1.52.3: a file deleted before the first approval (or while changes were asked).
+  | { type: "ATTACHMENT_DELETED"; actorId: number; name: string }
   // v1.6.0 (EN-06): advice asked and given; no effect on the approval itself.
   | { type: "CONSULTED"; consultationId: number; consulteeId: number; actorId: number; question: string }
   | { type: "CONSULT_ANSWERED"; consultationId: number; actorId: number; answer: string }

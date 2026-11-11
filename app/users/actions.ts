@@ -10,7 +10,7 @@ import { cleanExpiredReason, expiredReasonError } from "@/server/approvals/expir
 import { assessReadiness } from "@/server/approvals/readiness";
 import { amendmentPlan, amendmentTitle, mergeAmendmentFields, submitAmendment } from "@/server/approvals/amendments";
 import { findPublishedVersion, findWorkflow } from "@/lib/db/repositories/approvals.repository";
-import { addAttachments, filesFrom, prepareFiles } from "@/server/attachments/service";
+import { addAttachments, deleteAttachment, filesFrom, prepareFiles } from "@/server/attachments/service";
 import { existingFieldCounts, prepareFieldFiles, reportedFieldCounts, saveFieldFiles } from "@/server/attachments/field-files";
 import { addCollaborators, collaboratorIdsFrom } from "@/server/approvals/collaborators";
 import { findRequest, findWorkflowVersion } from "@/lib/db/repositories/approvals.repository";
@@ -319,6 +319,22 @@ export async function reopenAction(_previous: ActionResult | null, formData: For
 }
 
 // Add files to an open request (F-18): anyone who can see it.
+// v1.52.3 (owner): delete a request's file until the first approval, or while changes are asked for.
+export async function deleteAttachmentAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  const me = await actor();
+  const attachmentId = num(formData.get("attachmentId"));
+  if (!me || attachmentId === null) return NOT_FOUND;
+  try {
+    const result = await deleteAttachment(attachmentId, me);
+    if (!result.ok) return { ok: false, message: result.message };
+    revalidatePath(`/users/requests/${result.value.requestId}`);
+    return { ok: true, message: `Deleted ${result.value.name}.` };
+  } catch (error) {
+    logError("deleteAttachmentAction failed", error);
+    return { ok: false, message: "Couldn't delete the file. Please try again." };
+  }
+}
+
 export async function addFilesAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
   const me = await actor();
   const requestId = num(formData.get("requestId"));

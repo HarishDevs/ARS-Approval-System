@@ -165,6 +165,14 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 
 ---
 
+## Session log — v1.52.3 (11 Nov 2026): column order, deleting request files
+Owner: "attachments can be deleted until the first approval; after the first approval not, unless an approver asks for changes"; "wherever a table is used (Waiting for me, Approved by me…) each column can be rearranged by drag and saved as a view for that user".
+- [x] V1523-01 (11 Nov 2026) Migration 202611111200: request_attachments.deleted_at/deleted_by; every read and count leaves deleted files out
+- [x] V1523-02 (11 Nov 2026) attachmentDeleteBlock (requester or uploader; IN_PROGRESS/ON_HOLD without any approved APPROVAL task, or CHANGES_REQUIRED), deleteAttachment (lock, event ATTACHMENT_DELETED, audit REQUEST_FILE_DELETED), Delete button with confirm
+- [x] V1523-03 (11 Nov 2026) Column order: parseColumns keeps the saved order (late columns in their usual place), ReorderHeader (drag, Alt+arrows, saves via saveListColumnsAction), request lists render cells by order, Waiting for me ("queue") too, Columns menu ↑ ↓
+- [x] V1523-04 (11 Nov 2026) inside(event, element) for every outside-click check (a picked option removed itself before the check, closing panels)
+- [x] V1523-05 (11 Nov 2026) Tests: unit (order, delete rule), integration attachment-delete, e2e v1523 (delete file, drag columns, cells follow); general pages: Help, User Guide, release notes; privacy/terms: no change (no new data; deleted files are kept as before)
+
 ## Session log — v1.52.2 (11 Nov 2026): formatted comments, Asana activity, attachments list
 Owner: "change all the comment section as formattable like a mail body, all formatting options, shown like Asana activity"; "when uploading multiple files show each name separately, delete and re-upload; a second pick adds files, never replaces".
 - [x] V1522-01 (11 Nov 2026) rich-text: ++underline++, `code`, [link](https|mailto), "> " quote, "# " heading (data, never HTML); RichText renders them

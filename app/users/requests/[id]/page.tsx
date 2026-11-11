@@ -41,6 +41,8 @@ import { CommentForm } from "@/features/requests/Discussion";
 import { RichText } from "@/features/work/RichText";
 import { AddFilesForm } from "@/features/requests/Attachments";
 import { AttachmentList } from "@/features/requests/AttachmentList";
+import { hasAnyApproval } from "@/lib/db/repositories/attachments.repository";
+import { attachmentDeleteBlock } from "@/server/attachments/files";
 import { SubmissionChecks } from "@/features/requests/SubmissionChecks";
 import { SaveTemplateForm } from "@/features/requests/Templates";
 import { CollaboratorsCard } from "@/features/requests/CollaboratorsCard";
@@ -142,7 +144,10 @@ export default async function RequestPage({
       : null;
   const reuse: "levels" | "template" | null = view.isCustom && isAdmin ? "levels" : templatesOn && view.requesterId === user.id && !view.isCustom && view.workflowActive ? "template" : null;
 
+  // v1.52.3 (owner): a file can be deleted until the first approval, or while changes are asked for.
+  const anyApproval = await hasAnyApproval(view.id).catch(() => true);
   const fileRows = view.attachments.map((file) => ({
+    deletable: attachmentDeleteBlock({ requestStatus: view.status, anyApproval, actorId: user.id, uploadedBy: file.uploadedBy, requesterId: view.requesterId }) === null,
     id: file.id,
     name: file.name,
     size: file.size,

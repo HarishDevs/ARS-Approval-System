@@ -5,6 +5,8 @@ import { Hourglass, X } from "lucide-react";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { QueueTable } from "@/features/requests/lists";
+import { parseColumns, QUEUE_COLUMNS } from "@/server/requests/list-columns";
+import { getUserSetting } from "@/lib/db/repositories/user-settings.repository";
 import { priorityRecord } from "@/server/approvals/priority-lookup";
 import { PendingLink } from "@/features/ui/PendingLink";
 import { BulkApprove } from "@/features/requests/BulkApprove";
@@ -45,6 +47,8 @@ export default async function QueuePage({ searchParams }: { searchParams: Promis
   const queue = await listPendingTasksFor(user.id, { limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE }, undefined, filter);
   // v1.47.0: each request's Priority (one query for the page).
   const priority = await priorityRecord(queue.map((item) => item.requestId), user);
+  // v1.52.3 (owner): the person's own column order (drag a column title to change it).
+  const queueOrder = parseColumns(await getUserSetting(user.id, "list.columns.queue").catch(() => null), QUEUE_COLUMNS);
   const filtered = queueFiltered(filter);
   const typeName = types.find((type) => type.id === filter.typeId)?.name;
   const nameOf = (list: { id: number; name: string }[], id: number | null | undefined) => list.find((item) => item.id === id)?.name ?? "chosen";
@@ -246,7 +250,7 @@ export default async function QueuePage({ searchParams }: { searchParams: Promis
         <NoResults what="items waiting" query={filter.q} clearSearchHref={without({ q: "" })} resetHref="/users/queue" />
       ) : (
         <QueueKeyboard>
-          <QueueTable items={queue} priority={priority} />
+          <QueueTable items={queue} priority={priority} order={queueOrder} />
         </QueueKeyboard>
       )}
       {pages > 1 && (

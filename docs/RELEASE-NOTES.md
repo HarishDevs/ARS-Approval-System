@@ -1,5 +1,11 @@
 # Release notes
 
+## v1.52.3 (11 Nov 2026): arrange table columns, delete request files before approval (owner)
+- **Arrange columns:** on My pending requests, Collaborating, My approved requests, Approved by me and Waiting for me, drag a column title onto another to move the column (or focus a title and press Alt+← / Alt+→). The order is saved for you and used on every visit; the Columns button also has ↑ ↓ to reorder and still hides or shows columns.
+- **Deleting a request's files:** the requester, or the person who added a file, can delete it until an approver approves the first level. After that files are locked, unless an approver asks for changes: then they can be deleted again while the request is back with the requester. Delete asks first; the timeline says who deleted which file; the file is kept for the record but no longer shown or downloadable.
+- **Fixed:** picking a person inside a filter panel or a table cell no longer closes the panel.
+- One small database change on start (marks deleted files).
+
 ## v1.52.2 (11 Nov 2026): tasks in a popup, formatted comments, Asana-style activity, people pickers, attachments list (owner)
 - **Comments format like an email:** bold, italic, underline, strikethrough, code, links, bulleted and numbered lists, quotes, headings, emoji and @mentions (type @ and a name), on tasks (comments, replies, edits) and request discussions. Comments show with their formatting. Ctrl+B / I / U work; Ctrl+Enter sends.
 - **All activity like Asana:** each entry with the person's initials, "Name did this · Today at 2:27 pm", comments in full, completion with a green tick, and runs of small updates folded under "Show N previous updates".

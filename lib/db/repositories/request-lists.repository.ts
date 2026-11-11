@@ -72,7 +72,7 @@ export async function listRequests(base: ListBase, userId: number, filters: List
             (SELECT GROUP_CONCAT(DISTINCT p.name ORDER BY p.name SEPARATOR ', ') FROM approval_tasks t JOIN users p ON p.id = t.approver_id WHERE t.request_id = r.id AND t.status = 'PENDING') AS pending_with,
             (SELECT GROUP_CONCAT(DISTINCT t.node_label ORDER BY t.node_label SEPARATOR ', ') FROM approval_tasks t WHERE t.request_id = r.id AND t.status = 'PENDING') AS pending_step,
             (SELECT MIN(t.due_at) FROM approval_tasks t WHERE t.request_id = r.id AND t.status = 'PENDING') AS next_due,
-            (SELECT COUNT(*) FROM request_attachments f WHERE f.request_id = r.id) AS files,
+            (SELECT COUNT(*) FROM request_attachments f WHERE f.request_id = r.id AND f.deleted_at IS NULL) AS files,
             EXISTS (SELECT 1 FROM request_amendments am WHERE am.original_id = r.id) AS amended
             ${base === "COLLAB" ? ", ab.name AS added_by_name, k.added_at" : ""}
             ${base === "APPROVED_MINE" ? APPROVED_BY_COLUMN : ""}

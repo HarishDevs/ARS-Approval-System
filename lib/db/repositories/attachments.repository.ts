@@ -2,7 +2,8 @@ import "server-only";
 import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { getDbPool, type Queryable } from "@/lib/db/client";
 
-// request_attachments (F-18, D-072): insert and read only.
+// request_attachments (F-18, D-072): insert and read. v1.52.3: a deleted
+// file is marked (deleted_at, deleted_by) and left out of every read.
 export interface AttachmentRecord {
   id: number;
   requestId: number;
@@ -64,11 +65,22 @@ export async function insertAttachment(
 }
 
 export async function listAttachments(requestId: number, db: Queryable = getDbPool()): Promise<AttachmentRecord[]> {
-  const [rows] = await db.query<AttachmentRow[]>(`${SELECT} WHERE a.request_id = ? ORDER BY a.id`, [requestId]);
+  const [rows] = await db.query<AttachmentRow[]>(`${SELECT} WHERE a.request_id = ? AND a.deleted_at IS NULL ORDER BY a.id`, [requestId]);
   return rows.map(toRecord);
 }
 
 export async function findAttachment(id: number, db: Queryable = getDbPool()): Promise<AttachmentRecord | null> {
-  const [rows] = await db.query<AttachmentRow[]>(`${SELECT} WHERE a.id = ?`, [id]);
+  const [rows] = await db.query<AttachmentRow[]>(`${SELECT} WHERE a.id = ? AND a.deleted_at IS NULL`, [id]);
   return rows[0] ? toRecord(rows[0]) : null;
+}
+
+export async function markAttachmentDeleted(id: number, by: number, db: Queryable): Promise<boolean> {
+  const [result] = await db.query<ResultSetHeader>("UPDATE request_attachments SET deleted_at = UTC_TIMESTAMP(), deleted_by = ? WHERE id = ? AND deleted_at IS NULL", [by, id]);
+  return result.affectedRows === 1;
+}
+
+// Has any approver approved a step of this request yet (any round)?
+export async function hasAnyApproval(requestId: number, db: Queryable = getDbPool()): Promise<boolean> {
+  const [rows] = await db.query<RowDataPacket[]>("SELECT 1 FROM approval_tasks WHERE request_id = ? AND status = 'APPROVED' AND task_type = 'APPROVAL' LIMIT 1", [requestId]);
+  return rows.length > 0;
 }

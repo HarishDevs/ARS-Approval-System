@@ -8,6 +8,8 @@ export function describeEvent(event: TimelineEvent, labelOf: (nodeId: string) =>
       return `Submitted as ${event.requestNo}`;
     case "ATTACHMENTS_ADDED":
       return `${nameOf(event.actorId)} attached ${event.names.join(", ")}`;
+    case "ATTACHMENT_DELETED":
+      return `${nameOf(event.actorId)} deleted the file ${event.name}`;
     case "TASK_CREATED":
       return `Sent to ${nameOf(event.approverId)} for "${labelOf(event.nodeId)}"`;
     case "TASK_DECIDED": {
@@ -111,6 +113,7 @@ export function eventKind(event: TimelineEvent): TimelineKind {
     case "SUBMITTED":
       return "submit";
     case "ATTACHMENTS_ADDED":
+    case "ATTACHMENT_DELETED":
       return "file";
     case "TASK_CREATED":
       return "assign";

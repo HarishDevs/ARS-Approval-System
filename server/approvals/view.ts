@@ -50,7 +50,7 @@ export interface RequestView {
   // IT only (D-098): steps that found nobody / no path, with what can be done.
   blockedSteps: { nodeId: string; label: string; kind: "APPROVAL" | "CONDITION"; work: boolean; reason: string; paths: { edgeId: string; label: string }[] }[];
   comments: CommentItem[];
-  attachments: { id: number; name: string; size: string; uploaderName: string; createdAt: Date; round: number; preview: "image" | "pdf" | null; fieldLabel: string | null }[];
+  attachments: { id: number; name: string; size: string; uploadedBy: number; uploaderName: string; createdAt: Date; round: number; preview: "image" | "pdf" | null; fieldLabel: string | null }[];
   // RD-03: after a resubmit, what changed since the round before (null when
   // round 1; "unrecorded" for requests from before v1.6.0).
   changes: { round: number; fields: FieldChange[]; files: string[] } | "unrecorded" | null;
@@ -205,7 +205,7 @@ export async function loadRequestView(requestId: number, viewer: Actor): Promise
         : [],
     blockedSteps,
     comments: await listComments(requestId),
-    attachments: attachmentRows.map((file) => ({ id: file.id, name: file.name, size: formatSize(file.sizeBytes), uploaderName: file.uploaderName, createdAt: file.createdAt, round: file.round, preview: previewKind(file.contentType), fieldLabel: file.fieldKey ? (version.form.find((field) => field.key === file.fieldKey)?.label ?? null) : null })),
+    attachments: attachmentRows.map((file) => ({ id: file.id, name: file.name, size: formatSize(file.sizeBytes), uploadedBy: file.uploadedBy, uploaderName: file.uploaderName, createdAt: file.createdAt, round: file.round, preview: previewKind(file.contentType), fieldLabel: file.fieldKey ? (version.form.find((field) => field.key === file.fieldKey)?.label ?? null) : null })),
     changes: (() => {
       if (state.round <= 1) return null;
       const before = revisions.find((revision) => revision.round === state.round - 1);
