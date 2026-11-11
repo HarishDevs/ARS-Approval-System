@@ -166,10 +166,10 @@ Comments on a request can't be edited or removed. To tell someone in particular,
 - **Schedule a meeting:** Meetings → **Schedule a meeting**. Choose the type, date and times, the Owner, Coordinator, participants and departments by typing names. Optional: **Points due by** and **MOM due by** (the Coordinator is reminded), and what happens if the points aren't approved in time.
 - **Points:** the Coordinator presses **Send to Meeting Owner**; the Owner presses **Approve points** or **Return** with what to change. Approved points go to every participant.
 - **Invitees** answer **Attend**, **Maybe** or **Can't attend** (with a reason).
-- **During or after the meeting:** **Start meeting** (or **Record as held** with the real times), mark attendance, note the discussion point by point, the decisions, the **action items** (one responsible person, priority, due date) and **open points**, then **Send MOM to Meeting Owner**.
+- **Enter the MOM (before or after the meeting):** **Enter MOM**, then tick **Started on time** (if not, enter when it started), **Meeting was extended** (enter when it ended; the extra minutes are shown, and in the meeting details afterwards), **Points shared in time** and **MOM in time** (ticks, never worked out). Tick each person who was present (no tick = absent). The meeting's date and times can be edited until the MOM goes to the Owner. Then note note the discussion point by point, the decisions, the **action items** (one responsible person, priority, due date) and **open points**, then **Send MOM to Meeting Owner**.
 - **When the Owner approves the MOM** each action item becomes a task for its owner, linked to the meeting.
 - **Follow-ups:** the Owner or Coordinator presses **Confirm done** on a completed action, or **Send back** with what is still needed (the task reopens). **Schedule follow-up meeting** carries open actions and open points into the next meeting. **Close meeting** once every action is confirmed or carried forward.
-- **Dashboard:** on-time figures, attendance and actions for a period, by type and department.
+- **Meeting analytics** (Analytics → Meeting analytics): on time, attendance, approvals and action follow-up for the meetings your scope covers: yours, your whole team below you, the departments you head, or everything (IT; ED and MD can switch to all meetings).
 - **Who sees a meeting:** the people on it, heads of its departments (not Management-only meetings), the Management group (ED, MD) and IT.
 
 ### Information

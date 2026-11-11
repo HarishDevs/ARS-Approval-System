@@ -5,7 +5,7 @@ import { KpiGrid, pct, TallyTable, tallyMeetings } from "@/features/meetings/Mee
 import { PeriodPicker } from "@/features/home/HomeClient";
 import { dashboardMeetings, listFollowUps, listMeetings, type MeetingListFilter } from "@/lib/db/repositories/meetings.repository";
 import { scopeFor } from "@/server/meetings/service";
-import { actionState, compliance, durationBand, minutesBetween, MODE_LABEL } from "@/server/meetings/rules";
+import { actionState, durationBand, minutesBetween, MODE_LABEL } from "@/server/meetings/rules";
 import { indiaDateTimeText } from "@/server/modules/settings";
 import { parsePeriod } from "@/server/work/period";
 import { indiaDayOf } from "@/features/work/format";
@@ -334,7 +334,7 @@ export async function MeetingHome({
 function insightsOf(rows: Awaited<ReturnType<typeof dashboardMeetings>>, total: ReturnType<typeof tallyMeetings>["total"], byDepartment: ReturnType<typeof tallyMeetings>["byDepartment"]): string[] {
   if (rows.length === 0) return [];
   const out: string[] = [];
-  const late = rows.filter((row) => compliance(row).startedOnTime === false).length;
+  const late = rows.filter((row) => row.startedOnTime === false).length;
   if (total.startJudged) out.push(late ? `${late} of ${total.startJudged} meetings started late (more than 5 minutes).` : total.startJudged === 1 ? "The meeting held started on time." : `All ${total.startJudged} meetings held started on time.`);
   if (total.momJudged) out.push(`MOM sent in time for ${pct(total.momOnTime, total.momJudged)} of meetings (${total.momOnTime} of ${total.momJudged}).`);
   const awaiting = rows.filter((row) => row.status === "AWAITING_MOM" || row.status === "MOM_RETURNED").length;

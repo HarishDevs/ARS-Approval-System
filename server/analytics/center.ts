@@ -6,6 +6,8 @@ export const BOARDS = [
   { key: "approvals", label: "Approval analytics", what: "Volume, outcomes, turnaround, response times, steps, approvers and aging." },
   { key: "tasks", label: "Task analytics", what: "Task volume, delivery against due dates, backlog and aging, priorities." },
   { key: "information", label: "Information analytics", what: "Publishing, reading and acknowledgement of information." },
+  // v1.52.0 (owner): meetings, by access and reporting line.
+  { key: "meetings", label: "Meeting analytics", what: "Meetings held, on time (the Coordinator's ticks), attendance, approvals and action follow-up, by type, department, Coordinator and action owner." },
   { key: "employees", label: "Employee analytics", what: "Each person's approval, task and information workload, kept separate." },
   { key: "departments", label: "Department analytics", what: "Each department's workload, completion and backlog by module." },
   { key: "sla", label: "SLA & performance", what: "Approval response times and task due-date performance." },
@@ -18,7 +20,7 @@ export type BoardKey = (typeof BOARDS)[number]["key"];
 // boards need the module; people and department boards need a team,
 // department or whole-organisation view; data quality is for the IT team.
 export interface BoardAccess {
-  modules: { approval: boolean; task: boolean; information: boolean };
+  modules: { approval: boolean; task: boolean; information: boolean; meeting?: boolean };
   scopes: readonly string[]; // the ScopeKinds this person has
 }
 export function boardsFor(access: BoardAccess): BoardKey[] {
@@ -29,6 +31,7 @@ export function boardsFor(access: BoardAccess): BoardKey[] {
     approvals: modules.approval,
     tasks: modules.task,
     information: modules.information,
+    meetings: Boolean(modules.meeting),
     employees: manages,
     departments: scopes.includes("DEPARTMENT") || scopes.includes("ORGANISATION"),
     sla: modules.approval || modules.task,

@@ -12,6 +12,7 @@ import { BarList, KpiCard, LineChart, hoursText } from "@/features/analytics/Cha
 import { BOARDS, departmentAlerts, type BoardAccess, forecastNext, moduleAlerts, monthLabel, agingBuckets, type Alert, type BoardKey } from "@/server/analytics/center";
 import { comparisonPeriod, indiaToday, PERIOD_LABEL, resolvePeriod, type CompareMode, type PeriodKey } from "@/server/analytics/periods";
 import type { Scope, Viewer } from "@/server/analytics/scope";
+import { MeetingBoard } from "@/features/analytics/MeetingBoard";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 import { getSettingValue } from "@/server/settings/values";
 import {
@@ -191,7 +192,7 @@ export async function CenterScreen({ base, board, boards, modules, query, scope,
         id="center-filters"
         path={base}
         label="Filter analytics"
-        keep={{ board, scope: scope.kind }}
+        keep={{ board, scope: scope.kind, mscope: query.mscope === "all" ? "all" : undefined }}
         filterCount={[period.key !== "30d", compare !== "PREVIOUS", board === "employees" && query.q, board === "employees" && query.sort && query.sort !== "name"].filter(Boolean).length}
         clearHref={boardHref(base, { board, scope: scope.kind }, {})}
         filters={
@@ -262,6 +263,16 @@ export async function CenterScreen({ base, board, boards, modules, query, scope,
       {board === "overview" && <Overview scope={scope} viewer={viewer} period={period} previous={previous} compareLabel={compareLabel} today={today} modules={modules} />}
       {board === "tasks" && <Tasks scope={scope} viewer={viewer} period={period} previous={previous} compareLabel={compareLabel} buckets={buckets} />}
       {board === "information" && <Information scope={scope} viewer={viewer} period={period} previous={previous} compareLabel={compareLabel} buckets={buckets} today={today} />}
+      {board === "meetings" && (
+        <MeetingBoard
+          scope={scope}
+          viewer={viewer}
+          period={period}
+          previous={previous}
+          everything={query.mscope === "all"}
+          everythingHref={boardHref(base, carry, query.mscope === "all" ? {} : { mscope: "all" })}
+        />
+      )}
       {board === "employees" && <Employees base={base} carry={carry} query={query} scope={scope} viewer={viewer} period={period} exportHref={canExport ? exportHref("employees") : null} />}
       {board === "departments" && <Departments scope={scope} period={period} exportHref={canExport ? exportHref("departments") : null} />}
       {board === "sla" && <Sla base={base} carry={carry} scope={scope} viewer={viewer} period={period} />}

@@ -104,7 +104,7 @@ describe("Meeting Management (D-300)", () => {
   });
 
   it("the Owner's choice (BLOCK): the meeting can't start before the points are approved", async () => {
-    const early = await act("START", coordinator);
+    const early = await act("ENTER_MOM", coordinator);
     expect(early.ok).toBe(false);
   });
 
@@ -133,8 +133,8 @@ describe("Meeting Management (D-300)", () => {
     expect((await repo.listParticipants(meetingId)).find((person) => person.userId === member)!.response).toBe("ACCEPTED");
   });
 
-  it("the Coordinator runs it and writes the MOM; action items need a responsible person", async () => {
-    expect((await act("START", coordinator)).ok).toBe(true);
+  it("the Coordinator enters the MOM: timing questions, attendance ticks, action items need a responsible person", async () => {
+    expect((await act("ENTER_MOM", coordinator)).ok).toBe(true);
     const points = await repo.listPoints(meetingId);
     const mom = {
       discussions: [{ pointId: points[0]!.id, text: "Output up 4%." }],
@@ -146,15 +146,24 @@ describe("Meeting Management (D-300)", () => {
       openPoints: [{ text: "Power tariff review", ownerId: owner, reviewOn: "" }],
       attendance: [
         { userId: member, attendance: "PRESENT" },
-        { userId: owner, attendance: "LATE" },
+        { userId: owner, attendance: "ABSENT" },
       ],
+      // v1.51.2: started 15 minutes late, extended by 25 minutes; points in time, MOM late.
+      timing: { startedOnTime: false, startTime: "", extended: true, endTime: "", pointsOnTime: true, momOnTime: false },
     };
+    expect((await act("SAVE_MOM", coordinator, { mom })).ok).toBe(false); // the start and end times are missing
+    const scheduled = (await repo.findMeeting(meetingId))!;
+    const hhmm = (date: Date, minutes: number) => new Date(date.getTime() + minutes * 60_000 + 330 * 60_000).toISOString().slice(11, 16);
+    mom.timing = { ...mom.timing, startTime: hhmm(scheduled.scheduledStart, 15), endTime: hhmm(scheduled.scheduledEnd, 25) };
     expect((await act("SUBMIT_MOM", coordinator, { mom })).ok).toBe(false); // the second action has nobody responsible
     mom.actions[1]!.ownerId = coordinator;
     expect((await act("SAVE_MOM", coordinator, { mom })).ok).toBe(true);
-    expect((await act("END", coordinator)).ok).toBe(true);
     expect((await act("SUBMIT_MOM", coordinator)).ok).toBe(true);
     const saved = await repo.findMeeting(meetingId);
+    expect(saved!.actualStart!.getTime() - saved!.scheduledStart.getTime()).toBe(15 * 60_000);
+    expect(saved!.actualEnd!.getTime() - saved!.scheduledEnd.getTime()).toBe(25 * 60_000);
+    expect({ points: saved!.pointsOnTime, started: saved!.startedOnTime, ended: saved!.endedOnTime, mom: saved!.momOnTime }).toEqual({ points: true, started: false, ended: false, mom: false });
+    expect((await repo.listParticipants(meetingId)).find((person) => person.userId === owner)!.attendance).toBe("ABSENT");
     expect(saved!.status).toBe("MOM_SUBMITTED");
     expect(await repo.listDecisions(meetingId)).toEqual(["Second shift from Monday"]);
     expect((await repo.listActions(meetingId)).every((action) => action.taskId === null)).toBe(true);
@@ -219,8 +228,8 @@ describe("Meeting Management (D-300)", () => {
     meetingId = created.ok ? created.value.id : 0;
     expect((await act("SUBMIT_POINTS", coordinator)).ok).toBe(true);
     expect((await repo.findMeeting(meetingId))!.pointsStatus).toBe("APPROVED");
-    expect((await act("START", coordinator)).ok).toBe(true);
-    const mom = { discussions: [], decisions: [], actions: [{ title: "Send report", description: "", ownerId: member, priority: "NORMAL", dueOn: "" }], openPoints: [], attendance: [] };
+    expect((await act("ENTER_MOM", coordinator)).ok).toBe(true);
+    const mom = { discussions: [], decisions: [], actions: [{ title: "Send report", description: "", ownerId: member, priority: "NORMAL", dueOn: "" }], openPoints: [], attendance: [], timing: { startedOnTime: true, startTime: "", extended: false, endTime: "", pointsOnTime: true, momOnTime: true } };
     expect((await act("SUBMIT_MOM", coordinator, { mom })).ok).toBe(true);
     expect((await repo.findMeeting(meetingId))!.status).toBe("MOM_APPROVED");
     expect((await repo.listActions(meetingId))[0]!.taskId).not.toBeNull();
@@ -233,5 +242,28 @@ describe("Meeting Management (D-300)", () => {
     expect((await act("CANCEL", coordinator)).ok).toBe(false);
     expect((await act("CANCEL", coordinator, { remarks: "Plant shutdown" })).ok).toBe(true);
     expect(await notices(member, "MEETING_CANCELLED")).toBe(1);
+  });
+});
+
+// v1.52.0 (owner): Meeting analytics follow access and the reporting line.
+describe("Meeting analytics scope (D-303)", () => {
+  it("my team covers everyone below me; outsiders see nothing; Management-only stays private", async () => {
+    const { analyticsMeetings } = await import("@/lib/db/repositories/meeting-analytics.repository");
+    const boss = await createUser({ name: `Boss ${tag}` });
+    const middle = await createUser({ name: `Middle ${tag}`, managerId: boss });
+    await getDbPool().query("UPDATE users SET reporting_manager_id = ? WHERE id = ?", [middle, member]);
+    const general = await meetings.scheduleMeeting(base({ title: `Team view ${tag}`, ownerId: owner, coordinatorId: coordinator, participantIds: [member] }), who(coordinator));
+    const secret = await meetings.scheduleMeeting(base({ title: `Board only ${tag}`, ownerId: owner, coordinatorId: coordinator, participantIds: [member], confidentiality: "MANAGEMENT" }), who(coordinator));
+    const ids = [general, secret].map((result) => (result.ok ? result.value.id : 0));
+    const from = new Date(Date.now() - 86_400_000);
+    const to = new Date(Date.now() + 30 * 86_400_000);
+    const seen = async (scope: Parameters<typeof analyticsMeetings>[0]) => (await analyticsMeetings(scope, from, to)).map((row) => row.id).filter((id) => ids.includes(id));
+    // The boss, two levels above the member: the General meeting only.
+    expect(await seen({ all: false, peopleIds: [boss, middle, member], departmentIds: [], viewerId: boss, seeManagement: false })).toEqual([ids[0]]);
+    // The member is on both.
+    expect((await seen({ all: false, peopleIds: [member], departmentIds: [], viewerId: member, seeManagement: false })).sort()).toEqual([...ids].sort());
+    // An outsider: nothing; IT / Management: everything.
+    expect(await seen({ all: false, peopleIds: [outsider], departmentIds: [], viewerId: outsider, seeManagement: false })).toEqual([]);
+    expect((await seen({ all: true, seeManagement: true })).sort()).toEqual([...ids].sort());
   });
 });

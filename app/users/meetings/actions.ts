@@ -67,6 +67,13 @@ function parseMom(raw: string): MomInput | null {
       dueOn: strOf(row?.dueOn, 10),
     })),
     openPoints: list("openPoints").map((row) => ({ text: strOf(row?.text, 1000), ownerId: idOrNull(row?.ownerId), reviewOn: strOf(row?.reviewOn, 10) })),
+    timing:
+      value.timing && typeof value.timing === "object"
+        ? (() => {
+            const t = value.timing as Record<string, unknown>;
+            return { startedOnTime: t.startedOnTime === true, startTime: strOf(t.startTime, 5), extended: t.extended === true, endTime: strOf(t.endTime, 5), pointsOnTime: t.pointsOnTime === true, momOnTime: t.momOnTime === true };
+          })()
+        : null,
     attendance: list("attendance").flatMap((row) => (idOrNull(row?.userId) ? [{ userId: idOrNull(row.userId)!, attendance: strOf(row.attendance, 12) }] : [])),
   };
 }
@@ -118,6 +125,7 @@ export async function scheduleMeetingAction(_previous: ActionResult | null, form
 const ACTIONS: readonly ActOnMeetingInput["action"][] = [
   "RESPOND",
   "CANCEL",
+  "ENTER_MOM",
   "SAVE_POINTS",
   "SUBMIT_POINTS",
   "APPROVE_POINTS",

@@ -71,6 +71,7 @@ export type MeetingAction =
   | "EDIT_POINTS"
   | "SUBMIT_POINTS"
   | "DECIDE_POINTS"
+  | "ENTER_MOM"
   | "START"
   | "END"
   | "MARK_ATTENDANCE"
@@ -89,10 +90,10 @@ export function allowedActions(meeting: MeetingFacts, viewer: MeetingViewer): Se
   const s = meeting.status;
   // Invitees answer before the meeting; the Owner and Coordinator always attend.
   if (viewer.isParticipant && s === "SCHEDULED" && !owner && !isCoordinator(meeting, viewer.id)) out.add("RESPOND");
-  if (coordinator && s === "SCHEDULED") {
-    out.add("EDIT_DETAILS");
-    out.add("CANCEL");
-  }
+  if (coordinator && s === "SCHEDULED") out.add("CANCEL");
+  // v1.51.2 (owner: the meeting time stays flexible and editable): details can
+  // be changed until the MOM goes to the Owner.
+  if (coordinator && (s === "SCHEDULED" || s === "IN_PROGRESS" || s === "AWAITING_MOM" || s === "MOM_RETURNED")) out.add("EDIT_DETAILS");
   if (coordinator && (s === "SCHEDULED" || s === "IN_PROGRESS") && meeting.pointsStatus !== "SUBMITTED" && meeting.pointsStatus !== "APPROVED") {
     out.add("EDIT_POINTS");
     out.add("SUBMIT_POINTS");
@@ -100,11 +101,10 @@ export function allowedActions(meeting: MeetingFacts, viewer: MeetingViewer): Se
   // Approved points can be changed again by the Coordinator before the meeting (they go back to the Owner).
   if (coordinator && s === "SCHEDULED" && meeting.pointsStatus === "APPROVED") out.add("EDIT_POINTS");
   if (owner && meeting.pointsStatus === "SUBMITTED" && (s === "SCHEDULED" || s === "IN_PROGRESS")) out.add("DECIDE_POINTS");
-  // END from Scheduled = "record it as held" (times entered by the Coordinator).
-  if (coordinator && s === "SCHEDULED" && mayStart(meeting)) {
-    out.add("START");
-    out.add("END");
-  }
+  // v1.51.2 (owner): one step, Enter MOM, before or after the meeting; the
+  // MOM form asks whether it started on time and whether it was extended.
+  if (coordinator && s === "SCHEDULED" && mayStart(meeting)) out.add("ENTER_MOM");
+  // Meetings started before v1.51.2 can still be ended.
   if (coordinator && s === "IN_PROGRESS") {
     out.add("END");
     out.add("MARK_ATTENDANCE");
@@ -144,7 +144,39 @@ export function durationBand(minutes: number | null): string | null {
 
 export const minutesBetween = (from: Date | null, to: Date | null) => (from && to ? Math.max(0, Math.round((to.getTime() - from.getTime()) / 60000)) : null);
 
-// Compliance, from timestamps only (no ticked boxes). null = can't be judged yet.
+// v1.51.2 (owner: "all the on time parts make check boxes, don't calculate
+// automatically"): the Coordinator's ticks, as stored. null = not answered.
+export interface OnTimeTicks {
+  pointsOnTime: boolean | null;
+  startedOnTime: boolean | null;
+  endedOnTime: boolean | null;
+  momOnTime: boolean | null;
+}
+export const onTime = (ticks: OnTimeTicks) => ({ agendaOnTime: ticks.pointsOnTime, startedOnTime: ticks.startedOnTime, endedOnTime: ticks.endedOnTime, momOnTime: ticks.momOnTime });
+
+// Minutes the meeting ran past its scheduled end (0 when it didn't).
+export const extendedBy = (scheduledEnd: Date, actualEnd: Date | null) => (actualEnd ? Math.max(0, Math.round((actualEnd.getTime() - scheduledEnd.getTime()) / 60000)) : 0);
+
+// The MOM form's timing questions → the actual times (India local "HH:MM" on the meeting day).
+export interface TimingAnswer {
+  startedOnTime: boolean;
+  startTime: string; // when not on time
+  extended: boolean;
+  endTime: string; // when extended
+  pointsOnTime: boolean;
+  momOnTime: boolean;
+}
+export function timingProblem(answer: TimingAnswer, scheduledStart: Date, scheduledEnd: Date, toUtc: (local: string) => Date | null, day: string): { error: string } | { actualStart: Date; actualEnd: Date } {
+  const actualStart = answer.startedOnTime ? scheduledStart : /^\d{2}:\d{2}$/.test(answer.startTime) ? toUtc(`${day}T${answer.startTime}`) : null;
+  if (!actualStart) return { error: "The meeting didn't start on time: enter when it started." };
+  const actualEnd = !answer.extended ? (scheduledEnd > actualStart ? scheduledEnd : new Date(actualStart.getTime() + (scheduledEnd.getTime() - scheduledStart.getTime()))) : /^\d{2}:\d{2}$/.test(answer.endTime) ? toUtc(`${day}T${answer.endTime}`) : null;
+  if (!actualEnd) return { error: "The meeting was extended: enter when it ended." };
+  if (actualEnd <= actualStart) return { error: "The end time must be after the start time." };
+  if (answer.extended && actualEnd <= scheduledEnd) return { error: "An extended meeting ends after its scheduled end. Untick Extended, or enter a later end time." };
+  return { actualStart, actualEnd };
+}
+
+// Before v1.51.2: compliance worked out from timestamps (kept for reference and old tests).
 export interface ComplianceFacts {
   scheduledStart: Date;
   scheduledEnd: Date;
@@ -192,7 +224,8 @@ export function scheduleProblems(input: ScheduleInput, now = new Date()): Record
   if (!input.start) out.start = "Choose the date and start time.";
   if (!input.end) out.end = "Choose the end time.";
   if (input.start && input.end && input.end <= input.start) out.end = "The end must be after the start.";
-  if (input.start && input.start.getTime() < now.getTime() - 7 * 86_400_000) out.start = "The date is more than a week ago.";
+  // v1.51.2 (owner): a meeting may be recorded after it happened (up to a year back).
+  if (input.start && input.start.getTime() < now.getTime() - 366 * 86_400_000) out.start = "The date is more than a year ago.";
   if (input.start && input.agendaDueAt && input.agendaDueAt > input.start) out.agendaDueAt = "The points deadline must be before the meeting starts.";
   if (input.end && input.momDueAt && input.momDueAt < input.end) out.momDueAt = "The MOM deadline must be after the meeting ends.";
   if ((input.mode === "ONLINE" || input.mode === "HYBRID") && input.link && !/^https?:\/\//i.test(input.link)) out.link = "Use a full link starting with https://";

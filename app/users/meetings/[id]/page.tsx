@@ -5,13 +5,13 @@ import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { Badge, Breadcrumbs } from "@/features/ui/Display";
 import { HistoryList } from "@/features/modules/RecordParts";
-import { ActionReviewForm, CloseOpenPointForm, MeetingButton, MomEditor, PointsEditor, RecordHeldForm, RespondForm } from "@/features/meetings/MeetingForms";
+import { ActionReviewForm, CloseOpenPointForm, MeetingButton, MomEditor, PointsEditor, RespondForm } from "@/features/meetings/MeetingForms";
 import { FollowUpBadge, indiaInput, MeetingStatusBadge, PointsBadge, whenText } from "@/features/meetings/MeetingParts";
 import { listActions, listDecisions, listDepartmentIds, listMeetingEvents, listOpenPoints, listParticipants, listPeopleLabels, listPoints } from "@/lib/db/repositories/meetings.repository";
 import { listPeopleFacts } from "@/lib/db/repositories/tasks.repository";
 import { listDepartments } from "@/lib/db/repositories/organisation.repository";
 import { loadMeetingFor } from "@/server/meetings/service";
-import { actionState, ATTENDANCE_LABEL, compliance, durationBand, isCoordinator, isOwner, minutesBetween, MODE_LABEL, PRIORITY_LABEL, selfApproved } from "@/server/meetings/rules";
+import { actionState, ATTENDANCE_LABEL, durationBand, extendedBy, onTime, isCoordinator, isOwner, minutesBetween, MODE_LABEL, PRIORITY_LABEL, selfApproved } from "@/server/meetings/rules";
 import { indiaDateTimeText } from "@/server/modules/settings";
 
 export const metadata: Metadata = { title: "Meeting" };
@@ -27,6 +27,7 @@ const EVENT_TEXT: Record<string, string> = {
   POINTS_APPROVED: "Meeting points approved",
   POINTS_RETURNED: "Meeting points returned",
   STARTED: "Meeting started",
+  MOM_STARTED: "MOM started",
   ENDED: "Meeting ended",
   MOM_SAVED: "MOM saved",
   MOM_SUBMITTED: "MOM sent for approval",
@@ -42,7 +43,7 @@ const EVENT_TEXT: Record<string, string> = {
   REMINDER_MOM: "MOM reminder sent",
 };
 const RESPONSE_LABEL: Record<string, string> = { PENDING: "No answer yet", ACCEPTED: "Attending", DECLINED: "Can't attend", TENTATIVE: "Maybe" };
-const yesNo = (value: boolean | null) => (value === null ? "Not yet" : value ? "Yes" : "No");
+const yesNo = (value: boolean | null) => (value === null ? "Not answered" : value ? "✓ Yes" : "✗ No");
 
 function Fact({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -83,20 +84,19 @@ export default async function MeetingPage({ params, searchParams }: { params: Pr
   // Points are shown to participants once approved (or while the meeting runs on the last version).
   const pointsShared = meeting.pointsStatus === "APPROVED" || !["SCHEDULED"].includes(meeting.status) || coordinator || owner;
   const momShared = meeting.status === "MOM_APPROVED" || meeting.status === "CLOSED" || coordinator || owner;
-  const facts = compliance(meeting);
+  const facts = onTime(meeting); // v1.51.2: ticked by the Coordinator in the MOM
   const minutes = minutesBetween(meeting.actualStart, meeting.actualEnd);
   const involved = departments.filter((department) => departmentIds.includes(department.id)).map((department) => department.name);
   const editingPoints = can.has("EDIT_POINTS");
   const editingMom = can.has("EDIT_MOM");
   const tasked = actionItems.filter((action) => action.taskId);
   const present = participants.filter((person) => person.attendance === "PRESENT" || person.attendance === "LATE").length;
-  const blocked = meeting.status === "SCHEDULED" && coordinator && !can.has("START");
-  const heldForm = can.has("END") && meeting.status === "SCHEDULED" && meeting.scheduledStart.getTime() <= Date.now();
+  const blocked = meeting.status === "SCHEDULED" && coordinator && !can.has("ENTER_MOM");
+  const extraMinutes = extendedBy(meeting.scheduledEnd, meeting.actualEnd);
   const panelHasItems = Boolean(
     (can.has("RESPOND") && me) ||
-    can.has("START") ||
+    can.has("ENTER_MOM") ||
     (can.has("END") && meeting.status === "IN_PROGRESS") ||
-    heldForm ||
     blocked ||
     can.has("EDIT_DETAILS") ||
     can.has("FOLLOW_UP") ||
@@ -171,6 +171,7 @@ export default async function MeetingPage({ params, searchParams }: { params: Pr
               )}
               {meeting.actualStart && <Fact label="Held" value={`${indiaDateTimeText(meeting.actualStart)}${meeting.actualEnd ? ` to ${indiaDateTimeText(meeting.actualEnd)}` : ""}`} />}
               {minutes !== null && <Fact label="Duration" value={`${minutes} min (${durationBand(minutes)})`} />}
+              {meeting.actualEnd && <Fact label="Extended" value={extraMinutes > 0 ? `Yes, by ${extraMinutes} min` : "No"} />}
             </dl>
             {meeting.description && <p className="mt-3 whitespace-pre-wrap text-label">{meeting.description}</p>}
           </section>
@@ -235,7 +236,17 @@ export default async function MeetingPage({ params, searchParams }: { params: Pr
                   openPoints: openPoints
                     .filter((point) => point.status === "OPEN" && !point.carriedFromId)
                     .map((point) => ({ text: point.text, ownerId: point.ownerId, reviewOn: point.reviewOn ?? "" })),
-                  attendance: participants.map((person) => ({ userId: person.userId, name: person.name, attendance: person.attendance })),
+                  attendance: participants.map((person) => ({ userId: person.userId, name: person.name, attendance: person.attendance, declined: person.response === "DECLINED" })),
+                  timing: {
+                    scheduledStart: indiaInput(meeting.scheduledStart).slice(11),
+                    scheduledEnd: indiaInput(meeting.scheduledEnd).slice(11),
+                    startedOnTime: meeting.startedOnTime ?? true,
+                    startTime: meeting.actualStart && meeting.startedOnTime === false ? indiaInput(meeting.actualStart).slice(11) : "",
+                    extended: meeting.endedOnTime === false,
+                    endTime: meeting.actualEnd && meeting.endedOnTime === false ? indiaInput(meeting.actualEnd).slice(11) : "",
+                    pointsOnTime: meeting.pointsOnTime ?? false,
+                    momOnTime: meeting.momOnTime ?? false,
+                  },
                 }}
               />
             </section>
@@ -377,12 +388,11 @@ export default async function MeetingPage({ params, searchParams }: { params: Pr
               </p>
             )}
             {can.has("RESPOND") && me && <RespondForm meetingId={meeting.id} current={me.response} />}
-            {can.has("START") && <MeetingButton meetingId={meeting.id} rowVersion={meeting.rowVersion} action="START" label="Start meeting" variant="primary" />}
+            {can.has("ENTER_MOM") && <MeetingButton meetingId={meeting.id} rowVersion={meeting.rowVersion} action="ENTER_MOM" label="Enter MOM" variant="primary" />}
             {can.has("END") && meeting.status === "IN_PROGRESS" && (
               <MeetingButton meetingId={meeting.id} rowVersion={meeting.rowVersion} action="END" label="End meeting" confirm="The MOM is then written and sent to the Meeting Owner." />
             )}
-            {heldForm && <RecordHeldForm meetingId={meeting.id} rowVersion={meeting.rowVersion} start={indiaInput(meeting.scheduledStart)} end={indiaInput(meeting.scheduledEnd)} />}
-            {blocked && <p className="text-caption text-ink-muted">The Meeting Owner asked for approved points before the meeting can start.</p>}
+            {blocked && <p className="text-caption text-ink-muted">The Meeting Owner asked for approved points before the MOM is entered.</p>}
             {can.has("EDIT_DETAILS") && (
               <Link href={`/users/meetings/new?edit=${meeting.id}`} className="btn-secondary btn-compact">
                 Edit details

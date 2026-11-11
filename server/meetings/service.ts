@@ -29,6 +29,8 @@ import {
   type MeetingMode,
   type MeetingPriority,
   type MeetingViewer,
+  timingProblem,
+  type TimingAnswer,
 } from "@/server/meetings/rules";
 
 // v1.51.0 (D-300, D-301): Meeting Management. Coordinator-driven: the
@@ -143,7 +145,7 @@ export async function scheduleMeeting(input: ScheduleMeetingInput, actor: Meetin
   if (input.agendaDue && !agendaDueAt) problems.agendaDueAt = "Choose a valid date and time.";
   if (input.momDue && !momDueAt) problems.momDueAt = "Choose a valid date and time.";
   // Editing keeps the original date check relaxed (a meeting already in the past week stays editable).
-  if (input.meetingId && problems.start === "The date is more than a week ago.") delete problems.start;
+  if (input.meetingId && problems.start === "The date is more than a year ago.") delete problems.start;
   const people = await listPeopleFacts();
   const active = new Set(people.map((person) => person.id));
   for (const [key, id] of [
@@ -306,6 +308,7 @@ export interface MomInput {
   actions: { title: string; description: string; ownerId: number | null; priority: string; dueOn: string }[];
   openPoints: { text: string; ownerId: number | null; reviewOn: string }[];
   attendance: { userId: number; attendance: string }[];
+  timing?: TimingAnswer | null; // v1.51.2: started on time? extended? points and MOM in time?
 }
 export interface ActOnMeetingInput {
   meetingId: number;
@@ -500,6 +503,14 @@ export async function actOnMeeting(input: ActOnMeetingInput, actor: MeetingActor
         if (approve) for (const id of await everyone()) if (id !== meeting.coordinatorId) messages.push(meetingMessages.published(summary, id, "meeting points"));
         return { message: approve ? "Meeting points approved and shared with the participants." : "Returned to the Coordinator.", outbox: await insertOutbox(null, messages, connection) };
       }
+      // v1.51.2 (owner): Enter MOM, before or after the meeting time.
+      case "ENTER_MOM": {
+        if (!allowed.has("ENTER_MOM"))
+          return { error: meeting.pointsPolicy === "BLOCK" && meeting.pointsStatus !== "APPROVED" ? "The Meeting Owner asked for approved points before the MOM." : NOT_FOUND } as const;
+        await update({ status: "AWAITING_MOM" });
+        await event("MOM_STARTED");
+        return { message: "Write the MOM: timing, attendance, discussion, decisions and action items.", outbox: [] };
+      }
       case "START": {
         if (!allowed.has("START"))
           return { error: meeting.pointsPolicy === "BLOCK" && meeting.pointsStatus !== "APPROVED" ? "The Meeting Owner asked for approved points before the meeting starts." : NOT_FOUND } as const;
@@ -527,6 +538,15 @@ export async function actOnMeeting(input: ActOnMeetingInput, actor: MeetingActor
       case "SAVE_MOM":
       case "SUBMIT_MOM": {
         if (!allowed.has("EDIT_MOM")) return { error: NOT_FOUND } as const;
+        // v1.51.2: the timing questions give the actual times and the on-time ticks.
+        let timingChanges: Record<string, unknown> = {};
+        const timing = input.mom?.timing ?? null;
+        if (timing) {
+          const day = new Date(meeting.scheduledStart.getTime() + 330 * 60_000).toISOString().slice(0, 10);
+          const times = timingProblem(timing, meeting.scheduledStart, meeting.scheduledEnd, indiaLocalToUtc, day);
+          if ("error" in times) return { error: times.error } as const;
+          timingChanges = { actual_start: times.actualStart, actual_end: times.actualEnd, started_on_time: timing.startedOnTime, ended_on_time: !timing.extended, points_on_time: timing.pointsOnTime, mom_on_time: timing.momOnTime };
+        } else if (input.action === "SUBMIT_MOM" && meeting.startedOnTime === null) return { error: "Answer the timing questions first: did it start on time, was it extended?" } as const;
         if (input.mom) {
           const mom = cleanMom(input.mom, active);
           const problem = actionProblems(mom.actions.map((action) => ({ title: action.title, ownerId: action.ownerId, dueOn: action.dueOn })));
@@ -550,12 +570,12 @@ export async function actOnMeeting(input: ActOnMeetingInput, actor: MeetingActor
           if (mom.attendance.size) await repo.setAttendance(meeting.id, mom.attendance, connection);
         }
         if (input.action === "SAVE_MOM") {
+          if (Object.keys(timingChanges).length) await update(timingChanges);
           await event("MOM_SAVED");
           return { message: "MOM saved.", outbox: [] };
         }
         if (!allowed.has("SUBMIT_MOM")) return { error: NOT_FOUND } as const;
-        const ended = meeting.actualEnd ?? new Date();
-        const changes: Record<string, unknown> = { mom_submitted_at: new Date(), mom_remarks: null, actual_end: ended, actual_start: meeting.actualStart ?? meeting.scheduledStart };
+        const changes: Record<string, unknown> = { mom_submitted_at: new Date(), mom_remarks: null, actual_start: meeting.actualStart ?? meeting.scheduledStart, actual_end: meeting.actualEnd ?? meeting.scheduledEnd, ...timingChanges };
         if (selfApproved(meeting, actor.id)) {
           const tasks = await createActionTasks(meeting, actor, connection);
           if ("error" in tasks) return { error: tasks.error } as const;

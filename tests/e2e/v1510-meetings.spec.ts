@@ -63,9 +63,18 @@ test("the Coordinator runs the meeting and sends the MOM with an action item", a
   await as(context, "E2E_REQ");
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(meetingPath);
-  await page.getByRole("button", { name: "Start meeting" }).click();
+  // v1.51.2 (owner): Enter MOM; timing as ticks, attendance as ticks.
+  await page.getByRole("button", { name: "Enter MOM" }).click();
   await expect(page.getByRole("heading", { name: "Minutes of meeting (MOM)" })).toBeVisible();
-  await page.getByLabel("Attendance of Sita Staff").selectOption("PRESENT");
+  const timing = page.getByTestId("mom-timing");
+  await timing.getByLabel("Started on time").uncheck();
+  await timing.getByLabel("Started at").fill("10:10");
+  await timing.getByLabel("Meeting was extended").check();
+  await timing.getByLabel("Ended at").fill("11:35");
+  await expect(page.getByTestId("extended-by")).toHaveText("Extended by 35 min");
+  await timing.getByLabel("Points shared in time").check();
+  await page.getByLabel("Sita Staff present").check();
+  await page.getByLabel("Manoj Manager present").uncheck();
   await page.getByLabel("1. Production review").fill("Output up 4% this week.");
   await page.getByRole("button", { name: "Add a decision" }).click();
   await page.getByLabel("Decision 1", { exact: true }).fill("Second shift from Monday");
@@ -75,6 +84,8 @@ test("the Coordinator runs the meeting and sends the MOM with an action item", a
   await page.screenshot({ path: "test-results/v1510-mom.png", fullPage: true });
   await page.getByRole("button", { name: "Send MOM to Meeting Owner" }).click();
   await expect(page.getByText(/MOM sent to/).first()).toBeVisible();
+  await page.reload();
+  await expect(page.getByText("Yes, by 35 min")).toBeVisible();
 });
 
 test("the Owner approves the MOM; the action item becomes a task linked to the meeting", async ({ page, context }) => {
@@ -115,6 +126,13 @@ test("someone not on the meeting gets not found; the dashboard and phone view re
   for (const part of ["meeting-tiles", "meeting-attention", "meeting-insights", "meeting-figures", "meeting-kpis"]) await expect(page.getByTestId(part)).toBeVisible();
   await expect(page.getByTestId("sidebar").getByRole("link", { name: "Meeting dashboard" })).toHaveCount(0);
   await page.screenshot({ path: "test-results/v1510-dashboard.png", fullPage: true });
+  // v1.52.0 (owner): Meeting analytics, by access and reporting line.
+  const day = (offset: number) => new Date(Date.now() + 330 * 60_000 + offset * 86_400_000).toISOString().slice(0, 10);
+  await page.goto(`/users/analytics?board=meetings&scope=ORGANISATION&period=custom&from=${day(-7)}&to=${day(14)}`);
+  await expect(page.getByTestId("meeting-analytics")).toBeVisible();
+  await expect(page.getByTestId("meeting-analytics")).toContainText("Every meeting in the organisation.");
+  await expect(page.getByTestId("meeting-by-type")).toContainText("IDM");
+  await page.screenshot({ path: "test-results/v1520-meeting-analytics.png", fullPage: true });
   await page.goto("/admin/meetings");
   await expect(page.getByRole("heading", { name: "Meeting settings" })).toBeVisible();
   await page.screenshot({ path: "test-results/v1510-admin.png", fullPage: true });

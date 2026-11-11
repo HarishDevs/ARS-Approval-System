@@ -48,3 +48,11 @@ describe("analytics dashboards per person (D-206)", () => {
     expect(boardsFor({ modules: { approval: false, task: false, information: true }, scopes: ["MINE"] })).toEqual(["overview", "information", "trends"]);
   });
 });
+
+// v1.52.0 (owner): Meeting analytics, for people with the Meeting module.
+describe("Meeting analytics board", () => {
+  it("is offered only with the Meeting module", () => {
+    expect(boardsFor({ modules: { approval: false, task: false, information: false, meeting: true }, scopes: ["MINE"] })).toContain("meetings");
+    expect(boardsFor({ modules: { approval: true, task: true, information: true }, scopes: ["MINE"] })).not.toContain("meetings");
+  });
+});

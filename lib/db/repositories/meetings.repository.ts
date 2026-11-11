@@ -11,6 +11,7 @@ const numOrNull = (value: unknown) => (value === null || value === undefined ? n
 const str = (value: unknown) => (value === null || value === undefined ? "" : String(value));
 const strOrNull = (value: unknown) => (value === null || value === undefined ? null : String(value));
 const dateOrNull = (value: unknown) => (value instanceof Date ? value : value ? new Date(String(value)) : null);
+const tick = (value: unknown): boolean | null => (value === null || value === undefined ? null : Boolean(Number(value)));
 const dayText = (value: unknown): string | null => {
   if (!value) return null;
   if (value instanceof Date) return value.toISOString().slice(0, 10);
@@ -60,6 +61,11 @@ export interface MeetingRecord {
   momSubmittedAt: Date | null;
   momDecidedAt: Date | null;
   momRemarks: string | null;
+  // v1.51.2: ticked by the Coordinator (null = not answered).
+  pointsOnTime: boolean | null;
+  startedOnTime: boolean | null;
+  endedOnTime: boolean | null;
+  momOnTime: boolean | null;
   seriesId: number | null;
   parentMeetingId: number | null;
   parentMeetingNo: string | null;
@@ -112,6 +118,10 @@ function toMeeting(row: Row): MeetingRecord {
     momSubmittedAt: dateOrNull(row.mom_submitted_at),
     momDecidedAt: dateOrNull(row.mom_decided_at),
     momRemarks: strOrNull(row.mom_remarks),
+    pointsOnTime: tick(row.points_on_time),
+    startedOnTime: tick(row.started_on_time),
+    endedOnTime: tick(row.ended_on_time),
+    momOnTime: tick(row.mom_on_time),
     seriesId: numOrNull(row.series_id),
     parentMeetingId: numOrNull(row.parent_meeting_id),
     parentMeetingNo: strOrNull(row.parent_no),
@@ -254,6 +264,10 @@ const MEETING_COLUMNS = [
   "mom_submitted_at",
   "mom_decided_at",
   "mom_remarks",
+  "points_on_time",
+  "started_on_time",
+  "ended_on_time",
+  "mom_on_time",
   "cancelled_reason",
 ];
 
@@ -818,6 +832,10 @@ export interface DashboardMeeting {
   pointsSubmittedAt: Date | null;
   momDueAt: Date | null;
   momSubmittedAt: Date | null;
+  pointsOnTime: boolean | null;
+  startedOnTime: boolean | null;
+  endedOnTime: boolean | null;
+  momOnTime: boolean | null;
   participants: number;
   present: number;
   absent: number;
@@ -829,7 +847,7 @@ export interface DashboardMeeting {
 export async function dashboardMeetings(scope: MeetingScope, from: Date, to: Date, db: Queryable = getDbPool()): Promise<DashboardMeeting[]> {
   const visible = scopeSql(scope);
   const [rows] = await db.query<Row[]>(
-    `SELECT m.id, m.meeting_no, m.title, t.name AS type_name, d.name AS department_name, m.status, m.scheduled_start, m.scheduled_end, m.actual_start, m.actual_end, m.agenda_due_at, m.points_submitted_at, m.mom_due_at, m.mom_submitted_at,
+    `SELECT m.id, m.meeting_no, m.title, t.name AS type_name, d.name AS department_name, m.status, m.scheduled_start, m.scheduled_end, m.actual_start, m.actual_end, m.agenda_due_at, m.points_submitted_at, m.mom_due_at, m.mom_submitted_at, m.points_on_time, m.started_on_time, m.ended_on_time, m.mom_on_time,
             (SELECT COUNT(*) FROM meeting_participants p WHERE p.meeting_id = m.id) AS participants,
             (SELECT COUNT(*) FROM meeting_participants p WHERE p.meeting_id = m.id AND p.attendance IN ('PRESENT', 'LATE')) AS present,
             (SELECT COUNT(*) FROM meeting_participants p WHERE p.meeting_id = m.id AND p.attendance = 'ABSENT') AS absent,
@@ -856,6 +874,10 @@ export async function dashboardMeetings(scope: MeetingScope, from: Date, to: Dat
     pointsSubmittedAt: dateOrNull(row.points_submitted_at),
     momDueAt: dateOrNull(row.mom_due_at),
     momSubmittedAt: dateOrNull(row.mom_submitted_at),
+    pointsOnTime: tick(row.points_on_time),
+    startedOnTime: tick(row.started_on_time),
+    endedOnTime: tick(row.ended_on_time),
+    momOnTime: tick(row.mom_on_time),
     participants: num(row.participants),
     present: num(row.present),
     absent: num(row.absent),

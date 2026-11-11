@@ -1,5 +1,5 @@
 import type { DashboardMeeting } from "@/lib/db/repositories/meetings.repository";
-import { compliance } from "@/server/meetings/rules";
+import { onTime } from "@/server/meetings/rules";
 
 // v1.51.1: the meeting figures shared by the Meeting dashboard and the
 // Meetings view of Home (one calculation, so both always agree).
@@ -47,7 +47,7 @@ export function addToTally(tally: Tally, row: DashboardMeeting) {
     tally.cancelled += 1;
     return;
   }
-  const facts = compliance(row);
+  const facts = onTime(row); // v1.51.2: the Coordinator's ticks
   if (row.actualStart) tally.held += 1;
   if (facts.agendaOnTime !== null) {
     tally.pointsJudged += 1;

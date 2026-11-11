@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   actionProblems,
+  extendedBy,
+  onTime,
+  timingProblem,
   actionState,
   allowedActions,
   canViewMeeting,
@@ -56,11 +59,14 @@ describe("what each role may do", () => {
     expect(allowedActions(meeting({ status: "MOM_APPROVED" }), viewer(2)).has("CONFIRM_ACTIONS")).toBe(true);
     expect(allowedActions(meeting({ status: "MOM_APPROVED" }), viewer(3, { isParticipant: true })).has("CONFIRM_ACTIONS")).toBe(false);
   });
-  it("participants answer the invitation; the Coordinator starts, ends and writes the MOM", () => {
+  it("participants answer the invitation; the Coordinator enters the MOM (v1.51.2) and writes it", () => {
     expect(allowedActions(meeting(), viewer(3, { isParticipant: true })).has("RESPOND")).toBe(true);
     expect(allowedActions(meeting(), viewer(2, { isParticipant: true })).has("RESPOND")).toBe(false); // the Coordinator always attends
     expect(allowedActions(meeting({ status: "IN_PROGRESS" }), viewer(3, { isParticipant: true })).has("RESPOND")).toBe(false);
-    expect(allowedActions(meeting(), viewer(2)).has("START")).toBe(true);
+    expect(allowedActions(meeting(), viewer(2)).has("ENTER_MOM")).toBe(true);
+    expect(allowedActions(meeting(), viewer(2)).has("START")).toBe(false);
+    expect(allowedActions(meeting({ status: "AWAITING_MOM" }), viewer(2)).has("EDIT_DETAILS")).toBe(true); // times stay editable
+    expect(allowedActions(meeting({ status: "MOM_SUBMITTED" }), viewer(2)).has("EDIT_DETAILS")).toBe(false);
     expect(allowedActions(meeting({ status: "IN_PROGRESS" }), viewer(2)).has("EDIT_MOM")).toBe(true);
     expect(allowedActions(meeting({ status: "AWAITING_MOM" }), viewer(2)).has("SUBMIT_MOM")).toBe(true);
     expect(allowedActions(meeting({ status: "MOM_RETURNED" }), viewer(2)).has("SUBMIT_MOM")).toBe(true);
@@ -70,7 +76,7 @@ describe("what each role may do", () => {
     expect(mayStart({ pointsStatus: "DRAFT", pointsPolicy: "LAST_APPROVED" })).toBe(true);
     expect(mayStart({ pointsStatus: "SUBMITTED", pointsPolicy: "BLOCK" })).toBe(false);
     expect(mayStart({ pointsStatus: "APPROVED", pointsPolicy: "BLOCK" })).toBe(true);
-    expect(allowedActions(meeting({ pointsPolicy: "BLOCK" }), viewer(2)).has("START")).toBe(false);
+    expect(allowedActions(meeting({ pointsPolicy: "BLOCK" }), viewer(2)).has("ENTER_MOM")).toBe(false);
   });
   it("the same person as Owner and Coordinator approves by submitting", () => {
     expect(selfApproved({ ownerId: 5, coordinatorId: 5 }, 5)).toBe(true);
@@ -156,5 +162,31 @@ describe("follow-up states", () => {
     expect(carriesForward("DONE_UNCONFIRMED")).toBe(true);
     expect(carriesForward("CONFIRMED")).toBe(false);
     expect(carriesForward("CANCELLED")).toBe(false);
+  });
+});
+
+describe("timing questions (v1.51.2)", () => {
+  const start = new Date("2026-11-12T04:30:00Z"); // 10:00 India
+  const end = new Date("2026-11-12T05:30:00Z"); // 11:00 India
+  const toUtc = (local: string) => new Date(`${local}:00+05:30`);
+  const base = { startedOnTime: true, startTime: "", extended: false, endTime: "", pointsOnTime: true, momOnTime: true };
+  it("on time and not extended: the scheduled times", () => {
+    expect(timingProblem(base, start, end, toUtc, "2026-11-12")).toEqual({ actualStart: start, actualEnd: end });
+  });
+  it("late start and extended: the entered times, extension worked out", () => {
+    const times = timingProblem({ ...base, startedOnTime: false, startTime: "10:15", extended: true, endTime: "11:40" }, start, end, toUtc, "2026-11-12");
+    expect("error" in times).toBe(false);
+    if (!("error" in times)) {
+      expect(times.actualStart.toISOString()).toBe("2026-11-12T04:45:00.000Z");
+      expect(extendedBy(end, times.actualEnd)).toBe(40);
+    }
+  });
+  it("asks for the missing time, and an extended end after the scheduled end", () => {
+    expect(timingProblem({ ...base, startedOnTime: false }, start, end, toUtc, "2026-11-12")).toMatchObject({ error: expect.stringMatching(/started/) });
+    expect(timingProblem({ ...base, extended: true }, start, end, toUtc, "2026-11-12")).toMatchObject({ error: expect.stringMatching(/ended/) });
+    expect(timingProblem({ ...base, extended: true, endTime: "10:50" }, start, end, toUtc, "2026-11-12")).toMatchObject({ error: expect.stringMatching(/after its scheduled end/) });
+  });
+  it("the on-time figures are the ticks, never worked out", () => {
+    expect(onTime({ pointsOnTime: true, startedOnTime: false, endedOnTime: null, momOnTime: true })).toEqual({ agendaOnTime: true, startedOnTime: false, endedOnTime: null, momOnTime: true });
   });
 });

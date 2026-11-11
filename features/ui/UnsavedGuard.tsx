@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ConfirmDialog } from "@/features/ui/Dialog";
-import { SAVED_EVENT } from "@/features/ui/form";
+import { SAVE_FAILED_EVENT, SAVED_EVENT } from "@/features/ui/form";
 
 // Clicks this guard took over, so the page-change indicators (the top bar,
 // the Classic loader) don't start for them. Next's Link always calls
@@ -26,15 +26,25 @@ export function UnsavedGuard() {
     if (!form) return;
     const changed = () => setDirty(true);
     const clean = () => setDirty(false);
+    // v1.51.2 (owner: "asking leave this page but submitting"): sending the
+    // form is not leaving it unsaved. The question is dropped as soon as it is
+    // sent (a save that opens the new record never asks); a refused save
+    // makes the form unsaved again.
+    const submitting = () => setDirty(false);
+    const failed = () => setDirty(true);
     form.addEventListener("input", changed);
     form.addEventListener("change", changed);
     form.addEventListener(SAVED_EVENT, clean);
     form.addEventListener("reset", clean);
+    form.addEventListener("submit", submitting);
+    form.addEventListener(SAVE_FAILED_EVENT, failed);
     return () => {
       form.removeEventListener("input", changed);
       form.removeEventListener("change", changed);
       form.removeEventListener(SAVED_EVENT, clean);
       form.removeEventListener("reset", clean);
+      form.removeEventListener("submit", submitting);
+      form.removeEventListener(SAVE_FAILED_EVENT, failed);
     };
   }, []);
 

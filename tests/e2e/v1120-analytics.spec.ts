@@ -43,7 +43,7 @@ test("IT opens every dashboard from the one Analytics page; the period carries o
   await page.goto("/users/analytics");
   // v1.12.1: dashboards and scopes are dropdowns.
   const boards = page.getByLabel("Dashboard", { exact: true });
-  await expect(boards.locator("option")).toHaveCount(9);
+  await expect(boards.locator("option")).toHaveCount(10);
   await expect(boards).toHaveValue("overview");
   await seeOnSomePage(page, "Tasks created");
   await seeOnSomePage(page, /Overdue acknowledgements: not available/);

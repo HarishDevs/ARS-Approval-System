@@ -36,6 +36,8 @@ test("a follow-up of an approved custom request is raised from New request and l
   const confirm = page.getByRole("alertdialog");
   if (await confirm.isVisible().catch(() => false)) await confirm.getByRole("button", { name: /^Yes/ }).click();
   await expect(page.getByText(/Approved/).first()).toBeVisible();
+  // The page refreshes itself after the decision; let it finish before leaving.
+  await page.waitForLoadState("networkidle");
 
   // The requester raises the follow-up.
   await dropCustomDraft("E2E_REQ");

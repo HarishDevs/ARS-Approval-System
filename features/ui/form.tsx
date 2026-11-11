@@ -44,6 +44,26 @@ const serverError = (reference: string) => `Something went wrong on the server, 
 
 // The plain message for an error thrown by a Server Action call, or null
 // when the request never got an answer (offline, cut connection).
+// v1.51.2 (owner: "every record creation shows an error and then submits"):
+// an action that finishes by opening another page (redirect) reaches the
+// caller as Next's redirect signal, not as an error. Next carries out the
+// navigation itself; the form must treat it as saved, never as a failure.
+export function isRedirectSignal(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const { digest, message } = error as { digest?: unknown; message?: unknown };
+  return (typeof digest === "string" && digest.startsWith("NEXT_REDIRECT")) || message === "NEXT_REDIRECT";
+}
+export const REDIRECTED: ActionResult = { ok: true, data: { redirected: true } };
+// Next 15 rejects the call with the redirect (digest "NEXT_REDIRECT;push|replace;/path;307;")
+// for its own boundary to navigate. Caught here, the form opens the page itself.
+function redirectTarget(error: unknown): { to: string; replace: boolean } | null {
+  const digest = (error as { digest?: unknown } | null)?.digest;
+  if (typeof digest !== "string" || !digest.startsWith("NEXT_REDIRECT")) return null;
+  const parts = digest.split(";");
+  const to = parts.slice(2, -2).join(";");
+  return to.startsWith("/") && !to.startsWith("//") ? { to, replace: parts[1] === "replace" } : null;
+}
+
 export function actionErrorMessage(error: unknown): string | null {
   if (!error || typeof error !== "object") return null;
   const { name, message, digest } = error as { name?: unknown; message?: unknown; digest?: unknown };
@@ -71,6 +91,8 @@ async function signedIn(): Promise<boolean | null> {
 // There is no percentage: the real progress isn't known.
 // D-233: fired on a form once its action has saved it.
 export const SAVED_EVENT = "ars:saved";
+// v1.51.2: fired on a form when its save was refused (it is unsaved again).
+export const SAVE_FAILED_EVENT = "ars:save-failed";
 export const SLOW_EVENT = "ars:slow";
 export const SLOW_AFTER_MS = 8_000;
 // D-233: a refusal on a page the person may only view says so, instead of "Not found."
@@ -93,6 +115,8 @@ export async function guardCall<T extends ActionResult>(run: () => Promise<T>, t
   });
   try {
     const result = await Promise.race([run(), timeout]);
+    // A redirecting action can also resolve with nothing: the new page is on its way.
+    if (!result || typeof result !== "object") return REDIRECTED;
     // Actions answer "Not found." to anyone they can't identify; when that
     // is because the session ended, say so (DEF-07); on a view-only page,
     // say that instead (D-233).
@@ -106,6 +130,10 @@ export async function guardCall<T extends ActionResult>(run: () => Promise<T>, t
     }
     return result;
   } catch (error) {
+    if (isRedirectSignal(error)) {
+      const target = redirectTarget(error);
+      return target ? { ok: true, data: { redirected: true, ...target } } : REDIRECTED;
+    }
     const known = actionErrorMessage(error);
     if (known && known !== UNEXPECTED) return { ok: false, message: known };
     if (typeof navigator !== "undefined" && navigator.onLine === false) return { ok: false, message: OFFLINE };
@@ -157,6 +185,18 @@ export function useActionForm(action: Action, options: ConfirmOptions = {}) {
     setPending(true);
     void guarded(latest.current, formData)
       .then((next) => {
+        // v1.52.0: a save that opens its new record is not a result for the
+        // form (forms read their own data from results): the form is marked
+        // saved, keeps its spinner, and the new page opens.
+        if (next.ok && next.data?.redirected) {
+          formRef.current?.dispatchEvent(new Event(SAVED_EVENT));
+          const to = typeof next.data.to === "string" ? next.data.to : null;
+          if (to) {
+            if (next.data.replace) router.replace(to);
+            else router.push(to);
+          }
+          return;
+        }
         latest.current = next;
         setResult(next);
         // The action's revalidatePath answer doesn't always repaint a page
@@ -164,6 +204,8 @@ export function useActionForm(action: Action, options: ConfirmOptions = {}) {
         // the page again so what's shown always matches the server.
         if (next.ok && options.successHref) router.replace(options.successHref, { scroll: false });
         else if (next.ok) router.refresh();
+        // A refused save leaves the form's changes unsaved (UnsavedGuard asks again).
+        if (!next.ok) formRef.current?.dispatchEvent(new Event(SAVE_FAILED_EVENT));
       })
       .finally(() => {
         busy.current = false;

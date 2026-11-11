@@ -6,7 +6,7 @@ import { ALL_METRICS, METRIC } from "@/server/analytics/metrics";
 // v1.12.0 Analytics Center: the pure rules.
 describe("boards", () => {
   it("are tabs of one page, in the brief's order; unknown → executive overview", () => {
-    expect(BOARDS.map((board) => board.key)).toEqual(["overview", "approvals", "tasks", "information", "employees", "departments", "sla", "trends", "quality"]);
+    expect(BOARDS.map((board) => board.key)).toEqual(["overview", "approvals", "tasks", "information", "meetings", "employees", "departments", "sla", "trends", "quality"]);
     expect(parseBoard("nope")).toBe("overview");
     expect(parseBoard("tasks")).toBe("tasks");
   });

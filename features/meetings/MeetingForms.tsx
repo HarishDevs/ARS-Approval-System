@@ -6,7 +6,7 @@ import { closeOpenPointAction, meetingAction, reviewMeetingAction, scheduleMeeti
 import { PeoplePicker, type PersonOption } from "@/features/ui/PeoplePicker";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import { UnsavedGuard } from "@/features/ui/UnsavedGuard";
-import { ATTENDANCE_LABEL, PRIORITIES, PRIORITY_LABEL, type Attendance, type MeetingPriority } from "@/server/meetings/rules";
+import { PRIORITIES, PRIORITY_LABEL, type Attendance, type MeetingPriority } from "@/server/meetings/rules";
 
 // v1.51.0 (D-300, D-301): Meeting Management forms. Every people choice is
 // search-and-select (owner rule): one person for Owner, Coordinator,
@@ -558,8 +558,17 @@ export interface MomDefaults {
   actions: { title: string; description: string; ownerId: number; priority: MeetingPriority; dueOn: string }[];
   tasked: { title: string; ownerName: string; taskNo: string | null }[];
   openPoints: { text: string; ownerId: number | null; reviewOn: string }[];
-  attendance: { userId: number; name: string; attendance: Attendance }[];
+  attendance: { userId: number; name: string; attendance: Attendance; declined?: boolean }[];
+  // v1.51.2 (owner): asked when the MOM is entered.
+  timing: { scheduledStart: string; scheduledEnd: string; startedOnTime: boolean; startTime: string; extended: boolean; endTime: string; pointsOnTime: boolean; momOnTime: boolean };
 }
+
+// Minutes between two "HH:MM" times on the same day (0 if not later).
+const minutesAfter = (from: string, to: string) => {
+  if (!/^\d{2}:\d{2}$/.test(from) || !/^\d{2}:\d{2}$/.test(to)) return 0;
+  const at = (text: string) => Number(text.slice(0, 2)) * 60 + Number(text.slice(3, 5));
+  return Math.max(0, at(to) - at(from));
+};
 
 export function MomEditor({
   meetingId,
@@ -581,7 +590,13 @@ export function MomEditor({
   const [decisions, setDecisions] = useState<{ key: string; text: string }[]>(() => defaults.decisions.map((text) => ({ key: nextKey(), text })));
   const [actions, setActions] = useState<ActionRow[]>(() => defaults.actions.map((action) => ({ key: nextKey(), ...action })));
   const [openPoints, setOpenPoints] = useState<OpenRow[]>(() => defaults.openPoints.map((point) => ({ key: nextKey(), ...point })));
-  const [attendance, setAttendance] = useState<Record<number, Attendance>>(() => Object.fromEntries(defaults.attendance.map((row) => [row.userId, row.attendance])));
+  // v1.51.2 (owner): a tick = present, no tick = absent. Unmarked people start ticked unless they said they can't attend.
+  const [present, setPresent] = useState<Record<number, boolean>>(() =>
+    Object.fromEntries(defaults.attendance.map((row) => [row.userId, row.attendance === "PRESENT" || row.attendance === "LATE" || (row.attendance === "UNMARKED" && !row.declined)])),
+  );
+  const [timing, setTiming] = useState(defaults.timing);
+  const setTime = (change: Partial<MomDefaults["timing"]>) => setTiming((current) => ({ ...current, ...change }));
+  const extraMinutes = timing.extended ? minutesAfter(timing.scheduledEnd, timing.endTime) : 0;
   const json = useMemo(
     () =>
       JSON.stringify({
@@ -589,9 +604,10 @@ export function MomEditor({
         decisions: decisions.map((row) => row.text),
         actions: actions.map(({ title, description, ownerId, priority, dueOn }) => ({ title, description, ownerId, priority, dueOn })),
         openPoints: openPoints.map(({ text, ownerId, reviewOn }) => ({ text, ownerId, reviewOn })),
-        attendance: Object.entries(attendance).map(([userId, value]) => ({ userId: Number(userId), attendance: value })),
+        attendance: Object.entries(present).map(([userId, value]) => ({ userId: Number(userId), attendance: value ? "PRESENT" : "ABSENT" })),
+        timing: { startedOnTime: timing.startedOnTime, startTime: timing.startTime, extended: timing.extended, endTime: timing.endTime, pointsOnTime: timing.pointsOnTime, momOnTime: timing.momOnTime },
       }),
-    [discussions, decisions, actions, openPoints, attendance],
+    [discussions, decisions, actions, openPoints, present, timing],
   );
   const setAction = (key: string, change: Partial<ActionRow>) => setActions((current) => current.map((row) => (row.key === key ? { ...row, ...change } : row)));
   const setOpen = (key: string, change: Partial<OpenRow>) => setOpenPoints((current) => current.map((row) => (row.key === key ? { ...row, ...change } : row)));
@@ -602,38 +618,63 @@ export function MomEditor({
       <input type="hidden" name="rowVersion" value={rowVersion} />
       <input type="hidden" name="mom" value={json} />
 
+      <section aria-labelledby="mom-timing" className="space-y-3 rounded-md border border-line p-3" data-testid="mom-timing">
+        <h3 id="mom-timing" className="font-semibold">
+          Timing
+        </h3>
+        <p className="text-caption text-ink-muted">
+          Scheduled {timing.scheduledStart} to {timing.scheduledEnd}. Tick what applies.
+        </p>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <label className="flex items-center gap-2 text-label">
+            <input type="checkbox" checked={timing.startedOnTime} onChange={(event) => setTime({ startedOnTime: event.target.checked })} /> Started on time
+          </label>
+          {!timing.startedOnTime && (
+            <label className="flex items-center gap-2 text-label">
+              Started at <input type="time" value={timing.startTime} onChange={(event) => setTime({ startTime: event.target.value })} required className="field-input h-9 w-auto" />
+            </label>
+          )}
+        </div>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <label className="flex items-center gap-2 text-label">
+            <input type="checkbox" checked={timing.extended} onChange={(event) => setTime({ extended: event.target.checked })} /> Meeting was extended
+          </label>
+          {timing.extended && (
+            <>
+              <label className="flex items-center gap-2 text-label">
+                Ended at <input type="time" value={timing.endTime} onChange={(event) => setTime({ endTime: event.target.value })} required className="field-input h-9 w-auto" />
+              </label>
+              <span className="text-label font-semibold text-warning-600" data-testid="extended-by">
+                {extraMinutes > 0 ? `Extended by ${extraMinutes} min` : "Enter a time after the scheduled end"}
+              </span>
+            </>
+          )}
+        </div>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <label className="flex items-center gap-2 text-label">
+            <input type="checkbox" checked={timing.pointsOnTime} onChange={(event) => setTime({ pointsOnTime: event.target.checked })} /> Points shared in time
+          </label>
+          <label className="flex items-center gap-2 text-label">
+            <input type="checkbox" checked={timing.momOnTime} onChange={(event) => setTime({ momOnTime: event.target.checked })} /> MOM in time
+          </label>
+        </div>
+      </section>
+
       <section aria-labelledby="mom-attendance">
-        <h3 id="mom-attendance" className="mb-2 font-semibold">
+        <h3 id="mom-attendance" className="mb-1 font-semibold">
           Attendance
         </h3>
-        <div className="overflow-x-auto">
-          <table className="w-full text-label">
-            <tbody>
-              {defaults.attendance.map((row) => (
-                <tr key={row.userId} className="border-t border-line">
-                  <td className="py-1.5 pr-3">{row.name}</td>
-                  <td className="py-1.5">
-                    <label className="sr-only" htmlFor={`att-${row.userId}`}>
-                      Attendance of {row.name}
-                    </label>
-                    <select
-                      id={`att-${row.userId}`}
-                      value={attendance[row.userId] ?? "UNMARKED"}
-                      onChange={(event) => setAttendance((current) => ({ ...current, [row.userId]: event.target.value as Attendance }))}
-                      className="field-input h-9"
-                    >
-                      {(Object.keys(ATTENDANCE_LABEL) as Attendance[]).map((value) => (
-                        <option key={value} value={value}>
-                          {ATTENDANCE_LABEL[value]}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <p className="mb-2 text-caption text-ink-muted">Ticked = present; not ticked = absent.</p>
+        <ul className="grid gap-x-6 gap-y-1.5 sm:grid-cols-2">
+          {defaults.attendance.map((row) => (
+            <li key={row.userId}>
+              <label className="flex items-center gap-2 text-label">
+                <input type="checkbox" checked={present[row.userId] ?? false} onChange={(event) => setPresent((current) => ({ ...current, [row.userId]: event.target.checked }))} aria-label={`${row.name} present`} />
+                {row.name}
+              </label>
+            </li>
+          ))}
+        </ul>
       </section>
 
       <section aria-labelledby="mom-discussion">

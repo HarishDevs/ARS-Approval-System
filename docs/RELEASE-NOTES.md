@@ -1,5 +1,14 @@
 # Release notes
 
+## v1.52.0 (11 Nov 2026): Meeting analytics, MOM timing as ticks, forms without false errors (owner)
+- **Meeting analytics** (Analytics → Meeting analytics, with the Meeting module): meetings held and cancelled, points / start / end / MOM on time, how often meetings are extended and by how much, attendance, how long the Owner takes to approve points and MOM, action items done, confirmed and overdue, open points; compared with the previous period; by meeting type, department and Coordinator; action owners and ageing; twelve months; meetings needing attention and the most extended. **Whose meetings** follows the scope: your own, your team (everyone below you in the reporting line), the departments you head, or the whole organisation (IT). ED and MD (Management group) can switch to all meetings. Management-only meetings count only for the people on them, ED, MD and IT.
+- **Enter MOM** replaces Start meeting / End meeting / Record as held. A meeting can be scheduled before or after it happens, and its date and times can be edited until the MOM goes to the Owner.
+- **MOM timing:** tick **Started on time** (or enter when it started) and **Meeting was extended** (enter when it ended; the extra minutes are worked out and shown in the meeting details as "Extended: Yes, by N min").
+- **Ticks, not calculations:** Points shared in time, Started on time, Ended on time and MOM in time are the Coordinator's ticks, used on the meeting page, Home → Meetings and Meeting analytics.
+- **Attendance** is a tick per person: ticked = present, not ticked = absent.
+- **Fixed for every form:** saving a form that opens its new record (Add user, Schedule meeting, New request, Create task, new project, new approval type…) flashed "The server sent back an unexpected answer" before the new page opened, and could ask "Leave?" on the way. Both are gone. A refused save still shows its own message and still asks before you leave with unsaved changes.
+- One small database change on start (the four on-time ticks on meetings).
+
 ## v1.51.1 (11 Nov 2026): Meeting Overview on Home, modules for many users, toolbar filters everywhere (owner)
 - **Home → Meetings:** a third choice beside Approvals and Task Management. It has the cards (upcoming, to approve, MOM to write, my open actions), **Needs attention** (points or MOM late or due soon, meetings not started or still running, overdue actions, completed actions to confirm), Coming up, Waiting for my approval, Done to confirm, **Insights**, and for a period the on-time figures, by type, by department and the register. The separate Meeting dashboard page and its menu entry are gone (old links open Home → Meetings). The figures follow page access ("Meetings: dashboard figures").
 - **Users & roles:** tick several people and press **Modules** to give modules, take them away, or set exactly which ones they have. Each person is checked as on the user page and recorded in the audit log.
