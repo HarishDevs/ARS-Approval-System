@@ -73,7 +73,7 @@ export function FileListInput({
 
   return (
     <div data-testid={testId ?? "file-list-input"}>
-      <input ref={field} id={id ? `${id}-field` : undefined} name={name} type="file" multiple={multiple} accept={accept} tabIndex={-1} aria-hidden="true" className="sr-only" />
+      <input ref={field} id={id ? `${id}-field` : undefined} name={name} type="file" multiple={multiple} accept={accept} tabIndex={-1} aria-hidden="true" aria-label="Files to send" className="sr-only" />
       <input
         ref={picker}
         id={id}
