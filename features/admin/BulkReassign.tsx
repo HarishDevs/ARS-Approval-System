@@ -5,6 +5,7 @@ import { useState } from "react";
 import { bulkReassignAction } from "@/app/admin/workload/actions";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import { Hint } from "@/features/ui/Hint";
+import { PersonSelect } from "@/features/ui/PersonSelect";
 
 // v1.7.0 (A3): tick pending tasks, choose one person, give a reason. The
 // server checks each task again and moves them one by one; every task gets
@@ -26,7 +27,7 @@ export interface ReassignRow {
 }
 type Outcome = { requestId: number; taskKey: string; requestNo: string | null; ok: boolean; message: string };
 
-export function BulkReassign({ rows, people }: { rows: ReassignRow[]; people: { id: number; label: string }[] }) {
+export function BulkReassign({ rows, people }: { rows: ReassignRow[]; people: { id: number; label: string; detail?: string }[] }) {
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const { result, pending, onSubmit, confirmBar } = useActionForm(bulkReassignAction, {
     confirm: `Move ${picked.size} task${picked.size === 1 ? "" : "s"} to the chosen person? Each one is checked again; anything that can't move is listed with the reason.`,
@@ -87,16 +88,7 @@ export function BulkReassign({ rows, people }: { rows: ReassignRow[]; people: { 
             </label>
             <Hint text="Approval steps need someone who can approve; work steps can go to anyone active." align="start" className="mb-1.5" />
           </div>
-          <select id="toUserId" name="toUserId" required defaultValue="" className="field-input">
-            <option value="" disabled>
-              Choose a person
-            </option>
-            {people.map((person) => (
-              <option key={person.id} value={person.id}>
-                {person.label}
-              </option>
-            ))}
-          </select>
+          <PersonSelect id="toUserId" name="toUserId" required options={people} placeholder="Choose a person" />
           <FieldError result={result} name="toUserId" />
         </div>
         <div>

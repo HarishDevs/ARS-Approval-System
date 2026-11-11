@@ -118,15 +118,16 @@ export async function loadHeatmap(scope: Scope, viewer: Viewer, filter: Analytic
 
 // B02: choices for the approver and step filters: only people and steps
 // that appear on requests in the viewer's scope.
-export async function loadFilterChoices(scope: Scope, viewer: Viewer, filter: AnalyticsFilter, db: Queryable = getDbPool()): Promise<{ approvers: { id: number; name: string }[]; steps: string[] }> {
+export async function loadFilterChoices(scope: Scope, viewer: Viewer, filter: AnalyticsFilter, db: Queryable = getDbPool()): Promise<{ approvers: { id: number; name: string; loginId: string; departmentName: string | null }[]; steps: string[] }> {
   const base: AnalyticsFilter = { period: filter.period, workflowId: filter.workflowId, departmentId: filter.departmentId };
   const t = where(scope, viewer, base, "task");
-  const [approvers] = await db.query<(RowDataPacket & { id: number; name: string })[]>(
-    `SELECT DISTINCT u.id, u.name ${TASK_JOINS} JOIN users u ON u.id = t.approver_id WHERE ${t.sql} AND t.task_type = 'APPROVAL' ORDER BY u.name LIMIT 300`,
+  // v1.52.1: code and department too, for the "Name - code" picker.
+  const [approvers] = await db.query<(RowDataPacket & { id: number; name: string; login_id: string; department_name: string | null })[]>(
+    `SELECT DISTINCT u.id, u.name, u.login_id, ud.name AS department_name ${TASK_JOINS} JOIN users u ON u.id = t.approver_id LEFT JOIN departments ud ON ud.id = u.department_id WHERE ${t.sql} AND t.task_type = 'APPROVAL' ORDER BY u.name LIMIT 300`,
     t.params,
   );
   const [steps] = await db.query<(RowDataPacket & { step: string })[]>(`SELECT DISTINCT t.node_label AS step ${TASK_JOINS} WHERE ${t.sql} ORDER BY step LIMIT 200`, t.params);
-  return { approvers: approvers.map((row) => ({ id: row.id, name: row.name })), steps: steps.map((row) => row.step) };
+  return { approvers: approvers.map((row) => ({ id: row.id, name: row.name, loginId: row.login_id, departmentName: row.department_name })), steps: steps.map((row) => row.step) };
 }
 
 // B01: the requests behind a number. Each kind matches the query that

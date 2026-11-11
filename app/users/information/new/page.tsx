@@ -15,6 +15,7 @@ import { listDepartments } from "@/lib/db/repositories/organisation.repository";
 import { listGroups } from "@/lib/db/repositories/groups.repository";
 import { mayCreate, parseInfoSettings, type InfoSettings } from "@/server/modules/settings";
 import type { FormField } from "@/server/forms/fields";
+import { personLabel } from "@/lib/people/label";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
 export const metadata: Metadata = { title: "New information" };
@@ -87,7 +88,7 @@ export default async function NewInformationPage({ searchParams }: { searchParam
         infoId={draft?.id ?? null}
         rowVersion={draft?.rowVersion ?? null}
         form={form}
-        people={people.filter((person) => person.id !== user.id).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` }))}
+        people={people.filter((person) => person.id !== user.id).map((person) => ({ id: person.id, label: personLabel(person), detail: person.departmentName ?? undefined }))}
         departments={departments.filter((department) => department.active).map((department) => ({ id: department.id, label: department.name }))}
         groups={groups.filter((group) => group.active).map((group) => ({ id: group.id, label: group.name }))}
         lookups={lookups}

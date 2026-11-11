@@ -20,14 +20,14 @@ export interface PaletteLink {
   group: string;
 }
 type Kind = "request" | "task" | "project" | "person" | "info" | "page" | "recent";
-type Option = { key: string; href: string; label: string; detail?: string; group: string; kind: Kind; photo?: string | null };
+type Option = { key: string; href: string; label: string; detail?: string; group: string; kind: Kind; photo?: string | null; avatar?: string };
 type Chip = "all" | "requests" | "tasks" | "projects" | "people" | "info" | "pages";
 type Quick = {
   kind: string;
   items: { id: number; requestNo: string; title: string; status: string }[];
   tasks?: { id: number; taskNo: string; title: string; status: string }[];
   projects?: { id: number; name: string }[];
-  people?: { id: number; name: string; email: string; detail: string; photo: string | null }[];
+  people?: { id: number; name: string; label?: string; email: string; detail: string; photo: string | null }[]; // label: "Name - code" (v1.52.1)
   information?: { id: number; infoNo: string; title: string }[];
 };
 type FilterType = "task" | "request" | "project" | "info";
@@ -195,7 +195,7 @@ export function CommandPalette({ pages, saved }: { pages: PaletteLink[]; saved?:
         kind: "task" as const,
       })),
       ...(found.projects ?? []).map((item) => ({ key: `j:${item.id}`, href: `/users/work/projects/${item.id}`, label: item.name, group: "Projects", kind: "project" as const })),
-      ...(found.people ?? []).map((item) => ({ key: `u:${item.id}`, href: `/users/people/${item.id}`, label: item.name, detail: item.detail || item.email, group: "People", kind: "person" as const, photo: item.photo })),
+      ...(found.people ?? []).map((item) => ({ key: `u:${item.id}`, href: `/users/people/${item.id}`, label: item.label ?? item.name, detail: item.detail || item.email, group: "People", kind: "person" as const, photo: item.photo, avatar: item.name })),
       ...(found.information ?? []).map((item) => ({ key: `i:${item.id}`, href: `/users/information/${item.id}`, label: `${item.infoNo}: ${item.title}`, group: "Information", kind: "info" as const })),
       ...pages
         .filter((page) => words.length > 0 && words.every((word) => `${page.label} ${page.group}`.toLowerCase().includes(word)))
@@ -580,7 +580,7 @@ export function CommandPalette({ pages, saved }: { pages: PaletteLink[]; saved?:
                           onClick={() => go(option.href)}
                           className={`flex cursor-pointer items-center gap-3 rounded-md px-2 py-2 text-label ${index === active ? "bg-primary-50 text-primary-700" : "text-ink"}`}
                         >
-                          {option.kind === "person" ? <Avatar name={option.label} src={option.photo} size="xs" /> : <Icon aria-hidden="true" className="h-4 w-4 shrink-0" />}
+                          {option.kind === "person" ? <Avatar name={option.avatar ?? option.label} src={option.photo} size="xs" /> : <Icon aria-hidden="true" className="h-4 w-4 shrink-0" />}
                           <span className="min-w-0 flex-1 truncate">{option.label}</span>
                           {option.detail && <span className="max-w-[45%] shrink-0 truncate text-caption text-ink-muted">{option.detail}</span>}
                         </div>

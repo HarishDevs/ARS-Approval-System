@@ -335,12 +335,12 @@ export async function claimTaskReminder(taskId: number, kind: string, db: Querya
 }
 
 // Every active person (no break-glass) with what assignment scopes need.
-export async function listPeopleFacts(db: Queryable = getDbPool()): Promise<(PersonFacts & { loginId: string })[]> {
-  const [rows] = await db.query<(RowDataPacket & { id: number; name: string; login_id: string; department_id: number | null; reporting_manager_id: number | null })[]>(
-    "SELECT id, name, login_id, department_id, reporting_manager_id FROM users WHERE active = TRUE AND is_break_glass = FALSE ORDER BY name",
+export async function listPeopleFacts(db: Queryable = getDbPool()): Promise<(PersonFacts & { loginId: string; departmentName: string | null })[]> {
+  const [rows] = await db.query<(RowDataPacket & { id: number; name: string; login_id: string; department_id: number | null; reporting_manager_id: number | null; department_name: string | null })[]>(
+    "SELECT u.id, u.name, u.login_id, u.department_id, u.reporting_manager_id, d.name AS department_name FROM users u LEFT JOIN departments d ON d.id = u.department_id WHERE u.active = TRUE AND u.is_break_glass = FALSE ORDER BY u.name",
   );
   const [groups] = await db.query<(RowDataPacket & { user_id: number; group_id: number })[]>("SELECT m.user_id, m.group_id FROM approver_group_members m JOIN approver_groups g ON g.id = m.group_id AND g.active = TRUE");
   const byUser = new Map<number, number[]>();
   for (const row of groups) byUser.set(row.user_id, [...(byUser.get(row.user_id) ?? []), row.group_id]);
-  return rows.map((row) => ({ id: row.id, name: row.name, loginId: row.login_id, active: true, departmentId: row.department_id, managerId: row.reporting_manager_id, groupIds: byUser.get(row.id) ?? [] }));
+  return rows.map((row) => ({ id: row.id, name: row.name, loginId: row.login_id, departmentName: row.department_name, active: true, departmentId: row.department_id, managerId: row.reporting_manager_id, groupIds: byUser.get(row.id) ?? [] }));
 }

@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { MoreHorizontal, Pencil, Pin, PinOff, Search, Trash2 } from "lucide-react";
 import { ConfirmDialog } from "@/features/ui/Dialog";
+import { inside } from "@/features/ui/inside";
 
 export type ChatSummary = { id: number; title: string; pinned?: boolean };
 
@@ -140,7 +141,7 @@ function ChatMenu({ title, pinned, disabled, onRename, onPin, onDelete }: { titl
     if (!at) return;
     menu.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
     const close = (event: Event) => {
-      if (event.type === "mousedown" && menu.current?.contains(event.target as Node)) return;
+      if (event.type === "mousedown" && inside(event, menu.current)) return;
       setAt(null);
     };
     document.addEventListener("mousedown", close);

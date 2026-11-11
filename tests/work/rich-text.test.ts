@@ -40,3 +40,24 @@ describe("task description formatting", () => {
     expect(prefixLines("- a", 0, 0, true).value).toBe("1. a");
   });
 });
+
+// v1.52.2 (owner): comments format like an email body.
+describe("comment formatting (v1.52.2)", () => {
+  it("reads underline, code, links, quotes and headings", async () => {
+    const { inlineParts, richBlocks } = await import("@/features/work/rich-text");
+    expect(inlineParts("a ++b++ `c` [site](https://example.com)")).toEqual([
+      { kind: "text", text: "a " },
+      { kind: "underline", text: "b" },
+      { kind: "text", text: " " },
+      { kind: "code", text: "c" },
+      { kind: "text", text: " " },
+      { kind: "link", text: "site", href: "https://example.com" },
+    ]);
+    expect(richBlocks("> quoted\n# Title\nplain").map((block) => block.kind)).toEqual(["quote", "heading", "line"]);
+  });
+  it("never makes a link of anything but http(s) or mailto", async () => {
+    const { inlineParts } = await import("@/features/work/rich-text");
+    expect(inlineParts("[x](javascript:alert(1))").some((part) => part.kind === "link")).toBe(false);
+    expect(inlineParts("[mail](mailto:a@b.co)")).toEqual([{ kind: "link", text: "mail", href: "mailto:a@b.co" }]);
+  });
+});

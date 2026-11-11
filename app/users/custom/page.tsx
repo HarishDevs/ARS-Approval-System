@@ -14,6 +14,7 @@ import { personProfile } from "@/lib/db/repositories/profile.repository";
 import { loadRequestView } from "@/server/approvals/view";
 import { followUpSource, followUpValues } from "@/server/approvals/follow-up";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
+import { personLabel } from "@/lib/people/label";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
 export const metadata: Metadata = { title: "New request" };
@@ -24,7 +25,7 @@ export default async function CustomApprovalPage({ searchParams }: { searchParam
   const query = await searchParams;
   const options = await loadBuilderOptions();
   const draft = await findDraft(user.id, "CUSTOM");
-  const everyone = (await listActiveUserOptions()).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` }));
+  const everyone = (await listActiveUserOptions()).map((person) => ({ id: person.id, label: personLabel(person), detail: person.departmentName ?? undefined }));
   const collaboratorOptions = everyone.filter((person) => person.id !== user.id);
   // v1.8.0: the fields and step options IT set up (Admin → Custom approval).
   const config = await loadCustomConfig();

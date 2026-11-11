@@ -18,6 +18,7 @@ import { prefill, SOURCE_LABEL } from "@/server/approvals/autofill";
 import { listTemplates } from "@/lib/db/repositories/templates.repository";
 import { TemplatePicker } from "@/features/requests/Templates";
 import { featureOn } from "@/server/settings/features";
+import { personLabel } from "@/lib/people/label";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
 export const metadata: Metadata = { title: "Request templates" };
@@ -33,12 +34,12 @@ export default async function RaiseRequestPage({ params, searchParams }: { param
   const version = await findPublishedVersion(workflow.id);
   if (!version) notFound();
   const needsPeople = version.form.some((field) => field.type === "PERSON");
-  const people = needsPeople ? (await listActiveUserOptions()).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` })) : [];
+  const people = needsPeople ? (await listActiveUserOptions()).map((person) => ({ id: person.id, label: personLabel(person), detail: person.departmentName ?? undefined })) : [];
   const approverFields = approverFieldKeys(version.definition);
   const lookups = version.form.some((field) => field.type === "LOOKUP") ? await loadFieldLookups() : undefined;
   // v1.6.1: anyone active can be a collaborator (not the requester).
-  const collaboratorOptions = (await listActiveUserOptions()).filter((person) => person.id !== user.id).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` }));
-  const approverPeople = approverFields.length ? (await listApproverOptions()).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` })) : undefined;
+  const collaboratorOptions = (await listActiveUserOptions()).filter((person) => person.id !== user.id).map((person) => ({ id: person.id, label: personLabel(person), detail: person.departmentName ?? undefined }));
+  const approverPeople = approverFields.length ? (await listApproverOptions()).map((person) => ({ id: person.id, label: personLabel(person), detail: person.departmentName ?? undefined })) : undefined;
   // #3: the person's own draft for this type, if any (scoped by user id).
   const draftKey = `WF:${workflow.id}`;
   const draft = await findDraft(user.id, draftKey);

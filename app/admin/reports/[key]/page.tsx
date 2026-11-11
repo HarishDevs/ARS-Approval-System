@@ -16,6 +16,7 @@ import { dashboardChoices } from "@/lib/db/repositories/dashboards.repository";
 import { listViews } from "@/lib/db/repositories/analytics-views.repository";
 import type { Cell, Column } from "@/server/reports/catalogue";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
+import { personLabel } from "@/lib/people/label";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
 export const metadata: Metadata = { title: "Report" };
@@ -49,7 +50,7 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
   // B07: opening a report with no filters uses your default view for it.
   const defaultView = Object.keys(raw).length === 0 ? views.find((view) => view.isDefault && Object.keys(view.query).length > 0) : undefined;
   if (defaultView) redirect(`/admin/reports/${key}?${new URLSearchParams(defaultView.query).toString()}`);
-  const people = scheduling ? (await listActiveUserOptions()).filter((person) => person.id !== user.id).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` })) : [];
+  const people = scheduling ? (await listActiveUserOptions()).filter((person) => person.id !== user.id).map((person) => ({ id: person.id, label: personLabel(person), detail: person.departmentName ?? undefined })) : [];
   const effective: Record<string, string> = { ...(query as Record<string, string>), scope: scope.kind, period: filter.period.key };
   if (filter.period.key === "custom") Object.assign(effective, { from: filter.period.from, to: filter.period.to });
   // v1.51.1: filters in use (whose, other than the default; a period other than the last 30 days; a type; a department).

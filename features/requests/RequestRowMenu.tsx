@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { MoreVertical } from "lucide-react";
+import { inside } from "@/features/ui/inside";
 
 // D-256: a row's actions on the request lists. Only actions that exist for
 // this request and this person are offered; anything that changes it (withdraw,
@@ -31,7 +32,7 @@ export function RequestRowMenu({ title, actions }: { title: string; actions: Row
   useEffect(() => {
     if (!open) return;
     box.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus({ preventScroll: true });
-    const close = (event: MouseEvent) => box.current && !box.current.contains(event.target as Node) && setOpen(false);
+    const close = (event: MouseEvent) => box.current && !inside(event, box.current) && setOpen(false);
     const key = (event: KeyboardEvent) => event.key === "Escape" && setOpen(false);
     const away = () => setOpen(false); // the fixed menu would drift from its row
     document.addEventListener("mousedown", close);

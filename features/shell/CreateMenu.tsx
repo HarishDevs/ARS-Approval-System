@@ -4,6 +4,7 @@ import { CheckSquare, FileCheck2, FolderKanban, Megaphone, Plus } from "lucide-r
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { CREATE_TASK_EVENT } from "@/features/work/client";
+import { inside } from "@/features/ui/inside";
 
 // D-221 (owner: "the new button should be at the top; on clicking it asks
 // create Approval, Task, Project"): the sidebar's + Create, as in Asana.
@@ -28,7 +29,7 @@ export function CreateMenu({ approval, task, information, compact = false }: { a
     if (!open) return;
     box.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
     const close = (event: MouseEvent) => {
-      if (box.current && !box.current.contains(event.target as Node)) setOpen(false);
+      if (box.current && !inside(event, box.current)) setOpen(false);
     };
     const escape = (event: KeyboardEvent) => event.key === "Escape" && setOpen(false);
     document.addEventListener("mousedown", close);

@@ -13,6 +13,7 @@ import { workViewer } from "@/server/work/task-access";
 import { logError } from "@/lib/logging/logger";
 import { searchPeople } from "@/lib/db/repositories/profile.repository";
 import { photoUrl } from "@/server/profile/photo";
+import { personLabel } from "@/lib/people/label";
 import { listInfo } from "@/lib/db/repositories/info.repository";
 import { infoListSql, parseInfoFilters } from "@/server/modules/info-lists";
 import { indiaToday } from "@/server/modules/information";
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest) {
     // D-215: tasks and projects the person can see (same rule as everywhere).
     const work = q.length >= 2 && hasModule(session.user, "TASK") && (await featureOn("tasks", session.user)) ? await quickWork(await workViewer(session.user), q) : { tasks: [], projects: [] };
     // D-232: people and information too (the universal search).
-    const people = q.length >= 2 ? (await searchPeople(q)).map((person) => ({ id: person.id, name: person.name, email: person.email, detail: [person.designation, person.department].filter(Boolean).join(" · "), photo: photoUrl(person.id, person.photoUpdatedAt) })) : [];
+    const people = q.length >= 2 ? (await searchPeople(q)).map((person) => ({ id: person.id, name: person.name, label: personLabel(person), email: person.email, detail: [person.department, person.designation].filter(Boolean).join(" · "), photo: photoUrl(person.id, person.photoUpdatedAt) })) : [];
     let information: { id: number; infoNo: string; title: string }[] = [];
     if (q.length >= 2 && hasModule(session.user, "INFORMATION") && (await featureOn("information", session.user))) {
       const found = new Map<number, { id: number; infoNo: string; title: string }>();

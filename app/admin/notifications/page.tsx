@@ -11,6 +11,7 @@ import { listRoleCodes } from "@/lib/db/repositories/groups.repository";
 import { CATEGORY_TEXT, listAllDevices, listBroadcasts, pushOverview } from "@/server/notifications/broadcast";
 import { getPushConfig, pushReady } from "@/server/push/service";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
+import { personLabel } from "@/lib/people/label";
 
 export const metadata: Metadata = { title: "Notifications" };
 export const dynamic = "force-dynamic";
@@ -82,7 +83,7 @@ async function SendTab() {
   return (
     <section className="card px-5 py-5">
       <BroadcastForm
-        people={people.map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` }))}
+        people={people.map((person) => ({ id: person.id, label: personLabel(person), detail: person.departmentName ?? undefined }))}
         departments={departments.filter((department) => department.active).map((department) => ({ id: department.id, name: department.name }))}
         roles={roles}
       />

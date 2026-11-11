@@ -63,11 +63,14 @@ test("the task page: a subtask, a comment that mentions someone, a like", async 
   await subtask.press("Enter");
   await expect(page.getByTestId("subtasks")).toContainText(`East bay ${stamp}`);
 
-  await page.getByRole("textbox", { name: "Add a comment" }).fill("Please check the drawings ");
-  await page.getByRole("combobox", { name: "Mention someone" }).first().selectOption({ index: 1 });
+  // v1.52.2 (owner): the comment box formats like an email; "@" and a name mention someone.
+  const box = page.getByRole("textbox", { name: "Add a comment" });
+  await box.click();
+  await box.pressSequentially("Please check the drawings @");
+  await page.getByRole("listbox", { name: "Mention someone" }).getByRole("option").first().click();
   await page.getByRole("button", { name: "Comment", exact: true }).click();
   await expect(page.getByTestId("comment").first()).toContainText("Please check the drawings");
-  await expect(page.getByRole("textbox", { name: "Add a comment" })).toHaveValue("");
+  await expect(box).toHaveText("");
   await expect(page.getByTestId("comment").first().locator("span.rounded")).toHaveCount(1); // the mention chip
 
   await page.getByRole("button", { name: "Like", exact: true }).first().click();
@@ -98,7 +101,7 @@ test("My Tasks, Task home and Task search show the work", async ({ page, context
   // v1.51.1: saved searches are offered in the search bar at the top (Ctrl K).
   await expect(page.getByText(/saved/i).first()).toBeVisible();
   await page.reload();
-  await page.keyboard.press("Control+k");
+  await page.getByRole("button", { name: /Search ARS CMS/ }).click();
   await expect(page.getByTestId("saved-searches")).toContainText(`E2E search ${stamp}`);
 });
 

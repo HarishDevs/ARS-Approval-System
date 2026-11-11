@@ -4,6 +4,7 @@ import { addFilesAction } from "@/app/users/actions";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import { Hint } from "@/features/ui/Hint";
 import { ACCEPT_ATTRIBUTE } from "@/server/attachments/files";
+import { FileListInput } from "@/features/ui/FileListInput";
 
 // F-18: anyone who can see an open request can add files; files are never
 // removed, so the history stays complete.
@@ -12,7 +13,7 @@ export function AddFilesForm({ requestId }: { requestId: number }) {
   return (
     <form ref={formRef} onSubmit={onSubmit} className="space-y-2">
       <input type="hidden" name="requestId" value={requestId} />
-      <input name="attachments" type="file" multiple accept={ACCEPT_ATTRIBUTE} aria-label="Choose files to attach" className="block w-full text-label file:mr-3 file:rounded-md file:border-0 file:bg-surface-muted file:px-3 file:py-2" />
+      <FileListInput name="attachments" accept={ACCEPT_ATTRIBUTE} ariaLabel="Choose files to attach" maxFiles={5} />
       <FieldError result={result} name="attachments" />
       <div className="flex flex-wrap items-center gap-3">
         <SubmitButton pending={pending} variant="secondary" className="btn-compact">

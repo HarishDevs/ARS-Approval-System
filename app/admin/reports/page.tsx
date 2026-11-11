@@ -17,6 +17,7 @@ import { ALERT_METRICS, SEVERITY_LABEL, listAlertRules, listRuns, listSchedules 
 import { describeSchedule } from "@/server/reports/schedule-time";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 import { listExports } from "@/server/reports/background";
+import { personLabel } from "@/lib/people/label";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
 export const metadata: Metadata = { title: "Reports" };
@@ -33,7 +34,7 @@ export default async function ReportsPage() {
   const reports = reportsFor(scopes.map((scope) => scope.kind));
   const [schedules, runs, alerts, exports] = await Promise.all([listSchedules(user.id), listRuns(user.id, 10), listAlertRules(user.id), listExports(user.id, 10)]);
   // B06: people who can be added to a schedule (each gets their own numbers).
-  const people = scheduling && schedules.length ? (await listActiveUserOptions()).filter((person) => person.id !== user.id).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` })) : [];
+  const people = scheduling && schedules.length ? (await listActiveUserOptions()).filter((person) => person.id !== user.id).map((person) => ({ id: person.id, label: personLabel(person), detail: person.departmentName ?? undefined })) : [];
   const nameOf = new Map(people.map((person) => [person.id, person.label]));
   const hourText = (hour: number) => `${String(hour).padStart(2, "0")}:00`;
   const metrics = Object.entries(ALERT_METRICS)

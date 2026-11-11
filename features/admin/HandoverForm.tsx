@@ -1,17 +1,17 @@
 "use client";
 
 import { handoverAction } from "@/app/admin/users/actions";
+import { useState } from "react";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
+import { PersonSelect } from "@/features/ui/PersonSelect";
 import type { Option } from "@/features/admin/UserForm";
 
 // F-16: required before deactivating someone with pending approvals.
 // #12: suggests the eligible people with the fewest approvals waiting.
 export function HandoverForm({ id, name, pending, people, suggestions = [] }: { id: number; name: string; pending: number; people: Option[]; suggestions?: (Option & { pending: number })[] }) {
   const { result, pending: busy, formRef, onSubmit, confirmBar } = useActionForm(handoverAction, { confirm: `${name}'s ${pending} pending approval(s) go to the person you chose, with a fresh response time.`, confirmTitle: "Hand over approvals?", confirmLabel: "Yes, hand over" });
-  const choose = (personId: number) => {
-    const select = formRef.current?.elements.namedItem("toUserId");
-    if (select instanceof HTMLSelectElement) select.value = String(personId);
-  };
+  const [toUser, setToUser] = useState<number | null>(null);
+  const choose = (personId: number) => setToUser(personId);
   return (
     <form ref={formRef} onSubmit={onSubmit} className="space-y-2 px-5 py-4">
       <input type="hidden" name="id" value={id} />
@@ -21,14 +21,7 @@ export function HandoverForm({ id, name, pending, people, suggestions = [] }: { 
       </p>
       {pending > 0 && (
         <>
-          <select name="toUserId" defaultValue="" aria-label="New approver" className="field-input">
-            <option value="">Move them to…</option>
-            {people.map((person) => (
-              <option key={person.id} value={person.id}>
-                {person.label}
-              </option>
-            ))}
-          </select>
+          <PersonSelect name="toUserId" ariaLabel="New approver" options={people} value={toUser} onChange={setToUser} emptyLabel="Move them to…" />
           <FieldError result={result} name="toUserId" />
           {suggestions.length > 0 && (
             <div className="flex flex-wrap items-center gap-2 text-caption">

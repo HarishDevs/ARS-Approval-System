@@ -9,6 +9,7 @@ import { useEffect, useMemo, useState } from "react";
 import { deleteViewAction, saveViewAction, taskFieldsAction, updateViewAction } from "@/app/users/work/actions";
 import { initials } from "@/features/ui/Display";
 import { Drop } from "@/features/ui/Drop";
+import { PersonSelect } from "@/features/ui/PersonSelect";
 import { CREATE_TASK_EVENT, COLOR_HEX, TaskCheck, usePaneLink, useWorkCall } from "@/features/work/client";
 import { dueLabel, indiaDayOf, TONE_TEXT } from "@/features/work/format";
 import { BulkBar, FieldInput, type FieldView } from "@/features/work/MoreParts";
@@ -44,7 +45,7 @@ export interface GridView {
 }
 
 const COMPLETED_LABEL: Record<(typeof COMPLETED_RANGES)[number], string> = { none: "Hide", all: "All completed", today: "Completed today", week: "Past 7 days", month: "Past 30 days" };
-const WIDTH: Record<GridColumn, string> = { due: "130px", assignee: "190px", collaborators: "150px", createdBy: "160px", projects: "210px", visibility: "180px", priority: "110px", tags: "150px" };
+const WIDTH: Record<GridColumn, string> = { due: "130px", assignee: "190px", collaborators: "150px", createdBy: "160px", projects: "210px", visibility: "180px", priority: "160px", tags: "150px" };
 
 export function TaskGrid({
   rows,
@@ -421,19 +422,17 @@ export function TaskGrid({
                               (editAssignee && people.length > 0 && task.canEdit && open ? (
                                 <span className="flex min-w-0 items-center gap-1.5">
                                   <PersonDot name={task.assigneeName} />
-                                  <select
-                                    aria-label={`Assignee of ${task.title}`}
+                                  <PersonSelect
+                                    ariaLabel={`Assignee of ${task.title}`}
+                                    options={people.some((person) => person.id === task.assigneeId) ? people : [{ id: task.assigneeId, label: task.assigneeName }, ...people]}
                                     value={task.assigneeId}
-                                    onChange={(event) => void call(() => taskFieldsAction(task.id, { assigneeId: Number(event.target.value) }))}
-                                    className="min-w-0 flex-1 truncate border-0 bg-transparent text-label focus:outline-none"
-                                  >
-                                    {!people.some((person) => person.id === task.assigneeId) && <option value={task.assigneeId}>{task.assigneeName}</option>}
-                                    {people.map((person) => (
-                                      <option key={person.id} value={person.id}>
-                                        {person.label}
-                                      </option>
-                                    ))}
-                                  </select>
+                                    onChange={(id) => {
+                                      if (id !== null && id !== task.assigneeId) void call(() => taskFieldsAction(task.id, { assigneeId: id }));
+                                    }}
+                                    compact
+                                    floating
+                                    className="min-w-0 flex-1 text-label"
+                                  />
                                 </span>
                               ) : (
                                 <span className="flex min-w-0 items-center gap-1.5">
@@ -636,6 +635,17 @@ function FilterPanel({ config, set, people, projects }: { config: GridConfig; se
                   value={filter.value}
                   onChange={(event) => set({ filters: config.filters.map((item, at) => (at === index ? { ...item, value: event.target.value } : item)) })}
                   className="field-input h-9 flex-1"
+                />
+              ) : filter.field === "assignee" || filter.field === "createdBy" ? (
+                // "Me" stands first, where the empty choice goes.
+                <PersonSelect
+                  ariaLabel="Filter value"
+                  options={people}
+                  value={filter.value === "me" || !/^\d+$/.test(filter.value) ? null : Number(filter.value)}
+                  onChange={(id) => set({ filters: config.filters.map((item, at) => (at === index ? { ...item, value: id === null ? "me" : String(id) } : item)) })}
+                  emptyLabel="Me"
+                  compact
+                  className="flex-1"
                 />
               ) : (
                 <select

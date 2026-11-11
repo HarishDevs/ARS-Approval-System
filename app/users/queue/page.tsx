@@ -14,6 +14,8 @@ import { listViews } from "@/lib/db/repositories/analytics-views.repository";
 import { SavedViews, SaveViewForm } from "@/features/analytics/ReportForms";
 import { ListToolbar } from "@/features/ui/ListToolbar";
 import { NoResults } from "@/features/ui/Display";
+import { PersonSelect } from "@/features/ui/PersonSelect";
+import { personLabel } from "@/lib/people/label";
 import { QUEUE_SHOW_LABEL, QUEUE_SHOWS, QUEUE_SIZES, QUEUE_SORT_LABEL, QUEUE_SORTS, parseQueueFilter, queueFiltered, queueHref, type QueueFilter } from "@/server/approvals/queue-filters";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
@@ -104,14 +106,14 @@ export default async function QueuePage({ searchParams }: { searchParams: Promis
                 <label htmlFor="q-raisedby" className="field-label">
                   Raised by
                 </label>
-                <select id="q-raisedby" name="raisedBy" defaultValue={filter.requesterId ?? ""} className={select}>
-                  <option value="">Anyone</option>
-                  {choices.requesters.map((person) => (
-                    <option key={person.id} value={person.id}>
-                      {person.name}
-                    </option>
-                  ))}
-                </select>
+                <PersonSelect
+                  id="q-raisedby"
+                  name="raisedBy"
+                  options={choices.requesters.map((person) => ({ id: person.id, label: personLabel(person), detail: person.departmentName ?? undefined }))}
+                  defaultValue={filter.requesterId ?? null}
+                  emptyLabel="Anyone"
+                  compact
+                />
               </div>
               <div>
                 <label htmlFor="q-dept" className="field-label">

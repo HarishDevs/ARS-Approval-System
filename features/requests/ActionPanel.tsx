@@ -8,6 +8,7 @@ import { ConfirmDialog, Dialog } from "@/features/ui/Dialog";
 import { answerInfoAction, decideAction, delegateTaskAction, recallAction, reopenAction, resolveBlockedAction, resumeAction, withdrawAction } from "@/app/users/actions";
 import { FieldError, ResultMessage, useActionForm } from "@/features/ui/form";
 import { Hint } from "@/features/ui/Hint";
+import { PersonSelect } from "@/features/ui/PersonSelect";
 
 // What the signed-in person can do on this request right now (F-14). The
 // server decides again on every press (F-12).
@@ -120,7 +121,7 @@ export interface BlockedStep {
   paths: { edgeId: string; label: string }[];
 }
 
-export function BlockedStepForm({ requestId, step, people }: { requestId: number; step: BlockedStep; people: { id: number; label: string }[] }) {
+export function BlockedStepForm({ requestId, step, people }: { requestId: number; step: BlockedStep; people: { id: number; label: string; detail?: string }[] }) {
   const { result, pending, onSubmit } = useActionForm(resolveBlockedAction);
   const choices = step.kind === "CONDITION" ? (["TAKE_PATH", "RETRY"] as const) : (["ASSIGN", "SKIP", "RETRY"] as const);
   const [action, setAction] = useState<(typeof choices)[number]>(choices[0]);
@@ -406,7 +407,7 @@ export function AnswerQuestionForm({ requestId, question, byName }: { requestId:
 }
 
 // EN-07 (BD-10): pass my own approval to a colleague.
-export function DelegateTaskForm({ requestId, taskKey, people }: { requestId: number; taskKey: string; people: { id: number; label: string }[] }) {
+export function DelegateTaskForm({ requestId, taskKey, people }: { requestId: number; taskKey: string; people: { id: number; label: string; detail?: string }[] }) {
   const { result, pending, onSubmit, confirmBar } = useActionForm(delegateTaskAction, {
     confirmTitle: "Pass this approval on?",
     confirm: "Pass it on now? You can't decide it unless it comes back.",
@@ -421,14 +422,7 @@ export function DelegateTaskForm({ requestId, taskKey, people }: { requestId: nu
         <label htmlFor={`delegate-to-${taskKey}`} className="field-label">
           Colleague
         </label>
-        <select id={`delegate-to-${taskKey}`} name="toUserId" defaultValue="" className="field-input">
-          <option value="">Choose…</option>
-          {people.map((person) => (
-            <option key={person.id} value={person.id}>
-              {person.label}
-            </option>
-          ))}
-        </select>
+        <PersonSelect id={`delegate-to-${taskKey}`} name="toUserId" options={people} emptyLabel="Choose…" />
         <FieldError result={result} name="toUserId" />
         <label htmlFor={`delegate-reason-${taskKey}`} className="field-label">
           Why

@@ -7,6 +7,7 @@ import { followAction, memberAction, privacyAction } from "@/app/users/work/acti
 import { initials } from "@/features/ui/Display";
 import { useToast } from "@/features/ui/Toast";
 import { useWorkCall } from "@/features/work/client";
+import { PersonSelect } from "@/features/ui/PersonSelect";
 import { PRIVACY, PRIVACY_LABEL, PROJECT_ROLE_LABEL, PROJECT_ROLES, type ProjectRole } from "@/server/work/access";
 import { COPY_BLOCKED, copyText } from "@/features/ui/clipboard";
 
@@ -247,16 +248,16 @@ function TaskShareDialog({ taskId, title, followers, people, visibility, canAdd,
         <section className="space-y-2 border-b border-line px-6 py-4">
           <h3 className="font-semibold">Add collaborators</h3>
           <div className="flex gap-2">
-            <select aria-label="Add a collaborator" value={who} onChange={(event) => setWho(event.target.value)} className="field-input h-10 flex-1">
-              <option value="">Add people…</option>
-              {people
-                .filter((person) => !followers.some((item) => item.id === person.id))
-                .map((person) => (
-                  <option key={person.id} value={person.id}>
-                    {person.label}
-                  </option>
-                ))}
-            </select>
+            <PersonSelect
+              ariaLabel="Add a collaborator"
+              options={people.filter((person) => !followers.some((item) => item.id === person.id))}
+              value={who ? Number(who) : null}
+              onChange={(id) => setWho(id === null ? "" : String(id))}
+              emptyLabel="Add people…"
+              compact
+              floating
+              className="flex-1"
+            />
             <button type="button" disabled={!who || pending} onClick={() => void call(() => followAction(taskId, Number(who), true)).then((result) => result?.ok && setWho(""))} className="btn-primary btn-compact h-10">
               Add
             </button>

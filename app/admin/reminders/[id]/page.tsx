@@ -7,6 +7,7 @@ import { NotificationRuleEditor } from "@/features/admin/NotificationRuleEditor"
 import { NEW_RULE } from "@/server/notifications/rule-model";
 import { findRule, formFieldOptions } from "@/lib/db/repositories/notification-rules.repository";
 import { listActiveUserOptions } from "@/lib/db/repositories/admin-users.repository";
+import { personLabel } from "@/lib/people/label";
 
 export const metadata: Metadata = { title: "Reminder or escalation rule" };
 export const dynamic = "force-dynamic";
@@ -34,7 +35,7 @@ export default async function RuleEditorPage({ params, searchParams }: { params:
           Saved. The rule runs from the next job run (about every 5 minutes).
         </p>
       )}
-      <NotificationRuleEditor id={id} initial={initial} formFields={{ APPROVAL: approvalFields, TASK: taskFields }} people={people.map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` }))} />
+      <NotificationRuleEditor id={id} initial={initial} formFields={{ APPROVAL: approvalFields, TASK: taskFields }} people={people.map((person) => ({ id: person.id, label: personLabel(person), detail: person.departmentName ?? undefined }))} />
     </>
   );
 }

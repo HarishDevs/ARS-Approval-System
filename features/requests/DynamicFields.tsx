@@ -6,9 +6,11 @@ import { LineItemsEditor } from "@/features/requests/LineItemsEditor";
 import { describeRule, evaluateFormula, parseFormula, ruleHolds, visibleFields } from "@/server/forms/dynamic";
 import { FieldError } from "@/features/ui/form";
 import { Hint } from "@/features/ui/Hint";
+import { PersonSelect } from "@/features/ui/PersonSelect";
 import { ACCEPT_ATTRIBUTE } from "@/server/attachments/files";
 import type { FieldLookups, FormField } from "@/server/forms/fields";
 import type { ActionResult } from "@/lib/http/action-result";
+import { FileListInput } from "@/features/ui/FileListInput";
 
 // The fields of a form (v1.8.0: shared by raise / resubmit / amend and by
 // the custom approval page, whose fields IT sets up). Live values decide
@@ -38,7 +40,7 @@ export function DynamicFields({
 }: {
   fields: readonly FormField[];
   mode: "submit" | "resubmit";
-  people: { id: number; label: string }[];
+  people: { id: number; label: string; detail?: string }[];
   approverPeople?: { id: number; label: string }[];
   approverFields?: readonly string[];
   lookups: FieldLookups;
@@ -140,7 +142,7 @@ export function DynamicFields({
             ) : field.type === "LINE_ITEMS" ? (
               <LineItemsEditor name={field.key} label={field.label} defaultValue={initial?.[`${field.key}__lines`] ?? initial?.[field.key] ?? ""} invalid={Boolean(error)} describedBy={error ? `${field.key}-error` : undefined} onChange={lineHandlers[field.key]!} />
             ) : (
-              <FieldInput existing={existingFiles[field.key] ?? 0} field={field} people={approverPeople && approverFields.includes(field.key) ? approverPeople : people} lookups={lookups} defaultValue={start[field.key] ?? ""} error={error} />
+              <FieldInput existing={existingFiles[field.key] ?? 0} field={field} people={approverPeople && approverFields.includes(field.key) ? approverPeople : people} lookups={lookups} defaultValue={start[field.key] ?? ""} error={error} onPick={locked(field.key) ? undefined : (value) => setValues((current) => ({ ...current, [field.key]: value }))} />
             )}
             {sources[field.key] && <p className="mt-1 text-caption text-primary-700">{sources[field.key]}. You can change it.</p>}
             {locked(field.key) && <p className="mt-1 text-caption text-ink-muted">Can&apos;t be changed by an amendment.</p>}
@@ -159,7 +161,23 @@ export function DynamicFields({
   );
 }
 
-export function FieldInput({ field, people, lookups, defaultValue, error, existing = 0 }: { field: FormField; people: { id: number; label: string }[]; lookups: FieldLookups; defaultValue: string; error?: string; existing?: number }) {
+export function FieldInput({
+  field,
+  people,
+  lookups,
+  defaultValue,
+  error,
+  existing = 0,
+  onPick,
+}: {
+  field: FormField;
+  people: { id: number; label: string; detail?: string }[];
+  lookups: FieldLookups;
+  defaultValue: string;
+  error?: string;
+  existing?: number;
+  onPick?: (value: string) => void; // a person chosen (the picker sends no change event)
+}) {
   const id = `f-${field.key}`;
   // FB-06: the hint and the error are read with the control.
   const describedBy = [field.help ? `${id}-hint` : null, error ? `${field.key}-error` : null].filter(Boolean).join(" ") || undefined;
@@ -235,7 +253,9 @@ export function FieldInput({ field, people, lookups, defaultValue, error, existi
       return (
         <>
           <div className="flex items-center gap-2">
-            <input id={id} name={`file:${field.key}`} type="file" multiple={most > 1} accept={ACCEPT_ATTRIBUTE} {...a11y} className="block w-full min-w-0 flex-1 text-label file:mr-3 file:rounded-md file:border-0 file:bg-surface-muted file:px-3 file:py-2" />
+            <div className="min-w-0 flex-1">
+              <FileListInput id={id} name={`file:${field.key}`} multiple={most > 1} maxFiles={most} accept={ACCEPT_ATTRIBUTE} ariaDescribedBy={a11y["aria-describedby"]} ariaInvalid={a11y["aria-invalid"]} />
+            </div>
             <Hint text={`Up to ${most} file${most === 1 ? "" : "s"}, 10 MB each.`} align="end" />
           </div>
           {existing > 0 && <p className="mt-1 text-caption text-ink-muted">{existing} already attached; new files are added to them.</p>}
@@ -244,14 +264,16 @@ export function FieldInput({ field, people, lookups, defaultValue, error, existi
     }
     case "PERSON":
       return (
-        <select id={id} name={field.key} {...a11y} defaultValue={defaultValue} className="field-input">
-          <option value="">Choose a person…</option>
-          {people.map((person) => (
-            <option key={person.id} value={person.id}>
-              {person.label}
-            </option>
-          ))}
-        </select>
+        <PersonSelect
+          id={id}
+          name={field.key}
+          options={people}
+          defaultValue={/^\d+$/.test(defaultValue) ? Number(defaultValue) : null}
+          emptyLabel="Choose a person…"
+          onChange={(person) => onPick?.(person === null ? "" : String(person))}
+          ariaInvalid={a11y["aria-invalid"]}
+          ariaDescribedBy={a11y["aria-describedby"]}
+        />
       );
     default:
       return <input id={id} name={field.key} {...a11y} defaultValue={defaultValue} className="field-input" />;

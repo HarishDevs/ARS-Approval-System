@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { Search } from "lucide-react";
+import { inside } from "@/features/ui/inside";
 
 // v1.50.0 (owner: "link request should be searchable based on the access"):
 // type a number or words of the title; the list shows only requests the
@@ -47,7 +48,7 @@ export function RequestLinkPicker({ name, excludeId }: { name: string; excludeId
 
   useEffect(() => {
     const close = (event: MouseEvent) => {
-      if (box.current && !box.current.contains(event.target as Node)) setOpen(false);
+      if (box.current && !inside(event, box.current)) setOpen(false);
     };
     document.addEventListener("mousedown", close);
     return () => document.removeEventListener("mousedown", close);

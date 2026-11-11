@@ -4,6 +4,7 @@ import { useState } from "react";
 import { saveDepartmentAction, saveDesignationAction } from "@/app/admin/organisation/actions";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import type { Option } from "@/features/admin/UserForm";
+import { PersonSelect } from "@/features/ui/PersonSelect";
 
 // Departments (with HOD) and designations, P1-01 / S2-03a.
 export function DepartmentForm({
@@ -42,14 +43,7 @@ export function DepartmentForm({
         <input aria-label="Department name" name="name" defaultValue={department?.name ?? ""} placeholder="Department name" className="field-input" />
         <FieldError result={result} name="name" />
       </div>
-      <select aria-label="Head of department" name="hodUserId" defaultValue={department?.hodUserId ?? ""} className="field-input">
-        <option value="">No HOD yet</option>
-        {people.map((person) => (
-          <option key={person.id} value={person.id}>
-            {person.label}
-          </option>
-        ))}
-      </select>
+      <PersonSelect ariaLabel="Head of department" name="hodUserId" options={people} defaultValue={department?.hodUserId ?? null} emptyLabel="No HOD yet" />
       {department ? (
         <label className="flex h-11 items-center gap-2 text-label">
           <input type="checkbox" name="active" defaultChecked={department.active} id={`active-${key}`} onChange={(event) => setActiveTicked(event.target.checked)} /> Active

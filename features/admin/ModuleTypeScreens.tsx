@@ -14,6 +14,7 @@ import { listGroups } from "@/lib/db/repositories/groups.repository";
 import { loadFieldLookups } from "@/lib/db/repositories/lookups.repository";
 import { MODULE_ADMIN_PATH, MODULE_LABEL, parseInfoSettings, parseTaskSettings, type ModuleKind } from "@/server/modules/settings";
 import { indiaDateTimeText } from "@/server/modules/settings";
+import { personLabel } from "@/lib/people/label";
 
 // v1.9.0 (D-144): Admin → Task types / Information types. Server screens
 // shared by both modules; every page checks the admin area itself.
@@ -104,7 +105,7 @@ export async function ModuleTypeDetailScreen({ module, id, view }: { module: Mod
   const live = versions.find((version) => version.status === "PUBLISHED") ?? null;
   const viewed = view && /^\d+$/.test(view) ? (versions.find((version) => version.versionNo === Number(view)) ?? null) : null;
   const base = MODULE_ADMIN_PATH[module];
-  const personOptions = people.map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` }));
+  const personOptions = people.map((person) => ({ id: person.id, label: personLabel(person), detail: person.departmentName ?? undefined }));
   const parse = module === "TASK" ? parseTaskSettings : parseInfoSettings;
 
   return (

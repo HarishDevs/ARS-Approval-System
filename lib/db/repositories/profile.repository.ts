@@ -123,10 +123,10 @@ export async function searchPeople(
   q: string,
   limit = 6,
   db: Queryable = getDbPool(),
-): Promise<{ id: number; name: string; email: string; designation: string | null; department: string | null; photoUpdatedAt: Date | null }[]> {
+): Promise<{ id: number; name: string; loginId: string; email: string; designation: string | null; department: string | null; photoUpdatedAt: Date | null }[]> {
   const like = `%${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
   const [rows] = await db.query<RowDataPacket[]>(
-    `SELECT u.id, u.name, u.email, g.name AS designation, d.name AS department, u.photo_updated_at
+    `SELECT u.id, u.name, u.login_id, u.email, g.name AS designation, d.name AS department, u.photo_updated_at
      FROM users u LEFT JOIN designations g ON g.id = u.designation_id LEFT JOIN departments d ON d.id = u.department_id
      WHERE u.active = TRUE AND u.is_break_glass = FALSE AND (u.name LIKE ? OR u.email LIKE ? OR u.login_id LIKE ?)
      ORDER BY u.name LIMIT ?`,
@@ -135,6 +135,7 @@ export async function searchPeople(
   return rows.map((row) => ({
     id: Number(row.id),
     name: String(row.name),
+    loginId: String(row.login_id),
     email: String(row.email),
     designation: row.designation ?? null,
     department: row.department ?? null,

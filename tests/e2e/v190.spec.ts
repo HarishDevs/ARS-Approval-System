@@ -1,6 +1,7 @@
 import { expect, test, type BrowserContext } from "@playwright/test";
 import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { db, sessionCookie, userIdByLogin } from "./db";
+import { pickPerson } from "./people";
 
 // v1.9.0 through the real screens: IT sets up a task type (form, publish);
 // a task is created, started and completed; information is published, read
@@ -56,7 +57,6 @@ test("IT sets up a task type: form field, options, preview, publish", async ({ p
 });
 
 test("a task is created, started and completed with its note; the assignee hears through the bell", async ({ page, context }) => {
-  const staff = await userIdByLogin("E2E_STAFF");
   await as(context, "E2E_REQ");
   await page.goto("/users");
   // v1.48.2 (owner): New task without a type opens the Create task window; a type's form opens by its link.
@@ -66,7 +66,7 @@ test("a task is created, started and completed with its note; the assignee hears
   await page.goto(`/users/tasks/new?type=${taskTypeUrl.split("/").pop()}`);
   await expect(page.getByRole("heading", { level: 1, name: `New task: E2E repair ${stamp}` })).toBeVisible();
   await page.getByLabel("Title").fill("Pump 3 leaks");
-  await page.getByLabel("Assign to").selectOption(String(staff));
+  await pickPerson(page, page.getByLabel("Assign to"), "Sita Staff - E2E_STAFF");
   await page.getByLabel("Priority").selectOption("HIGH");
   await page.getByLabel("Pump").check();
   await page.getByRole("button", { name: "Create task" }).click();
@@ -85,13 +85,13 @@ test("a task is created, started and completed with its note; the assignee hears
   await dropdown.getByTestId("notification-items").getByRole("button").first().click();
   await expect(page).toHaveURL(taskUrl);
   await page.getByRole("button", { name: "Start" }).click();
-  await expect(page.getByTestId("record-history")).toContainText("Started");
+  await expect(page.getByTestId("record-history")).toContainText(/started/i); // v1.52.2: Asana-style "Name started"
   await page.getByRole("button", { name: "Complete" }).click();
   await page.getByLabel("Completion note").fill("Replaced the seal");
   await page.getByRole("form", { name: "Complete" }).getByRole("button", { name: "Complete" }).click();
-  await expect(page.getByTestId("record-history")).toContainText("Completed");
+  await expect(page.getByTestId("record-history")).toContainText(/completed/i);
   await expect(page.getByText("Replaced the seal").first()).toBeVisible();
-  await expect(page.getByTestId("record-history")).toContainText("Completed");
+  await expect(page.getByTestId("record-history")).toContainText(/completed/i);
 
   // A stranger can't open it.
   await as(context, "E2E_HOD");

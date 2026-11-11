@@ -18,6 +18,8 @@ import { isAdminActor } from "@/server/modules/tasks";
 import { TaskCheck } from "@/features/work/client";
 import { teamOf } from "@/server/work/task-access";
 import { ListToolbar } from "@/features/ui/ListToolbar";
+import { PersonSelect } from "@/features/ui/PersonSelect";
+import { personLabel } from "@/lib/people/label";
 import { NoResults } from "@/features/ui/Display";
 
 // v1.9.0 (D-143): My tasks / Assigned by me / Team tasks. Filters live in
@@ -108,17 +110,17 @@ export async function TaskListScreen({ base, query }: { base: TaskBase; query: R
                     ))}
                   </select>
                 </label>
-                <label className="text-label">
-                  {base === "MINE" ? "Created by" : "Assigned to"}
-                  <select name="person" defaultValue={filters.personId ?? ""} className="field-input h-10">
-                    <option value="">Anyone</option>
-                    {people.map((person) => (
-                      <option key={person.id} value={person.id}>
-                        {person.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <div className="text-label">
+                  <label htmlFor="task-person">{base === "MINE" ? "Created by" : "Assigned to"}</label>
+                  <PersonSelect
+                    id="task-person"
+                    name="person"
+                    options={people.map((person) => ({ id: person.id, label: personLabel(person), detail: person.departmentName ?? undefined }))}
+                    defaultValue={filters.personId ?? null}
+                    emptyLabel="Anyone"
+                    compact
+                  />
+                </div>
                 <label className="text-label">
                   Priority
                   <select name="priority" defaultValue={filters.priorities[0] ?? ""} className="field-input h-10">

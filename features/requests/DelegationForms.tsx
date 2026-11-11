@@ -2,9 +2,10 @@
 
 import { createDelegationAction, stopDelegationAction } from "@/app/users/collab-actions";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
+import { PersonSelect } from "@/features/ui/PersonSelect";
 
 // Out of office (F-30, D-062). userId is set only when IT sets it for someone.
-export function DelegationForm({ people, today, userId }: { people: { id: number; label: string }[]; today: string; userId?: number }) {
+export function DelegationForm({ people, today, userId }: { people: { id: number; label: string; detail?: string }[]; today: string; userId?: number }) {
   const { result, pending, formRef, onSubmit } = useActionForm(createDelegationAction, { resetOnSuccess: true });
   return (
     <form ref={formRef} onSubmit={onSubmit} className="grid gap-3 px-5 py-4 sm:grid-cols-2">
@@ -13,14 +14,7 @@ export function DelegationForm({ people, today, userId }: { people: { id: number
         <label htmlFor="d-delegate" className="field-label">
           Who approves while you&apos;re away
         </label>
-        <select id="d-delegate" name="delegateId" defaultValue="" className="field-input">
-          <option value="">Choose a person…</option>
-          {people.map((person) => (
-            <option key={person.id} value={person.id}>
-              {person.label}
-            </option>
-          ))}
-        </select>
+        <PersonSelect id="d-delegate" name="delegateId" options={people} emptyLabel="Choose a person…" />
         <FieldError result={result} name="delegateId" />
       </div>
       <div>

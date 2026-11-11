@@ -23,6 +23,18 @@ function Parts({ parts }: { parts: Inline[] }) {
           <s key={index}>
             <SafeText text={part.text} />
           </s>
+        ) : part.kind === "underline" ? (
+          <u key={index}>
+            <SafeText text={part.text} />
+          </u>
+        ) : part.kind === "code" ? (
+          <code key={index} className="rounded bg-surface-muted px-1 py-0.5 font-mono text-[0.9em]">
+            {part.text}
+          </code>
+        ) : part.kind === "link" ? (
+          <a key={index} href={part.href} target="_blank" rel="noopener noreferrer nofollow" className="link">
+            {part.text}
+          </a>
         ) : (
           <SafeText key={index} text={part.text} />
         ),
@@ -37,6 +49,14 @@ export function RichText({ text, className = "" }: { text: string; className?: s
       {richBlocks(text).map((block, index) =>
         block.kind === "line" ? (
           <p key={index} className="min-h-[1.5em]">
+            <Parts parts={block.parts} />
+          </p>
+        ) : block.kind === "quote" ? (
+          <blockquote key={index} className="border-l-4 border-line pl-3 text-ink-muted">
+            <Parts parts={block.parts} />
+          </blockquote>
+        ) : block.kind === "heading" ? (
+          <p key={index} className="text-body font-semibold">
             <Parts parts={block.parts} />
           </p>
         ) : block.kind === "bullets" ? (

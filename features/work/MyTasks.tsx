@@ -257,7 +257,7 @@ export function MyTasksGrid({ rows, sections, initial, view, people, projects, m
     <TaskGrid
       rows={rows}
       initial={initial}
-      columns={["due", "collaborators", "createdBy", "projects", "visibility", "priority"]}
+      columns={["due", "priority", "collaborators", "createdBy", "projects", "visibility"]} // v1.52.1 (owner): Priority beside the due date
       groupsAllowed={["section", "assignee", "createdBy", "project", "due", "priority", "kind"]}
       sections={sections.map((section) => ({ id: section.id, name: section.name }))}
       sectionHeader={(section, count) => <SectionTitle section={sections.find((item) => item.id === section.id)!} count={count} />}

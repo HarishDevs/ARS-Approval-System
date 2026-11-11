@@ -193,13 +193,18 @@ export async function exportRecords<K extends RecordKind>(kind: K, filter: Recor
 }
 
 // The choices for the filters: types of this module, departments, people.
-export async function recordChoices(kind: RecordKind, db: Queryable = getDbPool()): Promise<{ types: { id: number; name: string }[]; departments: { id: number; name: string }[]; people: { id: number; name: string }[] }> {
+export async function recordChoices(kind: RecordKind, db: Queryable = getDbPool()): Promise<{ types: { id: number; name: string }[]; departments: { id: number; name: string }[]; people: { id: number; name: string; loginId: string; departmentName: string | null }[] }> {
   const typeSql = kind === "requests" ? "SELECT id, name FROM workflow_definitions ORDER BY name" : "SELECT id, name FROM module_types WHERE module = ? ORDER BY name";
   const [[types], [departments], [people]] = await Promise.all([
     db.query<RowDataPacket[]>(typeSql, kind === "requests" ? [] : [kind === "tasks" ? "TASK" : "INFO"]),
     db.query<RowDataPacket[]>("SELECT id, name FROM departments ORDER BY name"),
-    db.query<RowDataPacket[]>("SELECT id, name FROM users WHERE is_break_glass = FALSE ORDER BY name"),
+    // v1.52.1: code and department too, for the "Name - code" picker.
+    db.query<RowDataPacket[]>("SELECT u.id, u.name, u.login_id, d.name AS department_name FROM users u LEFT JOIN departments d ON d.id = u.department_id WHERE u.is_break_glass = FALSE ORDER BY u.name"),
   ]);
   const pick = (list: RowDataPacket[]) => list.map((row) => ({ id: Number(row.id), name: String(row.name) }));
-  return { types: pick(types), departments: pick(departments), people: pick(people) };
+  return {
+    types: pick(types),
+    departments: pick(departments),
+    people: people.map((row) => ({ id: Number(row.id), name: String(row.name), loginId: String(row.login_id), departmentName: row.department_name === null ? null : String(row.department_name) })),
+  };
 }

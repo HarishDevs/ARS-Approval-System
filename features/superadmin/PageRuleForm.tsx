@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { setPageRuleAction } from "@/app/superadmin/pages/actions";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
+import { PersonSelect } from "@/features/ui/PersonSelect";
 import { LEVEL_LABEL, PAGE_LEVELS, type PageLevel } from "@/server/authorization/pages";
 
 // v1.8.0: one page-access rule: everyone, a department or a person.
@@ -21,7 +22,7 @@ export function PageRuleForm({
   scopeId?: number;
   level: PageLevel | null;
   neverHidden?: boolean;
-  choices?: { id: number; label: string }[]; // to add a new department or person rule
+  choices?: { id: number; label: string; detail?: string }[]; // to add a new department or person rule
   label: string;
   removable?: boolean;
 }) {
@@ -51,16 +52,20 @@ export function PageRuleForm({
           <label htmlFor={`${id}-who`} className="field-label">
             {scope === "USER" ? "Person" : "Department"}
           </label>
-          <select id={`${id}-who`} name="scopeId" defaultValue="" className="field-input h-9 w-64">
-            <option value="" disabled>
-              Choose…
-            </option>
-            {choices.map((choice) => (
-              <option key={choice.id} value={choice.id}>
-                {choice.label}
+          {scope === "USER" ? (
+            <PersonSelect id={`${id}-who`} name="scopeId" options={choices} placeholder="Choose…" compact className="w-64" />
+          ) : (
+            <select id={`${id}-who`} name="scopeId" defaultValue="" className="field-input h-9 w-64">
+              <option value="" disabled>
+                Choose…
               </option>
-            ))}
-          </select>
+              {choices.map((choice) => (
+                <option key={choice.id} value={choice.id}>
+                  {choice.label}
+                </option>
+              ))}
+            </select>
+          )}
           <FieldError result={result} name="scopeId" />
         </div>
       )}

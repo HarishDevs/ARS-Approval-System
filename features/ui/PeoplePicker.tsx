@@ -1,8 +1,10 @@
 "use client";
 
-import { useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { X } from "lucide-react";
+import { useFitPanel } from "@/features/ui/fit";
 import { Hint } from "@/features/ui/Hint";
+import { inside } from "@/features/ui/inside";
 
 // Pick several people (v1.6.1 collaborators). Type to search by name or
 // user id, choose with the mouse or the arrow keys and Enter; each chosen
@@ -78,6 +80,19 @@ export function PeoplePicker({
   };
   const listId = `${id}-list`;
   const showList = open && query.trim().length > 0 && !full;
+  // v1.52.1 (owner): the list opens where it is fully visible, has a close
+  // button, and a click outside closes it.
+  const wrap = useRef<HTMLDivElement>(null);
+  const list = useRef<HTMLUListElement>(null);
+  const fit = useFitPanel(showList, wrap, list);
+  useEffect(() => {
+    if (!showList) return;
+    const outside = (event: MouseEvent) => {
+      if (wrap.current && !inside(event, wrap.current)) setOpen(false);
+    };
+    document.addEventListener("mousedown", outside);
+    return () => document.removeEventListener("mousedown", outside);
+  }, [showList]);
 
   return (
     <div>
@@ -107,7 +122,7 @@ export function PeoplePicker({
       )}
       {/* v1.51.0: a one-person picker that is filled shows just the chosen chip (remove it to choose again). */}
       {!(max === 1 && full) && (
-        <div className="relative">
+        <div className="relative" ref={wrap}>
           <input
             ref={input}
             id={`${id}-input`}
@@ -145,7 +160,27 @@ export function PeoplePicker({
             className="field-input"
           />
           {showList && (
-            <ul id={listId} role="listbox" aria-label={`${label}: matches`} className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-md border border-line bg-raised py-1 shadow-card">
+            <ul
+              ref={list}
+              id={listId}
+              role="listbox"
+              aria-label={`${label}: matches`}
+              className={`absolute z-[70] w-full overflow-auto rounded-md border border-line bg-raised py-1 shadow-card ${fit.up ? "bottom-full mb-1" : "mt-1"}`}
+              style={{ maxHeight: Math.min(fit.maxHeight, 320) }}
+            >
+              <li role="presentation" className="flex justify-end px-1">
+                <button
+                  type="button"
+                  onMouseDown={(event) => {
+                    event.preventDefault();
+                    setOpen(false);
+                  }}
+                  aria-label="Close the list"
+                  className="rounded p-1 text-ink-muted hover:bg-surface-muted hover:text-ink"
+                >
+                  <X aria-hidden="true" className="h-3.5 w-3.5" />
+                </button>
+              </li>
               {matches.length === 0 ? (
                 <li className="px-3 py-2 text-label text-ink-muted">Nobody matches.</li>
               ) : (

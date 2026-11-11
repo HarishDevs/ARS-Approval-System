@@ -5,6 +5,7 @@ import { publishAction, simulateAction, updateDetailsAction, deleteWorkflowActio
 import type { TypeSettings } from "@/server/workflows/type-settings";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import { PeoplePicker } from "@/features/ui/PeoplePicker";
+import { PersonSelect } from "@/features/ui/PersonSelect";
 import { Hint } from "@/features/ui/Hint";
 import { NO_LOOKUPS, NUMERIC_TYPES, type FieldLookups, type FormField } from "@/server/forms/fields";
 import type { SimulationView } from "@/server/approvals/service";
@@ -25,7 +26,7 @@ function MultiChoiceSample({ field }: { field: FormField }) {
 }
 
 // Test mode (P3-05): sample values → the exact route and names. Nothing is saved.
-export function TestModePanel({ versionId, form, people, lookups = NO_LOOKUPS }: { versionId: number; form: FormField[]; people: { id: number; label: string }[]; lookups?: FieldLookups }) {
+export function TestModePanel({ versionId, form, people, lookups = NO_LOOKUPS }: { versionId: number; form: FormField[]; people: { id: number; label: string; detail?: string }[]; lookups?: FieldLookups }) {
   const { result, pending, onSubmit } = useActionForm(simulateAction);
   const view = (result?.ok ? (result.data as { view?: SimulationView } | undefined)?.view : undefined) ?? null;
   return (
@@ -40,14 +41,7 @@ export function TestModePanel({ versionId, form, people, lookups = NO_LOOKUPS }:
           <label htmlFor="sim-requester" className="field-label">
             Sample requester
           </label>
-          <select id="sim-requester" name="requesterId" defaultValue="" className="field-input">
-            <option value="">Choose a person…</option>
-            {people.map((person) => (
-              <option key={person.id} value={person.id}>
-                {person.label}
-              </option>
-            ))}
-          </select>
+          <PersonSelect id="sim-requester" name="requesterId" options={people} emptyLabel="Choose a person…" />
           <FieldError result={result} name="requesterId" />
         </div>
         {form
@@ -78,14 +72,7 @@ export function TestModePanel({ versionId, form, people, lookups = NO_LOOKUPS }:
                   ))}
                 </select>
               ) : field.type === "PERSON" ? (
-                <select id={`sim-${field.key}`} name={`field:${field.key}`} defaultValue="" className="field-input">
-                  <option value="">—</option>
-                  {people.map((person) => (
-                    <option key={person.id} value={person.id}>
-                      {person.label}
-                    </option>
-                  ))}
-                </select>
+                <PersonSelect id={`sim-${field.key}`} name={`field:${field.key}`} options={people} emptyLabel="—" />
               ) : field.type === "MULTI_CHOICE" ? (
                 <MultiChoiceSample field={field} />
               ) : field.type === "CHECKBOX" ? (

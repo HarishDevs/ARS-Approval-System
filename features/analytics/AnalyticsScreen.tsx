@@ -12,6 +12,8 @@ import { hasModule } from "@/server/modules/modules";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { Hint } from "@/features/ui/Hint";
+import { PersonSelect } from "@/features/ui/PersonSelect";
+import { personLabel } from "@/lib/people/label";
 import { BarList, Heatmap, KpiCard, LineChart, StackedBar, hoursText } from "@/features/analytics/Charts";
 import { resolveScope } from "@/server/analytics/scope";
 import { bucketLabel, comparisonPeriod, indiaToday, PERIOD_LABEL, resolvePeriod, type PeriodKey } from "@/server/analytics/periods";
@@ -214,14 +216,14 @@ export async function AnalyticsScreen({ searchParams, base }: { searchParams: Re
               <label htmlFor="approver" className="field-label">
                 Approver
               </label>
-              <select id="approver" name="approver" defaultValue={carried.approver ?? ""} className="field-input h-10">
-                <option value="">Anyone</option>
-                {filterChoices.approvers.map((person) => (
-                  <option key={person.id} value={person.id}>
-                    {person.name}
-                  </option>
-                ))}
-              </select>
+              <PersonSelect
+                id="approver"
+                name="approver"
+                options={filterChoices.approvers.map((person) => ({ id: person.id, label: personLabel(person), detail: person.departmentName ?? undefined }))}
+                defaultValue={carried.approver ? Number(carried.approver) : null}
+                emptyLabel="Anyone"
+                compact
+              />
             </div>
             <div>
               <label htmlFor="step" className="field-label">

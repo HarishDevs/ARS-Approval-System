@@ -13,6 +13,7 @@ import { listDepartments } from "@/lib/db/repositories/organisation.repository";
 import { loadMeetingFor } from "@/server/meetings/service";
 import { actionState, ATTENDANCE_LABEL, durationBand, extendedBy, onTime, isCoordinator, isOwner, minutesBetween, MODE_LABEL, PRIORITY_LABEL, selfApproved } from "@/server/meetings/rules";
 import { indiaDateTimeText } from "@/server/modules/settings";
+import { personLabel } from "@/lib/people/label";
 
 export const metadata: Metadata = { title: "Meeting" };
 export const dynamic = "force-dynamic";
@@ -79,7 +80,7 @@ export default async function MeetingPage({ params, searchParams }: { params: Pr
   const query = await searchParams;
   const coordinator = isCoordinator(meeting, user.id) || viewer.isAdmin;
   const owner = isOwner(meeting, user.id);
-  const personOptions = people.map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})`, detail: labels.get(person.id) || undefined }));
+  const personOptions = people.map((person) => ({ id: person.id, label: personLabel(person), detail: labels.get(person.id) || undefined }));
   const me = participants.find((person) => person.userId === user.id);
   // Points are shown to participants once approved (or while the meeting runs on the last version).
   const pointsShared = meeting.pointsStatus === "APPROVED" || !["SCHEDULED"].includes(meeting.status) || coordinator || owner;

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Bell } from "lucide-react";
 import { Spinner } from "@/features/ui/Spinner";
+import { inside } from "@/features/ui/inside";
 
 // v1.9.0 (owner, D-146): the bell opens a dropdown with the latest 10
 // notifications (newest first) and filters All / Approvals / Tasks /
@@ -90,7 +91,7 @@ export function NotificationBell({ initialUnread }: { initialUnread: number }) {
       }
     };
     const onClick = (event: MouseEvent) => {
-      if (!panel.current?.contains(event.target as Node) && !button.current?.contains(event.target as Node)) setOpen(false);
+      if (!inside(event, panel.current) && !inside(event, button.current)) setOpen(false);
     };
     document.addEventListener("keydown", onKey);
     document.addEventListener("mousedown", onClick);

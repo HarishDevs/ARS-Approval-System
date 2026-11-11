@@ -8,10 +8,12 @@ import type { ModuleCode, RoleCode, SignInMethod } from "@/types/auth";
 import { MODULE_HELP, MODULE_LABEL, MODULES } from "@/server/modules/modules";
 import { CHAT_MODES, MODE_HELP, MODE_LABEL, type ChatMode, type SalesforceScope } from "@/server/ai/chat-access";
 import { UnsavedGuard } from "@/features/ui/UnsavedGuard";
+import { PersonSelect } from "@/features/ui/PersonSelect";
 
 export interface Option {
   id: number;
   label: string;
+  detail?: string; // a person's department
 }
 
 export interface UserFormValues {
@@ -97,7 +99,7 @@ export function UserForm({
 
         <Select label="Department" name="departmentId" options={departments} defaultValue={values.departmentId} result={result} />
         <Select label="Designation" name="designationId" options={designations} defaultValue={values.designationId} result={result} />
-        <Select label="Reports to" name="reportingManagerId" options={managers} defaultValue={values.reportingManagerId} result={result} emptyLabel="Nobody" />
+        <Select label="Reports to" name="reportingManagerId" options={managers} defaultValue={values.reportingManagerId} result={result} emptyLabel="Nobody" person />
 
         <div className="sm:col-span-2">
           <p className="field-label">Roles</p>
@@ -264,6 +266,7 @@ function Select({
   defaultValue,
   result,
   emptyLabel = "Not set",
+  person = false,
 }: {
   label: string;
   name: string;
@@ -271,12 +274,16 @@ function Select({
   defaultValue: number | null;
   result: Parameters<typeof FieldError>[0]["result"];
   emptyLabel?: string;
+  person?: boolean; // a searchable people picker (Name - code, department below)
 }) {
   return (
     <div>
       <label htmlFor={name} className="field-label">
         {label}
       </label>
+      {person ? (
+        <PersonSelect id={name} name={name} options={options} defaultValue={defaultValue} emptyLabel={emptyLabel} />
+      ) : (
       <select id={name} name={name} defaultValue={defaultValue ?? ""} className="field-input">
         <option value="">{emptyLabel}</option>
         {options.map((option) => (
@@ -285,6 +292,7 @@ function Select({
           </option>
         ))}
       </select>
+      )}
       <FieldError result={result} name={name} />
     </div>
   );

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { deleteTaskAction, dependencyAction, followAction, likeAction, moveTaskAction, parentAction, subtaskOrderAction, tagAction, taskFieldsAction, taskProjectAction } from "@/app/users/work/actions";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
+import { PersonSelect } from "@/features/ui/PersonSelect";
 import { ProjectDot, TaskCheck, usePaneLink, useWorkCall } from "@/features/work/client";
 import { dueLabel, TONE_TEXT } from "@/features/work/format";
 import { AddTask } from "@/features/work/ProjectWorkspace";
@@ -37,7 +38,7 @@ export interface PanelData {
   blocking: { id: number; taskNo: string; title: string; status: string }[];
   tags: { id: number; name: string }[];
   followers: { id: number; name: string }[];
-  people: { id: number; label: string }[];
+  people: { id: number; label: string; detail?: string; name?: string }[];
   likes: { id: number; name: string }[];
   nowIso: string;
   // D-218
@@ -371,16 +372,15 @@ export function TaskWorkSide({ data }: { data: PanelData }) {
               <label htmlFor="add-follower" className="sr-only">
                 Add a follower
               </label>
-              <select id="add-follower" value={follower} onChange={(event) => setFollower(event.target.value ? Number(event.target.value) : "")} className="field-input h-8 w-44 py-0 text-label">
-                <option value="">Add a follower…</option>
-                {data.people
-                  .filter((person) => !data.followers.some((item) => item.id === person.id))
-                  .map((person) => (
-                    <option key={person.id} value={person.id}>
-                      {person.label}
-                    </option>
-                  ))}
-              </select>
+              <PersonSelect
+                id="add-follower"
+                options={data.people.filter((person) => !data.followers.some((item) => item.id === person.id))}
+                value={follower === "" ? null : follower}
+                onChange={(id) => setFollower(id ?? "")}
+                emptyLabel="Add a follower…"
+                compact
+                className="w-56"
+              />
               <button type="button" disabled={follower === ""} className="btn-secondary btn-compact" onClick={() => follower !== "" && void call(() => followAction(data.taskId, follower, true)).then(() => setFollower(""))}>
                 Add
               </button>

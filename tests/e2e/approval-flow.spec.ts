@@ -1,5 +1,6 @@
 import { expect, test, type BrowserContext, type Page } from "@playwright/test";
 import { sessionCookie } from "./db";
+import { pickPerson } from "./people";
 
 // The north star through the real screens: IT builds and publishes a
 // workflow → a requester raises → manager approves → HOD asks for changes →
@@ -23,7 +24,7 @@ test("IT builds, tests and publishes a two-level workflow", async ({ page, conte
   await expect(page).toHaveURL(/\/admin\/workflows\/\d+\?created=1/);
 
   // Test mode shows the real people.
-  await page.getByLabel("Sample requester").selectOption({ label: "Ravi Requester (E2E_REQ)" });
+  await pickPerson(page, page.getByLabel("Sample requester"), "Ravi Requester - E2E_REQ");
   await page.getByRole("button", { name: "Run test" }).click();
   await expect(page.getByText("Manager (Must approve): Manoj Manager")).toBeVisible();
   await expect(page.getByText("HOD (Must approve): Harini HOD")).toBeVisible();

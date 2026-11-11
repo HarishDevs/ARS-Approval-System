@@ -10,8 +10,10 @@ import { PRIORITY_LABEL, TASK_PRIORITIES, type TaskPriority } from "@/server/mod
 import type { FieldLookups, FormField } from "@/server/forms/fields";
 import type { TaskAction } from "@/server/modules/task-rules";
 import { UnsavedGuard } from "@/features/ui/UnsavedGuard";
+import { PersonSelect } from "@/features/ui/PersonSelect";
+import { FileListInput } from "@/features/ui/FileListInput";
 
-type Option = { id: number; label: string };
+type Option = { id: number; label: string; detail?: string };
 
 // v1.9.0 (D-143): create a task of a chosen type.
 export function CreateTaskForm({
@@ -66,16 +68,7 @@ export function CreateTaskForm({
           <label htmlFor="task-assignee" className="field-label">
             Assign to
           </label>
-          <select id="task-assignee" name="assignee" required defaultValue="" className="field-input">
-            <option value="" disabled>
-              Choose a person…
-            </option>
-            {assignable.map((person) => (
-              <option key={person.id} value={person.id}>
-                {person.id === selfId ? `${person.label} (me)` : person.label}
-              </option>
-            ))}
-          </select>
+          <PersonSelect id="task-assignee" name="assignee" required options={assignable.map((person) => (person.id === selfId ? { ...person, label: `${person.label} (me)` } : person))} />
           <FieldError result={result} name="assignee" />
         </div>
         <div>
@@ -125,7 +118,7 @@ export function CreateTaskForm({
           </label>
           <Hint text="Up to 5 files, 10 MB each." align="start" className="mb-1.5" />
         </div>
-        <input id="task-files" name="attachments" type="file" multiple accept={ACCEPT_ATTRIBUTE} className="block w-full text-label file:mr-3 file:rounded-md file:border-0 file:bg-surface-muted file:px-3 file:py-2" />
+        <FileListInput id="task-files" name="attachments" accept={ACCEPT_ATTRIBUTE} maxFiles={5} />
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <SubmitButton pending={pending}>Create task</SubmitButton>
@@ -190,7 +183,7 @@ export function TaskActionButton({
           <FieldError result={result} name="reason" />
         </div>
       )}
-      {allowFiles && <input aria-label="Evidence files" name="attachments" type="file" multiple accept={ACCEPT_ATTRIBUTE} className="block w-full text-label" />}
+      {allowFiles && <FileListInput name="attachments" accept={ACCEPT_ATTRIBUTE} ariaLabel="Evidence files" maxFiles={5} />}
       <div className="flex flex-wrap items-center gap-2">
         <SubmitButton pending={pending} variant={action === "COMPLETE" ? "primary" : "secondary"} className="btn-compact">
           {label}
@@ -215,16 +208,7 @@ export function ReassignForm({ taskId, rowVersion, assignable }: { taskId: numbe
       <input type="hidden" name="rowVersion" value={rowVersion} />
       <input type="hidden" name="action" value="REASSIGN" />
       <div className="grid gap-2 sm:grid-cols-2">
-        <select aria-label="New assignee" name="assignee" defaultValue="" className="field-input">
-          <option value="" disabled>
-            Reassign to…
-          </option>
-          {assignable.map((person) => (
-            <option key={person.id} value={person.id}>
-              {person.label}
-            </option>
-          ))}
-        </select>
+        <PersonSelect ariaLabel="New assignee" name="assignee" options={assignable} placeholder="Reassign to…" />
         <input aria-label="Reason for reassigning" name="reason" maxLength={500} placeholder="Reason" className="field-input" />
       </div>
       <FieldError result={result} name="assignee" />
@@ -247,7 +231,7 @@ export function CommentForm({ taskId }: { taskId: number }) {
         Add files to the history, with a note (optional)
       </label>
       <textarea id="task-comment" name="reason" rows={3} maxLength={2000} className="field-input h-auto py-2" />
-      <input aria-label="Files to add" name="attachments" type="file" multiple accept={ACCEPT_ATTRIBUTE} className="block w-full text-label" />
+      <FileListInput name="attachments" accept={ACCEPT_ATTRIBUTE} ariaLabel="Files to add" maxFiles={5} />
       <FieldError result={result} name="reason" />
       <div className="flex flex-wrap items-center gap-3">
         <SubmitButton pending={pending} variant="secondary" className="btn-compact">

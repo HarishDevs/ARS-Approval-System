@@ -172,6 +172,11 @@ Comments on a request can't be edited or removed. To tell someone in particular,
 - **Meeting analytics** (Analytics → Meeting analytics): on time, attendance, approvals and action follow-up for the meetings your scope covers: yours, your whole team below you, the departments you head, or everything (IT; ED and MD can switch to all meetings).
 - **Who sees a meeting:** the people on it, heads of its departments (not Management-only meetings), the Management group (ED, MD) and IT.
 
+### Tasks: the popup and activity
+- **Opening a task** from a list shows it in a popup with all its actions; × , Esc or a click outside closes it, **Open full page** opens its page.
+- **Comments / All activity:** Comments is the thread (reply, like, pin); All activity is the full history, oldest or newest first.
+- **Choosing a person** anywhere: type a name, code or department; each choice shows **Name - Employee code** and the department below. Lists open where they fit on the screen and close with ×, Esc or a click outside.
+
 ### Information
 - **New information:** choose the type, write the subject and message, choose recipients, then **Publish** (or **Save draft**).
 - **Recipients are fixed at publishing:** people who join a department later don't receive it.

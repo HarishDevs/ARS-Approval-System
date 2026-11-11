@@ -135,15 +135,23 @@ export async function baseTotal(base: ListBase, userId: number, db: Queryable = 
   return Number(row?.n ?? 0);
 }
 
+// v1.52.1: people come with their code and department, for the "Name - code" picker.
+export interface ChoicePerson {
+  id: number;
+  name: string;
+  loginId: string;
+  departmentName: string | null;
+}
+
 export interface ListChoices {
   types: { id: number; name: string }[];
-  requesters: { id: number; name: string }[];
+  requesters: ChoicePerson[];
   departments: { id: number; name: string }[];
-  addedBy: { id: number; name: string }[];
+  addedBy: ChoicePerson[];
   steps: string[];
-  waitingWith: { id: number; name: string }[];
+  waitingWith: ChoicePerson[];
   hasCustom: boolean;
-  approvedBy: { id: number; name: string }[]; // APPROVED_MINE
+  approvedBy: ChoicePerson[]; // APPROVED_MINE
   mySteps: string[]; // APPROVED_BY_ME
 }
 
@@ -153,15 +161,17 @@ export async function listChoices(base: ListBase, userId: number, db: Queryable 
   const where = `WHERE r.deleted_at IS NULL AND ${BASE[base]}`;
   const run = async <T,>(sql: string, extra: unknown[] = []) => (await db.query<RowDataPacket[]>(sql, [...extra, userId]))[0] as unknown as T[];
   const people = base === "COLLAB" || base === "APPROVED_BY_ME";
+  type PersonRow = { id: number; name: string; login_id: string; department_name: string | null };
+  const persons = (rows: PersonRow[]): ChoicePerson[] => rows.map((row) => ({ id: row.id, name: row.name, loginId: row.login_id, departmentName: row.department_name }));
   const [types, requesters, departments, addedBy, steps, waitingWith, approvedBy, mySteps] = await Promise.all([
     run<{ id: number; name: string; kind: string }>(`SELECT DISTINCT w.id, w.name, w.kind ${FROM(base)} ${where} ORDER BY w.name LIMIT 200`),
-    people ? run<{ id: number; name: string }>(`SELECT DISTINCT u.id, u.name ${FROM(base)} ${where} ORDER BY u.name LIMIT 300`) : Promise.resolve([]),
+    people ? run<PersonRow>(`SELECT DISTINCT u.id, u.name, u.login_id, ud.name AS department_name ${FROM(base)} LEFT JOIN departments ud ON ud.id = u.department_id ${where} ORDER BY u.name LIMIT 300`) : Promise.resolve([]),
     people ? run<{ id: number; name: string }>(`SELECT DISTINCT d.id, d.name ${FROM(base)} JOIN departments d ON d.id = u.department_id ${where} ORDER BY d.name LIMIT 200`) : Promise.resolve([]),
-    base === "COLLAB" ? run<{ id: number; name: string }>(`SELECT DISTINCT ab.id, ab.name ${FROM(base)} ${where} ORDER BY ab.name LIMIT 300`) : Promise.resolve([]),
+    base === "COLLAB" ? run<PersonRow>(`SELECT DISTINCT ab.id, ab.name, ab.login_id, abd.name AS department_name ${FROM(base)} LEFT JOIN departments abd ON abd.id = ab.department_id ${where} ORDER BY ab.name LIMIT 300`) : Promise.resolve([]),
     run<{ step: string }>(`SELECT DISTINCT t.node_label AS step ${FROM(base)} JOIN approval_tasks t ON t.request_id = r.id AND t.status = 'PENDING' ${where} ORDER BY step LIMIT 200`),
-    run<{ id: number; name: string }>(`SELECT DISTINCT p.id, p.name ${FROM(base)} JOIN approval_tasks t ON t.request_id = r.id AND t.status = 'PENDING' JOIN users p ON p.id = t.approver_id ${where} ORDER BY p.name LIMIT 300`),
+    run<PersonRow>(`SELECT DISTINCT p.id, p.name, p.login_id, pd.name AS department_name ${FROM(base)} JOIN approval_tasks t ON t.request_id = r.id AND t.status = 'PENDING' JOIN users p ON p.id = t.approver_id LEFT JOIN departments pd ON pd.id = p.department_id ${where} ORDER BY p.name LIMIT 300`),
     base === "APPROVED_MINE"
-      ? run<{ id: number; name: string }>(`SELECT DISTINCT p.id, p.name ${FROM(base)} JOIN approval_tasks t ON t.request_id = r.id AND t.status = 'APPROVED' AND t.task_type = 'APPROVAL' JOIN users p ON p.id = COALESCE(t.decided_by, t.approver_id) ${where} ORDER BY p.name LIMIT 300`)
+      ? run<PersonRow>(`SELECT DISTINCT p.id, p.name, p.login_id, pd.name AS department_name ${FROM(base)} JOIN approval_tasks t ON t.request_id = r.id AND t.status = 'APPROVED' AND t.task_type = 'APPROVAL' JOIN users p ON p.id = COALESCE(t.decided_by, t.approver_id) LEFT JOIN departments pd ON pd.id = p.department_id ${where} ORDER BY p.name LIMIT 300`)
       : Promise.resolve([]),
     base === "APPROVED_BY_ME"
       ? run<{ step: string }>(`SELECT DISTINCT t.node_label AS step ${FROM(base)} JOIN approval_tasks t ON t.request_id = r.id AND t.status = 'APPROVED' AND t.task_type = 'APPROVAL' AND t.decided_by = ? ${where} ORDER BY step LIMIT 200`, [userId])
@@ -170,12 +180,12 @@ export async function listChoices(base: ListBase, userId: number, db: Queryable 
   return {
     types: types.filter((row) => row.kind !== "CUSTOM").map((row) => ({ id: row.id, name: row.name })),
     hasCustom: types.some((row) => row.kind === "CUSTOM"),
-    requesters,
+    requesters: persons(requesters),
     departments,
-    addedBy,
+    addedBy: persons(addedBy),
     steps: steps.map((row) => row.step),
-    waitingWith,
-    approvedBy,
+    waitingWith: persons(waitingWith),
+    approvedBy: persons(approvedBy),
     mySteps: mySteps.map((row) => row.step),
   };
 }

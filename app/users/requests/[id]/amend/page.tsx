@@ -11,6 +11,7 @@ import { approverFieldKeys } from "@/server/approvals/approver-rules";
 import { loadFieldLookups } from "@/lib/db/repositories/lookups.repository";
 import { amendmentPlan, rawOf } from "@/server/approvals/amendments";
 import { findDraft } from "@/lib/db/repositories/drafts.repository";
+import { personLabel } from "@/lib/people/label";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
 export const metadata: Metadata = { title: "Amend request" };
@@ -43,10 +44,10 @@ export default async function AmendRequestPage({ params }: { params: Promise<{ i
   const { plan } = planned;
   const version = plan.version;
   const needsPeople = version.form.some((field) => field.type === "PERSON");
-  const people = needsPeople ? (await listActiveUserOptions()).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` })) : [];
+  const people = needsPeople ? (await listActiveUserOptions()).map((person) => ({ id: person.id, label: personLabel(person), detail: person.departmentName ?? undefined })) : [];
   const approverFields = approverFieldKeys(version.definition);
   const lookups = version.form.some((field) => field.type === "LOOKUP") ? await loadFieldLookups() : undefined;
-  const approverPeople = approverFields.length ? (await listApproverOptions()).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` })) : undefined;
+  const approverPeople = approverFields.length ? (await listApproverOptions()).map((person) => ({ id: person.id, label: personLabel(person), detail: person.departmentName ?? undefined })) : undefined;
   // A11: the requester's own amendment draft. Only amendable fields and the
   // reason come back from it; everything else is the effective value.
   const draftKey = `AM:${plan.original.id}`;

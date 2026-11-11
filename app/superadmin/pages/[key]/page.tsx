@@ -10,6 +10,7 @@ import { listAccessRules } from "@/lib/db/repositories/page-access.repository";
 import { listActiveUserOptions } from "@/lib/db/repositories/admin-users.repository";
 import { listDepartments } from "@/lib/db/repositories/organisation.repository";
 import { PAGE } from "@/server/authorization/pages";
+import { personLabel } from "@/lib/people/label";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
 export const metadata: Metadata = { title: "Page access rule" };
@@ -67,7 +68,7 @@ export default async function PageRulesPage({ params }: { params: Promise<{ key:
             <PageRuleForm pageKey={page.key} scope="USER" scopeId={rule.scopeId} level={rule.level} neverHidden={page.neverHidden} label={`${rule.scopeName ?? "Person"}: level`} removable />
           </div>
         ))}
-        <PageRuleForm pageKey={page.key} scope="USER" level={null} neverHidden={page.neverHidden} label="Level" choices={people.filter((person) => !byPerson.some((rule) => rule.scopeId === person.id)).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` }))} />
+        <PageRuleForm pageKey={page.key} scope="USER" level={null} neverHidden={page.neverHidden} label="Level" choices={people.filter((person) => !byPerson.some((rule) => rule.scopeId === person.id)).map((person) => ({ id: person.id, label: personLabel(person), detail: person.departmentName ?? undefined }))} />
       </section>
     </>
   );

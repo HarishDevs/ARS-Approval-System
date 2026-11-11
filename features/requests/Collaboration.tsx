@@ -4,6 +4,7 @@ import Link from "next/link";
 import { answerConsultAction, consultAction, linkAction } from "@/app/users/collab-actions";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import { Hint } from "@/features/ui/Hint";
+import { PersonSelect } from "@/features/ui/PersonSelect";
 import { SafeText } from "@/features/ui/SafeText";
 import { Lightbulb, Link2 } from "lucide-react";
 import { RequestLinkPicker } from "@/features/requests/RequestLinkPicker";
@@ -20,7 +21,7 @@ export interface ConsultRow {
   mine: boolean; // the viewer is the consultee and it is still open
 }
 
-export function Advice({ requestId, rows, canAsk, people }: { requestId: number; rows: ConsultRow[]; canAsk: boolean; people: { id: number; label: string }[] }) {
+export function Advice({ requestId, rows, canAsk, people }: { requestId: number; rows: ConsultRow[]; canAsk: boolean; people: { id: number; label: string; detail?: string }[] }) {
   if (rows.length === 0 && !canAsk) return null;
   return (
     <section className="card px-5 py-4" aria-labelledby="advice">
@@ -57,7 +58,7 @@ export function Advice({ requestId, rows, canAsk, people }: { requestId: number;
   );
 }
 
-function AskAdvice({ requestId, people }: { requestId: number; people: { id: number; label: string }[] }) {
+function AskAdvice({ requestId, people }: { requestId: number; people: { id: number; label: string; detail?: string }[] }) {
   const { result, pending, formRef, onSubmit } = useActionForm(consultAction, { resetOnSuccess: true });
   return (
     <details>
@@ -67,14 +68,7 @@ function AskAdvice({ requestId, people }: { requestId: number; people: { id: num
         <label htmlFor="consult-who" className="field-label">
           Colleague
         </label>
-        <select id="consult-who" name="consulteeId" defaultValue="" className="field-input">
-          <option value="">Choose…</option>
-          {people.map((person) => (
-            <option key={person.id} value={person.id}>
-              {person.label}
-            </option>
-          ))}
-        </select>
+        <PersonSelect id="consult-who" name="consulteeId" options={people} emptyLabel="Choose…" />
         <FieldError result={result} name="consulteeId" />
         <label htmlFor="consult-question" className="field-label">
           Your question

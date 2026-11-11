@@ -1,5 +1,6 @@
 import { expect, test, type BrowserContext, type Page } from "@playwright/test";
 import { sessionCookie } from "./db";
+import { pickPerson } from "./people";
 
 // Session 12 (F-75, D-088): the workflow builder's form field creator end to
 // end, typed key by key like a person, through every field type:
@@ -106,7 +107,7 @@ test("IT builds a form with every field type; the dropdown creator and keys work
 test("test mode follows the date and department conditions", async ({ page, context }) => {
   await as(context, "E2E_ADMIN");
   await page.goto(workflowPath);
-  await page.getByLabel("Sample requester").selectOption({ label: "Ravi Requester (E2E_REQ)" });
+  await pickPerson(page, page.getByLabel("Sample requester"), "Ravi Requester - E2E_REQ");
   await page.locator("#sim-amount").fill("50,000");
   await page.locator("#sim-purchase_type").selectOption("Capex");
   await page.locator("#sim-department").selectOption({ label: "E2E Department" });

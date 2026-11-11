@@ -14,6 +14,7 @@ import { loadFieldLookups } from "@/lib/db/repositories/lookups.repository";
 import { mayCreate, parseTaskSettings, utcToIndiaLocal } from "@/server/modules/settings";
 import { mayAssignTo } from "@/server/modules/task-rules";
 import { isAdminActor } from "@/server/modules/tasks";
+import { personLabel } from "@/lib/people/label";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
 export const metadata: Metadata = { title: "New task" };
@@ -69,8 +70,8 @@ export default async function NewTaskPage({ searchParams }: { searchParams: Prom
       <CreateTaskForm
         typeId={chosen.typeId}
         form={chosen.form}
-        people={everyone.map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` }))}
-        assignable={assignable.map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` }))}
+        people={everyone.map((person) => ({ id: person.id, label: personLabel(person), detail: person.departmentName ?? undefined }))}
+        assignable={assignable.map((person) => ({ id: person.id, label: personLabel(person), detail: person.departmentName ?? undefined }))}
         lookups={lookups}
         defaultPriority={settings.defaultPriority}
         defaultDue={defaultDue}

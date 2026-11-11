@@ -2,10 +2,14 @@
 // task's Formatting bar and "/" menu write it as plain text): **bold**,
 // _italic_, ~~struck~~, "- " bullets, "1. " numbered lines and @mentions
 // (@[Name](user:id)). Parsed into data, never HTML, so nothing typed can run.
-export type Inline = { kind: "text" | "bold" | "italic" | "strike"; text: string } | { kind: "mention"; userId: number; label: string };
-export type Block = { kind: "line"; parts: Inline[] } | { kind: "bullets" | "numbers"; items: Inline[][] };
+// v1.52.2 (owner: "the comment section formattable like a mail body"):
+// also ++underline++, `code`, [links](https://…), "> " quotes and "# "
+// headings. Links keep only http(s) and mailto addresses.
+export type Inline = { kind: "text" | "bold" | "italic" | "strike" | "underline" | "code"; text: string } | { kind: "mention"; userId: number; label: string } | { kind: "link"; text: string; href: string };
+export type Block = { kind: "line"; parts: Inline[] } | { kind: "quote"; parts: Inline[] } | { kind: "heading"; parts: Inline[] } | { kind: "bullets" | "numbers"; items: Inline[][] };
 
-const INLINE = /@\[([^\]\n]{1,80})\]\(user:(\d{1,10})\)|\*\*([^*\n]+)\*\*|~~([^~\n]+)~~|(?<![\w*])_([^_\n]+)_(?!\w)|(?<![\w*])\*([^*\n]+)\*(?!\w)/g;
+const INLINE =
+  /@\[([^\]\n]{1,80})\]\(user:(\d{1,10})\)|\*\*([^*\n]+)\*\*|~~([^~\n]+)~~|(?<![\w*])_([^_\n]+)_(?!\w)|(?<![\w*])\*([^*\n]+)\*(?!\w)|\+\+([^+\n]+)\+\+|`([^`\n]+)`|\[([^\]\n]{1,200})\]\(((?:https?:\/\/|mailto:)[^\s)]{1,500})\)/g;
 
 export function inlineParts(text: string): Inline[] {
   const parts: Inline[] = [];
@@ -16,6 +20,9 @@ export function inlineParts(text: string): Inline[] {
     if (match[1] !== undefined) parts.push({ kind: "mention", label: match[1], userId: Number(match[2]) });
     else if (match[3] !== undefined) parts.push({ kind: "bold", text: match[3] });
     else if (match[4] !== undefined) parts.push({ kind: "strike", text: match[4] });
+    else if (match[7] !== undefined) parts.push({ kind: "underline", text: match[7] });
+    else if (match[8] !== undefined) parts.push({ kind: "code", text: match[8] });
+    else if (match[9] !== undefined && match[10] !== undefined) parts.push({ kind: "link", text: match[9], href: match[10] });
     else parts.push({ kind: "italic", text: match[5] ?? match[6] ?? "" });
     last = index + match[0].length;
   }
@@ -25,6 +32,8 @@ export function inlineParts(text: string): Inline[] {
 
 const BULLET = /^\s*[-*•]\s+/;
 const NUMBER = /^\s*\d{1,3}[.)]\s+/;
+const QUOTE = /^\s*>\s?/;
+const HEADING = /^#{1,3}\s+/;
 
 export function richBlocks(text: string): Block[] {
   const blocks: Block[] = [];
@@ -35,7 +44,9 @@ export function richBlocks(text: string): Block[] {
       const previous = blocks.at(-1);
       if (previous && previous.kind === kind) previous.items.push(parts);
       else blocks.push({ kind, items: [parts] });
-    } else blocks.push({ kind: "line", parts: inlineParts(line) });
+    } else if (QUOTE.test(line)) blocks.push({ kind: "quote", parts: inlineParts(line.replace(QUOTE, "")) });
+    else if (HEADING.test(line)) blocks.push({ kind: "heading", parts: inlineParts(line.replace(HEADING, "")) });
+    else blocks.push({ kind: "line", parts: inlineParts(line) });
   }
   return blocks;
 }
@@ -43,7 +54,7 @@ export function richBlocks(text: string): Block[] {
 // Who is @mentioned (the Draft task makes them collaborators).
 export function mentionIds(text: string): number[] {
   const ids = new Set<number>();
-  for (const part of richBlocks(text).flatMap((block) => (block.kind === "line" ? block.parts : block.items.flat()))) if (part.kind === "mention") ids.add(part.userId);
+  for (const part of richBlocks(text).flatMap((block) => ("parts" in block ? block.parts : block.items.flat()))) if (part.kind === "mention") ids.add(part.userId);
   return [...ids];
 }
 

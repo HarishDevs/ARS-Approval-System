@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { db, sessionCookie, userIdByLogin } from "./db";
+import { pickFirstPerson } from "./people";
 
 // D-227 (owner: "in Classic mode make everything Classic… like Tally"):
 // entry forms read "Label : value", the field being entered is lit, Enter
@@ -33,7 +34,7 @@ test("Classic entry forms: Label : value rows, Enter moves on, Ctrl+A accepts; C
     await page.keyboard.press("Enter");
     await expect(page).toHaveURL(/\/users\/tasks\/new/); // Enter didn't submit
     await expect(page.locator("main form").getByLabel(/Description/)).toBeFocused();
-    await page.locator("main form").getByLabel("Assign to").selectOption({ index: 1 });
+    await pickFirstPerson(page, page.locator("main form").getByLabel("Assign to"));
     await page.locator("main form").getByLabel("Assign to").press("Control+a");
     await expect(page).toHaveURL(/\/users\/tasks\/\d+/);
     await expect(page.getByText(`Classic entry ${stamp}`).first()).toBeVisible();

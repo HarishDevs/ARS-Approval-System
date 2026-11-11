@@ -13,8 +13,10 @@ import type { ShownPriority } from "@/server/approvals/priority";
 import { SavedViews, SaveViewForm, type ViewChip } from "@/features/analytics/ReportForms";
 import { ListToolbar } from "@/features/ui/ListToolbar";
 import { EmptyState, NoResults } from "@/features/ui/Display";
+import { PersonSelect } from "@/features/ui/PersonSelect";
+import { personLabel } from "@/lib/people/label";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
-import type { ListChoices, ListedRequest } from "@/lib/db/repositories/request-lists.repository";
+import type { ChoicePerson, ListChoices, ListedRequest } from "@/lib/db/repositories/request-lists.repository";
 import {
   activeCount,
   BASE_FEATURES,
@@ -194,13 +196,28 @@ export function RequestListScreen({
       </div>
     </fieldset>
   );
-  const people = (id: string, name: string, label: string, value: number | null, list: { id: number; name: string }[], any = "Anyone") => (
+  const people = (id: string, name: string, label: string, value: number | null, list: ChoicePerson[]) => (
+    <div>
+      <label htmlFor={id} className="field-label">
+        {label}
+      </label>
+      <PersonSelect
+        id={id}
+        name={name}
+        options={list.map((item) => ({ id: item.id, label: personLabel(item), detail: item.departmentName ?? undefined }))}
+        defaultValue={value}
+        emptyLabel="Anyone"
+        compact
+      />
+    </div>
+  );
+  const departmentChoice = (id: string, name: string, label: string, value: number | null, list: { id: number; name: string }[]) => (
     <div>
       <label htmlFor={id} className="field-label">
         {label}
       </label>
       <select id={id} name={name} defaultValue={value ?? ""} className={select}>
-        <option value="">{any}</option>
+        <option value="">Any</option>
         {list.map((item) => (
           <option key={item.id} value={item.id}>
             {item.name}
@@ -321,7 +338,7 @@ export function RequestListScreen({
               </select>
             </div>
             {can.people && people("list-raisedby", "raisedBy", "Raised by", filters.requesterId, choices.requesters)}
-            {can.people && people("list-dept", "dept", "Their department", filters.departmentId, choices.departments, "Any")}
+            {can.people && departmentChoice("list-dept", "dept", "Their department", filters.departmentId, choices.departments)}
             {can.collab && people("list-addedby", "addedBy", "Added me", filters.addedById, choices.addedBy)}
             {can.approvedBy && people("list-approvedby", "approvedBy", "Approved by", filters.approvedById, choices.approvedBy)}
             {can.mine && (

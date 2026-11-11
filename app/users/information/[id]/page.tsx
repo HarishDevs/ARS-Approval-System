@@ -16,6 +16,7 @@ import { listRecordFiles } from "@/server/modules/files";
 import { indiaToday, loadInfoFor } from "@/server/modules/information";
 import { infoState, INFO_STATE_LABEL } from "@/server/modules/info-rules";
 import { indiaDateTimeText } from "@/server/modules/settings";
+import { personLabel } from "@/lib/people/label";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
 export const metadata: Metadata = { title: "Information" };
@@ -149,7 +150,7 @@ export default async function InformationPage({ params, searchParams }: { params
               {actions.has("ARCHIVE") && <InfoActionButton infoId={item.id} rowVersion={item.rowVersion} action="ARCHIVE" confirm="It moves out of the current lists. It stays readable in the history." />}
               {actions.has("WITHDRAW") && <InfoActionButton infoId={item.id} rowVersion={item.rowVersion} action="WITHDRAW" needsReason danger />}
             </div>
-            {actions.has("EDIT_PUBLISHED") && <EditPublishedForm infoId={item.id} rowVersion={item.rowVersion} editable={editable} values={values} expiresOn={item.expiresOn ?? ""} people={people.map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` }))} lookups={lookups} />}
+            {actions.has("EDIT_PUBLISHED") && <EditPublishedForm infoId={item.id} rowVersion={item.rowVersion} editable={editable} values={values} expiresOn={item.expiresOn ?? ""} people={people.map((person) => ({ id: person.id, label: personLabel(person), detail: person.departmentName ?? undefined }))} lookups={lookups} />}
             {settings.ack === "NEVER" && viewer.recipient && <p className="text-caption text-ink-muted">No acknowledgement is asked for this one.</p>}
           </section>
         </aside>

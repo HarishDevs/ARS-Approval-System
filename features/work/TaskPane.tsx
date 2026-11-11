@@ -1,146 +1,48 @@
-import { TaskPriorityPill } from "@/features/ui/ChoicePill";
-import { ApprovalBadge } from "@/features/work/ApprovalLink";
-import { WORK_LINK_KEY, workMirrorLink } from "@/server/approvals/work-mirror";
 import Link from "next/link";
 import { ExternalLink, X } from "lucide-react";
-import { Badge } from "@/features/ui/Display";
-import { SafeText } from "@/features/ui/SafeText";
-import { RichText } from "@/features/work/RichText";
-import { CopyLinkButton, TaskCompleteButton } from "@/features/work/client";
-import { TaskShareButton } from "@/features/work/ShareDialogs";
-import { TaskWorkPanel, TaskWorkSide } from "@/features/work/TaskWorkPanel";
-import { CommentThread } from "@/features/work/CommentThread";
-import { STATUS_TONE } from "@/features/modules/TaskListScreen";
-import { loadTaskFor } from "@/server/modules/tasks";
-import { indiaDateTimeText } from "@/server/modules/settings";
-import { isOverdue, TASK_STATUS_LABEL } from "@/server/modules/task-rules";
-import { taskWorkView } from "@/server/work/task-view";
-import { recurrenceLabel } from "@/server/work/more-rules";
+import { CopyLinkButton } from "@/features/work/client";
+import { TaskDetail } from "@/features/work/TaskDetail";
+import type { AuthenticatedUser } from "@/types/auth";
+export { visibilityText } from "@/features/work/visibility";
 
-// D-219: Asana's task pane. A task opens beside the list it was clicked in
-// (?task=<id>), with the same rights and parts as its full page; Esc or ×
-// closes it. Someone who can't see the task gets a plain "not found".
-export async function TaskPane({ taskId, user, closeHref }: { taskId: number; user: { id: number; roles: readonly string[] }; closeHref: string }) {
-  const loaded = await loadTaskFor(taskId, user);
-  const frame = (children: React.ReactNode) => (
-    <aside
-      aria-label="Task details"
-      data-task-pane
-      data-close-href={closeHref}
-      className="fixed inset-0 z-40 overflow-y-auto bg-page p-4 lg:sticky lg:inset-auto lg:top-4 lg:z-auto lg:max-h-[calc(100vh-2rem)] lg:rounded-lg lg:border lg:border-line lg:bg-surface lg:p-0 lg:shadow-sm"
-      data-testid="task-pane"
-    >
-      {children}
-    </aside>
-  );
-  if (!loaded)
-    return frame(
-      <div className="flex items-center justify-between px-5 py-4">
-        <p className="text-ink-muted">Not found, or you can&apos;t see this task.</p>
-        <Link href={closeHref} aria-label="Close task" className="rounded p-1 hover:bg-surface-muted">
-          <X aria-hidden="true" className="h-5 w-5" />
-        </Link>
-      </div>,
-    );
-  const { task, actions, settings } = loaded;
-  const view = await taskWorkView(task, user);
-  const late = isOverdue(task, new Date());
-  return frame(
-    <div className="space-y-4 pb-6">
-      <div className="sticky top-0 z-10 flex flex-wrap items-center gap-2 border-b border-line bg-surface px-4 py-2">
-        {((actions.has("COMPLETE") && settings.completion === "NONE") || actions.has("REOPEN") || task.status === "COMPLETED") && (
-          <TaskCompleteButton taskId={task.id} done={task.status === "COMPLETED"} disabled={!(actions.has("COMPLETE") || actions.has("REOPEN"))} title={task.title} />
-        )}
-        <span className="ml-auto flex items-center gap-1">
-          <TaskShareButton taskId={task.id} title={task.title} followers={view.panel.followers} people={view.panel.people} visibility={visibilityText(view.links)} canAdd={view.rights.comment} compact />
-          <CopyLinkButton path={`/users/tasks/${task.id}`} />
-          <Link href={`/users/tasks/${task.id}`} className="inline-flex items-center gap-1 rounded px-2 py-1 text-label text-ink-muted hover:bg-surface-muted hover:text-ink">
+// D-219: a task opens from the list it was clicked in (?task=<id>).
+// v1.52.1 (owner: "when opening a task it should open in a popup window with
+// all the actions"): it opens in a popup over the list with everything its
+// full page has (TaskDetail): actions, completion, reassign, edit, subtasks,
+// comments and activity. Esc, × or a click outside closes it; Open full page
+// opens the task's own page. Someone who can't see the task gets "not found".
+export async function TaskPane({ taskId, user, closeHref }: { taskId: number; user: AuthenticatedUser; closeHref: string }) {
+  return (
+    <div role="dialog" aria-modal="true" aria-label="Task" data-task-pane data-close-href={closeHref} data-testid="task-pane" className="fixed inset-0 z-[60] flex items-center justify-center p-0 sm:p-6">
+      {/* The dimmed page behind: a click on it closes the popup. */}
+      <Link href={closeHref} scroll={false} aria-label="Close task" tabIndex={-1} className="fixed inset-0 cursor-default bg-black/40" />
+      <div className="relative h-full w-full max-w-6xl overflow-y-auto overscroll-contain rounded-none bg-page shadow-2xl sm:h-auto sm:max-h-full sm:rounded-xl">
+        <div className="sticky top-0 z-10 flex items-center justify-end gap-1 rounded-t-xl border-b border-line bg-surface px-3 py-2">
+          <CopyLinkButton path={`/users/tasks/${taskId}`} />
+          <Link href={`/users/tasks/${taskId}`} className="inline-flex items-center gap-1 rounded px-2 py-1 text-label text-ink-muted hover:bg-surface-muted hover:text-ink">
             <ExternalLink aria-hidden="true" className="h-4 w-4" /> Open full page
           </Link>
-          <Link href={closeHref} aria-label="Close task" aria-keyshortcuts="Escape" className="rounded p-1 text-ink-muted hover:bg-surface-muted hover:text-ink" data-testid="close-pane">
+          <Link href={closeHref} scroll={false} aria-label="Close task" aria-keyshortcuts="Escape" className="rounded p-1 text-ink-muted hover:bg-surface-muted hover:text-ink" data-testid="close-pane">
             <X aria-hidden="true" className="h-5 w-5" />
           </Link>
-        </span>
-      </div>
-      {/* Who can see it (catalog S-17 banner). */}
-      <p className="mx-4 rounded-md bg-surface-muted px-3 py-2 text-caption text-ink-muted" data-testid="visibility-banner">
-        {visibilityText(view.links)}
-      </p>
-      <div className="space-y-3 px-4">
-        {/* v1.42.1 (owner): a task from an approval names the request and links to it. */}
-        {task.relatedRequestId && task.relatedRequestNo && (
-          <div className={`flex flex-wrap items-center gap-2 rounded-md px-3 py-2 text-label ${workMirrorLink(task.formData) || linkedWork(task.formData) ? "approval-task" : "bg-surface-muted"}`} data-testid="task-approval-link">
-            <ApprovalBadge approval={{ requestId: task.relatedRequestId, requestNo: task.relatedRequestNo, workStep: Boolean(workMirrorLink(task.formData)), linked: linkedWork(task.formData) }} />
-            <span className="text-ink-muted">
-              {workMirrorLink(task.formData)
-                ? "A work step of this approval request: tick it done here or press Mark as done on the request."
-                : linkedWork(task.formData)
-                  ? "Given out by this approval request. The request doesn't wait for it; finishing it doesn't decide anything there."
-                  : "Linked to this approval request."}
-            </span>
-          </div>
-        )}
-        <p className="font-mono text-caption text-ink-muted">
-          {task.taskNo} · {task.typeName}
-        </p>
-        <h2 className={`text-title font-semibold ${task.status === "COMPLETED" ? "text-ink-muted line-through" : ""}`}>
-          <SafeText text={task.title} />
-        </h2>
-        <div className="flex flex-wrap gap-2">
-          <Badge tone={STATUS_TONE[task.status]}>{TASK_STATUS_LABEL[task.status]}</Badge>
-          <TaskPriorityPill priority={task.priority} showNormal />
-          {late && <Badge tone="danger">Overdue</Badge>}
-          <Badge tone={view.panel.recurrence ? "info" : "neutral"}>{view.panel.recurrence ? `Periodic: ${recurrenceLabel(view.panel.recurrence)}` : "Ad hoc"}</Badge>
         </div>
-        <dl className="grid grid-cols-[110px_minmax(0,1fr)] gap-x-3 gap-y-2 text-label">
-          <dt className="text-ink-muted">Assignee</dt>
-          <dd>{task.assigneeName}</dd>
-          <dt className="text-ink-muted">Due date</dt>
-          <dd className={late ? "font-semibold text-danger-600" : ""}>{task.dueAt ? indiaDateTimeText(task.dueAt) : "No due date"}</dd>
-          <dt className="text-ink-muted">Created by</dt>
-          <dd>
-            {task.createdByName}, {indiaDateTimeText(task.createdAt)}
-          </dd>
-          {settings.completion !== "NONE" && actions.has("COMPLETE") && (
-            <>
-              <dt className="text-ink-muted">To complete</dt>
-              <dd>Needs a note or file: use the full page.</dd>
-            </>
-          )}
-        </dl>
-        {view.group.length > 0 && (
-          <p className="text-label" data-testid="assign-group">
-            <span className="text-ink-muted">Also given to: </span>
-            {view.group.map((item, index) => (
-              <span key={item.id}>
-                {index > 0 && ", "}
-                <Link href={`/users/tasks/${item.id}`} className="link">
-                  {item.assigneeName}
-                </Link>
-                {item.status === "COMPLETED" && " ✓"}
-              </span>
-            ))}
-          </p>
-        )}
-        {task.description && <RichText text={task.description} className="rounded-md bg-surface-muted p-3 text-body" />}
+        <div className="p-4 sm:p-6">
+          <TaskDetail taskId={taskId} user={user} query={{}} popup={{ closeHref }} />
+        </div>
       </div>
-      <div className="space-y-4 px-4">
-        <TaskWorkPanel data={view.panel} />
-        <TaskWorkSide data={view.panel} />
-        <CommentThread taskId={task.id} meId={user.id} canComment={view.rights.comment && !task.deletedAt} canPin={view.rights.edit} isAdmin={view.viewer.isAdmin} people={view.panel.people} comments={view.comments} />
-      </div>
-    </div>,
+    </div>
   );
 }
 
 // The page with its list on the left and the task pane on the right.
 export function WithPane({ pane, children }: { pane: React.ReactNode | null; children: React.ReactNode }) {
   if (!pane) return <>{children}</>;
+  // v1.52.1: the task is a popup over the list, so the list keeps its full width.
   return (
-    <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(380px,520px)] lg:items-start lg:gap-4">
-      <div className="min-w-0">{children}</div>
+    <>
+      {children}
       {pane}
-    </div>
+    </>
   );
 }
 
@@ -159,13 +61,4 @@ export function paneLinks(path: string, params: Record<string, string | string[]
   };
 }
 
-export function visibilityText(links: readonly { projectName: string }[]): string {
-  return links.length
-    ? `This task is visible to members of ${links.map((link) => link.projectName).join(", ")}, its people and followers.`
-    : "This task is visible to its assignee, its creator, its followers and the managers above the assignee.";
-}
 
-// D-273: a task handed out by a background work step.
-function linkedWork(formData: unknown): boolean {
-  return Boolean(formData && typeof formData === "object" && (formData as Record<string, unknown>)[WORK_LINK_KEY]);
-}

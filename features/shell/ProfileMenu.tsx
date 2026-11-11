@@ -7,6 +7,7 @@ import { Email } from "@/features/ui/SafeText";
 import { ViewSwitch } from "@/features/shell/ViewSwitch";
 import type { TextSize, WorkspaceView } from "@/server/ui/workspace-view";
 import { defaultAvatar } from "@/features/ui/Avatar";
+import { inside } from "@/features/ui/inside";
 
 // One user menu at the top right (S9-01..03): who you are, which space
 // you're in, switching space, Profile, Notifications, Sign-in and Help
@@ -50,7 +51,7 @@ export function ProfileMenu({
   useEffect(() => {
     if (!open) return;
     const onClick = (event: MouseEvent) => {
-      if (box.current && !box.current.contains(event.target as Node)) setOpen(false);
+      if (box.current && !inside(event, box.current)) setOpen(false);
     };
     const onKey = (event: KeyboardEvent) => event.key === "Escape" && setOpen(false);
     document.addEventListener("mousedown", onClick);

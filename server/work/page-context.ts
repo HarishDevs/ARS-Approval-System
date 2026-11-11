@@ -1,3 +1,4 @@
+import { personLabel } from "@/lib/people/label";
 import "server-only";
 import { notFound } from "next/navigation";
 import { requireArea } from "@/server/authorization/guards";
@@ -15,6 +16,7 @@ export async function workPage() {
   return { user, viewer };
 }
 
-export async function peopleOptions(): Promise<{ id: number; label: string }[]> {
-  return (await listActiveUserOptions()).map((person) => ({ id: person.id, label: person.name }));
+export async function peopleOptions(): Promise<{ id: number; label: string; detail?: string }[]> {
+  // v1.52.1 (owner): "Name - Employee code", the department below.
+  return (await listActiveUserOptions()).map((person) => ({ id: person.id, label: personLabel(person), detail: person.departmentName ?? undefined }));
 }

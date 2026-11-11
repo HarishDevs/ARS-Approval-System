@@ -16,6 +16,7 @@ import { NO_LOOKUPS, type FieldLookups, type FormField } from "@/server/forms/fi
 import { PeoplePicker, type PersonOption } from "@/features/ui/PeoplePicker";
 import { ACCEPT_ATTRIBUTE } from "@/server/attachments/files";
 import { ConfirmDialog } from "@/features/ui/Dialog";
+import { FileListInput } from "@/features/ui/FileListInput";
 
 // Custom approval (F-33, D-060): anyone picks anyone, any mix of levels.
 // v1.8.0: the fields and step options are IT's set-up (Admin → Custom
@@ -452,19 +453,8 @@ export function CustomApprovalForm({
               </label>
               <Hint text="Quotes, invoices, photos: PDF, images, Word, Excel, PowerPoint, CSV or text. Up to 5 files of 10 MB each." align="start" className="mb-1.5" />
             </div>
-            <input
-              id="c-attachments"
-              name="attachments"
-              type="file"
-              multiple
-              accept={ACCEPT_ATTRIBUTE}
-              className="block w-full rounded-lg border-2 border-dashed border-line-strong bg-surface-muted/40 px-3 py-4 text-label file:mr-3 file:rounded-md file:border-0 file:bg-primary-solid file:px-3 file:py-2 file:text-on-solid hover:border-primary-600"
-            />
-            {snapshot.files > 0 && (
-              <p className="mt-1 text-caption text-ink-muted">
-                {snapshot.files} file{snapshot.files === 1 ? "" : "s"} chosen.
-              </p>
-            )}
+            {/* v1.52.2 (owner): each file listed with its name; more files add to the list; any can be removed. */}
+            <FileListInput id="c-attachments" name="attachments" accept={ACCEPT_ATTRIBUTE} maxFiles={5} />
             <FieldError result={result} name="attachments" />
           </div>
           <div>

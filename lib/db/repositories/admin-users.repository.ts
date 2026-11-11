@@ -194,11 +194,12 @@ export async function getUserForAdmin(id: number, db: Queryable = getDbPool()): 
 }
 
 // For pickers (manager, HOD): active people only.
-export async function listActiveUserOptions(db: Queryable = getDbPool()): Promise<{ id: number; name: string; loginId: string }[]> {
-  const [rows] = await db.query<(RowDataPacket & { id: number; name: string; login_id: string })[]>(
-    "SELECT id, name, login_id FROM users WHERE active = TRUE AND is_break_glass = FALSE ORDER BY name",
+export async function listActiveUserOptions(db: Queryable = getDbPool()): Promise<{ id: number; name: string; loginId: string; departmentName: string | null }[]> {
+  // v1.52.1 (owner): every people list shows "Name - Employee code" with the department below.
+  const [rows] = await db.query<(RowDataPacket & { id: number; name: string; login_id: string; department_name: string | null })[]>(
+    "SELECT u.id, u.name, u.login_id, d.name AS department_name FROM users u LEFT JOIN departments d ON d.id = u.department_id WHERE u.active = TRUE AND u.is_break_glass = FALSE ORDER BY u.name",
   );
-  return rows.map((row) => ({ id: row.id, name: row.name, loginId: row.login_id }));
+  return rows.map((row) => ({ id: row.id, name: row.name, loginId: row.login_id, departmentName: row.department_name }));
 }
 
 export async function getManagerMap(db: Queryable = getDbPool()): Promise<Map<number, number | null>> {

@@ -61,10 +61,15 @@ export async function toWorkflowStep(page: import("@playwright/test").Page): Pro
     await page.getByTestId("step-next").click();
     // Moved on (the note about the locked workflow shows on wide screens only, so ask the steps).
     if ((await page.getByTestId("request-steps").getByRole("button", { name: /Approval workflow/ }).getAttribute("aria-current")) === "step") return;
-    for (const field of await page.locator('[data-testid="step-details"] [aria-invalid="true"]').all()) {
+    for (const field of await page.locator('[data-testid="step-details"] [aria-invalid="true"], [data-testid="step-details"] [data-invalid="true"]').all()) {
       const tag = await field.evaluate((element) => element.tagName);
       const type = (await field.getAttribute("type")) ?? "";
       if (tag === "SELECT") await field.selectOption({ index: 1 });
+      else if (tag === "BUTTON" && (await field.getAttribute("aria-haspopup")) === "listbox") {
+        // v1.52.1: a person field is a searchable list; take the first person.
+        await field.click();
+        await page.getByRole("listbox", { name: "People" }).getByRole("option").filter({ hasText: " - " }).first().click();
+      }
       else if (type === "date") await field.fill("2031-01-15");
       else if (type === "datetime-local") await field.fill("2031-01-15T10:00");
       else await field.fill(type === "url" ? "https://example.com" : "1");

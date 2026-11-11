@@ -38,6 +38,7 @@ import { PromoteCustomForm } from "@/features/admin/PromoteCustomForm";
 import { listApproverOptions } from "@/lib/db/repositories/approvers.repository";
 import { RequestForm } from "@/features/requests/RequestForm";
 import { CommentForm } from "@/features/requests/Discussion";
+import { RichText } from "@/features/work/RichText";
 import { AddFilesForm } from "@/features/requests/Attachments";
 import { AttachmentList } from "@/features/requests/AttachmentList";
 import { SubmissionChecks } from "@/features/requests/SubmissionChecks";
@@ -60,6 +61,7 @@ import { expiryState } from "@/server/approvals/expiry-rules";
 import { personProfile } from "@/lib/db/repositories/profile.repository";
 import { BrandAnimation } from "@/features/ui/BrandAnimation";
 import { RequestPriorityBadge } from "@/features/ui/ChoicePill";
+import { personLabel } from "@/lib/people/label";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
 export const metadata: Metadata = { title: "Request" };
@@ -93,17 +95,17 @@ export default async function RequestPage({
       : null;
   const lookups = view.canResubmit && view.form.some((field) => field.type === "LOOKUP") ? await loadFieldLookups() : undefined;
   const people =
-    view.canResubmit && view.form.some((field) => field.type === "PERSON") ? (await listActiveUserOptions()).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` })) : [];
+    view.canResubmit && view.form.some((field) => field.type === "PERSON") ? (await listActiveUserOptions()).map((person) => ({ id: person.id, label: personLabel(person), detail: person.departmentName ?? undefined })) : [];
   // v1.6.0: colleagues to pass an approval to (approver-eligible) or to ask for advice (anyone active).
   const colleagues =
     view.myTasks.length > 0
       ? {
           approvers: (await listApproverOptions())
             .filter((person) => person.id !== user.id && person.id !== view.requesterId)
-            .map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` })),
+            .map((person) => ({ id: person.id, label: personLabel(person), detail: person.departmentName ?? undefined })),
           anyone: (await listActiveUserOptions())
             .filter((person) => person.id !== user.id && person.id !== view.requesterId)
-            .map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` })),
+            .map((person) => ({ id: person.id, label: personLabel(person), detail: person.departmentName ?? undefined })),
         }
       : null;
   const templatesOn = await featureOn("templates", user);
@@ -111,15 +113,15 @@ export default async function RequestPage({
   const collaborators = await listCollaborators(view.id);
   const canManageCollaborators = view.requesterId === user.id || user.roles.includes("IT_ADMIN") || user.roles.includes("SUPER_ADMIN");
   const collaboratorOptions = canManageCollaborators
-    ? (await listActiveUserOptions()).filter((person) => person.id !== view.requesterId).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` }))
+    ? (await listActiveUserOptions()).filter((person) => person.id !== view.requesterId).map((person) => ({ id: person.id, label: personLabel(person), detail: person.departmentName ?? undefined }))
     : [];
   // FN5: the requester may amend an approved request when the type allows it.
   const canAmend = view.requesterId === user.id && view.status === "APPROVED" && (await amendmentPlan(view.id, { id: user.id, roles: user.roles })).ok;
   // Blocked steps (IT): approval steps take approver-eligible people; work any active person.
   const assignable = view.blockedSteps.length
     ? {
-        approvers: (await listApproverOptions()).filter((person) => person.id !== view.requesterId).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` })),
-        anyone: (await listActiveUserOptions()).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` })),
+        approvers: (await listApproverOptions()).filter((person) => person.id !== view.requesterId).map((person) => ({ id: person.id, label: personLabel(person), detail: person.departmentName ?? undefined })),
+        anyone: (await listActiveUserOptions()).map((person) => ({ id: person.id, label: personLabel(person), detail: person.departmentName ?? undefined })),
       }
     : null;
 
@@ -158,7 +160,7 @@ export default async function RequestPage({
   const followUpWith = await pendingWithFor(followUps.map((link) => link.id)).catch(() => new Map<number, string>());
   const followUpHref = view.canFollowUp ? (view.isCustom ? `/users/custom?followUp=${view.id}` : `/users/new?followUp=${view.id}`) : null;
   const canAddTask = view.status !== "CANCELLED" && hasModule(user, "TASK") && (await featureOn("tasks", user).catch(() => false));
-  const taskPeople = canAddTask ? (await listActiveUserOptions()).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` })) : [];
+  const taskPeople = canAddTask ? (await listActiveUserOptions()).map((person) => ({ id: person.id, label: personLabel(person), detail: person.departmentName ?? undefined })) : [];
   const backTo =
     view.myTasks.length > 0
       ? { href: "/users/queue", label: "Waiting for me" }
@@ -431,9 +433,8 @@ export default async function RequestPage({
                       <p>
                         <span className="font-medium">{comment.authorName}</span> <span className="text-caption text-ink-muted">· {formatIndiaTime(comment.createdAt)}</span>
                       </p>
-                      <p className="mt-0.5 whitespace-pre-wrap break-words">
-                        <SafeText text={comment.body} />
-                      </p>
+                      {/* v1.52.2 (owner): comments show their formatting. */}
+                      <RichText text={comment.body} className="mt-0.5" />
                     </li>
                   ))}
                 </ul>

@@ -12,6 +12,7 @@ import { listDepartments } from "@/lib/db/repositories/organisation.repository";
 
 import { loadMeetingFor } from "@/server/meetings/service";
 import { actionState, carriesForward } from "@/server/meetings/rules";
+import { personLabel } from "@/lib/people/label";
 
 export const metadata: Metadata = { title: "Schedule a meeting" };
 export const dynamic = "force-dynamic";
@@ -24,7 +25,7 @@ export default async function NewMeetingPage({ searchParams }: { searchParams: P
   const editId = query.edit && /^\d{1,10}$/.test(query.edit) ? Number(query.edit) : null;
   const parentId = query.followUp && /^\d{1,10}$/.test(query.followUp) ? Number(query.followUp) : null;
   const [types, people, departments, labels] = await Promise.all([listMeetingTypes(), listPeopleFacts(), listDepartments(), listPeopleLabels()]);
-  const personOptions = people.map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})`, detail: labels.get(person.id) || undefined }));
+  const personOptions = people.map((person) => ({ id: person.id, label: personLabel(person), detail: labels.get(person.id) || undefined }));
   const departmentOptions = departments.filter((department) => department.active).map((department) => ({ id: department.id, label: department.name }));
 
   // Tomorrow 10:00 to 11:00 by default.

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Columns3 } from "lucide-react";
 import { saveListColumnsAction } from "@/app/users/list-actions";
+import { inside } from "@/features/ui/inside";
 
 // D-256: show or hide a request list's columns (kept on the account).
 export function ColumnPicker({ list, available, shown }: { list: string; available: { key: string; label: string }[]; shown: string[] }) {
@@ -15,7 +16,7 @@ export function ColumnPicker({ list, available, shown }: { list: string; availab
   useEffect(() => setChosen(shown), [shown]);
   useEffect(() => {
     if (!open) return;
-    const close = (event: MouseEvent) => box.current && !box.current.contains(event.target as Node) && setOpen(false);
+    const close = (event: MouseEvent) => box.current && !inside(event, box.current) && setOpen(false);
     const key = (event: KeyboardEvent) => event.key === "Escape" && setOpen(false);
     document.addEventListener("mousedown", close);
     document.addEventListener("keydown", key);

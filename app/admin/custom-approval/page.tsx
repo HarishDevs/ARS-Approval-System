@@ -6,6 +6,7 @@ import { loadCustomConfig } from "@/server/approvals/custom-config";
 import { loadFieldLookups } from "@/lib/db/repositories/lookups.repository";
 import { listActiveUserOptions } from "@/lib/db/repositories/admin-users.repository";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
+import { personLabel } from "@/lib/people/label";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
 export const metadata: Metadata = { title: "Custom approval set-up" };
@@ -23,7 +24,7 @@ export default async function CustomApprovalSetupPage() {
         description="What people fill in when they raise a custom approval, and which step options they may change."
         meta={config.updatedAt ? `Last changed ${formatIndiaTime(config.updatedAt)}${config.updatedByName ? ` by ${config.updatedByName}` : ""}.` : "Using the standard set-up."}
       />
-      <CustomApprovalSetup initialForm={config.form} initialPolicy={config.policy} lookups={lookups} people={people.map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` }))} />
+      <CustomApprovalSetup initialForm={config.form} initialPolicy={config.policy} lookups={lookups} people={people.map((person) => ({ id: person.id, label: personLabel(person), detail: person.departmentName ?? undefined }))} />
     </>
   );
 }

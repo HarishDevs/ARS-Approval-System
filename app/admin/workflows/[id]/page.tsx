@@ -16,6 +16,7 @@ import { validateVersion } from "@/server/approvals/service";
 import { openCountsByVersion } from "@/server/workflows/migration";
 import { RestoreVersionButton } from "@/features/admin/VersionTools";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
+import { personLabel } from "@/lib/people/label";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
 export const metadata: Metadata = { title: "Approval type" };
@@ -31,7 +32,7 @@ export default async function WorkflowPage({ params, searchParams }: { params: P
   const versions = await listVersions(workflow.id);
   const options = await loadBuilderOptions(versions.flatMap((version) => namedApprovers(version.definition)));
   // Test mode: anyone can be the sample requester (approver-only lists are for choosing approvers).
-  const everyone = (await listActiveUserOptions()).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` }));
+  const everyone = (await listActiveUserOptions()).map((person) => ({ id: person.id, label: personLabel(person), detail: person.departmentName ?? undefined }));
   const latest = versions[0];
   const published = versions.find((version) => version.status === "PUBLISHED");
   const latestChecks = latest && latest.status === "DRAFT" ? await validateVersion(latest.id) : null;

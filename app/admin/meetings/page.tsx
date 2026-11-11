@@ -5,6 +5,7 @@ import { PageHeader } from "@/features/shell/PageHeader";
 import { ManagementGroupForm, MeetingTypeForm } from "@/features/meetings/MeetingAdminForms";
 import { listManagementMembers, listMeetingTypes, listPeopleLabels } from "@/lib/db/repositories/meetings.repository";
 import { listPeopleFacts } from "@/lib/db/repositories/tasks.repository";
+import { personLabel } from "@/lib/people/label";
 
 export const metadata: Metadata = { title: "Meeting settings" };
 export const dynamic = "force-dynamic";
@@ -14,7 +15,7 @@ export const dynamic = "force-dynamic";
 export default async function MeetingSettingsPage() {
   await requireArea("admin");
   const [types, members, people, labels] = await Promise.all([listMeetingTypes(true), listManagementMembers(), listPeopleFacts(), listPeopleLabels()]);
-  const options = people.map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})`, detail: labels.get(person.id) || undefined }));
+  const options = people.map((person) => ({ id: person.id, label: personLabel(person), detail: labels.get(person.id) || undefined }));
   return (
     <>
       <PageHeader icon={CalendarCog} title="Meeting settings" description="Meeting types with their default points, and the Management group who see every meeting." />

@@ -6,6 +6,7 @@ import { DepartmentForm, DesignationForm } from "@/features/admin/OrganisationFo
 import { requireArea } from "@/server/authorization/guards";
 import { listDepartments, listDesignations } from "@/lib/db/repositories/organisation.repository";
 import { listApproverOptions } from "@/lib/db/repositories/approvers.repository";
+import { personLabel } from "@/lib/people/label";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
 export const metadata: Metadata = { title: "Departments & designations" };
@@ -17,7 +18,7 @@ export default async function OrganisationPage() {
   const [departments, designations] = await Promise.all([listDepartments(), listDesignations()]);
   // D-085: a HOD must be an approver; each department's current HOD stays listed.
   const people = await listApproverOptions(departments.map((department) => department.hodUserId));
-  const options = people.map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` }));
+  const options = people.map((person) => ({ id: person.id, label: personLabel(person), detail: person.departmentName ?? undefined }));
 
   return (
     <>

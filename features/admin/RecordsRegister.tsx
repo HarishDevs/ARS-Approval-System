@@ -3,6 +3,8 @@ import { Download } from "lucide-react";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { EmptyState, NoResults } from "@/features/ui/Display";
 import { ListToolbar } from "@/features/ui/ListToolbar";
+import { PersonSelect } from "@/features/ui/PersonSelect";
+import { personLabel } from "@/lib/people/label";
 import { requireArea } from "@/server/authorization/guards";
 import { canExport } from "@/server/settings/features";
 import { listRecords, recordChoices, RECORDS_EXPORT_MAX, RECORDS_PAGE_SIZE } from "@/lib/db/repositories/records.repository";
@@ -23,6 +25,7 @@ export async function RecordsRegister({ kind, searchParams }: { kind: RecordKind
   const { user } = await requireArea("admin");
   const filter = readRecordFilter(kind, searchParams);
   const [result, choices, mayExport] = await Promise.all([listRecords(kind, filter), recordChoices(kind), canExport(user)]);
+  const people = choices.people.map((person) => ({ id: person.id, label: personLabel(person), detail: person.departmentName ?? undefined }));
   // PB-34: confidential amounts by the viewer's rule (QA-SEC-01).
   const columns = columnsFor(kind, { seeConfidential: rolesSeeConfidential(user.roles) }) as RecordColumn<(typeof result.rows)[number]>[];
   const statuses = kind === "requests" ? REQUEST_STATUSES : kind === "tasks" ? TASK_STATUSES : INFO_STATUSES;
@@ -77,8 +80,8 @@ export async function RecordsRegister({ kind, searchParams }: { kind: RecordKind
             <Choice name="status" label="Status" value={filter.status} options={statuses.map((status) => [status, kind === "tasks" && status === "CANCELLED" ? "Cancelled" : (STATUS_LABEL[status] ?? status)])} />
             <Choice name="type" label="Type" value={filter.type ?? ""} options={choices.types.map((type) => [String(type.id), type.name])} />
             <Choice name="department" label="Department" value={filter.department ?? ""} options={choices.departments.map((department) => [String(department.id), department.name])} />
-            <Choice name="person" label={PERSON_LABEL[kind]} value={filter.person ?? ""} options={choices.people.map((person) => [String(person.id), person.name])} />
-            {kind === "requests" && <Choice name="waiting" label="Waiting on" value={filter.waitingOn ?? ""} options={choices.people.map((person) => [String(person.id), person.name])} />}
+            <PersonChoice name="person" label={PERSON_LABEL[kind]} value={filter.person ?? null} options={people} />
+            {kind === "requests" && <PersonChoice name="waiting" label="Waiting on" value={filter.waitingOn ?? null} options={people} />}
             {priorities.length > 0 && <Choice name="priority" label="Priority" value={filter.priority} options={priorities.map((priority) => [priority, PRIORITY_LABEL[priority] ?? priority])} />}
             <div>
               <label htmlFor="rfrom" className="field-label">
@@ -181,6 +184,18 @@ export async function RecordsRegister({ kind, searchParams }: { kind: RecordKind
         </div>
       )}
     </>
+  );
+}
+
+// v1.52.1: a person filter, typed to search ("Name - code", department below).
+function PersonChoice({ name, label, value, options }: { name: string; label: string; value: number | null; options: { id: number; label: string; detail?: string }[] }) {
+  return (
+    <div>
+      <label htmlFor={`r-${name}`} className="field-label">
+        {label}
+      </label>
+      <PersonSelect id={`r-${name}`} name={name} options={options} defaultValue={value} emptyLabel="All" compact />
+    </div>
   );
 }
 

@@ -1,6 +1,7 @@
 import "server-only";
 import type { TaskRecord } from "@/lib/db/repositories/tasks.repository";
 import { listPeopleFacts } from "@/lib/db/repositories/tasks.repository";
+import { personLabel } from "@/lib/people/label";
 import { assignGroup, ancestors, fieldValues, likesOf, listComments, listDependencies, listFollowers, listProjectFields, listSections, listSubtasks, listTaskItems, listTaskProjects, listVisibleProjects } from "@/lib/db/repositories/work.repository";
 import { OPEN_STATUSES } from "@/server/modules/task-rules";
 import { indiaDateTimeText } from "@/server/modules/settings";
@@ -56,7 +57,8 @@ export async function taskWorkView(task: TaskRecord, user: { id: number; roles: 
     blocking: deps.blocking,
     tags: workItem.items[0]?.tags.map((tag) => ({ id: tag.id, name: tag.name })) ?? [],
     followers,
-    people: people.map((person) => ({ id: person.id, label: person.name })),
+    // v1.52.1: pickers show "Name - code" with the department; mentions keep the name.
+    people: people.map((person) => ({ id: person.id, label: personLabel(person), detail: person.departmentName ?? undefined, name: person.name })),
     likes,
     nowIso: new Date().toISOString(),
     recurrence,

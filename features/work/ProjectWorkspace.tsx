@@ -13,7 +13,9 @@ import { columnAccent, initialsOf } from "@/features/work/kanban";
 import { BulkBar, FieldInput, type FieldView } from "@/features/work/MoreParts";
 import { TaskGrid, type GridView } from "@/features/work/TaskGrid";
 import { TaskPriorityPill, priorityControlProps } from "@/features/ui/ChoicePill";
+import { PersonSelect } from "@/features/ui/PersonSelect";
 import type { GridConfig, GridTask } from "@/server/work/grid";
+import { inside } from "@/features/ui/inside";
 
 // D-215: a project's List and Board. Sections hold tasks in the order the
 // team set (drag, or Alt+↑/↓ on a row); a sort other than "Manual" only
@@ -75,7 +77,7 @@ export function ProjectWorkspace({
   tasks: BoardTask[];
   canEdit: boolean;
   meId: number;
-  people: { id: number; label: string }[];
+  people: { id: number; label: string; detail?: string }[];
   nowIso: string;
   fields?: FieldView[]; // D-218: the project's own columns
   values?: Record<number, Record<number, string>>;
@@ -457,20 +459,18 @@ export function ProjectWorkspace({
                       </div>
                       <div role="cell">
                         {canEdit ? (
-                          <select
-                            aria-label={`Assignee of ${task.title}`}
+                          <PersonSelect
+                            ariaLabel={`Assignee of ${task.title}`}
+                            options={people.some((person) => person.id === task.assigneeId) ? people : [{ id: task.assigneeId, label: task.assigneeName }, ...people]}
                             value={task.assigneeId}
                             disabled={!OPEN.has(task.status)}
-                            onChange={(event) => void call(() => taskFieldsAction(task.id, { assigneeId: Number(event.target.value) }))}
-                            className="field-input h-8 w-[160px] truncate py-0 text-label"
-                          >
-                            {!people.some((person) => person.id === task.assigneeId) && <option value={task.assigneeId}>{task.assigneeName}</option>}
-                            {people.map((person) => (
-                              <option key={person.id} value={person.id}>
-                                {person.label}
-                              </option>
-                            ))}
-                          </select>
+                            onChange={(id) => {
+                              if (id !== null && id !== task.assigneeId) void call(() => taskFieldsAction(task.id, { assigneeId: id }));
+                            }}
+                            compact
+                            floating
+                            className="w-[160px] text-label"
+                          />
                         ) : (
                           <span className="text-label text-ink-muted">{task.assigneeName}</span>
                         )}
@@ -739,7 +739,7 @@ function Popover({ label, active, testId, children }: { label: string; active?: 
   const box = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
     const close = (event: MouseEvent) => {
-      if (box.current?.open && !box.current.contains(event.target as Node)) box.current.open = false;
+      if (box.current?.open && !inside(event, box.current)) box.current.open = false;
     };
     document.addEventListener("mousedown", close);
     return () => document.removeEventListener("mousedown", close);

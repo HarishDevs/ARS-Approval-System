@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
+import { inside } from "@/features/ui/inside";
 
 // A dropdown menu (UI-03): a button with aria-haspopup, items reachable
 // with the arrow keys, Escape closes and returns focus to the button.
@@ -24,7 +25,7 @@ export function Menu({ label, trigger, items, align = "right" }: { label: string
     const first = box.current?.querySelector<HTMLElement>('[role="menuitem"]');
     first?.focus();
     const onClick = (event: MouseEvent) => {
-      if (box.current && !box.current.contains(event.target as Node)) setOpen(false);
+      if (box.current && !inside(event, box.current)) setOpen(false);
     };
     document.addEventListener("mousedown", onClick);
     return () => document.removeEventListener("mousedown", onClick);

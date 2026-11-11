@@ -13,6 +13,7 @@ import { PeoplePicker, type PersonOption } from "@/features/ui/PeoplePicker";
 import { NO_LOOKUPS, type FieldLookups, type FormField } from "@/server/forms/fields";
 import { ACCEPT_ATTRIBUTE } from "@/server/attachments/files";
 import { DraftStatus, useDraftAutosave } from "@/features/requests/useDraftAutosave";
+import { FileListInput } from "@/features/ui/FileListInput";
 
 // A saved draft for this form (#3): what was restored, and its version.
 export interface DraftInfo {
@@ -223,7 +224,7 @@ export function RequestForm({
             </label>
             <Hint text="Quotes, invoices, photos: PDF, images, Word, Excel, PowerPoint, CSV or text. Up to 5 files of 10 MB each." align="start" className="mb-1.5" />
           </div>
-          <input id="f-attachments" name="attachments" type="file" multiple accept={ACCEPT_ATTRIBUTE} className="block w-full text-label file:mr-3 file:rounded-md file:border-0 file:bg-surface-muted file:px-3 file:py-2" />
+          <FileListInput id="f-attachments" name="attachments" accept={ACCEPT_ATTRIBUTE} maxFiles={5} />
           <FieldError result={result} name="attachments" />
         </div>
         {mode === "submit" && !amendment && collaboratorOptions && (

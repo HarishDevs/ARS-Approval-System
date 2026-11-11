@@ -9,6 +9,7 @@ import { indiaToday, listDelegationsInvolving } from "@/lib/db/repositories/coll
 import { listApproverOptions } from "@/lib/db/repositories/approvers.repository";
 import { listPendingTasksFor } from "@/lib/db/repositories/approvals.repository";
 import Link from "next/link";
+import { personLabel } from "@/lib/people/label";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
 export const metadata: Metadata = { title: "Out of office" };
@@ -23,7 +24,7 @@ export default async function DelegationPage() {
   const [items, people, today, pending] = await Promise.all([listDelegationsInvolving(user.id), listApproverOptions(), indiaToday(), listPendingTasksFor(user.id, { limit: 200, offset: 0 })]);
   // #8 preview: your own waiting approvals the delegate would see.
   const mine = pending.filter((item) => item.forName === null);
-  const options = people.filter((person) => person.id !== user.id).map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` }));
+  const options = people.filter((person) => person.id !== user.id).map((person) => ({ id: person.id, label: personLabel(person), detail: person.departmentName ?? undefined }));
   return (
     <>
       <PageHeader

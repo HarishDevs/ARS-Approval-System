@@ -6,6 +6,8 @@ import { Hint } from "@/features/ui/Hint";
 import { PageRuleForm } from "@/features/superadmin/PageRuleForm";
 import { listAccessRules, rulesForPerson } from "@/lib/db/repositories/page-access.repository";
 import { listActiveUserOptions } from "@/lib/db/repositories/admin-users.repository";
+import { PersonSelect } from "@/features/ui/PersonSelect";
+import { personLabel } from "@/lib/people/label";
 import { effectiveLevel, LEVEL_LABEL, PAGES } from "@/server/authorization/pages";
 import { getDbPool } from "@/lib/db/client";
 import type { RowDataPacket } from "mysql2/promise";
@@ -52,14 +54,14 @@ export default async function PageAccessPage({ searchParams }: { searchParams: P
           <label htmlFor="person" className="field-label">
             Check what a person can open
           </label>
-          <select id="person" name="person" defaultValue={personId ?? ""} className="field-input h-10 w-72">
-            <option value="">Choose a person…</option>
-            {people.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.name} ({item.loginId})
-              </option>
-            ))}
-          </select>
+          <PersonSelect
+            id="person"
+            name="person"
+            options={people.map((item) => ({ id: item.id, label: personLabel(item), detail: item.departmentName ?? undefined }))}
+            defaultValue={personId ?? null}
+            emptyLabel="Choose a person…"
+            className="w-72"
+          />
         </div>
         <button type="submit" className="btn-secondary btn-compact h-10">
           Check

@@ -8,6 +8,7 @@ import { useWorkCall } from "@/features/work/client";
 import { FIELD_KIND_LABEL, FIELD_KINDS, recurrenceLabel, RECURRENCE_KINDS, type Recurrence } from "@/server/work/more-rules";
 import { PRIVACY, PRIVACY_LABEL } from "@/server/work/access";
 import { ConfirmButton } from "@/features/ui/ConfirmButton";
+import { PersonSelect } from "@/features/ui/PersonSelect";
 
 // D-218: repeating tasks, custom fields, templates, bulk actions, the inbox
 // and the morning summary switch.
@@ -299,7 +300,7 @@ export function FromTemplateForm({ templates, copyFrom, departments, defaultName
 }
 
 // ---- bulk actions ----------------------------------------------------------------------
-export function BulkBar({ ids, clear, people, sections, projectId }: { ids: number[]; clear: () => void; people?: { id: number; label: string }[]; sections?: { id: number; name: string }[]; projectId?: number }) {
+export function BulkBar({ ids, clear, people, sections, projectId }: { ids: number[]; clear: () => void; people?: { id: number; label: string; detail?: string }[]; sections?: { id: number; name: string }[]; projectId?: number }) {
   const { call, pending } = useWorkCall();
   const [op, setOp] = useState("COMPLETE");
   const [value, setValue] = useState("");
@@ -345,14 +346,7 @@ export function BulkBar({ ids, clear, people, sections, projectId }: { ids: numb
         <option value="DELETE">Delete</option>
       </select>
       {op === "ASSIGN" && (
-        <select aria-label="Person" value={value} onChange={(event) => setValue(event.target.value)} className="field-input h-8 w-48 py-0 text-label">
-          <option value="">Choose…</option>
-          {people?.map((person) => (
-            <option key={person.id} value={person.id}>
-              {person.label}
-            </option>
-          ))}
-        </select>
+        <PersonSelect ariaLabel="Person" options={people ?? []} value={value ? Number(value) : null} onChange={(id) => setValue(id === null ? "" : String(id))} emptyLabel="Choose…" compact className="w-56 text-label" />
       )}
       {op === "DUE" && <input type="date" aria-label="Due date" value={value} onChange={(event) => setValue(event.target.value)} className="field-input h-8 w-40 py-0 text-label" />}
       {op === "PRIORITY" && (

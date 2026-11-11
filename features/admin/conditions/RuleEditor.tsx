@@ -4,6 +4,7 @@ import { ConditionRow } from "@/features/admin/conditions/ConditionRow";
 import { NumberDraftInput } from "@/features/admin/form-designer/FieldProperties";
 import { isConditionGroup, operatorNeedsValue, upgradeRule, type RuleComparison, type RuleCondition, type StoredRule } from "@/server/conditions/rule";
 import { NUMERIC_TYPES, type FieldLookups, type FormField } from "@/server/forms/fields";
+import { PersonSelect } from "@/features/ui/PersonSelect";
 
 // One condition editor for every rule on the platform (owner, 2 Nov 2026:
 // "merge them into one editor used everywhere"): a workflow's skip and
@@ -69,7 +70,7 @@ export function ConditionValueInput({
   value: string | number | boolean | (string | number)[] | undefined;
   onChange: (value: ConditionValue) => void;
   lookups?: FieldLookups; // without them a list or person field takes typed text
-  people?: { id: number; label: string }[];
+  people?: { id: number; label: string; detail?: string }[];
   label?: string;
 }) {
   const current = Array.isArray(value) ? value[0] : value;
@@ -104,12 +105,19 @@ export function ConditionValueInput({
     case "LOOKUP":
       return lookups ? select((field.source ? lookups[field.source] : []).map((option) => ({ value: option.code, label: `${option.name} (${option.code})` }))) : text;
     case "PERSON":
-      return people
-        ? select(
-            people.map((person) => ({ value: String(person.id), label: person.label })),
-            true,
-          )
-        : text;
+      return people ? (
+        <PersonSelect
+          ariaLabel={label}
+          options={people}
+          value={typeof current === "number" || (typeof current === "string" && /^\d+$/.test(current)) ? Number(current) : null}
+          // As the list did: the empty choice stores 0 (Number of "").
+          onChange={(id) => onChange(id ?? 0)}
+          emptyLabel="Choose…"
+          className="w-auto min-w-40"
+        />
+      ) : (
+        text
+      );
     default:
       return text;
   }
@@ -138,7 +146,7 @@ export function RuleEditor({
   prefix?: string;
   labels?: RuleEditorLabels;
   lookups?: FieldLookups;
-  people?: { id: number; label: string }[];
+  people?: { id: number; label: string; detail?: string }[];
 }) {
   const rule = upgradeRule(value) as RuleCondition;
   const rows: RuleComparison[] = isConditionGroup(rule) ? rule.conditions : [rule];

@@ -22,9 +22,14 @@ test("only approver designations can be picked: the manager picker offers the ma
 
   // The reporting-manager picker on a new user lists approvers only.
   await page.goto("/admin/users/new");
-  const manager = page.getByLabel("Reports to");
-  await expect(manager.locator("option", { hasText: "Manoj Manager (E2E_MGR)" })).toHaveCount(1);
-  await expect(manager.locator("option", { hasText: "Ravi Requester (E2E_REQ)" })).toHaveCount(0);
+  // v1.52.1: a searchable list of "Name - code" with the department below.
+  await page.getByLabel("Reports to").click();
+  const search = page.getByRole("combobox", { name: "Search people" });
+  const people = page.getByRole("listbox", { name: "People" });
+  await search.fill("E2E_MGR");
+  await expect(people.getByRole("option", { name: /Manoj Manager - E2E_MGR/ })).toHaveCount(1);
+  await search.fill("E2E_REQ");
+  await expect(people.getByRole("option", { name: /Ravi Requester - E2E_REQ/ })).toHaveCount(0);
 });
 
 let requestPath = "";

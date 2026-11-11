@@ -17,7 +17,7 @@ test("the builder offers step kinds, all/any rules and choices inside choices", 
   await as(context, "E2E_ADMIN");
   await page.goto("/admin/workflows/new");
   await page.getByLabel("Name", { exact: true }).fill("E2E Hand-off");
-  await page.getByLabel("Code").fill("E2E_HANDOFF");
+  await page.getByLabel("Code", { exact: true }).fill("E2E_HANDOFF");
   await page.getByLabel("Number prefix").fill("EHO");
 
   // A new level after the DoA: a work task for the requester.
@@ -102,7 +102,7 @@ test("IT moves stuck steps on: gives one to a person, skips another (D-098)", as
   await expect(page.getByRole("heading", { name: "Stuck: needs IT" })).toBeVisible();
   await expect(page.getByText("Blocked: Manager")).toBeVisible();
   await page.screenshot({ path: "test-results/v140-stuck-panel.png" });
-  await page.getByLabel("People (hold Ctrl to pick several)").selectOption({ label: "Manoj Manager (E2E_MGR)" });
+  await page.getByLabel("People (hold Ctrl to pick several)").selectOption({ label: "Manoj Manager - E2E_MGR" });
   await page.getByLabel(/^Reason/).fill("Sita's manager isn't set yet");
   await page.getByRole("button", { name: "Move it on" }).click();
   await expect(page.getByText(/"Manager" given to Manoj Manager by Elena Admin/)).toBeVisible();
@@ -150,7 +150,7 @@ test("IT turns a custom approval into a reusable approval type (P5-04)", async (
   await as(context, "E2E_ADMIN");
   await page.goto(path);
   await expect(page.getByRole("heading", { name: "Reuse these levels" })).toBeVisible();
-  await page.getByLabel("Code").fill("E2E_OFFSITE");
+  await page.getByLabel("Code", { exact: true }).fill("E2E_OFFSITE");
   await page.getByLabel("Number prefix").fill("OFF");
   await page.getByRole("button", { name: "Make it an approval type (draft)" }).click();
   await expect(page).toHaveURL(/\/admin\/workflows\/\d+\?created=1/);

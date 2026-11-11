@@ -1,5 +1,6 @@
 import { expect, test, type BrowserContext } from "@playwright/test";
 import { sessionCookie } from "./db";
+import { pickPerson } from "./people";
 
 // D-220 (owner's Asana screenshots): the compact table with Filters, Sort,
 // Groups, Options and saved tabs; Share for projects and tasks; the Draft
@@ -72,7 +73,7 @@ test("Share a project and a task", async ({ page, context }) => {
   await page.getByTestId("share-project").click();
   const dialog = page.getByTestId("share-dialog");
   await expect(dialog).toContainText(`Share ${projectName}`);
-  await dialog.getByLabel("Add people or a department").selectOption({ label: "Sita Staff" });
+  await dialog.getByLabel("Add people or a department").selectOption({ label: "Sita Staff - E2E_STAFF" });
   await dialog.getByRole("button", { name: "Invite" }).click();
   await expect(dialog.getByRole("list", { name: "Who has access" })).toContainText("Sita Staff");
   await dialog.getByLabel("Who can see this project").selectOption("ORGANISATION");
@@ -85,8 +86,8 @@ test("Share a project and a task", async ({ page, context }) => {
   const pane = page.getByTestId("task-pane");
   await pane.getByTestId("share-task").click();
   const taskDialog = page.getByTestId("share-dialog");
-  await taskDialog.getByLabel("Add a collaborator").selectOption({ label: "Sita Staff" });
-  await taskDialog.getByRole("button", { name: "Add" }).click();
+  await pickPerson(page, taskDialog.getByRole("button", { name: /^Add a collaborator/ }), "Sita Staff");
+  await taskDialog.getByRole("button", { name: "Add", exact: true }).click();
   await expect(taskDialog.getByRole("list", { name: "Collaborators" })).toContainText("Sita Staff");
   await expect(taskDialog.getByRole("button", { name: "Copy task link" })).toBeVisible();
 });

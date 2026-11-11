@@ -1,5 +1,15 @@
 # Release notes
 
+## v1.52.2 (11 Nov 2026): tasks in a popup, formatted comments, Asana-style activity, people pickers, attachments list (owner)
+- **Comments format like an email:** bold, italic, underline, strikethrough, code, links, bulleted and numbered lists, quotes, headings, emoji and @mentions (type @ and a name), on tasks (comments, replies, edits) and request discussions. Comments show with their formatting. Ctrl+B / I / U work; Ctrl+Enter sends.
+- **All activity like Asana:** each entry with the person's initials, "Name did this · Today at 2:27 pm", comments in full, completion with a green tick, and runs of small updates folded under "Show N previous updates".
+- **Attachments, one by one:** choosing files lists each file by name and size; choosing again adds to the list (it no longer replaces the first files); remove any file before sending. On New request, request templates, request attachments, tasks and information.
+- **A task opens in a popup** over the list you clicked it in (My Tasks, Home, projects, search, periodic tasks), with everything its full page has: complete, start, block, reopen, cancel, reassign, edit, subtasks, projects, dependencies, followers, comments and activity. Close it with ×, Esc or a click outside; **Open full page** opens the task's own page.
+- **Comments and All activity** on every task, as two tabs like Asana: All activity lists who did what and when (comments included), oldest or newest first.
+- **My Tasks** shows **Priority** beside the due date (wide enough for "Most Important").
+- **Choosing people:** every name reads **Name - Employee code** (the User ID) with the **department below**, in search pickers and in single-person lists (assign, reassign, followers, mentions, approvers, managers, filters). Each list opens where it is fully visible (above when there is no room below), has a **×** to close, and closes when you click outside or press Esc. Filter, Sort, Group and Options menus also keep inside the screen and have a ×.
+- No database change.
+
 ## v1.52.0 (11 Nov 2026): Meeting analytics, MOM timing as ticks, forms without false errors (owner)
 - **Meeting analytics** (Analytics → Meeting analytics, with the Meeting module): meetings held and cancelled, points / start / end / MOM on time, how often meetings are extended and by how much, attendance, how long the Owner takes to approve points and MOM, action items done, confirmed and overdue, open points; compared with the previous period; by meeting type, department and Coordinator; action owners and ageing; twelve months; meetings needing attention and the most extended. **Whose meetings** follows the scope: your own, your team (everyone below you in the reporting line), the departments you head, or the whole organisation (IT). ED and MD (Management group) can switch to all meetings. Management-only meetings count only for the people on them, ED, MD and IT.
 - **Enter MOM** replaces Start meeting / End meeting / Record as held. A meeting can be scheduled before or after it happens, and its date and times can be edited until the MOM goes to the Owner.

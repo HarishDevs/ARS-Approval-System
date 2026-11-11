@@ -640,16 +640,20 @@ export async function queueTypesFor(userId: number, db: Queryable = getDbPool())
 
 // v1.7.2: choices for the Waiting for me filters, only from what waits for
 // the person now (no other names or departments).
-export async function queueChoicesFor(userId: number, db: Queryable = getDbPool()): Promise<{ requesters: { id: number; name: string }[]; departments: { id: number; name: string }[]; steps: string[]; covering: boolean }> {
+export async function queueChoicesFor(userId: number, db: Queryable = getDbPool()): Promise<{ requesters: { id: number; name: string; loginId: string; departmentName: string | null }[]; departments: { id: number; name: string }[]; steps: string[]; covering: boolean }> {
   const params = [userId, userId, userId];
-  const [requesters] = await db.query<(RowDataPacket & { id: number; name: string })[]>(`SELECT DISTINCT u.id, u.name ${PENDING_FOR} ORDER BY u.name LIMIT 300`, params);
+  // v1.52.1: code and department too, for the "Name - code" picker.
+  const [requesters] = await db.query<(RowDataPacket & { id: number; name: string; login_id: string; department_name: string | null })[]>(
+    `SELECT DISTINCT u.id, u.name, u.login_id, rd.name AS department_name ${PENDING_FOR.replace("JOIN users a ON a.id = t.approver_id", "JOIN users a ON a.id = t.approver_id LEFT JOIN departments rd ON rd.id = u.department_id")} ORDER BY u.name LIMIT 300`,
+    params,
+  );
   const [departments] = await db.query<(RowDataPacket & { id: number; name: string })[]>(
     `SELECT DISTINCT dp.id, dp.name ${PENDING_FOR.replace("JOIN users a ON a.id = t.approver_id", "JOIN users a ON a.id = t.approver_id JOIN departments dp ON dp.id = u.department_id")} ORDER BY dp.name LIMIT 200`,
     params,
   );
   const [steps] = await db.query<(RowDataPacket & { step: string })[]>(`SELECT DISTINCT t.node_label AS step ${PENDING_FOR} ORDER BY step LIMIT 200`, params);
   const [[covering]] = await db.query<RowDataPacket[]>(`SELECT EXISTS(SELECT 1 ${PENDING_FOR} AND t.approver_id <> ?) AS yes`, [...params, userId]);
-  return { requesters: requesters.map((row) => ({ id: row.id, name: row.name })), departments: departments.map((row) => ({ id: row.id, name: row.name })), steps: steps.map((row) => row.step), covering: Number(covering?.yes) === 1 };
+  return { requesters: requesters.map((row) => ({ id: row.id, name: row.name, loginId: row.login_id, departmentName: row.department_name })), departments: departments.map((row) => ({ id: row.id, name: row.name })), steps: steps.map((row) => row.step), covering: Number(covering?.yes) === 1 };
 }
 
 // Requester, anyone with a task on it (now or before), the active delegate

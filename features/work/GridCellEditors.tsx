@@ -5,6 +5,8 @@ import { Plus, X } from "lucide-react";
 import { followAction, tagAction } from "@/app/users/work/actions";
 import { useWorkCall } from "@/features/work/client";
 import { initials } from "@/features/ui/Display";
+import { PersonSelect } from "@/features/ui/PersonSelect";
+import { inside } from "@/features/ui/inside";
 
 // D-260 (owner: "in project and task tables only task is typable"): the
 // table's Collaborators and Tags cells open a small editor in place. The
@@ -28,7 +30,7 @@ function useCellPanel() {
   useEffect(() => {
     if (!spot) return;
     panel.current?.querySelector<HTMLElement>("input, select, button")?.focus({ preventScroll: true });
-    const outside = (event: MouseEvent) => !panel.current?.contains(event.target as Node) && !button.current?.contains(event.target as Node) && setSpot(null);
+    const outside = (event: MouseEvent) => !inside(event, panel.current) && !inside(event, button.current) && setSpot(null);
     const key = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setSpot(null);
@@ -37,7 +39,7 @@ function useCellPanel() {
     };
     // Scrolling moves the panel with its cell; it closes only once the cell has left the window.
     const away = (event: Event) => {
-      if (panel.current?.contains(event.target as Node)) return;
+      if (inside(event, panel.current)) return;
       const rect = button.current?.getBoundingClientRect();
       if (!rect || rect.bottom < 0 || rect.top > window.innerHeight) setSpot(null);
       else setSpot(place());
@@ -57,10 +59,9 @@ function useCellPanel() {
 
 const panelClass = "fixed z-[var(--z-drawer)] w-72 rounded-lg border border-line bg-raised p-3 text-ink shadow-overlay";
 
-export function CollaboratorsCell({ taskId, title, followers, people, canEdit }: { taskId: number; title: string; followers: { id: number; name: string }[]; people: { id: number; label: string }[]; canEdit: boolean }) {
+export function CollaboratorsCell({ taskId, title, followers, people, canEdit }: { taskId: number; title: string; followers: { id: number; name: string }[]; people: { id: number; label: string; detail?: string }[]; canEdit: boolean }) {
   const { call, pending } = useWorkCall();
   const { spot, button, panel, open, close } = useCellPanel();
-  const [adding, setAdding] = useState("");
   const avatars = (
     <span className="flex -space-x-1.5">
       {followers.slice(0, 4).map((person) => (
@@ -96,26 +97,23 @@ export function CollaboratorsCell({ taskId, title, followers, people, canEdit }:
               ))}
             </ul>
           )}
-          <label className="block text-caption text-ink-muted">
-            Add someone
-            <select
-              value={adding}
+          <div className="text-caption text-ink-muted">
+            <label htmlFor={`add-collaborator-${taskId}`} className="block">
+              Add someone
+            </label>
+            <PersonSelect
+              id={`add-collaborator-${taskId}`}
+              options={choices}
+              value={null}
               disabled={pending}
-              onChange={(event) => {
-                const id = Number(event.target.value);
-                setAdding("");
+              onChange={(id) => {
                 if (id) void call(() => followAction(taskId, id, true), { success: false });
               }}
-              className="field-input mt-1 h-9 w-full text-label"
-            >
-              <option value="">Choose a person…</option>
-              {choices.map((person) => (
-                <option key={person.id} value={person.id}>
-                  {person.label}
-                </option>
-              ))}
-            </select>
-          </label>
+              emptyLabel="Choose a person…"
+              compact
+              className="mt-1 text-label text-ink"
+            />
+          </div>
         </div>
       )}
     </>

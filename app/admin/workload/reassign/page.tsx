@@ -6,6 +6,8 @@ import { listReassignableTasks, pendingCountsByApprover } from "@/lib/db/reposit
 import { listActiveUserOptions } from "@/lib/db/repositories/admin-users.repository";
 import { listWorkflows } from "@/lib/db/repositories/approvals.repository";
 import { BulkReassign } from "@/features/admin/BulkReassign";
+import { personLabel } from "@/lib/people/label";
+import { PersonSelect } from "@/features/ui/PersonSelect";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
 export const metadata: Metadata = { title: "Move pending approvals" };
@@ -31,14 +33,14 @@ export default async function ReassignPage({ searchParams }: { searchParams: Pro
           <label htmlFor="from" className="field-label">
             Waiting on
           </label>
-          <select id="from" name="from" defaultValue={from ?? ""} className="field-input">
-            <option value="">Anyone</option>
-            {holders.map((person) => (
-              <option key={person.id} value={person.id}>
-                {person.name} ({counts.get(person.id)})
-              </option>
-            ))}
-          </select>
+          <PersonSelect
+            id="from"
+            name="from"
+            options={holders.map((person) => ({ id: person.id, label: personLabel(person), detail: [person.departmentName, `${counts.get(person.id)} waiting`].filter(Boolean).join(" · ") }))}
+            defaultValue={from}
+            emptyLabel="Anyone"
+            className="w-72"
+          />
         </div>
         <div>
           <label htmlFor="type" className="field-label">
@@ -59,7 +61,7 @@ export default async function ReassignPage({ searchParams }: { searchParams: Pro
       </form>
       <BulkReassign
         rows={rows.map((row) => ({ ...row, createdAt: row.createdAt.toISOString() }))}
-        people={people.map((person) => ({ id: person.id, label: `${person.name} (${person.loginId})` }))}
+        people={people.map((person) => ({ id: person.id, label: personLabel(person), detail: person.departmentName ?? undefined }))}
       />
     </>
   );

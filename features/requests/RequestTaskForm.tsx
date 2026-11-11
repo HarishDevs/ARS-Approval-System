@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Plus } from "lucide-react";
 import { requestTaskAction } from "@/app/users/work/actions";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
+import { PersonSelect } from "@/features/ui/PersonSelect";
 
 // v1.50.3 (owner: "custom request also needs follow-up management from the
 // linked tasks"): add a follow-up task from the request page. It is linked to
@@ -16,7 +17,7 @@ const PRIORITIES: [string, string][] = [
   ["NORMAL", "Normal"],
 ];
 
-export function RequestTaskForm({ requestId, people, meId }: { requestId: number; people: { id: number; label: string }[]; meId: number }) {
+export function RequestTaskForm({ requestId, people, meId }: { requestId: number; people: { id: number; label: string; detail?: string }[]; meId: number }) {
   const [open, setOpen] = useState(false);
   const { result, pending, formRef, onSubmit } = useActionForm(requestTaskAction, { resetOnSuccess: true });
   if (!open) {
@@ -42,13 +43,7 @@ export function RequestTaskForm({ requestId, people, meId }: { requestId: number
           <label htmlFor="rt-assignee" className="field-label">
             Assign to
           </label>
-          <select id="rt-assignee" name="assigneeId" defaultValue={String(meId)} className="field-input">
-            {people.map((person) => (
-              <option key={person.id} value={person.id}>
-                {person.id === meId ? `Me (${person.label})` : person.label}
-              </option>
-            ))}
-          </select>
+          <PersonSelect id="rt-assignee" name="assigneeId" options={people.map((person) => (person.id === meId ? { ...person, label: `Me (${person.label})` } : person))} defaultValue={meId} />
           <FieldError result={result} name="assignee" />
         </div>
         <div>

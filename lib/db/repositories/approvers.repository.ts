@@ -4,10 +4,10 @@ import { getDbPool, type Queryable } from "@/lib/db/client";
 import { isApproverEligible, type ApproverStatus } from "@/server/approvals/approver-rules";
 
 // Approver eligibility reads (S11-03, D-085).
-const STATUS_SQL = `SELECT u.id, u.name, u.login_id, u.active, u.is_break_glass, d.name AS designation, COALESCE(d.is_approver, FALSE) AS designation_is_approver
-  FROM users u LEFT JOIN designations d ON d.id = u.designation_id`;
+const STATUS_SQL = `SELECT u.id, u.name, u.login_id, u.active, u.is_break_glass, d.name AS designation, COALESCE(d.is_approver, FALSE) AS designation_is_approver, dep.name AS department_name
+  FROM users u LEFT JOIN designations d ON d.id = u.designation_id LEFT JOIN departments dep ON dep.id = u.department_id`;
 
-type StatusRow = RowDataPacket & { id: number; name: string; login_id: string; active: number; is_break_glass: number; designation: string | null; designation_is_approver: number };
+type StatusRow = RowDataPacket & { id: number; name: string; login_id: string; active: number; is_break_glass: number; designation: string | null; designation_is_approver: number; department_name: string | null };
 
 const toStatus = (row: StatusRow): ApproverStatus => ({
   id: row.id,
@@ -29,6 +29,7 @@ export interface PersonOption {
   id: number;
   name: string;
   loginId: string;
+  departmentName: string | null; // v1.52.1: shown below the name
 }
 
 // For approver pickers: eligible people, plus any ids passed in `keep`
@@ -41,6 +42,6 @@ export async function listApproverOptions(keep: readonly (number | null | undefi
   );
   return rows.map((row) => {
     const status = toStatus(row);
-    return { id: row.id, name: isApproverEligible(status) ? row.name : `${row.name} — not an approver`, loginId: row.login_id };
+    return { id: row.id, name: isApproverEligible(status) ? row.name : `${row.name} — not an approver`, loginId: row.login_id, departmentName: row.department_name };
   });
 }

@@ -76,3 +76,24 @@ test("a refused save shows only its own message and stays unsaved", async ({ pag
   await page.getByTestId("sidebar").getByRole("link", { name: "Calendar" }).click();
   await expect(page.getByRole("alertdialog").filter({ hasText: "Leave without saving?" })).toBeVisible();
 });
+
+// v1.52.2 (owner): attachments are listed one by one; a second pick adds to the
+// first instead of replacing it; any file can be removed.
+test("attachments: each pick adds to the list, files show by name and can be removed", async ({ page, context }) => {
+  await context.addCookies([await sessionCookie("E2E_REQ")]);
+  await page.goto("/users/custom");
+  const picker = page.locator("#c-attachments");
+  await picker.setInputFiles({ name: "quote-one.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.4 one") });
+  await picker.setInputFiles({ name: "quote-two.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.4 two two") });
+  const list = page.getByTestId("chosen-files");
+  await expect(list.getByRole("listitem")).toHaveCount(2);
+  await expect(list).toContainText("quote-one.pdf");
+  await expect(list).toContainText("quote-two.pdf");
+  // What the form sends: both files.
+  expect(await page.locator('input[name="attachments"]').evaluate((input) => (input as HTMLInputElement).files?.length)).toBe(2);
+  await list.getByRole("button", { name: "Remove quote-one.pdf" }).click();
+  await expect(list.getByRole("listitem")).toHaveCount(1);
+  await expect(list).toContainText("quote-two.pdf");
+  expect(await page.locator('input[name="attachments"]').evaluate((input) => (input as HTMLInputElement).files?.length)).toBe(1);
+  await page.screenshot({ path: "test-results/v1522-attachments.png", fullPage: false });
+});

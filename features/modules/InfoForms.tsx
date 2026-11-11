@@ -11,6 +11,7 @@ import { INFO_PRIORITIES, INFO_PRIORITY_LABEL, type AckRule, type InfoPriority }
 import type { FieldLookups, FormField } from "@/server/forms/fields";
 import type { InfoAction } from "@/server/modules/info-rules";
 import { UnsavedGuard } from "@/features/ui/UnsavedGuard";
+import { FileListInput } from "@/features/ui/FileListInput";
 
 type Option = { id: number; label: string };
 
@@ -135,7 +136,7 @@ export function InfoForm({
           </label>
           <Hint text="Up to 5 files, 10 MB each." align="start" className="mb-1.5" />
         </div>
-        <input id="info-files" name="attachments" type="file" multiple accept={ACCEPT_ATTRIBUTE} className="block w-full text-label file:mr-3 file:rounded-md file:border-0 file:bg-surface-muted file:px-3 file:py-2" />
+        <FileListInput id="info-files" name="attachments" accept={ACCEPT_ATTRIBUTE} maxFiles={5} />
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <button type="submit" name="intent" value="publish" disabled={pending} className="btn-primary">

@@ -1,5 +1,6 @@
 import { expect, test, type BrowserContext } from "@playwright/test";
 import { dropCustomDraft, sessionCookie, toReviewStep, toWorkflowStep } from "./db";
+import { pickFirstPerson } from "./people";
 
 // v1.42.0 (D-259, D-260): the calendar's Agenda and chips, Create task in two
 // columns with a priority, cells changed in the task table, the board's
@@ -50,6 +51,33 @@ test("Create task: two columns on a computer, with a priority that is saved", as
   await dialog.getByRole("button", { name: "Create task" }).click();
   await expect(page.getByTestId("task-pane")).toContainText(title);
   await expect(page.getByTestId("task-pane")).toContainText(/Most Important/); // v1.50.1: HIGH reads "Most Important"
+  // v1.52.1 (owner): the task opens as a popup with all its actions, and
+  // Comments / All activity tabs; My Tasks shows Priority beside the due date.
+  const popup = page.getByTestId("task-pane");
+  await expect(popup).toHaveAttribute("role", "dialog");
+  await expect(popup.getByRole("heading", { name: "Actions" })).toBeVisible();
+  await expect(popup.getByRole("tab", { name: /Comments/ })).toHaveAttribute("aria-selected", "true");
+  await popup.getByRole("tab", { name: "All activity" }).click();
+  await expect(popup.getByTestId("record-history")).toContainText("created");
+  await page.screenshot({ path: "test-results/v1521-task-popup.png", fullPage: false });
+  // v1.52.2 (owner): a formatted comment, shown with its formatting and in All activity.
+  await popup.getByRole("tab", { name: /Comments/ }).click();
+  const box = popup.getByRole("textbox", { name: "Add a comment" });
+  await box.click();
+  await box.pressSequentially("Ship it today");
+  await page.keyboard.press("Control+A");
+  await popup.getByRole("button", { name: "Bold (Ctrl+B)" }).click();
+  await popup.getByRole("button", { name: "Comment", exact: true }).click();
+  await expect(popup.getByTestId("comment").first().locator("strong")).toHaveText("Ship it today");
+  await popup.getByRole("tab", { name: "All activity" }).click();
+  await expect(popup.getByTestId("record-history")).toContainText("commented");
+  await page.screenshot({ path: "test-results/v1522-activity.png", fullPage: false });
+  await page.keyboard.press("Escape");
+  await expect(page.getByTestId("task-pane")).toHaveCount(0);
+  const headers = await page.locator("[data-testid] thead th, [role=columnheader]").allTextContents();
+  const names = headers.map((text) => text.trim()).filter(Boolean);
+  expect(names.indexOf("Priority")).toBe(names.indexOf("Due date") + 1);
+  await page.screenshot({ path: "test-results/v1521-my-tasks.png", fullPage: false });
 });
 
 test("the task table: tags and collaborators change in their cells (a project's List)", async ({ page, context }) => {
@@ -76,8 +104,9 @@ test("the task table: tags and collaborators change in their cells (a project's 
   // Collaborators.
   await row.getByTestId("cell-collaborators").click();
   const panel = page.getByRole("dialog", { name: `Collaborators of Inspect hoist ${stamp}` });
-  await panel.getByRole("combobox").selectOption({ index: 1 });
-  await expect(panel.getByRole("button", { name: /^Remove / })).toHaveCount(1);
+  await pickFirstPerson(page, panel.getByLabel("Add someone"));
+  // v1.52.1: the cell shows the added collaborator (the cell's panel may close after a pick).
+  await expect(row.getByTestId("cell-collaborators")).toHaveAttribute("aria-label", /: .+, .+\. Change$/);
   await page.keyboard.press("Escape");
   // Priority and due date change in place too.
   await row.getByLabel(/^Priority of /).selectOption("URGENT");

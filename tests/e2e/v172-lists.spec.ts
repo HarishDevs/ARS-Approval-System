@@ -1,6 +1,7 @@
 import { expect, test, type BrowserContext } from "@playwright/test";
 import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { db, sessionCookie, userIdByLogin } from "./db";
+import { pickPerson } from "./people";
 
 // v1.7.2 through the real screens: Collaborating (its own screen, with the
 // full filter set), and the same filters on My requests and Waiting for me.
@@ -48,7 +49,7 @@ test("Collaborating is its own screen in the sidebar, with quick tabs and the fu
   for (const label of ["Approval type", "Raised by", "Their department", "Added me", "Waiting at step", "Waiting with", "Due within", "Files", "Approval validity", "Raised from", "Added me from", "Closed from", "Last activity from"]) {
     await expect(page.getByLabel(label, { exact: true })).toBeVisible();
   }
-  await page.getByLabel("Raised by", { exact: true }).selectOption({ label: "Ravi Requester" });
+  await pickPerson(page, page.getByLabel("Raised by", { exact: true }), "Ravi Requester");
   await page.getByLabel("Withdrawn").check();
   await page.getByTestId("filter-menu").getByRole("button", { name: "Apply" }).click();
   await expect(page).toHaveURL(/raisedBy=\d+/);

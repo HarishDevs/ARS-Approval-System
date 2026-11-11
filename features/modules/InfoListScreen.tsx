@@ -15,6 +15,8 @@ import { indiaDateTimeText, INFO_PRIORITIES, INFO_PRIORITY_LABEL, type InfoPrior
 import { PAGE_SIZES } from "@/server/modules/task-lists";
 import { indiaToday } from "@/server/modules/information";
 import { ListToolbar } from "@/features/ui/ListToolbar";
+import { PersonSelect } from "@/features/ui/PersonSelect";
+import { personLabel } from "@/lib/people/label";
 import { NoResults } from "@/features/ui/Display";
 import { isMobileLayout } from "@/server/ui/layout-mode";
 import { MobileInfoList, type MobileInfoRow } from "@/features/mobile/MobileInfoList";
@@ -156,17 +158,17 @@ export async function InfoListScreen({ base, query }: { base: InfoBase; query: R
               </select>
             </label>
             {base === "INBOX" && (
-              <label className="text-label">
-                From
-                <select name="sender" defaultValue={filters.senderId ?? ""} className="field-input h-10">
-                  <option value="">Anyone</option>
-                  {people.map((person) => (
-                    <option key={person.id} value={person.id}>
-                      {person.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <div className="text-label">
+                <label htmlFor="info-sender">From</label>
+                <PersonSelect
+                  id="info-sender"
+                  name="sender"
+                  options={people.map((person) => ({ id: person.id, label: personLabel(person), detail: person.departmentName ?? undefined }))}
+                  defaultValue={filters.senderId ?? null}
+                  emptyLabel="Anyone"
+                  compact
+                />
+              </div>
             )}
             <label className="text-label">
               {base === "INBOX" ? "Published from" : "Created from"}

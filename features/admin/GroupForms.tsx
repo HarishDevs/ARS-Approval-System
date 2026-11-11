@@ -4,6 +4,7 @@ import { useState } from "react";
 import { groupMemberAction, saveGroupAction } from "@/app/admin/groups/actions";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import type { Option } from "@/features/admin/UserForm";
+import { PersonSelect } from "@/features/ui/PersonSelect";
 
 export function NewGroupForm() {
   const { result, pending, formRef, onSubmit } = useActionForm(saveGroupAction, { resetOnSuccess: true });
@@ -84,16 +85,7 @@ export function GroupEditor({ group, people }: { group: { id: number; code: stri
       <form ref={add.formRef} onSubmit={add.onSubmit} className="flex flex-wrap items-center gap-2">
         <input type="hidden" name="groupId" value={group.id} />
         <input type="hidden" name="command" value="add" />
-        <select aria-label="Add a person" name="userId" defaultValue="" className="field-input max-w-sm">
-          <option value="">Add a person…</option>
-          {people
-            .filter((person) => !memberIds.has(person.id))
-            .map((person) => (
-              <option key={person.id} value={person.id}>
-                {person.label}
-              </option>
-            ))}
-        </select>
+        <PersonSelect ariaLabel="Add a person" name="userId" options={people.filter((person) => !memberIds.has(person.id))} emptyLabel="Add a person…" className="w-full max-w-sm" />
         <SubmitButton pending={add.pending} variant="secondary" className="btn-compact">
           Add
         </SubmitButton>
