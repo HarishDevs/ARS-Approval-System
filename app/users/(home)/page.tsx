@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { formDueDays } from "@/server/approvals/form-due";
 import { Suspense } from "react";
 import Link from "next/link";
 import { requireArea } from "@/server/authorization/guards";
@@ -13,7 +14,8 @@ import { formatIndiaTime } from "@/server/notifications/security-messages";
 import { SafeText } from "@/features/ui/SafeText";
 import { FirstUseChecklist } from "@/features/help/FirstUseChecklist";
 import { hasFlag } from "@/lib/db/repositories/user-flags.repository";
-import { hasModule } from "@/server/modules/modules";
+import { hasModule, MODULE_LABEL, MODULES } from "@/server/modules/modules";
+import { ComingSoonCard, ComingSoonChip } from "@/features/ui/ComingSoon";
 import { getUserSetting } from "@/lib/db/repositories/user-settings.repository";
 import { parseWorkspaceView, WORKSPACE_VIEW_SETTING } from "@/server/ui/workspace-view";
 import { ClassicGateway } from "@/features/shell/ClassicScreens";
@@ -61,6 +63,7 @@ export default async function UsersHome({ searchParams }: { searchParams: Promis
         approvals={hasModule(user, "APPROVAL") && (open("/users/queue") || open("/users/requests"))}
         tasks={(await featureOn("tasks", user).catch(() => false)) && open("/users/work")}
         can={{ newRequest: open("/users/custom") || open("/users/new"), newRequestHref: open("/users/custom") ? "/users/custom" : "/users/new", search: open("/users/search"), ai: (await featureOn("ai", user).catch(() => false)) && open("/users/ai/assistant") }}
+        soon={MODULES.filter((module) => !hasModule(user, module)).map((module) => MODULE_LABEL[module])}
       />
     );
   }
@@ -88,6 +91,8 @@ export default async function UsersHome({ searchParams }: { searchParams: Promis
   // v1.51.1 (owner): Meetings is the third choice, for people with the Meeting module and its pages.
   const meetingsOn = hasModule(user, "MEETING") && !isHiddenHref("/users/meetings", (await navAccess(user)).hidden);
   const choices: HomeFocus[] = ["approvals", ...(tasksOn ? (["tasks"] as const) : []), ...(meetingsOn ? (["meetings"] as const) : [])];
+  // D-307 (owner): a module not given yet stays on the switch, locked ("Coming soon").
+  const lockedChoices: HomeFocus[] = [...(!hasModule(user, "TASK") ? (["tasks"] as const) : []), ...(!hasModule(user, "MEETING") ? (["meetings"] as const) : [])];
   // The tour points at the approval tiles, so it always opens on Approvals.
   const focus: HomeFocus =
     query.tour ? "approvals" : query.home === "meetings" && meetingsOn ? "meetings" : !tasksOn ? "approvals" : (asked ?? ((await isApproverForHome(user.id).catch(() => true)) ? "approvals" : "tasks"));
@@ -98,7 +103,7 @@ export default async function UsersHome({ searchParams }: { searchParams: Promis
 
   if (focus === "meetings") {
     const base: Record<string, string> = { home: "meetings", ...(overview ? { view: "overview" } : {}) };
-    return <MeetingHome user={user} greetingName={greetingName ?? name} query={query} base={base} figures={!isHiddenHref("/users/meetings/dashboard", (await navAccess(user)).hidden)} switcher={<HomeFocusSwitch focus={focus} overview={overview} choices={choices} />} />;
+    return <MeetingHome user={user} greetingName={greetingName ?? name} query={query} base={base} figures={!isHiddenHref("/users/meetings/dashboard", (await navAccess(user)).hidden)} switcher={<HomeFocusSwitch focus={focus} overview={overview} choices={choices} locked={lockedChoices} />} />;
   }
 
   if (focus === "tasks") {
@@ -108,7 +113,7 @@ export default async function UsersHome({ searchParams }: { searchParams: Promis
         user={user}
         viewer={viewer}
         query={query}
-        switcher={<HomeFocusSwitch focus={focus} overview={overview} choices={choices} />}
+        switcher={<HomeFocusSwitch focus={focus} overview={overview} choices={choices} locked={lockedChoices} />}
         others={
           <Suspense
             fallback={
@@ -193,7 +198,7 @@ export default async function UsersHome({ searchParams }: { searchParams: Promis
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          {choices.length > 1 && <HomeFocusSwitch focus={focus} overview={overview} choices={choices} />}
+          {choices.length + lockedChoices.length > 1 && <HomeFocusSwitch focus={focus} overview={overview} choices={choices} locked={lockedChoices} />}
           {/* D-206 (owner): New request opens the page where people choose their own approvers. */}
           <Link href="/users/custom" className="btn-primary btn-compact inline-flex items-center gap-1.5">
             <FilePlus2 aria-hidden="true" className="h-4 w-4" /> New request
@@ -241,7 +246,7 @@ export default async function UsersHome({ searchParams }: { searchParams: Promis
                 <p className="mt-1 text-label text-ink-muted">Requests that need your approval, and work given to you, appear here.</p>
               </div>
             ) : (
-              <QueueTable items={queue} priority={priority} />
+              <QueueTable items={queue} priority={priority} formDue={await formDueDays(queue.map((item) => item.requestId))} />
             )}
           </section>
 
@@ -255,7 +260,7 @@ export default async function UsersHome({ searchParams }: { searchParams: Promis
                   {attention.overdue} overdue · {attention.dueSoon} due within 24 hours
                 </span>
               </div>
-              <QueueTable items={attention.items} priority={priority} />
+              <QueueTable items={attention.items} priority={priority} formDue={await formDueDays(attention.items.map((item) => item.requestId))} />
             </section>
           )}
 
@@ -410,9 +415,10 @@ function Insight({ icon, tone, label, value }: { icon: React.ReactNode; tone: st
 
 // D-264: the Approvals / Task Management choice at the top of Home.
 // overview: keeps ?view=overview (the Classic view's Overview, not its Gateway).
-function HomeFocusSwitch({ focus, overview, choices }: { focus: HomeFocus; overview: boolean; choices: readonly HomeFocus[] }) {
+function HomeFocusSwitch({ focus, overview, choices, locked = [] }: { focus: HomeFocus; overview: boolean; choices: readonly HomeFocus[]; locked?: readonly HomeFocus[] }) {
   const LABEL: Record<HomeFocus, string> = { approvals: "Approvals", tasks: "Task Management", meetings: "Meetings" };
   const options: [HomeFocus, string][] = choices.map((key) => [key, LABEL[key]]);
+  const soon = locked.filter((key) => !choices.includes(key));
   return (
     <nav aria-label="Show on Home" className="inline-flex rounded-lg border border-line bg-surface-muted p-0.5" data-testid="home-focus">
       {options.map(([key, label]) => (
@@ -424,6 +430,9 @@ function HomeFocusSwitch({ focus, overview, choices }: { focus: HomeFocus; overv
         >
           {label}
         </Link>
+      ))}
+      {soon.map((key) => (
+        <ComingSoonChip key={key} label={LABEL[key]} />
       ))}
     </nav>
   );
@@ -438,6 +447,8 @@ function ModulesHome({ name, user, tasks }: { name: string; user: Parameters<typ
     hasModule(user, "AI") && { href: "/users/ai/assistant", label: "AI Assistant", body: "Ask your business analyst." },
     { href: "/users/calendar", label: "Calendar", body: "Your dates and personal entries." },
   ].filter(Boolean) as { href: string; label: string; body: string }[];
+  // D-307 (owner): the modules not given yet, blurred and locked ("Coming soon").
+  const soon = (["TASK", "PROJECT", "MEETING", "INFORMATION", "AI"] as const).filter((module) => !hasModule(user, module));
   return (
     <>
       <PageHeader title={`Welcome, ${name}`} />
@@ -451,6 +462,15 @@ function ModulesHome({ name, user, tasks }: { name: string; user: Parameters<typ
           </li>
         ))}
       </ul>
+      {soon.length > 0 && (
+        <ul className="mt-3 grid gap-3 sm:grid-cols-2" data-testid="modules-coming-soon">
+          {soon.map((module) => (
+            <li key={module}>
+              <ComingSoonCard title={MODULE_LABEL[module]} lines={2} />
+            </li>
+          ))}
+        </ul>
+      )}
       {tasks}
     </>
   );

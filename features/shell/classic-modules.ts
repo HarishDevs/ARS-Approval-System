@@ -25,6 +25,7 @@ export const MENU_BASE = "/users/menu";
 const MODULE_NAME: Record<string, { key: string; label: string }> = {
   "My Approvals": { key: "approvals", label: "Approval Management" },
   Tasks: { key: "tasks", label: "Tasks Management" },
+  Projects: { key: "projects", label: "Project Management" }, // D-307: its own module
   Information: { key: "information", label: "Information Management" },
   Meetings: { key: "meetings", label: "Meeting Management" },
   "AI Assistant": { key: "ai", label: "Pico Bot (AI Assistant)" },

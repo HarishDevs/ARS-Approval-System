@@ -41,6 +41,12 @@ export function boardsFor(access: BoardAccess): BoardKey[] {
   return BOARDS.map((board) => board.key).filter((key) => allowed[key]);
 }
 
+// D-307 (owner): the dashboards of modules the person hasn't been given yet,
+// shown locked ("coming soon") rather than left out.
+export function soonBoards(modules: { approval: boolean; task: boolean; information: boolean; meeting?: boolean }): BoardKey[] {
+  return ([["approvals", modules.approval], ["tasks", modules.task], ["information", modules.information], ["meetings", Boolean(modules.meeting)]] as const).filter(([, on]) => !on).map(([key]) => key);
+}
+
 export function parseBoard(value: string | undefined): BoardKey {
   return (BOARDS.find((board) => board.key === value)?.key ?? "overview") as BoardKey;
 }

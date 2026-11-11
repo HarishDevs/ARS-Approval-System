@@ -24,7 +24,10 @@ const QUEUE_HEADER: Record<QueueColumn, HeaderColumn> = {
   since: { key: "since", label: "Waiting since" },
   due: { key: "due", label: "Due date" },
 };
-export function QueueTable({ items, priority, order: savedOrder }: { items: QueueItem[]; priority?: Record<number, ShownPriority>; order?: string[] }) {
+export function QueueTable({ items, priority, order: savedOrder, formDue = {} }: { items: QueueItem[]; priority?: Record<number, ShownPriority>; order?: string[]; formDue?: Record<number, string> }) {
+  // v1.53.0: the request's own due date (its form's Due date field), India day.
+  const todayDay = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date());
+  const dayText = (day: string) => new Date(`${day}T00:00:00Z`).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
   const all: QueueColumn[] = priority ? ["priority", "from", "step", "since", "due"] : ["from", "step", "since", "due"];
   const order: QueueColumn[] = savedOrder ? (savedOrder.filter((key): key is QueueColumn => (all as string[]).includes(key))) : all;
   const cellFor = (item: QueueItem, column: QueueColumn): React.ReactNode => {
@@ -49,6 +52,19 @@ export function QueueTable({ items, priority, order: savedOrder }: { items: Queu
       case "since":
         return <td className="whitespace-nowrap">{formatIndiaTime(item.createdAt)}</td>;
       case "due":
+        if (formDue[item.requestId]) {
+          const day = formDue[item.requestId]!;
+          const late = day < todayDay;
+          return (
+            <td className="whitespace-nowrap">
+              <span className={late ? "font-semibold text-danger-600" : ""}>
+                {late ? "Overdue · " : ""}
+                {dayText(day)}
+              </span>
+              {item.dueAt && <span className={`block text-caption ${item.overdue ? "font-semibold text-danger-600" : "text-ink-muted"}`}>Step due {formatIndiaTime(item.dueAt)}</span>}
+            </td>
+          );
+        }
         return (
           <td className="whitespace-nowrap">
             {item.dueAt ? (

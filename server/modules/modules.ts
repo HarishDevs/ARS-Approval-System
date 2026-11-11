@@ -1,19 +1,30 @@
 import type { ModuleCode } from "@/types/auth";
 
-// AI module branch (D-168): the four modules of ARS Approvals and the rules
-// for who may use them. Pure and unit-tested.
+// AI module branch (D-168): the modules of ARS-CMS and the rules for who may
+// use them. Pure and unit-tested.
+// D-307 (owner, v1.53.0): the main modules, in this order, released one at a
+// time: Approvals (live), Tasks, Projects, Meeting Management, Information,
+// then the AI assistant. Projects is its own module (it was part of Tasks).
+// Home, Inbox, Calendar and Analytics are common to every module.
 export type { ModuleCode };
-export const MODULES: readonly ModuleCode[] = ["APPROVAL", "TASK", "INFORMATION", "AI", "MEETING"];
-export const MODULE_LABEL: Record<ModuleCode, string> = { APPROVAL: "Approval", TASK: "Task", INFORMATION: "Information", AI: "AI", MEETING: "Meeting" };
+export const MODULES: readonly ModuleCode[] = ["APPROVAL", "TASK", "PROJECT", "INFORMATION", "MEETING", "AI"];
+export const MODULE_LABEL: Record<ModuleCode, string> = { APPROVAL: "Approvals", TASK: "Tasks", PROJECT: "Projects", INFORMATION: "Information", MEETING: "Meeting Management", AI: "AI Assistant" };
 export const MODULE_HELP: Record<ModuleCode, string> = {
   APPROVAL: "Raise requests, custom approvals, approve what is assigned, search requests.",
   TASK: "My tasks, tasks given to others, team tasks.",
+  PROJECT: "Projects: lists, boards, timelines, status updates, members and templates.",
   INFORMATION: "The information inbox and sending information.",
-  AI: "The AI dashboard, assistant, business intelligence and reports.",
   MEETING: "Meetings: schedule, meeting points, MOM, action items and follow-ups.",
+  AI: "The AI dashboard, assistant, business intelligence and reports.",
 };
-// What everyone could use before modules existed; new people start here too.
-export const DEFAULT_MODULES: readonly ModuleCode[] = ["APPROVAL", "TASK", "INFORMATION", "MEETING"];
+// D-307 (owner): new people start with the released modules: Approvals and Tasks.
+export const DEFAULT_MODULES: readonly ModuleCode[] = ["APPROVAL", "TASK"];
+
+// D-308 (owner): a project holds tasks, so Projects is never given without Tasks.
+export const PROJECTS_NEED_TASKS = "Projects needs Tasks: tick Tasks too (or take Projects away first).";
+export function modulesProblem(modules: readonly ModuleCode[]): string | null {
+  return modules.includes("PROJECT") && !modules.includes("TASK") ? PROJECTS_NEED_TASKS : null;
+}
 
 const isModule = (value: string): value is ModuleCode => (MODULES as readonly string[]).includes(value);
 

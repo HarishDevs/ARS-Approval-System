@@ -59,7 +59,7 @@ describe("bulk import (F-59)", () => {
       "SELECT (SELECT module_access FROM users WHERE login_id = ?) AS emp, (SELECT module_access FROM users WHERE login_id = ?) AS boss",
       [`emp-${tag}`, `boss-${tag}`],
     );
-    expect(modules).toMatchObject({ emp: "TASK,AI", boss: "APPROVAL,TASK,INFORMATION,MEETING" });
+    expect(modules).toMatchObject({ emp: "TASK,AI", boss: "APPROVAL,TASK" });
     const audit = await one<RowDataPacket & { n: number }>("SELECT COUNT(*) AS n FROM audit_logs WHERE action = 'USER_CREATED' AND actor_user_id = ? AND JSON_EXTRACT(metadata_json, '$.source') = 'IMPORT'", [itAdmin.id]);
     expect(Number(audit?.n)).toBe(2);
     const summary = await one<RowDataPacket & { metadata_json: string }>("SELECT metadata_json FROM audit_logs WHERE action = 'IMPORT_COMPLETED' AND entity_id = 'users' AND actor_user_id = ? ORDER BY id DESC LIMIT 1", [itAdmin.id]);

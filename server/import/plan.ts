@@ -2,7 +2,7 @@ import { z } from "zod";
 import { parseCsv, unguardCell } from "@/server/import/csv";
 import { IMPORT_LIMITS, IMPORT_SPECS, type ImportKind } from "@/server/import/kinds";
 import { checkCanEdit, checkContactChange, checkModuleChange, checkRoleChange, isValidWhatsAppNumber, normaliseRoles, normaliseWhatsAppNumber, ASSIGNABLE_ROLES } from "@/server/admin/user-rules";
-import { DEFAULT_MODULES, MODULES, normaliseModules, sameModules, type ModuleCode } from "@/server/modules/modules";
+import { DEFAULT_MODULES, MODULES, modulesProblem, normaliseModules, sameModules, type ModuleCode } from "@/server/modules/modules";
 import { allowsGoogle, allowsPassword, type RoleCode, type SignInMethod } from "@/types/auth";
 
 // Bulk import planner (S10-03, F-59). Pure: given the file and a snapshot
@@ -344,7 +344,8 @@ function planUsers(rows: Row[], snapshot: Snapshot): { planned: PlannedRow[]; op
     if (unknown.length) check.add("roles", `Unknown role${unknown.length === 1 ? "" : "s"}: ${unknown.join(", ")}. Use USER, EXPORTER, IT_ADMIN or SUPER_ADMIN.`);
 
     const { modules, unknown: unknownModules } = parseModules(row.get("modules"));
-    if (unknownModules.length) check.add("modules", `Unknown module${unknownModules.length === 1 ? "" : "s"}: ${unknownModules.join(", ")}. Use APPROVAL, TASK, INFORMATION, AI or ALL, separated by ;.`);
+    if (unknownModules.length) check.add("modules", `Unknown module${unknownModules.length === 1 ? "" : "s"}: ${unknownModules.join(", ")}. Use APPROVAL, TASK, PROJECT, INFORMATION, MEETING, AI or ALL, separated by ;.`);
+    else if (modules && modulesProblem(modules)) check.add("modules", modulesProblem(modules)!);
 
     const value: UserValue = {
       loginId,

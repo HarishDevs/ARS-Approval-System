@@ -1480,6 +1480,27 @@ flowchart TD
 ```
 - Existing users keep exactly what they had: Approval, Task and Information; nobody gets AI until it is ticked.
 
+## F-152 Main modules, staged release and "Coming soon" (v1.53.0, D-307)
+```mermaid
+flowchart TD
+  M[Main modules: Approvals, Tasks, Projects, Information, Meeting Management; then AI Assistant] --> R[Released one at a time: Approvals live, Tasks, Projects, Meetings, Information, AI]
+  R --> IT[IT switches a module on per person or in bulk: Admin, Users]
+  C[Common to all: Home, Inbox, Calendar, Analytics] --> V
+  P[A page or card of module X] --> H{Page set to Hidden in Page access?}
+  H -- yes --> N1[Not shown at all]
+  H -- no --> G{Person has module X? Super Admin exempt}
+  G -- yes --> V[Shown and usable; page access View/Full as before]
+  G -- no --> S[Home, Classic menu, Analytics: blurred locked card or choice: Coming soon; no content sent]
+  G -- no --> A[Typed address: refused, says coming soon for you; actions and APIs refused on the server]
+  T[Task in a project, person has Tasks not Projects] --> TN[Project name only, with a lock; no link, no picker, no project changes]
+  T --> TV[D-308: projects open no task: only tasks they are on and their team's]
+  PN[Project notification] --> PQ{Recipient has Projects? Super Admin exempt}
+  PQ -- no --> PX[Not sent; older ones hidden from Inbox, bell and counts until Projects is on]
+  IT2[IT gives modules: form, bulk, import] --> PT{Projects without Tasks?}
+  PT -- yes --> RF[Refused: Projects needs Tasks]
+```
+- Projects was part of Tasks; it is its own module from v1.53.0. Nobody has it until IT switches it on. New people start with Approvals and Tasks.
+
 ## F-138 Pic bot - ai (D-172)
 ```mermaid
 flowchart TD

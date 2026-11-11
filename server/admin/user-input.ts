@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { isValidWhatsAppNumber, normaliseRoles, normaliseWhatsAppNumber } from "@/server/admin/user-rules";
 import { allowsPassword, type ModuleCode, type RoleCode, type SignInMethod } from "@/types/auth";
-import { normaliseModules } from "@/server/modules/modules";
+import { modulesProblem, normaliseModules } from "@/server/modules/modules";
 import { isSalesforceScope, normaliseChatModes, type ChatMode, type SalesforceScope } from "@/server/ai/chat-access";
 
 // Parses the user form (F-06). Pure and unit-tested.
@@ -72,6 +72,7 @@ export function parseUserForm(
   }
   const chosenModules = modules === null ? null : normaliseModules(modules);
   if (chosenModules && !chosenModules.ok) fieldErrors.modules = "Choose modules from the list.";
+  else if (chosenModules?.ok && modulesProblem(chosenModules.value)) fieldErrors.modules = modulesProblem(chosenModules.value)!;
   const chosenChat = chat === null ? null : normaliseChatModes(chat.modes);
   if (chosenChat && !chosenChat.ok) fieldErrors.chatModes = "Choose chat modes from the list.";
   if (chat && !isSalesforceScope(chat.salesforceScope)) fieldErrors.salesforceScope = "Choose a Salesforce scope from the list.";

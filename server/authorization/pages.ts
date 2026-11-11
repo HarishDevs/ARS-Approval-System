@@ -52,7 +52,7 @@ export const PAGES: readonly PageDef[] = [
   { key: "users.task", module: "TASK", partyOpen: true, area: "users", label: "Tasks: task page", what: "Opening a task: details, progress, comments, files. View only = can read, not act.", paths: [/^\/users\/tasks\/\d+(\/.*)?$/] },
   // D-215: Task & Project Management.
   { key: "users.work", module: "TASK", area: "users", label: "Tasks: home, My Tasks, search", what: "Task home, My Tasks with its sections and board, task search and saved searches, deleted tasks.", paths: [exact("/users/work"), under("/users/work/my-tasks"), under("/users/work/search"), under("/users/work/deleted"), under("/users/work/inbox"), under("/users/work/periodic")] },
-  { key: "users.projects", module: "TASK", area: "users", label: "Tasks: projects", what: "Projects: list, board, calendar, timeline, overview and status updates, members and settings.", paths: [under("/users/work/projects")] },
+  { key: "users.projects", module: "PROJECT", area: "users", label: "Projects", what: "Projects: list, board, calendar, timeline, overview and status updates, members and settings.", paths: [under("/users/work/projects")] },
   // v1.51.0 (D-300): Meeting Management.
   { key: "users.meetings", module: "MEETING", area: "users", label: "Meetings: lists", what: "Meetings: upcoming, mine, to approve, past and all, and the follow-up register (actions and open points).", paths: [exact("/users/meetings"), under("/users/meetings/follow-ups")] },
   { key: "users.meeting_new", module: "MEETING", area: "users", label: "Meetings: schedule", what: "Scheduling a meeting or a follow-up meeting.", paths: [under("/users/meetings/new")] },

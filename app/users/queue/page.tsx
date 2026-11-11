@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { formDueDays } from "@/server/approvals/form-due";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Hourglass, X } from "lucide-react";
@@ -250,7 +251,7 @@ export default async function QueuePage({ searchParams }: { searchParams: Promis
         <NoResults what="items waiting" query={filter.q} clearSearchHref={without({ q: "" })} resetHref="/users/queue" />
       ) : (
         <QueueKeyboard>
-          <QueueTable items={queue} priority={priority} order={queueOrder} />
+          <QueueTable items={queue} priority={priority} order={queueOrder} formDue={await formDueDays(queue.map((item) => item.requestId))} />
         </QueueKeyboard>
       )}
       {pages > 1 && (

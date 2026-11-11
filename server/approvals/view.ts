@@ -16,6 +16,8 @@ import { formatSize, previewKind } from "@/server/attachments/files";
 import { listRevisions } from "@/lib/db/repositories/revisions.repository";
 import { findSubmissionCheck, type SubmissionCheck } from "@/lib/db/repositories/checks.repository";
 import { getDbPool } from "@/lib/db/client";
+import { loadDirectorySnapshot, toDirectory } from "@/lib/db/repositories/directory.repository";
+import { resolveApprovers } from "@/server/engine/engine";
 import type { RowDataPacket } from "mysql2/promise";
 import { listConsultations, type Consultation } from "@/lib/db/repositories/consult.repository";
 import { visibleLinks } from "@/server/approvals/consult";
@@ -157,7 +159,24 @@ export async function loadRequestView(requestId: number, viewer: Actor): Promise
   // QA-SEC-01: the timeline doesn't name a confidential field's files either.
   const hiddenNames = new Set(allAttachments.filter((file) => file.fieldKey && hiddenKeys.has(file.fieldKey)).map((file) => file.name));
   const submissionCheck = await findSubmissionCheck(requestId);
+  // v1.54.0 (owner: "show the approval level name and who is going to
+  // approve"): levels not reached yet name who they will go to, resolved now
+  // with the engine's own rule (it resolves again when the level arrives).
+  const open = state.status === "IN_PROGRESS" || state.status === "ON_HOLD" || state.status === "CHANGES_REQUIRED";
+  const directory = open ? toDirectory(await loadDirectorySnapshot().catch(() => null) ?? { users: [], departmentHods: new Map(), roleMembers: new Map(), groupMembers: new Map(), delegations: new Map() }) : null;
+  const expectedIds = new Map<string, number[]>();
+  if (directory) {
+    for (const node of version.definition.nodes) {
+      if (node.kind !== "APPROVAL" && node.kind !== "NOTIFY") continue;
+      const sources = node.kind === "NOTIFY" ? node.recipients : node.approvers;
+      const allowRequester = node.kind === "NOTIFY" || node.mode === "WORK";
+      expectedIds.set(node.id, resolveApprovers(sources, { requesterId: request.requesterId, formData: request.formData as EngineFormData, now: new Date().toISOString() }, directory, { allowRequester }).slice(0, 20));
+    }
+  }
+  const expectedNames = expectedIds.size ? await userNames([...new Set([...expectedIds.values()].flat())].filter((id) => !names.has(id))) : new Map<number, string>();
+  const expectedName = (id: number) => names.get(id) ?? expectedNames.get(id) ?? `User #${id}`;
   const stages = buildStepMap(version.definition, state, version.builder, names, {
+    expected: (node) => (expectedIds.get(node.id) ?? []).map((userId) => ({ userId, name: expectedName(userId) })),
     formData: request.formData as EngineFormData,
     fieldLabel: (key) => version.form.find((field) => field.key === key)?.label ?? key,
   });

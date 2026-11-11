@@ -48,6 +48,8 @@ export const PERSON_EXTRA = {
   TOLD: text("told", "purple"),
   ASSIGNED: text("given the task", "purple"),
   DONE: text("done", "green"),
+  // v1.54.0 (owner): a level not reached yet names who it will go to.
+  EXPECTED: text("will approve", "grey"),
 } as const;
 
 // "Your decision" / "Work to do" on the queue cards: waiting, so blue.

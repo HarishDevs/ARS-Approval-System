@@ -1,5 +1,20 @@
 # Release notes
 
+## v1.53.0 (11 Nov 2026): Projects is its own module; "Coming soon" for modules not given (owner)
+- **Main modules:** Approvals, Tasks, Projects, Information, Meeting Management (then the AI Assistant), released one at a time. Home, Inbox, Calendar and Analytics are common to all.
+- **Projects separated from Tasks:** the project pages, + Create → Project, the Projects sidebar group and every project change need the new **Projects** module. Nobody has it yet: IT switches it on per person or in bulk (Admin → Users) when Projects is released. The Super Admin is never limited.
+- **Coming soon:** a module not switched on for a person shows as a blurred, locked card or choice marked **Coming soon** on Home (the Approvals / Task Management / Meetings switch, the Projects card and quick link), in the Classic menu and in Analytics (the dashboard list and the Executive overview). Nothing of its content is sent. Typing its address shows "coming soon for you".
+- **Tasks without Projects:** a task's project shows as its name with a lock, no link; no project picker on Create task; no Add to project, section or project-field changes. You see only the tasks you are on (assigned, created, given by you, followed) and your team's: a project no longer opens other tasks to you.
+- **Project notifications** (added to a project, status updates) are not sent to people without Projects, and older ones are hidden from the Inbox, the bell and their counts; they reappear once Projects is switched on.
+- **Projects needs Tasks:** IT can't give Projects without Tasks (user form, bulk Modules, import), nor take Tasks away while Projects stays.
+- **Phone Home:** modules not switched on show as locked "Coming soon" tiles too.
+- **Approval levels name the approver of every level:** on the request page, a level not reached yet shows who it will go to ("will approve"), worked out from the route now (the specific people, the HOD, the reporting manager…).
+- **Fixed: Waiting for me showed "No due date"** for a request whose form has a Due date. The Due date column (and Home) now shows the request's own due date (a form date field named or labelled "due"), red when it has passed; a step's own deadline shows under it as "Step due".
+- **Hidden pages:** a page set to Hidden in Page access is still not shown at all (unchanged).
+- **New people** start with Approvals and Tasks (before: every module but AI). Existing people keep their modules.
+- The sidebar has **Tasks** and **Projects** as separate groups.
+- One small database change on start (adds the Projects module).
+
 ## v1.52.3 (11 Nov 2026): arrange table columns, delete request files before approval (owner)
 - **Arrange columns:** on My pending requests, Collaborating, My approved requests, Approved by me and Waiting for me, drag a column title onto another to move the column (or focus a title and press Alt+← / Alt+→). The order is saved for you and used on every visit; the Columns button also has ↑ ↓ to reorder and still hides or shows columns.
 - **Deleting a request's files:** the requester, or the person who added a file, can delete it until an approver approves the first level. After that files are locked, unless an approver asks for changes: then they can be deleted again while the request is back with the requester. Delete asks first; the timeline says who deleted which file; the file is kept for the record but no longer shown or downloadable.

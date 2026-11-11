@@ -44,7 +44,7 @@ const PRIORITY: Record<string, { label: string; dot: string } | null> = {
 // priority dot and the due date; Choose view (the five lists), Manage view
 // (compact, sort, group) and + float above the tab bar. Same rows as the
 // computer's My Tasks: assigned to me (or, on the last view, given by me).
-export async function MobileTasks({ userId, tab: asked, sort: askedSort, group: askedGroup }: { userId: number; tab?: string; sort?: string; group?: string }) {
+export async function MobileTasks({ userId, tab: asked, sort: askedSort, group: askedGroup, projectsOn = true }: { userId: number; tab?: string; sort?: string; group?: string; projectsOn?: boolean }) {
   const tab: Tab = TABS.some((item) => item.key === asked) ? (asked as Tab) : "today";
   const sort: Sort = askedSort && askedSort in SORTS ? (askedSort as Sort) : tab === "completed" ? "newest" : "due";
   const group: Group = askedGroup && askedGroup in GROUPS ? (askedGroup as Group) : tab === "upcoming" ? "due" : "none";
@@ -94,7 +94,7 @@ export async function MobileTasks({ userId, tab: asked, sort: askedSort, group: 
   );
   const menu = (
     <nav aria-label="More task pages">
-      <SheetLink href="/users/work/projects" icon={<FolderKanban className="h-5 w-5" />} label="Projects" />
+      {projectsOn && <SheetLink href="/users/work/projects" icon={<FolderKanban className="h-5 w-5" />} label="Projects" />}
       <SheetLink href="/users/work/periodic" icon={<RefreshCw className="h-5 w-5" />} label="Periodic tasks" />
       <SheetLink href="/users/calendar" icon={<CalendarDays className="h-5 w-5" />} label="Calendar" />
       <SheetLink href="/users/work/search" icon={<Search className="h-5 w-5" />} label="Search tasks" />

@@ -70,7 +70,7 @@ jobs:
   e2e:
     name: End-to-end tests (Playwright)
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 75 # v1.53.0: the e2e suite outgrew 45 minutes (v1.52.2 and v1.52.3 runs were cut off)
     services:
       mysql:
         image: mysql:8.0

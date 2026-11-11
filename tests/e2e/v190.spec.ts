@@ -186,7 +186,7 @@ test("the user sidebar: Home, Inbox, collapsible My Approvals, Tasks & projects,
   const top = await nav.evaluate((element) =>
     Array.from(element.children).map((child) => (child.querySelector(":scope > button") ?? child).textContent?.trim().replace(/\s+/g, " ") ?? ""),
   );
-  expect(top.map((text) => text.replace(/\s*\d+( waiting)?$/, ""))).toEqual(["Home", "Inbox", "My Approvals", "Tasks & projects", "Information", "Meetings", "Calendar", "Analytics"]);
+  expect(top.map((text) => text.replace(/\s*\d+( waiting)?$/, ""))).toEqual(["Home", "Inbox", "My Approvals", "Tasks", "Projects", "Information", "Meetings", "Calendar", "Analytics"]);
   // A group opens like a dropdown, with its pages in the owner's order.
   const approvals = nav.getByRole("button", { name: "My Approvals" });
   await expect(approvals).toHaveAttribute("aria-expanded", "false");

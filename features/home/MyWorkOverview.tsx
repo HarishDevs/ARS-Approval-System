@@ -37,6 +37,8 @@ import { changePercent, parsePeriod, PREVIOUS_LABEL } from "@/server/work/period
 import type { WorkViewer } from "@/server/work/access";
 import type { workPage } from "@/server/work/page-context";
 import { PeriodPicker, QuietRefresh, WorkloadChart } from "@/features/home/HomeClient";
+import { hasModule } from "@/server/modules/modules";
+import { ComingSoonCard, ComingSoonChip, LockedProjectName } from "@/features/ui/ComingSoon";
 
 // D-265 (owner's My Work brief): Home → Task Management. Every figure is
 // counted from the task records with the same rules as My Tasks (India days;
@@ -83,12 +85,15 @@ export async function MyWorkOverview({
           ? [[...mineBase, `(${OPEN} OR ${completedIn})`], [user.id, period.from, period.to], "t.status = 'COMPLETED', t.due_at IS NULL, t.due_at, t.id DESC"]
           : [[...mineBase, OPEN, "t.due_at IS NOT NULL", `${IST_DAY} >= ?`], [user.id, today], "t.due_at, t.id DESC"];
   const limit = query.activity === "more" ? 20 : 6;
+  // D-307 (owner): Projects is its own module. Without it, project cards are
+  // locked ("Coming soon") and a task's project is its name only, no link.
+  const projectsOn = hasModule(user, "PROJECT");
   const [summary, list, projects, taskEvents, statusPosts, workload, profile] = await Promise.all([
     workSummary(user.id, today, period),
     listTaskItems(...tabWhere(tab), PAGE, (page - 1) * PAGE),
-    homeProjects(viewer, 4),
+    projectsOn ? homeProjects(viewer, 4) : Promise.resolve([]),
     workActivity(user.id, limit),
-    recentStatusUpdates(viewer, limit),
+    projectsOn ? recentStatusUpdates(viewer, limit) : Promise.resolve([] as StatusUpdate[]),
     weeklyWorkload(user.id, period),
     personProfile(user.id).catch(() => null),
   ]);
@@ -179,7 +184,7 @@ export async function MyWorkOverview({
       <nav aria-label="Quick actions" className="mb-5 flex flex-wrap gap-2" data-testid="work-quick-actions">
         <CreateTaskButton />
         <QuickLink href="/users/work/my-tasks" icon={<ListChecks className="h-4 w-4" />} label="View all tasks" />
-        <QuickLink href="/users/work/projects" icon={<FolderKanban className="h-4 w-4" />} label="Projects" />
+        {projectsOn ? <QuickLink href="/users/work/projects" icon={<FolderKanban className="h-4 w-4" />} label="Projects" /> : <ComingSoonChip label="Projects" className="rounded-lg border border-line" />}
         <QuickLink href="/users/work/search" icon={<Search className="h-4 w-4" />} label="Search tasks" />
         <QuickLink href="/users/calendar" icon={<CalendarDays className="h-4 w-4" />} label="Calendar" />
       </nav>
@@ -289,7 +294,7 @@ export async function MyWorkOverview({
                           {task.summary && <span className="line-clamp-1 text-caption text-ink-muted">{task.summary}</span>}
                         </td>
                         <td className="py-2.5 pr-3">
-                          <ProjectChip task={task} />
+                          <ProjectChip task={task} on={projectsOn} />
                         </td>
                         <td className="whitespace-nowrap py-2.5 pr-3">
                           <Due task={task} now={now} />
@@ -301,7 +306,7 @@ export async function MyWorkOverview({
                           <StatusBadge task={task} today={today} />
                         </td>
                         <td className="py-2.5 text-right">
-                          <RowMenu task={task} openHref={links.open(task.id)} />
+                          <RowMenu task={task} openHref={links.open(task.id)} projectsOn={projectsOn} />
                         </td>
                       </tr>
                     ))}
@@ -319,13 +324,13 @@ export async function MyWorkOverview({
                         {task.summary && <p className="line-clamp-2 text-caption text-ink-muted">{task.summary}</p>}
                         <div className="mt-1.5 flex flex-wrap items-center gap-2">
                           <ApprovalBadge approval={task.approval} size="sm" />
-                          <ProjectChip task={task} />
+                          <ProjectChip task={task} on={projectsOn} />
                           <Due task={task} now={now} />
                           <TaskPriorityPill priority={task.priority} showNormal />
                           <StatusBadge task={task} today={today} />
                         </div>
                       </div>
-                      <RowMenu task={task} openHref={links.open(task.id)} />
+                      <RowMenu task={task} openHref={links.open(task.id)} projectsOn={projectsOn} />
                     </li>
                   ))}
                 </ul>
@@ -352,6 +357,9 @@ export async function MyWorkOverview({
             )}
           </section>
 
+          {!projectsOn ? (
+            <ComingSoonCard title="Projects" body="Projects will open here once it is released for you." lines={4} testId="mw-projects-soon" />
+          ) : (
           <section className="card min-w-0 px-4 py-4 sm:px-5" aria-labelledby="mw-projects">
             <div className="mb-3 flex items-center justify-between">
               <h2 id="mw-projects" className="text-[calc(17px*var(--text-scale,1))] font-semibold">
@@ -403,6 +411,7 @@ export async function MyWorkOverview({
               </ul>
             )}
           </section>
+          )}
 
           <section className="card min-w-0 px-4 py-4 sm:px-5" aria-labelledby="mw-activity">
             <div className="mb-3 flex items-center justify-between">
@@ -518,9 +527,10 @@ function Change({ value, label }: { value: number | null; label: string }) {
   );
 }
 
-function ProjectChip({ task }: { task: WorkTaskItem }) {
+function ProjectChip({ task, on }: { task: WorkTaskItem; on: boolean }) {
   const project = task.projects[0];
   if (!project) return <span className="text-caption text-ink-faint">—</span>;
+  if (!on) return <LockedProjectName name={project.name} className="max-w-[12rem] text-caption" />;
   return (
     <Link href={`/users/work/projects/${project.id}`} className="inline-flex max-w-[12rem] items-center gap-1.5 rounded-md border border-line px-2 py-0.5 text-caption hover:bg-surface-muted">
       <ProjectDot color={project.color} />
@@ -551,7 +561,7 @@ function StatusBadge({ task, today }: { task: WorkTaskItem; today: string }) {
   return <Badge tone={STATUS[task.status][1]}>{STATUS[task.status][0]}</Badge>;
 }
 
-function RowMenu({ task, openHref }: { task: WorkTaskItem; openHref: string }) {
+function RowMenu({ task, openHref, projectsOn }: { task: WorkTaskItem; openHref: string; projectsOn: boolean }) {
   return (
     <details className="relative inline-block text-left">
       <summary
@@ -567,7 +577,7 @@ function RowMenu({ task, openHref }: { task: WorkTaskItem; openHref: string }) {
         <Link href={openHref} scroll={false} className="flex items-center gap-2 rounded px-2 py-1.5 hover:bg-surface-muted">
           <Pencil aria-hidden="true" className="h-4 w-4" /> Edit, reassign or change due date
         </Link>
-        {task.projects[0] && (
+        {projectsOn && task.projects[0] && (
           <Link href={`/users/work/projects/${task.projects[0].id}`} className="flex items-center gap-2 rounded px-2 py-1.5 hover:bg-surface-muted">
             <FolderKanban aria-hidden="true" className="h-4 w-4" /> Go to {task.projects[0].name}
           </Link>

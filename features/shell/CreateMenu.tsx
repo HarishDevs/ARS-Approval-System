@@ -11,7 +11,7 @@ import { inside } from "@/features/ui/inside";
 // Approval opens New request; Task opens the Draft task panel; Project opens
 // the new-project steps; Information (when the person has it) opens its form.
 // D-229: `compact` is the collapsed sidebar's round + (the menu opens beside it).
-export function CreateMenu({ approval, task, information, compact = false }: { approval: boolean; task: boolean; information: boolean; compact?: boolean }) {
+export function CreateMenu({ approval, task, project = task, information, compact = false }: { approval: boolean; task: boolean; project?: boolean; information: boolean; compact?: boolean }) {
   const [open, setOpen] = useState(false);
   // The folded sidebar scrolls, which clips anything sticking out of it, so
   // there the menu is placed on the page (fixed) beside the + button.
@@ -42,7 +42,7 @@ export function CreateMenu({ approval, task, information, compact = false }: { a
   const items = [
     approval && { key: "approval", label: "Approval request", hint: "Ask people to approve, at any levels", icon: FileCheck2, run: () => router.push("/users/custom") },
     task && { key: "task", label: "Task", hint: "Ad hoc or periodic", icon: CheckSquare, run: () => window.dispatchEvent(new CustomEvent(CREATE_TASK_EVENT, { detail: { projectId: null } })) },
-    task && { key: "project", label: "Project", hint: "Blank or from a template", icon: FolderKanban, run: () => router.push("/users/work/projects/new") },
+    project && { key: "project", label: "Project", hint: "Blank or from a template", icon: FolderKanban, run: () => router.push("/users/work/projects/new") },
     information && { key: "information", label: "Information", hint: "Tell people something", icon: Megaphone, run: () => router.push("/users/information/new") },
   ].filter(Boolean) as { key: string; label: string; hint: string; icon: typeof Plus; run: () => void }[];
   if (!items.length) return null;

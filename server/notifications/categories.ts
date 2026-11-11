@@ -103,3 +103,9 @@ export function appPath(link: string | null): string | null {
     return null;
   }
 }
+
+// D-308 (owner): project notifications are hidden from the Inbox, the bell
+// and their counts for people without the Projects module (Super Admin
+// excepted) until Projects is switched on for them; they reappear then. Uses
+// the notification's own person (n.user_id), so every inbox query can add it.
+export const VISIBLE_TO_MODULES_SQL = `NOT ((n.event_type IN ('WORK_PROJECT_MEMBER', 'WORK_PROJECT_STATUS') OR n.deep_link LIKE '/users/work/projects%') AND NOT EXISTS (SELECT 1 FROM users pu WHERE pu.id = n.user_id AND (FIND_IN_SET('PROJECT', pu.module_access) > 0 OR EXISTS (SELECT 1 FROM user_roles pur JOIN roles pr ON pr.id = pur.role_id WHERE pur.user_id = pu.id AND pr.code = 'SUPER_ADMIN'))))`;

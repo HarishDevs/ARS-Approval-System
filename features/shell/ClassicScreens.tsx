@@ -2,6 +2,8 @@ import "server-only";
 import Link from "next/link";
 import type { AuthenticatedUser } from "@/types/auth";
 import { ClassicMenu } from "@/features/shell/Classic";
+import { hasModule, MODULE_LABEL, MODULES } from "@/server/modules/modules";
+import { ComingSoonChip } from "@/features/ui/ComingSoon";
 import { classicModules, extraHotkeys, type ClassicModule } from "@/features/shell/classic-modules";
 import { areasForUser } from "@/server/authorization/policy";
 import type { MenuEntry } from "@/features/shell/Classic";
@@ -84,6 +86,14 @@ export async function ClassicGateway({ user }: { user: AuthenticatedUser }) {
     <div className="mx-auto max-w-md space-y-2 pt-4 sm:pt-10" data-testid="classic-gateway">
       <h1 className="sr-only">Central Management System</h1>
       <ClassicMenu title="Central Management System" testId="gateway-menu" entries={entries} />
+      {/* D-307 (owner): modules not given yet, locked ("Coming soon"). */}
+      {MODULES.some((module) => !hasModule(user, module)) && (
+        <div className="flex flex-wrap justify-center gap-2" data-testid="classic-coming-soon">
+          {MODULES.filter((module) => !hasModule(user, module)).map((module) => (
+            <ComingSoonChip key={module} label={MODULE_LABEL[module]} className="border border-line" />
+          ))}
+        </div>
+      )}
       <p className="text-center text-caption text-ink-faint">↑ ↓ to move, Enter to open, or press the highlighted letter. Esc goes back.</p>
     </div>
   );

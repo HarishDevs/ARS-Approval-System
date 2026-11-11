@@ -1,4 +1,5 @@
 import "server-only";
+import { VISIBLE_TO_MODULES_SQL } from "@/server/notifications/categories";
 import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { getDbPool, type Queryable } from "@/lib/db/client";
 import type { ProjectColor, ProjectFacts, ProjectPrivacy, ProjectRole, ProjectStatusKind, ProjectView, WorkViewer } from "@/server/work/access";
@@ -19,6 +20,8 @@ const dateOnly = (value: unknown) => (value === null || value === undefined ? nu
 // ---- visibility ------------------------------------------------------------------------
 // Projects the viewer can see (alias `p`).
 export function visibleProjectClause(viewer: WorkViewer, alias = "p"): { sql: string; params: unknown[] } {
+  // D-308: without the Projects module, no project is seen.
+  if (viewer.projects === false) return { sql: "FALSE", params: [] };
   if (viewer.isAdmin) return { sql: `${alias}.deleted_at IS NULL`, params: [] };
   const dept = viewer.departmentId;
   return {
@@ -38,10 +41,12 @@ export function visibleProjectClause(viewer: WorkViewer, alias = "p"): { sql: st
 export function visibleTaskClause(viewer: WorkViewer): { sql: string; params: unknown[] } {
   if (viewer.isAdmin) return { sql: "t.deleted_at IS NULL", params: [] };
   const project = visibleProjectClause(viewer, "vp");
+  // D-308: without the Projects module a project opens no task (only tasks the person is on).
+  const throughProject = viewer.projects === false ? "" : `
+      OR EXISTS (SELECT 1 FROM task_projects vtp JOIN projects vp ON vp.id = vtp.project_id WHERE vtp.task_id IN (t.id, COALESCE(t.root_task_id, t.id)) AND ${project.sql})`;
   return {
     sql: `t.deleted_at IS NULL AND (t.assignee_id IN (?) OR t.created_by = ? OR t.assigned_by = ? OR a.reporting_manager_id = ?
-      OR EXISTS (SELECT 1 FROM task_followers vf WHERE vf.task_id IN (t.id, COALESCE(t.root_task_id, t.id)) AND vf.user_id = ?)
-      OR EXISTS (SELECT 1 FROM task_projects vtp JOIN projects vp ON vp.id = vtp.project_id WHERE vtp.task_id IN (t.id, COALESCE(t.root_task_id, t.id)) AND ${project.sql})
+      OR EXISTS (SELECT 1 FROM task_followers vf WHERE vf.task_id IN (t.id, COALESCE(t.root_task_id, t.id)) AND vf.user_id = ?)${throughProject}
       OR (t.root_task_id IS NOT NULL AND EXISTS (SELECT 1 FROM tasks vr WHERE vr.id = t.root_task_id AND (vr.assignee_id = ? OR vr.created_by = ? OR vr.assigned_by = ?))))`,
     // D-216: tasks of everyone below the viewer in the reporting chain too.
     params: [[viewer.id, ...viewer.teamIds], viewer.id, viewer.id, viewer.id, viewer.id, ...project.params, viewer.id, viewer.id, viewer.id],
@@ -1013,7 +1018,8 @@ export interface InboxItem {
   bookmarkedAt: Date | null;
   eventType: string;
 }
-const TASK_NOTICE = "(n.category = 'TASK' OR n.event_type LIKE 'WORK|_%' ESCAPE '|')";
+// D-308: project notices only for people with the Projects module.
+const TASK_NOTICE = `(n.category = 'TASK' OR n.event_type LIKE 'WORK|_%' ESCAPE '|') AND ${VISIBLE_TO_MODULES_SQL}`;
 export async function listInbox(userId: number, tab: InboxTab, unreadOnly: boolean, limit = 100, db: Queryable = getDbPool()): Promise<InboxItem[]> {
   const where = ["n.user_id = ?", TASK_NOTICE, tab === "archive" ? "n.archived_at IS NOT NULL" : tab === "bookmarks" ? "n.bookmarked_at IS NOT NULL" : "n.archived_at IS NULL"];
   if (unreadOnly) where.push("n.read_at IS NULL");

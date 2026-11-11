@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { isTyping } from "@/features/shell/shortcuts";
 import { CREATE_TASK_EVENT } from "@/features/work/client";
+import { useProjectsOn } from "@/features/work/projects-access";
 
 // D-219: the Tasks area's keyboard: Q creates a task, G then H/I/M/P/R/S
 // goes, J/K move through rows, X ticks, Enter opens, Esc closes the task
@@ -22,6 +23,8 @@ const MAIN = [
 export function WorkKeys() {
   const router = useRouter();
   const awaitingG = useRef(0);
+  // D-307: G then P only for people with the Projects module.
+  const projectsOn = useProjectsOn();
   // D-221: the Draft task panel lives at app level (TaskCreator); this asks for it.
   const openCreate = () => {
     const project = /\/users\/work\/projects\/(\d+)/.exec(window.location.pathname)?.[1];
@@ -47,7 +50,7 @@ export function WorkKeys() {
       }
       if (Date.now() - awaitingG.current < 1500) {
         awaitingG.current = 0;
-        const item = MAIN.find((entry) => entry.key === key);
+        const item = MAIN.find((entry) => entry.key === key && (projectsOn || entry.key !== "p"));
         if (item) {
           take();
           router.push(item.href);
@@ -79,7 +82,7 @@ export function WorkKeys() {
     };
     window.addEventListener("keydown", onKey, true);
     return () => window.removeEventListener("keydown", onKey, true);
-  }, [router]);
+  }, [router, projectsOn]);
 
   return null;
 }

@@ -22,7 +22,7 @@ import type { RoleCode } from "@/types/auth";
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
 export const metadata: Metadata = { title: "Profile" };
 
-const MODULE_LABEL: Record<string, string> = { APPROVAL: "Approvals", TASK: "Tasks & projects", INFORMATION: "Information", AI: "AI" };
+const MODULE_LABEL: Record<string, string> = { APPROVAL: "Approvals", TASK: "Tasks", PROJECT: "Projects", INFORMATION: "Information", MEETING: "Meeting Management", AI: "AI Assistant" };
 const SIGN_IN_LABEL: Record<string, string> = { GOOGLE: "Google", PASSWORD: "User ID, password and WhatsApp code", BOTH: "Google, or User ID with password and WhatsApp code" };
 const day = (value: Date) => new Date(value).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Kolkata" });
 

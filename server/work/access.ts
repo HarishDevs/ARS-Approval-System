@@ -38,9 +38,14 @@ export interface WorkViewer {
   isAdmin: boolean;
   // D-216: everyone below this person in the reporting chain, every level.
   teamIds: readonly number[];
+  // D-308 (owner): false without the Projects module: projects then grant
+  // nothing (no project seen, no task seen or changed through a project), so
+  // the person has only the tasks they are on and their team's. Unset = true.
+  projects?: boolean;
 }
 
 export function effectiveProjectRole(project: ProjectFacts, viewer: WorkViewer): ProjectRole | null {
+  if (viewer.projects === false) return null;
   if (viewer.isAdmin) return "OWNER";
   let role: ProjectRole | null = null;
   for (const member of project.members) {

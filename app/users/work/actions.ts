@@ -15,6 +15,7 @@ import { workViewer } from "@/server/work/task-access";
 import * as more from "@/server/work/service-more";
 import { parseGridConfig } from "@/server/work/grid";
 import { projectAbilities } from "@/server/work/access";
+import { hasModule } from "@/server/modules/modules";
 import { getDbPool } from "@/lib/db/client";
 import type { RowDataPacket } from "mysql2/promise";
 import type { HolidayHit } from "@/server/work/holidays";
@@ -31,6 +32,20 @@ async function actor(): Promise<TaskActor | null> {
   } catch {
     return null;
   }
+}
+
+// D-307 (owner): Projects is its own module. Every project change (the
+// project, its members, sections, status, fields, templates, views, and
+// putting a task in or out of a project) needs it, wherever it is posted from.
+const PROJECTS_OFF = { ok: false as const, message: "Projects isn't available to you yet." };
+const projectsAllowed = (me: TaskActor) => !me.modules || hasModule({ roles: me.roles, modules: me.modules }, "PROJECT");
+async function actorForProjects(): Promise<TaskActor | null | "OFF"> {
+  const me = await actor();
+  return me && !projectsAllowed(me) ? "OFF" : me;
+}
+// run() for project changes: refused with a clear message without the module.
+async function runProject<T>(label: string, me: TaskActor | null | "OFF", work: Parameters<typeof run<T>>[2]): Promise<ActionResult & { value?: T; holiday?: HolidayHit }> {
+  return me === "OFF" ? { ok: false, message: PROJECTS_OFF.message ?? "" } : run<T>(label, me, work);
 }
 
 const id = (value: unknown) => (typeof value === "number" && Number.isInteger(value) && value > 0 && value < 1e10 ? value : typeof value === "string" && /^\d{1,10}$/.test(value) ? Number(value) : null);
@@ -77,7 +92,7 @@ function projectInput(formData: FormData): work.ProjectInput {
 }
 
 export async function createProjectAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  const result = await run("createProject", await actor(), (me) => work.createProject(projectInput(formData), me));
+  const result = await runProject("createProject", await actorForProjects(), (me) => work.createProject(projectInput(formData), me));
   if (!result.ok || !result.value) return result;
   redirect(`/users/work/projects/${(result.value as { id: number }).id}?created=1`);
 }
@@ -86,7 +101,7 @@ export async function updateProjectAction(_previous: ActionResult | null, formDa
   const projectId = id(text(formData, "projectId"));
   if (!projectId) return NOT_FOUND;
   const version = text(formData, "rowVersion");
-  return run("updateProject", await actor(), (me) => work.updateProjectDetails(projectId, { ...projectInput(formData), rowVersion: /^\d+$/.test(version) ? Number(version) : undefined }, me));
+  return runProject("updateProject", await actorForProjects(), (me) => work.updateProjectDetails(projectId, { ...projectInput(formData), rowVersion: /^\d+$/.test(version) ? Number(version) : undefined }, me));
 }
 
 export async function memberAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
@@ -95,14 +110,15 @@ export async function memberAction(_previous: ActionResult | null, formData: For
   const memberId = id(raw);
   if (!projectId || !memberId || (type !== "USER" && type !== "DEPARTMENT")) return { ok: false, message: "Choose a person or department.", fieldErrors: { member: "Choose a person or department." } };
   const role = text(formData, "role");
-  return run("member", await actor(), (me) => work.setMember(projectId, { type, id: memberId }, role === "REMOVE" ? null : role, me));
+  return runProject("member", await actorForProjects(), (me) => work.setMember(projectId, { type, id: memberId }, role === "REMOVE" ? null : role, me));
 }
 
 export async function projectCommand(projectId: number, command: "JOIN" | "LEAVE" | "ARCHIVE" | "UNARCHIVE" | "DELETE" | "RESTORE" | "STAR"): Promise<ActionResult> {
   const project = id(projectId);
   if (!project) return NOT_FOUND;
   if (command === "STAR") {
-    const me = await actor();
+    const me = await actorForProjects();
+    if (me === "OFF") return PROJECTS_OFF;
     if (!me) return NOT_FOUND;
     const found = await repo.projectFor(project, await workViewer(me));
     if (!found) return NOT_FOUND;
@@ -110,31 +126,31 @@ export async function projectCommand(projectId: number, command: "JOIN" | "LEAVE
     refresh();
     return { ok: true, message: on ? "Starred." : "Unstarred." };
   }
-  return run(command, await actor(), (me) => (command === "JOIN" ? work.joinProject(project, me) : command === "LEAVE" ? work.leaveProject(project, me) : work.setProjectLifecycle(project, command, me)));
+  return runProject(command, await actorForProjects(), (me) => (command === "JOIN" ? work.joinProject(project, me) : command === "LEAVE" ? work.leaveProject(project, me) : work.setProjectLifecycle(project, command, me)));
 }
 
 export async function statusAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
   const projectId = id(text(formData, "projectId"));
   if (!projectId) return NOT_FOUND;
-  return run("status", await actor(), (me) => work.postStatus(projectId, { status: text(formData, "status"), title: text(formData, "title"), body: text(formData, "body") }, me));
+  return runProject("status", await actorForProjects(), (me) => work.postStatus(projectId, { status: text(formData, "status"), title: text(formData, "title"), body: text(formData, "body") }, me));
 }
 
 export async function removeStatusAction(statusId: number): Promise<ActionResult> {
   const update = id(statusId);
-  return update ? run("removeStatus", await actor(), (me) => work.removeStatus(update, me)) : NOT_FOUND;
+  return update ? runProject("removeStatus", await actorForProjects(), (me) => work.removeStatus(update, me)) : NOT_FOUND;
 }
 
 // ---- sections --------------------------------------------------------------------------
 export async function addSectionAction(projectId: number, name: string, afterSectionId: number | null): Promise<ActionResult> {
   const project = id(projectId);
-  return project ? run("addSection", await actor(), (me) => work.addSection(project, String(name ?? ""), id(afterSectionId), me)) : NOT_FOUND;
+  return project ? runProject("addSection", await actorForProjects(), (me) => work.addSection(project, String(name ?? ""), id(afterSectionId), me)) : NOT_FOUND;
 }
 
 export async function sectionAction(sectionId: number, change: { name?: string; beforeId?: number | null; afterId?: number | null; deleteMoveTo?: number }): Promise<ActionResult> {
   const section = id(sectionId);
   if (!section) return NOT_FOUND;
   const moveTo = change.deleteMoveTo === undefined ? undefined : id(change.deleteMoveTo);
-  return run("section", await actor(), (me) =>
+  return runProject("section", await actorForProjects(), (me) =>
     work.changeSection(
       section,
       {
@@ -152,6 +168,7 @@ export async function sectionAction(sectionId: number, change: { name?: string; 
 export async function quickAddAction(input: { title: string; projectId?: number | null; sectionId?: number | null; parentId?: number | null; assigneeId?: number | null; assigneeIds?: number[]; dueDay?: string; mySectionId?: number | null; holidayOk?: boolean; description?: string }): Promise<ActionResult & { value?: { id: number; taskNo: string }; holiday?: HolidayHit }> {
   // D-222: an ad hoc task for several people (one copy each).
   const many = (Array.isArray(input.assigneeIds) ? input.assigneeIds : []).map((item) => id(item)).filter((item): item is number => item !== null);
+  if (id(input.projectId) !== null && (await actorForProjects()) === "OFF") return PROJECTS_OFF;
   if (many.length > 1)
     return run("quickAddMany", await actor(), (me) =>
       work.quickAddForMany(
@@ -228,7 +245,7 @@ export async function moveTaskAction(input: { taskId: number; projectId: number;
   const projectId = id(input.projectId);
   const sectionId = id(input.sectionId);
   if (!taskId || !projectId || !sectionId) return NOT_FOUND;
-  return run("move", await actor(), (me) => work.moveInProject({ taskId, projectId, sectionId, beforeId: id(input.beforeId), afterId: id(input.afterId) }, me));
+  return runProject("move", await actorForProjects(), (me) => work.moveInProject({ taskId, projectId, sectionId, beforeId: id(input.beforeId), afterId: id(input.afterId) }, me));
 }
 
 export async function completeAction(taskId: number): Promise<ActionResult> {
@@ -258,7 +275,7 @@ export async function taskProjectAction(taskId: number, projectId: number, on: b
   const task = id(taskId);
   const project = id(projectId);
   if (!task || !project) return NOT_FOUND;
-  return run("taskProject", await actor(), (me) => (on ? work.addToProject(task, project, id(sectionId), me) : work.removeFromProject(task, project, me)));
+  return runProject("taskProject", await actorForProjects(), (me) => (on ? work.addToProject(task, project, id(sectionId), me) : work.removeFromProject(task, project, me)));
 }
 
 export async function parentAction(taskId: number, parentRef: string | null): Promise<ActionResult> {
@@ -393,24 +410,24 @@ export async function recurrenceAction(taskId: number, rule: { kind: string; eve
 export async function addFieldAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
   const projectId = id(text(formData, "projectId"));
   if (!projectId) return NOT_FOUND;
-  return run("addField", await actor(), (me) => more.addField(projectId, { name: text(formData, "name"), kind: text(formData, "kind"), options: text(formData, "options") }, me));
+  return runProject("addField", await actorForProjects(), (me) => more.addField(projectId, { name: text(formData, "name"), kind: text(formData, "kind"), options: text(formData, "options") }, me));
 }
 
 export async function removeFieldAction(fieldId: number): Promise<ActionResult> {
   const field = id(fieldId);
-  return field ? run("removeField", await actor(), (me) => more.removeField(field, me)) : NOT_FOUND;
+  return field ? runProject("removeField", await actorForProjects(), (me) => more.removeField(field, me)) : NOT_FOUND;
 }
 
 export async function fieldValueAction(taskId: number, fieldId: number, value: string): Promise<ActionResult> {
   const task = id(taskId);
   const field = id(fieldId);
-  return task && field ? run("fieldValue", await actor(), (me) => more.setTaskField(task, field, String(value ?? ""), me)) : NOT_FOUND;
+  return task && field ? runProject("fieldValue", await actorForProjects(), (me) => more.setTaskField(task, field, String(value ?? ""), me)) : NOT_FOUND;
 }
 
 export async function saveTemplateAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
   const projectId = id(text(formData, "projectId"));
   if (!projectId) return NOT_FOUND;
-  const result = await run("saveTemplate", await actor(), (me) => more.saveAsTemplate(projectId, text(formData, "name"), me));
+  const result = await runProject("saveTemplate", await actorForProjects(), (me) => more.saveAsTemplate(projectId, text(formData, "name"), me));
   if (!result.ok || !result.value) return result;
   redirect(`/users/work/projects/${(result.value as { id: number }).id}`);
 }
@@ -419,7 +436,7 @@ export async function fromTemplateAction(_previous: ActionResult | null, formDat
   const templateId = id(text(formData, "templateId"));
   const copyFrom = id(text(formData, "copyFrom"));
   if (!templateId && !copyFrom) return { ok: false, message: "Choose a template.", fieldErrors: { templateId: "Choose a template." } };
-  const result = await run("fromTemplate", await actor(), (me) =>
+  const result = await runProject("fromTemplate", await actorForProjects(), (me) =>
     more.createFromTemplate(
       { templateId: templateId ?? undefined, copyFrom: copyFrom ?? undefined, copyMembers: text(formData, "copyMembers") === "on" },
       { name: text(formData, "name"), startOn: text(formData, "start_on"), privacy: text(formData, "privacy"), departmentId: id(text(formData, "department")) },
@@ -434,6 +451,7 @@ export async function bulkAction(ids: number[], op: string, value: { assigneeId?
   const me = await actor();
   if (!me) return NOT_FOUND;
   if (!(more.BULK_OPS as readonly string[]).includes(op)) return NOT_FOUND;
+  if (id(value.projectId) !== null && !projectsAllowed(me)) return PROJECTS_OFF;
   const clean = (Array.isArray(ids) ? ids : []).map((item) => id(item)).filter((item): item is number => item !== null);
   return run("bulk", me, (who) =>
     more.bulkTasks(
@@ -480,6 +498,7 @@ export async function saveViewAction(scope: "MY_TASKS" | "PROJECT", scopeId: num
   const me = await actor();
   const target = id(scopeId);
   if (!me || !target || (scope !== "MY_TASKS" && scope !== "PROJECT")) return NOT_FOUND;
+  if (scope === "PROJECT" && !projectsAllowed(me)) return PROJECTS_OFF;
   const title = String(name ?? "").replace(/\s+/g, " ").trim().slice(0, 60);
   if (title.length < 1) return { ok: false, message: "Give the tab a name." };
   if (!(await mayChangeViews(me, scope, target))) return { ok: false, message: "Only the project's owners and editors can add tabs." };
@@ -499,6 +518,7 @@ export async function updateViewAction(viewId: number, config: unknown): Promise
   const me = await actor();
   const view = id(viewId) ? await repo.findWorkView(id(viewId)!) : null;
   if (!me || !view || !(await mayChangeViews(me, view.scope, view.scopeId))) return NOT_FOUND;
+  if (view.scope === "PROJECT" && !projectsAllowed(me)) return PROJECTS_OFF;
   await repo.updateWorkView(view.id, { config: parseGridConfig(config) });
   refresh();
   return { ok: true, message: "View saved." };
@@ -508,6 +528,7 @@ export async function deleteViewAction(viewId: number): Promise<ActionResult> {
   const me = await actor();
   const view = id(viewId) ? await repo.findWorkView(id(viewId)!) : null;
   if (!me || !view || !(await mayChangeViews(me, view.scope, view.scopeId))) return NOT_FOUND;
+  if (view.scope === "PROJECT" && !projectsAllowed(me)) return PROJECTS_OFF;
   await repo.deleteWorkView(view.id);
   refresh();
   return { ok: true, message: "Tab deleted." };
@@ -519,6 +540,7 @@ export async function privacyAction(projectId: number, privacy: string, departme
   const me = await actor();
   const project = id(projectId) ? await repo.findProject(id(projectId)!) : null;
   if (!me || !project) return NOT_FOUND;
+  if (!projectsAllowed(me)) return PROJECTS_OFF;
   return run("privacy", me, (who) =>
     work.updateProjectDetails(
       project.id,
@@ -541,5 +563,5 @@ export async function privacyAction(projectId: number, privacy: string, departme
 // D-222: Project permissions (owners only, checked in the service).
 export async function permissionsAction(projectId: number, permissions: unknown): Promise<ActionResult> {
   const project = id(projectId);
-  return project ? run("permissions", await actor(), (me) => work.setPermissions(project, permissions, me)) : NOT_FOUND;
+  return project ? runProject("permissions", await actorForProjects(), (me) => work.setPermissions(project, permissions, me)) : NOT_FOUND;
 }

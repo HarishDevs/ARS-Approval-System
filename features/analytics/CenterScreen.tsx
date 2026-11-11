@@ -1,3 +1,4 @@
+import { ComingSoonCard } from "@/features/ui/ComingSoon";
 import { TaskPriorityPill } from "@/features/ui/ChoicePill";
 import Link from "next/link";
 import { ListToolbar } from "@/features/ui/ListToolbar";
@@ -48,17 +49,19 @@ export function boardHref(base: Base, query: Query, changes: Query): string {
 
 // v1.12.1 (owner): the dashboard and whose numbers are chosen from
 // dropdowns. Scope, period and comparison carry over between dashboards.
-export function BoardPicker({ base, board, boards, query, scopes, scope }: { base: Base; board: BoardKey; boards: readonly BoardKey[]; query: Query; scopes: Scope[]; scope: Scope }) {
+export function BoardPicker({ base, board, boards, soon = [], query, scopes, scope }: { base: Base; board: BoardKey; boards: readonly BoardKey[]; soon?: readonly BoardKey[]; query: Query; scopes: Scope[]; scope: Scope }) {
   const carry = { scope: scope.kind, period: query.period, from: query.from, to: query.to, compare: query.compare };
   return (
     <AnalyticsPicker
-      boards={BOARDS.filter((item) => boards.includes(item.key)).map((item) => ({ value: item.key, label: item.label, href: boardHref(base, carry, { board: item.key }) }))}
+      boards={BOARDS.filter((item) => boards.includes(item.key) || soon.includes(item.key)).map((item) => ({ value: item.key, label: item.label, href: boardHref(base, carry, { board: item.key }), disabled: !boards.includes(item.key) }))}
       board={board}
       scopes={scopes.map((item) => ({ value: item.kind, label: item.label, href: boardHref(base, { ...carry, board }, { scope: item.kind }) }))}
       scope={scope.kind}
     />
   );
 }
+
+const SOON_TITLE: Partial<Record<BoardKey, string>> = { approvals: "Approvals", tasks: "Tasks", information: "Information", meetings: "Meeting Management" };
 
 const pct = (value: number | null) => (value === null ? "—" : `${value}%`);
 
@@ -165,7 +168,7 @@ function Table({ caption, head, rows, testid }: { caption: string; head: string[
   );
 }
 
-export async function CenterScreen({ base, board, boards, modules, query, scope, scopes, viewer, canExport }: { base: Base; board: Exclude<BoardKey, "approvals">; boards: readonly BoardKey[]; modules: BoardAccess["modules"]; query: Query; scope: Scope; scopes: Scope[]; viewer: Viewer; canExport: boolean }) {
+export async function CenterScreen({ base, board, boards, soon = [], modules, query, scope, scopes, viewer, canExport }: { base: Base; board: Exclude<BoardKey, "approvals">; boards: readonly BoardKey[]; soon?: readonly BoardKey[]; modules: BoardAccess["modules"]; query: Query; scope: Scope; scopes: Scope[]; viewer: Viewer; canExport: boolean }) {
   const now = new Date();
   const today = indiaToday(now);
   const period = resolvePeriod({ key: query.period, from: query.from, to: query.to }, today);
@@ -185,7 +188,7 @@ export async function CenterScreen({ base, board, boards, modules, query, scope,
         </Link>
       </PageHeader>
       <PhoneFold mobile={await isMobileLayout()} summary={`${scope.label} · ${period.label}`}>
-      <BoardPicker base={base} board={board} boards={boards} query={query} scopes={scopes} scope={scope} />
+      <BoardPicker base={base} board={board} boards={boards} soon={soon} query={query} scopes={scopes} scope={scope} />
 
       {/* v1.51.1 (owner): toolbar filters instead of a filter form. */}
       <ListToolbar
@@ -260,7 +263,7 @@ export async function CenterScreen({ base, board, boards, modules, query, scope,
 
       {/* D-258: the board in pages that each fit the window. */}
       <FitPages label="Analytics">
-      {board === "overview" && <Overview scope={scope} viewer={viewer} period={period} previous={previous} compareLabel={compareLabel} today={today} modules={modules} />}
+      {board === "overview" && <Overview scope={scope} viewer={viewer} period={period} previous={previous} compareLabel={compareLabel} today={today} modules={modules} soon={soon} />}
       {board === "tasks" && <Tasks scope={scope} viewer={viewer} period={period} previous={previous} compareLabel={compareLabel} buckets={buckets} />}
       {board === "information" && <Information scope={scope} viewer={viewer} period={period} previous={previous} compareLabel={compareLabel} buckets={buckets} today={today} />}
       {board === "meetings" && (
@@ -291,7 +294,7 @@ export async function CenterScreen({ base, board, boards, modules, query, scope,
 type Common = { scope: Scope; viewer: Viewer; period: ReturnType<typeof resolvePeriod>; previous: ReturnType<typeof resolvePeriod>; compareLabel: string };
 
 // D-206: only the modules this person has are shown.
-async function Overview({ scope, viewer, period, previous, compareLabel, today, modules }: Common & { today: string; modules: BoardAccess["modules"] }) {
+async function Overview({ scope, viewer, period, previous, compareLabel, today, modules, soon }: Common & { today: string; modules: BoardAccess["modules"]; soon: readonly BoardKey[] }) {
   const [approvals, approvalsBefore, tasks, tasksBefore, info, infoBefore, active, activeBefore, monthly, departments] = await Promise.all([
     approvalSummary(scope, viewer, period),
     approvalSummary(scope, viewer, previous),
@@ -346,6 +349,16 @@ async function Overview({ scope, viewer, period, previous, compareLabel, today, 
         <div className="mt-3">
           <Unavailable title="Overdue acknowledgements" why="Information has no acknowledgement deadline field (only reminder days). Pending acknowledgements by age are on the Information board." />
         </div>
+        </Section>
+      )}
+      {/* D-307 (owner): modules not given yet: blurred, locked, "coming soon". */}
+      {soon.length > 0 && (
+        <Section title="Coming soon" note="Modules not switched on for you yet. They open here once IT switches them on.">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" data-testid="analytics-coming-soon">
+            {soon.map((key) => (
+              <ComingSoonCard key={key} title={SOON_TITLE[key] ?? key} lines={3} />
+            ))}
+          </div>
         </Section>
       )}
       <Section title="People">

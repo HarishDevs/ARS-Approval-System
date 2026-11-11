@@ -97,7 +97,7 @@ test("a page outside your modules shows the no-access screen, not 'isn't availab
   await page.goto("/users/ai/assistant");
   await expect(page).toHaveURL(/\/users\/no-access\?page=users\.ai_assistant&why=MODULE/);
   await expect(page.getByRole("heading", { name: "You don't have access to this page" })).toBeVisible();
-  await expect(page.getByTestId("no-access")).toContainText("AI module");
+  await expect(page.getByTestId("no-access")).toContainText("AI Assistant module");
   await page.getByRole("link", { name: "Go to Home" }).click();
   await expect(page).toHaveURL(/\/users$/);
 });

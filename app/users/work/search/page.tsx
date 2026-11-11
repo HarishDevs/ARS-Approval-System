@@ -1,3 +1,4 @@
+import { hasModule } from "@/server/modules/modules";
 import type { Metadata } from "next";
 import { paneLinks, paneTaskId, TaskPane, WithPane } from "@/features/work/TaskPane";
 import { TaskGrid } from "@/features/work/TaskGrid";
@@ -88,7 +89,7 @@ export default async function WorkSearchPage({ searchParams }: { searchParams: P
             <span aria-current="page" className="-mb-px border-b-2 border-primary-600 px-3 py-1.5 text-label font-semibold text-primary-700">
               Tasks ({result.total > 999 ? "999+" : result.total})
             </span>
-            {search.q && (
+            {search.q && hasModule(user, "PROJECT") && (
               <Link href={`/users/work/projects?q=${encodeURIComponent(search.q)}`} className="-mb-px border-b-2 border-transparent px-3 py-1.5 text-label text-ink-muted hover:text-ink">
                 Projects ({matchingProjects})
               </Link>

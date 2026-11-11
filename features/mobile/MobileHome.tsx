@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ComingSoonCard } from "@/features/ui/ComingSoon";
 import { AlertTriangle, ArrowRight, CheckCircle2, ClipboardList, FilePlus2, FileText, Inbox, ListPlus, MessagesSquare, PenSquare, Search } from "lucide-react";
 import { countPendingTasksFor, listAttentionTasksFor, listMyRequests, listPendingTasksFor } from "@/lib/db/repositories/approvals.repository";
 import { countTaskItems, listTaskItems } from "@/lib/db/repositories/work.repository";
@@ -27,11 +28,14 @@ export async function MobileHome({
   approvals,
   tasks,
   can,
+  soon = [],
 }: {
   user: { id: number };
   greeting: string;
   approvals: boolean;
   tasks: boolean;
+  // D-308 (owner): modules not switched on for the person: locked tiles.
+  soon?: readonly string[];
   can: { newRequest: boolean; search: boolean; ai: boolean; newRequestHref?: string };
 }) {
   const now = new Date();
@@ -213,6 +217,19 @@ export async function MobileHome({
             ))}
           </ul>
         </Block>
+      )}
+
+      {soon.length > 0 && (
+        <section aria-label="Coming soon" data-testid="mobile-coming-soon">
+          <h2 className="mob-section-title mb-2 px-1">Coming soon</h2>
+          <ul className="grid grid-cols-2 gap-3">
+            {soon.map((label) => (
+              <li key={label}>
+                <ComingSoonCard title={label} lines={2} className="mob-card px-3 py-3" />
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
     </div>
   );

@@ -9,6 +9,8 @@ export interface PickerOption {
   value: string;
   label: string;
   href: string;
+  // D-307: a dashboard of a module not given yet: listed, not openable.
+  disabled?: boolean;
 }
 
 export function AnalyticsPicker({
@@ -51,8 +53,8 @@ export function AnalyticsPicker({
           data-testid="board-picker"
         >
           {boards.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
+            <option key={option.value} value={option.value} disabled={option.disabled}>
+              {option.disabled ? `${option.label} (coming soon)` : option.label}
             </option>
           ))}
         </select>

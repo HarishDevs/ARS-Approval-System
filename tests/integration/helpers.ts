@@ -20,7 +20,7 @@ export async function createUser(
   counter += 1;
   const tag = `${Date.now().toString(36)}${counter}`;
   const [result] = await getDbPool().query<ResultSetHeader>(
-    "INSERT INTO users (login_id, name, email, sign_in_method, reporting_manager_id, department_id, designation_id, active) VALUES (?, ?, ?, 'GOOGLE', ?, ?, ?, ?)",
+    "INSERT INTO users (login_id, name, email, sign_in_method, reporting_manager_id, department_id, designation_id, active, module_access) VALUES (?, ?, ?, 'GOOGLE', ?, ?, ?, ?, 'APPROVAL,TASK,PROJECT,INFORMATION,MEETING')",
     [`it-${tag}`, input.name ?? `Person ${tag}`, `it-${tag}@example.test`, input.managerId ?? null, input.departmentId ?? null, await designationId(input.approver ?? true), input.active ?? true],
   );
   const id = result.insertId;

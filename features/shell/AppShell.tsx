@@ -116,7 +116,7 @@ export async function AppShell({ area, user, nav, children }: { area: AppArea; u
     { href: "/users/tasks/new", label: "New task", group: "Tasks" },
     { href: "/users/work/my-tasks", label: "My tasks", group: "Tasks" },
     { href: "/users/tasks", label: "My tasks (table with filters)", group: "Tasks" },
-    { href: "/users/work/projects", label: "Projects", group: "Tasks" },
+    { href: "/users/work/projects", label: "Projects", group: "Projects" },
     { href: "/users/work/search", label: "Task search", group: "Tasks" },
     { href: "/users/tasks/assigned", label: "Tasks assigned by me", group: "Tasks" },
     { href: "/users/tasks/team", label: "Team tasks", group: "Tasks" },
@@ -174,15 +174,22 @@ export async function AppShell({ area, user, nav, children }: { area: AppArea; u
   // bar of its own any more); the Classic view keeps the Tasks module's
   // pages. + Create offers what the person can create.
   const tasksOn = items.some((item) => item.section === "Tasks");
+  const projectsOn = tasksOn && visible("/users/work/projects/new");
+  // D-307 (owner): Tasks and Projects are separate modules, so separate
+  // groups; each link only when the person may open it.
   const workGroup: NavItem[] = [
-    { href: "/users/work/my-tasks", label: "My Tasks", also: ["/users/tasks"] },
-    { href: "/users/work/projects", label: "All projects" },
-    { href: "/users/work/periodic", label: "Periodic tasks" },
-    { href: "/users/work/projects/new", label: "New project" },
-    { href: "/users/work/projects?show=templates", label: "Templates" },
-  ].map((item) => ({ ...item, section: "Tasks & projects" }));
+    ...[
+      { href: "/users/work/my-tasks", label: "My Tasks", also: ["/users/tasks"] },
+      { href: "/users/work/periodic", label: "Periodic tasks" },
+    ].map((item) => ({ ...item, section: "Tasks" })),
+    ...[
+      { href: "/users/work/projects", label: "All projects" },
+      { href: "/users/work/projects/new", label: "New project" },
+      { href: "/users/work/projects?show=templates", label: "Templates" },
+    ].map((item) => ({ ...item, section: "Projects" })),
+  ].filter((item) => visible(item.href));
   const sideItems: NavItem[] =
-    area === "users" ? items.flatMap((item, index) => (item.section !== "Tasks" ? [item] : items.findIndex((other) => other.section === "Tasks") === index ? workGroup : [])) : items;
+    area === "users" ? items.flatMap((item, index) => (item.section !== "Tasks" && item.section !== "Projects" ? [item] : items.findIndex((other) => other.section === "Tasks" || other.section === "Projects") === index ? workGroup : [])) : items;
 
   // D-229: the sidebar's rail (collapsed): top-level pages and each group once.
   const rail: RailEntry[] = [];
@@ -223,9 +230,9 @@ export async function AppShell({ area, user, nav, children }: { area: AppArea; u
           homeHref={`/${area}`}
           homeLabel={`ARS Green Steel: ${SPACE_LABEL[area]} home`}
           rail={rail}
-          create={area === "users" ? { approval: items.some((item) => item.href === "/users/custom"), task: tasksOn, information: items.some((item) => item.href === "/users/information/new") } : null}
+          create={area === "users" ? { approval: items.some((item) => item.href === "/users/custom"), task: tasksOn, project: projectsOn, information: items.some((item) => item.href === "/users/information/new") } : null}
         >
-          {area === "users" && <CreateMenu approval={items.some((item) => item.href === "/users/custom")} task={tasksOn} information={items.some((item) => item.href === "/users/information/new")} />}
+          {area === "users" && <CreateMenu approval={items.some((item) => item.href === "/users/custom")} task={tasksOn} project={projectsOn} information={items.some((item) => item.href === "/users/information/new")} />}
           <p className="shrink-0 px-6 pt-4 text-caption font-semibold uppercase tracking-wider text-ink-faint">{SPACE_LABEL[area]}</p>
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain" data-testid="sidebar-scroll">
             <SideNav items={sideItems} collapsible={area !== "admin"} chats={chats} />

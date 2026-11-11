@@ -1,5 +1,5 @@
 import "server-only";
-import { CATEGORY_SQL, type NotificationCategory } from "@/server/notifications/categories";
+import { CATEGORY_SQL, VISIBLE_TO_MODULES_SQL, type NotificationCategory } from "@/server/notifications/categories";
 import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { getDbPool, type Queryable } from "@/lib/db/client";
 import { INDIA_TODAY_SQL } from "@/lib/db/repositories/directory.repository";
@@ -158,7 +158,7 @@ export type InboxState = "activity" | "bookmarks" | "archive";
 
 export async function countUnread(userId: number, db: Queryable = getDbPool(), category?: NotificationCategory | null): Promise<number> {
   const [rows] = await db.query<(RowDataPacket & { total: number })[]>(
-    `SELECT COUNT(*) AS total FROM notifications n WHERE n.user_id = ? AND n.read_at IS NULL AND n.archived_at IS NULL${category ? ` AND ${CATEGORY_SQL} = ?` : ""}`,
+    `SELECT COUNT(*) AS total FROM notifications n WHERE n.user_id = ? AND n.read_at IS NULL AND n.archived_at IS NULL AND ${VISIBLE_TO_MODULES_SQL}${category ? ` AND ${CATEGORY_SQL} = ?` : ""}`,
     category ? [userId, category] : [userId],
   );
   return Number(rows[0]?.total ?? 0);
@@ -167,7 +167,7 @@ export async function countUnread(userId: number, db: Queryable = getDbPool(), c
 // Unread counts per module, in one query.
 export async function countUnreadByCategory(userId: number, db: Queryable = getDbPool()): Promise<Record<NotificationCategory, number>> {
   const [rows] = await db.query<(RowDataPacket & { category: NotificationCategory; total: number })[]>(
-    `SELECT ${CATEGORY_SQL} AS category, COUNT(*) AS total FROM notifications n WHERE n.user_id = ? AND n.read_at IS NULL AND n.archived_at IS NULL GROUP BY 1`,
+    `SELECT ${CATEGORY_SQL} AS category, COUNT(*) AS total FROM notifications n WHERE n.user_id = ? AND n.read_at IS NULL AND n.archived_at IS NULL AND ${VISIBLE_TO_MODULES_SQL} GROUP BY 1`,
     [userId],
   );
   const counts: Record<NotificationCategory, number> = { APPROVAL: 0, TASK: 0, MEETING: 0, INFORMATION: 0, SYSTEM: 0 };
@@ -179,7 +179,7 @@ export async function countUnreadByCategory(userId: number, db: Queryable = getD
 // continues after the last one shown. Only the person's own rows.
 export async function listInbox(userId: number, limit: number, beforeId?: number, db: Queryable = getDbPool(), category?: NotificationCategory | null, state: InboxState = "activity", unreadOnly = false, mentionsOnly = false): Promise<InboxItem[]> {
   // v1.43.0: the mobile Inbox's Mentions tab (someone @-mentioned me).
-  const where = ["n.user_id = ?", state === "archive" ? "n.archived_at IS NOT NULL" : state === "bookmarks" ? "n.bookmarked_at IS NOT NULL" : "n.archived_at IS NULL"];
+  const where = ["n.user_id = ?", VISIBLE_TO_MODULES_SQL, state === "archive" ? "n.archived_at IS NOT NULL" : state === "bookmarks" ? "n.bookmarked_at IS NOT NULL" : "n.archived_at IS NULL"];
   if (unreadOnly) where.push("n.read_at IS NULL");
   if (mentionsOnly) where.push("n.event_type IN ('REQUEST_MENTION', 'WORK_TASK_MENTION')");
   const params: unknown[] = [userId];

@@ -4,6 +4,8 @@ import { TaskPriorityPill, priorityControlProps } from "@/features/ui/ChoicePill
 import { ApprovalBadge, approvalRowClass } from "@/features/work/ApprovalLink";
 import { ArrowUpDown, CalendarDays, ChevronDown, ChevronRight, Filter, GitBranch, Layers, Lock, MessageSquare, Plus, Repeat, Search, Settings2, Users, X } from "lucide-react";
 import Link from "next/link";
+import { useProjectsOn } from "@/features/work/projects-access";
+import { LockedProjectName } from "@/features/ui/ComingSoon";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { deleteViewAction, saveViewAction, taskFieldsAction, updateViewAction } from "@/app/users/work/actions";
@@ -92,6 +94,7 @@ export function TaskGrid({
   editPriority?: boolean;
   emptyText?: string;
 }) {
+  const projectsOn = useProjectsOn();
   const { call } = useWorkCall();
   const router = useRouter();
   const paneLink = usePaneLink();
@@ -448,7 +451,10 @@ export function TaskGrid({
                             )}
                             {column === "projects" && (
                               <span className="flex min-w-0 gap-1">
-                                {task.projects.slice(0, 2).map((project) => (
+                                {task.projects.slice(0, 2).map((project) =>
+                                  !projectsOn ? (
+                                    <LockedProjectName key={project.id} name={project.name} />
+                                  ) : (
                                   <Link
                                     key={project.id}
                                     href={`/users/work/projects/${project.id}`}
@@ -457,7 +463,8 @@ export function TaskGrid({
                                     <span aria-hidden="true" className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ backgroundColor: COLOR_HEX[project.color] ?? COLOR_HEX.gray }} />
                                     <span className="truncate">{project.name}</span>
                                   </Link>
-                                ))}
+                                  ),
+                                )}
                               </span>
                             )}
                             {column === "visibility" && (

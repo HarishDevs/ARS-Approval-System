@@ -7,7 +7,7 @@ import { FitPages } from "@/features/analytics/FitPages";
 import { notFound, redirect } from "next/navigation";
 import { canExport, featureOn } from "@/server/settings/features";
 import { BoardPicker, CenterScreen } from "@/features/analytics/CenterScreen";
-import { boardsFor, parseBoard } from "@/server/analytics/center";
+import { boardsFor, parseBoard, soonBoards } from "@/server/analytics/center";
 import { hasModule } from "@/server/modules/modules";
 import { requireArea } from "@/server/authorization/guards";
 import { PageHeader } from "@/features/shell/PageHeader";
@@ -64,7 +64,9 @@ export async function AnalyticsScreen({ searchParams, base }: { searchParams: Re
   const modules = tasksOnly ? { approval: false, task: true, information: false, meeting: false } : allModules;
   const boards = tasksOnly ? (["overview", "tasks"] as const).filter((key) => boardsFor({ modules: allModules, scopes: scopes.map((item) => item.kind) }).includes(key)) : boardsFor({ modules, scopes: scopes.map((item) => item.kind) });
   const board = boards.includes(requested as (typeof boards)[number]) ? requested : tasksOnly ? "tasks" : "overview";
-  if (board !== "approvals" && !limited) return <CenterScreen base={base} board={board} boards={boards} modules={modules} query={query} scope={scope} scopes={scopes} viewer={viewer} canExport={await canExport(user)} />;
+  // D-307 (owner): dashboards of modules not given yet are listed, locked.
+  const soon = tasksOnly ? [] : soonBoards(allModules);
+  if (board !== "approvals" && !limited) return <CenterScreen base={base} board={board} boards={boards} soon={soon} modules={modules} query={query} scope={scope} scopes={scopes} viewer={viewer} canExport={await canExport(user)} />;
   const now = new Date();
   const period = resolvePeriod({ key: query.period, from: query.from, to: query.to }, indiaToday(now));
   const choices = await dashboardChoices();
@@ -125,7 +127,7 @@ export async function AnalyticsScreen({ searchParams, base }: { searchParams: Re
         </Link>
       </PageHeader>
       <PhoneFold mobile={await isMobileLayout()} summary={`${scope.label} · ${period.label}`}>
-      <BoardPicker base={base} board="approvals" boards={boards} query={{ ...query, period: period.key }} scopes={scopes} scope={scope} />
+      <BoardPicker base={base} board="approvals" boards={boards} soon={soon} query={{ ...query, period: period.key }} scopes={scopes} scope={scope} />
 
       {/* v1.51.1 (owner): toolbar filters instead of a filter form. */}
       <ListToolbar

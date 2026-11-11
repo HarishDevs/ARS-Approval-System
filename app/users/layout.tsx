@@ -10,15 +10,18 @@ import { peopleOptions } from "@/server/work/page-context";
 import { workViewer } from "@/server/work/task-access";
 import { chatAccess } from "@/server/ai/policy";
 import { PushKeeper } from "@/features/pwa/PushKeeper";
+import { ProjectsAccess } from "@/features/work/projects-access";
 
 export const dynamic = "force-dynamic";
 
 export default async function UsersLayout({ children }: { children: React.ReactNode }) {
   const { user } = await requireArea("users");
   // D-221: "Create → Task" works on every page (the Draft task panel).
+  // D-307 (owner): Projects is its own module.
+  const projectsOn = hasModule(user, "PROJECT");
   const creator =
     hasModule(user, "TASK") && (await featureOn("tasks", user))
-      ? await Promise.all([listVisibleProjects(await workViewer(user)), peopleOptions()])
+      ? await Promise.all([projectsOn ? listVisibleProjects(await workViewer(user)) : Promise.resolve([]), peopleOptions()])
           .then(([projects, people]) => ({ projects: projects.slice(0, 200).map((project) => ({ id: project.id, name: project.name, color: project.color })), people }))
           .catch(() => null)
       : null;
@@ -31,10 +34,12 @@ export default async function UsersLayout({ children }: { children: React.ReactN
       : false;
   return (
     <AppShell area="users" user={user} nav={await usersNav(user)}>
-      {children}
-      <HolidayPrompt />
-      <PushKeeper userId={user.id} />
-      {creator && <TaskCreator projects={creator.projects} people={creator.people} meId={user.id} ai={ai} />}
+      <ProjectsAccess on={projectsOn}>
+        {children}
+        <HolidayPrompt />
+        <PushKeeper userId={user.id} />
+        {creator && <TaskCreator projects={creator.projects} people={creator.people} meId={user.id} ai={ai} />}
+      </ProjectsAccess>
     </AppShell>
   );
 }

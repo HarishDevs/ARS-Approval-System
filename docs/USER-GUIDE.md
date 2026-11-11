@@ -20,12 +20,21 @@ From the top:
 - **+ Create:** a new approval request, task, project or information (only what you can create).
 - **Home** and **Inbox**.
 - **My Approvals:** New request, My pending requests, My approved requests, Waiting for me, Approved by me, Collaborating, Request templates. If your designation isn't an approver designation you see only New request, My pending requests, My approved requests and Collaborating (Request templates is still reached from New request). A request you open highlights the list it belongs to for you (for example Waiting for me when it needs your decision).
-- **Tasks & projects:** My Tasks, All projects, Periodic tasks, New project, Templates, Task with a type (form).
+- **Tasks:** My Tasks, Assigned by me, Team tasks, Periodic tasks, Task search, New task.
+- **Projects:** All projects, New project, Templates (only if the Projects module is switched on for you).
 - **Information:** Information inbox, Sent by me, New information.
 - **AI Assistant** (if Pico Bot is on for you), with your chats.
 - **Calendar** and **Analytics**.
 
 Groups open and close like a dropdown; the group of the page you're on opens by itself and the app remembers the rest. **☰** folds the sidebar into a narrow row of icons. You only see the modules IT gave you.
+
+### Modules and "Coming soon"
+ARS-CMS has five main modules: **Approvals, Tasks, Projects, Information** and **Meeting Management** (and later the **AI Assistant**). They are switched on per person, one at a time as each is released. Home, Inbox, Calendar and Analytics are shared by every module.
+- A module **not switched on for you** shows on Home, the Classic menu and Analytics as a **blurred card or a locked choice marked "Coming soon"**. You can't open it; its content is never shown. Once IT switches it on, it opens normally.
+- A page IT has set to **Hidden** in Page access isn't shown at all.
+- **Tasks without Projects:** a task's project shows as its name with a lock, with no link; you can't add a task to a project or create a project. You see the tasks you are on and your team's, not other tasks of a project; project notifications wait until Projects is switched on for you.
+- On the phone, Home lists modules not switched on as locked "Coming soon" tiles.
+- **For IT:** Projects can only be given together with Tasks.
 
 There is **no Search in the sidebar**: use the search bar at the top. **Every search starts there** (Ctrl K): its **Filters** opens a full search of requests or tasks, and **Saved searches** lists ready-made searches you can open plus your own. Lists and dashboards have no filter forms: their toolbar has **Filter** (a dropdown with Apply), Sort, Group, Options and a small search icon. On a phone, see **On your phone** below.
 

@@ -18,7 +18,7 @@ import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { notify } from "@/server/notifications/notify";
 import { signInMethodChangedMessage, whatsappChangedMessage } from "@/server/notifications/security-messages";
 import { checkCanEdit, checkContactChange, checkDeactivate, checkManager, checkModuleChange, checkRoleChange, type Actor, type TargetUser } from "@/server/admin/user-rules";
-import { applyModuleChange, sameModules, type ModuleChange, type ModuleCode } from "@/server/modules/modules";
+import { applyModuleChange, modulesProblem, sameModules, type ModuleChange, type ModuleCode } from "@/server/modules/modules";
 import { diffFields, type ParsedUserInput } from "@/server/admin/user-input";
 import { logError } from "@/lib/logging/logger";
 import { countPendingTasks } from "@/server/approvals/service";
@@ -284,6 +284,12 @@ export async function bulkChangeModules(ids: readonly number[], change: ModuleCh
       continue;
     }
     const after = applyModuleChange(existing.modules, change, chosen);
+    // D-308: never Projects without Tasks (adding Projects alone, or removing Tasks).
+    const problem = existing.roles.includes("SUPER_ADMIN") ? null : modulesProblem(after);
+    if (problem) {
+      refuse(problem);
+      continue;
+    }
     if (sameModules(existing.modules, after)) {
       unchanged += 1;
       continue;

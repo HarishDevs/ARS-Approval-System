@@ -2,6 +2,8 @@
 
 import { ArrowDown, ArrowUp, Diamond, Heart, Lock, X } from "lucide-react";
 import Link from "next/link";
+import { useProjectsOn } from "@/features/work/projects-access";
+import { LockedProjectName } from "@/features/ui/ComingSoon";
 import { useState } from "react";
 import { deleteTaskAction, dependencyAction, followAction, likeAction, moveTaskAction, parentAction, subtaskOrderAction, tagAction, taskFieldsAction, taskProjectAction } from "@/app/users/work/actions";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
@@ -53,6 +55,7 @@ export function TaskWorkPanel({ data }: { data: PanelData }) {
   const { call, pending } = useWorkCall();
   const now = new Date(data.nowIso);
   const [addProject, setAddProject] = useState<number | "">("");
+  const projectsOn = useProjectsOn();
   const paneLink = usePaneLink();
   const [parentRef, setParentRef] = useState("");
   const liked = data.likes.some((person) => person.id === data.meId);
@@ -91,13 +94,17 @@ export function TaskWorkPanel({ data }: { data: PanelData }) {
           {data.links.map((link) => (
             <li key={link.projectId} className="flex flex-wrap items-center gap-2 text-label">
               <ProjectDot color={link.color} />
-              <Link href={`/users/work/projects/${link.projectId}`} className="link">
-                {link.projectName}
-              </Link>
+              {projectsOn ? (
+                <Link href={`/users/work/projects/${link.projectId}`} className="link">
+                  {link.projectName}
+                </Link>
+              ) : (
+                <LockedProjectName name={link.projectName} />
+              )}
               <select
                 aria-label={`Section in ${link.projectName}`}
                 value={link.sectionId}
-                disabled={!data.canEdit}
+                disabled={!data.canEdit || !projectsOn}
                 onChange={(event) => void call(() => moveTaskAction({ taskId: data.taskId, projectId: link.projectId, sectionId: Number(event.target.value), beforeId: null, afterId: null }))}
                 className="field-input h-8 w-auto py-0 text-label"
               >
@@ -113,11 +120,11 @@ export function TaskWorkPanel({ data }: { data: PanelData }) {
                   <span key={field.id} className="flex w-full items-center gap-2 pl-5 text-caption">
                     <span className="w-28 shrink-0 truncate text-ink-muted">{field.name}</span>
                     <span className="w-56">
-                      <FieldInput taskId={data.taskId} field={field} value={data.fields.find((item) => item.projectId === link.projectId)?.values[field.id] ?? ""} canChange={data.canProgress} compact />
+                      <FieldInput taskId={data.taskId} field={field} value={data.fields.find((item) => item.projectId === link.projectId)?.values[field.id] ?? ""} canChange={data.canProgress && projectsOn} compact />
                     </span>
                   </span>
                 ))}
-              {data.canEdit && (
+              {data.canEdit && projectsOn && (
                 <button type="button" aria-label={`Remove from ${link.projectName}`} onClick={() => void call(() => taskProjectAction(data.taskId, link.projectId, false))} className="rounded p-1 text-ink-faint hover:text-danger-600">
                   <X aria-hidden="true" className="h-4 w-4" />
                 </button>
@@ -125,7 +132,7 @@ export function TaskWorkPanel({ data }: { data: PanelData }) {
             </li>
           ))}
         </ul>
-        {data.canProgress && data.projectChoices.length > 0 && (
+        {projectsOn && data.canProgress && data.projectChoices.length > 0 && (
           <div className="flex flex-wrap items-end gap-2">
             <div>
               <label htmlFor="add-to-project" className="field-label">

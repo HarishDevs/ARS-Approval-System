@@ -16,6 +16,8 @@ function StepCard({ step }: { step: MapStep }) {
       </div>
     );
   }
+  // A level that will be skipped doesn't name who it would have gone to.
+  const people = step.status === "SKIPPED" ? step.people.filter((person) => person.status !== "EXPECTED") : step.people;
   return (
     // v1.49 (owner's layout): the current level is outlined; each person wears their status as a pill.
     <div className={`rounded-lg border p-3.5 ${step.status === "ACTIVE" ? "border-primary-600 bg-primary-50/40 shadow-sm ring-1 ring-primary-600" : "border-line bg-surface"}`}>
@@ -28,11 +30,11 @@ function StepCard({ step }: { step: MapStep }) {
         <StepStatusPill status={step.status} />
       </div>
       <p className="mt-0.5 text-caption text-ink-muted">{step.reason ?? step.rule}</p>
-      {step.people.length > 0 && (
+      {people.length > 0 && (
         <ul className="mt-2 space-y-1.5">
-          {step.people.map((person) => {
+          {people.map((person) => {
             const status =
-              person.status === "TOLD" ? PERSON_EXTRA.TOLD : person.status === "ASSIGNED" ? PERSON_EXTRA.ASSIGNED : step.type === "WORK" && person.status === "APPROVED" ? PERSON_EXTRA.DONE : taskStatusText(person.status);
+              person.status === "TOLD" ? PERSON_EXTRA.TOLD : person.status === "ASSIGNED" ? PERSON_EXTRA.ASSIGNED : person.status === "EXPECTED" ? (step.type === "WORK" ? { ...PERSON_EXTRA.EXPECTED, label: "will do it" } : step.type === "NOTIFY" ? { ...PERSON_EXTRA.EXPECTED, label: "will be told" } : PERSON_EXTRA.EXPECTED) : step.type === "WORK" && person.status === "APPROVED" ? PERSON_EXTRA.DONE : taskStatusText(person.status);
             return (
               <li key={`${person.userId}-${person.status}`} className="text-label">
                 <span className="font-medium">{person.name}</span>

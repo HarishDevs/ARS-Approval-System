@@ -34,11 +34,11 @@ test("an admin sets module access on the user page; it persists, shows on the li
   await page.getByRole("button", { name: "Save changes" }).click();
   await expect(page.getByText("Saved.")).toBeVisible();
   await page.reload();
-  await expect(page.getByTestId("user-modules")).toHaveText("Approval, Information, AI");
+  await expect(page.getByTestId("user-modules")).toHaveText("Approvals, Information, AI Assistant");
   await expect(page.getByTestId("module-access").getByRole("checkbox", { name: /^Task/ })).not.toBeChecked();
 
   await page.goto(`/admin/users?q=MOD_A_${tag}&module=AI`);
-  await expect(page.getByRole("row").filter({ hasText: `MOD_A_${tag}` })).toContainText("Approval, Information, AI");
+  await expect(page.getByRole("row").filter({ hasText: `MOD_A_${tag}` })).toContainText("Approvals, Information, AI Assistant");
   await page.goto(`/admin/users?q=MOD_A_${tag}&module=TASK`);
   await expect(page.getByRole("row").filter({ hasText: `MOD_A_${tag}` })).toHaveCount(0);
 });
@@ -65,9 +65,10 @@ test("without the Task module: no Tasks in the sidebar, and typed task addresses
   await page.goto("/users");
   const sidebar = page.getByTestId("sidebar");
   await expect(sidebar.getByTestId("nav-group-My Approvals")).toBeVisible();
-  await expect(sidebar.getByTestId("nav-group-Tasks & projects")).toHaveCount(0);
+  await expect(sidebar.getByTestId("nav-group-Tasks")).toHaveCount(0);
+  await expect(sidebar.getByTestId("nav-group-Projects")).toHaveCount(0);
   for (const path of ["/users/tasks", "/users/tasks/new", "/users/tasks/assigned"]) await expectNoAccess(page, path);
-  await expect(page.getByTestId("no-access")).toContainText("Task module");
+  await expect(page.getByTestId("no-access")).toContainText("Tasks module: coming soon");
   // The calendar offers no task kind.
   await page.goto("/users/calendar");
   await expect(page.getByRole("link", { name: /^Tasks/ })).toHaveCount(0);
@@ -90,7 +91,7 @@ test("a Super Admin's page says every module instead of showing boxes that would
   await context.addCookies([await sessionCookie("E2E_ADMIN")]);
   await page.goto("/admin/users?q=E2E_SUPER");
   await page.getByRole("link", { name: "Sam Super" }).click();
-  await expect(page.getByTestId("module-access")).toContainText("Every module: Approval, Task, Information, AI");
+  await expect(page.getByTestId("module-access")).toContainText("Every module: Approvals, Tasks, Projects, Information, Meeting Management, AI Assistant");
   await expect(page.getByTestId("module-access").getByRole("checkbox")).toHaveCount(0);
   await expect(page.getByTestId("user-modules")).toHaveText("All (Super Admin)");
 });

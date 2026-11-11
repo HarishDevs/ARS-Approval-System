@@ -24,7 +24,7 @@ export function NoAccess({ pageKey, why, home }: { pageKey: string | undefined; 
       </span>
       <h1 className="text-title font-semibold">You don&apos;t have access to this page</h1>
       {page && <p className="font-semibold text-ink">{page.label}</p>}
-      <p className="max-w-md text-ink-muted">{moduleName ? `It belongs to the ${moduleName} module, which isn't switched on for you.` : (WHY[why ?? ""] ?? WHY.UNKNOWN_PAGE)}</p>
+      <p className="max-w-md text-ink-muted">{moduleName ? `It belongs to the ${moduleName} module: coming soon for you. It opens once IT switches it on for you.` : (WHY[why ?? ""] ?? WHY.UNKNOWN_PAGE)}</p>
       <p className="max-w-md text-label text-ink-muted">If you need it for your work, ask IT to give you access.</p>
       <Link href={home} className="btn-primary btn-compact">
         Go to Home

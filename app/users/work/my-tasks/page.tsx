@@ -1,3 +1,4 @@
+import { hasModule } from "@/server/modules/modules";
 import type { Metadata } from "next";
 import { AlarmClock, CalendarClock, CalendarRange, CheckCircle2, ListTodo } from "lucide-react";
 import { paneLinks, paneTaskId, TaskPane, WithPane } from "@/features/work/TaskPane";
@@ -51,7 +52,7 @@ export default async function MyTasksPage({
   if (await isMobileLayout()) {
     const paneTask = paneTaskId(params.task);
     if (paneTask) redirect(`/users/tasks/${paneTask}`);
-    return <MobileTasks userId={user.id} tab={params.tab} sort={params.sort} group={params.group} />;
+    return <MobileTasks userId={user.id} tab={params.tab} sort={params.sort} group={params.group} projectsOn={hasModule(user, "PROJECT")} />;
   }
   const view = params.view === "board" || params.view === "calendar" ? params.view : "list";
   const showDone = params.done === "1" || view === "list";

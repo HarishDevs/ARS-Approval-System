@@ -7,6 +7,7 @@ import { followAction, quickAddAction, recurrenceAction, taskFieldsAction } from
 import { taskAction } from "@/app/users/tasks/actions";
 import { draftTaskTextAction } from "@/app/users/ai/actions";
 import { CREATE_TASK_EVENT, ProjectDot, useWorkCall } from "@/features/work/client";
+import { useProjectsOn } from "@/features/work/projects-access";
 import { encodeMentions, mentionIds, prefixLines, wrapSelection } from "@/features/work/rich-text";
 import { RECURRENCE_KINDS, type Recurrence } from "@/server/work/more-rules";
 
@@ -106,6 +107,7 @@ function CreateTaskDialog({
   const [weekdays, setWeekdays] = useState<number[]>([]);
   const [small, setSmall] = useState(false);
   const [picking, setPicking] = useState<"" | "assignee" | "project" | "due" | "repeat">("");
+  const projectsOn = useProjectsOn();
   // D-238: the toolbar's state.
   const [formatting, setFormatting] = useState(false);
   const [pop, setPop] = useState<Pop>("");
@@ -392,8 +394,8 @@ function CreateTaskDialog({
                       {periodic && others.length ? "Change" : "+ Person"}
                     </button>
                   ))}
-                <span className="text-ink-muted">in</span>
-                {picking === "project" ? (
+                {projectsOn && <span className="text-ink-muted">in</span>}
+                {!projectsOn ? null : picking === "project" ? (
                   <select
                     autoFocus
                     aria-label="Project"
@@ -678,7 +680,7 @@ function CreateTaskDialog({
             {pop === "plus" && (
               <ul role="menu" aria-label="More" className={`${popover} left-0 w-56 py-1`}>
                 {[
-                  { label: "Add to a project", run: () => setPicking("project") },
+                  ...(projectsOn ? [{ label: "Add to a project", run: () => setPicking("project") }] : []),
                   { label: "Set a due date", run: openDue },
                   { label: "Repeat (periodic)", run: openRepeat },
                   { label: "Attach a file", run: () => filePicker.current?.click() },

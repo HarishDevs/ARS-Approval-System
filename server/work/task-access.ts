@@ -1,4 +1,6 @@
 import "server-only";
+import { hasModule } from "@/server/modules/modules";
+import type { ModuleCode } from "@/types/auth";
 import type { RowDataPacket } from "mysql2/promise";
 import { getDbPool, type Queryable } from "@/lib/db/client";
 import { personFacts } from "@/lib/db/repositories/tasks.repository";
@@ -13,9 +15,11 @@ import type { TaskViewer } from "@/server/modules/task-rules";
 // they may do. Used by the task page, task actions and every work action.
 export const isAdminRoles = (roles: readonly string[]) => roles.includes("IT_ADMIN") || roles.includes("SUPER_ADMIN");
 
-export async function workViewer(actor: { id: number; roles: readonly string[] }, db: Queryable = getDbPool()): Promise<WorkViewer> {
+export async function workViewer(actor: { id: number; roles: readonly string[]; modules?: readonly ModuleCode[] }, db: Queryable = getDbPool()): Promise<WorkViewer> {
   const me = await personFacts(actor.id, db);
-  return { id: actor.id, departmentId: me?.departmentId ?? null, isAdmin: isAdminRoles(actor.roles), teamIds: await teamOf(actor.id, db) };
+  // D-308: without the Projects module, projects grant nothing (modules unknown = as before).
+  const projects = !actor.modules || hasModule({ roles: actor.roles, modules: actor.modules }, "PROJECT");
+  return { id: actor.id, departmentId: me?.departmentId ?? null, isAdmin: isAdminRoles(actor.roles), teamIds: await teamOf(actor.id, db), projects };
 }
 
 // D-216: everyone below the person in the reporting chain (all levels).

@@ -30,7 +30,7 @@ export function SidebarFrame({
   homeHref: string;
   homeLabel: string;
   rail: RailEntry[];
-  create: { approval: boolean; task: boolean; information: boolean } | null;
+  create: { approval: boolean; task: boolean; project?: boolean; information: boolean } | null;
   children: React.ReactNode;
 }) {
   const [collapsed, setCollapsed] = useState(initialCollapsed);

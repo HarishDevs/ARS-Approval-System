@@ -20,8 +20,8 @@ async function as(context: BrowserContext, loginId: string) {
 test("a project: create it, add tasks inline, see them in list, board and timeline", async ({ page, context }) => {
   await as(context, "E2E_REQ");
   await page.goto("/users/work/projects");
-  // D-223: the Tasks pages are the sidebar's "Tasks & projects" group (open on its pages).
-  await expect(page.getByTestId("nav-group-Tasks & projects").getByRole("link", { name: "All projects" })).toHaveAttribute("aria-current", "page");
+  // D-223 / D-307: the project pages are the sidebar's "Projects" group (open on its pages).
+  await expect(page.getByTestId("nav-group-Projects").getByRole("link", { name: "All projects" })).toHaveAttribute("aria-current", "page");
   projectUrl = await createProject(page, projectName);
   await expect(page.getByRole("heading", { level: 1, name: projectName })).toBeVisible();
 
@@ -154,8 +154,9 @@ test("Admin → Task holidays: rules are saved; the sidebar lists the new task p
   await page.goto("about:blank");
   await as(context, "E2E_REQ");
   await page.goto("/users/work");
-  // D-221 / D-223: one "Tasks & projects" group in the sidebar, and + Create at its top.
-  await expect(page.locator("aside nav").getByRole("button", { name: "Tasks & projects" })).toBeVisible();
+  // D-221 / D-223 / D-307: "Tasks" and "Projects" groups in the sidebar, and + Create at its top.
+  await expect(page.locator("aside nav").getByRole("button", { name: "Tasks", exact: true })).toBeVisible();
+  await expect(page.locator("aside nav").getByRole("button", { name: "Projects", exact: true })).toBeVisible();
   await expect(page.locator("aside nav").getByRole("link", { name: "Task home" })).toHaveCount(0);
   const create = page.getByTestId("create-menu");
   await expect(async () => {

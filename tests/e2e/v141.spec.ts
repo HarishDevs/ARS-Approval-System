@@ -97,7 +97,7 @@ test("My requests: status cards, columns kept on the account, the progress cell 
   await expect(page.getByTestId("request-table").getByRole("columnheader", { name: "Priority" })).toHaveCount(1);
   // Hide a column; it stays hidden after a reload.
   await page.getByTestId("column-picker").click();
-  await page.getByRole("group", { name: "Columns" }).getByLabel("Last activity").uncheck();
+  await page.getByRole("group", { name: "Columns" }).getByRole("checkbox", { name: "Last activity" }).uncheck();
   await expect(page.getByTestId("request-table").getByRole("columnheader", { name: "Last activity" })).toHaveCount(0);
   await page.reload();
   await expect(page.getByTestId("request-table").getByRole("columnheader", { name: "Last activity" })).toHaveCount(0);

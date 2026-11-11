@@ -1003,6 +1003,12 @@ Times are stored in UTC (`DATETIME`, set by `CURRENT_TIMESTAMP` or the app). Ind
 - Form JSON (`workflow_versions.form_json`, `module_type_versions.form_json`, `custom_approval_settings.form_json`): choice fields (CHOICE, RADIO, MULTI_CHOICE) may carry `optionColors`: `{ "<option>": "red" | "orange" | "yellow" | "green" | "teal" | "blue" | "purple" | "pink" | "grey" }`.
 - A request's priority is read from `approval_requests.form_data_json` at the key `priority` (case-insensitive) when its form version has a choice field with that key; nothing is stored separately.
 
+## v1.53.0: the Projects module (migration 202611111300_project_module)
+- `users.module_access` gains `PROJECT` (separate from `TASK`); nobody gets it (released later). The column default becomes `APPROVAL,TASK` (new people).
+
+## v1.52.3: deleting request files (migration 202611111200_attachment_delete)
+- `request_attachments.deleted_at`, `deleted_by`: a deleted file is marked, kept for audit, and left out of every read and count.
+
 ## v1.51.0: Meeting Management (migration 202611110900_meetings)
 - `users.module_access` gains `MEETING` (default and every existing user).
 - `meeting_types` (code, name, default points `template`, position, active; 11 seeded) and `meeting_management_members` (the Management group: ED, MD).

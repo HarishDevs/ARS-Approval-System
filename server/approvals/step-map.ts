@@ -8,7 +8,9 @@ import type { ApprovalNode, CompletionRule, FormData, InstanceState, NodeStatus,
 export interface MapPerson {
   userId: number;
   name: string;
-  status: TaskStatus | "TOLD" | "ASSIGNED";
+  // EXPECTED (v1.54.0, owner): a level not reached yet: who it will go to,
+  // worked out from the route now (the engine resolves again when it arrives).
+  status: TaskStatus | "TOLD" | "ASSIGNED" | "EXPECTED";
   decidedByName?: string; // only when a delegate acted
   comment?: string;
   decidedAt?: string;
@@ -170,13 +172,16 @@ export function buildStepMap(
   state: InstanceState,
   spec: BuilderSpec | null,
   names: ReadonlyMap<number, string>,
-  context: { formData?: FormData; fieldLabel?: (key: string) => string } = {},
+  context: { formData?: FormData; fieldLabel?: (key: string) => string; expected?: (node: ApprovalNode | NotifyNode) => { userId: number; name: string }[] } = {},
 ): MapStage[] {
   const approvalNodes = new Map(
     definition.nodes.filter((node): node is ApprovalNode | NotifyNode => node.kind === "APPROVAL" || node.kind === "NOTIFY").map((node) => [node.id, node]),
   );
   const nodeFor = (step: BuilderStep) => approvalNodes.get(`step_${step.id}`);
-  const mapAny = (node: ApprovalNode | NotifyNode) => (node.kind === "NOTIFY" ? mapNotify(node, state, names) : mapStep(node, state, names));
+  // v1.54.0 (owner): a level not reached yet shows who it will go to.
+  const withExpected = (step: MapStep, node: ApprovalNode | NotifyNode): MapStep =>
+    step.people.length === 0 && step.status === "WAITING" && context.expected ? { ...step, people: context.expected(node).map((person) => ({ ...person, status: "EXPECTED" as const })) } : step;
+  const mapAny = (node: ApprovalNode | NotifyNode) => withExpected(node.kind === "NOTIFY" ? mapNotify(node, state, names) : mapStep(node, state, names), node);
   const fieldLabel = context.fieldLabel ?? ((key: string) => key);
 
   // A level not reached yet whose skip condition already holds on the form

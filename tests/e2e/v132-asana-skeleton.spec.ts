@@ -21,8 +21,14 @@ test("the sidebar's Tasks & projects group; + Create → Task makes a periodic t
   await createProject(page, projectName);
   // D-223 (owner): the Tasks bar's pages sit in the sidebar; no second bar.
   await expect(page.getByTestId("work-rail")).toHaveCount(0);
-  const group = page.getByTestId("nav-group-Tasks & projects");
-  for (const label of ["My Tasks", "All projects", "Periodic tasks", "New project", "Templates"]) await expect(group.getByRole("link", { name: new RegExp(`^${label.replace(/[()]/g, "\\$&")}`) })).toBeVisible();
+  // D-307: Tasks and Projects are separate groups.
+  for (const [name, labels] of [["Tasks", ["My Tasks", "Periodic tasks"]], ["Projects", ["All projects", "New project", "Templates"]]] as const) {
+    const group = page.getByTestId(`nav-group-${name}`);
+    // A group folds when you are on another group's page: open it first.
+    const toggle = group.getByRole("button", { name, exact: true });
+    if ((await toggle.getAttribute("aria-expanded")) === "false") await toggle.click();
+    for (const label of labels) await expect(group.getByRole("link", { name: new RegExp(`^${label}`) })).toBeVisible();
+  }
 
   const create = page.getByTestId("create-menu");
   await expect(async () => {

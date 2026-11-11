@@ -32,7 +32,9 @@ export async function GET(request: NextRequest) {
         ? (await searchRequests(viewer, { ...parseSearchFilters({ q }), page: 1 })).items.slice(0, 8).map((item) => ({ id: item.id, requestNo: item.requestNo, title: item.title, status: STATUS_WORD[item.status] ?? item.status }))
         : (await listRecent(viewer, 8)).map((item) => ({ id: item.id, requestNo: item.requestNo, title: item.title, status: STATUS_WORD[item.status] ?? item.status }));
     // D-215: tasks and projects the person can see (same rule as everywhere).
-    const work = q.length >= 2 && hasModule(session.user, "TASK") && (await featureOn("tasks", session.user)) ? await quickWork(await workViewer(session.user), q) : { tasks: [], projects: [] };
+    const found = q.length >= 2 && hasModule(session.user, "TASK") && (await featureOn("tasks", session.user)) ? await quickWork(await workViewer(session.user), q) : { tasks: [], projects: [] };
+    // D-307: projects only for people with the Projects module.
+    const work = hasModule(session.user, "PROJECT") ? found : { ...found, projects: [] };
     // D-232: people and information too (the universal search).
     const people = q.length >= 2 ? (await searchPeople(q)).map((person) => ({ id: person.id, name: person.name, label: personLabel(person), email: person.email, detail: [person.department, person.designation].filter(Boolean).join(" · "), photo: photoUrl(person.id, person.photoUpdatedAt) })) : [];
     let information: { id: number; infoNo: string; title: string }[] = [];

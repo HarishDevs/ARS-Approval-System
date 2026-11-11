@@ -30,7 +30,7 @@ export async function usersNav(user: { roles: readonly string[] }): Promise<NavI
           { href: "/users/work/my-tasks", label: "My tasks", section: "Tasks" },
           { href: "/users/tasks/assigned", label: "Assigned by me", section: "Tasks" },
           { href: "/users/tasks/team", label: "Team tasks", section: "Tasks" },
-          { href: "/users/work/projects", label: "Projects", section: "Tasks" },
+          { href: "/users/work/projects", label: "Projects", section: "Projects" },
           { href: "/users/work/search", label: "Task search", section: "Tasks" },
           // D-219: repeating tasks have their own list.
           { href: "/users/work/periodic", label: "Periodic tasks", section: "Tasks" },

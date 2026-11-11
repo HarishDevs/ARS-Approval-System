@@ -2,6 +2,7 @@ import { workMirrorLink } from "@/server/approvals/work-mirror";
 import "server-only";
 import { afterResponse } from "@/lib/http/after-response";
 import type { RowDataPacket } from "mysql2/promise";
+import type { Queryable } from "@/lib/db/client";
 import { withTransaction } from "@/lib/db/transaction";
 import { getDbPool } from "@/lib/db/client";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
@@ -172,7 +173,7 @@ export async function setMember(projectId: number, member: { type: "USER" | "DEP
     else await repo.setProjectMember(projectId, member.type, member.id, next, actor.id, connection);
     await repo.appendProjectEvent(projectId, actor.id, next === null ? "MEMBER_REMOVED" : current ? "MEMBER_ROLE" : "MEMBER_ADDED", `${member.type}:${member.id}${next ? ` ${next}` : ""}`, connection);
     await recordAudit({ actorUserId: actor.id, action: "PROJECT_MEMBER", entityType: "PROJECT", entityId: projectId, sessionId: actor.sessionId, ipAddress: actor.ipAddress ?? null, metadata: { member, role: next } }, connection);
-    const messages = next && !current && member.type === "USER" && member.id !== actor.id ? [projectMessages.added({ id: projectId, name: found.project.name }, member.id, actor.name, PROJECT_ROLE_LABEL[next])] : [];
+    const messages = next && !current && member.type === "USER" && member.id !== actor.id && (await withProjects([member.id], connection)).includes(member.id) ? [projectMessages.added({ id: projectId, name: found.project.name }, member.id, actor.name, PROJECT_ROLE_LABEL[next])] : [];
     return insertOutbox(null, messages, connection);
   });
   await send(outbox);
@@ -805,7 +806,7 @@ export async function postStatus(projectId: number, input: { status: string; tit
     await repo.insertStatusUpdate(projectId, status, title, body, snapshot, actor.id, connection);
     await repo.updateProject(projectId, { current_status: status, completed_at: status === "COMPLETE" ? new Date() : null }, connection);
     await repo.appendProjectEvent(projectId, actor.id, "STATUS", `${STATUS_KIND_LABEL[status]}: ${title}`, connection);
-    const people = found.members.filter((member) => member.type === "USER" && member.id !== actor.id).map((member) => member.id);
+    const people = await withProjects(found.members.filter((member) => member.type === "USER" && member.id !== actor.id).map((member) => member.id), connection);
     return insertOutbox(null, people.map((person) => projectMessages.status({ id: projectId, name: found.project.name }, person, actor.name, STATUS_KIND_LABEL[status], title)), connection);
   });
   await send(outbox);
@@ -931,3 +932,16 @@ export async function quickAddForMany(input: QuickTaskInput, assigneeIds: readon
     message: `Created for ${ids.length} of ${people.length} people. Not for ${names.join(", ")}: ${[...new Set(missed.map((item) => item.message))].join(" ")}`,
   };
 }
+
+// D-308 (owner): project notifications (inbox, email, WhatsApp, push) go only
+// to people with the Projects module (or the Super Admin) until it is released.
+async function withProjects(userIds: readonly number[], db: Queryable): Promise<number[]> {
+  if (!userIds.length) return [];
+  const [rows] = await db.query<(RowDataPacket & { id: number })[]>(
+    "SELECT u.id FROM users u WHERE u.id IN (?) AND (FIND_IN_SET('PROJECT', u.module_access) > 0 OR EXISTS (SELECT 1 FROM user_roles ur JOIN roles r ON r.id = ur.role_id WHERE ur.user_id = u.id AND r.code = 'SUPER_ADMIN'))",
+    [userIds],
+  );
+  const allowed = new Set(rows.map((row) => Number(row.id)));
+  return userIds.filter((id) => allowed.has(id));
+}
+
