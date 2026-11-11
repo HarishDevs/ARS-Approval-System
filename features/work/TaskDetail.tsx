@@ -6,6 +6,7 @@ import { PageHeader } from "@/features/shell/PageHeader";
 import { Hint } from "@/features/ui/Hint";
 import { Badge, Breadcrumbs } from "@/features/ui/Display";
 import { EditTaskForm, ReassignForm, TaskActionButton } from "@/features/modules/TaskForms";
+import { ActionRemarks } from "@/features/modules/ActionRemarks";
 import { FieldValues, FileLinks, type HistoryEntry } from "@/features/modules/RecordParts";
 import { STATUS_TONE } from "@/features/modules/TaskListScreen";
 import { listTaskEvents, listPeopleFacts, personFacts } from "@/lib/db/repositories/tasks.repository";
@@ -126,6 +127,8 @@ export async function TaskDetail({ taskId, user, query, popup }: { taskId: numbe
           <section className="card space-y-3 px-5 py-4">
             <h2 className="font-semibold">Actions</h2>
             {[...actions].filter((action) => action !== "COMMENT").length === 0 && <p className="text-label text-ink-muted">Nothing for you to do on this task now.</p>}
+            {[...actions].some((action) => action !== "COMMENT" && action !== "EDIT") ? (
+            <ActionRemarks>
             <div className="flex flex-wrap gap-2">
               {actions.has("START") && <TaskActionButton taskId={task.id} rowVersion={task.rowVersion} action="START" needsText={false} />}
               {actions.has("UNBLOCK") && <TaskActionButton taskId={task.id} rowVersion={task.rowVersion} action="UNBLOCK" needsText={false} />}
@@ -145,6 +148,8 @@ export async function TaskDetail({ taskId, user, query, popup }: { taskId: numbe
             </div>
             {actions.has("COMPLETE") && settings.completion !== "NONE" && <p className="text-caption text-ink-muted">To complete: {COMPLETION_LABEL[settings.completion].toLowerCase()}.</p>}
             {actions.has("REASSIGN") && <ReassignForm taskId={task.id} rowVersion={task.rowVersion} assignable={assignable.map((person) => ({ id: person.id, label: personLabel(person), detail: person.departmentName ?? undefined }))} />}
+            </ActionRemarks>
+            ) : null}
             {actions.has("EDIT") && (
               <EditTaskForm
                 taskId={task.id}

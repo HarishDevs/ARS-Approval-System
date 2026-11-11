@@ -158,6 +158,7 @@ Comments on a request can't be edited or removed. To tell someone in particular,
 **Download PDF** at the top of a request: details, levels, who decided what, files and history.
 
 ### Tasks & projects
+- **Remarks with an action:** on a task page, the **Actions** card has a **Remarks** box. Whatever action you press next carries the remark and posts it to **Comments** (e.g. "Started: waiting for the vendor"). **Planning and people** (repeats, milestone, start date, tags, followers, delete) folds; click its title to open it.
 - **Create task:** **+ Create → Task** opens it. On a computer it is a card in the middle of the screen: task details on the left (name, who it's for, project, description), task settings on the right (due date, **priority**, repeat, collaborators, Task with a form). On a phone it is a panel at the bottom (on the Tasks tab, the red **+** opens it).
   - The task is for **Myself** by default; choose **Others** and type part of a name to find people.
   - The toolbar at the bottom: **More**, **Formatting** (bold, italic, strikethrough, lists), **Emoji**, **@mention** (people you mention become collaborators), **Attach a file or paste an image**, **Due date** and **Repeat**. If Pico Bot is on for you, **✨** writes the description from the task's name.

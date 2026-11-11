@@ -1,5 +1,9 @@
 # Release notes
 
+## v1.54.1 (12 Nov 2026): remarks with task actions; a folding Planning and people card (owner)
+- **Remarks in a task's Actions card:** type a remark, then press any action (Start, Complete, Mark blocked, Back in progress, Reopen, Cancel, Reassign). The remark goes with the action (it fills the reason when one is needed and its box is empty) and is posted to the task's **Comments** as "Started: …", "Completed: …" and so on. The box empties after the action.
+- **Planning and people** (repeats, milestone, start date, tags, followers, delete) is a card that folds; its title line says what is inside (repeats, tags, followers). Click it to open.
+
 ## v1.54.0 (12 Nov 2026): your own approval templates; a new New request; every approver named (owner)
 - **Approval templates are yours:** the approval types IT used to set up are gone (requests already raised from them still finish). Save the approval levels of a request as a template: on the workflow step of New request, or from a request you raised (Save as an approval template). **Approval templates** lists yours with who approves each level; **Use this template** opens New request with exactly those levels and approvers (change anything) and an empty form: no details or files are kept. Rename or delete them there. Only you see your templates.
 - **New request, one step at a time:** Request details, then Approval workflow, then Review & submit, each a page of its own; no summary column. A slim step bar with Save as draft, Reset, Back and Next / Submit stays at the top while you scroll. Clearer fields (blue outline when active, red when something is missing), a drag-and-drop file area with each file's type, size and a ready mark, and small notices you can close.

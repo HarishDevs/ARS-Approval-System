@@ -54,3 +54,23 @@ test("dragging a column title moves the column, and the order is kept for the pe
   }
   expect((await titles()).indexOf("raised")).toBeGreaterThan((await titles()).indexOf("status"));
 });
+
+test("v1.54.1: a remark given with an action shows in the task's comments; Planning and people folds", async ({ page, context }) => {
+  await as(context, "E2E_REQ");
+  await page.goto("/users/tasks/new");
+  const dialog = page.getByTestId("create-dialog");
+  const title = `Remark check ${Date.now().toString(36)}`;
+  await dialog.getByLabel("Task name").fill(title);
+  await dialog.getByRole("button", { name: "Create task" }).click();
+  await expect(page).toHaveURL(/task=\d+/);
+  await page.goto(`/users/tasks/${new URL(page.url()).searchParams.get("task")}`);
+  await page.getByTestId("task-remarks").fill("Started after the vendor confirmed");
+  await page.getByRole("button", { name: "Start", exact: true }).click();
+  await expect(page.getByText("Started: Started after the vendor confirmed").first()).toBeVisible();
+  await expect(page.getByTestId("task-remarks")).toHaveValue("");
+  const side = page.getByTestId("task-side");
+  await expect(side.getByRole("heading", { name: /Followers/ })).toBeHidden();
+  await side.locator("summary").click();
+  await expect(side.getByRole("heading", { name: /Followers/ })).toBeVisible();
+  await page.screenshot({ path: "test-results/v1541-task.png", fullPage: true });
+});

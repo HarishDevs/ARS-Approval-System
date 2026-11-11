@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createTaskAction, taskAction } from "@/app/users/tasks/actions";
+import { RemarksField, useRemarks } from "@/features/modules/ActionRemarks";
 import { DynamicFields } from "@/features/requests/DynamicFields";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import { Hint } from "@/features/ui/Hint";
@@ -162,6 +163,11 @@ export function TaskActionButton({
   const [open, setOpen] = useState(false);
   const { result, pending, onSubmit, confirmBar } = useActionForm(taskAction, confirm ? { confirm, confirmTitle: `${ACTION_LABEL[action]}?`, confirmLabel: ACTION_LABEL[action], confirmTone: danger ? "danger" : "primary" } : {});
   const label = ACTION_LABEL[action] ?? action;
+  const remarks = useRemarks();
+  useEffect(() => {
+    if (result?.ok) remarks?.clear();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [result]);
   if ((needsText || allowFiles) && !open) {
     return (
       <button type="button" className={danger ? "btn-danger-quiet btn-compact" : action === "COMPLETE" ? "btn-primary btn-compact" : "btn-secondary btn-compact"} onClick={() => setOpen(true)}>
@@ -174,6 +180,7 @@ export function TaskActionButton({
       <input type="hidden" name="taskId" value={taskId} />
       <input type="hidden" name="rowVersion" value={rowVersion} />
       <input type="hidden" name="action" value={action} />
+      <RemarksField />
       {(needsText || allowFiles) && textLabel && (
         <div>
           <label htmlFor={`text-${action}`} className="field-label">
@@ -202,11 +209,17 @@ export function TaskActionButton({
 
 export function ReassignForm({ taskId, rowVersion, assignable }: { taskId: number; rowVersion: number; assignable: Option[] }) {
   const { result, pending, onSubmit } = useActionForm(taskAction, { resetOnSuccess: true });
+  const remarks = useRemarks();
+  useEffect(() => {
+    if (result?.ok) remarks?.clear();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [result]);
   return (
     <form onSubmit={onSubmit} className="space-y-2" aria-label="Reassign">
       <input type="hidden" name="taskId" value={taskId} />
       <input type="hidden" name="rowVersion" value={rowVersion} />
       <input type="hidden" name="action" value="REASSIGN" />
+      <RemarksField />
       <div className="grid gap-2 sm:grid-cols-2">
         <PersonSelect ariaLabel="New assignee" name="assignee" options={assignable} placeholder="Reassign to…" />
         <input aria-label="Reason for reassigning" name="reason" maxLength={500} placeholder="Reason" className="field-input" />

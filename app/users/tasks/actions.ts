@@ -1,5 +1,6 @@
 "use server";
 
+import { addComment } from "@/server/work/service";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireApiArea } from "@/server/authorization/guards";
@@ -76,6 +77,8 @@ export async function createTaskAction(_previous: ActionResult | null, formData:
   redirect(`/users/tasks/${created.id}?created=1`);
 }
 
+const REMARK_LABEL: Partial<Record<TaskAction, string>> = { START: "Started", COMPLETE: "Completed", BLOCK: "Marked blocked", UNBLOCK: "Back in progress", REOPEN: "Reopened", CANCEL: "Cancelled", REASSIGN: "Reassigned" };
+
 export async function taskAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
   const me = await actor();
   if (!me) return { ok: false, message: "Not found." };
@@ -86,6 +89,9 @@ export async function taskAction(_previous: ActionResult | null, formData: FormD
   if (!files.ok) return { ok: false, message: files.message };
   const editFields: Record<string, string | undefined> = {};
   for (const [name, value] of formData.entries()) if (name.startsWith("field:") && typeof value === "string") editFields[name.slice(6)] = value;
+  // v1.54.1 (owner): the Actions card's Remarks go with the action and into Comments.
+  const remarks = text(formData, "remarks").trim().slice(0, 2000);
+  const reason = text(formData, "reason").trim() || (action !== "COMMENT" && remarks ? remarks : "");
   try {
     const version = idOf(text(formData, "rowVersion"));
     const result = await actOnTask(
@@ -93,7 +99,7 @@ export async function taskAction(_previous: ActionResult | null, formData: FormD
         taskId,
         action,
         rowVersion: version,
-        reason: text(formData, "reason"),
+        reason,
         assigneeId: idOf(text(formData, "assignee")),
         edit: action === "EDIT" ? { title: text(formData, "title"), description: text(formData, "description"), priority: text(formData, "priority"), due: text(formData, "due"), fields: editFields, holidayOk: text(formData, "holiday_ok") === "1" } : undefined,
         files: files.staged,
@@ -101,6 +107,11 @@ export async function taskAction(_previous: ActionResult | null, formData: FormD
       me,
     );
     if (!result.ok) return { ok: false, message: result.message, fieldErrors: result.fieldErrors };
+    if (remarks && action !== "COMMENT") {
+      // The remark is posted as a comment (the action already happened; a failed post is logged, not undone).
+      // Into the Comments tab (task_comments), the same place a typed comment goes.
+      await addComment(taskId, `${REMARK_LABEL[action] ?? "Remark"}: ${remarks}`, null, me, { addMentionedAsFollowers: false }).catch((error: unknown) => logError("task remark comment failed", error));
+    }
     revalidatePath(`/users/tasks/${taskId}`);
     revalidatePath("/users/tasks");
     return { ok: true, message: result.value.message };

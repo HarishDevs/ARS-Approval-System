@@ -168,6 +168,11 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 
 ---
 
+## Session log — v1.54.1 (12 Nov 2026): task remarks, folding side card
+- [x] V1541-01 (12 Nov 2026) Remarks box in the Actions card (ActionRemarks/RemarksField), server posts it to Comments after the action (D-310)
+- [x] V1541-02 (12 Nov 2026) Planning and people as a folding card with a summary line
+- [x] V1541-03 (12 Nov 2026) Tests and general pages (Help, User Guide, release notes)
+
 ## Session log — v1.54.0 (12 Nov 2026): own approval templates, New request redesign, approvers named
 Owner: "drop the current approval template completely… a requester captures the request's levels as a template, shown in Approval templates; using it keeps all the levels, everything editable; no data stored in the form… show the approvers (specific people, HOD…) on review… on the request page every level with who approves… on the journey cards the level name and the approver"; plus the New request redesign (one page per step, no summary column, smaller step bar, floating fixed buttons, spacing, focus, attachments, compact notices). Answers: remove IT types completely; levels only; private; Specific people by default.
 - [x] V1540-01 (12 Nov 2026) FLOWS F-153; D-309

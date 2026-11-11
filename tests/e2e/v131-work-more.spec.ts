@@ -58,6 +58,8 @@ test("a repeating task makes its next one when completed", async ({ page, contex
   await page.goto(projectUrl);
   await page.getByTestId("task-row").filter({ hasText: `Close ledgers ${stamp}` }).getByRole("link").first().click();
   // D-219: the task pane has the Repeats box too.
+  // v1.54.1: Planning and people is a collapsible card; open it.
+  await page.getByTestId("task-pane").getByTestId("task-side").locator("summary").click();
   const repeat = page.getByTestId("task-pane").getByTestId("repeat");
   await repeat.getByRole("button", { name: "Make it repeat" }).click();
   await repeat.getByLabel("Repeat unit").selectOption("MONTHLY");

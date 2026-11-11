@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDown, ArrowUp, Diamond, Heart, Lock, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, Diamond, Heart, Lock, X } from "lucide-react";
 import Link from "next/link";
 import { useProjectsOn } from "@/features/work/projects-access";
 import { LockedProjectName } from "@/features/ui/ComingSoon";
@@ -302,7 +302,18 @@ export function TaskWorkSide({ data }: { data: PanelData }) {
   const [confirming, setConfirming] = useState(false);
   if (data.deleted) return null;
   return (
-    <section className="card space-y-4 px-5 py-4" aria-label="Planning and people">
+    // v1.54.1 (owner): a collapsible card; the summary line says what's inside.
+    <details className="card group" aria-label="Planning and people" data-testid="task-side">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-5 py-3 [&::-webkit-details-marker]:hidden">
+        <span className="min-w-0">
+          <span className="block font-semibold">Planning and people</span>
+          <span className="block truncate text-caption text-ink-muted">
+            {[data.recurrence ? "Repeats" : null, data.isMilestone ? "Milestone" : null, `${data.tags.length} tag${data.tags.length === 1 ? "" : "s"}`, `${data.followers.length} follower${data.followers.length === 1 ? "" : "s"}`].filter(Boolean).join(" · ")}
+          </span>
+        </span>
+        <ChevronDown aria-hidden="true" className="h-4 w-4 shrink-0 text-ink-muted transition-transform group-open:rotate-180" />
+      </summary>
+      <div className="space-y-4 border-t border-line px-5 py-4">
       {(data.recurrenceOn || data.recurrence) && <RepeatEditor taskId={data.taskId} current={data.recurrence} canChange={data.canProgress && data.open} />}
       {data.adhoc && !data.canDetails && <p className="rounded-md bg-surface-muted px-3 py-2 text-caption text-ink-muted">Ad hoc task: only its creator changes the details. You can start it, complete it and comment.</p>}
       {data.canDetails && (
@@ -414,6 +425,7 @@ export function TaskWorkSide({ data }: { data: PanelData }) {
           )}
         </div>
       )}
-    </section>
+      </div>
+    </details>
   );
 }
