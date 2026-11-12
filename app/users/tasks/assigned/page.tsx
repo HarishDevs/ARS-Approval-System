@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { TaskListScreen } from "@/features/modules/TaskListScreen";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
-export const metadata: Metadata = { title: "Tasks assigned by me" };
+export const metadata: Metadata = { title: "Assigned by me" };
 
 export const dynamic = "force-dynamic";
 

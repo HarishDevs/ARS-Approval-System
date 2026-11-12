@@ -1,5 +1,10 @@
 # Release notes
 
+## v1.54.3 (12 Nov 2026): Task Summary, Assigned to me, Assigned by me (owner)
+- The sidebar's **Tasks** group: **Task Summary**, **Assigned to me**, **Assigned by me**, Periodic tasks.
+- **Task Summary** (was My Tasks) shows only what matters now: your incomplete tasks that are overdue, due today or due in the next 7 days, and the tasks you completed today. Its cards: in the summary, Overdue, Due today, Next 7 days, Completed today. List, Board and Calendar work as before.
+- **Assigned to me** is the full list of tasks given to you (with Open, Overdue, Due in 2 days, Blocked, Completed, Cancelled and All tabs and the filters); **Assigned by me** is the same for tasks you gave others.
+
 ## v1.54.2 (12 Nov 2026): select tasks with Ctrl + click and Shift + click (owner)
 - The task tables (My Tasks and a project's List) have no selection check boxes any more. **Ctrl + click** (Cmd on a Mac) a task to add it to the selection or take it out; **Shift + click** selects every task between the last one you clicked and this one. A plain click still opens the task. Selected tasks are highlighted; **Esc** clears the selection. Under the table: the shortcuts, **Select all shown** and **Clear selection**. The bulk bar (complete, assign, due date, priority…) works as before.
 

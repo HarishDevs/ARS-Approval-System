@@ -135,3 +135,14 @@ export async function raisePurchase(page: import("@playwright/test").Page, title
   await page.waitForURL(/\/users\/requests\/\d+\?submitted=1/);
   return new URL(page.url()).pathname;
 }
+
+// v1.54.3: Task Summary lists only tasks due by the next 7 days (and those
+// completed today); a scenario that opens it gives its task a due date today.
+export async function dueToday(titleLike: string): Promise<void> {
+  const conn = await db();
+  try {
+    await conn.query("UPDATE tasks SET due_at = DATE_ADD(UTC_DATE(), INTERVAL 12 HOUR) WHERE title LIKE ? AND due_at IS NULL", [titleLike]);
+  } finally {
+    await conn.end();
+  }
+}

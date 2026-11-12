@@ -168,9 +168,14 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 
 ---
 
+## Session log — v1.54.3 (12 Nov 2026): Task Summary, Assigned to me, Assigned by me
+- [x] V1543-01 (12 Nov 2026) Task Summary (renamed My Tasks): incomplete tasks due by today + 7 and tasks completed today; cards to match (D-312)
+- [x] V1543-02 (12 Nov 2026) Sidebar Tasks group: Task Summary, Assigned to me, Assigned by me, Periodic tasks; page titles renamed
+- [x] V1543-03 (12 Nov 2026) e2e updated (dueToday helper), docs
+
 ## Session log — v1.54.2 (12 Nov 2026): task selection by Ctrl/Shift + click
 - [x] V1542-01 (12 Nov 2026) No selection check boxes in TaskGrid; Ctrl/Cmd + click, Shift + click range, Esc, Select all shown (D-311); e2e v131; docs
-- [ ] V1542-02 Owner: live My Tasks showed "This page couldn't be shown" after publishing: hard reload, else send the error reference
+- [x] V1542-02 (12 Nov 2026) Live My Tasks error: gone after the publish settled (owner's screenshots show it working)
 
 ## Session log — v1.54.1 (12 Nov 2026): task remarks, folding side card
 - [x] V1541-01 (12 Nov 2026) Remarks box in the Actions card (ActionRemarks/RemarksField), server posts it to Comments after the action (D-310)

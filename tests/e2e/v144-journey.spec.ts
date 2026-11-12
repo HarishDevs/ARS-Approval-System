@@ -1,5 +1,5 @@
 import { expect, test, type BrowserContext } from "@playwright/test";
-import { dropCustomDraft, sessionCookie, toWorkflowStep } from "./db";
+import { dropCustomDraft, sessionCookie, toWorkflowStep, dueToday } from "./db";
 
 // D-273 (owner's journey brief): the approval journey from submission to the
 // flag, driven by the request's real records. A request with background work
@@ -86,6 +86,7 @@ test("submitted: the van carries it to the first approval; the background task a
 test("the background task: highlighted in My Tasks, its holder may read the request, and ticking it decides nothing", async ({ page, context }) => {
   await as(context, "E2E_REQ");
   await page.setViewportSize({ width: 1440, height: 900 });
+  await dueToday(`Collect papers: ${subject}%`); // v1.54.3: the summary lists tasks due by the next 7 days
   await page.goto("/users/work/my-tasks");
   const row = page.getByRole("row").filter({ hasText: `Collect papers: ${subject}` }).first();
   await expect(row).toBeVisible();

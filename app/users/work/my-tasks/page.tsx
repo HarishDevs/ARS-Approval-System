@@ -22,7 +22,7 @@ import { calendarHolidays } from "@/server/work/holiday-store";
 import { isMobileLayout } from "@/server/ui/layout-mode";
 import { MobileTasks } from "@/features/mobile/MobileTasks";
 
-export const metadata: Metadata = { title: "My Tasks" };
+export const metadata: Metadata = { title: "Task Summary" };
 export const dynamic = "force-dynamic";
 
 const VIEWS = [
@@ -55,36 +55,43 @@ export default async function MyTasksPage({
     return <MobileTasks userId={user.id} tab={params.tab} sort={params.sort} group={params.group} projectsOn={hasModule(user, "PROJECT")} />;
   }
   const view = params.view === "board" || params.view === "calendar" ? params.view : "list";
-  const showDone = params.done === "1" || view === "list";
+  const showDone = true;
   const now = new Date();
   const today = indiaDayOf(now);
+  // v1.54.3 (owner: "rename My Tasks as Task Summary: a summary of tasks
+  // overdue, due today and due in the next 7 days; only incomplete tasks and
+  // tasks completed today"). Everything else is on Assigned to me.
+  const weekEnd = indiaDayOf(new Date(now.getTime() + 7 * 86_400_000));
+  const todayStart = new Date(`${today}T00:00:00+05:30`);
+  const IST_DUE = "DATE(DATE_ADD(t.due_at, INTERVAL 330 MINUTE))";
   const where = [
     "t.assignee_id = ?",
     "t.deleted_at IS NULL",
-    showDone ? "(t.status IN ('OPEN', 'IN_PROGRESS', 'BLOCKED') OR (t.status = 'COMPLETED' AND t.completed_at >= ?))" : "t.status IN ('OPEN', 'IN_PROGRESS', 'BLOCKED')",
+    `((t.status IN ('OPEN', 'IN_PROGRESS', 'BLOCKED') AND t.due_at IS NOT NULL AND ${IST_DUE} <= ?) OR (t.status = 'COMPLETED' AND t.completed_at >= ?))`,
   ];
-  // D-257 (owner's My Tasks design): the summary cards, counted in the
-  // database (open, overdue, due today, upcoming, completed in the last 7 days).
+  // D-257 / v1.54.3: the summary cards, counted in the database, for the
+  // same tasks the summary lists.
+  const OPEN = "t.status IN ('OPEN', 'IN_PROGRESS', 'BLOCKED') AND t.due_at IS NOT NULL";
   const [[cardRow]] = await getDbPool().query<RowDataPacket[]>(
-    `SELECT COALESCE(SUM(t.status IN ('OPEN', 'IN_PROGRESS', 'BLOCKED')), 0) AS open_count,
-            COALESCE(SUM(t.status IN ('OPEN', 'IN_PROGRESS', 'BLOCKED') AND t.due_at IS NOT NULL AND DATE(DATE_ADD(t.due_at, INTERVAL 330 MINUTE)) < ?), 0) AS overdue,
-            COALESCE(SUM(t.status IN ('OPEN', 'IN_PROGRESS', 'BLOCKED') AND t.due_at IS NOT NULL AND DATE(DATE_ADD(t.due_at, INTERVAL 330 MINUTE)) = ?), 0) AS today,
-            COALESCE(SUM(t.status IN ('OPEN', 'IN_PROGRESS', 'BLOCKED') AND t.due_at IS NOT NULL AND DATE(DATE_ADD(t.due_at, INTERVAL 330 MINUTE)) > ?), 0) AS upcoming,
-            COALESCE(SUM(t.status = 'COMPLETED' AND t.completed_at >= DATE_SUB(CURRENT_TIMESTAMP, INTERVAL 7 DAY)), 0) AS done_week
+    `SELECT COALESCE(SUM(${OPEN} AND ${IST_DUE} <= ?), 0) AS open_count,
+            COALESCE(SUM(${OPEN} AND ${IST_DUE} < ?), 0) AS overdue,
+            COALESCE(SUM(${OPEN} AND ${IST_DUE} = ?), 0) AS today,
+            COALESCE(SUM(${OPEN} AND ${IST_DUE} > ? AND ${IST_DUE} <= ?), 0) AS upcoming,
+            COALESCE(SUM(t.status = 'COMPLETED' AND t.completed_at >= ?), 0) AS done_today
      FROM tasks t WHERE t.assignee_id = ? AND t.deleted_at IS NULL`,
-    [today, today, today, user.id],
+    [weekEnd, today, today, today, weekEnd, todayStart, user.id],
   );
   const cards = [
-    { key: "open", label: "Open tasks", value: Number(cardRow?.open_count ?? 0), icon: ListTodo, tone: "text-primary-700" },
+    { key: "open", label: "To do in the summary", value: Number(cardRow?.open_count ?? 0), icon: ListTodo, tone: "text-primary-700" },
     { key: "overdue", label: "Overdue", value: Number(cardRow?.overdue ?? 0), icon: AlarmClock, tone: "text-danger-600" },
     { key: "today", label: "Due today", value: Number(cardRow?.today ?? 0), icon: CalendarClock, tone: "text-warning-600" },
-    { key: "upcoming", label: "Upcoming", value: Number(cardRow?.upcoming ?? 0), icon: CalendarRange, tone: "text-primary-700" },
-    { key: "done", label: "Completed (7 days)", value: Number(cardRow?.done_week ?? 0), icon: CheckCircle2, tone: "text-success-600" },
+    { key: "upcoming", label: "Next 7 days", value: Number(cardRow?.upcoming ?? 0), icon: CalendarRange, tone: "text-primary-700" },
+    { key: "done", label: "Completed today", value: Number(cardRow?.done_today ?? 0), icon: CheckCircle2, tone: "text-success-600" },
   ];
   const [sections, placements, list, digestOff] = await Promise.all([
     ensureMySections(user.id),
     myPlacements(user.id),
-    listTaskItems(where, showDone ? [user.id, new Date(now.getTime() - (view === "list" ? 30 : 7) * 86_400_000)] : [user.id], "t.due_at IS NULL, t.due_at, t.id", 1000),
+    listTaskItems(where, [user.id, weekEnd, todayStart], "t.due_at IS NULL, t.due_at, t.id", 1000),
     getDbPool()
       .query<RowDataPacket[]>("SELECT 1 FROM user_settings WHERE user_id = ? AND setting_key = 'work.digest' AND value = 'OFF'", [user.id])
       .then(([rows]) => rows.length > 0),
@@ -155,8 +162,14 @@ export default async function MyTasksPage({
           <ListTodo className="h-6 w-6" />
         </span>
         <Avatar name={user.name} />
-        <h1 className="text-title font-semibold tracking-tight">My Tasks</h1>
-        <span className="text-caption text-ink-muted">Everything assigned to you, from every project, in your own sections. Only you see these sections and this order.</span>
+        <h1 className="text-title font-semibold tracking-tight">Task Summary</h1>
+        <span className="text-caption text-ink-muted">
+          Your tasks overdue, due today and due in the next 7 days, and what you completed today. Everything else is on{" "}
+          <Link href="/users/tasks" className="link">
+            Assigned to me
+          </Link>
+          .
+        </span>
         <span className="ml-auto">
           <CreateTaskButton label="Add task" />
         </span>
@@ -174,7 +187,7 @@ export default async function MyTasksPage({
       </ul>
       <WithPane pane={pane}>
         <div className="mb-4 flex flex-wrap items-center gap-2">
-          <nav aria-label="My Tasks views" className="flex flex-wrap gap-1 border-b border-line" data-testid="view-tabs">
+          <nav aria-label="Task Summary views" className="flex flex-wrap gap-1 border-b border-line" data-testid="view-tabs">
             {VIEWS.map((item) => (
               <span key={item.key} className="contents">
                 <Link

@@ -27,7 +27,8 @@ export async function usersNav(user: { roles: readonly string[] }): Promise<NavI
           // sections, board and calendar; the filtered table is one click
           // away), then the owner's order, then projects, home and search.
           { href: "/users/tasks/new", label: "New task", section: "Tasks" },
-          { href: "/users/work/my-tasks", label: "My tasks", section: "Tasks" },
+          { href: "/users/work/my-tasks", label: "Task Summary", section: "Tasks" },
+          { href: "/users/tasks", label: "Assigned to me", section: "Tasks" },
           { href: "/users/tasks/assigned", label: "Assigned by me", section: "Tasks" },
           { href: "/users/tasks/team", label: "Team tasks", section: "Tasks" },
           { href: "/users/work/projects", label: "Projects", section: "Projects" },

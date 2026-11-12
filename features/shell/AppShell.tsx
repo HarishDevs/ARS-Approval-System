@@ -114,11 +114,11 @@ export async function AppShell({ area, user, nav, children }: { area: AppArea; u
     { href: "/users/search", label: "Search requests", group: "My approvals" },
     { href: "/users/analytics", label: "Analytics", group: "My approvals" },
     { href: "/users/tasks/new", label: "New task", group: "Tasks" },
-    { href: "/users/work/my-tasks", label: "My tasks", group: "Tasks" },
-    { href: "/users/tasks", label: "My tasks (table with filters)", group: "Tasks" },
+    { href: "/users/work/my-tasks", label: "Task Summary", group: "Tasks" },
+    { href: "/users/tasks", label: "Assigned to me", group: "Tasks" },
     { href: "/users/work/projects", label: "Projects", group: "Projects" },
     { href: "/users/work/search", label: "Task search", group: "Tasks" },
-    { href: "/users/tasks/assigned", label: "Tasks assigned by me", group: "Tasks" },
+    { href: "/users/tasks/assigned", label: "Assigned by me", group: "Tasks" },
     { href: "/users/tasks/team", label: "Team tasks", group: "Tasks" },
     { href: "/users/information", label: "Information inbox", group: "Information" },
     { href: "/users/information/sent", label: "Information sent by me", group: "Information" },
@@ -179,7 +179,10 @@ export async function AppShell({ area, user, nav, children }: { area: AppArea; u
   // groups; each link only when the person may open it.
   const workGroup: NavItem[] = [
     ...[
-      { href: "/users/work/my-tasks", label: "My Tasks", also: ["/users/tasks"] },
+      // v1.54.3 (owner): the summary, then the two full lists.
+      { href: "/users/work/my-tasks", label: "Task Summary" },
+      { href: "/users/tasks", label: "Assigned to me" },
+      { href: "/users/tasks/assigned", label: "Assigned by me" },
       { href: "/users/work/periodic", label: "Periodic tasks" },
     ].map((item) => ({ ...item, section: "Tasks" })),
     ...[

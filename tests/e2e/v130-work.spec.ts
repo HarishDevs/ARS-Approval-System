@@ -1,5 +1,5 @@
 import { expect, test, type BrowserContext } from "@playwright/test";
-import { db, sessionCookie } from "./db";
+import { db, sessionCookie, dueToday } from "./db";
 import { createProject } from "./work-helpers";
 
 // D-215 / D-216 / D-217: Task & Project Management through the real screens:
@@ -80,12 +80,17 @@ test("the task page: a subtask, a comment that mentions someone, a like", async 
 
 test("My Tasks, Task home and Task search show the work", async ({ page, context }) => {
   await as(context, "E2E_REQ");
+  await dueToday(`Survey the site ${stamp}%`); // v1.54.3: the summary lists tasks due by the next 7 days
   await page.goto("/users/work/my-tasks");
-  await expect(page.getByRole("heading", { level: 1, name: "My Tasks" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Task Summary" })).toBeVisible();
   await expect(page.getByTestId("my-grid")).toContainText(`Survey the site ${stamp}`);
   await expect(page.getByRole("rowgroup", { name: "Recently assigned" })).toBeVisible();
   await page.goto("/users/work/my-tasks?view=board");
   await expect(page.getByTestId("my-board")).toBeVisible();
+  // v1.54.3: the full list of tasks given to me is Assigned to me (the sidebar names both).
+  await page.goto("/users/tasks");
+  await expect(page.getByRole("heading", { level: 1, name: "Assigned to me" })).toBeVisible();
+  await expect(page.getByRole("link", { name: `Survey the site ${stamp}` }).first()).toBeVisible();
 
   // D-236: Task home is part of Home; its old address leads there.
   await page.goto("/users/work");

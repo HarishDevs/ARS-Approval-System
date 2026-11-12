@@ -22,7 +22,7 @@ test("the sidebar's Tasks & projects group; + Create → Task makes a periodic t
   // D-223 (owner): the Tasks bar's pages sit in the sidebar; no second bar.
   await expect(page.getByTestId("work-rail")).toHaveCount(0);
   // D-307: Tasks and Projects are separate groups.
-  for (const [name, labels] of [["Tasks", ["My Tasks", "Periodic tasks"]], ["Projects", ["All projects", "New project", "Templates"]]] as const) {
+  for (const [name, labels] of [["Tasks", ["Task Summary", "Assigned to me", "Assigned by me", "Periodic tasks"]], ["Projects", ["All projects", "New project", "Templates"]]] as const) {
     const group = page.getByTestId(`nav-group-${name}`);
     // A group folds when you are on another group's page: open it first.
     const toggle = group.getByRole("button", { name, exact: true });

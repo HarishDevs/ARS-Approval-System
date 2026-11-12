@@ -1,5 +1,5 @@
 import { expect, test, type BrowserContext } from "@playwright/test";
-import { dropCustomDraft, sessionCookie, toReviewStep, toWorkflowStep } from "./db";
+import { dropCustomDraft, sessionCookie, toReviewStep, toWorkflowStep, dueToday } from "./db";
 import { pickFirstPerson } from "./people";
 
 // v1.42.0 (D-259, D-260): the calendar's Agenda and chips, Create task in two
@@ -115,6 +115,7 @@ test("the task table: tags and collaborators change in their cells (a project's 
 
 test("the board: coloured columns with counts; cards show who and when", async ({ page, context }) => {
   await as(context, "E2E_REQ");
+  await dueToday(`${title}%`); // v1.54.3: the summary lists tasks due by the next 7 days
   await page.goto("/users/work/my-tasks?view=board");
   const board = page.getByTestId("my-board");
   await expect(board).toBeVisible();
@@ -399,6 +400,7 @@ test("New request with a work step, an FYI and an approval: the work is a task i
 
   // Ravi: the work is in My Tasks, linked to the request; ticking it is "done".
   await as(context, "E2E_REQ");
+  await dueToday(`Loading: ${subject}%`); // v1.54.3: the summary lists tasks due by the next 7 days
   await page.goto("/users/work/my-tasks");
   const row = page.getByRole("row").filter({ hasText: `Loading: ${subject}` }).first();
   await expect(row).toBeVisible();

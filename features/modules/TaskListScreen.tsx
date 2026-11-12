@@ -24,7 +24,7 @@ import { NoResults } from "@/features/ui/Display";
 
 // v1.9.0 (D-143): My tasks / Assigned by me / Team tasks. Filters live in
 // the address (GET form), so a list can be bookmarked and shared.
-const TITLE: Record<TaskBase, string> = { MINE: "My tasks", CREATED: "Assigned by me", TEAM: "Team tasks" };
+const TITLE: Record<TaskBase, string> = { MINE: "Assigned to me", CREATED: "Assigned by me", TEAM: "Team tasks" }; // v1.54.3 (owner)
 const PATH: Record<TaskBase, string> = { MINE: "/users/tasks", CREATED: "/users/tasks/assigned", TEAM: "/users/tasks/team" };
 const DESCRIPTION: Record<TaskBase, string> = {
   MINE: "Tasks assigned to you.",
