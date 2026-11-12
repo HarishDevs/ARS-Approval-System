@@ -19,6 +19,7 @@ export interface HolidayInfo {
   suggestion: string;
   mode: "WARN" | "BLOCK";
   field: "due" | "start";
+  away?: boolean; // v1.54.5: the assignee is out of office that day
 }
 export type HolidayChoice = { holidayOk?: true; moveTo?: string };
 const HOLIDAY_EVENT = "ars:task-holiday";
@@ -165,10 +166,10 @@ export function HolidayPrompt() {
       {ask && (
         <div className="space-y-3 p-5">
           <h2 id="holiday-title" className="font-semibold">
-            {ask.info.day} is a holiday
+            {ask.info.away ? `${ask.info.day}: the person is out of office` : `${ask.info.day} is a holiday`}
           </h2>
           <p className="text-body">
-            {ask.info.name}. {ask.info.mode === "BLOCK" ? "Tasks can't be dated on holidays here; choose a working day." : `Keep the ${ask.info.field === "due" ? "due" : "start"} date anyway, or move it to a working day?`}
+            {ask.info.name}. {ask.info.mode === "BLOCK" ? "Tasks can't be dated on holidays here; choose a working day." : ask.info.away ? "Keep the due date anyway, or move it to the day after they are back?" : `Keep the ${ask.info.field === "due" ? "due" : "start"} date anyway, or move it to a working day?`}
           </p>
           <div className="flex flex-wrap gap-2">
             <button type="button" className="btn-primary btn-compact" onClick={() => answer({ moveTo: ask.info.suggestion })}>

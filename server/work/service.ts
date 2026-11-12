@@ -334,7 +334,7 @@ export async function quickAddTask(input: QuickTaskInput, actor: TaskActor): Pro
   const dueAt = input.dueDay ? dueFromDay(input.dueDay) : null;
   if (input.dueDay && !dueAt) return fail("Choose a valid due date.");
   if (input.dueDay) {
-    const { settings: holidays, calendar } = await holidayContext(undefined, assignee.departmentId);
+    const { settings: holidays, calendar } = await holidayContext(undefined, assignee.departmentId, assigneeId);
     const hit = checkHoliday(input.dueDay, "due", calendar, holidays, Boolean(input.holidayOk));
     if (hit) return holidayFail(hit);
   }
@@ -528,7 +528,7 @@ export async function setTaskFields(taskId: number, change: { dueDay?: string; s
     notes.push(change.milestone ? "Marked as a milestone" : "No longer a milestone");
   }
   if (change.dueDay || change.startDay) {
-    const { settings: holidays, calendar } = await holidayContext(undefined, await departmentOf(task.assigneeId));
+    const { settings: holidays, calendar } = await holidayContext(undefined, await departmentOf(task.assigneeId), task.assigneeId);
     const hit = checkHoliday(change.dueDay || null, "due", calendar, holidays, Boolean(change.holidayOk)) ?? checkHoliday(change.startDay || null, "start", calendar, holidays, Boolean(change.holidayOk));
     if (hit) return holidayFail(hit);
   }
@@ -864,6 +864,42 @@ export async function moveHolidayTasks(day: string, direction: "NEXT" | "PREVIOU
   });
   await send(outbox);
   return { ok: true, value: { moved: tasks.length, to: target }, message: `Moved ${tasks.length} task${tasks.length === 1 ? "" : "s"} to ${target}; their assignees were told.` };
+}
+
+// v1.54.5 (owner: "when out of office dates are set, the tasks already falling
+// on those dates move to the next day after the to-date"): the person's open
+// tasks due within the dates move to the first working day after them (their
+// own department's holidays count), keeping the time of day; whoever gave
+// each task is told. Returns how many moved and where to.
+export async function moveTasksOutOfAway(userId: number, startsOn: string, endsOn: string, actorId: number): Promise<{ moved: number; to: string }> {
+  const dayAfter = new Date(new Date(`${endsOn}T00:00:00Z`).getTime() + 86_400_000).toISOString().slice(0, 10);
+  const { settings, calendar } = await holidayContext(undefined, await departmentOf(userId));
+  const target = nearestWorkingDay(dayAfter, calendar, settings, "NEXT");
+  const [rows] = await getDbPool().query<RowDataPacket[]>(
+    `SELECT id FROM tasks WHERE assignee_id = ? AND deleted_at IS NULL AND status IN ('OPEN', 'IN_PROGRESS', 'BLOCKED') AND due_at IS NOT NULL
+       AND DATE(DATE_ADD(due_at, INTERVAL 330 MINUTE)) BETWEEN ? AND ? ORDER BY id LIMIT 1000`,
+    [userId, startsOn, endsOn],
+  );
+  if (!rows.length) return { moved: 0, to: target };
+  let moved = 0;
+  const outbox = await withTransaction(async (connection) => {
+    const messages: NotifyInput[] = [];
+    for (const row of rows) {
+      const fresh = await findTask(Number(row.id), connection, true);
+      if (!fresh?.dueAt) continue;
+      const from = new Date(fresh.dueAt.getTime() + 330 * 60_000).toISOString().slice(0, 10); // the India day
+      const shiftMs = new Date(`${target}T00:00:00Z`).getTime() - new Date(`${from}T00:00:00Z`).getTime();
+      const dueAt = new Date(fresh.dueAt.getTime() + shiftMs);
+      if (!(await updateTask(fresh.id, fresh.rowVersion, { due_at: dueAt }, connection))) continue;
+      moved += 1;
+      await appendTaskEvent(fresh.id, { actorId, type: "EDIT", from: fresh.status, to: fresh.status, body: `Due date moved from ${from} to ${target}: out of office ${startsOn} to ${endsOn}`, payload: { dueChanged: true } }, connection);
+      if (fresh.assignedBy && fresh.assignedBy !== userId) messages.push(taskMessages.updated(info({ ...fresh, dueAt }), fresh.assignedBy, `due date moved from ${from} to ${target}: the assignee is out of office ${startsOn} to ${endsOn}`));
+    }
+    await recordAudit({ actorUserId: actorId, action: "TASKS_MOVED_OUT_OF_OFFICE", entityType: "USER", entityId: userId, metadata: { startsOn, endsOn, to: target, tasks: moved } }, connection);
+    return insertOutbox(null, messages, connection);
+  });
+  await send(outbox);
+  return { moved, to: target };
 }
 
 export async function tellHolidayTasks(day: string, actor: TaskActor | null): Promise<WorkResult<{ told: number }>> {

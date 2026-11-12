@@ -1,5 +1,9 @@
 # Release notes
 
+## v1.54.5 (12 Nov 2026): Out of office moves your tasks; a warning for tasks while someone is away (owner)
+- **Setting Out of office** moves your open tasks due within those dates to the first working day after the to-date (keeping the time of day). Whoever gave you each task is told, and the task's history says why. The save message says how many moved and to when.
+- **A new task (or a new due date) on a day the assignee is out of office** asks first, like a holiday: keep the date anyway, or move it to the day after they are back. It always warns, whatever the holiday setting.
+
 ## v1.54.4 (12 Nov 2026): Task Summary sections by date; repeating tasks are your own (owner)
 - **Task Summary** has four fixed sections that follow the dates: **Overdue**, **Due today**, **Due in the next 7 days** and **Completed today** (List and Board). Tasks move between them by themselves; the sections can't be renamed or rearranged and there are no "add a task to section" rows (use Add task).
 - **Repeating (periodic) tasks are only for yourself.** In Create task, choosing Periodic sets the task for you; choosing Others makes it ad hoc. A task given to someone else can't be made to repeat, and giving a repeating task to someone else makes it ad hoc (it stops repeating).

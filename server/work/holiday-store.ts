@@ -17,7 +17,7 @@ export async function saveHolidaySettings(settings: HolidaySettings, updatedBy: 
 }
 
 // The organisation's holidays, plus (D-218) those of one department.
-export async function loadHolidayCalendar(db: Queryable = getDbPool(), departmentId: number | null = null): Promise<HolidayCalendar> {
+export async function loadHolidayCalendar(db: Queryable = getDbPool(), departmentId: number | null = null, personId: number | null = null): Promise<HolidayCalendar> {
   const [rows] = await db.query<RowDataPacket[]>(
     "SELECT DATE_FORMAT(holiday_on, '%Y-%m-%d') AS day, name FROM holidays WHERE holiday_on >= DATE_SUB(UTC_DATE(), INTERVAL 400 DAY) AND holiday_on < DATE_ADD(UTC_DATE(), INTERVAL 800 DAY)",
   );
@@ -29,12 +29,32 @@ export async function loadHolidayCalendar(db: Queryable = getDbPool(), departmen
     );
     for (const row of own) if (!holidays.has(String(row.day))) holidays.set(String(row.day), String(row.name));
   }
-  return { holidays, workingDays: new Set(await getWorkingDays(db)) };
+  return { holidays, workingDays: new Set(await getWorkingDays(db)), ...(personId ? { away: await awayDays(personId, db) } : {}) };
+}
+
+// v1.54.5 (owner): the days a person is out of office (their Out of office
+// periods still on: not ended, not yet over), each named for the warning.
+export async function awayDays(personId: number, db: Queryable = getDbPool()): Promise<Map<string, string>> {
+  const [rows] = await db.query<RowDataPacket[]>(
+    `SELECT DATE_FORMAT(starts_on, '%Y-%m-%d') AS starts, DATE_FORMAT(ends_on, '%Y-%m-%d') AS ends FROM delegations
+     WHERE user_id = ? AND ended_at IS NULL AND ends_on >= DATE(DATE_ADD(UTC_TIMESTAMP(), INTERVAL 330 MINUTE)) ORDER BY starts_on LIMIT 20`,
+    [personId],
+  );
+  const days = new Map<string, string>();
+  for (const row of rows) {
+    const label = `Out of office until ${new Date(`${row.ends}T00:00:00Z`).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" })}`;
+    for (let day = String(row.starts), guard = 0; day <= String(row.ends) && guard < 400; guard += 1) {
+      days.set(day, label);
+      day = new Date(new Date(`${day}T00:00:00Z`).getTime() + 86_400_000).toISOString().slice(0, 10);
+    }
+  }
+  return days;
 }
 
 // `departmentId`: whose holidays count too (the task's assignee's department).
-export async function holidayContext(db: Queryable = getDbPool(), departmentId: number | null = null) {
-  const [settings, calendar] = await Promise.all([loadHolidaySettings(db), loadHolidayCalendar(db, departmentId)]);
+// v1.54.5: `personId`: whose Out of office days count too (the task's assignee).
+export async function holidayContext(db: Queryable = getDbPool(), departmentId: number | null = null, personId: number | null = null) {
+  const [settings, calendar] = await Promise.all([loadHolidaySettings(db), loadHolidayCalendar(db, departmentId, personId)]);
   return { settings, calendar };
 }
 

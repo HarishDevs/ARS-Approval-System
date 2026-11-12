@@ -168,6 +168,10 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 
 ---
 
+## Session log — v1.54.5 (12 Nov 2026): out of office and tasks
+- [x] V1545-01 (12 Nov 2026) Saving Out of office moves the person's tasks due in those dates to the day after (D-314)
+- [x] V1545-02 (12 Nov 2026) A due date on an away day warns (keep / move), holiday prompt wording; tests; docs
+
 ## Session log — v1.54.4 (12 Nov 2026): summary sections by date; periodic only for oneself
 - [x] V1544-01 (12 Nov 2026) Task Summary sections Overdue / Due today / Due in the next 7 days / Completed today, fixed (D-313)
 - [x] V1544-02 (12 Nov 2026) Periodic only for oneself: server (setRecurrence, reassign clears), Create task window; tests; docs

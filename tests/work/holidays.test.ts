@@ -42,3 +42,20 @@ describe("task holidays", () => {
     expect(DEFAULT_HOLIDAY_SETTINGS).toMatchObject({ mode: "WARN", suggest: "NEXT", notifyNewHoliday: true });
   });
 });
+
+// v1.54.5 (owner): the assignee's Out of office days warn like a holiday.
+describe("out of office dates", () => {
+  const away: HolidayCalendar = { ...calendar, away: new Map([["2026-11-12", "Out of office until 13 Nov 2026"], ["2026-11-13", "Out of office until 13 Nov 2026"]]) };
+  it("a due date while away is a warning, offering the next free day after it", () => {
+    const hit = checkHoliday("2026-11-12", "due", away, settings, false);
+    expect(hit).toMatchObject({ away: true, mode: "WARN", suggestion: "2026-11-14", name: "Out of office until 13 Nov 2026" });
+    expect(holidayMessage(hit!)).toMatch(/while the person is away/);
+    expect(checkHoliday("2026-11-12", "due", away, settings, true)).toBeNull(); // kept on purpose
+  });
+  it("warns even when the holiday check is off or blocking; a named holiday still wins", () => {
+    expect(checkHoliday("2026-11-12", "due", away, { ...settings, mode: "OFF" }, false)).toMatchObject({ away: true, mode: "WARN" });
+    expect(checkHoliday("2026-11-12", "due", away, { ...settings, mode: "BLOCK" }, false)).toMatchObject({ away: true, mode: "WARN" });
+    expect(checkHoliday("2026-11-09", "due", away, settings, false)).toMatchObject({ name: "Diwali" });
+    expect(checkHoliday("2026-11-11", "due", away, settings, false)).toBeNull();
+  });
+});

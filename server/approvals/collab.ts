@@ -3,6 +3,7 @@ import type { RowDataPacket } from "mysql2/promise";
 import { afterResponse } from "@/lib/http/after-response";
 import { getDbPool } from "@/lib/db/client";
 import { checkChosenApprover } from "@/server/approvals/approver-check";
+import { moveTasksOutOfAway } from "@/server/work/service";
 import { findRequest, isParticipant } from "@/lib/db/repositories/approvals.repository";
 import {
   commentAudience,
@@ -114,7 +115,7 @@ export function checkDelegationInput(input: { userId: number; delegateId: number
 export async function createDelegation(
   input: { userId: number; delegateId: number; startsOn: string; endsOn: string; reason?: string },
   actor: Actor,
-): Promise<Result<{ id: number }>> {
+): Promise<Result<{ id: number; movedTasks: number; movedTo: string }>> {
   if (input.userId !== actor.id && !isAdmin(actor)) return { ok: false, code: "FORBIDDEN", message: "You can only set your own out-of-office." };
   const problem = checkDelegationInput(input, await indiaToday());
   if (problem) return { ok: false, code: "INVALID", message: problem };
@@ -133,7 +134,12 @@ export async function createDelegation(
   if (id === null) return { ok: false, code: "OVERLAP", message: "These dates overlap an existing out-of-office. End that one first." };
   await recordAudit({ actorUserId: actor.id, action: "DELEGATION_CREATED", entityType: "USER", entityId: input.userId, metadata: { delegationId: id, delegateId: input.delegateId, startsOn: input.startsOn, endsOn: input.endsOn } });
   await tellBoth(person.id, person.name, delegate.id, delegate.name, `from ${input.startsOn} to ${input.endsOn}`, true);
-  return { ok: true, value: { id } };
+  // v1.54.5 (owner): the person's tasks due while away move to the day after.
+  const moved = await moveTasksOutOfAway(input.userId, input.startsOn, input.endsOn, actor.id).catch((error: unknown) => {
+    logError("moving tasks out of the out-of-office dates failed", error);
+    return { moved: 0, to: "" };
+  });
+  return { ok: true, value: { id, movedTasks: moved.moved, movedTo: moved.to } };
 }
 
 export async function stopDelegation(id: number, actor: Actor): Promise<Result<null>> {

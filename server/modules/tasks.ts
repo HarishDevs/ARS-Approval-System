@@ -32,7 +32,7 @@ const utcToIndiaLocalDay = (value: Date | null) => (value ? indiaDate(value) : n
 // D-217: the holiday rule of Admin → Task holidays, as form errors.
 // The assignee's department holidays count too (D-218).
 async function holidayErrors(day: string, keep: boolean, errors: Record<string, string>, assigneeId: number | null): Promise<void> {
-  const { settings, calendar } = await holidayContext(undefined, assigneeId ? await departmentOf(assigneeId) : null);
+  const { settings, calendar } = await holidayContext(undefined, assigneeId ? await departmentOf(assigneeId) : null, assigneeId);
   const hit = checkHoliday(day, "due", calendar, settings, keep);
   if (!hit) return;
   errors.due = holidayMessage(hit);

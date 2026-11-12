@@ -146,19 +146,22 @@ export async function createDelegationAction(_previous: ActionResult | null, for
       return { ok: false, message: "You can only set your own out-of-office." };
     }
   }
+  let moved = "";
   try {
     const result = await createDelegation(
       { userId, delegateId, startsOn: String(formData.get("startsOn") ?? ""), endsOn: String(formData.get("endsOn") ?? ""), reason: String(formData.get("reason") ?? "") },
       me,
     );
     if (!result.ok) return { ok: false, message: result.message };
+    moved = result.value.movedTasks ? ` ${result.value.movedTasks} task${result.value.movedTasks === 1 ? "" : "s"} due in those days moved to ${result.value.movedTo}.` : "";
   } catch (error) {
     logError("createDelegationAction failed", error);
     return { ok: false, message: "Couldn't save. Please try again." };
   }
   revalidatePath("/users/delegation");
   revalidatePath(`/admin/users/${userId}`);
-  return { ok: true, message: "Saved. Both of you have been told." };
+  revalidatePath("/users/work", "layout");
+  return { ok: true, message: `Saved. Both of you have been told.${moved}` };
 }
 
 export async function stopDelegationAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {

@@ -158,6 +158,7 @@ Comments on a request can't be edited or removed. To tell someone in particular,
 **Download PDF** at the top of a request: details, levels, who decided what, files and history.
 
 ### Tasks & projects
+- **Out of office and tasks:** when you set Out of office, your open tasks due in those days move to the first working day after you are back, and whoever gave them is told. Giving someone a task due while they are away asks first: keep the date, or move it to the day after they return.
 - **Task Summary sections:** Overdue, Due today, Due in the next 7 days, Completed today, filled by the dates. **Repeating tasks** are only for yourself: a task for someone else is always ad hoc, and reassigning a repeating task to someone else stops it repeating.
 - **Task Summary, Assigned to me, Assigned by me:** Task Summary shows your incomplete tasks that are overdue, due today or due in the next 7 days, plus what you completed today. Assigned to me and Assigned by me are the full lists, with tabs and filters.
 - **Selecting several tasks:** in My Tasks and a project's List, **Ctrl + click** a task (Cmd on a Mac) to select it, **Shift + click** to select a range; **Esc** clears. The bulk bar then changes them together. **Select all shown** is under the table.
