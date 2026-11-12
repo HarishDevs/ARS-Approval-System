@@ -41,8 +41,12 @@ test("a project field shows as a List column and takes a value; two tasks change
   await page.reload();
   await expect(page.getByLabel(`Plant of Reconcile bank ${stamp}`)).toHaveValue("Raipur");
 
-  await page.getByLabel(`Select Reconcile bank ${stamp}`).check();
-  await page.getByLabel(`Select Close ledgers ${stamp}`).check();
+  // v1.54.2 (owner): no check boxes: Ctrl + click a task to select it, Shift + click for a range.
+  const row = (name: string) => page.getByTestId("task-row").filter({ hasText: name }).first();
+  await row(`Reconcile bank ${stamp}`).getByRole("link", { name: `Reconcile bank ${stamp}` }).click({ modifiers: ["ControlOrMeta"] });
+  await row(`Close ledgers ${stamp}`).getByRole("link", { name: `Close ledgers ${stamp}` }).click({ modifiers: ["ControlOrMeta"] });
+  await expect(page).not.toHaveURL(/task=\d+/); // a selecting click doesn't open the task
+  await expect(row(`Reconcile bank ${stamp}`)).toHaveAttribute("aria-selected", "true");
   const bar = page.getByTestId("bulk-bar");
   await expect(bar).toContainText("2 selected");
   await bar.getByLabel("Do").selectOption("PRIORITY");
@@ -51,6 +55,12 @@ test("a project field shows as a List column and takes a value; two tasks change
   await expect(page.getByLabel(`Priority of Close ledgers ${stamp}`)).toHaveValue("HIGH");
   await expect(page.getByLabel(`Priority of Reconcile bank ${stamp}`)).toHaveValue("HIGH");
   await page.screenshot({ path: "test-results/work-fields-bulk.png" });
+  // Esc clears; Shift + click selects everything between the last clicked task and this one.
+  await page.keyboard.press("Escape");
+  await expect(bar).toHaveCount(0);
+  await row(`Reconcile bank ${stamp}`).getByRole("link", { name: `Reconcile bank ${stamp}` }).click({ modifiers: ["ControlOrMeta"] });
+  await row(`Close ledgers ${stamp}`).getByRole("link", { name: `Close ledgers ${stamp}` }).click({ modifiers: ["Shift"] });
+  await expect(page.getByTestId("bulk-bar")).toContainText(/[2-9] selected/);
 });
 
 test("a repeating task makes its next one when completed", async ({ page, context }) => {

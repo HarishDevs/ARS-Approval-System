@@ -114,11 +114,36 @@ export function TaskGrid({
   const groups = useMemo(() => applyGrid(rows, config, { today, meId, sections }), [rows, config, today, meId, sections]);
   const shown = config.hidden.length ? columns.filter((column) => !config.hidden.includes(column)) : columns;
   const canDrag = Boolean(onMove) && config.group === "section" && config.sort === "none" && filterCount(config) === 0 && !config.search;
-  const gridColumns = { gridTemplateColumns: `${bulk ? "28px " : ""}40px minmax(260px,1fr)${shown.map((column) => ` ${WIDTH[column]}`).join("")}${fields.map(() => " 150px").join("")}` };
+  const gridColumns = { gridTemplateColumns: `40px minmax(260px,1fr)${shown.map((column) => ` ${WIDTH[column]}`).join("")}${fields.map(() => " 150px").join("")}` };
   const set = (changes: Partial<GridConfig>) => setConfig((value) => ({ ...value, ...changes }));
   const dirty = JSON.stringify(config) !== saved;
   const count = filterCount(config);
   const allShown = groups.flatMap((group) => group.rows);
+  // v1.54.2 (owner: "no check boxes; select with Ctrl + click or Shift + click on
+  // the task"): Ctrl (or Cmd) + click adds or removes a task; Shift + click
+  // selects every task between the last one clicked and this one, in the order
+  // shown. A plain click opens the task as before. Esc clears the selection.
+  const [anchor, setAnchor] = useState<number | null>(null);
+  const pick = (taskId: number, range: boolean) => {
+    const order = allShown.map((task) => task.id);
+    if (range && anchor !== null && order.includes(anchor)) {
+      const from = Math.min(order.indexOf(anchor), order.indexOf(taskId));
+      const to = Math.max(order.indexOf(anchor), order.indexOf(taskId));
+      const span = order.slice(from, to + 1);
+      setSelected((value) => [...new Set([...value, ...span])]);
+      return;
+    }
+    setSelected((value) => (value.includes(taskId) ? value.filter((one) => one !== taskId) : [...value, taskId]));
+    setAnchor(taskId);
+  };
+  useEffect(() => {
+    if (!selected.length) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setSelected([]);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selected.length]);
 
   const saveTab = async () => {
     if (!view) return;
@@ -284,16 +309,6 @@ export function TaskGrid({
       <div className="overflow-x-auto rounded-lg border border-line bg-surface">
         <div role="table" aria-label="Tasks" className="min-w-max">
           <div role="row" style={gridColumns} className="sticky top-0 z-10 grid border-b border-line bg-surface text-caption font-medium text-ink-muted">
-            {bulk && (
-              <span role="columnheader" className="flex items-center justify-center">
-                <input
-                  type="checkbox"
-                  aria-label="Select all shown tasks"
-                  checked={allShown.length > 0 && allShown.every((task) => selected.includes(task.id))}
-                  onChange={(event) => setSelected(event.target.checked ? allShown.map((task) => task.id) : [])}
-                />
-              </span>
-            )}
             <span role="columnheader" className="px-2 py-2">
               #
             </span>
@@ -374,18 +389,17 @@ export function TaskGrid({
                         }}
                         data-testid="task-row"
                         data-task-id={task.id}
-                        className={`work-row group grid min-h-9 items-center border-b border-line text-label hover:bg-surface-muted ${approvalRowClass(task.approval)} ${isOpen ? "bg-primary-50 outline outline-1 -outline-offset-1 outline-primary-600" : ""} ${selected.includes(task.id) ? "bg-primary-50/60" : ""} ${dragging === task.id ? "opacity-50" : ""}`}
+                        aria-selected={bulk ? selected.includes(task.id) : undefined}
+                        onClickCapture={(event) => {
+                          if (!bulk || !(event.ctrlKey || event.metaKey || event.shiftKey)) return;
+                          // Controls inside the row (due date, priority, people…) keep their own clicks.
+                          if ((event.target as HTMLElement).closest("input, select, textarea, button, [role='combobox'], [role='listbox']")) return;
+                          event.preventDefault();
+                          event.stopPropagation();
+                          pick(task.id, event.shiftKey);
+                        }}
+                        className={`work-row group grid min-h-9 select-none items-center border-b border-line text-label hover:bg-surface-muted ${approvalRowClass(task.approval)} ${isOpen ? "bg-primary-50 outline outline-1 -outline-offset-1 outline-primary-600" : ""} ${selected.includes(task.id) ? "bg-primary-50 shadow-[inset_3px_0_0_var(--color-primary-600)]" : ""} ${dragging === task.id ? "opacity-50" : ""}`}
                       >
-                        {bulk && (
-                          <span role="cell" className="flex items-center justify-center">
-                            <input
-                              type="checkbox"
-                              aria-label={`Select ${task.title}`}
-                              checked={selected.includes(task.id)}
-                              onChange={(event) => setSelected((value) => (event.target.checked ? [...value, task.id] : value.filter((one) => one !== task.id)))}
-                            />
-                          </span>
-                        )}
                         <span role="cell" className="px-2 text-caption text-ink-faint">
                           {index + 1}
                         </span>
@@ -521,6 +535,29 @@ export function TaskGrid({
           })}
         </div>
       </div>
+      {bulk && allShown.length > 0 && (
+        <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-caption text-ink-muted" data-testid="select-hint">
+          <span>
+            <kbd className="rounded border border-line bg-surface-muted px-1.5 py-0.5 font-semibold text-ink">Ctrl</kbd> + click a task to select several
+          </span>
+          <span aria-hidden="true">·</span>
+          <span>
+            <kbd className="rounded border border-line bg-surface-muted px-1.5 py-0.5 font-semibold text-ink">Shift</kbd> + click to select a range
+          </span>
+          <span aria-hidden="true">·</span>
+          <button type="button" className="link" onClick={() => setSelected(allShown.map((task) => task.id))}>
+            Select all shown
+          </button>
+          {selected.length > 0 && (
+            <>
+              <span aria-hidden="true">·</span>
+              <button type="button" className="link" onClick={() => setSelected([])}>
+                Clear selection (Esc)
+              </button>
+            </>
+          )}
+        </p>
+      )}
       {bulk && (
         <BulkBar
           ids={selected.filter((one) => rows.some((task) => task.id === one))}

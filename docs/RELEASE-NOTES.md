@@ -1,5 +1,8 @@
 # Release notes
 
+## v1.54.2 (12 Nov 2026): select tasks with Ctrl + click and Shift + click (owner)
+- The task tables (My Tasks and a project's List) have no selection check boxes any more. **Ctrl + click** (Cmd on a Mac) a task to add it to the selection or take it out; **Shift + click** selects every task between the last one you clicked and this one. A plain click still opens the task. Selected tasks are highlighted; **Esc** clears the selection. Under the table: the shortcuts, **Select all shown** and **Clear selection**. The bulk bar (complete, assign, due date, priority…) works as before.
+
 ## v1.54.1 (12 Nov 2026): remarks with task actions; a folding Planning and people card (owner)
 - **Remarks in a task's Actions card:** type a remark, then press any action (Start, Complete, Mark blocked, Back in progress, Reopen, Cancel, Reassign). The remark goes with the action (it fills the reason when one is needed and its box is empty) and is posted to the task's **Comments** as "Started: …", "Completed: …" and so on. The box empties after the action.
 - **Planning and people** (repeats, milestone, start date, tags, followers, delete) is a card that folds; its title line says what is inside (repeats, tags, followers). Click it to open.

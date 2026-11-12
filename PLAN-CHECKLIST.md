@@ -168,6 +168,10 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 
 ---
 
+## Session log — v1.54.2 (12 Nov 2026): task selection by Ctrl/Shift + click
+- [x] V1542-01 (12 Nov 2026) No selection check boxes in TaskGrid; Ctrl/Cmd + click, Shift + click range, Esc, Select all shown (D-311); e2e v131; docs
+- [ ] V1542-02 Owner: live My Tasks showed "This page couldn't be shown" after publishing: hard reload, else send the error reference
+
 ## Session log — v1.54.1 (12 Nov 2026): task remarks, folding side card
 - [x] V1541-01 (12 Nov 2026) Remarks box in the Actions card (ActionRemarks/RemarksField), server posts it to Comments after the action (D-310)
 - [x] V1541-02 (12 Nov 2026) Planning and people as a folding card with a summary line
