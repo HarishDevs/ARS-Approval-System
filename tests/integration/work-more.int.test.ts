@@ -88,9 +88,10 @@ describe("repeating tasks (D-218)", () => {
     const dayAfter = new Date(new Date(`${tuesday}T00:00:00Z`).getTime() + 2 * 86_400_000).toISOString().slice(0, 10);
     await addDepartmentHoliday(dept, nextDay, `Shutdown ${tag}`, owner);
     try {
-      const added = await work.quickAddTask({ title: `Daily ${tag}`, projectId, sectionId: null, parentId: null, assigneeId: helper, dueDay: tuesday, mySectionId: null }, who(owner));
+      // v1.54.4: a repeating task is the person's own (created by and for the helper).
+      const added = await work.quickAddTask({ title: `Daily ${tag}`, projectId, sectionId: null, parentId: null, assigneeId: null, dueDay: tuesday, mySectionId: null }, who(helper));
       const id = added.ok ? added.value.id : 0;
-      await more.setRecurrence(id, { kind: "DAILY", every: 1 }, who(owner));
+      expect((await more.setRecurrence(id, { kind: "DAILY", every: 1 }, who(helper))).ok).toBe(true);
       expect((await work.toggleComplete(id, who(helper))).ok).toBe(true);
       const [next] = await sql<{ id: number }>("SELECT id FROM tasks WHERE series_id = ? AND id <> ?", [id, id]);
       expect(await dueDayOf(Number(next!.id))).toBe(dayAfter);
@@ -280,11 +281,17 @@ describe("ad hoc tasks and project permissions (D-222)", () => {
     expect((await work.toggleComplete(id, who(helper))).ok).toBe(true); // progress is still theirs
   });
 
-  it("a periodic task's assignee may still plan its dates", async () => {
-    const made = await work.quickAddTask({ title: `Periodic rules ${tag}`, projectId, sectionId: null, parentId: null, assigneeId: helper, dueDay: "", mySectionId: null }, who(owner));
-    const id = made.ok ? made.value.id : 0;
-    await more.setRecurrence(id, { kind: "MONTHLY", every: 1 }, who(owner));
-    expect((await work.setTag(id, `monthly-${tag}`, true, who(helper))).ok).toBe(true);
+  it("v1.54.4 (owner): only a task kept for oneself repeats; given to someone else it is ad hoc", async () => {
+    const forHelper = await work.quickAddTask({ title: `Periodic rules ${tag}`, projectId, sectionId: null, parentId: null, assigneeId: helper, dueDay: "", mySectionId: null }, who(owner));
+    const helperTask = forHelper.ok ? forHelper.value.id : 0;
+    const refused = await more.setRecurrence(helperTask, { kind: "MONTHLY", every: 1 }, who(owner));
+    expect(refused).toMatchObject({ ok: false, message: expect.stringMatching(/Only a task you give yourself can repeat/) });
+    // The owner's own task repeats; reassigning it to the helper makes it ad hoc.
+    const own = await work.quickAddTask({ title: `Own periodic ${tag}`, projectId, sectionId: null, parentId: null, assigneeId: null, dueDay: "", mySectionId: null }, who(owner));
+    const ownId = own.ok ? own.value.id : 0;
+    expect((await more.setRecurrence(ownId, { kind: "MONTHLY", every: 1 }, who(owner))).ok).toBe(true);
+    expect((await work.setTaskFields(ownId, { assigneeId: helper }, who(owner))).ok).toBe(true);
+    expect(await more.recurrenceOf(ownId)).toBeNull();
   });
 
   it("project permissions: a restricted field and who may share tasks", async () => {

@@ -42,7 +42,7 @@ test("the sidebar's Tasks & projects group; + Create → Task makes a periodic t
   await dialog.getByRole("button", { name: /^Project:/ }).click();
   await dialog.getByRole("combobox", { name: "Project" }).selectOption({ label: projectName });
   await dialog.getByRole("button", { name: "Repeat (periodic)" }).click();
-  await dialog.getByLabel("Periodic (repeats)").check();
+  await dialog.getByLabel(/Periodic \(repeats/).check();
   await dialog.getByLabel("Mon").check();
   await dialog.getByRole("button", { name: "Create task" }).click();
   await expect(page).toHaveURL(/\/users\/work\/projects\/\d+\?task=\d+/);

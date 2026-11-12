@@ -1,5 +1,9 @@
 # Release notes
 
+## v1.54.4 (12 Nov 2026): Task Summary sections by date; repeating tasks are your own (owner)
+- **Task Summary** has four fixed sections that follow the dates: **Overdue**, **Due today**, **Due in the next 7 days** and **Completed today** (List and Board). Tasks move between them by themselves; the sections can't be renamed or rearranged and there are no "add a task to section" rows (use Add task).
+- **Repeating (periodic) tasks are only for yourself.** In Create task, choosing Periodic sets the task for you; choosing Others makes it ad hoc. A task given to someone else can't be made to repeat, and giving a repeating task to someone else makes it ad hoc (it stops repeating).
+
 ## v1.54.3 (12 Nov 2026): Task Summary, Assigned to me, Assigned by me (owner)
 - The sidebar's **Tasks** group: **Task Summary**, **Assigned to me**, **Assigned by me**, Periodic tasks.
 - **Task Summary** (was My Tasks) shows only what matters now: your incomplete tasks that are overdue, due today or due in the next 7 days, and the tasks you completed today. Its cards: in the summary, Overdue, Due today, Next 7 days, Completed today. List, Board and Calendar work as before.

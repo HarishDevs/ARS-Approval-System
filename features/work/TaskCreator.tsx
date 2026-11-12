@@ -101,7 +101,7 @@ function CreateTaskDialog({
   const [periodic, setPeriodic] = useState(false);
   // D-259: priority, set on the new task(s) right after they are made.
   const [priority, setPriority] = useState<"LOW" | "NORMAL" | "IMPORTANT" | "HIGH" | "URGENT">("NORMAL");
-  const assignees = forWhom === "self" ? [meId] : periodic ? others.slice(0, 1) : others;
+  const assignees = forWhom === "self" || periodic ? [meId] : others;
   const [kind, setKind] = useState<Recurrence["kind"]>("WEEKLY");
   const [every, setEvery] = useState(1);
   const [weekdays, setWeekdays] = useState<number[]>([]);
@@ -135,8 +135,9 @@ function CreateTaskDialog({
   };
   const openRepeat = () => {
     if (!periodic) {
+      // v1.54.4 (owner): a repeating task is always for yourself.
       setPeriodic(true);
-      setOthers((value) => value.slice(0, 1));
+      setForWhom("self");
     }
     setPicking("repeat");
     window.requestAnimationFrame(() => {
@@ -351,6 +352,8 @@ function CreateTaskDialog({
                       aria-checked={forWhom === value}
                       onClick={() => {
                         setForWhom(value);
+                        // v1.54.4 (owner): a task for others is ad hoc; only one for yourself repeats.
+                        if (value === "others") setPeriodic(false);
                         setPicking(value === "others" && others.length === 0 ? "assignee" : "");
                       }}
                       className={`rounded-full px-2.5 py-0.5 text-label ${forWhom === value ? "bg-primary-50 font-semibold text-primary-700" : "text-ink-muted hover:text-ink"}`}
@@ -602,7 +605,7 @@ function CreateTaskDialog({
                 <legend className="px-1 text-label font-semibold">Ad hoc or periodic</legend>
                 <div className="flex flex-wrap gap-4 text-label">
                   <label className="flex items-center gap-2">
-                    <input type="radio" name="create-kind" checked={!periodic} onChange={() => setPeriodic(false)} /> Ad hoc (one time; you can give it to several people)
+                    <input type="radio" name="create-kind" checked={!periodic} onChange={() => setPeriodic(false)} /> Ad hoc (one time; for you or for others, several at once)
                   </label>
                   <label className="flex items-center gap-2">
                     <input
@@ -611,10 +614,10 @@ function CreateTaskDialog({
                       checked={periodic}
                       onChange={() => {
                         setPeriodic(true);
-                        setOthers((value) => value.slice(0, 1));
+                        setForWhom("self");
                       }}
                     />{" "}
-                    Periodic (repeats)
+                    Periodic (repeats; only for yourself)
                   </label>
                 </div>
                 {periodic && (

@@ -170,7 +170,7 @@ export async function insertTask(task: NewTask, db: Queryable): Promise<number> 
 
 // Every change goes through here, guarded by the row version read under the lock.
 export async function updateTask(id: number, expectedVersion: number, changes: Record<string, unknown>, db: Queryable): Promise<boolean> {
-  const allowed = ["title", "description", "priority", "status", "assignee_id", "assigned_by", "due_at", "starts_on", "form_data_json", "completed_by", "completed_at", "completion_note", "cancelled_by", "cancelled_at", "assigned_at"];
+  const allowed = ["title", "description", "priority", "status", "assignee_id", "assigned_by", "due_at", "starts_on", "form_data_json", "completed_by", "completed_at", "completion_note", "cancelled_by", "cancelled_at", "assigned_at", "recurrence_json"]; // v1.54.4: a reassigned task stops repeating
   const keys = Object.keys(changes).filter((key) => allowed.includes(key));
   if (keys.length === 0) return true;
   const [result] = await db.query<ResultSetHeader>(

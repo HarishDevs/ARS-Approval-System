@@ -61,6 +61,8 @@ export async function setRecurrence(taskId: number, raw: unknown, actor: TaskAct
   const settings = parseRecurrenceSettings(await loadSetting(RECURRENCE_SETTINGS_KEY));
   if (!settings.enabled && raw !== null) return fail("Repeating tasks are switched off (Admin → Task settings).");
   if (!OPEN_STATUSES.includes(task.status) && raw !== null) return fail("Reopen the task first.");
+  // v1.54.4 (owner): "a periodic task can be created only for oneself; given to others it is ad hoc".
+  if (raw !== null && task.assigneeId !== task.createdBy) return fail("Only a task you give yourself can repeat. A task for someone else is ad hoc.");
   const rule: Recurrence | null = raw === null ? null : parseRecurrence(raw);
   if (raw !== null && !rule) return fail("Choose how often it repeats.");
   await withTransaction(async (connection) => {

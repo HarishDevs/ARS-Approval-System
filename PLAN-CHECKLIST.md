@@ -168,6 +168,10 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 
 ---
 
+## Session log — v1.54.4 (12 Nov 2026): summary sections by date; periodic only for oneself
+- [x] V1544-01 (12 Nov 2026) Task Summary sections Overdue / Due today / Due in the next 7 days / Completed today, fixed (D-313)
+- [x] V1544-02 (12 Nov 2026) Periodic only for oneself: server (setRecurrence, reassign clears), Create task window; tests; docs
+
 ## Session log — v1.54.3 (12 Nov 2026): Task Summary, Assigned to me, Assigned by me
 - [x] V1543-01 (12 Nov 2026) Task Summary (renamed My Tasks): incomplete tasks due by today + 7 and tasks completed today; cards to match (D-312)
 - [x] V1543-02 (12 Nov 2026) Sidebar Tasks group: Task Summary, Assigned to me, Assigned by me, Periodic tasks; page titles renamed

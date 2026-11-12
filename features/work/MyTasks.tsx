@@ -43,7 +43,10 @@ export interface MySectionRow {
   system: string | null;
 }
 
-export function MyTasks({ sections, tasks, layout, nowIso }: { sections: MySectionRow[]; tasks: MyTaskRow[]; layout: "LIST" | "BOARD"; nowIso: string }) {
+// v1.54.4 (owner): Task Summary's sections are fixed (Overdue, Due today, Due
+// in the next 7 days, Completed today) and follow the dates: "fixed" turns off
+// renaming, adding sections, adding into a section and moving between them.
+export function MyTasks({ sections, tasks, layout, nowIso, fixed = false }: { sections: MySectionRow[]; tasks: MyTaskRow[]; layout: "LIST" | "BOARD"; nowIso: string; fixed?: boolean }) {
   const { call, pending: busy } = useWorkCall();
   const now = useMemo(() => new Date(nowIso), [nowIso]);
   const [dragging, setDragging] = useState<number | null>(null);
@@ -86,7 +89,7 @@ export function MyTasks({ sections, tasks, layout, nowIso }: { sections: MySecti
       <li
         key={task.id}
         tabIndex={-1}
-        draggable
+        draggable={!fixed}
         onDragStart={() => setDragging(task.id)}
         onDragEnd={() => setDragging(null)}
         onDragOver={(event) => event.preventDefault()}
@@ -96,7 +99,7 @@ export function MyTasks({ sections, tasks, layout, nowIso }: { sections: MySecti
           if (dragging !== null && dragging !== task.id) place(dragging, task.sectionId, task.id);
           setDragging(null);
         }}
-        onKeyDown={(event) => keyMove(event, task)}
+        onKeyDown={(event) => !fixed && keyMove(event, task)}
         data-testid="my-task"
         className={`work-row ${card ? "kanban-card rounded-lg border border-line bg-surface p-3 shadow-card hover:border-line-strong" : "flex items-center gap-2 border-b border-line px-3 py-1.5 hover:bg-surface-muted"} ${approvalRowClass(task.approval)} ${dragging === task.id ? "opacity-50" : ""}`}
       >
@@ -134,7 +137,7 @@ export function MyTasks({ sections, tasks, layout, nowIso }: { sections: MySecti
     );
   };
 
-  const sectionHead = (section: MySectionRow, count: number) => <SectionTitle section={section} count={count} />;
+  const sectionHead = (section: MySectionRow, count: number) => (fixed ? <FixedTitle name={section.name} count={count} /> : <SectionTitle section={section} count={count} />);
   const addSection = (
     <form
       className={layout === "BOARD" ? "w-64 shrink-0" : "flex items-center gap-2 px-3 py-3"}
@@ -174,10 +177,10 @@ export function MyTasks({ sections, tasks, layout, nowIso }: { sections: MySecti
             >
               <div className="px-3 py-2">{sectionHead(section, inSection(section.id).length)}</div>
               <ul className="flex-1 space-y-2 px-2 pb-2">{inSection(section.id).map((task) => row(task, true))}</ul>
-              <AddTask mySectionId={section.id} compact />
+              {!fixed && <AddTask mySectionId={section.id} compact />}
             </section>
           ))}
-          {addSection}
+          {!fixed && addSection}
         </div>
       ) : (
         <div className="card" data-testid="my-list">
@@ -194,14 +197,23 @@ export function MyTasks({ sections, tasks, layout, nowIso }: { sections: MySecti
             >
               <div className="border-b border-line px-3 pb-1 pt-3">{sectionHead(section, inSection(section.id).length)}</div>
               <ul>{inSection(section.id).map((task) => row(task, false))}</ul>
-              <AddTask mySectionId={section.id} placeholder={`Add a task to ${section.name}…`} />
+              {!fixed && <AddTask mySectionId={section.id} placeholder={`Add a task to ${section.name}…`} />}
             </section>
           ))}
-          {addSection}
+          {!fixed && addSection}
         </div>
       )}
       <BulkBar ids={selected.filter((one) => tasks.some((task) => task.id === one))} clear={() => setSelected([])} />
-      {recent && <p className="mt-2 text-caption text-ink-muted">New tasks given to you land in {recent.name}. Tasks in Upcoming and Later move to Today on their due date.</p>}
+      {recent && !fixed && <p className="mt-2 text-caption text-ink-muted">New tasks given to you land in {recent.name}. Tasks in Upcoming and Later move to Today on their due date.</p>}
+    </div>
+  );
+}
+
+function FixedTitle({ name, count }: { name: string; count: number }) {
+  return (
+    <div className="flex items-center gap-2">
+      <h2 className="font-semibold">{name}</h2>
+      <span className="rounded-full bg-surface px-2 py-0.5 text-caption font-semibold tabular-nums text-ink-muted">{count}</span>
     </div>
   );
 }
@@ -243,7 +255,7 @@ function SectionTitle({ section, count }: { section: MySectionRow; count: number
 
 // D-220: My Tasks as the shared table (owner's screenshot): your sections as
 // groups by default, or any grouping; drag to place (your order only).
-export function MyTasksGrid({ rows, sections, initial, view, people, projects, meId, nowIso }: { rows: GridTask[]; sections: MySectionRow[]; initial: GridConfig; view: GridView; people: { id: number; label: string }[]; projects: { id: number; name: string }[]; meId: number; nowIso: string }) {
+export function MyTasksGrid({ rows, sections, initial, view, people, projects, meId, nowIso, fixed = false }: { rows: GridTask[]; sections: MySectionRow[]; initial: GridConfig; view: GridView; people: { id: number; label: string }[]; projects: { id: number; name: string }[]; meId: number; nowIso: string; fixed?: boolean }) {
   const { call } = useWorkCall();
   const place = (taskId: number, sectionId: number, beforeId: number | null) => {
     const list = rows.filter((task) => task.sectionId === sectionId && task.id !== taskId).sort((a, b) => a.position - b.position);
@@ -260,9 +272,9 @@ export function MyTasksGrid({ rows, sections, initial, view, people, projects, m
       columns={["due", "priority", "collaborators", "createdBy", "projects", "visibility"]} // v1.52.1 (owner): Priority beside the due date
       groupsAllowed={["section", "assignee", "createdBy", "project", "due", "priority", "kind"]}
       sections={sections.map((section) => ({ id: section.id, name: section.name }))}
-      sectionHeader={(section, count) => <SectionTitle section={sections.find((item) => item.id === section.id)!} count={count} />}
-      onMove={place}
-      addTo={{ mySections: true }}
+      sectionHeader={(section, count) => (fixed ? <FixedTitle name={section.name} count={count} /> : <SectionTitle section={sections.find((item) => item.id === section.id)!} count={count} />)}
+      onMove={fixed ? undefined : place}
+      addTo={fixed ? undefined : { mySections: true }}
       people={people}
       projects={projects}
       meId={meId}

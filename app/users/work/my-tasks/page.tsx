@@ -15,8 +15,7 @@ import { getDbPool } from "@/lib/db/client";
 import type { RowDataPacket } from "mysql2/promise";
 import { TaskCalendar } from "@/features/work/TaskCalendar";
 import { indiaDayOf } from "@/features/work/format";
-import { ensureMySections, listTaskItems, listVisibleProjects, listWorkViews, myPlacements } from "@/lib/db/repositories/work.repository";
-import { myTaskBucket, type MySystemSection } from "@/server/work/rules";
+import { listTaskItems, listVisibleProjects, listWorkViews } from "@/lib/db/repositories/work.repository";
 import { workPage } from "@/server/work/page-context";
 import { calendarHolidays } from "@/server/work/holiday-store";
 import { isMobileLayout } from "@/server/ui/layout-mode";
@@ -88,32 +87,29 @@ export default async function MyTasksPage({
     { key: "upcoming", label: "Next 7 days", value: Number(cardRow?.upcoming ?? 0), icon: CalendarRange, tone: "text-primary-700" },
     { key: "done", label: "Completed today", value: Number(cardRow?.done_today ?? 0), icon: CheckCircle2, tone: "text-success-600" },
   ];
-  const [sections, placements, list, digestOff] = await Promise.all([
-    ensureMySections(user.id),
-    myPlacements(user.id),
+  const [list, digestOff] = await Promise.all([
     listTaskItems(where, [user.id, weekEnd, todayStart], "t.due_at IS NULL, t.due_at, t.id", 1000),
     getDbPool()
       .query<RowDataPacket[]>("SELECT 1 FROM user_settings WHERE user_id = ? AND setting_key = 'work.digest' AND value = 'OFF'", [user.id])
       .then(([rows]) => rows.length > 0),
   ]);
-  const bySystem = new Map(sections.filter((section) => section.system).map((section) => [section.system as MySystemSection, section]));
+  // v1.54.4 (owner): Task Summary's own sections, by date (not the person's
+  // sections): Overdue, Due today, Due in the next 7 days, Completed today.
+  const SUMMARY = [
+    { id: -1, name: "Overdue", system: "SUMMARY" },
+    { id: -2, name: "Due today", system: "SUMMARY" },
+    { id: -3, name: "Due in the next 7 days", system: "SUMMARY" },
+    { id: -4, name: "Completed today", system: "SUMMARY" },
+  ];
+  const summarySection = (task: { status: string; dueAt: Date | null }) => {
+    if (task.status === "COMPLETED") return -4;
+    const day = task.dueAt ? indiaDayOf(task.dueAt) : today;
+    return day < today ? -1 : day === today ? -2 : -3;
+  };
   const rows = list.items.map((task) => {
-    const placed = placements.get(task.id);
-    const placedSection = placed ? sections.find((section) => section.id === placed.sectionId) : undefined;
-    const bucket = myTaskBucket(
-      {
-        dueDay: task.dueAt ? indiaDayOf(task.dueAt) : null,
-        assignedAt: task.assignedAt,
-        selfAssigned: task.createdBy === user.id,
-        open: task.status !== "COMPLETED",
-      },
-      placedSection ? { system: placedSection.system, sectionId: placedSection.id } : null,
-      today,
-      now,
-    );
-    const sectionId = bucket.sectionId ?? bySystem.get(bucket.system ?? "LATER")!.id;
-    // Never-placed tasks follow the placed ones, by due date.
-    const position = placed?.position ?? 1e12 + (task.dueAt ? task.dueAt.getTime() / 1000 : 9e9);
+    const sectionId = summarySection(task);
+    // By due date within each section.
+    const position = task.dueAt ? task.dueAt.getTime() / 1000 : 9e9;
     return {
       id: task.id,
       title: task.title,
@@ -243,7 +239,8 @@ export default async function MyTasksPage({
         ) : view === "list" ? (
           <MyTasksGrid
             rows={gridRows}
-            sections={sections.map((section) => ({ id: section.id, name: section.name, system: section.system }))}
+            sections={SUMMARY}
+            fixed
             initial={currentTab ? parseGridConfig(currentTab.config) : { ...DEFAULT_GRID, group: "section" }}
             view={{ scope: "MY_TASKS", scopeId: user.id, canSave: true, current: currentTab ? { id: currentTab.id, name: currentTab.name } : null }}
             people={gridPeople}
@@ -253,11 +250,8 @@ export default async function MyTasksPage({
           />
         ) : (
           <MyTasks
-            sections={sections.map((section) => ({
-              id: section.id,
-              name: section.name,
-              system: section.system,
-            }))}
+            sections={SUMMARY}
+            fixed
             tasks={rows}
             layout={view === "board" ? "BOARD" : "LIST"}
             nowIso={now.toISOString()}

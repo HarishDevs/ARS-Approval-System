@@ -306,6 +306,8 @@ export async function actOnTask(input: TaskActionInput, actor: TaskActor): Promi
           if (newAssignee.id === task.assigneeId) return { error: "It's already assigned to that person.", field: "assignee" } as const;
           if (!mayAssignTo(settings, { creatorId: actor.id, creatorDepartmentId: actorFacts?.departmentId ?? null, creatorTeamIds: team, candidate: newAssignee }, isAdminActor(actor))) return { error: "This type can't be assigned to that person.", field: "assignee" } as const;
           Object.assign(changes, { assignee_id: newAssignee.id, assigned_by: actor.id, assigned_at: new Date(), status: task.status === "BLOCKED" ? "BLOCKED" : task.status });
+          // v1.54.4 (owner): only a task kept for oneself repeats; given to someone else it is ad hoc.
+          if (newAssignee.id !== task.createdBy) Object.assign(changes, { recurrence_json: null });
           // D-215: the new assignee follows it and finds it in "Recently assigned".
           await addFollower(task.id, newAssignee.id, "ASSIGNEE", actor.id, connection);
           await clearPlacements(task.id, connection);

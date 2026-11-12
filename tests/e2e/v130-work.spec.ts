@@ -84,7 +84,10 @@ test("My Tasks, Task home and Task search show the work", async ({ page, context
   await page.goto("/users/work/my-tasks");
   await expect(page.getByRole("heading", { level: 1, name: "Task Summary" })).toBeVisible();
   await expect(page.getByTestId("my-grid")).toContainText(`Survey the site ${stamp}`);
-  await expect(page.getByRole("rowgroup", { name: "Recently assigned" })).toBeVisible();
+  // v1.54.4 (owner): fixed sections by date; the task due today is under Due today.
+  for (const name of ["Overdue", "Due today", "Due in the next 7 days", "Completed today"]) await expect(page.getByRole("rowgroup", { name })).toBeVisible();
+  await expect(page.getByRole("rowgroup", { name: "Due today" })).toContainText(`Survey the site ${stamp}`);
+  await expect(page.getByRole("button", { name: /^Rename / })).toHaveCount(0);
   await page.goto("/users/work/my-tasks?view=board");
   await expect(page.getByTestId("my-board")).toBeVisible();
   // v1.54.3: the full list of tasks given to me is Assigned to me (the sidebar names both).
