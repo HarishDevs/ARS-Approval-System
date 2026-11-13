@@ -33,6 +33,7 @@ import { AttachmentList, type AttachmentRow } from "@/features/requests/Attachme
 import { fieldIconKind, type FieldIconKind } from "@/features/requests/request-page";
 import { formatPaise } from "@/server/forms/dynamic";
 import type { RequestView } from "@/server/approvals/view";
+import { RichText } from "@/features/work/RichText";
 
 // v1.49 (owner's layout, 2 Nov 2026): the "Request details" card. Two
 // columns of icon + label + value rows: who raised it (D-263: name and
@@ -146,6 +147,8 @@ function FieldValue({ field, view, files }: { field: Field; view: RequestView; f
   }
   if (field.pills) return <ChoicePills values={field.pills} />;
   if (!field.value.trim()) return <span className="text-ink-muted">—</span>;
+  // v1.54.7 (owner): long text keeps its formatting (bold, lists…), like an email.
+  if (view.form.find((item) => item.key === field.key)?.type === "LONG_TEXT") return <RichText text={field.value} className="font-normal" />;
   return (
     <span className="whitespace-pre-wrap">
       <SafeText text={field.value} />

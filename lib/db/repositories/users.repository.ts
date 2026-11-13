@@ -144,6 +144,60 @@ export async function linkFirebaseUid(userId: number, uid: string, db: Queryable
   await db.query<ResultSetHeader>("UPDATE users SET firebase_uid = ? WHERE id = ? AND firebase_uid IS NULL", [uid, userId]);
 }
 
+// v1.54.7: the google_sub column comes with migration 202611131000. Until it
+// has run, these quietly do nothing, so sign-in keeps working as before.
+const missingColumn = (error: unknown) => (error as { code?: string } | null)?.code === "ER_BAD_FIELD_ERROR";
+
+// The account already linked to this Google account (by its permanent id).
+export async function findUserByGoogleSub(sub: string, db: Queryable = getDbPool()): Promise<UserRecord | null> {
+  try {
+    const [rows] = await db.query<RowDataPacket[]>("SELECT id FROM users WHERE google_sub = ? LIMIT 1", [sub]);
+    const id = rows[0] ? Number(rows[0].id) : 0;
+    return id ? findUserById(id, db) : null;
+  } catch (error) {
+    if (missingColumn(error)) return null;
+    throw error;
+  }
+}
+
+// Keeps the Google account's id with the account (only if none is kept yet).
+export async function keepGoogleSub(userId: number, sub: string, db: Queryable = getDbPool()): Promise<void> {
+  try {
+    await db.query<ResultSetHeader>("UPDATE users SET google_sub = ? WHERE id = ? AND google_sub IS NULL AND NOT EXISTS (SELECT 1 FROM (SELECT id FROM users WHERE google_sub = ?) AS taken)", [sub, userId, sub]);
+  } catch (error) {
+    if (!missingColumn(error)) throw error;
+  }
+}
+
+// The same Google account (same sub) came back with a new Firebase uid: move
+// the link to it. Only for the account that holds this sub.
+export async function relinkFirebaseUid(userId: number, uid: string, sub: string, db: Queryable = getDbPool()): Promise<boolean> {
+  try {
+    const [result] = await db.query<ResultSetHeader>("UPDATE users SET firebase_uid = ? WHERE id = ? AND google_sub = ? AND NOT EXISTS (SELECT 1 FROM (SELECT id FROM users WHERE firebase_uid = ?) AS taken)", [uid, userId, sub, uid]);
+    return result.affectedRows === 1;
+  } catch (error) {
+    if (missingColumn(error)) return false;
+    throw error;
+  }
+}
+
+// Google now reports a different primary email for the same Google account:
+// the account takes it, unless another account already uses that email.
+// Only the email changes: the user id, User ID, roles and history stay.
+export async function updateEmailFromGoogle(userId: number, email: string, db: Queryable = getDbPool()): Promise<"UPDATED" | "TAKEN" | "SAME"> {
+  const value = email.trim().toLowerCase();
+  const [taken] = await db.query<RowDataPacket[]>("SELECT id FROM users WHERE LOWER(email) = ? LIMIT 2", [value]);
+  if (taken.some((row) => Number(row.id) === userId)) return "SAME";
+  if (taken.length > 0) return "TAKEN";
+  try {
+    const [result] = await db.query<ResultSetHeader>("UPDATE users SET email = ? WHERE id = ?", [value, userId]);
+    return result.affectedRows === 1 ? "UPDATED" : "SAME";
+  } catch (error) {
+    if ((error as { code?: string } | null)?.code === "ER_DUP_ENTRY") return "TAKEN";
+    throw error;
+  }
+}
+
 export async function markLoginSuccess(userId: number, db: Queryable = getDbPool()): Promise<void> {
   await db.query<ResultSetHeader>(
     "UPDATE users SET last_login_at = CURRENT_TIMESTAMP, failed_login_count = 0, locked_until = NULL WHERE id = ?",

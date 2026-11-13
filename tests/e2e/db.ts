@@ -146,3 +146,10 @@ export async function dueToday(titleLike: string): Promise<void> {
     await conn.end();
   }
 }
+
+// v1.54.7 (owner): a task's due date is mandatory in Create task (the time is
+// 11:59 pm unless changed): the scenarios give one, a few days ahead.
+export async function fillDue(dialog: import("@playwright/test").Locator, daysAhead = 3): Promise<void> {
+  const day = new Date(Date.now() + 330 * 60_000 + daysAhead * 86_400_000).toISOString().slice(0, 10);
+  await dialog.locator("#create-due").fill(day);
+}

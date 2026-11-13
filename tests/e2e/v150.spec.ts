@@ -82,16 +82,16 @@ test("#6 notification choices are saved; the mandatory ones are locked on", asyn
   await expect(page.getByLabel("For your information by email")).toBeChecked();
 });
 
-test("#7 the manager approves two at once after reviewing them", async ({ page, context }) => {
+test("#7 Waiting for me has no bulk panel; the manager approves each one on its page", async ({ page, context }) => {
   await as(context, "E2E_MGR");
   await page.goto("/users/queue");
-  const bulk = page.getByRole("region", { name: "Approve several at once" });
-  for (const title of bulkTitles) await bulk.getByRole("checkbox", { name: new RegExp(title) }).check();
-  await bulk.getByRole("button", { name: /Review 3 approvals/ }).click();
-  await expect(page.getByRole("alertdialog", { name: "Confirm approvals" })).toContainText(bulkTitles[0]!);
-  await page.getByRole("button", { name: "Yes, approve 3" }).click();
-  await expect(page.getByText("Approved 3.")).toBeVisible();
-  await expect(page.getByRole("list", { name: "Results" }).getByText(/approved/)).toHaveCount(3);
+  // v1.54.7 (owner: "drop this in the waiting for me").
+  await expect(page.getByRole("region", { name: "Approve several at once" })).toHaveCount(0);
+  for (const path of bulkPaths) {
+    await page.goto(path);
+    await page.getByTestId("decision-buttons").getByRole("button", { name: "Approve", exact: true }).click();
+    await expect(page.getByTestId("decision-buttons")).toHaveCount(0);
+  }
 });
 
 test("#5 on a phone the HOD finds it as a card and approves it", async ({ page, context }) => {

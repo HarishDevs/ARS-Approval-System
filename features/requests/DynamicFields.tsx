@@ -11,6 +11,7 @@ import { ACCEPT_ATTRIBUTE } from "@/server/attachments/files";
 import type { FieldLookups, FormField } from "@/server/forms/fields";
 import type { ActionResult } from "@/lib/http/action-result";
 import { FileListInput } from "@/features/ui/FileListInput";
+import { RichEditor } from "@/features/ui/RichEditor";
 
 // The fields of a form (v1.8.0: shared by raise / resubmit / amend and by
 // the custom approval page, whose fields IT sets up). Live values decide
@@ -184,7 +185,21 @@ export function FieldInput({
   const a11y = { "aria-invalid": error ? true : undefined, "aria-describedby": describedBy, "aria-required": field.required || undefined };
   switch (field.type) {
     case "LONG_TEXT":
-      return <textarea id={id} name={field.key} {...a11y} defaultValue={defaultValue} rows={4} className="field-input h-auto py-2.5" />;
+      // v1.54.7 (owner): long text is formatted like an email.
+      return (
+        <RichEditor
+          id={id}
+          name={field.key}
+          label={field.label}
+          initialText={typeof defaultValue === "string" ? defaultValue : ""}
+          maxLength={10000}
+          minHeight={100}
+          placeholder=""
+          ariaInvalid={Boolean(error)}
+          ariaDescribedBy={describedBy}
+          ariaRequired={field.required}
+        />
+      );
     case "NUMBER":
       return <input id={id} name={field.key} {...a11y} defaultValue={defaultValue} inputMode="decimal" placeholder="e.g. 12,50,000" className="field-input" />;
     case "CURRENCY":

@@ -81,6 +81,33 @@ export function NotificationBell({ initialUnread }: { initialUnread: number }) {
     if (open) void load(filter);
   }, [open, filter, load]);
 
+  // v1.54.7 (owner: "once a notification is opened the bell's count doesn't
+  // update"): the bell kept the count it started with. Now it follows the
+  // page's count (a refresh after reading in the Inbox), and checks again when
+  // the tab comes back into view.
+  useEffect(() => {
+    setUnread((current) => (current.ALL === initialUnread ? current : { ...current, ALL: initialUnread }));
+  }, [initialUnread]);
+  const recount = useCallback(async () => {
+    try {
+      const response = await fetch("/api/me/notifications", { cache: "no-store", headers: { Accept: "application/json" } });
+      if (!response.ok) return;
+      const data = (await response.json()) as { unread?: Record<string, number> };
+      if (data.unread) setUnread(data.unread);
+    } catch {
+      // The count stays as it was.
+    }
+  }, []);
+  useEffect(() => {
+    const onVisible = () => document.visibilityState === "visible" && void recount();
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+    };
+  }, [recount]);
+
   // Close on Escape or a click outside; focus goes back to the bell.
   useEffect(() => {
     if (!open) return;
@@ -106,7 +133,10 @@ export function NotificationBell({ initialUnread }: { initialUnread: number }) {
   async function openItem(item: Item) {
     if (!item.read) {
       setItems((current) => current?.map((row) => (row.id === item.id ? { ...row, read: true } : row)) ?? null);
+      // The count drops at once (All and the item's own kind), then the server's figure.
+      setUnread((current) => ({ ...current, ALL: Math.max(0, (current.ALL ?? 0) - 1), [item.category]: Math.max(0, (current[item.category] ?? 0) - 1) }));
       await post({ action: "read", ids: [item.id] }).catch(() => undefined);
+      void recount();
     }
     setOpen(false);
     router.push(item.path ?? "/users/inbox");

@@ -1,21 +1,22 @@
 "use client";
 
-import { AtSign, Bold, CalendarDays, ChevronDown, Italic, List, ListOrdered, Paperclip, Plus, Repeat, Smile, Sparkles, Strikethrough, Type, UserPlus, X } from "lucide-react";
+import { CalendarDays, ChevronDown, Paperclip, Plus, Repeat, Sparkles, UserPlus, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { followAction, quickAddAction, recurrenceAction, taskFieldsAction } from "@/app/users/work/actions";
 import { taskAction } from "@/app/users/tasks/actions";
 import { draftTaskTextAction } from "@/app/users/ai/actions";
 import { CREATE_TASK_EVENT, ProjectDot, useWorkCall } from "@/features/work/client";
+import { RichEditor } from "@/features/ui/RichEditor";
 import { useProjectsOn } from "@/features/work/projects-access";
-import { encodeMentions, mentionIds, prefixLines, wrapSelection } from "@/features/work/rich-text";
+import { mentionIds } from "@/features/work/rich-text";
 import { RECURRENCE_KINDS, type Recurrence } from "@/server/work/more-rules";
 
 // D-221 (owner): "Create → Task" anywhere in the app opens Asana's Draft
 // task panel (bottom right). Mounted once in the users layout; anything can
 // ask for it with CREATE_TASK_EVENT (detail.projectId picks the project).
 type RailProject = { id: number; name: string; color: string };
-type Person = { id: number; label: string };
+type Person = { id: number; label: string; detail?: string };
 
 export function TaskCreator({ projects, people, meId, ai = false }: { projects: RailProject[]; people: Person[]; meId: number; ai?: boolean }) {
   const [open, setOpen] = useState<{ projectId: number | null } | null>(null);
@@ -36,25 +37,11 @@ export function TaskCreator({ projects, people, meId, ai = false }: { projects: 
 
 const UNIT: Record<(typeof RECURRENCE_KINDS)[number], string> = { DAILY: "days", WEEKLY: "weeks", MONTHLY: "months", YEARLY: "years", AFTER_DONE: "days after it is completed" };
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const EMOJI = ["👍", "✅", "🙏", "🎉", "🔥", "⚠️", "❗", "❓", "📌", "📎", "📅", "⏰", "🚚", "🏭", "💡", "📝", "📊", "💰", "🤝", "👀", "😊", "😀", "😅", "🙌", "👏", "💯", "🚀", "⭐", "✔️", "❌"];
 // The upload's own limits (server/attachments/files.ts), said before sending.
 const MAX_FILES = 5;
 const MAX_BYTES = 10 * 1024 * 1024;
 const ACCEPT = ".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.csv,.txt";
-type Pop = "" | "plus" | "emoji" | "mention" | "slash" | "collab";
-type Slash = { key: string; label: string; hint: string };
-const SLASH: Slash[] = [
-  { key: "bullets", label: "Bulleted list", hint: "- item" },
-  { key: "numbers", label: "Numbered list", hint: "1. item" },
-  { key: "bold", label: "Bold", hint: "**text**" },
-  { key: "italic", label: "Italic", hint: "_text_" },
-  { key: "strike", label: "Strikethrough", hint: "~~text~~" },
-  { key: "mention", label: "Mention someone", hint: "@" },
-  { key: "emoji", label: "Emoji", hint: "😊" },
-  { key: "attach", label: "Attach a file", hint: "📎" },
-  { key: "due", label: "Due date", hint: "📅" },
-  { key: "repeat", label: "Repeat (periodic)", hint: "↻" },
-];
+type Pop = "" | "plus" | "collab";
 const initials = (name: string) =>
   name
     .replace(/\(.*\)/, "")
@@ -96,8 +83,10 @@ function CreateTaskDialog({
   const [forWhom, setForWhom] = useState<"self" | "others">("self");
   const [others, setOthers] = useState<number[]>([]);
   const [due, setDue] = useState("");
+  const [dueTime, setDueTime] = useState("23:59"); // v1.54.7 (owner): 11:59 pm unless changed
   const [project, setProject] = useState<number | "">(defaultProject ?? "");
   const [description, setDescription] = useState("");
+  const [editorKey, setEditorKey] = useState(0); // remounts the editor when Pico Bot (or Undo) replaces the text
   const [periodic, setPeriodic] = useState(false);
   // D-259: priority, set on the new task(s) right after they are made.
   const [priority, setPriority] = useState<"LOW" | "NORMAL" | "IMPORTANT" | "HIGH" | "URGENT">("NORMAL");
@@ -109,11 +98,7 @@ function CreateTaskDialog({
   const [picking, setPicking] = useState<"" | "assignee" | "project" | "due" | "repeat">("");
   const projectsOn = useProjectsOn();
   // D-238: the toolbar's state.
-  const [formatting, setFormatting] = useState(false);
   const [pop, setPop] = useState<Pop>("");
-  const [mentioned, setMentioned] = useState<{ id: number; name: string }[]>([]);
-  const [atSign, setAtSign] = useState<number | null>(null); // where a typed "@" is waiting for a name
-  const [slash, setSlash] = useState<{ at: number; query: string; index: number } | null>(null);
   const [files, setFiles] = useState<File[]>([]);
   const [fileProblem, setFileProblem] = useState("");
   const [collaborators, setCollaborators] = useState<number[]>([]);
@@ -149,43 +134,13 @@ function CreateTaskDialog({
   const [aiBusy, setAiBusy] = useState(false);
   const [beforeAi, setBeforeAi] = useState<string | null>(null);
   const name = useRef<HTMLInputElement>(null);
-  const text = useRef<HTMLTextAreaElement>(null);
   const filePicker = useRef<HTMLInputElement>(null);
   useEffect(() => {
     name.current?.focus();
   }, []);
   const label = (id: number) => people.find((item) => item.id === id)?.label ?? "Someone";
   const chosen = projects.find((item) => item.id === project);
-  const slashMatches = slash ? SLASH.filter((item) => item.label.toLowerCase().includes(slash.query.toLowerCase())) : [];
 
-  // Put text where the cursor is (or replace the selection) and keep typing after it.
-  const edit = (next: { value: string; start: number; end: number }) => {
-    setDescription(next.value);
-    requestAnimationFrame(() => {
-      text.current?.focus();
-      text.current?.setSelectionRange(next.start, next.end);
-    });
-  };
-  const selection = () => ({ start: text.current?.selectionStart ?? description.length, end: text.current?.selectionEnd ?? description.length });
-  const insert = (value: string) => {
-    const { start, end } = selection();
-    edit({ value: `${description.slice(0, start)}${value}${description.slice(end)}`, start: start + value.length, end: start + value.length });
-  };
-  const format = (how: "bold" | "italic" | "strike" | "bullets" | "numbers") => {
-    const { start, end } = selection();
-    if (how === "bullets" || how === "numbers") edit(prefixLines(description, start, end, how === "numbers"));
-    else edit(wrapSelection(description, start, end, how === "bold" ? "**" : how === "italic" ? "_" : "~~", how === "bold" ? "bold text" : how === "italic" ? "italic text" : "struck text"));
-  };
-  const addMention = (id: number) => {
-    const person = label(id);
-    setMentioned((value) => (value.some((item) => item.id === id) ? value : [...value, { id, name: person }]));
-    if (atSign !== null && description[atSign] === "@") {
-      const after = atSign + 1;
-      edit({ value: `${description.slice(0, after)}${person} ${description.slice(after)}`, start: after + person.length + 1, end: after + person.length + 1 });
-    } else insert(`@${person} `);
-    setAtSign(null);
-    setPop("");
-  };
   const addFiles = (list: File[]) => {
     const problems: string[] = [];
     const fitting = list.filter((file) => {
@@ -197,50 +152,16 @@ function CreateTaskDialog({
     setFiles((value) => [...value, ...fitting.slice(0, Math.max(0, room))]);
     setFileProblem(problems.join(" "));
   };
-  const runSlash = (key: string) => {
-    if (!slash) return;
-    // The "/command" typed goes away; the command runs where it was.
-    const start = slash.at;
-    const end = slash.at + 1 + slash.query.length;
-    const value = `${description.slice(0, start)}${description.slice(end)}`;
-    setSlash(null);
-    setPop("");
-    setDescription(value);
-    requestAnimationFrame(() => {
-      text.current?.focus();
-      text.current?.setSelectionRange(start, start);
-      if (key === "bullets" || key === "numbers" || key === "bold" || key === "italic" || key === "strike") {
-        const next =
-          key === "bullets" || key === "numbers"
-            ? prefixLines(value, start, start, key === "numbers")
-            : wrapSelection(value, start, start, key === "bold" ? "**" : key === "italic" ? "_" : "~~", key === "bold" ? "bold text" : key === "italic" ? "italic text" : "struck text");
-        setDescription(next.value);
-        requestAnimationFrame(() => text.current?.setSelectionRange(next.start, next.end));
-      } else if (key === "mention") {
-        setAtSign(null);
-        setPop("mention");
-      } else if (key === "emoji") setPop("emoji");
-      else if (key === "attach") filePicker.current?.click();
-      else if (key === "due") setPicking("due");
-      else if (key === "repeat") setPicking("repeat");
-    });
-  };
   const askAi = async () => {
     if (aiBusy) return;
     setAiBusy(true);
     try {
-      const result = await call(() => draftTaskTextAction({ title, description: encodeMentions(description, mentioned) }), { success: false });
+      const result = await call(() => draftTaskTextAction({ title, description }), { success: false });
       const written = (result as { text?: string } | null)?.text;
       if (result?.ok && written) {
         setBeforeAi(description);
-        // Mentions come back as @[Name](user:id): shown as @Name again while editing.
-        const found: { id: number; name: string }[] = [];
-        const shown = written.replace(/@\[([^\]\n]{1,80})\]\(user:(\d{1,10})\)/g, (_all, who: string, id: string) => {
-          found.push({ id: Number(id), name: who });
-          return `@${who}`;
-        });
-        setMentioned((value) => [...value, ...found.filter((item) => !value.some((one) => one.id === item.id))]);
-        setDescription(shown);
+        setDescription(written);
+        setEditorKey((value) => value + 1);
       }
     } finally {
       setAiBusy(false);
@@ -248,15 +169,18 @@ function CreateTaskDialog({
   };
 
   const submit = async () => {
-    if (!title.trim() || assignees.length === 0) return;
-    const body = encodeMentions(description, mentioned);
+    if (!title.trim() || assignees.length === 0 || !due) {
+      if (!due) setPicking("due");
+      return;
+    }
+    const body = description;
     const result = await call(
       (choice) =>
         quickAddAction({
           title,
           assigneeId: assignees[0] ?? meId,
           assigneeIds: !periodic && assignees.length > 1 ? assignees : undefined,
-          dueDay: choice?.moveTo ?? due,
+          dueDay: `${choice?.moveTo ?? due}T${/^\d{2}:\d{2}$/.test(dueTime) ? dueTime : "23:59"}`,
           holidayOk: choice?.holidayOk,
           projectId: project === "" ? null : project,
           description: body,
@@ -294,9 +218,8 @@ function CreateTaskDialog({
       data-testid="create-dialog"
       onKeyDown={(event) => {
         if (event.key === "Escape") {
-          if (pop || slash) {
+          if (pop) {
             setPop("");
-            setSlash(null);
             return;
           }
           onClose();
@@ -431,109 +354,23 @@ function CreateTaskDialog({
                   </button>
                 )}
               </div>
-              {formatting && (
-                <div role="toolbar" aria-label="Formatting" className="flex items-center gap-0.5 rounded-md border border-line px-1 py-0.5" data-testid="format-bar">
-                  <button type="button" aria-label="Bold" title="Bold (**text**)" onClick={() => format("bold")} className={tool()}>
-                    <Bold aria-hidden="true" className="h-4 w-4" />
-                  </button>
-                  <button type="button" aria-label="Italic" title="Italic (_text_)" onClick={() => format("italic")} className={tool()}>
-                    <Italic aria-hidden="true" className="h-4 w-4" />
-                  </button>
-                  <button type="button" aria-label="Strikethrough" title="Strikethrough (~~text~~)" onClick={() => format("strike")} className={tool()}>
-                    <Strikethrough aria-hidden="true" className="h-4 w-4" />
-                  </button>
-                  <span aria-hidden="true" className="mx-1 h-5 w-px bg-line" />
-                  <button type="button" aria-label="Bulleted list" title="Bulleted list" onClick={() => format("bullets")} className={tool()}>
-                    <List aria-hidden="true" className="h-4 w-4" />
-                  </button>
-                  <button type="button" aria-label="Numbered list" title="Numbered list" onClick={() => format("numbers")} className={tool()}>
-                    <ListOrdered aria-hidden="true" className="h-4 w-4" />
-                  </button>
-                </div>
-              )}
-              <div className="relative flex min-h-[6rem] flex-1 flex-col lg:min-h-[12rem] lg:rounded-md lg:border lg:border-line lg:px-3 lg:py-2">
-                <label htmlFor="create-description" className="sr-only">
-                  Description
-                </label>
-                <textarea
-                  ref={text}
+              {/* v1.54.7 (owner: "long text formattable and visibly formatted like a mail body"):
+                  the description is the formatted editor (bold, italic, underline, lists,
+                  links, quote, heading, emoji, @mention); a pasted image is attached. */}
+              <div className="flex min-h-[6rem] flex-1 flex-col" data-testid="create-description-box">
+                <RichEditor
+                  key={editorKey}
+                  name="description"
                   id="create-description"
-                  maxLength={4000}
-                  placeholder="Description. Type / for menu, @ to mention someone; paste an image to attach it."
-                  value={description}
-                  aria-describedby="create-description-help"
-                  onChange={(event) => {
-                    const value = event.target.value;
-                    const caret = event.target.selectionStart ?? value.length;
-                    const typed = value.length === description.length + 1 ? value[caret - 1] : null;
-                    const before = caret >= 2 ? value[caret - 2] : "";
-                    setDescription(value);
-                    if (typed === "/" && (!before || /\s/.test(before))) {
-                      setSlash({ at: caret - 1, query: "", index: 0 });
-                      setPop("slash");
-                    } else if (typed === "@" && (!before || /\s/.test(before))) {
-                      setAtSign(caret - 1);
-                      setPop("mention");
-                    } else if (slash) {
-                      const query = value.slice(slash.at + 1, caret);
-                      if (value[slash.at] !== "/" || caret <= slash.at || /\s/.test(query) || query.length > 20) {
-                        setSlash(null);
-                        setPop("");
-                      } else setSlash({ ...slash, query, index: 0 });
-                    }
-                  }}
-                  onKeyDown={(event) => {
-                    if (!slash || pop !== "slash") return;
-                    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
-                      event.preventDefault();
-                      setSlash({ ...slash, index: Math.max(0, Math.min(slashMatches.length - 1, slash.index + (event.key === "ArrowDown" ? 1 : -1))) });
-                    } else if (event.key === "Enter" && !(event.ctrlKey || event.metaKey)) {
-                      const item = slashMatches[slash.index];
-                      if (item) {
-                        event.preventDefault();
-                        runSlash(item.key);
-                      }
-                    }
-                  }}
-                  onPaste={(event) => {
-                    const pasted = Array.from(event.clipboardData.files);
-                    if (!pasted.length) return;
-                    event.preventDefault();
-                    addFiles(pasted.map((file) => (/^image\.\w+$/.test(file.name) ? new File([file], `pasted-image-${Date.now()}.${file.name.split(".").pop()}`, { type: file.type }) : file)));
-                  }}
-                  className="min-h-[6rem] w-full flex-1 resize-none bg-transparent text-body placeholder:text-ink-faint focus:outline-none"
+                  label="Description"
+                  placeholder="Description. Format it like an email; @ to mention someone; paste an image to attach it."
+                  initialText={description}
+                  people={people.filter((item) => item.id !== meId).map((item) => ({ id: item.id, label: item.label, detail: item.detail, name: item.label.split(" - ")[0] }))}
+                  onText={setDescription}
+                  onPasteFiles={(pasted) => addFiles(pasted.map((file) => (/^image\.\w+$/.test(file.name) ? new File([file], `pasted-image-${Date.now()}.${file.name.split(".").pop()}`, { type: file.type }) : file)))}
+                  minHeight={120}
+                  testId="create-description-editor"
                 />
-                <p id="create-description-help" className="sr-only">
-                  Type / for formatting and other commands, or @ to mention someone. Mentioned people become collaborators.
-                </p>
-                {pop === "slash" && slash && (
-                  <ul
-                    role="listbox"
-                    aria-label="Commands"
-                    className="absolute left-0 top-8 z-20 max-h-64 w-64 overflow-y-auto rounded-md border border-line bg-raised py-1 shadow-overlay"
-                    data-testid="slash-menu"
-                  >
-                    {slashMatches.length === 0 ? (
-                      <li className="px-3 py-1.5 text-label text-ink-muted">No command matches.</li>
-                    ) : (
-                      slashMatches.map((item, index) => (
-                        <li
-                          key={item.key}
-                          role="option"
-                          aria-selected={index === slash.index}
-                          onMouseDown={(event) => {
-                            event.preventDefault();
-                            runSlash(item.key);
-                          }}
-                          className={`flex cursor-pointer items-center justify-between gap-2 px-3 py-1.5 text-label ${index === slash.index ? "bg-primary-50 text-primary-700" : "text-ink hover:bg-surface-muted"}`}
-                        >
-                          {item.label}
-                          <span className="text-caption text-ink-faint">{item.hint}</span>
-                        </li>
-                      ))
-                    )}
-                  </ul>
-                )}
               </div>
               {beforeAi !== null && (
                 <p role="status" className="flex items-center gap-2 text-caption text-ink-muted">
@@ -544,6 +381,7 @@ function CreateTaskDialog({
                     onClick={() => {
                       setDescription(beforeAi);
                       setBeforeAi(null);
+                      setEditorKey((value) => value + 1);
                     }}
                   >
                     Undo
@@ -579,14 +417,15 @@ function CreateTaskDialog({
               <p className="hidden text-caption font-semibold uppercase tracking-wide text-ink-muted lg:block">Task settings</p>
               <div className={`${picking === "due" || due ? "flex" : "hidden lg:flex"} items-center gap-2 text-label lg:flex-col lg:items-stretch lg:gap-1`}>
                 <label htmlFor="create-due" className="text-ink-muted">
-                  Due date
+                  Due date <span className="text-danger-600" aria-hidden="true">*</span>
                 </label>
-                <input id="create-due" type="date" value={due} onChange={(event) => setDue(event.target.value)} className="field-input h-8 w-44 py-0 text-label lg:w-full" />
-                {due && (
-                  <button type="button" aria-label="Remove due date" onClick={() => setDue("")} className="rounded p-1 text-ink-muted hover:bg-surface-muted lg:self-start">
-                    <X aria-hidden="true" className="h-3.5 w-3.5" />
-                  </button>
-                )}
+                <span className="flex items-center gap-1.5">
+                  <input id="create-due" type="date" value={due} required aria-required="true" onChange={(event) => setDue(event.target.value)} className="field-input h-8 w-40 py-0 text-label lg:w-full" />
+                  <label htmlFor="create-due-time" className="sr-only">
+                    Due time
+                  </label>
+                  <input id="create-due-time" type="time" value={dueTime} onChange={(event) => setDueTime(event.target.value || "23:59")} className="field-input h-8 w-28 py-0 text-label" />
+                </span>
               </div>
               <div className="flex items-center gap-2 text-label lg:flex-col lg:items-stretch lg:gap-1">
                 <label htmlFor="create-priority" className="text-ink-muted">
@@ -687,7 +526,6 @@ function CreateTaskDialog({
                   { label: "Set a due date", run: openDue },
                   { label: "Repeat (periodic)", run: openRepeat },
                   { label: "Attach a file", run: () => filePicker.current?.click() },
-                  { label: "Mention someone", run: () => setPop("mention") },
                   { label: "Add collaborators", run: () => setPop("collab") },
                 ].map((item) => (
                   <li key={item.label} role="none">
@@ -705,40 +543,6 @@ function CreateTaskDialog({
                   </li>
                 ))}
               </ul>
-            )}
-            {pop === "emoji" && (
-              <div role="group" aria-label="Emoji" className={`${popover} left-0 grid w-64 grid-cols-8 gap-0.5`} data-testid="emoji-picker">
-                {EMOJI.map((emoji) => (
-                  <button
-                    key={emoji}
-                    type="button"
-                    aria-label={`Insert ${emoji}`}
-                    onClick={() => {
-                      insert(emoji);
-                      setPop("");
-                    }}
-                    className="grid h-7 w-7 place-items-center rounded text-base hover:bg-surface-muted"
-                  >
-                    {emoji}
-                  </button>
-                ))}
-              </div>
-            )}
-            {pop === "mention" && (
-              <div className={`${popover} left-0 w-72`}>
-                <p className="mb-1 px-1 text-caption text-ink-muted">Mention someone: they become a collaborator and are told.</p>
-                <PersonSearch
-                  label="Search people to mention"
-                  listId="mention-search-list"
-                  people={people.filter((item) => item.id !== meId)}
-                  onPick={addMention}
-                  onDone={() => {
-                    setAtSign(null);
-                    setPop("");
-                    text.current?.focus();
-                  }}
-                />
-              </div>
             )}
             {pop === "collab" && (
               <div className={`${popover} right-0 w-72`} data-testid="collaborators-editor">
@@ -787,25 +591,6 @@ function CreateTaskDialog({
               <Plus aria-hidden="true" className="h-4 w-4" />
             </button>
             <span aria-hidden="true" className="mx-0.5 h-5 w-px bg-line" />
-            <button type="button" aria-label="Formatting" title="Formatting" aria-pressed={formatting} onClick={() => setFormatting((value) => !value)} className={tool(formatting)}>
-              <Type aria-hidden="true" className="h-4 w-4" />
-            </button>
-            <button type="button" aria-label="Emoji" title="Emoji" aria-expanded={pop === "emoji"} onClick={() => setPop(pop === "emoji" ? "" : "emoji")} className={tool(pop === "emoji")}>
-              <Smile aria-hidden="true" className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              aria-label="At-mention"
-              title="At-mention"
-              aria-expanded={pop === "mention"}
-              onClick={() => {
-                setAtSign(null);
-                setPop(pop === "mention" ? "" : "mention");
-              }}
-              className={tool(pop === "mention")}
-            >
-              <AtSign aria-hidden="true" className="h-4 w-4" />
-            </button>
             <button type="button" aria-label="Attach a file or paste an image" title="Attach a file or paste an image" onClick={() => filePicker.current?.click()} className={tool(files.length > 0)}>
               <Paperclip aria-hidden="true" className="h-4 w-4" />
             </button>
@@ -859,8 +644,8 @@ function CreateTaskDialog({
               </button>
               <button
                 type="submit"
-                disabled={pending || !title.trim() || assignees.length === 0}
-                title={assignees.length === 0 ? "Choose who the task is for" : undefined}
+                disabled={pending || !title.trim() || assignees.length === 0 || !due}
+                title={assignees.length === 0 ? "Choose who the task is for" : !due ? "Choose a due date" : undefined}
                 className="btn-primary btn-compact"
               >
                 Create task

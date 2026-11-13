@@ -4,7 +4,7 @@ import { TASK_STATUSES, type TaskStatus } from "@/server/modules/task-rules";
 // v1.9.0: the task lists (My tasks, Assigned by me, Team tasks): quick tabs,
 // search, filters and sorting, all from the address. Pure: the values are
 // checked here and only ever reach SQL as bound parameters.
-export type TaskBase = "MINE" | "CREATED" | "TEAM";
+export type TaskBase = "MINE" | "CREATED" | "TEAM" | "PERIODIC";
 export const TASK_TABS = ["open", "overdue", "due_soon", "blocked", "completed", "cancelled", "all"] as const;
 export type TaskTab = (typeof TASK_TABS)[number];
 export const TASK_TAB_LABEL: Record<TaskTab, string> = { open: "Open", overdue: "Overdue", due_soon: "Due in 2 days", blocked: "Blocked", completed: "Completed", cancelled: "Cancelled", all: "All" };
@@ -99,16 +99,29 @@ export function taskListSql(
   searchableKeys: readonly string[],
   now: Date,
   tabOverride?: TaskTab,
+  // v1.54.7: for PERIODIC, which tasks the person can see (the Tasks module's own rule).
+  visible?: { sql: string; params: unknown[] },
 ): { where: string[]; params: unknown[]; orderBy: string } {
   // D-215: deleted tasks (kept 30 days for Restore) are in no list.
   const where: string[] = ["t.deleted_at IS NULL"];
   const params: unknown[] = [];
+  // v1.54.7 (owner: "Assigned to me and Assigned by me should show only adhoc
+  // tasks"): repeating tasks are on Periodic tasks, with the same tabs and filters.
   if (base === "MINE") {
-    where.push("t.assignee_id = ?");
+    where.push("t.assignee_id = ?", "t.recurrence_json IS NULL");
     params.push(viewer.id);
   } else if (base === "CREATED") {
-    where.push("(t.created_by = ? OR t.assigned_by = ?)");
+    where.push("(t.created_by = ? OR t.assigned_by = ?)", "t.recurrence_json IS NULL");
     params.push(viewer.id, viewer.id);
+  } else if (base === "PERIODIC") {
+    where.push("t.recurrence_json IS NOT NULL");
+    if (visible) {
+      where.push(`(${visible.sql})`);
+      params.push(...visible.params);
+    } else if (!viewer.isAdmin) {
+      where.push("(t.assignee_id = ? OR t.created_by = ? OR t.assigned_by = ?)");
+      params.push(viewer.id, viewer.id, viewer.id);
+    }
   } else if (!viewer.isAdmin) {
     // D-216: the whole reporting line below the viewer (every level), when known.
     if (viewer.teamIds) {

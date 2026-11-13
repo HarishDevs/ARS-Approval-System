@@ -22,28 +22,74 @@ const EMOJI = ["👍", "👏", "🙏", "✅", "❌", "⚠️", "🔥", "🎉", "
 const SAFE_HREF = /^(https?:\/\/|mailto:)[^\s"'<>]{1,500}$/i;
 
 // ---- the editor's content → the app's formatting text ----------------------------------
-function inline(node: Node, marked = false): string {
-  if (node.nodeType === Node.TEXT_NODE) return (node.textContent ?? "").replace(/ /g, " ");
-  if (!(node instanceof HTMLElement)) return "";
-  if (node.dataset.mention) return node.dataset.mention;
-  if (node.tagName === "BR") return "\n";
-  const inner = (plain = marked) => [...node.childNodes].map((child) => inline(child, plain)).join("");
-  // One mark per run of text: nested marks keep the outer one (the format doesn't nest).
-  if (!marked) {
-    const tag = node.tagName;
-    const style = node.style;
-    if (tag === "B" || tag === "STRONG" || style.fontWeight === "bold" || Number(style.fontWeight) >= 600) return wrap("**", inner(true));
-    if (tag === "I" || tag === "EM" || style.fontStyle === "italic") return wrap("_", inner(true));
-    if (tag === "U" || style.textDecoration.includes("underline")) return wrap("++", inner(true));
-    if (tag === "S" || tag === "STRIKE" || tag === "DEL" || style.textDecoration.includes("line-through")) return wrap("~~", inner(true));
-    if (tag === "CODE") return wrap("`", inner(true));
-    if (tag === "A") {
-      const href = node.getAttribute("href") ?? "";
-      const text = inner(true).replace(/[[\]\n]/g, " ").trim();
-      return SAFE_HREF.test(href) && text ? `[${text}](${href})` : text;
-    }
+// v1.54.7: marks are tracked per run of text, so bold switched off inside bold
+// (the browser writes <b>…<span style="font-weight:normal">…</span></b>) and
+// marks inside marks (bold + italic) come out right; the format nests.
+type MarkKey = "b" | "i" | "u" | "s";
+type Marks = Record<MarkKey, boolean>;
+type Run = { text: string; marks: Marks };
+const MARK_ORDER: { key: MarkKey; mark: string }[] = [
+  { key: "b", mark: "**" },
+  { key: "i", mark: "_" },
+  { key: "u", mark: "++" },
+  { key: "s", mark: "~~" },
+];
+function collect(node: Node, marks: Marks, out: Run[]): void {
+  if (node.nodeType === Node.TEXT_NODE) {
+    out.push({ text: (node.textContent ?? "").replace(/\u00a0/g, " "), marks });
+    return;
   }
-  return inner();
+  if (!(node instanceof HTMLElement)) return;
+  if (node.dataset.mention) {
+    out.push({ text: node.dataset.mention, marks });
+    return;
+  }
+  const tag = node.tagName;
+  if (tag === "BR") {
+    out.push({ text: "\n", marks });
+    return;
+  }
+  if (tag === "CODE") {
+    const text = node.textContent ?? "";
+    if (text.trim()) out.push({ text: `\`${text}\``, marks });
+    return;
+  }
+  if (tag === "A") {
+    const href = node.getAttribute("href") ?? "";
+    const text = (node.textContent ?? "").replace(/[[\]\n]/g, " ").trim();
+    if (text) out.push({ text: SAFE_HREF.test(href) ? `[${text}](${href})` : text, marks });
+    return;
+  }
+  const style = node.style;
+  const weight = style.fontWeight;
+  const next: Marks = {
+    b: tag === "B" || tag === "STRONG" || weight === "bold" || Number(weight) >= 600 ? true : weight === "normal" || (Number(weight) > 0 && Number(weight) < 600) ? false : marks.b,
+    i: tag === "I" || tag === "EM" || style.fontStyle === "italic" ? true : style.fontStyle === "normal" ? false : marks.i,
+    u: tag === "U" || style.textDecoration.includes("underline") ? true : marks.u,
+    s: tag === "S" || tag === "STRIKE" || tag === "DEL" || style.textDecoration.includes("line-through") ? true : marks.s,
+  };
+  for (const child of node.childNodes) collect(child, next, out);
+}
+function render(runs: Run[], depth = 0): string {
+  const step = MARK_ORDER[depth];
+  if (!step) return runs.map((run) => run.text).join("");
+  let result = "";
+  let index = 0;
+  while (index < runs.length) {
+    const on = runs[index]!.marks[step.key];
+    let stop = index;
+    while (stop < runs.length && runs[stop]!.marks[step.key] === on) stop += 1;
+    const inner = render(runs.slice(index, stop), depth + 1);
+    result += on ? wrap(step.mark, inner) : inner;
+    index = stop;
+  }
+  return result;
+}
+const NO_MARKS: Marks = { b: false, i: false, u: false, s: false };
+function inline(node: Node): string {
+  const runs: Run[] = [];
+  collect(node, NO_MARKS, runs);
+  return render(runs);
 }
 function wrap(mark: string, text: string): string {
   const core = text.trim();
@@ -119,7 +165,9 @@ function appendInline(parent: HTMLElement, parts: Inline[]) {
     }
     const tag = { bold: "b", italic: "i", underline: "u", strike: "s", code: "code" }[part.kind];
     const element = document.createElement(tag);
-    element.textContent = part.text;
+    // v1.54.7: marks nest (bold inside italic…).
+    if ("children" in part && part.children) appendInline(element, part.children);
+    else element.textContent = part.text;
     parent.append(element);
   }
 }
@@ -156,6 +204,10 @@ export function RichEditor({
   autoFocus = false,
   maxLength = 4000,
   onText,
+  onPasteFiles,
+  ariaInvalid,
+  ariaDescribedBy,
+  ariaRequired,
   testId,
 }: {
   name: string;
@@ -169,6 +221,10 @@ export function RichEditor({
   autoFocus?: boolean;
   maxLength?: number;
   onText?: (text: string) => void;
+  onPasteFiles?: (files: File[]) => void; // v1.54.7: pasted files (e.g. an image) go here instead of the text
+  ariaInvalid?: boolean; // v1.54.7: a form field's state (required and empty, or refused)
+  ariaDescribedBy?: string;
+  ariaRequired?: boolean;
   testId?: string;
 }) {
   const auto = useId();
@@ -214,9 +270,16 @@ export function RichEditor({
     return () => form.removeEventListener("reset", reset);
   }, []);
 
+  // v1.54.7: the browser forgets "bold off" (and the like) at the caret when
+  // focus leaves for the emoji picker; it is remembered and put back.
+  const typing = useRef<Record<string, boolean> | null>(null);
+  const TYPING = ["bold", "italic", "underline", "strikeThrough"] as const;
   const remember = () => {
     const selection = window.getSelection();
-    if (selection && selection.rangeCount && editor.current?.contains(selection.anchorNode)) saved.current = selection.getRangeAt(0).cloneRange();
+    if (selection && selection.rangeCount && editor.current?.contains(selection.anchorNode)) {
+      saved.current = selection.getRangeAt(0).cloneRange();
+      typing.current = selection.isCollapsed ? Object.fromEntries(TYPING.map((name) => [name, document.queryCommandState(name)])) : null;
+    }
   };
   const restore = () => {
     editor.current?.focus();
@@ -224,6 +287,8 @@ export function RichEditor({
     if (saved.current && selection) {
       selection.removeAllRanges();
       selection.addRange(saved.current);
+      const state = typing.current;
+      if (state && selection.isCollapsed) for (const name of TYPING) if (document.queryCommandState(name) !== state[name]) document.execCommand(name);
     }
   };
   const command = (name: string, value?: string) => {
@@ -344,6 +409,9 @@ export function RichEditor({
           role="textbox"
           aria-multiline="true"
           aria-label={label}
+          aria-invalid={ariaInvalid || undefined}
+          aria-describedby={ariaDescribedBy}
+          aria-required={ariaRequired || undefined}
           contentEditable
           suppressContentEditableWarning
           className="max-h-[50vh] overflow-y-auto px-3 py-2 text-body outline-none [&_blockquote]:border-l-4 [&_blockquote]:border-line [&_blockquote]:pl-3 [&_blockquote]:text-ink-muted [&_code]:rounded [&_code]:bg-surface-muted [&_code]:px-1 [&_code]:font-mono [&_h3]:font-semibold [&_a]:text-primary-700 [&_a]:underline [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5"
@@ -369,6 +437,12 @@ export function RichEditor({
           onMouseUp={remember}
           onBlur={() => window.setTimeout(() => setMention(null), 150)}
           onPaste={(event) => {
+            const files = Array.from(event.clipboardData.files);
+            if (files.length && onPasteFiles) {
+              event.preventDefault();
+              onPasteFiles(files);
+              return;
+            }
             // Pasted text keeps its lines, not the page's styling.
             event.preventDefault();
             document.execCommand("insertText", false, event.clipboardData.getData("text/plain"));

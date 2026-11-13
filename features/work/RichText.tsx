@@ -13,20 +13,14 @@ function Parts({ parts }: { parts: Inline[] }) {
           </span>
         ) : part.kind === "bold" ? (
           <strong key={index} className="font-semibold">
-            <SafeText text={part.text} />
+            {part.children ? <Parts parts={part.children} /> : <SafeText text={part.text} />}
           </strong>
         ) : part.kind === "italic" ? (
-          <em key={index}>
-            <SafeText text={part.text} />
-          </em>
+          <em key={index}>{part.children ? <Parts parts={part.children} /> : <SafeText text={part.text} />}</em>
         ) : part.kind === "strike" ? (
-          <s key={index}>
-            <SafeText text={part.text} />
-          </s>
+          <s key={index}>{part.children ? <Parts parts={part.children} /> : <SafeText text={part.text} />}</s>
         ) : part.kind === "underline" ? (
-          <u key={index}>
-            <SafeText text={part.text} />
-          </u>
+          <u key={index}>{part.children ? <Parts parts={part.children} /> : <SafeText text={part.text} />}</u>
         ) : part.kind === "code" ? (
           <code key={index} className="rounded bg-surface-muted px-1 py-0.5 font-mono text-[0.9em]">
             {part.text}

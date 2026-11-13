@@ -124,7 +124,7 @@ export async function createTask(input: CreateTaskInput, actor: TaskActor): Prom
     if (input.due) {
       dueAt = indiaLocalToUtc(input.due);
       if (!dueAt) errors.due = "Choose a valid due date and time.";
-    } else if (settings.requireDueDate) errors.due = "This type needs a due date.";
+    } else errors.due = "Choose a due date. It is 11:59 pm unless you change the time."; // v1.54.7 (owner): mandatory
     if (dueAt) await holidayErrors(input.due.slice(0, 10), Boolean(input.holidayOk), errors, input.assigneeId);
     const startsOn = /^\d{4}-\d{2}-\d{2}$/.test(input.startsOn) ? input.startsOn : null;
     // Assignee: within the type's scope.
@@ -326,7 +326,7 @@ export async function actOnTask(input: TaskActionInput, actor: TaskActor): Promi
           if (input.edit.due) {
             dueAt = indiaLocalToUtc(input.edit.due);
             if (!dueAt) errors.due = "Choose a valid due date and time.";
-          } else if (settings.requireDueDate) errors.due = "This type needs a due date.";
+          } else errors.due = "Choose a due date. It is 11:59 pm unless you change the time."; // v1.54.7 (owner): mandatory
           // Only fields marked "can be changed" are read; the rest keep their values.
           const editable = ctx.version.form.filter((field) => field.editable && field.type !== "ATTACHMENT" && field.type !== "CALC");
           const raw: Record<string, string | undefined> = {};

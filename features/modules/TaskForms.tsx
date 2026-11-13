@@ -13,6 +13,7 @@ import type { TaskAction } from "@/server/modules/task-rules";
 import { UnsavedGuard } from "@/features/ui/UnsavedGuard";
 import { PersonSelect } from "@/features/ui/PersonSelect";
 import { FileListInput } from "@/features/ui/FileListInput";
+import { RichEditor } from "@/features/ui/RichEditor";
 
 type Option = { id: number; label: string; detail?: string };
 
@@ -61,7 +62,7 @@ export function CreateTaskForm({
         <label htmlFor="task-description" className="field-label">
           Description <span className="font-normal text-ink-faint">(optional)</span>
         </label>
-        <textarea id="task-description" name="description" rows={4} maxLength={4000} className="field-input h-auto py-2.5" />
+        <RichEditor id="task-description" name="description" label="Description" placeholder="What needs doing. Format it like an email." maxLength={4000} minHeight={110} />
         <FieldError result={result} name="description" />
       </div>
       <div className="grid gap-4 md:grid-cols-3">
@@ -88,7 +89,7 @@ export function CreateTaskForm({
           <label htmlFor="task-due" className="field-label">
             Due {!requireDue && <span className="font-normal text-ink-faint">(optional)</span>}
           </label>
-          <input id="task-due" name="due" type="datetime-local" defaultValue={defaultDue} required={requireDue} className="field-input" />
+          <input id="task-due" name="due" type="datetime-local" defaultValue={defaultDue} required aria-required="true" className="field-input" />
           <FieldError result={result} name="due" />
           <HolidayKeep result={result} />
         </div>
@@ -316,7 +317,7 @@ export function EditTaskForm({
         <label htmlFor="edit-description" className="field-label">
           Description
         </label>
-        <textarea id="edit-description" name="description" defaultValue={description} rows={3} maxLength={4000} className="field-input h-auto py-2" />
+        <RichEditor id="edit-description" name="description" label="Description" initialText={description} placeholder="What needs doing." maxLength={4000} minHeight={96} />
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
@@ -335,7 +336,7 @@ export function EditTaskForm({
           <label htmlFor="edit-due" className="field-label">
             Due
           </label>
-          <input id="edit-due" name="due" type="datetime-local" defaultValue={due} className="field-input" />
+          <input id="edit-due" name="due" type="datetime-local" defaultValue={due} required aria-required="true" className="field-input" />
           <FieldError result={result} name="due" />
           <HolidayKeep result={result} />
         </div>
@@ -361,5 +362,26 @@ function HolidayKeep({ result }: { result: { ok: boolean; fieldErrors?: Record<s
     <label className="mt-1 flex items-center gap-2 text-label">
       <input type="checkbox" name="holiday_ok" value="1" /> Keep this date even though it is a holiday
     </label>
+  );
+}
+
+// v1.54.7 (owner: "in task management an attachment adding option wherever
+// necessary"): add files to a task at any time (they join its files and its
+// history). Same file rules as everywhere (types, 10 MB, 5 at a time).
+export function AttachFilesForm({ taskId }: { taskId: number }) {
+  const { result, pending, onSubmit } = useActionForm(taskAction, { resetOnSuccess: true });
+  return (
+    <form onSubmit={onSubmit} encType="multipart/form-data" className="space-y-2" aria-label="Add files" data-testid="task-attach">
+      <input type="hidden" name="taskId" value={taskId} />
+      <input type="hidden" name="action" value="COMMENT" />
+      <input type="hidden" name="reason" value="" />
+      <FileListInput id="task-attach-files" name="attachments" accept={ACCEPT_ATTRIBUTE} ariaLabel="Files to add to the task" buttonLabel="Choose files" maxFiles={5} />
+      <div className="flex flex-wrap items-center gap-3">
+        <SubmitButton pending={pending} variant="secondary" className="btn-compact">
+          Add files
+        </SubmitButton>
+        <ResultMessage result={result} />
+      </div>
+    </form>
   );
 }

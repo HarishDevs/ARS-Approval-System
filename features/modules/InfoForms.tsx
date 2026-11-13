@@ -12,6 +12,7 @@ import type { FieldLookups, FormField } from "@/server/forms/fields";
 import type { InfoAction } from "@/server/modules/info-rules";
 import { UnsavedGuard } from "@/features/ui/UnsavedGuard";
 import { FileListInput } from "@/features/ui/FileListInput";
+import { RichEditor } from "@/features/ui/RichEditor";
 
 type Option = { id: number; label: string };
 
@@ -61,7 +62,7 @@ export function InfoForm({
         <label htmlFor="info-body" className="field-label">
           Message
         </label>
-        <textarea id="info-body" name="body" defaultValue={defaults.body} required rows={8} maxLength={20000} className="field-input h-auto py-2.5" />
+        <RichEditor id="info-body" name="body" label="Message" initialText={defaults.body} maxLength={20000} minHeight={180} placeholder="Write the notice. Format it like an email." />
         <FieldError result={result} name="body" />
       </div>
       <div className="grid gap-4 md:grid-cols-3">

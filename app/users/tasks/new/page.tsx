@@ -62,7 +62,8 @@ export default async function NewTaskPage({ searchParams }: { searchParams: Prom
   const [everyone, lookups] = await Promise.all([listPeopleFacts(), loadFieldLookups()]);
   const admin = isAdminActor(user);
   const assignable = everyone.filter((person) => mayAssignTo(settings, { creatorId: user.id, creatorDepartmentId: me?.departmentId ?? null, creatorTeamIds: team, candidate: person }, admin));
-  const defaultDue = settings.defaultDueDays !== null ? utcToIndiaLocal(new Date(Date.now() + settings.defaultDueDays * 86_400_000)).slice(0, 11) + "18:00" : "";
+  // v1.54.7 (owner): due date mandatory, 11:59 pm by default (today unless the type sets a number of days).
+  const defaultDue = utcToIndiaLocal(new Date(Date.now() + (settings.defaultDueDays ?? 0) * 86_400_000)).slice(0, 11) + "23:59";
   return (
     <>
       <Breadcrumbs items={[{ href: "/users/tasks", label: "Tasks" }, { href: "/users/tasks/new", label: "New task" }, { label: chosen.name }]} />

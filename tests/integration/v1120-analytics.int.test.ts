@@ -41,10 +41,12 @@ beforeAll(async () => {
   await saveTypeDraft("TASK", typeId, { name: "V112 Task", form: [], settings: { ...DEFAULT_TASK_SETTINGS, assignScope: "ANYONE" as never, completion: "NOTE" } }, admin);
   await publishTypeDraft("TASK", typeId, admin);
   const make = async (name: string, dueInDays: number | null) => {
-    const due = dueInDays === null ? "" : new Date(Date.now() + dueInDays * 86_400_000 + 330 * 60_000).toISOString().slice(0, 16);
+    // v1.54.7: a new task always has a due date; older tasks may have none (cleared below).
+    const due = new Date(Date.now() + (dueInDays ?? 5) * 86_400_000 + 330 * 60_000).toISOString().slice(0, 16);
     const created = await createTask({ typeId, title: name, description: "", priority: "NORMAL", assigneeId: worker, due, startsOn: "", related: "", fields: {}, submissionKey: crypto.randomUUID(), files: [], holidayOk: true }, { id: manager, name: "V112 Manager", roles: ["USER"] } as never);
     if (!created.ok) throw new Error(created.message);
     ids[name] = created.value.id;
+    if (dueInDays === null) await sql("UPDATE tasks SET due_at = NULL WHERE id = ?", [created.value.id]);
   };
   await make("on-time", 2);
   await make("late", -1);

@@ -23,6 +23,7 @@ import { PRIVACY_LABEL, PROJECT_ROLE_LABEL, projectAbilities, STATUS_KIND_LABEL,
 import { peopleOptions, workPage } from "@/server/work/page-context";
 import { calendarHolidays } from "@/server/work/holiday-store";
 import type { RowDataPacket } from "mysql2/promise";
+import { RichText } from "@/features/work/RichText";
 
 export const metadata: Metadata = { title: "Project" };
 export const dynamic = "force-dynamic";
@@ -288,7 +289,7 @@ export default async function ProjectPage({
                 </h2>
                 {project.description ? (
                   <p className="whitespace-pre-wrap">
-                    <SafeText text={project.description} />
+                    <RichText text={project.description} />
                   </p>
                 ) : (
                   <p className="text-ink-muted">No description yet.</p>
@@ -336,7 +337,7 @@ export default async function ProjectPage({
                       </div>
                       {update.body && (
                         <p className="mt-2 whitespace-pre-wrap text-label">
-                          <SafeText text={update.body} />
+                          <RichText text={update.body} />
                         </p>
                       )}
                       <p className="mt-2 text-caption text-ink-muted">

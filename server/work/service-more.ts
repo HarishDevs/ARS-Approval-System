@@ -248,7 +248,7 @@ export async function createFromTemplate(source: { templateId?: number; copyFrom
       const taskNo = await nextRequestNumber("TSK", connection);
       const due = item.dueOffset === null ? null : onWorkingDay(shiftDays(start, item.dueOffset));
       const id = await insertTask(
-        { taskNo, typeVersionId: general.versionId, title: item.title, description: item.description, priority: item.priority, createdBy: actor.id, assigneeId: actor.id, dueAt: due ? new Date(`${due}T18:00:00+05:30`) : null, startsOn: item.startOffset === null || item.isMilestone ? null : shiftDays(start, item.startOffset), formData: {}, relatedRequestId: null, submissionKey: null },
+        { taskNo, typeVersionId: general.versionId, title: item.title, description: item.description, priority: item.priority, createdBy: actor.id, assigneeId: actor.id, dueAt: due ? new Date(`${due}T23:59:00+05:30`) : null, startsOn: item.startOffset === null || item.isMilestone ? null : shiftDays(start, item.startOffset), formData: {}, relatedRequestId: null, submissionKey: null },
         connection,
       );
       made += 1;

@@ -1,5 +1,5 @@
 import { expect, test, type BrowserContext } from "@playwright/test";
-import { sessionCookie } from "./db";
+import { sessionCookie, fillDue } from "./db";
 import { pickPerson } from "./people";
 
 // D-220 (owner's Asana screenshots): the compact table with Filters, Sort,
@@ -46,11 +46,12 @@ test("the table: Filters with quick filters, Groups by assignee, a saved tab", a
   }
   const grid = page.getByTestId("project-grid");
   await expect(grid.getByRole("columnheader", { name: "#" })).toBeVisible();
-  // Filters: quick filter "Due this week" hides undated tasks; the button counts it.
+  // Filters: quick filter "Due this week"; the button counts it. v1.54.7: a
+  // quick-added task is due today at 11:59 pm, so both stay in this week.
   await grid.getByTestId("filter-menu").locator("summary").click();
   await grid.getByRole("button", { name: "Due this week" }).click();
   await expect(grid.getByTestId("filter-menu").locator("summary")).toContainText("Filters: 1");
-  await expect(grid.getByTestId("task-row")).toHaveCount(0);
+  await expect(grid.getByTestId("task-row")).toHaveCount(2);
   await page.getByRole("button", { name: "Clear filters" }).click();
   await expect(grid.getByTestId("task-row")).toHaveCount(2);
   // Groups: by assignee, with the person's group header.
@@ -120,7 +121,7 @@ test("D-222: an ad hoc task for two people; Project permissions", async ({ page,
   await draft.getByLabel("Task name").fill(`Count stock ${stamp}`);
   // D-224: Myself is the default; Others searches people by name.
   await expect(draft.getByRole("radio", { name: "Myself" })).toHaveAttribute("aria-checked", "true");
-  await draft.getByRole("radio", { name: "Others" }).click();
+  await draft.getByRole("radio", { name: "Others", exact: true }).click();
   const search = draft.getByRole("combobox", { name: "Search people" });
   await search.fill("sita");
   // The people found (the panel also has the Priority list).
@@ -129,6 +130,7 @@ test("D-222: an ad hoc task for two people; Project permissions", async ({ page,
   await search.fill("manoj man");
   await draft.getByRole("option", { name: "Manoj Manager" }).click();
   await expect(draft.getByTestId("assignee-chip")).toHaveCount(2);
+  await fillDue(draft);
   await draft.getByRole("button", { name: "Create task" }).click();
   // D-246 (audit UI-D04): a task only for others opens on its own page.
   await expect(page).toHaveURL(/\/users\/tasks\/\d+$/);

@@ -1,5 +1,5 @@
 import { expect, test, type BrowserContext, type Page } from "@playwright/test";
-import { db, sessionCookie, userIdByLogin } from "./db";
+import { db, sessionCookie, userIdByLogin, fillDue } from "./db";
 
 // D-238 (owner's Asana screenshots): the Draft task's toolbar: + (more),
 // Formatting, Emoji, @mention, Attach a file or paste an image, the due date
@@ -67,40 +67,31 @@ test("formatting, / menu, emoji, @mention, a file and a collaborator reach the t
   const dialog = await openDraft(page);
   const title = `Draft tools ${stamp}`;
   await dialog.getByLabel("Task name").fill(title);
-  const description = dialog.getByLabel("Description");
-
-  // "/" opens the menu; typing filters it; Enter runs the command.
+  // v1.54.7 (owner): the description is formatted as you type, like an email:
+  // its own toolbar (lists, bold…, emoji, @mention).
+  const description = dialog.getByRole("textbox", { name: "Description" });
+  const tools = dialog.getByTestId("create-description-editor").getByRole("toolbar", { name: "Formatting" });
   await description.click();
-  await description.pressSequentially("Steps /bul");
-  await expect(dialog.getByTestId("slash-menu")).toBeVisible();
-  await page.keyboard.press("Enter");
-  await expect(dialog.getByTestId("slash-menu")).toHaveCount(0);
-  await expect(description).toHaveValue("- Steps ");
-  await description.pressSequentially("count the coils");
-
-  // The Formatting bar wraps a placeholder in bold.
-  await dialog.getByRole("button", { name: "Formatting" }).click();
-  await page.keyboard.press("End");
-  await description.press("End");
-  await description.pressSequentially("\n");
-  await dialog.getByTestId("format-bar").getByRole("button", { name: "Bold" }).click();
-  await expect(description).toHaveValue(/\*\*bold text\*\*/);
+  await tools.getByRole("button", { name: "Bulleted list" }).click();
+  await description.pressSequentially("Steps count the coils");
+  await expect(description.locator("li")).toContainText("Steps count the coils");
+  await description.press("Enter");
+  await description.press("Enter"); // out of the list
+  await tools.getByRole("button", { name: /^Bold/ }).click();
+  await description.pressSequentially("bold text");
+  await tools.getByRole("button", { name: /^Bold/ }).click();
+  await expect(description.locator("b, strong").first()).toHaveText("bold text");
 
   // Emoji.
-  await description.press("End");
-  await dialog.getByRole("button", { name: "Emoji", exact: true }).click();
-  await dialog.getByTestId("emoji-picker").getByRole("button", { name: "Insert 👍" }).click();
-  await expect(description).toHaveValue(/👍/);
+  await tools.getByRole("button", { name: "Emoji" }).click();
+  await dialog.getByRole("dialog", { name: "Emoji" }).getByRole("button").first().click();
 
-  // Typing @ opens the people search; the pick goes in as @Name.
-  await description.press("End");
-  await description.pressSequentially(" ask @");
-  const mention = dialog.getByRole("combobox", { name: "Search people to mention" });
-  await expect(mention).toBeFocused();
-  await mention.fill("Manoj");
-  await dialog.getByRole("option", { name: /Manoj Manager/ }).click();
-  await expect(description).toHaveValue(/ask @Manoj Manager/);
+  // Typing @ and a name offers people; the pick becomes a mention.
+  await description.pressSequentially(" ask @Manoj");
+  await dialog.getByRole("listbox", { name: "Mention someone" }).getByRole("option", { name: /Manoj Manager/ }).first().click();
+  await expect(description).toContainText("@Manoj Manager");
 
+  await fillDue(dialog);
   // Attach a file (an image pasted is staged the same way).
   await dialog.getByLabel("Choose files to attach").setInputFiles({ name: `note-${stamp}.txt`, mimeType: "text/plain", buffer: Buffer.from("Coil count sheet") });
   await expect(dialog.getByTestId("draft-files")).toContainText(`note-${stamp}.txt`);

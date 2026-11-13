@@ -46,9 +46,18 @@ export interface VerifiedGoogleIdentity {
   emailVerified: boolean;
   // How the person signed in to Firebase, e.g. "google.com" (audit P-03).
   provider: string | null;
+  // v1.54.7: the Google account's permanent id ("sub"), from Firebase's
+  // verified identities; unchanged when the person's primary email changes.
+  googleSub?: string | null;
+  // Every email Firebase lists for this identity (the token's own first).
+  emails?: string[];
 }
 
 export async function verifyGoogleIdToken(idToken: string): Promise<VerifiedGoogleIdentity> {
   const decoded = await getAuth(getFirebaseAdminApp()).verifyIdToken(idToken, true);
-  return { uid: decoded.uid, email: decoded.email ?? null, emailVerified: decoded.email_verified ?? false, provider: decoded.firebase?.sign_in_provider ?? null };
+  const identities = (decoded.firebase?.identities ?? {}) as Record<string, unknown>;
+  const list = (value: unknown) => (Array.isArray(value) ? value.filter((item): item is string => typeof item === "string" && item.length > 0) : []);
+  const googleSub = list(identities["google.com"])[0] ?? null;
+  const emails = [...new Set([decoded.email ?? "", ...list(identities.email)].map((value) => value.trim().toLowerCase()).filter(Boolean))];
+  return { uid: decoded.uid, email: decoded.email ?? null, emailVerified: decoded.email_verified ?? false, provider: decoded.firebase?.sign_in_provider ?? null, googleSub: googleSub && googleSub.length <= 64 ? googleSub : null, emails };
 }

@@ -5,25 +5,40 @@
 // v1.52.2 (owner: "the comment section formattable like a mail body"):
 // also ++underline++, `code`, [links](https://…), "> " quotes and "# "
 // headings. Links keep only http(s) and mailto addresses.
-export type Inline = { kind: "text" | "bold" | "italic" | "strike" | "underline" | "code"; text: string } | { kind: "mention"; userId: number; label: string } | { kind: "link"; text: string; href: string };
+// v1.54.7 (owner: "formatting is not working in the description"): marks nest
+// (bold inside italic, italic inside a link…): a marked part also carries its
+// own parts (`children`), parsed the same way, a few levels deep at most.
+export type Inline =
+  | { kind: "text" | "code"; text: string }
+  | { kind: "bold" | "italic" | "strike" | "underline"; text: string; children?: Inline[] }
+  | { kind: "mention"; userId: number; label: string }
+  | { kind: "link"; text: string; href: string };
 export type Block = { kind: "line"; parts: Inline[] } | { kind: "quote"; parts: Inline[] } | { kind: "heading"; parts: Inline[] } | { kind: "bullets" | "numbers"; items: Inline[][] };
 
 const INLINE =
   /@\[([^\]\n]{1,80})\]\(user:(\d{1,10})\)|\*\*([^*\n]+)\*\*|~~([^~\n]+)~~|(?<![\w*])_([^_\n]+)_(?!\w)|(?<![\w*])\*([^*\n]+)\*(?!\w)|\+\+([^+\n]+)\+\+|`([^`\n]+)`|\[([^\]\n]{1,200})\]\(((?:https?:\/\/|mailto:)[^\s)]{1,500})\)/g;
 
-export function inlineParts(text: string): Inline[] {
+const withChildren = (part: { kind: "bold" | "italic" | "strike" | "underline"; text: string }, children: Inline[] | undefined): Inline => (children ? { ...part, children } : part);
+
+export function inlineParts(text: string, depth = 0): Inline[] {
   const parts: Inline[] = [];
+  // Only when there is formatting inside (a plain marked part stays as it was).
+  const inner = (value: string): Inline[] | undefined => {
+    if (depth >= 3) return undefined;
+    const parts = inlineParts(value, depth + 1);
+    return parts.length === 1 && parts[0]!.kind === "text" ? undefined : parts;
+  };
   let last = 0;
   for (const match of text.matchAll(INLINE)) {
     const index = match.index ?? 0;
     if (index > last) parts.push({ kind: "text", text: text.slice(last, index) });
     if (match[1] !== undefined) parts.push({ kind: "mention", label: match[1], userId: Number(match[2]) });
-    else if (match[3] !== undefined) parts.push({ kind: "bold", text: match[3] });
-    else if (match[4] !== undefined) parts.push({ kind: "strike", text: match[4] });
-    else if (match[7] !== undefined) parts.push({ kind: "underline", text: match[7] });
+    else if (match[3] !== undefined) parts.push(withChildren({ kind: "bold", text: match[3] }, inner(match[3])));
+    else if (match[4] !== undefined) parts.push(withChildren({ kind: "strike", text: match[4] }, inner(match[4])));
+    else if (match[7] !== undefined) parts.push(withChildren({ kind: "underline", text: match[7] }, inner(match[7])));
     else if (match[8] !== undefined) parts.push({ kind: "code", text: match[8] });
     else if (match[9] !== undefined && match[10] !== undefined) parts.push({ kind: "link", text: match[9], href: match[10] });
-    else parts.push({ kind: "italic", text: match[5] ?? match[6] ?? "" });
+    else parts.push(withChildren({ kind: "italic", text: match[5] ?? match[6] ?? "" }, inner(match[5] ?? match[6] ?? "")));
     last = index + match[0].length;
   }
   if (last < text.length) parts.push({ kind: "text", text: text.slice(last) });

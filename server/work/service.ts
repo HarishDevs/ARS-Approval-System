@@ -56,9 +56,16 @@ const clean = (value: string, max: number) => value.replace(/\s+/g, " ").trim().
 const info = (task: Pick<TaskRecord, "id" | "taskNo" | "title" | "dueAt">) => ({ id: task.id, taskNo: task.taskNo, title: task.title, dueAt: task.dueAt });
 
 // A date-only due date means 6 pm India time that day (the working day's end).
+// v1.54.7 (owner: "due date mandatory; due time 11:59 PM by default, changeable
+// when creating or editing"): "YYYY-MM-DD" is due at 23:59 India time;
+// "YYYY-MM-DDTHH:MM" at that time.
+export const DEFAULT_DUE_TIME = "23:59";
 export function dueFromDay(day: string): Date | null {
-  return /^\d{4}-\d{2}-\d{2}$/.test(day) ? indiaLocalToUtc(`${day}T18:00`) : null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(day)) return indiaLocalToUtc(`${day}T${DEFAULT_DUE_TIME}`);
+  if (/^\d{4}-\d{2}-\d{2}T([01]\d|2[0-3]):[0-5]\d$/.test(day)) return indiaLocalToUtc(day);
+  return null;
 }
+const dayPart = (value: string) => value.slice(0, 10);
 
 // ---- projects ------------------------------------------------------------------------
 async function projectWithRole(projectId: number, actor: TaskActor) {
@@ -331,11 +338,14 @@ export async function quickAddTask(input: QuickTaskInput, actor: TaskActor): Pro
   const assignee = await personFacts(assigneeId);
   if (!assignee?.active) return fail("Choose an active person.", { assignee: "Choose an active person." });
   if (!mayAssignTo(settings, { creatorId: actor.id, creatorDepartmentId: me.departmentId, creatorTeamIds: viewer.teamIds, candidate: assignee }, isAdminRoles(actor.roles))) return fail("General tasks can't be assigned to that person.");
-  const dueAt = input.dueDay ? dueFromDay(input.dueDay) : null;
-  if (input.dueDay && !dueAt) return fail("Choose a valid due date.");
+  // v1.54.7 (owner): the due date is mandatory; a quick "Add a task" line
+  // without one is due today at 11:59 pm.
+  const dueDay = input.dueDay || new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 10);
+  const dueAt = dueFromDay(dueDay);
+  if (!dueAt) return fail("Choose a valid due date.");
   if (input.dueDay) {
     const { settings: holidays, calendar } = await holidayContext(undefined, assignee.departmentId, assigneeId);
-    const hit = checkHoliday(input.dueDay, "due", calendar, holidays, Boolean(input.holidayOk));
+    const hit = checkHoliday(dayPart(input.dueDay), "due", calendar, holidays, Boolean(input.holidayOk));
     if (hit) return holidayFail(hit);
   }
   const priority = (TASK_PRIORITIES as readonly string[]).includes(input.priority ?? "") ? (input.priority as TaskPriority) : settings.defaultPriority;
@@ -497,8 +507,10 @@ export async function setTaskFields(taskId: number, change: { dueDay?: string; s
   const work: Parameters<typeof repo.setTaskWorkFields>[1] = {};
   const notes: string[] = [];
   if (change.dueDay !== undefined) {
-    const due = change.dueDay ? dueFromDay(change.dueDay) : null;
-    if (change.dueDay && !due) return fail("Choose a valid date.");
+    // v1.54.7 (owner): the due date is mandatory: it can be moved, not removed.
+    if (!change.dueDay) return fail("A task needs a due date: choose another date instead of removing it.");
+    const due = dueFromDay(change.dueDay);
+    if (!due) return fail("Choose a valid date.");
     changes.due_at = due;
     notes.push(change.dueDay ? `Due date set to ${change.dueDay}` : "Due date removed");
   }
@@ -529,7 +541,7 @@ export async function setTaskFields(taskId: number, change: { dueDay?: string; s
   }
   if (change.dueDay || change.startDay) {
     const { settings: holidays, calendar } = await holidayContext(undefined, await departmentOf(task.assigneeId), task.assigneeId);
-    const hit = checkHoliday(change.dueDay || null, "due", calendar, holidays, Boolean(change.holidayOk)) ?? checkHoliday(change.startDay || null, "start", calendar, holidays, Boolean(change.holidayOk));
+    const hit = checkHoliday(change.dueDay ? dayPart(change.dueDay) : null, "due", calendar, holidays, Boolean(change.holidayOk)) ?? checkHoliday(change.startDay || null, "start", calendar, holidays, Boolean(change.holidayOk));
     if (hit) return holidayFail(hit);
   }
   const start = (changes.starts_on as string | null | undefined) === undefined ? task.startsOn : (changes.starts_on as string | null);

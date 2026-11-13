@@ -64,7 +64,7 @@ export default function PrivacyPage() {
             device, the browser and operating system, and when it was added and last reached. It is used only to send that person&apos;s ARS notifications.
           </li>
           <li>
-            <strong>Google sign-in</strong>: if a person signs in with Google, we receive their Google account email and account identifier to match them to the account IT created.
+            <strong>Google sign-in</strong>: if a person signs in with Google, we receive their Google account email and account identifier to match them to the account IT created. The identifier is kept with the account so the same Google account is recognised later, and when Google reports a new primary email for it (for example after a company email domain change) the account&apos;s email is updated to it; the change is recorded in the audit log.
           </li>
           <li>
             <strong>Google Calendar data</strong>, only if a person chooses to connect their Google Calendar (see below).

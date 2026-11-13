@@ -1,5 +1,5 @@
 import { expect, test, type BrowserContext } from "@playwright/test";
-import { dropCustomDraft, sessionCookie, toWorkflowStep } from "./db";
+import { dropCustomDraft, sessionCookie, toWorkflowStep, fillDue } from "./db";
 
 // v1.52.3 (owner): table columns can be dragged into a new order, saved for
 // the person; a request's files can be deleted until the first approval.
@@ -61,13 +61,14 @@ test("v1.54.1: a remark given with an action shows in the task's comments; Plann
   const dialog = page.getByTestId("create-dialog");
   const title = `Remark check ${Date.now().toString(36)}`;
   await dialog.getByLabel("Task name").fill(title);
+  await fillDue(dialog);
   await dialog.getByRole("button", { name: "Create task" }).click();
   await expect(page).toHaveURL(/task=\d+/);
   await page.goto(`/users/tasks/${new URL(page.url()).searchParams.get("task")}`);
-  await page.getByTestId("task-remarks").fill("Started after the vendor confirmed");
+  await page.getByRole("textbox", { name: "Remarks" }).fill("Started after the vendor confirmed");
   await page.getByRole("button", { name: "Start", exact: true }).click();
   await expect(page.getByText("Started: Started after the vendor confirmed").first()).toBeVisible();
-  await expect(page.getByTestId("task-remarks")).toHaveValue("");
+  await expect(page.getByRole("textbox", { name: "Remarks" })).toHaveText("");
   const side = page.getByTestId("task-side");
   await expect(side.getByRole("heading", { name: /Followers/ })).toBeHidden();
   await side.locator("summary").click();

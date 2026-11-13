@@ -21,7 +21,6 @@ import { logError } from "@/lib/logging/logger";
 import { isStorageError, reportStorageFailure, STORAGE_USER_MESSAGE } from "@/server/attachments/storage";
 import { deleteDraft } from "@/lib/db/repositories/drafts.repository";
 import { hitRateLimit } from "@/lib/db/repositories/jobs.repository";
-import { bulkApprove, BULK_MAX } from "@/server/approvals/bulk";
 import type { ActionResult } from "@/lib/http/action-result";
 
 // Server Actions for requests (F-14). Every one re-checks the session; the
@@ -366,34 +365,8 @@ export async function addFilesAction(_previous: ActionResult | null, formData: F
   return { ok: true, message: `${added === 1 ? "File attached." : `${added} files attached.`}${already}` };
 }
 
-// Bulk approval (#7): "requestId:taskKey" values from the queue's checkboxes.
-export async function bulkApproveAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
-  const me = await actor();
-  if (!me) return NOT_FOUND;
-  const items = formData
-    .getAll("item")
-    .map((value) => (typeof value === "string" ? /^(\d{1,10}):([A-Za-z0-9_-]{1,40})$/.exec(value) : null))
-    .filter((match): match is RegExpExecArray => match !== null)
-    .map((match) => ({ requestId: Number(match[1]), taskKey: match[2]! }));
-  if (items.length === 0) return { ok: false, message: "Tick at least one approval." };
-  if (items.length > BULK_MAX) return { ok: false, message: `Approve at most ${BULK_MAX} at a time.` };
-  const comment = String(formData.get("comment") ?? "").trim();
-  if (comment.length > 2000) return { ok: false, message: "Keep the comment under 2,000 characters." };
-  try {
-    const outcomes = await bulkApprove(items, me, comment || undefined);
-    revalidatePath("/users/queue");
-    revalidatePath("/users");
-    const approved = outcomes.filter((outcome) => outcome.result === "APPROVED").length;
-    return {
-      ok: approved > 0,
-      message: approved === outcomes.length ? `Approved ${approved}.` : `Approved ${approved} of ${outcomes.length}. See the list for the others.`,
-      data: { outcomes },
-    };
-  } catch (error) {
-    logError("bulkApproveAction failed", error);
-    return { ok: false, message: "Something went wrong. Please try again." };
-  }
-}
+// v1.54.7 (owner): bulk approval was removed from Waiting for me; its action is gone
+// (server/approvals/bulk.ts stays, unused by the app, covered by its test).
 
 // ---- v1.6.0 (EN-04, EN-05, EN-07) -------------------------------------------------
 const text = (value: FormDataEntryValue | null, max = 2000) => String(value ?? "").trim().slice(0, max + 1);

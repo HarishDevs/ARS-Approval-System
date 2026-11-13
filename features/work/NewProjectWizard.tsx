@@ -7,6 +7,7 @@ import { createProjectAction, fromTemplateAction } from "@/app/users/work/action
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import { COLOR_HEX } from "@/features/work/client";
 import { PRIVACY, PRIVACY_LABEL, PROJECT_COLORS } from "@/server/work/access";
+import { RichEditor } from "@/features/ui/RichEditor";
 
 // D-220 (owner: "create project like Asana, page by page"): 1. how to start
 // (blank or a template), 2. name, department, who can see it and the default
@@ -139,13 +140,13 @@ export function NewProjectWizard({ templates, departments, myDepartmentId, start
               </div>
             </fieldset>
             <div>
-              <label htmlFor="wizard-description" className="field-label">
+              <p className="field-label">
                 What it is for <span className="font-normal text-ink-faint">(optional)</span>
-              </label>
-              <textarea id="wizard-description" rows={3} maxLength={4000} value={description} onChange={(event) => setDescription(event.target.value)} className="field-input h-auto py-2" />
+              </p>
+              <RichEditor id="wizard-description" name="wizard-description" label="What it is for" initialText={description} onText={setDescription} maxLength={4000} minHeight={90} placeholder="What the project is for. Format it like an email." />
             </div>
             <div className="flex gap-2">
-              <button type="button" className="btn-secondary w-auto" onClick={() => setStep("start")}>
+              <button type="button" className="btn-secondary w-auto shrink-0 whitespace-nowrap" onClick={() => setStep("start")}>
                 Back
               </button>
               <button type="button" className="btn-primary" disabled={name.trim().length < 2 || (privacy === "DEPARTMENT" && department === "")} onClick={() => setStep("sections")}>
@@ -191,7 +192,7 @@ export function NewProjectWizard({ templates, departments, myDepartmentId, start
             </button>
             <ResultMessage result={create.result} />
             <div className="flex gap-2">
-              <button type="button" className="btn-secondary w-auto" onClick={() => setStep("details")}>
+              <button type="button" className="btn-secondary w-auto shrink-0 whitespace-nowrap" onClick={() => setStep("details")}>
                 Back
               </button>
               <SubmitButton pending={create.pending} className="w-auto">Create project</SubmitButton>
@@ -267,7 +268,7 @@ export function NewProjectWizard({ templates, departments, myDepartmentId, start
           )}
           <ResultMessage result={fromTemplate.result} />
           <div className="flex gap-2">
-            <button type="button" className="btn-secondary w-auto" onClick={() => setStep("start")}>
+            <button type="button" className="btn-secondary w-auto shrink-0 whitespace-nowrap" onClick={() => setStep("start")}>
               Back
             </button>
             <SubmitButton pending={fromTemplate.pending} className="w-auto">Create from template</SubmitButton>

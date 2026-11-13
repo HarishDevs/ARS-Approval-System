@@ -127,6 +127,7 @@ flowchart TD
   D --> S([Signed in, no OTP])
 ```
 - Any email domain is allowed (D-004). Pattern taken from the Power BI site (`server/auth/google-login.ts`). *Updated 28 Sep 2026.*
+- **v1.54.7 (D-316, Workspace domain move):** the account is found by (1) Firebase uid, (2) Google sub (`users.google_sub`; the same Google account with a new Firebase uid is relinked), (3) exact email of an unlinked account, (4) the same mailbox on the other side of a configured domain move (`arssteels.co.in` and `arsenergy.co.in`, unlinked account only; the exact email wins). Then the sub is kept and the account's email follows Google's primary (not if another account uses it, never back onto a retired domain; audited). Nothing is created; access rules unchanged.
 
 ## F-02 User ID + password + OTP
 ```mermaid
@@ -1345,6 +1346,7 @@ Roles: one **Meeting Owner** (approves the points and the MOM) and one **Coordin
 ## F-165 Periodic and ad hoc tasks, ticks everywhere (v1.32.0, D-219)
 1. Every task row has a tick (complete / reopen); the task page and pane have Mark complete.
 2. Periodic tasks (↻) repeat; ad hoc tasks are one time. Tasks → Periodic tasks lists every repeating task; Search filters Periodic or Ad hoc.
+3. v1.54.7 (D-316): Assigned to me and Assigned by me list ad hoc tasks only. Periodic tasks is the same task list (tabs Open … All, Filter, Sort, Options, pages) over the repeating tasks the person can see, with Repeats, Done so far and Stop repeating. Every task has a due date (11:59 pm unless changed). Waiting for me has no bulk approval.
 
 ## F-158 Repeating tasks (v1.31.0, D-218)
 1. On the task page → Repeats → Make it repeat: every N days, weeks (choose weekdays), months, years, or N days after it is completed; Save. Stop repeating removes the rule.

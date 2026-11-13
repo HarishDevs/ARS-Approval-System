@@ -29,7 +29,7 @@ beforeAll(async () => {
   await publishTypeDraft("TASK", typeId, superAdmin as never);
   const make = async (assigneeId: number, title: string) => {
     const created = await createTask(
-      { typeId, title, description: "", priority: "NORMAL", assigneeId, due: "", startsOn: "", related: "", fields: {}, submissionKey: crypto.randomUUID(), files: [], holidayOk: true },
+      { typeId, title, description: "", priority: "NORMAL", assigneeId, due: "2031-01-15T23:59", startsOn: "", related: "", fields: {}, submissionKey: crypto.randomUUID(), files: [], holidayOk: true },
       { id: creator, name: "V1501 Creator", roles: ["USER"], modules: ["APPROVAL", "TASK"] } as never,
     );
     if (!created.ok) throw new Error(created.message);

@@ -1079,6 +1079,17 @@ export async function listPeriodic(viewer: WorkViewer, db: Queryable = getDbPool
   return items.map((item) => ({ ...item, rule: extra.get(item.id)?.rule ?? null, doneInSeries: extra.get(item.id)?.done ?? 0 }));
 }
 
+// v1.54.7: the repeat rule and how many of the series are done, for the listed tasks.
+export async function periodicDetails(ids: readonly number[], db: Queryable = getDbPool()): Promise<Map<number, { rule: unknown; doneInSeries: number }>> {
+  if (!ids.length) return new Map();
+  const [rows] = await db.query<Row[]>(
+    `SELECT t.id, t.recurrence_json, (SELECT COUNT(*) FROM tasks s WHERE s.series_id = COALESCE(t.series_id, t.id) AND s.status = 'COMPLETED' AND s.deleted_at IS NULL) AS done_n
+     FROM tasks t WHERE t.id IN (?)`,
+    [[...ids]],
+  );
+  return new Map(rows.map((row) => [num(row.id), { rule: row.recurrence_json, doneInSeries: num(row.done_n) }]));
+}
+
 // ---- saved view tabs (D-220) -----------------------------------------------------------
 export interface WorkView {
   id: number;

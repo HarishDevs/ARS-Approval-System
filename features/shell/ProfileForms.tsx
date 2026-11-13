@@ -6,6 +6,7 @@ import { aboutMeAction, removePhotoAction, uploadPhotoAction } from "@/app/users
 import { Avatar } from "@/features/ui/Avatar";
 import { ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import { PHOTO_ACCEPT } from "@/server/profile/photo";
+import { RichEditor } from "@/features/ui/RichEditor";
 
 // D-230: change or remove your photo (Asana's "Upload new photo • Remove photo").
 export function PhotoForm({ name, src, approver }: { name: string; src: string | null; approver: boolean }) {
@@ -74,7 +75,7 @@ export function AboutForm({ initial }: { initial: string | null }) {
       <label htmlFor="about-me" className="field-label">
         About me
       </label>
-      <textarea id="about-me" name="about" defaultValue={initial ?? ""} maxLength={1000} rows={4} placeholder="What you work on, what people can ask you about." className="field-input h-auto py-2" />
+      <RichEditor id="about-me" name="about" label="About me" initialText={initial ?? ""} maxLength={1000} minHeight={90} placeholder="What you do, what to ask you about." />
       <div className="flex items-center gap-3">
         <SubmitButton pending={pending} variant="secondary" className="btn-compact">
           Save

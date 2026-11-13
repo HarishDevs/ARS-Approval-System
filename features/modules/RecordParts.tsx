@@ -41,7 +41,7 @@ export function FileLinks({ files, label = "Files" }: { files: readonly RecordFi
   if (files.length === 0) return null;
   return (
     <div>
-      <h3 className="mb-1 text-label font-semibold">{label}</h3>
+      {label && <h3 className="mb-1 text-label font-semibold">{label}</h3>}
       <ul className="space-y-1" data-testid="record-files">
         {files.map((file) => (
           <li key={file.id} className="text-label">

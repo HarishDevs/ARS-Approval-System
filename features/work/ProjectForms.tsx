@@ -6,6 +6,7 @@ import { createProjectAction, memberAction, projectCommand, removeStatusAction, 
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import { COLOR_HEX, useWorkCall } from "@/features/work/client";
 import { PRIVACY, PRIVACY_LABEL, PROJECT_COLORS, PROJECT_ROLE_HELP, PROJECT_ROLE_LABEL, PROJECT_ROLES, STATUS_KIND_LABEL, STATUS_KINDS, type ProjectRole } from "@/server/work/access";
+import { RichEditor } from "@/features/ui/RichEditor";
 
 // D-215: creating and editing a project, its members, its status updates,
 // and the small project commands (star, join, leave, archive, delete).
@@ -42,7 +43,7 @@ export function ProjectForm({ values, departments, myDepartmentId }: { values?: 
         <label htmlFor="project-description" className="field-label">
           What it is for <span className="font-normal text-ink-faint">(optional)</span>
         </label>
-        <textarea id="project-description" name="description" rows={3} maxLength={4000} defaultValue={values?.description} className="field-input h-auto py-2" />
+        <RichEditor id="project-description" name="description" label="What it is for" initialText={values?.description ?? ""} maxLength={4000} minHeight={90} placeholder="What the project is for. Format it like an email." />
       </div>
       <fieldset>
         <legend className="field-label">Who can see it</legend>
@@ -336,7 +337,7 @@ export function StatusForm({ projectId, initial }: { projectId: number; initial?
         <label htmlFor="status-body" className="field-label">
           Summary <span className="font-normal text-ink-faint">(optional)</span>
         </label>
-        <textarea id="status-body" name="body" rows={3} maxLength={4000} className="field-input h-auto py-2" />
+        <RichEditor id="status-body" name="body" label="Details" maxLength={4000} minHeight={90} placeholder="What happened, what is next." />
       </div>
       <ResultMessage result={result} />
       <SubmitButton pending={pending}>Post status update</SubmitButton>

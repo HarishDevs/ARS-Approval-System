@@ -14,6 +14,7 @@ import { loadMeetingFor } from "@/server/meetings/service";
 import { actionState, ATTENDANCE_LABEL, durationBand, extendedBy, onTime, isCoordinator, isOwner, minutesBetween, MODE_LABEL, PRIORITY_LABEL, selfApproved } from "@/server/meetings/rules";
 import { indiaDateTimeText } from "@/server/modules/settings";
 import { personLabel } from "@/lib/people/label";
+import { RichText } from "@/features/work/RichText";
 
 export const metadata: Metadata = { title: "Meeting" };
 export const dynamic = "force-dynamic";
@@ -174,7 +175,7 @@ export default async function MeetingPage({ params, searchParams }: { params: Pr
               {minutes !== null && <Fact label="Duration" value={`${minutes} min (${durationBand(minutes)})`} />}
               {meeting.actualEnd && <Fact label="Extended" value={extraMinutes > 0 ? `Yes, by ${extraMinutes} min` : "No"} />}
             </dl>
-            {meeting.description && <p className="mt-3 whitespace-pre-wrap text-label">{meeting.description}</p>}
+            {meeting.description && <RichText text={meeting.description} className="mt-3 text-label" />}
           </section>
 
           <section className="card px-5 py-4" aria-labelledby="points">
@@ -263,7 +264,7 @@ export default async function MeetingPage({ params, searchParams }: { params: Pr
                     {points.map((point) => (
                       <li key={point.id}>
                         <p className="font-medium">{point.title}</p>
-                        {point.discussion && <p className="whitespace-pre-wrap text-label">{point.discussion}</p>}
+                        {point.discussion && <RichText text={point.discussion} className="text-label" />}
                       </li>
                     ))}
                   </ol>

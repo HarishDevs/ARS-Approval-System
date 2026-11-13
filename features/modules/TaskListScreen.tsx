@@ -21,14 +21,19 @@ import { ListToolbar } from "@/features/ui/ListToolbar";
 import { PersonSelect } from "@/features/ui/PersonSelect";
 import { personLabel } from "@/lib/people/label";
 import { NoResults } from "@/features/ui/Display";
+import { periodicDetails, visibleTaskClause } from "@/lib/db/repositories/work.repository";
+import { workViewer } from "@/server/work/task-access";
+import { parseRecurrence, recurrenceLabel } from "@/server/work/more-rules";
+import { StopRepeatButton } from "@/features/work/MoreParts";
 
 // v1.9.0 (D-143): My tasks / Assigned by me / Team tasks. Filters live in
 // the address (GET form), so a list can be bookmarked and shared.
-const TITLE: Record<TaskBase, string> = { MINE: "Assigned to me", CREATED: "Assigned by me", TEAM: "Team tasks" }; // v1.54.3 (owner)
-const PATH: Record<TaskBase, string> = { MINE: "/users/tasks", CREATED: "/users/tasks/assigned", TEAM: "/users/tasks/team" };
+const TITLE: Record<TaskBase, string> = { MINE: "Assigned to me", CREATED: "Assigned by me", TEAM: "Team tasks", PERIODIC: "Periodic tasks" }; // v1.54.3 (owner)
+const PATH: Record<TaskBase, string> = { MINE: "/users/tasks", CREATED: "/users/tasks/assigned", TEAM: "/users/tasks/team", PERIODIC: "/users/work/periodic" };
 const DESCRIPTION: Record<TaskBase, string> = {
-  MINE: "Tasks assigned to you.",
-  CREATED: "Tasks you created or assigned to someone.",
+  MINE: "Ad hoc tasks assigned to you. Repeating ones are on Periodic tasks.",
+  CREATED: "Ad hoc tasks you created or assigned to someone. Repeating ones are on Periodic tasks.",
+  PERIODIC: "Tasks that repeat. When one is completed the next one is made. Make any task periodic from its Repeats box.",
   TEAM: "Tasks of everyone below you in the reporting line, at every level (IT sees everyone's).",
 };
 export const STATUS_TONE: Record<TaskStatus, Tone> = { OPEN: "info", IN_PROGRESS: "primary", BLOCKED: "warning", COMPLETED: "success", CANCELLED: "neutral" };
@@ -48,16 +53,19 @@ export async function TaskListScreen({ base, query }: { base: TaskBase; query: R
   const chosen = filters.typeId ? versions.find((version) => version.typeId === filters.typeId && version.status === "PUBLISHED") : undefined;
   const columns: FormField[] = chosen ? chosen.form.filter((field) => field.listed && field.type !== "SECTION").slice(0, 4) : [];
 
-  const sql = taskListSql(filters, base, viewer, searchable, now);
+  // v1.54.7 (owner): Periodic tasks uses this list too (tabs, Filter, Sort, Options).
+  const visible = base === "PERIODIC" ? visibleTaskClause(await workViewer(user)) : undefined;
+  const sql = taskListSql(filters, base, viewer, searchable, now, undefined, visible);
   const [list, counts] = await Promise.all([
     listTasks(sql.where, sql.params, sql.orderBy, filters.size, (filters.page - 1) * filters.size),
     Promise.all(
       TASK_TABS.map(async (tab) => {
-        const counted = taskListSql(filters, base, viewer, searchable, now, tab);
+        const counted = taskListSql(filters, base, viewer, searchable, now, tab, visible);
         return [tab, await countTasks(counted.where, counted.params)] as const;
       }),
     ),
   ]);
+  const repeats = base === "PERIODIC" ? await periodicDetails(list.rows.map((task) => task.id)) : null;
   const pages = Math.max(1, Math.ceil(list.total / filters.size));
   const names = new Map(people.map((person) => [person.id, person.name]));
   const path = PATH[base];
@@ -176,7 +184,7 @@ export async function TaskListScreen({ base, query }: { base: TaskBase; query: R
             )
           ) : (
             <div className="card overflow-x-auto">
-              <table className="data-table" data-testid="task-table">
+              <table className="data-table" data-testid={base === "PERIODIC" ? "periodic-table" : "task-table"}>
                 <caption className="sr-only">{TITLE[base]}</caption>
                 <thead>
                   <tr>
@@ -189,6 +197,15 @@ export async function TaskListScreen({ base, query }: { base: TaskBase; query: R
                     <th scope="col">Priority</th>
                     <th scope="col">Status</th>
                     <th scope="col">Due</th>
+                    {repeats && (
+                      <>
+                        <th scope="col">Repeats</th>
+                        <th scope="col">Done so far</th>
+                        <th scope="col">
+                          <span className="sr-only">Stop</span>
+                        </th>
+                      </>
+                    )}
                     {columns.map((field) => (
                       <th key={field.key} scope="col">
                         {field.label}
@@ -223,6 +240,16 @@ export async function TaskListScreen({ base, query }: { base: TaskBase; query: R
                           {task.dueAt ? indiaDateTimeText(task.dueAt) : "—"}
                           {late && <span className="block text-caption">Overdue</span>}
                         </td>
+                        {repeats && (
+                          <>
+                            <td className="text-label">{(() => {
+                              const rule = parseRecurrence(repeats.get(task.id)?.rule);
+                              return rule ? recurrenceLabel(rule) : "Stopped";
+                            })()}</td>
+                            <td className="text-label">{repeats.get(task.id)?.doneInSeries ?? 0}</td>
+                            <td>{task.status !== "COMPLETED" && task.status !== "CANCELLED" && <StopRepeatButton taskId={task.id} />}</td>
+                          </>
+                        )}
                         {columns.map((field) => (
                           <td key={field.key} className="text-label">
                             {/* v1.47.0: coloured choice values. */}

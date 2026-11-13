@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { PageHeader } from "@/features/shell/PageHeader";
 import { Hint } from "@/features/ui/Hint";
 import { Badge, Breadcrumbs } from "@/features/ui/Display";
-import { EditTaskForm, ReassignForm, TaskActionButton } from "@/features/modules/TaskForms";
+import { AttachFilesForm, EditTaskForm, ReassignForm, TaskActionButton } from "@/features/modules/TaskForms";
 import { ActionRemarks } from "@/features/modules/ActionRemarks";
 import { FieldValues, FileLinks, type HistoryEntry } from "@/features/modules/RecordParts";
 import { STATUS_TONE } from "@/features/modules/TaskListScreen";
@@ -308,7 +308,14 @@ export async function TaskDetail({ taskId, user, query, popup }: { taskId: numbe
                 <p className="whitespace-pre-wrap">{task.completionNote}</p>
               </div>
             )}
-            <FileLinks files={files} />
+          </section>
+          {/* v1.54.7 (owner): a task's files, and adding more, always at hand. */}
+          <section className="card space-y-3 px-5 py-4" aria-labelledby="task-files" data-testid="task-files">
+            <h2 id="task-files" className="font-semibold">
+              Attachments
+            </h2>
+            {files.length ? <FileLinks files={files} label="" /> : <p className="text-label text-ink-muted">No files yet.</p>}
+            {actions.has("COMMENT") && <AttachFilesForm taskId={task.id} />}
           </section>
           {group.length > 0 && (
             <p className="card px-5 py-3 text-label" data-testid="assign-group">

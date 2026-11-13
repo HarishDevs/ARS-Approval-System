@@ -1,5 +1,15 @@
 # Release notes
 
+## v1.54.7 (13 Nov 2026): formatted text everywhere, due dates by default, task files, Periodic tasks list; Google sign-in after the domain move (owner)
+- **Formatting shows as formatting, like an email body.** Bold, italic, lists, quotes, links, @mentions and emoji in a task description (and marks inside marks, such as bold italic) now display formatted instead of as symbols. The same editor, with its toolbar, is used wherever long text is written: task descriptions (Create task, task forms, editing), remarks, project and status descriptions, meeting descriptions and discussion, information messages, long answers in request forms and About me.
+- **Due dates are required for tasks,** with **11:59 pm** as the time unless you change it (Create task has a time box next to the date; editing works the same way). A quick "Add a task" line without a date is due today at 11:59 pm. A due date can be moved, not removed.
+- **Attachments on a task:** the task page lists the task's files and has **Add files**.
+- **The bell's count goes down** as soon as you open a notification, and stays right when you come back to the tab.
+- **Assigned to me and Assigned by me** list only ad hoc tasks. **Periodic tasks** now has the same tabs, Filter, Sort, Options and pages, plus how each repeats, how many are done and Stop repeating.
+- **Waiting for me** no longer has the "Approve several at once" panel: each approval is opened and decided on its own page.
+- **New project:** the Back button no longer wraps onto two lines.
+- **Google sign-in after the Workspace move from arsenergy.co.in to arssteels.co.in:** someone whose ARS CMS account still has the old address can now sign in with the new primary address. The existing account is found (never a new one), linked to that Google account, and its email updated to the new address; id, User ID, roles and history are unchanged. The Google account's permanent id is now kept too. Details: docs/GOOGLE_AUTH_DOMAIN_MIGRATION.md. **The owner runs migration 202611131000_users_google_sub.sql** (additive; the app works before it runs).
+
 ## v1.54.6 (13 Nov 2026): Google sign-in says why it can't sign you in (fix)
 - **Why some people couldn't sign in with Google:** ARS CMS refuses a Google account that doesn't match an active account set up by IT (that is the 403), but it said the same thing for every reason. Now the message says which: no ARS CMS account uses that Google email (use the Google account of your registered email, or ask IT to correct it); the account is linked to a different Google sign-in; the account is inactive; the account signs in with User ID and password; the Google email isn't verified. A "Reference for IT" is shown.
 - **Super Admin → Sign-in history** shows the reason and a shortened email (e.g. ra***@gmail.com) for refused Google sign-ins, so IT can see who tried and fix the account.

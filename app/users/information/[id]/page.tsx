@@ -17,6 +17,7 @@ import { indiaToday, loadInfoFor } from "@/server/modules/information";
 import { infoState, INFO_STATE_LABEL } from "@/server/modules/info-rules";
 import { indiaDateTimeText } from "@/server/modules/settings";
 import { personLabel } from "@/lib/people/label";
+import { RichText } from "@/features/work/RichText";
 
 // WEB-05 (v1.10.0): a plain, non-confidential browser title.
 export const metadata: Metadata = { title: "Information" };
@@ -83,7 +84,7 @@ export default async function InformationPage({ params, searchParams }: { params
             <h2 id="message" className="sr-only">
               Message
             </h2>
-            <p className="whitespace-pre-wrap">{item.body}</p>
+            <RichText text={item.body} />
             <dl className="grid gap-x-6 gap-y-3 text-label sm:grid-cols-3">
               {item.publishedAt && <Fact label="Published" value={indiaDateTimeText(item.publishedAt)} />}
               {item.effectiveOn && <Fact label="Takes effect" value={item.effectiveOn} />}

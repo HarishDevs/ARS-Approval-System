@@ -6,6 +6,7 @@ import { Avatar } from "@/features/ui/Avatar";
 import { Email, SafeText } from "@/features/ui/SafeText";
 import { personProfile } from "@/lib/db/repositories/profile.repository";
 import { photoUrl } from "@/server/profile/photo";
+import { RichText } from "@/features/work/RichText";
 
 export const metadata: Metadata = { title: "Profile" };
 
@@ -31,7 +32,7 @@ export default async function PersonPage({ params }: { params: Promise<{ id: str
             <p className="text-label text-ink-muted">{[profile.designationName, profile.departmentName].filter(Boolean).join(" · ")}</p>
             {profile.away && <p className="mt-1 inline-flex rounded-full bg-warning-50 px-2.5 py-0.5 text-caption font-semibold text-warning-600">Out of office until {profile.away.until}</p>}
           </div>
-          {profile.aboutMe && <p className="whitespace-pre-line text-body">{profile.aboutMe}</p>}
+          {profile.aboutMe && <RichText text={profile.aboutMe} className="text-body" />}
           <dl className="grid gap-2 text-label sm:grid-cols-[10rem_1fr]">
             <dt className="text-ink-muted">Email</dt>
             <dd>

@@ -61,3 +61,18 @@ describe("comment formatting (v1.52.2)", () => {
     expect(inlineParts("[mail](mailto:a@b.co)")).toEqual([{ kind: "link", text: "mail", href: "mailto:a@b.co" }]);
   });
 });
+
+// v1.54.7 (owner: "formatting is not working in the description"): marks nest.
+import { inlineParts as nestedParts } from "@/features/work/rich-text";
+describe("nested formatting", () => {
+  it("bold inside italic, italic inside bold, strike around bold", () => {
+    expect(nestedParts("_**Provide support**_")).toEqual([{ kind: "italic", text: "**Provide support**", children: [{ kind: "bold", text: "Provide support" }] }]);
+    const [bold] = nestedParts("**very _important_ now**");
+    expect(bold).toMatchObject({ kind: "bold", children: [{ kind: "text", text: "very " }, { kind: "italic", text: "important" }, { kind: "text", text: " now" }] });
+    expect(nestedParts("~~**gone**~~")[0]).toMatchObject({ kind: "strike", children: [{ kind: "bold", text: "gone" }] });
+  });
+  it("plain text and single marks are unchanged", () => {
+    expect(nestedParts("plain")).toEqual([{ kind: "text", text: "plain" }]);
+    expect(nestedParts("**b**")[0]).toMatchObject({ kind: "bold", text: "b" });
+  });
+});

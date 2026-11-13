@@ -1,5 +1,5 @@
 import { expect, test, type BrowserContext } from "@playwright/test";
-import { db, sessionCookie } from "./db";
+import { db, sessionCookie, fillDue } from "./db";
 import { createProject } from "./work-helpers";
 
 // D-219 (owner: "tick mark wherever possible… periodical tasks and ad hoc
@@ -44,6 +44,7 @@ test("the sidebar's Tasks & projects group; + Create → Task makes a periodic t
   await dialog.getByRole("button", { name: "Repeat (periodic)" }).click();
   await dialog.getByLabel(/Periodic \(repeats/).check();
   await dialog.getByLabel("Mon").check();
+  await fillDue(dialog);
   await dialog.getByRole("button", { name: "Create task" }).click();
   await expect(page).toHaveURL(/\/users\/work\/projects\/\d+\?task=\d+/);
   const pane = page.getByTestId("task-pane");
@@ -59,6 +60,7 @@ test("the sidebar's Tasks & projects group; + Create → Task makes a periodic t
   await page.keyboard.press("q");
   await expect(page.getByTestId("create-dialog")).toBeVisible();
   await page.getByTestId("create-dialog").getByLabel("Task name").fill(`One-off audit ${stamp}`);
+  await fillDue(page.getByTestId("create-dialog"));
   await page.getByTestId("create-dialog").getByRole("button", { name: "Create task" }).click();
   await expect(page.getByTestId("task-pane")).toContainText("Ad hoc");
 });
@@ -68,10 +70,11 @@ test("Mark complete in the pane; periodic tasks list; search by periodic or ad h
   await page.goto("/users/work/periodic");
   const row = page.getByTestId("periodic-table").getByRole("row").filter({ hasText: `Weekly stock count ${stamp}` });
   await expect(row).toContainText("Every week on Mon");
+  // v1.54.7 (owner): Periodic tasks is the full task list (tabs, Filter, Sort, Options).
+  await expect(page.getByRole("navigation", { name: "Quick filters" })).toContainText("Overdue");
   await row.getByRole("link", { name: `Weekly stock count ${stamp}` }).click();
-  const pane = page.getByTestId("task-pane");
-  await pane.getByTestId("mark-complete").click();
-  await expect(pane.getByTestId("mark-complete")).toContainText("Completed");
+  await page.getByTestId("mark-complete").click();
+  await expect(page.getByTestId("mark-complete")).toContainText("Completed");
   // The next one of the series is made.
   await expect.poll(async () => {
     const conn = await db();

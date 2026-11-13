@@ -109,8 +109,11 @@ test("D-212: the keyboard works for a Super Admin too (closed confirmations on t
     await expect(gateway.getByRole("link").nth(1)).toBeFocused();
     await page.keyboard.press("t");
     await expect(page).toHaveURL(/\/users\/menu\/tasks$/);
-    await page.keyboard.press("m");
-    // D-215: My tasks opens My Tasks.
+    // v1.54.3 renamed My tasks to Task Summary: its highlighted letter opens it.
+    const summary = page.getByRole("navigation", { name: "Tasks Management pages" }).getByRole("link", { name: "Task Summary" });
+    const letter = (await summary.getAttribute("aria-keyshortcuts")) ?? "";
+    expect(letter).not.toBe("");
+    await page.keyboard.press(letter.toLowerCase());
     await expect(page).toHaveURL(/\/users\/work\/my-tasks$/);
     await page.keyboard.press("Escape");
     await expect(page).toHaveURL(/\/users\/menu\/tasks$/);

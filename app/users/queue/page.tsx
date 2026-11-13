@@ -10,7 +10,6 @@ import { parseColumns, QUEUE_COLUMNS } from "@/server/requests/list-columns";
 import { getUserSetting } from "@/lib/db/repositories/user-settings.repository";
 import { priorityRecord } from "@/server/approvals/priority-lookup";
 import { PendingLink } from "@/features/ui/PendingLink";
-import { BulkApprove } from "@/features/requests/BulkApprove";
 import { QueueKeyboard } from "@/features/requests/QueueKeyboard";
 import { countPendingTasksFor, listPendingTasksFor, queueChoicesFor, queueTypesFor } from "@/lib/db/repositories/approvals.repository";
 import { listViews } from "@/lib/db/repositories/analytics-views.repository";
@@ -246,7 +245,7 @@ export default async function QueuePage({ searchParams }: { searchParams: Promis
           />
         </div>
       )}
-      {!filtered && <BulkApprove items={queue} />}
+      {/* v1.54.7 (owner: "drop this in the waiting for me"): the Approve several at once panel is removed; each approval is opened and decided on its own. */}
       {filtered && queue.length === 0 ? (
         <NoResults what="items waiting" query={filter.q} clearSearchHref={without({ q: "" })} resetHref="/users/queue" />
       ) : (

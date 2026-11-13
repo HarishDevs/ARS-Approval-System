@@ -17,6 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (13 Nov 2026):** v1.54.7: formatted text everywhere long text is written, required due dates (11:59 pm), task Attachments card, bell count fixed, Periodic tasks as a full list (Assigned to me / by me ad hoc only), bulk approval removed from Waiting for me, Google sign-in for people moved to arssteels.co.in (D-316). **Owner:** back up `users`, run migration 202611131000_users_google_sub.sql (additive), publish; then ask Babulal to sign in with babulal@arssteels.co.in and check Sign-in history / audit (GOOGLE_ACCOUNT_LINKED, matchedBy email domain move).
 - **Now (12 Nov 2026):** v1.54.0: approval templates are each requester's own (IT approval types removed), New request one page per step with a sticky action bar, every approver named on review, the request page and the journey (D-309). One small migration on start. **Owner:** publish (v1.52.3 to v1.54.0 are all unpublished: the live site still shows "Tasks & projects").
 - **Now (11 Nov 2026, night):** v1.53.0: **Projects is its own module**; modules not switched on show as blurred, locked **Coming soon** cards (Home, Classic menu, Analytics); new people start with Approvals and Tasks (D-307). One small migration on start. **Owner:** publish; switch Projects on (Admin → Users → Modules → Add → Projects, with Tasks) when it is released. Interlinks decided (D-308). Before: v1.52.3 columns arranged by drag, request files deletable until the first approval (D-306).
 - **Next:** release order: Tasks now, then Projects, Meeting Management, Information, AI Assistant.
@@ -167,6 +168,15 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 - **Still open:** Q-015.
 
 ---
+
+## Session log — v1.54.7 (13 Nov 2026): formatting, due dates, task files, bell, Periodic list, bulk removal, Google domain move
+- [x] V1547-01 (13 Nov 2026) Formatting: nested marks parsed and shown; RichEditor for every long-text field (task, remarks, project, meeting, information, request LONG_TEXT, About me); serializer per run (bold off inside bold, nesting); typing marks kept across the emoji picker
+- [x] V1547-02 (13 Nov 2026) Due date required (Create task, typed forms, editing; quick add = today); 11:59 pm default time, time box in Create task
+- [x] V1547-03 (13 Nov 2026) Task Attachments card with Add files; bell count drops on open and re-syncs on focus; New project Back button
+- [x] V1547-04 (13 Nov 2026) Assigned to me / by me ad hoc only; Periodic tasks on TaskListScreen (tabs, Filter, Sort, Options, Repeats, Done so far, Stop)
+- [x] V1547-05 (13 Nov 2026) Waiting for me: Approve several at once removed (UI and action; Help, User Guide, e2e v150)
+- [x] V1547-06 (13 Nov 2026) Google sign-in after the domain move: sub lookup and keeping, moved-domain email lookup, email follows Google's primary (audited), safe log line, migration google_sub, docs/GOOGLE_AUTH_DOMAIN_MIGRATION.md, unit tests (10)
+- [x] V1547-07 (13 Nov 2026) e2e brought up to date (fillDue, editor, Classic Enter into the editor, pre-existing CI failures v127 and v133)
 
 ## Session log — v1.54.6 (13 Nov 2026): Google sign-in failures
 - [x] V1546-01 (13 Nov 2026) Investigation: flow map, every 403 source, COOP/CSP on live, cookies, rate limit, email dependency (D-315)

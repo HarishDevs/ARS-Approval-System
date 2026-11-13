@@ -1,5 +1,5 @@
 import { expect, test, type BrowserContext } from "@playwright/test";
-import { dropCustomDraft, sessionCookie, toReviewStep, toWorkflowStep, dueToday } from "./db";
+import { dropCustomDraft, sessionCookie, toReviewStep, toWorkflowStep, dueToday, fillDue } from "./db";
 import { pickFirstPerson } from "./people";
 
 // v1.42.0 (D-259, D-260): the calendar's Agenda and chips, Create task in two
@@ -48,6 +48,7 @@ test("Create task: two columns on a computer, with a priority that is saved", as
   await expect(dialog.getByRole("textbox", { name: "Due date", exact: true })).toBeVisible();
   await dialog.getByLabel("Task name").fill(title);
   await dialog.getByLabel("Priority").selectOption("HIGH");
+  await fillDue(dialog);
   await dialog.getByRole("button", { name: "Create task" }).click();
   await expect(page.getByTestId("task-pane")).toContainText(title);
   await expect(page.getByTestId("task-pane")).toContainText(/Most Important/); // v1.50.1: HIGH reads "Most Important"
@@ -66,7 +67,7 @@ test("Create task: two columns on a computer, with a priority that is saved", as
   await box.click();
   await box.pressSequentially("Ship it today");
   await page.keyboard.press("Control+A");
-  await popup.getByRole("button", { name: "Bold (Ctrl+B)" }).click();
+  await popup.getByTestId("rich-editor").getByRole("button", { name: "Bold (Ctrl+B)" }).click();
   await popup.getByRole("button", { name: "Comment", exact: true }).click();
   await expect(popup.getByTestId("comment").first().locator("strong")).toHaveText("Ship it today");
   await popup.getByRole("tab", { name: "All activity" }).click();

@@ -7,6 +7,7 @@ import { PeoplePicker, type PersonOption } from "@/features/ui/PeoplePicker";
 import { FieldError, ResultMessage, SubmitButton, useActionForm } from "@/features/ui/form";
 import { UnsavedGuard } from "@/features/ui/UnsavedGuard";
 import { PRIORITIES, PRIORITY_LABEL, type Attendance, type MeetingPriority } from "@/server/meetings/rules";
+import { RichEditor } from "@/features/ui/RichEditor";
 
 // v1.51.0 (D-300, D-301): Meeting Management forms. Every people choice is
 // search-and-select (owner rule): one person for Owner, Coordinator,
@@ -280,7 +281,7 @@ export function ScheduleMeetingForm({
         <label htmlFor="mtg-desc" className="field-label">
           Purpose (optional)
         </label>
-        <textarea id="mtg-desc" name="description" rows={3} defaultValue={defaults.description} maxLength={8000} className="field-input h-auto py-2" />
+        <RichEditor id="mtg-desc" name="description" label="Description" initialText={defaults.description} maxLength={8000} minHeight={90} placeholder="What the meeting is about. Format it like an email." />
       </div>
       <ResultMessage result={result} />
       <div className="flex justify-end">

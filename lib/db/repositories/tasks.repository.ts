@@ -225,7 +225,7 @@ export async function listTaskEvents(taskId: number, db: Queryable = getDbPool()
 }
 
 // ---- lists ------------------------------------------------------------------------
-export type TaskBase = "MINE" | "CREATED" | "TEAM";
+export type TaskBase = "MINE" | "CREATED" | "TEAM" | "PERIODIC";
 export interface TaskListItem {
   id: number;
   taskNo: string;

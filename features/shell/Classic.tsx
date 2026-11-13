@@ -293,7 +293,7 @@ export function ClassicBar({ modules }: { modules: ClassicModule[] }) {
 // last moves to the form's button; Enter there submits); Ctrl+A accepts the
 // whole form. Text areas keep Enter for new lines, an open suggestion list
 // keeps it for picking, and search boxes and one-field forms still submit.
-const FIELD = 'input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]), select, textarea';
+const FIELD = 'input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]), select, textarea, [contenteditable="true"]';
 function fieldsOf(form: HTMLFormElement): HTMLElement[] {
   return [...form.querySelectorAll<HTMLElement>(`${FIELD}, button[type="submit"], button:not([type])`)].filter(
     (element) => !(element as HTMLInputElement).disabled && !(element as HTMLInputElement).readOnly && element.getClientRects().length > 0 && !element.closest("details:not([open])"),
@@ -319,7 +319,7 @@ export function ClassicForms() {
         form.requestSubmit(button as HTMLButtonElement | undefined);
         return;
       }
-      if (event.key !== "Enter" || event.ctrlKey || event.shiftKey || !target.matches(FIELD) || target.tagName === "TEXTAREA" || target.getAttribute("aria-expanded") === "true") return;
+      if (event.key !== "Enter" || event.ctrlKey || event.shiftKey || !target.matches(FIELD) || target.tagName === "TEXTAREA" || target.isContentEditable || target.getAttribute("aria-expanded") === "true") return;
       const list = fieldsOf(form);
       const next = list[list.indexOf(target) + 1];
       if (!next) return;
