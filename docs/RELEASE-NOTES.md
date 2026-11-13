@@ -1,5 +1,12 @@
 # Release notes
 
+## v1.54.6 (13 Nov 2026): Google sign-in says why it can't sign you in (fix)
+- **Why some people couldn't sign in with Google:** ARS CMS refuses a Google account that doesn't match an active account set up by IT (that is the 403), but it said the same thing for every reason. Now the message says which: no ARS CMS account uses that Google email (use the Google account of your registered email, or ask IT to correct it); the account is linked to a different Google sign-in; the account is inactive; the account signs in with User ID and password; the Google email isn't verified. A "Reference for IT" is shown.
+- **Super Admin → Sign-in history** shows the reason and a shortened email (e.g. ra***@gmail.com) for refused Google sign-ins, so IT can see who tried and fix the account.
+- **Pop-up problems** (pop-ups blocked, the site's address not allowed, browser storage blocked, offline) each get a plain message and are logged.
+- **An office signing in together** is no longer stopped by the sign-in limit (Google sign-in: 300 per 15 minutes per network, was 30).
+- Reports: docs/GOOGLE_AUTH_ROOT_CAUSE_REPORT.md, GOOGLE_AUTH_FIX_IMPLEMENTATION.md, GOOGLE_AUTH_TEST_REPORT.md, GOOGLE_AUTH_DEPLOYMENT_CHECKLIST.md.
+
 ## v1.54.5 (12 Nov 2026): Out of office moves your tasks; a warning for tasks while someone is away (owner)
 - **Setting Out of office** moves your open tasks due within those dates to the first working day after the to-date (keeping the time of day). Whoever gave you each task is told, and the task's history says why. The save message says how many moved and to when.
 - **A new task (or a new due date) on a day the assignee is out of office** asks first, like a holiday: keep the date anyway, or move it to the day after they are back. It always warns, whatever the holiday setting.

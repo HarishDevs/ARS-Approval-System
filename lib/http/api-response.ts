@@ -13,6 +13,6 @@ export function apiSuccess<T>(data: T, init?: ResponseInit): NextResponse {
   return NextResponse.json({ success: true, data }, init);
 }
 
-export function apiError(code: string, message: string, status: number): NextResponse {
-  return NextResponse.json({ success: false, error: { code, message, requestId: requestId() } }, { status });
+export function apiError(code: string, message: string, status: number, extra?: { reason?: string }): NextResponse {
+  return NextResponse.json({ success: false, error: { code, message, requestId: requestId(), ...(extra?.reason ? { reason: extra.reason } : {}) } }, { status });
 }

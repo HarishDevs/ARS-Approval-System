@@ -133,6 +133,13 @@ export function findUnlinkedUserByEmail(email: string, db: Queryable = getDbPool
   return findOne("LOWER(u.email) = LOWER(?) AND u.firebase_uid IS NULL", [email.trim()], db);
 }
 
+// v1.54.6: an account with this email exists but is already linked to a
+// different Google identity (so linking by email is refused, by design).
+export async function isEmailLinkedToAnotherGoogle(email: string, uid: string, db: Queryable = getDbPool()): Promise<boolean> {
+  const [rows] = await db.query<RowDataPacket[]>("SELECT 1 FROM users WHERE LOWER(email) = LOWER(?) AND firebase_uid IS NOT NULL AND firebase_uid <> ? LIMIT 1", [email.trim(), uid]);
+  return rows.length > 0;
+}
+
 export async function linkFirebaseUid(userId: number, uid: string, db: Queryable = getDbPool()): Promise<void> {
   await db.query<ResultSetHeader>("UPDATE users SET firebase_uid = ? WHERE id = ? AND firebase_uid IS NULL", [uid, userId]);
 }

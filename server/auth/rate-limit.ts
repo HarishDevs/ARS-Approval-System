@@ -25,7 +25,11 @@ export const RATE_RULES: Record<LimitedAction, Rule[]> = {
     { scope: "login", limit: 5, windowSeconds: 3600 },
   ],
   SET_PASSWORD: [{ scope: "ip", limit: 10, windowSeconds: 900 }],
-  GOOGLE: [{ scope: "ip", limit: 30, windowSeconds: 900 }],
+  // v1.54.6 (Google sign-in fix): an office shares one public IP (behind NAT), and every
+  // Google sign-in, successful or not, counted against 30 per 15 minutes for the whole
+  // office. A Google ID token is verified by Google and can't be guessed, so this limit
+  // only guards the server: 300 per IP per 15 minutes.
+  GOOGLE: [{ scope: "ip", limit: 300, windowSeconds: 900 }],
 };
 
 // v1.50.0 (security review): one bucket for one mobile number however it is

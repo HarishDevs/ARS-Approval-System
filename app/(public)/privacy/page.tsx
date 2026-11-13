@@ -24,7 +24,7 @@ export const metadata: Metadata = {
 // request's background work step may read that request.
 // v1.46.0 (D-277, D-278): the encrypted backup copy may go to an ARS Google
 // Drive folder; security records are deleted after 90 days.
-const PRIVACY_EFFECTIVE = "12 November 2026";
+const PRIVACY_EFFECTIVE = "13 November 2026";
 
 export default function PrivacyPage() {
   return (
@@ -43,7 +43,7 @@ export default function PrivacyPage() {
             <strong>Account details</strong> entered by IT: name, user ID, work email address, WhatsApp number (for sign-in codes and notices), department, designation and reporting manager.
           </li>
           <li>
-            <strong>Sign-in and security records</strong>: sign-in times, the method used, IP address and browser details, to protect accounts and to show people their own sign-in history.
+            <strong>Sign-in and security records</strong>: sign-in times, the method used, IP address and browser details, to protect accounts and to show people their own sign-in history. When a Google sign-in is refused, the reason and a shortened form of the Google email (for example ra***@gmail.com) are kept so IT can help.
           </li>
           <li>
             <strong>Work records</strong> people create in the app: approval requests and decisions, comments and mentions, tasks and projects (with their descriptions, files, followers and

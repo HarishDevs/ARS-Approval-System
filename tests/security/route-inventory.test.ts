@@ -11,6 +11,7 @@ const PUBLIC: Record<string, string> = {
   "app/api/auth/forgot/complete/route.ts": "password reset: single-use code, rate-limited per login and IP",
   "app/api/auth/forgot/start/route.ts": "password reset start: same answer for every User ID, rate-limited",
   "app/api/auth/google/route.ts": "Google sign-in: verifies the Firebase ID token server-side",
+  "app/api/auth/google/client-event/route.ts": "Before sign-in: logs why the Google popup failed (a Firebase error code only; same-site, rate-limited, nothing stored)",
   "app/api/auth/keep-alive/route.ts": "extends the caller's own session cookie only",
   "app/api/auth/logout/route.ts": "ends the caller's own session",
   "app/api/auth/not-me/route.ts": "\"This wasn't me\": signed single-use purpose token",

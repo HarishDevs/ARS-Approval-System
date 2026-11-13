@@ -168,6 +168,12 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 
 ---
 
+## Session log — v1.54.6 (13 Nov 2026): Google sign-in failures
+- [x] V1546-01 (13 Nov 2026) Investigation: flow map, every 403 source, COOP/CSP on live, cookies, rate limit, email dependency (D-315)
+- [x] V1546-02 (13 Nov 2026) Per-reason messages and codes, masked-email history, LINKED_ELSEWHERE, structured logs, popup failure reports, cross-site 403 code, Google IP limit 300
+- [x] V1546-03 (13 Nov 2026) Tests and the four GOOGLE_AUTH reports; privacy, Help, release notes
+- [ ] V1546-04 Owner after deploy: Sign-in history reasons for the failing people; fix accounts (checklist §5); Firebase authorized domains; browser matrix on live
+
 ## Session log — v1.54.5 (12 Nov 2026): out of office and tasks
 - [x] V1545-01 (12 Nov 2026) Saving Out of office moves the person's tasks due in those dates to the day after (D-314)
 - [x] V1545-02 (12 Nov 2026) A due date on an away day warns (keep / move), holiday prompt wording; tests; docs

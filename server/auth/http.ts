@@ -35,7 +35,7 @@ export function clearSessionCookie(response: NextResponse): NextResponse {
 
 export function authErrorResponse(error: unknown, where: string): NextResponse {
   if (error instanceof AuthError) {
-    const response = apiError(error.code, error.message, AUTH_ERROR_STATUS[error.code]);
+    const response = apiError(error.code, error.message, AUTH_ERROR_STATUS[error.code], error.reason ? { reason: error.reason } : undefined);
     if (error.retryAfterSeconds) response.headers.set("Retry-After", String(error.retryAfterSeconds));
     return response;
   }

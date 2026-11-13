@@ -3,11 +3,12 @@ import { verifyGoogleIdToken, type VerifiedGoogleIdentity } from "@/lib/firebase
 import {
   findUnlinkedUserByEmail,
   findUserByFirebaseUid,
+  isEmailLinkedToAnotherGoogle,
   linkFirebaseUid,
   type UserRecord,
 } from "@/lib/db/repositories/users.repository";
 import { recordAudit, recordLogin } from "@/lib/db/repositories/audit.repository";
-import { AuthError, GENERIC_GOOGLE_FAILED } from "@/server/auth/errors";
+import { AuthError, GOOGLE_REFUSAL_MESSAGE, maskEmail } from "@/server/auth/errors";
 import { completeSignIn, defaultCompleteSignInDeps, type CompleteSignInDeps, type CompleteSignInResult } from "@/server/auth/complete-sign-in";
 import { checkSignInAllowed } from "@/server/auth/sign-in-rules";
 import type { RequestContext } from "@/types/auth";
@@ -19,6 +20,8 @@ export interface GoogleSignInDeps {
   verifyIdToken: (idToken: string) => Promise<VerifiedGoogleIdentity>;
   findUserByFirebaseUid: (uid: string) => Promise<UserRecord | null>;
   findUnlinkedUserByEmail: (email: string) => Promise<UserRecord | null>;
+  // v1.54.6: an account with this email exists but is linked to another Google identity.
+  isEmailLinkedToAnotherGoogle?: (email: string, uid: string) => Promise<boolean>;
   linkFirebaseUid: (userId: number, uid: string) => Promise<void>;
   recordLogin: typeof recordLogin;
   recordAudit: typeof recordAudit;
@@ -29,6 +32,7 @@ const defaultDeps: GoogleSignInDeps = {
   verifyIdToken: verifyGoogleIdToken,
   findUserByFirebaseUid: (uid) => findUserByFirebaseUid(uid),
   findUnlinkedUserByEmail: (email) => findUnlinkedUserByEmail(email),
+  isEmailLinkedToAnotherGoogle: (email, uid) => isEmailLinkedToAnotherGoogle(email, uid),
   linkFirebaseUid: (userId, uid) => linkFirebaseUid(userId, uid),
   recordLogin,
   recordAudit,
@@ -40,10 +44,14 @@ export async function googleSignInWithDeps(
   context: RequestContext,
   deps: GoogleSignInDeps,
 ): Promise<CompleteSignInResult> {
+  // v1.54.6: the sign-in history row carries the reason and the masked email
+  // (an unknown account has no user to point at, so IT could not see who it was).
+  let masked = "";
   const fail = async (userId: number | null, reason: string, error: AuthError): Promise<never> => {
-    await deps.recordLogin({ userId, authMethod: "GOOGLE", step: "GOOGLE", success: false, failureReason: reason, ipAddress: context.ipAddress, userAgent: context.userAgent });
+    await deps.recordLogin({ userId, authMethod: "GOOGLE", step: "GOOGLE", success: false, failureReason: `${reason}${masked ? ` ${masked}` : ""}`.slice(0, 100), ipAddress: context.ipAddress, userAgent: context.userAgent });
     throw error;
   };
+  const refuse = (userId: number | null, reason: string, email: string) => fail(userId, reason, new AuthError("AUTH_NOT_ALLOWED", (GOOGLE_REFUSAL_MESSAGE[reason] ?? GOOGLE_REFUSAL_MESSAGE.BREAK_GLASS_DISABLED!)(email), undefined, reason));
 
   let identity: VerifiedGoogleIdentity;
   try {
@@ -52,15 +60,16 @@ export async function googleSignInWithDeps(
     // The reason goes to the server log only (e.g. Firebase Admin not set up,
     // a malformed private key, a token from another project); never the token.
     logError("google sign-in: token verification failed", error);
-    return fail(null, "INVALID_TOKEN", new AuthError("AUTH_INVALID_TOKEN", "Google sign-in failed. Please try again."));
+    return fail(null, "INVALID_TOKEN", new AuthError("AUTH_INVALID_TOKEN", "Google sign-in couldn't be confirmed. Please try again.", undefined, "INVALID_TOKEN"));
   }
+  masked = identity.email ? maskEmail(identity.email) : "";
   if (!identity.email || !identity.emailVerified) {
-    return fail(null, "EMAIL_NOT_VERIFIED", new AuthError("AUTH_NOT_ALLOWED", GENERIC_GOOGLE_FAILED));
+    return refuse(null, "EMAIL_NOT_VERIFIED", identity.email ?? "");
   }
   // The Firebase project is shared with the Power BI site: only a real Google
   // sign-in counts here, not another provider with the same email (audit P-03).
   if (identity.provider !== "google.com") {
-    return fail(null, "NOT_GOOGLE_PROVIDER", new AuthError("AUTH_NOT_ALLOWED", GENERIC_GOOGLE_FAILED));
+    return refuse(null, "NOT_GOOGLE_PROVIDER", identity.email);
   }
 
   let user = await deps.findUserByFirebaseUid(identity.uid);
@@ -75,16 +84,16 @@ export async function googleSignInWithDeps(
     }
   }
   if (!user) {
-    return fail(null, "UNKNOWN_ACCOUNT", new AuthError("AUTH_NOT_ALLOWED", GENERIC_GOOGLE_FAILED));
+    // v1.54.6: an account with this email that is already linked to a different
+    // Google identity is a different problem from "no account" (IT resets the link).
+    const elsewhere = deps.isEmailLinkedToAnotherGoogle ? await deps.isEmailLinkedToAnotherGoogle(identity.email, identity.uid).catch(() => false) : false;
+    return refuse(null, elsewhere ? "LINKED_ELSEWHERE" : "UNKNOWN_ACCOUNT", identity.email);
   }
 
   const rule = checkSignInAllowed(user, "GOOGLE");
   if (!rule.allowed) {
-    const error =
-      rule.reason === "LOCKED"
-        ? new AuthError("AUTH_ACCOUNT_LOCKED", "This account is locked. Try again later or contact IT.", rule.retryAfterSeconds)
-        : new AuthError("AUTH_NOT_ALLOWED", GENERIC_GOOGLE_FAILED);
-    return fail(user.id, rule.reason, error);
+    if (rule.reason === "LOCKED") return fail(user.id, rule.reason, new AuthError("AUTH_ACCOUNT_LOCKED", "This account is locked. Try again later or contact IT.", rule.retryAfterSeconds, "LOCKED"));
+    return refuse(user.id, rule.reason, identity.email);
   }
 
   return completeSignIn(user, "GOOGLE", context, deps.complete);

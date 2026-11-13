@@ -84,7 +84,14 @@ export async function middleware(request: NextRequest) {
   if (UNSAFE_METHODS.has(request.method) && pathname.startsWith("/api/") && !MACHINE_APIS.some((prefix) => pathname.startsWith(prefix))) {
     const site = request.headers.get("sec-fetch-site");
     if (site === "cross-site" || site === "same-site") {
-      return NextResponse.json({ success: false, error: { code: "FORBIDDEN", message: "Not allowed." } }, { status: 403 });
+      // v1.54.6 (Google sign-in fix): this refusal is told apart from the
+      // app's own (a distinct code and message), and logged with what the
+      // browser said, so a 403 here can be traced. No cookies or bodies logged.
+      console.log(JSON.stringify({ level: "info", message: "security.cross_site_refused", requestId, path: pathname, method: request.method, site, origin: (request.headers.get("origin") ?? "").slice(0, 100), host: host.slice(0, 100) }));
+      return NextResponse.json(
+        { success: false, error: { code: "FORBIDDEN_CROSS_SITE", message: "This request came from another website, so it was refused. Open ARS CMS directly (approval.arssteels.net) and try again.", requestId } },
+        { status: 403 },
+      );
     }
   }
 
