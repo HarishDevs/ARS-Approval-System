@@ -45,6 +45,7 @@ describe("GoDaddy relay mode (RELAY)", () => {
     const transport = smtpTransport({ host: "127.0.0.1", port, security: "RELAY", user: "no_reply@cms.arssteels.net", password: "" });
     const sent = await sendSmtpEmail({ name: "ARS CMS", address: "no_reply@cms.arssteels.net", replyTo: "itadmin@arssteels.co.in" }, { to: "harishkumar.t@arssteels.com", subject: "Relay test", text: "Hello" }, transport, "SMTP");
     expect(sent.id).toBeTruthy();
+    expect(sent.receipt).toBe("250 OK queued");
     expect(seen.some((line) => /^AUTH/i.test(line))).toBe(false);
     expect(seen.some((line) => /^STARTTLS/i.test(line))).toBe(false);
     expect(seen).toContain("MAIL FROM:<no_reply@cms.arssteels.net>");

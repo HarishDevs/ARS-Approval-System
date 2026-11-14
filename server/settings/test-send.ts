@@ -51,7 +51,8 @@ export async function sendTestEmail(user: AuthenticatedUser, sessionId: string):
     await recordAudit({ actorUserId: user.id, action: "PROVIDER_TEST_SENT", entityType: "PROVIDER", entityId: sent.provider, sessionId });
     // v1.54.8: says which way it went (SMTP chosen but Resend carried it = SMTP needs attention).
     const via = sent.provider === "SMTP" ? `through ${config.smtp?.host ?? "SMTP"} as ${config.smtp?.user ?? ""}` : sent.provider === "SENDMAIL" ? `through the hosting's mail program as ${config.smtp?.user ?? ""}` : "through Resend";
-    return { ok: true, message: `Test email sent to ${user.email} ${via}.` };
+    const receipt = "receipt" in sent && sent.receipt ? ` The mail server replied: "${sent.receipt}". If it doesn't arrive, check the mailbox's Inbox for a bounce; GoDaddy support can trace it by that reply.` : "";
+    return { ok: true, message: `Test email sent to ${user.email} ${via}.${receipt}` };
   } catch (error) {
     const failure = describeFailure(error);
     logError("provider test: email failed", error);

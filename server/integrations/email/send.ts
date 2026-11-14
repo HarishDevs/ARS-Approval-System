@@ -21,7 +21,7 @@ export interface SendDeps {
   smtpSentLastHour?: () => Promise<number>;
 }
 
-export async function sendEmail(config: EmailConfig, input: SendEmailInput, deps: SendDeps): Promise<{ id: string | null; provider: EmailProvider }> {
+export async function sendEmail(config: EmailConfig, input: SendEmailInput, deps: SendDeps): Promise<{ id: string | null; provider: EmailProvider; receipt?: string }> {
   if (config.provider !== "SMTP" && config.provider !== "SENDMAIL") return { ...(await sendResendEmail(config, input, deps)), provider: "RESEND" };
 
   const via: "SMTP" | "SENDMAIL" = config.provider;

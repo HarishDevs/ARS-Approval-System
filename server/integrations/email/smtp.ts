@@ -23,7 +23,7 @@ export interface SmtpConfig {
 }
 
 export interface SmtpSender {
-  sendMail(message: Record<string, unknown>): Promise<{ messageId?: string }>;
+  sendMail(message: Record<string, unknown>): Promise<{ messageId?: string; response?: string }>;
 }
 
 // v1.54.10 (live: "connect EACCES <host>:465"): GoDaddy's hosting blocks the
@@ -71,7 +71,7 @@ export async function sendSmtpEmail(
   transport: SmtpSender,
   provider: "SMTP" | "SENDMAIL" = "SMTP",
   timeoutMs = SENDMAIL_TIMEOUT_MS,
-): Promise<{ id: string | null }> {
+): Promise<{ id: string | null; receipt?: string }> {
   // v1.54.11 (live: the SENDMAIL test hit the page's 30 s limit): the mail
   // program gets 20 s. When it doesn't finish, the email may still go out, so
   // this is EMAIL_UNCONFIRMED: reported, never retried automatically (no duplicates).
@@ -93,7 +93,9 @@ export async function sendSmtpEmail(
       ...(input.idempotencyKey ? { headers: { "X-ARS-Reference": oneLine(input.idempotencyKey).slice(0, 256) } } : {}),
       ...(input.attachments?.length ? { attachments: input.attachments.map((file) => ({ filename: file.filename.replace(/[^A-Za-z0-9._-]/g, "_"), content: Buffer.from(file.content) })) } : {}),
     })]);
-    return { id: info.messageId ?? null };
+    // v1.54.13: the relay's own receipt ("250 OK id=…"), so a lost email can be traced.
+    const receipt = typeof info.response === "string" ? (info.response.trim().split(/\r?\n/)[0] ?? "").slice(0, 160) : "";
+    return { id: info.messageId ?? null, ...(receipt ? { receipt } : {}) };
   } catch (error) {
     if (error instanceof EmailSendError) throw error;
     const raw = error as { code?: string; responseCode?: number; message?: string } | null;

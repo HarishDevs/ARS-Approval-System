@@ -17,6 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (14 Nov 2026):** v1.54.13: the test shows the relay's receipt (D-322). **Owner:** check the Roundcube Inbox for a bounce and Google Admin email log search; publish; test again and send the receipt line if the email doesn't arrive.
 - **Now (14 Nov 2026):** v1.54.12: GoDaddy relay mode (localhost:25, no SSL, no password) (D-321). **Owner:** publish; Email: Send through SMTP, server localhost, port 25, security RELAY, Save, Send test email; if refused, relay-hosting.secureserver.net.
 - **Now (14 Nov 2026):** v1.54.11: the email test answers within 20 s and never sends a second copy (D-320). **Owner:** check the inbox and Track Delivery for the earlier SENDMAIL test; publish; test again and send the message.
 - **Now (14 Nov 2026):** v1.54.10: email can go through the hosting's own mail program (SENDMAIL), because live SMTP got EACCES (D-319). **Owner:** publish; Super Admin → Email: try Connect through = localhost (SMTP); if still EACCES, Send email through = SENDMAIL, Save, Send test email.
@@ -173,6 +174,10 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 - **Still open:** Q-015.
 
 ---
+
+## Session log — v1.54.13 (14 Nov 2026): relay receipt
+- [x] V15413-01 (14 Nov 2026) Test shows the mail server's reply (D-322)
+- [ ] V15413-02 Owner: confirm delivery (bounce / Google log)
 
 ## Session log — v1.54.12 (14 Nov 2026): GoDaddy relay mode
 - [x] V15412-01 (14 Nov 2026) RELAY security (port 25, no TLS, no auth), hints, tests (D-321)

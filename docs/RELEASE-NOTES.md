@@ -1,5 +1,11 @@
 # Release notes
 
+## v1.54.13 (14 Nov 2026): the email test shows the relay's receipt (owner)
+- With GoDaddy's relay (localhost, port 25, RELAY) the live test turned green: the relay accepted the email. The email still hadn't arrived in the inbox.
+- **Send test email** now also shows the mail server's own reply (for example "250 OK id=…"). If the email goes missing, GoDaddy support can trace it by that reply.
+- Undelivered mail comes back as a bounce to the mailbox's **Inbox** in Roundcube.
+- Roundcube's Sent folder never shows emails sent by ARS CMS (only those sent from Roundcube), and Track Delivery shows nothing on this hosting.
+
 ## v1.54.12 (14 Nov 2026): email through GoDaddy's relay for hosted apps (owner)
 - GoDaddy's guidance for Web Hosting (cPanel) is that apps on the hosting send mail through its relay: server **localhost** (or **relay-hosting.secureserver.net**), port **25**, **no SSL, no password**.
   - Its limits: 500 emails a day per sender, and 500 an hour for the whole hosting account.
