@@ -1,5 +1,11 @@
 # Release notes
 
+## v1.54.15 (14 Nov 2026): email works through GoDaddy's relay (owner)
+- **Found and fixed:** ARS CMS runs in its own container on GoDaddy. There, `localhost:25` accepts email but never sends it, so nothing arrived and nothing bounced.
+- Emails now go through **GoDaddy's hosting relay** (`relay-hosting.secureserver.net`, port 25). The test email arrived in the Inbox. ARS CMS email no longer depends on Resend's daily quota (Resend stays as a fallback).
+- **Email diagnostics** builds its test message with the same email library as real email; GoDaddy's relay had refused the hand-built one ("bare LF").
+- GoDaddy's tracking number ("SBo0x…") is recognised and kept with each email in Message deliveries.
+
 ## v1.54.14 (14 Nov 2026): email delivery audit and diagnostics (owner)
 - **Super Admin → Settings → Email diagnostics** runs on the live server. It shows:
   - which mail routes the hosting allows: the local relay, GoDaddy's relay, the hosting mail server on 465/587, and an outside SMTP provider on 587/2525;

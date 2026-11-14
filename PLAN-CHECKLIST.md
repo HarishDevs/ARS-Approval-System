@@ -17,6 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (14 Nov 2026):** **Email works:** SMTP → relay-hosting.secureserver.net:25 RELAY; test delivered to the Inbox (D-324). v1.54.15 fixes the diagnostic's test message and reads GoDaddy's queue ids. **Owner:** publish v1.54.15; keep the settings; watch Message deliveries for FAILED rows. Next: STARTTLS on the relay hop; DKIM if mail lands in Spam.
 - **Now (14 Nov 2026):** v1.54.14: email delivery audit, live Email diagnostics, honest ACCEPTED status, queue id per delivery (D-323). **Owner:**
   - publish;
   - run Email diagnostics (Local relay → itsupport@arsenergy.co.in) and download the report;
@@ -181,11 +182,16 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 
 ---
 
+## Session log — v1.54.15 (14 Nov 2026): email delivered via GoDaddy's relay
+- [x] V15415-01 (14 Nov 2026) Root cause verified (container localhost:25 stub); relay-hosting delivers (D-324)
+- [x] V15415-02 (14 Nov 2026) Diagnostic test message via MailComposer + CRLF; GoDaddy queue ids; 465/587 checks target the hosting server
+- [ ] V15415-03 STARTTLS on the relay hop (after checking its certificate)
+
 ## Session log — v1.54.14 (14 Nov 2026): email delivery audit
 - [x] V15414-01 (14 Nov 2026) Audit of every email path; 7 docs (D-323)
 - [x] V15414-02 (14 Nov 2026) Live Email diagnostics (DNS, routes, SMTP conversation, queue id, report download), rate-limited and audited
 - [x] V15414-03 (14 Nov 2026) 5xx = permanent; queue id per delivery; ACCEPTED label; Provider column
-- [ ] V15414-04 Owner: run on live; Google log; GoDaddy support with the queue id
+- [x] V15414-04 (14 Nov 2026) Ran on live; root cause found without GoDaddy support (see V15415)
 - [ ] V15414-05 Decide the long-term provider after the diagnostic (SMTP reachable or HTTPS API only)
 
 ## Session log — v1.54.13 (14 Nov 2026): relay receipt

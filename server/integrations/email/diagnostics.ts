@@ -5,6 +5,7 @@ import { access, constants as fsConstants, stat } from "node:fs/promises";
 import net from "node:net";
 import os from "node:os";
 import tls from "node:tls";
+import MailComposer from "nodemailer/lib/mail-composer";
 import type { EmailConfig } from "@/server/settings/values";
 
 // v1.54.14 (owner's email delivery audit): the only way to see what the live
@@ -80,6 +81,11 @@ const errorText = (error: unknown) => {
   const raw = error as { code?: string; message?: string } | null;
   return short(`${raw?.code ? `${raw.code}: ` : ""}${raw?.message ?? String(error)}`, 200);
 };
+// The relay's queue id: Exim "id=1tXyz-…", or GoDaddy's relay "250 2.0.0 SBo0x… mail accepted".
+export function queueIdFrom(reply: string): string | null {
+  return reply.match(/id=([A-Za-z0-9-]+)/)?.[1] ?? reply.match(/\b2\.0\.0 ([A-Za-z0-9]{10,}) mail accepted/i)?.[1] ?? null;
+}
+
 // Only plain addresses go into SMTP commands (no spaces, angle brackets or line breaks).
 export function safeAddress(value: string): string | null {
   const address = value.trim().toLowerCase();
@@ -200,7 +206,7 @@ export async function smtpDialog(route: string, host: string, port: number, mail
       if (data.code !== 354) throw new Error("DATA refused");
       const sent = await step(`${message}\r\n.`, "(message body, then end-of-message)");
       dialog.messageAccepted = sent.code === 250;
-      dialog.queueId = sent.text.match(/id=([A-Za-z0-9-]+)/)?.[1] ?? null;
+      dialog.queueId = queueIdFrom(sent.text);
     } else {
       await step("RSET");
     }
@@ -213,25 +219,39 @@ export async function smtpDialog(route: string, host: string, port: number, mail
   return dialog;
 }
 
-function testMessage(id: string, mailbox: string, recipient: string, fromName: string): string {
+// v1.54.15 (live: GoDaddy's relay refused the hand-built message with "552
+// bare LF"): the test message is built by the same library as real email (which
+// GoDaddy accepted), then every line ending is made CRLF and lines starting
+// with "." are doubled, as SMTP requires.
+export async function testMessage(id: string, mailbox: string, recipient: string, fromName: string): Promise<string> {
   const domain = mailbox.split("@")[1] ?? "localhost";
-  const lines = [
-    `From: ${fromName.replace(/[^A-Za-z0-9 ._-]/g, "")} <${mailbox}>`,
-    `To: <${recipient}>`,
-    `Subject: ARS CMS email diagnostic ${id}`,
-    `Date: ${new Date().toUTCString()}`,
-    `Message-ID: <${id}@${domain}>`,
-    "MIME-Version: 1.0",
-    "Content-Type: text/plain; charset=utf-8",
-    `X-ARS-Diagnostic-ID: ${id}`,
-    "",
-    "This is an ARS CMS email delivery diagnostic.",
-    `Diagnostic ID: ${id}`,
-    `Sent at: ${new Date().toISOString()}`,
-    "",
-    "If you received this, the route works. Open the message's original (Gmail: More > Show original) to see SPF, DKIM and DMARC.",
-  ];
-  return lines.join("\r\n");
+  const built = await new MailComposer({
+    from: { name: fromName.replace(/[^A-Za-z0-9 ._-]/g, ""), address: mailbox },
+    to: recipient,
+    subject: `ARS CMS email diagnostic ${id}`,
+    messageId: `<${id}@${domain}>`,
+    headers: { "X-ARS-Diagnostic-ID": id },
+    text: [
+      "This is an ARS CMS email delivery diagnostic.",
+      `Diagnostic ID: ${id}`,
+      `Sent at: ${new Date().toISOString()}`,
+      "",
+      "If you received this, the route works. Open the message's original (Gmail: More > Show original) to see SPF, DKIM and DMARC.",
+    ].join("\n"),
+  })
+    .compile()
+    .build();
+  return smtpData(built.toString("utf8"));
+}
+
+// Every line ends in CRLF; a line starting with "." gets a second "." (RFC 5321 4.5.2).
+export function smtpData(message: string): string {
+  return message
+    .replace(/\r\n|\r|\n/g, "\r\n")
+    .replace(/\r\n$/, "")
+    .split("\r\n")
+    .map((line) => (line.startsWith(".") ? `.${line}` : line))
+    .join("\r\n");
 }
 
 export interface DiagnosticOptions {
@@ -248,8 +268,9 @@ export async function runEmailDiagnostics(config: EmailConfig, options: Diagnost
   if (!recipient) throw new Error("Enter a valid recipient address.");
   const mailboxDomain = mailbox.split("@")[1]!;
   const recipientDomain = recipient.split("@")[1]!;
-  const host = config.smtp?.host && config.smtp.host !== "localhost" ? config.smtp.host : "bom1plzcpnl493872.prod.bom1.secureserver.net";
   const relay = "relay-hosting.secureserver.net";
+  // The hosting's own mail server (for the 465/587 checks), not the relay.
+  const host = config.smtp?.host && config.smtp.host !== "localhost" && config.smtp.host !== relay ? config.smtp.host : "bom1plzcpnl493872.prod.bom1.secureserver.net";
 
   const [dnsChecks, ports, sendmail] = await Promise.all([
     Promise.all([
@@ -290,7 +311,8 @@ export async function runEmailDiagnostics(config: EmailConfig, options: Diagnost
   const ptrs = await Promise.all(ptrTargets.map((ip) => lookup(ip, "PTR")));
 
   // Real conversations only where the port answered (a blocked route is not retried).
-  const message = (route: "localhost" | "relay") => (options.sendVia === route ? testMessage(id, mailbox, recipient, config.fromName) : null);
+  const built = options.sendVia === "none" ? null : await testMessage(id, mailbox, recipient, config.fromName);
+  const message = (route: "localhost" | "relay") => (options.sendVia === route ? built : null);
   const reachable = (name: string) => ports.find((port) => port.host === name && port.port === 25)?.connected === true;
   const dialogs = await Promise.all([
     reachable("localhost") ? smtpDialog("Local relay (GoDaddy, no sign-in)", "localhost", 25, mailbox, recipient, message("localhost")) : null,

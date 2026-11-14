@@ -18,6 +18,7 @@ import { markNotificationRead } from "@/lib/db/repositories/notifications.reposi
 import { loadOptOuts } from "@/lib/db/repositories/preferences.repository";
 import type { EntityRef } from "@/server/notifications/categories";
 import { queuePushForNotification } from "@/server/push/service";
+import { queueIdFrom } from "@/server/integrations/email/diagnostics";
 
 // Notification hub (F-40, P1-40..P1-47). One call = one event for one
 // recipient: an in-app row plus one delivery per channel (email + WhatsApp,
@@ -94,7 +95,7 @@ const defaultDeps: NotifyDeps = {
 
 // v1.54.14: the message id and, for SMTP, the relay's queue id ("id=…"), so GoDaddy can trace it.
 export function deliveryReference(sent: { id: string | null; receipt?: string }): string | null {
-  const queueId = sent.receipt?.match(/id=([A-Za-z0-9-]+)/)?.[1];
+  const queueId = sent.receipt ? queueIdFrom(sent.receipt) : null;
   const reference = [queueId ? `queue ${queueId}` : null, sent.id].filter(Boolean).join(" | ");
   return reference ? reference.slice(0, 255) : null;
 }

@@ -1,5 +1,25 @@
 # Email root cause analysis (14 Nov 2026)
 
+## RESOLVED (14 Nov 2026, 4:51 PM IST)
+
+**Root cause (VERIFIED):**
+- GoDaddy runs the Node.js app in a **container** (server name `b56eb93f682c`, leaving GoDaddy from `92.204.214.227`).
+- In that container, `localhost:25` is a small local mail service that accepts every email ("OK: queued") but never hands it to GoDaddy's mail system.
+- So the emails silently went nowhere: no delivery, no bounce, nothing in cPanel Track Delivery (which only sees cPanel's Exim).
+
+**Fix (VERIFIED):**
+- Super Admin → Email: Send email through **SMTP**, server **`relay-hosting.secureserver.net`**, port **25**, security **RELAY** (no password).
+- GoDaddy's "HOSTING RELAY" accepted the app's test email ("250 2.0.0 SBo0xUPmLhTTXSBo0xmMGL mail accepted for delivery").
+- It arrived in the Inbox of `itsupport@arsenergy.co.in` as "ARS CMS <no_reply@cms.arssteels.net>".
+- SPF covers the relay (`132.148.124.47` is in `include:secureserver.net`).
+
+**Side finding:** the diagnostic's own hand-built test message was refused by the relay ("552 bare LF"). Fixed in v1.54.15: it's now built by the same email library.
+
+The analysis below is kept as the record of how this was found.
+
+---
+
+
 **Status: the final failure point is not yet confirmed.** Everything up to "the local relay accepted the email" is verified. What happens after that can only be seen in GoDaddy's mail log or the recipient's mail log. Neither is accessible to the application or to me. This document says exactly what is known, how it is known, and how to close the gap.
 
 ## Update: live diagnostic ars-diag-20261114-ad64e5d9 (14 Nov 2026, 16:45 IST)

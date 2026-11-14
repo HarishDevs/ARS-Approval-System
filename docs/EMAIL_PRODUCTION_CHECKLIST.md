@@ -1,5 +1,8 @@
 # Email production checklist
 
+## Status (14 Nov 2026)
+Working: SMTP → `relay-hosting.secureserver.net:25` RELAY. Test email delivered to the Inbox at 4:51 PM IST. **Don't use `localhost:25`**: in the app's container it accepts mail and drops it.
+
 ## Before relying on the GoDaddy relay
 - [ ] v1.54.14 published.
 - [ ] Email diagnostics run on live (route "Local relay"); report downloaded; queue id noted.

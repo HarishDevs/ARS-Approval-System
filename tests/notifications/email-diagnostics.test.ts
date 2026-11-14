@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import net from "node:net";
-import { findingsFor, reportAsText, safeAddress, smtpDialog, type EmailDiagnosticReport } from "@/server/integrations/email/diagnostics";
+import { findingsFor, queueIdFrom, reportAsText, safeAddress, smtpData, smtpDialog, testMessage, type EmailDiagnosticReport } from "@/server/integrations/email/diagnostics";
 import { sendSmtpEmail } from "@/server/integrations/email/smtp";
 import { isRetryableCode } from "@/server/notifications/retry-policy";
 import { deliveryReference } from "@/server/notifications/notify";
@@ -112,5 +112,21 @@ describe("sending: permanent refusals and the queue id (v1.54.14)", () => {
   it("the delivery keeps the relay's queue id", () => {
     expect(deliveryReference({ id: "<m1@cms>", receipt: "250 OK id=1tAbCd-0007Xy-9Z" })).toBe("queue 1tAbCd-0007Xy-9Z | <m1@cms>");
     expect(deliveryReference({ id: null })).toBeNull();
+  });
+});
+
+describe("v1.54.15: what GoDaddy's relay needs", () => {
+  it("the test message has CRLF line endings only (GoDaddy refused a bare LF) and escapes leading dots", async () => {
+    const message = await testMessage("ars-diag-x", "no_reply@cms.arssteels.net", "itsupport@arsenergy.co.in", "ARS CMS");
+    expect(/(^|[^\r])\n/.test(message)).toBe(false);
+    expect(message).toContain("Subject: ARS CMS email diagnostic ars-diag-x");
+    expect(message).toMatch(/^X-ARS-Diagnostic-ID: ars-diag-x$/im);
+    expect(smtpData("a\n.b\r\nc\n")).toBe("a\r\n..b\r\nc");
+  });
+  it("reads the queue id from Exim and from GoDaddy's relay", () => {
+    expect(queueIdFrom("250 OK id=1tAbCd-0007Xy-9Z")).toBe("1tAbCd-0007Xy-9Z");
+    expect(queueIdFrom("250 2.0.0 SBo0xUPmLhTTXSBo0xmMGL mail accepted for delivery")).toBe("SBo0xUPmLhTTXSBo0xmMGL");
+    expect(queueIdFrom("250 2.0.0 OK: queued")).toBeNull();
+    expect(deliveryReference({ id: "<m@cms>", receipt: "250 2.0.0 SBo0xUPmLhTTXSBo0xmMGL mail accepted for delivery" })).toBe("queue SBo0xUPmLhTTXSBo0xmMGL | <m@cms>");
   });
 });
