@@ -749,6 +749,14 @@
 ### 13 Nov 2026 (v1.54.6: Google sign-in diagnosis and fix)
 - D-315. Investigated end to end (route, Firebase popup, middleware 403 sources, COOP/CSP on live, cookies, rate limits, email dependency). No production data access: the per-person reason is now recorded instead. Four reports in docs/GOOGLE_AUTH_*.md. Tests: unit google-provider (10), e2e v1546 (4), route inventory, full unit/lint/types. General pages: privacy (masked email on refused Google sign-ins; effective 13 Nov 2026), Help, release notes; terms/tour/checklist: no change.
 
+### 14 Nov 2026 (live diagnostic result)
+- ars-diag-20261114-ad64e5d9 on live:
+  - localhost:25 is a container-local stub ("Roger, accepting mail…", "OK: queued", no Exim id; host b56eb93f682c), which explains the silent loss and the empty Track Delivery;
+  - relay-hosting.secureserver.net:25 is open and accepts sender and recipient without auth (app egress 92.204.214.227);
+  - its IP 132.148.124.47 is in spf-0.secureserver.net (132.148.124.0/24);
+  - 465/587 and outside SMTP (Brevo 587/2525) are blocked.
+- Next: owner sends a test through relay-hosting.secureserver.net (RELAY).
+
 ### 14 Nov 2026 (v1.54.14: email delivery audit and diagnostics)
 - D-323. The owner pasted a 12-phase brief. Done:
   - audit of every sending path;

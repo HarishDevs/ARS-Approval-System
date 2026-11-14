@@ -2,6 +2,20 @@
 
 **Status: the final failure point is not yet confirmed.** Everything up to "the local relay accepted the email" is verified. What happens after that can only be seen in GoDaddy's mail log or the recipient's mail log. Neither is accessible to the application or to me. This document says exactly what is known, how it is known, and how to close the gap.
 
+## Update: live diagnostic ars-diag-20261114-ad64e5d9 (14 Nov 2026, 16:45 IST)
+
+| Finding | Evidence | Verdict |
+|---|---|---|
+| **`localhost:25` is not cPanel's Exim.** It's a small mail service inside the app's own container | Greeting "220 localhost ESMTP Service Ready"; replies "Roger, accepting mail from…", "I'll make sure … gets this", "OK: queued" with **no queue id**; app server name `b56eb93f682c` (a container id) | LIKELY (very strong) |
+| **That explains all the symptoms:** mail is accepted, never arrives, no bounce, and Track Delivery is empty (it only sees cPanel's Exim) | As above, plus the empty Track Delivery | LIKELY |
+| **The app leaves GoDaddy from `92.204.214.227`,** not the hosting IP `68.178.145.238` | The GoDaddy relay greeted it as `[92.204.214.227]` | VERIFIED |
+| **`relay-hosting.secureserver.net:25` is GoDaddy's real relay and is open to the app** | "HOSTING RELAY : ESMTP Grid hosting relay server ready"; **sender and recipient accepted without a password**; STARTTLS offered | VERIFIED (no message sent through it yet) |
+| **SPF covers that relay** | Relay IP `132.148.124.47` (PTR p3nlsmtp01-v01.prod.phx3.secureserver.net) is in `include:secureserver.net` → `spf-0.secureserver.net` → `ip4:132.148.124.0/24` | VERIFIED |
+| **Every other SMTP route is blocked:** hosting server 465/587 (EACCES), outside provider 587 (EACCES), 2525 (timeout) | Diagnostic connections table | BLOCKED BY HOSTING PROVIDER |
+| **No DKIM** for cms.arssteels.net | `default._domainkey` not found | VERIFIED |
+
+**Conclusion (LIKELY, to confirm with one test):** the Node.js app runs in a container whose `localhost:25` accepts mail but doesn't hand it to GoDaddy's real mail system. The fix is to send through `relay-hosting.secureserver.net:25` (RELAY), which is open to the app and covered by SPF.
+
 ## Timeline of evidence
 
 | When (IST) | Route | Result | Verdict |

@@ -35,6 +35,10 @@ Before sending:
    - no bounce arrives in the `no_reply@cms.arssteels.net` inbox.
 4. **cPanel Track Delivery shows no records at all,** not even for the Roundcube emails that *were* delivered.
 
+### Live diagnostic findings (14 Nov 2026, ars-diag-20261114-ad64e5d9)
+- From the Node.js app, `localhost:25` answers "220 localhost ESMTP Service Ready" and accepts mail with "OK: queued" (no Exim queue id). The app's server name is `b56eb93f682c`, so it runs in a container. **What does this local service do with the mail?** None of it has been delivered, and Track Delivery shows nothing.
+- `relay-hosting.secureserver.net:25` ("HOSTING RELAY") is reachable from the app (it sees us as `92.204.214.227`) and accepts our sender and recipient without authentication. Is it supported for this account, and with what limits?
+
 ### Please
 1. Search the mail log for our messages and tell us what happened to them (relayed, deferred, rejected, held, discarded) and why:
    - `exigrep 'no_reply@cms.arssteels.net' /var/log/exim_mainlog`
