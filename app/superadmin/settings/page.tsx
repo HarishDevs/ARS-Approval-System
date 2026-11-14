@@ -5,6 +5,7 @@ import { PageHeader } from "@/features/shell/PageHeader";
 import { SettingsGroupForm } from "@/features/superadmin/SettingsGroupForm";
 import { SettingsConsole } from "@/features/superadmin/SettingsConsole";
 import { TestSendPanel } from "@/features/superadmin/TestSendPanel";
+import { EmailDiagnosticsPanel } from "@/features/superadmin/EmailDiagnosticsPanel";
 import { DriveBackupTestPanel } from "@/features/superadmin/DriveBackupTestPanel";
 import { requireArea } from "@/server/authorization/guards";
 import { SETTING_DEFINITIONS, type SettingDefinition } from "@/server/settings/definitions";
@@ -58,6 +59,7 @@ export default async function SettingsPage() {
         </SettingsConsole>
         <div className="space-y-6">
           <TestSendPanel email={user.email} whatsapp={user.whatsappNumber} />
+          <EmailDiagnosticsPanel email={user.email} />
           <DriveBackupTestPanel configured={Boolean(byKey.get("backup.gdrive_service_account_json")?.value && byKey.get("backup.gdrive_folder_id")?.value)} />
           <PushKeysPanel hasKeys={Boolean(byKey.get("push.vapid_public_key")?.value)} devices={await countAllActiveDevices()} />
           <section className="card">

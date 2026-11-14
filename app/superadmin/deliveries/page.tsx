@@ -39,21 +39,29 @@ export default async function DeliveriesPage() {
                 <th>Event</th>
                 <th>To</th>
                 <th>Channel</th>
+                <th>Provider</th>
                 <th>Status</th>
                 <th>Reason</th>
                 <th>Tries</th>
                 <th></th>
               </tr>
             </thead>
-            <PagedRows colSpan={8}>
+            <PagedRows colSpan={9}>
               {deliveries.map((delivery) => (
                 <tr key={delivery.id}>
                   <td className="whitespace-nowrap">{formatIndiaTime(delivery.createdAt)}</td>
                   <td>{delivery.eventType}</td>
                   <td>{delivery.recipientName}</td>
                   <td>{delivery.channel === "EMAIL" ? "Email" : "WhatsApp"}</td>
+                  <td className="text-ink-muted">
+                    {delivery.provider}
+                    {delivery.providerReference && <p className="max-w-[16rem] truncate text-caption" title={delivery.providerReference}>{delivery.providerReference}</p>}
+                  </td>
                   <td>
-                    <span className={`badge ${STATUS_STYLE[delivery.status] ?? ""}`}>{delivery.status}</span>
+                    {/* v1.54.14: an email marked SENT was accepted by the mail server; delivery to the inbox can't be seen from here. */}
+                    <span className={`badge ${STATUS_STYLE[delivery.status] ?? ""}`} title={delivery.channel === "EMAIL" && delivery.status === "SENT" ? "Accepted by the mail server. Whether it reached the inbox can't be seen from here." : undefined}>
+                      {delivery.channel === "EMAIL" && delivery.status === "SENT" ? "ACCEPTED" : delivery.status}
+                    </span>
                   </td>
                   <td className="text-ink-muted">
                     {delivery.failureCode ?? ""}

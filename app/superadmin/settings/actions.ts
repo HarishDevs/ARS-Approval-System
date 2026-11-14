@@ -9,9 +9,13 @@ import { getActionContext } from "@/lib/http/request-context";
 import { logError } from "@/lib/logging/logger";
 import type { ActionResult } from "@/lib/http/action-result";
 import { clearPushConfigCache, generateVapidKeys } from "@/server/push/service";
-import { getSettingValue } from "@/server/settings/values";
+import { getEmailConfig, getSettingValue } from "@/server/settings/values";
 import { testDriveAccess } from "@/server/ops/gdrive-backup";
-import { recordAudit } from "@/lib/db/repositories/audit.repository";
+import { runEmailDiagnostics, reportAsText, safeAddress } from "@/server/integrations/email/diagnostics";
+import { countRecentActions, recordAudit } from "@/lib/db/repositories/audit.repository";
+import { maskEmail } from "@/server/auth/errors";
+import nodemailerPackage from "nodemailer/package.json";
+const NODEMAILER_VERSION = String((nodemailerPackage as { version?: string }).version ?? "unknown");
 
 // Server Actions for /superadmin/settings (F-52). Each re-checks the Super
 // Admin area on the server; Next.js also rejects cross-site calls by
@@ -72,6 +76,46 @@ export async function testSendAction(_previous: ActionResult | null, formData: F
   } catch (error) {
     logError("testSendAction failed", error);
     return { ok: false, message: "Couldn't run the test. Please try again." };
+  }
+}
+
+// v1.54.14 (owner's email delivery audit): run the email diagnostic on the
+// live server. Super Admin only, at most 6 runs an hour, audited; one real
+// test message at most per run, to the address the Super Admin enters.
+export async function emailDiagnosticAction(_previous: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  let session;
+  try {
+    session = await requireApiArea("superadmin");
+  } catch {
+    return NOT_FOUND;
+  }
+  const recipient = safeAddress(String(formData.get("recipient") ?? ""));
+  if (!recipient) return { ok: false, message: "Enter a valid email address.", fieldErrors: { recipient: "Enter a valid email address." } };
+  const sendVia = String(formData.get("sendVia") ?? "none");
+  if (sendVia !== "localhost" && sendVia !== "relay" && sendVia !== "none") return { ok: false, message: "Choose a route." };
+  if ((await countRecentActions(session.user.id, "EMAIL_DIAGNOSTIC_RUN", 60).catch(() => 0)) >= 6) return { ok: false, message: "The diagnostic was run 6 times in the last hour. Please wait before running it again." };
+  try {
+    const report = await runEmailDiagnostics(await getEmailConfig(), { recipient, sendVia }, NODEMAILER_VERSION);
+    const { ipAddress } = await getActionContext();
+    await recordAudit({
+      actorUserId: session.user.id,
+      action: "EMAIL_DIAGNOSTIC_RUN",
+      entityType: "PROVIDER",
+      entityId: "EMAIL",
+      ipAddress,
+      sessionId: session.sessionId,
+      metadata: {
+        id: report.id,
+        recipient: maskEmail(recipient),
+        sendVia,
+        ports: report.ports.map((port) => `${port.host}:${port.port}=${port.connected ? "ok" : (port.error ?? "no").slice(0, 40)}`),
+        accepted: report.dialogs.map((dialog) => `${dialog.host}:${dialog.messageAccepted ?? dialog.recipientAccepted ?? "-"}${dialog.queueId ? `:${dialog.queueId}` : ""}`),
+      },
+    });
+    return { ok: true, message: `Diagnostic ${report.id} finished in ${(report.durationMs / 1000).toFixed(1)} s.`, data: { text: reportAsText(report), findings: report.findings, id: report.id } };
+  } catch (error) {
+    logError("emailDiagnosticAction failed", error);
+    return { ok: false, message: "Couldn't run the diagnostic. Please try again." };
   }
 }
 

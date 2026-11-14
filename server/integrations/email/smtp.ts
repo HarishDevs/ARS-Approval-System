@@ -62,6 +62,8 @@ export function smtpTransport(config: SmtpConfig, timeoutMs = EMAIL_TIMEOUT_MS):
 
 export const SENDMAIL_TIMEOUT_MS = 20_000;
 
+const short = (value: string, max: number) => value.replace(/\s+/g, " ").trim().slice(0, max);
+
 // One line only, so a title can't add mail headers (D-QA-15).
 const oneLine = (value: string) => value.replace(/[\r\n]+/g, " ").trim();
 
@@ -103,6 +105,11 @@ export async function sendSmtpEmail(
     // 4xx = "try later" (including "too many messages"); 535 = wrong password.
     if (status === 535 || raw?.code === "EAUTH") throw new EmailSendError("EMAIL_NOT_CONFIGURED", "The mail server refused the sign-in. Check the SMTP user and password.", status, { provider });
     if (status !== undefined && status >= 400 && status < 500) throw new EmailSendError("EMAIL_RATE_LIMITED", `The mail server asked to try later (SMTP ${status}).`, status, { provider });
+    // v1.54.14: 5xx is a permanent refusal (e.g. unknown recipient, sender not allowed): not retried.
+    if (status !== undefined && status >= 500) {
+      const said = short(raw?.message ?? "", 160);
+      throw new EmailSendError("EMAIL_REJECTED", `The mail server refused the email (SMTP ${status})${said ? `: ${said}` : ""}.`, status, { provider });
+    }
     // Codes and SMTP statuses only; never the message or the password.
     // v1.54.9: the network reason too (e.g. "connect ECONNREFUSED 1.2.3.4:465"), so
     // the test says why; connection messages carry no password or message text.

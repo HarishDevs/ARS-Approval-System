@@ -4,6 +4,7 @@ import { findActiveTemplate, tryConsumeWhatsAppRateLimit } from "@/lib/db/reposi
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { CeoitboxError, sendTemplateMessage } from "@/server/integrations/ceoitbox/client";
 import { EmailSendError, emailDeps, failedProvider, sendEmail } from "@/server/integrations/email/send";
+import { deliveryReference } from "@/server/notifications/notify";
 import { getEmailConfig, getWhatsAppConfig } from "@/server/settings/values";
 import { generateOtpCode } from "@/lib/security/otp";
 import { logError } from "@/lib/logging/logger";
@@ -47,7 +48,7 @@ export async function sendTestEmail(user: AuthenticatedUser, sessionId: string):
       },
       emailDeps(),
     );
-    await createDelivery({ notificationId, channel: "EMAIL", provider: sent.provider, status: "SENT", providerReference: sent.id });
+    await createDelivery({ notificationId, channel: "EMAIL", provider: sent.provider, status: "SENT", providerReference: deliveryReference(sent) });
     await recordAudit({ actorUserId: user.id, action: "PROVIDER_TEST_SENT", entityType: "PROVIDER", entityId: sent.provider, sessionId });
     // v1.54.8: says which way it went (SMTP chosen but Resend carried it = SMTP needs attention).
     const via = sent.provider === "SMTP" ? `through ${config.smtp?.host ?? "SMTP"} as ${config.smtp?.user ?? ""}` : sent.provider === "SENDMAIL" ? `through the hosting's mail program as ${config.smtp?.user ?? ""}` : "through Resend";

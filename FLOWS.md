@@ -142,6 +142,11 @@ flowchart TD
   F -- No --> W[Failed: retryable codes are tried again later]
 ```
 
+## F-52c Email diagnostics (v1.54.14, D-323)
+1. Super Admin → Settings → Email diagnostics: enter a recipient and choose a route (local relay, GoDaddy relay, or don't send).
+2. The server checks DNS, probes each route once, and talks to each reachable relay (no sign-in). It sends at most one message, and reports each reply and the queue id, with verdicts.
+3. Download the report and send it to GoDaddy support. The run is audited; at most 6 runs an hour.
+
 ## F-02 User ID + password + OTP
 ```mermaid
 flowchart TD

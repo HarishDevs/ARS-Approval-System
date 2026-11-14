@@ -225,3 +225,9 @@ export async function listAuditForEntity(entityTypes: readonly string[], entityI
   );
   return rows.map((row) => ({ id: row.id, occurredAt: row.occurred_at, actorName: row.name, action: row.action, entityType: row.entity_type, entityId: row.entity_id, result: row.result, ipAddress: row.ip_address, metadata: row.metadata_json }));
 }
+
+// v1.54.14: how many times this person did `action` in the last `minutes` (rate limits).
+export async function countRecentActions(userId: number, action: string, minutes: number, db: Queryable = getDbPool()): Promise<number> {
+  const [rows] = await db.query<RowDataPacket[]>("SELECT COUNT(*) AS n FROM audit_logs WHERE actor_user_id = ? AND action = ? AND occurred_at >= (UTC_TIMESTAMP() - INTERVAL ? MINUTE)", [userId, action, minutes]);
+  return Number(rows[0]?.n ?? 0);
+}

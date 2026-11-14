@@ -44,7 +44,7 @@ export interface NotifyDeps {
   findActiveTemplate: (eventType: string) => Promise<ActiveTemplate | null>;
   sendWhatsApp: (to: string, template: ActiveTemplate, variables: string[], reference: string) => Promise<{ waMessageId: string }>;
   // D-243: idempotencyKey goes to Resend, so a repeat of this send isn't delivered twice.
-  sendEmail: (to: string, subject: string, text: string, idempotencyKey: string) => Promise<{ id: string | null; provider?: EmailProvider }>;
+  sendEmail: (to: string, subject: string, text: string, idempotencyKey: string) => Promise<{ id: string | null; provider?: EmailProvider; receipt?: string }>;
   // D-243: "Retries for a failed send"; 0 = no retry. Optional for tests (3).
   retryLimit?: () => Promise<number>;
   // #6: the person's "off" choices (GROUP:CHANNEL). Optional for tests.
@@ -91,6 +91,13 @@ const defaultDeps: NotifyDeps = {
     return sendEmail(await getEmailConfig(), { to, subject, text, idempotencyKey }, emailDeps());
   },
 };
+
+// v1.54.14: the message id and, for SMTP, the relay's queue id ("id=…"), so GoDaddy can trace it.
+export function deliveryReference(sent: { id: string | null; receipt?: string }): string | null {
+  const queueId = sent.receipt?.match(/id=([A-Za-z0-9-]+)/)?.[1];
+  const reference = [queueId ? `queue ${queueId}` : null, sent.id].filter(Boolean).join(" | ");
+  return reference ? reference.slice(0, 255) : null;
+}
 
 function failureCode(error: unknown): string {
   if (error instanceof CeoitboxError || error instanceof EmailSendError) return error.code;
@@ -181,7 +188,7 @@ export async function notifyWithDeps(input: NotifyInput, deps: NotifyDeps, optio
   if (input.email && emailWanted) {
     // Sending and recording fail separately: a send that worked must never
     // be marked FAILED and retried (that would send it twice).
-    let sent: { id: string | null; provider?: EmailProvider } | null = null;
+    let sent: { id: string | null; provider?: EmailProvider; receipt?: string } | null = null;
     // D-243: kept with the delivery, so the retry runner sends with the same key.
     const idempotencyKey = `${reference}-email`;
     try {
@@ -202,7 +209,7 @@ export async function notifyWithDeps(input: NotifyInput, deps: NotifyDeps, optio
     }
     if (sent) {
       summary.email = { status: "SENT" };
-      await safeDelivery(deps, { notificationId, channel: "EMAIL", provider: sent.provider ?? "RESEND", status: "SENT", providerReference: sent.id });
+      await safeDelivery(deps, { notificationId, channel: "EMAIL", provider: sent.provider ?? "RESEND", status: "SENT", providerReference: deliveryReference(sent) });
     }
   }
 

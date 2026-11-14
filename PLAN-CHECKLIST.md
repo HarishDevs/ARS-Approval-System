@@ -17,6 +17,12 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (14 Nov 2026):** v1.54.14: email delivery audit, live Email diagnostics, honest ACCEPTED status, queue id per delivery (D-323). **Owner:**
+  - publish;
+  - run Email diagnostics (Local relay → itsupport@arsenergy.co.in) and download the report;
+  - check the Default Address and the system mailbox for bounces;
+  - Google Admin email log search;
+  - send docs/GODADDY_SUPPORT_REQUEST.md with the queue id.
 - **Now (14 Nov 2026):** v1.54.13: the test shows the relay's receipt (D-322). **Owner:** check the Roundcube Inbox for a bounce and Google Admin email log search; publish; test again and send the receipt line if the email doesn't arrive.
 - **Now (14 Nov 2026):** v1.54.12: GoDaddy relay mode (localhost:25, no SSL, no password) (D-321). **Owner:** publish; Email: Send through SMTP, server localhost, port 25, security RELAY, Save, Send test email; if refused, relay-hosting.secureserver.net.
 - **Now (14 Nov 2026):** v1.54.11: the email test answers within 20 s and never sends a second copy (D-320). **Owner:** check the inbox and Track Delivery for the earlier SENDMAIL test; publish; test again and send the message.
@@ -174,6 +180,13 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 - **Still open:** Q-015.
 
 ---
+
+## Session log — v1.54.14 (14 Nov 2026): email delivery audit
+- [x] V15414-01 (14 Nov 2026) Audit of every email path; 7 docs (D-323)
+- [x] V15414-02 (14 Nov 2026) Live Email diagnostics (DNS, routes, SMTP conversation, queue id, report download), rate-limited and audited
+- [x] V15414-03 (14 Nov 2026) 5xx = permanent; queue id per delivery; ACCEPTED label; Provider column
+- [ ] V15414-04 Owner: run on live; Google log; GoDaddy support with the queue id
+- [ ] V15414-05 Decide the long-term provider after the diagnostic (SMTP reachable or HTTPS API only)
 
 ## Session log — v1.54.13 (14 Nov 2026): relay receipt
 - [x] V15413-01 (14 Nov 2026) Test shows the mail server's reply (D-322)

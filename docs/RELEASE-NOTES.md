@@ -1,5 +1,15 @@
 # Release notes
 
+## v1.54.14 (14 Nov 2026): email delivery audit and diagnostics (owner)
+- **Super Admin → Settings → Email diagnostics** runs on the live server. It shows:
+  - which mail routes the hosting allows: the local relay, GoDaddy's relay, the hosting mail server on 465/587, and an outside SMTP provider on 587/2525;
+  - the DNS behind the sending domain;
+  - every reply of a real SMTP conversation.
+- It can send one test message and show the relay's **queue id**, which GoDaddy needs to trace it. **Download report** saves it for support. No password is used; at most 6 runs an hour; every run is in the audit log.
+- **Message deliveries** shows which provider sent each email and its reference (with the queue id). An email the mail server took is shown as **ACCEPTED**, because acceptance isn't delivery.
+- A mail server's **permanent refusal** (5xx) is no longer retried.
+- New documents: docs/EMAIL_DELIVERY_AUDIT.md, EMAIL_ROOT_CAUSE_ANALYSIS.md, EMAIL_PROVIDER_COMPARISON.md, GODADDY_SUPPORT_REQUEST.md, EMAIL_IMPLEMENTATION_GUIDE.md, EMAIL_TEST_PLAN.md, EMAIL_PRODUCTION_CHECKLIST.md.
+
 ## v1.54.13 (14 Nov 2026): the email test shows the relay's receipt (owner)
 - With GoDaddy's relay (localhost, port 25, RELAY) the live test turned green: the relay accepted the email. The email still hadn't arrived in the inbox.
 - **Send test email** now also shows the mail server's own reply (for example "250 OK id=…"). If the email goes missing, GoDaddy support can trace it by that reply.

@@ -99,6 +99,8 @@ export interface DeliveryListItem {
   eventType: string;
   recipientName: string;
   channel: "EMAIL" | "WHATSAPP";
+  provider: string;
+  providerReference: string | null;
   status: string;
   attemptCount: number;
   failureCode: string | null;
@@ -109,9 +111,9 @@ export interface DeliveryListItem {
 // Super Admin delivery log (P1-45). Never returns payloads.
 export async function listRecentDeliveries(limit: number): Promise<DeliveryListItem[]> {
   const [rows] = await getDbPool().query<
-    (RowDataPacket & { id: number; created_at: Date; event_type: string; name: string; channel: "EMAIL" | "WHATSAPP"; status: string; attempt_count: number; failure_code: string | null; has_payload: number; next_retry_at: Date | null })[]
+    (RowDataPacket & { id: number; created_at: Date; event_type: string; name: string; channel: "EMAIL" | "WHATSAPP"; provider: string; provider_reference: string | null; status: string; attempt_count: number; failure_code: string | null; has_payload: number; next_retry_at: Date | null })[]
   >(
-    `SELECT d.id, d.created_at, n.event_type, u.name, d.channel, d.status, d.attempt_count, d.failure_code,
+    `SELECT d.id, d.created_at, n.event_type, u.name, d.channel, d.provider, d.provider_reference, d.status, d.attempt_count, d.failure_code,
             (d.payload_json IS NOT NULL) AS has_payload, d.next_retry_at
      FROM notification_deliveries d
      JOIN notifications n ON n.id = d.notification_id
@@ -125,6 +127,8 @@ export async function listRecentDeliveries(limit: number): Promise<DeliveryListI
     eventType: row.event_type,
     recipientName: row.name,
     channel: row.channel,
+    provider: row.provider,
+    providerReference: row.provider_reference,
     status: row.status,
     attemptCount: row.attempt_count,
     failureCode: row.failure_code,
