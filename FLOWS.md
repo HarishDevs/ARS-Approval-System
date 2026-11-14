@@ -134,8 +134,8 @@ flowchart TD
 flowchart TD
   A([Any email: notification, alert, retry, report, test]) --> P{Provider setting}
   P -- RESEND --> R[Resend HTTPS API]
-  P -- SMTP --> C{SMTP set up and\nunder the hourly limit?}
-  C -- Yes --> S[GoDaddy mailbox over SMTP\nFrom = the mailbox, Reply-to = IT]
+  P -- "SMTP or SENDMAIL (v1.54.10)" --> C{Set up and\nunder the hourly limit?}
+  C -- Yes --> S[GoDaddy mailbox: SMTP connection,\nor the hosting's sendmail program\nFrom = the mailbox, Reply-to = IT]
   S -- fails --> F{Fallback ON and\nResend key set?}
   C -- No --> F
   F -- Yes --> R

@@ -50,7 +50,7 @@ export async function sendTestEmail(user: AuthenticatedUser, sessionId: string):
     await createDelivery({ notificationId, channel: "EMAIL", provider: sent.provider, status: "SENT", providerReference: sent.id });
     await recordAudit({ actorUserId: user.id, action: "PROVIDER_TEST_SENT", entityType: "PROVIDER", entityId: sent.provider, sessionId });
     // v1.54.8: says which way it went (SMTP chosen but Resend carried it = SMTP needs attention).
-    const via = sent.provider === "SMTP" ? `through ${config.smtp?.host ?? "SMTP"} as ${config.smtp?.user ?? ""}` : config.provider === "SMTP" ? "through Resend, because SMTP failed or the hourly limit was reached (see the server log)" : "through Resend";
+    const via = sent.provider === "SMTP" ? `through ${config.smtp?.host ?? "SMTP"} as ${config.smtp?.user ?? ""}` : sent.provider === "SENDMAIL" ? `through the hosting's mail program as ${config.smtp?.user ?? ""}` : "through Resend";
     return { ok: true, message: `Test email sent to ${user.email} ${via}.` };
   } catch (error) {
     const failure = describeFailure(error);
@@ -59,8 +59,13 @@ export async function sendTestEmail(user: AuthenticatedUser, sessionId: string):
     await createDelivery({ notificationId, channel: "EMAIL", provider, status: "FAILED", failureCode: failure.code });
     await recordAudit({ actorUserId: user.id, action: "PROVIDER_TEST_SENT", entityType: "PROVIDER", entityId: provider, result: "FAILURE", sessionId, metadata: { code: failure.code } });
     if (provider === "SMTP") {
-      const hint = failure.code === "EMAIL_NOT_CONFIGURED" ? " Check the SMTP user and password." : " If the hosting blocks this connection, set Connect through to localhost, Save and test again.";
+      const blocked = /EACCES|ECONNREFUSED|ETIMEDOUT|timeout/i.test(failure.detail);
+      const hint = failure.code === "EMAIL_NOT_CONFIGURED" ? " Check the SMTP user and password." : blocked ? (config.smtp?.connectHost ? " The hosting blocks this connection too: choose Send email through = SENDMAIL, Save and test again." : " If the hosting blocks this connection, set Connect through to localhost, Save and test again; if that is blocked too, choose SENDMAIL.") : "";
       return { ok: false, message: `SMTP: ${failure.code}: ${failure.detail}${hint}` };
+    }
+    if (provider === "SENDMAIL") {
+      const hint = failure.code === "EMAIL_NOT_CONFIGURED" ? " Set the SMTP user (the mailbox) and the program path." : " Check the program path (usually /usr/sbin/sendmail) and cPanel → Track Delivery.";
+      return { ok: false, message: `SENDMAIL: ${failure.code}: ${failure.detail}${hint}` };
     }
     return { ok: false, message: `${failure.code}: ${failure.detail}` };
   }

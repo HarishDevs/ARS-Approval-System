@@ -77,7 +77,9 @@ export interface EmailConfig {
   fromName: string;
   replyTo?: string | null;
   // v1.54.8: RESEND (default) or SMTP (the GoDaddy cPanel mailbox).
-  provider?: "RESEND" | "SMTP";
+  provider?: "RESEND" | "SMTP" | "SENDMAIL";
+  // v1.54.10: SENDMAIL = the hosting's mail program (path), sending as smtp.user.
+  sendmailPath?: string;
   smtp?: { host: string; port: number; security: "SSL" | "STARTTLS"; user: string; password: string; connectHost?: string | null } | null;
   smtpHourlyLimit?: number;
   fallbackToResend?: boolean;
@@ -99,13 +101,15 @@ export async function getEmailConfig(): Promise<EmailConfig> {
     getSettingValue("email.smtp_hourly_limit").catch(() => null),
     getSettingValue("email.fallback_resend").catch(() => null),
   ]);
-  const smtpOn = provider === "SMTP";
+  const sendmailPath = await getSettingValue("email.sendmail_path").catch(() => null);
+  const smtpOn = provider === "SMTP" || provider === "SENDMAIL";
   return {
     apiKey,
     fromAddress: fromAddress ?? "no_reply@approval.arssteels.net",
     fromName: fromName ?? "ARS CMS",
     replyTo,
-    provider: smtpOn ? "SMTP" : "RESEND",
+    provider: provider === "SENDMAIL" ? "SENDMAIL" : provider === "SMTP" ? "SMTP" : "RESEND",
+    sendmailPath: sendmailPath ?? "/usr/sbin/sendmail",
     smtp: smtpOn ? { host: host ?? "", port: Number(port) || 465, security: security === "STARTTLS" ? "STARTTLS" : "SSL", user: user ?? "", password: password ?? "", connectHost } : null,
     smtpHourlyLimit: Number(hourly ?? 100) || 0,
     fallbackToResend: fallback !== "OFF",

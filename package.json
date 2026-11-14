@@ -1,6 +1,6 @@
 {
   "name": "ars-approval-system",
-  "version": "1.54.9",
+  "version": "1.54.10",
   "private": true,
   "description": "ARS Approval Platform — multi-level approvals in any custom manner",
   "engines": {

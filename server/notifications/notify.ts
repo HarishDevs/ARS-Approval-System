@@ -7,7 +7,7 @@ import {
 } from "@/lib/db/repositories/notifications.repository";
 import { findActiveTemplate, tryConsumeWhatsAppRateLimit, type ActiveTemplate } from "@/lib/db/repositories/whatsapp.repository";
 import { sendTemplateMessage, CeoitboxError } from "@/server/integrations/ceoitbox/client";
-import { emailDeps, sendEmail, EmailSendError, type EmailProvider } from "@/server/integrations/email/send";
+import { emailDeps, failedProvider, sendEmail, EmailSendError, type EmailProvider } from "@/server/integrations/email/send";
 import { getEmailConfig, getWhatsAppConfig } from "@/server/settings/values";
 import { logError } from "@/lib/logging/logger";
 import { whatsappValue } from "@/server/notifications/templates";
@@ -193,7 +193,7 @@ export async function notifyWithDeps(input: NotifyInput, deps: NotifyDeps, optio
       await safeDelivery(deps, {
         notificationId,
         channel: "EMAIL",
-        provider: (error instanceof EmailSendError && (error.providerBody as { provider?: string } | null | undefined)?.provider === "SMTP") ? "SMTP" : "RESEND",
+        provider: failedProvider(error, null),
         status: "FAILED",
         failureCode: code,
         payload: { to: recipient.email, subject: input.email.subject, text: input.email.text, idempotencyKey },

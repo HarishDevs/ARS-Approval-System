@@ -78,4 +78,21 @@ describe("email through the GoDaddy mailbox (SMTP)", () => {
     const sent = await sendEmail(smtpConfig({ provider: "RESEND", smtp: null }), input, { fetch });
     expect(sent).toEqual({ id: "re-1", provider: "RESEND" });
   });
+
+  it("SENDMAIL (the hosting's mail program): no password needed, sends as the mailbox, recorded as SENDMAIL", async () => {
+    const program = { sendMail: vi.fn<(message: Record<string, unknown>) => Promise<{ messageId: string }>>(async () => ({ messageId: "<s1@cms>" })) };
+    const config = smtpConfig({ provider: "SENDMAIL", sendmailPath: "/usr/sbin/sendmail", smtp: { ...smtpConfig().smtp!, password: "" } });
+    const sent = await sendEmail(config, input, { fetch: resendOk(), smtp: program, smtpSentLastHour: async () => 0 });
+    expect(sent).toEqual({ id: "<s1@cms>", provider: "SENDMAIL" });
+    const message = program.sendMail.mock.calls[0]![0];
+    expect(message.envelope).toEqual({ from: "no_reply@cms.arssteels.net", to: "ravi@example.test" });
+  });
+
+  it("a SENDMAIL failure names SENDMAIL and its reason", async () => {
+    const program = { sendMail: vi.fn(async () => Promise.reject(new Error("spawn /usr/sbin/sendmail ENOENT"))) };
+    const config = smtpConfig({ provider: "SENDMAIL", sendmailPath: "/usr/sbin/sendmail", fallbackToResend: false });
+    const error = (await sendEmail(config, input, { fetch: resendOk(), smtp: program }).catch((caught: unknown) => caught)) as EmailSendError;
+    expect(error.message).toMatch(/^SENDMAIL send failed: spawn \/usr\/sbin\/sendmail ENOENT/);
+    expect((error.providerBody as { provider: string }).provider).toBe("SENDMAIL");
+  });
 });

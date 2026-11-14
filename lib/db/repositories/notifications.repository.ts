@@ -51,7 +51,7 @@ export type DeliveryStatus = "QUEUED" | "SENT" | "FAILED" | "SKIPPED";
 export async function createDelivery(input: {
   notificationId: number;
   channel: "EMAIL" | "WHATSAPP";
-  provider: "RESEND" | "CEOITBOX" | "SMTP";
+  provider: "RESEND" | "CEOITBOX" | "SMTP" | "SENDMAIL";
   status: DeliveryStatus;
   providerReference?: string | null;
   failureCode?: string | null;
@@ -149,6 +149,6 @@ export async function recordDeliveryReceipt(providerReference: string, status: "
 
 // v1.54.8: emails sent through SMTP in the last hour (the hourly limit).
 export async function countSmtpEmailsLastHour(db: Queryable = getDbPool()): Promise<number> {
-  const [rows] = await db.query<RowDataPacket[]>("SELECT COUNT(*) AS n FROM notification_deliveries WHERE channel = 'EMAIL' AND provider = 'SMTP' AND status = 'SENT' AND created_at >= (UTC_TIMESTAMP() - INTERVAL 1 HOUR)");
+  const [rows] = await db.query<RowDataPacket[]>("SELECT COUNT(*) AS n FROM notification_deliveries WHERE channel = 'EMAIL' AND provider IN ('SMTP', 'SENDMAIL') AND status = 'SENT' AND created_at >= (UTC_TIMESTAMP() - INTERVAL 1 HOUR)");
   return Number(rows[0]?.n ?? 0);
 }

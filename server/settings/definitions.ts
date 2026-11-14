@@ -88,7 +88,8 @@ export const SETTING_DEFINITIONS: readonly SettingDefinition[] = [
 
   // Email (D-037: Resend). v1.54.8 (owner): or the GoDaddy cPanel mailbox
   // over SMTP (no_reply@cms.arssteels.net), with Resend as a fallback.
-  { key: "email.provider", group: "EMAIL", label: "Send email through: RESEND, or SMTP (the GoDaddy cPanel mailbox)", valueType: "STRING", encrypted: false, schema: z.enum(["RESEND", "SMTP"]), defaultValue: "RESEND" },
+  { key: "email.provider", group: "EMAIL", label: "Send email through: RESEND; SMTP (the GoDaddy cPanel mailbox over the network); or SENDMAIL (the hosting's own mail program, no network connection: use it when SMTP says EACCES)", valueType: "STRING", encrypted: false, schema: z.enum(["RESEND", "SMTP", "SENDMAIL"]), defaultValue: "RESEND" },
+  { key: "email.sendmail_path", group: "EMAIL", label: "Sendmail program (SENDMAIL only)", valueType: "STRING", encrypted: false, schema: z.string().trim().regex(/^\/[A-Za-z0-9._/-]{1,200}$/, "A full path such as /usr/sbin/sendmail."), defaultValue: "/usr/sbin/sendmail" },
   { key: "email.smtp_host", group: "EMAIL", label: "SMTP server (cPanel → Email Accounts → Connect Devices → Outgoing Server)", valueType: "STRING", encrypted: false, schema: z.string().trim().min(3).max(255).regex(/^[A-Za-z0-9.-]+$/, "A server name such as bom1plzcpnl493872.prod.bom1.secureserver.net."), defaultValue: "bom1plzcpnl493872.prod.bom1.secureserver.net" },
   { key: "email.smtp_port", group: "EMAIL", label: "SMTP port (465 with SSL, or 587 with STARTTLS)", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(1).max(65535), defaultValue: "465" },
   { key: "email.smtp_security", group: "EMAIL", label: "SMTP security: SSL (port 465) or STARTTLS (port 587)", valueType: "STRING", encrypted: false, schema: z.enum(["SSL", "STARTTLS"]), defaultValue: "SSL" },

@@ -1,13 +1,13 @@
 import "server-only";
 import { EmailSendError, sendEmail as sendResendEmail, type SendEmailInput } from "@/server/integrations/resend/client";
-import { sendSmtpEmail, smtpTransport, type SmtpSender } from "@/server/integrations/email/smtp";
+import { sendmailTransport, sendSmtpEmail, smtpTransport, type SmtpSender } from "@/server/integrations/email/smtp";
 import type { EmailConfig } from "@/server/settings/values";
 import { logError } from "@/lib/logging/logger";
 import { countSmtpEmailsLastHour } from "@/lib/db/repositories/notifications.repository";
 
 export { EmailSendError, type SendEmailInput };
 
-export type EmailProvider = "RESEND" | "SMTP";
+export type EmailProvider = "RESEND" | "SMTP" | "SENDMAIL";
 
 // v1.54.8: every email in the app goes through here. The provider is the
 // Super Admin's choice (Email → Provider). With SMTP (the GoDaddy mailbox),
@@ -22,16 +22,18 @@ export interface SendDeps {
 }
 
 export async function sendEmail(config: EmailConfig, input: SendEmailInput, deps: SendDeps): Promise<{ id: string | null; provider: EmailProvider }> {
-  if (config.provider !== "SMTP") return { ...(await sendResendEmail(config, input, deps)), provider: "RESEND" };
+  if (config.provider !== "SMTP" && config.provider !== "SENDMAIL") return { ...(await sendResendEmail(config, input, deps)), provider: "RESEND" };
 
+  const via: "SMTP" | "SENDMAIL" = config.provider;
   const smtp = config.smtp;
   const canFallBack = Boolean(config.apiKey && config.fallbackToResend);
   const fallBack = async (reason: unknown) => {
     logError("email: SMTP not used, sending through Resend", reason);
     return { ...(await sendResendEmail(config, input, deps)), provider: "RESEND" as const };
   };
-  if (!smtp?.host || !smtp.user || !smtp.password) {
-    const error = new EmailSendError("EMAIL_NOT_CONFIGURED", "SMTP is chosen but its server, user or password is not set.", undefined, { provider: "SMTP" });
+  const ready = via === "SENDMAIL" ? Boolean(smtp?.user && config.sendmailPath) : Boolean(smtp?.host && smtp.user && smtp.password);
+  if (!smtp || !ready) {
+    const error = new EmailSendError("EMAIL_NOT_CONFIGURED", via === "SENDMAIL" ? "SENDMAIL is chosen but the mailbox (SMTP user) or the program path is not set." : "SMTP is chosen but its server, user or password is not set.", undefined, { provider: via });
     if (canFallBack) return fallBack(error);
     throw error;
   }
@@ -39,15 +41,16 @@ export async function sendEmail(config: EmailConfig, input: SendEmailInput, deps
   if (limit > 0 && deps.smtpSentLastHour) {
     const sent = await deps.smtpSentLastHour().catch(() => 0);
     if (sent >= limit) {
-      const error = new EmailSendError("EMAIL_RATE_LIMITED", `The hourly email limit (${limit}) is reached; it will be sent later.`, undefined, { provider: "SMTP", retryAfterSeconds: 15 * 60 });
+      const error = new EmailSendError("EMAIL_RATE_LIMITED", `The hourly email limit (${limit}) is reached; it will be sent later.`, undefined, { provider: via, retryAfterSeconds: 15 * 60 });
       if (canFallBack) return fallBack(error);
       throw error;
     }
   }
   try {
     // The mail server only sends as its own mailbox, so the From address is the SMTP user.
-    const sent = await sendSmtpEmail({ name: config.fromName, address: smtp.user, replyTo: config.replyTo }, input, deps.smtp ?? smtpTransport(smtp, deps.timeoutMs));
-    return { ...sent, provider: "SMTP" };
+    const transport = deps.smtp ?? (via === "SENDMAIL" ? sendmailTransport(config.sendmailPath ?? "/usr/sbin/sendmail") : smtpTransport(smtp, deps.timeoutMs));
+    const sent = await sendSmtpEmail({ name: config.fromName, address: smtp.user, replyTo: config.replyTo }, input, transport, via);
+    return { ...sent, provider: via };
   } catch (error) {
     // A wrong password is a setup problem: Resend still carries the mail meanwhile.
     if (canFallBack) return fallBack(error);
@@ -58,8 +61,8 @@ export async function sendEmail(config: EmailConfig, input: SendEmailInput, deps
 // The provider a failure belongs to (for the delivery record).
 export function failedProvider(error: unknown, config: EmailConfig | null): EmailProvider {
   const body = error instanceof EmailSendError ? (error.providerBody as { provider?: string } | null | undefined) : null;
-  if (body?.provider === "SMTP") return "SMTP";
-  return config?.provider === "SMTP" && !(config.apiKey && config.fallbackToResend) ? "SMTP" : "RESEND";
+  if (body?.provider === "SMTP" || body?.provider === "SENDMAIL") return body.provider;
+  return (config?.provider === "SMTP" || config?.provider === "SENDMAIL") && !(config.apiKey && config.fallbackToResend) ? config.provider : "RESEND";
 }
 
 // What the app's own senders pass (the hourly count comes from the delivery records).

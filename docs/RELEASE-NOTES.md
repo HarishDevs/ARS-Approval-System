@@ -1,5 +1,10 @@
 # Release notes
 
+## v1.54.10 (14 Nov 2026): email through the hosting's own mail program (owner)
+- On the live site the SMTP test said **"connect EACCES 68.178.145.238:465"**: GoDaddy's hosting doesn't let the app open connections to mail servers, its own included.
+- New choice in Super Admin → Settings → Email: **Send email through = SENDMAIL**. It hands each email to the hosting's own mail program, the way PHP and WordPress sites on cPanel send mail, so no network connection is needed. It sends as the mailbox in "SMTP user" (no_reply@cms.arssteels.net) and needs no password.
+- The hourly limit and the Resend fallback work the same as with SMTP. **Send test email** says which way it went, or why it failed.
+
 ## v1.54.9 (14 Nov 2026): a smaller formatting bar; the email test says why SMTP fails (owner)
 - **Formatting bar:** Bold, Italic and Underline are always shown. The **+** button opens the rest (strikethrough, code, link, lists, quote, heading, clear formatting, emoji and @mention) and closes them again. Typing @ and a name still offers people.
 - **Send test email** (Super Admin) now tests the chosen provider only. With SMTP chosen, a failure shows the mail server's own reason (for example a refused or timed-out connection, or a wrong password) with what to do, instead of Resend's error.
