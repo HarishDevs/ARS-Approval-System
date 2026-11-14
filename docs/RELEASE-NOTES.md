@@ -1,5 +1,20 @@
 # Release notes
 
+## v1.54.16 (14 Nov 2026): Message deliveries dashboard; Group by Department and any form field (owner)
+- **Super Admin → Message deliveries** is now a dashboard:
+  - totals: all messages, email accepted, WhatsApp sent (and delivered or read), failed (and how many wait for a retry), skipped;
+  - messages per day, by channel;
+  - a status bar;
+  - a table of channel and provider by status;
+  - why messages failed or were skipped, and which events send the most.
+
+  Choose the period (24 hours, 7, 30 or 90 days), channel, status and provider. The list below follows the same filters. Every number opens the matching list.
+- **Group by on the request lists** now also offers:
+  - **Department** (the requester's department, on lists of other people's requests);
+  - **every field of the forms** on the page ("Form: Vendor name", "Form: Amount" …). Fields with the same name on different forms are grouped together.
+
+  A confidential field groups as "Hidden" for anyone who may not see it.
+
 ## v1.54.15 (14 Nov 2026): email works through GoDaddy's relay (owner)
 - **Found and fixed:** ARS CMS runs in its own container on GoDaddy. There, `localhost:25` accepts email but never sends it, so nothing arrived and nothing bounced.
 - Emails now go through **GoDaddy's hosting relay** (`relay-hosting.secureserver.net`, port 25). The test email arrived in the Inbox. ARS CMS email no longer depends on Resend's daily quota (Resend stays as a fallback).

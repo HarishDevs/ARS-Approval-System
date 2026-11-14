@@ -74,3 +74,20 @@ describe("Waiting for me filters (v1.7.2)", () => {
     expect(parseQueueFilter(Object.fromEntries(new URLSearchParams(queueHref(f).split("?")[1])))).toEqual(f);
   });
 });
+
+// v1.54.16 (owner): Group by Department and by any form field.
+import { fieldGroupId, groupOrder } from "@/server/requests/list-groups";
+describe("v1.54.16 groups", () => {
+  it("parses Department on lists with people, and form-field groups anywhere; drops anything else", () => {
+    expect(parseListFilters({ group: "dept" }, "APPROVED_BY_ME").group).toBe("dept");
+    expect(parseListFilters({ group: "dept" }, "MINE").group).toBeNull();
+    expect(parseListFilters({ group: "f:vendor_name" }, "MINE").group).toBe("f:vendor_name");
+    for (const bad of ["f:", "f:Vendor", "f:a b", "f:x;drop", "field"]) expect(parseListFilters({ group: bad }, "MINE").group).toBeNull();
+  });
+  it("matches fields by label and keeps empty groups last", () => {
+    expect(fieldGroupId("Vendor name")).toBe("f:vendor_name");
+    expect(fieldGroupId("  PO No. / Ref ")).toBe("f:po_no_ref");
+    expect(fieldGroupId("***")).toBeNull();
+    expect(["No value", "Zeta", "Alpha", "Hidden"].sort(groupOrder)).toEqual(["Alpha", "Zeta", "Hidden", "No value"]);
+  });
+});

@@ -105,7 +105,14 @@ If the form has a Priority field, the **Priority** column (after Status) shows i
 - **Approved by me:** every request you approved a step of, including ones you approved for someone you cover, and where each one is now.
 - **Collaborating:** requests people added you to follow.
 
-Every list has the same toolbar: **Filter**, **Sort**, **Group**, **Options** (rows per page, save the view) and **Search**. Filters in use show as pills with **×**. A saved view can be shared or made your default.
+Every list has the same toolbar: **Filter**, **Sort**, **Group**, **Options** (rows per page, save the view) and **Search**.
+
+**Group** groups the rows on the page by:
+- Status, Approval type, Month raised, Priority;
+- on lists of other people's requests, also Raised by and **Department** (the requester's department);
+- **any field of the forms** on the page, shown as "Form: <field name>". Fields with the same name on different forms are grouped together.
+
+A confidential field you aren't allowed to see groups as "Hidden". Filters in use show as pills with **×**. A saved view can be shared or made your default.
 
 ### Raise a request
 1. **New request** (or **Approval templates → Use this template** to start with levels you saved).

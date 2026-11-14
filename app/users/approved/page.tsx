@@ -40,6 +40,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
         userId={user.id}
         progress={extras.progress}
         priority={extras.priority}
+        groupData={extras.groupData}
         columns={extras.columns}
       />
     </>

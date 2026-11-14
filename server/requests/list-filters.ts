@@ -13,10 +13,13 @@ export const LIST_SORTS = ["newest", "oldest", "activity", "due", "number", "add
 export type ListSort = (typeof LIST_SORTS)[number];
 export const LIST_SIZES = [25, 50, 100] as const;
 // D-226: the list's rows in groups (the page shown).
-export const LIST_GROUPS = ["status", "type", "month", "raiser", "priority"] as const;
+// v1.54.16 (owner): also the requester's department, and any form field ("f:<label slug>").
+export const LIST_GROUPS = ["status", "type", "month", "raiser", "dept", "priority"] as const;
 export type ListGroup = (typeof LIST_GROUPS)[number];
-export const GROUP_LABEL: Record<ListGroup, string> = { status: "Status", type: "Approval type", month: "Month raised", raiser: "Raised by", priority: "Priority" };
-export const groupsFor = (base: ListBase): ListGroup[] => LIST_GROUPS.filter((group) => group !== "raiser" || BASE_FEATURES[base].people);
+export type ListGroupKey = ListGroup | `f:${string}`;
+export const GROUP_LABEL: Record<ListGroup, string> = { status: "Status", type: "Approval type", month: "Month raised", raiser: "Raised by", dept: "Department", priority: "Priority" };
+export const groupsFor = (base: ListBase): ListGroup[] => LIST_GROUPS.filter((group) => (group !== "raiser" && group !== "dept") || BASE_FEATURES[base].people);
+export const FIELD_GROUP = /^f:[a-z0-9_]{1,60}$/;
 export const VALIDITY = ["valid", "expiring", "expired"] as const;
 // MINE: raised by me. COLLAB: I'm a collaborator. APPROVED_MINE: raised by me
 // and approved. APPROVED_BY_ME: I approved a step (myself or for someone).
@@ -118,7 +121,7 @@ export interface ListFilters {
   activityTo: string | null;
   sort: ListSort;
   size: (typeof LIST_SIZES)[number];
-  group: ListGroup | null;
+  group: ListGroupKey | null;
   page: number;
 }
 
@@ -182,7 +185,7 @@ export function parseListFilters(params: Record<string, unknown>, base: ListBase
     activityTo,
     sort,
     size,
-    group: groupsFor(base).find((value) => value === str(params.group)) ?? null,
+    group: groupsFor(base).find((value) => value === str(params.group)) ?? (FIELD_GROUP.test(str(params.group) ?? "") ? (str(params.group) as `f:${string}`) : null),
     page: page && page > 0 && page <= 10000 ? page : 1,
   };
 }

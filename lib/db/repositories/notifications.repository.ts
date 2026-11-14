@@ -108,8 +108,77 @@ export interface DeliveryListItem {
   nextRetryAt: Date | null;
 }
 
+// v1.54.16 (owner: "a dashboard for message deliveries"): the filters the
+// dashboard and the list share. Values are checked against fixed lists.
+export const DELIVERY_PERIODS = [1, 7, 30, 90] as const;
+export const DELIVERY_CHANNELS = ["EMAIL", "WHATSAPP"] as const;
+export const DELIVERY_STATUSES = ["SENT", "DELIVERED", "READ", "FAILED", "SKIPPED", "QUEUED"] as const;
+export interface DeliveryFilter {
+  days: (typeof DELIVERY_PERIODS)[number];
+  channel: (typeof DELIVERY_CHANNELS)[number] | null;
+  status: (typeof DELIVERY_STATUSES)[number] | null;
+  provider: string | null; // checked: letters only
+}
+export function parseDeliveryFilter(params: Record<string, string | string[] | undefined>): DeliveryFilter {
+  const one = (key: string) => (Array.isArray(params[key]) ? params[key]![0] : params[key]) ?? "";
+  const days = Number(one("days"));
+  return {
+    days: (DELIVERY_PERIODS as readonly number[]).includes(days) ? (days as DeliveryFilter["days"]) : 7,
+    channel: (DELIVERY_CHANNELS as readonly string[]).includes(one("channel")) ? (one("channel") as DeliveryFilter["channel"]) : null,
+    status: (DELIVERY_STATUSES as readonly string[]).includes(one("status")) ? (one("status") as DeliveryFilter["status"]) : null,
+    provider: /^[A-Z]{2,20}$/.test(one("provider")) ? one("provider") : null,
+  };
+}
+function deliveryWhere(filter: DeliveryFilter): { sql: string; params: unknown[] } {
+  const where = ["d.created_at >= (UTC_TIMESTAMP() - INTERVAL ? DAY)"];
+  const params: unknown[] = [filter.days];
+  if (filter.channel) {
+    where.push("d.channel = ?");
+    params.push(filter.channel);
+  }
+  if (filter.status) {
+    where.push("d.status = ?");
+    params.push(filter.status);
+  }
+  if (filter.provider) {
+    where.push("d.provider = ?");
+    params.push(filter.provider);
+  }
+  return { sql: where.join(" AND "), params };
+}
+
+export interface DeliverySummary {
+  byChannelStatus: { channel: string; provider: string; status: string; n: number }[];
+  daily: { day: string; channel: string; n: number }[]; // India days
+  failures: { channel: string; code: string; n: number }[];
+  events: { eventType: string; n: number }[];
+  retryPending: number;
+  providers: string[];
+}
+export async function deliverySummary(filter: DeliveryFilter, db: Queryable = getDbPool()): Promise<DeliverySummary> {
+  const { sql, params } = deliveryWhere(filter);
+  const [mix, daily, failures, events, retry, providers] = await Promise.all([
+    db.query<RowDataPacket[]>(`SELECT d.channel, d.provider, d.status, COUNT(*) AS n FROM notification_deliveries d WHERE ${sql} GROUP BY d.channel, d.provider, d.status`, params),
+    db.query<RowDataPacket[]>(`SELECT DATE_FORMAT(d.created_at + INTERVAL 330 MINUTE, '%Y-%m-%d') AS day, d.channel, COUNT(*) AS n FROM notification_deliveries d WHERE ${sql} GROUP BY day, d.channel`, params),
+    db.query<RowDataPacket[]>(`SELECT d.channel, COALESCE(d.failure_code, 'UNKNOWN') AS code, COUNT(*) AS n FROM notification_deliveries d WHERE ${sql} AND d.status IN ('FAILED', 'SKIPPED') GROUP BY d.channel, code ORDER BY n DESC LIMIT 12`, params),
+    db.query<RowDataPacket[]>(`SELECT nt.event_type, COUNT(*) AS cnt FROM notification_deliveries d JOIN notifications nt ON nt.id = d.notification_id WHERE ${sql} GROUP BY nt.event_type ORDER BY cnt DESC LIMIT 10`, params),
+    db.query<RowDataPacket[]>(`SELECT COUNT(*) AS n FROM notification_deliveries d WHERE ${sql} AND d.status = 'FAILED' AND d.next_retry_at IS NOT NULL`, params),
+    db.query<RowDataPacket[]>("SELECT DISTINCT provider FROM notification_deliveries ORDER BY provider"),
+  ]);
+  return {
+    byChannelStatus: mix[0].map((row) => ({ channel: String(row.channel), provider: String(row.provider), status: String(row.status), n: Number(row.n) })),
+    daily: daily[0].map((row) => ({ day: String(row.day), channel: String(row.channel), n: Number(row.n) })),
+    failures: failures[0].map((row) => ({ channel: String(row.channel), code: String(row.code), n: Number(row.n) })),
+    events: events[0].map((row) => ({ eventType: String(row.event_type), n: Number(row.cnt) })),
+    retryPending: Number(retry[0][0]?.n ?? 0),
+    providers: providers[0].map((row) => String(row.provider)).filter((value) => /^[A-Z]{2,20}$/.test(value)),
+  };
+}
+
 // Super Admin delivery log (P1-45). Never returns payloads.
-export async function listRecentDeliveries(limit: number): Promise<DeliveryListItem[]> {
+// v1.54.16: the dashboard's filters apply to the list too.
+export async function listRecentDeliveries(limit: number, filter?: DeliveryFilter): Promise<DeliveryListItem[]> {
+  const where = filter ? deliveryWhere(filter) : { sql: "1 = 1", params: [] as unknown[] };
   const [rows] = await getDbPool().query<
     (RowDataPacket & { id: number; created_at: Date; event_type: string; name: string; channel: "EMAIL" | "WHATSAPP"; provider: string; provider_reference: string | null; status: string; attempt_count: number; failure_code: string | null; has_payload: number; next_retry_at: Date | null })[]
   >(
@@ -118,8 +187,9 @@ export async function listRecentDeliveries(limit: number): Promise<DeliveryListI
      FROM notification_deliveries d
      JOIN notifications n ON n.id = d.notification_id
      JOIN users u ON u.id = n.user_id
+     WHERE ${where.sql}
      ORDER BY d.id DESC LIMIT ?`,
-    [limit],
+    [...where.params, limit],
   );
   return rows.map((row) => ({
     id: row.id,

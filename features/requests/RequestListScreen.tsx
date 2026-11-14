@@ -1,3 +1,4 @@
+import { groupOrder, NO_VALUE, type ListGroupData } from "@/server/requests/list-groups";
 import Link from "next/link";
 import { Fragment } from "react";
 import { AlarmClock, Ban, CheckCircle2, ClipboardList, FileText, FolderOpen, Hourglass, Layers, PauseCircle, ShieldCheck, Undo2, UserCheck, X, XCircle, type LucideIcon } from "lucide-react";
@@ -23,6 +24,7 @@ import {
   activeCount,
   BASE_FEATURES,
   GROUP_LABEL,
+  type ListGroup,
   groupsFor,
   LIST_SIZES,
   LIST_STATUSES,
@@ -130,6 +132,7 @@ export function RequestListScreen({
   empty,
   progress = {},
   priority = {},
+  groupData,
   columns,
   userId,
 }: {
@@ -143,6 +146,7 @@ export function RequestListScreen({
   empty: string;
   progress?: Record<number, MiniRoad>; // D-256: the small road per row
   priority?: Record<number, ShownPriority>; // v1.47.0: the request's Priority field, per row
+  groupData?: ListGroupData; // v1.54.16: department and form-field groups
   columns?: ListColumn[]; // D-256: the person's chosen columns
   userId: number;
 }) {
@@ -356,7 +360,11 @@ export function RequestListScreen({
             ? [item.requesterName, item.requesterName]
             : filters.group === "priority"
               ? [priority[item.id]?.label ?? "", priority[item.id]?.label ?? "No priority"]
-              : ["all", ""];
+              : filters.group === "dept"
+                ? [groupData?.department[item.id] ?? "No department", groupData?.department[item.id] ?? "No department"]
+                : filters.group?.startsWith("f:")
+                  ? [groupData?.values[item.id]?.[filters.group] ?? NO_VALUE, groupData?.values[item.id]?.[filters.group] ?? NO_VALUE]
+                  : ["all", ""];
   const grouped: { key: string; label: string; items: ListedRequest[] }[] = [];
   for (const item of result.items) {
     const [key, label] = groupOf(item);
@@ -364,6 +372,8 @@ export function RequestListScreen({
     if (found) found.items.push(item);
     else grouped.push({ key, label, items: [item] });
   }
+  // v1.54.16: department and field groups by name, with "No value"/"Hidden" last.
+  if (filters.group === "dept" || filters.group?.startsWith("f:")) grouped.sort((a, b) => groupOrder(a.label, b.label));
   // v1.47.0: priority groups in the option order (Critical first), then Hidden, then none.
   if (filters.group === "priority") {
     const rankOf = (group: { items: ListedRequest[] }) => priority[group.items[0]!.id]?.rank ?? Number.POSITIVE_INFINITY;
@@ -523,9 +533,13 @@ export function RequestListScreen({
         }
         sort={{ label: SORT_LABEL[filters.sort], changed: filters.sort !== can.sorts[0], choices: sortChoices }}
         group={{
-          label: filters.group ? GROUP_LABEL[filters.group] : null,
+          label: filters.group ? (filters.group.startsWith("f:") ? (groupData?.fields.find((field) => field.id === filters.group)?.label ?? "Form field") : GROUP_LABEL[filters.group as ListGroup]) : null,
           clearHref: href({ group: null, page: 1 }),
-          choices: groupsFor(base).map((value) => ({ label: GROUP_LABEL[value], href: href({ group: value, page: 1 }), active: filters.group === value })),
+          choices: [
+            ...groupsFor(base).map((value) => ({ label: GROUP_LABEL[value], href: href({ group: value, page: 1 }), active: filters.group === value })),
+            // v1.54.16 (owner): every field of the forms on this page, by label.
+            ...(groupData?.fields ?? []).map((field) => ({ label: `Form: ${field.label}`, href: href({ group: field.id as `f:${string}`, page: 1 }), active: filters.group === field.id })),
+          ],
         }}
         sizes={LIST_SIZES.map((size) => ({ label: `${size} per page`, href: href({ size, page: 1 }), active: filters.size === size }))}
         options={<SaveViewForm target={VIEW_TARGET[base]} query={listQuery({ ...filters, page: 1 }, {}, base)} />}

@@ -58,6 +58,7 @@ export default async function MyRequestsPage({ searchParams }: { searchParams: P
         userId={user.id}
         progress={extras.progress}
         priority={extras.priority}
+        groupData={extras.groupData}
         columns={extras.columns}
       />
     </>

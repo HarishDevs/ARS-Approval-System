@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { PagedRows } from "@/features/ui/PagedRows";
 import { PageHeader, EmptyState } from "@/features/shell/PageHeader";
 import { requireArea } from "@/server/authorization/guards";
-import { listRecentDeliveries } from "@/lib/db/repositories/notifications.repository";
+import { deliverySummary, listRecentDeliveries, parseDeliveryFilter } from "@/lib/db/repositories/notifications.repository";
+import { DeliveryDashboard } from "@/features/superadmin/DeliveryDashboard";
 import { RetryButton } from "@/features/superadmin/RetryButton";
 import { formatIndiaTime } from "@/server/notifications/security-messages";
 import { getRunnerHeartbeat, type RunnerHeartbeat } from "@/lib/db/repositories/jobs.repository";
@@ -21,15 +22,20 @@ const STATUS_STYLE: Record<string, string> = {
 
 // P1-45 delivery log: every email and WhatsApp attempt, with the failure
 // code. Message bodies and payloads are never shown.
-export default async function DeliveriesPage() {
+export const dynamic = "force-dynamic";
+
+export default async function DeliveriesPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   await requireArea("superadmin");
-  const [deliveries, heartbeat] = await Promise.all([listRecentDeliveries(200), getRunnerHeartbeat()]);
+  // v1.54.16 (owner): a dashboard over the period, and the list filtered the same way.
+  const filter = parseDeliveryFilter(await searchParams);
+  const [deliveries, heartbeat, summary] = await Promise.all([listRecentDeliveries(200, filter), getRunnerHeartbeat(), deliverySummary(filter)]);
   return (
     <>
-      <PageHeader title="Message deliveries" description="The latest 200 email and WhatsApp sends. Failed sends are retried automatically every few minutes by the job runner. SKIPPED with TEMPLATE_NOT_CONFIGURED means the WhatsApp template for that event isn't set up yet." />
+      <PageHeader title="Message deliveries" description="How many email and WhatsApp messages went out, by channel, provider and status, and the latest 200 of them for the filters chosen. Failed sends are retried automatically every few minutes by the job runner. SKIPPED with TEMPLATE_NOT_CONFIGURED means the WhatsApp template for that event isn't set up yet." />
       <RunnerStatus heartbeat={heartbeat} />
+      <DeliveryDashboard summary={summary} filter={filter} path="/superadmin/deliveries" />
       {deliveries.length === 0 ? (
-        <EmptyState title="Nothing sent yet" body="Sign-in codes, alerts and test sends will appear here." />
+        <EmptyState title="Nothing here" body="No messages match the period and filters chosen. Sign-in alerts, notifications and test sends appear here." />
       ) : (
         <div className="card overflow-x-auto">
           <table className="data-table">

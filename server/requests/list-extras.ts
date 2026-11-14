@@ -6,6 +6,7 @@ import type { ListedRequest } from "@/lib/db/repositories/request-lists.reposito
 import type { MiniRoad } from "@/server/approvals/road";
 import { priorityRecord } from "@/server/approvals/priority-lookup";
 import type { ShownPriority } from "@/server/approvals/priority";
+import { listGroupData, type ListGroupData } from "@/server/requests/list-groups";
 
 // D-256: what every request list adds to its page of rows: the small road for
 // each row (only the rows shown) and the person's chosen columns.
@@ -16,12 +17,14 @@ export async function listExtras(
   userId: number,
   items: readonly ListedRequest[],
   roles: readonly string[] = [],
-): Promise<{ progress: Record<number, MiniRoad>; columns: ListColumn[]; priority: Record<number, ShownPriority> }> {
+): Promise<{ progress: Record<number, MiniRoad>; columns: ListColumn[]; priority: Record<number, ShownPriority>; groupData: ListGroupData }> {
   const ids = items.map((item) => item.id);
-  const [roads, raw, priority] = await Promise.all([
+  const [roads, raw, priority, groupData] = await Promise.all([
     miniRoads(ids).catch(() => new Map<number, MiniRoad>()),
     getUserSetting(userId, `list.columns.${listKey}`).catch(() => null),
     priorityRecord(ids, { id: userId, roles }),
+    // v1.54.16: department and form-field groups.
+    listGroupData(ids, { id: userId, roles }).catch((): ListGroupData => ({ fields: [], department: {}, values: {} })),
   ]);
-  return { progress: Object.fromEntries(roads), columns: parseColumns(raw, available), priority };
+  return { progress: Object.fromEntries(roads), columns: parseColumns(raw, available), priority, groupData };
 }

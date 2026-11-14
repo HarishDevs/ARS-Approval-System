@@ -147,6 +147,13 @@ flowchart TD
 2. The server checks DNS, probes each route once, and talks to each reachable relay (no sign-in). It sends at most one message, and reports each reply and the queue id, with verdicts.
 3. Download the report and send it to GoDaddy support. The run is audited; at most 6 runs an hour.
 
+## F-52d Message deliveries dashboard (v1.54.16, D-325)
+1. Super Admin → Message deliveries: choose the period, channel, status and provider, then Apply. The totals, charts and the list below all follow the filters.
+2. Open any total, status part or table cell to filter to those messages.
+
+## F-RL Group by on request lists (v1.54.16, D-325)
+Group → Status, Approval type, Month raised, Priority; Raised by and Department (lists of other people's requests); Form: <field> for every form field on the page (matched by name; confidential values show as Hidden to those who may not see them).
+
 ## F-02 User ID + password + OTP
 ```mermaid
 flowchart TD

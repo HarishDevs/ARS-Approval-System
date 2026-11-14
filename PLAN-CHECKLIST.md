@@ -17,6 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (14 Nov 2026):** v1.54.16: Message deliveries dashboard; Group by Department and any form field (D-325). **Owner:** publish (no migration).
 - **Now (14 Nov 2026):** **Email works:** SMTP → relay-hosting.secureserver.net:25 RELAY; test delivered to the Inbox (D-324). v1.54.15 fixes the diagnostic's test message and reads GoDaddy's queue ids. **Owner:** publish v1.54.15; keep the settings; watch Message deliveries for FAILED rows. Next: STARTTLS on the relay hop; DKIM if mail lands in Spam.
 - **Now (14 Nov 2026):** v1.54.14: email delivery audit, live Email diagnostics, honest ACCEPTED status, queue id per delivery (D-323). **Owner:**
   - publish;
@@ -181,6 +182,10 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 - **Still open:** Q-015.
 
 ---
+
+## Session log — v1.54.16 (14 Nov 2026): delivery dashboard, Group by department and fields
+- [x] V15416-01 (14 Nov 2026) Message deliveries dashboard with filters shared by the list (D-325)
+- [x] V15416-02 (14 Nov 2026) Group by Department and any form field (confidential = Hidden)
 
 ## Session log — v1.54.15 (14 Nov 2026): email delivered via GoDaddy's relay
 - [x] V15415-01 (14 Nov 2026) Root cause verified (container localhost:25 stub); relay-hosting delivers (D-324)
