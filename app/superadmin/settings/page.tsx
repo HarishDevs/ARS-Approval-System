@@ -16,7 +16,7 @@ import { formatIndiaTime } from "@/server/notifications/security-messages";
 export const metadata: Metadata = { title: "Providers & security" };
 
 const GROUPS: { group: SettingDefinition["group"]; title: string; description: string }[] = [
-  { group: "EMAIL", title: "Email", description: "Resend, sending from the ARS address. GoDaddy blocks SMTP, so email goes over HTTPS." },
+  { group: "EMAIL", title: "Email", description: "Send through Resend, or through the GoDaddy cPanel mailbox (SMTP, e.g. no_reply@cms.arssteels.net) with Resend as a fallback. Save, then use Send test email: it says which way the test went." },
   { group: "WHATSAPP", title: "WhatsApp", description: "CEOITBox, the same number and account as the Power BI site." },
   { group: "AUTHENTICATION", title: "Sign-in security", description: "Code, lockout and device limits. Each value has safe minimum and maximum bounds." },
   { group: "GENERAL", title: "General", description: "Application name, timezone, the maintenance notice and the other app-wide basics." },

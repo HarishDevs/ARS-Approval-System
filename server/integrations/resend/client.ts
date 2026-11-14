@@ -1,11 +1,13 @@
 import "server-only";
 import type { EmailConfig } from "@/server/settings/values";
 
-// Resend HTTP API (D-037). GoDaddy's Node.js hosting blocks outbound SMTP
-// entirely, so an HTTPS provider is required (Power BI site, 2026-09-12).
+// Resend HTTP API (D-037). GoDaddy's Node.js hosting blocks outbound SMTP to
+// other mail servers (Power BI site, 2026-09-12). v1.54.8: the app can also
+// send through the hosting's own cPanel mailbox (server/integrations/email);
+// callers use server/integrations/email/send.ts, which picks the provider.
 export class EmailSendError extends Error {
   constructor(
-    readonly code: "EMAIL_NOT_CONFIGURED" | "EMAIL_REQUEST_FAILED",
+    readonly code: "EMAIL_NOT_CONFIGURED" | "EMAIL_REQUEST_FAILED" | "EMAIL_RATE_LIMITED",
     message: string,
     readonly providerStatus?: number,
     readonly providerBody?: unknown,

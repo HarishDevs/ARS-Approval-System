@@ -1,5 +1,13 @@
 # Release notes
 
+## v1.54.8 (14 Nov 2026): email from the GoDaddy mailbox (owner)
+- **Email can be sent from no_reply@cms.arssteels.net,** the cPanel mailbox on our GoDaddy hosting, instead of Resend.
+  - Set it up in Super Admin → Settings → Email: send through SMTP, the server and port from cPanel's Connect Devices (filled in), and the mailbox password (stored encrypted).
+  - **Send test email** says which way the test went.
+- **Resend stays as a fallback:** if the mailbox can't send, or the hourly limit is reached, Resend carries the email (can be switched off). Without the fallback, emails over the hourly limit wait and are sent later.
+- Every email goes the same way: notifications, sign-in alerts, retries, weekly HOD reports and scheduled reports. Message deliveries shows which provider sent each one.
+- Owner steps: docs/DEPLOYMENT.md, section G1b (DNS records for cms.arssteels.net, settings, what to do if the test falls back).
+
 ## v1.54.7 (13 Nov 2026): formatted text everywhere, due dates by default, task files, Periodic tasks list; Google sign-in after the domain move (owner)
 - **Formatting shows as formatting, like an email body.** Bold, italic, lists, quotes, links, @mentions and emoji in a task description (and marks inside marks, such as bold italic) now display formatted instead of as symbols. The same editor, with its toolbar, is used wherever long text is written: task descriptions (Create task, task forms, editing), remarks, project and status descriptions, meeting descriptions and discussion, information messages, long answers in request forms and About me.
 - **Due dates are required for tasks,** with **11:59 pm** as the time unless you change it (Create task has a time box next to the date; editing works the same way). A quick "Add a task" line without a date is due today at 11:59 pm. A due date can be moved, not removed.

@@ -86,7 +86,17 @@ export const SETTING_DEFINITIONS: readonly SettingDefinition[] = [
   { key: "auth.idle_timeout_minutes", group: "AUTHENTICATION", label: "Sign everyone out after no activity (minutes, 5 to 480; the Super Admin too)", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(5).max(480), defaultValue: "30" },
   { key: "auth.trusted_device_days", group: "AUTHENTICATION", label: "Remember a device for (days)", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(1).max(90), defaultValue: "30" },
 
-  // Email via Resend (D-037). GoDaddy's Node hosting blocks outbound SMTP.
+  // Email (D-037: Resend). v1.54.8 (owner): or the GoDaddy cPanel mailbox
+  // over SMTP (no_reply@cms.arssteels.net), with Resend as a fallback.
+  { key: "email.provider", group: "EMAIL", label: "Send email through: RESEND, or SMTP (the GoDaddy cPanel mailbox)", valueType: "STRING", encrypted: false, schema: z.enum(["RESEND", "SMTP"]), defaultValue: "RESEND" },
+  { key: "email.smtp_host", group: "EMAIL", label: "SMTP server (cPanel → Email Accounts → Connect Devices → Outgoing Server)", valueType: "STRING", encrypted: false, schema: z.string().trim().min(3).max(255).regex(/^[A-Za-z0-9.-]+$/, "A server name such as bom1plzcpnl493872.prod.bom1.secureserver.net."), defaultValue: "bom1plzcpnl493872.prod.bom1.secureserver.net" },
+  { key: "email.smtp_port", group: "EMAIL", label: "SMTP port (465 with SSL, or 587 with STARTTLS)", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(1).max(65535), defaultValue: "465" },
+  { key: "email.smtp_security", group: "EMAIL", label: "SMTP security: SSL (port 465) or STARTTLS (port 587)", valueType: "STRING", encrypted: false, schema: z.enum(["SSL", "STARTTLS"]), defaultValue: "SSL" },
+  { key: "email.smtp_user", group: "EMAIL", label: "SMTP user (the full mailbox address)", valueType: "STRING", encrypted: false, schema: z.string().trim().email(), defaultValue: "no_reply@cms.arssteels.net" },
+  { key: "email.smtp_password", group: "EMAIL", label: "SMTP password (the mailbox password)", valueType: "STRING", encrypted: true, schema: z.string().min(1).max(500) },
+  { key: "email.smtp_connect_host", group: "EMAIL", label: "Connect through (optional: localhost or 127.0.0.1 if the hosting blocks its own server name; the certificate is still checked against the SMTP server)", valueType: "STRING", encrypted: false, schema: z.string().trim().max(255).regex(/^[A-Za-z0-9.:-]*$/, "A server name or IP address.") },
+  { key: "email.smtp_hourly_limit", group: "EMAIL", label: "SMTP emails per hour at most (0 = no limit; above it: Resend if allowed, else sent later)", valueType: "NUMBER", encrypted: false, schema: z.coerce.number().int().min(0).max(100000), defaultValue: "100" },
+  { key: "email.fallback_resend", group: "EMAIL", label: "Use Resend when SMTP fails or the hourly limit is reached (needs the Resend key)", valueType: "STRING", encrypted: false, schema: z.enum(["ON", "OFF"]), defaultValue: "ON" },
   { key: "email.resend_api_key", group: "EMAIL", label: "Resend API key", valueType: "STRING", encrypted: true, schema: z.string().min(1).max(500) },
   { key: "email.from_address", group: "EMAIL", label: "From address", valueType: "STRING", encrypted: false, schema: z.string().trim().email(), defaultValue: "no_reply@approval.arssteels.net" },
   // D-080: replies to a notification reach IT, not the no-reply sender.

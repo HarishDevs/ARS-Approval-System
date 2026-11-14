@@ -3,7 +3,7 @@ import { createDelivery, createNotification } from "@/lib/db/repositories/notifi
 import { findActiveTemplate, tryConsumeWhatsAppRateLimit } from "@/lib/db/repositories/whatsapp.repository";
 import { recordAudit } from "@/lib/db/repositories/audit.repository";
 import { CeoitboxError, sendTemplateMessage } from "@/server/integrations/ceoitbox/client";
-import { EmailSendError, sendEmail } from "@/server/integrations/resend/client";
+import { EmailSendError, emailDeps, failedProvider, sendEmail } from "@/server/integrations/email/send";
 import { getEmailConfig, getWhatsAppConfig } from "@/server/settings/values";
 import { generateOtpCode } from "@/lib/security/otp";
 import { logError } from "@/lib/logging/logger";
@@ -34,24 +34,28 @@ export async function sendTestEmail(user: AuthenticatedUser, sessionId: string):
     message: "Test email from the Super Admin settings page.",
     deepLink: null,
   });
+  const config = await getEmailConfig();
   try {
     const sent = await sendEmail(
-      await getEmailConfig(),
+      config,
       {
         to: user.email,
         subject: "ARS CMS: test email",
         text: `Hello ${user.name},\n\nThis is a test from the ARS CMS settings page. Email delivery is working.\n\nARS CMS`,
       },
-      { fetch },
+      emailDeps(),
     );
-    await createDelivery({ notificationId, channel: "EMAIL", provider: "RESEND", status: "SENT", providerReference: sent.id });
-    await recordAudit({ actorUserId: user.id, action: "PROVIDER_TEST_SENT", entityType: "PROVIDER", entityId: "RESEND", sessionId });
-    return { ok: true, message: `Test email sent to ${user.email}.` };
+    await createDelivery({ notificationId, channel: "EMAIL", provider: sent.provider, status: "SENT", providerReference: sent.id });
+    await recordAudit({ actorUserId: user.id, action: "PROVIDER_TEST_SENT", entityType: "PROVIDER", entityId: sent.provider, sessionId });
+    // v1.54.8: says which way it went (SMTP chosen but Resend carried it = SMTP needs attention).
+    const via = sent.provider === "SMTP" ? `through ${config.smtp?.host ?? "SMTP"} as ${config.smtp?.user ?? ""}` : config.provider === "SMTP" ? "through Resend, because SMTP failed or the hourly limit was reached (see the server log)" : "through Resend";
+    return { ok: true, message: `Test email sent to ${user.email} ${via}.` };
   } catch (error) {
     const failure = describeFailure(error);
     logError("provider test: email failed", error);
-    await createDelivery({ notificationId, channel: "EMAIL", provider: "RESEND", status: "FAILED", failureCode: failure.code });
-    await recordAudit({ actorUserId: user.id, action: "PROVIDER_TEST_SENT", entityType: "PROVIDER", entityId: "RESEND", result: "FAILURE", sessionId, metadata: { code: failure.code } });
+    const provider = failedProvider(error, config);
+    await createDelivery({ notificationId, channel: "EMAIL", provider, status: "FAILED", failureCode: failure.code });
+    await recordAudit({ actorUserId: user.id, action: "PROVIDER_TEST_SENT", entityType: "PROVIDER", entityId: provider, result: "FAILURE", sessionId, metadata: { code: failure.code } });
     return { ok: false, message: `${failure.code}: ${failure.detail}` };
   }
 }

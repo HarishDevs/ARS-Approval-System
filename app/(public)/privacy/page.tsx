@@ -24,7 +24,7 @@ export const metadata: Metadata = {
 // request's background work step may read that request.
 // v1.46.0 (D-277, D-278): the encrypted backup copy may go to an ARS Google
 // Drive folder; security records are deleted after 90 days.
-const PRIVACY_EFFECTIVE = "13 November 2026";
+const PRIVACY_EFFECTIVE = "14 November 2026";
 
 export default function PrivacyPage() {
   return (
@@ -139,7 +139,7 @@ export default function PrivacyPage() {
         <ul>
           <li>inside ARS, with the colleagues a record involves (for example the approvers of a request, the people an FYI step tells, and the people given a task from it, who may read that request), as the app&apos;s access rules allow;</li>
           <li>
-            with service providers that run parts of the app for us, under their terms: GoDaddy (hosting), Cloudflare (network and security), Google Firebase (Google sign-in), Resend (email),
+            with service providers that run parts of the app for us, under their terms: GoDaddy (hosting), Cloudflare (network and security), Google Firebase (Google sign-in), GoDaddy and Resend (email: sent from our GoDaddy-hosted mailbox, or through Resend),
             CEOITBox (WhatsApp messages), the browsers&apos; push services (to deliver phone and desktop notifications, encrypted), the AI providers above (for the AI Assistant only), Salesforce
             (only when ARS connects it) and, when IT switches it on, an S3-compatible storage
             provider, or a Google Drive folder belonging to ARS, that keeps an <strong>encrypted</strong> copy of the daily backup outside the hosting account (only ARS holds the key). Google Calendar data is not shared with any of them beyond the hosting,

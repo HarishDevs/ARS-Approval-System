@@ -76,16 +76,40 @@ export interface EmailConfig {
   fromAddress: string;
   fromName: string;
   replyTo?: string | null;
+  // v1.54.8: RESEND (default) or SMTP (the GoDaddy cPanel mailbox).
+  provider?: "RESEND" | "SMTP";
+  smtp?: { host: string; port: number; security: "SSL" | "STARTTLS"; user: string; password: string; connectHost?: string | null } | null;
+  smtpHourlyLimit?: number;
+  fallbackToResend?: boolean;
 }
 
 export async function getEmailConfig(): Promise<EmailConfig> {
-  const [apiKey, fromAddress, fromName, replyTo] = await Promise.all([
+  const [apiKey, fromAddress, fromName, replyTo, provider, host, port, security, user, password, connectHost, hourly, fallback] = await Promise.all([
     getSettingValue("email.resend_api_key"),
     getSettingValue("email.from_address"),
     getSettingValue("email.from_name"),
     getSettingValue("email.reply_to"),
+    getSettingValue("email.provider").catch(() => null),
+    getSettingValue("email.smtp_host").catch(() => null),
+    getSettingValue("email.smtp_port").catch(() => null),
+    getSettingValue("email.smtp_security").catch(() => null),
+    getSettingValue("email.smtp_user").catch(() => null),
+    getSettingValue("email.smtp_password").catch(() => null),
+    getSettingValue("email.smtp_connect_host").catch(() => null),
+    getSettingValue("email.smtp_hourly_limit").catch(() => null),
+    getSettingValue("email.fallback_resend").catch(() => null),
   ]);
-  return { apiKey, fromAddress: fromAddress ?? "no_reply@approval.arssteels.net", fromName: fromName ?? "ARS CMS", replyTo };
+  const smtpOn = provider === "SMTP";
+  return {
+    apiKey,
+    fromAddress: fromAddress ?? "no_reply@approval.arssteels.net",
+    fromName: fromName ?? "ARS CMS",
+    replyTo,
+    provider: smtpOn ? "SMTP" : "RESEND",
+    smtp: smtpOn ? { host: host ?? "", port: Number(port) || 465, security: security === "STARTTLS" ? "STARTTLS" : "SSL", user: user ?? "", password: password ?? "", connectHost } : null,
+    smtpHourlyLimit: Number(hourly ?? 100) || 0,
+    fallbackToResend: fallback !== "OFF",
+  };
 }
 
 // D-250: who gets the daily session (until midnight IST, no idle sign-out).

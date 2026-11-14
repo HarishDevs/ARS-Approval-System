@@ -1,6 +1,6 @@
 {
   "name": "ars-approval-system",
-  "version": "1.54.7",
+  "version": "1.54.8",
   "private": true,
   "description": "ARS Approval Platform — multi-level approvals in any custom manner",
   "engines": {
@@ -31,6 +31,7 @@
     "lucide-react": "0.469.0",
     "mysql2": "3.24.3",
     "next": "15.5.28",
+    "nodemailer": "^6.9.16",
     "pdf-lib": "1.17.1",
     "react": "19.1.0",
     "react-dom": "19.1.0",
@@ -44,6 +45,7 @@
     "@eslint/eslintrc": "3.2.0",
     "@playwright/test": "1.63.0",
     "@types/node": "22.20.5",
+    "@types/nodemailer": "^6.4.17",
     "@types/react": "19.0.2",
     "@types/react-dom": "19.0.2",
     "@types/web-push": "3.6.4",

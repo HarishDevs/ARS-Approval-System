@@ -10,7 +10,7 @@ import { indiaToday, resolvePeriod } from "@/server/analytics/periods";
 import { findStuckRequests } from "@/server/ops/stuck";
 import { listBudgets } from "@/lib/db/repositories/budgets.repository";
 import { financialYear } from "@/server/workflows/type-settings";
-import { sendEmail } from "@/server/integrations/resend/client";
+import { emailDeps, sendEmail } from "@/server/integrations/email/send";
 import { runResult, sendToEach } from "@/server/reports/send-each";
 import { getEmailConfig } from "@/server/settings/values";
 import { notify } from "@/server/notifications/notify";
@@ -239,7 +239,7 @@ export async function runDueSchedules(limit = 20): Promise<{ reportsSent: number
             // D-243: one email per run and person, even if the send is repeated.
             idempotencyKey: `ars-report-r${runId}-u${entry.person.id}`,
           },
-          { fetch },
+          emailDeps(),
         );
       }, (entry, error) => logError("scheduled report: a recipient failed", error, { scheduleId: row.id, userId: entry.person.id }));
       const result = runResult(outcome, audience.length);

@@ -1,7 +1,7 @@
 import "server-only";
 import { findTemplateById, leaseDueDeliveries, markRetryFailed, markRetrySent, pruneDeliveryPayloads, pruneRateLimitHits, type DueDelivery } from "@/lib/db/repositories/jobs.repository";
 import { sendTemplateMessage, CeoitboxError } from "@/server/integrations/ceoitbox/client";
-import { sendEmail, EmailSendError } from "@/server/integrations/resend/client";
+import { emailDeps, sendEmail, EmailSendError } from "@/server/integrations/email/send";
 import { tryConsumeWhatsAppRateLimit } from "@/lib/db/repositories/whatsapp.repository";
 import { getEmailConfig, getWhatsAppConfig } from "@/server/settings/values";
 import { logError } from "@/lib/logging/logger";
@@ -34,7 +34,7 @@ function codeOf(error: unknown): string {
 const defaultDeps: RetryDeps = {
   lease: leaseDueDeliveries,
   async sendEmail(payload) {
-    return (await sendEmail(await getEmailConfig(), { to: payload.to, subject: payload.subject, text: payload.text, idempotencyKey: payload.idempotencyKey }, { fetch })).id;
+    return (await sendEmail(await getEmailConfig(), { to: payload.to, subject: payload.subject, text: payload.text, idempotencyKey: payload.idempotencyKey }, emailDeps())).id;
   },
   async sendWhatsApp(payload) {
     const template = await findTemplateById(payload.templateId);

@@ -209,6 +209,21 @@ Stops anyone reaching the GoDaddy server directly, around Cloudflare (and faking
 1. https://approval.arssteels.net → **Continue with Google** → **itsupport@arsenergy.co.in** (D-082). The seed created this Super Admin, User ID `itadmin`. `itadmin@arssteels.co.in` can't be used: it's only an alias, and Google reports the main address.
 2. You land on **My approvals**. Your name at the top right opens a menu whose **Switch space** section shows Admin and Super Admin.
 
+### G1b. Email through the GoDaddy cPanel mailbox (SMTP, v1.54.8)
+The app can send from the hosting's own mailbox, **no_reply@cms.arssteels.net**, instead of Resend.
+1. **cPanel → Email Accounts:** the mailbox exists. Its **Connect Devices** page gives the outgoing server (`bom1plzcpnl493872.prod.bom1.secureserver.net`) and port **465 (SSL)**. IMAP, POP3 and SMTP need the mailbox password.
+2. **DNS for cms.arssteels.net** (where arssteels.net is managed): SPF `v=spf1 +a +mx +ip4:<hosting IP> ~all`, the DKIM record (cPanel Zone Editor, or ask GoDaddy support; Email Deliverability is not offered on this plan) and DMARC `_dmarc.cms` = `v=DMARC1; p=none; rua=mailto:itadmin@arssteels.co.in`. Check with a Roundcube email to Gmail → Show original: SPF and DKIM PASS.
+3. **Super Admin → Settings → Email:**
+   - Send email through **SMTP**;
+   - server, port 465, security SSL and user `no_reply@cms.arssteels.net` (the defaults);
+   - the mailbox password (stored encrypted);
+   - emails per hour (start at 100, or GoDaddy's limit for the plan);
+   - "Use Resend when SMTP fails" **ON** while the Resend key is set.
+
+   **Save**, then **Send test email**: the message says whether it went through SMTP or fell back to Resend.
+4. **If the test falls back to Resend:** the server log has the SMTP code. ECONNREFUSED or a timeout means the hosting blocks the connection: set "Connect through" to `localhost` and test again. EAUTH or 535 means a wrong password.
+5. **The From address is the SMTP user.** The mail server sends only as its own mailbox. Replies still go to the Reply-to address.
+
 ### G2. Email (Resend)
 1. **Super Admin → Providers & security → Email**:
    - paste the Resend key (A5);

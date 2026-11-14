@@ -17,6 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (14 Nov 2026):** v1.54.8: email can go from the GoDaddy mailbox no_reply@cms.arssteels.net over SMTP, with Resend as a fallback (D-317). **Owner:** DNS for cms.arssteels.net (SPF, DKIM, DMARC; DEPLOYMENT G1b), publish, then Super Admin → Settings → Email: SMTP + password, Save, Send test email. If it falls back, set "Connect through" to localhost.
 - **Now (13 Nov 2026):** v1.54.7: formatted text everywhere long text is written, required due dates (11:59 pm), task Attachments card, bell count fixed, Periodic tasks as a full list (Assigned to me / by me ad hoc only), bulk approval removed from Waiting for me, Google sign-in for people moved to arssteels.co.in (D-316). **Owner:** back up `users`, run migration 202611131000_users_google_sub.sql (additive), publish; then ask Babulal to sign in with babulal@arssteels.co.in and check Sign-in history / audit (GOOGLE_ACCOUNT_LINKED, matchedBy email domain move).
 - **Now (12 Nov 2026):** v1.54.0: approval templates are each requester's own (IT approval types removed), New request one page per step with a sticky action bar, every approver named on review, the request page and the journey (D-309). One small migration on start. **Owner:** publish (v1.52.3 to v1.54.0 are all unpublished: the live site still shows "Tasks & projects").
 - **Now (11 Nov 2026, night):** v1.53.0: **Projects is its own module**; modules not switched on show as blurred, locked **Coming soon** cards (Home, Classic menu, Analytics); new people start with Approvals and Tasks (D-307). One small migration on start. **Owner:** publish; switch Projects on (Admin → Users → Modules → Add → Projects, with Tasks) when it is released. Interlinks decided (D-308). Before: v1.52.3 columns arranged by drag, request files deletable until the first approval (D-306).
@@ -168,6 +169,11 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 - **Still open:** Q-015.
 
 ---
+
+## Session log — v1.54.8 (14 Nov 2026): email from the GoDaddy mailbox
+- [x] V1548-01 (14 Nov 2026) One email sender (Resend or SMTP), settings, fallback, hourly limit, provider recorded per delivery, test send says the route (D-317)
+- [x] V1548-02 (14 Nov 2026) Tests (email-smtp 7); privacy, DEPLOYMENT G1b, release notes
+- [ ] V1548-03 Owner: DNS records for cms.arssteels.net; Send test email on live (SMTP, not Resend)
 
 ## Session log — v1.54.7 (13 Nov 2026): formatting, due dates, task files, bell, Periodic list, bulk removal, Google domain move
 - [x] V1547-01 (13 Nov 2026) Formatting: nested marks parsed and shown; RichEditor for every long-text field (task, remarks, project, meeting, information, request LONG_TEXT, About me); serializer per run (bold off inside bold, nesting); typing marks kept across the emoji picker

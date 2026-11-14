@@ -1,7 +1,7 @@
 import "server-only";
 import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { getDbPool } from "@/lib/db/client";
-import { sendEmail } from "@/server/integrations/resend/client";
+import { emailDeps, sendEmail } from "@/server/integrations/email/send";
 import { getEmailConfig, getSettingValue } from "@/server/settings/values";
 import { appBaseUrl } from "@/lib/http/app-url";
 import { logError } from "@/lib/logging/logger";
@@ -34,7 +34,7 @@ export async function runHodWeekly(now = new Date()): Promise<Record<string, num
       await sendEmail(
         await getEmailConfig(),
         { to: String(department.hod_email), subject: `ARS CMS: ${department.name} weekly report (${week.label})`, text, idempotencyKey: `ars-hod-${week.weekStart}-d${department.id}` },
-        { fetch },
+        emailDeps(),
       );
       await db.query("UPDATE hod_report_runs SET status = 'SENT' WHERE week_start = ? AND department_id = ?", [week.weekStart, department.id]);
       sent += 1;

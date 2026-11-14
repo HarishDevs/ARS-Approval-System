@@ -129,6 +129,19 @@ flowchart TD
 - Any email domain is allowed (D-004). Pattern taken from the Power BI site (`server/auth/google-login.ts`). *Updated 28 Sep 2026.*
 - **v1.54.7 (D-316, Workspace domain move):** the account is found by (1) Firebase uid, (2) Google sub (`users.google_sub`; the same Google account with a new Firebase uid is relinked), (3) exact email of an unlinked account, (4) the same mailbox on the other side of a configured domain move (`arssteels.co.in` and `arsenergy.co.in`, unlinked account only; the exact email wins). Then the sub is kept and the account's email follows Google's primary (not if another account uses it, never back onto a retired domain; audited). Nothing is created; access rules unchanged.
 
+## F-52b Sending an email (v1.54.8, D-317)
+```mermaid
+flowchart TD
+  A([Any email: notification, alert, retry, report, test]) --> P{Provider setting}
+  P -- RESEND --> R[Resend HTTPS API]
+  P -- SMTP --> C{SMTP set up and\nunder the hourly limit?}
+  C -- Yes --> S[GoDaddy mailbox over SMTP\nFrom = the mailbox, Reply-to = IT]
+  S -- fails --> F{Fallback ON and\nResend key set?}
+  C -- No --> F
+  F -- Yes --> R
+  F -- No --> W[Failed: retryable codes are tried again later]
+```
+
 ## F-02 User ID + password + OTP
 ```mermaid
 flowchart TD
