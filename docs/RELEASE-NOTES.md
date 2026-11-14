@@ -1,5 +1,12 @@
 # Release notes
 
+## v1.54.12 (14 Nov 2026): email through GoDaddy's relay for hosted apps (owner)
+- GoDaddy's guidance for Web Hosting (cPanel) is that apps on the hosting send mail through its relay: server **localhost** (or **relay-hosting.secureserver.net**), port **25**, **no SSL, no password**.
+  - Its limits: 500 emails a day per sender, and 500 an hour for the whole hosting account.
+  - Port 465 with a password (blocked: "EACCES") and the mail program (no email arrived) don't work for the app.
+- New **SMTP security** choice: **RELAY**. Set Send email through = SMTP, SMTP server = localhost, port = 25, security = RELAY; no password is needed. Emails are sent as the SMTP user (no_reply@cms.arssteels.net).
+- The test message suggests the next setting to try when one is blocked.
+
 ## v1.54.11 (14 Nov 2026): the email test never hangs (owner)
 - On the live site the SENDMAIL test ran past the page's 30-second limit ("This is taking longer than expected").
 - The mail program (and the SMTP server) now gets **20 seconds**. If it hasn't finished, the test says so: the email may still arrive, so check the inbox and cPanel → Track Delivery.

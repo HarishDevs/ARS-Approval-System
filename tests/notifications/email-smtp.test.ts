@@ -115,3 +115,12 @@ describe("the mail program takes too long (v1.54.11)", () => {
     }
   });
 });
+
+describe("GoDaddy relay settings (v1.54.12)", () => {
+  it("RELAY needs no password", async () => {
+    const program = { sendMail: vi.fn<(message: Record<string, unknown>) => Promise<{ messageId: string }>>(async () => ({ messageId: "<r1@cms>" })) };
+    const config = smtpConfig({ smtp: { host: "localhost", port: 25, security: "RELAY", user: "no_reply@cms.arssteels.net", password: "", connectHost: null } });
+    const sent = await sendEmail(config, input, { fetch: resendOk(), smtp: program, smtpSentLastHour: async () => 0 });
+    expect(sent.provider).toBe("SMTP");
+  });
+});

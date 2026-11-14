@@ -222,6 +222,7 @@ The app can send from the hosting's own mailbox, **no_reply@cms.arssteels.net**,
 
    **Save**, then **Send test email**: the message says whether it went through SMTP or fell back to Resend.
 4. **If the test fails** (from v1.54.9 the test uses SMTP only and shows its reason; v1.54.8 fell back to Resend and showed Resend's error): ECONNREFUSED or a timeout means the hosting blocks the connection: set "Connect through" to `localhost` and test again. EAUTH or 535 means a wrong password.
+4a. **GoDaddy's way (v1.54.12): RELAY.** Send email through = SMTP, SMTP server `localhost`, port `25`, security **RELAY** (no SSL, no password), SMTP user `no_reply@cms.arssteels.net`. If localhost is refused, use `relay-hosting.secureserver.net` (port 25, RELAY). GoDaddy limits: 500 a day per sender, 500 an hour per hosting account, so keep "emails per hour" at 100 or lower. SPF already includes secureserver.net.
 4b. **"connect EACCES …" (seen on live, 14 Nov 2026):** the hosting blocks the app's mail connections. Try Connect through = `localhost`. If that is blocked too, choose **Send email through = SENDMAIL** (v1.54.10). It uses the hosting's mail program (`/usr/sbin/sendmail`), needs no password, and sends as the SMTP user. Check the result in cPanel → Track Delivery.
 5. **The From address is the SMTP user.** The mail server sends only as its own mailbox. Replies still go to the Reply-to address.
 

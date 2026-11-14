@@ -60,7 +60,8 @@ export async function sendTestEmail(user: AuthenticatedUser, sessionId: string):
     await recordAudit({ actorUserId: user.id, action: "PROVIDER_TEST_SENT", entityType: "PROVIDER", entityId: provider, result: "FAILURE", sessionId, metadata: { code: failure.code } });
     if (provider === "SMTP") {
       const blocked = /EACCES|ECONNREFUSED|ETIMEDOUT|timeout/i.test(failure.detail);
-      const hint = failure.code === "EMAIL_NOT_CONFIGURED" ? " Check the SMTP user and password." : blocked ? (config.smtp?.connectHost ? " The hosting blocks this connection too: choose Send email through = SENDMAIL, Save and test again." : " If the hosting blocks this connection, set Connect through to localhost, Save and test again; if that is blocked too, choose SENDMAIL.") : "";
+      const relay = config.smtp?.security === "RELAY";
+      const hint = failure.code === "EMAIL_NOT_CONFIGURED" ? " Check the SMTP user and password." : blocked ? (relay ? (config.smtp?.host === "localhost" ? " Try SMTP server relay-hosting.secureserver.net (port 25, RELAY), Save and test again." : " Ask GoDaddy support to allow the hosting's script mail relay for this account.") : " GoDaddy's hosting only allows its relay for scripts: SMTP server localhost, port 25, security RELAY. Save and test again.") : "";
       return { ok: false, message: `SMTP: ${failure.code}: ${failure.detail}${hint}` };
     }
     if (provider === "SENDMAIL") {

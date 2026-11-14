@@ -80,7 +80,7 @@ export interface EmailConfig {
   provider?: "RESEND" | "SMTP" | "SENDMAIL";
   // v1.54.10: SENDMAIL = the hosting's mail program (path), sending as smtp.user.
   sendmailPath?: string;
-  smtp?: { host: string; port: number; security: "SSL" | "STARTTLS"; user: string; password: string; connectHost?: string | null } | null;
+  smtp?: { host: string; port: number; security: "SSL" | "STARTTLS" | "RELAY"; user: string; password: string; connectHost?: string | null } | null;
   smtpHourlyLimit?: number;
   fallbackToResend?: boolean;
 }
@@ -110,7 +110,7 @@ export async function getEmailConfig(): Promise<EmailConfig> {
     replyTo,
     provider: provider === "SENDMAIL" ? "SENDMAIL" : provider === "SMTP" ? "SMTP" : "RESEND",
     sendmailPath: sendmailPath ?? "/usr/sbin/sendmail",
-    smtp: smtpOn ? { host: host ?? "", port: Number(port) || 465, security: security === "STARTTLS" ? "STARTTLS" : "SSL", user: user ?? "", password: password ?? "", connectHost } : null,
+    smtp: smtpOn ? { host: host ?? "", port: Number(port) || 465, security: security === "STARTTLS" ? "STARTTLS" : security === "RELAY" ? "RELAY" : "SSL", user: user ?? "", password: password ?? "", connectHost } : null,
     smtpHourlyLimit: Number(hourly ?? 100) || 0,
     fallbackToResend: fallback !== "OFF",
   };

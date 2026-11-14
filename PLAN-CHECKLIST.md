@@ -17,6 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (14 Nov 2026):** v1.54.12: GoDaddy relay mode (localhost:25, no SSL, no password) (D-321). **Owner:** publish; Email: Send through SMTP, server localhost, port 25, security RELAY, Save, Send test email; if refused, relay-hosting.secureserver.net.
 - **Now (14 Nov 2026):** v1.54.11: the email test answers within 20 s and never sends a second copy (D-320). **Owner:** check the inbox and Track Delivery for the earlier SENDMAIL test; publish; test again and send the message.
 - **Now (14 Nov 2026):** v1.54.10: email can go through the hosting's own mail program (SENDMAIL), because live SMTP got EACCES (D-319). **Owner:** publish; Super Admin → Email: try Connect through = localhost (SMTP); if still EACCES, Send email through = SENDMAIL, Save, Send test email.
 - **Now (14 Nov 2026):** v1.54.9: formatting bar with B / I / U and a "+" for the rest; Send test email shows SMTP's own reason (D-318). **Owner:** publish, then Super Admin → Send test email; if it says the connection was refused or timed out, set Connect through = localhost, Save, test again.
@@ -172,6 +173,10 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 - **Still open:** Q-015.
 
 ---
+
+## Session log — v1.54.12 (14 Nov 2026): GoDaddy relay mode
+- [x] V15412-01 (14 Nov 2026) RELAY security (port 25, no TLS, no auth), hints, tests (D-321)
+- [ ] V15412-02 Owner: live test with localhost:25 RELAY
 
 ## Session log — v1.54.11 (14 Nov 2026): send time limit
 - [x] V15411-01 (14 Nov 2026) 20 s limit, EMAIL_UNCONFIRMED (no retry, no Resend copy), sendmail's reason shown, test (D-320)

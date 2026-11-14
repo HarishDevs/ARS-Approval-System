@@ -12,7 +12,10 @@ export interface SmtpConfig {
   host: string;
   port: number;
   // "SSL" = TLS from the start (465); "STARTTLS" = upgrade on 587.
-  security: "SSL" | "STARTTLS";
+  // v1.54.12 "RELAY" = GoDaddy's documented relay for scripts on Web Hosting
+  // (cPanel): localhost or relay-hosting.secureserver.net, port 25, no SSL, no
+  // sign-in (the hosting itself is trusted; 500 a day per sender).
+  security: "SSL" | "STARTTLS" | "RELAY";
   user: string;
   password: string;
   // Optional address to connect to (e.g. 127.0.0.1); TLS still names `host`.
@@ -32,6 +35,18 @@ export function sendmailTransport(path: string): SmtpSender {
 }
 
 export function smtpTransport(config: SmtpConfig, timeoutMs = EMAIL_TIMEOUT_MS): SmtpSender {
+  if (config.security === "RELAY") {
+    return nodemailer.createTransport({
+      host: config.connectHost?.trim() || config.host,
+      port: config.port,
+      secure: false,
+      // No STARTTLS: on localhost the certificate can't match, and GoDaddy says SSL off.
+      ignoreTLS: true,
+      connectionTimeout: timeoutMs,
+      greetingTimeout: timeoutMs,
+      socketTimeout: timeoutMs,
+    });
+  }
   return nodemailer.createTransport({
     host: config.connectHost?.trim() || config.host,
     port: config.port,

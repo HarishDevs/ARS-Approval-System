@@ -31,7 +31,8 @@ export async function sendEmail(config: EmailConfig, input: SendEmailInput, deps
     logError("email: SMTP not used, sending through Resend", reason);
     return { ...(await sendResendEmail(config, input, deps)), provider: "RESEND" as const };
   };
-  const ready = via === "SENDMAIL" ? Boolean(smtp?.user && config.sendmailPath) : Boolean(smtp?.host && smtp.user && smtp.password);
+  // RELAY (GoDaddy's port-25 relay) needs no password.
+  const ready = via === "SENDMAIL" ? Boolean(smtp?.user && config.sendmailPath) : Boolean(smtp?.host && smtp.user && (smtp.password || smtp.security === "RELAY"));
   if (!smtp || !ready) {
     const error = new EmailSendError("EMAIL_NOT_CONFIGURED", via === "SENDMAIL" ? "SENDMAIL is chosen but the mailbox (SMTP user) or the program path is not set." : "SMTP is chosen but its server, user or password is not set.", undefined, { provider: via });
     if (canFallBack) return fallBack(error);
