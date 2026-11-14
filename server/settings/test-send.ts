@@ -64,7 +64,7 @@ export async function sendTestEmail(user: AuthenticatedUser, sessionId: string):
       return { ok: false, message: `SMTP: ${failure.code}: ${failure.detail}${hint}` };
     }
     if (provider === "SENDMAIL") {
-      const hint = failure.code === "EMAIL_NOT_CONFIGURED" ? " Set the SMTP user (the mailbox) and the program path." : " Check the program path (usually /usr/sbin/sendmail) and cPanel → Track Delivery.";
+      const hint = failure.code === "EMAIL_NOT_CONFIGURED" ? " Set the SMTP user (the mailbox) and the program path." : failure.code === "EMAIL_UNCONFIRMED" ? " Check your inbox and cPanel → Track Delivery before testing again." : " Check the program path (usually /usr/sbin/sendmail) and cPanel → Track Delivery.";
       return { ok: false, message: `SENDMAIL: ${failure.code}: ${failure.detail}${hint}` };
     }
     return { ok: false, message: `${failure.code}: ${failure.detail}` };

@@ -45,6 +45,8 @@ export function smtpTransport(config: SmtpConfig, timeoutMs = EMAIL_TIMEOUT_MS):
   });
 }
 
+export const SENDMAIL_TIMEOUT_MS = 20_000;
+
 // One line only, so a title can't add mail headers (D-QA-15).
 const oneLine = (value: string) => value.replace(/[\r\n]+/g, " ").trim();
 
@@ -53,9 +55,17 @@ export async function sendSmtpEmail(
   input: SendEmailInput,
   transport: SmtpSender,
   provider: "SMTP" | "SENDMAIL" = "SMTP",
+  timeoutMs = SENDMAIL_TIMEOUT_MS,
 ): Promise<{ id: string | null }> {
+  // v1.54.11 (live: the SENDMAIL test hit the page's 30 s limit): the mail
+  // program gets 20 s. When it doesn't finish, the email may still go out, so
+  // this is EMAIL_UNCONFIRMED: reported, never retried automatically (no duplicates).
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const late = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new EmailSendError("EMAIL_UNCONFIRMED", `The ${provider === "SENDMAIL" ? "mail program" : "mail server"} didn't finish within ${Math.round(timeoutMs / 1000)} s; the email may still be delivered (see cPanel → Track Delivery).`, undefined, { provider })), timeoutMs);
+  });
   try {
-    const info = await transport.sendMail({
+    const info = await Promise.race([late, transport.sendMail({
       from: { name: oneLine(from.name), address: from.address },
       // The bounce address is the mailbox too (sendmail -f).
       envelope: { from: from.address, to: input.to },
@@ -67,9 +77,10 @@ export async function sendSmtpEmail(
       // A repeat of the same send can be recognised by the receiving side.
       ...(input.idempotencyKey ? { headers: { "X-ARS-Reference": oneLine(input.idempotencyKey).slice(0, 256) } } : {}),
       ...(input.attachments?.length ? { attachments: input.attachments.map((file) => ({ filename: file.filename.replace(/[^A-Za-z0-9._-]/g, "_"), content: Buffer.from(file.content) })) } : {}),
-    });
+    })]);
     return { id: info.messageId ?? null };
   } catch (error) {
+    if (error instanceof EmailSendError) throw error;
     const raw = error as { code?: string; responseCode?: number; message?: string } | null;
     const status = typeof raw?.responseCode === "number" ? raw.responseCode : undefined;
     // 4xx = "try later" (including "too many messages"); 535 = wrong password.
@@ -79,6 +90,11 @@ export async function sendSmtpEmail(
     // v1.54.9: the network reason too (e.g. "connect ECONNREFUSED 1.2.3.4:465"), so
     // the test says why; connection messages carry no password or message text.
     const reason = (raw?.message ?? "").match(/(connect|getaddrinfo|Greeting never received|Connection timeout|Timeout|self[- ]signed|certificate|ETIMEDOUT|ECONNREFUSED|ECONNRESET|EHOSTUNREACH|ENOTFOUND|spawn|ENOENT|EACCES|exited with code)[^\n]{0,100}/i)?.[0];
-    throw new EmailSendError("EMAIL_REQUEST_FAILED", `${provider} send failed${raw?.code ? ` (${raw.code})` : ""}${status ? ` (SMTP ${status})` : ""}${reason ? `: ${reason}` : ""}.`, status, { provider });
+    // The mail program's own words (exim prints why it refused), first line only.
+    const stderr = (error as { stderr?: unknown } | null)?.stderr;
+    const said = typeof stderr === "string" && stderr.trim() ? ` (${stderr.trim().split("\n")[0]!.slice(0, 160)})` : "";
+    throw new EmailSendError("EMAIL_REQUEST_FAILED", `${provider} send failed${said}${raw?.code ? ` (${raw.code})` : ""}${status ? ` (SMTP ${status})` : ""}${reason ? `: ${reason}` : ""}.`, status, { provider });
+  } finally {
+    clearTimeout(timer);
   }
 }

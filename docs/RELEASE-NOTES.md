@@ -1,5 +1,10 @@
 # Release notes
 
+## v1.54.11 (14 Nov 2026): the email test never hangs (owner)
+- On the live site the SENDMAIL test ran past the page's 30-second limit ("This is taking longer than expected").
+- The mail program (and the SMTP server) now gets **20 seconds**. If it hasn't finished, the test says so: the email may still arrive, so check the inbox and cPanel → Track Delivery.
+- Such an email is **not sent again** automatically, and Resend doesn't send a second copy. When the mail program refuses an email, its own reason is shown.
+
 ## v1.54.10 (14 Nov 2026): email through the hosting's own mail program (owner)
 - On the live site the SMTP test said **"connect EACCES 68.178.145.238:465"**: GoDaddy's hosting doesn't let the app open connections to mail servers, its own included.
 - New choice in Super Admin → Settings → Email: **Send email through = SENDMAIL**. It hands each email to the hosting's own mail program, the way PHP and WordPress sites on cPanel send mail, so no network connection is needed. It sends as the mailbox in "SMTP user" (no_reply@cms.arssteels.net) and needs no password.

@@ -7,7 +7,7 @@ import type { EmailConfig } from "@/server/settings/values";
 // callers use server/integrations/email/send.ts, which picks the provider.
 export class EmailSendError extends Error {
   constructor(
-    readonly code: "EMAIL_NOT_CONFIGURED" | "EMAIL_REQUEST_FAILED" | "EMAIL_RATE_LIMITED",
+    readonly code: "EMAIL_NOT_CONFIGURED" | "EMAIL_REQUEST_FAILED" | "EMAIL_RATE_LIMITED" | "EMAIL_UNCONFIRMED",
     message: string,
     readonly providerStatus?: number,
     readonly providerBody?: unknown,

@@ -53,7 +53,8 @@ export async function sendEmail(config: EmailConfig, input: SendEmailInput, deps
     return { ...sent, provider: via };
   } catch (error) {
     // A wrong password is a setup problem: Resend still carries the mail meanwhile.
-    if (canFallBack) return fallBack(error);
+    // Not when the outcome is unknown (it may have gone out): no second copy.
+    if (canFallBack && !(error instanceof EmailSendError && error.code === "EMAIL_UNCONFIRMED")) return fallBack(error);
     throw error;
   }
 }

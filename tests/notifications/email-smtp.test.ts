@@ -96,3 +96,22 @@ describe("email through the GoDaddy mailbox (SMTP)", () => {
     expect((error.providerBody as { provider: string }).provider).toBe("SENDMAIL");
   });
 });
+
+describe("the mail program takes too long (v1.54.11)", () => {
+  it("is EMAIL_UNCONFIRMED after the limit: not retried, and Resend doesn't send a second copy", async () => {
+    vi.useFakeTimers();
+    try {
+      const program = { sendMail: vi.fn(() => new Promise<{ messageId: string }>(() => undefined)) };
+      const fetch = resendOk();
+      const config = smtpConfig({ provider: "SENDMAIL", sendmailPath: "/usr/sbin/sendmail" });
+      const pending = sendEmail(config, input, { fetch, smtp: program, smtpSentLastHour: async () => 0 }).catch((caught: unknown) => caught);
+      await vi.advanceTimersByTimeAsync(20_000);
+      const error = (await pending) as EmailSendError;
+      expect(error.code).toBe("EMAIL_UNCONFIRMED");
+      expect(isRetryableCode(error.code)).toBe(false);
+      expect(fetch).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
