@@ -65,6 +65,9 @@ export async function sendSmtpEmail(
     if (status === 535 || raw?.code === "EAUTH") throw new EmailSendError("EMAIL_NOT_CONFIGURED", "The mail server refused the sign-in. Check the SMTP user and password.", status, { provider: "SMTP" });
     if (status !== undefined && status >= 400 && status < 500) throw new EmailSendError("EMAIL_RATE_LIMITED", `The mail server asked to try later (SMTP ${status}).`, status, { provider: "SMTP" });
     // Codes and SMTP statuses only; never the message or the password.
-    throw new EmailSendError("EMAIL_REQUEST_FAILED", `SMTP send failed${raw?.code ? ` (${raw.code})` : ""}${status ? ` (SMTP ${status})` : ""}.`, status, { provider: "SMTP" });
+    // v1.54.9: the network reason too (e.g. "connect ECONNREFUSED 1.2.3.4:465"), so
+    // the test says why; connection messages carry no password or message text.
+    const reason = (raw?.message ?? "").match(/(connect|getaddrinfo|Greeting never received|Connection timeout|Timeout|self[- ]signed|certificate|ETIMEDOUT|ECONNREFUSED|ECONNRESET|EHOSTUNREACH|ENOTFOUND)[^\n]{0,100}/i)?.[0];
+    throw new EmailSendError("EMAIL_REQUEST_FAILED", `SMTP send failed${raw?.code ? ` (${raw.code})` : ""}${status ? ` (SMTP ${status})` : ""}${reason ? `: ${reason}` : ""}.`, status, { provider: "SMTP" });
   }
 }

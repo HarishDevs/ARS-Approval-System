@@ -17,6 +17,7 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 **Multi-level approvals in any custom manner.** The engine must support any number of levels in any combination: sequential, parallel, any-one, any-N-of-M, conditional and hybrid. Approvers can come from any source, and levels can be added or skipped by rules. Build the engine for this from the first engine phase (P2). The drag-and-drop designer (P3) is only the screen for building it. Check every task against this.
 
 ## Now / Next
+- **Now (14 Nov 2026):** v1.54.9: formatting bar with B / I / U and a "+" for the rest; Send test email shows SMTP's own reason (D-318). **Owner:** publish, then Super Admin → Send test email; if it says the connection was refused or timed out, set Connect through = localhost, Save, test again.
 - **Now (14 Nov 2026):** v1.54.8: email can go from the GoDaddy mailbox no_reply@cms.arssteels.net over SMTP, with Resend as a fallback (D-317). **Owner:** DNS for cms.arssteels.net (SPF, DKIM, DMARC; DEPLOYMENT G1b), publish, then Super Admin → Settings → Email: SMTP + password, Save, Send test email. If it falls back, set "Connect through" to localhost.
 - **Now (13 Nov 2026):** v1.54.7: formatted text everywhere long text is written, required due dates (11:59 pm), task Attachments card, bell count fixed, Periodic tasks as a full list (Assigned to me / by me ad hoc only), bulk approval removed from Waiting for me, Google sign-in for people moved to arssteels.co.in (D-316). **Owner:** back up `users`, run migration 202611131000_users_google_sub.sql (additive), publish; then ask Babulal to sign in with babulal@arssteels.co.in and check Sign-in history / audit (GOOGLE_ACCOUNT_LINKED, matchedBy email domain move).
 - **Now (12 Nov 2026):** v1.54.0: approval templates are each requester's own (IT approval types removed), New request one page per step with a sticky action bar, every approver named on review, the request page and the journey (D-309). One small migration on start. **Owner:** publish (v1.52.3 to v1.54.0 are all unpublished: the live site still shows "Tasks & projects").
@@ -169,6 +170,11 @@ Legend: `[ ]` to do · `[>]` in progress · `[x]` done · `[~]` not applicable (
 - **Still open:** Q-015.
 
 ---
+
+## Session log — v1.54.9 (14 Nov 2026): formatting bar, SMTP test reason
+- [x] V1549-01 (14 Nov 2026) Toolbar: Bold, Italic, Underline + "All formatting options" (D-318)
+- [x] V1549-02 (14 Nov 2026) Send test email: SMTP only, its reason and a hint
+- [ ] V1549-03 Owner: test on live; localhost if the connection is refused
 
 ## Session log — v1.54.8 (14 Nov 2026): email from the GoDaddy mailbox
 - [x] V1548-01 (14 Nov 2026) One email sender (Resend or SMTP), settings, fallback, hourly limit, provider recorded per delivery, test send says the route (D-317)

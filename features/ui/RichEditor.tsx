@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { AtSign, Bold, Code, Heading, Italic, Link2, List, ListOrdered, Quote, RemoveFormatting, Smile, Strikethrough, Underline } from "lucide-react";
+import { AtSign, Bold, Code, Heading, Italic, Link2, List, ListOrdered, Plus, Quote, RemoveFormatting, Smile, Strikethrough, Underline } from "lucide-react";
 import { richBlocks, type Inline } from "@/features/work/rich-text";
 
 // v1.52.2 (owner: "change all the comment section as a formattable like mail
@@ -236,6 +236,8 @@ export function RichEditor({
   const [mention, setMention] = useState<{ query: string } | null>(null);
   const [active, setActive] = useState(0);
   const [emoji, setEmoji] = useState(false);
+  // v1.54.9 (owner): Bold, Italic, Underline always; "+" opens the rest.
+  const [more, setMore] = useState(false);
   const saved = useRef<Range | null>(null);
 
   const sync = () => {
@@ -511,6 +513,26 @@ export function RichEditor({
         {tool("Bold (Ctrl+B)", <Bold className={icon} />, () => command("bold"))}
         {tool("Italic (Ctrl+I)", <Italic className={icon} />, () => command("italic"))}
         {tool("Underline (Ctrl+U)", <Underline className={icon} />, () => command("underline"))}
+        <button
+          type="button"
+          title={more ? "Hide formatting options" : "All formatting options"}
+          aria-label="All formatting options"
+          aria-expanded={more}
+          onMouseDown={(event) => {
+            event.preventDefault();
+            remember();
+          }}
+          onClick={() => {
+            setMore((value) => !value);
+            setEmoji(false);
+          }}
+          className={`grid h-8 w-8 place-items-center rounded hover:bg-surface-muted hover:text-ink ${more ? "bg-surface-muted text-ink" : "text-ink-muted"}`}
+        >
+          <Plus aria-hidden="true" className={`${icon} transition-transform ${more ? "rotate-45" : ""}`} />
+        </button>
+        {more && (
+          <>
+        <span aria-hidden="true" className="mx-1 h-5 w-px bg-line" />
         {tool("Strikethrough", <Strikethrough className={icon} />, () => command("strikeThrough"))}
         {tool("Inline code", <Code className={icon} />, codeMark)}
         {tool("Link", <Link2 className={icon} />, link)}
@@ -533,6 +555,8 @@ export function RichEditor({
             setActive(0);
             remember();
           })}
+          </>
+        )}
         {emoji && (
           <div className="absolute bottom-full left-1 z-[70] mb-1 grid w-64 grid-cols-10 gap-0.5 rounded-md border border-line bg-raised p-1.5 shadow-overlay" role="dialog" aria-label="Emoji">
             {EMOJI.map((item) => (

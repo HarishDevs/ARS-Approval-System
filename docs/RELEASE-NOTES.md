@@ -1,5 +1,9 @@
 # Release notes
 
+## v1.54.9 (14 Nov 2026): a smaller formatting bar; the email test says why SMTP fails (owner)
+- **Formatting bar:** Bold, Italic and Underline are always shown. The **+** button opens the rest (strikethrough, code, link, lists, quote, heading, clear formatting, emoji and @mention) and closes them again. Typing @ and a name still offers people.
+- **Send test email** (Super Admin) now tests the chosen provider only. With SMTP chosen, a failure shows the mail server's own reason (for example a refused or timed-out connection, or a wrong password) with what to do, instead of Resend's error.
+
 ## v1.54.8 (14 Nov 2026): email from the GoDaddy mailbox (owner)
 - **Email can be sent from no_reply@cms.arssteels.net,** the cPanel mailbox on our GoDaddy hosting, instead of Resend.
   - Set it up in Super Admin → Settings → Email: send through SMTP, the server and port from cPanel's Connect Devices (filled in), and the mailbox password (stored encrypted).

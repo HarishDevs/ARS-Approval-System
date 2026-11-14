@@ -221,7 +221,7 @@ The app can send from the hosting's own mailbox, **no_reply@cms.arssteels.net**,
    - "Use Resend when SMTP fails" **ON** while the Resend key is set.
 
    **Save**, then **Send test email**: the message says whether it went through SMTP or fell back to Resend.
-4. **If the test falls back to Resend:** the server log has the SMTP code. ECONNREFUSED or a timeout means the hosting blocks the connection: set "Connect through" to `localhost` and test again. EAUTH or 535 means a wrong password.
+4. **If the test fails** (from v1.54.9 the test uses SMTP only and shows its reason; v1.54.8 fell back to Resend and showed Resend's error): ECONNREFUSED or a timeout means the hosting blocks the connection: set "Connect through" to `localhost` and test again. EAUTH or 535 means a wrong password.
 5. **The From address is the SMTP user.** The mail server sends only as its own mailbox. Replies still go to the Reply-to address.
 
 ### G2. Email (Resend)

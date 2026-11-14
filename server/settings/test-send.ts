@@ -34,7 +34,9 @@ export async function sendTestEmail(user: AuthenticatedUser, sessionId: string):
     message: "Test email from the Super Admin settings page.",
     deepLink: null,
   });
-  const config = await getEmailConfig();
+  // v1.54.9: the test checks the chosen provider itself: no Resend fallback,
+  // so an SMTP problem shows its own code instead of Resend's.
+  const config = { ...(await getEmailConfig()), fallbackToResend: false };
   try {
     const sent = await sendEmail(
       config,
@@ -56,6 +58,10 @@ export async function sendTestEmail(user: AuthenticatedUser, sessionId: string):
     const provider = failedProvider(error, config);
     await createDelivery({ notificationId, channel: "EMAIL", provider, status: "FAILED", failureCode: failure.code });
     await recordAudit({ actorUserId: user.id, action: "PROVIDER_TEST_SENT", entityType: "PROVIDER", entityId: provider, result: "FAILURE", sessionId, metadata: { code: failure.code } });
+    if (provider === "SMTP") {
+      const hint = failure.code === "EMAIL_NOT_CONFIGURED" ? " Check the SMTP user and password." : " If the hosting blocks this connection, set Connect through to localhost, Save and test again.";
+      return { ok: false, message: `SMTP: ${failure.code}: ${failure.detail}${hint}` };
+    }
     return { ok: false, message: `${failure.code}: ${failure.detail}` };
   }
 }

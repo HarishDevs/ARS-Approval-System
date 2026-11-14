@@ -72,6 +72,11 @@ test("formatting, / menu, emoji, @mention, a file and a collaborator reach the t
   const description = dialog.getByRole("textbox", { name: "Description" });
   const tools = dialog.getByTestId("create-description-editor").getByRole("toolbar", { name: "Formatting" });
   await description.click();
+  // v1.54.9 (owner): Bold, Italic, Underline show; "+" opens the rest.
+  for (const name of [/^Bold/, /^Italic/, /^Underline/]) await expect(tools.getByRole("button", { name })).toBeVisible();
+  await expect(tools.getByRole("button", { name: "Bulleted list" })).toHaveCount(0);
+  await tools.getByRole("button", { name: "All formatting options" }).click();
+  await expect(tools.getByRole("button", { name: "All formatting options" })).toHaveAttribute("aria-expanded", "true");
   await tools.getByRole("button", { name: "Bulleted list" }).click();
   await description.pressSequentially("Steps count the coils");
   await expect(description.locator("li")).toContainText("Steps count the coils");
